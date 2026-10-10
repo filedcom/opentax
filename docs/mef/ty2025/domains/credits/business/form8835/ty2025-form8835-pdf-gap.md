@@ -6,8 +6,9 @@ Later checkpoints below supersede the original full-use/first-four-year limits:
 reviewed partial/zero facility tax use, older wind/geothermal production and
 mixed1f/4e classes, cellulosic/livestock lessees, and cumulative bond-financing
 reviews now have complete-return evidence. Solar retains its earlier bounded
-source route. Increased credits, bonuses, transfers, passive and fiscal-year
-branches remain guarded in the PDF. Source references do not authenticate
+source route. Reviewed under-1-MW wind/geothermal increases now include bound
+statements; other increases, bonuses, transfers, passive and fiscal-year branches
+remain guarded in the PDF. Source references do not authenticate
 external records. Historical paragraphs below retain their original context.
 
 The [2025 Form 8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf) prints
@@ -353,3 +354,65 @@ issuer and capital records, carry ledgers, business rules and IRS acceptance
 remain open. No main parent is closed.
 
 Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 reviewed small-facility increases and attached statements
+
+Reviewed filer-owned wind and geothermal facilities with maximum net AC output
+below 1 MW now reach the complete return with the fivefold credit. This route
+requires post-2021 service, construction from January 29, 2023 through 2024,
+calendar-year production, a complete generating-unit inventory, distinct capacity
+records, meter and unrelated-sale joins, and a reviewed increased-credit statement.
+Other increased-credit reasons, bonuses, transfers, passive and fiscal-year PDF
+branches remain guarded. This checkpoint does not close the parent form task.
+
+The source review joins summed AC nameplate kW to facility capacity and maximum
+output, taxpayer identity, dates, kWh, statement filename and SHA-256. The required
+structured PDF has twelve named text fields for taxpayer, facility, capacity,
+review, signer/date and declarations. Native preparation and prepared-PDF output
+verify its contents and exact bytes; a fresh PDF without the prepared attachments
+rejects. This is an explicit structured-PDF contract, not general OCR or signature
+authentication. Synthetic signer/reviewer assertions in these fixtures do not
+prove authentic signed filings. Original attachment bytes remain unchanged;
+static copies are included in the review packet with no interactive widgets.
+
+Six synthetic complete returns cover one/two/four facilities, wind/geothermal,
+999 kW, full credit use and tax-limited use. Eleven facilities have 22 generating
+unit records and eleven required statement PDFs. Independent Decimal arithmetic,
+source joins, XML values and all six complete Return1040 XSD validations pass.
+The three unrestricted cases use production credits 3,000/6,000/6,300 and report
+tax 20,066/17,066/16,766; the other three use 23,049 and report tax 17. Each also
+uses 2,001 of separately sourced partnership/S-corporation orphan-drug credits.
+
+All 122 packet pages were reviewed: 70 distinct rendered pages across eighteen
+contact sheets and 52 exact pixel duplicates. Eleven statement pages are included
+in that count. Identity, capacity, question 8a, fivefold amount, allocation,
+final tax and statement text agree. Existing deferred Form3800 skipped lines26,
+Form8835 zero line3/presentation76, name-order68 and native AMT84 qualify this
+review; it is not clean whole-packet parity approval. Development caught stale
+widget references in the derived statement copies; those references were removed
+and all 122 final pages have no widgets or AcroForm fields. Earlier failed and
+interrupted development logs are retained separately.
+
+The six cases reject 102 native preparations and 78 PDF attempts with missing or
+inconsistent sources/attachments. Seventy-two of the PDF attempts mutate pending
+source against a prepared bundle and exercise its source-consistency gate; six
+exercise missing prepared attachments. Twenty-four native attempts change one
+statement field and recompute its digest, proving content checks beyond hashing.
+Six local submission ZIPs and six outer transmission ZIPs preserve all eleven
+statement byte streams. Twelve missing/changed-attachment archives reject even
+with rebuilt ZIP CRCs. Synthetic transmitter metadata is used; zero transmissions
+were made. Request packaging does not prove authorized credentials, SOAP delivery,
+IRS business-rule success or acceptance.
+
+Private evidence is `.state/research/form8835-increase-2026-10-10/`;
+`packaged/` is the canonical matched source/XML/PDF/archive set, with independent
+`verification.json`, `archive-verification.json` and `visual-review.json`.
+The retained [TY2025 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+have SHA-256 `628e79647a4595baeebe980e90639a482e7929382a03e01727b07c7580282c06`.
+Return1040 XSD remains the retained TY2025v5.4 schema, SHA-256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Broader facilities/owners, external authenticity, accepted carry histories,
+business rules and IRS acceptance remain open.
+
+Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.

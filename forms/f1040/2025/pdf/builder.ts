@@ -1,3 +1,4 @@
+import { assertForm8835IncreaseStatements } from "../mef/forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
 import { assertRequiredLtcSource } from "../mef/forms/adjustments/health/f8853_ltc.ts";
 import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
@@ -12,7 +13,7 @@ import { assertForm4852RetainedEvidence } from "../domains/income/wages/form4852
 import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charitable/f8283/f8283_signed_fields.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFName, StandardFonts } from "pdf-lib";
 import { loadPdfTemplate } from "./support/template-cache.ts";
 import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
@@ -695,6 +696,9 @@ async function buildPdfBytesInternal(
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
   }
+  if (!preparedBundle) {
+    await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
+  }
   if (preparedBundle) {
     if (
       await preparedSourceSha256(preparedBundle.pending, filer) !==
@@ -705,6 +709,11 @@ async function buildPdfBytesInternal(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertForm8835IncreaseStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
     await assertReviewedForm8283PdfFields(
       normalized.f8283,
       filer,
@@ -921,6 +930,38 @@ async function buildPdfBytesInternal(
           pageNumber,
           formKey,
           formCopy,
+        });
+      }
+    }
+  }
+
+  // Print a static review copy of each validated increased-credit statement.
+  // The submitted attachment retains the original, unmodified bytes.
+  if (normalized.f8835 && preparedBundle) {
+    const rows = normalized.f8835.f8835s as Array<{
+      increased_credit_reason: string;
+      increased_credit_statement_file_name?: string;
+    }>;
+    for (const [index, item] of rows.entries()) {
+      if (item.increased_credit_reason !== "under_one_mw") continue;
+      const attachment = preparedBundle.attachments.find((a) =>
+        a.fileName === item.increased_credit_statement_file_name
+      )!;
+      const copy = await PDFDocument.load(attachment.bytes, {
+        updateMetadata: false,
+      });
+      copy.getForm().flatten({ updateFieldAppearances: false });
+      // Remove stale widget references from this static derivative only.
+      for (const page of copy.getPages()) {
+        page.node.delete(PDFName.of("Annots"));
+      }
+      const pages = await merged.copyPages(copy, copy.getPageIndices());
+      for (const page of pages) {
+        merged.addPage(page);
+        pageOrigins?.push({
+          pageNumber: merged.getPageCount(),
+          formKey: "f8835_increased_credit_statement",
+          formCopy: index + 1,
         });
       }
     }

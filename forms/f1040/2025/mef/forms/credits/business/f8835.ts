@@ -1,3 +1,7 @@
+import {
+  assertForm8835SmallFacilitySource,
+  form8835IncreaseDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
 import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -134,6 +138,22 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
   }
 
   assertForm8835BondSource(item, true);
+  assertForm8835SmallFacilitySource(item, true);
+  if (item.small_facility_source) {
+    const source = item.small_facility_source;
+    if (
+      source.taxpayer_tin !== context.filer?.primarySSN ||
+      source.taxpayer_name !== context.filer?.fullName ||
+      context.attachmentSha256ByFileName?.[source.statement_file_name] !==
+        source.statement_sha256 ||
+      context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
+        form8835IncreaseDescription(item.facility_description!)
+    ) {
+      throw new Error(
+        "Form 8835 increased statement differs from filer or retained attachment bytes",
+      );
+    }
+  }
   const lines = calculateForm8835(item);
   const [quantityTag, amountTag] = productionTags[item.energy_type];
   const domesticStatementId = item.domestic_content_statement_file_name

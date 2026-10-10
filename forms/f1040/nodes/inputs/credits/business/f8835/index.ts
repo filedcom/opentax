@@ -1,3 +1,7 @@
+import {
+  assertForm8835SmallFacilitySource,
+  smallFacilitySourceSchema,
+} from "./increase-source.ts";
 import { z } from "zod";
 import { assertForm8835BondSource, bondSourceSchema } from "./bond-source.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
@@ -171,6 +175,7 @@ export const itemSchema = z.object({
   existing_facility_expansion: z.boolean().optional(),
   solar_dc_nameplate_kw: z.number().int().nonnegative().optional(),
   ac_nameplate_kw: z.number().int().nonnegative().optional(),
+  small_facility_source: smallFacilitySourceSchema.optional(),
   increased_credit_statement_file_name: z.string().min(1).optional(),
   domestic_content_statement_file_name: z.string().min(1).optional(),
   pwa_form7220_file_name: z.string().min(1).optional(),
@@ -390,6 +395,7 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  assertForm8835SmallFacilitySource(item);
   item = itemSchema.parse(item);
   if (item.energy_type === EnergyType.Solar) {
     const source = item.solar_production_source;

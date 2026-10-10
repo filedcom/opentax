@@ -188,8 +188,8 @@ Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields",
 Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled", () => {
   const increased = {
     ...facility,
-    increased_credit_reason: "under_one_mw" as const,
-    maximum_net_output_mw: 0.9,
+    increased_credit_reason: "construction_before_2023_01_29" as const,
+    facility_construction_start_date: "2022-06-01",
     increased_credit_statement_file_name: "Increase.pdf",
   };
   assertThrows(() => form8835.build({ f8835s: [increased] }));

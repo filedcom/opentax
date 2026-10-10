@@ -7064,3 +7064,27 @@ A separate full gate started2026-10-10T03:30:19.931Z at frozen `eed449e70`
 in `/private/tmp/opentax-full-gate-eed449e70`:1,394 modules/no exclusions,
 module-graph preflight complete, typed tests running with no terminal result.
 See [running checkpoint](../testing/ty2025-full-gate-2026-10-10.md).
+
+
+## October 10 — reviewed Form8835 small-facility statements and Form3800 tax
+
+Completed the related source/native/PDF/attachment work for reviewed under-1-MW
+wind/geothermal facilities: six complete XSD-valid returns,122 reviewed packet
+pages,11 facilities,22 generating-unit records and11 bound required statements.
+Independent tax/source/XSD/PDF checks pass. Missing or inconsistent evidence
+rejects102 native preparations and78 PDF attempts;12 rebuilt bad archives reject.
+Six submission/outer-transmission packages preserve original statement bytes;
+no package was transmitted. Synthetic typed signatures/reviews do not establish
+external authenticity. The [Form8835 checkpoint](../domains/credits/business/form8835/ty2025-form8835-pdf-gap.md#october-10-reviewed-small-facility-increases-and-attached-statements)
+retains detailed boundaries and known deferred presentation qualifications.
+
+PR70 cumulative evidence becomes328 schema-valid complete returns/3,261 reviewed
+packet pages, including the previously documented incorrect dividend-tax case125;
+ten separate schema-failing returns and nine XML-only cases remain separate.
+Business-credit evidence becomes54/960. Component carryover37roots/17pages is
+excluded. No main task body changed, no broader parent closed, and all135 future
+items stay deferred. Existing future76 receives the repeated line3 observation.
+The individual ATS estimate remains about60%, rough45–75%. The independent full
+1,394-module gate on frozen eed449e70 remains live, without a terminal result.
+
+Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.

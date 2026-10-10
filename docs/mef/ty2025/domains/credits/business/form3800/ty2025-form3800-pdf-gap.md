@@ -1215,3 +1215,19 @@ Existing26/76/84/134/135, broader routes, authenticated records, carry ledgers
 and IRS acceptance remain open. No main parent is closed.
 
 Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 reviewed small-facility increases and attached statements
+
+Six additional complete returns join reviewed fivefold Form8835 credits to the
+Form3800 facility allocation, Schedule3 and Form1040. All six pass full-return
+XSD; all122 packet pages are observed with existing presentation qualifications.
+Eleven bound statements survive exact-byte submission and transmission archive
+checks; twelve altered/missing archives reject. The Form8835
+[checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-reviewed-small-facility-increases-and-attached-statements)
+retains source, tax, rendering and rejection details. Business-credit complete
+return evidence is now54 returns/960 pages; the separate PartVI component evidence
+is excluded. Wider sources, passive/transfer credits, authenticated carryovers,
+source signatures, business rules and IRS acceptance remain open.
+
+Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.

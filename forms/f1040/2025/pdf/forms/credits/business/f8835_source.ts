@@ -1,3 +1,4 @@
+import { assertForm8835SmallFacilitySource } from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
 import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
 import {
   allocateForm3800CreditUse,
@@ -50,6 +51,7 @@ export function form8835PdfSources(
   const source = inputSchema.parse(raw);
   const rows = source.f8835s.map((item) => {
     assertForm8835BondSource(item, true);
+    assertForm8835SmallFacilitySource(item, true);
     const lines = calculateForm8835(item);
     const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
       (item.open_loop_cellulosic_source !== undefined ||
@@ -71,7 +73,8 @@ export function form8835PdfSources(
         item.energy_type !== EnergyType.BiomassOpen &&
         item.energy_type !== EnergyType.Landfill &&
         item.energy_type !== EnergyType.Trash) ||
-      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
+      item.is_fiscal_year ||
+      !["none", "under_one_mw"].includes(item.increased_credit_reason) ||
       item.domestic_content_bonus || item.energy_community_bonus ||
       (item.transfer_election_amount ?? 0) !== 0 ||
       item.subject_to_passive_activity_limit ||
@@ -91,7 +94,7 @@ export function form8835PdfSources(
       item.registration_number !== undefined
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and no increase, bonus, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility increases, without other increases, bonus, transfer, or fiscal-year branches",
       );
     }
     if (
