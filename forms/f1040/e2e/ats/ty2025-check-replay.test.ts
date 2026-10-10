@@ -42,13 +42,13 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   for (const s of report.scenarios) {
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
-  assertEquals(report.denominator, 54);
+  assertEquals(report.denominator, 63);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 111);
+  assertEquals(ledger.count, 120);
   assertEquals(ledger.byKind, {
     calculation: {
-      count: 54,
-      counts: { different: 12, match: 41, "not-produced": 1 },
+      count: 63,
+      counts: { different: 14, match: 45, "not-produced": 4 },
     },
     "document-copy": {
       count: 56,
@@ -56,11 +56,11 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     },
     "binary-attachment": { count: 1, counts: { missing: 1 } },
   });
-  assertEquals(ledger.calculationAnchor.matching, 36);
-  assertEquals(ledger.calculationAnchor.evaluated, 48);
-  assertEquals(ledger.calculationAnchor.notProduced, 1);
+  assertEquals(ledger.calculationAnchor.matching, 40);
+  assertEquals(ledger.calculationAnchor.evaluated, 54);
+  assertEquals(ledger.calculationAnchor.notProduced, 4);
   assertEquals(ledger.calculationAnchor.provisional, 5);
-  assertEquals(ledger.calculationAnchor.percent, 75);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 40 / 54);
   assertEquals(ledger.attachmentRequirementsNotInventoried.length, 7);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
@@ -122,13 +122,34 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   for (const id of ["1040-02", "1040-03"]) {
     const scenario = report.scenarios.find((s) => s.id === id)!;
     assertEquals(scenario.diagnostics, []);
-    assertEquals(
-      scenario.checks.every((c) => c.result === CheckResult.Match),
-      true,
-    );
+    if (id === "1040-02") {
+      assertEquals(
+        scenario.checks.every((c) => c.result === CheckResult.Match),
+        true,
+      );
+    }
     assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
   }
-  assertEquals(report.counts, { match: 41, different: 12, "not-produced": 1 });
+  assertEquals(report.counts, { match: 45, different: 14, "not-produced": 4 });
+  const farm = report.scenarios.find((s) => s.id === "1040-03")!;
+  assertEquals(
+    farm.checks.filter((c) => c.result !== CheckResult.Match).map(
+      (c) => [c.path, c.expected, c.actual, c.result],
+    ),
+    [
+      ["schedule1.line1_state_refund", 3110, null, CheckResult.NotProduced],
+      ["f1040.line8_additional_income", 17422, 14312, CheckResult.Different],
+      ["f1040.line9_total_income", 72235, 69125, CheckResult.Different],
+    ],
+  );
+  assertEquals(
+    transfer.checks.filter((c) => c.result === CheckResult.NotProduced)
+      .map((c) => [c.path, c.expected]),
+    [
+      ["f3800.f8835_credit_entries.0.credit_amount", 13200],
+      ["f3800.f8936_new_vehicle_credit.credit_amount", 130],
+    ],
+  );
   const deduction = report.scenarios.find((s) => s.id === "1040-12")!.checks
     .find((c) => c.path === "f1040.line12a_standard_deduction")!;
   assertEquals([deduction.expected, deduction.actual, deduction.result], [

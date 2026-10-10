@@ -1,5 +1,7 @@
 # TY2025 individual-check evidence ledger — October 10, 2026
 
+Historical 111-observation checkpoint; the [expanded 120-observation replay](./ty2025-check-expansion-2026-10-10.md) preserves every row and adds nine source expectations.
+
 **Provisional engineering estimate: about75% of individual ATS checks, with a
 judgment range50–85%.** Confidence is low because the complete applicable IRS
 check denominator has not been enumerated. This is a projection anchored to
