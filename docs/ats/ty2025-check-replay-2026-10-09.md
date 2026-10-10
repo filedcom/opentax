@@ -278,3 +278,31 @@ suite passed with `--v8-flags=--max-old-space-size=8192`. New cases exercise rep
 copies, blocked versus emitted-empty bundles, unknown forms, unrelated roots,
 form-specific schedules and all eight source inventories. Private replay,
 mapping verification and test evidence: `.state/research/ats-document-coverage-2026-10-10/`.
+
+
+## October 10 required binary attachment checkpoint
+
+The replay now verifies the prepared XML/attachment manifest and retained byte
+hashes before reporting its attachment observations. Scenario4 separately
+requires the exact description `Transfer Election Statement`, as printed on
+[the official cover sheet](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-4-10212025.pdf).
+Its partial prepared return contains no binary attachment, so the report marks
+this known requirement **missing**, alongside its five missing form copies.
+The cover sheet was downloaded and visually checked; SHA-256 is
+`190429244b03144c5952cfdac0df812e87bfcc16872b55c10f2d766b2d09faba`.
+
+Other scenarios' binary requirements remain explicitly uninventoried, rather
+than silently treating an empty list as complete. A blocked preparation has
+unknown attachment observations. Exact descriptions, unique matches, nonempty
+bytes and retained digests are required for an observed presence result;
+filename matches alone do not satisfy it. This does not authenticate statement
+contents, prove the complete attachment inventory or establish IRS acceptance.
+The existing missing transfer-source evidence remains unresolved; no substitute
+statement was fabricated.
+
+Complete ATS directory regression: **73 typed tests passed, zero failed**.
+The public replay remains **41 matches /12 differences /1 unproduced value**
+over54 selected calculation observations; native copy counts remain10/22 in
+three partial packets, with34 requirements unevaluated in five blocked packets.
+No new complete return or reviewed output page is counted. Evidence:
+`.state/research/ats-attachments-2026-10-10/`.

@@ -14,6 +14,8 @@ export type AtsCase = {
   readonly sourceUrl: string;
   readonly forms: readonly string[];
   readonly capture: "inventory-only" | "partial-facts";
+  /** Known cover-sheet requirements; omission means not inventoried, not none. */
+  readonly requiredBinaryAttachmentDescriptions?: readonly string[];
 };
 
 export const TY2025_ATS_CASES: readonly AtsCase[] = [
@@ -85,6 +87,7 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "8936",
       "8936 Schedule A",
     ],
+    requiredBinaryAttachmentDescriptions: ["Transfer Election Statement"],
     capture: "partial-facts",
   },
   {

@@ -42,6 +42,19 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
   assertEquals(report.denominator, 54);
+  const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
+  assertEquals(transfer.preparation.attachments, []);
+  assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);
+  assertEquals(transfer.attachmentCoverage.allKnownRequiredPresent, false);
+  assertEquals(transfer.attachmentCoverage.rows, [{
+    description: "Transfer Election Statement",
+    result: "missing",
+    observed: [],
+  }]);
+  for (const scenario of report.scenarios.filter((s) => s.id !== "1040-04")) {
+    assertEquals(scenario.attachmentCoverage.requirementsInventoried, false);
+    assertEquals(scenario.attachmentCoverage.allKnownRequiredPresent, null);
+  }
   const documents = report.scenarios.map((s) => ({
     id: s.id,
     observed: s.documentCoverage.requiredCopiesObserved,

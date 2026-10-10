@@ -7048,3 +7048,19 @@ Existing26/76/84/134/135, broader routes, authenticated records, carry ledgers
 and IRS acceptance remain open. No main parent is closed.
 
 Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 ATS attachment coverage and frozen full-gate checkpoint
+
+The ATS replay now verifies prepared attachment metadata/byte digests and
+reports Scenario4's required Transfer Election Statement as missing. Other
+scenario binary inventories remain unknown, not implicitly complete. The
+73-test ATS regression passes; calculation observations stay41/12/1 over54,
+and native copy counts stay10/22 with34 unevaluated. No filing source or
+attachment was fabricated, and no complete return/page count or parent closure
+is added. Evidence: `.state/research/ats-attachments-2026-10-10/`.
+
+A separate full gate started2026-10-10T03:30:19.931Z at frozen `eed449e70`
+in `/private/tmp/opentax-full-gate-eed449e70`:1,394 modules/no exclusions,
+module-graph preflight complete, typed tests running with no terminal result.
+See [running checkpoint](../testing/ty2025-full-gate-2026-10-10.md).
