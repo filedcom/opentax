@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { form8826 } from "../../../../mef/forms/credits/business/f8826_draft.ts";
 import { reconcileDisabledAccessK1Credits } from "../../../../mef/forms/credits/business/f8826_credit_evidence.ts";
@@ -53,45 +56,68 @@ export const form8826Pdf: PdfFormDescriptor = {
     const lines = calculateForm8826(source);
     if (
       lines.line6 <= 0 || source.subject_to_passive_activity_limit ||
-      (source.pass_through_credits?.length ?? 0) > 1 ||
       source.pass_through_credits?.some((entry) =>
-        entry.entity_type !== "s_corporation" ||
         entry.subject_to_passive_activity_limit
       )
     ) {
       throw new Error(
-        "Form 8826 PDF needs one sourced nonpassive self claim and at most one nonpassive S-corporation K-1",
+        "Form 8826 PDF needs one sourced nonpassive self claim and nonpassive partnership/S-corporation K-1s",
       );
     }
     form8826.build(source, { pending: allPending });
-    const k1 = source.pass_through_credits?.[0];
-    if (k1) {
-      reconcileDisabledAccessK1Credits([{
+    const k1s = source.pass_through_credits ?? [];
+    reconcileDisabledAccessK1Credits(
+      k1s.map((k1) => ({
         source_type: k1.entity_type,
         entity_ein: k1.entity_ein,
         source_document_reference: k1.source_document_reference,
         credit_amount: k1.credit_amount,
         subject_to_passive_activity_limit: false,
-      }], allPending);
-    }
+      })),
+      allPending,
+    );
     const parent = form3800InputSchema.parse(allPending.f3800);
     const allowedCredit = allPending.f3800?.allowed_credit;
     const entries = parent.f8826_credit_entries ?? [];
+    const expected = [
+      {
+        source_type: "self",
+        source_ein: undefined,
+        source_document_reference: undefined,
+        credit_amount: lines.selfCreditAfterCap,
+        subject_to_passive_activity_limit: false,
+      },
+      ...k1s.map((k1, index) => ({
+        source_type: k1.entity_type,
+        source_ein: k1.entity_ein,
+        source_document_reference: k1.source_document_reference,
+        credit_amount: lines.passThroughCreditsAfterCap[index],
+        subject_to_passive_activity_limit: false,
+      })),
+    ].filter((entry) => entry.credit_amount > 0);
+    const identity = (
+      entry: {
+        source_type: string;
+        source_ein?: string;
+        source_document_reference?: string;
+        credit_amount: number;
+        subject_to_passive_activity_limit: boolean;
+      },
+    ) =>
+      JSON.stringify([
+        entry.source_type,
+        entry.source_ein,
+        entry.source_document_reference,
+        entry.credit_amount,
+        entry.subject_to_passive_activity_limit,
+      ]);
     if (
-      entries.length !== (k1 ? 2 : 1) ||
-      entries[0].source_type !== "self" ||
-      entries[0].source_ein !== undefined ||
-      entries[0].subject_to_passive_activity_limit ||
-      entries[0].credit_amount !== lines.selfCreditAfterCap ||
-      (k1 && (
-        entries[1].source_type !== "s_corporation" ||
-        entries[1].source_ein !== k1.entity_ein ||
-        entries[1].source_document_reference !== k1.source_document_reference ||
-        entries[1].credit_amount !== lines.passThroughCreditsAfterCap[0] ||
-        entries[1].subject_to_passive_activity_limit
-      )) ||
-      entries.reduce((sum, entry) => sum + entry.credit_amount, 0) !==
-        lines.line8 ||
+      JSON.stringify(entries.map(identity).sort()) !==
+        JSON.stringify(expected.map(identity).sort()) ||
+      Math.round(
+          entries.reduce((sum, entry) => sum + entry.credit_amount, 0) * 100,
+        ) !==
+        Math.round(lines.line8 * 100) ||
       typeof allowedCredit !== "number"
     ) {
       throw new Error("Form 8826 PDF line 8 differs from Form 3800 source");
@@ -102,7 +128,7 @@ export const form8826Pdf: PdfFormDescriptor = {
       ...moneyFields(3, lines.line3),
       ...moneyFields(5, lines.line5),
       ...moneyFields(6, lines.line6),
-      ...(k1 ? moneyFields(7, lines.line7) : {}),
+      ...(k1s.length ? moneyFields(7, lines.line7) : {}),
       ...moneyFields(8, lines.line8),
     };
   },
@@ -113,31 +139,46 @@ export const form8826Pdf: PdfFormDescriptor = {
     }
     const source = inputSchema.parse(allPending.f8826);
     const lines = calculateForm8826(source);
-    const k1 = source.pass_through_credits?.[0];
+    const k1s = source.pass_through_credits ?? [];
     const rows = prepared.currentRows.filter((row) => row.line === "1e");
     const amounts = prepared.currentAmounts.filter((row) => row.line === "1e");
     const details = prepared.currentDetails.filter((row) => row.line === "1e");
     const [row] = rows;
     const [amount] = amounts;
-    const [self] = details;
-    const passThrough = details[1];
+    const expectedDetails = [
+      {
+        sourceDocumentId: row?.metadata.referenceDocumentId,
+        passThroughEin: undefined,
+        credit: lines.selfCreditAfterCap,
+      },
+      ...k1s.map((k1, index) => ({
+        sourceDocumentId: undefined,
+        passThroughEin: k1.entity_ein,
+        credit: lines.passThroughCreditsAfterCap[index],
+      })),
+    ].filter((detail) => detail.credit > 0);
+    const detailIdentity = (
+      detail: {
+        sourceDocumentId?: string;
+        passThroughEin?: string;
+        credit: number;
+      },
+    ) =>
+      JSON.stringify([
+        detail.sourceDocumentId,
+        detail.passThroughEin,
+        detail.credit,
+      ]);
     const expectedLine8 = moneyFields(8, lines.line8);
     if (
       fields.line8_dollars !== expectedLine8.line8_dollars ||
       fields.line8_cents !== expectedLine8.line8_cents ||
       rows.length !== 1 || amounts.length !== 1 ||
-      details.length !== (k1 ? 2 : 1) ||
+      JSON.stringify(details.map(detailIdentity).sort()) !==
+        JSON.stringify(expectedDetails.map(detailIdentity).sort()) ||
       row.metadata.sourceCount !== details.length ||
       row.metadata.referenceDocumentName !== "IRS8826" ||
       !row.metadata.referenceDocumentId ||
-      self.sourceDocumentId !== row.metadata.referenceDocumentId ||
-      self.passThroughEin !== undefined ||
-      self.credit !== lines.selfCreditAfterCap ||
-      (k1 && (
-        passThrough.sourceDocumentId !== undefined ||
-        passThrough.passThroughEin !== k1.entity_ein ||
-        passThrough.credit !== lines.passThroughCreditsAfterCap[0]
-      )) ||
       amount.nonpassiveCredit !== lines.line8 ||
       amount.totalCredit !== lines.line8 ||
       amount.transferOutCredit !== 0 ||

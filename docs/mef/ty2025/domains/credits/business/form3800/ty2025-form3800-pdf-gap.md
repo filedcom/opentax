@@ -1394,3 +1394,21 @@ the independently reconciled nonpassive inventory. Focused4/0 and related86/0
 pass;64 native/64 fresh-PDF mutations and16 malformed archives reject. The
 Form8582-CR checkpoint records exact source/column/aggregate evidence. Existing
 deferred26/68/76/84/144 repeat, and further tax-use limits142 remain guarded.
+
+
+## October 10 Form8826 mixed-source component inventory
+
+[Form8826 inventory evidence](../form8826/ty2025-form8826-pdf-gap.md#october-10-mixed-k-1-inventory-component-checkpoint)
+extends PDF reconciliation to complete nonpassive partnership/S-corporation
+inventories: six component pairs,12 standalone XSD-valid roots,45 PartV source
+rows and62 reviewed pages (including two continuations). The64 focused/related
+tests pass;48 native-component,48 PDF-source and42 prepared-detail mutations
+reject. Self credit2375 reduces ScheduleC expense by the full amount even when
+the cap allocates only1250 to self or current tax allows no credit.
+
+All seven original full native return preparations remain Form8995-blocked145.
+The31-K-1 cent-cap attribution conflict146 and the missing public per-source
+allocation input147 remain deferred; partial-use component evidence supplies
+an explicit reviewed pending allocation and is not public-route completion.
+Existing26/68/76 visual qualifications repeat. No full-return/archive/ATS count
+is added and no deferred item is implemented.
