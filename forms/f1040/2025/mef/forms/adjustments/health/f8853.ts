@@ -2,7 +2,7 @@ import {
   reconcileArcherContributions,
   reconcileArcherPartVI,
 } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
-import { buildLtcDocument } from "./f8853_ltc.ts";
+import { buildLtcDocument, buildLtcSection } from "./f8853_ltc.ts";
 import { schedule1 as nativeSchedule1 } from "../../general/return-assembly/schedule1/schedule1.ts";
 import { schedule2 as nativeSchedule2 } from "../../taxes/other/schedule2.ts";
 import { z } from "zod";
@@ -22,7 +22,10 @@ import {
   calculateMedicareLedger,
   type MedicareHolderLedger,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input = Form8853Input | readonly [];
 
@@ -326,13 +329,16 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
-  if ("ltc_ledger" in rawFields && rawFields.ltc_ledger) return buildLtcDocument(rawFields, context);
   const fields = normalizeArcherContributionSource(normalizeMedicareSource(
     normalizeArcherSource(inputSchema.parse(rawFields)),
   ));
   if (fields.archer_contribution_ledger) {
-    return buildArcherContributionIRS8853(fields, context);
+    return elements("IRS8853", [
+      buildArcherContributionGroup(fields, context),
+      ...(fields.ltc_ledger ? [buildLtcSection(fields, context)] : []),
+    ]);
   }
+  if (fields.ltc_ledger) return buildLtcDocument(fields, context);
   if (fields.medicare_joint_distribution_ledgers) {
     return buildMedicareJointDocumentParts(fields, context).control;
   }
@@ -411,7 +417,7 @@ export const form8853: MefFormDescriptor<"form8853", Input> = {
   },
 };
 
-function buildArcherContributionIRS8853(
+function buildArcherContributionGroup(
   fields: Form8853Input,
   context?: MefBuildContext,
 ): string {
@@ -449,16 +455,14 @@ function buildArcherContributionIRS8853(
       "Archer contribution Schedule1/2 totals conflict with Form1040",
     );
   }
-  return elements("IRS8853", [
-    elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
-      element("MSAHolderSSN", ssn),
-      element("ArcherMSAEmployerContriAmt", lines.line1),
-      element("ArcherMSAContributionAmt", lines.line2),
-      ...(lines.rawEmployer > 0 ? [] : [
-        element("ArcherMSAContriLimitationAmt", lines.line3),
-        element("HDHPEmployerCompensationAmt", lines.line4),
-      ]),
-      element("ArcherMSADeductionAmt", lines.line5),
+  return elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+    element("MSAHolderSSN", ssn),
+    element("ArcherMSAEmployerContriAmt", lines.line1),
+    element("ArcherMSAContributionAmt", lines.line2),
+    ...(lines.rawEmployer > 0 ? [] : [
+      element("ArcherMSAContriLimitationAmt", lines.line3),
+      element("HDHPEmployerCompensationAmt", lines.line4),
     ]),
+    element("ArcherMSADeductionAmt", lines.line5),
   ]);
 }

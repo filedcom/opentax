@@ -3,8 +3,9 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../nodes/types.ts";
 import {
-  assertLtcOnlySource,
+  assertLtcSourceActivity,
   inputSchema,
+  normalizeArcherContributionSource,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
 import {
   assertLtcOwners,
@@ -14,6 +15,7 @@ import {
 import { schedule1 } from "../../general/return-assembly/schedule1/schedule1.ts";
 import type { MefBuildContext } from "../../../form-descriptor.ts";
 import { ltcLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
+import { archerContributionLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
 
 export function assertRequiredLtcSource(context: MefBuildContext): void {
   const retained =
@@ -50,10 +52,21 @@ export const LTC_LINE_TAGS = [
 ] as const;
 
 export function reconcileLtcReturn(raw: unknown, context?: MefBuildContext) {
-  const source = inputSchema.parse(raw);
-  assertLtcOnlySource(source);
+  const source = normalizeArcherContributionSource(inputSchema.parse(raw));
+  assertLtcSourceActivity(source);
   if (!source.ltc_ledger) {
     throw new Error("LTC filing needs its complete reviewed ledger");
+  }
+  const retainedArcher = z.object({
+    ltc_archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  }).parse(context?.pending?.schedule1 ?? {}).ltc_archer_contribution_ledger;
+  if (
+    JSON.stringify(retainedArcher) !==
+      JSON.stringify(source.archer_contribution_ledger)
+  ) {
+    throw new Error(
+      "Combined LTC contribution ledger must match its retained Schedule 1 source",
+    );
   }
   const result = calculateLtcLedger(source.ltc_ledger);
   // TY2025 ReturnData permits one IRS8853 and one Section C group. Additional
@@ -113,6 +126,13 @@ export function buildLtcDocument(
   raw: unknown,
   context?: MefBuildContext,
 ): string {
+  return elements("IRS8853", [buildLtcSection(raw, context)]);
+}
+
+export function buildLtcSection(
+  raw: unknown,
+  context?: MefBuildContext,
+): string {
   const { form } = reconcileLtcReturn(raw, context);
   const needsStatement = form.multiplePayees && !form.terminalOnly;
   const ids = context?.documentIdsByTag?.MultiplePayeesStatement;
@@ -131,7 +151,7 @@ export function buildLtcDocument(
       referenceDocumentName: "MultiplePayeesStatement",
     }
     : undefined;
-  return elements("IRS8853", [elements("SectCLTCInsuranceCntrctGrp", [
+  return elements("SectCLTCInsuranceCntrctGrp", [
     element("LTCInsurancePolicyHolderNm", form.policyholder.name.toUpperCase()),
     element("LTCInsurancePolicyHolderSSN", form.policyholder.ssn),
     element("LTCInsuredNameControlTxt", form.insured.name_control),
@@ -146,7 +166,7 @@ export function buildLtcDocument(
       form.terminalOnly ? key === "line26" : !form.multiplePayees ||
         !["line21", "line22", "line23", "line24"].includes(key)
     ).map(([key, tag]) => element(tag, form[key])),
-  ])]);
+  ]);
 }
 
 export function buildLtcStatements(

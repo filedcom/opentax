@@ -6745,3 +6745,24 @@ claim. No future work or broad parent checkoff. This turn advances source
 inventories, ownership, filing statements and validation.
 
 Final repayment-layout typed replay: six passed, zero failed; the changed full-return XML was revalidated and the four changed worksheet pages were inspected again.
+
+## October 10: combined Form 8853 Archer contributions and LTC packets
+
+Board learnings compacted before production edits. The existing health/source/
+1040/native/PDF group now combines one reviewed employee Archer contribution
+ledger with one sourced LTC Section C, using an exclusive coexistence review.
+The [checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-combined-archer-contributions-and-ltc-packets)
+retains nine final full-XSD returns and 64 reviewed static PDF pages (48 unique,
+16 exact duplicates). Deductions, excess employer income, Part VI excise, LTC
+allocation, AGI, tax and refunds independently reconcile. One native IRS8853
+contains both groups; the PDF prints both sections and any payee statement once.
+Related typed gate 271/0 across 18 modules; final corrected-fixture gate 10/0.
+Rejections: 10 public inventories and 108 native/108 fresh-PDF mutations.
+Benchmark 46/133 retains the same 87 failing IDs. Initial joint fixtures exposed
+an accepted insured/spouse identity collision: original evidence is preserved,
+fixture identities corrected, and the runtime gap is deferred 133 without a fix.
+All 7 changed unique pages were reviewed again; 41 final unique pages match the
+first review exactly. Main 52 unchanged; future 133 remain unworked; about 60%
+individual-check estimate (45–75% uncertainty) and no IRS acceptance claim.
+Ongoing work remains on base PR #70; broader MSA/LTC, source authenticity and
+existing zero-line presentation remain open.

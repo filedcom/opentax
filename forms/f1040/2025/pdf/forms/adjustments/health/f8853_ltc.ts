@@ -55,6 +55,10 @@ export const ltcPdfInstances: NonNullable<PdfFormDescriptor["instances"]> = (
   return [{
     ...raw,
     ltc_print: true,
+    employer_archer_msa: undefined,
+    taxpayer_archer_msa_contributions: undefined,
+    line3_limitation_amount: undefined,
+    compensation: undefined,
     ltc_policyholder_name: form.policyholder.name,
     ltc_policyholder_ssn: form.policyholder.ssn,
     ltc_insured_name: form.insured.name,
@@ -75,7 +79,7 @@ export const ltcPdfInstances: NonNullable<PdfFormDescriptor["instances"]> = (
 export const appendLtcStatement: NonNullable<
   PdfFormDescriptor["appendSupplementalPages"]
 > = async (document, fields, filer, pending) => {
-  if (!fields.ltc_ledger) return;
+  if (!fields.ltc_ledger || fields.ltc_print !== true) return;
   const { form, insured } = reconcileLtcReturn(fields, { filer, pending });
   if (!form.multiplePayees || form.terminalOnly) return;
   const font = await document.embedFont(StandardFonts.Helvetica);

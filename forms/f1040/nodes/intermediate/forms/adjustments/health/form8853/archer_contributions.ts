@@ -79,14 +79,24 @@ export const archerContributionLedgerSchema = z.object({
     reference,
   no_hsa_contributions_review_reference: reference,
   no_2026_employer_contributions_for_2025_review_reference: reference,
-  no_other_form8853_activity_review_reference: reference,
+  no_other_form8853_activity_review_reference: reference.optional(),
+  ltc_activity_review: z.object({
+    source_reference: reference,
+    no_msa_distributions_confirmed: z.literal(true),
+    all_other_form8853_activity_in_ltc_ledger_confirmed: z.literal(true),
+  }).strict().optional(),
   no_prior_excess_or_withdrawals_review_reference: reference,
   december_31: z.object({
     value: amount,
     source_reference: reference,
     all_holder_archer_accounts_included_confirmed: z.literal(true),
   }).strict().optional(),
-}).strict();
+}).strict().refine(
+  (ledger) =>
+    !!ledger.no_other_form8853_activity_review_reference !==
+      !!ledger.ltc_activity_review,
+  "Archer contributions require exactly one absence-of-other-activity or combined LTC review",
+);
 export const codeREntrySchema = z.object({
   employee_ssn: z.string(),
   employer_ein: z.string(),

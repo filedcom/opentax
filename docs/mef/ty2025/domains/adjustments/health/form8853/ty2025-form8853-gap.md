@@ -510,10 +510,79 @@ reviewed period. Calculating multiple insureds does not authorize extra native
 copies: TY2025 v5.4 permits one `IRS8853` and one Section C group, while its
 multiple-payee statement has no additional insured identity. The required
 attachment representation is deferred item 131; exports retain the guard.
-Mixed MSA/LTC activity, nonqualified contracts, multiple or changing periods,
+At this checkpoint, mixed MSA/LTC activity, nonqualified contracts, multiple or changing periods,
 business-relationship exclusions, additional filing copies, source authenticity,
 business rules and IRS acceptance remain open. No parent board task is closed.
 
 Private source/pending/XML/PDF, XSD logs, independent arithmetic, rendered-page
 hashes and regression evidence are retained in
 `.state/research/form8853-ltc-2026-10-10/`; generated evidence is not committed.
+
+## October 10 combined Archer contributions and LTC packets
+
+The existing single-holder employee Archer contribution route now combines with
+one sourced Section C. Under the [2025 Form 8853 instructions](https://www.irs.gov/instructions/i8853),
+contribution deductions, excess employer income, excess-contribution tax and LTC
+benefits retain their separate calculations and return destinations. The v5.4
+native schema permits the MSA group followed by the Section C group within one
+`IRS8853`; this does not resolve additional Section C copies (deferred 131).
+
+The contribution ledger must provide exactly one activity review: its existing
+absence-of-other-activity review, or an explicit LTC coexistence review confirming
+no MSA distributions and a complete LTC ledger. Contradictory or missing reviews
+reject. Monthly HDHP eligibility, owned W-2/payroll, personal deposits, December 31
+value, no-HSA funding and no-prior-excess/withdrawal requirements remain intact.
+Both source ledgers are retained by Schedule 1, including zero-income returns, so
+removing or changing either source before export rejects.
+
+The native parent composes reconciled Section A and Section C groups. The PDF
+prints Section A followed by the identified Section C page, suppressing Section A
+print values on the latter page. A required multiple-payee statement appears once
+after Section C. Separate taxpayer/spouse ownership is checked against the return;
+Schedule 1 lines 8e/8z/23, Form 5329 Part VI, Schedule 2 and Form 1040 totals reconcile.
+
+Nine final synthetic packets pass full `Return1040.xsd` validation. Independent
+Python Decimal calculations reproduce contribution limits, excess income/tax,
+benefit-period exclusion, recipient allocation, AGI, tax and refund using the
+[2025 Form 1040 Tax Computation Worksheet, page 80](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).
+
+| Final packet | LTC income | Archer deduction | Excess employer income | Part VI tax | AGI | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Personal contribution | 7,400 | 2,000 | 0 | 0 | 155,400 | 26,363 |
+| Personal contribution above limit | 7,400 | 2,600 | 0 | 84 | 154,800 | 26,303 |
+| Employer and personal excess | 7,400 | 0 | 401 | 84 | 157,801 | 27,023 |
+| Employer excess already in wages | 0 | 0 | 0 | 24 | 150,401 | 25,187 |
+| Spouse MSA, taxpayer LTC | 7,400 | 2,000 | 0 | 0 | 155,400 | 17,086 |
+| Taxpayer MSA, spouse LTC | 7,400 | 2,000 | 0 | 0 | 155,400 | 17,086 |
+| Multiple LTC payees | 27,680 | 2,000 | 0 | 0 | 175,680 | 31,230 |
+| Zero income, deduction and excise | 0 | 0 | 0 | 0 | 150,000 | 25,067 |
+| Cent-valued sources | 7,401 | 2,001 | 0 | 0 | 155,400 | 26,363 |
+
+Withholding is 35,000 in each case; all refunds equal withholding less total tax.
+The related typed gate passes 271/0 across 18 modules; the final corrected-fixture
+replay passes 10/0, including 10 rejected public source inventories and
+108 native/108 fresh-PDF rejections for missing/changed ledgers or conflicting
+Schedule 1/Form 1040 amounts. The benchmark remains 46/133 with the same 87 failing
+case IDs as the preceding retirement checkpoint; those historical contracts and
+expectations remain deferred 96.
+
+The nine final static packets contain 64 reviewed pages: 48 unique pixel renders
+and 16 exact duplicates. Of the final unique pages, 41 exactly match the first
+visual review and all 7 changed identity pages were reviewed again. Form 8853
+Sections A/C and the single multiple-payee continuation have readable labels,
+amounts and owner/insured identities; no widget annotations or live AcroForm
+fields remain. Existing general skipped-zero presentation remains qualified.
+
+The first visual review found that the two joint fixtures reused the spouse SSN
+for a differently named insured. Their accepted original XML/PDF/source files
+are preserved; the final fixtures use a distinct insured SSN and update every
+matching issued-source reference. The runtime's missing cross-role identity
+check is recorded as deferred 133 and is not changed here. XSD validation alone
+cannot establish source identity consistency.
+
+MSA distributions combined with LTC, multiple Archer holders, coordinated HSA
+funding, additional LTC periods/copies, source authenticity, business rules and
+IRS acceptance remain open. Existing general zero-line presentation qualifications
+remain; no parent board task is closed. Private final and initial source/pending,
+XML/PDF, XSD, arithmetic and rendered-page evidence is retained under
+`.state/research/form8853-combined-2026-10-10/` and is not committed.

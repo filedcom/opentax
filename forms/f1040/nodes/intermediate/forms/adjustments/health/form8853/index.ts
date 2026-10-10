@@ -335,6 +335,9 @@ function schedule1Output(
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (input.ltc_ledger) s1Input.ltc_source_ledger = input.ltc_ledger;
+  if (input.ltc_ledger && input.archer_contribution_ledger) {
+    s1Input.ltc_archer_contribution_ledger = input.archer_contribution_ledger;
+  }
   if (totalTaxableIncome > 0) {
     s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   }
@@ -410,7 +413,7 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-    assertLtcOnlySource(inputSchema.parse(rawInput), ctx.taxYear);
+    assertLtcSourceActivity(inputSchema.parse(rawInput), ctx.taxYear);
     const input = normalizeArcherContributionSource(
       normalizeMedicareSource(
         normalizeArcherSource(inputSchema.parse(rawInput), ctx.taxYear),
@@ -497,16 +500,34 @@ export function normalizeMedicareSource(
 
 export const form8853 = new Form8853Node();
 
-export function assertLtcOnlySource(input: Form8853Input, taxYear = 2025): void {
+export function assertLtcSourceActivity(
+  input: Form8853Input,
+  taxYear = 2025,
+): void {
   if (!input.ltc_ledger) return;
-  if (taxYear !== 2025) throw new Error("LTC source ledger requires tax year 2025");
+  if (taxYear !== 2025) {
+    throw new Error("LTC source ledger requires tax year 2025");
+  }
+  const allowed = new Set([
+    "ltc_ledger",
+    ...(input.archer_contribution_ledger?.ltc_activity_review
+      ? [
+        "archer_contribution_ledger",
+        "w2_code_r_entries",
+        "employer_archer_msa",
+        "taxpayer_archer_msa_contributions",
+        "line3_limitation_amount",
+        "compensation",
+      ]
+      : []),
+  ]);
   if (
     Object.entries(input).some(([key, value]) =>
-      key !== "ltc_ledger" && value !== undefined && value !== false && value !== 0
+      !allowed.has(key) && value !== undefined && value !== false && value !== 0
     )
   ) {
     throw new Error(
-      "LTC source ledger cannot yet combine MSA activity or legacy LTC aggregates",
+      "LTC source ledger needs reviewed Archer contributions and cannot combine MSA distributions or legacy LTC aggregates",
     );
   }
 }
@@ -520,6 +541,11 @@ export function normalizeArcherContributionSource(
     throw new Error("Sourced Archer contribution worksheet requires TY2025");
   }
   const ledger = input.archer_contribution_ledger;
+  if (!!ledger.ltc_activity_review !== !!input.ltc_ledger) {
+    throw new Error(
+      "Archer combined LTC review requires its complete LTC ledger and cannot assert absence of other activity",
+    );
+  }
   const lines = calculateArcherContributions(ledger, input.w2_code_r_entries);
   if (
     input.archer_distribution_ledger || input.medicare_distribution_ledger ||

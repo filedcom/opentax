@@ -1,7 +1,14 @@
 import { calculateArcherContributions } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
-import { appendLtcStatement, ltcPdfFields, ltcPdfInstances } from "./f8853_ltc.ts";
+import {
+  appendLtcStatement,
+  ltcPdfFields,
+  ltcPdfInstances,
+} from "./f8853_ltc.ts";
 import { StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateArcherMsaDistribution,
   inputSchema,
@@ -193,7 +200,9 @@ export const form8853Pdf: PdfFormDescriptor = {
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    if (raw.ltc_ledger) return ltcPdfInstances(raw, filer, allPending);
+    if (raw.ltc_ledger && !raw.archer_contribution_ledger) {
+      return ltcPdfInstances(raw, filer, allPending);
+    }
     const source = normalizeArcherContributionSource(normalizeMedicareSource(
       normalizeArcherSource(inputSchema.parse(raw)),
     ));
@@ -204,27 +213,32 @@ export const form8853Pdf: PdfFormDescriptor = {
         ledger,
         source.w2_code_r_entries,
       );
-      return [{
-        ...source,
-        msa_reporting_ssn: ledger.holder_ssn,
-        msa_reporting_name: ledger.filing_status === "mfj"
-          ? `${filer?.fullName} & ${
-            [
-              filer?.spouse?.firstName,
-              filer?.spouse?.middleInitial,
-              filer?.spouse?.lastName,
-              filer?.spouse?.suffix,
-            ].filter(Boolean).join(" ")
-          }`
-          : filer?.fullName,
-        employer_archer_msa: lines.line1,
-        taxpayer_archer_msa_contributions: lines.line2,
-        line3_limitation_amount: lines.rawEmployer > 0
-          ? undefined
-          : lines.line3,
-        compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
-        line5_archer_deduction: lines.line5,
-      }];
+      return [
+        {
+          ...source,
+          msa_reporting_ssn: ledger.holder_ssn,
+          msa_reporting_name: ledger.filing_status === "mfj"
+            ? `${filer?.fullName} & ${
+              [
+                filer?.spouse?.firstName,
+                filer?.spouse?.middleInitial,
+                filer?.spouse?.lastName,
+                filer?.spouse?.suffix,
+              ].filter(Boolean).join(" ")
+            }`
+            : filer?.fullName,
+          employer_archer_msa: lines.line1,
+          taxpayer_archer_msa_contributions: lines.line2,
+          line3_limitation_amount: lines.rawEmployer > 0
+            ? undefined
+            : lines.line3,
+          compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
+          line5_archer_deduction: lines.line5,
+        },
+        ...(source.ltc_ledger
+          ? ltcPdfInstances(source, filer, allPending)
+          : []),
+      ];
     }
     if (source.medicare_joint_distribution_ledgers) {
       const parts = buildMedicareJointDocumentParts(source, {
