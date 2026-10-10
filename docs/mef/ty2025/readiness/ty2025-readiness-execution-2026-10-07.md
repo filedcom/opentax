@@ -6877,3 +6877,24 @@ combinations remain open. No future item added/implemented and no parent
 closed. Main52/future133 bodies byte-preserved. Individual ATS-check estimate
 stays about60%, uncertainty45–75%. Evidence: form3800-part-v-2026-10-10/.
 Continuation remains draft PR70.
+
+
+## October 10: Form3800 reviewed current K-1 partial use
+
+Compacted the board before edits. The public source review now binds year,
+primary filer, source type/EIN/document, gross credit and explicit tax-use
+allocation to the entire current nonpassive orphan-drug K-1 inventory. Native
+and PDF projection preserve the independent review, keyed allocations and
+unused current amounts across PartV continuations. Numeric tax calculation
+is unchanged; no fresh benchmark claim. Six complete public returns cover70
+source rows/four continuations and pass local2025v5.4 XSD and independent Decimal
+source/AMT-limit/final-tax/refund checks. All82 static packet pages reviewed via
+31unique renders/51exact pixel matches; no fields/widgets remain. Focused8/0,
+including17 unit rejection cases, and related329/0 pass. Complete-return
+mutations reject72 native/72 fresh-PDF/18 prepared changes. Initial typecheck
+and missing-registry failures are retained; the new public node is registered.
+Existing skipped PartII18–21, blank-zero/name presentation, authentication and
+broader source/accepted-history gaps remain. No new deferred item or parent
+closure; all52 main/133 future bodies are byte-preserved. The individual ATS
+check estimate remains about60%, rough45–75%. Evidence is retained under
+form3800-allocation-2026-10-10/. Continue pushing to single draft PR70.

@@ -1,3 +1,4 @@
+import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
 import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
 import { qbiPatron } from "../nodes/inputs/deductions/business/qbi_patron/index.ts";
 import { education_income } from "../nodes/inputs/income/other/education_income/index.ts";
@@ -331,6 +332,7 @@ export const registry: NodeRegistry = {
   f8915f,
   f8915d,
   f3800,
+  form3800_current_orphan_allocation: currentOrphanAllocationNode,
   f2106,
   f5405,
   nol_carryforward,

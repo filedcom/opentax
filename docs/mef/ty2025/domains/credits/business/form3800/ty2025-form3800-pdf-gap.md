@@ -840,3 +840,55 @@ or added; the frozen main/future bodies are preserved. Evidence is retained in
 `.state/research/form3800-part-v-2026-10-10/`, including inputs, normalized
 pending, prepared parts, XML, PDFs, source/numeric checks, page hashes, visual
 review, test logs and the checksum manifest. Work continues on draft PR70.
+
+
+## October 10 reviewed current K-1 partial-use allocation checkpoint
+
+The public `form3800_current_orphan_allocation` input now accepts a complete
+reviewed inventory of current nonpassive partnership/S-corporation orphan-drug
+credits. Records identify the reporting year, primary filer, review reference,
+source type, EIN, source document, gross credit and amount used. The independent
+retained review must match its Form3800 projection. Every source must match the
+K-1 inventory; each applied amount is bounded by its source credit and their sum
+must equal the calculated Form3800 credit use. Reordering the review does not
+change the source assignment. The numeric credit-limit calculation is unchanged.
+
+This closes the public-intake limitation recorded in the preceding checkpoint
+for this bounded source family. Native PartIII/PartV and the PDF now preserve
+reviewed partial use and unused current credit across continuation pages. The
+review is explicit; the implementation does not invent an allocation from row
+order. [IRS Form3800 instructions](https://www.irs.gov/instructions/i3800)
+describe separate PartV reporting for multiple pass-through sources, applied
+credit in column(i)(1), and unused credit in column(k).
+
+| Synthetic complete return | Source rows | Current credit | Credit used | Unused current credit | Packet pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Two partnerships | 2 | 20,001 | 8,973 | 11,028 | 13 |
+| Three partnerships | 3 | 12,003 | 8,973 | 3,030 | 13 |
+| Mixed two K-1s | 2 | 20,001 | 8,973 | 11,028 | 13 |
+| Sixteen partnerships | 16 | 16,120 | 8,973 | 7,147 | 14 |
+| Mixed sixteen K-1s | 16 | 16,120 | 8,973 | 7,147 | 14 |
+| Mixed thirty-one K-1s | 31 | 15,965 | 8,973 | 6,992 | 15 |
+
+All six full returns pass local2025v5.4 XSD and independent Decimal source,
+regular-tax, AMT-limit, final-tax and refund checks. Each has25,067 regular tax,
+16,094 tentative minimum tax,8,973 allowed credit,16,094 final tax and13,906
+refund. All70 source rows appear once across four continuations. Reviewed82
+static packet pages comprise31 unique renders and51 exact pixel duplicates;
+reopened PDFs contain no fields/widgets. No new clipping or missing rows was
+observed. Existing skipped PartII18–21 values remain printed on packet page5
+(12,071/12,071/12,996/4,023); blank-zero/name qualifications also remain.
+
+Focused tests pass8/0, including17 unit rejection cases. The related typed
+calculation/native/PDF/public-start gate passes329/0. Complete returns reject
+72 native and72 fresh-PDF source/review/total mutations and18 altered prepared
+inventories. Initial failures exposed a missing execution-registry entry; the
+public node is now registered and the retained record is checked at export.
+The initial typecheck failure and failed retry are retained in private evidence.
+
+Source facts are synthetic, not authenticated issuer evidence. This does not
+establish accepted-filing carryforward persistence, passive claims, estate/trust
+sources, transfers, prior histories, PartVI overflow, or wider mixed credits.
+The parent Form3800 TODO remains open; no deferred item was implemented or added.
+Evidence: `.state/research/form3800-allocation-2026-10-10/` (inputs, pending,
+prepared parts, XML, PDFs, numeric/XSD checks, page hashes, visual review and logs).

@@ -1,3 +1,7 @@
+import {
+  currentOrphanAllocationSchema,
+  reconcileCurrentOrphanAllocation,
+} from "./current-allocation.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -265,6 +269,7 @@ const appliedSourceCreditSchema = z.number().finite().nonnegative().refine(
 
 export const inputSchema = z.object({
   f3800s: z.array(itemSchema).min(1).optional(),
+  current_orphan_allocation_review: currentOrphanAllocationSchema.optional(),
   carryforward_vintages: z.array(
     z.object({
       vintage: form3800CarryoverVintageSchema,
@@ -314,6 +319,7 @@ export const inputSchema = z.object({
     .optional(),
 }).refine(
   (input) =>
+    input.current_orphan_allocation_review !== undefined ||
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
     input.carryforward_vintages !== undefined ||
     input.f8826_credit_entries !== undefined ||
@@ -639,6 +645,17 @@ class F3800Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (parsed.current_orphan_allocation_review) {
+      if (parsed.f8820_credit) {
+        throw new Error(
+          "Form 3800 allocation review needs K-1-only orphan-drug sources",
+        );
+      }
+      reconcileCurrentOrphanAllocation(
+        parsed.current_orphan_allocation_review,
+        parsed.f8820_k1_credit_entries ?? [],
+      );
+    }
     return {
       outputs: schedule3Output(
         parsed.f3800s ?? [],

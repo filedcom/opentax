@@ -15,24 +15,59 @@ import { projectForm3800PartVFields } from "../../../../pdf/forms/credits/busine
 import { fixture } from "./form3800_k1_inventory.fixture.ts";
 
 const cases = [
-  { id: "thirty", count: 30, credit: 100, mixed: false },
-  { id: "fifteen", count: 15, credit: 100, mixed: false },
-  { id: "sixteen", count: 16, credit: 100, mixed: false },
-  { id: "thirty-one", count: 31, credit: 100, mixed: false },
-  { id: "mixed-sixteen", count: 16, credit: 100, mixed: true },
-  { id: "mixed-thirty-one", count: 31, credit: 100, mixed: true },
+  { id: "two", count: 2, credit: 10000, mixed: false },
+  { id: "three", count: 3, credit: 4000, mixed: false },
+  { id: "mixed-two", count: 2, credit: 10000, mixed: true },
+  { id: "sixteen", count: 16, credit: 1000, mixed: false },
+  { id: "mixed-sixteen", count: 16, credit: 1000, mixed: true },
+  { id: "mixed-thirty-one", count: 31, credit: 500, mixed: true },
 ];
+function reviewedFixture(test: typeof cases[number]) {
+  const input = fixture(test);
+  const sources = [
+    ...input.k1_partnership.map((k) => ({
+      source_type: "partnership" as const,
+      source_ein: k.partnership_ein,
+      source_document_reference: k.source_document_reference,
+      credit_amount: k.box15_code_z_orphan_drug_credit,
+    })),
+    ...(input.k1_s_corp ?? []).map((k) => ({
+      source_type: "s_corporation" as const,
+      source_ein: k.corporation_ein,
+      source_document_reference: k.source_document_reference,
+      credit_amount: k.box13_code_z_orphan_drug_credit,
+    })),
+  ].sort((a, b) => a.source_ein.localeCompare(b.source_ein));
+  let remaining = 8973;
+  const allocated = sources.map((source) => {
+    const applied_credit = Math.min(remaining, source.credit_amount);
+    remaining -= applied_credit;
+    return { ...source, applied_credit };
+  });
+  // The review deliberately uses a different order than either node's K-1 list.
+  return {
+    ...input,
+    form3800_current_orphan_allocation: {
+      tax_year: 2025 as const,
+      return_primary_ssn: "111223333",
+      review_reference:
+        "Synthetic reviewed source-by-source current credit use",
+      complete_current_orphan_drug_inventory_confirmed: true as const,
+      sources: allocated.reverse(),
+    },
+  };
+}
 function evidenceRoot() {
   try {
-    return Deno.env.get("FORM3800_PART_V_EVIDENCE");
+    return Deno.env.get("FORM3800_ALLOCATION_EVIDENCE");
   } catch (error) {
     if (error instanceof Deno.errors.NotCapable) return undefined;
     throw error;
   }
 }
 for (const test of cases) {
-  Deno.test(`Form 3800 complete Part V inventory: ${test.id}`, async () => {
-    const input = fixture(test);
+  Deno.test(`Form 3800 reviewed partial current-credit inventory: ${test.id}`, async () => {
+    const input = reviewedFixture(test);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -126,7 +161,11 @@ for (const test of cases) {
     );
     assertEquals(
       parts.currentDetails.map((row) => row.appliedCredit),
-      parts.currentDetails.map((row) => row.credit),
+      parts.currentDetails.map((row) =>
+        input.form3800_current_orphan_allocation.sources.find((source) =>
+          source.source_ein === row.passThroughEin
+        )!.applied_credit
+      ),
     );
     const origins: PdfPageOrigin[] = [];
     const pdf = await buildPdfBytes(
@@ -176,6 +215,19 @@ for (const test of cases) {
           row,
           i,
         ) => row.credit + Number(i === test.count - 1));
+      },
+      (p) => {
+        Reflect.deleteProperty(p.f3800, "current_orphan_allocation_review");
+      },
+      (p) => {
+        Reflect.deleteProperty(p, "form3800_current_orphan_allocation");
+      },
+      (p) => {
+        p.form3800_current_orphan_allocation.return_primary_ssn = "999887777";
+      },
+      (p) => {
+        p.form3800_current_orphan_allocation.review_reference =
+          "Changed retained review";
       },
       (p) => {
         p.f1040.line20_nonrefundable_credits = allowed + 1;

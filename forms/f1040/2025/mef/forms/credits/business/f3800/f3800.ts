@@ -1,3 +1,7 @@
+import {
+  assertCurrentOrphanAllocationSource,
+  reconcileCurrentOrphanAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { z } from "zod";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import {
@@ -799,6 +803,10 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
+  assertCurrentOrphanAllocationSource(
+    parsed.current_orphan_allocation_review,
+    context.pending?.form3800_current_orphan_allocation,
+  );
   const carryforwardEntries = parsed.carryforward_vintages ?? [];
   const empowermentCarryforward = reconcileForm3800NonpassiveCarryforwards(
     carryforwardEntries,
@@ -1143,6 +1151,26 @@ export function prepareForm3800DocumentParts(
     "nonpassive:8820",
     parsed.form8820_applied_credit,
   );
+  const reviewedOrphanTaxUse = parsed.current_orphan_allocation_review
+    ? reconcileCurrentOrphanAllocation(
+      parsed.current_orphan_allocation_review,
+      orphanDrugK1Credits,
+      {
+        primarySSN: context.filer?.primarySSN ?? "",
+        appliedCredit: form8820Applied,
+      },
+    )
+    : undefined;
+  if (
+    reviewedOrphanTaxUse && (form8820 ||
+      (parsed.form8820_applied_credits_by_source !== undefined &&
+        JSON.stringify(parsed.form8820_applied_credits_by_source) !==
+          JSON.stringify(reviewedOrphanTaxUse)))
+  ) {
+    throw new Error(
+      "Form 3800 current K-1 allocation conflicts with another source or allocation",
+    );
+  }
   const form8874Applied = applied("nonpassive:8874");
   const form8844Applied = applied("nonpassive:8844");
   const form8881Applied = {
@@ -1354,7 +1382,7 @@ export function prepareForm3800DocumentParts(
             form8820Sources.map((source) => source.credit),
             form8820Credit,
             form8820Applied,
-            parsed.form8820_applied_credits_by_source,
+            reviewedOrphanTaxUse ?? parsed.form8820_applied_credits_by_source,
           ),
         }
         : undefined,

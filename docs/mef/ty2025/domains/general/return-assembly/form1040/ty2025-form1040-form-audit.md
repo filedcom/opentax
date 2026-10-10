@@ -674,3 +674,15 @@ adds no PDF key or independent taxpayer form. See [bounded packet evidence and
 limits](../../../adjustments/health/form8853/ty2025-form8853-gap.md).
 
 Form8941 qualifying-arrangement follow-up: the focused compatibility suite passed 47/47 and the final packet-order/held-scope gate 15/15. All 10 new complete local TY2025 v5.4 XSD packets and every one of their 242 final PDF pages were retained and visually reviewed. Native/PDF exports reject 33 prepared-source mutations and 27 public-source conflicts. The existing descriptor is unchanged; the held fixture and precise source limits are documented in [the gap record](../../../credits/health/form8941/ty2025-form8941-gap.md#october-6-sourced-qualifying-arrangements).
+
+
+## October 10 Form3800 reviewed partial-use source checkpoint
+
+The public current-orphan-credit review now identifies each partnership or
+S-corporation source and reconciles its applied amount to finalized tax use.
+Six complete partial-use returns retain70 source rows/four PartV continuations,
+six local2025v5.4 XSD passes and82 reviewed pages (31unique/51pixel matches).
+Focused8/0 and related329/0 pass; mutations reject72 native/72 fresh-PDF/18 prepared changes.
+See the [bounded checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-current-k-1-partial-use-allocation-checkpoint).
+Existing skipped-line, zero/name, authentication, broader coverage and accepted
+carry-history limitations remain; no parent closure or IRS acceptance follows.

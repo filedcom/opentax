@@ -1,3 +1,7 @@
+import {
+  assertCurrentOrphanAllocationSource,
+  reconcileCurrentOrphanAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { StandardFonts } from "pdf-lib";
 import type {
   PdfFieldEntry,
@@ -144,6 +148,14 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    assertCurrentOrphanAllocationSource(
+      source.current_orphan_allocation_review,
+      all.form3800_current_orphan_allocation,
+    );
+    assertCurrentOrphanAllocationSource(
+      raw.current_orphan_allocation_review,
+      all.form3800_current_orphan_allocation,
+    );
     if (source.f8864_direct_producer_credit) {
       const { lines } = reconcileForm8864DocumentSource(all.f8864, all);
       const rawSource = f3800InputSchema.parse(raw);
@@ -1496,10 +1508,23 @@ export const form3800Pdf: PdfFormDescriptor = {
         (sum, entry) => sum + entry.credit_amount,
         0,
       );
+      const reviewedTaxUse = source.current_orphan_allocation_review
+        ? reconcileCurrentOrphanAllocation(
+          source.current_orphan_allocation_review,
+          entries,
+          {
+            primarySSN: filer.primarySSN,
+            appliedCredit: prepared.lines.line17,
+          },
+        )
+        : entries.map((entry) => entry.credit_amount);
+      const applied = reviewedTaxUse.reduce((sum, amount) => sum + amount, 0);
       const largest = entries.reduce((left, right) =>
         left.credit_amount >= right.credit_amount ? left : right
       );
       if (
+        JSON.stringify(rawSource.current_orphan_allocation_review) !==
+          JSON.stringify(source.current_orphan_allocation_review) ||
         JSON.stringify(rawSource.form8820_applied_credits_by_source) !==
           JSON.stringify(source.form8820_applied_credits_by_source) ||
         new Set(entries.map((entry) => entry.source_ein)).size !==
@@ -1525,19 +1550,19 @@ export const form3800Pdf: PdfFormDescriptor = {
         details.length !== entries.length ||
         details.some((detail, index) =>
           detail.credit !== entries[index].credit_amount ||
-          detail.appliedCredit !== entries[index].credit_amount ||
+          detail.appliedCredit !== reviewedTaxUse[index] ||
           detail.appliedCredit < 0 ||
           detail.appliedCredit > entries[index].credit_amount ||
           detail.passThroughEin !== entries[index].source_ein
         ) ||
         amount?.line !== "1h" ||
         amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
-        amount.appliedCredit !== total || amount.transferOutCredit !== 0 ||
+        amount.appliedCredit !== applied || amount.transferOutCredit !== 0 ||
         amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
         prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
-        prepared.lines.line17 !== total ||
+        prepared.lines.line17 !== applied ||
         (prepared.lines.line37 ?? 0) !== 0 ||
-        prepared.lines.line38 !== total
+        prepared.lines.line38 !== applied
       ) {
         throw new Error(
           "Form 3800 PDF orphan-drug K-1 sources differ from Part V and filed K-1s",

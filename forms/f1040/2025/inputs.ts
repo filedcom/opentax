@@ -1,3 +1,5 @@
+import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
+import { currentOrphanAllocationSchema } from "../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
 import { publicSourceSchema as f8886InputSchema } from "./domains/general/filing/form8886/source.ts";
 import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts";
@@ -978,6 +980,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8915f, itemSchema: f8915fItemSchema, isArray: true },
   { node: f8915d, itemSchema: f8915dItemSchema, isArray: true },
   { node: f3800, itemSchema: f3800ItemSchema, isArray: true },
+  {
+    node: currentOrphanAllocationNode,
+    inputSchema: currentOrphanAllocationSchema,
+    isArray: false,
+  },
   { node: f2106, itemSchema: f2106ItemSchema, isArray: true },
   { node: f5405, itemSchema: f5405ItemSchema, isArray: true },
   {
