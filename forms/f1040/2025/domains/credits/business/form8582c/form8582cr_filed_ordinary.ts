@@ -15,6 +15,7 @@ import { inputSchema as form3800InputSchema } from "../../../../../nodes/inputs/
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { sameForm3800PassiveAllocations } from "../../../../mef/forms/credits/business/f3800/f3800_passive_link.ts";
+import { reconcileNewMarketsK1Credits } from "../../../../mef/forms/credits/business/f8874_credit_evidence.ts";
 import { assertForm3800FinalCreditJoin } from "../form3800/form3800_final_credit_join.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
@@ -59,7 +60,8 @@ function reconcilePartnershipK1Credits(
     ? []
     : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships;
   const k1s = allK1s.filter((k1) =>
-    k1.box15_code_ad_new_markets_credit !== undefined
+    k1.box15_code_ad_new_markets_credit !== undefined &&
+    k1.new_markets_credit_subject_to_passive_activity_limit === true
   );
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
@@ -69,7 +71,8 @@ function reconcilePartnershipK1Credits(
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
       (k1.box15_code_ad_new_markets_credit !== undefined
-        ? k1.new_markets_credit_subject_to_passive_activity_limit !== true
+        ? typeof k1.new_markets_credit_subject_to_passive_activity_limit !==
+          "boolean"
         : k1.new_markets_credit_subject_to_passive_activity_limit !==
             undefined ||
           (k1.box2_rental_re === undefined &&
@@ -112,7 +115,8 @@ function reconcileSCorpK1Credits(
     ? []
     : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
   const k1s = allK1s.filter((k1) =>
-    k1.box13_code_ad_new_markets_credit !== undefined
+    k1.box13_code_ad_new_markets_credit !== undefined &&
+    k1.new_markets_credit_subject_to_passive_activity_limit === true
   );
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
@@ -122,7 +126,8 @@ function reconcileSCorpK1Credits(
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
       (k1.box13_code_ad_new_markets_credit !== undefined
-        ? k1.new_markets_credit_subject_to_passive_activity_limit !== true
+        ? typeof k1.new_markets_credit_subject_to_passive_activity_limit !==
+          "boolean"
         : k1.new_markets_credit_subject_to_passive_activity_limit !==
             undefined ||
           (k1.box2_rental_re === undefined &&
@@ -324,6 +329,61 @@ export function reconcileFiledForm8582CROrdinary(
     );
   }
   const f3800 = form3800InputSchema.parse(pending.f3800);
+  const expectedNonpassive = [
+    ...(pending.k1_partnership === undefined
+      ? []
+      : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships)
+      .filter((k1) =>
+        k1.box15_code_ad_new_markets_credit !== undefined &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      .map((k1) => ({
+        source_type: "partnership" as const,
+        source_ein: k1.partnership_ein!,
+        source_document_reference: k1.source_document_reference!,
+        credit_amount: k1.box15_code_ad_new_markets_credit!,
+        subject_to_passive_activity_limit: false as const,
+      })),
+    ...(pending.k1_s_corp === undefined
+      ? []
+      : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps)
+      .filter((k1) =>
+        k1.box13_code_ad_new_markets_credit !== undefined &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      .map((k1) => ({
+        source_type: "s_corporation" as const,
+        source_ein: k1.corporation_ein!,
+        source_document_reference: k1.source_document_reference!,
+        credit_amount: k1.box13_code_ad_new_markets_credit!,
+        subject_to_passive_activity_limit: false as const,
+      })),
+  ];
+  const nonpassiveEntries = f3800.f8874_k1_credit_entries ?? [];
+  reconcileNewMarketsK1Credits(nonpassiveEntries, pending);
+  const entryKey = (entry: typeof nonpassiveEntries[number]) =>
+    JSON.stringify([
+      entry.source_type,
+      entry.source_ein,
+      entry.source_document_reference,
+      entry.source_statement_reference,
+      entry.credit_amount,
+      entry.subject_to_passive_activity_limit,
+    ]);
+  if (
+    JSON.stringify(expectedNonpassive.map(entryKey).sort()) !==
+      JSON.stringify(nonpassiveEntries.map(entryKey).sort())
+  ) {
+    throw new Error(
+      "Form 8582-CR nonpassive K-1 credit inventory differs from filed Form 3800",
+    );
+  }
+  const nonpassiveK1Credit = expectedNonpassive.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
+  const totalAllowed = lines.line37 + nonpassiveForm8874Credit +
+    nonpassiveK1Credit;
   const filedForm3800Allowed = (
     pending.f3800 as Record<string, unknown> | undefined
   )?.allowed_credit;
@@ -332,7 +392,7 @@ export function reconcileFiledForm8582CROrdinary(
       (f3800.f8874_credit?.credit_amount !== nonpassiveForm8874Credit ||
         f3800.f8874_credit?.subject_to_passive_activity_limit !== false)) ||
     (nonpassiveForm8874Credit === 0 && f3800.f8874_credit !== undefined) ||
-    filedForm3800Allowed !== lines.line37 + nonpassiveForm8874Credit ||
+    filedForm3800Allowed !== totalAllowed ||
     !sameForm3800PassiveAllocations(
       lines.sourceAllocations,
       f3800.passive_source_allocations ?? [],
@@ -343,8 +403,8 @@ export function reconcileFiledForm8582CROrdinary(
     );
   }
   assertForm3800FinalCreditJoin(
-    lines.line37 + nonpassiveForm8874Credit,
+    totalAllowed,
     pending,
   );
-  return { lines, ledger, tax, nonpassiveForm8874Credit };
+  return { lines, ledger, tax, nonpassiveForm8874Credit, nonpassiveK1Credit };
 }

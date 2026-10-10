@@ -873,3 +873,13 @@ reviewed, including single-credit PartIII and two-credit PartV reporting. Gates
 4/0 and82/0 pass;88 native/88 fresh-PDF mutations and16 malformed archives reject.
 The Form8582-CR gap checkpoint retains source, final-tax and artifact details.
 Deferred26/68/76/84/144 repeat; no new item or deferred repair was made.
+
+## October 10 mixed passive and nonpassive K-1 checkpoint
+
+Four XSD-valid complete returns/75 reviewed pages now reconcile both kinds of
+New Markets credit, including34 source rows and an18-row PartV continuation.
+The passive ledger retains its own suspended balance; the final1040 credit adds
+the independently reconciled nonpassive inventory. Focused4/0 and related86/0
+pass;64 native/64 fresh-PDF mutations and16 malformed archives reject. The
+Form8582-CR checkpoint records exact source/column/aggregate evidence. Existing
+deferred26/68/76/84/144 repeat, and further tax-use limits142 remain guarded.
