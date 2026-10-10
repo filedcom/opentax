@@ -9,7 +9,10 @@ import type { Form3800NonpassiveDetailRow } from "../../../../../mef/forms/credi
 import type { Form3800PassiveDetailRow } from "../../../../../mef/forms/credits/business/f3800/f3800_passive_rows.ts";
 import { validateForm3800NonpassiveCarryoverDetail } from "../../../../../mef/forms/credits/business/f3800/f3800_carryover_details.ts";
 import { reconcileForm3800CarryforwardLinks } from "../../../../../mef/forms/credits/business/f3800/f3800_carryforward_link.ts";
-import { assertForm3800PrintableDetailCapacity } from "./f3800_capacity.ts";
+import {
+  assertForm3800PrintableDetailCapacity,
+  FORM3800_PRINTED_PART_V_ROWS,
+} from "./f3800_capacity.ts";
 import { form3800PartVFields, form3800PartVIFields } from "./f3800_fields.ts";
 
 function cents(amount: number): number {
@@ -46,9 +49,9 @@ type CurrentSource =
   | { readonly kind: "passive"; readonly row: Form3800PassiveDetailRow };
 
 /** Part V's 18 physical columns, using only credit routes native MeF supports. */
-export function projectForm3800PartVFields(
+export function projectForm3800PartVPages(
   parts: Form3800DocumentParts,
-): Readonly<Record<string, string | number>> {
+): ReadonlyArray<Readonly<Record<string, string | number>>> {
   assertForm3800PrintableDetailCapacity(parts);
   const amountByLine = new Map(
     parts.currentAmounts.map((row) => [row.line, row]),
@@ -74,7 +77,7 @@ export function projectForm3800PartVFields(
   if (sources.some((source) => lineOrder.indexOf(source.row.line) < 0)) {
     throw new Error("Form 3800 printable Part V has an unsupported line");
   }
-  const fields: Record<string, string | number> = {};
+  const pages: Record<string, string | number>[] = [{}];
   const byLine = new Map<string, {
     before: number;
     after: number;
@@ -83,7 +86,9 @@ export function projectForm3800PartVFields(
     applied: number;
   }>();
   for (const [index, item] of sources.entries()) {
-    const pdf = form3800PartVFields(index + 1);
+    const page = Math.floor(index / FORM3800_PRINTED_PART_V_ROWS);
+    const fields = pages[page] ?? (pages[page] = {});
+    const pdf = form3800PartVFields(index % FORM3800_PRINTED_PART_V_ROWS + 1);
     fields[pdf.a] = item.row.line;
     const total = byLine.get(item.row.line) ?? {
       before: 0,
@@ -168,7 +173,18 @@ export function projectForm3800PartVFields(
       );
     }
   }
-  return fields;
+  return pages;
+}
+
+/** Single-page callers must never silently lose a continuation. */
+export function projectForm3800PartVFields(
+  parts: Form3800DocumentParts,
+): Readonly<Record<string, string | number>> {
+  const pages = projectForm3800PartVPages(parts);
+  if (pages.length !== 1) {
+    throw new Error("Form 3800 Part V needs continuation pages");
+  }
+  return pages[0];
 }
 
 /** Part VI's nine physical columns from typed carryover vintages. */

@@ -57,12 +57,8 @@ Deno.test("Form 3800 nine-page printable capacity accepts all 15 Part V and 35 P
   assertForm3800PrintableDetailCapacity(printableParts(15, 35));
 });
 
-Deno.test("Form 3800 nine-page printable capacity rejects unsupported overflow", () => {
-  assertThrows(
-    () => assertForm3800PrintableDetailCapacity(printableParts(16, 35)),
-    Error,
-    "Part V has 16 breakdown rows",
-  );
+Deno.test("Form 3800 printable capacity permits Part V continuations but rejects Part VI overflow", () => {
+  assertForm3800PrintableDetailCapacity(printableParts(46, 35));
   assertThrows(
     () => assertForm3800PrintableDetailCapacity(printableParts(15, 36)),
     Error,

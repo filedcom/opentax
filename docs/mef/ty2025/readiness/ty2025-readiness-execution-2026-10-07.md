@@ -6855,3 +6855,25 @@ remain; no new future item or deferred implementation. Main52/future133 bodies
 are byte-preserved and no parent closed. Individual ATS-check estimate stays
 about60%, uncertainty45–75%. Evidence: `archer-paired-2026-10-10/`. Work remains
 on draft base PR70.
+
+
+## October 10: Form3800 Part V continuations
+
+Compacted learnings before edits. The existing Form3800 PDF gap now supports
+additional Part V pages after the nine-page parent, validating the entire
+source inventory before pagination and preserving both row halves together.
+Six public-input complete returns cover15/16/30/31 fully used partnership and
+mixed partnership/S-corporation K-1 credits:139 source rows, seven extra pages,
+six full2025v5.4 XSD passes and85 reviewed static packet pages (39unique/46exact
+duplicates). Independent Decimal checks join credits, AMT limit, tax and refund;
+PDFs retain no fields/widgets. Focused18/0 and related305/0 pass. The initial
+303/2 group only lacked pdftotext on PATH; final replay includes it. Mutations
+reject48 native/48 fresh-PDF/18 prepared inventories. Initial fixture typing,
+unsupported public partial-use allocation experiments, and verifier ordering/
+glob errors remain in evidence. Tax calculation unchanged; no benchmark rerun.
+Existing skipped PartII18-21, blank-zero/name presentation and authentication
+qualifications remain; PartVI overflow, partial-use public intake and wider
+combinations remain open. No future item added/implemented and no parent
+closed. Main52/future133 bodies byte-preserved. Individual ATS-check estimate
+stays about60%, uncertainty45–75%. Evidence: form3800-part-v-2026-10-10/.
+Continuation remains draft PR70.

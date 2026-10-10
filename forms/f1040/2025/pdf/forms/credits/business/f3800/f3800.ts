@@ -1,4 +1,8 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import { StandardFonts } from "pdf-lib";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../../review-support/form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
 import {
@@ -57,8 +61,8 @@ import {
   projectForm3800PartIVFields,
 } from "./f3800_print_projection.ts";
 import {
-  projectForm3800PartVFields,
   projectForm3800PartVIFields,
+  projectForm3800PartVPages,
 } from "./f3800_detail_projection.ts";
 
 const checkboxPaths = new Set<string>([
@@ -1459,7 +1463,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     if (
-      directOrphanK1?.length === 2 &&
+      (directOrphanK1?.length ?? 0) >= 2 &&
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
@@ -1467,7 +1471,10 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8994_direct_employer_credit &&
       !source.f8864_direct_producer_credit &&
       !source.f8882_direct_employer_credit &&
-      directOrphanK1.every((entry) => entry.source_type === "partnership") &&
+      directOrphanK1?.every((entry) =>
+        entry.source_type === "partnership" ||
+        entry.source_type === "s_corporation"
+      ) &&
       !source.f8820_credit && !source.f8874_credit &&
       !source.f5884_credit && !source.f8835_credit_entries?.length &&
       !source.f8826_credit_entries?.length &&
@@ -1489,11 +1496,14 @@ export const form3800Pdf: PdfFormDescriptor = {
         (sum, entry) => sum + entry.credit_amount,
         0,
       );
-      const largest = entries[0].credit_amount >= entries[1].credit_amount
-        ? entries[0]
-        : entries[1];
+      const largest = entries.reduce((left, right) =>
+        left.credit_amount >= right.credit_amount ? left : right
+      );
       if (
-        entries[0].source_ein === entries[1].source_ein ||
+        JSON.stringify(rawSource.form8820_applied_credits_by_source) !==
+          JSON.stringify(source.form8820_applied_credits_by_source) ||
+        new Set(entries.map((entry) => entry.source_ein)).size !==
+          entries.length ||
         entries.some((entry) =>
           entry.credit_amount <= 0 || entry.subject_to_passive_activity_limit
         ) ||
@@ -1501,10 +1511,10 @@ export const form3800Pdf: PdfFormDescriptor = {
           JSON.stringify(directOrphanK1) ||
         prepared.currentRows.length !== 1 ||
         prepared.currentAmounts.length !== 1 ||
-        prepared.currentDetails.length !== 2 ||
+        prepared.currentDetails.length !== entries.length ||
         prepared.carryoverRows.length !== 0 ||
-        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
-        row.entityCredits.length !== 2 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== entries.length ||
+        row.entityCredits.length !== entries.length ||
         !(row.metadata.entity && "ein" in row.metadata.entity) ||
         row.metadata.entity.ein !== largest.source_ein ||
         row.entityCredits.some((entity, index) =>
@@ -1512,10 +1522,12 @@ export const form3800Pdf: PdfFormDescriptor = {
           entity.entity.ein !== entries[index].source_ein ||
           entity.credit !== entries[index].credit_amount
         ) ||
-        details.length !== 2 ||
+        details.length !== entries.length ||
         details.some((detail, index) =>
           detail.credit !== entries[index].credit_amount ||
           detail.appliedCredit !== entries[index].credit_amount ||
+          detail.appliedCredit < 0 ||
+          detail.appliedCredit > entries[index].credit_amount ||
           detail.passThroughEin !== entries[index].source_ein
         ) ||
         amount?.line !== "1h" ||
@@ -1528,7 +1540,7 @@ export const form3800Pdf: PdfFormDescriptor = {
         prepared.lines.line38 !== total
       ) {
         throw new Error(
-          "Form 3800 PDF two partnership orphan-drug sources differ from Part V and filed K-1s",
+          "Form 3800 PDF orphan-drug K-1 sources differ from Part V and filed K-1s",
         );
       }
     }
@@ -1672,12 +1684,13 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
     }
+    const partVPages = projectForm3800PartVPages(prepared);
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),
       ...projectForm3800PartIIIFields(prepared),
       ...projectForm3800PartIVFields(prepared),
-      ...projectForm3800PartVFields(prepared),
+      ...partVPages[0],
       ...projectForm3800PartVIFields(prepared),
     };
     for (const key of Object.keys(projected)) {
@@ -1685,9 +1698,32 @@ export const form3800Pdf: PdfFormDescriptor = {
         throw new Error(`Form 3800 printable field is not mapped: ${key}`);
       }
     }
-    return [projected];
+    return [
+      projected,
+      ...partVPages.slice(1).map((page, index) => ({
+        ...page,
+        partVContinuation: index + 2,
+        partVPageCount: partVPages.length,
+      })),
+    ];
   },
-  async appendSupplementalPages(document, _fields, filer, all, prepared) {
+  pageIndices(fields) {
+    return fields.partVContinuation ? [7] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  },
+  async decoratePages(document, pages, fields, filer) {
+    if (!fields.partVContinuation || !filer) return;
+    const page = pages[0];
+    const label =
+      `Form 3800 Part V continuation ${fields.partVContinuation} of ${fields.partVPageCount} | ${filer.nameLine1} | ${filer.primarySSN}`;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const size = Math.min(
+      7,
+      7 * (page.getWidth() - 72) / font.widthOfTextAtSize(label, 7),
+    );
+    page.drawText(label, { x: 36, y: page.getHeight() - 12, size, font });
+  },
+  async appendSupplementalPages(document, fields, filer, all, prepared) {
+    if (fields.partVContinuation) return;
     const entries = all?.f3800
       ? f3800InputSchema.parse(all.f3800).carryforward_vintages ?? []
       : [];

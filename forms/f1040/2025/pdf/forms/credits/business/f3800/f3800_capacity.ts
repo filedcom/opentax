@@ -4,7 +4,7 @@ import type { Form3800DocumentParts } from "../../../../../mef/forms/credits/bus
 export const FORM3800_PRINTED_PART_V_ROWS = 15;
 export const FORM3800_PRINTED_PART_VI_ROWS = 35;
 
-/** Reject detail rows that the unextended nine-page form cannot show. */
+/** Reconcile current-source counts; Part VI still has no continuation. */
 export function assertForm3800PrintableDetailCapacity(
   parts: Form3800DocumentParts,
 ): void {
@@ -30,11 +30,6 @@ export function assertForm3800PrintableDetailCapacity(
   }
   const partVIBreakdowns = parts.carryoverDetails.length +
     parts.passiveCarryoverDetails.length;
-  if (partVRows.length > FORM3800_PRINTED_PART_V_ROWS) {
-    throw new Error(
-      `Form 3800 Part V has ${partVRows.length} breakdown rows; the nine-page PDF prints only ${FORM3800_PRINTED_PART_V_ROWS}`,
-    );
-  }
   if (partVIBreakdowns > FORM3800_PRINTED_PART_VI_ROWS) {
     throw new Error(
       `Form 3800 Part VI has ${partVIBreakdowns} breakdown rows; the nine-page PDF prints only ${FORM3800_PRINTED_PART_VI_ROWS}`,

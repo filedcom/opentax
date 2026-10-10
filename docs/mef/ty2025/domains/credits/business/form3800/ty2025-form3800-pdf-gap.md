@@ -781,3 +781,62 @@ On October8, 2026, all15 pages of the retained orphan-drug clinical-testing pack
 
 
 The October8 employer-childcare retained packet now has all16 pages visually reviewed, including the nine-page Form3800 parent. Form8882 tentative credit11,000 matches reduced ScheduleC expenses39,000 and PartIII line1k; current allowance9,573 reaches Schedule3/Form1040. Native XML reproduces exactly and local full XSD passes, with the inactive Form8960 pending difference explicitly qualified. Unused1,427 carry history and external contract/licensing eligibility remain unproved. See the [source and page evidence](../../../../readiness/ty2025-readiness-execution-2026-10-07.md); no parent scope checkoff.
+
+## October 10 Part V continuation and mixed K-1 checkpoint
+
+The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+require a Part V breakdown for multiple pass-through sources on one Part III
+credit line, with the greatest-credit entity's EIN in Part III column (c).
+The existing fifteen-row PDF boundary now expands to additional copies of
+page 8 after the nine-page parent. Each continuation identifies the filer/TIN
+and its position in the Part V sequence. Both halves of every row stay on the
+same sheet. All rows reconcile before any page is returned; callers of the
+single-page projection still reject overflow rather than losing extra rows.
+History statements are emitted only once, after the parent.
+
+The nonpassive orphan-drug check now binds every distinct partnership or
+S-corporation K-1 in the inventory to its Part III/Part V source count, EIN,
+credit and fully applied amount. Six public-input complete returns cover
+15/16/30/31-row boundaries and mixed partnership/S-corporation inventories.
+The independent verifier joins each native and printed EIN to the source
+inventory; it does not assume the executor visits partnership sources first.
+
+| Case | Sources | Credit allowed | Final tax | Packet pages | Extra Part V pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fifteen partnerships | 15 | 1,605 | 23,462 | 13 | 0 |
+| Sixteen partnerships | 16 | 1,720 | 23,347 | 14 | 1 |
+| Thirty partnerships | 30 | 3,435 | 21,632 | 14 | 1 |
+| Thirty-one partnerships | 31 | 3,565 | 21,502 | 15 | 2 |
+| Mixed sixteen K-1s | 16 | 1,720 | 23,347 | 14 | 1 |
+| Mixed thirty-one K-1s | 31 | 3,565 | 21,502 | 15 | 2 |
+
+All six returns pass local 2025v5.4 XSD and independent Decimal source,
+regular-tax, tentative-minimum-tax, credit-limit, final-tax and refund checks.
+The 139 source rows appear exactly once across the Part V pages. All 85 static
+packet pages were reviewed through 39 unique renders and 46 exact pixel
+matches, including all seven continuations; reopened PDFs have no fields or
+widgets. The continuations have no observed clipping or lost rows. Existing
+skipped Part II lines 18–21 are still printed on packet page 5 (18/19=12,071,
+20=12,996, 21=12,996 minus the allowed credit); native omits those skipped lines.
+Existing blank-zero and name-format qualifications also remain. These are
+qualified packet observations, not clean whole-return presentation approval.
+
+The final focused gate passes 18/0. The related calculation/native/PDF gate
+passes 305/0; its initial 303/2 run failed only because `pdftotext` was absent
+from PATH. The six complete cases reject 48 native and 48 fresh-PDF source or
+total mutations, plus 18 altered prepared-source inventories. Projection
+checks also reject a changed or invalid final continuation row. Initial
+readonly test typing, attempts to pass unsupported public partial-use
+allocation facts, and verifier ordering/glob corrections are retained in the
+private evidence, not counted as successful checks. Tax calculation code
+was not changed, so the benchmark was not rerun for this printing change.
+
+This checkpoint does not open partial-use public allocation intake, passive
+orphan-drug claims, estate/trust sources, transfer elections, Part VI overflow,
+prior accepted carry histories, or other unreviewed source combinations.
+Source records are synthetic and do not authenticate issuer bytes. The
+broader Form 3800 parent TODO remains open. No deferred item was implemented
+or added; the frozen main/future bodies are preserved. Evidence is retained in
+`.state/research/form3800-part-v-2026-10-10/`, including inputs, normalized
+pending, prepared parts, XML, PDFs, source/numeric checks, page hashes, visual
+review, test logs and the checksum manifest. Work continues on draft PR70.
