@@ -11,6 +11,7 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
 import { registry } from "../../../registry.ts";
+import { inputSchema as form8959Schema } from "../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const employer = (base.inputs.w2 as Array<Record<string, unknown>>)[0];
@@ -132,5 +133,30 @@ Deno.test("line 1c final exports reject Form 4137 income even when tax rounds un
     () => buildPdfBytes(wrongAgi, base.filer),
     Error,
     "Form 1040 line 1c and AGI tips differ",
+  );
+});
+
+Deno.test("Form 4137 rejects Form 8959 deposit drift hidden by whole-dollar rounding", async () => {
+  const result = calculated();
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const source = form8959Schema.passthrough().parse(pending.form8959);
+  const amount = source.unreported_tips!;
+  assertEquals(typeof amount, "number");
+  // The retained employment form and every printed dollar stay unchanged.
+  // Only replay against the original calculation detects this deposit change.
+  const changed = {
+    ...pending,
+    form8959: { ...source, unreported_tips: amount + 0.01 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, base.filer),
+    Error,
+    "unreported_tips differs from original source records",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, base.filer),
+    Error,
+    "unreported_tips differs from original source records",
   );
 });

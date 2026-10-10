@@ -73,13 +73,13 @@ node finds no tax or excess withholding.
 
 Where complete original records are present, the check also compares W-2, Form
 4852 W-2-substitute, household-wage and CT-2 quarterly items to their
-corresponding graph deposits before printing. The remaining original-record
-joins are not yet independently re-derived here: Form 4137's
-source/allocated-tip calculation, Form 8919's reason-code and wage-base
-calculation, and Schedule SE's multi-source line 6. Their finalized graph
-deposits are checked against the printed lines, but that does not independently
-prove those upstream calculations. These are explicit verification gaps, not
-approved exclusions. Focused rejection cases for changed deposits and changed
+corresponding graph deposits before printing. The checkpoint below also
+replays retained Form 4137 and Form 8919 owner calculations before comparing
+their Medicare deposits. The later Schedule SE checkpoint replays its retained
+scalar or owner inputs through the producer before accepting the Medicare
+deposit. This does not authenticate the source records or resolve the deferred
+raw-versus-filed line rounding difference; broader source verification remains
+open, not an approved exclusion. Focused rejection cases for changed deposits and changed
 Form 4852/household records pass in the October 10 grouped gate.
 
 ## October 10 public wage, spouse and threshold checkpoint
@@ -155,3 +155,145 @@ seven PDFs, 35 page images, nine contact sheets, `packet-verification.json`,
 not new unique cases or additional test counts: **57 tests / seven returns**
 remain the scope. No production code changed; broader source, payment, mixed
 SE/tip/reclassification and IRS acceptance requirements remain open.
+
+## October 10 retained employment-source reconciliation
+
+Both Form 8959 exporters now recalculate retained Form 4137 and Form 8919
+owner copies before accepting their deposits. Form 4137 uses Medicare tips
+after the below-$20 monthly exclusions, rather than total taxable tip income.
+Form 8919 uses full line 6 wages, rather than the Social Security-capped amount.
+The existing calculators retain their owner, employer, reason-code and source
+validation; this is a reconciliation guard, not a new tax formula or proof of
+source authenticity.
+
+The grouped gate passes **101 distinct typed tests, zero failures and zero
+ignored**: 91 in the six Form 8959/4137/8919 calculator and return modules, plus
+10 in the four existing income and Schedule 2 replay modules. The final
+11-test native descriptor rerun and six-test income replay rerun overlap this
+count and are not additional tests. Formatting, lint and diff checks pass.
+
+The new owner cases verify both taxpayers' tips (5,985 after a $15 exclusion)
+and full reclassified wages (230,000), rejecting six coordinated substitutions
+in both native and PDF projections. Final native and actual PDF exporters also
+reject each of two one-cent deposit changes whose printed dollars remain
+unchanged. Existing positive replays still pass full Return1040 XSD and actual
+PDF generation: two executed income returns and two prepared Schedule 2
+returns. No new visual review or page count is claimed.
+
+An entirely empty Form 8959 slot with retained employment records is checked
+against the combined filing trigger and retained Form 1040 filing status.
+Below-threshold cases remain valid; 230,000 of reclassified wages may omit the
+form for a joint return but not a single return. Tips plus wages that each
+fall below the joint threshold still require the form when their sum exceeds
+250,000. A missing filing status cannot establish a valid omission. Existing
+W-2, substitute, household and railroad deposit checks remain in force.
+
+Private command logs are retained under
+`.state/research/form8959-upstream-2026-10-10/`: `tests-omission.log`,
+`public-replays-final.log`, `combined-omission.log` and `deposit-rejections.log`.
+The seven previously reviewed wage/spouse packets remain 35 qualified pages;
+their seven full-XSD regressions pass within the 91-test group. Multi-source
+Schedule SE, payment authenticity, wider filing combinations and IRS
+acceptance remain open. Deferred Schedule SE rounding33 and presentation76
+were not changed; no broad board task is closed by this checkpoint.
+
+## October 10 complete joint employment-source packets
+
+Three additional public-entry cases now execute both spouses' employment
+records through Form 4137, Form 8919, Form 8959, Schedule 2, Form 1040, full
+Return1040 XSD validation and actual PDF generation. The three typed tests pass
+with no ignored cases, adding to the preceding 101 distinct passing tests.
+The new owner-document assertions verify exactly one native copy per spouse
+for each applicable employment form. Four one-cent deposit mutations reject
+in each final exporter (four native and four actual-PDF rejections).
+
+| Complete return | Tip income / Medicare tips | Reclassified wages | Tip / reclassified tax | Additional Medicare | Income tax | Final tax | Paid / owed | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Joint tips | 6,000 / 5,985 | 0 | 458 / 0 | 54 | 39,574 | 40,086 | 40,000 / 86 | 8 |
+| Joint reclassified | 0 / 0 | 230,000 | 0 / 13,013 | 720 | 57,334 | 71,067 | 40,000 / 31,067 | 8 |
+| Joint mixed | 6,000 / 5,985 | 50,000 | 458 / 3,825 | 54 | 39,574 | 43,911 | 40,000 / 3,911 | 10 |
+
+The mixed case verifies that each owner's Form 4137 Social Security tips join
+Form 8919's wage-base calculation while full Medicare amounts join Form 8959.
+The larger reclassified case reaches the primary owner's Social Security cap
+without capping the 200,000 Medicare wage amount. The $15 below-monthly-limit
+tip amount remains taxable income but is excluded from Medicare tips.
+Independent Decimal calculations using the public inputs and the
+[IRS 2025 tax-rate schedule](https://www.irs.gov/irb/2024-45_IRB) agree with
+employment taxes, ordinary tax, final tax and amounts owed. Every populated
+Form 4137/8919/8959 amount sequence and owner identity was also checked in
+extracted PDF text; flattened packets have no surviving widgets or field tree.
+
+All **26 pages** were visually reviewed (25 unique RGB pages across seven
+contact sheets, plus a full Form 8919 page). Four owner pages repeat deferred
+item17: Form 8919 names and SSNs overlap the identity-row border in joint-mixed
+pages7–8 and joint-reclassified pages5–6. Their identities and amounts reconcile,
+but this is qualified review, not clean visual approval; no deferred repair.
+The three zero-investment-income Form 8960 pages are included in the page
+count, not counted as additional filing scenarios.
+
+The Form 8959 wage/employment packet series now has **10 full-XSD returns and
+61 reviewed pages**, combining the prior seven/35 with these three/26; existing
+zero qualification76 and current owner-placement17 remain. Synthetic SS-8
+references are not authenticated filings. RRTA combinations, original
+multi-source Schedule SE, wider source coverage and IRS acceptance remain
+open; no broad board task is closed.
+
+Reproduce with
+`deno test -A forms/f1040/e2e/taxes/employment/form8959/form8959_employment_sources.test.ts`.
+The local IRS schema and `xmllint` are required; these tests do not silently
+skip. Add `-- --evidence-dir=<directory>` to retain the three source/pending
+JSON records, XML returns and generated PDFs. Private artifacts, both passing
+logs, independent verification, page inventory, visual findings and hashes are
+under `.state/research/form8959-joint-employment-2026-10-10/`.
+
+## October 10 Schedule SE Medicare deposit replay
+
+The Form 8959 source guard now replays retained Schedule SE inputs through the
+shared producer, including scalar business/farm income, the farm optional
+method and separate owner businesses. It compares the resulting Medicare
+earnings deposit before accepting native XML, PDF projections or source-only
+omission. The replay preserves producer precision: deferred item33's difference
+between rounded owner lines and rounded combined raw earnings is not repaired.
+
+**119 distinct typed checks pass, with zero failures or ignored tests:** 60
+calculator/native-source checks, six public/prepared Schedule SE replay checks
+and 53 native/PDF and earlier employment regressions. The final 12-test
+source-descriptor rerun overlaps this total. Formatting, lint and diff checks
+pass. Prior packet commit `c92fbe8de` passed CI run38040918503 before this change.
+
+Three new component cases independently expect Medicare earnings of267,815
+(scalar business plus farm loss),279,050 (business plus optional farm income)
+and323,225 (two proprietors, including one owner's business loss). Their
+Additional Medicare Tax is610,711 and659. Six coordinated or fractional deposit
+substitutions reject in each representation. Empty-slot checks preserve losses,
+sub-$400 earnings and ordinary below-threshold cases. A combined184,700 of SE
+income and100,000 of reclassified wages requires a joint Form8959 even though
+either source alone can omit it.
+
+Four existing public fixtures now have durable final-export regression tests:
+
+| Source route | Replayed SE earnings | Additional Medicare | Required Form8959 |
+| --- | ---: | ---: | --- |
+| Two spouse businesses; spouse wage cap | 92,350 | 166 | Yes |
+| Primary business and spouse farm; spouse wage cap | 92,350 | 166 | Yes |
+| Primary business and spouse farm optional method | 57,410 | 0 | No |
+| Optional farm with combined income below minimum | 0 | 0 | No |
+
+All four pass full Return1040 XSD and actual PDF generation, and each rejects
+a one-cent SE deposit change in both final exporters (four native/four PDF
+rejections). The existing prepared Schedule2 replay also passes XSD/PDF.
+No new visual pages or packet-series count is claimed. The prior ten reviewed
+wage/employment returns and their placement17/zero76 qualifications remain.
+
+The existing owned Schedule SE export checks still reconcile owner business
+and W-2 sources to retained calculations and Schedule1/2 totals. This new guard
+closes the downstream deposit comparison; it does not independently establish
+all scalar business-source classifications, source authenticity, every allowed
+SE/4137/8919 owner combination, or IRS acceptance. Broader board tasks remain
+open; deferred work is untouched.
+
+Private logs are under `.state/research/form8959-se-replay-2026-10-10/`:
+`tests.log`, `public-replay.log`, `regressions.log`, and the overlapping
+`combined-omission.log`. The public replay module requires the local IRS schema
+and `xmllint`; it does not silently skip missing evidence.
