@@ -106,11 +106,46 @@ The route test also exercises the PDF descriptor's actual copy selection with
 prepared Form3800 parts, checking owner SSN, employer EIN, cap and credit for
 all six copies. Eighteen altered-source native preparations and eighteen PDF
 projections reject stale Albany amounts, conflicting employee counties and
-Hawaii claims, including alterations to either spouse's employer. No new filled
-PDF or visual-review page count is claimed for this follow-up; the prior 71-page
-review above remains the visual evidence. The farm fixture's receipt-character
+Hawaii claims, including alterations to either spouse's employer. The subsequent filled-packet review below completes this follow-up visual
+evidence; the prior 71-page review remains separate. The farm fixture's receipt-character
 qualification remains deferred under the existing Schedule F source finding.
 
 Evidence is retained in `.state/research/form8941-geographic-routes-2026-10-10/`,
 including complete source/pending records, XML, schema results and test output.
 The broader Form8941, source authenticity and filing-ready parent tasks stay open.
+
+## Complete period, farm and spouse packet review
+
+The five original source-backed inputs were replayed through public preparation
+and the production PDF builder at runtime `9aba2eee0`. All five XML files saved
+with those PDFs pass the complete TY2025 v5.4 schema. Static output contains no
+remaining AcroForm field tree or widget annotations.
+
+All 122 pages were observed: partial-year 23, partial-month 23, tier-change 25,
+farm 23 and independent spouses 28. Twenty-three contact sheets cover 90 unique
+raster pages; the remaining 32 pages are exact RGB duplicates. All six Form8941
+pages were additionally inspected at full size. Correct owner SSNs, employer
+EINs, A/C checkboxes, employee/FTE counts, caps and determined credits remain
+legible. Two spouse Forms8941, Schedule C and Schedule SE copies retain their
+separate owners; Form3800 Part V retains both credit rows and their current use.
+
+Independent decimal arithmetic reconstructs business profit from gross receipts,
+wages and gross benefits reduced by the determined credit, then SE tax by owner,
+half-SE deductions, AGI, QBI, ordinary tax, current credit use and final tax. All
+five results match the table above. This arithmetic takes the separately checked
+Form8941 determined credits as inputs; it does not independently authenticate
+premiums or replace the arrangement-method qualification above. The partial-year
+credit is determined at 8,275 with current use 7,724; spouse credits total 34,449
+with current use 9,078. Gross-benefit deduction reductions use the determined
+amounts in both cases. No accepted carryforward is claimed.
+
+Existing qualifications remain: farm receipt classification22, skipped Form3800
+Section B values26, name order/joint-name omission68, blank zero Form3800 TMT
+fields76, and the five native Form6251 line1a omissions84. No new clipping or
+overlap was observed. These findings were appended to their existing deferred
+items, with no runtime repair or clean filing approval. Combined geographic
+evidence is eight XSD-valid complete returns and 193 qualified reviewed pages.
+
+The packet/copy/arithmetic/visual reports and checksums are retained with the
+source evidence. CI for `fc4f0203d99279cc4a21efe4391391d3f46aa234` passed in
+run `38037886745`; this packet-review update changes documentation only.
