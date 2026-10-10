@@ -24,13 +24,15 @@ code-Y sale ID to identify exactly one computed Form 8949 row and the same
 Schedule D transaction. It verifies the original eligible-gain row, available
 gain across investments, QOF EIN, dates, reporting box, adjustment sign,
 proceeds/basis on sales, and arithmetic. It also rejects unlinked Z/Y rows. It
-does not accept caller-supplied Form 8949 snapshots. Mixed-character sales,
+consumes the pending Form 8949/Schedule D shape; the public-graph test proves
+that route executes the rows, but structural reconciliation alone cannot
+authenticate a caller-created pending object. Mixed-character sales,
 non-sale inclusions, section 1231, and other special events remain outside this
 bounded join. The MeF field order follows the local TY2025 v5.4
 `Shared/IRS8997/IRS8997.xsd`; PDF fields and checkboxes were inspected read-only
 in the official 2025 AcroForm. They are staging code only, not proof of a valid
-filed return. Cases were written but not run pending the agreed full batch. No
-PDF was filled or rendered.
+filed return. The October 7 checkpoints below supersede the original unrun/no-render
+status for their staged artifacts; the October 10 gate verifies current code.
 
 A separate staged
 [one-lot holding-only source review](../../../../../../../forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts)
@@ -39,7 +41,7 @@ PDF and 2025 QOF issuer statement. It matches the reviewed lot ID, QOF EIN,
 acquisition date, description, short/long deferred gain, filed-form reference,
 and annual workpaper to the unchanged opening and closing ledger. Current-year
 additions, sales, inclusion events, EIN changes and multiple funds reject.
-Positive and tampered-source cases are written for the deferred test batch. A
+Positive and tampered-source cases pass in the October 10 focused gate. A
 digest and parsed PDF structure bind the review to bytes: the prior Form 8997
 copy must have at least two pages and the issuer statement at least one. This
 rejects forged PDF headers and incomplete prior form copies, but cannot
@@ -52,9 +54,9 @@ is not connected to the public exporters, which remain guarded.
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Prior-year continuity            | Exact prior closing to 2025 opening match is required by lot ID, EIN, date and deferred character. Reorganizations can identify a former EIN.                                                                             | Support and attach a reviewed explanation when opening differs from the filed prior year; verify that the referenced prior return and lot source documents exist and match.                                                                                                                 |
 | Part IV uninvested deferred gain | The field is captured but a positive amount rejects because an identifiable IRS row treatment has not been established.                                                                                                   | Resolve the official Part IV instruction for gain held during the year but not invested, with a source-backed EIN/date/description treatment.                                                                                                                                               |
-| Form 8949 and Schedule D         | A staged narrow join verifies actual executor Z/Y and eligible-gain transactions, plus corresponding Schedule D rows; no tax output is emitted. Native/PDF Form 8949 code-Z blank-column projection is written but unrun. | Source-byte validation and final tax-line reconciliation remain. Mixed-character allocations and section 1231 Form 4797/code-O rows need separate source-backed joins. Verify code-Y sale rows and all Form 8949 output with XSD and filled-PDF review before activation.                   |
+| Form 8949 and Schedule D         | A staged narrow join verifies actual executor Z/Y and eligible-gain transactions, plus corresponding Schedule D rows; no tax output is emitted. Native/PDF Form 8949 code-Z blank-column tests pass in the October 10 gate. | Source-byte validation and final tax-line reconciliation remain. Mixed-character allocations and section 1231 Form 4797/code-O rows need separate source-backed joins. Verify code-Y sale rows and all Form 8949 output with XSD and filled-PDF review before activation.                   |
 | Special events and elections     | Codes F/G/H, exception citations, transfers, basis adjustment amounts, and a 10-year FMV election have typed source fields and ledger rollforward checks.                                                                 | Verify regulation-specific eligibility, 5/7-year basis calculations, noninclusion-transfer ownership, 10-year sale gain and basis against source records. The local older v3 business-rule text lists A-G even though the 2025 form and v5.4 XSD allow H. Resolve final rule compatibility. |
-| Annual filing and attachments    | Staged MeF covers four groups/totals and answers. Staged PDF maps five rows per part on pages 1-2 and rejects additional rows.                                                                                            | Add native descriptors and any required prior-year explanation and labeled continuation sheets; validate complete row counts, document links, final filer identity, all three export layers and visual PDF output.                                                                          |
+| Annual filing and attachments    | Staged MeF covers four groups/totals and answers. Staged PDF maps five rows per part on pages 1-2 and emits reconciled labeled continuation sheets for additional rows.                                                                                            | Register complete native/PDF routes only after source and final-tax prerequisites; resolve any required prior-year explanation and validate full packet links, identity and output. Staged continuation retention/review is recorded below.                                                                          |
 
 The
 [official 2025 Form 8997 with instructions](https://www.irs.gov/pub/irs-prior/f8997--2025.pdf)
@@ -225,3 +227,36 @@ No runtime change or new full-return approval follows from this probe: both
 full-export guards remain, and the source-authenticity, prior-filing, business-rule
 and IRS acceptance prerequisites remain open. Aggregate readiness counts and
 the main-board requirement are unchanged.
+
+## October 10 grouped route and holding-only public-export audit
+
+Eight related test modules completed **30 typed tests, zero failed, zero
+ignored**: the annual ledger, holding-only source-byte review, executor
+reconciliation, legacy-input rejection, staged parent/continuations, and native
+and PDF Form 8949 code-Z projections. The source module then gained a complete
+paired-return/export test and passed **2/0**. Its original test overlaps the
+first run: the combined coverage is **31 distinct passing tests**, not 32.
+
+The new public-graph check executes a 75,000 wage/11,000 withholding return both
+without a QOF ledger and with three unchanged holding ledgers: 50,000 long-term,
+50,000 original short-term, and 20,000 short-term plus 30,000 long-term deferred
+gain. Every Form 1040 pending field equals its baseline; total tax remains
+7,955. Each of the three complete pending graphs reaches the specific annual
+Form 8997 document rejection in both real exporters, for six verified
+rejections. There are no current elections or inclusion events in those cases.
+This does not establish the historical gain character or issuer authenticity.
+
+The grouped gate also checks all-four-part continuation retention across ten
+supplemental pages, the five-row no-continuation boundary, changed projection
+and identity rejection, code-Z blank sale columns, and unmatched/altered
+Form 8949/Schedule D rows. These are computational and PDF-text checks; no new
+visual-review pages or full-return XSD passes are counted. The October 7 staged
+component XSD and visual observations remain historical evidence.
+
+Logs and provenance are retained under
+`.state/research/form8997-route-audit-2026-10-10/`. No production route, registry
+or guard changed. The source PDFs in the unit gate are labeled synthetic
+fixtures; file binding is not prior IRS acceptance or issuer authentication.
+Existing deferred item 34 (the current-event fixture's direct-sale conflict)
+remains untouched. Broader source/character/election facts, final tax joins,
+registered attachments, business rules and ATS acceptance remain open.
