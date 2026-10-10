@@ -1,3 +1,4 @@
+import { buildAtsCheckLedger } from "./ty2025-check-ledger.ts";
 import { assertEquals } from "@std/assert";
 import {
   ATS_REPLAY_TARGETS,
@@ -42,6 +43,33 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
   assertEquals(report.denominator, 54);
+  const ledger = buildAtsCheckLedger(report);
+  assertEquals(ledger.count, 111);
+  assertEquals(ledger.byKind, {
+    calculation: {
+      count: 54,
+      counts: { different: 12, match: 41, "not-produced": 1 },
+    },
+    "document-copy": {
+      count: 56,
+      counts: { missing: 12, "not-evaluated": 34, present: 10 },
+    },
+    "binary-attachment": { count: 1, counts: { missing: 1 } },
+  });
+  assertEquals(ledger.calculationAnchor.matching, 36);
+  assertEquals(ledger.calculationAnchor.evaluated, 48);
+  assertEquals(ledger.calculationAnchor.notProduced, 1);
+  assertEquals(ledger.calculationAnchor.provisional, 5);
+  assertEquals(ledger.calculationAnchor.percent, 75);
+  assertEquals(ledger.attachmentRequirementsNotInventoried.length, 7);
+  // Distinct W2 copy identities survive; blocked copies are not labeled missing.
+  assertEquals(
+    ledger.rows.filter((r) => r.id.startsWith("1040-01:document:W-2:")).map((
+      r,
+    ) => r.result),
+    ["not-evaluated", "not-evaluated"],
+  );
+
   const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
   assertEquals(transfer.preparation.attachments, []);
   assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);
