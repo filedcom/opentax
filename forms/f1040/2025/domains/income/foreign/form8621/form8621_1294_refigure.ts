@@ -28,11 +28,6 @@ export function applyForm8621QefRefigure(
 ): ExecuteResult {
   const elected = deferredHoldings(inputs);
   if (elected.length === 0) return full;
-  if (inputs.form8839 !== undefined && inputs.f8863 !== undefined) {
-    throw new Error(
-      "Form 8621 Election B needs a combined education and adoption counterfactual",
-    );
-  }
   if (inputs.form8990 !== undefined) {
     throw new Error(
       "Form 8621 Election B needs a settled full-return counterfactual before Form 8990",

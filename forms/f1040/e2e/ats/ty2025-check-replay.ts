@@ -111,6 +111,48 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
         "Schedule F pp.13–14:8,111 less4,860",
       ),
       target(
+        "schedule_d.print_line7_st_total",
+        1988,
+        TargetBasis.Derived,
+        "Schedule D p.9:14,222 proceeds less12,234 basis",
+      ),
+      target(
+        "schedule_d.print_line15_lt_total",
+        9725,
+        TargetBasis.Derived,
+        "Schedule D p.9:14,211 proceeds less4,486 basis",
+      ),
+      target(
+        "f1040.line7_capital_gain",
+        11713,
+        TargetBasis.Derived,
+        "Schedule D p.9:1,988 short-term plus9,725 long-term",
+      ),
+      target(
+        "schedule1.line5_schedule_e",
+        11061,
+        TargetBasis.Derived,
+        "Form4835 p.17:17,035 income less5,974 expenses",
+      ),
+      target(
+        "schedule1.line1_state_refund",
+        3110,
+        TargetBasis.Printed,
+        "Cover sheet p.1 taxable state refund",
+      ),
+      target(
+        "f1040.line8_additional_income",
+        17422,
+        TargetBasis.Derived,
+        "Cover/Sch F/Form4835:3,110 refund +3,251 farm +11,061 rental",
+      ),
+      target(
+        "f1040.line9_total_income",
+        72235,
+        TargetBasis.Derived,
+        "43,100 taxable pension +11,713 capital gain +17,422 additional income",
+      ),
+      target(
         "schedule2.line4_se_tax",
         827,
         TargetBasis.Derived,
@@ -124,7 +166,25 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
       ),
     ],
   },
-  { id: "1040-04", targets: wage(36014, 4581) },
+  {
+    id: "1040-04",
+    targets: [
+      ...wage(36014, 4581),
+      // One printed solar source; this checks its deposit, not allowed credit.
+      target(
+        "f3800.f8835_credit_entries.0.credit_amount",
+        13200,
+        TargetBasis.Printed,
+        "Form3800 line1f; source eligibility and line placement unresolved",
+      ),
+      target(
+        "f3800.f8936_new_vehicle_credit.credit_amount",
+        130,
+        TargetBasis.Printed,
+        "Form3800 line1y; Form8936 business computation blank",
+      ),
+    ],
+  },
   {
     id: "1040-05",
     targets: [

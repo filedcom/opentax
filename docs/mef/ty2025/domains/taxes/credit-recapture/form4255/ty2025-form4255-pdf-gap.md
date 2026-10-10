@@ -67,3 +67,29 @@ files. A staged EP-only PDF was rendered and all three retained Part I pages
 were visually inspected, including the line 1d/2a entries and line 3 totals.
 The native positive-export gate still rejects unauthenticated source bytes, so
 this direct descriptor review is not a filed full-return or XSD validation.
+
+## October 10 public calculation and final export boundary
+
+The grouped Forms3115/4255/8611 component batch passes32 tests; ten new public
+checks also pass (42 distinct passes, zero failures/ignored). Form4255's own
+input/native/PDF modules account for10 component tests. Four public Form4255
+cases retain75,000 W2 wages and baseline tax7,955:
+
+| Case | Schedule2 destination | Added tax | Final1040 tax |
+| --- | --- | ---: | ---: |
+| EP-only line2a | line1e300 + line1f60 | 360 | 8,315 |
+| line2a recapture | line1d1,500 + line1e300 + line1f60 | 1,860 | 9,815 |
+| line1d recapture | line19 1,500 + line1e300 + line1f60 | 1,860 | 9,815 |
+| line1d EP, reasonable cause | line1e300; line1f0 | 300 | 8,255 |
+
+Both final exporters reject all four candidates with their respective missing
+source-authentication errors (eight assertions). The source metadata is
+synthetic; a consistent amount and SHA256-shaped string do not prove an IRS
+notice or accepted prior return. The PDF projection test verifies three
+retained PartI pages from the five-page template and rejects unsupported
+recapture. There is no new rendered-page or full-return XSD claim.
+
+See the [grouped route checkpoint](../../../income/business/form3115/ty2025-form3115-route-audit.md)
+and `.state/research/method-recapture-routes-2026-10-10/` logs. This supersedes
+older authored/unrun inventory wording but leaves the source-authentication,
+PartsII/III and broader recapture tasks open. No production code changed.

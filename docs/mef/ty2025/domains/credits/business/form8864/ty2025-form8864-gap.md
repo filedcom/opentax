@@ -48,3 +48,26 @@ A source-backed full-return fixture exposed two assembly defects: `IRS8864` dema
 The `single-agri-biodiesel-producer-credit` review fixture executes $75,000 wages plus $10,000 producer sales and $500 credit income. The $500 allowed credit reaches Schedule 3 and Form 1040 line 20; Form 6251 line 3 subtracts $500 for AMT. The whole return validates against the local TY2025 v5.4 XSD. Its 23-page filled packet was rendered and visually inspected page by page, including all nine Form 3800 pages, owner identity, Schedule C income, SE deduction, QBI and refund totals. Form 8864 line 8 prints 2,500 gallons at $0.20 and $500 on lines 8/9/11. Native/PDF/source focused checks passed 27/27; additional wrong allocation and AMT negatives are included in the integrated check.
 
 Artifacts are ignored local evidence under `.state/research/ty2025-filled-pdf-review/2026-10-05-form8864-direct-producer/`. XML SHA256: `5d87e817e289b5881b6ef39c6d7e1f67018eecc75c1c219cee1289e042fa58c2`; PDF SHA256: `aaca5fc825a3c2d586d23620851a3a1d68131a6f9b445ec402da00c927f60a7a`. Page images are `/tmp/opentax-8864-review/page-01.png` through `page-23.png`. These synthetic facts and packet checks do not authenticate producer records, resolve first-half MeF business rules, or establish ATS acceptance. Wider routes remain open.
+
+## October 10 complete producer export replay
+
+The current fuel-credit group passes21 tests:17 source/native/PDF component
+checks across Forms6478/8864, three public Form6478 checks and one complete
+Form8864 producer replay. The latter recomputes the retained two-lot2,500-gallon
+fixture, confirms500 source/allowed credit and negative500 AMT adjustment,
+validates the full return against TY2025 v5.4 XSD and renders an actual23-page
+PDF. This reruns the earlier packet route; it adds no newly reviewed visual
+pages and does not remove earlier presentation qualifications.
+
+Eight changed pending returns reject both preparation/native assembly and
+actual PDF building (16 assertions): five extra gallons (a1-dollar rounded
+credit change), wrong producer EIN, credit deposit500.01, AMT deposit-500.01,
+applied credit499, AMT deposit-499, wrong proprietor SSN, and ScheduleC income
+inclusion499. The fractional deposits specifically verify that inconsistent
+source deposits cannot be concealed by printed whole-dollar rounding.
+
+Evidence: `.state/research/fuel-credit-routes-2026-10-10/producer.log` and the
+related component/public logs. No production code changed. The remaining
+first-half rule conflict, producer variants, fiscal-year allocations, transfers
+and source-byte authenticity remain open; this checkpoint does not claim
+current IRS business-rule approval or ATS acceptance.

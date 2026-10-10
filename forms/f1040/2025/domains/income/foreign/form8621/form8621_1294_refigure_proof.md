@@ -316,3 +316,118 @@ Changing Schedule 3 line 6a by one dollar makes both native and PDF export
 reject the packet on independent full source replay. The eight focused
 education/business packet and conflict cases passed 8/0 in
 `/tmp/opentax-form8621-qef-business-final-oct6.log`.
+
+## October 10 combined education and adoption credit checkpoint
+
+The public Election B route now settles education first and adoption second in
+both the actual and without-QEF graphs. Previously, the combination was rejected
+before either graph could be reconciled. The existing runners still validate
+actual education MAGI and the credit-limit worksheet, retained adoption sources
+and required attachments; only the hypothetical graph recalculates the source
+worksheet operands. Both exporters replay the complete retained sources.
+
+The [2025 Form 8839 line 17 worksheet](https://www.irs.gov/instructions/i8839)
+subtracts Schedule 3 education credit before limiting adoption credit. The
+[Form 8863 credit-limit worksheet](https://www.irs.gov/instructions/i8863) does
+not subtract adoption credit. [Form 8621 lines 9a–9c](https://www.irs.gov/instructions/i8621)
+require the corresponding full-return tax difference. These support composing
+the two existing stages in that order, rather than subtracting QEF income from
+an already settled taxable-income figure.
+
+Both synthetic sources combine an existing $6,000 taxable-scholarship/AOTC
+packet, $11,000 reviewed adoption expenses and $2,000 undistributed ordinary
+QEF earnings. The $11,000 expenses split into $5,000 refundable and $6,000
+nonrefundable adoption credit. Issuer, school and decree evidence remains
+synthetic contract evidence, not external authentication.
+
+| Case | Wages | Actual / without QEF AGI | Actual / without QEF tax before credits | Education nonrefundable actual / without | Adoption nonrefundable actual / without | QEF 9a / 9b / 9c | Filed refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| AOTC phaseout | 75,000 | 83,000 / 81,000 | 9,715 / 9,275 | 1,050 / 1,350 | 6,000 / 6,000 | 2,665 / 1,925 / 740 | 14,775 |
+| Hypothetical adoption limit | 66,000 | 74,000 / 72,000 | 7,735 / 7,295 | 1,500 / 1,500 | 6,000 / 5,795 | 235 / 0 / 235 | 17,000 |
+
+The single-filer tax values independently agree with the [2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)
+rows beginning 67,250, 65,250, 58,250 and 56,250 (PDF pages 8–10).
+The first AOTC phaseout fractions are 0.7 and 0.9, yielding refundable amounts
+700 and 900; the second case retains 1,000. Only actual refundable credits enter
+the filed refund, with 11,000 withholding and 5,000 refundable adoption credit.
+The hypothetical unused adoption amount does not create a filed carryforward.
+
+Two new actual 11-page packets pass full local TY2025v5.4 Return1040 XSD.
+All 22 pages were rendered and reviewed: Form1040 (2), Schedule1 and statement
+(3), Schedule3 (1), Form8621 (2), Form8839 (1), Form8863 (2) per packet.
+Amounts, identities, elections and ordering reconcile. The hypothetical-limit
+packet leaves calculated/native-zero Form1040 line24 blank, repeating deferred76;
+this qualification is preserved without repair. The flattened PDFs have no
+remaining AcroForm fields or widgets. Required reviewed adoption attachments
+are supplied to native preparation; these 22 pages count the generated tax
+packet, not a new review of the synthetic evidence attachments.
+
+The grouped QEF/adoption/return-arithmetic gate passes 52/0. After adding the
+actual-carryforward boundary assertion, the final focused gate passes 3/0, including assertions on both counterfactual
+credit amounts and refund arithmetic, eight native/PDF altered-credit rejections,
+two stale-MAGI public rejections and one actual-carryforward rejection. The
+ordinary actual-return Form8839/Form8621 carryforward guard remains intact.
+The existing stale-education test now checks the combined route's source guard
+instead of expecting the removed blanket rejection.
+
+Private source/pending/XML/PDF snapshots, logs, XSD results and visual hashes:
+`.state/research/form8621-combined-2026-10-10/`. No IRS transmission, business-rule
+acceptance or externally authenticated source is claimed. Form8990 composition,
+nonadditive multi-QEF allocation and other original parent boundaries remain
+open; PartII D–H and other deferred scope remain untouched.
+
+## October 10 current-year adoption carryforward with Election B
+
+The existing current-year adoption ledger now composes with the source-replayed
+Election B route. The actual return retains its unused nonrefundable credit;
+the hypothetical without-QEF return neither emits a carryforward record nor
+changes the actual one. Form8621 without Election B remains under its prior
+combination guard. This supersedes the actual-carryforward rejection in the
+preceding combined-credit checkpoint only for the Election B route.
+
+| Synthetic case | AGI | Tax before credits | Education credit | Adoption used | Actual unused | Hypothetical adoption used | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Adoption + QEF | 52,000 | 4,115 | 0 | 4,115 | 1,885 | 3,875 | 20,000 |
+| Education + adoption + QEF | 72,500 | 7,405 | 1,500 | 5,905 | 95 | 5,465 | 17,000 |
+
+Both returns contain 2,000 undistributed QEF ordinary earnings, 11,000 reviewed
+adoption expenses and 5,000 refundable adoption credit. The second also has
+6,000 taxable scholarship income and 1,000 refundable AOTC. Withholding is
+15,000/11,000. Actual and hypothetical total tax are zero, so QEF lines9a–9c
+are all zero; unused adoption credit is not a second tax deferral.
+The [2025 single-filer Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)
+independently supplies 4,115 at taxable36,250 and 7,405 at56,750; the second
+hypothetical tax is6,965 at54,750. Subtracting its1,500 education credit gives
+5,465 adoption capacity, rather than the actual5,905.
+
+The existing ledger retains taxpayer/child SSNs, decree and expense references,
+2025 origin, 2026–2030 carry years and status `computed_unfiled`. These are
+current calculations, not accepted-filing evidence or a next-year import.
+The [Form8839 carryforward instructions](https://www.irs.gov/instructions/i8839)
+remain the source for unused nonrefundable credit; synthetic records do not
+establish authentic decrees or expense payment.
+
+Both direct public-return exports pass full local TY2025v5.4 XSD. Their9/11-page
+PDFs have no remaining AcroForm fields/widgets; all20 pages were rendered and
+reviewed. Source, Form8839, Schedule3, QEF and refund totals agree. Both Form1040
+zero-tax fields are blank, repeating deferred76 without repair. Source evidence
+attachments are supplied to preparation, but are not counted as newly reviewed
+packet pages.
+
+The grouped QEF/adoption/return-arithmetic gate passes55 tests with zero failures
+or ignored cases; the two focused tests also pass. Ten altered/missing carry ledgers reject at both
+native and PDF boundaries (20 assertions): substituting the hypothetical
+balance or use, changing the taxpayer, claiming accepted status, or removing
+the record. Each hypothetical graph is separately checked for its smaller
+used credit and absence of a carry record.
+
+A separate persistence probe serializes and reloads the pending graph, then
+both exporters reject full source replay in both cases. The original failure
+log and four explicit rejection assertions remain retained as new deferred150.
+This is **direct in-memory export evidence**, not pending-JSON reload support;
+no saved-return CLI behavior was tested or inferred. No normalization or replay
+repair was made. The broad readiness and carryforward tasks stay open.
+
+Evidence: `.state/research/form8621-carry-2026-10-10/`, including synthetic source,
+pending, hypothetical graph, XML, PDFs, original persistence failure, test logs,
+XSD validation and visual hashes.

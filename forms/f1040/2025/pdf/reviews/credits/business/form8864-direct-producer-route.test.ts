@@ -6,10 +6,11 @@ import {
 } from "@std/assert";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { PDFDocument } from "pdf-lib";
+import { buildPdfBytes } from "../../../builder.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import {
   directAgriBiodieselPending,
-  directAgriBiodieselSource,
+  type directAgriBiodieselSource,
 } from "../../../../../nodes/inputs/credits/business/f8864/fixture.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { form8864Pdf } from "../../../forms/credits/business/f8864.ts";
@@ -85,6 +86,44 @@ Deno.test("direct Form 8864 producer source reaches full return, AMT, native and
     const changed of [
       {
         ...result.pending,
+        f8864: {
+          ...source,
+          lots: source.lots.map((lot, index) =>
+            index === 0
+              ? {
+                ...lot, // Five gallons change the rounded credit by one dollar.
+                gallons_sold: lot.gallons_sold + 5,
+              }
+              : lot
+          ),
+        },
+      },
+      {
+        ...result.pending,
+        f8864: { ...source, producer_ein: "111111111" },
+      },
+      {
+        ...result.pending,
+        f3800: {
+          ...result.pending.f3800,
+          f8864_direct_producer_credit: {
+            ...(result.pending.f3800.f8864_direct_producer_credit as Record<
+              string,
+              unknown
+            >),
+            credit_amount: 500.01,
+          },
+        },
+      },
+      {
+        ...result.pending,
+        form6251: {
+          ...result.pending.form6251,
+          line3_form8864_income_exclusion: -500.01,
+        },
+      },
+      {
+        ...result.pending,
         f3800: { ...result.pending.f3800, form8864_applied_credit: 499 },
       },
       {
@@ -107,5 +146,6 @@ Deno.test("direct Form 8864 producer source reaches full return, AMT, native and
     ]
   ) {
     await assertRejects(() => f1040_2025.prepareReturn(changed, base.filer));
+    await assertRejects(() => buildPdfBytes(changed, base.filer));
   }
 });

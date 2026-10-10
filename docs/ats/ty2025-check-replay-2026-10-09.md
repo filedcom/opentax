@@ -4,7 +4,7 @@ The eight retained partial Form 1040 fixtures were replayed through the public r
 
 **Selected observations: 41 match / 12 differ / 1 not produced, out of 54 (76% matching).** These are calculation checks chosen from retained printed amounts, source arithmetic and provisional interpretations. They are not an enumerated IRS business-rule set or a representative sample; matching values do not prove native/PDF output or accepted transmission.
 
-**Updated engineering estimate: about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not41/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
+**Historical engineering estimate (superseded by the [October10 check ledger](./ty2025-check-ledger-2026-10-10.md)): about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not41/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
 
 | Scenario | Match | Different | Not produced | Public/native preparation | Required source copies |
 | --- | ---: | ---: | ---: | --- | ---: |
