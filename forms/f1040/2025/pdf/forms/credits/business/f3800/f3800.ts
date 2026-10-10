@@ -66,7 +66,7 @@ import {
   projectForm3800PartIVFields,
 } from "./f3800_print_projection.ts";
 import {
-  projectForm3800PartVIFields,
+  projectForm3800PartVIPages,
   projectForm3800PartVPages,
 } from "./f3800_detail_projection.ts";
 
@@ -1757,13 +1757,14 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     const partVPages = projectForm3800PartVPages(prepared);
+    const partVIPages = projectForm3800PartVIPages(prepared);
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),
       ...projectForm3800PartIIIFields(prepared),
       ...projectForm3800PartIVFields(prepared),
       ...partVPages[0],
-      ...projectForm3800PartVIFields(prepared),
+      ...partVIPages[0],
     };
     for (const key of Object.keys(projected)) {
       if (!paths.has(key)) {
@@ -1777,16 +1778,28 @@ export const form3800Pdf: PdfFormDescriptor = {
         partVContinuation: index + 2,
         partVPageCount: partVPages.length,
       })),
+      ...partVIPages.slice(1).map((page, index) => ({
+        ...page,
+        partVIContinuation: index + 2,
+        partVIPageCount: partVIPages.length,
+      })),
     ];
   },
   pageIndices(fields) {
-    return fields.partVContinuation ? [7] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    if (fields.partVContinuation) return [7];
+    if (fields.partVIContinuation) return [8];
+    return [0, 1, 2, 3, 4, 5, 6, 7, 8];
   },
   async decoratePages(document, pages, fields, filer) {
-    if (!fields.partVContinuation || !filer) return;
+    if ((!fields.partVContinuation && !fields.partVIContinuation) || !filer) {
+      return;
+    }
+    const part = fields.partVContinuation ? "V" : "VI";
+    const continuation = fields.partVContinuation ?? fields.partVIContinuation;
+    const count = fields.partVPageCount ?? fields.partVIPageCount;
     const page = pages[0];
     const label =
-      `Form 3800 Part V continuation ${fields.partVContinuation} of ${fields.partVPageCount} | ${filer.nameLine1} | ${filer.primarySSN}`;
+      `Form 3800 Part ${part} continuation ${continuation} of ${count} | ${filer.nameLine1} | ${filer.primarySSN}`;
     const font = await document.embedFont(StandardFonts.Helvetica);
     const size = Math.min(
       7,
@@ -1795,7 +1808,7 @@ export const form3800Pdf: PdfFormDescriptor = {
     page.drawText(label, { x: 36, y: page.getHeight() - 12, size, font });
   },
   async appendSupplementalPages(document, fields, filer, all, prepared) {
-    if (fields.partVContinuation) return;
+    if (fields.partVContinuation || fields.partVIContinuation) return;
     const entries = all?.f3800
       ? f3800InputSchema.parse(all.f3800).carryforward_vintages ?? []
       : [];

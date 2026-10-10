@@ -736,3 +736,15 @@ prepared EIN134 qualify this evidence; authenticity, wider routes and IRS
 acceptance remain unproved. Main parent tasks remain open.
 
 Related regression gate:390 passed/0 failed (6m59s).
+
+## October 10 Part VI carryover continuation component checkpoint
+
+Form3800 PartVI now paginates its 35-row detail table and labels continuation
+copies without duplicating carryover histories. Related regression315/0; final
+focused5/0. Five focused tests cover
+35/36/70/71 rows and a mixed 71-source case, with 24 source/detail rejections.
+One parent and36 native computations pass component XSD; all17 component PDF
+pages were rendered and reviewed. This adds no complete-return count and does
+not open the authenticated-prior-return export guard. Deferred26/76 and the
+52 main TODOs/135 deferred items remain unchanged. See the
+[checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md).

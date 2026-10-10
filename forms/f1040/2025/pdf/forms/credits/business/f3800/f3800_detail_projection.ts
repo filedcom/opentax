@@ -12,6 +12,7 @@ import { reconcileForm3800CarryforwardLinks } from "../../../../../mef/forms/cre
 import {
   assertForm3800PrintableDetailCapacity,
   FORM3800_PRINTED_PART_V_ROWS,
+  FORM3800_PRINTED_PART_VI_ROWS,
 } from "./f3800_capacity.ts";
 import { form3800PartVFields, form3800PartVIFields } from "./f3800_fields.ts";
 
@@ -188,9 +189,9 @@ export function projectForm3800PartVFields(
 }
 
 /** Part VI's nine physical columns from typed carryover vintages. */
-export function projectForm3800PartVIFields(
+export function projectForm3800PartVIPages(
   parts: Form3800DocumentParts,
-): Readonly<Record<string, string | number>> {
+): ReadonlyArray<Readonly<Record<string, string | number>>> {
   assertForm3800PrintableDetailCapacity(parts);
   reconcileForm3800CarryforwardLinks(
     parts.lines,
@@ -215,7 +216,7 @@ export function projectForm3800PartVIFields(
   if (details.some((detail) => lineOrder.indexOf(detail.row.line) < 0)) {
     throw new Error("Form 3800 printable Part VI has an unsupported line");
   }
-  const fields: Record<string, string | number> = {};
+  const pages: Array<Record<string, string | number>> = [{}];
   const byLine = new Map<string, {
     keys: string[];
     before: number;
@@ -227,7 +228,9 @@ export function projectForm3800PartVIFields(
     latestYear: number;
   }>();
   for (const [index, detail] of details.entries()) {
-    const pdf = form3800PartVIFields(index + 1);
+    const pageIndex = Math.floor(index / FORM3800_PRINTED_PART_VI_ROWS);
+    const fields = pages[pageIndex] ?? (pages[pageIndex] = {});
+    const pdf = form3800PartVIFields(index % FORM3800_PRINTED_PART_VI_ROWS + 1);
     fields[pdf.a] = detail.row.line;
     const total = byLine.get(detail.row.line) ?? {
       keys: [],
@@ -338,5 +341,16 @@ export function projectForm3800PartVIFields(
       );
     }
   }
-  return fields;
+  return pages;
+}
+
+/** Single-page callers must not silently lose carryover detail. */
+export function projectForm3800PartVIFields(
+  parts: Form3800DocumentParts,
+): Readonly<Record<string, string | number>> {
+  const pages = projectForm3800PartVIPages(parts);
+  if (pages.length !== 1) {
+    throw new Error("Form 3800 Part VI needs continuation pages");
+  }
+  return pages[0];
 }

@@ -4,7 +4,7 @@ import type { Form3800DocumentParts } from "../../../../../mef/forms/credits/bus
 export const FORM3800_PRINTED_PART_V_ROWS = 15;
 export const FORM3800_PRINTED_PART_VI_ROWS = 35;
 
-/** Reconcile current-source counts; Part VI still has no continuation. */
+/** Reconcile current-source counts before paginating detail pages. */
 export function assertForm3800PrintableDetailCapacity(
   parts: Form3800DocumentParts,
 ): void {
@@ -27,12 +27,5 @@ export function assertForm3800PrintableDetailCapacity(
         `Form 3800 printable Part V line ${row.line} source count does not reconcile`,
       );
     }
-  }
-  const partVIBreakdowns = parts.carryoverDetails.length +
-    parts.passiveCarryoverDetails.length;
-  if (partVIBreakdowns > FORM3800_PRINTED_PART_VI_ROWS) {
-    throw new Error(
-      `Form 3800 Part VI has ${partVIBreakdowns} breakdown rows; the nine-page PDF prints only ${FORM3800_PRINTED_PART_VI_ROWS}`,
-    );
   }
 }

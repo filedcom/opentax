@@ -1122,3 +1122,45 @@ families, split production across the fourth anniversary, PWA/bonus/transfer,
 passive combinations, carryover inventories/ledgers, source authenticity,
 deferred presentation and IRS acceptance remain open. The broad Form3800 and
 Form8835 parent TODOs remain unchecked.
+
+## October 10 Part VI carryover continuation component checkpoint
+
+The Form 3800 PDF descriptor now paginates Part VI after each 35 rows,
+retaining every source year, entity, passive/nonpassive amount, tax use and
+unused balance. Continuations use only official page 9 and identify the filer,
+part and continuation count. The history statement is appended once, with
+neither Part V nor Part VI continuation instances duplicating it. Existing
+source-key, computation-ID, vintage and Part IV aggregate checks still run
+before pagination; the single-page API rejects overflow instead of truncating.
+
+The related regression passes315 tests with no failures; the final focused
+run passes5 tests. Five focused tests cover35/36/70/71 rows and at a mixed 71-row inventory;
+24 omitted, reordered, duplicate-ID, invalid-year or changed-use mutations
+reject. The component joins 36 synthetic nonpassive histories with 35 passive
+sources: $6,130 nonpassive available, $7,000 before passive limits/$0 after,
+$1,000 used against tax, and $5,130 nonpassive carryforward. All 36 native
+computation documents and the IRS3800 parent validate separately against the
+cached TY2025 v5.4 schemas. An independent Decimal/XML/PDF check verifies the
+36 reference IDs and histories, 71 printed detail rows, source years/EINs,
+amounts, and continuation labels.
+
+The component PDF has 17 reviewed pages: nine parent pages, six history pages,
+and two Part VI continuations. Every final page matches the reviewed rendered
+pixels; the reopened static PDF has no form fields or widgets. Existing
+future_todo26 skipped Section B values and future_todo76 blank zero amounts
+remain unchanged. No new complete return or ATS success is counted.
+
+This is component evidence, not a positive carryforward filing route. Native
+preparation still requires authenticated prior-return evidence, and partial
+same-year source allocation remains guarded. The first synthetic fixture hit
+that allocation guard; the retained fixture uses one oldest vintage for the
+partial use. A second fixture correction uses the production 30-character
+ID generator; no ID-generation or tax-calculation behavior changed. Source
+and prior-return authentication, revised histories, passive filing combinations,
+ledgers, business rules and ATS acceptance keep the existing parent tasks open.
+
+Evidence: `.state/research/form3800-part-vi-2026-10-10/` contains the source
+histories, prepared component parts, 37 XML documents, XSD log, PDF, 17 rendered
+pages/five reviewed contact sheets, independent verifier and results, fixture
+correction logs, focused/regression logs and a hash manifest. Instructions:
+[2025 Form 3800 Part VI](https://www.irs.gov/instructions/i3800).
