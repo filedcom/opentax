@@ -11,7 +11,10 @@ bound statements. Actual-cost domestic-content reviews now bind current/prior ce
 to wind/geothermal bonuses. Annual coal/statistical/brownfield community reviews now
 join location and capacity to both exports, including combined domestic bonuses.
 Reviewed2023/2024 construction can retain community status after annual eligibility expires.
-PWA increases, transfers, passive and fiscal-year branches remain guarded in the PDF. Source references do not authenticate
+Reviewed direct-compliance PWA payroll now binds Form7220 and increased-credit statements.
+Solar increases and domestic/community bonuses retain their solar production review and
+use these same qualification sources; the solar AC PDF row remains deferred136.
+Transfers, passive and fiscal-year branches remain guarded in the PDF. Source references do not authenticate
 external records. Historical paragraphs below retain their original context.
 
 The [2025 Form 8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf) prints
@@ -730,3 +733,50 @@ synthetic software/EFIN identities prove no authorization. Other facilities,
 owner/transfer/passive/fiscal-year routes, PWA corrections/cures/exceptions,
 authenticated carryovers, external source/signature authenticity and IRS acceptance
 remain open. The broad Form8835/Form3800 parents remain unchecked.
+
+## October 10 solar increases and combined bonuses
+
+Filer-owned solar production now joins the existing reviewed under-1-MW,
+early-construction and direct-PWA qualification sources, actual-cost domestic
+content and annual/construction-date energy-community reviews. Solar production,
+unrelated sales, pre-2025 construction, post-2021 service and the section48
+nonclaim remain required. Capacity qualification uses AC; the small case has
+999kW AC and1399kW DC. Domestic certifications identify a solar energy facility,
+with the same identity/content/hash checks as the existing facility routes.
+
+The [2025 Form8835 instructions](https://www.irs.gov/instructions/i8835) identify
+solar eligibility and the0.6-cent base rate, the three fivefold-increase routes,
+the two10% bonuses, and required statements. Seven complete returns cover
+physical-work and5%-cost starts, small AC capacity, base domestic credit,
+small/PWA combined bonuses, current-year repairs and two tax-limited facilities.
+Solar line1d and Form3800 allocations reconcile through final tax. Credits are
+660,6,000,3,000,3,000,72,360,3,000 and3,600; the72,360 pair uses23,049,
+leaving tax17. Every case also uses2,001 orphan credit; the other taxes range
+from17,066 to22,406.
+
+All seven returns pass the full TY2025v5.4 XSD. Independent Decimal credit/tax,
+native solar capacity and printed credit checks agree. Source mutations reject
+123 native and123 freshly hashed prepared-PDF variants;14 missing attachments
+reject. Local submission/container archives retain all14 original interactive
+attachments exactly and reject28 missing/altered archive variants. All2,099
+canonical source fields agree with2,099 linked widgets and populated appearances.
+Nothing was transmitted; synthetic package identifiers and unsigned source
+examples do not establish authorization, source/signature authenticity or IRS
+acceptance. The consolidated related gate passes95 typed tests with zero failures.
+
+All145 packet pages were rendered:70 unique pages were inspected on18 contact
+sheets, with75 exact pixel duplicates. Solar AC capacity remains on Other line12c
+instead of solar line12a in all eight copies, while native XML uses the correct
+solar field: newly recorded future item136, left deferred. Existing qualifications
+also remain:26 Form3800 skipped SectionB values,68 some EXAMPLE ALEX headers,
+76 blank Form8835 zero phaseout, and84 omitted native Form6251 line1a while
+PDF prints15,750. These are qualified observations, not clean filing approval.
+
+Evidence is retained in `.state/research/form8835-solar-increases-2026-10-10/`:
+source/pending records, full XML/PDF, original attachments, independent verifier,
+local archives, XSD logs, render/page hashes and typed log. Business evidence now
+totals98 complete XSD-valid returns/1,824 observed pages; PartVI remains separately
+37 component roots/17 pages. Bond-financed solar, other owners, transfers, passive
+and fiscal-year routes, broader source combinations, PWA cures/exceptions,
+authenticated carryovers and IRS acceptance remain open. The broad parents remain
+unchecked, and main TODO bodies are unchanged.

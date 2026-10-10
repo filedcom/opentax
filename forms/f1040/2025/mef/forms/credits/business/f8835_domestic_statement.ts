@@ -26,6 +26,8 @@ export function domesticStatementFields(item: F8835Item) {
     ProjectCategory: "Qualified facility under section 45",
     FacilityType: item.energy_type === "WIND"
       ? "Land-based wind facility"
+      : item.energy_type === "SOLAR"
+      ? "Solar energy facility"
       : "Geothermal facility",
     FacilityDescription: item.facility_description!,
     FacilityAddress: [

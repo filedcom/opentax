@@ -111,7 +111,8 @@ export function assertForm8835DomesticSource(item: F8835Item, filing = false) {
   const serviceYear = Number(item.facility_placed_in_service_date.slice(0, 4));
   if (
     !item.domestic_content_bonus || item.facility_owned_by_filer !== true ||
-    !["WIND", "GEOTHERMAL"].includes(item.energy_type) || item.is_fiscal_year ||
+    !["WIND", "GEOTHERMAL", "SOLAR"].includes(item.energy_type) ||
+    item.is_fiscal_year ||
     ![
       "none",
       "under_one_mw",

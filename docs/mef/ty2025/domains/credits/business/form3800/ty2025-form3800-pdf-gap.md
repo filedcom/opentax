@@ -1286,3 +1286,7 @@ carryover filing, source/signature authenticity or IRS acceptance is established
 ## October 10 direct PWA complete-return checkpoint
 
 [Reviewed payroll and Form7220](../form8835/ty2025-form8835-pdf-gap.md#october-10-direct-pwa-payroll-form-7220-and-complete-packets) add8 complete XSD-valid returns/191 observed pages, including both payroll continuations and combined domestic/community bonuses. The consolidated gate passes88 tests;153 native/153 prepared-PDF source mutations and48 attachment mutations reject. All20 original attachments survive local archives;40 missing/altered variants reject. Business evidence now totals91 complete returns/1,679 pages; PartVI remains separately37 roots/17 pages. Existing presentation qualifications, broader combinations, carryovers, source authenticity and IRS acceptance remain open.
+
+## October 10 solar increase and bonus packets
+
+[Seven solar returns](../form8835/ty2025-form8835-pdf-gap.md#october-10-solar-increases-and-combined-bonuses) add145 observed pages and pass full XSD, covering reviewed capacity, early construction, PWA and combined domestic/community bonuses through final tax. The related gate passes95 tests;123 native/123 freshly hashed PDF source mutations,14 missing attachments and28 altered/missing archive variants reject. All14 original attachments are retained. Business evidence totals98 returns/1,824 pages, with PartVI separately37 roots/17 pages. Deferred136 solar AC-row presentation and earlier26/68/76/84 qualifications remain; broader source/carryover/acceptance work is open.

@@ -304,7 +304,7 @@ export function assertForm8835EnergyCommunitySource(
   if (
     !item.energy_community_bonus || item.facility_owned_by_filer !== true ||
     item.is_fiscal_year ||
-    !["WIND", "GEOTHERMAL"].includes(item.energy_type) ||
+    !["WIND", "GEOTHERMAL", "SOLAR"].includes(item.energy_type) ||
     ![
       "none",
       "under_one_mw",

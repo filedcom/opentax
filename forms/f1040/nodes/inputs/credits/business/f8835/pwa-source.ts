@@ -447,7 +447,7 @@ export function assertForm8835PwaSource(item: F8835Item, filing = false) {
     (item.transfer_election_amount ?? 0) !== 0 ||
     item.registration_number ||
     item.existing_facility_expansion ||
-    !["WIND", "GEOTHERMAL"].includes(item.energy_type) ||
+    !["WIND", "GEOTHERMAL", "SOLAR"].includes(item.energy_type) ||
     item.facility_construction_start_date < "2023-01-29" ||
     item.facility_construction_start_date >= "2025-01-01" ||
     s.facility_description !== item.facility_description ||

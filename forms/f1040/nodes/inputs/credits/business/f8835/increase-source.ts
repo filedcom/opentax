@@ -72,7 +72,7 @@ export function assertForm8835SmallFacilitySource(
   if (
     item.increased_credit_reason !== "under_one_mw" ||
     item.facility_owned_by_filer !== true || item.is_fiscal_year ||
-    !["WIND", "GEOTHERMAL"].includes(item.energy_type) ||
+    !["WIND", "GEOTHERMAL", "SOLAR"].includes(item.energy_type) ||
     item.facility_placed_in_service_date < "2022-01-01" ||
     item.facility_construction_start_date < "2023-01-29" ||
     item.facility_construction_start_date >= "2025-01-01" ||

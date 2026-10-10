@@ -428,8 +428,7 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.facility_owner_business !== undefined ||
       item.existing_facility_expansion === true ||
       item.subject_to_passive_activity_limit ||
-      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
-      item.domestic_content_bonus || item.energy_community_bonus ||
+      item.is_fiscal_year ||
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
       (item.transfer_election_amount ?? 0) !== 0 ||
       item.registration_number !== undefined ||
