@@ -9,7 +9,8 @@ ongoing branch and draft PR for subsequent work. Preserve local audit records,
 evidence, and uncommitted changes while updating the checkout.
 
 The previous batch is merged in [PR #73](https://github.com/filedcom/opentax/pull/73).
-Continue on `codex/mef-readiness-ongoing-3`, based on `origin/main`
+Continue in [PR #74](https://github.com/filedcom/opentax/pull/74) on
+`codex/mef-readiness-ongoing-3`, based on `origin/main`
 commit `d65263134` after that merge. Use one ongoing draft PR for this branch
 and keep pushing subsequent work to it until the next authorized merge.
 Leave unrelated draft PRs outside this workflow.
