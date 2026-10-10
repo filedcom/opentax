@@ -1502,6 +1502,9 @@ export const form3800Pdf: PdfFormDescriptor = {
       const productionSources = source.f8835_credit_entries?.length || all.f8835
         ? form8835PdfSources(all, filer, prepared)
         : [];
+      const productionApplied = productionSources.length
+        ? Number(all.f3800.specified_credit_allowed)
+        : 0;
       const productionCredit = productionSources.reduce(
         (sum, source) => sum + source.lines.line15,
         0,
@@ -1583,8 +1586,8 @@ export const form3800Pdf: PdfFormDescriptor = {
         prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
         prepared.lines.line17 !== applied ||
         (prepared.lines.line30 ?? 0) !== productionCredit ||
-        (prepared.lines.line37 ?? 0) !== productionCredit ||
-        prepared.lines.line38 !== applied + productionCredit
+        (prepared.lines.line37 ?? 0) !== productionApplied ||
+        prepared.lines.line38 !== applied + productionApplied
       ) {
         throw new Error(
           "Form 3800 PDF orphan-drug K-1 sources differ from Part V and filed K-1s",

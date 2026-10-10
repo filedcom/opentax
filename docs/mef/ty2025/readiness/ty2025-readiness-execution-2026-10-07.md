@@ -6917,3 +6917,16 @@ blank-zero/name qualifications remain; no new discrepancy or future item.
 Tax formulas unchanged; no fresh benchmark claim. No parent closed and52 main/
 133 future bodies unchanged. Estimate remains about60%, uncertainty45–75%.
 Pushing this batch to single draft PR70.
+
+
+## October 10 tax-limited production-credit packets
+
+Compacted board learnings before code edits; 52 main TODO bodies and133 deferred
+items remain unchanged. Single-facility generated credit now reconciles separately
+from tax use in the mixed K-1 PDF route. Three new full returns pass XSD;49 reviewed
+pages cover20 K-1 rows/3 facilities/one continuation. Rejections42 native/42 PDF/15
+prepared; related gate109/0 after correcting Poppler PATH, final focused3/0.
+Evidence:`.state/research/form3800-production-limited-2026-10-10/`. Numeric/native
+code unchanged; estimate remains60% (45–75%). Wider sources, multi-facility partial
+allocation, ledgers, presentation qualifications and IRS acceptance remain open.
+Continue on draft PR70; no parent closed or future item implemented.

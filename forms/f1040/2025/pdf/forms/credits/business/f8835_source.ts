@@ -108,6 +108,23 @@ export function form8835PdfSources(
   const credits = return1040.form3800_source_credits;
   const finalized3800 = allPending.f3800 ?? {};
   const schedule3 = allPending.schedule3 ?? {};
+  // One facility is unambiguous only when it is the entire specified-credit
+  // inventory. Multiple partially used facilities still need a reviewed split.
+  const singleFacilityApplied = rows.length === 1 &&
+      prepared.carryoverRows.length === 0 &&
+      credits?.specifiedCredit === totalCredit
+    ? finalized3800.specified_credit_allowed
+    : totalCredit;
+  if (
+    typeof singleFacilityApplied !== "number" ||
+    !Number.isFinite(singleFacilityApplied) || singleFacilityApplied < 0 ||
+    singleFacilityApplied > totalCredit
+  ) {
+    throw new Error(
+      "Form 8835 PDF has invalid finalized production-credit use",
+    );
+  }
+  const appliedCredit = rows.length === 1 ? singleFacilityApplied : totalCredit;
   const currentRows = prepared.currentRows.filter((row) => row.line === "4e");
   const currentAmounts = prepared.currentAmounts.filter((row) =>
     row.line === "4e"
@@ -134,19 +151,20 @@ export function form8835PdfSources(
     currentAmounts.length !== 1 ||
     currentAmounts[0].nonpassiveCredit !== totalCredit ||
     currentAmounts[0].transferOutCredit !== 0 ||
-    currentAmounts[0].appliedCredit !== totalCredit ||
+    currentAmounts[0].appliedCredit !== appliedCredit ||
     sourceDetails.length !== rows.length ||
     filedDocumentIds?.length !== rows.length ||
     sourceDetails.some((detail, index) =>
       detail.credit !== rows[index].lines.line15 ||
-      detail.appliedCredit !== rows[index].lines.line15 ||
+      detail.appliedCredit !==
+        (rows.length === 1 ? appliedCredit : rows[index].lines.line15) ||
       (detail.transferOutCredit ?? 0) !== 0 ||
       detail.sourceDocumentId !== filedDocumentIds?.[index]
     ) ||
     new Set(filedDocumentIds).size !== rows.length ||
     currentRows[0].metadata.referenceDocumentId !==
       sourceDetails.map((detail) => detail.sourceDocumentId).join(" ") ||
-    prepared.lines.line37 < totalCredit ||
+    prepared.lines.line37 < appliedCredit ||
     finalized3800.allowed_credit !== prepared.lines.line38 ||
     finalized3800.specified_credit_allowed !== prepared.lines.line37 ||
     schedule3.line6a_total !== prepared.lines.line38 ||

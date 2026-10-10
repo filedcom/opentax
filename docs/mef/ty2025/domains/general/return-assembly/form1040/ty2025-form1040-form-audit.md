@@ -701,3 +701,14 @@ The [complete checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf
 retains arithmetic and qualified visual evidence. Partial production-credit
 use, wider source/eligibility branches, known presentation qualifications,
 authenticity and IRS acceptance remain open. No parent TODO is closed.
+
+
+## October 10 tax-limited production-credit packet checkpoint
+
+Three mixed K-1 and single-facility returns retain $30,000 Form 8835 credit while
+Form 3800 applies $23,049/$16,077 and Form 1040 reports $17 tax/$29,983 refund.
+All three pass XSD;49 packet pages were reviewed, including20 K-1 rows and one
+continuation. Source mutations reject42 native/42 fresh-PDF/15 prepared cases.
+See the [Form 3800 checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-tax-limited-production-credit-packet-checkpoint).
+Multiple-facility partial allocation, broader mixtures, carry ledgers, existing
+presentation qualifications, source authentication and IRS acceptance stay open.

@@ -230,3 +230,19 @@ The [complete checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-mixe
 retains arithmetic and qualified visual evidence. Partial production-credit
 use, wider source/eligibility branches, known presentation qualifications,
 authenticity and IRS acceptance remain open. No parent TODO is closed.
+
+
+## October 10 tax-limited production-credit packet checkpoint
+
+The [Form 3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-tax-limited-production-credit-packet-checkpoint)
+adds three full returns with one geothermal/wind facility and mixed K-1 credits.
+Form 8835 keeps its $30,000 generated credit while Form 3800 applies $23,049 or
+$16,077; all three returns reconcile to $17 tax/$29,983 refund. The PDFs now
+reconcile unambiguous single-facility tax use with no carryovers. Multiple
+partially used facilities still require a reviewed allocation before PDF export.
+
+All three returns pass XSD; 49 pages (28 unique, 21 pixel duplicates) were
+reviewed, including one K-1 continuation. Rejections:42 native/42 fresh-PDF/15
+prepared. Existing skipped-line/zero/name qualifications remain. Sources are
+synthetic; wider source/owner/election combinations, ledgers, authenticity,
+business rules and IRS acceptance remain open. Numeric/native code is unchanged.

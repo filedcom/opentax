@@ -949,3 +949,48 @@ future item was changed or implemented; neither parent is closed. Private
 evidence is retained at`.state/research/form3800-production-2026-10-10/` with
 public inputs, pending, prepared sources, XML/PDF, arithmetic/XSD results,
 page hashes, visual observations and test logs. Work stays on draft PR70.
+
+
+## October 10 tax-limited production-credit packet checkpoint
+
+The PDF source reconciliation now distinguishes a facility's generated credit from
+its finalized tax use when one facility is the complete current specified-credit
+inventory and there are no carryover rows. It preserves the full-use requirement
+for multiple facilities without a reviewed partial-use allocation. The mixed K-1
+Form 3800 PDF route reconciles line 30 to generated production credit and lines
+37/38 to allowed credit. Numeric and native calculation code is unchanged.
+
+Three public-return cases join 20 partnership/S-corporation K-1 sources to one
+geothermal or wind facility per return. Each facility has 5,000,000 kWh sold and
+$30,000 generated credit; source facts are synthetic structured records, not
+authenticated issuer bytes. Single-filer wages are $150,000, regular tax $25,067,
+TMT $16,094, and the rounded section 38(c) specified-credit ceiling is $25,050
+before subtracting ordinary credit use. The [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+distinguish generated Part III credit from amounts applied against Part II tax.
+
+| Case | K-1 credit / use | Production use / unused | Final tax / refund | Pages |
+| --- | --- | --- | --- | --- |
+| Two K-1s, geothermal | 2,001 / 2,001 | 23,049 / 6,951 | 17 / 29,983 | 16 |
+| Two mixed K-1s, wind | 20,001 / 8,973 | 16,077 / 13,923 | 17 / 29,983 | 16 |
+| Sixteen mixed K-1s, wind | 16,120 / 8,973 | 16,077 / 13,923 | 17 / 29,983 | 17 |
+
+All three complete XML returns pass the retained 2025v5.4 XSD. An independent
+Decimal-based verifier checks source amounts, native summaries, all 20 Part V
+K-1 rows, document references and Form 1040 totals. Reopened PDFs have no fields
+or widget annotations. All 49 pages were rendered; all 28 unique images were
+reviewed across seven sheets, with 21 exact pixel duplicates and one continuation.
+The cases reject 42 altered native inputs, 42 fresh-PDF inputs and 15 prepared
+packet mutations, including internally consistent but wrong production tax use.
+
+Evidence: `.state/research/form3800-production-limited-2026-10-10/`, including
+source inputs, pending graph, native parts, XML/PDF, XSD logs, independent verifier,
+page hashes and visual observations. Existing skipped Form 3800 lines 18–21,
+blank-zero and name-format qualifications remain deferred; no new clipping or
+lost source rows was observed. Multi-facility partial use, other credit mixtures,
+carryover ledgers, source authenticity, business rules and IRS acceptance remain
+open. No frozen parent task is closed and no future item is implemented.
+
+Validation:109 grouped typed tests pass (2m14s), plus final focused3/0. The
+initial group had107 passes and two missing-`pdftotext` environment failures;
+rerunning the same group with the installed Poppler directory on PATH passed.
+No numeric change or fresh benchmark claim.

@@ -15,6 +15,30 @@ import { projectForm3800PartVFields } from "../../../../pdf/forms/credits/busine
 import { fixture } from "./form3800_k1_inventory.fixture.ts";
 
 const cases = [
+  {
+    id: "production-limited-two-full",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    kwh: 5000000,
+  },
+  {
+    id: "production-limited-two-partial",
+    count: 2,
+    credit: 10000,
+    mixed: true,
+    facilities: 1,
+    kwh: 5000000,
+  },
+  {
+    id: "production-limited-sixteen-partial",
+    count: 16,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 5000000,
+  },
   { id: "two-full", count: 2, credit: 1000, mixed: false, facilities: 1 },
   { id: "two-partial", count: 2, credit: 10000, mixed: true, facilities: 1 },
   { id: "fourteen-full", count: 14, credit: 100, mixed: false, facilities: 2 },
@@ -60,10 +84,12 @@ function reviewedFixture(test: typeof cases[number]) {
   return {
     ...input,
     f8835: Array.from({ length: test.facilities }, (_, index) => ({
-      energy_type: index === 1 && test.mixed ? "WIND" : "GEOTHERMAL",
+      energy_type: (index === 1 || test.kwh) && test.mixed
+        ? "WIND"
+        : "GEOTHERMAL",
       subject_to_passive_activity_limit: false,
-      kwh_produced: 100000 + index * 10000,
-      kwh_sold: 100000 + index * 10000,
+      kwh_produced: (test.kwh ?? 100000) + index * 10000,
+      kwh_sold: (test.kwh ?? 100000) + index * 10000,
       facility_description: `Synthetic production facility ${index + 1}`,
       facility_us_address: {
         line1: `${10 + index} Plant Road`,
@@ -113,8 +139,13 @@ for (const test of cases) {
     // Single filer: 150,000 wages less 15,750 deduction; AMT exemption 88,100.
     const regular = 25067, tmt = 16094;
     const orphanAllowed = Math.min(total, regular - tmt);
-    const productionCredit = test.facilities === 1 ? 600 : 1260;
-    const allowed = orphanAllowed + productionCredit;
+    const productionCredit = test.kwh
+      ? test.kwh * 0.006
+      : test.facilities === 1
+      ? 600
+      : 1260;
+    const productionAllowed = Math.min(productionCredit, 25050 - orphanAllowed);
+    const allowed = orphanAllowed + productionAllowed;
     const partVCount = test.count + (test.facilities > 1 ? test.facilities : 0);
     assertEquals(pending.f1040.line16_income_tax, regular);
     assertEquals(pending.schedule3.line6a_total, allowed);
@@ -128,7 +159,7 @@ for (const test of cases) {
     assertEquals(parts.currentDetails.length, test.count + test.facilities);
     assertEquals(parts.lines.line17, orphanAllowed);
     assertEquals(parts.lines.line30, productionCredit);
-    assertEquals(parts.lines.line37, productionCredit);
+    assertEquals(parts.lines.line37, productionAllowed);
     assertEquals(
       parts.currentDetails.reduce((s, r) => s + r.credit, 0),
       total + productionCredit,
@@ -238,6 +269,30 @@ for (const test of cases) {
         ),
       Error,
     );
+    // Keep the aggregate and detail mutually consistent but contradict final tax.
+    const wrongProductionUse = {
+      ...parts,
+      currentDetails: parts.currentDetails.map((row) =>
+        row.line === "4e"
+          ? { ...row, appliedCredit: row.appliedCredit - 1 }
+          : row
+      ),
+      currentAmounts: parts.currentAmounts.map((row) =>
+        row.line === "4e"
+          ? { ...row, appliedCredit: row.appliedCredit - test.facilities }
+          : row
+      ),
+    };
+    assertThrows(
+      () =>
+        form3800Pdf.instances!(
+          pending.f3800,
+          filer,
+          pending,
+          wrongProductionUse,
+        ),
+      Error,
+    );
     const origins: PdfPageOrigin[] = [];
     const pdf = await buildPdfBytes(
       prepared.bundle.pending,
@@ -337,6 +392,7 @@ for (const test of cases) {
             expected: {
               total,
               productionCredit,
+              productionAllowed,
               orphanAllowed,
               regular,
               tmt,
@@ -345,7 +401,7 @@ for (const test of cases) {
             },
             rejectedNative: mutations.length,
             rejectedPdf: mutations.length,
-            rejectedPrepared: 4,
+            rejectedPrepared: 5,
           },
           null,
           2,
