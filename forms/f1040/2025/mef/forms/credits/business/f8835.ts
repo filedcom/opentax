@@ -1,3 +1,7 @@
+import {
+  assertForm8835DomesticSource,
+  form8835DomesticDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
 import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
 import {
   assertForm8835SmallFacilitySource,
@@ -138,6 +142,24 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     );
   }
 
+  assertForm8835DomesticSource(item, true);
+  if (item.domestic_content_source) {
+    const source = item.domestic_content_source;
+    if (
+      source.taxpayer_tin !== context.filer?.primarySSN ||
+      source.taxpayer_name !== context.filer?.fullName ||
+      context.attachmentSha256ByFileName?.[source.statement_file_name] !==
+        source.statement_sha256 ||
+      context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
+        form8835DomesticDescription(item.facility_description!) ||
+      (source.certification_year === 2025 &&
+        source.first_year_bonus_credit !== calculateForm8835(item).line10)
+    ) {
+      throw new Error(
+        "Form 8835 domestic certification differs from filer, bonus or retained attachment bytes",
+      );
+    }
+  }
   assertForm8835BondSource(item, true);
   assertForm8835SmallFacilitySource(item, true);
   assertForm8835EarlyConstructionSource(item, true);

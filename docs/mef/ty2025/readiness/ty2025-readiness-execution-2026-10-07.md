@@ -7114,3 +7114,73 @@ All52 main task bodies remain frozen/open and135 future items remain deferred;
 existing76 receives the repeated zero-line observation. Individual ATS estimate
 remains about60%, rough45–75%. Independent full gate eed449e70 remains live on
 unchanged tracked runtime; this checkpoint does not supply its terminal result.
+
+## October 10 Form8835 domestic-content source-to-archive checkpoint
+
+The original-facility, filer-owned wind/geothermal route now joins an actual
+manufacturer-cost review to the domestic-content bonus, required certification,
+Form3800 allocation and finalized return. This completes another bounded part
+of the existing Form8835/Form3800/source/attachment tasks; no broad parent is closed.
+
+[Notice2023-38](https://www.irs.gov/pub/irs-drop/n-23-38.pdf) sections3/5 supply
+the actual-cost and certification rules. The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+require the certification in the service year and a copy in subsequent years.
+[Notice2025-08](https://www.irs.gov/pub/irs-drop/n-25-08.pdf) provides an elective
+cost-table alternative; this implementation uses actual costs, not that election.
+The source inventory classifies structural steel/iron and manufactured products,
+retains manufacturer/origin/cost references, and records completeness and
+classification review. Structural steel/iron requires U.S. manufacturing except
+metallurgical additives. Product direct costs include whole U.S.-made products
+once, or U.S. components of other products; foreign-product assembly labor and
+installation costs do not enter the domestic numerator. Exact integer cents
+check the40% threshold without rounding a below-threshold percentage upward.
+The notice's180/300 example and a balanced one-cent miss below40% are tested.
+
+The review joins facility identity, full address, coordinates, service date,
+construction, production meter and unrelated sales. Certification year must
+match the2023–2025 service year. A2025 certificate's original bonus matches
+current line10;2023/2024 copies retain the original amount and digest plus a
+reviewed prior-filing reference. This latter reference is not authentication of
+a filed or accepted return. Each separate certification has14 checked PDF fields,
+including project kind, original bonus, authority-reviewed signer, date and
+perjury declaration. Final filer, description, distinct filename, digest and
+field content must agree. Original submitted bytes are preserved; the packet
+appends static review copies. PWA, elective cost tables, retrofit/expanded
+property, other energy types, offshore thresholds, transfers, passive and fiscal
+years remain outside this bounded domestic-content route. Community bonuses
+remain guarded. Source and signature authenticity and IRS acceptance are unproved.
+
+Four complete returns cover five facilities, five two-page domestic certifications
+and four separate increased-credit statements. Two2025 certificates and three
+retained2023/2024 copies cover base-rate, under-1-MW and early-construction claims.
+The complete returns have production credits660,3,300,33,000 and66,330;
+uses660,3,300,23,049 and23,049; and final taxes22,406,19,766,17 and17.
+The two limited cases retain their unused amounts on the current-credit detail
+rows; this does not establish an authenticated next-year carryforward.
+All four also use2,001 of reviewed current orphan-drug credits.
+
+Private evidence: `.state/research/form8835-domestic-2026-10-10/`.
+The matched `packaged/` source/XML/PDF/submission and outer ZIP set is canonical.
+All four complete returns validate against TY2025v5.4 Return1040.xsd.
+Independent integer/Decimal checks reconcile cost ratios, credit, tax, refund,
+attachment references, line9a/9b and monetary field rectangles. Seventy canonical
+certification fields have70 parent-linked widgets and nonempty appearances;
+all packet pages have no remaining form fields/widgets. All81 packet pages were
+observed:46 distinct pages on12 contact sheets and35 exact pixel duplicates,
+including10 domestic-certification pages. Declarations, dates, address, bonus
+and facility identity are legible. Known deferred Form3800 skipped lines26,
+Form8835 zero phaseout76, name order68 and native AMT84 remain qualifications;
+no clean whole-packet parity claim or deferred repair is made.
+
+The negative cases reject96 native preparations (including16 rehashed PDF-field
+substitutions),80 changed-source PDF attempts and four fresh PDF attempts without
+prepared attachments. Eight altered/missing attachment archives reject despite
+rebuilt ZIP CRCs. All nine original statement streams survive both archive
+layers. No transmission was attempted; synthetic software/EFIN values establish
+no authorization. Initial fixture-capacity, first-pass XML-ID and negative-cost
+expectation errors were corrected; failed logs remain in the evidence directory.
+A legacy PDF assertion was updated to the more specific missing-review error.
+
+Validation: five focused and55 related typed tests pass,60 distinct tests total,
+with zero failures/ignored. Changed-TypeScript formatting and `git diff --check` pass.
+The unchanged frozen full gate remains separate and has no terminal result.

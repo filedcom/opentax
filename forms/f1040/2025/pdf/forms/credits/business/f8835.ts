@@ -59,6 +59,7 @@ export const form8835Pdf: PdfFormDescriptor = {
     checked("under_one_mw", `${page1}.c1_3[0]`),
     checked("early_construction", `${page1}.c1_3[1]`),
     checked("no_increased_credit", `${page1}.c1_3[3]`),
+    checked("domestic_bonus", `${page1}.c1_4[0]`),
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
     checked("no_energy_community_bonus", `${page1}.c1_5[1]`),
     checked("dc_not_applicable", `${page1}.c1_6[1]`),
@@ -208,7 +209,8 @@ export const form8835Pdf: PdfFormDescriptor = {
             item.increased_credit_reason === "construction_before_2023_01_29",
           no_increased_credit: !oldFacility &&
             item.increased_credit_reason === "none",
-          no_domestic_bonus: true,
+          domestic_bonus: item.domestic_content_bonus,
+          no_domestic_bonus: !item.domestic_content_bonus,
           no_energy_community_bonus: true,
           dc_not_applicable: !solar,
           dc_solar: solar,

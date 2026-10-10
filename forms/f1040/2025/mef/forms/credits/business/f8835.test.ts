@@ -195,24 +195,29 @@ Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled
     increased_credit_statement_file_name: "Increase.pdf",
   };
   assertThrows(() => form8835.build({ f8835s: [increased] }));
-  const xml = form8835.build({
-    f8835s: [{
-      ...increased,
-      domestic_content_bonus: true,
-      domestic_content_statement_file_name: "Domestic.pdf",
-    }],
-  }, {
-    binaryAttachmentFileNames: ["Increase.pdf", "Domestic.pdf", "PWA.pdf"],
-    documentIdsByAttachmentFileName: { "Domestic.pdf": "BinaryAttachment2" },
+  assertThrows(
+    () =>
+      form8835.build({
+        f8835s: [{
+          ...increased,
+          domestic_content_bonus: true,
+          domestic_content_statement_file_name: "Domestic.pdf",
+        }],
+      }, {
+        binaryAttachmentFileNames: ["Increase.pdf", "Domestic.pdf", "PWA.pdf"],
+        documentIdsByAttachmentFileName: {
+          "Domestic.pdf": "BinaryAttachment2",
+        },
+      }),
+    Error,
+    "reviewed manufacturer costs",
+  );
+  const xml = form8835.build({ f8835s: [increased] }, {
+    binaryAttachmentFileNames: ["Increase.pdf", "PWA.pdf"],
   })[0];
   assertStringIncludes(
     xml,
     "<QualifiedFacilitiesIncrCrAmt>30000</QualifiedFacilitiesIncrCrAmt>",
-  );
-  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment2"');
-  assertStringIncludes(
-    xml,
-    "<DomesticContentBonusCreditAmt>3000</DomesticContentBonusCreditAmt>",
   );
 });
 

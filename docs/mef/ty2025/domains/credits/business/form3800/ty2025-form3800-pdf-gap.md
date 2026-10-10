@@ -1247,3 +1247,13 @@ Broader sources, authenticated carryovers, passive/transfer routes, business rul
 and IRS acceptance remain open.
 
 Final validation:12 focused plus82 related typed tests pass, zero failures/ignored;94 distinct tests in the two runs. Changed-TypeScript formatting and `git diff --check` pass. The frozen full gate remains separate and has no terminal result.
+
+## October 10 domestic-content source and certification checkpoint
+
+The [Form8835 actual-cost checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-actual-cost-domestic-content-and-certification-copies)
+adds four complete XSD-valid returns/81 observed pages, five facility bonuses
+and nine required statements. Base/increased rates and full/limited facility
+uses reconcile through PartIII/V, Schedule3 and final tax. Business-credit
+complete-return evidence now totals66 returns/1,193 pages; the separate37-root/
+17-page PartVI component remains excluded. Source authenticity, accepted carry
+histories, broader combinations and the documented presentation gaps remain open.

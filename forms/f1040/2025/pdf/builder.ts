@@ -1,3 +1,4 @@
+import { assertForm8835DomesticStatements } from "../mef/forms/credits/business/f8835_domestic_statement.ts";
 import { assertForm8835IncreaseStatements } from "../mef/forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
 import { assertRequiredLtcSource } from "../mef/forms/adjustments/health/f8853_ltc.ts";
@@ -697,6 +698,7 @@ async function buildPdfBytesInternal(
     throw new Error("PDF source differs from the prepared MeF return");
   }
   if (!preparedBundle) {
+    await assertForm8835DomesticStatements(normalized.f8835, filer, []);
     await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
   }
   if (preparedBundle) {
@@ -709,6 +711,11 @@ async function buildPdfBytesInternal(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertForm8835DomesticStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
     await assertForm8835IncreaseStatements(
       normalized.f8835,
       filer,
@@ -935,38 +942,53 @@ async function buildPdfBytesInternal(
     }
   }
 
-  // Print a static review copy of each validated increased-credit statement.
-  // The submitted attachment retains the original, unmodified bytes.
+  // Reviewed copies are static; submitted attachment bytes are unchanged.
   if (normalized.f8835 && preparedBundle) {
     const rows = normalized.f8835.f8835s as Array<{
       increased_credit_reason: string;
       increased_credit_statement_file_name?: string;
+      domestic_content_bonus: boolean;
+      domestic_content_statement_file_name?: string;
     }>;
     for (const [index, item] of rows.entries()) {
+      const statements: Array<[string, string | undefined]> = [];
       if (
-        !["under_one_mw", "construction_before_2023_01_29"].includes(
+        ["under_one_mw", "construction_before_2023_01_29"].includes(
           item.increased_credit_reason,
         )
-      ) continue;
-      const attachment = preparedBundle.attachments.find((a) =>
-        a.fileName === item.increased_credit_statement_file_name
-      )!;
-      const copy = await PDFDocument.load(attachment.bytes, {
-        updateMetadata: false,
-      });
-      copy.getForm().flatten({ updateFieldAppearances: false });
-      // Remove stale widget references from this static derivative only.
-      for (const page of copy.getPages()) {
-        page.node.delete(PDFName.of("Annots"));
+      ) {
+        statements.push([
+          "f8835_increased_credit_statement",
+          item.increased_credit_statement_file_name,
+        ]);
       }
-      const pages = await merged.copyPages(copy, copy.getPageIndices());
-      for (const page of pages) {
-        merged.addPage(page);
-        pageOrigins?.push({
-          pageNumber: merged.getPageCount(),
-          formKey: "f8835_increased_credit_statement",
-          formCopy: index + 1,
+      if (item.domestic_content_bonus) {
+        statements.push([
+          "f8835_domestic_content_statement",
+          item.domestic_content_statement_file_name,
+        ]);
+      }
+      for (const [formKey, fileName] of statements) {
+        const attachment = preparedBundle.attachments.find((a) =>
+          a.fileName === fileName
+        )!;
+        const copy = await PDFDocument.load(attachment.bytes, {
+          updateMetadata: false,
         });
+        copy.getForm().flatten({ updateFieldAppearances: false });
+        for (const page of copy.getPages()) {
+          page.node.delete(PDFName.of("Annots"));
+        }
+        for (
+          const page of await merged.copyPages(copy, copy.getPageIndices())
+        ) {
+          merged.addPage(page);
+          pageOrigins?.push({
+            pageNumber: merged.getPageCount(),
+            formKey,
+            formCopy: index + 1,
+          });
+        }
       }
     }
   }

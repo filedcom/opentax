@@ -1,4 +1,8 @@
 import {
+  assertForm8835DomesticSource,
+  domesticContentSourceSchema,
+} from "./domestic-source.ts";
+import {
   assertForm8835EarlyConstructionSource,
   earlyConstructionSourceSchema,
 } from "./early-construction-source.ts";
@@ -182,6 +186,7 @@ export const itemSchema = z.object({
   small_facility_source: smallFacilitySourceSchema.optional(),
   early_construction_source: earlyConstructionSourceSchema.optional(),
   increased_credit_statement_file_name: z.string().min(1).optional(),
+  domestic_content_source: domesticContentSourceSchema.optional(),
   domestic_content_statement_file_name: z.string().min(1).optional(),
   pwa_form7220_file_name: z.string().min(1).optional(),
   facility_placed_in_service_date: isoDate,
@@ -402,6 +407,7 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 export function calculateForm8835(item: F8835Item): F8835Lines {
   assertForm8835SmallFacilitySource(item);
   assertForm8835EarlyConstructionSource(item);
+  assertForm8835DomesticSource(item);
   item = itemSchema.parse(item);
   if (item.energy_type === EnergyType.Solar) {
     const source = item.solar_production_source;
