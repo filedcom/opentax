@@ -1,3 +1,7 @@
+import {
+  distributionActivityReviewSchema,
+  hasExclusiveDistributionActivityReview,
+} from "./distribution_activity.ts";
 import { z } from "zod";
 import {
   calculateArcherLedger,
@@ -57,7 +61,7 @@ const priorYear = z.discriminatedUnion("had_account_at_end_2024", [
     deductible_policy_source_reference: reference,
   }).strict(),
 ]);
-export const medicareDistributionLedgerSchema = z.object({
+const medicareDistributionLedgerObject = z.object({
   owner: z.enum(["taxpayer", "spouse"]),
   sole_medicare_msa_holder_on_return_confirmed: z.literal(true),
   source: z.discriminatedUnion("kind", [normal, death]),
@@ -65,20 +69,32 @@ export const medicareDistributionLedgerSchema = z.object({
   all_distributions_identified_confirmed: z.literal(true),
   erroneous_medicare_contributions_and_earnings_and_trustee_transfers_excluded_confirmed:
     z.literal(true),
-  no_other_form8853_activity_confirmed: z.literal(true),
+  ...distributionActivityReviewSchema.shape,
 }).strict();
+export const medicareDistributionLedgerSchema = medicareDistributionLedgerObject
+  .refine(
+    hasExclusiveDistributionActivityReview,
+    "MSA distribution needs exactly one activity review",
+  );
 export type MedicareDistributionLedger = z.infer<
   typeof medicareDistributionLedgerSchema
 >;
 
-export const medicareHolderLedgerSchema = medicareDistributionLedgerSchema.omit(
+const medicareHolderLedgerObject = medicareDistributionLedgerObject.omit(
   {
     sole_medicare_msa_holder_on_return_confirmed: true,
   },
 ).strict();
+export const medicareHolderLedgerSchema = medicareHolderLedgerObject.refine(
+  hasExclusiveDistributionActivityReview,
+  "MSA distribution needs exactly one activity review",
+);
 export type MedicareHolderLedger = z.infer<typeof medicareHolderLedgerSchema>;
 export const medicareJointLedgersSchema = z.array(
-  medicareHolderLedgerSchema.extend({ source: normal }),
+  medicareHolderLedgerObject.extend({ source: normal }).refine(
+    hasExclusiveDistributionActivityReview,
+    "MSA distribution needs exactly one activity review",
+  ),
 )
   .length(2);
 

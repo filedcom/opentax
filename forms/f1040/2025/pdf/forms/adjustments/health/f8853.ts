@@ -200,13 +200,20 @@ export const form8853Pdf: PdfFormDescriptor = {
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    if (raw.ltc_ledger && !raw.archer_contribution_ledger) {
+    if (
+      raw.ltc_ledger && !raw.archer_contribution_ledger &&
+      !raw.archer_distribution_ledger && !raw.medicare_distribution_ledger &&
+      !raw.medicare_joint_distribution_ledgers
+    ) {
       return ltcPdfInstances(raw, filer, allPending);
     }
     const source = normalizeArcherContributionSource(normalizeMedicareSource(
       normalizeArcherSource(inputSchema.parse(raw)),
     ));
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    const ltcInstances = source.ltc_ledger
+      ? ltcPdfInstances(source, filer, allPending)
+      : [];
     if (source.archer_contribution_ledger) {
       const ledger = source.archer_contribution_ledger;
       const lines = calculateArcherContributions(
@@ -235,9 +242,7 @@ export const form8853Pdf: PdfFormDescriptor = {
           compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
           line5_archer_deduction: lines.line5,
         },
-        ...(source.ltc_ledger
-          ? ltcPdfInstances(source, filer, allPending)
-          : []),
+        ...ltcInstances,
       ];
     }
     if (source.medicare_joint_distribution_ledgers) {
@@ -276,6 +281,7 @@ export const form8853Pdf: PdfFormDescriptor = {
             ].filter(Boolean).join(" "),
           false,
         ),
+        ...ltcInstances,
         ...parts.owners.map((holder) => {
           const name = holder.ledger.owner === "taxpayer"
             ? filer!.fullName ?? filer!.nameLine1
@@ -309,7 +315,7 @@ export const form8853Pdf: PdfFormDescriptor = {
         line13a_medicare_msa_exception: lines.line13a,
         line13b_medicare_msa_additional_tax: lines.line13b,
         medicare_death_transfer: lines.deathTransfer,
-      }];
+      }, ...ltcInstances];
     }
     const lines = calculateArcherMsaDistribution(source);
     return [{
@@ -321,7 +327,7 @@ export const form8853Pdf: PdfFormDescriptor = {
       line9b_archer_msa_additional_tax: lines.line9b,
       line9a_archer_msa_exception: lines.line9a,
       death_transfer: lines.deathTransfer,
-    }];
+    }, ...ltcInstances];
   },
   fields,
   appendSupplementalPages: appendLtcStatement,

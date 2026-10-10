@@ -6766,3 +6766,25 @@ first review exactly. Main 52 unchanged; future 133 remain unworked; about 60%
 individual-check estimate (45–75% uncertainty) and no IRS acceptance claim.
 Ongoing work remains on base PR #70; broader MSA/LTC, source authenticity and
 existing zero-line presentation remain open.
+
+
+## October 10: combined Form 8853 distributions and LTC packets
+
+Board learnings compacted before production edits. The existing health/source/
+1040/native/PDF group now combines one reviewed Archer or Medicare distribution
+family with one sourced LTC Section C. Exclusive reviews retain medical-cost
+separation and complete inventories through Schedule1, Schedule2 and final tax.
+The [checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-combined-msa-distribution-and-ltc-packets)
+retains fourteen full-XSD returns and 117 reviewed static PDF pages (75 unique,
+42 exact duplicates; 69 newly inspected and six matched to prior reviewed pages).
+Independent MSA/LTC income, additional tax, AGI, final tax and refunds reconcile.
+Joint packets print the controlling page, LTC/payee pages, then owner statements.
+Typed related gate286/0 across19 modules; focused15/0; rejections56 public,
+154 native and154 fresh-PDF. First related run285/1 hit an older missing output
+directory; the restored-directory replay passed. Benchmark46/133 retains the
+same87 failing IDs. The sole-spouse Medicare page7 repeats the existing joint
+name-header gap, now annotated in future24 without fixing deferred work.
+Main52 unchanged; future133 retained; estimate about60% of individual ATS checks
+(45–75% uncertainty), with no source-authenticity or IRS-acceptance claim.
+Concurrent MSA families/shared costs, changing periods and additional LTC copies
+remain open. Ongoing changes continue on the single base PR70.

@@ -580,9 +580,84 @@ matching issued-source reference. The runtime's missing cross-role identity
 check is recorded as deferred 133 and is not changed here. XSD validation alone
 cannot establish source identity consistency.
 
-MSA distributions combined with LTC, multiple Archer holders, coordinated HSA
-funding, additional LTC periods/copies, source authenticity, business rules and
-IRS acceptance remain open. Existing general zero-line presentation qualifications
+At that checkpoint MSA distributions combined with LTC remained open; the next
+checkpoint adds the bounded distribution families. Multiple Archer holders,
+coordinated HSA funding, additional LTC periods/copies, source authenticity,
+business rules and IRS acceptance remain open. Existing general zero-line presentation qualifications
 remain; no parent board task is closed. Private final and initial source/pending,
 XML/PDF, XSD, arithmetic and rendered-page evidence is retained under
 `.state/research/form8853-combined-2026-10-10/` and is not committed.
+
+
+## October 10: combined MSA distribution and LTC packets
+
+The existing source routes now combine one reviewed MSA distribution family
+with one sourced LTC Section C: single-taxpayer Archer, sole taxpayer/spouse
+Medicare Advantage MSA, or both-holder joint Medicare. Each holder supplies an
+exclusive coexistence review confirming no other MSA activity and medical costs
+separate from LTC costs/reimbursements. Reusing a medical source reference across
+those ledgers rejects. Schedule 1 retains both source inventories even when
+both taxable amounts are zero; native/PDF export reconciles them exactly,
+Schedule 1 line 8e, Schedule 2 MSA tax and Form 1040 lines 8/23.
+
+One native IRS8853 contains the MSA and LTC groups. Printed packets order the
+controlling MSA page, LTC page and any payee continuation, then the separate
+joint Medicare owner statements. Existing prior-account, partial disability,
+age-65 and individual nonspouse-death branches retain their source checks.
+Concurrent contribution/distribution or Archer/Medicare families, shared medical
+cost allocations, multiple Archer holders, estate final returns and additional
+Section C copies are outside this bounded route.
+
+Fourteen synthetic public inputs were calculated and prepared through the real
+return graph. Independent Decimal calculations reconcile entered-line rounding,
+exception dates, the prior-account deductible threshold, LTC allocation,
+AGI, taxable income, final tax and refunds. The authoritative references are the
+[2025 Form 8853 instructions](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf)
+and [2025 Form 1040 tax computation worksheet](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).
+
+| Case | MSA income | LTC income | MSA additional tax | AGI | Final tax | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| archer-age65 | 4,500 | 7,400 | 600 | 211,900 | 40,043 | 9 |
+| archer-all-medical | 0 | 0 | 0 | 200,000 | 37,067 | 4 |
+| archer-cents | 1,499 | 7,400 | 300 | 208,899 | 39,503 | 9 |
+| archer-death-beneficiary | 4,000 | 7,400 | 0 | 211,400 | 39,803 | 7 |
+| archer-disability | 4,500 | 7,400 | 600 | 211,900 | 40,523 | 9 |
+| joint-medicare-all-medical | 0 | 0 | 0 | 200,000 | 26,898 | 6 |
+| joint-medicare-cents-ltc-spouse | 1,798 | 7,400 | 900 | 209,198 | 29,822 | 10 |
+| joint-medicare-partial-disability | 13,000 | 7,400 | 2,100 | 220,400 | 33,486 | 10 |
+| joint-medicare-prior-and-ltc-payees | 9,499 | 27,680 | 2,150 | 237,179 | 37,227 | 11 |
+| medicare-death-beneficiary | 4,000 | 7,400 | 0 | 211,400 | 39,803 | 7 |
+| medicare-new-account | 4,000 | 7,400 | 2,000 | 211,400 | 41,803 | 9 |
+| medicare-partial-disability | 9,000 | 7,400 | 100 | 216,400 | 41,371 | 9 |
+| medicare-prior-account | 8,000 | 7,400 | 1,400 | 215,400 | 42,351 | 9 |
+| medicare-spouse-ltc-primary | 4,000 | 7,400 | 2,000 | 211,400 | 31,406 | 8 |
+
+Each fixture has 45,000 withholding; refunds equal that amount less final tax.
+All fourteen complete XML returns pass the cached 2025v5.4 Return1040 XSD
+(SHA256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+Focused typed gate: 15 passed, zero failed. Related typed replay: 286 passed, zero failed across 19 modules (2m29s).
+Public validation rejects 56 missing, contradictory or shared-cost inventories;
+native and fresh-PDF export each reject 154 changed sources or filed totals.
+The first grouped run passed 285 tests and failed one older test because its
+local evidence output directory was absent; its log is retained and the replay
+uses the restored directory. No production change was needed for that failure.
+Benchmark remains 46/133 with exactly the same 87 failing case IDs (deferred96).
+
+All 117 static PDF pages were reviewed: 75 unique pixel renders and 42 exact
+duplicates; 69 unique pages received new visual inspection and six exactly
+match previously reviewed contribution/LTC pages. Amounts, exception marks,
+death annotations, LTC/payee rows and joint owner statement order reconcile.
+No live fields or widget annotations remain. The sole spouse Medicare case
+`medicare-spouse-ltc-primary`, page 7, retains the pre-existing primary-only
+name header `EXAMPLE ALEX` beside the correct spouse MSA SSN; this is added to
+existing deferred24, without a runtime fix. General joint identity/name and
+skipped-zero qualifications 68/76/133 remain; the fixtures use distinct insured
+identities and do not establish those deferred guards.
+
+This brings the three recent LTC packet groups to 38 XSD-valid returns and
+256 reviewed pages, with the stated qualifications. Broader combinations,
+changing periods, extra copies131, source authenticity, business rules and IRS
+acceptance remain open. Main52 and future133 stay open; the individual-check
+estimate remains about60% (45–75% uncertainty). Private source/pending, XML/PDF,
+XSD, independent arithmetic, rejected mutations and rendered-page evidence is
+retained in `.state/research/form8853-distribution-ltc-2026-10-10/`.

@@ -1,3 +1,7 @@
+import {
+  distributionActivityReviewSchema,
+  hasExclusiveDistributionActivityReview,
+} from "./distribution_activity.ts";
 import { z } from "zod";
 
 const reference = z.string().trim().min(1);
@@ -60,8 +64,11 @@ export const archerDistributionLedgerSchema = z.object({
   source: z.discriminatedUnion("kind", [normal, deathTransferSourceSchema]),
   all_distributions_identified_confirmed: z.literal(true),
   no_rollover_or_excess_contribution_withdrawal_confirmed: z.literal(true),
-  no_other_form8853_activity_confirmed: z.literal(true),
-}).strict();
+  ...distributionActivityReviewSchema.shape,
+}).strict().refine(
+  hasExclusiveDistributionActivityReview,
+  "MSA distribution needs exactly one activity review",
+);
 export type ArcherDistributionLedger = z.infer<
   typeof archerDistributionLedgerSchema
 >;

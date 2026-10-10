@@ -1,3 +1,4 @@
+import { calculateLtcLedger } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
 import {
   reconcileArcherContributions,
   reconcileArcherPartVI,
@@ -9,6 +10,7 @@ import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
+  assertLtcSourceActivity,
   calculateArcherMsaDistribution,
   type Form8853Input,
   inputSchema,
@@ -94,6 +96,7 @@ function validateReturnContext(
   lines: { line8: number; line9b: number },
   medicareTax = 0,
   allowSoleJointHolder = false,
+  ltcIncome = 0,
 ): string {
   const filer = context?.filer;
   if (!filer || !/^\d{9}$/.test(filer.primarySSN)) {
@@ -132,7 +135,8 @@ function validateReturnContext(
   }
   if (
     (schedule1.success &&
-      ((schedule1.data.line8e_archer_msa_dist ?? 0) !== lines.line8 ||
+      ((schedule1.data.line8e_archer_msa_dist ?? 0) !==
+          lines.line8 + ltcIncome ||
         (schedule1.data.line23_archer_msa_deduction ?? 0) !== 0)) ||
     (schedule2.success &&
       ((schedule2.data.line17e_archer_msa_tax ?? 0) !== lines.line9b ||
@@ -241,6 +245,7 @@ export function buildMedicareJointDocumentParts(
   if (!ledgers) {
     throw new Error("Form8853 joint Medicare source ledgers required");
   }
+  assertLtcSourceActivity(fields);
   validateMedicareOtherActivity(fields);
   if (
     context?.filer?.filingStatus !== FilingStatus.MarriedFilingJointly ||
@@ -256,6 +261,7 @@ export function buildMedicareJointDocumentParts(
     { line8: computed.line12, line9b: 0 },
     computed.line13b,
     true,
+    fields.ltc_ledger ? calculateLtcLedger(fields.ltc_ledger).taxable : 0,
   );
   const f1040 = z.object({
     line8_additional_income: z.number().optional(),
@@ -289,6 +295,7 @@ export function buildMedicareJointDocumentParts(
       element("MSAHolderSSN", primarySSN),
       ...medicareNativeLines(computed),
     ]),
+    ...(fields.ltc_ledger ? [buildLtcSection(fields, context)] : []),
   ]);
   const statements = owners.map((holder) =>
     elements(
@@ -306,6 +313,7 @@ function buildMedicareIRS8853(
   context?: MefBuildContext,
 ): string {
   const ledger = fields.medicare_distribution_ledger!;
+  assertLtcSourceActivity(fields);
   validateMedicareOtherActivity(fields);
   const lines = calculateMedicareLedger(ledger);
   const primarySSN = validateReturnContext(
@@ -313,15 +321,19 @@ function buildMedicareIRS8853(
     { line8: lines.line12, line9b: 0 },
     lines.line13b,
     true,
+    fields.ltc_ledger ? calculateLtcLedger(fields.ltc_ledger).taxable : 0,
   );
   const { sole_medicare_msa_holder_on_return_confirmed: _sole, ...holder } =
     ledger;
   const holderSSN = bindMedicareHolder(holder, primarySSN, context);
-  return elements("IRS8853", [elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
-    element("MSAHolderSSN", holderSSN),
-    ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
-    ...medicareNativeLines(lines),
-  ])]);
+  return elements("IRS8853", [
+    elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+      element("MSAHolderSSN", holderSSN),
+      ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
+      ...medicareNativeLines(lines),
+    ]),
+    ...(fields.ltc_ledger ? [buildLtcSection(fields, context)] : []),
+  ]);
 }
 
 function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
@@ -332,13 +344,18 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   const fields = normalizeArcherContributionSource(normalizeMedicareSource(
     normalizeArcherSource(inputSchema.parse(rawFields)),
   ));
+  assertLtcSourceActivity(fields);
   if (fields.archer_contribution_ledger) {
     return elements("IRS8853", [
       buildArcherContributionGroup(fields, context),
       ...(fields.ltc_ledger ? [buildLtcSection(fields, context)] : []),
     ]);
   }
-  if (fields.ltc_ledger) return buildLtcDocument(fields, context);
+  if (
+    fields.ltc_ledger && !fields.archer_distribution_ledger &&
+    !fields.medicare_distribution_ledger &&
+    !fields.medicare_joint_distribution_ledgers
+  ) return buildLtcDocument(fields, context);
   if (fields.medicare_joint_distribution_ledgers) {
     return buildMedicareJointDocumentParts(fields, context).control;
   }
@@ -346,7 +363,13 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
     return buildMedicareIRS8853(fields, context);
   }
   const lines = validateBoundedArcherDistribution(fields);
-  const holderSSN = validateReturnContext(context, lines);
+  const holderSSN = validateReturnContext(
+    context,
+    lines,
+    0,
+    false,
+    fields.ltc_ledger ? calculateLtcLedger(fields.ltc_ledger).taxable : 0,
+  );
   const ledgerSource = fields.archer_distribution_ledger?.source;
   if (ledgerSource) {
     const recipient = ledgerSource.kind === "normal"
@@ -405,6 +428,7 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
         ? [element("ArcherMSAAddnlDistriTaxAmt", Math.round(lines.line9b))]
         : []),
     ]),
+    ...(fields.ltc_ledger ? [buildLtcSection(fields, context)] : []),
   ]);
 }
 
