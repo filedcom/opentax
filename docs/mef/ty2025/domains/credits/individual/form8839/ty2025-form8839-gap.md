@@ -681,3 +681,17 @@ Four public-source probes add2000 of W-2 code-D deferrals, with explicit nonstud
 At wages40000, above the single-filer saver-credit income cutoff, the return retains tax2675, zero saver credit, nonrefundable adoption2675, refundable adoption5000 and carry3325. Native and complete-PDF construction pass; changing either the Schedule3 saver-credit amount or carry amount rejects at both export boundaries. No new retained PDF visual review, XSD validation or IRS acceptance is claimed for this probe. The underlying attachment PDFs are synthetic identifiers, not authenticated decree or expense records.
 
 The revised regression records the three exact public-route rejections explicitly. Credit ordering remains open; passing rejection assertions are boundary coverage, not completed tax-return coverage. Private logs: `.state/research/form8839-saver-ordering-2026-10-09/`.
+
+## October 10 QEF current-year carryforward composition
+
+The [Election B checkpoint](../../../../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_1294_refigure_proof.md#october-10-current-year-adoption-carryforward-with-election-b)
+now permits actual unused adoption credit on the verified QEF refigure route,
+including the preceding education-credit stage. Actual records retain1,885/95;
+hypothetical unused amounts do not become filed carryforwards. Two direct exports
+pass fullXSD and20 packet pages were reviewed;20 altered-ledger export rejections
+pass. Non-Election-B PFIC combinations retain their guard.
+
+Pending-JSON reload fails source replay in four retained exporter checks, newly
+deferred150 without repair. Zero-tax display repeats76. This checkpoint does
+not establish saved-return support, accepted carry records, next-year imports,
+external authenticity or closure of the broad adoption task.

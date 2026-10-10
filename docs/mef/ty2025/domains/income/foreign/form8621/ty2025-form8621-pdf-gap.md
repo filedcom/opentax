@@ -10,7 +10,7 @@ adoption or education are universally blocked.
 
 The October10 combined education/adoption route adds two full-XSD returns and
 22 visually reviewed pages, with source-replayed credits and QEF deferrals
-740/235. Actual adoption carryforwards remain guarded; zero-tax presentation
+740/235. The subsequent Election B carryforward checkpoint verifies two direct exports/20 pages and actual carries1,885/95, while persisted-pending replay remains deferred150; zero-tax presentation
 repeats deferred76. External source authentication, broader combinations and IRS
 acceptance remain open. The historical stages below describe how these routes
 were built; their unregistered/unrun statements are not current status.
