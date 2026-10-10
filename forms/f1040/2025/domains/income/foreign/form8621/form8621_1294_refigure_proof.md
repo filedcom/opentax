@@ -316,3 +316,62 @@ Changing Schedule 3 line 6a by one dollar makes both native and PDF export
 reject the packet on independent full source replay. The eight focused
 education/business packet and conflict cases passed 8/0 in
 `/tmp/opentax-form8621-qef-business-final-oct6.log`.
+
+## October 10 combined education and adoption credit checkpoint
+
+The public Election B route now settles education first and adoption second in
+both the actual and without-QEF graphs. Previously, the combination was rejected
+before either graph could be reconciled. The existing runners still validate
+actual education MAGI and the credit-limit worksheet, retained adoption sources
+and required attachments; only the hypothetical graph recalculates the source
+worksheet operands. Both exporters replay the complete retained sources.
+
+The [2025 Form 8839 line 17 worksheet](https://www.irs.gov/instructions/i8839)
+subtracts Schedule 3 education credit before limiting adoption credit. The
+[Form 8863 credit-limit worksheet](https://www.irs.gov/instructions/i8863) does
+not subtract adoption credit. [Form 8621 lines 9a–9c](https://www.irs.gov/instructions/i8621)
+require the corresponding full-return tax difference. These support composing
+the two existing stages in that order, rather than subtracting QEF income from
+an already settled taxable-income figure.
+
+Both synthetic sources combine an existing $6,000 taxable-scholarship/AOTC
+packet, $11,000 reviewed adoption expenses and $2,000 undistributed ordinary
+QEF earnings. The $11,000 expenses split into $5,000 refundable and $6,000
+nonrefundable adoption credit. Issuer, school and decree evidence remains
+synthetic contract evidence, not external authentication.
+
+| Case | Wages | Actual / without QEF AGI | Actual / without QEF tax before credits | Education nonrefundable actual / without | Adoption nonrefundable actual / without | QEF 9a / 9b / 9c | Filed refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| AOTC phaseout | 75,000 | 83,000 / 81,000 | 9,715 / 9,275 | 1,050 / 1,350 | 6,000 / 6,000 | 2,665 / 1,925 / 740 | 14,775 |
+| Hypothetical adoption limit | 66,000 | 74,000 / 72,000 | 7,735 / 7,295 | 1,500 / 1,500 | 6,000 / 5,795 | 235 / 0 / 235 | 17,000 |
+
+The single-filer tax values independently agree with the [2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)
+rows beginning 67,250, 65,250, 58,250 and 56,250 (PDF pages 8–10).
+The first AOTC phaseout fractions are 0.7 and 0.9, yielding refundable amounts
+700 and 900; the second case retains 1,000. Only actual refundable credits enter
+the filed refund, with 11,000 withholding and 5,000 refundable adoption credit.
+The hypothetical unused adoption amount does not create a filed carryforward.
+
+Two new actual 11-page packets pass full local TY2025v5.4 Return1040 XSD.
+All 22 pages were rendered and reviewed: Form1040 (2), Schedule1 and statement
+(3), Schedule3 (1), Form8621 (2), Form8839 (1), Form8863 (2) per packet.
+Amounts, identities, elections and ordering reconcile. The hypothetical-limit
+packet leaves calculated/native-zero Form1040 line24 blank, repeating deferred76;
+this qualification is preserved without repair. The flattened PDFs have no
+remaining AcroForm fields or widgets. Required reviewed adoption attachments
+are supplied to native preparation; these 22 pages count the generated tax
+packet, not a new review of the synthetic evidence attachments.
+
+The grouped QEF/adoption/return-arithmetic gate passes 52/0. After adding the
+actual-carryforward boundary assertion, the final focused gate passes 3/0, including assertions on both counterfactual
+credit amounts and refund arithmetic, eight native/PDF altered-credit rejections,
+two stale-MAGI public rejections and one actual-carryforward rejection. The
+ordinary actual-return Form8839/Form8621 carryforward guard remains intact.
+The existing stale-education test now checks the combined route's source guard
+instead of expecting the removed blanket rejection.
+
+Private source/pending/XML/PDF snapshots, logs, XSD results and visual hashes:
+`.state/research/form8621-combined-2026-10-10/`. No IRS transmission, business-rule
+acceptance or externally authenticated source is claimed. Form8990 composition,
+nonadditive multi-QEF allocation and other original parent boundaries remain
+open; PartII D–H and other deferred scope remain untouched.

@@ -1,8 +1,19 @@
 # TY2025 Form 8621 printable-return gap
 
-## Current verified parent packet checkpoint (October6)
+## Current parent and counterfactual routes
 
-The source-bound parent PDF is registered. [Current proof](../../../../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_parent_source_proof.md) records main36/0+56/0 and five fullXSD packets/38 reviewed pages byte-identical to reviewed originals. QEF ElectionB, accepted-record contract for section1294 status/interest and seven-election overflow, multiple MTM dispositions and line14c Form8949 are verified within the stated source contract. Synthetic issuer/ACK bytes do not authenticate external records. Broader QEF AGI-sensitive refigure and IRS acceptance remain open. Historical staged sections below are superseded only for these proved routes.
+The source-bound parent PDF is registered. The [parent packet proof](../../../../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_parent_source_proof.md)
+retains section1291, QEF, MTM and historical-election contracts. The later
+[full-return refigure proof](../../../../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_1294_refigure_proof.md)
+supersedes older claims that AGI-sensitive refigures, AMT, ScheduleJ, Form8615,
+adoption or education are universally blocked.
+
+The October10 combined education/adoption route adds two full-XSD returns and
+22 visually reviewed pages, with source-replayed credits and QEF deferrals
+740/235. Actual adoption carryforwards remain guarded; zero-tax presentation
+repeats deferred76. External source authentication, broader combinations and IRS
+acceptance remain open. The historical stages below describe how these routes
+were built; their unregistered/unrun statements are not current status.
 
 
 Static source, native, and blank-PDF review on 2026-09-28, followed by a Part V

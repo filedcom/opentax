@@ -71,11 +71,6 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
       item !== null && typeof item === "object" &&
       "qef_1294_election" in item && item.qef_1294_election !== undefined
     );
-  if (elected && inputs.form8839 !== undefined && inputs.f8863 !== undefined) {
-    throw new Error(
-      "Form 8621 Election B with both adoption and education credits needs a settled combined counterfactual",
-    );
-  }
   if (
     inputs.form8990 !== undefined && elected
   ) {

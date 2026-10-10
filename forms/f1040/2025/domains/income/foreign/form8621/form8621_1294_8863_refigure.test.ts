@@ -165,11 +165,11 @@ Deno.test("QEF education source and stale worksheet conflicts are rejected", () 
   const adoption = pdfReviewFixtures.find((row) =>
     row.id === "single-reviewed-adoption-credit"
   )!;
-  const combined = { ...source(), form8839: adoption.inputs.form8839 };
+  const combined = { ...stale, form8839: adoption.inputs.form8839 };
   assertThrows(
     () => f1040_2025.executeReturn(combined),
     Error,
-    "combined counterfactual",
+    "filed MAGI",
   );
 });
 
