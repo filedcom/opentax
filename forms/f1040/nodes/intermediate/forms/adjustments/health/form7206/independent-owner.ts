@@ -148,7 +148,7 @@ export function calculateIndependentOwnerHealth(
         "Health plan must use its actual establishing business and proprietor",
       );
     }
-    if (owned.source.businesses.some((b) => b.kind === "schedule_f")) {
+    {
       const policy = plan.issued_policy_record,
         records = plan.issued_premium_records;
       const ssn = plan.recipient === "T"
@@ -174,7 +174,7 @@ export function calculateIndependentOwnerHealth(
         })
       ) {
         throw new Error(
-          "Mixed C/F health needs actual owned issuer policy and monthly issued/payment records",
+          "Independent health needs actual owned issuer policy and monthly issued/payment records",
         );
       }
     }

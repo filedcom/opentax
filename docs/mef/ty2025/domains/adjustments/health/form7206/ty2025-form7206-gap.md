@@ -1,8 +1,20 @@
 # TY2025 Form 7206 source-to-filing gap
 
+## October 10 independent Schedule C policy-source checkpoint
+
+[Complete policy-inventory evidence](./ty2025-form7206-policy-inventory-review.md)
+extends the existing farm issuer/payment reconciliation to both Schedule C
+proprietors. Missing or conflicting policy and twelve-month payment records now
+reject across all independent-owner plans. Five complete XSD-valid returns and85
+qualified reviewed pages reconcile120 monthly records, owner SE, excluded months,
+income limits, QBI and final tax;14 public/90 native/90 fresh-PDF and20 archive
+mutations reject. The fresh typed gate passes65 tests across nine related modules.
+Broader single-plan, owner/business, LTC/PTC, authentication and
+IRS acceptance work remains open; no original parent or deferred task is closed.
+
 ## October8 current registered-audit reconciliation
 
-The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **50 passed/0 failed/0 ignored across9 named modules**; all21 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **50 passed/0 failed/0 ignored across9 named modules**; the21 matching runtime paths equaled that snapshot at that checkpoint. The October10 source change above has separate fresh verification. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
 
 
 ## Current evidence checkpoint (2026-10-06)
