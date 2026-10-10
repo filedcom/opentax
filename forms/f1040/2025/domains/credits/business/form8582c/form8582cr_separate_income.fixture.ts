@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import {
   passiveK1IncomeCases,
   passiveK1IncomeFixture,

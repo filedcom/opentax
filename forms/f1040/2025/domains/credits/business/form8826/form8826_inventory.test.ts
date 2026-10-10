@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   disabledAccessInventoryCases,

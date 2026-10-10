@@ -181,6 +181,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${19 + index * 5}[0]`,
     ),
   ]),
+  {
+    kind: "checkboxWhen",
+    domainKey: "k1_prior_year_losses",
+    pdfField: `${page2}.c2_1[0]`,
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "k1_prior_year_losses",
+    pdfField: `${page2}.c2_1[1]`,
+    whenValue: "false",
+  },
   text("k1_total_passive_income", `${page2}.f2_36[0]`),
   text("k1_total_nonpassive_income", `${page2}.f2_39[0]`),
   text("k1_total_passive_loss", `${page2}.f2_40[0]`),
@@ -305,6 +317,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
         0,
       );
       partIIFields = {
+        // Every currently printable K-1 route rejects prior unallowed losses.
+        k1_prior_year_losses: false,
         ...Object.fromEntries(k1Rows.flatMap((row, index) => [
           [`k1_${index}_name`, row.name],
           [`k1_${index}_code`, row.code],

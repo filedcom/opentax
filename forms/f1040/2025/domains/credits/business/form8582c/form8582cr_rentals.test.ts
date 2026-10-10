@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   passiveRentalCases,

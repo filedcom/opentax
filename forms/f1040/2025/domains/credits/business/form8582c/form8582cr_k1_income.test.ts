@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   passiveK1IncomeCases,
@@ -9,6 +10,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { buildCurrentYearCarryforwardLedger } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts";
 import { inputSchema as form8582crInputSchema } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { scheduleEPdf } from "../../../../pdf/forms/income/rental-passthrough/schedule_e.ts";
 
 for (const c of passiveK1IncomeCases) {
   Deno.test(`Complete passive K-1 income and credit inventory: ${c.id}`, async () => {
@@ -35,10 +37,24 @@ for (const c of passiveK1IncomeCases) {
       [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
       c.count,
     );
+    assertEquals(
+      prepared.bundle.xml.includes(
+        "<PriorYearsLossesInd>false</PriorYearsLossesInd>",
+      ),
+      true,
+    );
     const origins: PdfPageOrigin[] = [];
     const pdfSupported = c.incomeSources <= 4;
     let pdf: Uint8Array | undefined;
     if (pdfSupported) {
+      assertEquals(
+        scheduleEPdf.projectFields?.(
+          pending.schedule_e ?? {},
+          pending as unknown as Record<string, Record<string, unknown>>,
+        )
+          ?.k1_prior_year_losses,
+        false,
+      );
       pdf = await buildPdfBytes(
         pending,
         filer,
