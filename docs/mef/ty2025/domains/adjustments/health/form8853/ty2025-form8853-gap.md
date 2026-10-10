@@ -376,9 +376,9 @@ The payroll review establishes current-service wages, excluding pension,
 annuity and deferred compensation. In this bounded route, W-2 box 1 consists
 of those wages plus any identified employer MSA excess already included in
 box 1. An employer/custodian review excludes employer funding for 2025 made in 2026;
-this route binds the sole actual issued 2025 W-2 from the holder’s HDHP employer
-on the return. Additional same-employer payroll records require a complete
-multiple-source compensation model and reject in this bounded route. It is not a general reconstruction
+the original checkpoint bound the sole actual issued 2025 W-2 from the holder’s
+HDHP employer. The [complete employer payroll checkpoint](#october-10-complete-employer-payroll-inventories)
+below extends that inventory to distinct issued W-2s from the same employer. It is not a general reconstruction
 of gross compensation from cafeteria
 plans, retirement deferrals or other pay adjustments.
 
@@ -661,3 +661,70 @@ acceptance remain open. Main52 and future133 stay open; the individual-check
 estimate remains about60% (45–75% uncertainty). Private source/pending, XML/PDF,
 XSD, independent arithmetic, rejected mutations and rendered-page evidence is
 retained in `.state/research/form8853-distribution-ltc-2026-10-10/`.
+
+
+## October 10 complete employer payroll inventories
+
+The existing employee Archer contribution route now accepts multiple distinct
+issued W-2s for one holder and the employer maintaining the HDHP. The original
+compensation record remains required; additional records require a complete
+employer payroll review and confirmation that the records are distinct issued
+W-2s rather than corrected or replacement copies. Every record retains its
+issued-source reference, payroll review, current-service wages and identified
+employer excess already included in box 1. Duplicate issued or payroll references
+reject. Native and fresh-PDF export match every record to exactly one actual
+same-owner, same-employer, nonstatutory W-2 and require the complete employer
+inventory; other employers do not increase the Archer compensation limit.
+
+Employer code R entries must refer to those issued W-2s and cannot repeat a
+source. Compensation, code R funding and already-included employer excess each
+sum raw amounts before rounding once. Personal deposits cannot reuse any
+reviewed W-2 reference. Existing monthly eligibility, employer-versus-personal
+funding, Schedule 1 deduction/excess income, Form 5329 Part VI and Schedule 2
+joins remain enforced. Reversing actual W-2 order preserves tax and native
+preparation.
+
+Four synthetic public-input returns exercise personal funding, employer excess
+already partly included in wages, a sole spouse holder with mixed funding, and
+a compensation cap alongside an unrelated employer. Independent Decimal
+calculations reconcile the [2025 Form 8853 instructions](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf)
+and [2025 tax table/computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf).
+
+| Case | W-2 copies | AGI | Deduction | Employer excess income | Current excess | Part VI tax | Final tax | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| personal | 2 | 118,001 | 2,000 | 0 | 0 | 0 | 17,409 | 5 |
+| employer-excess | 2 | 121,402 | 0 | 601 | 1,401 | 84 | 18,287 | 10 |
+| spouse-mixed | 2 | 120,001 | 0 | 0 | 2,000 | 120 | 10,266 | 7 |
+| pay-cap | 3 | 120,000 | 1,501 | 0 | 1,499 | 90 | 17,957 | 9 |
+
+The first three cases have 10,000 withholding and owe 7,409, 8,287 and 266;
+the pay-cap case has 30,000 withholding and a 12,043 refund. Its unrelated
+120,000 wage source is excluded from the 1,501 Archer compensation limit.
+The employer case has 4,001 rounded employer funding, 800 already included in
+wages and 601 additional income. The joint tax table amount is 10,146 before
+the 120 excise tax. All four complete XML returns pass the cached 2025v5.4
+Return1040 XSD (SHA256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+
+Focused typed tests pass 5/0; the related typed suite passes 291/0 across 20
+modules (2m40s). Seven source/total mutations per return reject
+in both native preparation and fresh-PDF export: 28 native and 28 PDF rejections.
+Initial focused attempts exposed test typing errors and incorrect expected-tax
+constants; those expectations were corrected against the IRS worksheet/table,
+without changing the production income-tax computation. The benchmark remains
+46/133 with exactly the same 87 failing IDs as the prior checkpoint (deferred96).
+
+All 31 static PDF pages were inspected: 29 unique rendered pages and two exact
+pixel duplicates. Names/SSNs, employer-funded omitted limit lines, deduction,
+excess-income statement, Part VI excess/tax and final tax/refund reconcile;
+the spouse holder prints both return names on Form 8853 and the spouse name on
+Form 5329. No live fields or widget annotations remain. Existing general
+skipped-zero76 and native joint-name68 qualifications remain open.
+
+This adds four payroll returns/31 pages separately from the prior 38 LTC
+combination returns/256 pages. Self-employment, multiple HDHP employers,
+corrected/replacement W-2 handling, two Archer holders, coordinated HSA funding,
+prior/withdrawn excess, external source authenticity and IRS acceptance remain
+open. Main52 and future133 are unchanged; the individual-check estimate stays
+about60% (45–75% uncertainty). Private evidence is retained in
+`.state/research/archer-payroll-2026-10-10/`.

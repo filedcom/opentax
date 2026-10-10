@@ -1,6 +1,7 @@
 import { schedule1 as schedule1Node } from "../../../../../nodes/outputs/general/return-assembly/schedule1/index.ts";
 import { z } from "zod";
 import {
+  archerCompensationSources,
   archerContributionLedgerSchema,
   calculateArcherContributions,
   codeREntrySchema,
@@ -65,27 +66,29 @@ export function reconcileArcherContributions(
     w.employee_ssn?.replace(/\D/g, "") === ssn &&
     w.employer_ein?.replace(/\D/g, "") === ledger.employer_ein
   );
-  if (employerPayroll.length !== 1) {
+  const payroll = archerCompensationSources(ledger);
+  if (employerPayroll.length !== payroll.length) {
     throw new Error(
-      "Archer one-W2 compensation source must include the sole HDHP-employer payroll record on return",
+      "Archer compensation inventory must include every HDHP-employer payroll record on return",
     );
   }
-  const match = w2s.filter((w) =>
-    w.source_document_reference === ledger.compensation.w2_source_reference
-  );
-  if (
-    match.length !== 1 || match[0].employee_ssn?.replace(/\D/g, "") !== ssn ||
-    match[0].employer_ein?.replace(/\D/g, "") !== ledger.employer_ein ||
-    match[0].box13_statutory_employee ||
-    Math.round(match[0].box1_wages * 100) !==
-      Math.round(
-        (ledger.compensation.service_wages +
-          ledger.compensation.employer_excess_already_in_box1) * 100,
-      )
-  ) {
-    throw new Error(
-      "Archer compensation must reconcile to actual owner HDHP employer W-2 services wages",
+  for (const row of payroll) {
+    const match = w2s.filter((w) =>
+      w.source_document_reference === row.w2_source_reference
     );
+    if (
+      match.length !== 1 || match[0].employee_ssn?.replace(/\D/g, "") !== ssn ||
+      match[0].employer_ein?.replace(/\D/g, "") !== ledger.employer_ein ||
+      match[0].box13_statutory_employee ||
+      Math.round(match[0].box1_wages * 100) !==
+        Math.round(
+          (row.service_wages + row.employer_excess_already_in_box1) * 100,
+        )
+    ) {
+      throw new Error(
+        "Archer compensation must reconcile to actual owner HDHP employer W-2 services wages",
+      );
+    }
   }
   const codeR = w2s.flatMap((w) =>
     (w.box12_entries ?? []).filter((e) => e.code === "R" && e.amount > 0).map((

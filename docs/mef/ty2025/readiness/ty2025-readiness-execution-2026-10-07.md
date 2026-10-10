@@ -6809,3 +6809,25 @@ source gaps remain unresolved. Main52 and future133 remain byte-preserved as
 TODO bodies; no new deferred item or parent checkoff. About60% individual ATS
 check estimate (45–75% uncertainty) remains. Evidence is private under
 `ats-document-coverage-2026-10-10/`; work continues on base PR70.
+
+
+## October 10: complete Archer employer payroll inventories
+
+Compacted board learnings before edits. Extended the existing employee Archer
+route to a reviewed complete inventory of distinct issued W-2s from one HDHP
+employer for one holder. Actual source/owner/employer/box1 joins, source
+uniqueness and complete inventory checks protect native and fresh-PDF export.
+Compensation, codeR and already-included employer excess round after aggregation;
+other-employer wages stay outside the compensation cap. Four synthetic public
+returns cover personal funding, employer excess, spouse mixed funding and a
+low-pay cap; deductions/excess/PartVI/1040 tax and refund reconcile independently.
+All four complete XML returns pass local2025v5.4 XSD; all31 static PDF pages
+reviewed (29unique/two exact duplicates). Focused5/0 and related291/0 across20
+modules pass; 28native/28fresh-PDF mutations reject. Benchmark46/133 retains
+exactly the same87 failing IDs. Initial focused typing and tax-expectation
+corrections are retained in the logs; production income-tax calculation did
+not change. Existing native-name68 and zero76 qualifications, wider Archer
+routes, authenticity and IRS acceptance remain open. Main52/future133 bodies
+are byte-preserved; no future item implemented or added and no parent closed.
+Individual ATS-check estimate remains about60%, uncertainty45–75%. Private
+proof is `archer-payroll-2026-10-10/`; continuation stays on draft base PR70.

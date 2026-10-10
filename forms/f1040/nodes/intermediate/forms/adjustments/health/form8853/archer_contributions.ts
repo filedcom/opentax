@@ -5,6 +5,16 @@ import { z } from "zod";
 
 const reference = z.string().trim().min(1);
 const amount = z.number().finite().nonnegative();
+const compensationSchema = z.object({
+  w2_source_reference: reference,
+  service_wages: amount,
+  payroll_source_reference: reference,
+  all_box1_other_than_reported_employer_excess_is_current_service_compensation_confirmed:
+    z.literal(true),
+  employer_excess_already_in_box1: amount,
+  employer_excess_box1_review_reference: reference,
+}).strict();
+
 export const archerContributionLedgerSchema = z.object({
   owner: z.enum(["taxpayer", "spouse"]),
   filing_status: z.enum(["single", "mfj", "mfs", "hoh", "qss"]),
@@ -66,15 +76,13 @@ export const archerContributionLedgerSchema = z.object({
       designated_tax_year: z.literal(2025),
     }).strict(),
   ),
-  compensation: z.object({
-    w2_source_reference: reference,
-    service_wages: amount,
-    payroll_source_reference: reference,
-    all_box1_other_than_reported_employer_excess_is_current_service_compensation_confirmed:
-      z.literal(true),
-    employer_excess_already_in_box1: amount,
-    employer_excess_box1_review_reference: reference,
-  }).strict(),
+  compensation: compensationSchema,
+  additional_compensation_sources: z.object({
+    complete_employer_payroll_review_reference: reference,
+    distinct_issued_w2s_not_corrected_or_replacement_copies_confirmed: z
+      .literal(true),
+    records: z.array(compensationSchema).min(1),
+  }).strict().optional(),
   no_spouse_archer_contributions_or_other_archer_accounts_review_reference:
     reference,
   no_hsa_contributions_review_reference: reference,
@@ -108,11 +116,29 @@ export type ArcherContributionLedger = z.infer<
 >;
 export type CodeREntry = z.infer<typeof codeREntrySchema>;
 
+export function archerCompensationSources(ledger: ArcherContributionLedger) {
+  return [
+    ledger.compensation,
+    ...(ledger.additional_compensation_sources?.records ?? []),
+  ];
+}
+
 export function calculateArcherContributions(
   raw: ArcherContributionLedger,
   codeR: CodeREntry[] = [],
 ) {
   const ledger = archerContributionLedgerSchema.parse(raw);
+  const payroll = archerCompensationSources(ledger);
+  const payrollReferences = payroll.map((row) => row.w2_source_reference);
+  if (
+    new Set(payrollReferences).size !== payroll.length ||
+    new Set(payroll.map((row) => row.payroll_source_reference)).size !==
+      payroll.length
+  ) {
+    throw new Error(
+      "Archer compensation needs distinct issued W-2 and payroll sources",
+    );
+  }
   if (new Set(ledger.months.map((m) => m.dependent_of_another)).size !== 1) {
     throw new Error("Archer dependency status applies to entire tax year");
   }
@@ -201,16 +227,19 @@ export function calculateArcherContributions(
     if (
       c.employee_ssn.replace(/\D/g, "") !== ledger.holder_ssn ||
       c.employer_ein.replace(/\D/g, "") !== ledger.employer_ein ||
-      c.source_document_reference !== ledger.compensation.w2_source_reference
+      !payrollReferences.includes(c.source_document_reference)
     ) {
       throw new Error(
         "Archer code R source must belong to holder and HDHP employer W-2",
       );
     }
   }
-  if (codeR.length > 1) {
+  if (
+    new Set(codeR.map((row) => row.source_document_reference)).size !==
+      codeR.length
+  ) {
     throw new Error(
-      "Archer contribution route requires one issued employer W-2 code R source",
+      "Archer contribution code R source cannot repeat an issued W-2",
     );
   }
   const rawEmployer = codeR.reduce((s, c) => s + c.amount, 0);
@@ -224,8 +253,8 @@ export function calculateArcherContributions(
       ).size !== ledger.personal_contributions.length ||
     ledger.personal_contributions.some((c) =>
       c.payer_ssn !== ledger.holder_ssn ||
-      c.source_reference === ledger.compensation.w2_source_reference ||
-      c.payment_source_reference === ledger.compensation.w2_source_reference
+      payrollReferences.includes(c.source_reference) ||
+      payrollReferences.includes(c.payment_source_reference)
     )
   ) {
     throw new Error(
@@ -247,14 +276,16 @@ export function calculateArcherContributions(
   // Round the filed totals once; every deduction/income/excise join uses these lines.
   const line1 = Math.round(rawEmployer), line2 = Math.round(rawPersonal);
   const line3 = Math.round(monthly.reduce((s, m) => s + m.amount, 0) / 12);
-  const line4 = Math.round(ledger.compensation.service_wages);
+  const line4 = Math.round(
+    payroll.reduce((sum, row) => sum + row.service_wages, 0),
+  );
   const cap = Math.min(line3, line4);
   const line5 = rawEmployer > 0
     ? 0
     : Math.min(line2, cap, Math.round(deductiblePersonal));
   const employerExcess = Math.max(0, line1 - cap);
   const alreadyIncluded = Math.round(
-    ledger.compensation.employer_excess_already_in_box1,
+    payroll.reduce((sum, row) => sum + row.employer_excess_already_in_box1, 0),
   );
   if (alreadyIncluded > employerExcess) {
     throw new Error(
