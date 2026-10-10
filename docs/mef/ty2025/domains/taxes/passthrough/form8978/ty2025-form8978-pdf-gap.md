@@ -99,3 +99,42 @@ specifically the reviewed contract above. It does not establish pass-through,
 foreign, community-property, arbitrary historical return, or nonincome tax
 amendment support. Full XSD success is not ATS, IRS business-rule, or production
 acceptance. The broader source/authentication and acceptance scope remains open.
+
+## October 10 paired reporting-year and registry audit
+
+At branch head `dcbfdd627`, eight related modules completed **37 typed tests,
+zero failures and zero ignored**: calculation/input, reporting-year worksheet,
+negative offsets, end-to-end joins, parent/reporting PDF, native XSD, and reviewed
+public sources. The public-source module was then strengthened with an otherwise
+identical return without `f8978`; its two tests passed again. This is 37 distinct
+tests, not 39. No production calculation changed.
+
+| Public reviewed case | Income tax without adjustment | Net Form 8978 line 14 | Income tax with adjustment | Final tax |
+| --- | ---: | ---: | ---: | ---: |
+| Positive AAR | 7,955 | 1,920 | 9,875 | 9,875 |
+| Negative AAR | 7,955 | -1,920 | 7,955 | 6,035 |
+| Multiple AAR/BBA | 7,955 | -8,160 | 7,955 | 0 |
+
+All three public returns again passed full TY2025 v5.4 XSD and actual PDF
+construction with 3, 3, and 9 attachments. The multi-year case retains three
+parent instances and four Schedule A sheets. Owner, reviewed fact, total,
+baseline and attachment conflicts remain exercised by the public-source gate.
+The paired assertion verifies that a positive adjustment increases line 16 by
+exactly line 14; negative amounts leave line 16 unchanged and use the separate
+credit path. The historical missing-positive-tax claim in board future item 14
+is **not reproduced** by these inputs and this runtime: 9,875 already includes
+1,920 over the 7,955 baseline. The historical discrepancy stays deferred; this
+checkpoint neither implements a deferred repair nor authenticates older output.
+
+Three additional native XSD cases exercise Schedule 3 credit, Schedule 2 excess
+offset and positive line 16 references. These use explicitly prepared totals,
+not independently reviewed historical source returns. In particular, the
+Schedule 2 case verifies the `AnyOtherTaxesStatement` reference and `Form8978ADJ`
+negative amount; the registry's earlier “No direct case located” is stale.
+Native statement and generated computation PDF remain distinct documents.
+
+Local logs and paired results are retained under
+`.state/research/form8978-route-audit-2026-10-10/`, with provenance and SHA-256
+manifest. This run adds no visual-review pages; the October 6 page review remains
+historical evidence. Issuer authenticity, arbitrary historical computation,
+wider ownership and IRS business-rule/ATS acceptance remain open.

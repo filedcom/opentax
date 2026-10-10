@@ -11,7 +11,10 @@ import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { form8978Pdf } from "../../../../pdf/forms/taxes/passthrough/f8978.ts";
 import { form8978ScheduleAPdf } from "../../../../pdf/forms/taxes/passthrough/f8978_schedule_a.ts";
-import { calculateFiling, inputSchema } from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
+import {
+  calculateFiling,
+  inputSchema,
+} from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
 function prepared(i: number) {
   const f = form8978ReviewFixtures[i],
     r = f1040_2025.executeReturn({ ...f.inputs });
@@ -23,6 +26,16 @@ Deno.test("Form8978 reviewed public positive/negative/multi-year sources join fu
     const { f, p } = prepared(i);
     assertEquals(p.f8978?.line14, [1920, -1920, -8160][i]);
     assertEquals(p.f1040?.line24_total_tax, [9875, 6035, 0][i]);
+    // Compare the same reporting-year sources with the partnership adjustment
+    // removed, so a plausible hard-coded tax total cannot hide a missing join.
+    const { f8978: _adjustment, ...baselineInputs } = structuredClone(f.inputs);
+    const baseline = f1040_2025.executeReturn(baselineInputs);
+    assertEquals(baseline.diagnostics, []);
+    assertEquals(
+      p.f1040?.line16_income_tax,
+      Number(baseline.pending.f1040.line16_income_tax) +
+        Math.max(0, Number(p.f8978?.line14)),
+    );
     const b = await buildMefBundle(p, {
       filer: f.filer,
       attachments: [...f.attachments!],
