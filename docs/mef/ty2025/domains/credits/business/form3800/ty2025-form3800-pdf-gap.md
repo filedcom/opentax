@@ -1231,3 +1231,19 @@ is excluded. Wider sources, passive/transfer credits, authenticated carryovers,
 source signatures, business rules and IRS acceptance remain open.
 
 Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.
+
+
+## October 10 early-construction continuity and complete filing statements
+
+Eight additional complete returns reconcile reviewed early-construction increases
+from wind/geothermal facilities to Form3800, Schedule3 and Form1040, including
+full use and partial allocation across two/four facilities. All eight pass XSD;
+all152 packet pages are observed with existing presentation qualifications. Twelve
+bound statements survive local archive checks, and16 bad archives reject.
+Business-credit cumulative evidence is62 complete returns/1,112 pages, excluding
+separate PartVI component evidence. The [Form8835 checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-early-construction-continuity-and-complete-filing-statements)
+retains source methods, continuity/cost boundaries, rejection counts and evidence.
+Broader sources, authenticated carryovers, passive/transfer routes, business rules
+and IRS acceptance remain open.
+
+Final validation:12 focused plus82 related typed tests pass, zero failures/ignored;94 distinct tests in the two runs. Changed-TypeScript formatting and `git diff --check` pass. The frozen full gate remains separate and has no terminal result.

@@ -943,7 +943,11 @@ async function buildPdfBytesInternal(
       increased_credit_statement_file_name?: string;
     }>;
     for (const [index, item] of rows.entries()) {
-      if (item.increased_credit_reason !== "under_one_mw") continue;
+      if (
+        !["under_one_mw", "construction_before_2023_01_29"].includes(
+          item.increased_credit_reason,
+        )
+      ) continue;
       const attachment = preparedBundle.attachments.find((a) =>
         a.fileName === item.increased_credit_statement_file_name
       )!;

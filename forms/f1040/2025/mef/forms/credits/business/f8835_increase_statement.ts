@@ -1,3 +1,7 @@
+import {
+  assertForm8835EarlyConstructionSource,
+  form8835EarlyConstructionDeclaration,
+} from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import {
@@ -23,9 +27,15 @@ export async function assertForm8835IncreaseStatements(
   const source = inputSchema.parse(raw);
   const names = new Set<string>();
   for (const item of source.f8835s) {
-    if (item.increased_credit_reason !== "under_one_mw") continue;
+    if (
+      !["under_one_mw", "construction_before_2023_01_29"].includes(
+        item.increased_credit_reason,
+      )
+    ) continue;
     assertForm8835SmallFacilitySource(item, true);
-    const review = item.small_facility_source!;
+    assertForm8835EarlyConstructionSource(item, true);
+    const review =
+      (item.small_facility_source ?? item.early_construction_source)!;
     const matches = attachments.filter((a) =>
       a.fileName === review.statement_file_name
     );
@@ -59,7 +69,9 @@ export async function assertForm8835IncreaseStatements(
       ReviewReference: review.review_reference,
       SignerName: review.signer_name,
       SignedOn: review.signed_on,
-      Declaration: smallFacilityDeclaration,
+      Declaration: item.early_construction_source
+        ? form8835EarlyConstructionDeclaration(item)
+        : smallFacilityDeclaration,
       PerjuryDeclaration: increasedCreditPerjury,
     };
     for (const [key, value] of Object.entries(expected)) {

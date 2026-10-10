@@ -1,3 +1,4 @@
+import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
 import {
   assertForm8835SmallFacilitySource,
   form8835IncreaseDescription,
@@ -139,8 +140,10 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
 
   assertForm8835BondSource(item, true);
   assertForm8835SmallFacilitySource(item, true);
-  if (item.small_facility_source) {
-    const source = item.small_facility_source;
+  assertForm8835EarlyConstructionSource(item, true);
+  if (item.small_facility_source || item.early_construction_source) {
+    const source =
+      (item.small_facility_source ?? item.early_construction_source)!;
     if (
       source.taxpayer_tin !== context.filer?.primarySSN ||
       source.taxpayer_name !== context.filer?.fullName ||

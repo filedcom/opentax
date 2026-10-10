@@ -57,6 +57,7 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("construction_date", `${page1}.f1_16[0]`),
     text("service_date", `${page1}.f1_17[0]`),
     checked("under_one_mw", `${page1}.c1_3[0]`),
+    checked("early_construction", `${page1}.c1_3[1]`),
     checked("no_increased_credit", `${page1}.c1_3[3]`),
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
     checked("no_energy_community_bonus", `${page1}.c1_5[1]`),
@@ -203,6 +204,8 @@ export const form8835Pdf: PdfFormDescriptor = {
           construction_date: usDate(item.facility_construction_start_date),
           service_date: usDate(item.facility_placed_in_service_date),
           under_one_mw: item.increased_credit_reason === "under_one_mw",
+          early_construction:
+            item.increased_credit_reason === "construction_before_2023_01_29",
           no_increased_credit: !oldFacility &&
             item.increased_credit_reason === "none",
           no_domestic_bonus: true,

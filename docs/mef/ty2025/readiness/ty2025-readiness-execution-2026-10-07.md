@@ -7088,3 +7088,29 @@ The individual ATS estimate remains about60%, rough45–75%. The independent ful
 1,394-module gate on frozen eed449e70 remains live, without a terminal result.
 
 Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.
+
+
+## October 10 — early-construction continuity, statements and final tax
+
+Completed the related Form8835 source/native/PDF/attachment work for reviewed
+filer-owned wind/geothermal facilities begun before January29,2023. Eight
+complete returns pass XSD with152 observed packet pages and12 bound statements.
+Both qualifying start methods, extended continuity safe harbors, complete
+continuous-construction/efforts histories and full/limited Form3800 use reconcile
+through final tax. Evidence covers six physical-work/contract pairs,18 cost
+records and60 history periods. Rejections:190 native,158 PDF,16 local archives;
+all12 original attachments survive submission and transmission ZIP packaging.
+No transmission or source/signature authenticity is claimed. See the [Form8835
+checkpoint](../domains/credits/business/form8835/ty2025-form8835-pdf-gap.md#october-10-early-construction-continuity-and-complete-filing-statements)
+for source methods, independent checks and existing presentation qualifications.
+
+Twelve focused plus82 related typed tests pass, zero failures/ignored. Private evidence:
+`.state/research/form8835-early-2026-10-10/`. PR70 cumulative evidence becomes
+336 schema-valid complete returns/3,413 reviewed packet pages, including the
+previously documented incorrect dividend-tax case125. Ten separate schema-failing
+returns and nine XML-only cases remain separate. Business-credit evidence is
+62/1,112; separate carryover component37roots/17pages is excluded.
+All52 main task bodies remain frozen/open and135 future items remain deferred;
+existing76 receives the repeated zero-line observation. Individual ATS estimate
+remains about60%, rough45–75%. Independent full gate eed449e70 remains live on
+unchanged tracked runtime; this checkpoint does not supply its terminal result.

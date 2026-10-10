@@ -6,8 +6,8 @@ Later checkpoints below supersede the original full-use/first-four-year limits:
 reviewed partial/zero facility tax use, older wind/geothermal production and
 mixed1f/4e classes, cellulosic/livestock lessees, and cumulative bond-financing
 reviews now have complete-return evidence. Solar retains its earlier bounded
-source route. Reviewed under-1-MW wind/geothermal increases now include bound
-statements; other increases, bonuses, transfers, passive and fiscal-year branches
+source route. Reviewed under-1-MW and early-construction wind/geothermal increases now include
+bound statements; PWA increases, bonuses, transfers, passive and fiscal-year branches
 remain guarded in the PDF. Source references do not authenticate
 external records. Historical paragraphs below retain their original context.
 
@@ -416,3 +416,79 @@ Broader facilities/owners, external authenticity, accepted carry histories,
 business rules and IRS acceptance remain open.
 
 Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.
+
+
+## October 10 early-construction continuity and complete filing statements
+
+Reviewed original, independently assessed, filer-owned wind/geothermal facilities
+with post-2021 service and a qualifying construction start before January29,2023
+now have a complete native/PDF/statement route. The review must identify the
+first qualifying start under either significant physical work or the five-percent
+cost test. Other energy/owner combinations, aggregated projects, retrofits, PWA,
+bonuses, transfers, passive and fiscal-year routes remain outside this expansion.
+
+For physical work, the review identifies dated integral work and excludes
+preliminary/inventory activity; contractor work requires an earlier enforceable
+binding agreement. For the cost method, a complete final eligible-cost inventory
+reconciles to final depreciable cost in cents, and the first date at which costs
+reach five percent must equal the claimed construction start. Integer arithmetic
+preserves the boundary even when an otherwise balanced final cost increases by
+one cent. Tax accounting, eligibility and the absence of an earlier qualifying
+method still require source review; this is not external record authentication.
+[Notice2013-29](https://www.irs.gov/pub/irs-drop/n-13-29.pdf) supplies the start
+methods, cost and physical-work rules.
+
+Continuity is separately reconciled. The ordinary four-year calendar safe harbor
+uses the placed-in-service date; [Notice2021-41](https://www.irs.gov/pub/irs-drop/n-21-41.pdf)
+extends construction begun in2016–2019 to six years and2020 to five years.
+The ordinary rule is retained from
+[Notice2016-31](https://www.irs.gov/pub/irs-drop/n-16-31.pdf).
+Alternatively, reviewed continuous-construction or continuous-efforts histories
+must span the entire start-to-service period without gaps or overlapping periods,
+with distinct supporting records and an explicit review for each period. Period
+coverage does not itself determine whether the underlying activities legally
+satisfy continuity. Offshore/federal-land special safe harbors are not modeled
+by this ordinary facility route.
+
+The required declaration identifies the selected construction method and confirms
+continuity, with source dates, taxpayer/facility identity and the prescribed
+perjury text. Native preparation and prepared PDF validate the structured fields
+and digest; static packet copies retain no widgets and submitted attachment bytes
+remain unchanged. Synthetic typed signer/authority assertions are test inputs,
+not proof of genuine signed filings. [TY2025 Form8835 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+require this statement with question8b and do not require Form7220 for that box.
+
+Eight complete synthetic returns cover both start methods, the January28 cutoff,
+six/five-year safe harbors, two complete continuity histories and mixed two/four
+facility inventories with full and tax-limited credit use. Twelve facilities have
+six physical-work/contract pairs, eighteen cost records and sixty reviewed history
+periods across the cases. The two 3,000-credit cases report tax20,066, the two
+6,000-credit cases report17,066, and four limited cases use23,049 and report17;
+each also uses2,001 of independently sourced current orphan-drug credits.
+
+Private evidence: `.state/research/form8835-early-2026-10-10/`; the matched
+`packaged/` source/XML/PDF/archive set is canonical. Eight submission ZIPs and
+outer transmission ZIPs preserve all12 original statement streams. Sixteen
+missing/changed-attachment archives reject despite rebuilt ZIP CRCs. Source and
+statement mutations reject190 native preparations and158 PDF attempts, including
+32 native field substitutions with recomputed digests. Of the PDF attempts,150
+change source against the prepared bundle and eight omit prepared attachments.
+No transmission was attempted; synthetic package identifiers do not prove an
+authorized transmitter, live SOAP delivery, IRS business-rule success or acceptance.
+The initial copied test-helper field error was corrected before the final12-test
+focused pass; its failed log is retained. Notice PDFs and SHA-256 provenance,
+commands, runtime hashes and visual/XSD reports are retained in private evidence.
+
+
+All eight complete returns pass the retained TY2025v5.4 Return1040 XSD.
+Independent source/date/cost and Decimal tax checks reconcile. All152 packet
+pages were observed:64 distinct rendered pages on16 contact sheets and88 exact
+pixel duplicates;12 statement pages are included. Dates, question8b, capacity,
+fivefold amounts, Form3800 allocation/unused rows, final tax and declaration text
+agree. All final pages have no AcroForm fields/widgets. Known deferred skipped
+Form3800 lines26, Form8835 blank zero line3/presentation76, names68 and native
+AMT84 qualify the review; no clean whole-packet parity approval is claimed.
+
+Original statement structure also passes:144 canonical values match144 parent-linked widgets with nonempty appearances across12 PDFs; duplicate/orphan widget trees are absent in these retained sources. The static packet copies remain widget-free.
+
+Final validation:12 focused plus82 related typed tests pass, zero failures/ignored;94 distinct tests in the two runs. Changed-TypeScript formatting and `git diff --check` pass. The frozen full gate remains separate and has no terminal result.
