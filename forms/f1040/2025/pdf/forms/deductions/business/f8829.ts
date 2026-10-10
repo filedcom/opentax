@@ -1,4 +1,9 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import { form8829 } from "../../../../mef/forms/deductions/business/f8829.ts";
+import { reconcileRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateRentedHomeForm8829,
   type Form8829Lines,
@@ -118,6 +123,7 @@ function projectFields(
 ): Record<string, unknown> {
   if (Object.keys(fields).length === 0) return fields;
   const source = rentedHomeSourceSchema.parse(fields.rented_home);
+  reconcileRentedHomeEvidence(source);
   const lines = calculateRentedHomeForm8829(source);
   for (const key of Object.keys(lines) as (keyof Form8829Lines)[]) {
     if (fields[key] !== lines[key]) {
@@ -137,6 +143,11 @@ export const form8829Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8829--2025.pdf",
   includeWhen: (source) => typeof source.line36 === "number",
   projectFields,
+  instances(fields, filer, allPending) {
+    if (Object.keys(fields).length === 0) return [];
+    form8829.build(fields, { filer, pending: allPending });
+    return [fields];
+  },
   fields,
   filerFields: [
     { kind: "text", domainKey: "fullName", pdfField: `${page}.f1_01[0]` },

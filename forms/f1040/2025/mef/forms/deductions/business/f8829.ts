@@ -1,3 +1,4 @@
+import { reconcileRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import {
@@ -11,7 +12,10 @@ import {
   inputSchema as scheduleCInputSchema,
   projectForm8829ScheduleCItems,
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input = Partial<Form8829Lines & { rented_home: RentedHomeSource }>;
 
@@ -77,6 +81,8 @@ function checkScheduleC(
   const scheduleC = scheduleCInputSchema.parse(context.pending.schedule_c);
   if (
     scheduleC.schedule_cs.length !== 1 ||
+    source.recipient !== TS.T ||
+    scheduleC.schedule_cs[0].proprietor_recipient !== source.recipient ||
     scheduleC.schedule_cs[0].business_reference !== source.business_reference ||
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     (scheduleC.line1_gross_receipts ?? 0) > 0 ||
@@ -136,6 +142,7 @@ function buildIRS8829(fields: Input, context?: MefBuildContext): string {
   }
   checkScheduleC(source, lines, context);
   const proprietor = identity(source, context);
+  reconcileRentedHomeEvidence(source, proprietor.ssn);
   return elements("IRS8829", [
     element("ProprietorNm", proprietor.name),
     element("SSN", proprietor.ssn.replaceAll("-", "")),

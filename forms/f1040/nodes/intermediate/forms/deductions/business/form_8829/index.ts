@@ -1,3 +1,7 @@
+import {
+  reconcileRentedHomeEvidence,
+  rentedHomeEvidenceSchema,
+} from "./source.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
@@ -13,6 +17,7 @@ const area = z.number().int().positive().max(999_999);
 // Owned homes, mortgage interest, taxes, casualty losses, and depreciation
 // require additional primary-source and cross-form reconciliation.
 export const rentedHomeSourceSchema = z.object({
+  source_evidence: rentedHomeEvidenceSchema.optional(),
   business_reference: z.string().trim().min(1),
   home_identifier: z.string().trim().min(1),
   recipient: z.nativeEnum(TS),
@@ -80,6 +85,7 @@ export function calculateRentedHomeForm8829(
   raw: RentedHomeSource,
 ): Form8829Lines {
   const source = rentedHomeSourceSchema.parse(raw);
+  if (source.source_evidence) reconcileRentedHomeEvidence(source);
   if (source.business_area_sqft > source.total_area_sqft) {
     throw new Error("Form 8829 business area exceeds total home area");
   }

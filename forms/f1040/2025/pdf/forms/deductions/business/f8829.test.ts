@@ -1,3 +1,4 @@
+import { withRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateRentedHomeForm8829 } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
@@ -96,31 +97,33 @@ Deno.test("2025 Form 8829 maps every bounded rented-home calculated line and ide
 });
 
 Deno.test("2025 Form 8829 PDF projection checks source and formats percentages", () => {
-  const source = {
-    business_reference: "C-1",
-    home_identifier: "HOME-1",
-    recipient: TS.T,
-    business_area_sqft: 200,
-    total_area_sqft: 1_000,
-    schedule_c_line29_tentative_profit: 5_000,
-    insurance_indirect: 1_000,
-    rent_indirect: 10_000,
-    repairs_direct: 0,
-    repairs_indirect: 500,
-    utilities_indirect: 2_000,
-    other_indirect: 500,
-    prior_operating_carryover: 100,
-    regular_exclusive_use_verified: true,
-    actual_expense_method_verified: true,
-    rented_home_verified: true,
-    sole_home_and_business_verified: true,
-    all_schedule_c_gross_income_attributable_to_home_verified: true,
-    no_daycare_or_inventory_exception: true,
-    no_home_business_gain_or_other_trade_loss: true,
-    no_casualty_mortgage_tax_or_depreciation: true,
-    home_expenses_excluded_from_schedule_c_verified: true,
-    direct_repairs_business_area_only_verified: true,
-  } as const;
+  const source = withRentedHomeEvidence(
+    {
+      business_reference: "C-1",
+      home_identifier: "HOME-1",
+      recipient: TS.T,
+      business_area_sqft: 200,
+      total_area_sqft: 1_000,
+      schedule_c_line29_tentative_profit: 5_000,
+      insurance_indirect: 1_000,
+      rent_indirect: 10_000,
+      repairs_direct: 0,
+      repairs_indirect: 500,
+      utilities_indirect: 2_000,
+      other_indirect: 500,
+      prior_operating_carryover: 100,
+      regular_exclusive_use_verified: true,
+      actual_expense_method_verified: true,
+      rented_home_verified: true,
+      sole_home_and_business_verified: true,
+      all_schedule_c_gross_income_attributable_to_home_verified: true,
+      no_daycare_or_inventory_exception: true,
+      no_home_business_gain_or_other_trade_loss: true,
+      no_casualty_mortgage_tax_or_depreciation: true,
+      home_expenses_excluded_from_schedule_c_verified: true,
+      direct_repairs_business_area_only_verified: true,
+    } as const,
+  );
   const lines = calculateRentedHomeForm8829(source);
   const fields = { rented_home: source, ...lines };
   const projected = form8829Pdf.projectFields?.(fields, {});
@@ -143,7 +146,10 @@ Deno.test("2025 Form 8829 PDF projection checks source and formats percentages",
   assertEquals(carryoverProjected?.line36, 0);
   assertEquals(carryoverProjected?.line43, 2_900);
 
-  const directRepairs = { ...source, repairs_direct: 700 };
+  const directRepairs = withRentedHomeEvidence({
+    ...source,
+    repairs_direct: 700,
+  });
   const directLines = calculateRentedHomeForm8829(directRepairs);
   const directProjected = form8829Pdf.projectFields?.(
     { rented_home: directRepairs, ...directLines },

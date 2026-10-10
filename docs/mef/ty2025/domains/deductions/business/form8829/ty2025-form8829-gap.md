@@ -1,122 +1,113 @@
 # TY2025 Form 8829 coverage boundary
 
-## October8 current registered-audit reconciliation
+## October 10 reviewed rented-home source and complete-return checkpoint
 
-The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **22 passed/0 failed/0 ignored across4 named modules**; all8 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+The retained one-home, one-business rented-home route now binds its entered
+amounts to typed reviewed records before native or PDF export. Five complete
+returns pass local Return1040 XSD and archive checks, with all46 PDF pages
+reviewed. The original business-loss case remains blocked by the existing
+Form8995 current-loss carryforward guard (future8). This is bounded source
+reconciliation, not external authentication, IRS acceptance or full Form8829
+coverage.
 
+The [2025 form](https://www.irs.gov/pub/irs-prior/f8829--2025.pdf) and
+[2025 instructions](https://www.irs.gov/pub/irs-prior/i8829--2025.pdf) distinguish
+business-area direct costs from costs benefiting the entire home, require
+part-year expenses to relate to the business-use period, and carry unallowed
+operating expenses forward. This checkpoint covers the actual-method rented
+home already admitted by the calculator; it does not add an owned-home,
+daycare, mortgage-interest or depreciation route.
 
-Sources: [IRS 2025 Form 8829](https://www.irs.gov/pub/irs-prior/f8829--2025.pdf)
-and
-[2025 Instructions for Form 8829](https://www.irs.gov/pub/irs-prior/i8829--2025.pdf).
-Native XML must match the checked-in TY2025 v5.4 `Common/IRS8829/IRS8829.xsd`
-schema.
+### Source and owner contract
 
-## Bounded rented-home route written
+`rented_home.source_evidence` holds the home/business references, owner TIN,
+lease reference, measured-area/use record, dated expense ledger, and either
+an explicit no-prior-operating-loss confirmation or an identified2024
+actual-method Form8829 line43 record. Expense records contain distinct ledger
+IDs, bill/payment references, covered dates, payment date, category, whole-dollar
+amount, and nonduplication/reimbursement/tax-exempt-allocation confirmations.
+Direct repairs additionally identify exclusive business-area work. Ledger sums
+must exactly match each entered direct/indirect category; covered dates must
+fall within the reviewed2025 use period. Prior carryover must match the same
+home, business and owner.
 
-The node models one identified rented home used regularly and exclusively for
-one Schedule C business, with actual-method indirect insurance, rent, repairs,
-utilities, and other operating expenses, plus direct repairs made solely to the
-business area in column (a). The direct repair amount is required (zero when
-none), with an affirmative business-area-only fact. It reaches lines 20a, 23a,
-and 26 at 100%, without the line 24 area proration. It requires explicit
-eligibility and exclusion facts. It calculates applicable 2025 lines 1–3, 7–8,
-18b–28, 32–36, and 43–44. A positive line 36 now emits a business-referenced
-claim to Schedule C. That node projects it onto the sole item before line 31, SE
-tax, and QBI; the Schedule C and Form 8829 MeF builders independently reconcile
-the same claim, source line 29, and filed line 30/31. The positive route
-requires the sole Schedule C item to identify the taxpayer as proprietor,
-matching the primary filer identity emitted by MeF. Spouse-owned or
-unspecified-owner businesses fail closed. A prior top-level line 30 amount or an
-existing item line 30 is rejected for this route. The source additionally
-affirms that all Schedule C gross income is attributable to business use of the
-home, which is required for the bounded line 8 calculation. Zero-deduction Form
-8829 still retains and emits line 43 carryover. The old flat expense input is
-rejected. Form 1098's former full-box-1 routing to Form 8829 now fails
-explicitly because its mortgage-interest allocation is not modeled. The input is
-registered for the 2025 filing graph.
+Calculation with supplied evidence rejects conflicting records. Legacy aggregate
+calculation remains available for staging, but native/PDF export now requires
+the evidence. The fixture-only helper creates explicitly synthetic records for
+regression examples; production code never fills in missing filing facts.
+References and typed numbers do not authenticate leases, invoices, payments,
+measurements or prior returns against external bytes.
 
-The MeF descriptor was rewritten for native TY2025 v5.4 `IRS8829` order. It
-requires proprietor name/SSN, recalculates every emitted line, and checks the
-identified Schedule C reference and line 29. The PDF descriptor now projects
-proprietor identity and every calculated line of the bounded rented-home route,
-including the printed business percentages, line 15 limit, expense subtotal,
-allowance, and next-year carryover. Its projection recalculates the source and
-rejects mismatched amounts before printing.
+Native export recalculates every emitted line, identifies the primary filer as
+the sole ScheduleC proprietor, and checks the business reference and tentative
+profit. The owner check also applies when the current deduction is zero. A
+positive line36 must match the identified ScheduleC line30 claim and filed net
+profit; a zero line36 cannot create that claim. PDF instance preparation now
+runs the same native source/owner/ScheduleC reconciliation before printing.
+The existing conflicting-claim, simplified-method and unsupported-source guards
+remain in force.
 
-## Bounded PDF correction
+### Complete cases and independent verification
 
-The earlier field audit corrected reversed area fields and several printed-line
-positions. For the currently supported rented-home route, the descriptor now
-maps business and total area to lines 1 and 2, percentages to lines 3 and 7,
-indirect operating expenses to lines 18–23, direct repairs to line 20 column (a)
-and line 23 column (a), the prior operating carryover to line 25, and all
-computed limits and carryovers through line 44. Unsupported owner-home fields,
-including mortgage interest and depreciation basis, remain unmapped for this
-route. Focused field-name and projection cases are written, but have not been
-run or visually inspected.
+All full-year cases retain28 expense records: monthly rent/utilities plus
+insurance, direct repairs, indirect repairs and other operating costs. The
+July–December case retains16 records, a matching use period and no prior
+carryover. The five complete cases contain128 expense records in total.
 
-This extends the bounded rented-home PDF projection only. It does not make an
-owned-home or another excluded route fileable, and the filled appearance is
-still unverified.
+| Case | Business area | Line36 deduction | Line43 carryover | ScheduleC profit | Final tax | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| monthly-full | 200/1000 | 4100 | 0 | 45900 | 8830 | 12 |
+| income-limited | 200/1000 | 2000 | 2100 | 0 | 0 | 5 |
+| zero-income | 200/1000 | 0 | 4100 | 0 | 0 | 5 |
+| part-year | 200/1000 | 2440 | 0 | 24560 | 4038 | 12 |
+| fractional-area | 333/1000 | 6295 | 0 | 43705 | 8322 | 12 |
 
-## Remaining end-to-end boundaries
+Independent Python Decimal calculations reconstruct category totals, area
+allocation, income limit, carryover, ScheduleC profit, separate SE components,
+half-SE deduction, AGI, QBI limit, taxable income and ordinary tax-table amounts.
+All five packaged complete XML returns pass the cached TY2025v5.4 Return1040
+schema. Form8829 owner/amount elements match the source and calculations.
+Five synthetic submission archives retain exact prepared XML and manifests;
+each transmission container retains its exact inner archive. Twenty missing or
+altered XML/manifest archive variants reject. No package was transmitted, and
+synthetic software/originator/citizenship-review facts imply no authorized
+transmitter or accepted filing.
 
-- The bounded path excludes owned homes, all mortgage interest and real estate
-  taxes, casualty losses, depreciation, direct expenses other than repairs to
-  the exclusive business area, daycare, inventory storage, and multiple homes or
-  businesses. These need distinct sourced paths, not an inferred zero expense in
-  otherwise applicable returns.
-- The one-business taxpayer-owned projection is written but has not yet passed
-  the agreed consolidated test, XSD, filled-PDF, or IRS ATS acceptance gates.
-  Multiple businesses, multiple homes, or non-home business income remain
-  unsupported.
-- Eligibility, non-duplication of home costs in Schedule C expenses, and the
-  prior-year line 25 operating carryover are verified source facts, not yet
-  reconciled to independent use records, expense detail, or a prior-year return.
-  Schedule C lacks an owner field, so proprietor-to-business linkage is not
-  independently checked.
-- The native XML is written against v5.4 names and order but has not yet passed
-  local XSD or IRS business-rule validation. The registered PDF projects the
-  bounded rented-home lines and identity, but its widgets and actual filled
-  appearance have not been validated.
-- The node assumes `mortgage_interest` is already allocated to business use. The
-  1098 router actually sends the full box 1 amount, and the IRS instructions put
-  deductible home mortgage interest in Form 8829 line 10 column (b), apply the
-  line 7 business percentage, and distinguish itemizers from standard-deduction
-  filers. Treating the full amount as a direct deduction can overstate Schedule
-  C line 30. Mortgage-interest integration needs Schedule A/standard-deduction
-  context and a non-duplicating personal/business split before it can be enabled
-  safely.
-- The depreciation calculation uses the supplied `home_fmv_or_basis` as building
-  basis. The form first subtracts the value of land on line 38, then applies
-  line 7 and the applicable line 41 rate. No land value, improvements,
-  prior-service exceptions, or partial-year cessation facts are modeled. The
-  current `first_business_use_month = 0` rate applies 2.564% to all prior years,
-  but the instructions list exceptions requiring Pub. 946 or Pub. 534 rates.
-  First use in 2025 can also require Form 4562.
-- The bounded calculator rejects a business area greater than the total area and
-  excludes daycare, other direct expenses, excess interest and tax, casualty
-  losses, and depreciation rather than guessing those calculations.
-- Form 8829 line 8 is sourced from Schedule C line 29 only for the explicitly
-  excluded no-home-gain/no-other-trade-loss case. A zero or negative line 8 does
-  not suppress the filed Form 8829 or line 43 carryover.
+The final typed gate passes28 tests: six new source/complete-return tests plus
+22 existing calculator, route, native and PDF tests. Seven conflicting public
+record variants reject;80 native and80 freshly rehashed full-PDF source/owner/
+amount mutations reject across the five complete cases. The original loss−1000
+case remains unchanged: line36=0 and line43=4100 calculate, but both full exports
+reject the unfiled QBI-loss carryforward. That evidence is appended to future8;
+no deferred carryforward work was implemented.
 
-## Required acceptance cases
+All46 pages were rendered at1400px:38 unique pages plus8 exact pixel duplicates,
+reviewed through10 contact sheets. Form8829 areas, percentages, direct/indirect
+columns, income limits and both carryover lines reconcile to ScheduleC and final
+tax. Names on Form8829 correctly identify Alex Tenant; the Form8995 header still
+uses TENANT ALEX (future68). Some zero Form1040/ScheduleC/Form8829 fields remain
+blank (future76), including zero-income Form8829 line36; line43 and44 do print.
+These are qualified reviews, with no deferred layout repair. Static copies have
+no remaining AcroForm or widget fields.
 
-1. Build one typed Form 8829 source model per home and proprietor, with explicit
-   eligibility and simplified-method selection. Reject an area greater than
-   total area and unsupported daycare/multiple-home paths rather than silently
-   calculating them.
-2. Compute and emit all applicable lines in IRS order, including direct/indirect
-   columns, line 36 to Schedule C line 30, and lines 43–44 even when line 36 is
-   zero. Add cases for income-limited operating expenses and depreciation
-   carryovers, land subtraction, mortgage interest under itemized and standard
-   deductions, and daycare or fail-closed behavior.
-3. Map the computed fields in the v5.4 XSD's exact order and include proprietor
-   identity. Check native XML against the checked-in schema and a filled PDF
-   against the printed IRS form, including the 2025 line numbers and both
-   expense columns.
+Private evidence is retained in `.state/research/form8829-sources-2026-10-10/`:
+original/baseline inputs, full source/pending/XML/PDF cases, preserved loss
+boundary, final typed log, packaged archives, independent verifier, rendered
+page hashes and qualified visual review. Earlier October8 evidence was22
+selected tests; this checkpoint supplies fresh complete-return proof for the
+five routes above without closing the broader main-board parent.
 
-No compatibility layer or temporary calculator fallback was added. Full Form
-8829 coverage remains open until the excluded situations, local XSD, filled PDF,
-and IRS acceptance gates are satisfied.
+### Remaining scope
+
+Owned homes, mortgage interest and real estate taxes, casualty losses,
+depreciation/land/basis, other direct-expense kinds, daycare, inventory storage,
+multiple homes/businesses, spouse-owned businesses, and non-home business
+income remain outside this retained route. Carryovers through intervening
+simplified-method years and other prior histories require their own sourced
+paths. Form1098's former full-interest home-office routing remains rejected;
+no personal/business mortgage allocation or depreciation fallback was enabled.
+
+Independent source-byte authentication, accepted prior-year carryover records,
+production next-year import, broader business-rule verification and IRS ATS
+acceptance remain open. All original Form8829 main-board requirements remain
+open until those applicable routes and evidence gates are resolved.

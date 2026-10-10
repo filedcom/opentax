@@ -1,3 +1,4 @@
+import { withRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { TS } from "../../../../../nodes/types.ts";
@@ -8,7 +9,7 @@ import {
 import { form8829 } from "./f8829.ts";
 import { scheduleC } from "../../income/business/schedule_c.ts";
 
-const source: RentedHomeSource = {
+const source: RentedHomeSource = withRentedHomeEvidence({
   business_reference: "C-1",
   home_identifier: "HOME-1",
   recipient: TS.T,
@@ -32,7 +33,7 @@ const source: RentedHomeSource = {
   no_casualty_mortgage_tax_or_depreciation: true,
   home_expenses_excluded_from_schedule_c_verified: true,
   direct_repairs_business_area_only_verified: true,
-};
+});
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
@@ -195,7 +196,10 @@ Deno.test("2025 Form 8829 rejects stale line 36 before filing", () => {
 });
 
 Deno.test("2025 Form 8829 MeF emits direct repair and subtotal before indirect amounts", () => {
-  const withDirectRepairs = { ...source, repairs_direct: 700 };
+  const withDirectRepairs = withRentedHomeEvidence({
+    ...source,
+    repairs_direct: 700,
+  });
   const lines = calculateRentedHomeForm8829(withDirectRepairs);
   const xml = form8829.build(
     { rented_home: withDirectRepairs, ...lines },
