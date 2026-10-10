@@ -7220,3 +7220,11 @@ pages, including previously documented incorrect dividend-tax case125. Ten
 additional schema-failing returns and9 XML-only cases remain separate. Frozen
 full gate eed449e70 is still running and predates this runtime. Estimate stays
 about60% individual ATS checks (rough45–75%); broad parents remain open.
+
+## October 10 direct PWA payroll and complete packets
+
+Final consolidated validation: **88 typed tests pass, zero fail**. All eight complete returns pass the full TY2025v5.4 XSD. Independent payroll, tax and native/PDF checks agree. Source mutations reject153 native and153 freshly hashed prepared-PDF cases;48 attachment mutations reject. Both local archives preserve all20 original interactive attachments exactly, and40 missing/altered archive variants reject. All6,323 canonical source fields and6,323 widgets agree with nonempty appearances.
+
+All191 packet pages were rendered:60 unique pages were inspected across15 contact sheets and131 pages were exact pixel duplicates. Identities, dates, coordinates, qualification answers, amounts, statements and both continuation tables were checked. Existing deferred qualifications remain:26 Form3800 skipped SectionB values,76 blank Form8835 PartII line3 zero,68 some EXAMPLEALEX headers, and84 omitted native Form6251 line1a despite PDF15,750. These observations do not establish correction of those deferred items.
+
+Business evidence totals91 complete XSD-valid returns/1,679 observed pages, with37 PartVI roots/17 pages separate. Evidence is retained under `.state/research/form8835-pwa-2026-10-10/`; see the Form8835 direct-PWA checkpoint for source boundaries. The52 main TODO bodies remain unchanged and all135 future items deferred. The technical estimate remains about60% (45–75%), engineering judgment rather than IRS acceptance. The frozen earlier full regression remains pending and predates these changes.

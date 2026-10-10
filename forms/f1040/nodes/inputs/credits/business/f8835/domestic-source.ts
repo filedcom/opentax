@@ -112,7 +112,12 @@ export function assertForm8835DomesticSource(item: F8835Item, filing = false) {
   if (
     !item.domestic_content_bonus || item.facility_owned_by_filer !== true ||
     !["WIND", "GEOTHERMAL"].includes(item.energy_type) || item.is_fiscal_year ||
-    !["none", "under_one_mw", "construction_before_2023_01_29"].includes(
+    ![
+      "none",
+      "under_one_mw",
+      "construction_before_2023_01_29",
+      "prevailing_wage_and_apprenticeship",
+    ].includes(
       item.increased_credit_reason,
     ) ||
     item.existing_facility_expansion ||

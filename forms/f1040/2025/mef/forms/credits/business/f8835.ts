@@ -1,3 +1,7 @@
+import {
+  assertForm8835PwaSource,
+  form8835PwaDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
 import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
 import {
   assertForm8835DomesticSource,
@@ -173,11 +177,29 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     }
   }
   assertForm8835BondSource(item, true);
+  assertForm8835PwaSource(item, true);
+  if (
+    item.pwa_source &&
+    (context.attachmentSha256ByFileName
+          ?.[item.pwa_source.form7220_file_name] !==
+        item.pwa_source.form7220_sha256 ||
+      context.attachmentDescriptionsByFileName
+          ?.[item.pwa_source.form7220_file_name] !==
+        form8835PwaDescription(item.facility_description!))
+  ) {
+    throw new Error(
+      "Form 8835 PWA Form 7220 differs from retained source bytes",
+    );
+  }
   assertForm8835SmallFacilitySource(item, true);
   assertForm8835EarlyConstructionSource(item, true);
-  if (item.small_facility_source || item.early_construction_source) {
+  if (
+    item.small_facility_source || item.early_construction_source ||
+    item.pwa_source
+  ) {
     const source =
-      (item.small_facility_source ?? item.early_construction_source)!;
+      (item.small_facility_source ?? item.early_construction_source ??
+        item.pwa_source)!;
     if (
       source.taxpayer_tin !== context.filer?.primarySSN ||
       source.taxpayer_name !== context.filer?.fullName ||

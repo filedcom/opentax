@@ -1,4 +1,9 @@
 import {
+  assertForm8835PwaSource,
+  form8835PwaDeclaration,
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+import { assertForm8835PwaAttachment } from "./f8835_pwa_statement.ts";
+import {
   assertForm8835EarlyConstructionSource,
   form8835EarlyConstructionDeclaration,
 } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
@@ -28,14 +33,21 @@ export async function assertForm8835IncreaseStatements(
   const names = new Set<string>();
   for (const item of source.f8835s) {
     if (
-      !["under_one_mw", "construction_before_2023_01_29"].includes(
+      ![
+        "under_one_mw",
+        "construction_before_2023_01_29",
+        "prevailing_wage_and_apprenticeship",
+      ].includes(
         item.increased_credit_reason,
       )
     ) continue;
+    assertForm8835PwaSource(item, true);
+    await assertForm8835PwaAttachment(item, attachments);
     assertForm8835SmallFacilitySource(item, true);
     assertForm8835EarlyConstructionSource(item, true);
     const review =
-      (item.small_facility_source ?? item.early_construction_source)!;
+      (item.small_facility_source ?? item.early_construction_source ??
+        item.pwa_source)!;
     const matches = attachments.filter((a) =>
       a.fileName === review.statement_file_name
     );
@@ -69,7 +81,9 @@ export async function assertForm8835IncreaseStatements(
       ReviewReference: review.review_reference,
       SignerName: review.signer_name,
       SignedOn: review.signed_on,
-      Declaration: item.early_construction_source
+      Declaration: item.pwa_source
+        ? form8835PwaDeclaration(item)
+        : item.early_construction_source
         ? form8835EarlyConstructionDeclaration(item)
         : smallFacilityDeclaration,
       PerjuryDeclaration: increasedCreditPerjury,

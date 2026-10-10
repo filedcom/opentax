@@ -271,13 +271,17 @@ export function assertForm8835EnergyCommunitySource(
       placed_in_service_on: source.placed_in_service_on,
     }, records);
     const early = item.early_construction_source;
+    const increasedHistory = item.pwa_source?.construction_history ?? (early
+      ? {
+        beginning: early.beginning,
+        continuity: early.continuity,
+        earliest_qualifying_start_verified:
+          early.earliest_qualifying_start_verified,
+      }
+      : undefined);
     if (
-      early && JSON.stringify(constructionHistorySchema.parse({
-          beginning: early.beginning,
-          continuity: early.continuity,
-          earliest_qualifying_start_verified:
-            early.earliest_qualifying_start_verified,
-        })) !==
+      increasedHistory &&
+      JSON.stringify(constructionHistorySchema.parse(increasedHistory)) !==
         JSON.stringify(
           constructionHistorySchema.parse(source.construction_history),
         )
@@ -287,7 +291,7 @@ export function assertForm8835EnergyCommunitySource(
       );
     }
   }
-  const small = item.small_facility_source;
+  const small = item.small_facility_source ?? item.pwa_source;
   const sameSmallUnits = !small ||
     small.generating_units.length === source.generating_units.length &&
       small.generating_units.every((u) =>
@@ -301,7 +305,12 @@ export function assertForm8835EnergyCommunitySource(
     !item.energy_community_bonus || item.facility_owned_by_filer !== true ||
     item.is_fiscal_year ||
     !["WIND", "GEOTHERMAL"].includes(item.energy_type) ||
-    !["none", "under_one_mw", "construction_before_2023_01_29"].includes(
+    ![
+      "none",
+      "under_one_mw",
+      "construction_before_2023_01_29",
+      "prevailing_wage_and_apprenticeship",
+    ].includes(
       item.increased_credit_reason,
     ) ||
     item.existing_facility_expansion ||

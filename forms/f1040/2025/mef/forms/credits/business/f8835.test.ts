@@ -212,12 +212,13 @@ Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled
     Error,
     "reviewed manufacturer costs",
   );
-  const xml = form8835.build({ f8835s: [increased] }, {
-    binaryAttachmentFileNames: ["Increase.pdf", "PWA.pdf"],
-  })[0];
-  assertStringIncludes(
-    xml,
-    "<QualifiedFacilitiesIncrCrAmt>30000</QualifiedFacilitiesIncrCrAmt>",
+  assertThrows(
+    () =>
+      form8835.build({ f8835s: [increased] }, {
+        binaryAttachmentFileNames: ["Increase.pdf", "PWA.pdf"],
+      }),
+    Error,
+    "reviewed payroll, apprenticeship and Form 7220 sources",
   );
 });
 

@@ -1282,3 +1282,7 @@ evidence totals83 complete returns/1,488 observed pages; PartVI37 component
 roots/17 pages remain separate. See the [Form8835 checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-construction-date-community-qualification-and-complete-packets)
 for tax amounts, source facts, visual qualifications and open scope. No authentic
 carryover filing, source/signature authenticity or IRS acceptance is established.
+
+## October 10 direct PWA complete-return checkpoint
+
+[Reviewed payroll and Form7220](../form8835/ty2025-form8835-pdf-gap.md#october-10-direct-pwa-payroll-form-7220-and-complete-packets) add8 complete XSD-valid returns/191 observed pages, including both payroll continuations and combined domestic/community bonuses. The consolidated gate passes88 tests;153 native/153 prepared-PDF source mutations and48 attachment mutations reject. All20 original attachments survive local archives;40 missing/altered variants reject. Business evidence now totals91 complete returns/1,679 pages; PartVI remains separately37 roots/17 pages. Existing presentation qualifications, broader combinations, carryovers, source authenticity and IRS acceptance remain open.

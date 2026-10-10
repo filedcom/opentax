@@ -675,3 +675,58 @@ Offshore attribution, changing project/unit inventories, other energy/owner type
 PWA, transfers, passive/fiscal-year routes, source/signature authenticity,
 authenticated carryovers and IRS acceptance remain open. This completes the
 construction-date source path, not the broad Form8835/Form3800 parent tasks.
+
+## October 10 direct PWA payroll, Form 7220 and complete packets
+
+Reviewed direct-compliance sources now join filer-owned, nonpassive wind and
+geothermal facilities begun in2023/2024 to their increased credit, required
+Form7220, increased-credit statement, Form3800 allocation and final return.
+Employer/worker/rate/program joins reconcile dated time and payments in integer
+minutes/cents. Overtime premiums do not satisfy the wage floor; qualifying cash
+and fringe benefits can substitute for each other. Registered apprentice wage
+schedules, daily employer/worksite/classification ratios, the12.5%/15% labor-hour
+thresholds and each four-worker employer's participation are checked separately.
+Working forepersons' manual work remains wage-covered but is excluded from the
+apprenticeship denominator. This source review does not authenticate payroll,
+registration, wage determinations, time records or signatures.
+
+[Form7220 instructions](https://www.irs.gov/instructions/i7220) govern the
+per-facility attachment, current-service reporting and later-year repair reporting.
+[TD9998](https://www.irs.gov/irb/2024-34_IRB#TD-9998) and the
+[IRS PWA guidance](https://www.irs.gov/credits-deductions/frequently-asked-questions-about-the-prevailing-wage-and-apprenticeship-under-the-inflation-reduction-act)
+support the wage/apprenticeship distinctions. Exact minutes govern eligibility;
+Form7220 hours print to four decimals and dollar columns reconcile rounded rows.
+The no-repair attestation is retained in the increased-credit statement with
+filer/facility identity and the perjury declaration. Synthetic examples are
+explicitly unsigned. Corrections, penalty cures and good-faith exceptions need
+separate evidence and remain outside this direct-compliance route.
+
+Eight complete returns cover2023/2024 starts, current/prior-year service, repairs,
+cash in lieu of fringe benefits, a working foreperson,20 employers with both
+PartII/III continuations, and two wind/geothermal facilities with domestic and
+annual/construction-date community bonuses. The two construction histories must
+agree where both PWA and construction-date community reviews are supplied.
+Seven returns produce/use3,000 and tax20,066; the pair produces72,360,
+uses23,049 and has tax17. Every return also uses2,001 of orphan-drug credit.
+Independent Decimal payroll and tax checks retain the source-to-final-return join.
+
+Final consolidated validation: **88 typed tests pass, zero fail**. All eight complete returns pass the full TY2025v5.4 XSD. Independent payroll, tax and native/PDF checks agree. Source mutations reject153 native and153 freshly hashed prepared-PDF cases;48 attachment mutations reject. Both local archives preserve all20 original interactive attachments exactly, and40 missing/altered archive variants reject. All6,323 canonical source fields and6,323 widgets agree with nonempty appearances.
+
+The reviewed official Form7220 template has SHA-256
+`6d5d7bf5ccee360ab3054752e4a649f1f5ea7298ac50840d85727fa3da77e6cc`.
+Its PartIII row12 skips canonical field107; subsequent row mappings follow the
+actual field inventory. Form8835 prints the PWA qualification checkbox.
+Continuation fields retain transparent appearances, official alignment, unique
+canonical names and taxpayer headers. The independent verifier reads row values
+by widget-column position, checks canonical/widget values and appearances,
+and verifies the flattened packet separately from the retained interactive sources.
+
+All191 packet pages were rendered:60 unique pages were inspected across15 contact sheets and131 pages were exact pixel duplicates. Identities, dates, coordinates, qualification answers, amounts, statements and both continuation tables were checked. Existing deferred qualifications remain:26 Form3800 skipped SectionB values,76 blank Form8835 PartII line3 zero,68 some EXAMPLEALEX headers, and84 omitted native Form6251 line1a despite PDF15,750. These observations do not establish correction of those deferred items.
+
+Evidence: `.state/research/form8835-pwa-2026-10-10/`, including IRS sources and
+hashes, typed logs, independent verification, full XML/PDF, source fields,
+render manifests and local submission/container archives. Nothing was transmitted;
+synthetic software/EFIN identities prove no authorization. Other facilities,
+owner/transfer/passive/fiscal-year routes, PWA corrections/cures/exceptions,
+authenticated carryovers, external source/signature authenticity and IRS acceptance
+remain open. The broad Form8835/Form3800 parents remain unchecked.

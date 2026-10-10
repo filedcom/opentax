@@ -1,3 +1,4 @@
+import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
 import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
 import { assertForm8835DomesticSource } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
 import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
@@ -67,6 +68,12 @@ export function form8835PdfSources(
     }
     assertForm8835DomesticSource(item, true);
     assertForm8835BondSource(item, true);
+    assertForm8835PwaSource(item, true);
+    if (
+      item.pwa_source &&
+      (item.pwa_source.taxpayer_tin !== filer?.primarySSN ||
+        item.pwa_source.taxpayer_name !== filer?.fullName)
+    ) throw new Error("Form 8835 PWA source differs from PDF filer");
     assertForm8835SmallFacilitySource(item, true);
     assertForm8835EarlyConstructionSource(item, true);
     const lines = calculateForm8835(item);
@@ -91,7 +98,12 @@ export function form8835PdfSources(
         item.energy_type !== EnergyType.Landfill &&
         item.energy_type !== EnergyType.Trash) ||
       item.is_fiscal_year ||
-      !["none", "under_one_mw", "construction_before_2023_01_29"].includes(
+      ![
+        "none",
+        "under_one_mw",
+        "construction_before_2023_01_29",
+        "prevailing_wage_and_apprenticeship",
+      ].includes(
         item.increased_credit_reason,
       ) ||
       (item.transfer_election_amount ?? 0) !== 0 ||
@@ -112,7 +124,7 @@ export function form8835PdfSources(
       item.registration_number !== undefined
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility or early-construction increases, with reviewed actual-cost domestic content and annual energy-community locations, without other increases, transfer, or fiscal-year branches",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility, early-construction or direct-compliance PWA increases, with reviewed actual-cost domestic content and annual energy-community locations, without other increases, transfer, or fiscal-year branches",
       );
     }
     if (

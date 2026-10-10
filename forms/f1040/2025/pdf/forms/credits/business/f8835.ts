@@ -58,6 +58,7 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("service_date", `${page1}.f1_17[0]`),
     checked("under_one_mw", `${page1}.c1_3[0]`),
     checked("early_construction", `${page1}.c1_3[1]`),
+    checked("pwa_requirements", `${page1}.c1_3[2]`),
     checked("no_increased_credit", `${page1}.c1_3[3]`),
     checked("domestic_bonus", `${page1}.c1_4[0]`),
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
@@ -208,6 +209,8 @@ export const form8835Pdf: PdfFormDescriptor = {
           under_one_mw: item.increased_credit_reason === "under_one_mw",
           early_construction:
             item.increased_credit_reason === "construction_before_2023_01_29",
+          pwa_requirements: item.increased_credit_reason ===
+            "prevailing_wage_and_apprenticeship",
           no_increased_credit: !oldFacility &&
             item.increased_credit_reason === "none",
           domestic_bonus: item.domestic_content_bonus,

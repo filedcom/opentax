@@ -1,3 +1,4 @@
+import { assertForm8835PwaSource, pwaSourceSchema } from "./pwa-source.ts";
 import {
   assertForm8835EnergyCommunitySource,
   energyCommunitySourceSchema,
@@ -187,6 +188,7 @@ export const itemSchema = z.object({
   existing_facility_expansion: z.boolean().optional(),
   solar_dc_nameplate_kw: z.number().int().nonnegative().optional(),
   ac_nameplate_kw: z.number().int().nonnegative().optional(),
+  pwa_source: pwaSourceSchema.optional(),
   small_facility_source: smallFacilitySourceSchema.optional(),
   early_construction_source: earlyConstructionSourceSchema.optional(),
   increased_credit_statement_file_name: z.string().min(1).optional(),
@@ -410,6 +412,7 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  assertForm8835PwaSource(item);
   assertForm8835SmallFacilitySource(item);
   assertForm8835EarlyConstructionSource(item);
   assertForm8835DomesticSource(item);

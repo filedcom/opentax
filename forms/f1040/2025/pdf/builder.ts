@@ -947,13 +947,18 @@ async function buildPdfBytesInternal(
     const rows = normalized.f8835.f8835s as Array<{
       increased_credit_reason: string;
       increased_credit_statement_file_name?: string;
+      pwa_form7220_file_name?: string;
       domestic_content_bonus: boolean;
       domestic_content_statement_file_name?: string;
     }>;
     for (const [index, item] of rows.entries()) {
       const statements: Array<[string, string | undefined]> = [];
       if (
-        ["under_one_mw", "construction_before_2023_01_29"].includes(
+        [
+          "under_one_mw",
+          "construction_before_2023_01_29",
+          "prevailing_wage_and_apprenticeship",
+        ].includes(
           item.increased_credit_reason,
         )
       ) {
@@ -961,6 +966,11 @@ async function buildPdfBytesInternal(
           "f8835_increased_credit_statement",
           item.increased_credit_statement_file_name,
         ]);
+      }
+      if (
+        item.increased_credit_reason === "prevailing_wage_and_apprenticeship"
+      ) {
+        statements.push(["f8835_form7220", item.pwa_form7220_file_name]);
       }
       if (item.domestic_content_bonus) {
         statements.push([
