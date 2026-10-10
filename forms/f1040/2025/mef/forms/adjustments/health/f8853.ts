@@ -488,5 +488,23 @@ function buildArcherContributionGroup(
       element("HDHPEmployerCompensationAmt", lines.line4),
     ]),
     element("ArcherMSADeductionAmt", lines.line5),
+    ...(fields.archer_distribution_ledger
+      ? (() => {
+        const dist = calculateArcherMsaDistribution(fields);
+        return [
+          element("TotalArcherMSADistributionAmt", dist.line6a),
+          element("ArcherMSADistriRollOverAmt", dist.line6b),
+          element("ArcherMSANetDistributionAmt", dist.line6c),
+          element("ArcherMSAUnreimbQualMedExpAmt", dist.line7),
+          element("TaxableArcherMSADistriAmt", dist.line8),
+          ...(dist.line9a
+            ? [element("ArcherMSADistriMeetTaxExcInd", "X")]
+            : []),
+          ...(dist.line9b > 0
+            ? [element("ArcherMSAAddnlDistriTaxAmt", dist.line9b)]
+            : []),
+        ];
+      })()
+      : []),
   ]);
 }

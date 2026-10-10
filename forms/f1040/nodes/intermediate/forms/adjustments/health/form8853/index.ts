@@ -329,12 +329,19 @@ function schedule1Output(
 
   if (
     deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0 &&
-    !input.ltc_ledger
+    !input.ltc_ledger &&
+    !input.archer_contribution_ledger?.paired_archer_activity_review
   ) {
     return [];
   }
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
+  if (input.archer_contribution_ledger?.paired_archer_activity_review) {
+    s1Input.paired_archer_contribution_ledger =
+      input.archer_contribution_ledger;
+    s1Input.paired_archer_distribution_ledger =
+      input.archer_distribution_ledger;
+  }
   if (input.ltc_ledger) {
     s1Input.ltc_source_ledger = input.ltc_ledger;
     s1Input.ltc_archer_distribution_ledger = input.archer_distribution_ledger;
@@ -442,15 +449,40 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   }
 }
 
+export function assertPairedArcherActivity(input: Form8853Input): boolean {
+  const contribution = input.archer_contribution_ledger;
+  const distribution = input.archer_distribution_ledger;
+  const review = contribution?.paired_archer_activity_review;
+  if (!review && !distribution?.paired_archer_activity_review) return false;
+  if (
+    !review || !contribution || !distribution ||
+    JSON.stringify(review) !==
+      JSON.stringify(distribution.paired_archer_activity_review) ||
+    review.includes_ltc !== !!input.ltc_ledger ||
+    distribution.source.kind !== "normal" ||
+    distribution.source.holder_ssn !== contribution.holder_ssn ||
+    input.medicare_distribution_ledger ||
+    input.medicare_joint_distribution_ledgers ||
+    input.archer_distribution_filing_details
+  ) {
+    throw new Error(
+      "Paired Archer activity needs matching complete contribution/distribution reviews for one living holder",
+    );
+  }
+  return true;
+}
+
 export function normalizeArcherSource(
   input: Form8853Input,
   taxYear = 2025,
 ): Form8853Input {
   if (!input.archer_distribution_ledger) return input;
-  assertDistributionLtcReview(
-    input.archer_distribution_ledger,
-    !!input.ltc_ledger,
-  );
+  if (!assertPairedArcherActivity(input)) {
+    assertDistributionLtcReview(
+      input.archer_distribution_ledger,
+      !!input.ltc_ledger,
+    );
+  }
   const lines = calculateArcherLedger(
     input.archer_distribution_ledger,
     taxYear,
@@ -541,13 +573,16 @@ export function assertLtcSourceActivity(
     input.medicare_distribution_ledger,
     input.medicare_joint_distribution_ledgers,
   ].filter(Boolean);
-  if (families.length > 1) {
+  const paired = assertPairedArcherActivity(input);
+  if (families.length > (paired ? 2 : 1)) {
     throw new Error(
       "LTC currently combines with one reviewed MSA activity family",
     );
   }
   for (const ledger of distributionLedgers) {
-    assertDistributionLtcReview(ledger, true);
+    if (!(paired && ledger === input.archer_distribution_ledger)) {
+      assertDistributionLtcReview(ledger, true);
+    }
   }
   const ltcExpenseReferences = new Set(
     input.ltc_ledger.insureds.flatMap((insured) =>
@@ -570,7 +605,7 @@ export function assertLtcSourceActivity(
   }
   const allowed = new Set([
     "ltc_ledger",
-    ...(input.archer_distribution_ledger?.ltc_activity_review
+    ...(paired || input.archer_distribution_ledger?.ltc_activity_review
       ? [
         "archer_distribution_ledger",
         "archer_msa_distributions",
@@ -590,7 +625,7 @@ export function assertLtcSourceActivity(
         "medicare_advantage_exception",
       ]
       : []),
-    ...(input.archer_contribution_ledger?.ltc_activity_review
+    ...(paired || input.archer_contribution_ledger?.ltc_activity_review
       ? [
         "archer_contribution_ledger",
         "w2_code_r_entries",
@@ -621,18 +656,22 @@ export function normalizeArcherContributionSource(
     throw new Error("Sourced Archer contribution worksheet requires TY2025");
   }
   const ledger = input.archer_contribution_ledger;
-  if (!!ledger.ltc_activity_review !== !!input.ltc_ledger) {
+  const paired = assertPairedArcherActivity(input);
+  if (!paired && !!ledger.ltc_activity_review !== !!input.ltc_ledger) {
     throw new Error(
       "Archer combined LTC review requires its complete LTC ledger and cannot assert absence of other activity",
     );
   }
   const lines = calculateArcherContributions(ledger, input.w2_code_r_entries);
   if (
-    input.archer_distribution_ledger || input.medicare_distribution_ledger ||
+    (!paired && input.archer_distribution_ledger) ||
+    input.medicare_distribution_ledger ||
     input.medicare_joint_distribution_ledgers ||
     input.archer_distribution_filing_details ||
     Object.entries(input).some(([key, value]) =>
-      /^(archer_msa_|medicare_advantage_|ltc_)/.test(key) &&
+      (paired
+        ? /^(medicare_advantage_|ltc_)/
+        : /^(archer_msa_|medicare_advantage_|ltc_)/).test(key) &&
       (typeof value === "number" ? value > 0 : value === true)
     )
   ) {

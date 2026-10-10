@@ -1,3 +1,12 @@
+import {
+  archerDistributionLedgerSchema,
+  calculateArcherLedger,
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_distributions.ts";
+import {
+  assertPairedArcherActivity,
+  inputSchema,
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
+import { calculateLtcLedger } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
 import { schedule1 as schedule1Node } from "../../../../../nodes/outputs/general/return-assembly/schedule1/index.ts";
 import { z } from "zod";
 import {
@@ -17,6 +26,50 @@ export function reconcileArcherContributions(
     w2_code_r_entries: z.array(codeREntrySchema).optional(),
   }).parse(raw);
   const ledger = fields.archer_contribution_ledger;
+  if (ledger.paired_archer_activity_review) {
+    const paired = inputSchema.parse(raw);
+    assertPairedArcherActivity(paired);
+    const source = paired.archer_distribution_ledger!;
+    if (source.source.kind !== "normal") {
+      throw new Error("Paired Archer holder must be living");
+    }
+    const birth =
+      (context?.pending?.f1040 as Record<string, unknown> | undefined)
+        ?.[ledger.owner === "taxpayer" ? "taxpayer_dob" : "spouse_dob"];
+    if (birth !== source.source.holder_date_of_birth) {
+      throw new Error("Paired Archer holder birth must match return owner");
+    }
+    const retained = z.object({
+      paired_archer_contribution_ledger: archerContributionLedgerSchema,
+      paired_archer_distribution_ledger: archerDistributionLedgerSchema,
+      line8e_archer_msa_dist: z.number().optional(),
+    }).parse(context?.pending?.schedule1 ?? {});
+    if (
+      JSON.stringify(retained.paired_archer_contribution_ledger) !==
+        JSON.stringify(ledger) ||
+      JSON.stringify(retained.paired_archer_distribution_ledger) !==
+        JSON.stringify(source)
+    ) {
+      throw new Error(
+        "Paired Archer ledgers must match retained Schedule1 sources",
+      );
+    }
+    const dist = calculateArcherLedger(source);
+    const otherTax = z.object({ line17e_archer_msa_tax: z.number().optional() })
+      .parse(context?.pending?.schedule2 ?? {});
+    if (
+      (retained.line8e_archer_msa_dist ?? 0) !==
+        dist.line8 +
+          (paired.ltc_ledger
+            ? calculateLtcLedger(paired.ltc_ledger).taxable
+            : 0) ||
+      (otherTax.line17e_archer_msa_tax ?? 0) !== dist.line9b
+    ) {
+      throw new Error(
+        "Paired Archer distribution income/tax must reconcile to Schedule1/2",
+      );
+    }
+  }
   const filer = context?.filer, pending = context?.pending;
   const statuses = ["", "single", "mfj", "mfs", "hoh", "qss"];
   if (
@@ -209,6 +262,18 @@ export function assertArcherEmployerExcessIncomeSource(
   fields: Record<string, unknown>,
   context?: MefBuildContext,
 ) {
+  if (
+    fields.paired_archer_contribution_ledger ||
+    fields.paired_archer_distribution_ledger
+  ) {
+    const source = inputSchema.parse(context?.pending?.form8853 ?? {});
+    if (!source.archer_contribution_ledger?.paired_archer_activity_review) {
+      throw new Error(
+        "Retained paired Archer sources require their complete Form8853",
+      );
+    }
+    reconcileArcherContributions(source, context);
+  }
   if (Number(fields.line8z_archer_excess_employer ?? 0) > 0) {
     reconcileArcherContributions(context?.pending?.form8853, context);
   }

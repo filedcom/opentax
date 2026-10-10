@@ -6831,3 +6831,27 @@ routes, authenticity and IRS acceptance remain open. Main52/future133 bodies
 are byte-preserved; no future item implemented or added and no parent closed.
 Individual ATS-check estimate remains about60%, uncertainty45–75%. Private
 proof is `archer-payroll-2026-10-10/`; continuation stays on draft base PR70.
+
+
+## October 10: paired Archer contributions and distributions
+
+Compacted board learnings before edits. The existing Form8853 gap now has one
+reviewed living-holder contribution/distribution route, including sole-spouse
+ownership and optional separate LTC. Both annual inventory reviews must match;
+Schedule1 retains both ledgers and native/PDF export joins owner/date of birth,
+payroll/funding, deductions, income, distribution tax and current-excess tax.
+One native Archer group and printed SectionA contain both PartsI/II; SectionC
+follows when present. Whole-form removal, missing/changed ledgers and altered
+totals reject. No inherited/multiple-holder/mixed-MSA scope is inferred.
+Eight synthetic full returns pass cached2025v5.4 XSD and independent Decimal
+source/1040 tax/refund checks. All65 static PDF pages reviewed (40unique/25exact
+duplicates); no fields/widgets remain. Focused9/0 covers59 public-source and
+88native/88fresh-PDF rejections. Initial typing, synthetic wage-base and joint
+worksheet-expectation corrections are preserved; production income-tax logic
+was unchanged. Related regression passes300/0 across21 modules after replaying
+the initial298/2 run with the corrected joint test expectation. Benchmark46/133 has exactly the same87 failing IDs. Existing
+zero76/native-name68 qualifications and distinct-insured/deferred133 limits
+remain; no new future item or deferred implementation. Main52/future133 bodies
+are byte-preserved and no parent closed. Individual ATS-check estimate stays
+about60%, uncertainty45–75%. Evidence: `archer-paired-2026-10-10/`. Work remains
+on draft base PR70.

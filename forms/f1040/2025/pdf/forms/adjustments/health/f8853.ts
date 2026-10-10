@@ -241,6 +241,19 @@ export const form8853Pdf: PdfFormDescriptor = {
             : lines.line3,
           compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
           line5_archer_deduction: lines.line5,
+          ...(source.archer_distribution_ledger
+            ? (() => {
+              const dist = calculateArcherMsaDistribution(source);
+              return {
+                archer_msa_distributions: dist.line6a,
+                archer_msa_qualified_expenses: dist.line7,
+                line6c_archer_msa_net_distribution: dist.line6c,
+                line8_taxable_archer_msa_distribution: dist.line8,
+                line9b_archer_msa_additional_tax: dist.line9b,
+                line9a_archer_msa_exception: dist.line9a,
+              };
+            })()
+            : {}),
         },
         ...ltcInstances,
       ];

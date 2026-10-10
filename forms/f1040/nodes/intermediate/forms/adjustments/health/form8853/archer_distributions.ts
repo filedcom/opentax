@@ -1,3 +1,4 @@
+import { pairedArcherActivityReviewSchema } from "./archer_activity.ts";
 import {
   distributionActivityReviewSchema,
   hasExclusiveDistributionActivityReview,
@@ -65,8 +66,13 @@ export const archerDistributionLedgerSchema = z.object({
   all_distributions_identified_confirmed: z.literal(true),
   no_rollover_or_excess_contribution_withdrawal_confirmed: z.literal(true),
   ...distributionActivityReviewSchema.shape,
+  paired_archer_activity_review: pairedArcherActivityReviewSchema.optional(),
 }).strict().refine(
-  hasExclusiveDistributionActivityReview,
+  (ledger) =>
+    ledger.paired_archer_activity_review
+      ? !ledger.no_other_form8853_activity_confirmed &&
+        !ledger.ltc_activity_review
+      : hasExclusiveDistributionActivityReview(ledger),
   "MSA distribution needs exactly one activity review",
 );
 export type ArcherDistributionLedger = z.infer<

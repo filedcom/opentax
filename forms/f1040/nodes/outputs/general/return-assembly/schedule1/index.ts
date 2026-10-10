@@ -36,6 +36,8 @@ const inputSchema = z.object({
   ltc_medicare_joint_distribution_ledgers: medicareJointLedgersSchema
     .optional(),
   ltc_archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  paired_archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  paired_archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
   // Entry space above Part I: Form 1099-K amounts reported in error or
   // personal items sold at a loss. It does not enter income or AGI totals.
   form1099k_reported_error_or_loss: z.number().int().nonnegative().optional(),
@@ -458,6 +460,18 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
       ? {
         k1_partnership_box11_code_k_sources:
           input.k1_partnership_box11_code_k_sources,
+      }
+      : {}),
+    ...(input.paired_archer_contribution_ledger
+      ? {
+        paired_archer_contribution_ledger:
+          input.paired_archer_contribution_ledger,
+      }
+      : {}),
+    ...(input.paired_archer_distribution_ledger
+      ? {
+        paired_archer_distribution_ledger:
+          input.paired_archer_distribution_ledger,
       }
       : {}),
     ...(input.ltc_source_ledger

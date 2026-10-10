@@ -1,3 +1,4 @@
+import { pairedArcherActivityReviewSchema } from "./archer_activity.ts";
 // TY2025 IRS Form8853 instructions, Section A and Line3 chart (pp.1–5).
 // This source worksheet covers one holder and an actual small-employer HDHP/W-2.
 // Personal deposit/payment sources and employer codeR sources retain their raw cents.
@@ -93,6 +94,8 @@ export const archerContributionLedgerSchema = z.object({
     no_msa_distributions_confirmed: z.literal(true),
     all_other_form8853_activity_in_ltc_ledger_confirmed: z.literal(true),
   }).strict().optional(),
+  paired_archer_activity_review: pairedArcherActivityReviewSchema.optional(),
+  // This review excludes prior excess and excess-contribution withdrawals.
   no_prior_excess_or_withdrawals_review_reference: reference,
   december_31: z.object({
     value: amount,
@@ -101,9 +104,12 @@ export const archerContributionLedgerSchema = z.object({
   }).strict().optional(),
 }).strict().refine(
   (ledger) =>
-    !!ledger.no_other_form8853_activity_review_reference !==
-      !!ledger.ltc_activity_review,
-  "Archer contributions require exactly one absence-of-other-activity or combined LTC review",
+    [
+      ledger.no_other_form8853_activity_review_reference,
+      ledger.ltc_activity_review,
+      ledger.paired_archer_activity_review,
+    ].filter(Boolean).length === 1,
+  "Archer contributions require exactly one absence-of-other-activity, combined LTC or paired Archer review",
 );
 export const codeREntrySchema = z.object({
   employee_ssn: z.string(),
