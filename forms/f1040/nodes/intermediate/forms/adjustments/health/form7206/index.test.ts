@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "./policy-records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TS } from "../../../../../types.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -316,11 +317,11 @@ const scheduleSEOutput = schedule_se.compute(
 if (typeof scheduleSEOutput !== "number") {
   throw new Error("Form 7206 fixture needs computed Schedule SE line 13");
 }
-const filingSource = {
+const filingSource = withHealthPolicyRecords({
   ...source,
   schedule1_line15_se_tax_deduction: scheduleSEOutput,
   schedule1_line16_retirement_deduction: 0,
-};
+});
 const filingLines = calculateSingleScheduleCForm7206(filingSource);
 const filingFields = {
   single_schedule_c_plan: filingSource,

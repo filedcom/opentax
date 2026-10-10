@@ -1351,3 +1351,64 @@ No new deferred item. Business totals122 returns/2367 pages; PartVI37/17 separat
 See the Form8582-CR continuation checkpoint and private
 `.state/research/form8582cr-overflow-2026-10-10/`. Source authenticity, broader
 passive-income/credit methods, accepted carryovers and IRS acceptance remain open.
+
+## October 10 passive rental inventory checkpoint
+
+Four complete returns now reconcile16 positive ScheduleE rentals and64 passive
+New Markets credit sources through Form8582-CR, Form3800, Schedule3 and final tax.
+All four pass XSD;78 packet pages were reviewed, with64 native/64 freshly hashed
+PDF mutation rejections and16 malformed-archive rejections. Focused7/0 and related
+73/0 gates pass. The [detailed checkpoint](../form8582cr/ty2025-form8582cr-pdf-gap.md#october-10-complete-passive-rental-income-inventories)
+retains source, allocation and printed-row evidence. Existing presentation26/68/76/84
+remain qualified; the separately retained higher-income case cannot export because
+Form3800 further limits the passive credit (new deferred142). No IRS acceptance or
+broad parent-task completion is claimed.
+
+## October 10 K-1 rental income and passive credit checkpoint
+
+The Form8582-CR ordinary route now reconciles reviewed primary-owned positive
+K-1 box2/3 rental income, alongside or without direct Schedule E rentals, through
+Form3800 and final1040. Three XSD-valid complete returns retain56 reviewed pages;
+two larger XSD-valid native returns remain PDF-blocked at Schedule E's four-row
+capacity. Focused5/0 and related77/0 pass, with90 native/54 fresh-PDF source
+rejections and12 archive rejections. New future143/144 retain the capacity and
+unanswered PartII line27; existing26/68/76/84 qualifications remain. See the
+[full checkpoint](../form8582cr/ty2025-form8582cr-pdf-gap.md#october-10-reviewed-k-1-rental-income-inventories)
+for source and final-tax evidence; no filing acceptance is claimed.
+
+## October 10 separate income-only K-1 checkpoint
+
+Four complete returns now join separate income-only partnership/S corporation
+K-1s with passive New Markets credit sources. All four pass XSD;74 pages were
+reviewed, including single-credit PartIII and two-credit PartV reporting. Gates
+4/0 and82/0 pass;88 native/88 fresh-PDF mutations and16 malformed archives reject.
+The Form8582-CR gap checkpoint retains source, final-tax and artifact details.
+Deferred26/68/76/84/144 repeat; no new item or deferred repair was made.
+
+## October 10 mixed passive and nonpassive K-1 checkpoint
+
+Four XSD-valid complete returns/75 reviewed pages now reconcile both kinds of
+New Markets credit, including34 source rows and an18-row PartV continuation.
+The passive ledger retains its own suspended balance; the final1040 credit adds
+the independently reconciled nonpassive inventory. Focused4/0 and related86/0
+pass;64 native/64 fresh-PDF mutations and16 malformed archives reject. The
+Form8582-CR checkpoint records exact source/column/aggregate evidence. Existing
+deferred26/68/76/84/144 repeat, and further tax-use limits142 remain guarded.
+
+
+## October 10 Form8826 mixed-source component inventory
+
+[Form8826 inventory evidence](../form8826/ty2025-form8826-pdf-gap.md#october-10-mixed-k-1-inventory-component-checkpoint)
+extends PDF reconciliation to complete nonpassive partnership/S-corporation
+inventories: six component pairs,12 standalone XSD-valid roots,45 PartV source
+rows and62 reviewed pages (including two continuations). The64 focused/related
+tests pass;48 native-component,48 PDF-source and42 prepared-detail mutations
+reject. Self credit2375 reduces ScheduleC expense by the full amount even when
+the cap allocates only1250 to self or current tax allows no credit.
+
+All seven original full native return preparations remain Form8995-blocked145.
+The31-K-1 cent-cap attribution conflict146 and the missing public per-source
+allocation input147 remain deferred; partial-use component evidence supplies
+an explicit reviewed pending allocation and is not public-route completion.
+Existing26/68/76 visual qualifications repeat. No full-return/archive/ATS count
+is added and no deferred item is implemented.

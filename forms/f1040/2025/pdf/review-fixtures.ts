@@ -1,3 +1,5 @@
+import { withHealthPolicyRecords } from "../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
+import { withRentedHomeEvidence } from "../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { form8582crReviewFixtures } from "../domains/credits/business/form8582c/form8582cr_k1.fixture.ts";
 import { ordinaryRothSubstituteReviewFixture } from "./reviews/general/composed-returns/review-4852-ordinary-roth.fixture.ts";
 import type { Form4852RetainedDocument } from "../domains/income/wages/form4852/form4852_source.ts";
@@ -7549,7 +7551,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_1_gross_receipts: 50_000,
       }],
       form7206: {
-        single_schedule_c_plan: {
+        single_schedule_c_plan: withHealthPolicyRecords({
           business_reference: "HEALTH-CONSULTING",
           plan_identifier: "ALEX-HEALTH-2025",
           recipient: TS.T,
@@ -7578,7 +7580,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           no_form2555: true,
           no_schedule_se_optional_method: true,
           no_other_earned_income: true,
-        },
+        }),
         marketplace_ptc_premium_overlap: false,
       },
     },
@@ -7790,7 +7792,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         qbi_no_other_adjustments_confirmed: true,
       }],
       form_8829: {
-        rented_home: {
+        rented_home: withRentedHomeEvidence({
           business_reference: "C-1",
           home_identifier: "HOME-1",
           recipient: TS.T,
@@ -7814,7 +7816,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           no_casualty_mortgage_tax_or_depreciation: true,
           home_expenses_excluded_from_schedule_c_verified: true,
           direct_repairs_business_area_only_verified: true,
-        },
+        }, singleFiler.primarySSN),
       },
     },
     filer: singleFiler,

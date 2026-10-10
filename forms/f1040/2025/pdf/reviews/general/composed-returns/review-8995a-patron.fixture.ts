@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import type { PdfReviewFixture } from "../../../review-fixtures.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
@@ -166,7 +167,7 @@ export function patronFixture(
         ? {
           form7206: {
             marketplace_ptc_premium_overlap: false,
-            single_schedule_c_plan: {
+            single_schedule_c_plan: withHealthPolicyRecords({
               business_reference: "PATR-C",
               plan_identifier: "SYNTHETIC-PATR-HEALTH",
               recipient: "T",
@@ -198,7 +199,7 @@ export function patronFixture(
               no_form2555: true,
               no_schedule_se_optional_method: true,
               no_other_earned_income: true,
-            },
+            }),
           },
         }
         : {}),

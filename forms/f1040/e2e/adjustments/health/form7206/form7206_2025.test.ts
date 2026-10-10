@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -72,7 +73,7 @@ const sources = {
     line_1_gross_receipts: 50_000,
   }],
   form7206: {
-    single_schedule_c_plan: {
+    single_schedule_c_plan: withHealthPolicyRecords({
       business_reference: "HEALTH-CONSULTING",
       plan_identifier: "ALEX-HEALTH-2025",
       recipient: TS.T,
@@ -97,7 +98,7 @@ const sources = {
       no_form2555: true,
       no_schedule_se_optional_method: true,
       no_other_earned_income: true,
-    },
+    }),
     marketplace_ptc_premium_overlap: false,
   },
 };
@@ -190,7 +191,7 @@ Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects iden
     },
     form7206: {
       ...sources.form7206,
-      single_schedule_c_plan: {
+      single_schedule_c_plan: withHealthPolicyRecords({
         ...sources.form7206.single_schedule_c_plan,
         spouse_identity: { name: "Casey Example", ssn: "222334444" },
         premium_months: sources.form7206.single_schedule_c_plan.premium_months
@@ -203,7 +204,7 @@ Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects iden
                 "2025 spouse employer eligibility review",
             }),
           ),
-      },
+      }),
     },
   };
   const result = execute(
@@ -294,7 +295,7 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
     }],
     form7206: {
       ...sources.form7206,
-      single_schedule_c_plan: {
+      single_schedule_c_plan: withHealthPolicyRecords({
         ...sources.form7206.single_schedule_c_plan,
         recipient: TS.S,
         spouse_identity: { name: "Casey Example", ssn: "222334444" },
@@ -310,7 +311,7 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
             employer_plan_review_reference:
               "2025 Casey and Alex employer plan eligibility review",
           })),
-      },
+      }),
     },
   };
   const result = execute(
@@ -407,7 +408,7 @@ Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joi
     },
     form7206: {
       ...sources.form7206,
-      single_schedule_c_plan: {
+      single_schedule_c_plan: withHealthPolicyRecords({
         ...sources.form7206.single_schedule_c_plan,
         spouse_identity: { name: "Casey Example", ssn: "222334444" },
         premium_months: sources.form7206.single_schedule_c_plan.premium_months
@@ -419,7 +420,7 @@ Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joi
               ? "2025 taxpayer employer eligibility review"
               : "2025 spouse employer eligibility review",
           })),
-      },
+      }),
     },
   };
   const result = execute(

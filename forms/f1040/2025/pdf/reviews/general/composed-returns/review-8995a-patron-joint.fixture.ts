@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { patronFixture } from "./review-8995a-patron.fixture.ts";
 import type { PdfReviewFixture } from "../../../review-fixtures.ts";
 
@@ -96,6 +97,7 @@ export function spouseOwnedPatronFixture(
     plan.recipient = "S";
     plan.spouse_identity = { name: "Sam Example", ssn: "444556666" };
     for (const month of plan.premium_months) month.covered_person = "spouse";
+    inputs.form7206.single_schedule_c_plan = withHealthPolicyRecords(plan);
   }
   return {
     ...base,

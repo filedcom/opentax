@@ -910,6 +910,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
             : undefined,
         )
         : "",
+      k1Rows.length > 0 ? element("PriorYearsLossesInd", "false") : "",
       ...k1Rows.map((row) =>
         elements("PartnershipOrSCorpGroup", [
           element(

@@ -1,3 +1,8 @@
+import {
+  issuedPolicyRecordSchema,
+  issuedPremiumRecordsSchema,
+  reconcileHealthPolicyRecords,
+} from "./policy-records.ts";
 import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
 import { z } from "zod";
 import {
@@ -26,27 +31,8 @@ export const independentOwnerHealthSourceSchema = z.object({
       plan_identifier: z.string().trim().min(1),
       establishment_source_reference: z.string().trim().min(1),
       plan_established_under_business: z.literal(true),
-      issued_policy_record: z.object({
-        issuer_name: z.string().trim().min(1),
-        issuer_ein: z.string().regex(/^\d{9}$/),
-        policy_number: z.string().trim().min(1),
-        policyholder_ssn: z.string().regex(/^\d{9}$/),
-        source_document_reference: z.string().trim().min(1),
-      }).strict().optional(),
-      issued_premium_records: z.array(
-        z.object({
-          month: z.number().int().min(1).max(12),
-          issuer_ein: z.string().regex(/^\d{9}$/),
-          policy_number: z.string().trim().min(1),
-          policyholder_ssn: z.string().regex(/^\d{9}$/),
-          payer_ssn: z.string().regex(/^\d{9}$/),
-          covered_person: z.enum(["taxpayer", "spouse"]),
-          paid_premium: z.number().nonnegative(),
-          paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
-          policy_source_reference: z.string().trim().min(1),
-          payment_source_reference: z.string().trim().min(1),
-        }).strict(),
-      ).length(12).optional(),
+      issued_policy_record: issuedPolicyRecordSchema.optional(),
+      issued_premium_records: issuedPremiumRecordsSchema.optional(),
       premium_months: z.array(premiumMonthSchema).length(12).refine(
         (m) => m.every((x, i) => x.month === i + 1),
         "Independent plans need every month in order",
@@ -148,36 +134,12 @@ export function calculateIndependentOwnerHealth(
         "Health plan must use its actual establishing business and proprietor",
       );
     }
-    if (owned.source.businesses.some((b) => b.kind === "schedule_f")) {
-      const policy = plan.issued_policy_record,
-        records = plan.issued_premium_records;
-      const ssn = plan.recipient === "T"
+    reconcileHealthPolicyRecords(
+      plan,
+      plan.recipient === "T"
         ? source.taxpayer_identity.ssn
-        : source.spouse_identity.ssn;
-      if (
-        !policy || !records || policy.policyholder_ssn !== ssn ||
-        records.some((record, index) => {
-          const month = plan.premium_months[index],
-            date = new Date(record.paid_on + "T00:00:00Z");
-          return record.month !== month.month ||
-            !Number.isFinite(date.valueOf()) ||
-            date.toISOString().slice(0, 10) !== record.paid_on ||
-            record.issuer_ein !== policy.issuer_ein ||
-            record.policy_number !== policy.policy_number ||
-            record.policyholder_ssn !== ssn || record.payer_ssn !== ssn ||
-            record.covered_person !== month.covered_person ||
-            record.paid_premium !== month.paid_premium ||
-            record.policy_source_reference !== month.policy_source_reference ||
-            month.policy_source_reference !==
-              policy.source_document_reference ||
-            record.payment_source_reference !== month.payment_source_reference;
-        })
-      ) {
-        throw new Error(
-          "Mixed C/F health needs actual owned issuer policy and monthly issued/payment records",
-        );
-      }
-    }
+        : source.spouse_identity.ssn,
+    );
     for (const month of plan.premium_months) {
       if (payments.has(month.payment_source_reference)) {
         throw new Error(

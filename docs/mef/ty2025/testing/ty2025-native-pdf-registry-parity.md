@@ -1,5 +1,16 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
+## October10 canonical PDF field and type inventory
+
+The [complete field inventory](./ty2025-pdf-field-inventory-2026-10-10.md)
+checks all118 PDF descriptors/115 keys against116 actual IRS templates, expanding
+scalar/filer/extra fields and every declared row. All7,979 mapped occurrences
+have the expected field type and a widget; an independent pypdf canonical-tree
+check agrees. The normal registry regression now checks types/widgets as well
+as names. No mapping changed, no descriptor was added and no visual or broader
+filing support is inferred. Dynamic page/overflow/owner semantics and remaining
+route decisions stay open.
+
 ## October 10 LTC statement registration
 
 Live imports contain 158 native descriptors / 153 distinct pending keys and

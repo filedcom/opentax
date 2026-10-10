@@ -15,6 +15,7 @@ import { inputSchema as form3800InputSchema } from "../../../../../nodes/inputs/
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { sameForm3800PassiveAllocations } from "../../../../mef/forms/credits/business/f3800/f3800_passive_link.ts";
+import { reconcileNewMarketsK1Credits } from "../../../../mef/forms/credits/business/f8874_credit_evidence.ts";
 import { assertForm3800FinalCreditJoin } from "../form3800/form3800_final_credit_join.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
@@ -23,21 +24,29 @@ const nonemptySource = (value: unknown): boolean =>
     ? value.length > 0
     : value !== null && typeof value === "object" &&
       Object.keys(value).length > 0;
-const creditOnlyPartnershipFields = new Set([
+const reviewedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
   "recipient_tin",
   "box15_code_ad_new_markets_credit",
   "new_markets_credit_subject_to_passive_activity_limit",
+  "box2_rental_re",
+  "box3_other_rental",
+  "eic_passive_activity_review",
+  "passive_income_source",
 ]);
-const creditOnlySCorpFields = new Set([
+const reviewedSCorpFields = new Set([
   "corporation_name",
   "corporation_ein",
   "source_document_reference",
   "recipient_tin",
   "box13_code_ad_new_markets_credit",
   "new_markets_credit_subject_to_passive_activity_limit",
+  "box2_rental_re",
+  "box3_other_rental",
+  "eic_passive_activity_review",
+  "passive_income_source",
 ]);
 type CreditSource = ReturnType<
   typeof form8582crInputSchema.parse
@@ -47,22 +56,27 @@ function reconcilePartnershipK1Credits(
   sources: readonly CreditSource[],
   pending: Pending,
 ) {
-  if (sources.length === 0) {
-    if (nonemptySource(pending.k1_partnership)) {
-      throw new Error("Form 8582-CR has an unclaimed partnership K-1 source");
-    }
-    return;
-  }
-  const k1s = partnershipK1InputSchema.parse(pending.k1_partnership)
-    .k1_partnerships;
+  const allK1s = pending.k1_partnership === undefined
+    ? []
+    : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships;
+  const k1s = allK1s.filter((k1) =>
+    k1.box15_code_ad_new_markets_credit !== undefined &&
+    k1.new_markets_credit_subject_to_passive_activity_limit === true
+  );
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
     k1s.length !== sources.length ||
-    k1s.some((k1) =>
-      Object.keys(k1).some((key) => !creditOnlyPartnershipFields.has(key)) ||
+    allK1s.some((k1) =>
+      Object.keys(k1).some((key) => !reviewedPartnershipFields.has(key)) ||
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
-      k1.new_markets_credit_subject_to_passive_activity_limit !== true
+      (k1.box15_code_ad_new_markets_credit !== undefined
+        ? typeof k1.new_markets_credit_subject_to_passive_activity_limit !==
+          "boolean"
+        : k1.new_markets_credit_subject_to_passive_activity_limit !==
+            undefined ||
+          (k1.box2_rental_re === undefined &&
+            k1.box3_other_rental === undefined))
     ) ||
     sources.some((source) =>
       k1s.filter((k1) =>
@@ -88,7 +102,7 @@ function reconcilePartnershipK1Credits(
     )
   ) {
     throw new Error(
-      "Form 8582-CR partnership code AD credits differ from the filed credit-only K-1s",
+      "Form 8582-CR partnership code AD credits differ from the filed reviewed K-1s",
     );
   }
 }
@@ -97,21 +111,27 @@ function reconcileSCorpK1Credits(
   sources: readonly CreditSource[],
   pending: Pending,
 ) {
-  if (sources.length === 0) {
-    if (nonemptySource(pending.k1_s_corp)) {
-      throw new Error("Form 8582-CR has an unclaimed S corporation K-1 source");
-    }
-    return;
-  }
-  const k1s = sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const allK1s = pending.k1_s_corp === undefined
+    ? []
+    : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const k1s = allK1s.filter((k1) =>
+    k1.box13_code_ad_new_markets_credit !== undefined &&
+    k1.new_markets_credit_subject_to_passive_activity_limit === true
+  );
   const general = pending.general as { taxpayer_ssn?: string } | undefined;
   if (
     k1s.length !== sources.length ||
-    k1s.some((k1) =>
-      Object.keys(k1).some((key) => !creditOnlySCorpFields.has(key)) ||
+    allK1s.some((k1) =>
+      Object.keys(k1).some((key) => !reviewedSCorpFields.has(key)) ||
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
-      k1.new_markets_credit_subject_to_passive_activity_limit !== true
+      (k1.box13_code_ad_new_markets_credit !== undefined
+        ? typeof k1.new_markets_credit_subject_to_passive_activity_limit !==
+          "boolean"
+        : k1.new_markets_credit_subject_to_passive_activity_limit !==
+            undefined ||
+          (k1.box2_rental_re === undefined &&
+            k1.box3_other_rental === undefined))
     ) ||
     sources.some((source) =>
       k1s.filter((k1) =>
@@ -137,12 +157,12 @@ function reconcileSCorpK1Credits(
     )
   ) {
     throw new Error(
-      "Form 8582-CR S corporation code AD credits differ from the filed credit-only K-1s",
+      "Form 8582-CR S corporation code AD credits differ from the filed reviewed K-1s",
     );
   }
 }
 
-/** Replays one rental activity and its current-year credits against the filed return. */
+/** Replays the rental-income inventory and its current-year credits against the filed return. */
 export function reconcileFiledForm8582CROrdinary(
   raw: unknown,
   pending: Pending,
@@ -196,7 +216,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or credit-only partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or reviewed partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus a complete sourced passive rental income inventory",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -207,16 +227,11 @@ export function reconcileFiledForm8582CROrdinary(
     pending.schedule1,
     pending.general,
     pending.f1099int,
+    pending.k1_partnership,
+    pending.k1_s_corp,
   );
   let nonpassiveForm8874Credit = 0;
   if (selfCredit || mixedCredit) {
-    if (
-      selfCredit &&
-      (nonemptySource(pending.k1_partnership) ||
-        nonemptySource(pending.k1_s_corp))
-    ) {
-      throw new Error("Form 8582-CR self-earned route has another K-1 source");
-    }
     const creditForm = form8874InputSchema.parse(pending.f8874);
     const rows = calculateForm8874(creditForm).rows;
     const credits = rows.filter((row) =>
@@ -261,7 +276,7 @@ export function reconcileFiledForm8582CROrdinary(
     }
     nonpassiveForm8874Credit = ordinaryCredits[0]?.creditAmount ?? 0;
   }
-  if (passThroughCredit || mixedCredit) {
+  {
     if (passThroughCredit && nonemptySource(pending.f8874)) {
       throw new Error(
         "Form 8582-CR K-1 route has another Form 8874 source",
@@ -314,6 +329,61 @@ export function reconcileFiledForm8582CROrdinary(
     );
   }
   const f3800 = form3800InputSchema.parse(pending.f3800);
+  const expectedNonpassive = [
+    ...(pending.k1_partnership === undefined
+      ? []
+      : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships)
+      .filter((k1) =>
+        k1.box15_code_ad_new_markets_credit !== undefined &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      .map((k1) => ({
+        source_type: "partnership" as const,
+        source_ein: k1.partnership_ein!,
+        source_document_reference: k1.source_document_reference!,
+        credit_amount: k1.box15_code_ad_new_markets_credit!,
+        subject_to_passive_activity_limit: false as const,
+      })),
+    ...(pending.k1_s_corp === undefined
+      ? []
+      : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps)
+      .filter((k1) =>
+        k1.box13_code_ad_new_markets_credit !== undefined &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      .map((k1) => ({
+        source_type: "s_corporation" as const,
+        source_ein: k1.corporation_ein!,
+        source_document_reference: k1.source_document_reference!,
+        credit_amount: k1.box13_code_ad_new_markets_credit!,
+        subject_to_passive_activity_limit: false as const,
+      })),
+  ];
+  const nonpassiveEntries = f3800.f8874_k1_credit_entries ?? [];
+  reconcileNewMarketsK1Credits(nonpassiveEntries, pending);
+  const entryKey = (entry: typeof nonpassiveEntries[number]) =>
+    JSON.stringify([
+      entry.source_type,
+      entry.source_ein,
+      entry.source_document_reference,
+      entry.source_statement_reference,
+      entry.credit_amount,
+      entry.subject_to_passive_activity_limit,
+    ]);
+  if (
+    JSON.stringify(expectedNonpassive.map(entryKey).sort()) !==
+      JSON.stringify(nonpassiveEntries.map(entryKey).sort())
+  ) {
+    throw new Error(
+      "Form 8582-CR nonpassive K-1 credit inventory differs from filed Form 3800",
+    );
+  }
+  const nonpassiveK1Credit = expectedNonpassive.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
+  const totalAllowed = lines.line37 + nonpassiveForm8874Credit +
+    nonpassiveK1Credit;
   const filedForm3800Allowed = (
     pending.f3800 as Record<string, unknown> | undefined
   )?.allowed_credit;
@@ -322,7 +392,7 @@ export function reconcileFiledForm8582CROrdinary(
       (f3800.f8874_credit?.credit_amount !== nonpassiveForm8874Credit ||
         f3800.f8874_credit?.subject_to_passive_activity_limit !== false)) ||
     (nonpassiveForm8874Credit === 0 && f3800.f8874_credit !== undefined) ||
-    filedForm3800Allowed !== lines.line37 + nonpassiveForm8874Credit ||
+    filedForm3800Allowed !== totalAllowed ||
     !sameForm3800PassiveAllocations(
       lines.sourceAllocations,
       f3800.passive_source_allocations ?? [],
@@ -333,8 +403,8 @@ export function reconcileFiledForm8582CROrdinary(
     );
   }
   assertForm3800FinalCreditJoin(
-    lines.line37 + nonpassiveForm8874Credit,
+    totalAllowed,
     pending,
   );
-  return { lines, ledger, tax, nonpassiveForm8874Credit };
+  return { lines, ledger, tax, nonpassiveForm8874Credit, nonpassiveK1Credit };
 }

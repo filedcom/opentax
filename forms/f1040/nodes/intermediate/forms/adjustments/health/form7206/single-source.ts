@@ -1,3 +1,8 @@
+import {
+  issuedPolicyRecordSchema,
+  issuedPremiumRecordsSchema,
+  reconcileHealthPolicyRecords,
+} from "./policy-records.ts";
 import { z } from "zod";
 import { TS } from "../../../../../types.ts";
 
@@ -33,6 +38,8 @@ export const singleScheduleCPlanSchema = z.object({
     name: z.string().trim().min(1),
     ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   }).strict().optional(),
+  issued_policy_record: issuedPolicyRecordSchema.optional(),
+  issued_premium_records: issuedPremiumRecordsSchema.optional(),
   premium_months: z.array(premiumMonthSchema).length(12).refine(
     (months) => months.every((record, index) => record.month === index + 1),
     "Form 7206 needs January through December premium records in order",
@@ -138,6 +145,17 @@ export function calculateSingleScheduleCForm7206(
   raw: SingleScheduleCPlan,
 ): Form7206Lines {
   const source = singleScheduleCPlanSchema.parse(raw);
+  if (
+    source.issued_policy_record !== undefined ||
+    source.issued_premium_records !== undefined
+  ) {
+    reconcileHealthPolicyRecords(
+      source,
+      source.recipient === TS.S
+        ? source.spouse_identity!.ssn
+        : source.taxpayer_identity.ssn,
+    );
+  }
   const eligiblePremiums = eligiblePlanPremiums(source.premium_months);
   const profit = source.schedule_c_line31_net_profit;
   const seTax = source.schedule1_line15_se_tax_deduction;

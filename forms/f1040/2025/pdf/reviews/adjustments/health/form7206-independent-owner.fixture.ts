@@ -87,6 +87,29 @@ export function independentHealthInputs(
     },
     marketplace_ptc_premium_overlap: false,
   };
+  // Synthetic reviewed policy/payment records for the fixture, not external authentication.
+  for (const plan of i.form7206.independent_schedule_c_plans.plans) {
+    const ssn = plan.recipient === "T" ? "111223333" : "222334444";
+    plan.issued_policy_record = {
+      issuer_name: "Example Health Insurer",
+      issuer_ein: "951234567",
+      policy_number: plan.plan_identifier,
+      policyholder_ssn: ssn,
+      source_document_reference: plan.premium_months[0].policy_source_reference,
+    };
+    plan.issued_premium_records = plan.premium_months.map((m: any) => ({
+      month: m.month,
+      issuer_ein: "951234567",
+      policy_number: plan.plan_identifier,
+      policyholder_ssn: ssn,
+      payer_ssn: ssn,
+      covered_person: m.covered_person,
+      paid_premium: m.paid_premium,
+      paid_on: `2025-${String(m.month).padStart(2, "0")}-15`,
+      policy_source_reference: m.policy_source_reference,
+      payment_source_reference: m.payment_source_reference,
+    }));
+  }
   return i;
 }
 export function independentHealthFamily(

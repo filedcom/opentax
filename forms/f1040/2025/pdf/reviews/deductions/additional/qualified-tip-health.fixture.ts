@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { assertEquals } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import {
@@ -44,7 +45,7 @@ export function singleTipHealthInputs(
     .no_other_allocable_deductions_review_reference =
       "2025-owned-expense-halfSE-and-established-health-plan-review-no-other-allocable-deductions";
   inputs.form7206 = {
-    single_schedule_c_plan: plan,
+    single_schedule_c_plan: withHealthPolicyRecords(plan),
     marketplace_ptc_premium_overlap: false,
   };
   return inputs;

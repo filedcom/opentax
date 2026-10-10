@@ -4,12 +4,13 @@ import {
   inputSchema as scheduleEInputSchema,
 } from "../../../../../inputs/income/rental-passthrough/schedule_e/index.ts";
 import { inputSchema as form1099IntInputSchema } from "../../../../../inputs/income/investments/f1099int/index.ts";
-import { filingStatusSchema } from "../../../../../types.ts";
+import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
 import { inputSchema as form8582crInputSchema } from "./index.ts";
+import { reviewedLine6K1Income } from "./line6_k1_income.ts";
 import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 
-/** A reviewed, one-activity ordinary-tax candidate for line 6; filing is gated separately. */
+/** A reviewed, rental-inventory ordinary-tax candidate for line 6; filing is gated separately. */
 export { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 
 export function calculateForm8582CRLine6OrdinaryWorksheet(
@@ -20,9 +21,11 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   rawSchedule1: unknown,
   rawGeneral: unknown,
   rawForm1099Int: unknown,
+  rawPartnershipK1?: unknown,
+  rawSCorpK1?: unknown,
 ) {
   const worksheet = line6OrdinaryWorksheetSchema.parse(rawWorksheet);
-  const scheduleE = scheduleEInputSchema.parse(rawScheduleE);
+  const scheduleE = scheduleEInputSchema.parse(rawScheduleE ?? {});
   const form8582cr = form8582crInputSchema.parse(rawForm8582cr);
   const form1040 = z.object({
     line1z_total_wages: z.number().int().nonnegative(),
@@ -47,9 +50,29 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   }).parse(rawSchedule1);
   const general = z.object({
     filing_status: filingStatusSchema,
+    taxpayer_ssn: z.string().optional(),
   }).parse(rawGeneral);
-  const property = scheduleE.schedule_es[0];
-  const netPassive = property ? computePropertyNet(property) : 0;
+  const incomeSources = "passive_income_sources" in worksheet
+    ? worksheet.passive_income_sources
+    : [worksheet];
+  const sourcesById = new Map(
+    incomeSources.map((source) => [source.activity_id, source]),
+  );
+  const k1Income = reviewedLine6K1Income(
+    rawPartnershipK1,
+    rawSCorpK1,
+    general.taxpayer_ssn,
+  );
+  const propertyIds = new Set(
+    [
+      ...scheduleE.schedule_es.map((property) => property.activity_id),
+      ...k1Income.map((source) => source.activity_id),
+    ],
+  );
+  const netPassive = scheduleE.schedule_es.reduce(
+    (total, property) => total + computePropertyNet(property),
+    k1Income.reduce((sum, source) => sum + source.net_passive_income, 0),
+  );
   let taxableInterest = 0;
   if (rawForm1099Int !== undefined) {
     const interestSource = form1099IntInputSchema.parse(rawForm1099Int);
@@ -123,19 +146,41 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     form1040.line7_capital_gain,
   ];
   if (
-    scheduleE.schedule_es.length !== 1 || !property ||
-    (property.activity_type !== "A" && property.activity_type !== "B") ||
-    property.property_type !== 1 ||
-    property.activity_id !== worksheet.activity_id ||
-    property.passive_income_source_document_reference !==
-      worksheet.passive_income_source_document_reference ||
-    property.royalties_income !== undefined ||
-    property.qbi_trade_or_business === "Y" ||
-    property.some_investment_not_at_risk === true ||
-    (property.passive_property_sales?.length ?? 0) !== 0 ||
-    (property.prior_unallowed_passive_operating ?? 0) !== 0 ||
-    (property.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
-    (property.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
+    scheduleE.schedule_es.length + k1Income.length !== incomeSources.length ||
+    sourcesById.size !== incomeSources.length ||
+    propertyIds.size !== incomeSources.length ||
+    scheduleE.schedule_es.some((property) => {
+      const source = sourcesById.get(property.activity_id ?? "");
+      const net = computePropertyNet(property);
+      return !source || "source_origin" in source ||
+        ("tsj" in source &&
+          (source.tsj !== property.tsj ||
+            (general.filing_status !== FilingStatus.MFJ &&
+              source.tsj !== "T"))) ||
+        (property.activity_type !== "A" && property.activity_type !== "B") ||
+        property.property_type !== 1 ||
+        property.passive_income_source_document_reference !==
+          source.passive_income_source_document_reference ||
+        !Number.isSafeInteger(net) || net <= 0 ||
+        net !== source.net_passive_income ||
+        property.royalties_income !== undefined ||
+        property.qbi_trade_or_business === "Y" ||
+        property.some_investment_not_at_risk === true ||
+        (property.passive_property_sales?.length ?? 0) !== 0 ||
+        (property.prior_unallowed_passive_operating ?? 0) !== 0 ||
+        (property.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
+        (property.prior_unallowed_passive_4797_part2 ?? 0) !== 0;
+    }) ||
+    k1Income.some((actual) => {
+      const source = sourcesById.get(actual.activity_id);
+      return !source || !("source_origin" in source) ||
+        source.source_origin.kind !== actual.source_origin.kind ||
+        source.source_origin.ein !== actual.source_origin.ein ||
+        source.tsj !== actual.tsj ||
+        source.passive_income_source_document_reference !==
+          actual.passive_income_source_document_reference ||
+        source.net_passive_income !== actual.net_passive_income;
+    }) ||
     (scheduleE.estate_trust_rows?.length ?? 0) !== 0 ||
     (scheduleE.farm_rental_activities?.length ?? 0) !== 0 ||
     (scheduleE.farm_rental_gross ?? 0) !== 0 ||
@@ -163,7 +208,7 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     )
   ) {
     throw new Error(
-      "Form 8582-CR line 6 ordinary worksheet needs one sourced passive Schedule E income activity and a matching final return",
+      "Form 8582-CR line 6 ordinary worksheet needs a complete sourced passive Schedule E income inventory and a matching final return",
     );
   }
   const taxableWithoutPassive = Math.max(
@@ -193,9 +238,12 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     );
   }
   return {
-    activity_id: worksheet.activity_id,
+    activity_id: "activity_id" in worksheet ? worksheet.activity_id : undefined,
     passive_income_source_document_reference:
-      worksheet.passive_income_source_document_reference,
+      "passive_income_source_document_reference" in worksheet
+        ? worksheet.passive_income_source_document_reference
+        : undefined,
+    passive_income_sources: incomeSources,
     taxable_income_including_passive: form1040.line15_taxable_income,
     tax_including_passive: taxAll,
     taxable_income_without_passive: taxableWithoutPassive,
