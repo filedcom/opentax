@@ -1,3 +1,4 @@
+import { assertForm8941RatingReview } from "./average-premiums.ts";
 import { z } from "zod";
 import {
   arrangementWorksheet,
@@ -149,21 +150,10 @@ interface ReviewSource {
   readonly shop_review: ShopReview;
 }
 
-/** A deliberately bounded 2025 table row with exact monthly worksheet joins. */
+/** Verify the official 2025 table row and exact monthly worksheet joins. */
 export function verifyForm8941ShopReview(source: ReviewSource): void {
   const review = source.shop_review;
-  // The official 2025 table identifies Albany County, NY at $9,358 for
-  // employee-only coverage and $24,527 for family coverage. Other rows need
-  // their own reviewed source values.
-  if (
-    review.irs_table_state !== "NY" ||
-    review.irs_table_county !== "Albany" ||
-    review.irs_table_employee_only_average_premium !== 9358 ||
-    (review.irs_table_family_average_premium !== undefined &&
-      review.irs_table_family_average_premium !== 24527)
-  ) {
-    throw new Error("Form 8941 rating-area table row is not supported");
-  }
+  assertForm8941RatingReview(review);
   if (
     review.shop_marketplace_identifier !== source.shop_marketplace_identifier ||
     review.shop_plan_reference !== source.shop_plan_reference ||

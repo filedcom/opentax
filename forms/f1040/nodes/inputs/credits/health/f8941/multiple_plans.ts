@@ -1,3 +1,4 @@
+import { assertForm8941RatingReview } from "./average-premiums.ts";
 import { z } from "zod";
 import {
   arrangementQuoteContribution,
@@ -177,10 +178,10 @@ export const multiplePlanEmployeeSchema = z.object({
 export const multiplePlanReviewSchema = z.object({
   irs_table_tax_year: z.literal(2025),
   irs_table_source_url: z.literal("https://www.irs.gov/instructions/i8941"),
-  irs_table_state: z.literal("NY"),
-  irs_table_county: z.literal("Albany"),
-  irs_table_employee_only_average_premium: z.literal(9358),
-  irs_table_family_average_premium: z.literal(24527),
+  irs_table_state: z.string().regex(/^[A-Z]{2}$/),
+  irs_table_county: reference,
+  irs_table_employee_only_average_premium: z.number().int().positive(),
+  irs_table_family_average_premium: z.number().int().positive(),
   table_review_reference: reference,
   employment_ein: id,
   payroll_ledger_reference: reference,
@@ -271,6 +272,7 @@ export function multiplePlanWorksheet(raw: unknown) {
     documents.add(r);
   };
   add(s.payroll_ledger_reference);
+  const tableAmounts = assertForm8941RatingReview(s.shop_review);
   add(s.shop_review.table_review_reference);
   if (
     s.shop_review.employment_ein !== s.employment_ein ||
@@ -369,7 +371,7 @@ export function multiplePlanWorksheet(raw: unknown) {
     excluded.some((worker) =>
       worker.coverage_records.some((coverage) => coverage.employer_payment > 0)
     ) && (s.other_schedule_c_employee_benefits ??
-      s.other_schedule_f_employee_benefits) !== 0
+        s.other_schedule_f_employee_benefits) !== 0
   ) fail("excluded paid coverage cannot be ordinary Schedule C benefits");
   for (const e of employees.values()) {
     if (ssns.has(e.employee_ssn)) {
@@ -397,9 +399,12 @@ export function multiplePlanWorksheet(raw: unknown) {
       ) fail("seasonal service dates or hours differ from retained records");
     }
     if (
-      e.rating_area_state !== "NY" || e.rating_area_county !== "Albany" ||
+      e.rating_area_state !== s.shop_review.irs_table_state ||
+      e.rating_area_county !== s.shop_review.irs_table_county ||
       e.irs_2025_rating_area_average_premium !==
-        (e.coverage_tier === "family" ? 24527 : 9358)
+        (e.coverage_tier === "family"
+          ? tableAmounts.family
+          : tableAmounts.employeeOnly)
     ) fail("employee IRS table differs");
     if (
       !e.coverage_periods &&
@@ -926,8 +931,10 @@ export function multiplePlanWorksheet(raw: unknown) {
             billed_premium: segment.billed_premium,
             employer_payment: segment.employer_payment,
             adjusted_average_percentage: pct,
-            adjusted_average_premium:
-              (segment.coverage_tier === "family" ? 24527 : 9358) / 12 *
+            adjusted_average_premium: (segment.coverage_tier === "family"
+              ? tableAmounts.family
+              : tableAmounts.employeeOnly) /
+              12 *
               segmentDays / monthDays * pct,
           });
         }
@@ -1017,8 +1024,9 @@ export function multiplePlanWorksheet(raw: unknown) {
         billed_premium: invoice.billed_premium,
         employer_payment: invoice.employer_payment,
         adjusted_average_percentage: pct,
-        adjusted_average_premium:
-          (monthCoverage.tier === "family" ? 24527 : 9358) / 12 * pct,
+        adjusted_average_premium: (monthCoverage.tier === "family"
+          ? tableAmounts.family
+          : tableAmounts.employeeOnly) / 12 * pct,
       });
     }
     if (

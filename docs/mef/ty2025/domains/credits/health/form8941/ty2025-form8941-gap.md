@@ -1,5 +1,18 @@
 # TY2025 Form 8941 owned direct employer route
 
+## October10 state and county premium limits
+
+The [rating-area checkpoint](./ty2025-form8941-rating-areas.md) replaces the
+Albany-only constants in single-plan review and multiple-plan monthly/partial-month
+worksheets with all3,091 published Table2025 rows. All3,090 non-Hawaii rows pass
+the employee-only calculator check; unknown or mismatched table facts reject,
+and Hawaii remains barred under the published plan-year rule. Three complete
+public-entry returns cover Bronx employee-only, Travis family tiers and statewide
+New Jersey reference/list billing, with native XSD and PDF projection checks.
+This does not authenticate employer geography or SHOP participation and does not
+close the broader Form8941 parent; final packet review and regression evidence
+are in the checkpoint.
+
 ## Source and deduction rule
 
 The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf) require qualifying SHOP coverage, fewer than25 FTEs, average annual wages below$67,000, a two-consecutive-year credit period and employee/rating-area worksheets. The modeled ordinary employer rate is50%. Worksheets 1–7 floor FTEs at2080hours and average wages to$1,000, cap premiums by the rating-area average and subtract both phaseouts from the original credit. Worksheet 6 uses$33,300 despite the rounded$33,000 threshold in the prose. Table 2025 lists$9,358 for employee-only coverage in Albany County, NY.
@@ -114,7 +127,7 @@ Final focused verification passed **55/55** with type checking, including all 47
 
 ## Remaining boundaries
 
-Other rating areas, partial-month or discontinuous enrollment, changing family membership, additional family tiers/relationships, separate SHOP dependent policies, excluded workers, state subsidies, common control/multiple businesses, tax-exempt employers and pass-through credits need their applicable sources and packet evidence. Automatic tax-use allocation here is the sole direct credit with no competing credit/carryover/passive sources; broader mixed-source allocation remains subject to existing source-specific Form 3800 reconciliation. Payroll remains whole-dollar source; the new monthly arrangement profile retains premium cents. Independent source authentication, prior/future credit-period and carryover evidence, full-return regression, business rules and ATS remain open. The broader employer health credit parent is not closed by this slice.
+This historical checkpoint predates the nationwide table extension above. Broader packet coverage for other rating areas, partial-month or discontinuous enrollment, changing family membership, additional family tiers/relationships, separate SHOP dependent policies, excluded workers, state subsidies, common control/multiple businesses, tax-exempt employers and pass-through credits need their applicable sources and packet evidence. Automatic tax-use allocation here is the sole direct credit with no competing credit/carryover/passive sources; broader mixed-source allocation remains subject to existing source-specific Form 3800 reconciliation. Payroll remains whole-dollar source; the new monthly arrangement profile retains premium cents. Independent source authentication, prior/future credit-period and carryover evidence, full-return regression, business rules and ATS remain open. The broader employer health credit parent is not closed by this slice.
 
 
 ## Verified same-proprietor two-business SHOP source route
