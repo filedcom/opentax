@@ -116,9 +116,42 @@ and SHA-256 provenance are retained in
 argument it writes no evidence files. The seven XSD tests explicitly skip when
 the local IRS schema is absent; none skipped in this recorded run.
 
-No actual filled PDFs or new visual pages are counted here. The PDF descriptor
+At the initial native checkpoint, no filled PDFs or visual pages were counted. The PDF descriptor
 projection check does not prove printed output, identity or page placement.
 The 50-test group covers CT-2, substitute and household deposits, but those are
 not seven additional full-return XSD cases. Source payment authenticity,
 original Form 4137/8919 and multi-source Schedule SE derivation, business rules
 and IRS acceptance remain open. No production calculation changed.
+
+## October 10 complete packet review
+
+The same seven retained public-source cases were replayed through the actual
+`buildMefBundle` and `buildPdfBytes` path at `d0b47928d`; their pending graphs
+match the saved native checkpoint exactly. All seven accompanying bundle XML
+files pass full Return1040 XSD again. Seven static filing PDFs contain **35
+pages**, all rendered and inspected: Box-5 difference 5; spouse-only 3; joint
+threshold 6; joint two-earner 6; joint zero-tax trigger 3; separate filer 6;
+single withholding 6. The two 3-page joint packets have identical PDF bytes,
+consistent with the same joint totals despite different wage ownership.
+
+An independent Decimal calculation starts from Box 1/5/6 and filing status,
+recomputes ordinary bracket tax, additional Medicare tax and withholding,
+and matches final tax, payments, refund or amount owed in every return. The
+exact printed Form 8959 name/SSN and ordered amount sequences match the
+projected fields; all packets are flattened with no remaining AcroForm fields
+or widget annotations. Owner names, filing-status/digital-asset boxes, page
+order, applicable parts and legibility were inspected on all pages. The four
+zero-NIIT Form 8960 pages are included in the review count.
+
+The two zero-tax joint Form 8959 copies on page 3 leave lines 6, 7 and 18 blank,
+although their native elements contain zero. Line 6 explicitly says to enter
+zero. This repeats deferred item 76; it was appended there and **not repaired**.
+Line 24 correctly prints the 180 additional withholding, and final amount owed
+is 1,118 in each case. Thus the review is qualified, not a clean parity approval.
+
+Evidence in the same private directory now includes original/rendered XML,
+seven PDFs, 35 page images, nine contact sheets, `packet-verification.json`,
+`visual-review.json` and an updated SHA-256 manifest. This adds packet evidence,
+not new unique cases or additional test counts: **57 tests / seven returns**
+remain the scope. No production code changed; broader source, payment, mixed
+SE/tip/reclassification and IRS acceptance requirements remain open.
