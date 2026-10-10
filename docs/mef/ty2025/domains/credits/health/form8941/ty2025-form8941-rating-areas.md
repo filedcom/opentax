@@ -47,9 +47,8 @@ Anchorage and statewide New Jersey/DC rates; unknown and Hawaii sources reject.
 Complete public-entry cases cover Bronx employee-only, Travis mixed family tiers
 and New Jersey reference-plan/list billing. They reconcile the filed credit and
 PDF projection, with mutated table amounts, employee county and Hawaii claims
-rejected at native preparation and PDF projection. No new filled-page visual
-review is claimed by these projection tests. Full-route visual review and source
-authenticity remain part of the open original parent.
+rejected at native preparation and PDF projection. Projection tests are supplemented by the qualified filled-page review below;
+source authenticity and wider full-route coverage remain open.
 
 Terminal checks: 94 existing end-to-end SHOP regressions, 18 calculator/native
 checks, and three new geographic route checks passed (115 total). The calculator
@@ -58,7 +57,19 @@ against the full TY2025 v5.4 Return1040 schema; credits are $12,500, $20,112 and
 $10,516 for NY, TX and NJ respectively. Independent decimal calculations agree
 with final tax of $21,254, $30,112 and $46,582.
 
-Three filled packets were generated (71 pages, 55 unique raster pages), but
-visual inspection remains pending; generated pages are not counted as reviewed.
+All 71 filled pages were reviewed through 14 contact sheets covering 55 unique
+raster pages and 16 exact RGB duplicates; each of the three Form8941 pages was
+also inspected at full page size. Credit amounts, A/C answers, EIN, employee/FTE
+counts and source-to-final-tax joins agree. Fields remain legible without newly
+observed clipping. Static outputs contain no remaining field tree or widgets.
+
+This is a qualified review: Form3800 fills skipped Section B intermediate lines
+(future26); Forms3800/8995 reverse the displayed name order (future68); and all
+three native Form6251 roots omit the deduction element printed on PDF line1a
+(future84). These existing deferred findings are repeated, not repaired. No
+filing-ready or IRS acceptance claim follows from the schema or visual checks.
 The native verification, arithmetic report and PDFs remain in the private
 evidence directory above. Broader parent readiness tasks remain open.
+
+CI for head `6549597ed85412db590a610857d4b73c56b58436` passed in run
+`38037406827`; the subsequent review update changes documentation only.
