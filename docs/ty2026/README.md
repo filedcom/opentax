@@ -1,5 +1,10 @@
 # TY2026 Form 1040 research corpus
 
+For the current main-based implementation status, read the
+[October 10 baseline assessment](./readiness/CURRENT-BASELINE-2026-10-10.md).
+The historical prototype described below is recoverable at `b7c07b616`, but its
+2026 implementation files are not present in the current main-based checkout.
+
 Snapshot date: 2026-09-27. This is the source map for full TY2026 1040 end-to-end
 work. Start at the [implementation entry point](./readiness/ENTRY-POINT.md).
 The code observations were captured from research commit `b7c07b61` while
