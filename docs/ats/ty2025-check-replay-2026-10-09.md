@@ -234,3 +234,47 @@ underlying cooperative-QBI block remains unresolved. A separate927 statutory-
 W-2 withholding omission is recorded as future item91 without changing tax logic.
 **65 typed ATS tests pass**; replay remains41/12/1 across the same54 observations.
 See the [source checkpoint](./ty2025.md#october-9-scenario2-itemizing-election-and-guarded-mortgage-source).
+
+
+## October 10 native document-copy reconciliation
+
+The replay now compares each scenario's required source-form inventory to its
+actual prepared native document roots. All 30 explicit mappings were checked
+against the cached TY2025 v5.4 ReturnData1040 XSD. Counts retain repeated W-2
+and 1099-R copies, distinguish ordinary Schedule A from form-specific schedules,
+and never substitute unrelated extra roots for missing required documents.
+Unknown source-form names remain visible as unmapped requirements.
+
+| Scenario | Required copies | Observed required copies | Document result |
+| --- | ---: | ---: | --- |
+| 1040-01 | 7 | Not evaluated | Preparation blocked |
+| 1040-02 | 7 | Not evaluated | Preparation blocked |
+| 1040-03 | 9 | Not evaluated | Preparation blocked |
+| 1040-04 | 7 | 2 | Five missing |
+| 1040-05 | 9 | 2 | Seven missing |
+| 1040-08 | 3 | Not evaluated | Preparation blocked |
+| 1040-12 | 8 | Not evaluated | Preparation blocked |
+| 1040-13 | 6 | 6 | Required roots present; current-law reconstruction |
+
+Scenario4 lacks Schedule3, Forms3800/8835/8936 and ScheduleA(8936).
+Scenario5 lacks Schedules1/3/EIC/8812 and Forms2441/8862/8863. Across the three
+emitted bundles, ten of22 required copies are observed and12 are missing;
+34 requirements in the five blocked scenarios remain unevaluated. These counts
+are separate from the54 calculation observations and are not an IRS test
+pass-rate denominator. Presence does not validate identity, contents, attachments,
+PDF output or business rules. Scenario13 retains its printed-target conflicts
+and presentation qualifications even with all six roots present.
+
+The fresh replay retains41 matching/12 differing/one unproduced calculation
+observations. Scenario1's official packet was checked again: household employee
+payroll evidence and the previously recorded Form5695 source questions remain
+unresolved. No payroll identity, QMID, eligibility or credit is fabricated to
+bypass those guards. The engineering estimate remains about60% of individual
+ATS checks, with45–75% uncertainty; none is an accepted IRS scenario.
+
+Validation: the complete ATS typed suite passed71 tests, zero failures. The
+initial default-heap typecheck exhausted V8 memory (exit133); the unchanged
+suite passed with `--v8-flags=--max-old-space-size=8192`. New cases exercise repeated
+copies, blocked versus emitted-empty bundles, unknown forms, unrelated roots,
+form-specific schedules and all eight source inventories. Private replay,
+mapping verification and test evidence: `.state/research/ats-document-coverage-2026-10-10/`.

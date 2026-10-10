@@ -6788,3 +6788,24 @@ Main52 unchanged; future133 retained; estimate about60% of individual ATS checks
 (45–75% uncertainty), with no source-authenticity or IRS-acceptance claim.
 Concurrent MSA families/shared costs, changing periods and additional LTC copies
 remain open. Ongoing changes continue on the single base PR70.
+
+
+## October 10: eight-scenario native document-copy reconciliation
+
+Compacted board learnings before changes. The existing ATS matrix now compares
+all56 source-required copies across eight scenarios to actual prepared roots,
+with30 mappings checked against the local ReturnData1040 XSD. Repeated W-2 and
+1099-R copies remain distinct requirements; unknown mappings and unrelated roots
+cannot satisfy missing forms. Five blocked preparations leave34 requirements
+unevaluated. Three emitted partial bundles contain10 of22 required copies:
+Scenario4 lacks5, Scenario5 lacks7, and Scenario13 has6/6 roots but retains its
+printed-target and presentation gaps. This is document presence only, not
+identity, contents, PDF, attachments, business-rule or acceptance proof.
+The unchanged54 calculation observations remain41 match/12 differ/1 unproduced.
+The complete ATS typed suite passes71/0 after increasing the V8 heap for the
+same suite; the initial exit133 heap exhaustion is preserved. No production tax
+runtime, source claim or expected tax was changed. Scenario1 payroll and energy
+source gaps remain unresolved. Main52 and future133 remain byte-preserved as
+TODO bodies; no new deferred item or parent checkoff. About60% individual ATS
+check estimate (45–75% uncertainty) remains. Evidence is private under
+`ats-document-coverage-2026-10-10/`; work continues on base PR70.

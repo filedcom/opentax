@@ -1,3 +1,4 @@
+import { compareAtsDocuments } from "./ty2025-document-coverage.ts";
 import { z } from "zod";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { f1040_2025 } from "../../2025/index.ts";
@@ -341,6 +342,7 @@ export async function replayAtsChecks() {
         throw new Error(`Missing ATS source/input ${scenario.id}`);
       }
       const execution = f1040_2025.executeReturn(factory());
+      const preparation = await replayPreparation(execution);
       return {
         id: scenario.id,
         sourceUrl: source.sourceUrl,
@@ -349,7 +351,13 @@ export async function replayAtsChecks() {
           : "Partial source fixture",
         requiredSourceDocuments: source.forms,
         diagnostics: execution.diagnostics,
-        preparation: await replayPreparation(execution),
+        preparation,
+        documentCoverage: compareAtsDocuments(
+          source.forms,
+          preparation.result === PreparationResult.PartialPrepared
+            ? preparation.documentRoots
+            : null,
+        ),
         checks: scenario.targets.map((check) =>
           compareAtsTarget(execution.pending, check)
         ),

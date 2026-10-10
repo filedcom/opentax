@@ -42,6 +42,30 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
   assertEquals(report.denominator, 54);
+  const documents = report.scenarios.map((s) => ({
+    id: s.id,
+    observed: s.documentCoverage.requiredCopiesObserved,
+    required: s.documentCoverage.requiredCopies,
+    present: s.documentCoverage.allRequiredCopiesPresent,
+  }));
+  assertEquals(documents, [
+    { id: "1040-01", observed: 0, required: 7, present: false },
+    { id: "1040-02", observed: 0, required: 7, present: false },
+    { id: "1040-03", observed: 0, required: 9, present: false },
+    { id: "1040-04", observed: 2, required: 7, present: false },
+    { id: "1040-05", observed: 2, required: 9, present: false },
+    { id: "1040-08", observed: 0, required: 3, present: false },
+    { id: "1040-12", observed: 0, required: 8, present: false },
+    { id: "1040-13", observed: 6, required: 6, present: true },
+  ]);
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-04")!
+      .documentCoverage.rows.filter((r) => r.missingCopies).map((r) =>
+        r.sourceForm
+      ),
+    ["Schedule 3", "3800", "8835", "8936", "8936 Schedule A"],
+  );
+
   assertEquals(
     report.scenarios.find((s) => s.id === "1040-04")!.preparation.result,
     PreparationResult.PartialPrepared,
