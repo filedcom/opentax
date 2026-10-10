@@ -1,5 +1,46 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 10 two-current-loss computation checkpoint
+
+The existing single-filer Schedule C loss route now retains **two identified
+current-loss businesses**, with no positive business required. It sums their
+filed losses into Schedule C line3/6 and the current QBI loss origin, keeps both
+native business rows, and projects both identities onto the parent PDF. The
+previous single-loss and one-profit/one-loss paths use the same reconciliation.
+Source, prior-loss, owner, adjustment, activity and wage/property guards remain.
+
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a) require
+Schedule C for current QBI losses and carry unused loss into the next year;
+nonpositive adjusted QBI does not retain wage/property limitation amounts.
+This checkpoint retains a current unfiled loss origin, not accepted prior-year
+history or a production next-year import.
+
+| Public source case | Business losses | Carry | AGI | QBI deduction | Total tax / owed |
+| --- | --- | ---: | ---: | ---: | --- |
+| Two losses | 1,200 / 800 | 2,000 | 298,000 | 0 | 69,235 / 9,235 |
+| Reversed source order | 800 / 1,200 | 2,000 | 298,000 | 0 | 69,235 / 9,235 |
+| Retained cents | 1,200.49 / 800.51; filed1,200 / 801 | 2,001 | 297,999 | 0 | 69,234 / 9,234 |
+
+Each case retains consistent300,000 W-2 wages and payroll boxes,60,000
+withholding and reviewed Form461 scope. The three public calculations,
+source-bound native parent/companion and PDF field projections reconcile.
+Thirty-six altered deduction, income and companion component checks reject.
+
+**Complete native and PDF exports still reject all three cases** at the
+existing Form8995 unfiled-loss guard (deferred8). The initial full-export
+failure is retained; no guard was bypassed and no full packet, XSD or visual
+review is claimed for these cases. The broader filing route remains unfinished.
+The new calculation and form-level support is not a filing-readiness checkoff.
+
+Evidence: `.state/research/form8995a-two-losses-2026-10-10/`, including source,
+pending, component XML, projected fields, both full-export errors and logs.
+The focused replay passes3/0. The eight-module related batch passes **55 tests,
+zero failed or ignored**, including the prior single-loss, profit/loss, unused
+loss, cent-valued parent and full-return compatibility cases. The first batch
+reported54/1 because `pdftotext` was absent from PATH; the same command passes
+with `/tmp/opentax-poppler-env/bin` prepended. No source or expectation was
+changed for that environment correction.
+
 Status: the source-reconciled patron Schedule D route below passed local public
 return tests, full TY2025 v5.4 XSD, and filled-PDF review on 2026-10-06. The
 previously recorded WOTC route remains locally proven. Historical sections below

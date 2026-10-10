@@ -8,7 +8,10 @@ import { calculateFarmWotcLines } from "../../../../../nodes/intermediate/forms/
 import { qbiPercentageForPdf } from "../../../reviews/general/composed-returns/qbi-percentage.ts";
 import { assertSstbScheduleCSource } from "../../../../mef/forms/deductions/business/f8995a/f8995a-sstb-source.ts";
 import { assertForm8995APatronReturn } from "../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   assertMfsSstbOwner,
@@ -269,13 +272,15 @@ export function projectOneBusiness8995A(
         "Form 8995-A PDF Schedule C line 39 differs from Form 1040 line 13",
       );
     }
+    const first = (lines.positive ?? lines.negative)!;
+    const second = lines.businesses.find((business) => business !== first);
     return {
-      business_name: (lines.positive ?? lines.negative)!.business_name,
-      business_ein: (lines.positive ?? lines.negative)!.ein,
-      ...(lines.positive
+      business_name: first.business_name,
+      business_ein: first.ein,
+      ...(second
         ? {
-          business_name_b: lines.negative.business_name,
-          business_ein_b: lines.negative.ein,
+          business_name_b: second.business_name,
+          business_ein_b: second.ein,
         }
         : {}),
       ...lines.parent,

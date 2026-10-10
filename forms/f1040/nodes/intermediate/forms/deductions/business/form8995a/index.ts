@@ -766,12 +766,12 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   if (
     !businesses ||
     (businesses.length !== 1 && businesses.length !== 2) ||
-    businesses.filter((business) => business.qbi > 0).length !==
-      (businesses.length === 2 ? 1 : 0) ||
-    businesses.filter((business) => business.qbi < 0).length !== 1
+    businesses.filter((business) => business.qbi > 0).length > 1 ||
+    !businesses.some((business) => business.qbi < 0) ||
+    businesses.some((business) => business.qbi === 0)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs one identified loss business, with at most one positive business",
+      "Form 8995-A Schedule C bounded route needs one or two identified businesses with a loss and at most one positive business",
     );
   }
   if (
@@ -821,7 +821,8 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     }
   }
   const positive = businesses.find((business) => business.qbi > 0);
-  const negative = businesses.find((business) => business.qbi < 0)!;
+  const negatives = businesses.filter((business) => business.qbi < 0);
+  const negative = negatives[0];
   // The source graph and Schedule 1 keep cents. Schedule C of Form 8995-A
   // files whole-dollar amounts for each identified trade or business.
   const roundedDollar = (amount: number): number =>
@@ -829,24 +830,28 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const sourceQbi = businesses.reduce((sum, business) => sum + business.qbi, 0);
   if (
     Math.abs((input.qbi ?? 0) - sourceQbi) > 0.000001 ||
-    roundedDollar(negative.qbi) >= 0 ||
+    negatives.some((business) => roundedDollar(business.qbi) >= 0) ||
     (positive !== undefined && roundedDollar(positive.qbi) <= 0)
   ) {
     throw new Error(
       "Form 8995-A Schedule C needs sourced net QBI and nonzero whole-dollar business rows",
     );
   }
-  const line3 = -roundedDollar(negative.qbi);
+  const line3 = -negatives.reduce(
+    (sum, business) => sum + roundedDollar(business.qbi),
+    0,
+  );
   const line4 = positive ? roundedDollar(positive.qbi) : 0;
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
     adjustedQbi >= 400 ||
-    (input.w2_wages ?? 0) !== (positive?.w2_wages ?? 0) + negative.w2_wages ||
-    (input.unadjusted_basis ?? 0) !== (positive?.ubia ?? 0) + negative.ubia ||
-    negative.w2_wages !== 0 ||
-    negative.ubia !== 0
+    (input.w2_wages ?? 0) !==
+      businesses.reduce((sum, b) => sum + b.w2_wages, 0) ||
+    (input.unadjusted_basis ?? 0) !==
+      businesses.reduce((sum, b) => sum + b.ubia, 0) ||
+    negatives.some((business) => business.w2_wages !== 0 || business.ubia !== 0)
   ) {
     throw new Error(
       "Form 8995-A Schedule C bounded route needs sourced net QBI below the Schedule SE threshold and no negative-business limitation amount",
