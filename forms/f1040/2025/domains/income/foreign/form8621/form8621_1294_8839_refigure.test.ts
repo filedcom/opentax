@@ -215,10 +215,34 @@ Deno.test("Form 8621 Election B keeps an actual fully used adoption credit when 
       qef_1294_election: undefined,
     }],
   };
-  assertThrows(
-    () => f1040_2025.executeReturn(withoutInputs),
+  const actualBundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: base.attachments!,
+  });
+  const actualWithout = f1040_2025.executeReturn(withoutInputs);
+  assertEquals(actualWithout.carryforwards.adoption_credit_2025, 355);
+  // The hypothetical income adjustment must not be exported against the
+  // original issuer statement, which still reports 2,000 of QEF earnings.
+  await assertRejects(
+    () =>
+      f1040_2025.prepareReturn(
+        buildPending(actualWithout.pending),
+        base.filer,
+        base.attachments!,
+      ),
     Error,
-    "carryforward filing is not supported",
+    "income differs from annual statement",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        buildPending(actualWithout.pending),
+        base.filer,
+        ".pdf-cache",
+        actualBundle,
+      ),
+    Error,
+    "PDF source differs from the prepared MeF return",
   );
   const without = executeForm8839TwoPass(withoutInputs, true);
   const shadow = buildPending(without.pending);

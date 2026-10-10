@@ -1,5 +1,15 @@
 # TY2025 unregistered-root applicability crosswalk
 
+October 10 verification at `0d35ca78d`: all 158 native and 118 PDF entries
+were matched to their live pending keys and imported sources; the distinct-key
+counts remain 153/115. The cached schema and documented census contain the
+same 211 roots, and all 128 Yes / 83 No literal flags match the current source
+scan. `form8853LtcStatement` is the additional supporting descriptor described
+below; it does not add an IRS-prefixed root or a separate PDF descriptor.
+Evidence: `.state/research/registry-reconciliation-2026-10-10/audit.json`.
+This verifies registration and literal counts, not the unresolved applicability
+decisions in the historical review rows.
+
 Build-stage triage reconciled 2026-10-03. The source is the locally cached, ignored
 TY2025 v5.4 `ReturnData1040.xsd` document-root census in
 [`ty2025-xsd-document-root-census.md`](./ty2025-xsd-document-root-census.md),

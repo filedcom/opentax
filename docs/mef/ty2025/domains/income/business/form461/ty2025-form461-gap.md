@@ -1,5 +1,65 @@
 # TY2025 Form 461 source-to-filing gap
 
+## October 10 signed C/F public-return checkpoint
+
+Three public cases now exercise the signed source review, Form461 calculation,
+Schedule1 addback, subsequent-year loss-origin amount, component serializers
+and both full-return export boundaries. This extends the earlier component
+checks; it does not turn the source-literal or historical fixture into a
+supported complete packet.
+
+All cases retain a single taxpayer,120,000 consistently sourced W-2 wages and
+40,000 federal withholding. Business losses are active and fully at risk, with
+described operating expenses and the existing C/F-only review. The reciprocal
+cases each net10,000 business income but still require Form461 because one
+line exceeds the156,500 loss filing trigger in the
+[2025 instructions](https://www.irs.gov/instructions/i461).
+
+| Case | Schedule C | Schedule F | Form461 line16 | Schedule1 addback / NOL origin | Complete native/PDF result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| farm-profit | −200,000 | 210,000 | 323,000 | 0 / 0 | Both reject Form8995 source reconciliation |
+| shop-profit | 210,000 | −200,000 | 323,000 | 0 / 0 | Both reject Form8995 source reconciliation |
+| two-losses | −200,000 | −200,000 | −87,000 | 87,000 / 87,000 | Both reject Form1040 line8 reconciliation |
+
+All three Form461 component XML/PDF projections reproduce their amounts;
+12 altered native and12 altered PDF-component line checks reject. The six
+complete-export rejections use the original returned graph without removing
+sources or patching its amounts. No new complete XSD/PDF packet or visual
+review is claimed.
+
+Independent source arithmetic finds six failing checks across three newly
+deferred issues, rather than certifying the final tax:
+
+- Both reciprocal cases omit the signed loss before Schedule SE. Under
+  [Schedule SE lines1–4 and10–12](https://www.irs.gov/pub/irs-pdf/f1040sse.pdf),
+  net earnings are9,235 and SE tax1,413, versus public193,935 and12,580.
+  Each also produces1,025 Additional Medicare tax instead of zero.
+- The shop-profit QBI source omits farm loss−200,000, contrary to the
+  [Form8995 source/netting instructions](https://www.irs.gov/instructions/i8995).
+  Observed deductions21,592 versus742 in the reciprocal case are not correct
+  expectations: both also contain the preceding SE error.
+- The two-losses case correctly produces Schedule1 additional income−313,000,
+  but Form1040 retains−400,000 and AGI−280,000 rather than−193,000.
+
+These findings are future153–155 and remain unimplemented. The two-losses
+Form8995 net-loss diagnostic repeats deferred8. No NOL deduction is claimed;
+the87,000 carry output is an origin amount, not accepted next-year import.
+
+`form461_cf_boundary.test.ts` retains three public cases and their actual
+rejections alongside the existing component tests. The normal typed grouped
+run passed **73 tests, zero failed and zero ignored**, covering Form461
+components/public boundaries and scalar/owned ScheduleSE. This passing
+regression result is separate from the six failing independent amount checks.
+Private evidence is in
+`.state/research/form461-cf-2026-10-10/`: current inputs/pending/diagnostics,
+original draft probes, final probe, `independent-checks.json` and grouped log.
+Earlier draft probes lacked complete Schedule C PDF inputs and retained the
+base W-2 payroll fields; the final cases explicitly set all wage boxes to the
+120,000 source and preserve both business amounts. No production changes or
+deferred repairs were made. Broader business classifications, authenticated
+sources, return-wide computation and IRS acceptance remain open.
+
+
 ## October8 current registered-audit reconciliation
 
 The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **22 passed/0 failed/0 ignored across4 named modules**; all8 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.

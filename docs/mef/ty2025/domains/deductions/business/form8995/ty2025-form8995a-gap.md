@@ -1,5 +1,91 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 10 three-business loss-offset complete-return checkpoint
+
+The ordinary single-filer loss-netting route now retains three identified
+Schedule C businesses: one profitable business and two current-loss businesses.
+The parent PDF preserves all three names/EINs, and its Schedule C prints all
+three source rows, the combined loss reduction and adjusted QBI. Four new
+third-row PDF mappings pass independent pdf-lib and pypdf field checks.
+
+| Public source case | Profit | Losses | Filed adjusted QBI | Deduction | Total tax / owed |
+| --- | ---: | --- | ---: | ---: | --- |
+| Income-limited | 2,200 | 1,200 / 800 | 200 | 40 | 69,991 / 9,991 |
+| Wage-limited | 2,300 | 1,200 / 800 | 300 | 50 | 70,022 / 10,022 |
+| Source cents | 2,301.25 | 1,200.49 / 800.51 | 300 | 50 | 70,022 / 10,022 |
+
+All three public returns have consistent300,000 wages,60,000 withholding,
+100 business wages and900 Additional Medicare tax. Losses are fully used;
+no QBI loss carryforward remains. The cents case retains raw net300.25 and
+AGI300,300.25; filed profit2,301 less losses1,200/801 yields300, and filed
+AGI is300,300. The initial test incorrectly expected whole-dollar amounts in
+raw pending fields; only that expectation was corrected, with sources intact.
+
+All three complete returns pass the TY2025 v5.4 Return1040 schema. The actual
+flattened PDFs contain17 pages each, no remaining fields/widgets, and preserve
+all three business identities and final tax amounts. Visual review covers
+**51 pages through29 distinct rendered images**, with hash equality proving
+repeated pages. Parent loss-business columns and some Schedule C zero fields
+remain blank (existing deferred76); this is a qualified presentation review.
+
+The nine-module related batch passes **58 tests, zero failures or ignored**.
+The final focused replay passes3/0 and rejects12 native plus12 fresh-PDF
+mutations to deduction, income, companion values and third-business identity.
+Seven descriptor tests pass (822 filtered out), including real-template field
+names, types and widgets. Private evidence is retained in
+`.state/research/form8995a-three-businesses-2026-10-10/`, including the original
+raw-rounding assertion, final logs, inputs, XML/PDF, source projections,
+two-reader field checks, render inventory and `visual-review.json`.
+
+The original three all-loss cases below remain unchanged and reject all six
+full exports on deferred8. These new positive-offset cases do not replace them.
+Multiple positive businesses, four-or-more rows/continuations, broader owners,
+prior history, source authenticity and IRS acceptance remain open; the existing
+single-filer, activity, adjustment, wage/property and source guards remain.
+This checkpoint advances the existing QBI task without closing its broad parent.
+
+
+## October 10 two-current-loss computation checkpoint
+
+The existing single-filer Schedule C loss route now retains **two identified
+current-loss businesses**, with no positive business required. It sums their
+filed losses into Schedule C line3/6 and the current QBI loss origin, keeps both
+native business rows, and projects both identities onto the parent PDF. The
+previous single-loss and one-profit/one-loss paths use the same reconciliation.
+Source, prior-loss, owner, adjustment, activity and wage/property guards remain.
+
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a) require
+Schedule C for current QBI losses and carry unused loss into the next year;
+nonpositive adjusted QBI does not retain wage/property limitation amounts.
+This checkpoint retains a current unfiled loss origin, not accepted prior-year
+history or a production next-year import.
+
+| Public source case | Business losses | Carry | AGI | QBI deduction | Total tax / owed |
+| --- | --- | ---: | ---: | ---: | --- |
+| Two losses | 1,200 / 800 | 2,000 | 298,000 | 0 | 69,235 / 9,235 |
+| Reversed source order | 800 / 1,200 | 2,000 | 298,000 | 0 | 69,235 / 9,235 |
+| Retained cents | 1,200.49 / 800.51; filed1,200 / 801 | 2,001 | 297,999 | 0 | 69,234 / 9,234 |
+
+Each case retains consistent300,000 W-2 wages and payroll boxes,60,000
+withholding and reviewed Form461 scope. The three public calculations,
+source-bound native parent/companion and PDF field projections reconcile.
+Thirty-six altered deduction, income and companion component checks reject.
+
+**Complete native and PDF exports still reject all three cases** at the
+existing Form8995 unfiled-loss guard (deferred8). The initial full-export
+failure is retained; no guard was bypassed and no full packet, XSD or visual
+review is claimed for these cases. The broader filing route remains unfinished.
+The new calculation and form-level support is not a filing-readiness checkoff.
+
+Evidence: `.state/research/form8995a-two-losses-2026-10-10/`, including source,
+pending, component XML, projected fields, both full-export errors and logs.
+The focused replay passes3/0. The eight-module related batch passes **55 tests,
+zero failed or ignored**, including the prior single-loss, profit/loss, unused
+loss, cent-valued parent and full-return compatibility cases. The first batch
+reported54/1 because `pdftotext` was absent from PATH; the same command passes
+with `/tmp/opentax-poppler-env/bin` prepended. No source or expectation was
+changed for that environment correction.
+
 Status: the source-reconciled patron Schedule D route below passed local public
 return tests, full TY2025 v5.4 XSD, and filled-PDF review on 2026-10-06. The
 previously recorded WOTC route remains locally proven. Historical sections below

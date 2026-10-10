@@ -695,3 +695,15 @@ Pending-JSON reload fails source replay in four retained exporter checks, newly
 deferred150 without repair. Zero-tax display repeats76. This checkpoint does
 not establish saved-return support, accepted carry records, next-year imports,
 external authenticity or closure of the broad adoption task.
+
+
+## October 10 non-Election-B PFIC carryforward composition
+
+The [retained-regime checkpoint](../../../../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_1294_refigure_proof.md#october-10-adoption-carryforward-across-retained-pfic-regimes)
+supersedes the preceding non-Election-B combination restriction. Ordinary QEF,
+mark-to-market, current-year disposition and mixed holdings now retain actual
+unused adoption credits1,885/1,405 through full native/PDF preparation. Four
+returns pass full XSD and42 packet pages were reviewed; eight native source/ledger
+rejections and eight prepared-PDF consistency rejections retain export boundaries.
+Zero-tax presentation repeats deferred76, with no repair. External authenticity,
+accepted carry imports, broader ordering and the existing JSON replay150 remain open.

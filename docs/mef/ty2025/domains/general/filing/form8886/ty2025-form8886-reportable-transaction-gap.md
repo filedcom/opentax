@@ -1,6 +1,44 @@
 # TY2025 Form 8886 reportable-transaction disclosure gap
 
-## Current candidate status — October 9, 2026
+## Current integrated status — October 10, 2026
+
+The stored-return disclosure and separate OTSA-copy workflow is integrated in
+this repository. Public `f8886` intake is registered, return preparation binds
+its native and PDF copies, and the CLI registers both `export-otsa` and
+`record-otsa-delivery`. The isolated-candidate description below is historical.
+
+The current typed regression batch at `a1a4cfd61` reports **75 passed, one
+failed, zero ignored** across ten modules:
+
+```sh
+deno test -A forms/f1040/2025/domains/general/filing/form8886 cli/commands/form8886-otsa.test.ts
+```
+
+All three OTSA command tests pass. They create a stored joint return, export
+separate taxpayer/spouse copies, verify every file digest, and retain reviewed
+fax and mail evidence against the correct disclosure. The fax copy has its own
+cover; mail binds the unchanged spouse disclosure. Existing directories cannot
+be overwritten; altered PDFs, manifests, requests, owners and evidence are
+rejected. Subsequent disclosures retain explicit `not_required` decisions.
+Recording evidence leaves the original export unchanged and does not set IRS
+acceptance. These are synthetic local command tests, not external delivery.
+
+The two full-return XSD/PDF integration tests also pass in the configured local
+schema/cache environment. No new visual review or retained packet count is
+claimed by this replay. The failed preparation-snapshot test reaches the
+already-recorded deferred140 rejection-contract mismatch: invalid filing
+status throws `ZodError` during public validation before the test can inspect
+calculation diagnostics. Assertions after that exception did not run. Neither
+the public guard nor the deferred test contract was changed.
+
+Evidence: `.state/research/form8886-current-2026-10-10/grouped.log` and
+`verification.json`. The [operator workflow](./ty2025-form8886-otsa-export.md)
+now describes the integrated commands. This completes the current integration
+and command replay checkpoint; the parent still includes wider source/category
+coverage, shared-spouse legal copy policy, source authentication and applicable
+IRS business-rule/ATS evidence. Existing casualty export guards remain.
+
+## Historical candidate status — October 9, 2026
 
 The parent task remains **open**. The isolated worktree
 `/private/tmp/opentax-form8886-disclosure-oct8`, based on `30fe40fe5`, now contains

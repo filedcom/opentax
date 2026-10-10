@@ -1,5 +1,13 @@
 # TY2025 conditional schedules: 8995-A A-D and 1116 C
 
+October 10 live reconciliation: **158 native / 118 PDF entries**, with
+**153 / 115 distinct pending keys**. The added Form8853 multiple-payee
+statement shares its parent's key and PDF renderer. All four Form8995-A
+companions remain registered in both live arrays; Form1116 Schedule C is absent
+from both. The retained registry/root snapshot is
+`.state/research/registry-reconciliation-2026-10-10/audit.json`.
+This corrects the total below without changing the conditional dispositions.
+
 October 9 registry reconciliation: the five newly counted descriptors are Form 8886 and its two continuations, plus two Form 4562 election statements. They do not change the conditional Form 8995-A Schedules A–D or staged Form 1116 Schedule C dispositions below. Native/PDF inventories are now 157/118 entries (153/115 distinct keys); registration does not resolve the remaining source and filing triggers.
 
 Static source and schema audit, reconciled 2026-10-02. This records **conditional filing

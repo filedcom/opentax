@@ -42,25 +42,34 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   for (const s of report.scenarios) {
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
-  assertEquals(report.denominator, 63);
+  assertEquals(report.denominator, 74);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 120);
+  assertEquals(ledger.count, 185);
   assertEquals(ledger.byKind, {
     calculation: {
-      count: 63,
-      counts: { different: 14, match: 45, "not-produced": 4 },
+      count: 74,
+      counts: { different: 17, match: 51, "not-produced": 6 },
     },
     "document-copy": {
       count: 56,
       counts: { missing: 12, "not-evaluated": 34, present: 10 },
     },
     "binary-attachment": { count: 1, counts: { missing: 1 } },
+    "native-value": {
+      count: 54,
+      counts: {
+        different: 6,
+        match: 16,
+        "missing-field": 2,
+        "not-evaluated": 30,
+      },
+    },
   });
-  assertEquals(ledger.calculationAnchor.matching, 40);
-  assertEquals(ledger.calculationAnchor.evaluated, 54);
-  assertEquals(ledger.calculationAnchor.notProduced, 4);
+  assertEquals(ledger.calculationAnchor.matching, 46);
+  assertEquals(ledger.calculationAnchor.evaluated, 63);
+  assertEquals(ledger.calculationAnchor.notProduced, 6);
   assertEquals(ledger.calculationAnchor.provisional, 5);
-  assertEquals(ledger.calculationAnchor.percent, 100 * 40 / 54);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 46 / 63);
   assertEquals(ledger.attachmentRequirementsNotInventoried.length, 7);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
@@ -70,6 +79,30 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     ["not-evaluated", "not-evaluated"],
   );
 
+  const native13 = report.scenarios.find((s) => s.id === "1040-13")!
+    .preparation.nativeValueCoverage;
+  assertEquals(
+    native13.rows.filter((r) => r.result === "different").map((
+      r,
+    ) => [r.path, r.expected, r.actual]),
+    [
+      ["f1040.line15_taxable_income", 1620, 120],
+      ["f1040.line16_income_tax", 162, 11],
+      ["f1040.line20_nonrefundable_credits", 162, 11],
+      ["form6251.regular_tax_income", 1620, 120],
+      ["form6251.line2a_taxes_paid", 30000, 31500],
+      ["form6251.regular_tax", 162, 11],
+    ],
+  );
+  assertEquals(
+    native13.rows.filter((r) => r.result === "missing-field")
+      .map((r) => r.path),
+    ["form6251.amtftc"],
+  );
+  assertEquals(native13.unmappedTargetPaths, [
+    "f1040.line12a_standard_deduction",
+    "schedule3.line6j_alt_fuel_vehicle_refueling",
+  ]);
   const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
   assertEquals(transfer.preparation.attachments, []);
   assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);
@@ -130,7 +163,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     }
     assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
   }
-  assertEquals(report.counts, { match: 45, different: 14, "not-produced": 4 });
+  assertEquals(report.counts, { match: 51, different: 17, "not-produced": 6 });
   const farm = report.scenarios.find((s) => s.id === "1040-03")!;
   assertEquals(
     farm.checks.filter((c) => c.result !== CheckResult.Match).map(
@@ -150,6 +183,29 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       ["f3800.f8936_new_vehicle_credit.credit_amount", 130],
     ],
   );
+  // Preserve every printed AMT target, including stale tax limits and absent
+  // zero fields; never substitute the current-law output into the answer key.
+  const amt = report.scenarios.find((s) => s.id === "1040-13")!.checks
+    .filter((c) => c.path.startsWith("form6251."));
+  assertEquals(amt.map((c) => [c.path, c.expected, c.actual, c.result]), [
+    ["form6251.regular_tax_income", 1620, 120, CheckResult.Different],
+    ["form6251.line2a_taxes_paid", 30000, 31500, CheckResult.Different],
+    ["form6251.amti", 31620, 31620, CheckResult.Match],
+    ["form6251.exemption", 137000, 137000, CheckResult.Match],
+    ["form6251.taxable_excess", 0, 0, CheckResult.Match],
+    ["form6251.tentative_tax", 0, 0, CheckResult.Match],
+    ["form6251.amtftc", 0, null, CheckResult.NotProduced],
+    ["form6251.net_tmt", 0, 0, CheckResult.Match],
+    ["form6251.regular_tax", 162, 11, CheckResult.Different],
+    ["form6251.line11_amt", 0, 0, CheckResult.Match],
+  ]);
+  const optedOut = report.scenarios.find((s) => s.id === "1040-05")!.checks
+    .find((c) => c.path === "f1040.line28_actc")!;
+  assertEquals([optedOut.expected, optedOut.actual, optedOut.result], [
+    0,
+    null,
+    CheckResult.NotProduced,
+  ]);
   const deduction = report.scenarios.find((s) => s.id === "1040-12")!.checks
     .find((c) => c.path === "f1040.line12a_standard_deduction")!;
   assertEquals([deduction.expected, deduction.actual, deduction.result], [

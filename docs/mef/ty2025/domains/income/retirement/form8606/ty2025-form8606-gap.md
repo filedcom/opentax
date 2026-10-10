@@ -1,5 +1,64 @@
 # TY2025 Form 8606 coverage gap
 
+## October 10 persisted-source complete-return checkpoint
+
+Three annual traditional/Roth cases now rebuild on the current branch from
+saved public-input JSON and reopened retained source bytes. Each copy's
+SHA256 is rechecked before filing preparation; this covers37,72 and41 records
+respectively (150 case-local records, not150 distinct issuer sources).
+These are new retained artifacts from existing constructed source scenarios,
+not recovery of the missing historical proof directories.
+
+| Case | Owner8606 copies | IRA gross / taxable | Remaining traditional basis | Final tax | Refund / owed | Reviewed pages |
+| --- | ---: | ---: | --- | ---: | --- | ---: |
+| Single annual | 1 | 23,000 / 11,662 | 2,662 | 22,949 | 151 refund | 9 |
+| Joint annual | 2 | 43,500 / 22,568 | 2,566 taxpayer;1,002 spouse | 17,675 | 9,525 refund | 14 |
+| Roth phaseout | 1 | 24,500 / 13,066 | 2,566 | 31,204 | 7,004 owed | 9 |
+
+The [2025 Form8606 instructions](https://www.irs.gov/instructions/i8606)
+require individual owner copies, separate post-year contributions and the
+annual basis allocation. For the single annual case, current basis4,000
+(dividing by24,000 and rounding to.167) allocates1,670 to conversions and668
+to withdrawals, leaving2,662 of total basis5,000. The joint taxpayer's.157
+ratio allocates1,570/864, while the spouse's.095 allocates475/523; taxable
+PartsI/II sum to22,568. All four owner forms print the matching name and SSN.
+
+For the phaseout case, AGI170,930 less taxable conversion8,430 gives Roth
+MAGI162,500. The previously worked maximum Roth contribution1,170 exceeds the
+actual1,000. Form1040 income tax30,090 plus Form5329 tax1,114 gives31,204;
+24,200 payments leave7,004 owed. The existing annual-source fixture contains
+the full contribution/distribution/recapture history.
+
+The normal typed11-module run passed **46 tests, zero failed and zero ignored**.
+The new three tests assert final IRA/tax/carry amounts after source reload;
+12 altered owner-line native replays and12 prepared-PDF replays reject, as do
+three native calls without the required source bytes. The PDF mutations use
+the original prepared bundle and do not independently prove source replay.
+The initial focused3/0 run is retained separately; its fresh-PDF negative
+calls were strengthened to prepared-bundle checks before the grouped run.
+
+All three complete XMLs pass the retained Return1040v5.4 XSD. The corresponding
+flattened PDFs have no remaining fields/widgets; all32 current-return pages
+were rendered and observed, including four Form8606 and four Form5329 owner
+copies. Joint Form1040/Schedule2 names and individual8606/5329 names print
+correctly; native header NameLine1Txt still has EXAMPLE<ALEX while both SSNs
+are present, repeating deferred68. No new future item or identity repair.
+
+Artifacts and exact log/digests are under
+`.state/research/form8606-source-replay-2026-10-10/`: per-case input/filer JSON,
+150 persisted document records/manifests, XML/PDF/pending/page origins,
+XSD logs, render inventory and visual review. Prior-source pages were not
+visually reapproved in this checkpoint. The test is
+`form8606_saved_source.test.ts`; use FORM8606_REPLAY_DIR to retain outputs.
+
+This verifies the tested saved-source-to-filing chain, including contribution
+timing, current conversions, withdrawals, historical Roth pools and owner
+separation. It does not authenticate an issuer or accepted prior filing,
+repair the deferred MFS route, recover missing older artifacts, or close
+all remaining Form8606 source/history/IRS requirements. No main checkoff or
+ATS denominator change follows.
+
+
 Status: current registered retained-owner routes include historical Roth
 basis/consumption, owner-separated current payments, current2025 traditional
 IRA-to-Roth conversions, annual traditional contributions/withdrawals, and

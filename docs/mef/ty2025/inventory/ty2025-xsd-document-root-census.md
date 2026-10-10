@@ -1,6 +1,6 @@
 # TY2025 Form 1040 schema document-root census
 
-Root list from 2026-09-28; source-literal status revalidated 2026-10-09. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
+Root list from 2026-09-28; source-literal status revalidated 2026-10-10. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
 top-level `IRS...` references under ignored `.state/research/docs/`. These
 schema files are not tracked in Git; reproducible official artifact provenance
 remains a release gate. The [v5.4 archive record](../testing/ty2025-v54-schema-provenance.md)
@@ -23,7 +23,10 @@ missing-root counts. A per-root review is not approval to exclude a filing
 situation, and product applicability decisions for these roots remain open
 separately from `INV-01`.
 
-Counts: 211 schema roots; 128 with a MeF source literal; 83 without one.
+Counts: 211 schema roots; 128 with a MeF source literal; 83 without one. All
+211 roots exactly match the cached schema, and every flag matches the current
+scan at `0d35ca78d`; the source map and schema digest are retained in
+`.state/research/registry-reconciliation-2026-10-10/audit.json`.
 Of the 128 literal roots, 117 occur directly in registered descriptor files.
 Six (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`, `IRS9465`)
 occur only in staged descriptor files. Five more (`IRS3115`,
@@ -37,7 +40,8 @@ inventory, not supported-form counts.
 
 Native/PDF distinct pending-key counts are 153/115. The five additions since
 the 152-entry snapshot are Form 8886 and two continuations, plus two Form 4562
-election statements. Their packet paths are recorded in the form audit.
+election statements. The sixth addition is the Form8853 multiple-payee
+statement on an existing key. Their packet paths are recorded in the form audit.
 
 The current descriptor inventory is **158 native** and **118 PDF** entries;
 the native set includes **40 wage/supporting descriptors**. These are not

@@ -1,5 +1,15 @@
 # TY2025 registered PDF field inventory — October 10
 
+## Later third-row mapping extension
+
+The October10 three-business Form8995-A checkpoint adds four Schedule C
+third-row mappings to the historical inventory below. Both pdf-lib and pypdf
+verify their canonical names, text types and widgets; seven focused descriptor
+tests pass. The three actual17-page packets also receive qualified visual
+review. Evidence: `.state/research/form8995a-three-businesses-2026-10-10/`.
+The7,979 count and866-test gate below remain the historical full-registry run;
+this extension does not claim a new exhaustive7,983-mapping replay.
+
 ## Scope and result
 
 At runtime `a31000e82`, all 118 registered PDF descriptors (115 distinct pending
@@ -28,7 +38,7 @@ mapping; previously its real-template checks asserted names only.
 
 ## Limits
 
-This is an exhaustive mapping check for the current registry, not a visual
+This is an exhaustive mapping check for the registry at the recorded runtime, not a visual
 review or proof that every needed line has a mapping. Page selection, labels,
 checkbox tax semantics, correct source/owner values, overflow content, generated
 statements and full-return filing applicability still require their route

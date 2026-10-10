@@ -1,5 +1,31 @@
 # TY2025 Form 1040 coverage disposition queue
 
+## October 10 live registry reconciliation
+
+Live imports at `0d35ca78d` contain **158 native descriptors / 153 distinct
+pending keys** and **118 PDF descriptors / 115 distinct pending keys**. All
+276 entries were matched in order to their imported identifier, source file and
+runtime pending key. The native wage/supporting segment contains 40 entries.
+The one addition since October 9 is `form8853LtcStatement`, on the existing
+`form8853` key; its `MultiplePayeesStatement` uses the parent PDF's statement
+pages, so neither the distinct-key count nor the PDF registry count increases.
+
+The 211 documented IRS roots exactly match the cached TY2025 v5.4 return
+schema. All 211 literal flags agree with a fresh non-test MeF-source scan:
+128 present, 83 absent; 117 have a literal in a directly registered descriptor
+file. This scan intentionally measures exact source tokens, including reference
+names; it does not measure emitted roots or supported filing situations.
+Form 8886 is imported from its filing-domain module, while the older MeF
+reference token also remains. The integrated source/packet and OTSA command
+checkpoint is recorded in its gap note. Form 2210 and Form 1116 Schedule C
+remain staged. No new form was registered or exclusion approved in this audit.
+
+The retained replay includes actual registry JSON, all ordered source mappings,
+all schema-root/literal results and the schema digest in
+`.state/research/registry-reconciliation-2026-10-10/audit.json`; `audit.py`
+compares these inputs and rejects any census flag or root-set disagreement.
+This supersedes the counts below, while preserving their dated history.
+
 ## October10 Form7206 route reconciliation
 
 The [current Form7206 route audit](../../../adjustments/health/form7206/ty2025-form7206-route-audit.md)

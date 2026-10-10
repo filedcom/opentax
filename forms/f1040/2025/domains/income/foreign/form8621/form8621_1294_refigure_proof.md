@@ -431,3 +431,99 @@ repair was made. The broad readiness and carryforward tasks stay open.
 Evidence: `.state/research/form8621-carry-2026-10-10/`, including synthetic source,
 pending, hypothetical graph, XML, PDFs, original persistence failure, test logs,
 XSD validation and visual hashes.
+
+
+## October 10 adoption carryforward across retained PFIC regimes
+
+The actual-return adoption ledger now also composes with ordinary QEF income
+without Election B, mark-to-market income, current-year section1291 disposition
+income, and a mixed inventory of those three holdings. The remaining blanket
+PFIC/carryforward rejection is removed; the existing source and export guards
+remain. This supersedes the non-Election-B restriction in the preceding checkpoint.
+
+| Synthetic case | PFIC ordinary income | AGI | Tax before credits / adoption used | Unused adoption credit | Refund | Packet pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| QEF without Election B | 2,000 | 52,000 | 4,115 | 1,885 | 20,000 | 9 |
+| Mark-to-market | 2,000 | 52,000 | 4,115 | 1,885 | 20,000 | 9 |
+| Current-year disposition | 2,000 | 52,000 | 4,115 | 1,885 | 20,000 | 10 |
+| Three-regime inventory | 6,000 | 56,000 | 4,595 | 1,405 | 20,000 | 14 |
+
+Each return has wages50,000, withholding15,000, adoption expenses11,000 and
+refundable adoption credit5,000. The [2025 single-filer tax table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)
+provides4,115 at taxable36,250 and4,595 at40,250. The mixed inventory adds
+three2,000 ordinary-income amounts before calculating the adoption limit.
+Mark-to-market reconciles value20,000 less basis18,000. The disposition's
+holding period is wholly within2025, so its2,000 gain is current-year ordinary
+income with no prior-year tax or interest under the
+[Form8621 PartV instructions](https://www.irs.gov/instructions/i8621).
+No Election B refigure or deferral is invented for these four returns.
+
+All four complete native returns pass local TY2025v5.4 Return1040 XSD.
+All42 generated tax-packet pages were rendered and visually reviewed; the
+flattened files retain no AcroForm fields or widgets. Identity, regime elections,
+Schedule1 descriptions, adoption limits and refunds reconcile. Form1040 page2
+line24 remains blank at zero in all four, repeating deferred76 without repair.
+Reviewed synthetic adoption attachments are supplied to preparation; these
+counts do not include a new review or authentication of those attachments.
+
+The grouped PFIC/adoption/return-arithmetic gate passes59 tests with zero failures
+or ignored cases. Final replay PDF hashes match the reviewed artifacts.
+The four cases additionally reject altered carry balances and removed issuer
+bytes at native export (eight assertions); attempts to pair those changed
+pending returns with the original prepared bundle fail PDF source consistency
+(eight assertions). These are prepared-PDF consistency checks, not independent
+PDF source-replay proofs. The initial test logs preserve incorrect expectations
+about which existing guard fired; only test setup and assertions were corrected.
+The old hypothetical-income test now verifies that exporting changed QEF income
+against the unchanged issuer annual statement is rejected. A separate combined
+education/adoption calculation without Election B retains its95 carry balance.
+
+Evidence: `.state/research/form8621-regimes-2026-10-10/`, containing inputs,
+pending graphs, native XML, actual PDFs, XSD logs, rendered pages and hashes.
+Prior-year section1291 charges, further combinations, accepted carry imports,
+source authenticity and IRS acceptance remain outside this checkpoint; the
+previous pending-JSON Election B defect150 remains deferred and untouched.
+
+
+## October 10 prior-period charges and unavailable MTM loss
+
+Two more public-return cases extend the adoption/PFIC composition evidence.
+No production code changes in this checkpoint. The six regime cases plus
+underlying PFIC node/event tests pass35/0; the focused pair passes2/0.
+
+The prior-disposition case allocates7,310 of gain over731 holding days:
+366 days/3,660 to2024 and365 days/3,650 to2025. At37%, prior-year tax is1,354
+after rounding. The [Form8621 instructions](https://www.irs.gov/instructions/i8621)
+place this tax on Form1040 line16 and interest on Schedule2 line17p.
+The single-filer taxable-income row37,900–37,949 in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) supplies4,313 regular
+tax, giving line16/18 of5,667. Following the
+[Form8839 credit-limit worksheet](https://www.irs.gov/instructions/i8839),
+nonrefundable adoption credit uses5,667 and leaves333 unused. Daily interest
+on1,354.20 from April15,2025 through April14,2026 is97.62396 (filed98), using
+[IRS underpayment rates](https://www.irs.gov/payments/quarterly-interest-rates)
+of7% through March2026 and6% in April. That98 remains final tax; refundable
+adoption5,000 plus withholding15,000 gives refund19,902.
+
+The new-year MTM loss case has value20,000, adjusted basis23,000 and zero
+unreversed inclusions. The3,000 economic loss permits no current deduction;
+AGI stays50,000, tax/adoption use3,875, unused credit2,125 and refund20,000.
+Both cases retain native carry/source rejection and prepared-PDF consistency
+checks (eight additional rejection assertions across the pair).
+
+Both full native returns pass local TY2025v5.4 XSD, with12 and6 generated tax
+packet pages respectively; all18 pages were rendered and reviewed. No AcroForm
+fields or widgets remain. The disposition packet's Form1040 page2 omits line16
+box3 and the1291TAX description, although native OtherTaxAmtInd isX and
+OtherTaxAmtGrp contains1291TAX/1,354. The instructions require the printed mark
+and description. This newly observed presentation discrepancy is deferred151;
+no mapping repair is included. The loss packet repeats blank zero line24
+(deferred76). Amounts, adoption identities, PFIC fields, allocation statement,
+Schedule2 interest and refunds otherwise reconcile in this observation.
+
+Private evidence: `.state/research/form8621-charges-2026-10-10/`, including
+independent expectations, typed test logs, original inputs/pending, native XML,
+PDFs, full-XSD results and visual hashes. The first filter command selected zero
+tests; the corrected focused command and combined35-test run are the actual
+evidence. These synthetic sources do not establish external authenticity,
+accepted carry imports or IRS acceptance; parent tasks remain open.

@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateScheduleCLossLines,
   inputSchema,
@@ -13,8 +16,8 @@ const row = (index: number, field: number): string =>
   }[0]`;
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  ...([1, 2] as const).flatMap((index): PdfFieldEntry[] => {
-    const start = index === 1 ? 3 : 7;
+  ...([1, 2, 3] as const).flatMap((index): PdfFieldEntry[] => {
+    const start = 3 + (index - 1) * 4;
     return [
       {
         kind: "text",
@@ -87,6 +90,7 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
     }
     const first = lines.schedule.rows[0];
     const second = lines.schedule.rows[1];
+    const third = lines.schedule.rows[2];
     return {
       row1_name: first.name,
       row1_a: first.line1a,
@@ -98,6 +102,14 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
           row2_a: second.line1a,
           row2_b: second.line1b,
           row2_c: second.line1c,
+        }
+        : {}),
+      ...(third
+        ? {
+          row3_name: third.name,
+          row3_a: third.line1a,
+          row3_b: third.line1b,
+          row3_c: third.line1c,
         }
         : {}),
       line2: lines.schedule.line2,

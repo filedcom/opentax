@@ -1,5 +1,20 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 10 current public-export boundary replay
+
+The grouped ordinary/farmer underpayment gate passes77 typed tests with no
+failures or ignored cases. Five ordinary Form2210 flags (full waiver, partial
+waiver, annualized method, actual withholding dates and changed joint status)
+preserve the baseline public Form1040 but reject both native and complete-PDF
+export:ten assertions. The existing staged regular-method/native/PDF tests
+also pass in this group. No ordinary Form2210 registration or deferred
+payment-timing, high-income or payment-total repair is made.
+
+The related [Form2210-F public packet checkpoint](./ty2025-form2210f-gap.md#october-10-complete-public-packet-and-boundary-checkpoint)
+adds three full-XSD returns and nine reviewed pages; those are farmer/fisher
+box-B packets and do not close ordinary Form2210 methods. Private grouped log:
+`.state/research/form2210-packets-2026-10-10/grouped.log`.
+
 ## October 8 retained source limitations
 
 Future 45 records the unresolved changed-status/high-income interpretation;

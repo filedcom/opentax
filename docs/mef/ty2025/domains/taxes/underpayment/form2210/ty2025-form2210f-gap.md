@@ -1,5 +1,51 @@
 # TY2025 Form 2210-F farmer/fisher underpayment gap
 
+## October 10 complete public packet and boundary checkpoint
+
+The registered box-B route now has three fresh complete public-return replays,
+full local TY2025v5.4 Return1040 XSD validation, and nine reviewed packet pages.
+The combined Forms2210/2210-F node, domain, native and PDF gate passes77 tests
+with zero failures or ignored cases; the new focused packet/boundary gate passes4.
+Earlier authored/unrun and never-rendered statements below are historical.
+No production implementation or deferred repair is included in this checkpoint.
+
+| Source case | Withholding | Underpayment | Days | Penalty | Form1040 amount owed |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Paid March1 | 1,000 | 8,000 | 45 | 69 | 25,967 |
+| Unpaid through April15 | 1,000 | 8,000 | 90 | 138 | 26,036 |
+| Withholding covers required payment | 9,000 | 0 | 0 | 0 | 17,898 |
+
+Each synthetic joint return has wages200,000, standard deduction31,500,
+taxable income168,500 and tax26,898. Two distinct2024 separate-return references
+supply4,000+5,000 prior tax, below the current17,941 two-thirds calculation.
+The claimed2024 farming share is70,000/100,000. The
+[2025 Form2210-F](https://www.irs.gov/pub/irs-pdf/f2210f.pdf) line16 formula
+is underpayment times days divided by365 times0.07; independently it rounds
+to69/138. The covered case keeps boxB and omits native penalty-date/day/amount
+fields and printed PartIII. Form1040 line38 and amount owed reconcile.
+
+Four changed filed lines per case (tax, withholding, underpayment and penalty)
+are rejected at both native and fresh full-PDF boundaries:24 rejection assertions.
+The ordinary Form2210 full/partial waiver, annualized method, actual withholding
+and changed-joint-status flags each preserve the baseline1040 while both exports
+reject their missing sourced mandatory attachment (ten assertions). These
+rejection cases do not establish positive support for those methods.
+
+All three actual PDFs contain Form1040 pages1–2 and Form2210-F page3, with
+no remaining AcroForm fields/widgets. Amounts, dates, boxB, primary TIN and
+ordering reconcile. Each Form2210-F name header omits spouse Sam and prints
+only Alex Example; this repeats deferred24 and remains unrepaired. Source
+records remain reviewed synthetic references, not authenticated prior returns
+or IRS payment confirmations. The paid case supplies an underpayment settlement
+date, not proof of a filed-and-fully-paid return qualifying for the March2
+exception in the [instructions](https://www.irs.gov/instructions/i2210f).
+No early-filing exemption or accepted filing is inferred.
+
+Evidence: `.state/research/form2210-packets-2026-10-10/`, including typed logs,
+public inputs/pending, fullXML/PDF, XSD logs and nine rendered-page hashes.
+Source authentication, remaining payment/credit/waiver branches and IRS
+business-rule/acceptance gates remain open.
+
 ## October8 current registered-audit reconciliation
 
 The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **17 passed/0 failed/0 ignored across4 named modules**; all10 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.

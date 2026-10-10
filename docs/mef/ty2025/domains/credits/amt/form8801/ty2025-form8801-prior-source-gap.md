@@ -1,5 +1,60 @@
 # TY2025 Form 8801 prior-year source boundary
 
+## October 10 current-AMT capacity and carry checkpoint
+
+The staged implementation described chronologically below is integrated in the
+current branch. Six new source-bound cases join reviewed prior-copy bytes,
+current public W-2/1099-INT inputs, final Form1040 amounts and the retained
+2026 opening preview. This supersedes historical statements that those staged
+APIs remain isolated; it does not admit their projection as a public filing.
+
+Each case uses wages120,000, standard deduction15,750 and withholding20,000.
+The [2025 regular-tax worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)
+gives17,867 on taxable income104,250. Under the
+[2025 Form6251](https://www.irs.gov/pub/irs-pdf/f6251.pdf), AMTI is wages plus
+private-activity-bond interest; the88,100 single exemption and26% rate give
+the independently calculated tentative minimum tax below. No foreign credit,
+capital preference, exemption phaseout or investment-interest adjustment is
+present in these cases.
+
+The constructed prior copy matches reviewed2024 Form6251 fields and a100,000
+prior carry. Prior exclusion-only AMT is918: (120,000−85,700)×26%−8,000.
+The [2025 Form8801](https://www.irs.gov/pub/irs-prior/f8801--2025.pdf) therefore
+has available credit104,182 (5,000−918+100,000+100), limited to regular tax
+less current tentative minimum tax. These copies establish byte consistency,
+not an accepted prior filing or authentic workpaper.
+
+| Current PAB interest | Tentative minimum tax / final tax | Current AMT | Credit used | Carry to2026 | Refund / amount owed |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 8,294 | 0 | 9,573 | 94,609 | 11,706 refund |
+| 20,000 | 13,494 | 0 | 4,373 | 99,809 | 6,506 refund |
+| 36,800 | 17,862 | 0 | 5 | 104,177 | 2,138 refund |
+| 36,850 | 17,875 | 8 | 0 | 104,182 | 2,125 refund |
+| 40,000 | 18,694 | 827 | 0 | 104,182 | 1,306 refund |
+| 100,000 | 34,294 | 16,427 | 0 | 104,182 | 14,294 owed |
+
+All six cases verify the exact serialized carry against original sources and
+reject a changed current1099-INT, including cases where credit and carry stay
+numerically unchanged. Zero allowed credit does not remove the required
+Form8801 when positive credit remains available: all12 direct attachment
+checks reject the unregistered form.
+
+Actual native/PDF calls retain their original staged inputs. They reject12/12
+on the missing final digital-assets answer, before reaching that attachment
+guard. The public pre-credit output retains false, but settlement drops it.
+This newly observed defect is deferred152; neither production headers nor
+filing guards were changed. The initial six failing export-message assertions
+remain in `.state/research/form8801-current-amt-2026-10-10/initial-export-failure.log`.
+No new complete XML/PDF packet, XSD pass or visual-review count is claimed.
+
+The executable checkpoint is `form8801_current_amt.test.ts`; its grouped
+run passed **152 tests, zero failures and zero ignored**, covering the full
+staged Form8801 domain, public input node and shared attachment guards.
+The terminal log is retained at `.state/research/form8801-current-amt-2026-10-10/grouped.log`. Accepted history/import, public packet admission, wider
+owner/credit combinations and IRS rules remain requirements of the original
+main task. The deferred research context remains unchanged.
+
+
 The [2025 Form 8801 instructions](https://www.irs.gov/instructions/i8801)
 require distinguishing AMT caused by deferral items from AMT caused by exclusion
 items. They direct a 2024 Form 8801 line 26 carryforward to the 2025 computation
