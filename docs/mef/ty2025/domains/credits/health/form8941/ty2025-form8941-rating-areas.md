@@ -73,3 +73,44 @@ evidence directory above. Broader parent readiness tasks remain open.
 
 CI for head `6549597ed85412db590a610857d4b73c56b58436` passed in run
 `38037406827`; the subsequent review update changes documentation only.
+
+## Geographic periods, farm and separate-owner routes
+
+The follow-up public-entry replay holds enrollment, payroll, contribution
+percentages and gross benefits fixed while changing the employer rating area.
+It covers partial-year months, within-month eligibility events, monthly tier
+changes, farm employment and two independently owned spouse businesses in
+different states. A spouse's household mailing address does not replace the
+employer's retained rating area. These remain synthetic sources; plan names and
+marketplace identifiers are retained fixture references, not authenticated
+state-specific SHOP availability.
+
+| Route / rating area | Line 5 premium cap | Determined credit | Current use | AGI | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Partial year / Anchorage AK | 16,550 | 8,275 | 7,724 | 88,544 | 13,462 |
+| Partial month / Los Angeles CA | 43,952 | 21,976 | 21,976 | 188,606 | 31,311 |
+| Tier changes / Albany WY | 22,163 | 11,082 | 11,082 | 204,735 | 45,757 |
+| Farm / Travis TX | 25,411 | 12,706 | 12,706 | 150,983 | 29,061 |
+| Independent spouses / Essex NJ + Anchorage AK | 31,503 + 37,394 | 15,752 + 18,697 | 9,078 | 131,000 | 19,917 |
+
+All five typed route tests pass (715 ms execution after type checking).
+All five complete returns pass the full local TY2025 v5.4 Return1040 XSD,
+including two separate IRS8941 copies in the joint return. The partial-year
+premium oracle directly applies 34 employee-months at 50%; the other cases
+rescale each retained qualified worksheet row by its new tier rate, preserving
+its percentage and enrollment fraction. This checks geographic propagation,
+not an independent rederivation of the existing arrangement methods. Employee
+counts, FTEs, wages, gross premiums and enrolled counts remain unchanged.
+
+The route test also exercises the PDF descriptor's actual copy selection with
+prepared Form3800 parts, checking owner SSN, employer EIN, cap and credit for
+all six copies. Eighteen altered-source native preparations and eighteen PDF
+projections reject stale Albany amounts, conflicting employee counties and
+Hawaii claims, including alterations to either spouse's employer. No new filled
+PDF or visual-review page count is claimed for this follow-up; the prior 71-page
+review above remains the visual evidence. The farm fixture's receipt-character
+qualification remains deferred under the existing Schedule F source finding.
+
+Evidence is retained in `.state/research/form8941-geographic-routes-2026-10-10/`,
+including complete source/pending records, XML, schema results and test output.
+The broader Form8941, source authenticity and filing-ready parent tasks stay open.
