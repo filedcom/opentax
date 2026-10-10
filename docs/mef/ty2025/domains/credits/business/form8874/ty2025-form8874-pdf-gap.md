@@ -1,5 +1,11 @@
 # TY2025 Form 8874 PDF print route
 
+Current status (October10): direct-QEI credit exports are blocked for missing
+authenticated CDE status/history. Historical credit packets below predate that
+gate. The latest checkpoint verifies reported-event recapture exports and the
+current credit boundary; it supersedes older authored/unrun wording for the
+checks it names.
+
 The
 [IRS Form 8874 (Rev. November 2021)](https://www.irs.gov/pub/irs-pdf/f8874.pdf)
 is the current continuous-use New Markets Credit paper form. Its first page has
@@ -217,3 +223,47 @@ open.
 The fixed-source `7318ed47` repository-wide run completed at 2026-09-29 15:04
 UTC: 8,880/8,880 passed, zero failed, with no ignored tests reported, in 16m42s.
 Its log is `.state/research/ty2025-full-test-7318ed47.log`.
+
+## October 10 credit inventory and reported recapture checkpoint
+
+The ten existing input/evidence/native/PDF/child-source modules pass44 tests,
+including issuance identity and deadlines, recapture and carryover arithmetic,
+byte-bound no-event/notice helpers, staged Form8874 XSD, overflow and parent
+credit checks. Four new public tests pass, for **48 passes, zero failures or
+ignored tests**. The no-event helper remains separate from public direct-credit
+export; consistency of synthetic reviewed bytes does not authenticate a CDE.
+
+Two historical direct-QEI fixtures still calculate correctly: two investments
+produce1,100 credit and final tax23,967; seven produce3,500 and final tax21,567.
+Both have150,000 wages and25,067 tax before the credit. Each now rejects both
+complete preparation and actual PDF building with the authenticated CDE status
+and recapture-history message (four assertions). These are verified current
+blocks, not new positive filing or visual evidence. The older two/seven-row
+packets must not be counted as currently exportable returns.
+
+One- and two-investment reported-recapture cases retain reviewed synthetic
+Form8874-A/B pairs, CDE/investor identity, original QEI date, prior allowed-credit
+recomputations and carryover vintages. Per investment, prior allowed credit
+falls from9,000 to7,000; the source notice's25,000 is not the recapture tax.
+The independent check uses2,000 of used credit and144 rounded interest:
+`2000 * (1 + .07/365)^351 * (1 + .06/365)^14 - 2000`.
+The [IRS quarterly rate table](https://www.irs.gov/payments/quarterly-interest-rates)
+confirms the applicable7% through2026Q1 and6% for2026Q2.
+
+| Reported investments | Schedule2 line17a NMCR | Form1040 final tax | Actual PDF pages |
+| --- | ---: | ---: | ---: |
+| 1 | 2,144 | 10,099 | 4 |
+| 2 | 4,288 | 12,243 | 4 |
+
+Both complete returns pass local TY2025 v5.4 Return1040 XSD and actual PDF
+construction. Each rejects changed line17a and changed taxpayer identity at
+preparation and PDF export (eight mutation assertions). These eight generated
+pages have **not** received a new visual review; no reviewed-page total is
+increased. The separate component-XSD test is not a third complete return.
+
+Logs and provenance: `.state/research/new-markets-routes-2026-10-10/`, on
+production runtime `d65263134`. The public module is
+`forms/f1040/2025/domains/credits/business/form8874/form8874_public.test.ts`.
+No production code or deferred repair changed. Authenticated CDE/notice/prior
+return records, wider recapture histories, passive credit use and direct-QEI
+activation remain open; the broad Form8874 task is not complete.
