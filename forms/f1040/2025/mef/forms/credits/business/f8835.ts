@@ -1,3 +1,4 @@
+import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
 import {
   assertForm8835DomesticSource,
   form8835DomesticDescription,
@@ -142,6 +143,17 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     );
   }
 
+  assertForm8835EnergyCommunitySource(item, true);
+  if (
+    item.energy_community_source && (
+      item.energy_community_source.taxpayer_tin !== context.filer?.primarySSN ||
+      item.energy_community_source.taxpayer_name !== context.filer?.fullName
+    )
+  ) {
+    throw new Error(
+      "Form 8835 energy-community source differs from return filer",
+    );
+  }
   assertForm8835DomesticSource(item, true);
   if (item.domestic_content_source) {
     const source = item.domestic_content_source;

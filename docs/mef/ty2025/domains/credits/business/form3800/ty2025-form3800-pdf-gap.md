@@ -1257,3 +1257,16 @@ uses reconcile through PartIII/V, Schedule3 and final tax. Business-credit
 complete-return evidence now totals66 returns/1,193 pages; the separate37-root/
 17-page PartVI component remains excluded. Source authenticity, accepted carry
 histories, broader combinations and the documented presentation gaps remain open.
+
+## October 10 annual energy-community and combined-bonus checkpoint
+
+[The Form8835 checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-annual-energy-community-locations-and-complete-packets)
+adds eight XSD-valid returns/139 observed pages. Coal/statistical locations and
+brownfield reviews join exact50% capacity to annual bonuses and Form3800 use,
+including two facilities claiming domestic content. Credits660,3,300,33,000 and
+72,360 reach final tax22,406,19,766,17 and17; capped cases use23,049.
+Six statements retain original archive bytes;144 native/144 PDF source mutations
+and16 archive mutations reject. The grouped gate is69 typed passes.
+Business-credit evidence totals74 complete returns/1,332 observed pages;
+37 separate PartVI component roots/17 pages remain excluded. Presentation
+qualifications, wider sources/owners, carryover proof and IRS acceptance stay open.

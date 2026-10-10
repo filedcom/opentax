@@ -115,7 +115,7 @@ export function assertForm8835DomesticSource(item: F8835Item, filing = false) {
     !["none", "under_one_mw", "construction_before_2023_01_29"].includes(
       item.increased_credit_reason,
     ) ||
-    item.existing_facility_expansion || item.energy_community_bonus ||
+    item.existing_facility_expansion ||
     item.subject_to_passive_activity_limit ||
     (item.transfer_election_amount ?? 0) !== 0 ||
     item.registration_number !== undefined || item.facility_owner_person ||

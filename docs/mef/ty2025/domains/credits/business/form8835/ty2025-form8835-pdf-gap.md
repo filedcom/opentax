@@ -8,7 +8,9 @@ mixed1f/4e classes, cellulosic/livestock lessees, and cumulative bond-financing
 reviews now have complete-return evidence. Solar retains its earlier bounded
 source route. Reviewed under-1-MW and early-construction wind/geothermal increases now include
 bound statements. Actual-cost domestic-content reviews now bind current/prior certifications
-to wind/geothermal bonuses; PWA increases, community bonuses, transfers, passive and fiscal-year branches
+to wind/geothermal bonuses. Annual coal/statistical/brownfield community reviews now
+join location and capacity to both exports, including combined domestic bonuses.
+BOC-only community claims, PWA increases, transfers, passive and fiscal-year branches
 remain guarded in the PDF. Source references do not authenticate
 external records. Historical paragraphs below retain their original context.
 
@@ -527,7 +529,7 @@ field content must agree. Original submitted bytes are preserved; the packet
 appends static review copies. PWA, elective cost tables, retrofit/expanded
 property, other energy types, offshore thresholds, transfers, passive and fiscal
 years remain outside this bounded domestic-content route. Community bonuses
-remain guarded. Source and signature authenticity and IRS acceptance are unproved.
+were guarded at this checkpoint; the annual-location checkpoint below supersedes that boundary. Source and signature authenticity and IRS acceptance are unproved.
 
 Four complete returns cover five facilities, five two-page domestic certifications
 and four separate increased-credit statements. Two2025 certificates and three
@@ -563,3 +565,57 @@ A legacy PDF assertion was updated to the more specific missing-review error.
 Validation: five focused and55 related typed tests pass,60 distinct tests total,
 with zero failures/ignored. Changed-TypeScript formatting and `git diff --check` pass.
 The unchanged frozen full gate remains separate and has no terminal result.
+
+## October 10 annual energy-community locations and complete packets
+
+The filer-owned onshore wind/geothermal route now requires annual community
+source review for both exports. All generating units join manufacturer AC
+capacity and location records at one2025 qualification date, with at least50%
+qualifying capacity; small-facility inventories must agree. Facility/filer identity,
+production and unrelated sales also reconcile. Community line11 and domestic
+line10 independently add10% of line9; PDF question10a is checked and10b blank.
+
+[Notice2023-29](https://www.irs.gov/pub/irs-drop/n-23-29.pdf) supplies the annual
+location/capacity rule. Pinned coal catalogs retain4,153/38/134/98 rows from
+2023-29 AppendixC,2023-47 Appendix3,2024-48 Appendix2 and2025-31 Appendix4.
+The statistical catalogs retain901 counties through June22,2025 and851 rows
+from June23, with825 Vintage1 and818 Vintage2 eligible entries; both criteria
+must hold in the same vintage under
+[Notice2025-31](https://www.irs.gov/pub/irs-drop/n-25-31.pdf).
+Part-year qualification supports the annual bonus without proration.
+Brownfield sources bind parcel boundaries, excluded-site review and a qualifying
+federal/state/territory/recognized-tribal assessment, PhaseII contamination report,
+or PhaseI report for a project no larger than5MW; a clean PhaseI fails under
+[Notice2023-45](https://www.irs.gov/pub/irs-drop/n-23-45.pdf).
+
+Eight returns cover nine facilities: original/adjoining and new coal tracts,
+eligibility ending June22, Vintage2-only eligibility, PhaseI at5MW, PhaseII at6MW,
+early-construction increase and two facilities claiming both bonuses. Five base
+returns each produce/use660 and tax22,406; the small coal return produces/uses
+3,300 and tax19,766; early construction produces33,000, uses23,049 and tax17;
+the combined pair produces72,360, uses23,049 and tax17. Each also uses2,001
+of current orphan-drug credit. The pair retains12,951/36,360 unused credits.
+
+Focused9 and related60 typed tests pass, none fail or are ignored. Mutations
+reject144 native and144 rehashed prepared-PDF exports. Exact-half, one-kW-below,
+publication dates/vintages, clean/late reports,5MW and government-level boundaries
+are checked. Eight complete returns pass local TY2025v5.4 XSD; independent
+Decimal tax/refund, raw IRS-list joins, checkbox/amount rectangles and76 canonical
+source fields with76 parent-linked widgets agree. Six original statements remain
+byte-exact in eight local submission/container ZIPs;16 altered/missing archives
+reject. Synthetic transmitter identities are used; nothing was sent.
+
+All139 packet pages were rendered:50 unique pages viewed on13 contact sheets,
+89 exact-pixel duplicates. Existing future26 skipped Form3800 values, future76
+blank zero Form8835 line3, future68 name order and future84 omitted native
+Form6251 line1a remain qualifications. No deferred repair was implemented.
+Evidence: `.state/research/form8835-community-2026-10-10/`, including original IRS
+notices/HTML hashes, complete catalog extraction, typed logs, packaged XML/PDF,
+source files, field/render checks, ZIPs and request checks.
+
+BOC-only community safe harbor, offshore attribution, changing unit inventories,
+other energy/owner types, PWA, transfers, passive and fiscal-year routes remain
+open. Source references are reviewed synthetic facts, not automatic geocoding or
+authenticated reports. Separate increase/domestic statements retain their own
+content/digest checks. No source/signature authenticity, IRS acceptance, complete
+business-rule certification or closure of broad parent tasks is claimed.

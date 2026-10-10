@@ -7184,3 +7184,22 @@ A legacy PDF assertion was updated to the more specific missing-review error.
 Validation: five focused and55 related typed tests pass,60 distinct tests total,
 with zero failures/ignored. Changed-TypeScript formatting and `git diff --check` pass.
 The unchanged frozen full gate remains separate and has no terminal result.
+
+### October 10 annual energy-community source and packet checkpoint
+
+Compacted board before runtime edits;52 frozen main task bodies remain unchanged
+and135 future items stay deferred. The preceding goal turn verified the live full
+gate and PR/main state. This turn advances existing Form8835/Form3800/source/
+native/PDF/archive tasks. Annual coal/statistical/brownfield reviews now bind
+all-unit capacity and published membership at one2025 date; both bonuses
+reconcile independently. Eight XSD-valid returns/139 observed pages,50 unique
+viewed pages,76 source fields/widgets,144 native/144 PDF and16 archive rejections
+are retained. Focused9 plus related60 typed tests pass. Six statements retain
+original ZIP bytes. Existing presentation qualifications stay deferred; only an
+observation is appended to future76. No transmission or authentication is implied.
+Broad parent tasks remain open, including BOC-only community and wider owners.
+PR70 cumulative:348 schema-valid complete returns/3,633 observed packet pages,
+including prior incorrect dividend-tax case125; ten schema-failing returns and
+nine XML-only cases remain separately qualified. Evidence:
+`.state/research/form8835-community-2026-10-10/`; details in Form8835/3800 notes.
+Frozen `eed449e70` full gate remains live and predates this work; not restarted.
