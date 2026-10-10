@@ -142,7 +142,7 @@ function reconcileSCorpK1Credits(
   }
 }
 
-/** Replays one rental activity and its current-year credits against the filed return. */
+/** Replays the rental-income inventory and its current-year credits against the filed return. */
 export function reconcileFiledForm8582CROrdinary(
   raw: unknown,
   pending: Pending,
@@ -196,7 +196,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or credit-only partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or credit-only partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus a complete sourced passive rental income inventory",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(

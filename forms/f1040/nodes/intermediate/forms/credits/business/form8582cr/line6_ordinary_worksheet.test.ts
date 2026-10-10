@@ -102,7 +102,7 @@ Deno.test("Form 8582-CR line 6 candidate rejects source and final-tax tampering"
         undefined,
       ),
     Error,
-    "one sourced passive Schedule E income activity",
+    "a complete sourced passive Schedule E income inventory",
   );
   assertThrows(
     () =>
@@ -132,4 +132,75 @@ Deno.test("Form 8582-CR line 6 candidate rejects source and final-tax tampering"
     Error,
     "finalized Form 1040 ordinary-tax method",
   );
+});
+
+Deno.test("Form 8582-CR line 6 binds every rental amount and owner independent of ordering", () => {
+  const rentals = [
+    { ...scheduleE.schedule_es[0], rent_income: 12000 },
+    {
+      ...scheduleE.schedule_es[0],
+      tsj: "T",
+      activity_id: "rental-2",
+      rent_income: 8000,
+    },
+  ];
+  const {
+    activity_id: _activity,
+    passive_income_source_document_reference: _reference,
+    ...taxSides
+  } = worksheet;
+  const review = {
+    ...taxSides,
+    passive_income_sources: rentals.map((r) => ({
+      activity_id: r.activity_id,
+      passive_income_source_document_reference:
+        r.passive_income_source_document_reference,
+      tsj: r.tsj,
+      net_passive_income: r.rent_income,
+    })).reverse(),
+  };
+  // A retained ledger may cover several activities; IDs, amounts and owners
+  // distinguish those rows, so document references need not be unique.
+  const run = (w: unknown, rows: unknown) =>
+    calculateForm8582CRLine6OrdinaryWorksheet(
+      w,
+      { schedule_es: rows },
+      form8582cr,
+      form1040,
+      schedule1,
+      general,
+      undefined,
+    );
+  assertEquals(run(review, rentals).line6, 4412);
+  assertEquals(run(review, rentals.toReversed()).line6, 4412);
+  const mutations: Array<(w: typeof review, r: typeof rentals) => void> = [
+    (w) => {
+      w.passive_income_sources[0].net_passive_income++;
+      w.passive_income_sources[1].net_passive_income--;
+    },
+    (w) => {
+      w.passive_income_sources[0].activity_id =
+        w.passive_income_sources[1].activity_id;
+    },
+    (w) => {
+      w.passive_income_sources[0].tsj = "S";
+    },
+    (w) => {
+      w.net_passive_income++;
+    },
+    (_w, r) => {
+      r[1].rent_income = 0;
+    },
+    (_w, r) => {
+      r[1].activity_type = "D";
+    },
+  ];
+  for (const mutate of mutations) {
+    const changedReview = structuredClone(review),
+      changedRentals = structuredClone(rentals);
+    mutate(changedReview, changedRentals);
+    assertThrows(() => run(changedReview, changedRentals));
+  }
+  assertThrows(() => run({ ...worksheet, ...review }, rentals));
+  assertThrows(() => run({ ...review, passive_income_sources: [] }, rentals));
 });

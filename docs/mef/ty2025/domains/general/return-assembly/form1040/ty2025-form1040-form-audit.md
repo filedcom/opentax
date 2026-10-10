@@ -840,3 +840,15 @@ No new deferred item. Business totals122 returns/2367 pages; PartVI37/17 separat
 See the Form8582-CR continuation checkpoint and private
 `.state/research/form8582cr-overflow-2026-10-10/`. Source authenticity, broader
 passive-income/credit methods, accepted carryovers and IRS acceptance remain open.
+
+## October 10 passive rental inventory checkpoint
+
+Four complete returns now reconcile16 positive ScheduleE rentals and64 passive
+New Markets credit sources through Form8582-CR, Form3800, Schedule3 and final tax.
+All four pass XSD;78 packet pages were reviewed, with64 native/64 freshly hashed
+PDF mutation rejections and16 malformed-archive rejections. Focused7/0 and related
+73/0 gates pass. The [detailed checkpoint](../../../credits/business/form8582cr/ty2025-form8582cr-pdf-gap.md#october-10-complete-passive-rental-income-inventories)
+retains source, allocation and printed-row evidence. Existing presentation26/68/76/84
+remain qualified; the separately retained higher-income case cannot export because
+Form3800 further limits the passive credit (new deferred142). No IRS acceptance or
+broad parent-task completion is claimed.
