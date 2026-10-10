@@ -25,7 +25,34 @@ export async function transferFixture(c: typeof transferCases[number]) {
   const { input, attachments } = await solarBondFixture(
     solarBondCases[c.source],
   );
+  const { credits, transfers } = await attachReviewedTransfers(
+    input,
+    attachments,
+    c.portions,
+  );
   let remaining = 23049;
+  for (const [index, f] of input.f8835.entries()) {
+    const credit = credits[index];
+    const a = input.form3800_current_production_allocation.facilities[index];
+    a.transfer_out_amount = f.transfer_election_amount;
+    a.applied_credit = Math.min(remaining, credit - f.transfer_election_amount);
+    remaining -= a.applied_credit;
+  }
+  const used = 23049 - remaining;
+  return {
+    input,
+    attachments,
+    expected: { credits, transfers, used, tax: 25067 - 2001 - used },
+  };
+}
+
+export async function attachReviewedTransfers(
+  input: { f8835: any[] },
+  attachments: Array<
+    { fileName: string; description: string; bytes: Uint8Array }
+  >,
+  portions: number[][],
+) {
   const credits = [], transfers = [];
   for (const [index, f] of input.f8835.entries()) {
     const credit = calculateForm8835(f).line15;
@@ -45,7 +72,7 @@ export async function transferFixture(c: typeof transferCases[number]) {
       signed_statement_reviewed: true,
     };
     f.registration_number = `CAABC25ABCD${index}`;
-    f.transfer_election_amount = c.portions[index].reduce((a, b) => a + b, 0);
+    f.transfer_election_amount = portions[index].reduce((a, b) => a + b, 0);
     f.transfer_source = {
       tax_year: 2025,
       transferor: party,
@@ -68,7 +95,7 @@ export async function transferFixture(c: typeof transferCases[number]) {
       complete_facility_transfer_inventory_verified: true,
       total_facility_credit: credit,
       review_reference: `Synthetic transfer review ${index}`,
-      transfers: c.portions[index].map((amount, j) => ({
+      transfers: portions[index].map((amount, j) => ({
         transferee: {
           ...party,
           name: `Synthetic Buyer ${index + 1}-${j + 1}`,
@@ -192,17 +219,8 @@ export async function transferFixture(c: typeof transferCases[number]) {
         bytes,
       });
     }
-    const a = input.form3800_current_production_allocation.facilities[index];
-    a.transfer_out_amount = f.transfer_election_amount;
-    a.applied_credit = Math.min(remaining, credit - f.transfer_election_amount);
-    remaining -= a.applied_credit;
     credits.push(credit);
     transfers.push(f.transfer_election_amount);
   }
-  const used = 23049 - remaining;
-  return {
-    input,
-    attachments,
-    expected: { credits, transfers, used, tax: 25067 - 2001 - used },
-  };
+  return { credits, transfers };
 }

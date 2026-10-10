@@ -1322,3 +1322,19 @@ inspected (97 unique pages,78 pixel duplicates). Qualifications26/68/76/84/136
 remain; new deferred138 records clipped Form3800 registration edges. Source
 and signature authenticity, wider coverage and IRS acceptance remain open.
 No broad main task is closed.
+
+## October 10 mixed-transfer limits and source overflow
+
+Five XSD-valid complete returns/126 observed pages now cover ordinary and
+specified production limits, older-facility transfers, a full specified transfer,
+and18 mixed source rows on two Form3800 PartV pages. Final taxes21066,16094,
+3094,16094,18576 reconcile independently. Focused tests5/0; grouped typed gate51/0 (7m58s);
+40 native/40 fresh-PDF mutations and20 malformed archives reject. Ten original
+statements retain290 matching canonical fields/widgets. All19 contact sheets
+were inspected (75 unique pages/51 pixel duplicates). Existing26/68/76/84/138
+qualify the packets; new future141 records signed values inside the preprinted
+PartV sold-credit parentheses. No deferred repair or production runtime change.
+See the [Form8835 checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-mixed-transfer-limits-and-source-overflow)
+and `.state/research/form8835-mixed-transfers-2026-10-10/`.
+Business totals117 XSD-valid returns/2270 observed pages; separate PartVI37/17.
+Authentic sources/signatures, broader combinations and IRS acceptance remain open.

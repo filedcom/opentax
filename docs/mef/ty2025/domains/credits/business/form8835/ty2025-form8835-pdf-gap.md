@@ -871,3 +871,52 @@ This checkpoint does not close a broad main TODO.
 Sources checked: [Form8835 instructions](https://www.irs.gov/instructions/i8835),
 [Form3800 instructions](https://www.irs.gov/instructions/i3800), and
 [final section6418 regulations](https://www.irs.gov/irb/2024-25_IRB).
+
+## October 10 mixed-transfer limits and source overflow
+
+Five new complete-return tests exercise the retained reviewed-transfer route
+through ordinary and specified credit limits, older wind/geothermal facilities,
+a wholly transferred specified credit, and18 source rows spanning two PartV
+pages. The transfer fixture now shares its statement builder; production runtime
+is unchanged. Independent Decimal checks reconcile rates, wind reductions,
+source allocation, credit limits, final tax and refunds.
+
+| Case | Facility credits | Transfers | Ordinary / orphan / specified used | Final tax | Pages |
+| --- | --- | --- | --- | --- | --- |
+| old-geo | 3000 | 1000 | 2000 / 2001 / 0 | 21066 | 19 |
+| wind-limit | 24000 | 10000 | 8973 / 0 / 0 | 16094 | 19 |
+| both-classes | 90000,18000 | 20000,5000 | 8973 / 0 / 13000 | 3094 | 25 |
+| full-specified | 18000,18000 | 9000,18000 | 8973 / 0 / 0 | 16094 | 25 |
+| overflow | 3000,2640,720,780 | 1000,640,220,280 | 4000 / 1491 / 1000 | 18576 | 38 |
+
+All five public execution/preparation cases pass local full TY2025v5.4 XSD.
+Focused typed tests pass5/0; grouped typed gate51/0 (7m58s). Negative probes reject40 native
+and40 freshly hashed PDF mutations covering allocation, class, use, buyer credit,
+registration, missing statement and cash amounts. Ten original statements retain
+290 canonical source fields and290 linked widgets with matching values and
+appearances; both archive layers preserve their bytes and20 missing/altered
+archive variants reject. Package identifiers and unsigned examples are synthetic;
+these checks do not authenticate source claims or signatures.
+
+All126 pages were rendered:75 unique pages on19 inspected sheets plus51 exact
+pixel duplicates. All final packets are static with no Widget/AcroForm remnants;
+original statement PDFs remain interactive. Existing26/68/76/84 qualifications
+remain, including blank zero net/use on the full specified transfer. Deferred138
+also occurs in ordinary PartIII line1f, as well as specified line4e. New deferred141
+records minus signs inside PartV sold-credit parentheses on overflow pages11/13;
+native detail sold amounts are also negative (see `part-v-row-review.json`), so
+net credits and final tax reconcile but native/PDF sign semantics are unapproved.
+The printed Form8835 footnote refers pre-2022 rates to the instructions, so the
+correct independently calculated .03 old-facility rate is not recorded as a new
+printed-rate defect. No deferred runtime repair was made.
+
+Evidence: `.state/research/form8835-mixed-transfers-2026-10-10/` retains
+source/pending/XML/PDF, original statements, both archives, XSD logs, independent
+verifier, typed logs, file/pixel hashes and visual qualifications. The prior head
+4826ec38d passed CI38029678677. Business evidence totals117 XSD-valid complete
+returns/2270 observed pages; PartVI37 roots/17 pages remains separate. Broader
+source/election combinations, authenticated carryovers, IRS business rules and
+acceptance remain open; no broad main TODO is closed.
+
+Sources checked: [Form8835 instructions](https://www.irs.gov/instructions/i8835)
+and [Form3800 instructions](https://www.irs.gov/instructions/i3800).
