@@ -1375,3 +1375,12 @@ rejections and12 archive rejections. New future143/144 retain the capacity and
 unanswered PartII line27; existing26/68/76/84 qualifications remain. See the
 [full checkpoint](../form8582cr/ty2025-form8582cr-pdf-gap.md#october-10-reviewed-k-1-rental-income-inventories)
 for source and final-tax evidence; no filing acceptance is claimed.
+
+## October 10 separate income-only K-1 checkpoint
+
+Four complete returns now join separate income-only partnership/S corporation
+K-1s with passive New Markets credit sources. All four pass XSD;74 pages were
+reviewed, including single-credit PartIII and two-credit PartV reporting. Gates
+4/0 and82/0 pass;88 native/88 fresh-PDF mutations and16 malformed archives reject.
+The Form8582-CR gap checkpoint retains source, final-tax and artifact details.
+Deferred26/68/76/84/144 repeat; no new item or deferred repair was made.
