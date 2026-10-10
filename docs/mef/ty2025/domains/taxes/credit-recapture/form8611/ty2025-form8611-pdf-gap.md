@@ -51,3 +51,14 @@ unnecessary; classify the recapture event and IRS exceptions separately.
 ## October6 issued section42(j)(5) K1 recipient proof
 
 The [issued-K1 review](./ty2025-form8611-issued-k1-review.md) supersedes the unrun statement for this specific issuer path. Actual issuer/recipient/building allocations now derive line8 and strict native/PDF source replay. Two complete packets/all12 pages,22 mutations,109 related checks and current held localXSD/source/catalog/template replay pass. The other historical, own-credit, unused-credit, bond and non-section42j5 variants remain open; no accepted prior filing or external authentication is inferred.
+
+## October 10 component replay
+
+The current input, native and PDF modules pass12 tests (6/3/3) as part of the
+32-test Forms3115/4255/8611 batch. This supersedes the historical unrun wording
+for these bounded source/projection checks. Native multi-building serialization,
+Schedule2 reconciliation, duplicate-BIN rejection and PDF projections remain
+covered; no new issued-K1 packet replay, XSD or visual count is claimed.
+The earlier issued-K1 packets retain the later recorded joint-name qualification
+in future_todo24. Wider source authenticity and filing branches remain open.
+Evidence: `.state/research/method-recapture-routes-2026-10-10/components.log`.
