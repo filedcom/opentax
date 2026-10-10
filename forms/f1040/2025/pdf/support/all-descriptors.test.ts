@@ -13,10 +13,16 @@
  *   8. Row descriptors have {row} placeholder in pdfFieldPattern.
  *
  * Network existence tests require --allow-net=www.irs.gov and validate the
- * mapped fields against the referenced IRS PDFs.
+ * mapped field names, types and widget presence against the referenced IRS PDFs.
  */
-import { assertEquals, assertMatch } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
+import { assert, assertEquals, assertMatch } from "@std/assert";
+import {
+  PDFCheckBox,
+  PDFDocument,
+  type PDFField,
+  PDFRadioGroup,
+  PDFTextField,
+} from "pdf-lib";
 import { ALL_PDF_FORMS } from "../forms/index.ts";
 
 const VALID_KINDS = new Set(["text", "checkbox", "checkboxWhen", "radio"]);
@@ -199,12 +205,35 @@ for (const descriptor of ALL_PDF_FORMS) {
 // These checks must run in the normal batch so stale mappings cannot pass.
 // ---------------------------------------------------------------------------
 
-async function getRealFieldNames(url: string): Promise<Set<string>> {
+async function getRealFields(url: string): Promise<Map<string, PDFField>> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
   const bytes = new Uint8Array(await res.arrayBuffer());
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-  return new Set(doc.getForm().getFields().map((f) => f.getName()));
+  return new Map(doc.getForm().getFields().map((f) => [f.getName(), f]));
+}
+
+function assertMappedField(
+  fields: ReadonlyMap<string, PDFField>,
+  name: string,
+  kind: string,
+  label: string,
+): void {
+  const field = fields.get(name);
+  assert(field, `[${label}] pdfField not found in real PDF: "${name}"`);
+  const expected = kind === "text"
+    ? PDFTextField
+    : kind === "radio"
+    ? PDFRadioGroup
+    : PDFCheckBox;
+  assert(
+    field instanceof expected,
+    `[${label}] field "${name}" needs ${kind}, found ${field.constructor.name}`,
+  );
+  assert(
+    field.acroField.getWidgets().length > 0,
+    `[${label}] mapped field "${name}" has no widget`,
+  );
 }
 
 for (const descriptor of ALL_PDF_FORMS) {
@@ -212,12 +241,13 @@ for (const descriptor of ALL_PDF_FORMS) {
 
   Deno.test(
     {
-      name: `${label}: all mapped pdfField names exist in real IRS PDF`,
+      name:
+        `${label}: all mapped fields have correct names, types and widgets in real IRS PDF`,
       sanitizeResources: false,
       sanitizeOps: false,
     },
     async () => {
-      const realFields = await getRealFieldNames(descriptor.pdfUrl);
+      const realFields = await getRealFields(descriptor.pdfUrl);
       for (
         const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
       ) {
@@ -227,11 +257,7 @@ for (const descriptor of ALL_PDF_FORMS) {
             ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
           ]
         ) {
-          assertEquals(
-            realFields.has(pdfField),
-            true,
-            `[${label}] pdfField not found in real PDF: "${pdfField}"`,
-          );
+          assertMappedField(realFields, pdfField, entry.kind, label);
         }
       }
       if (descriptor.rows) {
@@ -244,10 +270,11 @@ for (const descriptor of ALL_PDF_FORMS) {
                 /{field_num}/g,
                 String(fieldNumber).padStart(2, "0"),
               );
-            assertEquals(
-              realFields.has(pdfField),
-              true,
-              `[${label}] row field (row ${row}) not found in real PDF: "${pdfField}"`,
+            assertMappedField(
+              realFields,
+              pdfField,
+              rf.kind,
+              `${label} row ${row}`,
             );
           }
         }
