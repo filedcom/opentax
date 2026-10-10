@@ -1363,3 +1363,15 @@ retains source, allocation and printed-row evidence. Existing presentation26/68/
 remain qualified; the separately retained higher-income case cannot export because
 Form3800 further limits the passive credit (new deferred142). No IRS acceptance or
 broad parent-task completion is claimed.
+
+## October 10 K-1 rental income and passive credit checkpoint
+
+The Form8582-CR ordinary route now reconciles reviewed primary-owned positive
+K-1 box2/3 rental income, alongside or without direct Schedule E rentals, through
+Form3800 and final1040. Three XSD-valid complete returns retain56 reviewed pages;
+two larger XSD-valid native returns remain PDF-blocked at Schedule E's four-row
+capacity. Focused5/0 and related77/0 pass, with90 native/54 fresh-PDF source
+rejections and12 archive rejections. New future143/144 retain the capacity and
+unanswered PartII line27; existing26/68/76/84 qualifications remain. See the
+[full checkpoint](../form8582cr/ty2025-form8582cr-pdf-gap.md#october-10-reviewed-k-1-rental-income-inventories)
+for source and final-tax evidence; no filing acceptance is claimed.

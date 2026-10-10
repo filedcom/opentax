@@ -2,11 +2,11 @@
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
 current-year passive New Markets credit inventories from distinct
-self-earned Form 8874 investments and credit-only partnership K-1 box 15
+self-earned Form 8874 investments and reviewed partnership K-1 box 15
 code AD or S corporation K-1 box 13 code AD sources in any mix. One passive
 self-earned investment may also be paired with one distinct nonpassive Form
 8874 investment when no K-1 credit enters the route. The ordinary route supports a complete reviewed inventory of positive
-Schedule E passive rental income activities. Other branches remain closed at PDF
+Schedule E passive rental income activities, including positive box 2/3 income on those credit K-1s under the current-acquisition source contract. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
 
 ## Ordinary-tax filing route and historical implementation notes
@@ -29,9 +29,7 @@ Alternatively, each partnership K-1 box 15 code AD or S corporation K-1 box
 13 code AD must match one source's pass-through EIN/name, K-1 reference,
 recipient TIN, passive classification, and current-year amount. All K-1
 sources must have distinct activity and document references, and no K-1 may
-remain unclaimed. Those K-1s have no other income,
-deduction, or credit boxes in this bounded route, so the Schedule E rentals are
-the complete positive passive-income inventory. No prior credit, PTP, special allowance,
+remain unclaimed. Those K-1s may also carry reviewed positive box 2/3 rental income owned by the primary taxpayer; every such activity must match its retained source and line 6 inventory. Other income, deduction, or credit boxes remain outside this bounded route. No prior credit, PTP, special allowance,
 additional passive income source, or Part VI election enters this route.
 The [2025 partnership K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
 identify box 15 code AD as the New Markets credit, direct it to Form 8874 or
@@ -95,7 +93,7 @@ retains its IRS8874 document reference only for the self-earned detail and
 the issuer EINs for K-1 details. A second full-return fixture combines two
 self-earned investments and three K-1s. Source-amount and prepared-detail
 tamper cases are authored but unrun. A nonpassive investment alongside K-1
-credits, other K-1 boxes, Form 3800 tax-use restrictions below the allowed
+credits, K-1 boxes other than the reviewed positive box 2/3 extension below, Form 3800 tax-use restrictions below the allowed
 passive credit, and prior-year carryforward imports remain closed.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
@@ -443,3 +441,55 @@ income, business-credit and full-return tasks; it does not close their broader
 52 parent TODOs or establish IRS business-rule acceptance. Business checkpoint
 totals are126 XSD-valid complete returns/2445 observed pages; separate PartVI
 37 roots/17 pages remain unchanged. Current PR71 adds four returns/78 pages.
+
+## October 10 reviewed K-1 rental income inventories
+
+The ordinary line 6 route now admits primary-taxpayer-owned positive rental
+income from box 2 and/or box 3 on partnership and S corporation K-1s that also
+supply the already-supported New Markets credit. It reuses the existing
+current-acquisition passive activity source contract: issuer/recipient, issued
+K-1 and activity-statement references, participation record, acquisition year,
+no prior passive loss and non-PTP status. Direct Schedule E rentals and K-1
+activities form one exact inventory; each worksheet row matches owner, activity,
+source reference, amount and, for K-1s, entity kind/EIN. The tax pair is recomputed
+from the final return. Reversed source ordering does not change matching.
+
+| Case | Credit K-1s / income K-1s | Passive income | Credit / allowed / unused | Final tax | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| Four-row boundary | 4 / 4 | 20,000 | 8,006 / 4,412 / 3,594 | 13,455 | XSD-valid complete return, 19 pages |
+| Partnership plus rental | 2 / 1 | 20,000 | 201 / 201 / 0 | 17,666 | XSD-valid complete return, 19 pages |
+| Mixed two-box, no direct rental | 2 / 2 | 20,000 | 10,001 / 4,412 / 5,589 | 13,455 | XSD-valid complete return, 18 pages |
+| Sixteen mixed issuers | 16 / 16 | 20,000 | 8,120 / 4,412 / 3,708 | 13,455 | XSD-valid native only; PDF blocked |
+| Thirty-one mixed issuers | 31 / 31 | 20,000 | 3,565 / 3,565 / 0 | 14,302 | XSD-valid native only; PDF blocked |
+
+All five use wages100,000, taxable income104,250, regular tax17,867,
+without-passive taxable income84,250/tax13,455 and line6 limit4,412.
+The three complete packets retain seven income K-1s with thirteen activity
+records and two direct rentals. The two larger native returns retain all47
+income/credit K-1s; the original inventories were not reduced to bypass the
+existing Schedule E four-row PDF guard (future143).
+
+Focused gate: **5 passed, 0 failed**. Related ordinary/rental/worksheet/child-credit
+and detail regression: **77 passed, 0 failed**. Altered owner, issuer, reference,
+activity, classification, amount, worksheet and final-credit facts reject in
+**90 native and54 freshly hashed PDF** cases. Independent checks reconcile
+source box sums, Schedule E rows, credit allocations and final tax. All five
+returns pass local XSD validation. Three local archive packages preserve exact
+XML/manifest/container bytes; **12 malformed archive variants reject**.
+Synthetic filer/software identifiers were used locally; nothing was transmitted.
+
+The **56 pages** include36 unique rendered pages and20 exact pixel duplicates;
+all nine contact sheets were reviewed. Existing deferred26/68/76/84 presentation
+and native qualifications repeat. Both Schedule E PartII line27 answer boxes
+are blank on all three packets (new future144). These are qualified complete
+packets, not evidence of IRS acceptance or flawless PDF parity. The new capacity
+and answer items remain deferred and were not repaired.
+
+Private evidence: `.state/research/form8582cr-k1-income-2026-10-10/`, including
+focused/grouped logs, source JSON, prepared XML/PDF, XSD logs, local archives,
+independent verification, rendered sheets, runtime hashes and visual review.
+Business-credit cumulative evidence becomes **129 complete returns/2,501 pages**;
+the two native-only cases and PartVI37 roots/17 pages remain separate. PR71 now
+contains seven complete returns/134 pages plus these two native-only returns.
+Other K-1 income, losses, prior histories, spouse-owned credit K-1s, authenticity,
+further Form3800 limitations and broader passive methods remain open.

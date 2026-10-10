@@ -7,6 +7,7 @@ import { inputSchema as form1099IntInputSchema } from "../../../../../inputs/inc
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
 import { inputSchema as form8582crInputSchema } from "./index.ts";
+import { reviewedLine6K1Income } from "./line6_k1_income.ts";
 import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 
 /** A reviewed, rental-inventory ordinary-tax candidate for line 6; filing is gated separately. */
@@ -20,9 +21,11 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   rawSchedule1: unknown,
   rawGeneral: unknown,
   rawForm1099Int: unknown,
+  rawPartnershipK1?: unknown,
+  rawSCorpK1?: unknown,
 ) {
   const worksheet = line6OrdinaryWorksheetSchema.parse(rawWorksheet);
-  const scheduleE = scheduleEInputSchema.parse(rawScheduleE);
+  const scheduleE = scheduleEInputSchema.parse(rawScheduleE ?? {});
   const form8582cr = form8582crInputSchema.parse(rawForm8582cr);
   const form1040 = z.object({
     line1z_total_wages: z.number().int().nonnegative(),
@@ -47,6 +50,7 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   }).parse(rawSchedule1);
   const general = z.object({
     filing_status: filingStatusSchema,
+    taxpayer_ssn: z.string().optional(),
   }).parse(rawGeneral);
   const incomeSources = "passive_income_sources" in worksheet
     ? worksheet.passive_income_sources
@@ -54,12 +58,20 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   const sourcesById = new Map(
     incomeSources.map((source) => [source.activity_id, source]),
   );
+  const k1Income = reviewedLine6K1Income(
+    rawPartnershipK1,
+    rawSCorpK1,
+    general.taxpayer_ssn,
+  );
   const propertyIds = new Set(
-    scheduleE.schedule_es.map((property) => property.activity_id),
+    [
+      ...scheduleE.schedule_es.map((property) => property.activity_id),
+      ...k1Income.map((source) => source.activity_id),
+    ],
   );
   const netPassive = scheduleE.schedule_es.reduce(
     (total, property) => total + computePropertyNet(property),
-    0,
+    k1Income.reduce((sum, source) => sum + source.net_passive_income, 0),
   );
   let taxableInterest = 0;
   if (rawForm1099Int !== undefined) {
@@ -134,13 +146,13 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     form1040.line7_capital_gain,
   ];
   if (
-    scheduleE.schedule_es.length !== incomeSources.length ||
+    scheduleE.schedule_es.length + k1Income.length !== incomeSources.length ||
     sourcesById.size !== incomeSources.length ||
     propertyIds.size !== incomeSources.length ||
     scheduleE.schedule_es.some((property) => {
       const source = sourcesById.get(property.activity_id ?? "");
       const net = computePropertyNet(property);
-      return !source ||
+      return !source || "source_origin" in source ||
         ("tsj" in source &&
           (source.tsj !== property.tsj ||
             (general.filing_status !== FilingStatus.MFJ &&
@@ -158,6 +170,16 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
         (property.prior_unallowed_passive_operating ?? 0) !== 0 ||
         (property.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
         (property.prior_unallowed_passive_4797_part2 ?? 0) !== 0;
+    }) ||
+    k1Income.some((actual) => {
+      const source = sourcesById.get(actual.activity_id);
+      return !source || !("source_origin" in source) ||
+        source.source_origin.kind !== actual.source_origin.kind ||
+        source.source_origin.ein !== actual.source_origin.ein ||
+        source.tsj !== actual.tsj ||
+        source.passive_income_source_document_reference !==
+          actual.passive_income_source_document_reference ||
+        source.net_passive_income !== actual.net_passive_income;
     }) ||
     (scheduleE.estate_trust_rows?.length ?? 0) !== 0 ||
     (scheduleE.farm_rental_activities?.length ?? 0) !== 0 ||

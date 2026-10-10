@@ -23,21 +23,29 @@ const nonemptySource = (value: unknown): boolean =>
     ? value.length > 0
     : value !== null && typeof value === "object" &&
       Object.keys(value).length > 0;
-const creditOnlyPartnershipFields = new Set([
+const reviewedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
   "recipient_tin",
   "box15_code_ad_new_markets_credit",
   "new_markets_credit_subject_to_passive_activity_limit",
+  "box2_rental_re",
+  "box3_other_rental",
+  "eic_passive_activity_review",
+  "passive_income_source",
 ]);
-const creditOnlySCorpFields = new Set([
+const reviewedSCorpFields = new Set([
   "corporation_name",
   "corporation_ein",
   "source_document_reference",
   "recipient_tin",
   "box13_code_ad_new_markets_credit",
   "new_markets_credit_subject_to_passive_activity_limit",
+  "box2_rental_re",
+  "box3_other_rental",
+  "eic_passive_activity_review",
+  "passive_income_source",
 ]);
 type CreditSource = ReturnType<
   typeof form8582crInputSchema.parse
@@ -59,7 +67,7 @@ function reconcilePartnershipK1Credits(
   if (
     k1s.length !== sources.length ||
     k1s.some((k1) =>
-      Object.keys(k1).some((key) => !creditOnlyPartnershipFields.has(key)) ||
+      Object.keys(k1).some((key) => !reviewedPartnershipFields.has(key)) ||
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
       k1.new_markets_credit_subject_to_passive_activity_limit !== true
@@ -88,7 +96,7 @@ function reconcilePartnershipK1Credits(
     )
   ) {
     throw new Error(
-      "Form 8582-CR partnership code AD credits differ from the filed credit-only K-1s",
+      "Form 8582-CR partnership code AD credits differ from the filed reviewed K-1s",
     );
   }
 }
@@ -108,7 +116,7 @@ function reconcileSCorpK1Credits(
   if (
     k1s.length !== sources.length ||
     k1s.some((k1) =>
-      Object.keys(k1).some((key) => !creditOnlySCorpFields.has(key)) ||
+      Object.keys(k1).some((key) => !reviewedSCorpFields.has(key)) ||
       !k1.recipient_tin ||
       k1.recipient_tin !== general?.taxpayer_ssn?.replaceAll("-", "") ||
       k1.new_markets_credit_subject_to_passive_activity_limit !== true
@@ -137,7 +145,7 @@ function reconcileSCorpK1Credits(
     )
   ) {
     throw new Error(
-      "Form 8582-CR S corporation code AD credits differ from the filed credit-only K-1s",
+      "Form 8582-CR S corporation code AD credits differ from the filed reviewed K-1s",
     );
   }
 }
@@ -196,7 +204,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or credit-only partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus a complete sourced passive rental income inventory",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or reviewed partnership/S corporation K-1 code AD sources with reconciled Form 3800 Part V detail, plus a complete sourced passive rental income inventory",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -207,6 +215,8 @@ export function reconcileFiledForm8582CROrdinary(
     pending.schedule1,
     pending.general,
     pending.f1099int,
+    pending.k1_partnership,
+    pending.k1_s_corp,
   );
   let nonpassiveForm8874Credit = 0;
   if (selfCredit || mixedCredit) {

@@ -22,7 +22,16 @@ export const line6OrdinaryWorksheetSchema = z.union([
   z.object({
     ...taxSides,
     passive_income_sources: z.array(
-      incomeSourceSchema.extend({ tsj: tsjSchema }),
+      z.union([
+        incomeSourceSchema.extend({ tsj: tsjSchema }),
+        incomeSourceSchema.extend({
+          tsj: tsjSchema,
+          source_origin: z.object({
+            kind: z.enum(["partnership", "s_corporation"]),
+            ein: z.string().regex(/^\d{9}$/),
+          }).strict(),
+        }),
+      ]),
     )
       .min(1),
   }).strict(),
