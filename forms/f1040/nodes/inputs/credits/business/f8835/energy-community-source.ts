@@ -1,3 +1,7 @@
+import {
+  assertForm8835ConstructionHistory,
+  constructionHistorySchema,
+} from "./construction-history.ts";
 import { z } from "zod";
 import type { F8835Item } from "./index.ts";
 import catalog from "./energy-community-catalog.json" with { type: "json" };
@@ -61,21 +65,36 @@ const location = z.discriminatedUnion("category", [
       "2025-31-4",
     ]),
     tract_boundary_and_unit_location_review_reference: reference,
+    historical_closure_review: z.object({
+      closure_type: z.enum([
+        "abandoned_coal_mine",
+        "retired_coal_generating_unit",
+      ]),
+      closure_occurred_on: date,
+      closure_record_reference: reference,
+      listed_tract_and_closure_location_review_reference: reference,
+      qualifying_closure_or_direct_adjacency_as_of_start_verified: z.literal(
+        true,
+      ),
+    }).strict().optional(),
   }).strict(),
   z.object({
     category: z.literal("statistical_area"),
     county_fips: z.string().regex(/^\d{5}$/),
-    notice_appendix: z.enum(["2024-48-1", "2025-31-3"]),
+    notice_appendix: z.enum([
+      "2023-47-2",
+      "2024-30-2",
+      "2024-48-1",
+      "2025-31-3",
+    ]),
     vintage: z.enum(["vintage1", "vintage2"]),
     county_boundary_and_unit_location_review_reference: reference,
   }).strict(),
   brownfield,
 ]);
 
-/** Annual nameplate test, Notice 2023-29 §§4–5, as clarified by 2023-45.
- * Source review is not geocoding, issuer authentication, or a BOC safe harbor.
- */
-export const energyCommunitySourceSchema = z.object({
+/** Source review under Notice 2023-29 §§4–5; not geocoding or authentication. */
+const annualEnergyCommunitySourceSchema = z.object({
   tax_year: z.literal(2025),
   method: z.literal("annual_nameplate_capacity"),
   taxpayer_name: reference,
@@ -124,6 +143,21 @@ export const energyCommunitySourceSchema = z.object({
   ).min(1),
 }).strict();
 
+export const energyCommunitySourceSchema = z.discriminatedUnion("method", [
+  annualEnergyCommunitySourceSchema,
+  annualEnergyCommunitySourceSchema.omit({
+    units_and_capacity_as_of_qualification_date_verified: true,
+  }).extend({
+    method: z.literal("beginning_of_construction_nameplate"),
+    unit_locations_fixed_from_beginning_of_construction_verified: z.literal(
+      true,
+    ),
+    original_project_and_final_units_reconciled: z.literal(true),
+    independent_single_facility_reviewed: z.literal(true),
+    construction_history: constructionHistorySchema,
+  }).strict(),
+]);
+
 export type EnergyCommunitySource = z.infer<typeof energyCommunitySourceSchema>;
 
 export function energyCommunityCapacity(source: EnergyCommunitySource) {
@@ -137,18 +171,50 @@ export function energyCommunityCapacity(source: EnergyCommunitySource) {
     if (q.category === "not_counted") continue;
     let valid = false;
     if (q.category === "coal_closure") {
-      valid =
-        catalog.coal[q.notice_appendix].includes(q.census_2020_tract_fips) &&
-        (q.notice_appendix !== "2025-31-4" ||
-          source.qualification_date >= "2025-06-23");
+      valid = catalog.coal[q.notice_appendix].includes(
+        q.census_2020_tract_fips,
+      );
+      if (source.method === "beginning_of_construction_nameplate") {
+        const history = q.historical_closure_review;
+        // Membership alone does not establish WHEN a closure qualified the tract.
+        valid = valid && !!history &&
+          history.closure_occurred_on >=
+            (history.closure_type === "abandoned_coal_mine"
+              ? "2000-01-01"
+              : "2010-01-01") &&
+          history.closure_occurred_on <= source.qualification_date &&
+          history.closure_record_reference !==
+            history.listed_tract_and_closure_location_review_reference;
+      } else {
+        valid = valid &&
+          (q.notice_appendix !== "2025-31-4" ||
+            source.qualification_date >= "2025-06-23");
+      }
     } else if (q.category === "statistical_area") {
-      // Each published row already satisfies BOTH thresholds in the SAME vintage.
-      valid = q.notice_appendix === "2024-48-1"
-        ? source.qualification_date < "2025-06-23" &&
+      // Published rows satisfy BOTH thresholds. Historical additions apply back
+      // to January 1, 2023 under Notice 2024-30, not its publication date.
+      if (
+        q.notice_appendix === "2023-47-2" || q.notice_appendix === "2024-30-2"
+      ) {
+        valid = source.qualification_date >= "2023-01-01" &&
+          source.qualification_date < "2024-06-07" &&
           q.vintage === "vintage1" &&
-          catalog.statistical["2024-48-1"].vintage1.includes(q.county_fips)
-        : source.qualification_date >= "2025-06-23" &&
-          catalog.statistical["2025-31-3"][q.vintage].includes(q.county_fips);
+          catalog.statistical[q.notice_appendix].vintage1.includes(
+            q.county_fips,
+          );
+      } else if (q.notice_appendix === "2024-48-1") {
+        valid = source.qualification_date >= "2024-06-07" &&
+          source.qualification_date < "2025-06-23" &&
+          q.vintage === "vintage1" &&
+          catalog.statistical[q.notice_appendix].vintage1.includes(
+            q.county_fips,
+          );
+      } else {
+        valid = source.qualification_date >= "2025-06-23" &&
+          catalog.statistical[q.notice_appendix][q.vintage].includes(
+            q.county_fips,
+          );
+      }
     } else {
       valid = q.condition_as_of === source.qualification_date &&
         q.report_completed_on <= source.qualification_date &&
@@ -189,6 +255,38 @@ export function assertForm8835EnergyCommunitySource(
       u,
     ) => [u.capacity_record_reference, u.geolocation_record_reference]),
   ];
+  if (source.method === "beginning_of_construction_nameplate") {
+    if (
+      source.qualification_date !== source.construction_began_on ||
+      source.construction_began_on < "2023-01-01" ||
+      source.construction_began_on >= "2025-01-01"
+    ) {
+      throw new Error(
+        "Form 8835 community construction safe harbor needs a qualifying 2023/2024 start date",
+      );
+    }
+    assertForm8835ConstructionHistory({
+      ...source.construction_history,
+      construction_began_on: source.construction_began_on,
+      placed_in_service_on: source.placed_in_service_on,
+    }, records);
+    const early = item.early_construction_source;
+    if (
+      early && JSON.stringify(constructionHistorySchema.parse({
+          beginning: early.beginning,
+          continuity: early.continuity,
+          earliest_qualifying_start_verified:
+            early.earliest_qualifying_start_verified,
+        })) !==
+        JSON.stringify(
+          constructionHistorySchema.parse(source.construction_history),
+        )
+    ) {
+      throw new Error(
+        "Form 8835 community and increased-credit construction histories differ",
+      );
+    }
+  }
   const small = item.small_facility_source;
   const sameSmallUnits = !small ||
     small.generating_units.length === source.generating_units.length &&
@@ -211,9 +309,11 @@ export function assertForm8835EnergyCommunitySource(
     (item.transfer_election_amount ?? 0) !== 0 ||
     item.registration_number !== undefined ||
     item.facility_owner_person || item.facility_owner_business ||
-    source.qualification_date < "2025-01-01" ||
-    source.qualification_date > "2025-12-31" ||
-    source.qualification_date < item.facility_placed_in_service_date ||
+    (source.method === "annual_nameplate_capacity" && (
+      source.qualification_date < "2025-01-01" ||
+      source.qualification_date > "2025-12-31" ||
+      source.qualification_date < item.facility_placed_in_service_date
+    )) ||
     source.facility_description !== item.facility_description ||
     source.facility_address_line1 !== item.facility_us_address?.line1 ||
     source.facility_address_line2 !== item.facility_us_address?.line2 ||

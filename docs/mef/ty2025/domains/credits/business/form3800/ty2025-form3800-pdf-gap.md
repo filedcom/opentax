@@ -1270,3 +1270,15 @@ and16 archive mutations reject. The grouped gate is69 typed passes.
 Business-credit evidence totals74 complete returns/1,332 observed pages;
 37 separate PartVI component roots/17 pages remain excluded. Presentation
 qualifications, wider sources/owners, carryover proof and IRS acceptance stay open.
+
+## October 10 construction-date community source checkpoint
+
+Nine additional complete returns pass TY2025v5.4 XSD with156 observed packet
+pages. Historical energy-community status, construction/continuity, increased
+amounts and combined domestic bonuses reconcile to per-facility rows, unused
+credit and final tax.79 typed tests pass;228 native/228 PDF and18 archive
+mutations reject. Seven statement files preserve exact bytes. Business-credit
+evidence totals83 complete returns/1,488 observed pages; PartVI37 component
+roots/17 pages remain separate. See the [Form8835 checkpoint](../form8835/ty2025-form8835-pdf-gap.md#october-10-construction-date-community-qualification-and-complete-packets)
+for tax amounts, source facts, visual qualifications and open scope. No authentic
+carryover filing, source/signature authenticity or IRS acceptance is established.

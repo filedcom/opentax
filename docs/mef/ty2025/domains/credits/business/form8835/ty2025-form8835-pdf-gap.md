@@ -10,8 +10,8 @@ source route. Reviewed under-1-MW and early-construction wind/geothermal increas
 bound statements. Actual-cost domestic-content reviews now bind current/prior certifications
 to wind/geothermal bonuses. Annual coal/statistical/brownfield community reviews now
 join location and capacity to both exports, including combined domestic bonuses.
-BOC-only community claims, PWA increases, transfers, passive and fiscal-year branches
-remain guarded in the PDF. Source references do not authenticate
+Reviewed2023/2024 construction can retain community status after annual eligibility expires.
+PWA increases, transfers, passive and fiscal-year branches remain guarded in the PDF. Source references do not authenticate
 external records. Historical paragraphs below retain their original context.
 
 The [2025 Form 8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf) prints
@@ -619,3 +619,59 @@ open. Source references are reviewed synthetic facts, not automatic geocoding or
 authenticated reports. Separate increase/domestic statements retain their own
 content/digest checks. No source/signature authenticity, IRS acceptance, complete
 business-rule certification or closure of broad parent tasks is claimed.
+
+## October 10 construction-date community qualification and complete packets
+
+Reviewed original onshore wind/geothermal projects can now retain energy-community
+qualification from a qualifying construction start in2023/2024, including locations
+that no longer qualify under2025 annual statistical lists. The shared construction
+review checks significant integral physical work and prior binding contractor
+agreements, or the first date cumulative eligible costs reach5% of final basis,
+plus safe-harbor or complete continuous-construction/efforts history. Where an
+early-construction increase is also claimed, both source histories must agree.
+All generating units retain reviewed locations from construction through production;
+final capacity, small-facility inventory, filer, facility, meter and sales reconcile.
+
+[Notice2023-45](https://www.irs.gov/pub/irs-drop/n-23-45.pdf) makes the community
+construction rule effective January1,2023; this differs from the January29
+increased-credit boundary. [Notice2023-47](https://www.irs.gov/pub/irs-drop/n-23-47.pdf)
+Appendix2 supplies843 eligible county rows, with122 additional rows in
+[Notice2024-30](https://www.irs.gov/pub/irs-drop/n-24-30.pdf) Appendix2 applying
+retroactively to January1,2023. The next list applies from June7,2024 under
+[Notice2024-48](https://www.irs.gov/pub/irs-drop/n-24-48.pdf).
+Raw IRS HTML tables and pinned catalog membership reconcile in full. AlcornMS
+and New CastleDE disappear from both later lists used in2025; FairbanksAK
+qualifies at its2024 construction date but loses annual status before July2025
+service. Brownfield evidence is dated to construction; coal claims also require
+reviewed closure timing and the qualifying tract/direct-adjacency relationship
+as of construction. These reviews do not authenticate external facts or geocode sites.
+
+Nine returns cover ten facilities: January1/28 early increases, January29 base
+rate,2024 construction with later2025 service, five-percent brownfield, historical
+coal, both continuous-history methods and two domestic/community facilities.
+The three base cases each produce/use660 and tax22,406; two continuity cases
+produce/use1,980 and tax21,086; three increased cases produce/use3,300 and
+tax19,766. The combined pair produces72,360, uses23,049 and has tax17,
+retaining unused facility credits12,951/36,360. Each return also uses2,001 of
+current orphan-drug credit. Independent Decimal arithmetic verifies final tax/refunds.
+
+Ten focused and69 related typed tests pass,79 total with no failures/ignored;228 native and228 rehashed prepared-PDF mutations reject.
+All nine complete returns pass local TY2025v5.4 XSD. Seven original statement
+files survive submission and container ZIPs byte-for-byte;18 missing/altered
+archives reject. The88 canonical source fields agree with88 parent-linked widgets
+and nonempty appearances. Synthetic software/EFIN identities imply no transmitter
+authorization; nothing was sent and unsigned synthetic statements prove no signatures.
+
+All156 packet pages were rendered:53 unique pages viewed on14 contact sheets,
+103 exact-pixel duplicates. Dates, coordinates, answers, credit amounts and
+statements are legible. Existing deferred26 skipped Form3800 values,76 blank
+zero Form8835 line3,68 name order and84 omitted native Form6251 line1a remain
+qualifications; no deferred repair or new main-board task was added.
+Evidence: `.state/research/form8835-community-boc-2026-10-10/`, including IRS
+source hashes/tables, full catalog checks, typed logs, independently verified
+XML/PDF, field/render manifests and local archives.
+
+Offshore attribution, changing project/unit inventories, other energy/owner types,
+PWA, transfers, passive/fiscal-year routes, source/signature authenticity,
+authenticated carryovers and IRS acceptance remain open. This completes the
+construction-date source path, not the broad Form8835/Form3800 parent tasks.

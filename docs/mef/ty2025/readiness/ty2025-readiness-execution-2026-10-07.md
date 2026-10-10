@@ -7203,3 +7203,20 @@ including prior incorrect dividend-tax case125; ten schema-failing returns and
 nine XML-only cases remain separately qualified. Evidence:
 `.state/research/form8835-community-2026-10-10/`; details in Form8835/3800 notes.
 Frozen `eed449e70` full gate remains live and predates this work; not restarted.
+
+## October 10 — construction-date community qualification
+
+Compacted board first;52 frozen main TODO bodies and135 deferred items remain.
+Shared construction/continuity evidence now binds2023/2024 community qualification,
+historical lists, facility units and combined increases/domestic bonuses through
+Form3800 and Form1040.79 typed tests pass;9 full XSD returns/156 observed pages,
+228 native/228 PDF/18 archive rejections and7 byte-preserved statements are retained
+in `.state/research/form8835-community-boc-2026-10-10/`. Independent arithmetic,
+88 canonical fields/widgets and53 unique page views agree;103 pages are exact
+visual duplicates. Existing deferred26/68/76/84 qualifications remain. No
+source/signature authenticity or IRS acceptance is claimed. Business evidence
+now totals83 returns/1,488 pages; PR70 totals357 XSD-valid returns/3,789 observed
+pages, including previously documented incorrect dividend-tax case125. Ten
+additional schema-failing returns and9 XML-only cases remain separate. Frozen
+full gate eed449e70 is still running and predates this runtime. Estimate stays
+about60% individual ATS checks (rough45–75%); broad parents remain open.
