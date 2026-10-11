@@ -119,7 +119,13 @@ for (
       ".pdf-cache",
       packet.bundle,
     );
-    const out = Deno.env.get("FORM8621_COMBINED_EVIDENCE_DIR");
+    const permission = await Deno.permissions.query({
+      name: "env",
+      variable: "FORM8621_COMBINED_EVIDENCE_DIR",
+    });
+    const out = permission.state === "granted"
+      ? Deno.env.get("FORM8621_COMBINED_EVIDENCE_DIR")
+      : undefined;
     if (out) {
       const dir = `${out}/${testCase.id}`;
       await Deno.mkdir(dir, { recursive: true });

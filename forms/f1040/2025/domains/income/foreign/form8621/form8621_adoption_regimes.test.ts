@@ -174,7 +174,13 @@ for (
       packet.bundle,
       origins,
     );
-    const out = Deno.env.get("FORM8621_REGIMES_EVIDENCE_DIR");
+    const permission = await Deno.permissions.query({
+      name: "env",
+      variable: "FORM8621_REGIMES_EVIDENCE_DIR",
+    });
+    const out = permission.state === "granted"
+      ? Deno.env.get("FORM8621_REGIMES_EVIDENCE_DIR")
+      : undefined;
     if (out) {
       const dir = `${out}/${id}`;
       await Deno.mkdir(dir, { recursive: true });

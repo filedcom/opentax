@@ -50,7 +50,13 @@ for (
       packet.bundle,
       origins,
     );
-    const out = Deno.env.get("FORM2210F_PACKETS_DIR");
+    const permission = await Deno.permissions.query({
+      name: "env",
+      variable: "FORM2210F_PACKETS_DIR",
+    });
+    const out = permission.state === "granted"
+      ? Deno.env.get("FORM2210F_PACKETS_DIR")
+      : undefined;
     if (out) {
       const dir = `${out}/${id}`;
       await Deno.mkdir(dir, { recursive: true });
