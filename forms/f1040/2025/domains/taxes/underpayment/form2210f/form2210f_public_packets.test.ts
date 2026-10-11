@@ -15,6 +15,7 @@ for (
   ] as const
 ) {
   Deno.test(`Form 2210-F public packet reconciles ${id}`, async () => {
+    // deno-lint-ignore no-explicit-any -- mutable heterogeneous public-return fixture
     const input = structuredClone(base.inputs) as Record<string, any>;
     input.w2[0].box2_fed_withheld = withholding;
     Object.assign(input.f2210f.source, {
@@ -24,6 +25,7 @@ for (
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
     const pending = buildPending(result.pending);
+    // deno-lint-ignore no-explicit-any -- normalized pending form fixture
     const fields = pending.f2210f as Record<string, any>;
     assertEquals(fields.filed_lines.line11, 9000);
     assertEquals(fields.filed_lines.line13, 9000 - withholding);
@@ -85,6 +87,7 @@ for (
 }
 
 Deno.test("ordinary Form 2210 mandatory methods retain both public export guards", async () => {
+  // deno-lint-ignore no-explicit-any -- mutable heterogeneous public-return fixture
   const input = structuredClone(base.inputs) as Record<string, any>;
   delete input.f2210f;
   const baseline = buildPending(f1040_2025.executeReturn(input).pending);

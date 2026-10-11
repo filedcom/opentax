@@ -25,6 +25,7 @@ for (
   ] as const
 ) {
   Deno.test(`Form 461 signed C/F ${id} verifies form amounts and retains full-return rejection`, async () => {
+    // deno-lint-ignore no-explicit-any -- mutable heterogeneous public-return fixture
     const input: any = structuredClone(base.inputs);
     Object.assign(input.general, {
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,

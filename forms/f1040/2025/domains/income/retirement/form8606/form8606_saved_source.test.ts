@@ -74,6 +74,7 @@ for (
         pending.f1040.line4b_ira_taxable,
         pending.f1040.line24_total_tax,
       ], [gross, taxable, tax]);
+      // deno-lint-ignore no-explicit-any -- normalized pending owner-form fixture
       const forms = pending.form8606.owner_forms as Record<string, any>[];
       assertEquals(forms.length, owners);
       assertEquals(
@@ -120,6 +121,7 @@ for (
           ]
         ) {
           const changed = structuredClone(pending);
+          // deno-lint-ignore no-explicit-any -- mutable normalized owner-form fixture
           (changed.form8606.owner_forms as Record<string, any>[])[owner][
             field
           ] += 1;
