@@ -1,5 +1,56 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 independent joint employers with current losses
+
+Four complete-return cases now verify both spouses' ordinary employer WOTC
+alongside the four-business current-loss inventory. The existing runtime
+supports two loss-making employers, a profitable primary employer plus a loss
+spouse employer, the reverse arrangement, and joint wage-limit phase-in.
+Each employer retains6,000 payroll,2,400 determined credit and3,600 deductible
+wages. The complete ordinary joint-employer review binds both business EINs,
+proprietor SSNs and spousal-attribution exceptions; controlled groups remain
+outside this checkpoint. No production change was needed.
+
+The [Form5884 instructions](https://www.irs.gov/instructions/i5884) govern the
+wage deduction reduction. The [Form8995-A ScheduleC instructions](https://www.irs.gov/instructions/i8995a)
+keep loss-business wages out of the parent limit after proportional loss netting.
+The four retained profits remain2,000/4,000/-1,000/-2,000, with owner SE taxes
+27/283 and half-SE deductions14/142. Primary gross-income allocation7/7 and
+spouse81.14/60.86 produce filed QBI1,993/3,919/-1,007/-2,061; losses3,068 offset
+positive businesses1,034/2,034, leaving959/1,885. When only the primary positive
+business and spouse loss business employ workers, primary allocation10.50/3.50
+instead gives filed QBI1,990/3,919/-1,004/-2,061 and adjusted958/1,886.
+
+| Employer arrangement | QBI | Wage limits on positive businesses | Regular tax | Total tax | Owed |
+| --- | ---: | --- | ---: | ---: | ---: |
+| Both loss-making | 150 | 50 / 100 | 139,012 | 137,697 | 77,697 |
+| Primary profitable, spouse loss | 292 | 1,800 / 100 | 138,963 | 137,648 | 77,648 |
+| Primary loss, spouse profitable | 427 | 50 / 1,800 | 138,915 | 137,600 | 77,600 |
+| Both loss-making, joint phase-in | 359 | 50 / 100 | 96,283 | 93,827 | 33,827 |
+
+All four use the full4,800 credit and retain60,000 withholding. At phase-in,
+taxable income before QBI444,600 yields50% reduction; components121/238 give
+QBI359. Independent decimal calculations use the official
+[2025 Tax Computation Worksheet](https://www.irs.gov/publications/p1040),
+including the joint32% subtraction45,874, and agree with every Form1040 tax,
+credit and balance. Native audits also reconcile both employer credits,
+QBI/loss rows, wage limits and Form3800 current use.
+
+The typed suite passes4/0 (55s). Five altered public source contracts per case
+reject (20 total); eight retained-input mutations per case reject native and
+fresh PDF export (32 each). Reversing businesses and employees preserves tax.
+All four full returns pass TY2025 v5.4 XSD. The148-page review comprises30
+new unique images on eight observed contact sheets,107 exact prior-image matches
+and11 within-batch duplicates. Reopened packets have zero fields/widgets.
+Existing26/68/76/84 qualifications recur: skipped Form3800 intermediate lines,
+joint Form6251 name, blank QBI zeros and omitted native Form6251 line1a.
+No new layout defect was found. Evidence is retained under
+`.state/research/form8995a-dual-loss-wotc-2026-10-12/`.
+
+Synthetic ownership, payroll and certification references establish calculation
+joins only. Wider employer/control arrangements, source authenticity, broad
+parent completion and IRS acceptance remain open; deferred work is untouched.
+
 ## October 12 loss-making employer payroll and WOTC
 
 The reviewed current-loss route now retains WOTC payroll on a business with
