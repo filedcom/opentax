@@ -754,24 +754,62 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
   };
 }
 
-export function calculateScheduleCLossLines(input: Form8995AInput) {
+type ScheduleCLossBusiness = NonNullable<
+  Form8995AInput["schedule_c_qbi_businesses"]
+>[number];
+type ScheduleCLossBusinessAmounts = Record<
+  `line${2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 13 | 15}`,
+  number
+>;
+type ScheduleCLossLines = {
+  businesses: ScheduleCLossBusiness[];
+  businessLines: {
+    business: ScheduleCLossBusiness;
+    loss: number;
+    parent: ScheduleCLossBusinessAmounts;
+  }[];
+  positive?: ScheduleCLossBusiness;
+  negative?: ScheduleCLossBusiness;
+  schedule: {
+    rows: { name: string; line1a: number; line1b: number; line1c: number }[];
+    line2: number;
+    line3: number;
+    line4: number;
+    line5: number;
+    line6: number;
+  };
+  parent:
+    & ScheduleCLossBusinessAmounts
+    & Record<
+      `line${16 | 32 | 33 | 34 | 35 | 36 | 37 | 39}`,
+      number
+    >;
+};
+
+export function calculateScheduleCLossLines(
+  input: Form8995AInput,
+): ScheduleCLossLines {
   if (input.farm_wotc_filing_source) {
     const farm = calculateFarmWotcLines(input);
     if (!farm.lossSchedule) {
       throw new Error("Farm Schedule C needs actual sourced QBI loss");
     }
-    return { schedule: farm.lossSchedule, parent: farm.parent, businesses: [] };
+    return {
+      schedule: farm.lossSchedule,
+      parent: farm.parent,
+      businesses: [],
+      businessLines: [],
+    };
   }
   const businesses = input.schedule_c_qbi_businesses;
   if (
     !businesses ||
     (businesses.length < 1 || businesses.length > 3) ||
-    businesses.filter((business) => business.qbi > 0).length > 1 ||
     !businesses.some((business) => business.qbi < 0) ||
     businesses.some((business) => business.qbi === 0)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs one to three identified businesses with a loss and at most one positive business",
+      "Form 8995-A Schedule C bounded route needs one to three identified businesses with a loss",
     );
   }
   if (
@@ -820,7 +858,8 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       );
     }
   }
-  const positive = businesses.find((business) => business.qbi > 0);
+  const positives = businesses.filter((business) => business.qbi > 0);
+  const positive = positives[0];
   const negatives = businesses.filter((business) => business.qbi < 0);
   const negative = negatives[0];
   // The source graph and Schedule 1 keep cents. Schedule C of Form 8995-A
@@ -831,7 +870,7 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   if (
     Math.abs((input.qbi ?? 0) - sourceQbi) > 0.000001 ||
     negatives.some((business) => roundedDollar(business.qbi) >= 0) ||
-    (positive !== undefined && roundedDollar(positive.qbi) <= 0)
+    positives.some((business) => roundedDollar(business.qbi) <= 0)
   ) {
     throw new Error(
       "Form 8995-A Schedule C needs sourced net QBI and nonzero whole-dollar business rows",
@@ -841,7 +880,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     (sum, business) => sum + roundedDollar(business.qbi),
     0,
   );
-  const line4 = positive ? roundedDollar(positive.qbi) : 0;
+  const line4 = positives.reduce(
+    (sum, business) => sum + roundedDollar(business.qbi),
+    0,
+  );
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
@@ -857,43 +899,84 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       "Form 8995-A Schedule C bounded route needs sourced net QBI below the Schedule SE threshold and no negative-business limitation amount",
     );
   }
-  const line2 = adjustedQbi;
-  const line3Parent = Math.round(line2 * QBI_RATE);
-  // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
-  // amounts on the parent; those limits cannot create a deduction by themselves.
-  const line4Parent = adjustedQbi > 0 ? Math.round(positive!.w2_wages) : 0;
-  // Each monetary line is filed in whole dollars. Fractional percentage
-  // products are rounded when entered, before later lines compare or add them.
-  const line5Parent = Math.round(line4Parent * W2_LIMIT_A_RATE);
-  const line6Parent = Math.round(line4Parent * W2_LIMIT_B_WAGE_RATE);
-  const line7Parent = adjustedQbi > 0 ? positive!.ubia : 0;
-  const line8Parent = Math.round(line7Parent * UBIA_RATE);
-  const line9Parent = line6Parent + line8Parent;
-  const line10Parent = Math.max(line5Parent, line9Parent);
-  const line11Parent = Math.min(line3Parent, line10Parent);
+  if (![line3, line4, line5].every(Number.isSafeInteger)) {
+    throw new Error(
+      "Form 8995-A Schedule C needs safe whole-dollar loss totals",
+    );
+  }
+  // Allocate filed loss proportionally, retaining every dollar. Largest
+  // remainders get the residual; a stable source reference breaks exact ties.
+  const allocations = positives.map((business) => {
+    const numerator = BigInt(line5) * BigInt(roundedDollar(business.qbi));
+    const denominator = BigInt(line4);
+    return {
+      business,
+      amount: Number(numerator / denominator),
+      remainder: numerator % denominator,
+    };
+  });
+  const ranked = [...allocations].sort((a, b) =>
+    a.remainder === b.remainder
+      ? a.business.business_reference! < b.business.business_reference! ? -1 : 1
+      : a.remainder > b.remainder
+      ? -1
+      : 1
+  );
+  const residual = line5 -
+    allocations.reduce((sum, row) => sum + row.amount, 0);
+  for (let i = 0; i < residual; i++) ranked[i].amount++;
+  const businessLines = businesses.map((business) => {
+    const loss = allocations.find((row) => row.business === business)?.amount ??
+      0;
+    const line2 = Math.max(0, roundedDollar(business.qbi) - loss);
+    const line3 = Math.round(line2 * QBI_RATE);
+    const line4 = line2 > 0 ? Math.round(business.w2_wages) : 0;
+    const line5 = Math.round(line4 * W2_LIMIT_A_RATE);
+    const line6 = Math.round(line4 * W2_LIMIT_B_WAGE_RATE);
+    const line7 = line2 > 0 ? business.ubia : 0;
+    const line8 = Math.round(line7 * UBIA_RATE);
+    const line9 = line6 + line8;
+    const line10 = Math.max(line5, line9);
+    const line11 = Math.min(line3, line10);
+    const parent = {
+      line2,
+      line3,
+      line4,
+      line5,
+      line6,
+      line7,
+      line8,
+      line9,
+      line10,
+      line11,
+      line13: line11,
+      line15: line11,
+    };
+    if (!Object.values(parent).every(Number.isSafeInteger)) {
+      throw new Error(
+        "Form 8995-A Schedule C needs safe whole-dollar business lines",
+      );
+    }
+    return { business, loss, parent };
+  });
+  const first = businessLines.find((row) => row.business === positive) ??
+    businessLines[0];
+  const component = businessLines.reduce(
+    (sum, row) => sum + row.parent.line15,
+    0,
+  );
   const line34 = qbiCapitalTotal(input, true);
   const line35 = Math.max(0, Math.round(input.taxable_income) - line34);
   const line36 = Math.round(line35 * QBI_RATE);
-  const line39 = Math.min(line11Parent, line36);
-  if (
-    ![
-      line3Parent,
-      line5Parent,
-      line6Parent,
-      line8Parent,
-      line9Parent,
-      line10Parent,
-      line11Parent,
-      line36,
-      line39,
-    ].every(Number.isSafeInteger)
-  ) {
+  const line39 = Math.min(component, line36);
+  if (![component, line36, line39].every(Number.isSafeInteger)) {
     throw new Error(
       "Form 8995-A Schedule C needs safe whole-dollar filed monetary lines",
     );
   }
   return {
     businesses,
+    businessLines,
     positive,
     negative,
     schedule: {
@@ -902,28 +985,17 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line4,
       line5,
       line6,
-      rows: businesses.map((business) => ({
+      rows: businessLines.map(({ business, loss, parent }) => ({
         name: business.business_name!,
         line1a: roundedDollar(business.qbi),
-        line1b: business.qbi > 0 ? line5 : 0,
-        line1c: business.qbi > 0 ? adjustedQbi : 0,
+        line1b: loss,
+        line1c: parent.line2,
       })),
     },
     parent: {
-      line2,
-      line3: line3Parent,
-      line4: line4Parent,
-      line5: line5Parent,
-      line6: line6Parent,
-      line7: line7Parent,
-      line8: line8Parent,
-      line9: line9Parent,
-      line10: line10Parent,
-      line11: line11Parent,
-      line13: line11Parent,
-      line15: line11Parent,
-      line16: line11Parent,
-      line32: line11Parent,
+      ...first.parent,
+      line16: component,
+      line32: component,
       line33: Math.round(input.taxable_income),
       line34,
       line35,

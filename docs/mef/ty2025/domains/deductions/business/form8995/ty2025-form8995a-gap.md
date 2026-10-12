@@ -1,5 +1,59 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 proportional current-loss allocation checkpoint
+
+The ordinary high-income single-filer Schedule C route now supports two
+profitable businesses and one current-loss business. Losses are allocated
+across the positive businesses before applying each business's own wage/property
+limit, and both positive columns remain distinct in native XML and the PDF.
+The [Form8995-A instructions](https://www.irs.gov/instructions/i8995a) require
+proportional allocation and zero wage/property amounts when adjusted QBI is
+nonpositive. This extends the existing three-business route; its source,
+owner, activity, prior-loss and adjustment guards remain.
+
+| Case | Positive QBI | Loss | Allocated loss | Adjusted QBI | Business components | Deduction | Tax / owed |
+| --- | --- | ---: | --- | --- | --- | ---: | --- |
+| Unequal profits and wages | 2,000 / 1,000 | 2,700 | 1,800 / 900 | 200 / 100 | 40 / 10 | 50 | 70,022 / 10,022 |
+| Rounding remainder | 1,200 / 1,100 | 2,000 | 1,043 / 957 | 157 / 143 | 31 / 20 | 51 | 70,022 / 10,022 |
+| Separate property limit | 2,000 / 1,000 | 2,700 | 1,800 / 900 | 200 / 100 | 10 / 20 | 30 | 70,029 / 10,029 |
+
+The first two cases retain business wages100/20 and100/40 respectively. The
+property case retains wages20/0 and UBIA0/800, so one business cannot use the
+other's limitation amount. All three retain wages300,000, business income300,
+AGI300,300, withholding60,000 and Additional Medicare tax900. Whole-dollar
+loss allocation conserves the filed total using largest remainders, with stable
+business references breaking exact ties; input order does not change ownership.
+
+All three complete returns pass the retained TY2025 v5.4 Return1040 schema.
+The51 flattened PDF pages (29 distinct images) were reviewed on October12:
+source identities, individual loss reductions, separate parent columns,
+deductions and final taxes reconcile without observed clipping. Zero amounts
+in the loss-business parent column and some Schedule C fields still print
+blank (existing deferred76), so presentation remains qualified.
+
+The focused replay passes four typed tests and rejects12 native/12 fresh-PDF
+mutations. It checks all six source orders for each positive case and all six
+orders for tied rounding, fully offset profit and excess loss. The latter cases
+retain the required Form461 scope review; its initially omitted review is
+recorded, with source amounts unchanged. They demonstrate calculation
+boundaries, not new complete all-loss filing support.
+
+The final11-module related batch passes **65 typed tests, zero failures or
+ignored** (1m18s), including the original loss, fractional and capital-source
+cases. Initial combined type checks hit TS2590, and an isolated check exhausted
+the4GB heap. The unchanged branch passed the comparison check; declaring this
+calculator's result type explicitly resolved the new inference expansion.
+The final full batch passes without disabling type checking. This does not
+close the separate general compiler-reliability item72.
+
+Evidence is retained in `.state/research/form8995a-proportional-losses-2026-10-10/`
+(the work began October10 and resumed October12), including original compiler
+and source-review failures, inputs, projections, complete XML/PDF, final replay
+logs, render hashes and `visual-review.json`. The original all-loss filing
+blocks remain deferred8. Four-or-more rows, wider owner/SE/adjustment paths,
+prior accepted histories, source authenticity and IRS acceptance remain open.
+
+
 ## October 10 three-business loss-offset complete-return checkpoint
 
 The ordinary single-filer loss-netting route now retains three identified
@@ -39,8 +93,9 @@ two-reader field checks, render inventory and `visual-review.json`.
 
 The original three all-loss cases below remain unchanged and reject all six
 full exports on deferred8. These new positive-offset cases do not replace them.
-Multiple positive businesses, four-or-more rows/continuations, broader owners,
-prior history, source authenticity and IRS acceptance remain open; the existing
+At that checkpoint, multiple positive businesses remained unimplemented; the
+October12 checkpoint above extends that case. Four-or-more rows/continuations,
+broader owners, prior history, source authenticity and IRS acceptance remain open; the existing
 single-filer, activity, adjustment, wage/property and source guards remain.
 This checkpoint advances the existing QBI task without closing its broad parent.
 

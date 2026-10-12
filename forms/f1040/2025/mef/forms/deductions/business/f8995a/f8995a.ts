@@ -33,7 +33,10 @@ import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
 } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
 import { assertZeroReductionScheduleAReturn } from "./f8995a_schedule_a.ts";
 import { qualifiedReitDividends } from "../f8995/f8995-route.ts";
@@ -571,37 +574,36 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     reconcileReturn(context, lines.parent.line39, fields);
     const parent = lines.parent;
     return elements("IRS8995A", [
-      ...lines.businesses.map((business) => {
-        const adjusted = business.qbi > 0;
+      ...lines.businessLines.map(({ business, parent }) => {
         return elements("QBIDeductionInformationGrp", [
           elements("TradeOrBusinessName", [
             element("BusinessNameLine1Txt", business.business_name!),
           ]),
           element("EIN", business.ein!),
-          element("QualifiedBusinessIncomeAmt", adjusted ? parent.line2 : 0),
-          element("QlfyBusinessIncome20PctAmt", adjusted ? parent.line3 : 0),
-          element("AllocableShareW2WagesAmt", adjusted ? parent.line4 : 0),
-          element("AllocableShareW2Wages50PctAmt", adjusted ? parent.line5 : 0),
-          element("AllocableShareW2Wages25PctAmt", adjusted ? parent.line6 : 0),
-          element("AllocableShareUBIAQlfyPropAmt", adjusted ? parent.line7 : 0),
+          element("QualifiedBusinessIncomeAmt", parent.line2),
+          element("QlfyBusinessIncome20PctAmt", parent.line3),
+          element("AllocableShareW2WagesAmt", parent.line4),
+          element("AllocableShareW2Wages50PctAmt", parent.line5),
+          element("AllocableShareW2Wages25PctAmt", parent.line6),
+          element("AllocableShareUBIAQlfyPropAmt", parent.line7),
           element(
             "AllcblShrUBIAQlfyProp025PctAmt",
-            adjusted ? parent.line8 : 0,
+            parent.line8,
           ),
           element(
             "TotalAllcblW2WgsQlfyPropPctAmt",
-            adjusted ? parent.line9 : 0,
+            parent.line9,
           ),
           element(
             "GrtrAllcblShrW2WageQlfyPropAmt",
-            adjusted ? parent.line10 : 0,
+            parent.line10,
           ),
-          element("W2WageQlfyPropLimitationAmt", adjusted ? parent.line11 : 0),
+          element("W2WageQlfyPropLimitationAmt", parent.line11),
           element(
             "QBIDedBeforePatronReductionAmt",
-            adjusted ? parent.line13 : 0,
+            parent.line13,
           ),
-          element("QBIComponentAmt", adjusted ? parent.line15 : 0),
+          element("QBIComponentAmt", parent.line15),
         ]);
       }),
       element("TotalQBIComponentAmt", parent.line16),
