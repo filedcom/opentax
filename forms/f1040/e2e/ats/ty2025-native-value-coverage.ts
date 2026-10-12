@@ -1,8 +1,53 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 
 // Explicit reviewed mapping, kept separate from the production serializers.
-// These targets cover direct numeric fields in single-copy 1040/6251 roots.
-const fields: Record<string, readonly [string, string]> = {
+// These targets cover direct fields in single-copy return and schedule roots.
+const fields: Record<
+  string,
+  readonly [string, string, ("boolean" | "checkbox")?]
+> = {
+  "schedule1.line1_state_refund": [
+    "IRS1040Schedule1",
+    "StateLocalIncomeTaxRefundAmt",
+  ],
+  "schedule1.line3_schedule_c": ["IRS1040Schedule1", "BusinessIncomeLossAmt"],
+  "schedule1.line5_schedule_e": [
+    "IRS1040Schedule1",
+    "RentalRealEstateIncomeLossAmt",
+  ],
+  "schedule1.line6_schedule_f": ["IRS1040Schedule1", "NetFarmProfitLossAmt"],
+  "schedule1.line15_se_deduction": [
+    "IRS1040Schedule1",
+    "DeductibleSelfEmploymentTaxAmt",
+  ],
+  "schedule1.line17_se_health_insurance": [
+    "IRS1040Schedule1",
+    "SelfEmpldHealthInsDedAmt",
+  ],
+  "schedule2.line4_se_tax": ["IRS1040Schedule2", "SelfEmploymentTaxAmt"],
+  "schedule2.line9_household_employment": [
+    "IRS1040Schedule2",
+    "HouseholdEmploymentTaxAmt",
+  ],
+  "schedule3.line6j_alt_fuel_vehicle_refueling": [
+    "IRS1040Schedule3",
+    "TotalPersonalUsePartOfCrAmt",
+  ],
+  "schedule_d.print_line7_st_total": [
+    "IRS1040ScheduleD",
+    "NetSTCapitalGainOrLossAmt",
+  ],
+  "schedule_d.print_line15_lt_total": [
+    "IRS1040ScheduleD",
+    "NetLTCapitalGainOrLossAmt",
+  ],
+  "f1040.taxpayer_blind": ["IRS1040", "PrimaryBlindInd", "checkbox"],
+  "f1040.digital_assets": ["IRS1040", "VirtualCurAcquiredDurTYInd", "boolean"],
+  "f1040.line5c_pension_rollover": [
+    "IRS1040",
+    "PensionsAnnuitiesRolloverInd",
+    "checkbox",
+  ],
   "f1040.line1a_wages": ["IRS1040", "WagesAmt"],
   "f1040.line5a_pension_gross": ["IRS1040", "PensionsAnnuitiesAmt"],
   "f1040.line5b_pension_taxable": ["IRS1040", "TotalTaxablePensionsAmt"],
@@ -65,11 +110,12 @@ export function compareAtsNativeValues(xml: string | null, targets: Target[]) {
     }
   }
   const selected = targets.filter((t) =>
-    typeof t.expected === "number" && Object.hasOwn(fields, t.path)
+    Object.hasOwn(fields, t.path) &&
+    typeof t.expected === (fields[t.path][2] ? "boolean" : "number")
   );
   const rows = selected.map((target) => {
-    const [root, field] = fields[target.path];
-    let actual: number | null = null;
+    const [root, field, encoding] = fields[target.path];
+    let actual: number | boolean | null = null;
     let result: string;
     if (xml === null) result = "not-evaluated";
     else if (!data) result = "invalid-xml";
@@ -80,7 +126,26 @@ export function compareAtsNativeValues(xml: string | null, targets: Target[]) {
       const value = data[root][field];
       if (value === undefined) result = "missing-field";
       else if (Array.isArray(value)) result = "ambiguous";
-      else if (
+      else if (encoding) {
+        // An omitted optional checkbox remains missing, never an inferred false.
+        if (encoding === "checkbox" && value === "X") actual = true;
+        else if (
+          encoding === "boolean" && typeof value === "string" &&
+          ["true", "1"].includes(value)
+        ) {
+          actual = true;
+        } else if (
+          encoding === "boolean" && typeof value === "string" &&
+          ["false", "0"].includes(value)
+        ) {
+          actual = false;
+        }
+        result = actual === null
+          ? "invalid-value"
+          : actual === target.expected
+          ? "match"
+          : "different";
+      } else if (
         typeof value !== "string" || !/^-?\d+$/.test(value) ||
         !Number.isSafeInteger(Number(value))
       ) result = "invalid-value";
@@ -93,7 +158,7 @@ export function compareAtsNativeValues(xml: string | null, targets: Target[]) {
   });
   return {
     scope:
-      "Selected direct numeric XML fields only; separate from calculation matches, PDF review, ownership, IRS business rules and acceptance",
+      "Selected direct numeric and indicator XML fields only; separate from calculation matches, PDF review, ownership, IRS business rules and acceptance",
     unmappedTargetPaths: targets.filter((t) => !selected.includes(t)).map((t) =>
       t.path
     ),

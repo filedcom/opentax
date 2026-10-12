@@ -44,7 +44,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   }
   assertEquals(report.denominator, 74);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 185);
+  assertEquals(ledger.count, 200);
   assertEquals(ledger.byKind, {
     calculation: {
       count: 74,
@@ -56,12 +56,12 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     },
     "binary-attachment": { count: 1, counts: { missing: 1 } },
     "native-value": {
-      count: 54,
+      count: 69,
       counts: {
-        different: 6,
-        match: 16,
+        different: 7,
+        match: 18,
         "missing-field": 2,
-        "not-evaluated": 30,
+        "not-evaluated": 42,
       },
     },
   });
@@ -92,6 +92,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       ["form6251.regular_tax_income", 1620, 120],
       ["form6251.line2a_taxes_paid", 30000, 31500],
       ["form6251.regular_tax", 162, 11],
+      ["schedule3.line6j_alt_fuel_vehicle_refueling", 162, 11],
     ],
   );
   assertEquals(
@@ -101,7 +102,6 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   );
   assertEquals(native13.unmappedTargetPaths, [
     "f1040.line12a_standard_deduction",
-    "schedule3.line6j_alt_fuel_vehicle_refueling",
   ]);
   const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
   assertEquals(transfer.preparation.attachments, []);

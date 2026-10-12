@@ -87,12 +87,111 @@ Deno.test("ATS native values report unsupported targets without conflating deduc
         path: "f1040.line12a_standard_deduction",
         expected: 31500,
       },
-      { ...targets[0], path: "f1040.digital_assets", expected: false },
+      { ...targets[0], path: "f1040.unreviewed", expected: false },
     ],
   );
   assertEquals(coverage.rows, []);
   assertEquals(coverage.unmappedTargetPaths, [
     "f1040.line12a_standard_deduction",
-    "f1040.digital_assets",
+    "f1040.unreviewed",
   ]);
+});
+
+Deno.test("ATS explicit yes/no answers preserve false and reject invalid boolean encodings", () => {
+  const target = {
+    ...targets[0],
+    path: "f1040.digital_assets",
+    expected: false,
+  };
+  const observe = (contents: string) =>
+    compareAtsNativeValues(packet(`<IRS1040>${contents}</IRS1040>`), [target])
+      .rows[0];
+  for (const value of ["false", "0"]) {
+    const row = observe(
+      `<VirtualCurAcquiredDurTYInd>${value}</VirtualCurAcquiredDurTYInd>`,
+    );
+    assertEquals([row.result, row.actual], ["match", false]);
+  }
+  for (const value of ["true", "1"]) {
+    const row = observe(
+      `<VirtualCurAcquiredDurTYInd>${value}</VirtualCurAcquiredDurTYInd>`,
+    );
+    assertEquals([row.result, row.actual], ["different", true]);
+  }
+  for (const value of ["", "X", "False", "2", "<Other>false</Other>"]) {
+    assertEquals(
+      observe(
+        `<VirtualCurAcquiredDurTYInd>${value}</VirtualCurAcquiredDurTYInd>`,
+      ).result,
+      "invalid-value",
+    );
+  }
+  assertEquals(observe("").result, "missing-field");
+  assertEquals(
+    observe(
+      "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd><VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+    ).result,
+    "ambiguous",
+  );
+});
+
+Deno.test("ATS checkbox checks keep primary blindness and pension rollover separate from spouse and IRA", () => {
+  const cases = [
+    ["f1040.taxpayer_blind", "PrimaryBlindInd", "SpouseBlindInd"],
+    [
+      "f1040.line5c_pension_rollover",
+      "PensionsAnnuitiesRolloverInd",
+      "IRADistributionRolloverInd",
+    ],
+  ];
+  for (const [path, field, other] of cases) {
+    const target = { ...targets[0], path, expected: true };
+    const observe = (contents: string) =>
+      compareAtsNativeValues(packet(`<IRS1040>${contents}</IRS1040>`), [target])
+        .rows[0];
+    assertEquals(observe(`<${field}>X</${field}>`).actual, true);
+    assertEquals(observe(`<${other}>X</${other}>`).result, "missing-field");
+    for (const value of ["", "true", "false", "1", "0", "x"]) {
+      assertEquals(
+        observe(`<${field}>${value}</${field}>`).result,
+        "invalid-value",
+      );
+    }
+    assertEquals(
+      compareAtsNativeValues(null, [target]).rows[0].result,
+      "not-evaluated",
+    );
+  }
+});
+
+Deno.test("ATS schedules observe signed direct amounts and reject duplicate schedule copies", () => {
+  const target = {
+    ...targets[0],
+    path: "schedule1.line3_schedule_c",
+    expected: -1200,
+  };
+  const observe = (body: string) =>
+    compareAtsNativeValues(packet(body), [target]).rows[0];
+  assertEquals(
+    observe(
+      '<IRS1040Schedule1><BusinessIncomeLossAmt referenceDocumentId="C1">-1200</BusinessIncomeLossAmt></IRS1040Schedule1>',
+    ).result,
+    "match",
+  );
+  assertEquals(
+    observe(
+      "<IRS1040><BusinessIncomeLossAmt>-1200</BusinessIncomeLossAmt></IRS1040>",
+    ).result,
+    "missing-document",
+  );
+  assertEquals(
+    observe(
+      "<IRS1040Schedule1><Other><BusinessIncomeLossAmt>-1200</BusinessIncomeLossAmt></Other></IRS1040Schedule1>",
+    ).result,
+    "missing-field",
+  );
+  assertEquals(
+    observe("<IRS1040Schedule1/><IRS1040Schedule1/>").result,
+    "ambiguous",
+  );
 });
