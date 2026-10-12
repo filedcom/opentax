@@ -284,6 +284,18 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
   {
     id: "1040-12",
     targets: [
+      printed1040("line1z_total_wages", 100836),
+      printed1040("line14_deductions_qbi_total", 15000),
+      printed1040("line18_total_tax_before_credits", 18634),
+      printed1040("line22_tax_after_credits", 18634),
+      printed1040("line25d_total_withholding", 14444),
+      printed1040("line33_total_payments", 14444),
+      target(
+        "f1040.digital_assets",
+        false,
+        TargetBasis.Printed,
+        "Form1040 p.2 digital-assets No",
+      ),
       printed1040("line1a_wages", 100836),
       printed1040("line8_additional_income", 24328),
       printed1040("line9_total_income", 125164),
@@ -313,6 +325,20 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
   {
     id: "1040-13",
     targets: [
+      printed1040("line1z_total_wages", 31620),
+      printed1040("line9_total_income", 31620),
+      printed1040("line14_deductions_qbi_total", 30000),
+      printed1040("line18_total_tax_before_credits", 162),
+      printed1040("line21_credits_total", 162),
+      printed1040("line22_tax_after_credits", 0),
+      printed1040("line25d_total_withholding", 609),
+      printed1040("line33_total_payments", 609),
+      target(
+        "f1040.digital_assets",
+        false,
+        TargetBasis.Printed,
+        "Form1040 p.2 digital-assets No",
+      ),
       printed1040("line1a_wages", 31620),
       printed1040("line11_agi", 31620),
       printed1040("line12a_standard_deduction", 30000),

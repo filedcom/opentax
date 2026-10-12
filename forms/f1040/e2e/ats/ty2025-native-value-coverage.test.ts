@@ -195,3 +195,45 @@ Deno.test("ATS schedules observe signed direct amounts and reject duplicate sche
     "ambiguous",
   );
 });
+
+Deno.test("ATS totals observe transmitted totals independently of component fields", () => {
+  const selected = [
+    ["line1z_total_wages", 100, "WagesSalariesAndTipsAmt"],
+    ["line14_deductions_qbi_total", 30, "TotalDeductionsAmt"],
+    ["line18_total_tax_before_credits", 20, "TotalTaxBeforeCrAndOthTaxesAmt"],
+    ["line21_credits_total", 5, "TotalCreditsAmt"],
+    ["line22_tax_after_credits", 0, "TaxLessCreditsAmt"],
+    ["line25d_total_withholding", 9, "WithholdingTaxAmt"],
+    ["line33_total_payments", 10, "TotalPaymentsAmt"],
+  ] as const;
+  const wanted = selected.map(([path, expected]) => ({
+    ...targets[0],
+    path: `f1040.${path}`,
+    expected,
+  }));
+  const componentOnly = packet(
+    "<IRS1040><WagesAmt>100</WagesAmt><TotalItemizedOrStandardDedAmt>30</TotalItemizedOrStandardDedAmt><TaxAmt>20</TaxAmt><TotalNonrefundableCreditsAmt>5</TotalNonrefundableCreditsAmt><TotalTaxAmt>0</TotalTaxAmt><FormW2WithheldTaxAmt>9</FormW2WithheldTaxAmt><RefundAmt>10</RefundAmt></IRS1040>",
+  );
+  assertEquals(
+    compareAtsNativeValues(componentOnly, wanted).rows.map((r) => r.result),
+    selected.map(() => "missing-field"),
+  );
+  const xml = (change: number) =>
+    packet(
+      `<IRS1040>${
+        selected.map(([, value, field]) =>
+          `<${field}>${value + change}</${field}>`
+        ).join("")
+      }</IRS1040>`,
+    );
+  assertEquals(
+    compareAtsNativeValues(xml(0), wanted).rows.map(
+      (r) => [r.result, r.actual],
+    ),
+    selected.map(([, value]) => ["match", value]),
+  );
+  assertEquals(
+    compareAtsNativeValues(xml(1), wanted).rows.map((r) => r.result),
+    selected.map(() => "different"),
+  );
+});

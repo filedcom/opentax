@@ -42,13 +42,13 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   for (const s of report.scenarios) {
     assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
   }
-  assertEquals(report.denominator, 74);
+  assertEquals(report.denominator, 90);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 201);
+  assertEquals(ledger.count, 233);
   assertEquals(ledger.byKind, {
     calculation: {
-      count: 74,
-      counts: { different: 17, match: 51, "not-produced": 6 },
+      count: 90,
+      counts: { different: 23, match: 61, "not-produced": 6 },
     },
     "document-copy": {
       count: 56,
@@ -59,20 +59,20 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       counts: { missing: 1, "not-evaluated": 1 },
     },
     "native-value": {
-      count: 69,
+      count: 85,
       counts: {
-        different: 7,
-        match: 18,
+        different: 10,
+        match: 24,
         "missing-field": 2,
-        "not-evaluated": 42,
+        "not-evaluated": 49,
       },
     },
   });
-  assertEquals(ledger.calculationAnchor.matching, 46);
-  assertEquals(ledger.calculationAnchor.evaluated, 63);
+  assertEquals(ledger.calculationAnchor.matching, 56);
+  assertEquals(ledger.calculationAnchor.evaluated, 79);
   assertEquals(ledger.calculationAnchor.notProduced, 6);
   assertEquals(ledger.calculationAnchor.provisional, 5);
-  assertEquals(ledger.calculationAnchor.percent, 100 * 46 / 63);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 56 / 79);
   assertEquals(ledger.attachmentRequirementsNotInventoried.length, 0);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
@@ -89,6 +89,9 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       r,
     ) => [r.path, r.expected, r.actual]),
     [
+      ["f1040.line14_deductions_qbi_total", 30000, 31500],
+      ["f1040.line18_total_tax_before_credits", 162, 11],
+      ["f1040.line21_credits_total", 162, 11],
       ["f1040.line15_taxable_income", 1620, 120],
       ["f1040.line16_income_tax", 162, 11],
       ["f1040.line20_nonrefundable_credits", 162, 11],
@@ -183,7 +186,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     }
     assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
   }
-  assertEquals(report.counts, { match: 51, different: 17, "not-produced": 6 });
+  assertEquals(report.counts, { match: 61, different: 23, "not-produced": 6 });
   const farm = report.scenarios.find((s) => s.id === "1040-03")!;
   assertEquals(
     farm.checks.filter((c) => c.result !== CheckResult.Match).map(
