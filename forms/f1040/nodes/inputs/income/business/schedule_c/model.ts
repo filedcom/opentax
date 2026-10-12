@@ -143,7 +143,8 @@ export const itemSchema = z.object({
       .optional(),
     no_aggregation_confirmed: z.literal(true).optional(),
     no_ptp_or_loss_carryforward_confirmed: z.literal(true),
-    qualified_dividends_zero_confirmed: z.literal(true),
+    // Loss inventories reconcile this answer against retained investment sources.
+    qualified_dividends_zero_confirmed: z.boolean(),
     no_qualified_property_confirmed: z.literal(true),
     review_reference: z.string().trim().min(1),
     reviewed_by: z.string().trim().min(1),

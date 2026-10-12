@@ -1,5 +1,59 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 qualified dividends with joint loss-employer credits
+
+Current-loss WOTC returns now accept positive qualified dividends when each
+employer's retained zero-dividend answer is false and agrees with the investment
+inventory. A zero-dividend answer remains required and is checked both ways;
+false with no qualified dividends and true with positive dividends both reject.
+The previous true-only payroll schema unnecessarily excluded this combination.
+Existing native/full-PDF investment replay still validates issued copies, owner,
+qualified holding-period review, source totals and final preferential-rate tax.
+Other WOTC routes retain their existing source and export conditions.
+
+The [Form8995-A line34 instructions](https://www.irs.gov/instructions/i8995a)
+include qualified dividends with net capital gains in the QBI income limitation.
+Four joint common-control cases now retain two dividend copies with ordinary
+amounts2,000/1,000, qualified amounts1,000/500 and capital distributions1,000/800.
+Each qualified copy has its dated ordinary-stock holding review. Interest1,700,
+business profits2,000/4,000/-1,000/-2,000, half-SE156, and credit2,400 remain
+unchanged; line34 is3,300. Dividends/gains receive15% treatment in these cases.
+
+| Employer arrangement | QBI | Taxable income | Regular tax | Total tax | Balance |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Both loss-making | 150 | 577,694 | 140,627 | 141,959 | 81,959 |
+| Primary profitable / spouse loss | 292 | 577,552 | 140,578 | 141,910 | 81,910 |
+| Primary loss / spouse profitable | 427 | 577,417 | 140,530 | 141,862 | 81,862 |
+| Both loss-making / phase-in | 332 | 450,768 | 97,811 | 98,002 | 38,002 |
+
+The phase-in ratio remains56.5% and components112/220; line35 is447,800
+and line36 is89,560. All four have247 NIIT and zero AMT. Independent decimal
+calculations verify loss allocation, QBI limits, regular/AMT preferential tax,
+SE/Medicare, credits and balance against emitted native amounts.
+
+Four typed packet tests pass (1m4s), plus one focused zero-review test covering
+all four employer arrangements. Related capital-distribution, ordinary/group
+WOTC and investment regression passes24/0 (5m1s). In total20 public mutations and72 native/72
+fresh-PDF mutations reject; these include inconsistent qualified copies, final
+qualified totals, individual payroll reviews and changes too small to alter the
+rounded wage-credit shares. Reversing all related source inventories preserves
+tax and native preparation. Initial fixture export correctly rejected missing
+holding-period evidence; the retained fixtures now supply that existing review.
+
+All four complete returns pass TY2025v5.4 XSD. The160-page qualified review
+uses26 newly observed images on seven contact sheets,132 exact matches to
+previously observed pages and two within-batch duplicates. Reopened PDFs have
+zero fields/widgets. Existing26/68/76/84 qualifications recur: skipped3800
+SectionB intermediates, primary-only6251 name, partly blank zero cells and
+missing native6251 line1a. Group statement members/shares and reference IDs
+reconcile. No new layout finding or deferred repair is recorded.
+
+Evidence: `.state/research/form8995a-group-dividends-2026-10-12/` contains
+packet inputs, pending/XML/PDF, independent arithmetic, XSD results, image
+provenance and test logs. Synthetic reviewed records do not authenticate issued
+sources; the broader QBI parent remains open.
+
+
 ## October 12 capital distributions with joint loss-employer credits
 
 The current-loss route now permits retained capital gains alongside employer
