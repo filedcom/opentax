@@ -360,17 +360,13 @@ export function assertScheduleCLossSources(
       );
     }
   }
+  const seDeduction = fields.loss_se_tax_source?.deduction ?? 0;
   if (
     fields.qbi_capital_sources !== undefined ||
     pending?.f1099div !== undefined || pending?.f1099int !== undefined ||
     pending?.f1099b !== undefined
   ) {
     const retained = pending as Record<string, Record<string, unknown>>;
-    if (fields.loss_se_tax_source) {
-      throw Error(
-        "QBI loss SE investment combinations need complete adjustment reconciliation",
-      );
-    }
     const investment = assertMultiBusinessInvestmentSources(
       {
         ...fields,
@@ -401,8 +397,10 @@ export function assertScheduleCLossSources(
       !Number.isFinite(retained.f1040.line11_agi) ||
       Math.abs(Number(retained.f1040.line9_total_income) - expectedIncome) >=
         1e-8 ||
-      Math.abs(Number(retained.f1040.line11_agi) - expectedIncome) >= 1e-8 ||
-      (retained.f1040.line10_adjustments ?? 0) !== 0 ||
+      Math.abs(
+          Number(retained.f1040.line11_agi) - (expectedIncome - seDeduction),
+        ) >= 1e-8 ||
+      (retained.f1040.line10_adjustments ?? 0) !== seDeduction ||
       (retained.f1040.line1a_wages ?? 0) !== wages ||
       (retained.f1040.line1z_total_wages ?? 0) !== wages
     ) {
@@ -410,7 +408,11 @@ export function assertScheduleCLossSources(
         "Form 8995-A investment taxable income differs from retained wage, business and investment sources",
       );
     }
-    assertMultiBusinessInvestmentTax(retained, investment);
+    assertMultiBusinessInvestmentTax(
+      retained,
+      investment,
+      fields.filing_status,
+    );
   }
 
   const source = scheduleCInputSchema.safeParse(pending?.schedule_c);
@@ -442,7 +444,6 @@ export function assertScheduleCLossSources(
       );
     }
   }
-  const seDeduction = fields.loss_se_tax_source?.deduction ?? 0;
   if (fields.loss_se_tax_source) {
     const retained = pending as Record<string, Record<string, unknown>>;
     const wages = pending?.w2 === undefined

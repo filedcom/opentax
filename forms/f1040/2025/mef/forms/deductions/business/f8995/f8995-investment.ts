@@ -304,6 +304,7 @@ export function assertMultiBusinessInvestmentSources(
 export function assertMultiBusinessInvestmentTax(
   pending: Record<string, Record<string, unknown>>,
   totals: { qualified: number; capital: number; capitalGain?: number },
+  filingStatus: FilingStatus = FilingStatus.Single,
 ) {
   const f1040 = pending.f1040;
   const taxable = f1040.line15_taxable_income as number;
@@ -313,9 +314,9 @@ export function assertMultiBusinessInvestmentTax(
       taxable,
       totals.qualified,
       capital,
-      FilingStatus.Single,
+      filingStatus,
     )
-    : ordinaryTax2025(taxable, FilingStatus.Single);
+    : ordinaryTax2025(taxable, filingStatus);
   const worksheet = pending.income_tax_calculation;
   const sum = (value: unknown): number =>
     value === undefined

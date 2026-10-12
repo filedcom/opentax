@@ -1,5 +1,68 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 current losses, SE deductions and investment income
+
+The current-loss export now reconciles retained owner SE deductions when the
+return also contains reviewed interest, dividends and capital-gain distributions.
+Previously it rejected this combination and its investment-tax check always used
+Single rates. The check now uses the actual filing status and reconciles total
+income, adjustments and AGI before replaying the preferential-rate worksheet.
+Source ownership, distinct capital contributions, SE allocation, business loss
+netting and MFS property-regime reviews remain enforced.
+
+Each of six complete returns retains two taxpayer-owned INT copies (1,000/700)
+and two DIV copies (ordinary2,000/1,000; qualified1,200/600; distributions1,000/800).
+The investment total is6,500; equal qualified-dividend and capital-gain contributions
+of1,800 each remain distinct and give Form8995-A line34 of3,600, following the
+[Form8995-A instructions](https://www.irs.gov/instructions/i8995a).
+The four businesses and owner gross-income allocation are the same as the
+SE-only checkpoint below. All investments in this batch belong to the primary
+filer, including the joint case; spouse investments and broker sales are not
+proved by these six packets.
+
+| Case | Half-SE | QBI deduction | Regular tax | NIIT | Total tax | Owed / (refund) | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single high income | 40 | 150 | 71,573 | 247 | 72,825 | 12,825 | 24 |
+| Single phase-in | 40 | 313 | 49,567 | 247 | 50,235 | (9,765) | 24 |
+| Joint two owners | 156 | 150 | 140,567 | 247 | 144,299 | 84,299 | 26 |
+| Head of household | 40 | 150 | 67,079 | 247 | 68,331 | 8,331 | 24 |
+| Surviving spouse | 40 | 150 | 52,044 | 247 | 53,296 | (6,704) | 24 |
+| Separate return | 40 | 150 | 71,573 | 247 | 73,500 | 13,500 | 24 |
+
+The added income raises the phase-in case's pre-QBI taxable income to228,800,
+producing63% phase-in and components104/209. Independent decimal arithmetic applies
+the [2025 tax worksheet](https://www.irs.gov/instructions/i1040gi),15% capital
+rates and [NIIT thresholds](https://www.irs.gov/instructions/i8960); all six final
+taxes, owner SE amounts and balances agree. An independent native audit checks
+business identities, loss offsets, adjusted QBI, both capital contributions,
+Form1040 investment/adjustment/tax lines and Form8960 investment income/tax.
+
+All six full returns pass local TY2025 v5.4 Return1040 XSD. All146 flattened pages
+were reopened with zero fields/widgets and visually observed through62 unique
+images on16 sheets; final PDF hashes match those reviewed. ScheduleB payer rows,
+seven owner ScheduleSE copies, QBI continuations, phase-in and final amounts
+reconcile. Joint ScheduleB page7 retains a primary-only header and MFS Form1040
+page1 repeats the spouse name in the joint-only row (deferred68); blank zero
+QBI/business fields repeat deferred76. The positive joint Form8960 page21 shows
+both names. These presentation findings remain deferred without repair.
+
+The focused suite passes six typed tests and rejects24 public business-source
+mutations plus78 native and78 fresh-PDF mutations. Export probes cover investment
+owner changes in both retained copies, collapsed capital contributions, inadequate
+qualified-dividend holding review, altered ScheduleB print amounts, AGI, adjustments,
+regular tax and the earlier owner-SE source joins. The first test draft used a
+nonexistent tax field in one mutation; correcting the test to the actual Form1040
+income-tax field makes that rejection meaningful. Production tax logic did not
+change to accommodate a test expectation. The20-module grouped gate passes209
+typed tests, zero failures or ignored (5m15s), including prior SE/loss/owner/MFS
+routes, source schemas, native companions and distinct investment contributions.
+
+Evidence: `.state/research/form8995a-loss-investments-2026-10-12/` retains inputs,
+filer/pending/projection records, full XML/PDF, schema logs, independent arithmetic
+and native audits, rendered-image mappings and qualified visual review. This
+extends the existing QBI and return-wide investment/adjustment work; broader
+conditional paths, external authenticity and IRS acceptance remain open.
+
 ## October 12 current losses with deductible self-employment tax
 
 Ordinary Schedule C current-loss inventories now retain positive owner-specific
@@ -17,8 +80,8 @@ The public graph retains raw Schedule C profit and the separate SE deduction;
 QBI rows reflect the deduction before proportional loss offsets and per-business
 wage/property limitations. Native and fresh-PDF exports rebuild source profits,
 owner SE and wage records, and reconcile Schedules1/2 and Form1040. Exempt trades,
-other SE sources, health/retirement adjustments and investment combinations remain
-outside this extension; existing prior-loss, SSTB, aggregation, cooperative and
+other SE sources and health/retirement adjustments remain outside this extension;
+investment combinations are covered by the newer checkpoint above, while existing prior-loss, SSTB, aggregation, cooperative and
 MFS property-regime boundaries continue to apply.
 
 All six cases have gross business income6,000/8,000/2,000/4,000 and net profits
