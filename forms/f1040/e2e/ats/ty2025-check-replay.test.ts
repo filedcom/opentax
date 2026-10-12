@@ -44,7 +44,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   }
   assertEquals(report.denominator, 74);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 200);
+  assertEquals(ledger.count, 201);
   assertEquals(ledger.byKind, {
     calculation: {
       count: 74,
@@ -54,7 +54,10 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       count: 56,
       counts: { missing: 12, "not-evaluated": 34, present: 10 },
     },
-    "binary-attachment": { count: 1, counts: { missing: 1 } },
+    "binary-attachment": {
+      count: 2,
+      counts: { missing: 1, "not-evaluated": 1 },
+    },
     "native-value": {
       count: 69,
       counts: {
@@ -70,7 +73,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   assertEquals(ledger.calculationAnchor.notProduced, 6);
   assertEquals(ledger.calculationAnchor.provisional, 5);
   assertEquals(ledger.calculationAnchor.percent, 100 * 46 / 63);
-  assertEquals(ledger.attachmentRequirementsNotInventoried.length, 7);
+  assertEquals(ledger.attachmentRequirementsNotInventoried.length, 0);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
     ledger.rows.filter((r) => r.id.startsWith("1040-01:document:W-2:")).map((
@@ -112,10 +115,27 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     result: "missing",
     observed: [],
   }]);
-  for (const scenario of report.scenarios.filter((s) => s.id !== "1040-04")) {
-    assertEquals(scenario.attachmentCoverage.requirementsInventoried, false);
-    assertEquals(scenario.attachmentCoverage.allKnownRequiredPresent, null);
+  for (const scenario of report.scenarios) {
+    const coverage = scenario.attachmentCoverage;
+    assertEquals(coverage.requirementsInventoried, true);
+    assertEquals(coverage.completeRequirementsInventoried, false);
+    assertEquals(coverage.coverSheetReview?.page, 1);
+    assertEquals(
+      /^[a-f0-9]{64}$/.test(coverage.coverSheetReview!.sourceSha256),
+      true,
+    );
+    if (!["1040-04", "1040-05", "1040-13"].includes(scenario.id)) {
+      assertEquals(coverage.allKnownRequiredPresent, null);
+    }
   }
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-02")!.attachmentCoverage.rows,
+    [{
+      description: "Nonresident Spouse Choice Statement",
+      result: "not-evaluated",
+      observed: null,
+    }],
+  );
   const documents = report.scenarios.map((s) => ({
     id: s.id,
     observed: s.documentCoverage.requiredCopiesObserved,

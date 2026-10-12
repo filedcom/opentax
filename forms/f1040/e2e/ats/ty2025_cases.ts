@@ -16,6 +16,11 @@ export type AtsCase = {
   readonly capture: "inventory-only" | "partial-facts";
   /** Known cover-sheet requirements; omission means not inventoried, not none. */
   readonly requiredBinaryAttachmentDescriptions?: readonly string[];
+  /** Visual cover review only; conditional form-level requirements remain separate. */
+  readonly binaryAttachmentCoverReview?: {
+    readonly page: 1;
+    readonly sourceSha256: string;
+  };
 };
 
 export const TY2025_ATS_CASES: readonly AtsCase[] = [
@@ -34,6 +39,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "Schedule H",
       "5695",
     ],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "fb6054bf4417094f0c102bd47b7d021596143929d6789f1971912994e3738cd3",
+    },
     capture: "partial-facts",
   },
   {
@@ -51,6 +62,14 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "Schedule C",
       "8283",
     ],
+    requiredBinaryAttachmentDescriptions: [
+      "Nonresident Spouse Choice Statement",
+    ],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "1d94fce66edb816fe780e532a88d998617eb20d9edc3cf9a36355fa0c5236689",
+    },
     capture: "partial-facts",
   },
   {
@@ -70,6 +89,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "Schedule SE",
       "4835",
     ],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "29fb04a95cb926bf9157c9e8f5b4c35c806ec83dfa995412866da3394a8715ce",
+    },
     capture: "partial-facts",
   },
   {
@@ -88,6 +113,11 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "8936 Schedule A",
     ],
     requiredBinaryAttachmentDescriptions: ["Transfer Election Statement"],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "190429244b03144c5952cfdac0df812e87bfcc16872b55c10f2d766b2d09faba",
+    },
     capture: "partial-facts",
   },
   {
@@ -107,6 +137,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "Schedule EIC",
       "Schedule 8812",
     ],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "2ecfd873224b8d1e0912caa68682f3b06a8887565205808e0ed8777cc408c779",
+    },
     capture: "partial-facts",
   },
   {
@@ -116,6 +152,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
     sourceUrl:
       "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-8-10212025.pdf",
     forms: ["1040", "1099-R", "1099-R"],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "3016890611382ee3ae9876b7cd8c81260bcf8e1b611920aac82611fd52e02fae",
+    },
     capture: "partial-facts",
   },
   {
@@ -134,6 +176,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
       "7217",
       "W-2",
     ],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "f0bfcfda3c29e216687ba74c78a5c73f33d11487f82aab0808ee9cd128146c83",
+    },
     capture: "partial-facts",
   },
   {
@@ -142,6 +190,12 @@ export const TY2025_ATS_CASES: readonly AtsCase[] = [
     scenario: 13,
     sourceUrl: "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf",
     forms: ["1040", "Schedule 3", "6251", "8911", "8911 Schedule A", "W-2"],
+    requiredBinaryAttachmentDescriptions: [],
+    binaryAttachmentCoverReview: {
+      page: 1,
+      sourceSha256:
+        "254ae93adb93791c3ac7257bf7de404d4b962bfa2e56da9d49d19c33fba265c1",
+    },
     capture: "partial-facts",
   },
   {

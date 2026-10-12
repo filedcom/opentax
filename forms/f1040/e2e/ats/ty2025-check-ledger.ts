@@ -123,6 +123,11 @@ export function buildAtsCheckLedger(report: Replay) {
       provisional: checks.length - nonprovisional.length,
       percent: evaluated.length ? 100 * matches / evaluated.length : null,
     },
+    attachmentCoverReviews: report.scenarios.map((s) => ({
+      scenario: s.id,
+      sourceUrl: s.sourceUrl,
+      review: s.attachmentCoverage.coverSheetReview,
+    })),
     attachmentRequirementsNotInventoried: report.scenarios.filter((s) =>
       !s.attachmentCoverage.requirementsInventoried
     ).map((s) => s.id),

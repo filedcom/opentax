@@ -36,6 +36,8 @@ export function compareAtsAttachments(
     scope:
       "Known binary attachment descriptions and retained bytes only; not exhaustive requirements, statement content, authenticity, business rules or IRS acceptance",
     requirementsInventoried: requiredDescriptions !== null,
+    // The supplied list never establishes all conditional filing requirements.
+    completeRequirementsInventoried: false,
     knownRequiredCount: requiredDescriptions?.length ?? null,
     allKnownRequiredPresent: rows === null || observed === null
       ? null

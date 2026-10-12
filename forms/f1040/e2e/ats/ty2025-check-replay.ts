@@ -500,10 +500,13 @@ export async function replayAtsChecks() {
             ? preparation.documentRoots
             : null,
         ),
-        attachmentCoverage: compareAtsAttachments(
-          source.requiredBinaryAttachmentDescriptions ?? null,
-          preparation.attachments,
-        ),
+        attachmentCoverage: {
+          ...compareAtsAttachments(
+            source.requiredBinaryAttachmentDescriptions ?? null,
+            preparation.attachments,
+          ),
+          coverSheetReview: source.binaryAttachmentCoverReview ?? null,
+        },
         checks: scenario.targets.map((check) =>
           compareAtsTarget(execution.pending, check)
         ),

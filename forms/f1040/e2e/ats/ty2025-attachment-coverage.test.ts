@@ -54,3 +54,17 @@ Deno.test("ATS attachment names cannot replace exact descriptions or retained by
     "invalid-or-ambiguous",
   );
 });
+
+Deno.test("ATS empty reviewed cover inventories do not certify complete attachment requirements", () => {
+  for (const observed of [null, []]) {
+    const coverage = compareAtsAttachments([], observed);
+    assertEquals(coverage.requirementsInventoried, true);
+    assertEquals(coverage.knownRequiredCount, 0);
+    assertEquals(coverage.rows, []);
+    assertEquals(coverage.completeRequirementsInventoried, false);
+    assertEquals(
+      coverage.allKnownRequiredPresent,
+      observed === null ? null : true,
+    );
+  }
+});
