@@ -27,6 +27,7 @@ import {
 import {
   assertNoFiledForm8995,
   assertOneBusinessReitSource,
+  assertScheduleCLossFiler,
   assertScheduleCLossSources,
   validateOneBusiness,
 } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
@@ -398,6 +399,7 @@ function projectLossParentCopies(
         input.taxable_income,
         parent.line3,
         parent.line10,
+        input.filing_status,
       )
     );
     const phaseIn = phases.find((phase) => phase !== undefined);
@@ -527,6 +529,7 @@ export const form8995aPdf: PdfFormDescriptor = {
       if (!allPending) {
         throw new Error("Form 8995-A loss copies need retained return sources");
       }
+      assertScheduleCLossFiler(input, allPending, filer);
       projectOneBusiness8995A(allPending.form8995a, allPending);
       return projectLossParentCopies(input);
     }

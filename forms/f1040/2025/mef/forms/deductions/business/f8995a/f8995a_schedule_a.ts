@@ -45,7 +45,7 @@ export function assertZeroReductionScheduleAReturn(
   }
 }
 
-function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
+function buildScheduleA(rawFields: unknown, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
   const parent = inputSchema.strict().safeParse(context?.pending?.form8995a);
@@ -126,7 +126,7 @@ export const form8995aScheduleA = {
   pendingKey: "form8995a_schedule_a",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995aa--2025.pdf",
-  build(fields: Input, context?: MefBuildContext) {
+  build(fields: unknown, context?: MefBuildContext) {
     return buildScheduleA(fields, context);
   },
 } satisfies MefFormDescriptor<

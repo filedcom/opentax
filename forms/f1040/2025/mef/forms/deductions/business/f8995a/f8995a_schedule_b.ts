@@ -321,7 +321,7 @@ export const form8995aScheduleB = {
     }
     return attachments;
   },
-  build(fields: Form8995AInput | readonly [], context?: MefBuildContext) {
+  build(fields: unknown, context?: MefBuildContext) {
     if (Array.isArray(fields) && fields.length === 0) return "";
     return buildStagedIRS8995AScheduleB(fields, context);
   },

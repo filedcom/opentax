@@ -1,3 +1,5 @@
+import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import type { FilerIdentity } from "../../../../../../mef/header.ts";
 import { mefBusinessNameLine1 } from "../../../../../../mef/business-name.ts";
 import { calculateIndependentPatronBusinesses } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { patronProprietorSsn } from "../../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
@@ -238,6 +240,47 @@ export function assertOneBusinessReitSource(
   }
 }
 
+export function assertScheduleCLossFiler(
+  fields: Form8995AInput,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  filer: FilerIdentity | undefined,
+): void {
+  if (
+    fields.filing_status === NodeFilingStatus.Single ||
+    fields.farm_wotc_filing_source
+  ) return;
+  const expected = fields.filing_status === NodeFilingStatus.MFJ
+    ? HeaderFilingStatus.MarriedFilingJointly
+    : fields.filing_status === NodeFilingStatus.HOH
+    ? HeaderFilingStatus.HeadOfHousehold
+    : fields.filing_status === NodeFilingStatus.QSS
+    ? HeaderFilingStatus.QualifyingSurvivingSpouse
+    : undefined;
+  const retained = pending as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+  const general = retained?.general;
+  const ssn = String(general?.taxpayer_ssn ?? "").replaceAll("-", "");
+  if (
+    !filer || !expected || filer.filingStatus !== expected ||
+    general?.filing_status !== fields.filing_status || !/^\d{9}$/.test(ssn) ||
+    ssn !== filer.primarySSN.replaceAll("-", "") ||
+    retained?.f1040?.filing_status !== fields.filing_status ||
+    String(retained?.f1040?.taxpayer_ssn ?? "").replaceAll("-", "") !== ssn
+  ) {
+    throw new Error(
+      "Form 8995-A loss proprietor or filing status differs from the final filer",
+    );
+  }
+  if (fields.filing_status === NodeFilingStatus.MFJ) {
+    if (!assertOwnedScheduleSE(retained!, filer)) {
+      throw new Error(
+        "Form 8995-A joint losses need retained proprietor computations",
+      );
+    }
+  }
+}
+
 export function assertScheduleCLossSources(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -250,6 +293,15 @@ export function assertScheduleCLossSources(
     return;
   }
   const lines = calculateScheduleCLossLines(fields);
+  if (fields.filing_status === NodeFilingStatus.MFJ) {
+    if (
+      !assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>)
+    ) {
+      throw new Error(
+        "Form 8995-A joint losses need retained proprietor computations",
+      );
+    }
+  }
   if (
     fields.qbi_capital_sources !== undefined ||
     pending?.f1099div !== undefined || pending?.f1099int !== undefined ||
@@ -392,6 +444,10 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.HOH ||
       fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details &&
+      !(fields.filing_status !== NodeFilingStatus.MFS &&
+        fields.schedule_c_qbi_businesses?.some((business) =>
+          business.qbi < 0
+        )) &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
         (fields.independent_patron_sources || fields.patron_business_source ||
           fields.single_schedule_c_source ||
@@ -543,9 +599,14 @@ function ownedWotcGroup(
   ]);
 }
 
-function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
+// Registry values are parsed here before use; keeping the raw boundary unknown
+// avoids expanding every QBI source variant in the registry callable union.
+function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
-  if (Object.keys(rawFields).length === 0) {
+  if (
+    rawFields && typeof rawFields === "object" &&
+    Object.keys(rawFields).length === 0
+  ) {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
   const fields = inputSchema.strict().parse(rawFields);
@@ -572,6 +633,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
   }
   if (fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
     const lines = calculateScheduleCLossLines(fields);
+    assertScheduleCLossFiler(fields, context?.pending, context?.filer);
     reconcileReturn(context, lines.parent.line39, fields);
     const parent = lines.parent;
     const phases = lines.businessLines.map(({ parent }) =>
@@ -579,6 +641,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         fields.taxable_income,
         parent.line3,
         parent.line10,
+        fields.filing_status,
       )
     );
     const phaseIn = phases.find((phase) => phase !== undefined);
@@ -774,7 +837,7 @@ export const form8995a = {
   pendingKey: "form8995a",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995a.pdf",
-  build(fields: Input, context?: MefBuildContext) {
+  build(fields: unknown, context?: MefBuildContext) {
     return buildIRS8995A(fields, context);
   },
 } satisfies MefFormDescriptor<"form8995a", Input>;

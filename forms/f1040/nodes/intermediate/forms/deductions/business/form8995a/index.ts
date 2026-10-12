@@ -791,6 +791,7 @@ export function calculateLossBusinessPhase(
   taxableIncome: number,
   potential: number,
   limit: number,
+  filingStatus: FilingStatus = FilingStatus.Single,
 ): {
   threshold: number;
   range: number;
@@ -803,8 +804,11 @@ export function calculateLossBusinessPhase(
   line25: number;
   line26: number;
 } | undefined {
-  const threshold = CONFIG_BY_YEAR[2025].qbiThresholdSingle;
-  const range = CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2;
+  const joint = filingStatus === FilingStatus.MFJ;
+  const threshold = joint
+    ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
+    : CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const range = CONFIG_BY_YEAR[2025].qbiPhaseInRange / (joint ? 1 : 2);
   const filedIncome = Math.round(taxableIncome);
   if (filedIncome > threshold + range || limit >= potential) return undefined;
   const excess = Math.max(0, filedIncome - threshold);
@@ -853,8 +857,12 @@ export function calculateScheduleCLossLines(
     );
   }
   if (
-    input.filing_status !== FilingStatus.Single ||
-    input.taxable_income <= CONFIG_BY_YEAR[2025].qbiThresholdSingle ||
+    ![FilingStatus.Single, FilingStatus.MFJ, FilingStatus.HOH, FilingStatus.QSS]
+      .includes(input.filing_status) ||
+    input.taxable_income <=
+      (input.filing_status === FilingStatus.MFJ
+        ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
+        : CONFIG_BY_YEAR[2025].qbiThresholdSingle) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -895,6 +903,24 @@ export function calculateScheduleCLossLines(
     ) {
       throw new Error(
         "Form 8995-A Schedule C business identity, QBI adjustment, and limitation source must match the Schedule C item",
+      );
+    }
+  }
+  if (input.filing_status !== FilingStatus.Single) {
+    const joint = input.filing_status === FilingStatus.MFJ;
+    const ownerTotals = { T: 0, S: 0 };
+    for (const business of businesses) {
+      const owner = business.source_schedule_c.proprietor_recipient;
+      if (owner !== "T" && !(joint && owner === "S")) {
+        throw new Error(
+          "Form 8995-A loss business needs its explicit permitted proprietor",
+        );
+      }
+      ownerTotals[owner] += business.qbi;
+    }
+    if (Object.values(ownerTotals).some((amount) => amount >= 400)) {
+      throw new Error(
+        "Form 8995-A loss owners must each remain below the reviewed SE threshold",
       );
     }
   }
@@ -982,6 +1008,7 @@ export function calculateScheduleCLossLines(
       input.taxable_income,
       line3,
       line10,
+      input.filing_status,
     );
     const line13 = phase ? Math.max(line11, phase.line26) : line11;
     const parent = {

@@ -1,5 +1,69 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 joint, head-of-household and surviving-spouse losses
+
+The ordinary current-loss route now retains explicit taxpayer/spouse business
+ownership for MFJ and taxpayer ownership for HOH/QSS. It joins filing status and
+SSNs to the final return/header and, for joint returns, rebuilds the retained
+owner-specific SE inventory even when neither proprietor owes SE tax. Missing
+or inconsistent owners reject. Each proprietor must remain below the existing
+400 net-profit boundary; cross-owner losses cannot hide an unsupported SE
+allocation. MFS, prior losses and other existing exclusions remain guarded.
+
+The [2025 Form8995-A instructions](https://www.irs.gov/instructions/i8995a)
+use a394,600 threshold/100,000 phase-in range for MFJ and197,300/50,000 for
+HOH/QSS. QSS retains joint ordinary income-tax brackets without receiving the
+joint QBI threshold. All five cases have four businesses with QBI1,000/2,000/
+-900/-1,800, adjusted positive QBI100/200 and wage limits15/50. At50% phase-in,
+components17/40 produce deduction57; the adjacent QSS case has50.002%.
+
+| Case | Wage income | Business owners | Expected / actual final tax | PDF pages |
+| --- | ---: | --- | ---: | ---: |
+| Joint primary owner | 475,800 | T/T/T/T | 98,412 / 98,412 | 21 |
+| Joint both owners; spouse wages | 475,800 | T/S/T/S | 98,412 / 98,412 | 21 |
+| Head of household | 245,625 | T/T/T/T | 46,853 / 46,853 | 21 |
+| Surviving spouse, original half-dollar | 253,500 | T/T/T/T | **39,514 / 39,513** | 21 |
+| Surviving spouse, adjacent dollar | 253,501 | T/T/T/T | 39,515 / 39,515 | 21 |
+
+All five full returns pass the local v5.4 Return1040 XSD. Independent final-tax
+checks pass four and fail one: the original QSS wage case computes Additional
+Medicare tax481 instead of482 because binary multiplication puts481.50 just
+below the rounding boundary. The [1040 whole-dollar rule](https://www.irs.gov/instructions/i1040gi)
+rounds half dollars upward. Deferred156 retains the source and incorrect return;
+its QBI deduction57 is independently correct. The adjacent-dollar case supplements
+the original and does not replace it. No Medicare code was changed.
+
+All105 flattened pages have zero fields/widgets. Visual review covers47 unique
+images:44 newly observed images on11 sheets and three SHA256 matches to earlier
+reviewed pages. Both joint names, each Schedule C proprietor/SSN, four business
+identities, loss allocations and continuation order reconcile; the spouse's
+second/fourth trades print the spouse identity. No filled-content clipping was
+observed. Blank loss-business parent zeros and some Schedule C zero fields repeat
+deferred76; the half-dollar tax defect is visible in the original PDF.
+
+The initial six-case replay passed. Subsequent public-source and empty-owner
+inventory checks expanded the test coverage; the companion Schedule A/B/D batch
+passes16 typed tests. The first combined compiler run reported TS2590 in the
+registry callable union; the previous commit9f353cce4 passes the matching baseline
+compiler check. The five QBI builders now take raw values as `unknown` and retain
+strict schema parsing before accessing fields, avoiding expansion of the deep
+QBI input union at dispatch. No global registry or deferred reliability change
+was made. Initial test-only unknown-spread/enum typing errors were also corrected.
+
+The final15-module run passes87 typed tests with zero failures or ignored;
+with the16 companion passes, this checkpoint has103 related typed passes.
+The new cases reject ten public-source mutations and29 native plus29 fresh-PDF
+mutations, including empty joint-owner inventories. All five final PDFs,
+projections and tax-audit records exactly match the reviewed artifacts; XML
+matches after excluding only ReturnTs. The separate final-tax audit remains
+four passes/one deferred156 failure. The historical four deferred65 RPE fixture
+path failures are not reclassified or repaired by these passing batches.
+
+Evidence is retained in `.state/research/form8995a-loss-owners-2026-10-12/`,
+including source inputs, filer/pending records, projections, XML/XSD logs, actual
+PDFs, render/hash inventories and a separate final-tax audit. This advances the
+existing QBI source/ownership task without closing its broader parent.
+
 ## October 12 current-loss phase-in and continuation checkpoint
 
 The ordinary Single current-loss route now applies the wage/property phase-in

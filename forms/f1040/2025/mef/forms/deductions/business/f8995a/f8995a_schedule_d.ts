@@ -21,7 +21,7 @@ type Input = Form8995AInput | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
-function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
+function buildScheduleD(rawFields: unknown, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
   const parent = inputSchema.strict().safeParse(context?.pending?.form8995a);
@@ -118,7 +118,7 @@ export const form8995aScheduleD = {
   pendingKey: "form8995a_schedule_d",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995ad.pdf",
-  build(fields: Input, context?: MefBuildContext) {
+  build(fields: unknown, context?: MefBuildContext) {
     return buildScheduleD(fields, context);
   },
 } satisfies MefFormDescriptor<

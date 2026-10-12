@@ -7,7 +7,10 @@ import {
   calculateScheduleCLossLines,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
-import { assertScheduleCLossSources } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
+import {
+  assertScheduleCLossFiler,
+  assertScheduleCLossSources,
+} from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { projectOneBusiness8995A } from "./f8995a.ts";
 
 const page = "topmostSubform[0].Page1[0].";
@@ -126,13 +129,18 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
   projectFields(raw, allPending) {
     return projectLossScheduleCopies(raw, allPending)[0] ?? {};
   },
-  instances(raw, _filer, allPending) {
+  instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     if (!allPending) {
       throw new Error(
         "Form 8995-A loss schedule copies need retained return sources",
       );
     }
+    assertScheduleCLossFiler(
+      inputSchema.parse(allPending.form8995a_schedule_c),
+      allPending,
+      filer,
+    );
     return projectLossScheduleCopies(
       allPending.form8995a_schedule_c,
       allPending,
