@@ -9,7 +9,8 @@ export interface LedgerRow {
     | "document-copy"
     | "binary-attachment"
     | "native-value"
-    | "native-w2-value";
+    | "native-w2-value"
+    | "native-retirement-value";
   result: string;
   basis: string;
   sourceUrl: string;
@@ -54,6 +55,18 @@ export function buildAtsCheckLedger(report: Replay) {
         result: c.result,
         basis:
           `Issued W-2 page ${c.sourcePage}, ${c.employerName}; XML IRSW2/${c.field}`,
+        expected: c.expected,
+        actual: c.actual,
+      });
+    }
+    for (const c of s.preparation.retirementValueCoverage.rows) {
+      rows.push({
+        ...common,
+        id: `${s.id}:native-retirement-value:page${c.sourcePage}:${c.field}`,
+        kind: "native-retirement-value",
+        result: c.result,
+        basis:
+          `Issued 1099-R page ${c.sourcePage}, ${c.copyName}; XML IRS1099R/${c.field}`,
         expected: c.expected,
         actual: c.actual,
       });
@@ -110,6 +123,7 @@ export function buildAtsCheckLedger(report: Replay) {
       "binary-attachment",
       "native-value",
       "native-w2-value",
+      "native-retirement-value",
     ] as const).map(
       (kind) => {
         const selected = rows.filter((r) => r.kind === kind);

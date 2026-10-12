@@ -1,4 +1,4 @@
-import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { compareAtsIssuedCopyValues } from "./ty2025-issued-copy-values.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -53,94 +53,19 @@ export const ATS_W2_TARGETS: Readonly<Record<string, readonly W2Target[]>> = {
   "1040-12": [target(SCENARIO_1040_12_FACTS.w2, 15)],
   "1040-13": [target(SCENARIO_1040_13_FACTS.w2, 9)],
 };
-const record = (v: unknown): v is Record<string, unknown> =>
-  v !== null && typeof v === "object" && !Array.isArray(v);
-const name = (v: unknown) =>
-  typeof v === "string" ? v.trim().replace(/\s+/g, " ").toUpperCase() : null;
-const parser = new XMLParser({
-  ignoreAttributes: true,
-  parseTagValue: false,
-  removeNSPrefix: true,
-});
-type Result =
-  | "match"
-  | "different"
-  | "not-evaluated"
-  | "invalid-xml"
-  | "missing-copy"
-  | "ambiguous-copy"
-  | "missing-field"
-  | "invalid-value";
-
-/** Match whole copies by reviewed employer name; never pair fields separately
- * or use order, wage amounts, recipient identity, or EIN to force a match.
- * Duplicate names are ambiguous, including identical duplicate copies.
- */
 export function compareAtsW2Values(
   xml: string | null,
   targets: readonly W2Target[],
 ) {
-  let copies: unknown[] | undefined;
-  if (xml !== null && XMLValidator.validate(xml) === true) {
-    const parsed = parser.parse(xml);
-    if (record(parsed.Return) && record(parsed.Return.ReturnData)) {
-      const raw = parsed.Return.ReturnData.IRSW2;
-      copies = raw === undefined ? [] : Array.isArray(raw) ? raw : [raw];
-    }
-  }
-  const rows = targets.flatMap((t) => {
-    const found = copies?.filter((copy) => {
-      if (!record(copy) || !record(copy.EmployerName)) return false;
-      const first = copy.EmployerName.BusinessNameLine1Txt;
-      const second = copy.EmployerName.BusinessNameLine2Txt;
-      if (
-        typeof first !== "string" ||
-        (second !== undefined && typeof second !== "string")
-      ) return false;
-      return name([first, second].filter((v) => v !== undefined).join(" ")) ===
-        name(t.employerName);
-    }) ?? [];
-    return Object.entries(t.fields).map(([field, expected]) => {
-      let result: Result;
-      let actual: string | number | boolean | null = null;
-      const copy = found[0];
-      if (xml === null) result = "not-evaluated";
-      else if (!copies) result = "invalid-xml";
-      else if (!found.length) result = "missing-copy";
-      else if (found.length !== 1) result = "ambiguous-copy";
-      else {
-        const value = record(copy) ? copy[field] : undefined;
-        if (typeof expected === "boolean") {
-          // CheckboxType is X when selected; absence on an existing copy is false.
-          actual = value === undefined ? false : value === "X" ? true : null;
-        } else if (typeof expected === "string") {
-          actual = typeof value === "string" && /^\d{9}$/.test(value)
-            ? value
-            : null;
-        } else if (
-          typeof value === "string" && /^-?\d+$/.test(value) &&
-          Number.isSafeInteger(Number(value))
-        ) {
-          actual = Number(value);
-        }
-        result = value === undefined && typeof expected !== "boolean"
-          ? "missing-field"
-          : actual === null
-          ? "invalid-value"
-          : actual === expected
-          ? "match"
-          : "different";
-      }
-      return {
-        sourcePage: t.sourcePage,
-        employerName: t.employerName,
-        field,
-        expected,
-        actual,
-        result,
-      };
-    });
-  });
+  const rows = compareAtsIssuedCopyValues(
+    xml,
+    targets.map((t) => ({ ...t, copyName: t.employerName })),
+    {
+      root: "IRSW2",
+      nameField: "EmployerName",
+      stringPatterns: { EmployeeSSN: /^\d{9}$/, EmployerEIN: /^\d{9}$/ },
+    },
+  ).map(({ copyName, ...row }) => ({ ...row, employerName: copyName }));
   return {
     scope:
       "Issued W-2 copy identities, six amounts and two indicators; employer name locates a unique copy. No address, state, PDF, business-rule or IRS-acceptance claim.",

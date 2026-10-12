@@ -1,4 +1,9 @@
 import {
+  ATS_RETIREMENT_TARGETS,
+  compareAtsRetirementValues,
+} from "./ty2025-retirement-value-coverage.ts";
+import type { IssuedCopyTarget } from "./ty2025-issued-copy-values.ts";
+import {
   ATS_W2_TARGETS,
   compareAtsW2Values,
   type W2Target,
@@ -464,12 +469,17 @@ async function replayPreparation(
   execution: ReturnType<typeof f1040_2025.executeReturn>,
   targets: z.infer<typeof targetSchema>[],
   w2Targets: readonly W2Target[],
+  retirementTargets: readonly IssuedCopyTarget[],
 ) {
   if (execution.diagnostics.some((d) => d.severity === "error")) {
     return {
       result: PreparationResult.GraphBlocked,
       nativeValueCoverage: compareAtsNativeValues(null, targets),
       w2ValueCoverage: compareAtsW2Values(null, w2Targets),
+      retirementValueCoverage: compareAtsRetirementValues(
+        null,
+        retirementTargets,
+      ),
       documentRoots: [],
       attachments: null,
       reason: "Resolve graph diagnostics before preparation",
@@ -485,6 +495,10 @@ async function replayPreparation(
       result: PreparationResult.PartialPrepared,
       nativeValueCoverage: compareAtsNativeValues(prepared.bundle.xml, targets),
       w2ValueCoverage: compareAtsW2Values(prepared.bundle.xml, w2Targets),
+      retirementValueCoverage: compareAtsRetirementValues(
+        prepared.bundle.xml,
+        retirementTargets,
+      ),
       attachments: prepared.bundle.attachments.map((attachment) => ({
         description: attachment.description,
         fileName: attachment.fileName,
@@ -504,6 +518,10 @@ async function replayPreparation(
       result: PreparationResult.NativeBlocked,
       nativeValueCoverage: compareAtsNativeValues(null, targets),
       w2ValueCoverage: compareAtsW2Values(null, w2Targets),
+      retirementValueCoverage: compareAtsRetirementValues(
+        null,
+        retirementTargets,
+      ),
       documentRoots: [],
       attachments: null,
       reason: String(error),
@@ -523,6 +541,7 @@ export async function replayAtsChecks() {
         execution,
         scenario.targets,
         ATS_W2_TARGETS[scenario.id] ?? [],
+        ATS_RETIREMENT_TARGETS[scenario.id] ?? [],
       );
       return {
         id: scenario.id,
