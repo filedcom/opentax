@@ -5,7 +5,10 @@ import {
 } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import { assertNoFiledForm8995, assertScheduleCLossSources } from "./f8995a.ts";
 
 type Input = Form8995AInput | readonly [];
@@ -64,14 +67,18 @@ function buildScheduleC(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8995aScheduleC: MefFormDescriptor<
-  "form8995a_schedule_c",
-  Input
-> = {
+export const form8995aScheduleC = {
+  sourcePendingKeys: undefined,
+  buildAdditionalDocuments: undefined,
+  buildBinaryAttachments: undefined,
+
   pendingKey: "form8995a_schedule_c",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995ac.pdf",
-  build(fields, context) {
+  build(fields: Input, context?: MefBuildContext) {
     return buildScheduleC(fields, context);
   },
-};
+} satisfies MefFormDescriptor<
+  "form8995a_schedule_c",
+  Input
+>;

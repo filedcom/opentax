@@ -786,6 +786,46 @@ type ScheduleCLossLines = {
     >;
 };
 
+/** Part III applies independently to each loss-adjusted business. */
+export function calculateLossBusinessPhase(
+  taxableIncome: number,
+  potential: number,
+  limit: number,
+): {
+  threshold: number;
+  range: number;
+  excess: number;
+  ratio: number;
+  line12: number;
+  line17: number;
+  line18: number;
+  line19: number;
+  line25: number;
+  line26: number;
+} | undefined {
+  const threshold = CONFIG_BY_YEAR[2025].qbiThresholdSingle;
+  const range = CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2;
+  const filedIncome = Math.round(taxableIncome);
+  if (filedIncome > threshold + range || limit >= potential) return undefined;
+  const excess = Math.max(0, filedIncome - threshold);
+  const ratio = excess / range;
+  const line19 = potential - limit;
+  const line25 = Math.round(line19 * ratio);
+  const line26 = potential - line25;
+  return {
+    threshold,
+    range,
+    excess,
+    ratio,
+    line12: line26,
+    line17: potential,
+    line18: limit,
+    line19,
+    line25,
+    line26,
+  };
+}
+
 export function calculateScheduleCLossLines(
   input: Form8995AInput,
 ): ScheduleCLossLines {
@@ -814,7 +854,7 @@ export function calculateScheduleCLossLines(
   }
   if (
     input.filing_status !== FilingStatus.Single ||
-    input.taxable_income <= 247_300 ||
+    input.taxable_income <= CONFIG_BY_YEAR[2025].qbiThresholdSingle ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -938,6 +978,12 @@ export function calculateScheduleCLossLines(
     const line9 = line6 + line8;
     const line10 = Math.max(line5, line9);
     const line11 = Math.min(line3, line10);
+    const phase = calculateLossBusinessPhase(
+      input.taxable_income,
+      line3,
+      line10,
+    );
+    const line13 = phase ? Math.max(line11, phase.line26) : line11;
     const parent = {
       line2,
       line3,
@@ -949,8 +995,8 @@ export function calculateScheduleCLossLines(
       line9,
       line10,
       line11,
-      line13: line11,
-      line15: line11,
+      line13,
+      line15: line13,
     };
     if (!Object.values(parent).every(Number.isSafeInteger)) {
       throw new Error(

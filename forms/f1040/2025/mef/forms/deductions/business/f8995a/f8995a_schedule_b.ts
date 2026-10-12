@@ -18,7 +18,10 @@ import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
 } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import { inputSchema as sCorpInputSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { currentSCorpRpeAggregation } from "../../../../../../nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts";
 import { isDeepStrictEqual } from "node:util";
@@ -290,14 +293,17 @@ export function buildStagedIRS8995AScheduleB(
   );
 }
 
-export const form8995aScheduleB: MefFormDescriptor<
-  "form8995a_schedule_b",
-  Form8995AInput | readonly []
-> = {
+export const form8995aScheduleB = {
+  sourcePendingKeys: undefined,
+  buildAdditionalDocuments: undefined,
+
   pendingKey: "form8995a_schedule_b",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995ab--2022.pdf",
-  async buildBinaryAttachments(fields, context) {
+  async buildBinaryAttachments(
+    fields: Form8995AInput | readonly [],
+    context?: MefBuildContext,
+  ) {
     if (Array.isArray(fields) || Object.keys(fields).length === 0) return [];
     const input = inputSchema.strict().parse(fields);
     const attachments = [{
@@ -315,8 +321,11 @@ export const form8995aScheduleB: MefFormDescriptor<
     }
     return attachments;
   },
-  build(fields, context) {
+  build(fields: Form8995AInput | readonly [], context?: MefBuildContext) {
     if (Array.isArray(fields) && fields.length === 0) return "";
     return buildStagedIRS8995AScheduleB(fields, context);
   },
-};
+} satisfies MefFormDescriptor<
+  "form8995a_schedule_b",
+  Form8995AInput | readonly []
+>;

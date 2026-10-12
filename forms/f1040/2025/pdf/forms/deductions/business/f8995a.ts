@@ -17,6 +17,7 @@ import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   assertMfsSstbOwner,
   assertPatron1099PATRSource,
+  calculateLossBusinessPhase,
   calculateOneSstb8995ALines,
   calculateOwnedWotcBusinesses,
   calculateScheduleCLossLines,
@@ -391,23 +392,54 @@ function projectLossParentCopies(
   const rows = [first, ...lines.businessLines.filter((row) => row !== first)];
   const copies: Record<string, unknown>[] = [];
   for (let start = 0; start < rows.length; start += 3) {
+    const chunk = rows.slice(start, start + 3);
+    const phases = chunk.map(({ parent }) =>
+      calculateLossBusinessPhase(
+        input.taxable_income,
+        parent.line3,
+        parent.line10,
+      )
+    );
+    const phaseIn = phases.find((phase) => phase !== undefined);
+    const hasPhaseIn = phaseIn !== undefined;
     copies.push({
+      ...(phaseIn
+        ? {
+          line20: Math.round(input.taxable_income),
+          line21: phaseIn.threshold,
+          line22: phaseIn.excess,
+          line23: phaseIn.range,
+          line24: qbiPercentageForPdf(phaseIn.ratio),
+        }
+        : {}),
       ...(start === 0
         ? { ...lines.parent, line27: lines.parent.line16, line40: 0 }
         : {}),
       ...Object.fromEntries(
-        rows.slice(start, start + 3).flatMap(({ business, parent }, index) => {
+        chunk.flatMap(({ business, parent }, index) => {
+          const phase = phases[index];
+          const phaseFields = phase
+            ? {
+              line12: phase.line12,
+              line17: phase.line17,
+              line18: phase.line18,
+              line19: phase.line19,
+              line25: phase.line25,
+              line26: phase.line26,
+            }
+            : {};
           const suffix = ["", "_b", "_c"][index];
           return [
             [`business_name${suffix}`, business.business_name],
             [`business_ein${suffix}`, business.ein],
-            ...Object.entries(parent).map((
+            ...Object.entries({ ...parent, ...phaseFields }).map((
               [key, value],
             ) => [`${key}${suffix}`, value]),
           ];
         }),
       ),
       qbi_loss_continuation: start > 0,
+      qbi_loss_phase_in: hasPhaseIn,
       qbi_loss_page_note: rows.length > 3
         ? `Form 8995-A business details ${start + 1}-${
           Math.min(start + 3, rows.length)
@@ -428,7 +460,10 @@ export const form8995aPdf: PdfFormDescriptor = {
   fields,
   projectFields: projectOneBusiness8995A,
   pageIndices: (instance) =>
-    instance.qbi_loss_continuation === true ? [0] : [0, 1],
+    instance.qbi_loss_continuation === true &&
+      instance.qbi_loss_phase_in !== true
+      ? [0]
+      : [0, 1],
   async decoratePages(document, pages, instance) {
     if (typeof instance.qbi_loss_page_note !== "string") return;
     const font = await document.embedFont(StandardFonts.Helvetica);

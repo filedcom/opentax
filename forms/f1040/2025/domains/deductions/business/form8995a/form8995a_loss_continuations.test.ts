@@ -22,6 +22,9 @@ const cases = [
     components: [15, 40],
     deduction: 55,
     pages: 21,
+    income: 300000,
+    tax: 70021,
+    phase: undefined,
   },
   {
     id: "seven-businesses",
@@ -33,6 +36,51 @@ const cases = [
     components: [6, 10, 18, 20],
     deduction: 54,
     pages: 29,
+    income: 300000,
+    tax: 70021,
+    phase: undefined,
+  },
+  {
+    id: "seven-businesses-half-phase",
+    profits: [1000, 2000, 3000, 4000],
+    wages: [100, 20, 0, 40],
+    ubia: [0, 0, 800, 0],
+    losses: [1900, 2800, 5000],
+    adjusted: [30, 60, 90, 120],
+    components: [6, 11, 18, 22],
+    deduction: 57,
+    pages: 30,
+    income: 237750,
+    tax: 48521,
+    phase: 0.5,
+  },
+  {
+    id: "four-businesses-fractional-phase",
+    profits: [1000, 2000],
+    wages: [30, 100],
+    ubia: [0, 0],
+    losses: [900, 1800],
+    adjusted: [100, 200],
+    components: [18, 40],
+    deduction: 58,
+    pages: 21,
+    income: 237701,
+    tax: 48504,
+    phase: 0.49902,
+  },
+  {
+    id: "seven-businesses-phase-ceiling",
+    profits: [1000, 2000, 3000, 4000],
+    wages: [100, 20, 0, 40],
+    ubia: [0, 0, 800, 0],
+    losses: [1900, 2800, 5000],
+    adjusted: [30, 60, 90, 120],
+    components: [6, 10, 18, 20],
+    deduction: 54,
+    pages: 30,
+    income: 262750,
+    tax: 56747,
+    phase: 1,
   },
 ];
 for (const c of cases) {
@@ -62,10 +110,11 @@ for (const c of cases) {
       schedule_c: rows,
       w2: (base.inputs.w2 as Record<string, unknown>[]).map((w) => ({
         ...w,
+        box1_wages: c.income,
         box3_ss_wages: 176100,
         box4_ss_withheld: 10918,
-        box5_medicare_wages: 300000,
-        box6_medicare_withheld: 4350,
+        box5_medicare_wages: c.income,
+        box6_medicare_withheld: Math.round(c.income * 1.45) / 100,
       })),
     };
     const result = f1040_2025.executeReturn(inputs);
@@ -76,8 +125,8 @@ for (const c of cases) {
       pending.f1040.line11_agi,
       pending.f1040.line13_qbi_deduction,
       pending.f1040.line24_total_tax,
-      pending.f1040.line37_amount_owed,
-    ], [300, 300300, c.deduction, 70021, 10021]);
+      pending.f1040.line37_amount_owed ?? 0,
+    ], [300, c.income + 300, c.deduction, c.tax, Math.max(0, c.tax - 60000)]);
     const parentFields = form8995aPdf.projectFields!(
       pending.form8995a,
       pending,
@@ -93,6 +142,38 @@ for (const c of cases) {
       pending,
     );
     const count = Math.ceil(rows.length / 3);
+    parents.forEach((copy) => {
+      const phaseColumns = ["", "_b", "_c"].filter((suffix) => {
+        const name = copy[`business_name${suffix}`];
+        const i = rows.findIndex((r) => r.line_c_business_name === name);
+        if (i < 0 || i >= c.profits.length) return false;
+        const potential = Math.round(c.adjusted[i] * 0.2);
+        const limit = Math.max(
+          Math.round(c.wages[i] * 0.5),
+          Math.round(c.wages[i] * 0.25) + Math.round(c.ubia[i] * 0.025),
+        );
+        const applies = c.phase !== undefined && limit < potential;
+        assertEquals(
+          copy[`line12${suffix}`],
+          applies ? c.components[i] : undefined,
+        );
+        assertEquals(
+          copy[`line19${suffix}`],
+          applies ? potential - limit : undefined,
+        );
+        assertEquals(
+          copy[`line25${suffix}`],
+          applies ? Math.round((potential - limit) * c.phase!) : undefined,
+        );
+        return applies;
+      });
+      assertEquals(
+        copy.line24 === undefined ? undefined : String(copy.line24),
+        phaseColumns.length
+          ? String(Number((c.phase! * 100).toFixed(3)))
+          : undefined,
+      );
+    });
     assertEquals([parents.length, schedules.length], [count, count]);
     const parentRows = parents.flatMap((page) =>
       ["", "_b", "_c"].filter((s) => page[`business_name${s}`] !== undefined)
@@ -147,7 +228,10 @@ for (const c of cases) {
         undefined,
         undefined,
       ]);
-      assertEquals(form8995aPdf.pageIndices!(p), [0]);
+      assertEquals(
+        form8995aPdf.pageIndices!(p),
+        p.qbi_loss_phase_in === true ? [0, 1] : [0],
+      );
     }
     for (const p of schedules.slice(1)) {
       assertEquals([p.line2, p.line3, p.line4, p.line5, p.line6], [
@@ -213,6 +297,16 @@ for (const c of cases) {
         /<QBIDeductionInformationGrp>(.*?)<\/QBIDeductionInformationGrp>/gs,
       ),
     ].map((m) => m[1]);
+    if (c.phase !== undefined) {
+      assertStringIncludes(
+        prepared.bundle.xml,
+        `<PhaseInPct>${c.phase.toFixed(5)}</PhaseInPct>`,
+      );
+      assertStringIncludes(
+        prepared.bundle.xml,
+        "<FilingStatusThresholdCd>197300</FilingStatusThresholdCd>",
+      );
+    }
     const lossGroups = [
       ...prepared.bundle.xml.matchAll(
         /<LossNettingCarryforwardGrp>(.*?)<\/LossNettingCarryforwardGrp>/gs,
@@ -300,7 +394,7 @@ for (const c of cases) {
       assertEquals(origins.length, c.pages);
       assertEquals(
         origins.filter((x) => x.formKey === "form8995a").length,
-        count + 1,
+        count + 1 + (c.phase !== undefined && count === 3 ? 1 : 0),
       );
       assertEquals(
         origins.filter((x) => x.formKey === "form8995a_schedule_c").length,

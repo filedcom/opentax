@@ -22,6 +22,7 @@ import { CONFIG_BY_YEAR } from "../../../../../../nodes/config/index.ts";
 import {
   assertMfsSstbOwner,
   assertPatron1099PATRSource,
+  calculateLossBusinessPhase,
   calculateOneBusiness8995ALines,
   calculateOneSstb8995ALines,
   calculateOwnedWotcBusinesses,
@@ -573,8 +574,17 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     const lines = calculateScheduleCLossLines(fields);
     reconcileReturn(context, lines.parent.line39, fields);
     const parent = lines.parent;
+    const phases = lines.businessLines.map(({ parent }) =>
+      calculateLossBusinessPhase(
+        fields.taxable_income,
+        parent.line3,
+        parent.line10,
+      )
+    );
+    const phaseIn = phases.find((phase) => phase !== undefined);
     return elements("IRS8995A", [
-      ...lines.businessLines.map(({ business, parent }) => {
+      ...lines.businessLines.map(({ business, parent }, index) => {
+        const phase = phases[index];
         return elements("QBIDeductionInformationGrp", [
           elements("TradeOrBusinessName", [
             element("BusinessNameLine1Txt", business.business_name!),
@@ -604,9 +614,24 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
             parent.line13,
           ),
           element("QBIComponentAmt", parent.line15),
+          ...(phase !== undefined
+            ? [
+              element("QBI20PctLessGrtrAllcblShareAmt", phase.line19),
+              element("TotalPhaseInReductionAmt", phase.line25),
+              element("QBIAfterPhaseInReductionAmt", phase.line26),
+            ]
+            : []),
         ]);
       }),
       element("TotalQBIComponentAmt", parent.line16),
+      ...(phaseIn
+        ? [
+          element("FilingStatusThresholdCd", phaseIn.threshold),
+          element("TXIBfrQBIDedLessThresholdAmt", phaseIn.excess),
+          element("FilingStatusPhaseInRangeCd", phaseIn.range),
+          element("PhaseInPct", phaseIn.ratio.toFixed(5)),
+        ]
+        : []),
       element("QlfyREITDivPTPIncomeLossAmt", 0),
       element("PYQlfyREITDivPTPLossCfwdAmt", 0),
       element("TotQlfyREITDivPTPIncomeAmt", 0),
@@ -741,11 +766,15 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8995a: MefFormDescriptor<"form8995a", Input> = {
+export const form8995a = {
+  sourcePendingKeys: undefined,
+  buildAdditionalDocuments: undefined,
+  buildBinaryAttachments: undefined,
+
   pendingKey: "form8995a",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995a.pdf",
-  build(fields, context) {
+  build(fields: Input, context?: MefBuildContext) {
     return buildIRS8995A(fields, context);
   },
-};
+} satisfies MefFormDescriptor<"form8995a", Input>;

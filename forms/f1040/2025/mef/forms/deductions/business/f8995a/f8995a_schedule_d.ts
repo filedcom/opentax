@@ -11,7 +11,10 @@ import {
   inputSchema,
 } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import { validateOneBusiness } from "./f8995a.ts";
 
 type Input = Form8995AInput | readonly [];
@@ -107,14 +110,18 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8995aScheduleD: MefFormDescriptor<
-  "form8995a_schedule_d",
-  Input
-> = {
+export const form8995aScheduleD = {
+  sourcePendingKeys: undefined,
+  buildAdditionalDocuments: undefined,
+  buildBinaryAttachments: undefined,
+
   pendingKey: "form8995a_schedule_d",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995ad.pdf",
-  build(fields, context) {
+  build(fields: Input, context?: MefBuildContext) {
     return buildScheduleD(fields, context);
   },
-};
+} satisfies MefFormDescriptor<
+  "form8995a_schedule_d",
+  Input
+>;

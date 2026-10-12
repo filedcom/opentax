@@ -1,5 +1,67 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 current-loss phase-in and continuation checkpoint
+
+The ordinary Single current-loss route now applies the wage/property phase-in
+between taxable income197,300 and247,300, including the upper endpoint. Each
+positive business first absorbs its allocated loss, then uses its own wage and
+property limit. Only businesses whose limit is below20% of adjusted QBI need
+Part III. Native XML retains the business reduction and shared phase percentage;
+the PDF includes Part III on each continuation that needs it, with overall
+Part IV totals on the first copy only. This follows the
+[Form8995-A Part III instructions](https://www.irs.gov/instructions/i8995a).
+
+| Case | Pre-QBI taxable income | Phase | Business components | Deduction | Tax / refund | Pages |
+| --- | ---: | ---: | --- | ---: | --- | ---: |
+| Seven businesses, midpoint | 222,300 | 50% | 6 / 11 / 18 / 22 | 57 | 48,521 / 11,479 | 30 |
+| Four businesses, fractional | 222,251 | 49.902% | 18 / 40 | 58 | 48,504 / 11,496 | 21 |
+| Seven businesses, upper endpoint | 247,300 | 100% | 6 / 10 / 18 / 20 | 54 | 56,747 / 3,253 | 30 |
+
+The business inventories, loss allocations, wages and property amounts are the
+same as the preceding continuation checkpoint. Wage income is237,750/237,701/
+262,750 respectively; each return keeps net business income300 and withholding
+60,000. Additional Medicare tax340/339/565 and regular tax48,181/48,165/56,182
+reconcile independently to the final totals. The midpoint and upper-endpoint
+cases require Part III for both the second and fourth profitable businesses;
+the fractional case retains the printed49.902% and rounds its reduction to2.
+
+All three complete returns pass the local TY2025 v5.4 Return1040 XSD. All81
+flattened pages have zero fields/widgets and were reviewed through54 distinct
+images:28 new images on seven sheets plus26 matching prior-reviewed images by
+SHA256. Business identities, loss rows, phase reductions, final totals and
+continuation order reconcile with no observed clipping. Blank loss-business
+parent zeros and some Schedule C zero fields repeat existing deferred76.
+
+The focused typed replay passes3/0 and rejects12 native plus12 fresh-PDF
+mutations. It also reverses source order and verifies that projected identity
+changes cannot replace retained sources. Initial runs retained a compiler
+complexity failure and an incorrect test expectation that a refund return
+retains a zero amount-owed field; the latter was corrected without changing
+source amounts or calculated tax. Evidence is retained in
+`.state/research/form8995a-loss-phase-in-2026-10-12/`, including full packets,
+projections, XSD logs, commands, initial/final logs, render hashes and review.
+
+The final13-module batch passes **73 typed tests, zero failures or ignored**.
+The additional Schedule A/B/D and RPE batch has16 passes and four failures on
+the already deferred65 moved RPE fixture path; no path repair was made. The
+final replay's three PDFs and projections exactly match the reviewed artifacts;
+XML matches after excluding only ReturnTs. The intermediate no-check run also
+passed73 tests but is superseded by the final typed result.
+
+The baseline1d03b3f99 passes the matching compiler check. Initial implementations
+expanded the registry's optional-builder type union, producing TS2590 and one
+heap exhaustion. The five Form8995-A descriptors now retain their implemented
+members with `satisfies` and explicitly absent optional builders; Schedule B's
+binary attachments and optional call contexts remain supported. Part III uses
+a small shared numeric helper, preserving the prior loss-result type. Final
+type checks pass without disabling validation or increasing the heap. This is
+a local integration fix, not closure of deferred general compiler reliability.
+
+Single ownership, net QBI below400 and the existing ordinary active source
+checks remain; this extension removes the above-phaseout-only boundary.
+Other owners, positive SE allocations, prior accepted histories, source
+authenticity and IRS acceptance remain open. No deferred task was implemented.
+
 ## October 12 business-inventory continuation checkpoint
 
 The ordinary current-loss route now retains more than three identified
@@ -41,7 +103,8 @@ sources. No descriptor or field mapping was added.
 Evidence is retained in `.state/research/form8995a-loss-continuations-2026-10-12/`:
 inputs, pending/projections, full XML/PDF, XSD logs, grouped replay, render hashes
 and `visual-review.json`. The route still requires the reviewed Single,
-above-phaseout, ordinary active Schedule C source path with net QBI below400;
+above-phaseout, ordinary active Schedule C source path with net QBI below400
+at this checkpoint (the later phase-in checkpoint above extends its income range);
 prior losses, adjustments, owners, SE combinations, aggregation and patron routes
 retain their existing boundaries. The original all-loss filing guard remains
 deferred8. Wider source authenticity and IRS acceptance remain open.

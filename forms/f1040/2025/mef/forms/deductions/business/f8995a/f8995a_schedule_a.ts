@@ -8,7 +8,10 @@ import {
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -115,14 +118,18 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8995aScheduleA: MefFormDescriptor<
-  "form8995a_schedule_a",
-  Input
-> = {
+export const form8995aScheduleA = {
+  sourcePendingKeys: undefined,
+  buildAdditionalDocuments: undefined,
+  buildBinaryAttachments: undefined,
+
   pendingKey: "form8995a_schedule_a",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995aa--2025.pdf",
-  build(fields, context) {
+  build(fields: Input, context?: MefBuildContext) {
     return buildScheduleA(fields, context);
   },
-};
+} satisfies MefFormDescriptor<
+  "form8995a_schedule_a",
+  Input
+>;
