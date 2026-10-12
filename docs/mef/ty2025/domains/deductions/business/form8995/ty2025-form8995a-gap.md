@@ -1,5 +1,82 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 current losses with deductible self-employment tax
+
+Ordinary Schedule C current-loss inventories now retain positive owner-specific
+half-SE deductions before applying QBI loss netting. The new per-business review
+records gross-income attribution, the allocated deduction, complete owner inventory
+and workpaper provenance. Gross income is rebuilt from receipts, allowances, COGS
+and other business income. Cent shares use exact integer ratios and stable business
+references for residual ties. A loss business with gross income receives its share;
+spouses' deductions never cross owners. Existing ordinary positive-only allocation
+routes are unchanged and are separately recorded as deferred157.
+
+This ordering follows [26 CFR1.199A-3(b)(1)(vi)](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol4/pdf/CFR-2025-title26-vol4-sec1-199A-3.pdf)
+and the [Form8995-A loss-netting instructions](https://www.irs.gov/instructions/i8995a).
+The public graph retains raw Schedule C profit and the separate SE deduction;
+QBI rows reflect the deduction before proportional loss offsets and per-business
+wage/property limitations. Native and fresh-PDF exports rebuild source profits,
+owner SE and wage records, and reconcile Schedules1/2 and Form1040. Exempt trades,
+other SE sources, health/retirement adjustments and investment combinations remain
+outside this extension; existing prior-loss, SSTB, aggregation, cooperative and
+MFS property-regime boundaries continue to apply.
+
+All six cases have gross business income6,000/8,000/2,000/4,000 and net profits
+2,000/4,000/-1,000/-2,000. One-owner half-SE40 allocates12/16/4/8, yielding filed
+QBI1,988/3,984/-1,004/-2,008 and offsets1,003/2,009. The joint case assigns the
+first/third trades to T and second/fourth to S: SE taxes27/283 yield deductions
+14/142, allocated10.50/94.67/3.50/47.33. Filed QBI1,990/3,905/-1,004/-2,047 nets
+to960/1,884 after offsets1,030/2,021. A separate public calculation keeps T's
+deduction14 when S's loss makes combined profit-1,000, retaining QBI carry1,014;
+this remains QBI-stage evidence with a Form461 source-review diagnostic
+(deferred158), not a complete return or an additional packet. The existing
+zero-other-item review was not falsely asserted for the positive SE deduction.
+All businesses remain separately identified
+in both representations and continuation pages.
+
+| Case | Half-SE | QBI deduction | Final tax | Balance owed / (refund) | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Single high income | 40 | 150 | 71,023 | 11,023 | 23 |
+| Single 50% phase-in | 40 | 370 | 48,502 | (11,498) | 23 |
+| Joint two owners | 156 | 150 | 142,497 | 82,497 | 25 |
+| Head of household | 40 | 150 | 66,529 | 6,529 | 23 |
+| Surviving spouse | 40 | 150 | 51,813 | (8,187) | 23 |
+| Separate return | 40 | 150 | 71,698 | 11,698 | 23 |
+
+Independent decimal calculations apply the [2025 tax worksheet](https://www.irs.gov/instructions/i1040gi)
+and [Additional Medicare thresholds](https://www.irs.gov/instructions/i8959),
+including each filed SE line and owner deduction. All six final taxes and balances
+agree. The initial test draft corrected two hand-calculated expectations (phase
+370 and spouse SE283/half142); source cases and production tax calculations did
+not change. A one-dollar gross-income mutation legitimately preserved cent shares;
+the rejection probe now changes gross and offsetting expenses by1,000 to test a
+material attribution conflict without changing net profit.
+
+All six full returns pass local TY2025 v5.4 Return1040 XSD. All140 flattened pages
+have zero fields/widgets and were observed through61 unique images on16 sheets.
+Seven ScheduleSE copies, source owner/name/EIN, QBI amounts, phase-in, continuations
+and final tax reconcile without observed clipping. Deferred68 repeats in the joint
+Form8960 primary-only header and the separate Form1040 spouse row; deferred76
+repeats in blank zero fields. Neither presentation issue was repaired.
+
+The six focused typed cases pass and reject24 public-source,36 native and36
+fresh-PDF mutations. Additional allocation tests cover stable cent ties, source
+permutations, zero gross, subcent bases, exempt trades and missing owner sources.
+The19-module grouped gate passes203 typed tests, zero failures or ignored; the
+first attempt had199 passes and one missing-pdftotext environment failure. After
+correcting PATH, it passes unchanged. Final review then added net-loss deduction
+attribution and its guarded joint case; the final allocation/current-loss replay
+passes12 typed tests. All six final PDFs, inputs, filer records, projections and
+pending records are byte-identical to the reviewed packets; XML differs only in
+ReturnTs. Independent final-tax and native business-row audits also pass on the
+final replay.
+
+Evidence: `.state/research/form8995a-loss-se-2026-10-12/` retains public inputs,
+prepared pending/filer records, projections, XML/XSD logs, PDFs, independent tax
+arithmetic, image hashes and qualified visual review. This completes this SE-loss
+extension of the existing QBI task; broader parent readiness remains open.
+
+
 ## October 12 separate-return ordinary loss inventories
 
 MFS ordinary current-loss inventories now use taxpayer-owned businesses with

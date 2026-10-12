@@ -215,6 +215,19 @@ export const itemSchema = z.object({
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }).strict().optional(),
 
+  // Loss inventories attribute half-SE using gross income before QBI loss netting.
+  qbi_loss_se_tax_allocation_review: z.object({
+    deduction_amount: z.number().finite().nonnegative(),
+    allocation_method: z.literal(
+      "owner_gross_income_proportion_with_cent_residual",
+    ),
+    all_owner_businesses_included_confirmed: z.literal(true),
+    no_other_qbi_adjustments_confirmed: z.literal(true),
+    workpaper_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
+
   // Part I: Income
   line_1_gross_receipts: z.number().nonnegative(),
   line_2_returns_allowances: z.number().nonnegative().optional(),

@@ -1,3 +1,4 @@
+import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
 import { mefBusinessNameLine1 } from "../../../../../../mef/business-name.ts";
@@ -365,6 +366,11 @@ export function assertScheduleCLossSources(
     pending?.f1099b !== undefined
   ) {
     const retained = pending as Record<string, Record<string, unknown>>;
+    if (fields.loss_se_tax_source) {
+      throw Error(
+        "QBI loss SE investment combinations need complete adjustment reconciliation",
+      );
+    }
     const investment = assertMultiBusinessInvestmentSources(
       {
         ...fields,
@@ -436,6 +442,66 @@ export function assertScheduleCLossSources(
       );
     }
   }
+  const seDeduction = fields.loss_se_tax_source?.deduction ?? 0;
+  if (fields.loss_se_tax_source) {
+    const retained = pending as Record<string, Record<string, unknown>>;
+    const wages = pending?.w2 === undefined
+      ? []
+      : w2InputSchema.parse(pending.w2).w2s;
+    if (fields.filing_status === NodeFilingStatus.MFJ) {
+      const owned = assertOwnedScheduleSE(retained);
+      if (
+        !owned ||
+        JSON.stringify(fields.loss_se_tax_source.joint_se_source) !==
+          JSON.stringify(owned.source)
+      ) {
+        throw Error(
+          "QBI loss SE owner inventory differs from the retained return",
+        );
+      }
+    } else {
+      const owner = String(retained.general?.taxpayer_ssn ?? "").replaceAll(
+        "-",
+        "",
+      );
+      if (
+        !/^\d{9}$/.test(owner) ||
+        wages.some((w) => w.employee_ssn?.replaceAll("-", "") !== owner)
+      ) {
+        throw Error("QBI loss SE wages must belong to the actual proprietor");
+      }
+      const se = scheduleSELines({
+        net_profit_schedule_c: lines.businesses.reduce(
+          (sum, b) => sum + b.qbi,
+          0,
+        ),
+        w2_ss_wages: wages.reduce(
+          (sum, w) => sum + (w.box3_ss_wages ?? 0) + (w.box7_ss_tips ?? 0),
+          0,
+        ),
+      }, CONFIG_BY_YEAR[2025].ssWageBase);
+      if (
+        !se || se.line13 !== seDeduction ||
+        retained.schedule2?.line4_se_tax !== se.line12 ||
+        retained.schedule_se?.net_profit_schedule_c !== se.line3
+      ) {
+        throw Error(
+          "QBI loss deduction must replay the owner's Schedule SE and Schedule 2",
+        );
+      }
+    }
+    // Other self-employment sources need their own combined attribution route.
+    if (
+      (retained.schedule_se?.net_profit_schedule_f ?? 0) !== 0 ||
+      (retained.schedule_se?.unreported_tips_4137 ?? 0) !== 0 ||
+      (retained.schedule_se?.wages_8919 ?? 0) !== 0 ||
+      retained.schedule_se?.farm_optional_method_elected === true
+    ) {
+      throw Error(
+        "QBI loss SE allocation needs the complete Schedule C-only proprietor inventory",
+      );
+    }
+  }
   const schedule1 = z.object({
     line3_schedule_c: z.number(),
     line10_total_additional_income: z.number(),
@@ -460,7 +526,7 @@ export function assertScheduleCLossSources(
           form1040.data.line13_qbi_deduction +
           (form1040.data.line13b_additional_deductions ?? 0) !==
       fields.taxable_income ||
-    (schedule1.data.line15_se_deduction ?? 0) !== 0 ||
+    (schedule1.data.line15_se_deduction ?? 0) !== seDeduction ||
     (schedule1.data.line16_sep_simple ?? 0) !== 0 ||
     (schedule1.data.line17_se_health_insurance ?? 0) !== 0
   ) {

@@ -1,3 +1,4 @@
+import { lossSeSourceSchema, reviewedLossSeAllocations } from "./loss-se.ts";
 import {
   independentPatronSourceSchema,
   replayIndependentPatronSources,
@@ -328,6 +329,7 @@ export const inputSchema = z.object({
   ).length(2).optional(),
   sstb_filing_details: sstbFilingDetailsSchema.optional(),
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessSchema).optional(),
+  loss_se_tax_source: lossSeSourceSchema.optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
 });
 
@@ -924,7 +926,10 @@ export function calculateScheduleCLossLines(
       }
       ownerTotals[owner] += business.qbi;
     }
-    if (Object.values(ownerTotals).some((amount) => amount >= 400)) {
+    if (
+      !input.loss_se_tax_source &&
+      Object.values(ownerTotals).some((amount) => amount >= 400)
+    ) {
       throw new Error(
         "Form 8995-A loss owners must each remain below the reviewed SE threshold",
       );
@@ -951,9 +956,24 @@ export function calculateScheduleCLossLines(
       );
     }
   }
-  const positives = businesses.filter((business) => business.qbi > 0);
+  const seAllocations = input.loss_se_tax_source
+    ? reviewedLossSeAllocations(
+      businesses.map((b) => b.source_schedule_c),
+      input.filing_status,
+      input.loss_se_tax_source,
+    )
+    : businesses.map(() => 0);
+  const businessQbi = new Map(
+    businesses.map((
+      business,
+      i,
+    ) => [business, business.qbi - seAllocations[i]]),
+  );
+  const qbi = (business: ScheduleCLossBusiness): number =>
+    businessQbi.get(business)!;
+  const positives = businesses.filter((business) => qbi(business) > 0);
   const positive = positives[0];
-  const negatives = businesses.filter((business) => business.qbi < 0);
+  const negatives = businesses.filter((business) => qbi(business) < 0);
   const negative = negatives[0];
   // The source graph and Schedule 1 keep cents. Schedule C of Form 8995-A
   // files whole-dollar amounts for each identified trade or business.
@@ -961,27 +981,30 @@ export function calculateScheduleCLossLines(
     Math.sign(amount) * Math.round(Math.abs(amount));
   const sourceQbi = businesses.reduce((sum, business) => sum + business.qbi, 0);
   if (
-    Math.abs((input.qbi ?? 0) - sourceQbi) > 0.000001 ||
-    negatives.some((business) => roundedDollar(business.qbi) >= 0) ||
-    positives.some((business) => roundedDollar(business.qbi) <= 0)
+    Math.abs(
+        (input.qbi ?? 0) - sourceQbi +
+          (input.loss_se_tax_source?.deduction ?? 0),
+      ) > 0.000001 ||
+    negatives.some((business) => roundedDollar(qbi(business)) >= 0) ||
+    positives.some((business) => roundedDollar(qbi(business)) <= 0)
   ) {
     throw new Error(
       "Form 8995-A Schedule C needs sourced net QBI and nonzero whole-dollar business rows",
     );
   }
   const line3 = -negatives.reduce(
-    (sum, business) => sum + roundedDollar(business.qbi),
+    (sum, business) => sum + roundedDollar(qbi(business)),
     0,
   );
   const line4 = positives.reduce(
-    (sum, business) => sum + roundedDollar(business.qbi),
+    (sum, business) => sum + roundedDollar(qbi(business)),
     0,
   );
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
-    adjustedQbi >= 400 ||
+    (!input.loss_se_tax_source && adjustedQbi >= 400) ||
     (input.w2_wages ?? 0) !==
       businesses.reduce((sum, b) => sum + b.w2_wages, 0) ||
     (input.unadjusted_basis ?? 0) !==
@@ -1000,7 +1023,7 @@ export function calculateScheduleCLossLines(
   // Allocate filed loss proportionally, retaining every dollar. Largest
   // remainders get the residual; a stable source reference breaks exact ties.
   const allocations = positives.map((business) => {
-    const numerator = BigInt(line5) * BigInt(roundedDollar(business.qbi));
+    const numerator = BigInt(line5) * BigInt(roundedDollar(qbi(business)));
     const denominator = BigInt(line4);
     return {
       business,
@@ -1021,7 +1044,7 @@ export function calculateScheduleCLossLines(
   const businessLines = businesses.map((business) => {
     const loss = allocations.find((row) => row.business === business)?.amount ??
       0;
-    const line2 = Math.max(0, roundedDollar(business.qbi) - loss);
+    const line2 = Math.max(0, roundedDollar(qbi(business)) - loss);
     const line3 = Math.round(line2 * QBI_RATE);
     const line4 = line2 > 0 ? Math.round(business.w2_wages) : 0;
     const line5 = Math.round(line4 * W2_LIMIT_A_RATE);
@@ -1087,7 +1110,7 @@ export function calculateScheduleCLossLines(
       line6,
       rows: businessLines.map(({ business, loss, parent }) => ({
         name: business.business_name!,
-        line1a: roundedDollar(business.qbi),
+        line1a: roundedDollar(qbi(business)),
         line1b: loss,
         line1c: parent.line2,
       })),

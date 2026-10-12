@@ -650,7 +650,8 @@ function advancedFormOutput(
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
     if (
       sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
-      sstbQbi !== 0 || businessDeductions(input) !== 0 ||
+      sstbQbi !== 0 || sumField(input.se_health_insurance_deduction) !== 0 ||
+      sumField(input.retirement_plan_deduction) !== 0 ||
       sumField(input.qbi_from_schedule_c) !==
         input.schedule_c_qbi_businesses.reduce(
           (sum, business) => sum + business.qbi,
@@ -1077,7 +1078,12 @@ function advancedFormOutput(
     investment_interest_sources: input.investment_interest_sources,
     investment_dividend_sources: input.investment_dividend_sources,
     investment_dividend_totals: input.investment_dividend_totals,
-    qbi: nonSstbQbi - deductions * nonSstbShare,
+    // Current-loss inventories attribute the owner's deduction even when the
+    // combined businesses have a net loss (for example, different spouses).
+    qbi: nonSstbQbi - deductions *
+      (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)
+        ? 1
+        : nonSstbShare),
     w2_wages: sumField(input.w2_wages),
     unadjusted_basis: sumField(input.unadjusted_basis),
     sstb_qbi: sstbQbi - deductions * sstbShare,
@@ -1089,6 +1095,16 @@ function advancedFormOutput(
     ...(input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) &&
       {
         schedule_c_qbi_businesses: input.schedule_c_qbi_businesses,
+        ...(sumField(input.se_tax_deduction) > 0
+          ? {
+            loss_se_tax_source: {
+              deduction: sumField(input.se_tax_deduction),
+              ...(input.joint_se_source
+                ? { joint_se_source: input.joint_se_source }
+                : {}),
+            },
+          }
+          : {}),
         qbi_no_prior_loss_or_suspended_loss_confirmed:
           input.qbi_no_prior_loss_or_suspended_loss_confirmed,
       }),
@@ -1650,7 +1666,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
 
     if (
       input.agi === undefined && (input.schedule_c_qbi_businesses?.some(
-        (row) => row.source_schedule_c.qbi_se_tax_allocation_review,
+        (row) =>
+          row.source_schedule_c.qbi_se_tax_allocation_review ||
+          row.source_schedule_c.qbi_loss_se_tax_allocation_review,
       ) ||
         (input.schedule_c_qbi_businesses?.length === 1 &&
           input.investment_dividend_totals !== undefined))
