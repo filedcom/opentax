@@ -504,7 +504,14 @@ export const form8995aPdf: PdfFormDescriptor = {
           "Form 8995-A PDF MFS status differs from the final filer",
         );
       }
-      assertMfsSstbOwner(input, filer.primarySSN);
+      if (
+        !input.sstb_filing_details &&
+        input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)
+      ) {
+        calculateScheduleCLossLines(input);
+      } else {
+        assertMfsSstbOwner(input, filer.primarySSN);
+      }
     }
     if (
       input.filing_status === NodeFilingStatus.QSS &&

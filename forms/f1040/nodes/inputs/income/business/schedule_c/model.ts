@@ -106,6 +106,10 @@ export const itemSchema = z.object({
 
   // Section 199A information used when taxable income exceeds the QBI threshold.
   qbi_specified_service: z.boolean().optional(),
+  // Ordinary loss inventories use the same separate-income/property review as SSTBs.
+  qbi_mfs_loss_review: mfsSstbFilingReviewSchema.extend({
+    owner_ssn: z.string().regex(/^\d{9}$/),
+  }).optional(),
   qbi_w2_wages: z.number().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().nonnegative().optional(),
   qbi_zero_limit_inventory: zeroLimitInventorySchema.optional(),

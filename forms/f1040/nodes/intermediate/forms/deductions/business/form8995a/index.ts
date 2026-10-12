@@ -857,7 +857,13 @@ export function calculateScheduleCLossLines(
     );
   }
   if (
-    ![FilingStatus.Single, FilingStatus.MFJ, FilingStatus.HOH, FilingStatus.QSS]
+    ![
+      FilingStatus.Single,
+      FilingStatus.MFJ,
+      FilingStatus.MFS,
+      FilingStatus.HOH,
+      FilingStatus.QSS,
+    ]
       .includes(input.filing_status) ||
     input.taxable_income <=
       (input.filing_status === FilingStatus.MFJ
@@ -921,6 +927,27 @@ export function calculateScheduleCLossLines(
     if (Object.values(ownerTotals).some((amount) => amount >= 400)) {
       throw new Error(
         "Form 8995-A loss owners must each remain below the reviewed SE threshold",
+      );
+    }
+  }
+  if (input.filing_status === FilingStatus.MFS) {
+    const first = businesses[0].source_schedule_c.qbi_mfs_loss_review;
+    const shared = [
+      "owner_ssn",
+      "spouse_ssn",
+      "domicile_state",
+      "spouse_domicile_state",
+      "mailing_address_state",
+    ] as const;
+    if (
+      !first || businesses.some(({ source_schedule_c: source }) => {
+        const review = source.qbi_mfs_loss_review;
+        return !review || review.owner_ssn === review.spouse_ssn ||
+          shared.some((key) => review[key] !== first[key]);
+      })
+    ) {
+      throw new Error(
+        "MFS loss businesses need consistent separate-income, domicile and spouse deduction reviews",
       );
     }
   }

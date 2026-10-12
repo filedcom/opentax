@@ -240,6 +240,59 @@ export function assertOneBusinessReitSource(
   }
 }
 
+function assertMfsLossSources(
+  fields: Form8995AInput,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  filer?: FilerIdentity,
+): void {
+  if (fields.filing_status !== NodeFilingStatus.MFS) return;
+  const retained = pending as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+  const general = retained?.general;
+  const final = retained?.f1040;
+  const ssn = String(general?.taxpayer_ssn ?? "").replaceAll("-", "");
+  if (
+    !general || !final || !/^\d{9}$/.test(ssn) ||
+    general.filing_status !== NodeFilingStatus.MFS ||
+    final.filing_status !== NodeFilingStatus.MFS ||
+    String(final.taxpayer_ssn ?? "").replaceAll("-", "") !== ssn ||
+    general.mfs_spouse_itemizing !== false ||
+    final.mfs_spouse_itemizing !== false
+  ) {
+    throw new Error(
+      "MFS QBI losses require finalized separate return and spouse deduction facts",
+    );
+  }
+  for (const business of fields.schedule_c_qbi_businesses ?? []) {
+    const review = business.source_schedule_c.qbi_mfs_loss_review;
+    if (
+      !review || review.owner_ssn !== ssn ||
+      general.address_state !== review.mailing_address_state ||
+      String(general.spouse_ssn ?? "").replaceAll("-", "") !==
+        review.spouse_ssn ||
+      String(final.spouse_ssn ?? "").replaceAll("-", "") !==
+        review.spouse_ssn ||
+      (filer && (filer.address.state !== review.mailing_address_state ||
+        filer.spouse?.ssn.replaceAll("-", "") !== review.spouse_ssn))
+    ) {
+      throw new Error(
+        "MFS QBI loss review differs from actual owner, spouse or mailing address",
+      );
+    }
+  }
+  if (
+    pending?.w2 !== undefined &&
+    w2InputSchema.parse(pending.w2).w2s.some((w) =>
+      w.employee_ssn?.replaceAll("-", "") !== ssn
+    )
+  ) {
+    throw new Error(
+      "MFS QBI loss wages must belong to the reviewed separate-income owner",
+    );
+  }
+}
+
 export function assertScheduleCLossFiler(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -251,6 +304,8 @@ export function assertScheduleCLossFiler(
   ) return;
   const expected = fields.filing_status === NodeFilingStatus.MFJ
     ? HeaderFilingStatus.MarriedFilingJointly
+    : fields.filing_status === NodeFilingStatus.MFS
+    ? HeaderFilingStatus.MarriedFilingSeparately
     : fields.filing_status === NodeFilingStatus.HOH
     ? HeaderFilingStatus.HeadOfHousehold
     : fields.filing_status === NodeFilingStatus.QSS
@@ -272,6 +327,7 @@ export function assertScheduleCLossFiler(
       "Form 8995-A loss proprietor or filing status differs from the final filer",
     );
   }
+  assertMfsLossSources(fields, pending, filer);
   if (fields.filing_status === NodeFilingStatus.MFJ) {
     if (!assertOwnedScheduleSE(retained!, filer)) {
       throw new Error(
@@ -293,6 +349,7 @@ export function assertScheduleCLossSources(
     return;
   }
   const lines = calculateScheduleCLossLines(fields);
+  assertMfsLossSources(fields, pending);
   if (fields.filing_status === NodeFilingStatus.MFJ) {
     if (
       !assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>)
@@ -444,10 +501,9 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.HOH ||
       fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details &&
-      !(fields.filing_status !== NodeFilingStatus.MFS &&
-        fields.schedule_c_qbi_businesses?.some((business) =>
-          business.qbi < 0
-        )) &&
+      !(fields.schedule_c_qbi_businesses?.some((business) =>
+        business.qbi < 0
+      )) &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
         (fields.independent_patron_sources || fields.patron_business_source ||
           fields.single_schedule_c_source ||
@@ -480,7 +536,9 @@ function reconcileReturn(
       "Farm WOTC primary owner differs from actual return header",
     );
   }
-  assertMfsSstbOwner(fields, context.filer.primarySSN);
+  if (fields.sstb_filing_details) {
+    assertMfsSstbOwner(fields, context.filer.primarySSN);
+  }
   if (
     (fields.patron_filing_details?.source_1099patr
         .box6_section199ag_deduction ?? 0) > 0 &&

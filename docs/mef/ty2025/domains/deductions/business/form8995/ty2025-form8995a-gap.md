@@ -1,5 +1,67 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 separate-return ordinary loss inventories
+
+MFS ordinary current-loss inventories now use taxpayer-owned businesses with
+retained domicile, property-regime, separate-earnings and spouse-deduction reviews.
+Each business identifies its owner; common owner/spouse/domicile facts must agree
+across the inventory. Native and PDF exports join those facts to general inputs,
+Form1040, actual wage recipients and the final filer/address. An SSTB-only owner
+check no longer incorrectly rejects ordinary losses; SSTB validation remains in
+its own branch.
+
+This reuses the existing separate-income review schema rather than treating a
+mailing state as proof of property character. Mandatory community-property states,
+elected or retained community income, spouse-owned businesses and an itemizing
+spouse remain outside this path. The review follows the distinctions in
+[Publication555](https://www.irs.gov/publications/p555). Broader property allocations,
+source authenticity, positive SE adjustments and prior accepted losses remain open;
+each proprietor still must have net profit below400.
+
+| Case | Pre-QBI taxable income | Phase | QBI deduction | Final tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Colorado midpoint | 222,300 | 50% | 57 | 49,196 | 10,804 | 21 |
+| Alaska upper endpoint | 247,300 | 100% | 55 | 57,421 | 2,579 | 21 |
+| New York fractional | 222,301 | 50.002% | 57 | 49,196 | 10,804 | 21 |
+
+Each source contains four businesses with QBI1,000/2,000/-900/-1,800,
+proportional offsets900/1,800, adjusted positive QBI100/200, wages30/100 and
+zero UBIA. The [Form8995-A instructions](https://www.irs.gov/instructions/i8995a)
+use the nonjoint197,300 threshold and50,000 range for MFS. Independent decimal
+arithmetic applies the [1040 tax worksheet, Section C](https://www.irs.gov/instructions/i1040gi)
+(32% of taxable income less22,937), producing regular taxes48,181/56,181/48,181.
+The [Form8959 MFS threshold](https://www.irs.gov/instructions/i8959) is125,000;
+Additional Medicare tax1,015/1,240/1,015 reconciles all final taxes and refunds.
+All three original cases pass; no source amount was substituted to avoid a failure.
+
+All three full returns pass local TY2025 v5.4 Return1040 XSD. All63 flattened
+pages have zero fields/widgets and were reviewed through33 unique images:
+28 newly observed images on seven sheets plus five prior-reviewed SHA256 matches.
+Business identity, taxpayer ownership, loss rows, phase amounts and continuation
+order reconcile without observed clipping. Existing deferred68 repeats the
+spouse name in the joint-only Form1040 row and MFS field; deferred76 repeats
+blank zero fields. These qualifications remain deferred without repair.
+
+The focused typed replay passes3/0. It rejects18 public-source mutations and
+39 native plus39 fresh-PDF mutations, including spouse deduction conflicts,
+altered review facts propagated into both QBI companions, wage-recipient swaps
+and detached taxpayer/spouse/address headers. Reversed business inventories
+preserve the final tax. The initial run found a test-only assertRejects overload
+error, corrected by specifying Error without changing the cases.
+
+The expanded17-module QBI/Schedule C batch passes194 typed tests, zero failures
+or ignored. Final diff review tightened the PDF status condition to preserve the
+previous rejection of non-SSTB, non-loss MFS paths; only validated ordinary loss
+inventories bypass the SSTB-only owner assertion. The final MFS/SSTB rerun passes
+11 typed tests with zero failures or ignored. All three final PDFs, projections
+and pending records exactly match the reviewed artifacts; XML differs only in
+ReturnTs.
+
+Evidence: `.state/research/form8995a-mfs-losses-2026-10-12/` retains inputs,
+pending/filer records, projections, XML/XSD logs, actual PDFs, independent decimal
+tax arithmetic, render hashes and visual review. This advances the existing
+QBI source and owner task; it does not close the broader parent.
+
 ## October 12 joint, head-of-household and surviving-spouse losses
 
 The ordinary current-loss route now retains explicit taxpayer/spouse business
