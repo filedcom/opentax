@@ -958,9 +958,17 @@ export function calculateScheduleCLossLines(
     }
   }
   const wotcReductions = reviewedLossWotcReductions(businesses);
-  if (wotcReductions.size && (input.net_capital_gain ?? 0) !== 0) {
+  // Payroll reviews require zero qualified dividends; independently sourced
+  // capital gains still belong in the return-wide QBI income limitation.
+  if (
+    wotcReductions.size &&
+    ((input.investment_dividend_totals?.qualified ?? 0) !== 0 ||
+      input.qbi_capital_sources?.some((source) =>
+        source.source !== "schedule_d.net_capital_gain" && source.amount !== 0
+      ))
+  ) {
     throw Error(
-      "QBI loss WOTC needs its reviewed zero preferential-income source",
+      "QBI loss WOTC needs its reviewed zero qualified-dividend source",
     );
   }
   const seAllocations = input.loss_se_tax_source

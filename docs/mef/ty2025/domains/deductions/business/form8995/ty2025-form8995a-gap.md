@@ -1,5 +1,59 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 capital distributions with joint loss-employer credits
+
+The current-loss route now permits retained capital gains alongside employer
+WOTC. The former zero-preferential-income guard now checks the actual condition
+in the payroll review: zero qualified dividends. Positive qualified dividends
+remain rejected. Existing investment-source replay still binds payer, recipient,
+issued-copy amounts, capital contributions and the final tax worksheet; the
+payroll, proprietor and group-allocation checks remain intact.
+
+The [Form8995-A line34 instructions](https://www.irs.gov/instructions/i8995a)
+require capital gain in the income limitation, while the
+[Form5884 line2 instructions](https://www.irs.gov/instructions/i5884) reduce wage
+deductions by the determined credit. Four joint common-control returns now
+combine these rules with four business profits2,000/4,000/-1,000/-2,000,
+owned half-SE deductions14/142, interest1,700, ordinary dividends3,000 and
+capital distributions1,800. Two fund copies retain zero qualified dividends.
+The shared employee cap gives2,400 WOTC, allocated1,200 per employer.
+
+| Employer arrangement | QBI | Taxable income | Regular tax | Total tax | Balance |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Both loss-making | 150 | 577,694 | 140,927 | 142,259 | 82,259 |
+| Primary profitable / spouse loss | 292 | 577,552 | 140,878 | 142,210 | 82,210 |
+| Primary loss / spouse profitable | 427 | 577,417 | 140,830 | 142,162 | 82,162 |
+| Both loss-making / phase-in | 332 | 450,768 | 98,066 | 98,257 | 38,257 |
+
+Capital distributions receive15% treatment in these cases. The phase-in return
+has451,100 taxable income before QBI,56.5% phase-in and112/220 business
+components; line34 retains1,800, line35 is449,300 and line36 is89,860.
+All four have247 NIIT and zero AMT. An independent decimal ledger checks
+regular tax using [2025 tax computation offsets](https://www.irs.gov/publications/p1040),
+AMT preferential tax, SE/additional Medicare, credit use and balance against
+native XML. Source order reversal preserves the result and prepares natively.
+
+The focused typed suite passes4/0 (57s); the related ordinary/group WOTC and
+investment regression passes17/0 (3m46s). It rejects16 public-source mutations
+and60 native/60 fresh-PDF mutations, including a small payroll mismatch that
+leaves rounded credit shares unchanged. Those four small changes have no
+calculation diagnostic but both exporters reject the issued-wage mismatch.
+All four full returns pass local TY2025v5.4 XSD.
+
+The160-page qualified review uses30 newly observed images on eight contact
+sheets,128 exact prior-image matches and two within-batch duplicates. All
+reopened PDFs have zero fields/widgets. Group allocation page31 retains both
+employers and their1,200 shares; native statement references reconcile.
+Existing26/68/76/84 qualifications recur: skipped Form3800 SectionB amounts,
+joint Form6251 primary-only name, blank required zeros and omitted native6251
+line1a. No new layout issue or deferred repair is recorded.
+
+Evidence: `.state/research/form8995a-group-capital-2026-10-12/` retains the
+original four calculation/export blocks, unchanged source inputs, prepared
+packets, independent arithmetic, image mappings and test logs. Synthetic source
+joins do not authenticate issued records; wider qualified-dividend and other
+QBI combinations and the broad main-board parent remain open.
+
 ## October 12 unequal cent payroll in loss-employer groups
 
 Four additional joint common-control packets retain unequal employer payroll
