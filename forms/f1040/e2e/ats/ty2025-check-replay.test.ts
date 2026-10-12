@@ -44,7 +44,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   }
   assertEquals(report.denominator, 90);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 233);
+  assertEquals(ledger.count, 313);
   assertEquals(ledger.byKind, {
     calculation: {
       count: 90,
@@ -57,6 +57,10 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     "binary-attachment": {
       count: 2,
       counts: { missing: 1, "not-evaluated": 1 },
+    },
+    "native-w2-value": {
+      count: 80,
+      counts: { match: 30, "not-evaluated": 50 },
     },
     "native-value": {
       count: 85,

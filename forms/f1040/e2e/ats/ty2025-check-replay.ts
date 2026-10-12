@@ -1,3 +1,8 @@
+import {
+  ATS_W2_TARGETS,
+  compareAtsW2Values,
+  type W2Target,
+} from "./ty2025-w2-value-coverage.ts";
 import { compareAtsNativeValues } from "./ty2025-native-value-coverage.ts";
 import { compareAtsAttachments } from "./ty2025-attachment-coverage.ts";
 import { assertPreparedAttachmentManifest } from "../../2025/mef/attachments/prepared-attachment-manifest.ts";
@@ -458,11 +463,13 @@ export enum PreparationResult {
 async function replayPreparation(
   execution: ReturnType<typeof f1040_2025.executeReturn>,
   targets: z.infer<typeof targetSchema>[],
+  w2Targets: readonly W2Target[],
 ) {
   if (execution.diagnostics.some((d) => d.severity === "error")) {
     return {
       result: PreparationResult.GraphBlocked,
       nativeValueCoverage: compareAtsNativeValues(null, targets),
+      w2ValueCoverage: compareAtsW2Values(null, w2Targets),
       documentRoots: [],
       attachments: null,
       reason: "Resolve graph diagnostics before preparation",
@@ -477,6 +484,7 @@ async function replayPreparation(
     return {
       result: PreparationResult.PartialPrepared,
       nativeValueCoverage: compareAtsNativeValues(prepared.bundle.xml, targets),
+      w2ValueCoverage: compareAtsW2Values(prepared.bundle.xml, w2Targets),
       attachments: prepared.bundle.attachments.map((attachment) => ({
         description: attachment.description,
         fileName: attachment.fileName,
@@ -495,6 +503,7 @@ async function replayPreparation(
     return {
       result: PreparationResult.NativeBlocked,
       nativeValueCoverage: compareAtsNativeValues(null, targets),
+      w2ValueCoverage: compareAtsW2Values(null, w2Targets),
       documentRoots: [],
       attachments: null,
       reason: String(error),
@@ -510,7 +519,11 @@ export async function replayAtsChecks() {
         throw new Error(`Missing ATS source/input ${scenario.id}`);
       }
       const execution = f1040_2025.executeReturn(factory());
-      const preparation = await replayPreparation(execution, scenario.targets);
+      const preparation = await replayPreparation(
+        execution,
+        scenario.targets,
+        ATS_W2_TARGETS[scenario.id] ?? [],
+      );
       return {
         id: scenario.id,
         sourceUrl: source.sourceUrl,

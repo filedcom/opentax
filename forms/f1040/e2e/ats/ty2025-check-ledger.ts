@@ -4,7 +4,12 @@ type Replay = Awaited<ReturnType<typeof replayAtsChecks>>;
 export interface LedgerRow {
   id: string;
   scenario: string;
-  kind: "calculation" | "document-copy" | "binary-attachment" | "native-value";
+  kind:
+    | "calculation"
+    | "document-copy"
+    | "binary-attachment"
+    | "native-value"
+    | "native-w2-value";
   result: string;
   basis: string;
   sourceUrl: string;
@@ -37,6 +42,18 @@ export function buildAtsCheckLedger(report: Replay) {
         kind: "native-value",
         result: c.result,
         basis: `${c.basis}: ${c.sourceLocation}; XML ${c.root}/${c.field}`,
+        expected: c.expected,
+        actual: c.actual,
+      });
+    }
+    for (const c of s.preparation.w2ValueCoverage.rows) {
+      rows.push({
+        ...common,
+        id: `${s.id}:native-w2-value:page${c.sourcePage}:${c.field}`,
+        kind: "native-w2-value",
+        result: c.result,
+        basis:
+          `Issued W-2 page ${c.sourcePage}, ${c.employerName}; XML IRSW2/${c.field}`,
         expected: c.expected,
         actual: c.actual,
       });
@@ -92,6 +109,7 @@ export function buildAtsCheckLedger(report: Replay) {
       "document-copy",
       "binary-attachment",
       "native-value",
+      "native-w2-value",
     ] as const).map(
       (kind) => {
         const selected = rows.filter((r) => r.kind === kind);
