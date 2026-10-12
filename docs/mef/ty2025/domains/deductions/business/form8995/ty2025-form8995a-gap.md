@@ -1,5 +1,44 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 unequal cent payroll in loss-employer groups
+
+Four additional joint common-control packets retain unequal employer payroll
+of4,000.49/3,000.52 for the same reviewed worker. Under the
+[Form5884 group allocation instructions](https://www.irs.gov/instructions/i5884),
+the shared6,000 wage cap still gives credit2,400. Proportionate whole-dollar
+shares are1,371/1,029, leaving deductible/QBI wages2,629.49/1,971.52.
+Gross receipts and reviewed nonpayroll expenses preserve the four business
+profits2,000/4,000/-1,000/-2,000 and owner half-SE deductions14/142.
+
+Both-loss employers, profitable primary/loss spouse, loss primary/profitable
+spouse and joint phase-in retain QBI150/292/427/359 and total tax
+140,097/140,048/140,000/96,227, respectively. A profitable employer's filed
+wage base is2,629 and its50% limit1,315; loss-employer payroll contributes zero
+after loss netting. This follows the [Form8995-A ScheduleC note](https://www.irs.gov/instructions/i8995a).
+The credit shares conserve the full2,400 despite unequal cents and source order.
+
+The common-control fixtures now use one shared test helper. All four original
+inputs deep-compare equal to the preceding retained packet sources; production
+calculation and export code are unchanged. New tests also reverse businesses,
+employees, group members and filed-member reviews together, then prepare native
+returns with the same final tax. Public mutations cover payroll, issued W-2,
+net wages and ownership; retained mutations also cover credit shares, employee
+identity, certification and statement members.
+
+The two-module typed gate passes8/0 (1m51s), including all four original group
+cases. New cases reject16 public mutations and32 native/32 fresh-PDF mutations.
+All four new returns pass local TY2025 v5.4 XSD and independent final-tax checks.
+Decimal share audits agree with both linked native allocation statements.
+The152-page review uses14 newly observed images on four contact sheets,
+130 exact previously observed image matches and eight within-batch duplicates.
+Reopened PDFs have zero fields/widgets. Existing26/68/76/84 qualifications
+remain; no new layout issue was found and prior packet totals are not recounted.
+
+Evidence is retained under
+`.state/research/form8995a-group-loss-cents-2026-10-12/`. Synthetic source joins
+remain distinct from issued payroll/ownership proof; wider combinations and
+parent completion remain open, and no deferred item is repaired.
+
 ## October 12 joint common-control employers with current losses
 
 Native and PDF exports now accept the reviewed two-member joint common-control
