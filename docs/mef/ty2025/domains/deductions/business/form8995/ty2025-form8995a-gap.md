@@ -1,5 +1,67 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 loss-making employer payroll and WOTC
+
+The reviewed current-loss route now retains WOTC payroll on a business with
+negative QBI. Its wage-credit reduction still changes ScheduleC profit and the
+owner's SE basis, but its wages contribute zero to the parent QBI limitation.
+This follows the [Form8995-A ScheduleC column(c) note](https://www.irs.gov/instructions/i8995a):
+W-2 wages and qualified-property basis must be zero for a business whose
+adjusted QBI is zero or negative. No wage allowance transfers to another trade.
+Unreviewed loss-business payroll and nonzero loss-business UBIA remain guarded.
+
+Eight public cases retain four businesses with profits2,000/4,000/-1,000/-2,000.
+The primary loss employer has gross6,000, raw payroll6,000, WOTC2,400,
+deductible wages3,600 and expenses3,400. Its ordinary single-owner half-SE
+allocation is10/13.33/10/6.67, giving filed QBI1,990/3,987/-1,010/-2,007.
+Loss offsets1,004/2,013 yield adjusted QBI986/1,974. Native and PDF parent wages
+are100/200/0/0 and wage limits50/100/0/0, despite the retained employer wages3,600.
+
+The joint primary-employer allocation7/94.67/7/47.33 gives adjusted QBI961/1,883.
+The spouse-employer variant moves reviewed payroll to the fourth business:
+gross6,000 minus wages3,600 and expenses4,400 gives loss2,000. Its proprietor
+allocation10.50/81.14/3.50/60.86 gives adjusted QBI958/1,886. Both owner cases
+retain separate SE computations and the same independent wage limits.
+
+| Case | QBI | Regular tax | WOTC used | Total tax | Owed / (refund) | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single above range | 150 | 70,018 | 2,400 | 68,623 | 8,623 | 35 |
+| Single limited credit | 150 | 70,018 | 58,763 | 12,260 | (47,740) | 35 |
+| Single phase-in | 370 | 48,081 | 2,400 | 46,102 | (13,898) | 35 |
+| Joint primary employer | 150 | 139,012 | 2,400 | 140,097 | 80,097 | 37 |
+| Joint spouse employer | 150 | 139,012 | 2,400 | 140,097 | 80,097 | 37 |
+| Head of household | 150 | 65,524 | 2,400 | 64,129 | 4,129 | 35 |
+| Qualifying surviving spouse | 150 | 50,808 | 2,400 | 49,413 | (10,587) | 35 |
+| Married filing separately | 150 | 70,018 | 2,400 | 69,298 | 9,298 | 35 |
+
+The limited-use loss employer pays480,000 to80 reviewed workers, generating
+WOTC192,000 and deductible wages288,000. Gross310,000 and expenses23,000 still
+produce loss1,000. Deduction shares.73/.98/37.80/.49 precede loss netting.
+All288,000 retained QBI wages are excluded from the loss business's wage limit;
+current credit use58,763 does not replace the full192,000 wage reduction.
+
+The nine-module typed regression passes74/0 (6m58s); the focused suite passes
+8/0 (2m6s), with48 public diagnostic rejections and
+96 native/96 fresh-PDF mutation rejections. Independent decimal calculations
+reconcile all eight final taxes, credits and balances; native audits verify
+four business identities, QBI/loss allocations and zero loss-employer wage
+limitations. All eight complete returns pass the local TY2025 v5.4 XSD.
+All284 packet pages were reviewed:45 new unique images on12 contact sheets,
+212 exact matches to previously observed images and27 within-batch duplicates.
+Reopened PDFs contain zero fields/widgets. Existing qualifications26/68/76/84
+recur (Form3800 skipped values, joint/MFS names, blank QBI zeros and native
+Form6251 line1a omission); no new layout defect was found. Final native audits
+independently agree on Form1040, Form5884 and current Form3800 amounts.
+The initial test draft used the wrong spouse identity property and failed type
+checking; it was corrected before the successful typed run.
+
+Evidence is retained in `.state/research/form8995a-loss-employer-2026-10-12/`.
+The initial source replay documents the previous blanket payroll rejection.
+Synthetic source joins do not authenticate employer W-2s or SWA certifications.
+Controlled groups, wider payroll methods and the broad parent TODO remain open;
+no deferred defect was repaired and no IRS acceptance is claimed.
+
+
 ## October 12 employer WOTC with ordinary current losses
 
 Reviewed employer payroll now coexists with the ordinary multi-business loss

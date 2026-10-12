@@ -959,7 +959,9 @@ export function calculateScheduleCLossLines(
   }
   const wotcReductions = reviewedLossWotcReductions(businesses);
   if (wotcReductions.size && (input.net_capital_gain ?? 0) !== 0) {
-    throw Error("QBI loss WOTC needs its reviewed zero preferential-income source");
+    throw Error(
+      "QBI loss WOTC needs its reviewed zero preferential-income source",
+    );
   }
   const seAllocations = input.loss_se_tax_source
     ? reviewedLossSeAllocations(
@@ -1015,7 +1017,11 @@ export function calculateScheduleCLossLines(
       businesses.reduce((sum, b) => sum + b.w2_wages, 0) ||
     (input.unadjusted_basis ?? 0) !==
       businesses.reduce((sum, b) => sum + b.ubia, 0) ||
-    negatives.some((business) => business.w2_wages !== 0 || business.ubia !== 0)
+    negatives.some((business) =>
+      business.ubia !== 0 ||
+      (business.w2_wages !== 0 &&
+        !wotcReductions.has(business.business_reference!))
+    )
   ) {
     throw new Error(
       "Form 8995-A Schedule C bounded route needs sourced net QBI below the Schedule SE threshold and no negative-business limitation amount",
