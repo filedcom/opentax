@@ -1,5 +1,65 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 broker gains and capital-loss boundary audit
+
+Three source-backed cases now retain complete broker-gain evidence alongside
+current business losses and deductible SE tax: Single phase-in, joint two-owner
+and MFS. Two taxpayer-owned covered sales add a2,000 long-term gain and1,000
+short-term loss to1,800 capital distributions. ScheduleD combines long-term3,800
+and short-term-1,000 to2,800; qualified dividends1,800 produce a4,600 QBI capital
+limit. All investment copies belong to the primary filer. Existing gross-income
+SE allocation and four identified business loss rows remain unchanged.
+
+| Case | QBI deduction | Regular tax | NIIT | Total tax | Owed / (refund) | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single phase-in gain | 304 | 49,720 | 285 | 50,426 | (9,574) | 26 |
+| Joint two-owner gain | 150 | 140,717 | 285 | 144,487 | 84,487 | 28 |
+| Separate-return gain | 150 | 71,723 | 285 | 73,688 | 13,688 | 26 |
+
+Independent decimal calculations recompute source gains, preferential income,
+filing-status tax, QBI phase-in, NIIT and balances. Single pre-QBI taxable229,800
+produces65% phase-in and components101/203. These three cases agree through
+Form1040 and native tax. The focused typed suite passes3 tests, rejecting12
+public business-source mutations plus51 native and51 fresh-PDF mutations;
+additional broker mutations cover recipient, reused transaction ID, basis and
+wash-sale adjustment. The five-module grouped gate passes182 typed tests, zero
+failures or ignored (1m33s), covering both recent QBI suites, distinct capital
+sources, ScheduleD and Form8960. The MFS loss probe also rejects through both native and
+fresh-PDF export with the explicit finalized-ScheduleD mismatch.
+
+The six-case audit preserves the negative cases as entered. A5,000 long-term
+loss,1,000 short-term gain and1,800 distributions produce net loss2,200. The
+Single and joint cases calculate QBI349/150 and regular tax48,581/139,527
+correctly, but ScheduleD sends only positive capital income to Form8960.
+Consequently both native/PDF packets report NIIT179 rather than95: final tax
+49,181/143,191 instead of49,097/143,107. The [Form8960 line5a instructions](https://www.irs.gov/instructions/i8960)
+require the Form1040 capital gain or loss; these ordinary investment sales have
+no excluded-property adjustment. This is deferred159, with original incorrect
+outputs retained, not an approved tax result.
+
+The MFS loss case omits filing status from retained public ScheduleD input,
+using the ordinary3,000 loss limit instead of the required1,500 limit in the
+[ScheduleD instructions](https://www.irs.gov/instructions/i1040sd). Public AGI
+305,460 should be306,160; after also correcting NIIT, final tax should be72,580.
+Both final export routes already reject the ScheduleD/Form1040 mismatch, so no
+MFS loss packet is counted. This is deferred160. Neither new defect was repaired.
+
+Five complete returns pass local TY2025 v5.4 XSD: three tax-reconciled gain
+packets/80 pages and two incorrect-NIIT loss packets/54 pages. All134 flattened
+pages were reopened with zero fields/widgets and observed:36 new unique images
+on9 sheets,92 exact matches to the prior observed investment batch and6 duplicate
+pages within this batch. No clipping was observed. Existing deferred15 repeats
+in missing native ScheduleD totals/conditional indicators; deferred68 repeats in
+joint primary-only ScheduleB/ScheduleD headers and the MFS spouse row; deferred76
+repeats in blank zero QBI/business fields. Structural success does not resolve
+those native/presentation qualifications or the two tax discrepancies.
+
+Evidence: `.state/research/form8995a-loss-brokers-2026-10-12/` retains six original
+inputs/pending records, five XML/PDF packets, the MFS rejection, independent
+expected-versus-actual arithmetic, native ScheduleD observations, page hashes and
+qualified visual review. No production runtime changed in this audit. Wider QBI
+conditional routes, external authenticity and IRS acceptance remain open.
+
 ## October 12 current losses, SE deductions and investment income
 
 The current-loss export now reconciles retained owner SE deductions when the
