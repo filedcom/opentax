@@ -1,5 +1,53 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 joint common-control employers with current losses
+
+Native and PDF exports now accept the reviewed two-member joint common-control
+WOTC inventory alongside current QBI losses. The former blanket group rejection
+is replaced by complete employer-name/EIN, proprietor, business-reference and
+filed-member reconciliation. Shared employee references are joined by employer
+EIN as well, preserving distinct W-2, SSA, certification and payroll records.
+The existing group calculator still applies the shared-worker wage cap and
+allocates the credit before the business wage reductions and QBI calculation.
+
+The [Form5884 group instructions](https://www.irs.gov/instructions/i5884) treat
+common-control businesses as one employer and require proportionate credit
+shares and an allocation statement. Each synthetic employer here pays4,000 to
+the same reviewed worker. The6,000 group wage cap gives total credit2,400,
+allocated1,200 per member; each deducts2,800 wages. The same four-business
+profits2,000/4,000/-1,000/-2,000, owned SE deductions14/142 and gross-income
+allocations from the ordinary joint checkpoint remain intact. Lower payroll
+and corresponding nonpayroll expenses preserve those independently reviewed
+profits without changing loss netting.
+
+| Employer arrangement | QBI | Positive-business wage limits | Group credit | Total tax | Owed |
+| --- | ---: | --- | ---: | ---: | ---: |
+| Both loss-making | 150 | 50 / 100 | 2,400 | 140,097 | 80,097 |
+| Primary profitable, spouse loss | 292 | 1,400 / 100 | 2,400 | 140,048 | 80,048 |
+| Primary loss, spouse profitable | 427 | 50 / 1,400 | 2,400 | 140,000 | 80,000 |
+| Both loss-making, joint phase-in | 359 | 50 / 100 | 2,400 | 96,227 | 36,227 |
+
+The group source must include exactly both filed ScheduleC employers and their
+matching joint ownership review. Nonjoint groups, incomplete membership,
+external member shares and unsupported source combinations remain guarded.
+Synthetic records prove calculation and source joins, not issued certifications
+or authenticated ownership. No deferred work is implemented and the broad
+Forms8995/8995-A parent remains open.
+
+The six-module typed regression passes32/0 (7m15s); the focused suite passes
+4/0 (57s), with32 public-source rejections and
+44 native/44 fresh-PDF mutation rejections. Independent decimal calculations
+reconcile all four final taxes and native QBI/wage limits. Each full return
+passes TY2025 v5.4 XSD, including both linked native group statements. Member
+names, qualified wages3,000 each, credit shares1,200 each and document IDs agree.
+The152-page review comprises17 newly observed images on five contact sheets,
+122 exact prior-image matches and13 within-batch duplicates. Reopened PDFs
+have zero fields/widgets. Printed page30 contains the complete group allocation;
+existing26/68/76/84 presentation qualifications recur without a new layout issue.
+
+Evidence: `.state/research/form8995a-group-loss-wotc-2026-10-12/` retains the
+valid-source pre-change export rejection, post-change replay and filing packets.
+
 ## October 12 independent joint employers with current losses
 
 Four complete-return cases now verify both spouses' ordinary employer WOTC

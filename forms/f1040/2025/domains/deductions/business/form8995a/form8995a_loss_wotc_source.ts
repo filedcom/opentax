@@ -43,7 +43,9 @@ export function assertLossWotcSources(
     b.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
   );
   if (
-    !employers.length || wotc.controlled_group ||
+    !employers.length ||
+    (wotc.controlled_group &&
+      !wotc.controlled_group.joint_filed_members_review) ||
     wotc.subject_to_passive_activity_limit !== false ||
     lines.line3 !== 0 ||
     lines.line2 !== [...reductions.values()].reduce((a, b) => a + b, 0) ||
@@ -71,7 +73,30 @@ export function assertLossWotcSources(
       "QBI loss WOTC credit, complete payroll and retained business reductions disagree",
     );
   }
-  if (employers.length > 1) {
+  if (wotc.controlled_group) {
+    const group = wotc.controlled_group;
+    const members = group.joint_filed_members_review!.members;
+    if (
+      general.filing_status !== "mfj" || employers.length !== 2 ||
+      group.members.length !== employers.length ||
+      members.length !== employers.length ||
+      group.members.some((m) =>
+        !employers.some((e) =>
+          e.ein === m.ein && e.business_name === m.business_name
+        )
+      ) ||
+      members.some((m) =>
+        !employers.some((e) =>
+          e.ein === m.ein && e.business_reference === m.business_reference &&
+          e.source_schedule_c.proprietor_recipient === m.proprietor_recipient &&
+          e.source_schedule_c.qbi_wotc_filing_review?.owner_ssn ===
+            m.proprietor_ssn
+        )
+      )
+    ) {
+      throw Error("QBI loss WOTC needs complete matching joint group members");
+    }
+  } else if (employers.length > 1) {
     const control = wotc.ordinary_joint_employer_control_review;
     if (
       general.filing_status !== "mfj" || !control ||
@@ -113,7 +138,8 @@ export function assertLossWotcSources(
   for (const employee of wotc.f5884s) {
     const matches = employers.filter((b) =>
       b.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
-        .some((r) => r.employee_reference === employee.employee_reference)
+        .some((r) => r.employee_reference === employee.employee_reference) &&
+      (!wotc.controlled_group || b.ein === employee.employer_ein)
     );
     if (matches.length !== 1) {
       throw Error(
