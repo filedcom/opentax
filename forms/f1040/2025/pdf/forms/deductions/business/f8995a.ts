@@ -1,3 +1,4 @@
+import { StandardFonts } from "pdf-lib";
 import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import { calculateIndependentPatronBusinesses } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { patronProprietorSsn } from "../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
@@ -19,6 +20,7 @@ import {
   calculateOneSstb8995ALines,
   calculateOwnedWotcBusinesses,
   calculateScheduleCLossLines,
+  type Form8995AInput,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import {
@@ -272,27 +274,7 @@ export function projectOneBusiness8995A(
         "Form 8995-A PDF Schedule C line 39 differs from Form 1040 line 13",
       );
     }
-    const first = lines.businessLines.find((row) =>
-      row.business === lines.positive
-    ) ??
-      lines.businessLines[0];
-    const rows = [first, ...lines.businessLines.filter((row) => row !== first)];
-    return {
-      ...lines.parent,
-      ...Object.fromEntries(rows.flatMap(({ business, parent }, index) => {
-        const suffix = ["", "_b", "_c"][index];
-        return [
-          [`business_name${suffix}`, business.business_name],
-          [`business_ein${suffix}`, business.ein],
-          ...Object.entries(parent).map((
-            [key, value],
-          ) => [`${key}${suffix}`, value]),
-        ];
-      })),
-      line27: lines.parent.line16,
-      // This validated Schedule C route excludes REIT/PTP income and losses.
-      line40: 0,
-    };
+    return projectLossParentCopies(input)[0];
   }
 
   if (
@@ -399,6 +381,43 @@ export function projectOneBusiness8995A(
   };
 }
 
+function projectLossParentCopies(
+  input: Form8995AInput,
+): Record<string, unknown>[] {
+  const lines = calculateScheduleCLossLines(input);
+  const first =
+    lines.businessLines.find((row) => row.business === lines.positive) ??
+      lines.businessLines[0];
+  const rows = [first, ...lines.businessLines.filter((row) => row !== first)];
+  const copies: Record<string, unknown>[] = [];
+  for (let start = 0; start < rows.length; start += 3) {
+    copies.push({
+      ...(start === 0
+        ? { ...lines.parent, line27: lines.parent.line16, line40: 0 }
+        : {}),
+      ...Object.fromEntries(
+        rows.slice(start, start + 3).flatMap(({ business, parent }, index) => {
+          const suffix = ["", "_b", "_c"][index];
+          return [
+            [`business_name${suffix}`, business.business_name],
+            [`business_ein${suffix}`, business.ein],
+            ...Object.entries(parent).map((
+              [key, value],
+            ) => [`${key}${suffix}`, value]),
+          ];
+        }),
+      ),
+      qbi_loss_continuation: start > 0,
+      qbi_loss_page_note: rows.length > 3
+        ? `Form 8995-A business details ${start + 1}-${
+          Math.min(start + 3, rows.length)
+        } of ${rows.length}; totals on first form`
+        : undefined,
+    });
+  }
+  return copies;
+}
+
 export const form8995aPdf: PdfFormDescriptor = {
   pendingKey: "form8995a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995a--2025.pdf",
@@ -408,6 +427,18 @@ export const form8995aPdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields: projectOneBusiness8995A,
+  pageIndices: (instance) =>
+    instance.qbi_loss_continuation === true ? [0] : [0, 1],
+  async decoratePages(document, pages, instance) {
+    if (typeof instance.qbi_loss_page_note !== "string") return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    pages[0].drawText(instance.qbi_loss_page_note, {
+      x: 40,
+      y: 9,
+      size: 8,
+      font,
+    });
+  },
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     // The builder passes projected print fields here; validate owner and
@@ -456,6 +487,13 @@ export const form8995aPdf: PdfFormDescriptor = {
         );
       }
       return [projectStagedAggregatedParentPdf(input, filer, allPending)];
+    }
+    if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
+      if (!allPending) {
+        throw new Error("Form 8995-A loss copies need retained return sources");
+      }
+      projectOneBusiness8995A(allPending.form8995a, allPending);
+      return projectLossParentCopies(input);
     }
     return [raw];
   },

@@ -804,12 +804,12 @@ export function calculateScheduleCLossLines(
   const businesses = input.schedule_c_qbi_businesses;
   if (
     !businesses ||
-    (businesses.length < 1 || businesses.length > 3) ||
+    businesses.length < 1 ||
     !businesses.some((business) => business.qbi < 0) ||
     businesses.some((business) => business.qbi === 0)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs one to three identified businesses with a loss",
+      "Form 8995-A Schedule C bounded route needs identified businesses with a loss",
     );
   }
   if (

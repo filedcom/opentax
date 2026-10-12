@@ -1,5 +1,51 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 business-inventory continuation checkpoint
+
+The ordinary current-loss route now retains more than three identified
+businesses through calculation, native XML and the complete PDF. Parent
+continuations print business identity and Part II columns in groups of three;
+the first copy alone retains overall totals and Part IV. Schedule C similarly
+prints every loss-netting row, with totals only on its first copy. Footer row
+ranges identify each continuation. The [Form8995-A instructions](https://www.irs.gov/instructions/i8995a)
+require additional business detail beyond three rows; the native business and
+loss-netting groups permit unbounded repeats.
+
+| Case | Positive QBI | Current losses | Adjusted positive QBI | Components | Deduction | Packet pages |
+| --- | --- | --- | --- | --- | ---: | ---: |
+| Four businesses | 1,000 / 2,000 | 900 / 1,800 | 100 / 200 | 15 / 40 | 55 | 21 |
+| Seven businesses | 1,000 / 2,000 / 3,000 / 4,000 | 1,900 / 2,800 / 5,000 | 30 / 60 / 90 / 120 | 6 / 10 / 18 / 20 | 54 | 29 |
+
+Both source-backed synthetic returns retain wages300,000, net business income300,
+AGI300,300, Additional Medicare tax900, total tax70,021 and amount owed10,021.
+The four-business case uses wages30/100; the seven-business case uses
+wages100/20/0/40 and UBIA0/0/800/0. Separate wage/property limits apply after
+proportional loss allocation, including the profitable fourth business on a
+continuation page.
+
+Both complete returns pass the retained TY2025 v5.4 Return1040 XSD. The50
+flattened pages have zero remaining fields/widgets; all38 distinct rendered
+images were inspected across10 contact sheets, with hashes identifying repeated
+pages. Names, EINs, source amounts, loss allocations, first-copy totals and
+final tax reconcile. Existing blank loss-business parent zeros and some
+Schedule C zero fields repeat deferred76; no new presentation defect was found.
+
+The12-module related batch passes **67 typed tests, zero failures or ignored**
+(1m34s); three shared farm/WOTC loss regressions also pass. The new cases
+reject eight native and eight fresh-PDF mutations to
+final deduction, companion totals, last-business identity and missing overflow
+source. Reversing both complete source inventories preserves each business's
+amounts; detached projected identities are replaced from validated retained
+sources. No descriptor or field mapping was added.
+
+Evidence is retained in `.state/research/form8995a-loss-continuations-2026-10-12/`:
+inputs, pending/projections, full XML/PDF, XSD logs, grouped replay, render hashes
+and `visual-review.json`. The route still requires the reviewed Single,
+above-phaseout, ordinary active Schedule C source path with net QBI below400;
+prior losses, adjustments, owners, SE combinations, aggregation and patron routes
+retain their existing boundaries. The original all-loss filing guard remains
+deferred8. Wider source authenticity and IRS acceptance remain open.
+
 ## October 12 proportional current-loss allocation checkpoint
 
 The ordinary high-income single-filer Schedule C route now supports two
@@ -50,7 +96,8 @@ Evidence is retained in `.state/research/form8995a-proportional-losses-2026-10-1
 (the work began October10 and resumed October12), including original compiler
 and source-review failures, inputs, projections, complete XML/PDF, final replay
 logs, render hashes and `visual-review.json`. The original all-loss filing
-blocks remain deferred8. Four-or-more rows, wider owner/SE/adjustment paths,
+blocks remain deferred8. Four-or-more rows are covered by the later continuation
+checkpoint above; wider owner/SE/adjustment paths,
 prior accepted histories, source authenticity and IRS acceptance remain open.
 
 

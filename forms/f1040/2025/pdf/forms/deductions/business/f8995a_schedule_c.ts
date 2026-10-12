@@ -1,3 +1,4 @@
+import { StandardFonts } from "pdf-lib";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -50,6 +51,70 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   })),
 ];
 
+function projectLossScheduleCopies(
+  raw: Record<string, unknown>,
+  allPending: Record<string, Record<string, unknown>>,
+): Record<string, unknown>[] {
+  if (Object.keys(raw).length === 0) return [];
+  const input = inputSchema.strict().parse(raw);
+  const parent = inputSchema.strict().safeParse(allPending.form8995a);
+  if (
+    !parent.success || JSON.stringify(parent.data) !== JSON.stringify(input)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule C PDF needs matching parent pending source",
+    );
+  }
+  if (allPending.form8995a_schedule_b !== undefined) {
+    throw new Error(
+      "Form 8995-A Schedule C PDF cannot accompany Schedule B aggregation",
+    );
+  }
+  assertScheduleCLossSources(input, allPending);
+  const parentProjection = projectOneBusiness8995A(
+    allPending.form8995a,
+    allPending,
+  );
+  const lines = calculateScheduleCLossLines(input);
+  if (
+    parentProjection.line39 !== lines.parent.line39 ||
+    allPending.f1040?.line13_qbi_deduction !== lines.parent.line39
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule C PDF differs from Form 8995-A and Form 1040",
+    );
+  }
+  const rows = lines.schedule.rows;
+  const copies: Record<string, unknown>[] = [];
+  for (let start = 0; start < rows.length; start += 3) {
+    copies.push({
+      ...Object.fromEntries(
+        rows.slice(start, start + 3).flatMap((row, index) => [
+          [`row${index + 1}_name`, row.name],
+          [`row${index + 1}_a`, row.line1a],
+          [`row${index + 1}_b`, row.line1b],
+          [`row${index + 1}_c`, row.line1c],
+        ]),
+      ),
+      ...(start === 0
+        ? {
+          line2: lines.schedule.line2,
+          line3: lines.schedule.line3,
+          line4: lines.schedule.line4,
+          line5: lines.schedule.line5,
+          line6: lines.schedule.line6,
+        }
+        : {}),
+      qbi_loss_page_note: rows.length > 3
+        ? `Form 8995-A Schedule C rows ${start + 1}-${
+          Math.min(start + 3, rows.length)
+        } of ${rows.length}; totals on first schedule`
+        : undefined,
+    });
+  }
+  return copies;
+}
+
 export const form8995aScheduleCPdf: PdfFormDescriptor = {
   pendingKey: "form8995a_schedule_c",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995ac--2022.pdf",
@@ -59,64 +124,28 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields(raw, allPending) {
-    if (Object.keys(raw).length === 0) return {};
-    const input = inputSchema.strict().parse(raw);
-    const parent = inputSchema.strict().safeParse(allPending.form8995a);
-    if (
-      !parent.success || JSON.stringify(parent.data) !== JSON.stringify(input)
-    ) {
+    return projectLossScheduleCopies(raw, allPending)[0] ?? {};
+  },
+  instances(raw, _filer, allPending) {
+    if (Object.keys(raw).length === 0) return [];
+    if (!allPending) {
       throw new Error(
-        "Form 8995-A Schedule C PDF needs matching parent pending source",
+        "Form 8995-A loss schedule copies need retained return sources",
       );
     }
-    if (allPending.form8995a_schedule_b !== undefined) {
-      throw new Error(
-        "Form 8995-A Schedule C PDF cannot accompany Schedule B aggregation",
-      );
-    }
-    assertScheduleCLossSources(input, allPending);
-    const parentProjection = projectOneBusiness8995A(
-      allPending.form8995a,
+    return projectLossScheduleCopies(
+      allPending.form8995a_schedule_c,
       allPending,
     );
-    const lines = calculateScheduleCLossLines(input);
-    if (
-      parentProjection.line39 !== lines.parent.line39 ||
-      allPending.f1040?.line13_qbi_deduction !== lines.parent.line39
-    ) {
-      throw new Error(
-        "Form 8995-A Schedule C PDF differs from Form 8995-A and Form 1040",
-      );
-    }
-    const first = lines.schedule.rows[0];
-    const second = lines.schedule.rows[1];
-    const third = lines.schedule.rows[2];
-    return {
-      row1_name: first.name,
-      row1_a: first.line1a,
-      row1_b: first.line1b,
-      row1_c: first.line1c,
-      ...(second
-        ? {
-          row2_name: second.name,
-          row2_a: second.line1a,
-          row2_b: second.line1b,
-          row2_c: second.line1c,
-        }
-        : {}),
-      ...(third
-        ? {
-          row3_name: third.name,
-          row3_a: third.line1a,
-          row3_b: third.line1b,
-          row3_c: third.line1c,
-        }
-        : {}),
-      line2: lines.schedule.line2,
-      line3: lines.schedule.line3,
-      line4: lines.schedule.line4,
-      line5: lines.schedule.line5,
-      line6: lines.schedule.line6,
-    };
+  },
+  async decoratePages(document, pages, instance) {
+    if (typeof instance.qbi_loss_page_note !== "string") return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    pages[0].drawText(instance.qbi_loss_page_note, {
+      x: 40,
+      y: 9,
+      size: 8,
+      font,
+    });
   },
 };
