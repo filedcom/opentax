@@ -1,3 +1,4 @@
+import { reviewedLossWotcReductions } from "./loss-wotc.ts";
 import { lossSeSourceSchema, reviewedLossSeAllocations } from "./loss-se.ts";
 import {
   independentPatronSourceSchema,
@@ -956,11 +957,16 @@ export function calculateScheduleCLossLines(
       );
     }
   }
+  const wotcReductions = reviewedLossWotcReductions(businesses);
+  if (wotcReductions.size && (input.net_capital_gain ?? 0) !== 0) {
+    throw Error("QBI loss WOTC needs its reviewed zero preferential-income source");
+  }
   const seAllocations = input.loss_se_tax_source
     ? reviewedLossSeAllocations(
       businesses.map((b) => b.source_schedule_c),
       input.filing_status,
       input.loss_se_tax_source,
+      wotcReductions,
     )
     : businesses.map(() => 0);
   const businessQbi = new Map(

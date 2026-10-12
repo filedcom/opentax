@@ -22,6 +22,7 @@ export function reviewedLossSeAllocations(
   items: readonly ScheduleCItem[],
   status: FilingStatus,
   raw: z.infer<typeof lossSeSourceSchema>,
+  wotcReductions: ReadonlyMap<string, number> = new Map(),
 ): number[] {
   const source = lossSeSourceSchema.parse(raw);
   const refs = items.map((item) => item.business_reference);
@@ -53,7 +54,11 @@ export function reviewedLossSeAllocations(
       if (
         !business || business.kind !== "schedule_c" ||
         business.recipient !== item.proprietor_recipient ||
-        business.net_profit !== computeNetProfit(item) ||
+        business.net_profit !==
+          computeNetProfit(
+            item,
+            wotcReductions.get(item.business_reference!) ?? 0,
+          ) ||
         business.gross_business_income !== computeGrossIncome(item)
       ) {
         throw Error("QBI loss SE proprietor source differs from Schedule C");
@@ -116,7 +121,9 @@ export function reviewedLossSeAllocations(
     const review = item.qbi_loss_se_tax_allocation_review;
     if (
       !review || review.deduction_amount !== result[i] ||
-      isSeExempt(item) || item.qbi_wotc_filing_review ||
+      isSeExempt(item) ||
+      (item.qbi_wotc_filing_review &&
+        !wotcReductions.has(item.business_reference!)) ||
       item.qbi_se_tax_allocation_review || item.at_risk_simplified ||
       (item.line_30_home_office ?? 0) !== 0 || item.home_office_method ||
       (item.line_26_other_employment_credits ?? 0) !== 0

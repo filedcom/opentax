@@ -685,7 +685,10 @@ function advancedFormOutput(
   const businesses = input.schedule_c_qbi_businesses;
   const business = businesses?.[0];
   let sourcedBusiness: Partial<Form8995AInput> = {};
-  if (businesses?.some((row) => row.source_schedule_c.qbi_wotc_filing_review)) {
+  if (
+    businesses?.some((row) => row.source_schedule_c.qbi_wotc_filing_review) &&
+    !businesses.some((row) => row.qbi < 0)
+  ) {
     // Finalized filing lines use whole dollars; source wages and AGI retain cents.
     taxableIncome = Math.round(taxableIncome);
     const review = business?.source_schedule_c.qbi_wotc_filing_review;

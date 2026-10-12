@@ -1,5 +1,75 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 12 employer WOTC with ordinary current losses
+
+Reviewed employer payroll now coexists with the ordinary multi-business loss
+inventory. The graph retains the full wage-credit reduction, then attributes
+half-SE deductions using the owner's reviewed gross income before loss netting.
+Native parent, loss companion and PDF exports replay the employer W-2 records,
+certified employee payroll, business inventory, proprietor, determined credit,
+Form3800 source and retained wage reductions. Existing positive-only WOTC
+routes keep their separate source contracts.
+
+The six public cases use four businesses with gross income6,000/8,000/2,000/4,000
+and profits2,000/4,000/-1,000/-2,000. The first business pays6,000 in wages:
+WOTC2,400 reduces deductible/QBI wages to3,600, with400 other expenses. This
+follows the [Form5884 line2 instruction](https://www.irs.gov/instructions/i5884)
+to reduce wage deductions by the determined credit, independently of current
+credit use. All six cases currently use the full2,400 credit. The
+[Form8995-A instructions](https://www.irs.gov/instructions/i8995a) govern the
+separate current-loss netting and wage limitations.
+
+Single-owner half-SE40 allocates12/16/4/8 before netting; the joint inventory
+retains T/S/T/S ownership and half-SE156 allocated10.50/94.67/3.50/47.33.
+The first positive business now has enough QBI wages for its full20% component;
+the second still faces its own200 wage base. Single phase-in at50% gives
+components197/247 and QBI444; joint above-range components are192/100.
+
+| Case | QBI | Regular tax | WOTC used | Total tax | Owed / (refund) | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single above range | 297 | 69,967 | 2,400 | 68,572 | 8,572 | 35 |
+| Single phase-in | 444 | 48,057 | 2,400 | 46,078 | (13,922) | 35 |
+| Joint two-owner | 292 | 138,963 | 2,400 | 140,048 | 80,048 | 37 |
+| Head of household | 297 | 65,472 | 2,400 | 64,077 | 4,077 | 35 |
+| Qualifying surviving spouse | 297 | 50,773 | 2,400 | 49,378 | (10,622) | 35 |
+| Married filing separately | 297 | 69,967 | 2,400 | 69,247 | 9,247 | 35 |
+| Single limited credit | 295 | 69,968 | 58,726 | 12,247 | (47,753) | 35 |
+
+The seventh case has80 certified workers and480,000 payroll. Full WOTC192,000
+reduces deductible/QBI wages to288,000 even though current use is only58,726.
+Gross310,000 minus wages288,000 and expenses20,000 preserves profit2,000;
+the changed gross-income basis reallocates half-SE as38.27/.99/.25/.49.
+Filed QBI1,962/3,999/-1,000/-2,000 nets to975/1,986, giving components195/100.
+Independent specified-credit limitation69,968 - round(25% * (69,968 -25,000))
+is58,726, and final tax12,247 matches native and PDF.
+
+The18-module grouped gate passes129 typed tests with zero failures or ignored
+(7m39s); the added limited-use case passes separately1/0 (13s). The seven new
+cases reject42 public-source mutations and84 native/84 fresh-PDF mutations. Independent decimal calculations
+reconcile SE tax, half-SE, regular tax, Medicare tax, current credit and balance;
+XML audits additionally join all four QBI/loss rows, components and EINs.
+All seven full returns pass the local TY2025 v5.4 XSD. All247 flattened pages were
+observed:58 new unique images on16 contact sheets,132 exact matches to previously
+observed pages (including the first six cases) and57 within-batch duplicates. Reopened PDFs contain no fields
+or widgets. Deferred26 skipped Form3800 lines,68 names,76 blank zeros and84
+native Form6251 line1a omission remain qualified; no new clipping was observed.
+
+Evidence is retained under
+`.state/research/form8995a-loss-wotc-2026-10-12/`, with complete sources, packets,
+render hashes, independent tax, XML audits and visual-review mapping. Initial
+test expectations were corrected using decimal rounding, and the MFS fixture
+now explicitly answers the required spouse business-credit question.
+
+The original pre-change probe is preserved under `before/`: a required QBI node
+failed, but return preparation emitted XML with no QBI form and tax68,676.
+General diagnostic-to-export handling is newly deferred161 and was not repaired;
+this feature removes that calculation failure only for the supported sources.
+Controlled-group losses, preferential-income coexistence,
+loss-making WOTC employers and wider payroll methods remain outside this
+checkpoint. Synthetic records establish calculation/source joins, not payroll
+or SWA authenticity. The broad parent TODO and IRS acceptance remain open.
+
+
 ## October 12 broker gains and capital-loss boundary audit
 
 Three source-backed cases now retain complete broker-gain evidence alongside

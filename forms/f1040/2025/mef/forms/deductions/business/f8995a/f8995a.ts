@@ -1,3 +1,4 @@
+import { assertLossWotcSources } from "../../../../../domains/deductions/business/form8995a/form8995a_loss_wotc_source.ts";
 import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
@@ -350,6 +351,7 @@ export function assertScheduleCLossSources(
     return;
   }
   const lines = calculateScheduleCLossLines(fields);
+  assertLossWotcSources(fields, pending);
   assertMfsLossSources(fields, pending);
   if (fields.filing_status === NodeFilingStatus.MFJ) {
     if (
@@ -436,7 +438,8 @@ export function assertScheduleCLossSources(
       !sourceItem ||
       JSON.stringify(sourceItem) !==
         JSON.stringify(business.source_schedule_c) ||
-      computeNetProfit(sourceItem) !== business.qbi ||
+      computeNetProfit(sourceItem, business.wotc_wage_reduction ?? 0) !==
+        business.qbi ||
       (sourceItem.line_26_wages ?? 0) < business.w2_wages
     ) {
       throw new Error(
