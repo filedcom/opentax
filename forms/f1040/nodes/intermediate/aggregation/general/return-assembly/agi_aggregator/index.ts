@@ -377,20 +377,24 @@ function computeSsaTaxable(
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
-    sumField(input.line1a_wages as number | number[] | undefined) +
-    sumField(input.line1b_household_wages) +
-    sumField(input.line1h_other_earned) +
-    (input.line1c_unreported_tips ?? 0) +
-    (input.line1e_taxable_dep_care ?? 0) +
-    (input.line1f_taxable_adoption_benefits ?? 0) +
-    (input.line1g_wages_8919 ?? 0) +
-    (input.line2b_taxable_interest ?? 0) +
-    sumField(input.line3b_ordinary_dividends) +
-    (input.line4b_ira_taxable ?? 0) +
-    sumField(input.line5b_pension_taxable) +
-    (input.line5b_form4972_ordinary ?? 0) +
-    (input.line7_capital_gain ?? 0) +
-    (input.line7a_cap_gain_distrib ?? 0) +
+    Math.round(sumField(input.line1a_wages)) +
+    Math.round(sumField(input.line1b_household_wages)) +
+    Math.round(sumField(input.line1h_other_earned)) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0) +
+    Math.round(input.line2b_taxable_interest ?? 0) +
+    Math.round(sumField(input.line3b_ordinary_dividends)) +
+    Math.round(input.line4b_ira_taxable ?? 0) +
+    Math.round(
+      sumField(input.line5b_pension_taxable) +
+        (input.line5b_form4972_ordinary ?? 0),
+    ) +
+    Math.round(
+      (input.line7_capital_gain ?? 0) +
+        (input.line7a_cap_gain_distrib ?? 0),
+    ) +
     (input.line1_state_refund ?? 0) +
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
@@ -450,7 +454,7 @@ function resolveSsaTaxable(
   cfg: import("../../../../../config/index.ts").F1040Config,
 ): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
-  const ssaGross = input.line6a_ss_gross ?? 0;
+  const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
   if (ssaGross === 0) return 0;
 
   if (
@@ -465,7 +469,7 @@ function resolveSsaTaxable(
   // IRC §86(c)(2): MFS filer who lived with spouse at any time during the year —
   // 85% of benefits are always taxable; no threshold applies.
   if (input.filing_status === "mfs" && input.mfs_lived_with_spouse === true) {
-    return 0.85 * ssaGross;
+    return Math.round(0.85 * ssaGross);
   }
 
   const isMfj = input.filing_status === "mfj";
@@ -478,7 +482,9 @@ function resolveSsaTaxable(
     0,
     nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg),
   );
-  return computeSsaTaxable(ssaGross, otherAgi, taxExemptInterest, isMfj);
+  return Math.round(
+    computeSsaTaxable(ssaGross, otherAgi, Math.round(taxExemptInterest), isMfj),
+  );
 }
 
 // Sum all income and addition items (before exclusions/deductions).
@@ -784,7 +790,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       );
 
     // Compute SSA taxable amount for f1040 line 6b pass-through
-    const ssaGross = input.line6a_ss_gross ?? 0;
+    const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
     const ssaTaxable = resolveSsaTaxable(input, cfg);
 
     const line8 = scheduleOnePartI(input);
@@ -793,6 +799,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     const unsupportedFarmIncome = firstNonScheduleFIncomeSource(input);
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
       line11_agi: agi,
+      line9_total_income: totalIncome,
     };
     if (line8 !== 0) f1040Fields.line8_additional_income = line8;
     if (line10 > 0) f1040Fields.line10_adjustments = line10;

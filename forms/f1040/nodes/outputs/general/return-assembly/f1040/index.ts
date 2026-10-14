@@ -314,32 +314,36 @@ type F1040Input = z.infer<typeof inputSchema>;
 
 function totalWages(input: F1040Input): number {
   return (
-    sumField(input.line1a_wages as number | number[] | undefined) +
-    (input.line1b_household_wages ?? 0) +
-    (input.line1c_unreported_tips ?? 0) +
-    (input.line1d_medicaid_waiver ?? 0) +
-    (input.line1e_taxable_dep_care ?? 0) +
-    (input.line1f_taxable_adoption_benefits ?? 0) +
-    (input.line1g_wages_8919 ?? 0) +
-    sumField(input.line1h_other_earned)
+    Math.round(sumField(input.line1a_wages as number | number[] | undefined)) +
+    Math.round(input.line1b_household_wages ?? 0) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1d_medicaid_waiver ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0) +
+    Math.round(sumField(input.line1h_other_earned))
   );
 }
 
 function totalIncome(input: F1040Input): number {
   // Prefer explicit line9 if provided; otherwise compute from component lines
-  if (input.line9_total_income !== undefined) return input.line9_total_income;
+  if (input.line9_total_income !== undefined) {
+    return Math.round(input.line9_total_income);
+  }
   const wages = input.line1z_total_wages ?? totalWages(input);
   return (
     wages +
-    (input.line2b_taxable_interest ?? 0) +
-    sumField(input.line3b_ordinary_dividends) +
-    (input.line4b_ira_taxable ?? 0) +
-    sumField(input.line5b_pension_taxable) +
-    (input.line5b_form4972_ordinary ?? 0) +
-    (input.line6b_ss_taxable ?? 0) +
-    (input.line7_capital_gain ?? 0) +
-    (input.line7a_cap_gain_distrib ?? 0) +
-    (input.line8_additional_income ?? 0)
+    Math.round(input.line2b_taxable_interest ?? 0) +
+    Math.round(sumField(input.line3b_ordinary_dividends)) +
+    Math.round(input.line4b_ira_taxable ?? 0) +
+    Math.round(
+      sumField(input.line5b_pension_taxable) +
+        (input.line5b_form4972_ordinary ?? 0),
+    ) +
+    Math.round(input.line6b_ss_taxable ?? 0) +
+    Math.round(input.line7_capital_gain ?? 0) +
+    Math.round(input.line7a_cap_gain_distrib ?? 0) +
+    Math.round(input.line8_additional_income ?? 0)
   );
 }
 
@@ -349,7 +353,7 @@ function deductionAmount(input: F1040Input): number {
   if (input.line12a_standard_deduction !== undefined) {
     return input.line12a_standard_deduction;
   }
-  if ((input.line12e_itemized_deductions ?? 0) > 0) {
+  if (Math.round(input.line12e_itemized_deductions ?? 0) > 0) {
     return input.line12e_itemized_deductions!;
   }
   return input.line12a_standard_deduction ?? 0;
@@ -367,11 +371,12 @@ function taxableIncome(input: F1040Input): number {
 }
 
 function totalTaxBeforeCredits(input: F1040Input): number {
-  return (input.line16_income_tax ?? 0) + (input.line17_additional_taxes ?? 0);
+  return Math.round(input.line16_income_tax ?? 0) +
+    Math.round(input.line17_additional_taxes ?? 0);
 }
 
 function creditsTotal(input: F1040Input, schedule3Credits: number): number {
-  return (input.line19_child_tax_credit ?? 0) +
+  return Math.round(input.line19_child_tax_credit ?? 0) +
     schedule3Credits;
 }
 
@@ -768,27 +773,31 @@ function bondCreditAllowance(
 
 function totalWithholding(input: F1040Input): number {
   return (
-    (input.line25a_w2_withheld ?? 0) +
-    sumField(input.line25b_withheld_1099 as number | number[] | undefined) +
-    (input.line25c_additional_medicare_withheld ?? 0) +
-    sumField(input.line25c_other_withheld)
+    Math.round(input.line25a_w2_withheld ?? 0) +
+    Math.round(
+      sumField(input.line25b_withheld_1099 as number | number[] | undefined),
+    ) +
+    Math.round(
+      (input.line25c_additional_medicare_withheld ?? 0) +
+        sumField(input.line25c_other_withheld),
+    )
   );
 }
 
 function refundableCreditsTotal(input: F1040Input): number {
   return (
-    (input.line27_eitc ?? 0) +
-    (input.line28_actc ?? 0) +
-    (input.line29_refundable_aoc ?? 0) +
-    (input.line30_refundable_adoption ?? 0) +
-    (input.line31_additional_payments ?? 0)
+    Math.round(input.line27_eitc ?? 0) +
+    Math.round(input.line28_actc ?? 0) +
+    Math.round(input.line29_refundable_aoc ?? 0) +
+    Math.round(input.line30_refundable_adoption ?? 0) +
+    Math.round(input.line31_additional_payments ?? 0)
   );
 }
 
 function totalPayments(input: F1040Input): number {
   return (
     totalWithholding(input) +
-    (input.line26_estimated_tax ?? 0) +
+    Math.round(input.line26_estimated_tax ?? 0) +
     refundableCreditsTotal(input)
   );
 }
@@ -854,10 +863,14 @@ function assembleReturn(
   businessCredit: BusinessCreditAllowance | undefined,
   bondCredit: BondCreditAllowance | undefined,
 ): Record<string, number> {
-  const computed_line1z = input.line1z_total_wages ?? totalWages(input);
+  const computed_line1z = Math.round(
+    input.line1z_total_wages ?? totalWages(input),
+  );
   const computed_line9 = totalIncome(input);
-  const computed_line10 = input.line10_adjustments ?? 0;
-  const computed_line11 = input.line11_agi ?? computed_line9 - computed_line10;
+  const computed_line10 = Math.round(input.line10_adjustments ?? 0);
+  const computed_line11 = Math.round(
+    input.line11_agi ?? computed_line9 - computed_line10,
+  );
   const computed_line14 = (deductionAmount(input)) +
     (input.line13_qbi_deduction ?? 0) +
     (input.line13b_additional_deductions ?? 0);
@@ -871,8 +884,8 @@ function assembleReturn(
     (input.line20_nonrefundable_credits ?? 0);
   const computed_line21 = creditsTotal(input, computed_line20);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
-  const computed_line23 = (input.line23_other_taxes ?? 0) -
-    (input.form8978_schedule2_line17z_reduction ?? 0);
+  const computed_line23 = Math.round(input.line23_other_taxes ?? 0) -
+    Math.round(input.form8978_schedule2_line17z_reduction ?? 0);
   if (computed_line23 < -0.000001) {
     throw new Error(
       "Form 8978 reduction exceeds Form 1040 line 23 other taxes",
@@ -904,8 +917,10 @@ function assembleReturn(
     : 0;
   const computed_line24 = computed_line22 + computed_line23 - deferredTax;
   const computed_line25d = totalWithholding(input);
-  const computed_line25c = (input.line25c_additional_medicare_withheld ?? 0) +
-    sumField(input.line25c_other_withheld);
+  const computed_line25c = Math.round(
+    (input.line25c_additional_medicare_withheld ?? 0) +
+      sumField(input.line25c_other_withheld),
+  );
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
   const form2210f = reconciledForm2210FBoxB(

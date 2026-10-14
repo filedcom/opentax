@@ -1063,3 +1063,22 @@ Deno.test("f1040: accepts explicit line9 total income override", () => {
   assertEquals(f.line9_total_income, 200_000);
   assertEquals(f.line15_taxable_income, 165_000);
 });
+
+Deno.test("f1040 combines same-line source cents and adds rounded payment lines", () => {
+  const f = fields({
+    line1a_wages: [100.4, 100.4],
+    line1b_household_wages: 10.4,
+    line2b_taxable_interest: 10.4,
+    line3b_ordinary_dividends: [10.4, 10.4],
+    line25a_w2_withheld: 100.4,
+    line25b_withheld_1099: [10.4, 10.4],
+    line25c_additional_medicare_withheld: 1.4,
+    line25c_other_withheld: [1.4],
+    line26_estimated_tax: 10.4,
+  });
+  assertEquals(f.line1z_total_wages, 211);
+  assertEquals(f.line9_total_income, 242);
+  assertEquals(f.line25c_total, 3);
+  assertEquals(f.line25d_total_withholding, 124);
+  assertEquals(f.line33_total_payments, 134);
+});

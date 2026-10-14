@@ -38,8 +38,8 @@ rules. Other sources are the TY2025 instructions for
 | Report | Reconciliation |
 | --- | --- |
 | Tax Table instead of continuous brackets | Recomputed tax on ordinary income, including the ordinary-income portion of the QDCGT Worksheet; above $100,000 uses the Tax Computation Worksheet. The existing engine already implements this rule. |
-| Senior deduction | Recomputed the nine listed scenarios, plus senior cases 27 and 51, including taxable-income floors and the QBI limit. These are conditional on valid employment SSNs, which the sparse inputs do not establish; no SSNs were invented. |
-| PTC | Annual arithmetic now uses the 2025 poverty amounts and Table 2. Case 110's 2026 revenue-procedure reference and repayment description were corrected. Annual eligibility/allocation evidence remains explicitly incomplete. |
+| Senior deduction | Recomputed the nine listed scenarios, plus senior cases 27 and 51, including taxable-income floors and the QBI limit. The nine reported cases now use labeled synthetic SSN eligibility facts; additional sparse fixtures retain their stated conditions. |
+| PTC | Annual arithmetic now uses the 2025 poverty amounts and Table 2. Case 110's 2026 revenue-procedure reference and repayment description were corrected. The six reported cases now include labeled synthetic monthly coverage and eligibility evidence. |
 | EIC | Replaced formula amounts with published table amounts; updated dependent credits and payment balances where affected. Child relationships, residency and SSN eligibility are not established by arithmetic alone. |
 | Whole-dollar rounding | Added amounts within each source line before rounding; added rounded return/schedule lines afterward. Form 8949 columns, IRA versus pension lines, Schedule SE tax components and deductible half, Schedule A, QBI and payment lines are handled separately. Source documents retain cents. |
 | Line 18 meaning | Removed Part II taxes from line 18; excess APTC repayment remains in Part I. SE, Additional Medicare, NIIT and early-distribution tax contribute to line 24 separately. In complex cases this retains the archived assumptions about AMT and source classification rather than certifying their absence. |
@@ -49,7 +49,7 @@ rules. Other sources are the TY2025 instructions for
 - Case 02: tax **3,875**, refund **1,125**.
 - Cases 18/24/29: EIC **1,983 / 5,718 / 7,272**; CTC/ACTC limits and
   payment totals are recomputed. Case 24's third child's relationship is
-  `other`; the intended three-child treatment remains conditional.
+  `other` in the archive; the completed synthetic case explicitly assumes niece/nephew.
 - Cases 36/45/48/52: net PTC **3,952 / 3,860 / 4,700 / 3,600**.
   Case 53: repayment **3,725**, withholding/payment **6,500**.
 - Case 110: FPL 15,060; truncated percentage 212; applicable figure .0248;
@@ -61,10 +61,10 @@ rules. Other sources are the TY2025 instructions for
 - Case 76: worksheet income tax **100,487**; NIIT is a separate **212**.
   Combined tax remains close to the archive because the old income-tax amount
   effectively included that investment tax. Total withholding is **97,303**.
-- Case 86: total withholding is **40,471**. For 76/86 (and 97), missing W-2
-  ownership prevents verification of the excess Social Security credit and final
-  payments/refund. The archived excess-credit assumption is retained visibly as
-  conditional and cannot produce a passing benchmark. It is not replaced by zero.
+- Case 86: total withholding is **40,471**. Completed cases 76/86 explicitly
+  assign all W-2s to the taxpayer, giving excess Social Security credit
+  **8,199 / 5,711**. Separate synthetic ownership variants verify zero credit
+  when wages are split between spouses. The original ownership remains unknown.
 - Case 78: the original age was absent. The completed synthetic fixture uses
   DOB 1985-06-15, EIC **316**, and payments/refund **382**; original values
   remain in the incomplete-fixture archive.
@@ -76,17 +76,18 @@ rules. Other sources are the TY2025 instructions for
 
 ### Case 95: proposed amount is not reproduced
 
-The proposed **297,368** does not follow from the supplied taxable income and
-qualified income. Whole-dollar taxable income is 957,088; qualified dividends
-43,237 plus net capital gain 30,046 leave ordinary taxable income 883,805.
+The proposed **297,368** does not follow from the supplied source amounts.
+Covered long-term sales aggregate proceeds 611,026.43 and basis 609,315.14
+before rounding each column, giving 1,711. Together with adjusted transactions,
+short-term sales and partnership gains, net capital gain is 30,045.
+Whole-dollar taxable income is 957,087; qualified dividends 43,237 plus net
+capital gain 30,045 leave ordinary taxable income 883,805.
 The Single Tax Computation Worksheet gives
-`883,805 × .37 − 42,979.75 = 284,028.10`.
-All 73,283 of preferential income is above the 20% threshold, producing
-`73,283 × .20 = 14,656.60`. Their sum is **298,684.70**, rounded **298,685**.
-The archive's 298,684.60 was consistent with its unrounded operands to cents.
-The regression checks the published worksheet calculation, not the issue's
-suggested replacement. Partnership eligibility, basis and AMT remain separate
-source limitations on the complete return.
+`883,805 × .37 − 42,979.75 = 284,028.10`, reported as 284,028.
+Preferential income of 73,282 at 20% adds 14,656.40; final tax is **298,684**.
+The earlier 298,685 reconciliation rounded individual covered sales instead of
+the aggregated Schedule D columns. The source-column regression now documents
+this correction. Missing eligibility facts remain explicitly synthetic.
 
 ## Scope and remaining work
 
@@ -108,7 +109,7 @@ deno test --allow-read --allow-write --allow-run \
   benchmark/run_benchmark.integration.test.ts
 ```
 
-Validation: **30 focused tests passed**. The full benchmark discovers all 133
+Initial reconciliation checkpoint: **30 focused tests passed**. That full benchmark discovered all 133
 cases: **10 pass, 123 fail, 0 skipped**, with 273 line failures, 1,198 unsupported
 checks and 163 errors (categories overlap). The failures retain engine diagnostics
 and incomplete sources; no pass-rate or issue-closure claim is made. The separate
@@ -162,7 +163,7 @@ All nine reported senior scenarios and all six PTC scenarios execute without
 diagnostics. Case 48 also retains the one dollar of Additional Medicare
 withholding implied by its original W-2 boxes: payments 15,201, refund 7,455.
 
-Current focused gate: 31 passing tests, including complete-return graph checks.
+First synthetic checkpoint: 31 passing tests, including complete-return graph checks.
 Rounding consistency and the remaining reported cases are still being reviewed;
 this checkpoint does not close the issue or supersede the final release smoke.
 
@@ -179,6 +180,22 @@ Case 47 supplies the missing adult supported-brother facts for childless HOH EIC
 Schedule A now adds rounded line operands, combining amounts belonging on the
 same line before rounding. Form 1040 taxable income subtracts rounded AGI and
 deduction operands, fixing the one-dollar case 76 tax discrepancy. Cases 76, 91
-and 95 reproduce income tax 100,487, 4,121 and 298,685. The combined focused gate
+and 95 reproduce income tax 100,487, 4,121 and 298,684. The combined focused gate
 is **138 passed, 0 failed**. Schedule D/SSA/income-total rounding remains under
 review before final smoke, release and issue closure.
+
+
+### Capital and income rounding checkpoint
+
+Covered, unadjusted sales now aggregate proceeds and basis on Schedule D before
+rounding each column; adjusted Form 8949 transactions round each column before
+calculating gain. Capital distribution sources on the same line combine before
+rounding, including the distributions-only path. A comparison of all 133 inputs
+found case 95 was the only fixture affected by changing covered sales from
+individual to aggregate column rounding.
+
+Form 1040 totals add reported whole-dollar lines, and Social Security benefits
+use rounded source income. Case 67 income is 211,365; case 91 income is 57,188;
+case 78 income is 14,962 with unchanged EIC 316 and refund 382. The release smoke
+now exercises all 30 completed fixtures and checks seven summary amounts exactly,
+in addition to the eight ownership/age variants and existing MeF/PDF smoke.

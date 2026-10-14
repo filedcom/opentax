@@ -1,3 +1,7 @@
+import {
+  isDirectCapitalSale,
+  roundCapitalAmount,
+} from "../../../../forms/income/investments/form8949/reported-money.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -231,42 +235,10 @@ function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
   ].every((value) => (value ?? 0) === 0);
 }
 
-function computeTransactionGains(transactions: Transaction[]): {
-  stGain: number;
-  ltGain: number;
-} {
-  let stGain = 0;
-  let ltGain = 0;
-  for (const tx of transactions) {
-    if (tx.is_long_term) {
-      ltGain += tx.gain_loss;
-    } else {
-      stGain += tx.gain_loss;
-    }
-  }
-  return { stGain, ltGain };
-}
-
 // Compute col(h) = col(d) - col(e) + col(g) for a d_screen transaction
 function dScreenGainLoss(tx: DScreenTransaction): number {
-  return tx.proceeds - tx.cost_basis + (tx.adjustment_amount ?? 0);
-}
-
-function computeDScreenTransactionGains(transactions: DScreenTransaction[]): {
-  stGain: number;
-  ltGain: number;
-} {
-  let stGain = 0;
-  let ltGain = 0;
-  for (const tx of transactions) {
-    const gl = dScreenGainLoss(tx);
-    if (LONG_TERM_PARTS.has(tx.part)) {
-      ltGain += gl;
-    } else {
-      stGain += gl;
-    }
-  }
-  return { stGain, ltGain };
+  return Math.round(tx.proceeds) - Math.round(tx.cost_basis) +
+    roundCapitalAmount(tx.adjustment_amount ?? 0);
 }
 
 // Compute d_screen aggregate short-term net (contribution to line 7)
@@ -287,7 +259,6 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
     (input.line_8a_cost ?? 0) +
     sumAmounts(input.line_11_form2439) +
     (input.line_11_qef_lt ?? 0) +
-    (input.line_12_cap_gain_dist ?? 0) +
     sumAmounts(input.line_12_k1_lt) -
     (input.line_14_carryover ?? 0)
   );
@@ -403,9 +374,11 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     }
 
     if (hasOnlyCapitalGainDistributions(input)) {
-      const distributions = (input.line13_cap_gain_distrib ?? 0) +
-        (input.line13_form8814 ?? 0) +
-        (input.line_12_cap_gain_dist ?? 0);
+      const distributions = Math.round(
+        (input.line13_cap_gain_distrib ?? 0) +
+          (input.line13_form8814 ?? 0) +
+          (input.line_12_cap_gain_dist ?? 0),
+      );
       const outputs: NodeOutput[] = [
         this.outputNodes.output(f1040, {
           line7a_cap_gain_distrib: distributions,
@@ -437,29 +410,57 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
         : { outputs };
     }
 
-    // f8949 transactions (pre-computed gain_loss + is_long_term)
     const f8949Txs = normalizeArray(input.transaction);
-    const { stGain: stTxGain, ltGain: ltTxGain } = computeTransactionGains(
-      f8949Txs,
-    );
-
-    // d_screen transactions (gain_loss computed here from proceeds/cost/adjustment)
     const dScreenTxs = input.transactions ?? [];
-    const { stGain: dScreenStTxGain, ltGain: dScreenLtTxGain } =
-      computeDScreenTransactionGains(dScreenTxs);
-
-    // d_screen aggregate line contributions
-    const dScreenStAgg = computeDScreenStNet(input);
-    const dScreenLtAgg = computeDScreenLtNet(input);
+    const direct = {
+      stP: input.line_1a_proceeds ?? 0,
+      stC: input.line_1a_cost ?? 0,
+      ltP: input.line_8a_proceeds ?? 0,
+      ltC: input.line_8a_cost ?? 0,
+    };
+    let stTxGain = 0;
+    let ltTxGain = 0;
+    for (const tx of [...f8949Txs, ...dScreenTxs]) {
+      const longTerm = LONG_TERM_PARTS.has(tx.part);
+      if (isDirectCapitalSale(tx)) {
+        if (longTerm) {
+          direct.ltP += tx.proceeds;
+          direct.ltC += tx.cost_basis;
+        } else {
+          direct.stP += tx.proceeds;
+          direct.stC += tx.cost_basis;
+        }
+      } else {
+        const gain = Math.round(tx.proceeds) - Math.round(tx.cost_basis) +
+          roundCapitalAmount(tx.adjustment_amount ?? 0);
+        if (longTerm) ltTxGain += gain;
+        else stTxGain += gain;
+      }
+    }
+    stTxGain += Math.round(direct.stP) - Math.round(direct.stC);
+    ltTxGain += Math.round(direct.ltP) - Math.round(direct.ltC);
+    const dScreenStAgg = computeDScreenStNet({
+      ...input,
+      line_1a_proceeds: 0,
+      line_1a_cost: 0,
+    });
+    const dScreenLtAgg = computeDScreenLtNet({
+      ...input,
+      line_8a_proceeds: 0,
+      line_8a_cost: 0,
+    });
 
     // f1099div cap gain distributions
-    const line13F1099div = input.line13_cap_gain_distrib ?? 0;
-    const line13Form8814 = input.line13_form8814 ?? 0;
+    const line13Distributions = Math.round(
+      (input.line13_cap_gain_distrib ?? 0) +
+        (input.line13_form8814 ?? 0) +
+        (input.line_12_cap_gain_dist ?? 0),
+    );
 
     // Schedule D line 7 (net short-term) and line 15 (net long-term)
-    const line7 = stTxGain + dScreenStTxGain + dScreenStAgg;
-    const line15 = ltTxGain + dScreenLtTxGain + dScreenLtAgg +
-      line13F1099div + line13Form8814;
+    const line7 = stTxGain + dScreenStAgg;
+    const line15 = ltTxGain + dScreenLtAgg +
+      line13Distributions;
 
     // Line 16: combined net capital gain or loss
     const line16 = line7 + line15;
@@ -562,40 +563,6 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // qualify for direct reporting on lines 1a/8a without Form 8949
     // (Schedule D instructions, "Exception 1"). All other transactions remain
     // on the Form 8949 path and aggregate into lines 1b/2/3 and 8b/9/10.
-    const isDirect = (
-      part: string,
-      codes: string | undefined,
-      adjustment: number | undefined,
-    ): boolean =>
-      (part === "A" || part === "D") && !(codes ?? "").length &&
-      adjustment === undefined;
-
-    const direct = { stP: 0, stC: 0, ltP: 0, ltC: 0 };
-    for (const tx of dScreenTxs) {
-      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
-        continue;
-      }
-      if (LONG_TERM_PARTS.has(tx.part)) {
-        direct.ltP += tx.proceeds;
-        direct.ltC += tx.cost_basis;
-      } else {
-        direct.stP += tx.proceeds;
-        direct.stC += tx.cost_basis;
-      }
-    }
-    for (const tx of f8949Txs) {
-      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
-        continue;
-      }
-      if (tx.is_long_term) {
-        direct.ltP += tx.proceeds;
-        direct.ltC += tx.cost_basis;
-      } else {
-        direct.stP += tx.proceeds;
-        direct.stC += tx.cost_basis;
-      }
-    }
-
     const printFields: Record<string, number | boolean> = {
       print_line7_st_total: line7,
       print_line15_lt_total: line15,
@@ -624,8 +591,8 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     if (line16 > 0) {
       printFields.print_line17_both_gains = line17Yes;
     }
-    const directStProceeds = (input.line_1a_proceeds ?? 0) + direct.stP;
-    const directStCost = (input.line_1a_cost ?? 0) + direct.stC;
+    const directStProceeds = Math.round(direct.stP);
+    const directStCost = Math.round(direct.stC);
     if (directStProceeds > 0 || directStCost > 0) {
       printFields.line_1a_proceeds = directStProceeds;
       printFields.line_1a_cost = directStCost;
@@ -633,8 +600,8 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       printFields.print_line1a_cost = directStCost;
       printFields.print_line1a_gain = directStProceeds - directStCost;
     }
-    const directLtProceeds = (input.line_8a_proceeds ?? 0) + direct.ltP;
-    const directLtCost = (input.line_8a_cost ?? 0) + direct.ltC;
+    const directLtProceeds = Math.round(direct.ltP);
+    const directLtCost = Math.round(direct.ltC);
     if (directLtProceeds > 0 || directLtCost > 0) {
       printFields.line_8a_proceeds = directLtProceeds;
       printFields.line_8a_cost = directLtCost;
@@ -642,13 +609,8 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       printFields.print_line8a_cost = directLtCost;
       printFields.print_line8a_gain = directLtProceeds - directLtCost;
     }
-    if (
-      line13F1099div > 0 || line13Form8814 > 0 ||
-      (input.line_12_cap_gain_dist ?? 0) > 0
-    ) {
-      printFields.print_line13_cap_gain_distrib = line13F1099div +
-        line13Form8814 +
-        (input.line_12_cap_gain_dist ?? 0);
+    if (line13Distributions > 0) {
+      printFields.print_line13_cap_gain_distrib = line13Distributions;
     }
     if (line17Yes) {
       const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;

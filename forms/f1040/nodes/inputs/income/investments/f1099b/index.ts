@@ -1,3 +1,4 @@
+import { reportedCapitalSale } from "../../../../intermediate/forms/income/investments/form8949/reported-money.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -205,7 +206,7 @@ function processItem(item: B99Item): NodeOutput[] {
 
   const outputs: NodeOutput[] = [
     output(form8949, {
-      transaction: {
+      transaction: reportedCapitalSale({
         part,
         description: item.description,
         source_transaction_id: item.transaction_id,
@@ -218,7 +219,7 @@ function processItem(item: B99Item): NodeOutput[] {
         gain_loss: gainLoss,
         is_long_term: isLongTerm,
         collectibles: item.box3_transaction_type === "collectibles",
-      },
+      }),
     }),
   ];
 

@@ -10,7 +10,8 @@
     "line24_total_tax": 0,
     "line33_total_payments": 1500,
     "line35a_refund": 1500,
-    "line37_amount_owed": 0
+    "line37_amount_owed": 0,
+    "line9_total_income": 20500
   },
   "reconciliation": {
     "issue": 77,

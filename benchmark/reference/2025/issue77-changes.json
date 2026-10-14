@@ -306,11 +306,16 @@
       "line35a_refund": {
         "before": 4430,
         "after": 4400
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 48000
       }
     },
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
-      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": []
   },
@@ -411,11 +416,16 @@
       "line35a_refund": {
         "before": 775,
         "after": 1374
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 25000
       }
     },
     "basis": [
       "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
-      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": [
       "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
@@ -596,11 +606,16 @@
       "line37_amount_owed": {
         "before": 1207.5,
         "after": 9
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 46775
       }
     },
     "basis": [
       "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
-      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": [
       "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
@@ -620,11 +635,16 @@
       "line35a_refund": {
         "before": 1225,
         "after": 1500
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 20500
       }
     },
     "basis": [
       "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
-      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": [
       "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
@@ -644,11 +664,16 @@
       "line35a_refund": {
         "before": 2120,
         "after": 3000
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 43500
       }
     },
     "basis": [
       "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
-      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": [
       "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
@@ -740,11 +765,16 @@
       "line35a_refund": {
         "before": 4369.5,
         "after": 4339
+      },
+      "line9_total_income": {
+        "before": null,
+        "after": 45000
       }
     },
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
-      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable.",
+      "No above-the-line adjustments in supplied sources: total income equals independently reconciled AGI."
     ],
     "source_limitations": []
   },
@@ -4041,15 +4071,15 @@
     "changes": {
       "line9_total_income": {
         "before": 972837.6,
-        "after": 972838
+        "after": 972837
       },
       "line11_agi": {
         "before": 972837.6,
-        "after": 972838
+        "after": 972837
       },
       "line15_taxable_income": {
         "before": 957087.6,
-        "after": 957088
+        "after": 957087
       },
       "ordinary_taxable": {
         "before": 883804.87,
@@ -4057,7 +4087,7 @@
       },
       "income_tax": {
         "before": 298684.6,
-        "after": 298685
+        "after": 298684
       },
       "add_medicare_tax": {
         "before": 4598.2,
@@ -4065,11 +4095,11 @@
       },
       "line18_tax_before_credits": {
         "before": 312931.99,
-        "after": 298685
+        "after": 298684
       },
       "line24_total_tax": {
         "before": 312560.31,
-        "after": 312560
+        "after": 312559
       },
       "line33_total_payments": {
         "before": 300080.49,
@@ -4077,11 +4107,12 @@
       },
       "line37_amount_owed": {
         "before": 12479.82,
-        "after": 12480
+        "after": 12479
       }
     },
     "basis": [
-      "Whole-dollar source form lines: wages/interest/dividends/pension 854210, net capital 30046, business/rental 20337, other 68245, taxable SSA 0; Schedule A 6; line16 298685, SE 0, Medicare 4598, NIIT 9649, distribution tax 0, foreign tax credit 372."
+      "Whole-dollar source form lines: wages/interest/dividends/pension 854210, net capital 30046, business/rental 20337, other 68245, taxable SSA 0; Schedule A 6; line16 298685, SE 0, Medicare 4598, NIIT 9649, distribution tax 0, foreign tax credit 372.",
+      "Covered unadjusted sales use Schedule D Exception 1: LT proceeds 611026.43 and basis 609315.14 aggregate then round to 611026 - 609315 = 1711 (not 1712 from rounding three sales separately). Total capital gain 30045; income 854210 + 30045 + 20337 + 68245 = 972837; taxable income 957087. QDCGT ordinary tax 284028 plus 20-percent tax rounded to 14656 gives line16 298684. Total tax 298684 - 372 + 4598 + 9649 = 312559; payments 300080, owed12479."
     ],
     "source_limitations": [
       "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."

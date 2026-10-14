@@ -1,3 +1,4 @@
+import { reportedCapitalSale } from "../../../../intermediate/forms/income/investments/form8949/reported-money.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -161,7 +162,7 @@ function processItem(item: F8949Item): NodeOutput[] {
 
   const outputs: NodeOutput[] = [
     output(form8949, {
-      transaction: {
+      transaction: reportedCapitalSale({
         part: item.part,
         description: item.description,
         source_transaction_id: item.source_transaction_id,
@@ -176,7 +177,7 @@ function processItem(item: F8949Item): NodeOutput[] {
         ...(item.qsbs_code
           ? { qsbs_code: item.qsbs_code, qsbs_amount: item.qsbs_amount }
           : {}),
-      },
+      }),
     }),
   ];
 

@@ -33,8 +33,8 @@
     "itemized_deductions": 0
   },
   "correct": {
-    "line9_total_income": 14961,
-    "line11_agi": 14961,
+    "line9_total_income": 14962,
+    "line11_agi": 14962,
     "standard_deduction": 15750,
     "qbi_deduction": 0,
     "line15_taxable_income": 0,
@@ -59,7 +59,7 @@
   },
   "reconciliation": {
     "issue": 77,
-    "scope": "Unresolved source facts; archived amounts retained, not independently valid.",
+    "scope": "Synthetic eligibility facts; whole-dollar income independently checked from source columns.",
     "source_limitations": [],
     "synthetic_source": "issue77-original-incomplete.json retains the original incomplete input and expectations; current identity, ownership, timely SSN and foreign-account answers are invented test assumptions."
   }

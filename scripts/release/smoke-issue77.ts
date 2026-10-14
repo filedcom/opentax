@@ -47,7 +47,7 @@ const general = {
 async function compute(
   invoke: Invoke,
   forms: Form[],
-  expectedWarnings: string[] = [],
+  expectedWarnings: string[] | null = [],
 ) {
   const { returnId } = JSON.parse(
     await invoke("return", "create", "--year", "2025"),
@@ -67,7 +67,13 @@ async function compute(
     await invoke("return", "get", "--returnId", returnId),
   );
   if (
-    JSON.stringify(result.warnings ?? []) !== JSON.stringify(expectedWarnings)
+    expectedWarnings === null
+      ? (result.warnings ?? []).some((warning: string) =>
+        warning !==
+          "Refund is more than double total withholding — verify refundable credits."
+      )
+      : JSON.stringify(result.warnings ?? []) !==
+        JSON.stringify(expectedWarnings)
   ) {
     throw new Error(
       `Synthetic issue77 warnings: ${JSON.stringify(result.warnings)}`,
@@ -121,7 +127,7 @@ export async function smokeIssue77(invoke: Invoke): Promise<void> {
   }
   for (const variant of variants.childless_eic) {
     const rows = (await source("78-single-w2-1099int-1099div-1099b")).filter(
-      (f) => f.node_type !== "start",
+      (f) => ["w2", "f1099int", "f1099div", "f1099b"].includes(f.node_type),
     );
     const forms: Form[] = [
       { node_type: "general", data: { ...general, taxpayer_dob: variant.dob } },
@@ -170,5 +176,48 @@ export async function smokeIssue77(invoke: Invoke): Promise<void> {
   }
   console.log(
     "Synthetic issue77 CLI smoke passed: four ownership and four EIC age scenarios",
+  );
+}
+
+/** Replay every completed fixture through persisted public CLI inputs. */
+export async function smokeCompletedIssue77(invoke: Invoke): Promise<void> {
+  const archived = JSON.parse(
+    await Deno.readTextFile(
+      new URL(
+        "../../benchmark/reference/2025/issue77-original-incomplete.json",
+        import.meta.url,
+      ),
+    ),
+  );
+  const fields = [
+    "line9_total_income",
+    "line11_agi",
+    "line15_taxable_income",
+    "line24_total_tax",
+    "line33_total_payments",
+    "line35a_refund",
+    "line37_amount_owed",
+  ];
+  for (const name of Object.keys(archived)) {
+    const fixture = JSON.parse(
+      await Deno.readTextFile(
+        new URL(
+          `../../benchmark/cases/f1040/2025/${name}/correct.json`,
+          import.meta.url,
+        ),
+      ),
+    );
+    const expected = fixture.correct;
+    // Refund advisory is informational; every executor or other warning fails.
+    const result = await compute(invoke, await source(name), null);
+    for (const field of fields) {
+      equal(result.summary[field] ?? 0, expected[field], `${name} ${field}`);
+    }
+    console.log(`Complete issue77 CLI scenario passed: ${name}`);
+  }
+  console.log(
+    `Complete issue77 CLI smoke passed: ${
+      Object.keys(archived).length
+    } scenarios, seven exact summary amounts each`,
   );
 }

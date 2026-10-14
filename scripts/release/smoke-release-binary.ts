@@ -1,5 +1,5 @@
 /** Exercise a compiled release asset with a synthetic TY2025 W-2 return. */
-import { smokeIssue77 } from "./smoke-issue77.ts";
+import { smokeCompletedIssue77, smokeIssue77 } from "./smoke-issue77.ts";
 import { join, resolve } from "@std/path";
 import {
   decodePDFRawStream,
@@ -158,6 +158,7 @@ try {
   }
 
   await smokeIssue77(invoke);
+  await smokeCompletedIssue77(invoke);
 
   const created = JSON.parse(
     await invoke("return", "create", "--year", "2025"),

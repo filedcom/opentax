@@ -39,6 +39,9 @@ Deno.test("issue77 complete synthetic case78 uses EIC table through the return g
   const result = await replay("78-single-w2-1099int-1099div-1099b");
   assertEquals(result.diagnostics, []);
   const lines = result.pending.f1040;
+  // 7,212 wages + 1,589 interest + 750 dividends + (4,965 + 443 + 3) gains.
+  assertEquals(lines.line9_total_income, 14962);
+  assertEquals(lines.line11_agi, 14962);
   assertEquals(lines.line27_eitc, 316);
   assertEquals(lines.line24_total_tax, 0);
   assertEquals(lines.line33_total_payments, 382);
@@ -138,7 +141,7 @@ for (
   const [name, tax] of [
     ["76-mfj-w2-1099int-1099b", 100487],
     ["91-single-w2-1099int-1099div-1099b-ssa", 4121],
-    ["95-single-w2-k1-1099r-1099int-1099div-1099b", 298685],
+    ["95-single-w2-k1-1099r-1099int-1099div-1099b", 298684],
   ] as const
 ) {
   Deno.test(`issue77 reported investment income tax: ${name}`, async () => {
@@ -147,3 +150,60 @@ for (
     assertEquals(pending.f1040.line16_income_tax, tax);
   });
 }
+
+for (
+  const [name, income, taxable, totalTax] of [
+    ["67-single-w2-1099r-1099int-1099div-1099b-ssa", 211365, 179989, 35933],
+    ["91-single-w2-1099int-1099div-1099b-ssa", 57188, 41438, 4031],
+    ["95-single-w2-k1-1099r-1099int-1099div-1099b", 972837, 957087, 312559],
+  ] as const
+) {
+  Deno.test(`issue77 rounded capital/SSA sources balance through Form 1040: ${name}`, async () => {
+    const { pending, diagnostics } = await replay(name);
+    assertEquals(diagnostics, []);
+    assertEquals(pending.f1040.line9_total_income, income);
+    assertEquals(pending.f1040.line11_agi, income);
+    assertEquals(pending.f1040.line15_taxable_income, taxable);
+    assertEquals(pending.f1040.line24_total_tax, totalTax);
+  });
+}
+
+Deno.test("issue77 completed fixtures match all seven summary amounts exactly", async () => {
+  const archive = JSON.parse(
+    await Deno.readTextFile(
+      new URL(
+        "./reference/2025/issue77-original-incomplete.json",
+        import.meta.url,
+      ),
+    ),
+  );
+  for (const name of Object.keys(archive)) {
+    const fixture = JSON.parse(
+      await Deno.readTextFile(
+        new URL(
+          `./cases/f1040/2025/${name}/correct.json`,
+          import.meta.url,
+        ),
+      ),
+    );
+    const result = await replay(name);
+    assertEquals(result.diagnostics, [], name);
+    for (
+      const field of [
+        "line9_total_income",
+        "line11_agi",
+        "line15_taxable_income",
+        "line24_total_tax",
+        "line33_total_payments",
+        "line35a_refund",
+        "line37_amount_owed",
+      ]
+    ) {
+      assertEquals(
+        result.pending.f1040[field] ?? 0,
+        fixture.correct[field],
+        `${name} ${field}`,
+      );
+    }
+  }
+});

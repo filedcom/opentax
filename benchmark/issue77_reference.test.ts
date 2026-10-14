@@ -53,11 +53,12 @@ Deno.test("issue 77: published nonterminal EIC rows agree at both interval ends"
 });
 
 Deno.test("issue 77: high-income proposed correction must satisfy IRS worksheet", () => {
-  // Case 95: ordinary $883,805 x .37 - $42,979.75 = $284,028.10;
-  // preferential $73,283 x .20 = $14,656.60; sum rounds to $298,685.
+  // Case 95: Schedule D Exception 1 gives net capital gain $30,045.
+  // Taxable $957,087 - preferential $73,282 = ordinary $883,805.
+  // Worksheet tax $284,028 plus preferential tax $14,656.40 rounds to $298,684.
   assertEquals(
-    qualifiedDividendTax2025(957088, 43237, 30046, FilingStatus.Single),
-    298685,
+    qualifiedDividendTax2025(957087, 43237, 30045, FilingStatus.Single),
+    298684,
   );
   assertEquals(
     qualifiedDividendTax2025(458371, 0, 1867, FilingStatus.MFJ),
@@ -109,5 +110,41 @@ Deno.test("issue 77: unresolved source facts cannot become successful oracles", 
   );
   assertThrows(() =>
     benchmarkSourceIssues({ reconciliation: { source_limitations: "unknown" } })
+  );
+});
+
+Deno.test("issue77 case95 direct-sale source columns support the revised worksheet", async () => {
+  const fixture = JSON.parse(
+    await Deno.readTextFile(
+      new URL(
+        "./cases/f1040/2025/95-single-w2-k1-1099r-1099int-1099div-1099b/input.json",
+        import.meta.url,
+      ),
+    ),
+  );
+  const direct = fixture.forms.filter((
+    form: { node_type: string; data: Record<string, unknown> },
+  ) =>
+    form.node_type === "f1099b" && form.data.part === "D" &&
+    !form.data.adjustment_codes && form.data.adjustment_amount === undefined
+  ).map((form: { data: { proceeds: number; cost_basis: number } }) =>
+    form.data
+  );
+  assertEquals(direct.length, 3);
+  const proceedsCents = direct.reduce(
+    (sum: number, row: { proceeds: number }) =>
+      sum + Math.round(row.proceeds * 100),
+    0,
+  );
+  const basisCents = direct.reduce(
+    (sum: number, row: { cost_basis: number }) =>
+      sum + Math.round(row.cost_basis * 100),
+    0,
+  );
+  assertEquals(proceedsCents, 61102643);
+  assertEquals(basisCents, 60931514);
+  assertEquals(
+    Math.round(proceedsCents / 100) - Math.round(basisCents / 100),
+    1711,
   );
 });
