@@ -1,6 +1,6 @@
 {
   "case": "48-mfj-w2-marketplace-1095a",
-  "scenario": "Married filing jointly with both spouses' W-2 income and marketplace health insurance (1095-A with no APTC) — tests Form 8962 PTC computation path",
+  "scenario": "Married filing jointly with both spouses' W-2 income and marketplace health insurance (1095-A with no APTC) \u2014 tests Form 8962 PTC computation path",
   "year": 2025,
   "inputs": {
     "filing_status": "mfj",
@@ -48,20 +48,20 @@
     "actc": 0,
     "excess_ss_credit": 0,
     "line24_total_tax": 7746,
-    "line33_total_payments": 15200,
-    "line35a_refund": 7454,
+    "line33_total_payments": 15201,
+    "line35a_refund": 7455,
     "line37_amount_owed": 0
   },
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed benchmark; original missing facts and expectations are retained in issue77-original-incomplete.json.",
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
-      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0."
+      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0.",
+      "Form 8959: archived W-2 Medicare withholding 798 + 653 = 1451, less 100000 x 0.0145 = 1450, adds 1 to Form 1040 line25c; total payments 10500 + 1 + 4700 = 15201."
     ],
-    "source_limitations": [
-      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "See input.json synthetic_assumptions and the separately labeled monthly marketplace records where applicable."
   }
 }

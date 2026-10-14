@@ -1,7 +1,7 @@
 {
   "year": 2025,
-  "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64–65",
-  "scenario": "Married filing jointly — retired railroad worker with $10,000 RRB-1099 SSEB and government-worker spouse with pension and savings bond interest. SSEB uses the Social Security benefit worksheet and is partly taxable; RRB-1099-R reports separate pension components.",
+  "source": "synthetic",
+  "scenario": "Married filing jointly \u2014 retired railroad worker with $10,000 RRB-1099 SSEB and government-worker spouse with pension and savings bond interest. SSEB uses the Social Security benefit worksheet and is partly taxable; RRB-1099-R reports separate pension components.",
   "forms": [
     {
       "node_type": "start",
@@ -18,7 +18,15 @@
           "spouse_age_65_or_older": true,
           "address_city": "Cheyenne",
           "address_state": "WY",
-          "address_zip": "82001"
+          "address_zip": "82001",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "spouse_ssn": "444-55-6666",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_ssn_issued_before_due_date": true,
+          "spouse_tin_issued_by_due_date": true
         }
       }
     },
@@ -38,7 +46,8 @@
       "node_type": "f1099int",
       "data": {
         "payer_name": "Western Savings Bank",
-        "box1": 2500
+        "box1": 2500,
+        "source_document_reference": "SYNTHETIC issue77 124-mfj-1099r-rrb1099-interest interest source 2"
       }
     },
     {
@@ -51,6 +60,21 @@
         "box5_net_benefits": 10000,
         "rrb_box10_federal_withheld": 0
       }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date",
+      "No foreign accounts or trusts"
+    ]
+  }
 }

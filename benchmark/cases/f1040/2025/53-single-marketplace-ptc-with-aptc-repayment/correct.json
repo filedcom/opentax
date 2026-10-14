@@ -1,6 +1,6 @@
 {
   "case": "53-single-marketplace-ptc-with-aptc-repayment",
-  "scenario": "Single filer, $65k wages, marketplace coverage at 432% FPL — received too much APTC and must repay full excess on Form 8962 (above 400% FPL, no repayment cap)",
+  "scenario": "Single filer, $65k wages, marketplace coverage at 432% FPL \u2014 received too much APTC and must repay full excess on Form 8962 (above 400% FPL, no repayment cap)",
   "year": 2025,
   "inputs": {
     "filing_status": "single",
@@ -55,13 +55,12 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed benchmark; original missing facts and expectations are retained in issue77-original-incomplete.json.",
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
       "Form8962 annual method: FPL 15060, line5 431%, line7 0.0850, contribution 5525, allowed PTC 1075, net 0, repayment 3725."
     ],
-    "source_limitations": [
-      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "See input.json synthetic_assumptions and the separately labeled monthly marketplace records where applicable."
   }
 }

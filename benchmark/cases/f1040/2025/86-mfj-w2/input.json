@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "source": "irs",
+  "source": "synthetic",
   "scenario": "Married filing jointly with multiple W-2 wage income ",
   "forms": [
     {
@@ -22,7 +22,14 @@
               "months_in_home": 12,
               "dob": "2012-01-31",
               "ssn": "221336517",
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false
             },
             {
               "first_name": "Mackenzie",
@@ -31,10 +38,27 @@
               "months_in_home": 12,
               "dob": "2014-07-09",
               "ssn": "663212205",
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false
             }
           ],
-          "address_state": "IL"
+          "address_state": "IL",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_dob": "1985-06-15",
+          "spouse_ssn": "444-55-6666",
+          "spouse_dob": "1985-06-15",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_tin_issued_by_due_date": true,
+          "spouse_ssn_issued_before_due_date": true
         }
       }
     },
@@ -48,7 +72,9 @@
         "box5_medicare_wages": 208125.0,
         "box6_medicare_withheld": 3090.94,
         "employer_name": "ACME INDUSTRIES INC",
-        "employer_ein": "67-1000057"
+        "employer_ein": "67-1000057",
+        "source_document_reference": "SYNTHETIC issue77 86-mfj-w2 source 1",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -61,7 +87,9 @@
         "box5_medicare_wages": 69605.03,
         "box6_medicare_withheld": 1009.0,
         "employer_name": "SUMMIT CONSULTING LLC",
-        "employer_ein": "68-1000058"
+        "employer_ein": "68-1000058",
+        "source_document_reference": "SYNTHETIC issue77 86-mfj-w2 source 2",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -74,7 +102,9 @@
         "box5_medicare_wages": 22500.06,
         "box6_medicare_withheld": 326.25,
         "employer_name": "HORIZON SERVICES CORP",
-        "employer_ein": "67-1000057"
+        "employer_ein": "67-1000057",
+        "source_document_reference": "SYNTHETIC issue77 86-mfj-w2 source 3",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -83,6 +113,43 @@
         "line_8a_mortgage_interest_1098": 35915.15,
         "line_5b_real_estate_tax": 20284.440000000002
       }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
+    },
+    {
+      "node_type": "f8812_credit_limit_worksheet",
+      "data": {
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer identities, birth dates and employment-valid timely SSNs",
+      "All W-2s belong to taxpayer; each copy has a distinct source reference",
+      "Dependents have timely employment-valid SSNs",
+      "No foreign accounts or foreign trusts",
+      "Dependent US residency/citizenship, support, sole claim and joint-return tests satisfied",
+      "No competing Schedule 3 credits; Schedule 8812 Credit Limit Worksheet B does not apply",
+      "Listed itemized expenses qualify; no additional income, AMT preferences or adjustments"
+    ]
+  }
 }

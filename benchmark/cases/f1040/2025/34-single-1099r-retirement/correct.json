@@ -1,6 +1,6 @@
 {
   "case": "34-single-1099r-retirement",
-  "scenario": "Single senior age 65+ with 1099-R taxable pension distribution — no W-2, additional standard deduction applies",
+  "scenario": "Single senior age 65+ with 1099-R taxable pension distribution \u2014 no W-2, additional standard deduction applies",
   "year": 2025,
   "inputs": {
     "filing_status": "single",
@@ -55,13 +55,12 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed benchmark; original missing facts and expectations are retained in issue77-original-incomplete.json.",
     "basis": [
       "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
     ],
-    "source_limitations": [
-      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "See input.json synthetic_assumptions and the separately labeled monthly marketplace records where applicable."
   }
 }

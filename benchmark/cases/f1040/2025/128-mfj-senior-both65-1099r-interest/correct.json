@@ -1,8 +1,8 @@
 {
   "case": "128-mfj-senior-both65-1099r-interest",
-  "scenario": "Married filing jointly both spouses age 65+ with pension and interest income — tests dual senior standard deduction ($34,700 = $31,500 base + $1,600 × 2 age factors)",
+  "scenario": "Married filing jointly both spouses age 65+ with pension and interest income \u2014 tests dual senior standard deduction ($34,700 = $31,500 base + $1,600 \u00d7 2 age factors)",
   "year": 2025,
-  "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked; Rev. Proc. 2024-40 §3.14: $1,600 per age/blindness factor for MFJ (p. 95)",
+  "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked; Rev. Proc. 2024-40 \u00a73.14: $1,600 per age/blindness factor for MFJ (p. 95)",
   "correct": {
     "line11_agi": 43500,
     "line15_taxable_income": 0,
@@ -14,13 +14,12 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed benchmark; original missing facts and expectations are retained in issue77-original-incomplete.json.",
     "basis": [
       "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
     ],
-    "source_limitations": [
-      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "See input.json synthetic_assumptions and the separately labeled monthly marketplace records where applicable."
   }
 }

@@ -1,9 +1,9 @@
 # Issue 77 reconciliation — October 14, 2026
 
 This review changes arithmetic expectations in 121 fixtures. It does **not**
-certify 121 complete returns. Sixty-five fixtures explicitly retain unresolved
-source or eligibility limitations, including case 78 whose numeric expectations
-are preserved pending age evidence. The benchmark now reports those limitations
+certify 121 complete returns. The initial reconciliation retained 65 source or eligibility limitations.
+The synthetic completion work below reduces that number to 48; case 78 now
+uses an explicitly invented eligible DOB and the correct 316 EIC expectation. The benchmark now reports those limitations
 as errors even if every compared number matches. Existing unsupported-oracle and
 executor errors still fail the benchmark; the $5 legacy tolerance is unchanged.
 
@@ -65,8 +65,9 @@ rules. Other sources are the TY2025 instructions for
   ownership prevents verification of the excess Social Security credit and final
   payments/refund. The archived excess-credit assumption is retained visibly as
   conditional and cannot produce a passing benchmark. It is not replaced by zero.
-- Case 78: age is absent; the conditional childless table credit would be **316**.
-  Numeric expectations remain archived and flagged, pending source evidence.
+- Case 78: the original age was absent. The completed synthetic fixture uses
+  DOB 1985-06-15, EIC **316**, and payments/refund **382**; original values
+  remain in the incomplete-fixture archive.
 - Case 91: worksheet tax **4,121**. Case 96: other-dependent credit **500**.
 - Case 106: contrary to the report, `input.json` contains a child, DOB,
   residency and 48,000 wages. Under the intended eligibility assumptions,
@@ -143,3 +144,24 @@ advisory), verifies excess SS on Form 1040 line 31, and verifies EIC, total
 payments and refunds (382 when eligible, 66 when ineligible). The separate basic
 W-2 smoke still checks finalized MeF and flattened PDF values. Every platform
 release build must pass these checks before publication.
+
+
+## Synthetic completion work (ongoing)
+
+The user explicitly authorized completing missing benchmark facts with synthetic
+records. Eighteen inputs now contain labeled identity, eligibility or monthly
+coverage assumptions. The original inputs and expectations are retained in
+[issue77-original-incomplete.json](./issue77-original-incomplete.json). None of
+the original financial source amounts were replaced. Marketplace record hashes
+refer to the actual labeled JSON records in `synthetic-marketplace/`.
+
+The public `f8812_credit_limit_worksheet` input supplies reviewed credit-limit
+answers while retaining automatically derived dependent counts, AGI and tax.
+Case 86 now produces CTC 4,400, excess Social Security 5,711 and refund 7,069.
+All nine reported senior scenarios and all six PTC scenarios execute without
+diagnostics. Case 48 also retains the one dollar of Additional Medicare
+withholding implied by its original W-2 boxes: payments 15,201, refund 7,455.
+
+Current focused gate: 31 passing tests, including complete-return graph checks.
+Rounding consistency and the remaining reported cases are still being reviewed;
+this checkpoint does not close the issue or supersede the final release smoke.

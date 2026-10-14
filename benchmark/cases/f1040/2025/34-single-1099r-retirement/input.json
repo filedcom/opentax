@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single senior age 65+ with 1099-R taxable pension distribution — no W-2, additional standard deduction applies",
+  "scenario": "Single senior age 65+ with 1099-R taxable pension distribution \u2014 no W-2, additional standard deduction applies",
   "forms": [
     {
       "node_type": "start",
@@ -13,7 +13,11 @@
           "taxpayer_age_65_or_older": true,
           "address_city": "Phoenix",
           "address_state": "AZ",
-          "address_zip": "85001"
+          "address_zip": "85001",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true
         }
       }
     },
@@ -28,5 +32,13 @@
         "box7_distribution_code": "7"
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date"
+    ]
+  }
 }

@@ -67,8 +67,8 @@
       "Form 8959 / Form 1040 line25d total withholding: 97303; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
     ],
     "source_limitations": [
-      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
-      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
-    ]
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ],
+    "synthetic_source": "issue77-original-incomplete.json retains the original incomplete input and expectations; current identity, ownership, timely SSN and foreign-account answers are invented test assumptions."
   }
 }

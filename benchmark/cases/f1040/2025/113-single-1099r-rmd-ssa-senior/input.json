@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single retiree age 75 with RMD (1099-R code 7) and Social Security — no early distribution penalty",
+  "scenario": "Single retiree age 75 with RMD (1099-R code 7) and Social Security \u2014 no early distribution penalty",
   "forms": [
     {
       "node_type": "start",
@@ -13,7 +13,11 @@
           "taxpayer_age_65_or_older": true,
           "address_city": "Phoenix",
           "address_state": "AZ",
-          "address_zip": "85001"
+          "address_zip": "85001",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true
         }
       }
     },
@@ -36,5 +40,13 @@
         "box6_federal_withheld": 0
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date"
+    ]
+  }
 }

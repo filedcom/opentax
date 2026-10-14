@@ -17,7 +17,15 @@
           "spouse_age_65_or_older": true,
           "address_city": "Scottsdale",
           "address_state": "AZ",
-          "address_zip": "85251"
+          "address_zip": "85251",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "spouse_ssn": "444-55-6666",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_ssn_issued_before_due_date": true,
+          "spouse_tin_issued_by_due_date": true
         }
       }
     },
@@ -40,5 +48,13 @@
         "box6_federal_withheld": 0
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date"
+    ]
+  }
 }

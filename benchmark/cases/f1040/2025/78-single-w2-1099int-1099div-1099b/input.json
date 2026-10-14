@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "source": "irs",
+  "source": "synthetic",
   "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses ",
   "forms": [
     {
@@ -12,7 +12,27 @@
           "taxpayer_last_name": "James",
           "address_city": "Springfield",
           "address_zip": "62701",
-          "address_state": "IL"
+          "address_state": "IL",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_dob": "1985-06-15",
+          "main_home_in_us_over_half_year": true,
+          "taxpayer_can_be_claimed_as_dependent": false,
+          "childless_eic_review": {
+            "not_qualifying_child_of_another_taxpayer_verified": true,
+            "qualifying_child_status_record_reference": "SYNTHETIC issue77 family assumption"
+          },
+          "prior_eic_disallowance_review": {
+            "status": "none",
+            "irs_account_record_reference": "SYNTHETIC issue77 no prior disallowance",
+            "no_nonclerical_disallowance_since_1996_verified": true
+          },
+          "eic_tax_residency_review": {
+            "status": "all_year_resident",
+            "taxpayer_status_record_reference": "SYNTHETIC issue77 residency"
+          }
         }
       }
     },
@@ -26,7 +46,9 @@
         "box5_medicare_wages": 7212.07,
         "box6_medicare_withheld": 104.58,
         "employer_name": "ACME INDUSTRIES INC",
-        "employer_ein": "49-1000039"
+        "employer_ein": "49-1000039",
+        "source_document_reference": "SYNTHETIC issue77 78-single-w2-1099int-1099div-1099b source 1",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -34,7 +56,8 @@
       "data": {
         "payer_name": "FIRST NATIONAL BANK",
         "box1": 1587.29,
-        "payer_tin": "50-1000040"
+        "payer_tin": "50-1000040",
+        "source_document_reference": "SYNTHETIC issue77 78-single-w2-1099int-1099div-1099b source 2"
       }
     },
     {
@@ -42,7 +65,8 @@
       "data": {
         "payer_name": "LIBERTY INVESTMENTS LLC",
         "box1": 1.72,
-        "payer_tin": "12-1000002"
+        "payer_tin": "12-1000002",
+        "source_document_reference": "SYNTHETIC issue77 78-single-w2-1099int-1099div-1099b source 3"
       }
     },
     {
@@ -77,6 +101,24 @@
         "proceeds": 2849.58,
         "cost_basis": 2407.36
       }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer identities, birth dates and employment-valid timely SSNs",
+      "All W-2s belong to taxpayer; each copy has a distinct source reference",
+      "Dependents have timely employment-valid SSNs",
+      "No foreign accounts or foreign trusts",
+      "US residency, no dependent claim, not another taxpayer qualifying child, no prior EIC disallowance"
+    ]
+  }
 }

@@ -12,7 +12,11 @@
           "taxpayer_dob": "1983-06-18",
           "address_city": "Columbus",
           "address_state": "OH",
-          "address_zip": "43201"
+          "address_zip": "43201",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true
         }
       }
     },
@@ -33,8 +37,415 @@
         "issuer_name": "HealthConnect",
         "annual_premium": 5400,
         "annual_slcsp": 5800,
-        "annual_aptc": 3600
+        "annual_aptc": 3600,
+        "monthly_premiums": [
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0,
+          450.0
+        ],
+        "monthly_slcsps": [
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333,
+          483.3333333333333
+        ],
+        "monthly_aptcs": [
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0
+        ],
+        "policy_number": "SYNTHETIC-ISSUE77-110",
+        "aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 1,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-01-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 2,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 2,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-02-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 3,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 3,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-03-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 4,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 4,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-04-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 5,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 5,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-05-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 6,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 6,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-06-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 7,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 7,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-07-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 8,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 8,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-08-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 9,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 9,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-09-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 10,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 10,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-10-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 11,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 11,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-11-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          },
+          {
+            "month": 12,
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-110",
+              "month": 12,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "amount": 150.0,
+              "paid_on": "2025-12-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json"
+            }
+          }
+        ],
+        "recipient_ssn": "111-22-3333",
+        "covered_individual_ssns": [
+          "111-22-3333"
+        ]
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date",
+      "Annual marketplace amounts cover all twelve months equally, with unchanged eligible tax-family enrollment and no shared allocation",
+      "All covered people eligible for PTC; no other minimum essential coverage; premium amounts paid as specified in the synthetic monthly records"
+    ]
+  }
 }

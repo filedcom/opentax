@@ -33,8 +33,8 @@
     "itemized_deductions": 0
   },
   "correct": {
-    "line9_total_income": 14960.69,
-    "line11_agi": 14960.69,
+    "line9_total_income": 14961,
+    "line11_agi": 14961,
     "standard_deduction": 15750,
     "qbi_deduction": 0,
     "line15_taxable_income": 0,
@@ -49,19 +49,18 @@
     "aotc_refundable": 0,
     "ptc_additional": 0,
     "ptc_repayment": 0,
-    "eitc": 219.66,
+    "eitc": 316,
     "actc": 0,
     "excess_ss_credit": 0.0,
     "line24_total_tax": 0.0,
-    "line33_total_payments": 285.66,
-    "line35a_refund": 285.66,
+    "line33_total_payments": 382,
+    "line35a_refund": 382,
     "line37_amount_owed": 0
   },
   "reconciliation": {
     "issue": 77,
     "scope": "Unresolved source facts; archived amounts retained, not independently valid.",
-    "source_limitations": [
-      "Taxpayer DOB/childless EIC age eligibility absent. Conditional EIC table amount is 316; no age supplied."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "issue77-original-incomplete.json retains the original incomplete input and expectations; current identity, ownership, timely SSN and foreign-account answers are invented test assumptions."
   }
 }

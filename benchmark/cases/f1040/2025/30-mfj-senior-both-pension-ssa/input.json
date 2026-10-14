@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Married filing jointly, both spouses age 67, with pension income and Social Security benefits — tests dual senior standard deduction add-on and SSA partial taxability at low income",
+  "scenario": "Married filing jointly, both spouses age 67, with pension income and Social Security benefits \u2014 tests dual senior standard deduction add-on and SSA partial taxability at low income",
   "forms": [
     {
       "node_type": "start",
@@ -17,7 +17,15 @@
           "spouse_age_65_or_older": true,
           "address_city": "Boca Raton",
           "address_state": "FL",
-          "address_zip": "33431"
+          "address_zip": "33431",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "spouse_ssn": "444-55-6666",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_ssn_issued_before_due_date": true,
+          "spouse_tin_issued_by_due_date": true
         }
       }
     },
@@ -40,5 +48,13 @@
         "box6_federal_withheld": 0
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date"
+    ]
+  }
 }

@@ -1,6 +1,6 @@
 {
   "case": "52-single-w2-marketplace-ptc-no-aptc",
-  "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC — taxpayer claims full PTC at filing on Form 8962",
+  "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC \u2014 taxpayer claims full PTC at filing on Form 8962",
   "year": 2025,
   "inputs": {
     "filing_status": "single",
@@ -55,13 +55,12 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed benchmark; original missing facts and expectations are retained in issue77-original-incomplete.json.",
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
       "Form8962 annual method: FPL 15060, line5 185%, line7 0.0140, contribution 392, allowed PTC 3600, net 3600, repayment 0."
     ],
-    "source_limitations": [
-      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "See input.json synthetic_assumptions and the separately labeled monthly marketplace records where applicable."
   }
 }

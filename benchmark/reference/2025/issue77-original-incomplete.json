@@ -1,0 +1,1959 @@
+{
+  "76-mfj-w2-1099int-1099b": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Married filing jointly with multiple W-2 wage income, interest income, capital gains/losses ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_state": "IL",
+              "address_zip": "62701",
+              "spouse_first_name": "Sarah",
+              "spouse_last_name": "James",
+              "dependents": [
+                {
+                  "first_name": "Julian",
+                  "last_name": "Altman",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "dob": "2019-06-09",
+                  "middle_initial": "I",
+                  "ssn": "132716825"
+                },
+                {
+                  "first_name": "Asher",
+                  "last_name": "Altman",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "dob": "2020-09-09",
+                  "ssn": "360298788"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 115737.5,
+            "box2_fed_withheld": 13387.2,
+            "box3_ss_wages": 132237.5,
+            "box4_ss_withheld": 8198.73,
+            "box5_medicare_wages": 132237.5,
+            "box6_medicare_withheld": 1917.44,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "44-1000034"
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 380966.81,
+            "box2_fed_withheld": 82075.76,
+            "box3_ss_wages": 176100.0,
+            "box4_ss_withheld": 10918.2,
+            "box5_medicare_wages": 404466.81,
+            "box6_medicare_withheld": 7704.97,
+            "employer_name": "SUMMIT CONSULTING LLC",
+            "employer_ein": "45-1000035"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 3350.74,
+            "payer_tin": "46-1000036"
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Morgan Stanley AT WORK x2879 ST Noncovered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 51794.59,
+            "cost_basis": 52069.62,
+            "adjustment_amount": 640.27,
+            "adjustment_codes": "MW"
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Morgan Stanley AT WORK x2879 LT Noncovered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 19397.38,
+            "cost_basis": 17530.37
+          }
+        },
+        {
+          "node_type": "schedule_a",
+          "data": {
+            "line_8a_mortgage_interest_1098": 27558.86,
+            "line_5b_real_estate_tax": 16356.66
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "76-mfj-w2-1099int-1099b",
+      "scenario": "Married filing jointly with multiple W-2 wage income, interest income, capital gains/losses ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 496704.31,
+        "unemployment": 0,
+        "interest": 3350.74,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "stcg": 365.23999999999387,
+        "ltcg": 1867.010000000002,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 2,
+        "eitc_children": 2,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 95462.95999999999,
+        "foreign_tax_paid": 0,
+        "itemized_deductions": 43915.52
+      },
+      "correct": {
+        "line9_total_income": 502287,
+        "line11_agi": 502287,
+        "standard_deduction": 31500,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 458371,
+        "ordinary_taxable": 456504,
+        "income_tax": 100487,
+        "se_tax": 0,
+        "add_medicare_tax": 2580,
+        "line18_tax_before_credits": 100487,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0.0,
+        "actc": 0.0,
+        "excess_ss_credit": 8199,
+        "line24_total_tax": 103279,
+        "line33_total_payments": 105502,
+        "line35a_refund": 2223,
+        "line37_amount_owed": 0,
+        "itemized_deduction": 43916
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 500055, net capital 2232, business/rental 0, other 0, taxable SSA 0; Schedule A 43916; line16 100487, SE 0, Medicare 2580, NIIT 212, distribution tax 0, foreign tax credit 0.",
+          "Form 8959 / Form 1040 line25d total withholding: 97303; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+          "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+        ]
+      }
+    }
+  },
+  "78-single-w2-1099int-1099div-1099b": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_zip": "62701",
+              "address_state": "IL"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 7212.07,
+            "box2_fed_withheld": 66.0,
+            "box3_ss_wages": 7212.07,
+            "box4_ss_withheld": 447.15,
+            "box5_medicare_wages": 7212.07,
+            "box6_medicare_withheld": 104.58,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "49-1000039"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 1587.29,
+            "payer_tin": "50-1000040"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "LIBERTY INVESTMENTS LLC",
+            "box1": 1.72,
+            "payer_tin": "12-1000002"
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "HERITAGE FINANCIAL SERVICES",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 749.64,
+            "box1b": 740.76,
+            "box2a": 2.97
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Charles Schwab x6526 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 20754.78,
+            "cost_basis": 15790.0
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Charles Schwab x6526 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 2849.58,
+            "cost_basis": 2407.36
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "78-single-w2-1099int-1099div-1099b",
+      "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 7212.07,
+        "unemployment": 0,
+        "interest": 1589.01,
+        "ordinary_dividends": 749.64,
+        "qualified_dividends": 740.76,
+        "stcg": 4964.779999999999,
+        "ltcg": 445.1899999999998,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 66.0,
+        "foreign_tax_paid": 0,
+        "itemized_deductions": 0
+      },
+      "correct": {
+        "line9_total_income": 14960.69,
+        "line11_agi": 14960.69,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0.0,
+        "se_tax": 0,
+        "add_medicare_tax": 0.0,
+        "line18_tax_before_credits": 0.0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 219.66,
+        "actc": 0,
+        "excess_ss_credit": 0.0,
+        "line24_total_tax": 0.0,
+        "line33_total_payments": 285.66,
+        "line35a_refund": 285.66,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "scope": "Unresolved source facts; archived amounts retained, not independently valid.",
+        "source_limitations": [
+          "Taxpayer DOB/childless EIC age eligibility absent. Conditional EIC table amount is 316; no age supplied."
+        ]
+      }
+    }
+  },
+  "86-mfj-w2": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Married filing jointly with multiple W-2 wage income ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_zip": "62701",
+              "spouse_first_name": "Sarah",
+              "spouse_last_name": "James",
+              "dependents": [
+                {
+                  "first_name": "ALEXIS",
+                  "last_name": "OSMAN",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "dob": "2012-01-31",
+                  "ssn": "221336517",
+                  "qualifying_child_for_ctc": true
+                },
+                {
+                  "first_name": "Mackenzie",
+                  "last_name": "OSMAN",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "dob": "2014-07-09",
+                  "ssn": "663212205",
+                  "qualifying_child_for_ctc": true
+                }
+              ],
+              "address_state": "IL"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 208125.0,
+            "box2_fed_withheld": 29713.49,
+            "box3_ss_wages": 176100.0,
+            "box4_ss_withheld": 10918.2,
+            "box5_medicare_wages": 208125.0,
+            "box6_medicare_withheld": 3090.94,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "67-1000057"
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 64605.03,
+            "box2_fed_withheld": 9934.76,
+            "box3_ss_wages": 69605.03,
+            "box4_ss_withheld": 4315.53,
+            "box5_medicare_wages": 69605.03,
+            "box6_medicare_withheld": 1009.0,
+            "employer_name": "SUMMIT CONSULTING LLC",
+            "employer_ein": "68-1000058"
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 22500.06,
+            "box2_fed_withheld": 749.97,
+            "box3_ss_wages": 22500.06,
+            "box4_ss_withheld": 1395.0,
+            "box5_medicare_wages": 22500.06,
+            "box6_medicare_withheld": 326.25,
+            "employer_name": "HORIZON SERVICES CORP",
+            "employer_ein": "67-1000057"
+          }
+        },
+        {
+          "node_type": "schedule_a",
+          "data": {
+            "line_8a_mortgage_interest_1098": 35915.15,
+            "line_5b_real_estate_tax": 20284.440000000002
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "86-mfj-w2",
+      "scenario": "Married filing jointly with multiple W-2 wage income ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 295230.09,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "stcg": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 2,
+        "eitc_children": 2,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 40398.22,
+        "foreign_tax_paid": 0,
+        "itemized_deductions": 56199.59
+      },
+      "correct": {
+        "line9_total_income": 295230,
+        "line11_agi": 295230,
+        "standard_deduction": 31500,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 239031,
+        "ordinary_taxable": 239031,
+        "income_tax": 43061,
+        "se_tax": 0,
+        "add_medicare_tax": 452,
+        "line18_tax_before_credits": 43061,
+        "nonref_ctc": 4400,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0.0,
+        "actc": 0.0,
+        "excess_ss_credit": 5711,
+        "line24_total_tax": 39113,
+        "line33_total_payments": 46182,
+        "line35a_refund": 7069,
+        "line37_amount_owed": 0,
+        "itemized_deduction": 56199
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 295230, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 56199; line16 43061, SE 0, Medicare 452, NIIT 0, distribution tax 0, foreign tax credit 0.",
+          "Form 8959 / Form 1040 line25d total withholding: 40471; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+          "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+        ]
+      }
+    }
+  },
+  "09-single-senior-over65": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer age 70 with W-2 income \u2014 tests enhanced standard deduction (+$2,000 for age 65+)",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Pat",
+              "taxpayer_last_name": "Wilson",
+              "taxpayer_dob": "1954-10-10",
+              "taxpayer_age_65_or_older": true,
+              "address_city": "Phoenix",
+              "address_state": "AZ",
+              "address_zip": "85001"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 28000,
+            "box2_fed_withheld": 1500,
+            "box3_ss_wages": 28000,
+            "box4_ss_withheld": 1736,
+            "box5_medicare_wages": 28000,
+            "box6_medicare_withheld": 406,
+            "taxpayer_age": 70
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "09-single-senior-over65",
+      "scenario": "Single filer age 70 with W-2 income \u2014 tests enhanced standard deduction (+$2,000 for age 65+)",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 28000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 1500
+      },
+      "correct": {
+        "line9_total_income": 28000,
+        "line11_agi": 28000,
+        "standard_deduction": 17750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 4250,
+        "ordinary_taxable": 4250,
+        "income_tax": 428,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 428,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 428,
+        "line33_total_payments": 1500,
+        "line35a_refund": 1072,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "16-mfj-retirement-ssa": {
+    "input": {
+      "year": 2025,
+      "scenario": "Married filing jointly in retirement \u2014 1099-R pension distributions and Social Security income",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Lee",
+              "taxpayer_last_name": "Johnson",
+              "taxpayer_dob": "1950-05-15",
+              "taxpayer_age_65_or_older": true,
+              "spouse_first_name": "Terry",
+              "spouse_last_name": "Johnson",
+              "spouse_dob": "1951-09-08",
+              "spouse_age_65_or_older": true,
+              "address_city": "Scottsdale",
+              "address_state": "AZ",
+              "address_zip": "85251"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Federal Employee Retirement System",
+            "payer_ein": "52-0000001",
+            "box1_gross_distribution": 36000,
+            "box2a_taxable_amount": 36000,
+            "box4_federal_withheld": 3600,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "payer_name": "Social Security Administration",
+            "box3_gross_benefits": 24000,
+            "box6_federal_withheld": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "16-mfj-retirement-ssa",
+      "scenario": "Married filing jointly in retirement \u2014 1099-R pension distributions and Social Security income",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 0,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 36000,
+        "ssa_gross": 24000,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 3600
+      },
+      "correct": {
+        "line9_total_income": 45400,
+        "line11_agi": 45400,
+        "standard_deduction": 34700,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 3600,
+        "line35a_refund": 3600,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "30-mfj-senior-both-pension-ssa": {
+    "input": {
+      "year": 2025,
+      "scenario": "Married filing jointly, both spouses age 67, with pension income and Social Security benefits \u2014 tests dual senior standard deduction add-on and SSA partial taxability at low income",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Harold",
+              "taxpayer_last_name": "Garner",
+              "taxpayer_dob": "1957-06-15",
+              "taxpayer_age_65_or_older": true,
+              "spouse_first_name": "Beverly",
+              "spouse_last_name": "Garner",
+              "spouse_dob": "1958-01-20",
+              "spouse_age_65_or_older": true,
+              "address_city": "Boca Raton",
+              "address_state": "FL",
+              "address_zip": "33431"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Federal Pension",
+            "payer_ein": "52-0000001",
+            "box1_gross_distribution": 30000,
+            "box2a_taxable_amount": 30000,
+            "box4_federal_withheld": 2500,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "payer_name": "Social Security Administration",
+            "box3_gross_benefits": 24000,
+            "box6_federal_withheld": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "30-mfj-senior-both-pension-ssa",
+      "scenario": "Married filing jointly, both spouses age 67, with pension income and Social Security benefits \u2014 tests dual senior standard deduction add-on and SSA partial taxability at low income",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 0,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 30000,
+        "ssa_gross": 24000,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 2500
+      },
+      "correct": {
+        "line9_total_income": 35000,
+        "line11_agi": 35000,
+        "standard_deduction": 34700,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 2500,
+        "line35a_refund": 2500,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "34-single-1099r-retirement": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single senior age 65+ with 1099-R taxable pension distribution \u2014 no W-2, additional standard deduction applies",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Margaret",
+              "taxpayer_last_name": "Walters",
+              "taxpayer_dob": "1955-04-18",
+              "taxpayer_age_65_or_older": true,
+              "address_city": "Phoenix",
+              "address_state": "AZ",
+              "address_zip": "85001"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Arizona State Retirement System",
+            "payer_ein": "86-0000001",
+            "box1_gross_distribution": 35000,
+            "box2a_taxable_amount": 28000,
+            "box4_federal_withheld": 2800,
+            "box7_distribution_code": "7"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "34-single-1099r-retirement",
+      "scenario": "Single senior age 65+ with 1099-R taxable pension distribution \u2014 no W-2, additional standard deduction applies",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 0,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 28000,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 2800
+      },
+      "correct": {
+        "line9_total_income": 28000,
+        "line11_agi": 28000,
+        "standard_deduction": 17750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 4250,
+        "ordinary_taxable": 4250,
+        "income_tax": 428,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 428,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 428,
+        "line33_total_payments": 2800,
+        "line35a_refund": 2372,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "43-single-multiple-1099r": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single senior age 70 with two separate 1099-R retirement distributions \u2014 taxable amounts from both pensions combined",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Harold",
+              "taxpayer_last_name": "Jensen",
+              "taxpayer_dob": "1955-01-30",
+              "taxpayer_age_65_or_older": true,
+              "address_city": "Omaha",
+              "address_state": "NE",
+              "address_zip": "68101"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Nebraska Public Employees Retirement",
+            "payer_ein": "47-0000001",
+            "box1_gross_distribution": 20000,
+            "box2a_taxable_amount": 18000,
+            "box4_federal_withheld": 1800,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Fidelity Investments IRA",
+            "payer_ein": "04-3523567",
+            "box1_gross_distribution": 15000,
+            "box2a_taxable_amount": 13000,
+            "box4_federal_withheld": 1300,
+            "box7_distribution_code": "7"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "43-single-multiple-1099r",
+      "scenario": "Single senior age 70 with two separate 1099-R retirement distributions \u2014 taxable amounts from both pensions combined",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 0,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 31000,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 3100
+      },
+      "correct": {
+        "line9_total_income": 31000,
+        "line11_agi": 31000,
+        "standard_deduction": 17750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 7250,
+        "ordinary_taxable": 7250,
+        "income_tax": 728,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 728,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 728,
+        "line33_total_payments": 3100,
+        "line35a_refund": 2372,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "113-single-1099r-rmd-ssa-senior": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single retiree age 75 with RMD (1099-R code 7) and Social Security \u2014 no early distribution penalty",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Dorothy",
+              "taxpayer_last_name": "Walsh",
+              "taxpayer_dob": "1950-03-12",
+              "taxpayer_age_65_or_older": true,
+              "address_city": "Phoenix",
+              "address_state": "AZ",
+              "address_zip": "85001"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Fidelity Retirement Services",
+            "payer_ein": "00-0000001",
+            "box1_gross_distribution": 22000,
+            "box2a_taxable_amount": 22000,
+            "box4_federal_withheld": 1500,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "payer_name": "Social Security Administration",
+            "box3_gross_benefits": 18000,
+            "box6_federal_withheld": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "113-single-1099r-rmd-ssa-senior",
+      "year": 2025,
+      "correct": {
+        "line11_agi": 25000,
+        "line15_taxable_income": 1250,
+        "line24_total_tax": 126,
+        "line33_total_payments": 1500,
+        "line35a_refund": 1374,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "124-mfj-1099r-rrb1099-interest": {
+    "input": {
+      "year": 2025,
+      "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64\u201365",
+      "scenario": "Married filing jointly \u2014 retired railroad worker with $10,000 RRB-1099 SSEB and government-worker spouse with pension and savings bond interest. SSEB uses the Social Security benefit worksheet and is partly taxable; RRB-1099-R reports separate pension components.",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Gerald",
+              "taxpayer_last_name": "Hartwell",
+              "taxpayer_dob": "1956-04-22",
+              "taxpayer_age_65_or_older": true,
+              "spouse_first_name": "Pauline",
+              "spouse_last_name": "Hartwell",
+              "spouse_dob": "1958-11-09",
+              "spouse_age_65_or_older": true,
+              "address_city": "Cheyenne",
+              "address_state": "WY",
+              "address_zip": "82001"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "State Government Pension (Pauline)",
+            "payer_ein": "78-9012345",
+            "box1_gross_distribution": 38000,
+            "box2a_taxable_amount": 38000,
+            "box4_federal_withheld": 0,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "Western Savings Bank",
+            "box1": 2500
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "payer_name": "Railroad Retirement Board",
+            "is_rrb": true,
+            "box3_gross_benefits": 10000,
+            "box4_repaid": 0,
+            "box5_net_benefits": 10000,
+            "rrb_box10_federal_withheld": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "124-mfj-1099r-rrb1099-interest",
+      "scenario": "Married filing jointly: retired railroad worker (RRB Tier 1 SSEB $10,000) and government-worker spouse with pension $38,000 and savings bond interest $2,500 \u2014 SSEB partially taxable ($6,275) per IRC \u00a786 Worksheet; both 65+ for enhanced standard deduction $34,700",
+      "year": 2025,
+      "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64\u201365 (income amounts adapted; SSEB taxability per IRC \u00a786)",
+      "correct": {
+        "line11_agi": 46775,
+        "line15_taxable_income": 75,
+        "line24_total_tax": 9,
+        "line33_total_payments": 0,
+        "line35a_refund": 0,
+        "line37_amount_owed": 9
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "127-single-senior-1099r-ssa-age65": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer age 65+ with pension (1099-R) and Social Security \u2014 age-enhanced standard deduction, SSA partially taxable",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Ruth",
+              "taxpayer_last_name": "Malone",
+              "taxpayer_dob": "1948-03-15",
+              "taxpayer_age_65_or_older": true,
+              "address_city": "Juneau",
+              "address_state": "AK",
+              "address_zip": "99801"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Pension Fund",
+            "payer_ein": "34-5678901",
+            "box1_gross_distribution": 20000,
+            "box2a_taxable_amount": 20000,
+            "box4_federal_withheld": 1500,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "payer_name": "Social Security Administration",
+            "box3_gross_benefits": 12000,
+            "box6_federal_withheld": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "127-single-senior-1099r-ssa-age65",
+      "scenario": "Single filer over 65 \u2014 age-enhanced standard deduction $17,750; pension income with small Social Security partially taxable",
+      "year": 2025,
+      "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction age 65+ single = $17,750 (p. 95); SSA taxable portion rules Chapter 7 p. 63",
+      "correct": {
+        "line6b_taxable_ssa": 500,
+        "line11_agi": 20500,
+        "line15_taxable_income": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 1500,
+        "line35a_refund": 1500,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "128-mfj-senior-both65-1099r-interest": {
+    "input": {
+      "year": 2025,
+      "scenario": "Married filing jointly both spouses age 65+ with pension and interest income \u2014 tests dual senior standard deduction ($34,700 with 2 age boxes checked)",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Raymond",
+              "taxpayer_last_name": "Castillo",
+              "taxpayer_dob": "1948-05-20",
+              "taxpayer_age_65_or_older": true,
+              "spouse_first_name": "Gloria",
+              "spouse_last_name": "Castillo",
+              "spouse_dob": "1950-08-14",
+              "spouse_age_65_or_older": true,
+              "address_city": "Cheyenne",
+              "address_state": "WY",
+              "address_zip": "82001"
+            }
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "Pension Fund",
+            "payer_ein": "56-7890123",
+            "box1_gross_distribution": 42000,
+            "box2a_taxable_amount": 42000,
+            "box4_federal_withheld": 3000,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "First National Bank",
+            "box1": 1500
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "128-mfj-senior-both65-1099r-interest",
+      "scenario": "Married filing jointly both spouses age 65+ with pension and interest income \u2014 tests dual senior standard deduction ($34,700 = $31,500 base + $1,600 \u00d7 2 age factors)",
+      "year": 2025,
+      "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked; Rev. Proc. 2024-40 \u00a73.14: $1,600 per age/blindness factor for MFJ (p. 95)",
+      "correct": {
+        "line11_agi": 43500,
+        "line15_taxable_income": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 3000,
+        "line35a_refund": 3000,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+        ],
+        "source_limitations": [
+          "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+        ]
+      }
+    }
+  },
+  "36-single-w2-marketplace-1095a": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer with W-2 income and marketplace health insurance (1095-A) \u2014 no APTC paid, 1095-A submitted for PTC computation on Form 8962",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Dana",
+              "taxpayer_last_name": "Reyes",
+              "taxpayer_dob": "1987-12-05",
+              "address_city": "Kansas City",
+              "address_state": "MO",
+              "address_zip": "64101"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 35000,
+            "box2_fed_withheld": 3500,
+            "box3_ss_wages": 35000,
+            "box4_ss_withheld": 2170,
+            "box5_medicare_wages": 35000,
+            "box6_medicare_withheld": 508
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "HealthConnect",
+            "annual_premium": 4800,
+            "annual_slcsp": 5100,
+            "annual_aptc": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "36-single-w2-marketplace-1095a",
+      "scenario": "Single filer with W-2 income and marketplace health insurance (1095-A) \u2014 no APTC paid, 1095-A submitted for PTC computation on Form 8962",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 35000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 4800,
+        "marketplace_slcsp": 5100,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 3500
+      },
+      "correct": {
+        "line9_total_income": 35000,
+        "line11_agi": 35000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 19250,
+        "ordinary_taxable": 19250,
+        "income_tax": 2075,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 2075,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 3952,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 2075,
+        "line33_total_payments": 7452,
+        "line35a_refund": 5377,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 15060, line5 232%, line7 0.0328, contribution 1148, allowed PTC 3952, net 3952, repayment 0."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  },
+  "45-single-w2-educator-marketplace": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer with W-2 income and marketplace health insurance (1095-A with no APTC) \u2014 tests f1095a node acceptance and basic PTC path without repayment",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Natalie",
+              "taxpayer_last_name": "Brooks",
+              "taxpayer_dob": "1991-10-25",
+              "address_city": "Louisville",
+              "address_state": "KY",
+              "address_zip": "40201"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 40000,
+            "box2_fed_withheld": 4000,
+            "box3_ss_wages": 40000,
+            "box4_ss_withheld": 2480,
+            "box5_medicare_wages": 40000,
+            "box6_medicare_withheld": 580
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "BlueCross Marketplace",
+            "annual_premium": 5400,
+            "annual_slcsp": 5700,
+            "annual_aptc": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "45-single-w2-educator-marketplace",
+      "scenario": "Single filer with W-2 income and marketplace health insurance (1095-A with no APTC) \u2014 tests f1095a node acceptance and basic PTC path without repayment",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 40000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 5400,
+        "marketplace_slcsp": 5700,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 4000
+      },
+      "correct": {
+        "line9_total_income": 40000,
+        "line11_agi": 40000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 24250,
+        "ordinary_taxable": 24250,
+        "income_tax": 2675,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 2675,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 3860,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 2675,
+        "line33_total_payments": 7860,
+        "line35a_refund": 5185,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 15060, line5 265%, line7 0.0460, contribution 1840, allowed PTC 3860, net 3860, repayment 0."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  },
+  "48-mfj-w2-marketplace-1095a": {
+    "input": {
+      "year": 2025,
+      "scenario": "Married filing jointly with both spouses' W-2 income and marketplace health insurance (1095-A with no APTC) \u2014 tests Form 8962 PTC computation path",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Antonio",
+              "taxpayer_last_name": "Vasquez",
+              "taxpayer_dob": "1982-11-14",
+              "spouse_first_name": "Carmen",
+              "spouse_last_name": "Vasquez",
+              "spouse_dob": "1984-07-22",
+              "address_city": "San Diego",
+              "address_state": "CA",
+              "address_zip": "92101"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 55000,
+            "box2_fed_withheld": 6000,
+            "box3_ss_wages": 55000,
+            "box4_ss_withheld": 3410,
+            "box5_medicare_wages": 55000,
+            "box6_medicare_withheld": 798
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 45000,
+            "box2_fed_withheld": 4500,
+            "box3_ss_wages": 45000,
+            "box4_ss_withheld": 2790,
+            "box5_medicare_wages": 45000,
+            "box6_medicare_withheld": 653
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "Covered California",
+            "annual_premium": 12000,
+            "annual_slcsp": 13200,
+            "annual_aptc": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "48-mfj-w2-marketplace-1095a",
+      "scenario": "Married filing jointly with both spouses' W-2 income and marketplace health insurance (1095-A with no APTC) \u2014 tests Form 8962 PTC computation path",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 100000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 12000,
+        "marketplace_slcsp": 13200,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 10500
+      },
+      "correct": {
+        "line9_total_income": 100000,
+        "line11_agi": 100000,
+        "standard_deduction": 31500,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 68500,
+        "ordinary_taxable": 68500,
+        "income_tax": 7746,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 7746,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 4700,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 7746,
+        "line33_total_payments": 15200,
+        "line35a_refund": 7454,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  },
+  "52-single-w2-marketplace-ptc-no-aptc": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC \u2014 taxpayer claims full PTC at filing on Form 8962",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Avery",
+              "taxpayer_last_name": "Singh",
+              "taxpayer_dob": "1992-08-14",
+              "address_city": "Albuquerque",
+              "address_state": "NM",
+              "address_zip": "87101"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 28000,
+            "box2_fed_withheld": 2800,
+            "box3_ss_wages": 28000,
+            "box4_ss_withheld": 1736,
+            "box5_medicare_wages": 28000,
+            "box6_medicare_withheld": 406
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "NM Health Exchange",
+            "annual_premium": 3600,
+            "annual_slcsp": 4200,
+            "annual_aptc": 0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "52-single-w2-marketplace-ptc-no-aptc",
+      "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC \u2014 taxpayer claims full PTC at filing on Form 8962",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 28000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 3600,
+        "marketplace_slcsp": 4200,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 2800
+      },
+      "correct": {
+        "line9_total_income": 28000,
+        "line11_agi": 28000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 12250,
+        "ordinary_taxable": 12250,
+        "income_tax": 1235,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 1235,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 3600,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 1235,
+        "line33_total_payments": 6400,
+        "line35a_refund": 5165,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 15060, line5 185%, line7 0.0140, contribution 392, allowed PTC 3600, net 3600, repayment 0."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  },
+  "53-single-marketplace-ptc-with-aptc-repayment": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer, $65k wages, marketplace coverage at 432% FPL \u2014 received too much APTC and must repay full excess on Form 8962 (above 400% FPL, no repayment cap)",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Riley",
+              "taxpayer_last_name": "Nakamura",
+              "taxpayer_dob": "1985-03-22",
+              "address_city": "Portland",
+              "address_state": "OR",
+              "address_zip": "97201"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 65000,
+            "box2_fed_withheld": 6500,
+            "box3_ss_wages": 65000,
+            "box4_ss_withheld": 4030,
+            "box5_medicare_wages": 65000,
+            "box6_medicare_withheld": 943
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "Oregon Health Plan Exchange",
+            "annual_premium": 6000,
+            "annual_slcsp": 6600,
+            "annual_aptc": 4800
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "53-single-marketplace-ptc-with-aptc-repayment",
+      "scenario": "Single filer, $65k wages, marketplace coverage at 432% FPL \u2014 received too much APTC and must repay full excess on Form 8962 (above 400% FPL, no repayment cap)",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 65000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 6000,
+        "marketplace_slcsp": 6600,
+        "marketplace_aptc": 4800,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 6500
+      },
+      "correct": {
+        "line9_total_income": 65000,
+        "line11_agi": 65000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 49250,
+        "ordinary_taxable": 49250,
+        "income_tax": 5755,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 9480,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 3725,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 9480,
+        "line33_total_payments": 6500,
+        "line35a_refund": 0,
+        "line37_amount_owed": 2980
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 15060, line5 431%, line7 0.0850, contribution 5525, allowed PTC 1075, net 0, repayment 3725."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  },
+  "110-single-marketplace-excess-aptc-repayment": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer with $32,000 wages and full-year marketplace coverage: 2025 Form 8962 annual method gives $5,006 allowed PTC, $3,600 APTC, and $1,406 net PTC (eligibility evidence remains incomplete).",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Heather",
+              "taxpayer_last_name": "Collins",
+              "taxpayer_dob": "1983-06-18",
+              "address_city": "Columbus",
+              "address_state": "OH",
+              "address_zip": "43201"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 32000,
+            "box2_fed_withheld": 2500,
+            "box3_ss_wages": 32000,
+            "box4_ss_withheld": 1984,
+            "box5_medicare_wages": 32000,
+            "box6_medicare_withheld": 464
+          }
+        },
+        {
+          "node_type": "f1095a",
+          "data": {
+            "issuer_name": "HealthConnect",
+            "annual_premium": 5400,
+            "annual_slcsp": 5800,
+            "annual_aptc": 3600
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "110-single-marketplace-excess-aptc-repayment",
+      "scenario": "Single filer with $32,000 wages and full-year marketplace coverage: 2025 Form 8962 annual method gives $5,006 allowed PTC, $3,600 APTC, and $1,406 net PTC (eligibility evidence remains incomplete).",
+      "year": 2025,
+      "source": "2025 Form 1040 instructions and 2025 Form 8962 instructions, Tables 1-1 and 2; https://www.irs.gov/instructions/i8962 (212% FPL, applicable figure 0.0248). Rev. Proc. 2025-15 applies to 2026, not this tax year.",
+      "correct": {
+        "line9_total_income": 32000,
+        "line11_agi": 32000,
+        "line15_taxable_income": 16250,
+        "line24_total_tax": 1715,
+        "line33_total_payments": 3906,
+        "line35a_refund": 2191,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Form8962 annual method: FPL 15060, line5 212%, line7 0.0248, contribution 794, allowed PTC 5006, net 1406, repayment 0."
+        ],
+        "source_limitations": [
+          "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+        ]
+      }
+    }
+  }
+}

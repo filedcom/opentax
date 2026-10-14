@@ -1,0 +1,139 @@
+{
+  "provenance": "SYNTHETIC TEST DATA: invented eligibility, Marketplace SLCSP determination and paid premium records; not issuer or taxpayer evidence.",
+  "tax_year": 2025,
+  "policy_number": "SYNTHETIC-ISSUE77-48",
+  "months": [
+    {
+      "month": 1,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-01-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 2,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-02-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 3,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-03-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 4,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-04-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 5,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-05-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 6,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-06-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 7,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-07-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 8,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-08-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 9,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-09-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 10,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-10-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 11,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-11-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    },
+    {
+      "month": 12,
+      "premium": 1000.0,
+      "slcsp": 1100.0,
+      "aptc": 0.0,
+      "paid_on": "2025-12-01",
+      "eligible_ssns": [
+        "111-22-3333",
+        "444-55-6666"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "source": "irs",
+  "source": "synthetic",
   "scenario": "Married filing jointly with multiple W-2 wage income, interest income, capital gains/losses ",
   "forms": [
     {
@@ -23,7 +23,14 @@
               "months_in_home": 12,
               "dob": "2019-06-09",
               "middle_initial": "I",
-              "ssn": "132716825"
+              "ssn": "132716825",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false
             },
             {
               "first_name": "Asher",
@@ -31,9 +38,26 @@
               "relationship": "son",
               "months_in_home": 12,
               "dob": "2020-09-09",
-              "ssn": "360298788"
+              "ssn": "360298788",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false
             }
-          ]
+          ],
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_dob": "1985-06-15",
+          "spouse_ssn": "444-55-6666",
+          "spouse_dob": "1985-06-15",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_tin_issued_by_due_date": true,
+          "spouse_ssn_issued_before_due_date": true
         }
       }
     },
@@ -47,7 +71,9 @@
         "box5_medicare_wages": 132237.5,
         "box6_medicare_withheld": 1917.44,
         "employer_name": "ACME INDUSTRIES INC",
-        "employer_ein": "44-1000034"
+        "employer_ein": "44-1000034",
+        "source_document_reference": "SYNTHETIC issue77 76-mfj-w2-1099int-1099b source 1",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -60,7 +86,9 @@
         "box5_medicare_wages": 404466.81,
         "box6_medicare_withheld": 7704.97,
         "employer_name": "SUMMIT CONSULTING LLC",
-        "employer_ein": "45-1000035"
+        "employer_ein": "45-1000035",
+        "source_document_reference": "SYNTHETIC issue77 76-mfj-w2-1099int-1099b source 2",
+        "employee_ssn": "111-22-3333"
       }
     },
     {
@@ -68,7 +96,8 @@
       "data": {
         "payer_name": "FIRST NATIONAL BANK",
         "box1": 3350.74,
-        "payer_tin": "46-1000036"
+        "payer_tin": "46-1000036",
+        "source_document_reference": "SYNTHETIC issue77 76-mfj-w2-1099int-1099b source 3"
       }
     },
     {
@@ -101,6 +130,24 @@
         "line_8a_mortgage_interest_1098": 27558.86,
         "line_5b_real_estate_tax": 16356.66
       }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer identities, birth dates and employment-valid timely SSNs",
+      "All W-2s belong to taxpayer; each copy has a distinct source reference",
+      "Dependents have timely employment-valid SSNs",
+      "No foreign accounts or foreign trusts",
+      "Dependent US residency/citizenship, support, sole claim and joint-return tests satisfied"
+    ]
+  }
 }

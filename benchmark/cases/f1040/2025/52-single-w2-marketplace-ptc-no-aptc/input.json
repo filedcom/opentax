@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC — taxpayer claims full PTC at filing on Form 8962",
+  "scenario": "Single filer, $28k wages, marketplace coverage at 186% FPL with no APTC \u2014 taxpayer claims full PTC at filing on Form 8962",
   "forms": [
     {
       "node_type": "start",
@@ -12,7 +12,11 @@
           "taxpayer_dob": "1992-08-14",
           "address_city": "Albuquerque",
           "address_state": "NM",
-          "address_zip": "87101"
+          "address_zip": "87101",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true
         }
       }
     },
@@ -33,8 +37,609 @@
         "issuer_name": "NM Health Exchange",
         "annual_premium": 3600,
         "annual_slcsp": 4200,
-        "annual_aptc": 0
+        "annual_aptc": 0,
+        "monthly_premiums": [
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0,
+          300.0
+        ],
+        "monthly_slcsps": [
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0,
+          350.0
+        ],
+        "monthly_aptcs": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_number": "SYNTHETIC-ISSUE77-52",
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 1,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-01-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 2,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-02-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 3,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-03-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 4,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-04-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 5,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-05-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 6,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-06-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 7,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-07-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 8,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-08-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 9,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-09-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 10,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-10-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 11,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-11-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 350.0,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "marketplace_determined_on": "2026-04-01",
+            "marketplace_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "coverage_eligibility_review": {
+              "tax_year": 2025,
+              "policy_number": "SYNTHETIC-ISSUE77-52",
+              "month": 12,
+              "review_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "reviewed_on": "2026-04-01",
+              "reviewer_name": "Synthetic benchmark reviewer",
+              "individuals": [
+                {
+                  "individual_ssn": "111-22-3333",
+                  "qhp_enrolled_for_month": true,
+                  "lawfully_present_for_month": true,
+                  "incarcerated_other_than_pending_disposition": false,
+                  "employer_sponsored_mec_enrolled": false,
+                  "employer_offer_review": "no_offer_available",
+                  "government_mec_eligibility_review": "not_eligible",
+                  "other_designated_mec_eligibility_review": "not_eligible",
+                  "eligibility_record_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json"
+                }
+              ]
+            },
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 300.0,
+              "paid_on": "2025-12-01",
+              "reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+              "record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df"
+            }
+          }
+        ],
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 350.0,
+            "determination_source": "marketplace_tool",
+            "determination_reference": "SYNTHETIC benchmark/reference/2025/synthetic-marketplace/52-single-w2-marketplace-ptc-no-aptc.json",
+            "determination_record_sha256": "b35ef06cd7305aeaf49d9e930d754f960339ac2cb3292c50f790a7544510b9df",
+            "determined_on": "2026-04-01"
+          }
+        ],
+        "recipient_ssn": "111-22-3333",
+        "covered_individual_ssns": [
+          "111-22-3333"
+        ]
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date",
+      "Annual marketplace amounts cover all twelve months equally, with unchanged eligible tax-family enrollment and no shared allocation",
+      "All covered people eligible for PTC; no other minimum essential coverage; premium amounts paid as specified in the synthetic monthly records"
+    ]
+  }
 }

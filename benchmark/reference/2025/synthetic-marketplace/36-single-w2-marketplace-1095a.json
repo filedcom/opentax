@@ -1,0 +1,127 @@
+{
+  "provenance": "SYNTHETIC TEST DATA: invented eligibility, Marketplace SLCSP determination and paid premium records; not issuer or taxpayer evidence.",
+  "tax_year": 2025,
+  "policy_number": "SYNTHETIC-ISSUE77-36",
+  "months": [
+    {
+      "month": 1,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-01-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 2,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-02-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 3,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-03-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 4,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-04-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 5,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-05-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 6,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-06-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 7,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-07-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 8,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-08-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 9,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-09-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 10,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-10-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 11,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-11-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "month": 12,
+      "premium": 400.0,
+      "slcsp": 425.0,
+      "aptc": 0.0,
+      "paid_on": "2025-12-01",
+      "eligible_ssns": [
+        "111-22-3333"
+      ]
+    }
+  ]
+}

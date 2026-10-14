@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single senior age 70 with two separate 1099-R retirement distributions — taxable amounts from both pensions combined",
+  "scenario": "Single senior age 70 with two separate 1099-R retirement distributions \u2014 taxable amounts from both pensions combined",
   "forms": [
     {
       "node_type": "start",
@@ -13,7 +13,11 @@
           "taxpayer_age_65_or_older": true,
           "address_city": "Omaha",
           "address_state": "NE",
-          "address_zip": "68101"
+          "address_zip": "68101",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true
         }
       }
     },
@@ -39,5 +43,13 @@
         "box7_distribution_code": "7"
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Filer SSNs are synthetic, employment-valid and issued before the due date"
+    ]
+  }
 }

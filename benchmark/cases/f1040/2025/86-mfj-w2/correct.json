@@ -61,14 +61,12 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "scope": "Synthetic completed benchmark; see input.json assumptions and archived original data.",
     "basis": [
       "Whole-dollar source form lines: wages/interest/dividends/pension 295230, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 56199; line16 43061, SE 0, Medicare 452, NIIT 0, distribution tax 0, foreign tax credit 0.",
       "Form 8959 / Form 1040 line25d total withholding: 40471; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
     ],
-    "source_limitations": [
-      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
-      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
-    ]
+    "source_limitations": [],
+    "synthetic_source": "issue77-original-incomplete.json retains the original incomplete input and expectations; current identity, ownership, timely SSN and foreign-account answers are invented test assumptions."
   }
 }

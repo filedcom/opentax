@@ -1496,16 +1496,17 @@
       },
       "line33_total_payments": {
         "before": 14000,
-        "after": 15200
+        "after": 15201
       },
       "line35a_refund": {
         "before": 6257,
-        "after": 7454
+        "after": 7455
       }
     },
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
-      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0."
+      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0.",
+      "Form 8959: archived W-2 Medicare withholding 798 + 653 = 1451, less 100000 x 0.0145 = 1450, adds 1 to Form 1040 line25c; total payments 10500 + 1 + 4700 = 15201."
     ],
     "source_limitations": [
       "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
