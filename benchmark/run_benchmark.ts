@@ -5,6 +5,13 @@
  */
 
 import { dirname, fromFileUrl, join } from "@std/path";
+import {
+  benchmarkExpectedSchema,
+  benchmarkInputSchema,
+  benchmarkReturnSchema,
+  createdReturnSchema,
+  discoverBenchmarkCases,
+} from "./harness.ts";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR = join(SCRIPT_DIR, "..");
@@ -286,23 +293,18 @@ type CaseResult = {
   ok: boolean;
 };
 
-async function runCase(name: string): Promise<CaseResult | null> {
+async function runCase(name: string): Promise<CaseResult> {
   const caseDir = join(CASES_DIR, name);
   const inputFile = join(caseDir, "input.json");
   const correctFile = join(caseDir, "correct.json");
-  try {
-    await Deno.stat(inputFile);
-    await Deno.stat(correctFile);
-  } catch {
-    return null;
-  }
-
-  const caseData = JSON.parse(await Deno.readTextFile(inputFile));
+  const caseData = benchmarkInputSchema.parse(
+    JSON.parse(await Deno.readTextFile(inputFile)),
+  );
   const correct = JSON.parse(await Deno.readTextFile(correctFile));
-
-  const rid = JSON.parse(
+  benchmarkExpectedSchema.parse(correct);
+  const rid = createdReturnSchema.parse(JSON.parse(
     await tax("return", "create", "--year", String(caseData.year), "--json"),
-  ).returnId;
+  )).returnId;
   for (const f of caseData.forms) {
     await tax(
       "form",
@@ -316,9 +318,9 @@ async function runCase(name: string): Promise<CaseResult | null> {
     );
   }
 
-  const eng = JSON.parse(
+  const eng = benchmarkReturnSchema.parse(JSON.parse(
     await tax("return", "get", "--returnId", rid, "--json"),
-  );
+  ));
   const l = eng.lines ?? {};
   const sm = eng.summary ?? {};
   // Raw lines take precedence: summary normalization must not hide malformed values.
@@ -457,12 +459,8 @@ async function runAll(caseNames: string[]): Promise<CaseResult[]> {
 }
 
 if (import.meta.main) {
-  const names: string[] = [];
-  for await (const e of Deno.readDir(CASES_DIR)) {
-    if (!e.isDirectory) continue;
-    names.push(e.name);
-  }
-  names.sort();
+  const paths = await discoverBenchmarkCases(CASES_DIR);
+  const names = paths.map((path) => path.slice(CASES_DIR.length + 1));
 
   const results = await runAll(names);
 

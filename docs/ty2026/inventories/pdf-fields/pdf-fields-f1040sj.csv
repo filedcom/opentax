@@ -1,0 +1,28 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684.468 467 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Social security number (S S N). ,2,469 684.468 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"1. Enter the taxable income from your 2026 Form 1040, 1040-S R, or 1040-N R, line 15. ",2,505 660.47 576 671.969,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2a. Enter your elected farm income. See instructions. Do not enter more than the amount on line 1. ,2,505 636.469 576 647.968,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"Capital gain included on line 2a: 2b. Excess, if any, of net long-term capital gain over net short-term capital loss. ",2,411.4 600.469 481.4 611.968,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,2c. Unrecaptured section 1250 gain. ,2,411.4 576.468 481.4 587.967,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,3. Subtract line 2a from line 1. ,2,505 552.47 576 563.969,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,4. Figure the tax on the amount on line 3 using the 2026 tax rates. See instructions. ,2,505 528.469 576 539.968,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"5. If you used Schedule J to figure your tax for: 2025, enter the amount from your 2025 Schedule J, line 11; 2024 but not 2025, enter the amount from your 2024 Schedule J, line 15; or 2023 but not 2024 or 2025, enter the amount from your 2023 Schedule J, line 3. Otherwise, enter the taxable income from your 2023 Form 1040, 1040-S R, or 1040-N R, line 15. If zero or less, see instructions. ",2,411.4 456.469 481.4 467.968,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,6. Divide the amount on line 2a by 3.0. ,2,411.4 408.47 481.4 419.969,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,"7. Combine lines 5 and 6. If zero or less, enter 0. ",2,411.4 384.469 481.4 395.968,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,8. Figure the tax on the amount on line 7 using the 2023 tax rates. See instructions. ,2,505 360.468 576 371.967,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,"9. If you used Schedule J to figure your tax for: 2025, enter the amount from your 2025 Schedule J, line 15; or 2024 but not 2025, enter the amount from your 2024 Schedule J, line 3. Otherwise, enter the taxable income from your 2024 Form 1040, 1040-S R, or 1040-N R, line 15. If zero or less, see instructions.",2,411.4 300.47 481.4 311.969,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,10. Enter the amount from line 6. ,2,411.4 264.47 481.4 275.969,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"11. Combine lines 9 and 10. If less than zero, enter as a negative amount. ",2,411.4 240.469 481.4 251.968,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,12. Figure the tax on the amount on line 11 using the 2024 tax rates. See instructions. ,2,505 216.468 576 227.967,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"13. If you used Schedule J to figure your tax for 2025, enter the amount from your 2025 Schedule J, line 3. Otherwise, enter the taxable income from your 2025 Form 1040, 1040-S R, or 1040-N R, line 15. If zero or less, see instructions. ",2,411.4 168.469 481.4 179.968,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,14. Enter the amount from line 6. ,2,411.4 144.468 481.4 155.967,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"15. Combine lines 13 and 14. If less than zero, enter as a negative amount. ",2,411.4 120.47 481.4 131.969,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,16. Figure the tax on the amount on line 15 using the 2025 tax rates. See instructions. ,2,505 96.469 576 107.968,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"17. Add lines 4, 8, 12, and 16. ",2,505 72.468 576 83.967,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. 18. Amount from line 17. ,3,505 720.468 576 731.967,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,"19. If you used Schedule J to figure your tax for: 2025, enter the amount from your 2025 Schedule J, line 12; 2024 but not 2025, enter the amount from your 2024 Schedule J, line 16; or 2023 but not 2024 or 2025, enter the amount from your 2023 Schedule J, line 4. Otherwise, enter the tax from your 2023 Form 1040, 1040-S R, or 1040-N R, line 16.",3,411.4 660.47 481.4 671.969,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"20. If you used Schedule J to figure your tax for: 2025, enter the amount from your 2025 Schedule J, line 16; or 2024 but not 2025, enter the amount from your 2024 Schedule J, line 4. Otherwise, enter the tax from your 2024 Form 1040, 1040-S R, or 1040-N R, line 16.",3,411.4 564.469 481.4 575.968,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,"21. If you used Schedule J to figure your tax for 2025, enter the amount from your 2025 Schedule J, line 4. Otherwise, enter the tax from your 2025 Form 1040, 1040-S R, or 1040-N R, line 16*. *Only include tax reported on this line that is imposed by section 1 of the Internal Revenue Code. See instructions. ",3,411.4 504.468 481.4 515.967,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,22. Add lines 19 through 21. ,3,505 456.469 576 467.968,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,"23. Tax. Subtract line 22 from line 18. Also, include this amount on Form 1040, 1040-S R, or 1040-N R, line 16. Caution: Your tax may be less if you figure it using the 2026 Tax Table, Tax Computation Worksheet, Qualified Dividends and Capital Gain Tax Worksheet, or Schedule D Tax Worksheet. Attach Schedule J only if you are using it to figure your tax. ",3,505 420.469 576 431.968,yes

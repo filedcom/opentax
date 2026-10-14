@@ -1,0 +1,68 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 452.85 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your taxpayer identification number. ,2,454.35 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_3[0],/Tx,"Complete Schedule A only if your trade or business is a specified service trade or business (see instructions) and your taxable income is more than $201,750 but not $276,750 ($201,775 and $276,775 if married filing separately; $403,500 and $553,500 if married filing jointly). If your taxable income isn’t more than $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly) and you’re not a patron of an agricultural or horticultural cooperative, don’t file this form; instead, file Form 8995, Qualified Business Income Deduction Simplified Computation. Otherwise, complete Schedule D (Form 8995-A) before beginning Schedule A. If your taxable income is more than $276,750 ($276,775 if married filing separately; $553,500 if married filing jointly), your specified service trade or business doesn’t qualify for the deduction. If you have more than three trades or businesses, attach as many Schedules A as needed. See instructions. Part I. Other Than Publicly Traded Partnerships (P T P). See instructions before completing Parts I and I I. Row: 1a. Trade or business name. Column: A. ",2,360.75 551.97 431.25 587.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_4[0],/Tx,Row: 1a. Trade or business name. Column: B. ,2,432.75 551.97 503.25 587.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_5[0],/Tx,Row: 1a. Trade or business name. Column: C. ,2,504.75 551.97 576 587.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1b[0].f1_6[0],/Tx,Row: 1b. Taxpayer identification number. Column: A. ,2,360.75 539.971 431.25 551.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1b[0].f1_7[0],/Tx,Row: 1b. Taxpayer identification number. Column: B. ,2,432.75 539.971 503.25 551.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row1b[0].f1_8[0],/Tx,Row: 1b. Taxpayer identification number. Column: C. ,2,504.75 539.971 576 551.97,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row2[0].f1_9[0],/Tx,Row: 2. Qualified business income or (loss) from the trade or business. Column: A. ,2,360.75 527.972 431.25 539.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row2[0].f1_10[0],/Tx,Row: 2. Qualified business income or (loss) from the trade or business. Column: B. ,2,432.75 527.972 503.25 539.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row2[0].f1_11[0],/Tx,Row: 2. Qualified business income or (loss) from the trade or business. Column: C. ,2,504.75 527.972 576 539.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_12[0],/Tx,Row: 3. Allocable share of W-2 wages from the trade or business. Column: A. ,2,360.75 515.973 431.25 527.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_13[0],/Tx,Row: 3. Allocable share of W-2 wages from the trade or business. Column: B. ,2,432.75 515.973 503.25 527.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_14[0],/Tx,Row: 3. Allocable share of W-2 wages from the trade or business. Column: C. ,2,504.75 515.973 576 527.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row4[0].f1_15[0],/Tx,Row: 4. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: A. ,2,360.75 491.972 431.25 503.973,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row4[0].f1_16[0],/Tx,Row: 4. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: B. ,2,432.75 491.972 503.25 503.973,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row4[0].f1_17[0],/Tx,Row: 4. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: C. ,2,504.75 491.972 576 503.973,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row5[0].Ln5[0].f1_18[0],/Tx,Row: 5. Taxable income before qualified business income deduction. ,2,267.15 467.971 337.65 479.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row5[0].f1_19[0],/Tx,Row: 5. Taxable income before qualified business income deduction. Column: A. ,2,360.75 467.971 431.25 479.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row5[0].f1_20[0],/Tx,Row: 5. Taxable income before qualified business income deduction. Column: B. ,2,432.75 467.971 503.25 479.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row5[0].f1_21[0],/Tx,Row: 5. Taxable income before qualified business income deduction. Column: C. ,2,504.75 467.971 576 479.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row6[0].Ln6[0].f1_22[0],/Tx,"Row: 6. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). ",2,267.15 431.971 337.65 443.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row6[0].f1_23[0],/Tx,"Row: 6. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column: A. ",2,360.75 431.971 431.25 443.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row6[0].f1_24[0],/Tx,"Row: 6. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column B.",2,432.75 431.971 503.25 443.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row6[0].f1_25[0],/Tx,"Row: 6. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column: C. ",2,504.75 431.971 576 443.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row7[0].Ln7[0].f1_26[0],/Tx,Row: 7. Subtract line 6 from line 5. ,2,267.15 419.972 337.65 431.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row7[0].f1_27[0],/Tx,Row: 7. Subtract line 6 from line 5. Column: A. ,2,360.75 419.972 431.25 431.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row7[0].f1_28[0],/Tx,Row: 7. Subtract line 6 from line 5. Column: B. ,2,432.75 419.972 503.25 431.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row7[0].f1_29[0],/Tx,Row: 7. Subtract line 6 from line 5. Column: C. ,2,504.75 419.972 576 431.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row8[0].Ln8[0].f1_30[0],/Tx,"Row: 8. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). ",2,267.15 395.971 337.65 407.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row8[0].f1_31[0],/Tx,"Row: 8. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: A. ",2,360.75 395.971 431.25 407.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row8[0].f1_32[0],/Tx,"Row: 8. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: B. ",2,432.75 395.971 503.25 407.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row8[0].f1_33[0],/Tx,"Row: 8. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: C. ",2,504.75 395.971 576 407.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row9[0].Ln9[0].f1_34[0],/Tx,Row: 9. Divide line 7 by line 8. ,2,267.15 383.972 337.65 395.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row9[0].f1_35[0],/Tx,Row: 9. Divide line 7 by line 8. Column: A. ,2,360.75 383.972 431.25 395.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row9[0].f1_36[0],/Tx,Row: 9. Divide line 7 by line 8. Column: B. ,2,432.75 383.972 503.25 395.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row9[0].f1_37[0],/Tx,Row: 9. Divide line 7 by line 8. Column: C. ,2,504.75 383.972 576 395.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row10[0].Ln10[0].f1_38[0],/Tx,Row: 10. Applicable percentage. Subtract line 9 from 100%. %. ,2,267.15 359.971 324 371.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row10[0].f1_39[0],/Tx,Row: 10. Applicable percentage. Subtract line 9 from 100%. Column: A. ,2,360.75 359.971 431.25 371.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row10[0].f1_40[0],/Tx,Row: 10. Applicable percentage. Subtract line 9 from 100%. Column: B. ,2,432.75 359.971 503.25 371.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row10[0].f1_41[0],/Tx,Row: 10. Applicable percentage. Subtract line 9 from 100%. Column: C. ,2,504.75 359.971 576 371.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row11[0].f1_42[0],/Tx,"Row: 11. Applicable percentage of qualified business income or (loss). Multiply line 2 by line 10. Enter this amount on Schedule C (Form 8995-A) or on Form 8995-A, line 2, for the corresponding trade or business, as appropriate. Column: A. ",2,360.75 311.972 431.25 323.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row11[0].f1_43[0],/Tx,"Row: 11. Applicable percentage of qualified business income or (loss). Multiply line 2 by line 10. Enter this amount on Schedule C (Form 8995-A) or on Form 8995-A, line 2, for the corresponding trade or business, as appropriate. Column: B. ",2,432.75 311.972 503.25 323.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row11[0].f1_44[0],/Tx,"Row: 11. Applicable percentage of qualified business income or (loss). Multiply line 2 by line 10. Enter this amount on Schedule C (Form 8995-A) or on Form 8995-A, line 2, for the corresponding trade or business, as appropriate. Column: C. ",2,504.75 311.972 576 323.971,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row12[0].f1_45[0],/Tx,"Row: 12. Applicable percentage of W-2 wages. Multiply line 3 by line 10. Enter this amount on Form 8995-A, line 4, for the corresponding trade or business, as appropriate. Column: A. ",2,360.75 275.972 431.25 287.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row12[0].f1_46[0],/Tx,"Row: 12. Applicable percentage of W-2 wages. Multiply line 3 by line 10. Enter this amount on Form 8995-A, line 4, for the corresponding trade or business, as appropriate. Column: B. ",2,432.75 275.972 503.25 287.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row12[0].f1_47[0],/Tx,"Row: 12. Applicable percentage of W-2 wages. Multiply line 3 by line 10. Enter this amount on Form 8995-A, line 4, for the corresponding trade or business, as appropriate. Column: C. ",2,504.75 275.972 576 287.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row13[0].f1_48[0],/Tx,"Row: 13. Applicable percentage of the U B I A of qualified property. Multiply line 4 by line 10. Enter this amount on Form 8995-A, line 7, for the corresponding trade or business, as appropriate. Column: A. ",2,360.75 239.972 431.25 251.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row13[0].f1_49[0],/Tx,"Row: 13. Applicable percentage of the U B I A of qualified property. Multiply line 4 by line 10. Enter this amount on Form 8995-A, line 7, for the corresponding trade or business, as appropriate. Column: B. ",2,432.75 239.972 503.25 251.972,yes
+topmostSubform[0].Page1[0].Table_PartI[0].Row13[0].f1_50[0],/Tx,"Row: 13. Applicable percentage of the U B I A of qualified property. Multiply line 4 by line 10. Enter this amount on Form 8995-A, line 7, for the corresponding trade or business, as appropriate. Column: C. ",2,504.75 239.972 576 251.972,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_51[0],/Tx,Part I I. Publicly Traded Partnership. Row: 14. Trade or business name. Column: A. ,2,360.75 179.968 431.25 215.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_52[0],/Tx,Row: 14. Trade or business name. Column: B. ,2,432.75 179.968 503.25 215.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_53[0],/Tx,Row: 14. Trade or business name. Column: C. ,2,504.75 179.968 576 215.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_54[0],/Tx,Row: 15. Taxpayer identification number. Column: A. ,2,360.75 167.969 431.25 179.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_55[0],/Tx,Row: 15. Taxpayer identification number. Column: B. ,2,432.75 167.969 503.25 179.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_56[0],/Tx,Row: 15. Taxpayer identification number. Column: C. ,2,504.75 167.969 576 179.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_57[0],/Tx,Row: 16. Qualified P T P income or (loss). Column: A. ,2,360.75 155.97 431.25 167.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_58[0],/Tx,Row: 16. Qualified P T P income or (loss). Column: B. ,2,432.75 155.97 503.25 167.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_59[0],/Tx,Row: 16. Qualified P T P income or (loss). Column: C. ,2,504.75 155.97 576 167.969,yes
+topmostSubform[0].Page1[0].f1_60[0],/Tx,17. Total P T P specified service trade or business (S S T B) income or (loss). Combine all amounts on line 16. ,2,504.75 143.968 576 155.967,yes
+topmostSubform[0].Page1[0].f1_61[0],/Tx,18. Taxable income before qualified business income deduction. ,2,504.75 131.969 576 143.968,yes
+topmostSubform[0].Page1[0].f1_62[0],/Tx,"19. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). ",2,504.75 119.97 576 131.969,yes
+topmostSubform[0].Page1[0].f1_63[0],/Tx,20. Subtract line 19 from line 18. ,2,504.75 107.968 576 119.967,yes
+topmostSubform[0].Page1[0].f1_64[0],/Tx,"21. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). ",2,504.75 95.969 576 107.968,yes
+topmostSubform[0].Page1[0].f1_65[0],/Tx,22. Divide line 20 by line 21. ,2,504.75 83.97 576 95.969,yes
+topmostSubform[0].Page1[0].f1_66[0],/Tx,23. Applicable percentage. Subtract line 22 from 100%. %. ,2,504.75 71.968 564 83.967,yes
+topmostSubform[0].Page1[0].f1_67[0],/Tx,"24. Applicable percentage of qualified P T P income or (loss). Multiply line 17 by line 23. Include this amount on Form 8995-A, line 28. ",2,504.75 47.97 576 59.969,yes

@@ -11,8 +11,7 @@ const validForms = [
       taxpayer_last_name: "Example",
     },
   },
-  { node_type: "f2441", data: {} },
-  { node_type: "w2", data: { box1_wages: 85000, box2_fed_withheld: 10000 } },
+  { node_type: "w2", data: { box1_wages: 120000, box2_fed_withheld: 10000 } },
 ];
 
 for (
@@ -34,25 +33,34 @@ for (
       const forms = scenario === "command-error"
         ? [{ node_type: "__nonexistent_node", data: {} }]
         : scenario === "executor-error"
-        ? [validForms[2]]
+        ? [validForms[1]]
         : validForms;
       await Deno.writeTextFile(
         join(caseDir, "input.json"),
         JSON.stringify({ year: 2025, forms }),
       );
+      // Synthetic Single return: 120,000 wages - 15,750 standard deduction;
+      // 1,192.50 + 4,386 + 12,072.50 + 216 = 17,867 tax, less 10,000 paid.
       const correct = scenario === "mismatch"
         ? { line11_agi: 1, line33_total_payments: 1 }
         : scenario === "unsupported"
-        ? { line1a_wages: 85000, ordinary_taxable: 123 }
-        : { line1a_wages: 85000 };
+        ? { line1a_wages: 120000, ordinary_taxable: 123 }
+        : { line1a_wages: 120000 };
       await Deno.writeTextFile(
         join(caseDir, "correct.json"),
-        JSON.stringify({ correct }),
+        JSON.stringify({
+          correct: {
+            line24_total_tax: 17867,
+            line35a_refund: 0,
+            line37_amount_owed: 7867,
+            ...correct,
+          },
+        }),
       );
       if (scenario === "missing-case") {
         await Deno.mkdir(join(caseRoot, "2025", "incomplete"));
       }
-      const { code, stdout } = await new Deno.Command("deno", {
+      const { code, stdout, stderr } = await new Deno.Command("deno", {
         args: [
           "run",
           "--allow-read",
@@ -68,26 +76,41 @@ for (
         stderr: "piped",
       }).output();
       assertEquals(code, 1);
+      if (scenario === "missing-case") {
+        assertStringIncludes(
+          new TextDecoder().decode(stderr),
+          "Incomplete benchmark directory:",
+        );
+        assertEquals(
+          new TextDecoder().decode(stdout).includes('{"total":'),
+          false,
+        );
+        return;
+      }
       const jsonLine = new TextDecoder().decode(stdout).split("\n").find(
         (line) => line.startsWith('{"total":'),
       );
       if (!jsonLine) throw new Error("Benchmark omitted JSON summary");
       const report = JSON.parse(jsonLine);
-      if (scenario === "missing-case") {
-        assertEquals(report.skipped, 1);
-        assertEquals(report.pass, 1);
-      } else {
+      {
         assertEquals(report.fail, 1);
         assertEquals(report.failing, ["synthetic"]);
         if (scenario === "mismatch") {
           assertEquals(
-            report.failures[0].lineFailures.map((failure: { line: string }) =>
-              failure.line
-            ),
+            report.failures[0].lineFailures.filter((
+              failure: { line: string },
+            ) => ["line11_agi", "line33_total_payments"].includes(failure.line))
+              .map((failure: { line: string }) => failure.line),
             ["line11_agi", "line33_total_payments"],
           );
         } else if (scenario === "unsupported") {
-          assertEquals(report.failures[0].lineFailures, []);
+          // Missing inactive output stays visible under the unresolved zero policy.
+          assertEquals(
+            report.failures[0].lineFailures.map((f: { line: string }) =>
+              f.line
+            ),
+            ["line35a_refund"],
+          );
           assertEquals(report.failures[0].errors, []);
           assertEquals(report.failures[0].unsupportedChecks, [{
             field: "ordinary_taxable",

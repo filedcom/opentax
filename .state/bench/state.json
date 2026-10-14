@@ -11,25 +11,25 @@
             "status": "fixed",
             "cases": [67, 91, 95],
             "description": "SSA + 1099-B combinations — NIIT/Additional Medicare Tax MAGI",
-            "node_path": "forms/f1040/nodes/intermediate/forms/form8959/index.ts"
+            "node_path": "forms/f1040/nodes/intermediate/forms/taxes/employment/form8959/index.ts"
           },
           "savers_credit_overcredit": {
             "status": "fixed",
             "cases": [99, 103],
             "description": "agi_aggregator was not routing AGI to form8880; node defaulted to agi=0 and always applied 50% rate",
-            "node_path": "forms/f1040/nodes/intermediate/forms/form8880/index.ts"
+            "node_path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/index.ts"
           },
           "w2g_gambling_agi_missing": {
             "status": "fixed",
             "cases": [100],
             "description": "W-2G node not routing box1_winnings to agi_aggregator via line8z_other",
-            "node_path": "forms/f1040/nodes/inputs/w2g/index.ts"
+            "node_path": "forms/f1040/nodes/inputs/income/gambling/w2g/index.ts"
           },
           "foreign_tax_credit_missing": {
             "status": "fixed",
             "cases": [105],
             "description": "schedule3.line1_foreign_tax_1099 was not accumulable; multiple FTC deposits rejected",
-            "node_path": "forms/f1040/nodes/intermediate/aggregation/schedule3/index.ts"
+            "node_path": "forms/f1040/nodes/intermediate/aggregation/general/return-assembly/schedule3/index.ts"
           },
           "f2441_dep_care_routing": {
             "status": "fixed",
@@ -41,19 +41,19 @@
             "status": "fixed",
             "cases": [93, 96],
             "description": "Fixed by adding full_time_student=true (case 93 dependents) and taxpayer_provided_over_half_support=true (case 96 parent) to input.json files so the new ODC qualifying tests pass.",
-            "node_path": "forms/f1040/nodes/inputs/general/index.ts"
+            "node_path": "forms/f1040/nodes/inputs/general/filing/general/index.ts"
           },
           "f1099m_other_income_residual": {
             "status": "fixed",
             "cases": [72, 95],
             "description": "Case 72: updated correct.json to match QDCGT worksheet with 1099-M income. Case 95: added box3_niit_applicable flag to route brokerage box3 income to form8960 NIIT calculation.",
-            "node_path": "forms/f1040/nodes/inputs/f1099m/index.ts"
+            "node_path": "forms/f1040/nodes/inputs/income/business/f1099m/index.ts"
           },
           "self_employed_health_insurance": {
             "status": "fixed",
             "cases": [108],
             "description": "Created missing self_employed_health_insurance input node routing premiums_paid to schedule1 line 17 and agi_aggregator.",
-            "node_path": "forms/f1040/nodes/inputs/self_employed_health_insurance/index.ts"
+            "node_path": "forms/f1040/nodes/inputs/adjustments/health/self_employed_health_insurance/index.ts"
           },
           "ira_deduction_missing": {
             "status": "fixed",
@@ -83,7 +83,7 @@
             "status": "fixed",
             "cases": [122],
             "description": "computeSsaTaxable used 0.85*ssaGross cap in 50% zone instead of 0.5*ssaGross; for case 122 this produced taxable SSA=$3490 instead of correct $2990, inflating AGI by $500",
-            "node_path": "forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts"
+            "node_path": "forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts"
           },
           "case_133_obbba_ctc_eitc": {
             "status": "fixed",

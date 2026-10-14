@@ -1,5 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { appendInput, loadInputs } from "../store/store.ts";
+import { appendInput, buildEngineInputs, loadInputs } from "../store/store.ts";
+import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
+import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import {
   formAddCommand,
   formDeleteCommand,
@@ -19,6 +21,61 @@ async function makeReturn(tmpDir: string): Promise<string> {
 
 // ─── form add ────────────────────────────────────────────────────────────────
 
+Deno.test("SEHI CLI stores the Marketplace answer in the canonical singleton", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await formAddCommand({
+      returnId,
+      nodeType: "self_employed_health_insurance",
+      dataJson: JSON.stringify({
+        items: [{ premiums_paid: 0 }],
+        marketplace_ptc_premium_overlap: false,
+      }),
+      baseDir: tmpDir,
+    });
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    const engineInput = buildEngineInputs(
+      inputs,
+      new Set(["self_employed_health_insurance"]),
+    );
+    assertEquals(engineInput.self_employed_health_insurance, {
+      items: [{ premiums_paid: 0 }],
+      marketplace_ptc_premium_overlap: false,
+    });
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "self_employed_health_insurance",
+          dataJson: JSON.stringify({
+            items: [{ premiums_paid: 1200 }],
+            marketplace_ptc_premium_overlap: false,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "enter form7206 instead",
+    );
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "self_employed_health_insurance",
+          dataJson: JSON.stringify({
+            items: [{ premiums_paid: 0 }],
+            marketplace_ptc_premium_overlap: true,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Publication 974",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -37,6 +94,66 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     assertEquals(inputs["w2"].length, 1);
     assertEquals(inputs["w2"][0].id, "w2_01");
     assertEquals(inputs["w2"][0].fields["box1_wages"], 85000);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("CLI retains a registered alias as a singleton start input", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const sale = {
+      property_id: "investment-1245-1",
+      property_description: "Investment tool",
+      acquired_on: "2022-05-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 10_000,
+      cost_or_other_basis_plus_sale_expense: 12_000,
+      depreciation_allowed_or_allowable: 5_000,
+      property_held_for_investment_not_business: true,
+      section_1245_classification_reviewed: true,
+      direct_cash_sale_no_special_recapture_exception: true,
+      sale_document_reference: "SALE-2025",
+      basis_document_reference: "BASIS-2022",
+      depreciation_schedule_reference: "DEPR-2025",
+    };
+    const added = await formAddCommand({
+      returnId,
+      nodeType: "form4797_investment_1245",
+      dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+      baseDir: tmpDir,
+    });
+    assertEquals(added.id, "form4797_investment_1245_01");
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "form4797_investment_1245",
+          dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Singleton input form4797_investment_1245 already exists",
+    );
+    await formUpdateCommand({
+      returnId,
+      entryId: added.id,
+      dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+      baseDir: tmpDir,
+    });
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    const engineInputs = buildEngineInputs(
+      inputs,
+      singletonPublicInputKeys(f1040_2025),
+    );
+    assertEquals(engineInputs.form4797_investment_1245, {
+      investment_1245_dispositions: [sale],
+    });
+    assertEquals(
+      f1040_2025.registry.start.inputSchema.safeParse(engineInputs).success,
+      true,
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -68,6 +185,34 @@ Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => 
   }
 });
 
+Deno.test("formAddCommand accepts and persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await formAddCommand({
+      returnId,
+      nodeType: "f1099m",
+      dataJson: JSON.stringify({
+        payer_name: "Example Broker",
+        payer_tin: "13-3863700",
+        recipient_tin: "000-00-0000",
+        box8_substitute_payments: 609,
+      }),
+      baseDir: tmpDir,
+    });
+
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "f1099m_01",
+      baseDir: tmpDir,
+    });
+    assertEquals(entry.fields.payer_tin, "133863700");
+    assertEquals(entry.fields.recipient_tin, "000000000");
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validation error", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -82,6 +227,65 @@ Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validat
         }),
       Error,
       "Validation error",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("form add rejects a misspelled W-2 field without storing the entry", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "w2",
+          dataJson: JSON.stringify({
+            box1_wages: 300000,
+            box2_fed_withheld: 60000,
+            box17_state_income_tax: 25000,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Unrecognized field: box17_state_income_tax",
+    );
+    assertEquals((await loadInputs(`${tmpDir}/${returnId}`))["w2"], undefined);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("form update rejects unknown fields on a refined schema without changing stored data", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const added = await formAddCommand({
+      returnId,
+      nodeType: "schedule_a",
+      dataJson: JSON.stringify({ line_8a_mortgage_interest_1098: 20000 }),
+      baseDir: tmpDir,
+    });
+    await assertRejects(
+      () =>
+        formUpdateCommand({
+          returnId,
+          entryId: added.id,
+          dataJson: JSON.stringify({
+            line_8a_mortgage_interest_1098: 20000,
+            line_9_investment_interst: 5000,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Unrecognized field: line_9_investment_interst",
+    );
+    assertEquals(
+      (await formGetCommand({ returnId, entryId: added.id, baseDir: tmpDir }))
+        .fields,
+      { line_8a_mortgage_interest_1098: 20000 },
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -128,6 +332,29 @@ Deno.test("formAddCommand unknown nodeType rejects with Unknown node type", asyn
   }
 });
 
+Deno.test("formAddCommand rejects legacy Form 2555 aggregate inputs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "form2555",
+          dataJson: '{"foreign_wages":100000,"bona_fide_resident":true}',
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Validation error",
+    );
+
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    assertEquals(inputs["form2555"], undefined);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 // ─── form list ───────────────────────────────────────────────────────────────
 
 Deno.test("formListCommand returns empty array for fresh return", async () => {
@@ -146,8 +373,14 @@ Deno.test("formListCommand returns all entries across node types", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
     await appendInput(returnPath, "general", { filing_status: 1 });
 
     const result = await formListCommand({ returnId, baseDir: tmpDir });
@@ -162,10 +395,17 @@ Deno.test("formListCommand filters by nodeType", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
     await appendInput(returnPath, "general", { filing_status: 1 });
 
-    const result = await formListCommand({ returnId, baseDir: tmpDir, nodeType: "w2" });
+    const result = await formListCommand({
+      returnId,
+      baseDir: tmpDir,
+      nodeType: "w2",
+    });
     assertEquals(result.length, 1);
     assertEquals(result[0].nodeType, "w2");
   } finally {
@@ -178,7 +418,10 @@ Deno.test("formListCommand returns entries with fields", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 85000, box2_fed_withheld: 10000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 85000,
+      box2_fed_withheld: 10000,
+    });
 
     const result = await formListCommand({ returnId, baseDir: tmpDir });
     assertEquals(result[0].fields["box1_wages"], 85000);
@@ -195,9 +438,16 @@ Deno.test("formGetCommand returns correct entry by id", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 5000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+    });
 
-    const result = await formGetCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const result = await formGetCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(result.id, "w2_01");
     assertEquals(result.nodeType, "w2");
     assertEquals(result.fields["box1_wages"], 50000);
@@ -225,10 +475,20 @@ Deno.test("formGetCommand retrieves second entry correctly", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 75000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 75000,
+      box2_fed_withheld: 0,
+    });
 
-    const result = await formGetCommand({ returnId, entryId: "w2_02", baseDir: tmpDir });
+    const result = await formGetCommand({
+      returnId,
+      entryId: "w2_02",
+      baseDir: tmpDir,
+    });
     assertEquals(result.fields["box1_wages"], 75000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -242,7 +502,10 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 5000 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+    });
 
     const updated = await formUpdateCommand({
       returnId,
@@ -253,9 +516,48 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
     assertEquals(updated.id, "w2_01");
     assertEquals(updated.nodeType, "w2");
 
-    const entry = await formGetCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(entry.fields["box1_wages"], 75000);
     assertEquals(entry.fields["box2_fed_withheld"], 8000);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "f1099m", {
+      payer_name: "Example Broker",
+      payer_tin: "133863700",
+      recipient_tin: "000000000",
+    });
+
+    await formUpdateCommand({
+      returnId,
+      entryId: "f1099m_01",
+      dataJson: JSON.stringify({
+        payer_name: "Example Broker",
+        payer_tin: "13-3863700",
+        recipient_tin: "000-00-0000",
+        box8_substitute_payments: 609,
+      }),
+      baseDir: tmpDir,
+    });
+
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "f1099m_01",
+      baseDir: tmpDir,
+    });
+    assertEquals(entry.fields.payer_tin, "133863700");
+    assertEquals(entry.fields.recipient_tin, "000000000");
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -266,7 +568,10 @@ Deno.test("formUpdateCommand validates against schema", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
 
     await assertRejects(
       () =>
@@ -274,6 +579,32 @@ Deno.test("formUpdateCommand validates against schema", async () => {
           returnId,
           entryId: "w2_01",
           dataJson: JSON.stringify({ box2_fed_withheld: 0 }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Validation error",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("formUpdateCommand rejects legacy stored Form 2555 aggregate inputs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "form2555", {
+      foreign_wages: 100000,
+      bona_fide_resident: true,
+    });
+
+    await assertRejects(
+      () =>
+        formUpdateCommand({
+          returnId,
+          entryId: "form2555_01",
+          dataJson: '{"foreign_wages":90000,"bona_fide_resident":true}',
           baseDir: tmpDir,
         }),
       Error,
@@ -309,8 +640,14 @@ Deno.test("formUpdateCommand does not affect other entries", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
 
     await formUpdateCommand({
       returnId,
@@ -319,7 +656,11 @@ Deno.test("formUpdateCommand does not affect other entries", async () => {
       baseDir: tmpDir,
     });
 
-    const entry2 = await formGetCommand({ returnId, entryId: "w2_02", baseDir: tmpDir });
+    const entry2 = await formGetCommand({
+      returnId,
+      entryId: "w2_02",
+      baseDir: tmpDir,
+    });
     assertEquals(entry2.fields["box1_wages"], 30000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -333,10 +674,20 @@ Deno.test("formDeleteCommand removes entry", async () => {
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
-    await appendInput(returnPath, "w2", { box1_wages: 30000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 30000,
+      box2_fed_withheld: 0,
+    });
 
-    const deleted = await formDeleteCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
+    const deleted = await formDeleteCommand({
+      returnId,
+      entryId: "w2_01",
+      baseDir: tmpDir,
+    });
     assertEquals(deleted.id, "w2_01");
     assertEquals(deleted.nodeType, "w2");
 
@@ -367,7 +718,10 @@ Deno.test("formDeleteCommand removing all entries leaves empty list", async () =
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
-    await appendInput(returnPath, "w2", { box1_wages: 50000, box2_fed_withheld: 0 });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 50000,
+      box2_fed_withheld: 0,
+    });
 
     await formDeleteCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
 

@@ -10,6 +10,7 @@
           "taxpayer_first_name": "Brianna",
           "taxpayer_last_name": "Scott",
           "taxpayer_dob": "1996-04-12",
+          "taxpayer_ssn": "111-22-3333",
           "address_city": "Las Vegas",
           "address_state": "NV",
           "address_zip": "89101"
@@ -25,7 +26,8 @@
         "box4_ss_withheld": 1860,
         "box5_medicare_wages": 30000,
         "box6_medicare_withheld": 435,
-        "box7_ss_tips": 5000
+        "box7_ss_tips": 5000,
+        "box14b_tipped_code": "102"
       }
     }
   ]

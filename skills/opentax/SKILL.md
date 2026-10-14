@@ -23,7 +23,8 @@ opentax version
 
 ## Onboarding
 
-Greet the user and say: "Please upload some source docs and I can help you with taxes."
+Greet the user and say: "Please upload some source docs or type the values and I can help you with taxes."
+If the user uploads documents in a hosted chat, be clear that the upload is handled by that assistant provider; the OpenTax CLI itself runs and stores return files locally.
 
 Once they share documents:
 

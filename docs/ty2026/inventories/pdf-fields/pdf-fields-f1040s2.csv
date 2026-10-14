@@ -1,0 +1,69 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+form1[0].Page1[0].f1_01[0],/Tx,"Page 1. Name(s) shown on Form 1040, 1040-S R, or 1040-N R. ",2,36 684.5 445.4 698.001,yes
+form1[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,447.4 684.5 576 698.001,yes
+form1[0].Page1[0].Line1_ReadOrder[0].f1_03[0],/Tx,Part I. Tax. 1. Additions to tax: 1a. Excess advance premium tax credit repayment. Attach Form 8962. ,2,411.4 648.5 481.4 659.999,yes
+form1[0].Page1[0].f1_04[0],/Tx,"1b. Repayment of new clean vehicle credit(s) transferred to a registered dealer from Schedule A (Form 8936), Part I I. Attach Form 8936 and Schedule A (Form 8936). ",2,411.4 624.502 481.4 636.001,yes
+form1[0].Page1[0].f1_05[0],/Tx,"1c. Repayment of previously owned clean vehicle credit(s) transferred to a registered dealer from Schedule A (Form 8936), Part I V. Attach Form 8936 and Schedule A (Form 8936). ",2,411.4 588.502 481.4 600.001,yes
+form1[0].Page1[0].f1_06[0],/Tx,"1d. Recapture of net E P E from Form 4255, line 2a, column (l). ",2,411.4 576.5 481.4 587.499,yes
+form1[0].Page1[0].Line1e_ReadOrder[0].c1_1[0],/Btn,1e. Excessive payments (E Ps) on gross E P E from Form 4255. Check applicable box and enter amount. See instructions. (i). Line 1a. ,2,86.4 542 94.4 550,yes
+form1[0].Page1[0].Line1e_ReadOrder[0].c1_1[1],/Btn,1e. (i i). Line 1c. ,2,201.6 542 209.6 550,yes
+form1[0].Page1[0].Line1e_ReadOrder[0].c1_1[2],/Btn,1e. (i i i). Line 1d. ,2,86.4 530.001 94.4 538.001,yes
+form1[0].Page1[0].Line1e_ReadOrder[0].c1_1[3],/Btn,1e. (i v). Line 2a. ,2,201.6 530.001 209.6 538.001,yes
+form1[0].Page1[0].f1_07[0],/Tx,1e. Amount. ,2,411.4 528.501 481.4 540,yes
+form1[0].Page1[0].Line1f_ReadOrder[0].c1_2[0],/Btn,1f. 20% E P from Form 4255. Check applicable box and enter amount. See instructions. (i). Line 1a. ,2,86.4 494.001 94.4 502.001,yes
+form1[0].Page1[0].Line1f_ReadOrder[0].c1_2[1],/Btn,1f. (i i). Line 1c. ,2,201.6 494.001 209.6 502.001,yes
+form1[0].Page1[0].Line1f_ReadOrder[0].c1_2[2],/Btn,1f. (i i i). Line 1d. ,2,86.4 482.002 94.4 490.002,yes
+form1[0].Page1[0].Line1f_ReadOrder[0].c1_2[3],/Btn,1f. (i v). Line 2a. ,2,201.6 482.002 209.6 490.002,yes
+form1[0].Page1[0].f1_08[0],/Tx,1f. Amount. ,2,411.4 480.502 481.4 492.001,yes
+form1[0].Page1[0].f1_09[0],/Tx,1y. Other additions to tax (see instructions): ,2,230.4 468.5 381.6 479.999,yes
+form1[0].Page1[0].f1_10[0],/Tx,1y. Amount. ,2,411.4 468.5 481.4 479.499,yes
+form1[0].Page1[0].f1_11[0],/Tx,1z. Add lines 1a through 1y. ,2,505 456.501 576 468,yes
+form1[0].Page1[0].f1_12[0],/Tx,2. Alternative minimum tax. Attach Form 6251. ,2,505 444.502 576 455.501,yes
+form1[0].Page1[0].f1_13[0],/Tx,"3. Add lines 1z and 2. Enter here and on Form 1040, 1040-S R, or 1040-N R, line 17. ",2,505 432.5 576 443.499,yes
+form1[0].Page1[0].c1_3[0],/Btn,Part I I. Additional Taxes. Section A—Additional Income Taxes. 4. Self-employment tax. Attach Schedule S E. Check if any exemption from (see instructions): 1. 4361. ,2,79.2 386.001 87.2 394.001,yes
+form1[0].Page1[0].c1_4[0],/Btn,4. 2. 4029. ,2,158.4 386.001 166.4 394.001,yes
+form1[0].Page1[0].c1_5[0],/Btn,4. 3. ,2,237.6 386.001 245.6 394.001,yes
+form1[0].Page1[0].f1_14[0],/Tx,4. 3. (specify). ,2,252 384.501 324 396,yes
+form1[0].Page1[0].f1_15[0],/Tx,4. Amount. ,2,505 384.501 576 396,yes
+form1[0].Page1[0].c1_6[0],/Btn,"5. Additional tax on I R As or other tax-favored accounts. Attach Form 5329 if required. If not required, check here. ",2,467.2 362.5 475.2 370.5,yes
+form1[0].Page1[0].f1_16[0],/Tx,5. Amount. ,2,505 360.5 576 371.999,yes
+form1[0].Page1[0].f1_17[0],/Tx,6. Net investment income tax. Attach Form 8960. ,2,505 348.501 576 359.5,yes
+form1[0].Page1[0].f1_18[0],/Tx,7. Interest on tax due on installment income from the sale of certain residential lots and timeshares. ,2,505 336.502 576 347.501,yes
+form1[0].Page1[0].f1_19[0],/Tx,"8. Interest on the deferred tax on gain from certain installment sales with a sales price over $150,000. ",2,505 324.5 576 335.499,yes
+form1[0].Page1[0].f1_20[0],/Tx,9. Recapture of low-income housing credit. Attach Form 8611. ,2,505 312.501 576 323.5,yes
+form1[0].Page1[0].f1_21[0],/Tx,"10. Recapture of net E P E from Form 4255, line 1d, column (l). ",2,505 300.502 576 311.501,yes
+form1[0].Page1[0].f1_22[0],/Tx,11. Additional Medicare Tax on self-employment income. Attach Form 8959. ,2,505 288.5 576 299.499,yes
+form1[0].Page1[0].f1_23[0],/Tx,12. Section 965 net tax liability installment from Form 965-A. ,2,411.4 276.501 481.4 288,yes
+form1[0].Page1[0].Line13_ReadOrder[0].Line13a_ReadOrder[0].f1_24[0],/Tx,"13. Other additional income taxes: 13a. Recapture of other credits. List type, form number. ",2,64.8 240.501 381.6 252,yes
+form1[0].Page1[0].Line13_ReadOrder[0].f1_25[0],/Tx,13a. and amount: ,2,411.4 240.501 481.4 252,yes
+form1[0].Page1[0].f1_26[0],/Tx,"13b. Recapture of federal mortgage subsidy. If you sold your home, see instructions. ",2,411.4 228.502 481.4 239.501,yes
+form1[0].Page1[0].f1_27[0],/Tx,13c. Additional tax on H S A distributions. Attach Form 8889. ,2,411.4 216.5 481.4 227.499,yes
+form1[0].Page1[0].f1_28[0],/Tx,13d. Additional tax on an H S A because you didn’t remain an eligible individual. Attach Form 8889. ,2,411.4 192.502 481.4 204.001,yes
+form1[0].Page1[0].f1_29[0],/Tx,13e. Additional tax on Archer M S A distributions. Attach Form 8853. ,2,411.4 180.5 481.4 191.499,yes
+form1[0].Page1[0].f1_30[0],/Tx,13f. Additional tax on Medicare Advantage M S A distributions. Attach Form 8853. ,2,411.4 168.501 481.4 179.5,yes
+form1[0].Page1[0].f1_31[0],/Tx,13g. Recapture of a charitable contribution deduction related to a fractional interest in tangible personal property. ,2,411.4 144.5 481.4 155.999,yes
+form1[0].Page1[0].f1_32[0],/Tx,13h. Income you received from a nonqualified deferred compensation plan that fails to meet the requirements of section 409A. ,2,411.4 120.502 481.4 132.001,yes
+form1[0].Page1[0].f1_33[0],/Tx,13i. Compensation you received from a nonqualified deferred compensation plan described in section 457A. ,2,411.4 96.501 481.4 108,yes
+form1[0].Page1[0].f1_34[0],/Tx,13j. Section 72(m)(5) excess benefits tax. ,2,411.4 84.502 481.4 95.501,yes
+form1[0].Page1[0].f1_35[0],/Tx,13k. Golden parachute payments. ,2,411.4 72.5 481.4 83.499,yes
+form1[0].Page1[0].f1_36[0],/Tx,13l. Tax on accumulation distribution of trusts. ,2,411.4 60.501 481.4 71.5,yes
+form1[0].Page2[0].f2_01[0],/Tx,Page 2. Part I I. Additional Taxes (continued). Section A—Additional Income Taxes (continued). 13m. Excise tax on insider stock compensation from an expatriated corporation. ,3,411.4 708.501 481.4 719.5,yes
+form1[0].Page2[0].f2_02[0],/Tx,13n. Look-back interest under section 167(g) or 460(b) from Form 8697 or 8866. ,3,411.4 696.502 481.4 707.501,yes
+form1[0].Page2[0].f2_03[0],/Tx,13o. Tax on non-effectively connected income for any part of the year you were a nonresident alien from Form 1040-N R. ,3,411.4 672.501 481.4 684,yes
+form1[0].Page2[0].Line13z_ReadOrder[0].f2_04[0],/Tx,13z. Any other taxes. List type. ,3,64.8 636.498 381.6 659.999,yes
+form1[0].Page2[0].f2_05[0],/Tx,13z. and amount: ,3,411.4 636.501 481.4 648,yes
+form1[0].Page2[0].f2_06[0],/Tx,14. Total additional income taxes. Add lines 13a through 13z. ,3,505 624.502 576 636.001,yes
+form1[0].Page2[0].f2_07[0],/Tx,15. Add lines 4 through 11 and line 14. ,3,505 612.5 576 623.499,yes
+form1[0].Page2[0].Line16_ReadOrder[0].f2_08[0],/Tx,Section B—Additional Employment and Other Taxes. 16. Additional social security and Medicare taxes: 16a. Social security and Medicare tax on unreported tip income. Attach Form 4137. ,3,411.4 576.5 481.4 587.999,yes
+form1[0].Page2[0].f2_09[0],/Tx,16b. Uncollected social security and Medicare tax on wages. Attach Form 8919. ,3,411.4 564.501 481.4 575.5,yes
+form1[0].Page2[0].f2_10[0],/Tx,16c. Total additional social security and Medicare tax. Add lines 16a and 16b. ,3,505 552.502 576 564.001,yes
+form1[0].Page2[0].Line17_ReadOrder[0].f2_11[0],/Tx,17. Other employment taxes: 17a. Household employment taxes. Attach Schedule H. ,3,411.4 528.501 481.4 540,yes
+form1[0].Page2[0].f2_12[0],/Tx,17b. Additional Medicare tax on Medicare wages and R R T A compensation. Attach Form 8959. ,3,411.4 504.5 481.4 515.999,yes
+form1[0].Page2[0].f2_13[0],/Tx,"17c. Uncollected social security and Medicare or R R T A tax on tips or group-term life insurance from Form W-2, box 12. ",3,411.4 480.502 481.4 492.001,yes
+form1[0].Page2[0].f2_14[0],/Tx,17d. Total other employment taxes. Add lines 17a through 17c. ,3,505 468.5 576 479.999,yes
+form1[0].Page2[0].f2_15[0],/Tx,18. Additional tax on excess contributions or accumulations in I R As or other tax-favored accounts. Attach Form 5329. ,3,505 444.502 576 456.001,yes
+form1[0].Page2[0].Line19a_ReadOrder[0].f2_16[0],/Tx,"19a. Any interest from Form 8621, line 16f, relating to distributions from, and dispositions of, stock of a section 1291 fund. ",3,411.4 420.501 481.4 432,yes
+form1[0].Page2[0].f2_17[0],/Tx,"19b. Any interest from Form 8621, line 24. ",3,411.4 408.502 481.4 419.501,yes
+form1[0].Page2[0].f2_18[0],/Tx,19c. Add lines 19a and 19b. ,3,505 396.5 576 407.999,yes
+form1[0].Page2[0].f2_19[0],/Tx,"20. Total additional employment and other taxes. Add lines 16c, 17d, 18, and 19c. ",3,505 384.501 576 395.5,yes
+form1[0].Page2[0].f2_20[0],/Tx,"Section C—Total Additional Taxes. 21. Add lines 15 and 20. These are your total additional taxes. Enter here and on Form 1040 or 1040-S R, line 23; or Form 1040-N R, line 23b. ",3,505 348.501 576 360,yes

@@ -1,0 +1,782 @@
+import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../../../irs_country_code.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
+import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
+import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
+import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
+import { form8995a } from "../../../../intermediate/forms/deductions/business/form8995a/index.ts";
+import {
+  ForeignTaxCreditMethod,
+  ForeignTaxKind,
+  form_1116,
+  IncomeCategory,
+} from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
+import { rate_28_gain_worksheet } from "../../../../intermediate/worksheets/taxes/calculation/rate_28_gain_worksheet/index.ts";
+import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { schedule_b } from "../../../../intermediate/aggregation/income/investments/schedule_b/index.ts";
+import { schedule_d } from "../../../../intermediate/aggregation/income/investments/schedule_d/index.ts";
+import { unrecaptured_1250_worksheet } from "../../../../intermediate/worksheets/taxes/calculation/unrecaptured_1250_worksheet/index.ts";
+import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8960/index.ts";
+import { form4952 } from "../../../../intermediate/forms/deductions/investments/form4952/index.ts";
+import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+
+const nomineeDistributionSchema = z.object({
+  box1a: z.number().nonnegative(),
+  box1b: z.number().nonnegative().optional(),
+  box2a: z.number().nonnegative().optional(),
+  box2b: z.number().nonnegative().optional(),
+  box2c: z.number().nonnegative().optional(),
+  box2d: z.number().nonnegative().optional(),
+  box2e: z.number().nonnegative().optional(),
+  box2f: z.number().nonnegative().optional(),
+  box3: z.number().nonnegative().optional(),
+  box4: z.number().nonnegative().optional(),
+  box5: z.number().nonnegative().optional(),
+  box6: z.number().nonnegative().optional(),
+  box7: z.number().nonnegative().optional(),
+  box9: z.number().nonnegative().optional(),
+  box10: z.number().nonnegative().optional(),
+  box12: z.number().nonnegative().optional(),
+  box13: z.number().nonnegative().optional(),
+  box16: z.number().nonnegative().optional(),
+  foreign_source_dividends_usd: z.number().nonnegative().optional(),
+  foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
+});
+
+function realCalendarDate(value: string): boolean {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+}
+
+export const itemSchema = z.object({
+  payerName: z.string().optional(),
+  payerTin: z.string().regex(/^\d{9}$/).optional(),
+  account_number: z.string().trim().min(1).max(40).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
+  isNominee: z.boolean(),
+  nominee_distribution: nomineeDistributionSchema.optional(),
+  box11: z.boolean(),
+  box1a: z.number().nonnegative(),
+  // Affirm this payer's dividends and capital-gain distributions come from
+  // investment property and are excluded from Form 4952 manual "other" facts.
+  investment_property_for_form4952: z.boolean().optional(),
+  qualified_dividend_filing_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
+    qualified_held_days_in_121_day_window: z.number().int().min(61).max(121),
+    diminished_risk_days_excluded: z.number().int().min(0).max(121),
+    ordinary_stock_rule_confirmed: z.literal(true),
+    eligible_issuer_and_no_disqualified_dividend_confirmed: z.literal(true),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
+  }).strict().optional(),
+  box1b: z.number().nonnegative().optional(),
+  box2a: z.number().nonnegative().optional(),
+  box2b: z.number().nonnegative().optional(),
+  box2c: z.number().nonnegative().optional(),
+  box2d: z.number().nonnegative().optional(),
+  box2e: z.number().nonnegative().optional(),
+  box2f: z.number().nonnegative().optional(),
+  box3: z.number().nonnegative().optional(),
+  box4: z.number().nonnegative().optional(),
+  box5: z.number().nonnegative().optional(),
+  box6: z.number().nonnegative().optional(),
+  box7: z.number().nonnegative().optional(),
+  box8: z.string().optional(),
+  foreign_source_dividends_usd: z.number().nonnegative().optional(),
+  foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
+  foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
+  box9: z.number().nonnegative().optional(),
+  box10: z.number().nonnegative().optional(),
+  box12: z.number().nonnegative().optional(),
+  box13: z.number().nonnegative().optional(),
+  pab_dividend_review: z.object({
+    specified_bond_dividend_confirmed: z.literal(true),
+    box13_net_of_fund_expenses_confirmed: z.literal(true),
+    no_allocable_taxpayer_deduction_confirmed: z.literal(true),
+    not_claimed_elsewhere_on_return_confirmed: z.literal(true),
+    bond_eligibility_review_reference: z.string().trim().min(1),
+    taxpayer_expense_review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
+  box14: z.string().optional(),
+  box15: z.string().optional(),
+  box16: z.number().nonnegative().optional(),
+  holdingPeriodDays: z.number().nonnegative().optional(),
+  foreign_tax_holding_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    qualifying_held_days_in_31_day_window: z.number().int().min(16).max(31),
+    diminished_risk_days_excluded: z.number().int().min(0).max(31),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    ordinary_stock_holding_rule_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
+  section199a_holding_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    qualified_held_days_in_91_day_window: z.number().int().min(0).max(91),
+    diminished_risk_days_excluded: z.number().int().nonnegative(),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
+}).superRefine((item, ctx) => {
+  if (item.box11 && !item.account_number) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["account_number"],
+      message: "1099-DIV FATCA copy needs its issued account number",
+    });
+  }
+});
+
+export const inputSchema = z.object({
+  f1099divs: z.array(itemSchema).min(0),
+  taxableIncome: z.number().nonnegative().optional(),
+  filingStatus: z.string().optional(),
+});
+
+type DIVItem = z.infer<typeof itemSchema>;
+type DIVInput = z.infer<typeof inputSchema>;
+
+const nomineeFields = [
+  "box1a",
+  "box1b",
+  "box2a",
+  "box2b",
+  "box2c",
+  "box2d",
+  "box2e",
+  "box2f",
+  "box3",
+  "box4",
+  "box5",
+  "box6",
+  "box7",
+  "box9",
+  "box10",
+  "box12",
+  "box13",
+  "box16",
+  "foreign_source_dividends_usd",
+  "foreign_source_qualified_dividends_usd",
+] as const;
+
+export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
+  const seenReferences = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
+  const seenItems: DIVItem[] = [];
+  for (const item of items) {
+    const payer = item.payerTin ??
+      item.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ?? null;
+    const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
+    const identifiedAccount = !!(item.account_number && payer);
+    const positive = nomineeFields.some((key) => (item[key] ?? 0) > 0);
+    if (item.source_document_reference) {
+      if (seenReferences.has(item.source_document_reference)) {
+        throw new Error(
+          "1099-DIV repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        );
+      }
+      seenReferences.add(item.source_document_reference);
+    }
+    if (identifiedAccount) {
+      const key = JSON.stringify([owner, item.account_number]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-DIV repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
+    }
+    const payerName = item.payerName?.trim().replace(/\s+/g, " ")
+      .toUpperCase() ?? null;
+    for (const earlier of seenItems) {
+      // A missing payer TIN must not separate two otherwise matching copies.
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        (earlier.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ??
+            null) !== payerName ||
+        Boolean(earlier.payerTin) === Boolean(item.payerTin)
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number === item.account_number
+      ) {
+        throw new Error(
+          "1099-DIV repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      if (
+        positive && nomineeFields.some((key) => (earlier[key] ?? 0) > 0) &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+        );
+      }
+    }
+    seenItems.push(item);
+    if (!positive) continue;
+    if (!identifiedAccount && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
+      throw new Error(
+        "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+      );
+    }
+    seenOwners.add(owner);
+  }
+}
+
+function taxpayerShare(item: DIVItem): DIVItem {
+  if (!item.isNominee) {
+    if (item.nominee_distribution) {
+      throw new Error("1099-DIV nominee distribution requires isNominee");
+    }
+    return item;
+  }
+  const nominee = item.nominee_distribution;
+  if (!nominee || nominee.box1a <= 0 || nominee.box1a > item.box1a) {
+    throw new Error(
+      "1099-DIV nominee needs an ordinary-dividend amount within box 1a",
+    );
+  }
+  for (const key of nomineeFields) {
+    const gross = item[key] ?? 0;
+    const passedOn = nominee[key];
+    if (gross > 0 && passedOn === undefined) {
+      throw new Error(`1099-DIV nominee needs an explicit ${key} allocation`);
+    }
+    if ((passedOn ?? 0) > gross) {
+      throw new Error(`1099-DIV nominee ${key} exceeds the reported amount`);
+    }
+  }
+  const own = { ...item };
+  for (const key of nomineeFields) {
+    (own as Record<string, unknown>)[key] = (item[key] ?? 0) -
+      (nominee[key] ?? 0);
+  }
+  return own;
+}
+
+const HOLDING_PERIOD_199A_DAYS = 45;
+const HOLDING_PERIOD_FOREIGN_DAYS = 16;
+
+// Normalize a DIV item: clamp sub-box values that may exceed their parent due
+// to payer data entry errors.
+//
+// box1b (qualified dividends) is passed through as reported, even when it
+// exceeds box1a (ordinary dividends). The qualified dividend amount from box1b
+// flows to the QDCG worksheet regardless of its relationship to box1a.
+// Ordinary dividends (box1a) are never inflated.
+// All other sub-boxes (box2b–box2f, box5, box13) are clamped to their parents.
+function normalizeDivItem(item: DIVItem): DIVItem {
+  const box1a = item.box1a;
+  const box2a = item.box2a ?? 0;
+  const box12 = item.box12 ?? 0;
+  return {
+    ...item,
+    // box1a is authoritative for ordinary dividends — never inflate it
+    box1a,
+    // box1b is used as reported (qualified dividends may exceed ordinary when
+    // payer data has the boxes swapped — passed through without clamping)
+    box1b: item.box1b,
+    // box5 (§199A dividends) cannot exceed box1a
+    box5: item.box5 !== undefined ? Math.min(item.box5, box1a) : undefined,
+    // box2e (Section 897 ordinary dividends) cannot exceed box1a
+    box2e: item.box2e !== undefined ? Math.min(item.box2e, box1a) : undefined,
+    // box2b/box2c/box2d/box2f are sub-components of box2a — clamp each individually
+    box2b: item.box2b !== undefined ? Math.min(item.box2b, box2a) : undefined,
+    box2c: item.box2c !== undefined ? Math.min(item.box2c, box2a) : undefined,
+    box2d: item.box2d !== undefined ? Math.min(item.box2d, box2a) : undefined,
+    box2f: item.box2f !== undefined ? Math.min(item.box2f, box2a) : undefined,
+    // box13 (specified private activity bond interest) cannot exceed box12 (exempt-interest dividends)
+    box13: item.box13 !== undefined ? Math.min(item.box13, box12) : undefined,
+  };
+}
+
+function validateDivItem(item: DIVItem): void {
+  const box1a = item.box1a;
+  const box2a = item.box2a ?? 0;
+  const box2b = item.box2b ?? 0;
+  const box2c = item.box2c ?? 0;
+  const box2d = item.box2d ?? 0;
+  const box2e = item.box2e ?? 0;
+  const box2f = item.box2f ?? 0;
+  const box5 = item.box5 ?? 0;
+  const box12 = item.box12 ?? 0;
+  const box13 = item.box13 ?? 0;
+
+  if (box2b + box2c + box2d + box2f > box2a) {
+    throw new Error(
+      `DIV validation error: sum of box2b+box2c+box2d+box2f (${
+        box2b + box2c + box2d + box2f
+      }) cannot exceed box2a (${box2a})`,
+    );
+  }
+  if (box2f > box2a) {
+    throw new Error(
+      `DIV validation error: box2f (${box2f}) cannot exceed box2a (${box2a})`,
+    );
+  }
+  if (box2e > box1a) {
+    throw new Error(
+      `DIV validation error: box2e (${box2e}) cannot exceed box1a (${box1a}) — Section 897 ordinary dividends cannot exceed total ordinary dividends`,
+    );
+  }
+  if (box5 > box1a && item.holdingPeriodDays === undefined) {
+    throw new Error(
+      `DIV validation error: box5 (${box5}) cannot exceed box1a (${box1a}) — §199A dividends cannot exceed total ordinary dividends`,
+    );
+  }
+  if (box13 > box12) {
+    throw new Error(
+      `DIV validation error: box13 (${box13}) cannot exceed box12 (${box12}) — specified PAB cannot exceed exempt-interest dividends`,
+    );
+  }
+}
+
+function needsScheduleB(
+  items: DIVItem[],
+  scheduleBDividendThreshold: number,
+): boolean {
+  if (items.some((item) => item.isNominee)) return true;
+  const totalBox1a = items.reduce((sum, item) => sum + item.box1a, 0);
+  return totalBox1a > scheduleBDividendThreshold;
+}
+
+function dividendScheduleBOutput(gross: DIVItem, own: DIVItem): NodeOutput[] {
+  if (!gross.payerName?.trim()) {
+    throw new Error("1099-DIV payer name is required when Schedule B is filed");
+  }
+  return [output(schedule_b, {
+    dividend_detail: {
+      payer_name: gross.payerName,
+      gross: gross.box1a,
+      net: own.box1a,
+      nominee: gross.nominee_distribution?.box1a ?? 0,
+    },
+  })];
+}
+
+function isAbove199AThreshold(
+  taxableIncome: number | undefined,
+  filingStatus: string | undefined,
+  sec199aSingleThreshold: number,
+  sec199aMfjThreshold: number,
+): boolean {
+  if (taxableIncome === undefined) return false;
+  const threshold = filingStatus === "mfj"
+    ? sec199aMfjThreshold
+    : sec199aSingleThreshold;
+  return taxableIncome > threshold;
+}
+
+class F1099divNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f1099div";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([
+    agi_aggregator,
+    schedule_b,
+    f1040,
+    schedule_d,
+    income_tax_calculation,
+    form8995,
+    form8995a,
+    form6251,
+    form_1116,
+    unrecaptured_1250_worksheet,
+    rate_28_gain_worksheet,
+    form8960,
+    form4952,
+  ]);
+
+  compute(ctx: NodeContext, input: DIVInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const parsed = inputSchema.parse(input);
+    assertDistinct1099DIVCopies(parsed.f1099divs);
+    const { taxableIncome, filingStatus } = parsed;
+    // Normalize items first (clamp sub-box values that payers occasionally report
+    // over their parent box due to data entry errors), then validate the rest.
+    const div1099s = parsed.f1099divs.map((item) =>
+      normalizeDivItem(taxpayerShare(item))
+    );
+
+    for (const item of div1099s) {
+      validateDivItem(item);
+    }
+
+    const shouldRouteScheduleB = needsScheduleB(
+      parsed.f1099divs,
+      cfg.scheduleBDividendThreshold,
+    );
+    const outputs: NodeOutput[] = shouldRouteScheduleB
+      ? parsed.f1099divs.flatMap((gross, index) =>
+        dividendScheduleBOutput(gross, div1099s[index])
+      )
+      : [];
+    for (const item of div1099s) {
+      if (item.investment_property_for_form4952 !== true) continue;
+      if ((item.box1b ?? 0) > item.box1a) {
+        throw new Error(
+          "1099-DIV qualified dividends cannot exceed ordinary dividends on Form 4952",
+        );
+      }
+      const sourceFields = {
+        ...(item.box1a > 0 ? { source_1099_dividends: item.box1a } : {}),
+        ...((item.box1b ?? 0) > 0
+          ? { source_1099_qualified_dividends: item.box1b }
+          : {}),
+        ...((item.box2a ?? 0) > 0
+          ? { source_1099_capital_gain_distributions: item.box2a }
+          : {}),
+        ...((item.box13 ?? 0) > 0
+          ? { source_private_activity_bond_interest: item.box13 }
+          : {}),
+      };
+      if (Object.keys(sourceFields).length > 0) {
+        outputs.push({ nodeType: form4952.nodeType, fields: sourceFields });
+      }
+    }
+    if (!shouldRouteScheduleB) {
+      const dividendInfo = div1099s
+        .filter((item) => item.box1a > 0)
+        .map((item) => ({
+          payerName: item.payerName ?? "",
+          amount: item.box1a,
+        }));
+      if (dividendInfo.length > 0) {
+        outputs.push(
+          this.outputNodes.output(schedule_b, { dividend_info: dividendInfo }),
+        );
+      }
+    }
+
+    // Aggregate all f1040 fields into one output
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
+
+    // When below the Schedule B threshold, ordinary dividends don't route through
+    // schedule_b — emit them directly to f1040 line 3b and agi_aggregator so they land in AGI.
+    if (!shouldRouteScheduleB) {
+      const totalOrdinary = div1099s.reduce((sum, item) => sum + item.box1a, 0);
+      if (totalOrdinary > 0) {
+        f1040Fields.line3b_ordinary_dividends = totalOrdinary;
+        outputs.push(
+          this.outputNodes.output(agi_aggregator, {
+            line3b_ordinary_dividends: totalOrdinary,
+          }),
+        );
+      }
+    }
+    const totalQualDiv = div1099s.reduce(
+      (sum, item) => sum + (item.box1b ?? 0),
+      0,
+    );
+    if (totalQualDiv > 0) f1040Fields.line3a_qualified_dividends = totalQualDiv;
+    const totalWithholding = div1099s.reduce(
+      (sum, item) => sum + (item.box4 ?? 0),
+      0,
+    );
+    if (totalWithholding > 0) {
+      f1040Fields.line25b_withheld_1099 = totalWithholding;
+    }
+    const totalTaxExempt = div1099s.reduce(
+      (sum, item) => sum + (item.box12 ?? 0),
+      0,
+    );
+    if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
+    if (totalTaxExempt > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        tax_exempt_interest: totalTaxExempt,
+      }));
+    }
+    const totalBox2a = div1099s.reduce(
+      (sum, item) => sum + (item.box2a ?? 0),
+      0,
+    );
+    if (Object.keys(f1040Fields).length > 0) {
+      outputs.push(
+        this.outputNodes.output(
+          f1040,
+          f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+        ),
+      );
+    }
+
+    // Qualified dividends → income_tax_calculation for QDCGT worksheet (IRC §1(h))
+    if (totalQualDiv > 0) {
+      outputs.push(
+        this.outputNodes.output(income_tax_calculation, {
+          qualified_dividends: totalQualDiv,
+        }),
+      );
+    }
+
+    // Aggregate every Form 8995 field into one output.
+    // Line 12 is Form 1040 line 3a plus net capital gain (i8995, Line 12), so the
+    // qualified dividends reduce the 20%-of-taxable-income limit on line 13.
+    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {
+      ...(parsed.f1099divs.length > 0 &&
+          parsed.f1099divs.every((item) =>
+            item.payerTin && item.recipient_tin && item.account_number &&
+            item.source_document_reference
+          )
+        ? {
+          investment_dividend_sources: parsed.f1099divs,
+          investment_dividend_totals: {
+            ordinary: div1099s.reduce((sum, item) => sum + item.box1a, 0),
+            qualified: totalQualDiv,
+            capital_gain_distributions: totalBox2a,
+          },
+        }
+        : {}),
+    };
+    if (totalQualDiv > 0) {
+      form8995Fields.net_capital_gain = totalQualDiv;
+      form8995Fields.qbi_capital_sources = [{
+        source: "f1099div.qualified_dividends",
+        amount: totalQualDiv,
+      }];
+    }
+
+    // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2
+    const totalOrdinaryForNiit = div1099s.reduce(
+      (sum, item) => sum + item.box1a,
+      0,
+    );
+    if (totalOrdinaryForNiit > 0) {
+      outputs.push(
+        this.outputNodes.output(form8960, {
+          line2_ordinary_dividends: totalOrdinaryForNiit,
+        }),
+      );
+    }
+
+    // Cap gain distributions always route through Schedule D (IRC §1(h), Sch D line 13).
+    // Schedule D computes the combined net_capital_gain and emits it to income_tax_calculation.
+    // This prevents double-routing when f1099b transactions also produce net_capital_gain via
+    // schedule_d — both sources are consolidated in schedule_d before reaching income_tax_calculation.
+    if (totalBox2a > 0) {
+      const totalBox2c = div1099s.reduce(
+        (sum, item) => sum + (item.box2c ?? 0),
+        0,
+      );
+      outputs.push(this.outputNodes.output(schedule_d, {
+        line13_cap_gain_distrib: totalBox2a,
+        ...(totalBox2c > 0 ? { box2c_qsbs: totalBox2c } : {}),
+      }));
+    }
+
+    const totalBox2b = div1099s.reduce(
+      (sum, item) => sum + (item.box2b ?? 0),
+      0,
+    );
+    if (totalBox2b > 0) {
+      outputs.push(
+        this.outputNodes.output(unrecaptured_1250_worksheet, {
+          unrecaptured_1250_gain: totalBox2b,
+        }),
+      );
+    }
+
+    const totalBox2d = div1099s.reduce(
+      (sum, item) => sum + (item.box2d ?? 0),
+      0,
+    );
+    if (totalBox2d > 0) {
+      outputs.push(
+        this.outputNodes.output(rate_28_gain_worksheet, {
+          collectibles_gain: totalBox2d,
+        }),
+      );
+    }
+
+    // §199A dividends — only items meeting holding period qualify
+    const totalBox5 = div1099s
+      .filter((item) =>
+        item.holdingPeriodDays === undefined ||
+        item.holdingPeriodDays >= HOLDING_PERIOD_199A_DAYS
+      )
+      .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
+    if (totalBox5 > 0) {
+      const reitSources = div1099s
+        .filter((item) => (item.box5 ?? 0) > 0)
+        .map((item) => ({
+          payer_name: item.payerName ?? "",
+          source_document_reference: item.source_document_reference ?? "",
+          box1a: item.box1a,
+          box5: item.box5 ?? 0,
+          ex_dividend_date: item.section199a_holding_review?.ex_dividend_date,
+          qualified_held_days_in_91_day_window: item
+            .section199a_holding_review?.qualified_held_days_in_91_day_window,
+          diminished_risk_days_excluded: item.section199a_holding_review
+            ?.diminished_risk_days_excluded,
+          no_related_payment_obligation_confirmed: item
+            .section199a_holding_review
+            ?.no_related_payment_obligation_confirmed,
+          review_reference: item.section199a_holding_review?.review_reference,
+          reviewed_on: item.section199a_holding_review?.reviewed_on,
+        }));
+      const useForm8995a = isAbove199AThreshold(
+        taxableIncome,
+        filingStatus,
+        cfg.sec199aSingleThreshold,
+        cfg.sec199aMfjThreshold,
+      );
+      if (useForm8995a) {
+        outputs.push({
+          nodeType: form8995a.nodeType,
+          fields: {
+            line6_sec199a_dividends: totalBox5,
+            reit_dividend_sources: reitSources,
+          },
+        });
+      } else {
+        form8995Fields.line6_sec199a_dividends = totalBox5;
+        form8995Fields.reit_dividend_sources = reitSources;
+      }
+    }
+    if (Object.keys(form8995Fields).length > 0) {
+      outputs.push(
+        this.outputNodes.output(
+          form8995,
+          form8995Fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>,
+        ),
+      );
+    }
+
+    // PAB interest from exempt-interest dividends (form6251)
+    const totalBox13 = div1099s.reduce(
+      (sum, item) => sum + (item.box13 ?? 0),
+      0,
+    );
+    if (totalBox13 > 0) {
+      outputs.push(
+        this.outputNodes.output(form6251, {
+          private_activity_bond_interest: totalBox13,
+        }),
+      );
+    }
+
+    const taxedItems = div1099s.filter((item) => (item.box7 ?? 0) > 0);
+    for (const item of taxedItems) {
+      if (item.holdingPeriodDays === undefined) {
+        throw new Error("1099-DIV foreign tax needs the holding period");
+      }
+    }
+    const eligibleItems = taxedItems.filter((item) =>
+      item.holdingPeriodDays! >= HOLDING_PERIOD_FOREIGN_DAYS
+    );
+    for (const item of eligibleItems) {
+      const review = item.foreign_tax_holding_review;
+      if (
+        !review ||
+        review.qualifying_held_days_in_31_day_window >
+          item.holdingPeriodDays! ||
+        review.qualifying_held_days_in_31_day_window +
+              review.diminished_risk_days_excluded > 31 ||
+        Number.isNaN(Date.parse(`${review.ex_dividend_date}T00:00:00Z`)) ||
+        new Date(`${review.ex_dividend_date}T00:00:00Z`).toISOString().slice(
+            0,
+            10,
+          ) !==
+          review.ex_dividend_date
+      ) {
+        throw new Error(
+          "1099-DIV foreign tax needs reviewed qualifying days in the ex-dividend window and no related payment",
+        );
+      }
+    }
+    for (const item of eligibleItems) {
+      if (
+        item.foreign_source_dividends_usd === undefined ||
+        item.foreign_source_dividends_usd <= 0 ||
+        item.foreign_source_dividends_usd > item.box1a ||
+        !item.foreign_tax_irs_country_code
+      ) {
+        throw new Error(
+          "1099-DIV foreign tax needs verified foreign-source dividends and an IRS country code",
+        );
+      }
+      if (
+        (item.box1b ?? 0) > 0 &&
+        item.foreign_source_qualified_dividends_usd === undefined
+      ) {
+        throw new Error(
+          "1099-DIV foreign tax needs the foreign-source qualified-dividend amount",
+        );
+      }
+      if (
+        (item.foreign_source_qualified_dividends_usd ?? 0) >
+          item.foreign_source_dividends_usd!
+      ) {
+        throw new Error(
+          "1099-DIV foreign qualified dividends exceed foreign-source dividends",
+        );
+      }
+      if ((item.foreign_source_qualified_dividends_usd ?? 0) > 0) {
+        throw new Error(
+          "Form 1116 foreign qualified dividends need the rate-adjustment worksheet before e-filing",
+        );
+      }
+    }
+    if (eligibleItems.length > 0) {
+      outputs.push(this.outputNodes.output(form_1116, {
+        foreign_tax_items: eligibleItems.map((item) => ({
+          foreign_tax_paid: item.box7!,
+          foreign_gross_income: item.foreign_source_dividends_usd!,
+          foreign_income_source_document_reference:
+            item.source_document_reference,
+          income_category: IncomeCategory.Passive,
+          irs_country_code: item.foreign_tax_irs_country_code,
+          tax_kind: ForeignTaxKind.Dividends,
+          tax_credit_method: ForeignTaxCreditMethod.Paid,
+          tax_reported_on_1099: true,
+        })),
+      }));
+    }
+
+    const knownForeignQualifiedDividends = div1099s.reduce(
+      (sum, item) => sum + (item.foreign_source_qualified_dividends_usd ?? 0),
+      0,
+    );
+    if (knownForeignQualifiedDividends > 0) {
+      outputs.push(this.outputNodes.output(form_1116, {
+        known_foreign_qualified_dividends: knownForeignQualifiedDividends,
+      }));
+    }
+
+    return { outputs };
+  }
+}
+
+export const f1099div = new F1099divNode();

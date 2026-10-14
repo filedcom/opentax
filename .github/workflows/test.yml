@@ -1,0 +1,34 @@
+name: Verify pull request
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-and-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Graph preflight and typed unit and harness verification
+        run: deno task test:unit
+      - name: Preserve verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-report
+          path: .state/research/testing/
+          include-hidden-files: true
+          if-no-files-found: error
+
+# Private IRS schemas, reviewed attachment bytes and ATS acceptance require
+# the separately recorded full/evidence gates; this job does not claim them.

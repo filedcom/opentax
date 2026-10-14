@@ -136,7 +136,7 @@ Deno.test("run_benchmark exits nonzero for an empty runnable case set", async ()
     assertEquals(code, 1);
     assertEquals(
       new TextDecoder().decode(stderr).includes(
-        "No runnable benchmark cases found",
+        "Incomplete benchmark directory:",
       ),
       true,
     );

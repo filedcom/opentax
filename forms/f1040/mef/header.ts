@@ -38,6 +38,7 @@ export interface SpouseIdentity {
   readonly nameControl: string;
   readonly ipPin?: string;
   readonly signaturePin?: string;
+  readonly signatureDate?: string;
   readonly deceased?: boolean;
   readonly deathDate?: string;
   readonly occupation?: string;
@@ -95,6 +96,7 @@ export interface FilerIdentity {
   readonly occupation?: string;
   readonly ipPin?: string;
   readonly signaturePin?: string;
+  readonly signatureDate?: string;
   readonly priorYearAgi?: number;
 
   // Spouse (MFJ / MFS)
@@ -119,6 +121,18 @@ export interface FilerIdentity {
 
   // Timestamp
   readonly timestamp?: string;
+}
+
+/** IRS header name uses < separators; keep nameLine1 readable for PDFs. */
+export function returnHeaderNameLine1(filer: FilerIdentity): string {
+  const last = filer.lastName?.trim().toUpperCase();
+  const first = filer.firstName?.trim().toUpperCase();
+  if (last && first) {
+    return [last, first, filer.middleInitial?.trim().toUpperCase()]
+      .filter(Boolean).join("<");
+  }
+  // Direct FilerIdentity callers can supply only a display name.
+  return filer.nameLine1.trim().replace(/\s+/g, "<");
 }
 
 // ─── Address builders ─────────────────────────────────────────────────────────
@@ -164,7 +178,7 @@ function buildFilerBlock(filer: FilerIdentity): string {
   const children = [
     element("PrimarySSN", filer.primarySSN),
     element("SpouseSSN", filer.spouse?.ssn),
-    element("NameLine1Txt", filer.nameLine1),
+    element("NameLine1Txt", returnHeaderNameLine1(filer)),
     element("PrimaryNameControlTxt", filer.nameControl),
     element("SpouseNameControlTxt", filer.spouse?.nameControl),
     buildAddress(filer.address),
@@ -185,9 +199,12 @@ function buildOriginatorBlock(filer: FilerIdentity): string {
   const children = [
     element("EFIN", filer.originator.efin),
     element("OriginatorTypeCd", filer.originator.originatorType),
-    element("PractitionerPINGrp", filer.originator.practitionerPIN
-      ? element("PIN", filer.originator.practitionerPIN)
-      : undefined),
+    element(
+      "PractitionerPINGrp",
+      filer.originator.practitionerPIN
+        ? element("PIN", filer.originator.practitionerPIN)
+        : undefined,
+    ),
   ];
   return elements("OriginatorGrp", children);
 }
@@ -249,15 +266,49 @@ function buildBankAccountBlock(filer: FilerIdentity): string {
 function irsTimestamp(ts?: string): string {
   const d = ts ? new Date(ts) : new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
-    `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}-05:00`;
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${
+    pad(d.getUTCDate())
+  }` +
+    `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${
+      pad(d.getUTCSeconds())
+    }-05:00`;
 }
 
 export function buildReturnHeader(
   filer?: FilerIdentity,
   year = 2025,
   returnType = "1040",
+  binaryAttachmentCount = 0,
 ): string {
+  if (!filer) {
+    throw new Error("MeF return header requires a real filer identity");
+  }
+  if (!/^\d{9}$/.test(filer.primarySSN) || filer.primarySSN === "000000000") {
+    throw new Error(
+      "MeF return header requires a nine-digit filer SSN or ITIN",
+    );
+  }
+  if (!filer.nameLine1.trim() || !filer.nameControl.trim()) {
+    throw new Error(
+      "MeF return header requires the filer's name and name control",
+    );
+  }
+  const address = filer.address;
+  if (
+    !address.line1.trim() || !address.city.trim() ||
+    (address.foreignCountry
+      ? !address.foreignCountry.trim()
+      : !address.state.trim() || !address.zip.trim())
+  ) {
+    throw new Error("MeF return header requires the filer's mailing address");
+  }
+  if (
+    !Number.isSafeInteger(binaryAttachmentCount) || binaryAttachmentCount < 0
+  ) {
+    throw new Error(
+      "MeF binary attachment count must be a nonnegative integer",
+    );
+  }
   const ts = irsTimestamp(filer?.timestamp);
   const softwareId = filer?.softwareId ?? "00000001";
   const softwareVersionNum = filer?.softwareVersionNum;
@@ -281,45 +332,35 @@ export function buildReturnHeader(
       element("OriginatorTypeCd", originatorType),
       ...(filer?.originator?.practitionerPIN
         ? [elements("PractitionerPINGrp", [
-            element("EFIN", efin),
-            element("PIN", filer.originator.practitionerPIN),
-          ])]
+          element("EFIN", efin),
+          element("PIN", filer.originator.practitionerPIN),
+        ])]
         : []),
     ]),
     element("PINTypeCd", "Self-Select On-Line"),
     element("JuratDisclosureCd", "Online Self Select PIN"),
+    element(
+      "PrimaryPINEnteredByCd",
+      filer.signaturePin ? filer.pinEnteredBy : undefined,
+    ),
+    element(
+      "SpousePINEnteredByCd",
+      filer.spouse?.signaturePin ? filer.pinEnteredBy : undefined,
+    ),
+    element("PrimarySignaturePIN", filer.signaturePin),
+    element("SpouseSignaturePIN", filer.spouse?.signaturePin),
+    element("PrimarySignatureDt", filer.signatureDate),
+    element("SpouseSignatureDt", filer.spouse?.signatureDate),
     element("ReturnTypeCd", returnType),
   ];
 
-  if (filer !== undefined) {
-    headerChildren.push(
-      buildFilerBlock(filer),
-      buildPaidPreparerBlock(filer),
-      buildOnlineFilerBlock(filer),
-    );
-  } else {
-    // XSD requires <Filer> with PrimarySSN, NameLine1Txt, PrimaryNameControlTxt,
-    // and either USAddress or ForeignAddress (all required per ReturnHeader1040x.xsd §338).
-    // Emit a placeholder block so the schema validator accepts the document
-    // when no filer identity is provided (test/preview use case).
-    const placeholderAddress = elements("USAddress", [
-      element("AddressLine1Txt", "123 Main St"),
-      element("CityNm", "Anytown"),
-      element("StateAbbreviationCd", "CA"),
-      element("ZIPCd", "00000"),
-    ]);
-    headerChildren.push(
-      elements("Filer", [
-        element("PrimarySSN", "000000000"),
-        element("NameLine1Txt", "UNKNOWN FILER"),
-        element("PrimaryNameControlTxt", "UNKN"),
-        placeholderAddress,
-      ]),
-    );
-  }
+  headerChildren.push(
+    buildFilerBlock(filer),
+    buildPaidPreparerBlock(filer),
+    buildOnlineFilerBlock(filer),
+  );
 
   const inner = headerChildren.filter((s) => s !== "").join("");
   // binaryAttachmentCnt is a required attribute per ReturnHeader1040x.xsd §990.
-  // Value is 0 for returns with no binary attachments.
-  return `<ReturnHeader binaryAttachmentCnt="0">${inner}</ReturnHeader>`;
+  return `<ReturnHeader binaryAttachmentCnt="${binaryAttachmentCount}">${inner}</ReturnHeader>`;
 }

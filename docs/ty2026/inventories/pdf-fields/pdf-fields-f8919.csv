@@ -1,0 +1,41 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,"Page 1. Name of person who must file this form. If married, complete a separate Form 8919 for each spouse who must file this form. ",2,36 684.5 438.2 698.016,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Social security number. ,2,440.2 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].f1_3[0],/Tx,"Who must file. You must file Form 8919 if all of the following apply. You performed services for a firm. You believe your pay from the firm wasn't for services as an independent contractor. The firm did not withhold your share of social security and Medicare taxes from your pay. One of the reasons listed below under Reason codes applies to you. Reason codes. For each firm listed below, enter in column (c) the applicable reason code for filing this form. If none of the reason codes apply to you, but you believe you should have been treated as an employee, enter reason code G and file Form S S-8 on or before the date you file your tax return. A. I filed Form S S-8 and received a determination letter stating that I am an employee of this firm. C. I received other correspondence from the I R S stating that I am an employee. G. I filed Form S S-8 with the I R S and haven't received a reply. H. I received a Form W-2 and a Form 1099-M I S C and/or 1099-N E C from this firm for 2026. The amount on Form 1099-M I S C and/or 1099-N E C should have been included as wages on Form W-2. (Don't file Form S S-8 if you select reason code H.) Row: 1. Column: (a) Name of firm. ",2,58.6 383.998 243.8 407.499,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].f1_4[0],/Tx,Row: 1. Column: (b) Firm's federal identification number (see instructions). ,2,245.8 384.498 323 395.999,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].f1_5[0],/Tx,Row: 1. Column: (c) Enter reason code from above. ,2,325 384.498 373.4 395.999,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].f1_6[0],/Tx,Row: 1. Column: (d) Date of I R S determination or correspondence (M M/D D/Y Y Y Y) (see instructions). ,2,375.4 384.498 452.6 395.999,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].c1_1[0],/Btn,Row: 1. Column: (e) Check if Form 1099-M I S C and/or 1099-N E C was received. ,2,473.8 386.999 483.8 396.999,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row1[0].f1_7[0],/Tx,Row: 1. Column: (f) Total wages received with no social security or Medicare tax withholding and not reported on Form W-2. ,2,505 384.498 576 395.999,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].f1_8[0],/Tx,Row: 2. Column: (a) Name of firm. ,2,58.6 359.997 243.8 383.498,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].f1_9[0],/Tx,Row: 2. Column: (b) Firm's federal identification number (see instructions). ,2,245.8 360.497 323 371.998,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].f1_10[0],/Tx,Row: 2. Column: (c) Enter reason code from above. ,2,325 360.497 373.4 371.998,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].f1_11[0],/Tx,Row: 2. Column: (d) Date of I R S determination or correspondence (M M/D D/Y Y Y Y) (see instructions). ,2,375.4 360.497 452.6 371.998,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].c1_2[0],/Btn,Row: 2. Column: (e) Check if Form 1099-M I S C and/or 1099-N E C was received. ,2,473.8 362.998 483.8 372.998,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row2[0].f1_12[0],/Tx,Row: 2. Column: (f) Total wages received with no social security or Medicare tax withholding and not reported on Form W-2. ,2,505 360.497 576 371.998,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].f1_13[0],/Tx,Row: 3. Column: (a) Name of firm. ,2,58.6 335.996 243.8 359.497,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].f1_14[0],/Tx,Row: 3. Column: (b) Firm's federal identification number (see instructions). ,2,245.8 336.496 323 347.997,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].f1_15[0],/Tx,Row: 3. Column: (c) Enter reason code from above. ,2,325 336.496 373.4 347.997,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].f1_16[0],/Tx,Row: 3. Column: (d) Date of I R S determination or correspondence (M M/D D/Y Y Y Y) (see instructions). ,2,375.4 336.496 452.6 347.997,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].c1_3[0],/Btn,Row: 3. Column: (e) Check if Form 1099-M I S C and/or 1099-N E C was received. ,2,473.8 338.997 483.8 348.997,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row3[0].f1_17[0],/Tx,Row: 3. Column: (f) Total wages received with no social security or Medicare tax withholding and not reported on Form W-2. ,2,505 336.496 576 347.997,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].f1_18[0],/Tx,Row: 4. Column: (a) Name of firm. ,2,58.6 311.995 243.8 335.496,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].f1_19[0],/Tx,Row: 4. Column: (b) Firm's federal identification number (see instructions). ,2,245.8 312.495 323 323.996,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].f1_20[0],/Tx,Row: 4. Column: (c) Enter reason code from above. ,2,325 312.495 373.4 323.996,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].f1_21[0],/Tx,Row: 4. Column: (d) Date of I R S determination or correspondence (M M/D D/Y Y Y Y) (see instructions). ,2,375.4 312.495 452.6 323.996,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].c1_4[0],/Btn,Row: 4. Column: (e) Check if Form 1099-M I S C and/or 1099-N E C was received. ,2,473.8 314.996 483.8 324.996,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row4[0].f1_22[0],/Tx,Row: 4. Column: (f) Total wages received with no social security or Medicare tax withholding and not reported on Form W-2. ,2,505 312.495 576 323.996,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].f1_23[0],/Tx,Row: 5. Column: (a) Name of firm. ,2,58.6 287.994 243.8 311.495,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].f1_24[0],/Tx,Row: 5. Column: (b) Firm's federal identification number (see instructions). ,2,245.8 288.494 323 299.995,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].f1_25[0],/Tx,Row: 5. Column: (c) Enter reason code from above. ,2,325 288.494 373.4 299.995,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].f1_26[0],/Tx,Row: 5. Column: (d) Date of I R S determination or correspondence (M M/D D/Y Y Y Y) (see instructions). ,2,375.4 288.494 452.6 299.995,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].c1_5[0],/Btn,Row: 5. Column: (e) Check if Form 1099-M I S C and/or 1099-N E C was received. ,2,473.8 290.995 483.8 300.995,yes
+topmostSubform[0].Page1[0].Pg1Table[0].Row5[0].f1_27[0],/Tx,Row: 5. Column: (f) Total wages received with no social security or Medicare tax withholding and not reported on Form W-2. ,2,505 288.494 576 299.995,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"6. Total wages. Combine lines 1 through 5 in column (f). Enter here and on Form 1040, 1040-S R, or 1040-N R, line 1g. ",2,505 264.502 576 276.001,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"7. Maximum amount of wages subject to social security tax. $184,500.",2,481.4 252 482.4 263.999,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,"8. Total social security wages and social security tips (total of boxes 3 and 7 on Form(s) W-2), Railroad Retirement Tax Act (R R T A) compensation (subject to the 6.2% rate), and unreported tips subject to social security tax from Form 4137, line 10 (see instructions) ",2,411.4 204.501 481.4 216,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,"9. Subtract line 8 from line 7. If line 8 is more than line 7, enter 0 here and on line 10. ",2,505 192.502 576 204.001,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,10. Wages subject to social security tax. Enter the smaller of line 6 or line 9. ,2,505 180.5 576 191.499,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,11. Multiply line 10 by 0.062 (social security tax rate). ,2,505 168.501 576 179.5,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,12. Multiply line 6 by 0.0145 (Medicare tax rate). ,2,505 156.502 576 167.501,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,"13. Add lines 11 and 12. Enter here and on Schedule 2 (Form 1040), line 16b, or Form 1040-S S, Part I, line 6c.",2,505 132.501 576 144,yes

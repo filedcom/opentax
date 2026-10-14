@@ -1,0 +1,12 @@
+{
+  "two-reported": {"poverty":18810,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "three-reported": {"poverty":18810,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "four-reported": {"poverty":18810,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "five-reported": {"poverty":18810,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "twelve-reported": {"poverty":18810,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "hawaii-reported": {"poverty":17310,"pct":401,"monthly":533,"ptc":804,"advance":2400,"cap":null,"repay":1596,"tax":9617,"refund":0,"owed":1617},
+  "two-unreported-corrected": {"poverty":18810,"pct":401,"monthly":533,"ptc":1104,"advance":2400,"cap":null,"repay":1296,"tax":9317,"refund":0,"owed":1317},
+  "two-uncovered-june": {"poverty":18810,"pct":401,"monthly":533,"ptc":737,"advance":2200,"cap":null,"repay":1463,"tax":9484,"refund":0,"owed":1484},
+  "alaska-cap": {"poverty":18810,"pct":191,"monthly":49,"ptc":6612,"advance":9600,"cap":375,"repay":375,"tax":2570,"refund":430,"owed":0},
+  "hawaii-cap": {"poverty":17310,"pct":207,"monthly":68,"ptc":6384,"advance":9600,"cap":975,"repay":975,"tax":3170,"refund":0,"owed":170}
+}

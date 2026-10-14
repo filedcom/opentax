@@ -1,0 +1,139 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Taxpayer name(s) shown on tax return. ,2,36 684.5 452.6 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identification number. ,2,454.6 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"A. If Form 8990 relates to an information return for a foreign entity (for example, Form 5471), enter: Name of foreign entity. ",2,166.507 660.002 576 672.001,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"A. Employer identification number, if any. ",2,230.4 648 576 659.999,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,A. Reference I D number. ,2,164.622 636.001 576 648,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,B. Is the foreign entity a C F C group member? See instructions. Yes. ,2,504 626.002 512 634.002,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,B. No. ,2,544 626.002 552 634.002,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,C. Is this Form 8990 filed by the specified group parent for an entire C F C group? See instructions. Yes. ,2,504 614 512 622,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,C. No. ,2,544 614 552 622,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,"D. Has a C F C or a C F C group made a safe harbor election? If “Yes,” see instructions for which lines of Form 8990 to complete. Yes. ",2,504 590.002 512 598.002,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,D. No. ,2,544 590.002 552 598.002,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,Part I. Computation of Allowable Business Interest Expense. Part I is completed by all taxpayers subject to section 163(j). Schedule A and Schedule B need to be completed before Part I when the taxpayer is a partner or shareholder of a pass-through entity subject to section 163(j). Section I—Business Interest Expense Before the Section 163(j) Limitation. 1. Current-year otherwise deductible business interest expense (not including amounts reported on line 2 or line 5). See instructions.,2,504 510.001 576 522,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,2. Current-year otherwise capitalizable business interest expense (not including interest capitalized under sections 263(g) and 263A(f)). See instructions.,2,504 486 576 497.999,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,3. Disallowed business interest expense carryforwards from prior years (does not apply to a partnership). ,2,504 474.001 576 486,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"4. Partner’s excess business interest expense treated as paid or accrued in current year (Schedule A, line 48, column (h)). ",2,504 450 576 461.999,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,5. Floor plan financing interest expense. See instructions.,2,504 438.001 576 450,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,6. Total business interest expense before section 163(j) limitation. Add lines 1 through 5. ,2,504 426.002 576 438.001,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,Section I I—Adjusted Taxable Income. Tentative Taxable Income. 7. Tentative taxable income. See instructions.,2,504 378 576 389.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,Additions (adjustments to be made if amounts are taken into account on line 7). 8. Any item of loss or deduction that is not properly allocable to a trade or business of the taxpayer. See instructions.,2,504 336.002 576 348.001,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,9. Any business interest expense not from a pass-through entity. See instructions.,2,504 324 576 335.999,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,10. Amount of any net operating loss deduction under section 172. ,2,504 312.001 576 324,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,11. Amount of any qualified business income deduction allowed under section 199A. ,2,504 300.002 576 312.001,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"12. Deduction allowable for depreciation, amortization, or depletion attributable to a trade or business. See instructions.",2,504 276.001 576 288,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,13. Amount of any loss or deduction items from a pass-through entity. See instructions.,2,504 264.002 576 276.001,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,14. Other additions. See instructions.,2,504 252 576 263.999,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"15. Total current-year partner’s excess taxable income (Schedule A, line 48, column (f)). ",2,504 240.001 576 252,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"16. Total current-year S corporation shareholder’s excess taxable income (Schedule B, line 50, column (c)). ",2,504 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,17. Total. Add lines 8 through 16. ,2,504 216 576 227.999,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,Reductions (adjustments to be made if amounts are taken into account on line 7). 18. Open parenthesis. Any item of income or gain that is not properly allocable to a trade or business of the taxpayer. See instructions. Close parenthesis. ,2,508 174.002 572 185.501,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,19. Open parenthesis. Any business interest income not from a pass-through entity. See instructions. Close parenthesis. ,2,508 162 572 173.499,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,20. Open parenthesis. Amount of any income or gain items from a pass-through entity. See instructions. Close parenthesis. ,2,508 150.001 572 161.5,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,"21. Open parenthesis. Any amount included in gross income under sections 951(a), 951A(a), and 78 (net of associated deductions). See instructions. Close parenthesis. ",2,508 126 572 137.499,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,22. Open parenthesis. Other reductions. See instructions. Close parenthesis. ,2,508 114.001 572 125.5,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,23. Open parenthesis. Total. Combine lines 18 through 22. Close parenthesis. ,2,508 102.002 572 113.501,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"24. Adjusted taxable income. Combine lines 7, 17, and 23. See instructions. ",2,504 90 576 101.999,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. Section I I I—Business Interest Income. 25. Current-year business interest income. See instructions.,3,504 714.002 576 726.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,"26. Excess business interest income from pass-through entities (total of Schedule A, line 48, column (g), and Schedule B, line 50, column (d)). ",3,504 690.001 576 702,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,27. Total. Add lines 25 and 26. ,3,504 678.002 576 690.001,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,Section I V—163(j) Limitation Calculations. Limitation on Business Interest Expense. 28. Multiply the adjusted taxable income from line 24 by 30% (0.30). See instructions. ,3,504 630 576 641.999,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,29. Business interest income (line 27). ,3,504 618.001 576 630,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,30. Floor plan financing interest expense (line 5). ,3,504 606.002 576 618.001,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,"31. Total business interest expense limitation under section 163(j). Add lines 28, 29, and 30. ",3,504 594 576 605.999,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,Business Interest Expense Deduction. 32. Allowable business interest expense. Enter the lesser of line 31 or line 6. ,3,504 564.001 576 576,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,33. Capitalized interest portion of line 32. Enter the lesser of line 2 or line 32. ,3,504 552.002 576 564.001,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,34. Total current-year business interest expense deduction. Subtract line 33 from line 32. See instructions. ,3,504 528.001 576 540,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,"Carryforward. 35. Disallowed business interest expense. Subtract line 32 from line 6. (If zero or less, enter 0.)",3,504 498.002 576 510.001,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,Part I I. Partnership Pass-Through Items. Part I I is only completed by a partnership that is subject to section 163(j). The partnership items below are allocated to the partners and are not carried forward by the partnership. See the instructions for more information. Excess Business Interest Expense. 36. Excess business interest expense. Enter amount from line 35. ,3,504 432 576 443.999,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,"Excess Taxable Income (If you entered an amount on line 36, skip lines 37 through 41.) 37. Subtract the sum of lines 5 and 27 from line 6. (If zero or less, enter 0.)",3,504 402.001 576 414,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,"38. Subtract line 37 from line 28. (If zero or less, enter 0.) ",3,504 390.002 576 402.001,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,"39. Divide line 38 by line 28. Enter the result as a decimal. (If line 28 is zero, enter 0.) Numbers before the decimal. ",3,504 378 540 389.999,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,39. Numbers after the decimal. ,3,547.2 378 576 389.999,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,40. Excess taxable income. Multiply line 39 by line 24. ,3,504 366.001 576 378,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"Excess Business Interest Income. 41. Excess business interest income. Subtract the sum of lines 1, 2, 3, and 4 from line 27. (If zero or less, enter 0.) ",3,504 324 576 335.999,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,"Part I I I. S Corporation Pass-Through Items. Part I I I is only completed by S corporations that are subject to section 163(j). The S corporation items below are allocated to the shareholders. See the instructions for more information. Excess Taxable Income. 42. Subtract the sum of lines 5 and 27 from line 6. (If zero or less, enter 0.)",3,504 258.001 576 270,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,"43. Subtract line 42 from line 28. (If zero or less, enter 0.)",3,504 246.002 576 258.001,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,"44. Divide line 43 by line 28. Enter the result as a decimal. (If line 28 is zero, enter 0.) Numbers before the decimal. ",3,504 234 540 245.999,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,44. Numbers after the decimal. ,3,547.2 234 576 245.999,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,45. Excess taxable income. Multiply line 44 by line 24. ,3,504 222.001 576 234,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,"Excess Business Interest Income. 46. Excess business interest income. Subtract the sum of lines 1, 2, 3, and 4 from line 27. (If zero or less, enter 0.) ",3,504 180 576 191.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_1[0],/Tx,Page 3. Schedule A. Summary of Partner’s Section 163(j) Excess Items. Any taxpayer that owns an interest in a partnership subject to section 163(j) should complete Schedule A before completing Part I. 47. Row: 1. Column: (a) Name of partnership. ,4,64.8 473.998 186.2 497.499,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_2[0],/Tx,Row: 1. Column: (b) E I N. ,4,187.2 473.998 252 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_3[0],/Tx,Row: 1. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 473.998 323.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_4[0],/Tx,Row: 1. Column: Excess business interest expense. (d) Prior-year carryforward (see instructions).  ,4,324 473.998 395.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_5[0],/Tx,Row: 1. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 473.998 467.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_6[0],/Tx,Row: 1. Column: (f) Current-year excess taxable income. ,4,468 473.998 539.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_7[0],/Tx,Row: 1. Column: (g) Current-year excess business interest income. ,4,540 473.998 611.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_8[0],/Tx,Row: 1. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 473.998 683.25 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row1[0].f3_9[0],/Tx,Row: 1. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 473.998 756 485.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_10[0],/Tx,Row: 2. Column: (a) Name of partnership. ,4,64.8 449.997 186.2 473.498,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_11[0],/Tx,Row: 2. Column: (b) E I N. ,4,187.2 449.997 252 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_12[0],/Tx,Row: 2. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 449.997 323.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_13[0],/Tx,Row: 2. Column: Excess business interest expense. (d) Prior-year carryforward (see instructions). ,4,324 449.997 395.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_14[0],/Tx,Row: 2. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 449.997 467.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_15[0],/Tx,Row: 2. Column: (f) Current-year excess taxable income. ,4,468 449.997 539.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_16[0],/Tx,Row: 2. Column: (g) Current-year excess business interest income. ,4,540 449.997 611.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_17[0],/Tx,Row: 2. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 449.997 683.25 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row2[0].f3_18[0],/Tx,Row: 2. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 449.997 756 461.998,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_19[0],/Tx,Row: 3. Column: (a) Name of partnership.,4,64.8 425.996 186.2 449.497,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_20[0],/Tx,Row: 3. Column: (b) E I N. ,4,187.2 425.996 252 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_21[0],/Tx,Row: 3. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 425.996 323.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_22[0],/Tx,Row: 3. Column: Excess business interest expense. (d) Prior-year carryforward (see instructions). ,4,324 425.996 395.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_23[0],/Tx,Row: 3. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 425.996 467.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_24[0],/Tx,Row: 3. Column: (f) Current-year excess taxable income. ,4,468 425.996 539.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_25[0],/Tx,Row: 3. Column: (g) Current-year excess business interest income. ,4,540 425.996 611.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_26[0],/Tx,Row: 3. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 425.996 683.25 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row3[0].f3_27[0],/Tx,Row: 3. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 425.996 756 437.997,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_28[0],/Tx,Row: 4. Column: (a) Name of partnership.,4,64.8 401.995 186.2 425.496,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_29[0],/Tx,Row: 4. Column: (b) E I N. ,4,187.2 401.995 252 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_30[0],/Tx,Row: 4. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 401.995 323.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_31[0],/Tx,Row: 4. Column: Excess business interest expense. (d) Prior-year carryforward (see instructions). ,4,324 401.995 395.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_32[0],/Tx,Row: 4. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 401.995 467.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_33[0],/Tx,Row: 4. Column: (f) Current-year excess taxable income. ,4,468 401.995 539.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_34[0],/Tx,Row: 4. Column: (g) Current-year excess business interest income. ,4,540 401.995 611.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_35[0],/Tx,Row: 4. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 401.995 683.25 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row4[0].f3_36[0],/Tx,Row: 4. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 401.995 756 413.996,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_37[0],/Tx,Row: 5. Column: (a) Name of partnership.,4,64.8 377.994 186.2 401.495,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_38[0],/Tx,Row: 5. Column: (b) E I N. ,4,187.2 377.994 252 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_39[0],/Tx,Row: 5. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 377.994 323.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_40[0],/Tx,Row: 5. Column: Excess business interest expense. (d) Prior-year carryforward (see instructions). ,4,324 377.994 395.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_41[0],/Tx,Row: 5. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 377.994 467.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_42[0],/Tx,Row: 5. Column: (f) Current-year excess taxable income. ,4,468 377.994 539.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_43[0],/Tx,Row: 5. Column: (g) Current-year excess business interest income. ,4,540 377.994 611.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_44[0],/Tx,Row: 5. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 377.994 683.25 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row5[0].f3_45[0],/Tx,Row: 5. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 377.994 756 389.995,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_46[0],/Tx,Row: 6. Column: (a) Name of partnership.,4,64.8 353.993 186.2 377.494,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_47[0],/Tx,Row: 6. Column: (b) E I N. ,4,187.2 353.993 252 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_48[0],/Tx,Row: 6. Column: Excess business interest expense. (c) Current year (see instructions). ,4,252 353.993 323.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_50[0],/Tx,Row: 6. Column: Excess business interest expense. (d) Prior-year carryforward ,4,324 353.993 395.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_51[0],/Tx,Row: 6. Column: Excess Business interest expense. (e) Total ((c) plus (d)). ,4,396 353.993 467.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_52[0],/Tx,Row: 6. Column: (f) Current-year excess taxable income. ,4,468 353.993 539.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_53[0],/Tx,Row: 6. Column: (g) Current-year excess business interest income. ,4,540 353.993 611.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_54[0],/Tx,Row: 6. Column: (h) Excess business interest expense treated as paid or accrued (see instructions). ,4,612 353.993 683.25 365.994,yes
+topmostSubform[0].Page3[0].Table_ScheduleA[0].Row6[0].f3_55[0],/Tx,Row: 6. Column: (i) Current-year excess business interest expense carryforward (see instructions). ,4,684 353.993 756 365.994,yes
+topmostSubform[0].Page3[0].f3_56[0],/Tx,48. Total. (f) Current-year excess taxable income. ,4,468 329.998 539.25 341.999,yes
+topmostSubform[0].Page3[0].f3_57[0],/Tx,48. Total. (g) Current-year excess business interest income. ,4,540 329.998 611.25 341.999,yes
+topmostSubform[0].Page3[0].f3_58[0],/Tx,48. Total. (h) Excess business interest expense treated as paid or accrued. ,4,612 329.998 683.25 341.999,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row1[0].f3_59[0],/Tx,Schedule B. Summary of S Corporation Shareholder’s Excess Taxable Income and Excess Business Interest Income. Any taxpayer that is required to complete Part I and is a shareholder in an S corporation that has excess taxable income or excess business interest income should complete Schedule B before completing Part I. 49. Row: 1. Column: (a) Name of S Corporation. ,4,64.8 246.002 359 258.001,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row1[0].f3_60[0],/Tx,Row: 1. Column: (b) E I N. ,4,361 246.002 452.6 258.001,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row1[0].f3_61[0],/Tx,Row: 1. Column: (c) Current-year excess taxable income. ,4,454.6 246.002 603.8 258.001,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row1[0].f3_62[0],/Tx,Row: 1. Column: (d) Current-year excess business interest income. ,4,604.8 246.002 756 258.001,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row2[0].f3_63[0],/Tx,Row: 2. Column: (a) Name of S Corporation. ,4,64.8 234.003 359 246.002,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row2[0].f3_64[0],/Tx,Row: 2. Column: (b) E I N. ,4,361 234.003 452.6 246.002,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row2[0].f3_65[0],/Tx,Row: 2. Column: (c) Current-year excess taxable income. ,4,454.6 234.003 603.8 246.002,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row2[0].f3_66[0],/Tx,Row: 2. Column: (d) Current-year excess business interest income. ,4,604.8 234.003 756 246.002,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row3[0].f3_67[0],/Tx,Row: 3. Column: (a) Name of S Corporation. ,4,64.8 222.004 359 234.003,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row3[0].f3_68[0],/Tx,Row: 3. Column: (b) E I N. ,4,361 222.004 452.6 234.003,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row3[0].f3_69[0],/Tx,Row: 3. Column: (c) Current-year excess taxable income. ,4,454.6 222.004 603.8 234.003,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row3[0].f3_70[0],/Tx,Row: 3. Column: (d) Current-year excess business interest income. ,4,604.8 222.004 756 234.003,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row4[0].f3_71[0],/Tx,Row: 4. Column: (a) Name of S Corporation. ,4,64.8 210.005 359 222.004,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row4[0].f3_72[0],/Tx,Row: 4. Column: (b) E I N. ,4,361 210.005 452.6 222.004,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row4[0].f3_73[0],/Tx,Row: 4. Column: (c) Current-year excess taxable income. ,4,454.6 210.005 603.8 222.004,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row4[0].f3_74[0],/Tx,Row: 4. Column: (d) Current-year excess business interest income. ,4,604.8 210.005 756 222.004,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row5[0].f3_75[0],/Tx,Row: 5. Column: (a) Name of S Corporation. ,4,64.8 198.006 359 210.005,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row5[0].f3_76[0],/Tx,Row: 5. Column: (b) E I N. ,4,361 198.006 452.6 210.005,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row5[0].f3_77[0],/Tx,Row: 5. Column: (c) Current-year excess taxable income. ,4,454.6 198.006 603.8 210.005,yes
+topmostSubform[0].Page3[0].Table_ScheduleB[0].Row5[0].f3_78[0],/Tx,Row: 5. Column: (d) Current-year excess business interest income. ,4,604.8 198.006 756 210.005,yes
+topmostSubform[0].Page3[0].f3_78[0],/Tx,50. Total. (c) Current-year excess taxable income. ,4,453.6 173.999 604.8 186,yes
+topmostSubform[0].Page3[0].f3_79[0],/Tx,50. Total. (d) Current-year excess business interest income. ,4,604.8 173.999 756 186,yes

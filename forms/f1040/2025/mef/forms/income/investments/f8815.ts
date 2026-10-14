@@ -1,0 +1,128 @@
+import { EducationAccountKind } from "../../../../../nodes/intermediate/forms/income/investments/form8815/education_contributions.ts";
+import { element, elements } from "../../../../../mef/xml.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
+import {
+  calculateForm8815,
+  type Form8815Input,
+  type Form8815Lines,
+  inputSchema,
+  type InstitutionAddress,
+} from "../../../../../nodes/intermediate/forms/income/investments/form8815/index.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
+import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
+import { assertForm8815FinalReturn } from "../../../../domains/income/investments/form8815/form8815_final_return.ts";
+
+type Input = Partial<Form8815Input & Form8815Lines>;
+
+// IRS8815.xsd, TY2025 v5.4, in its required sequence.
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8815Lines, string]> =
+  [
+    ["line2", "ExclBondIntTotQlfyEducExpnsAmt"],
+    ["line3", "ExclBondIntTotNonTxEducBnftAmt"],
+    ["line4", "ExclBondIntTxblEducBenefitAmt"],
+    ["line5", "ExclBondTotPYBondProcAmt"],
+    ["line6", "ExclBondIntTotPYBondIntAmt"],
+    ["line7", "ExclBondIntTxblExpnsBondProcRt"],
+    ["line8", "ExclBondIntTentativeBondIntAmt"],
+    ["line9", "ExclBondIntModifiedAGIAmt"],
+    ["line10", "ExclBondIntFilingStatusLmtAmt"],
+    ["line11", "ExclBondIntExcessAGIAmt"],
+    ["line12", "ExclBondIntExcessAGIRt"],
+    ["line13", "ExclBondIntOffsetAmt"],
+    ["line14", "ExcludableSavingsBondIntAmt"],
+  ];
+
+function reconciledLines(fields: Input) {
+  const source = inputSchema.parse(Object.fromEntries(
+    Object.keys(inputSchema.shape).map((key) => [
+      key,
+      fields[key as keyof Input],
+    ]),
+  ));
+  const lines = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
+  for (const [key] of FIELD_MAP) {
+    if (fields[key] !== lines[key]) {
+      throw new Error(`Form 8815 MeF ${key} differs from source calculation`);
+    }
+  }
+  return { source, lines };
+}
+
+function institutionAddress(address: InstitutionAddress): string {
+  const street = [
+    element("AddressLine1Txt", address.line1),
+    element("AddressLine2Txt", address.line2),
+    element("CityNm", address.city),
+  ];
+  if ("country_code" in address) {
+    return elements("EligibleInstitutionFrgnAddress", [
+      ...street,
+      element("ProvinceOrStateNm", address.province_or_state),
+      element("CountryCd", address.country_code),
+      element("ForeignPostalCd", address.postal_code),
+    ]);
+  }
+  return elements("EligibleInstitutionUSAddress", [
+    ...street,
+    element("StateAbbreviationCd", address.state),
+    element("ZIPCd", address.zip.replace("-", "")),
+  ]);
+}
+
+function buildIRS8815(fields: Input, context?: MefBuildContext): string {
+  if (Object.keys(fields).length === 0) return "";
+  if (fields.line14 === undefined) {
+    throw new Error(
+      "Form 8815 MeF needs computed 2025 lines, not raw claim fields",
+    );
+  }
+  const { source, lines } = reconciledLines(fields);
+  const filedStatus = {
+    [NodeFilingStatus.Single]: MefFilingStatus.Single,
+    [NodeFilingStatus.MFS]: MefFilingStatus.MarriedFilingSeparately,
+    [NodeFilingStatus.MFJ]: MefFilingStatus.MarriedFilingJointly,
+    [NodeFilingStatus.HOH]: MefFilingStatus.HeadOfHousehold,
+    [NodeFilingStatus.QSS]: MefFilingStatus.QualifyingSurvivingSpouse,
+  }[source.filing_status];
+  if (context?.filer && context.filer.filingStatus !== filedStatus) {
+    throw new Error("Form 8815 filing status differs from the filed return");
+  }
+  assertForm8815FinalReturn(source, lines, context?.pending);
+  return elements("IRS8815", [
+    ...source.eligible_students.map((student) =>
+      elements("EligibleEducationInstnGrp", [
+        element("EligiblePersonNm", student.person_name),
+        element(
+          "EligibleInstitutionNm",
+          student.institution_name,
+          student.contribution_account?.kind === EducationAccountKind.Qtp
+            ? { qualifiedTuitionProgramCd: "QSTP" }
+            : student.contribution_account?.kind ===
+                EducationAccountKind.Coverdell
+            ? { coverdellEducationalSavAcctCd: "COVERDELL ESA" }
+            : undefined,
+        ),
+        institutionAddress(student.institution_address),
+      ])
+    ),
+    ...FIELD_MAP.map(([key, tag]) => {
+      if (key === "line12" && lines.line11 === 0) return "";
+      const value = lines[key];
+      return element(
+        tag,
+        key === "line7" || key === "line12" ? value.toFixed(3) : value,
+      );
+    }),
+  ]);
+}
+
+export const form8815: MefFormDescriptor<"form8815", Input> = {
+  pendingKey: "form8815",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8815--2025.pdf",
+  build: buildIRS8815,
+};

@@ -1,3 +1,7 @@
+import {
+  exportForm8886OtsaCommand,
+  recordForm8886OtsaDeliveryCommand,
+} from "./commands/form8886-otsa.ts";
 import { parseArgs } from "@std/cli";
 import type { CommandDef, ParsedArgs, TopLevelDef } from "./commands/help.ts";
 import { printHelp } from "./commands/help.ts";
@@ -11,9 +15,17 @@ import {
 import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
-import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
+import {
+  exportForm4972PaperCommand,
+  exportMefCommand,
+  exportPdfCommand,
+} from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
-import { checkForUpdate, updateCommand, versionCommand } from "./commands/version.ts";
+import {
+  checkForUpdate,
+  updateCommand,
+  versionCommand,
+} from "./commands/version.ts";
 
 const RETURNS_DIR = "./.state/returns";
 
@@ -56,12 +68,20 @@ const COMMANDS: readonly CommandDef[] = [
     description: "Inspect a node's input schema and output nodes",
     usage: "opentax node inspect --node_type <type>",
     options: [
-      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+      {
+        flag: "--node_type",
+        description: "Node type identifier (e.g. w2)",
+        required: true,
+      },
       { flag: "--json", description: "Output as JSON" },
     ],
     handler: async (args) => {
       const nodeType = requireArg("node_type", args.node_type);
-      await run(() => Promise.resolve(nodeInspectCommand({ nodeType, json: args.json === true })));
+      await run(() =>
+        Promise.resolve(
+          nodeInspectCommand({ nodeType, json: args.json === true }),
+        )
+      );
     },
   },
   {
@@ -80,7 +100,9 @@ const COMMANDS: readonly CommandDef[] = [
         Deno.exit(1);
       }
       const formType = args.form ?? "f1040";
-      await run(() => createReturnCommand({ year, formType, baseDir: RETURNS_DIR }));
+      await run(() =>
+        createReturnCommand({ year, formType, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -98,31 +120,142 @@ const COMMANDS: readonly CommandDef[] = [
   },
   {
     cmd: "return",
-    sub: "export",
-    description: "Export a return as MEF XML or filled IRS PDF",
-    usage: "opentax return export --returnId <id> --type mef|pdf [--force] [--output <path>]",
+    sub: "record-otsa-delivery",
+    description:
+      "Retain reviewed delivery evidence for an unchanged OTSA export; no IRS acceptance claim",
+    usage:
+      "opentax return record-otsa-delivery --returnId <id> --requests <json-file> --export-dir <directory> --record <json-file> --evidence <file> --output <new-directory> [--force]",
+    handler: async (args) => {
+      await run(() =>
+        recordForm8886OtsaDeliveryCommand({
+          returnId: requireArg("returnId", args.returnId),
+          baseDir: RETURNS_DIR,
+          requestsPath: requireArg("requests", args.requests),
+          exportDir: requireArg("export-dir", args["export-dir"]),
+          recordPath: requireArg("record", args.record),
+          evidencePath: requireArg("evidence", args.evidence),
+          outputDir: requireArg("output", args.output),
+          force: args.force === true || args.force === "true",
+          draft: args.draft === true || args.draft === "true",
+        })
+      );
+    },
+  },
+  {
+    cmd: "return",
+    sub: "export-otsa",
+    description:
+      "Prepare separate Form 8886 OTSA copies and handoff manifest; does not send them",
+    usage:
+      "opentax return export-otsa --returnId <id> --requests <json-file> [--output <new-directory>] [--force]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--type", description: "Export format: mef or pdf", required: true },
-      { flag: "--force", description: "Bypass reject-severity validation gate", required: false },
-      { flag: "--output", description: "Output file path (pdf only; default: returns/<id>/export.pdf)", required: false },
+      {
+        flag: "--requests",
+        description: "JSON handoff request for every disclosure",
+        required: true,
+      },
+      {
+        flag: "--output",
+        description:
+          "New export directory; existing directories are never overwritten",
+      },
+      {
+        flag: "--force",
+        description:
+          "Override return business-rule rejection for review; recorded in manifest",
+      },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const requestsPath = requireArg("requests", args.requests);
+      await run(() =>
+        exportForm8886OtsaCommand({
+          returnId,
+          baseDir: RETURNS_DIR,
+          requestsPath,
+          outputDir: args.output,
+          force: args.force === true || args.force === "true",
+          draft: args.draft === true || args.draft === "true",
+        })
+      );
+    },
+  },
+  {
+    cmd: "return",
+    sub: "export",
+    description:
+      "Export a return as MeF XML, filled IRS PDF, or Form 4972 paper packet",
+    usage:
+      "opentax return export --returnId <id> --type mef|pdf|form4972-paper [--force] [--draft] [--output <path>]",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      {
+        flag: "--type",
+        description: "Export format: mef, pdf, or form4972-paper",
+        required: true,
+      },
+      {
+        flag: "--force",
+        description: "Bypass reject-severity validation gate",
+        required: false,
+      },
+      {
+        flag: "--draft",
+        description:
+          "Always label output as draft; allow incomplete calculations for review",
+        required: false,
+      },
+      {
+        flag: "--output",
+        description:
+          "Output file path (pdf only; default: returns/<id>/export.pdf)",
+        required: false,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const force = args.force === true || args.force === "true";
+      const draft = args.draft === true || args.draft === "true";
       if (args.type === "mef") {
         await run(async () => {
-          const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR, force });
+          const xml = await exportMefCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+          });
           console.log(xml);
         });
       } else if (args.type === "pdf") {
         await run(async () => {
           const outputPath = args.output as string | undefined;
-          const writtenPath = await exportPdfCommand({ returnId, baseDir: RETURNS_DIR, force, outputPath });
+          const writtenPath = await exportPdfCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+            outputPath,
+          });
           console.log(`PDF written to ${writtenPath}`);
         });
+      } else if (args.type === "form4972-paper") {
+        await run(async () => {
+          const writtenPath = await exportForm4972PaperCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+            outputPath: args.output as string | undefined,
+          });
+          console.log(
+            `PAPER ONLY: ${writtenPath} (source manifest: ${writtenPath}.source-manifest.json). This packet has no MeF XML or electronic-submission authorization.`,
+          );
+        });
       } else {
-        console.error("Error: --type must be 'mef' or 'pdf'");
+        console.error(
+          "Error: --type must be 'mef', 'pdf', or 'form4972-paper'",
+        );
         Deno.exit(1);
       }
     },
@@ -134,7 +267,11 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form add --returnId <id> --node_type <type> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+      {
+        flag: "--node_type",
+        description: "Node type identifier (e.g. w2)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
@@ -144,7 +281,9 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: JSON data argument is required");
         Deno.exit(1);
       }
-      await run(() => formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -159,7 +298,9 @@ const COMMANDS: readonly CommandDef[] = [
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const nodeType = args.node_type as string | undefined;
-      await run(() => formListCommand({ returnId, baseDir: RETURNS_DIR, nodeType }));
+      await run(() =>
+        formListCommand({ returnId, baseDir: RETURNS_DIR, nodeType })
+      );
     },
   },
   {
@@ -169,12 +310,18 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form get --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const entryId = requireArg("entryId", args.entryId);
-      await run(() => formGetCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formGetCommand({ returnId, entryId, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -184,7 +331,11 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form update --returnId <id> --entryId <id> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
@@ -194,7 +345,9 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: JSON data argument is required");
         Deno.exit(1);
       }
-      await run(() => formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -204,12 +357,18 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form delete --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const entryId = requireArg("entryId", args.entryId);
-      await run(() => formDeleteCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formDeleteCommand({ returnId, entryId, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -219,11 +378,16 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax return validate --returnId <id> [--format text|json]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--format", description: "Output format: text or json (default: json)" },
+      {
+        flag: "--format",
+        description: "Output format: text or json (default: json)",
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
-      const format = (args.format === "text" ? "text" : "json") as "text" | "json";
+      const format = (args.format === "text" ? "text" : "json") as
+        | "text"
+        | "json";
       await run(async () => {
         const { report, formatted } = await validateReturnCommand({
           returnId,
@@ -245,7 +409,10 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax node graph --node_type start [--depth <n>] [--json]",
     options: [
       { flag: "--node_type", description: "Root node type", required: true },
-      { flag: "--depth", description: "Max traversal depth (default: unlimited)" },
+      {
+        flag: "--depth",
+        description: "Max traversal depth (default: unlimited)",
+      },
       { flag: "--json", description: "Output as JSON instead of Mermaid" },
     ],
     handler: async (args) => {
@@ -256,7 +423,9 @@ const COMMANDS: readonly CommandDef[] = [
         Deno.exit(1);
       }
       await run(() =>
-        Promise.resolve(graphViewCommand({ nodeType, depth, json: args.json === true }))
+        Promise.resolve(
+          graphViewCommand({ nodeType, depth, json: args.json === true }),
+        )
       );
     },
   },
@@ -270,13 +439,30 @@ const TOP_LEVEL: Record<string, () => Promise<void> | void> = {
 
 const TOP_LEVEL_DEFS: readonly TopLevelDef[] = [
   { usage: "opentax version", description: "Show the current version" },
-  { usage: "opentax update", description: "Download and install the latest release" },
+  {
+    usage: "opentax update",
+    description: "Download and install the latest release",
+  },
 ];
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format", "output"],
-    boolean: ["json", "help"],
+    string: [
+      "year",
+      "returnId",
+      "node_type",
+      "depth",
+      "type",
+      "form",
+      "entryId",
+      "format",
+      "output",
+      "requests",
+      "export-dir",
+      "record",
+      "evidence",
+    ],
+    boolean: ["json", "help", "draft"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
 

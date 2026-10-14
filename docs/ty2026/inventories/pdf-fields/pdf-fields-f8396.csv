@@ -1,0 +1,27 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on your tax return. ,2,36 671.998 460.05 685.999,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,460.8 671.998 576 685.999,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Enter the address of your main home to which the qualified mortgage certificate relates if it is different from the address shown on your tax return. ,2,36 648 576 662.001,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,Name of issuer of Mortgage Credit Certificate. ,2,36 623.999 244.05 638,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,Mortgage Credit Certificate number. ,2,244.8 623.999 460.8 638,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,Issue date. ,2,460.8 623.999 576 638,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"Part I. Current-Year Mortgage Interest Credit. 1. Interest paid on the certified indebtedness amount. If someone else (other than your spouse if filing jointly) also held an interest in the home, enter only your share of the interest paid. ",2,504 564.001 576 576,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,2. Enter the certificate credit rate shown on your Mortgage Credit Certificate. Do not enter the interest rate on your home mortgage. %. ,2,504 528.001 561.6 540,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"3. If line 2 is 20% or less, multiply line 1 by line 2. If line 2 is more than 20%, or you refinanced your mortgage and received a reissued certificate, see the instructions for the amount to enter. ",2,504 492.001 576 504,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,4. Enter any 2023 credit carryforward from line 16 of your 2025 Form 8396. ,2,504 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,5. Enter any 2024 credit carryforward from line 14 of your 2025 Form 8396. ,2,504 420.001 576 432,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,6. Enter any 2025 credit carryforward from line 17 of your 2025 Form 8396. ,2,504 396 576 407.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,7. Add lines 3 through 6. ,2,504 372.002 576 384.001,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,8. Limitation based on tax liability. Enter the amount from line 3 of the Credit Limit Worksheet in the instructions.,2,504 336.002 576 348.001,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"9. Current-year mortgage interest credit. Enter the smaller of line 7 or line 8. Also include this amount on Schedule 3 (Form 1040), line 6g. ",2,504 300.002 576 312.001,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,Part I I. Mortgage Interest Credit Carryforward to 2027 (Complete only if line 9 is less than line 7.). 10. Add lines 3 and 4. ,2,504 252 576 263.999,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,11. Enter the amount from line 7. ,2,504 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,12. Enter the larger of line 9 or line 10. ,2,504 204.001 576 216,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,13. Subtract line 12 from line 11. ,2,504 180 576 191.999,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,14. 2025 credit carryforward to 2027. Enter the smaller of line 6 or line 13. ,2,504 156.002 576 168.001,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,15. Subtract line 14 from line 13. ,2,504 132.001 576 144,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,16. 2024 credit carryforward to 2027. Enter the smaller of line 5 or line 15. ,2,504 108 576 119.999,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,"17. 2026 credit carryforward to 2027. Subtract line 9 from line 3. If zero or less, enter 0. ",2,504 84.002 576 96.001,yes
+topmostSubform[0].Page2[0].Col2[0].Line8_Worksheet[0].Line1[0].f2_1[0],/Tx,"Page 2. Line 8—Credit Limit Worksheet. Keep for Your Records. 1. Enter the amount from Form 1040, 1040-S R, or 1040-N R, line 18. ",3,518.4 387.002 576 399.001,yes
+topmostSubform[0].Page2[0].Col2[0].Line8_Worksheet[0].Line2[0].f2_2[0],/Tx,"2. Form 1040 or 1040-S R filers: Enter the total of all amounts (if any) from Form 1040 or 1040-S R, line 19,* and Schedule 3 (Form 1040), lines 1 through 4, 6d, 6f, 6l, and 6m. Form 1040-N R filers: Enter the total of all amounts (if any) from Form 1040-N R, line 19,* and Schedule 3 (Form 1040), lines 1, 2, 4, 6f, 6l, and 6m. * If you are directed to complete Form 8396 by Credit Limit Worksheet B in the Instructions for Schedule 8812 (Form 1040), include the amount from line 14 of Credit Limit Worksheet B instead of the amount from Form 1040, 1040-S R, or 1040-N R, line 19.",3,518.4 302.334 576 314.333,yes
+topmostSubform[0].Page2[0].Col2[0].Line8_Worksheet[0].Line3[0].f2_3[0],/Tx,"3. Subtract line 2 from line 1. Enter this amount on Form 8396, line 8. If zero or less, enter 0 here and on Form 8396, lines 8 and 9, and go to Part I I of Form 8396. ",3,518.4 262.334 576 274.333,yes

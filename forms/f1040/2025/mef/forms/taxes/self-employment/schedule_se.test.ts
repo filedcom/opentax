@@ -1,0 +1,503 @@
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
+import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
+import { ownedScheduleSE } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
+import { scheduleSE as rawScheduleSE } from "./schedule_se.ts";
+
+const filer: FilerIdentity = {
+  primarySSN: "123456789",
+  fullName: "Test Filer",
+  nameLine1: "FILER TEST",
+  nameControl: "FILE",
+  address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
+};
+const scheduleSE = {
+  build: (fields: Parameters<typeof rawScheduleSE.build>[0]) => {
+    const result = rawScheduleSE.build(fields, { filer });
+    assert(
+      typeof result === "string",
+      "Legacy single-owner input must emit one XML document",
+    );
+    return result;
+  },
+};
+
+function assertNotIncludes(actual: string, expected: string) {
+  assertEquals(
+    actual.includes(expected),
+    false,
+    `Expected string NOT to include: ${expected}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 1: Empty input
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: empty object returns empty string", () => {
+  assertEquals(scheduleSE.build({}), "");
+});
+
+// ---------------------------------------------------------------------------
+// Section 2: Unknown keys ignored
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: all unknown keys returns empty string", () => {
+  assertEquals(scheduleSE.build({ junk: 999, foo: "bar", baz: 0 }), "");
+});
+
+// ---------------------------------------------------------------------------
+// Section 3: Zero value emitted (tag name verified against IRS1040ScheduleSE.xsd)
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: net_profit_schedule_c at zero is emitted", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 0 });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>0</NetNonFarmProfitLossAmt>",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Section 4: Per-field mapping (one test per field, 5 fields)
+// Tag names verified against IRS1040ScheduleSE.xsd (TY2025 v5.4)
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: net_profit_schedule_c maps to NetNonFarmProfitLossAmt", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+});
+
+Deno.test("schedule_se: regular computed lines reach native tax and deduction", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 50_000 });
+  assertStringIncludes(
+    result,
+    "<SETotalNetEarningsOrLossAmt>50000</SETotalNetEarningsOrLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<SelfEmploymentTaxAmt>7065</SelfEmploymentTaxAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<DeductibleSelfEmploymentTaxAmt>3533</DeductibleSelfEmploymentTaxAmt>",
+  );
+});
+
+Deno.test("schedule_se: filed component taxes add to the filed total", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 24_328 });
+  assertStringIncludes(result, "<TaxBaseAmt>2786</TaxBaseAmt>");
+  assertStringIncludes(result, "<SEBaseAmt>652</SEBaseAmt>");
+  assertStringIncludes(
+    result,
+    "<SelfEmploymentTaxAmt>3438</SelfEmploymentTaxAmt>",
+  );
+});
+
+Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitLossAmt", () => {
+  const result = scheduleSE.build({ net_profit_schedule_f: 15000 });
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>15000</NetFarmProfitLossAmt>",
+  );
+});
+
+Deno.test("schedule_se: unreported_tips_4137 maps to UnreportedTipsAmt", () => {
+  const result = scheduleSE.build({ unreported_tips_4137: 2000 });
+  assertStringIncludes(
+    result,
+    "<UnreportedTipsAmt>2000</UnreportedTipsAmt>",
+  );
+});
+
+Deno.test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
+  const result = scheduleSE.build({ wages_8919: 8000 });
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
+});
+
+Deno.test("schedule_se: w2_ss_wages alone does not emit SE form (W-2-only filer)", () => {
+  const result = scheduleSE.build({ w2_ss_wages: 100000 });
+  assertEquals(result, "");
+});
+
+Deno.test("schedule_se: w2_ss_wages maps to SSTWagesRRTCompAmt when SE income present", () => {
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 30000,
+    w2_ss_wages: 100000,
+  });
+  assertStringIncludes(
+    result,
+    "<SSTWagesRRTCompAmt>100000</SSTWagesRRTCompAmt>",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Section 5: Required SSN field
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: SSN element emitted before income fields", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
+  assertStringIncludes(result, "<SSN>");
+  // SSN appears before income field in the output
+  const ssnPos = result.indexOf("<SSN>");
+  const incomePos = result.indexOf("<NetNonFarmProfitLossAmt>");
+  assertEquals(ssnPos < incomePos, true, "SSN must precede income fields");
+});
+
+Deno.test("schedule_se: uses the filer SSN and checks a supplied pending SSN", () => {
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 30000,
+    taxpayer_ssn: "123-45-6789",
+  });
+  assertStringIncludes(result, "<SSN>123456789</SSN>");
+});
+
+Deno.test("schedule_se: rejects missing or conflicting filer identity", () => {
+  assertThrows(
+    () => rawScheduleSE.build({ net_profit_schedule_c: 30000 }),
+    Error,
+    "needs the proprietor's nine-digit SSN",
+  );
+  assertThrows(
+    () =>
+      scheduleSE.build({
+        net_profit_schedule_c: 30000,
+        taxpayer_ssn: "987654321",
+      }),
+    Error,
+    "does not match the filer",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Section 6: Sparse output
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: single known field emits only that element, absent fields omitted", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertNotIncludes(result, "<NetFarmProfitLossAmt>");
+  assertNotIncludes(result, "<UnreportedTipsAmt>");
+  assertNotIncludes(result, "<WagesSubjectToSSTAmt>");
+  assertNotIncludes(result, "<SSTWagesRRTCompAmt>");
+});
+
+Deno.test("schedule_se: two fields present: only those two elements emitted", () => {
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 30000,
+    wages_8919: 8000,
+  });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
+  assertNotIncludes(result, "<NetFarmProfitLossAmt>");
+  assertNotIncludes(result, "<SSTWagesRRTCompAmt>");
+});
+
+// ---------------------------------------------------------------------------
+// Section 7: All fields present
+// ---------------------------------------------------------------------------
+
+const allFields = {
+  net_profit_schedule_c: 30000,
+  net_profit_schedule_f: 15000,
+  unreported_tips_4137: 2000,
+  wages_8919: 8000,
+  w2_ss_wages: 100000,
+};
+
+Deno.test("schedule_se: all 5 fields present: output wrapped in IRS1040ScheduleSE tag", () => {
+  const result = scheduleSE.build(allFields);
+  assertStringIncludes(result, "<IRS1040ScheduleSE>");
+  assertStringIncludes(result, "</IRS1040ScheduleSE>");
+});
+
+Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
+  const result = scheduleSE.build(allFields);
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>15000</NetFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<UnreportedTipsAmt>2000</UnreportedTipsAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<SSTWagesRRTCompAmt>100000</SSTWagesRRTCompAmt>",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Section 8: Non-numeric fields silently ignored
+// ---------------------------------------------------------------------------
+
+Deno.test("schedule_se: string field is silently ignored", () => {
+  const result = scheduleSE.build({
+    filing_status: "MFJ",
+    net_profit_schedule_c: 30000,
+  });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertNotIncludes(result, "filing_status");
+  assertNotIncludes(result, "MFJ");
+});
+
+Deno.test("schedule_se: farm election maps Parts I and II in TY2025 XSD order", () => {
+  const result = scheduleSE.build({
+    farm_optional_method_elected: true,
+    gross_farm_income: 9_000,
+    net_profit_schedule_f: -2_000,
+    net_profit_schedule_c: 1_000,
+    w2_ss_wages: 2_000,
+  });
+  assertNotIncludes(result, "<NetFarmProfitLossAmt>");
+  const expected = [
+    "<NetNonFarmProfitLossAmt>1000</NetNonFarmProfitLossAmt>",
+    "<SETotalNetEarningsOrLossAmt>1000</SETotalNetEarningsOrLossAmt>",
+    "<MinimumProfitForSETaxAmt>924</MinimumProfitForSETaxAmt>",
+    "<OptionalMethodAmt>6000</OptionalMethodAmt>",
+    "<CombinedSEAmt>6924</CombinedSEAmt>",
+    "<CombinedSEAndChurchWagesAmt>6924</CombinedSEAndChurchWagesAmt>",
+    "<SSTWagesRRTCompAmt>2000</SSTWagesRRTCompAmt>",
+    "<SETaxFarmOptionalMethodAmt>6000</SETaxFarmOptionalMethodAmt>",
+  ];
+  let previous = -1;
+  for (const xml of expected) {
+    const current = result.indexOf(xml);
+    assertEquals(current > previous, true, `Missing or out of order: ${xml}`);
+    previous = current;
+  }
+});
+
+Deno.test("schedule_se: farm election caps line 15 at $7,240", () => {
+  const result = scheduleSE.build({
+    farm_optional_method_elected: true,
+    gross_farm_income: 10_860,
+    net_profit_schedule_f: 7_840,
+  });
+  assertStringIncludes(result, "<OptionalMethodAmt>7240</OptionalMethodAmt>");
+  assertStringIncludes(
+    result,
+    "<SETaxFarmOptionalMethodAmt>7240</SETaxFarmOptionalMethodAmt>",
+  );
+  assertNotIncludes(result, "<NetFarmProfitLossAmt>");
+});
+
+Deno.test("schedule_se: farm election refuses missing or ineligible source facts", () => {
+  assertThrows(
+    () =>
+      scheduleSE.build({
+        farm_optional_method_elected: true,
+        net_profit_schedule_f: -2_000,
+      }),
+    Error,
+    "requires gross farm income and net farm profit",
+  );
+  assertThrows(
+    () =>
+      scheduleSE.build({
+        farm_optional_method_elected: true,
+        gross_farm_income: 12_000,
+        net_profit_schedule_f: 8_000,
+      }),
+    Error,
+    "unavailable",
+  );
+});
+
+Deno.test("schedule_se: elected line 4c below $400 stops without a form", () => {
+  assertEquals(
+    scheduleSE.build({
+      farm_optional_method_elected: true,
+      gross_farm_income: 300,
+      net_profit_schedule_f: -1_000,
+    }),
+    "",
+  );
+});
+
+Deno.test("schedule_se: sole spouse farm uses spouse SSN in native XML", () => {
+  const joint = {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "Jane",
+      lastName: "Farmer",
+      nameControl: "FARM",
+    },
+  };
+  const result = rawScheduleSE.build({ net_profit_schedule_f: 50_000 }, {
+    filer: joint,
+    pending: {
+      schedule_f: { schedule_fs: [{ proprietor_recipient: "S" }] },
+      general: { spouse_ssn: "111223333" },
+      f1040: { spouse_ssn: "111223333" },
+    },
+  });
+  assert(
+    typeof result === "string",
+    "Legacy spouse-only input must emit one XML document",
+  );
+  assertStringIncludes(result, "<SSN>111223333</SSN>");
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>50000</NetFarmProfitLossAmt>",
+  );
+});
+
+Deno.test("schedule_se: multiple spouse-owned businesses and farms share spouse SSN", () => {
+  const joint = {
+    ...filer,
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "Jane",
+      lastName: "Farmer",
+      nameControl: "FARM",
+    },
+  };
+  const businesses = [
+    {
+      recipient: "S" as const,
+      source_reference: "C1",
+      kind: "schedule_c" as const,
+      net_profit: 15000,
+      gross_business_income: 15000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+    {
+      recipient: "S" as const,
+      source_reference: "C2",
+      kind: "schedule_c" as const,
+      net_profit: 15000,
+      gross_business_income: 15000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+    {
+      recipient: "S" as const,
+      source_reference: "F1",
+      kind: "schedule_f" as const,
+      net_profit: 25000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+    {
+      recipient: "S" as const,
+      source_reference: "F2",
+      kind: "schedule_f" as const,
+      net_profit: 25000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+  ];
+  const owner = ownedScheduleSE({
+    identity: { primary_ssn: filer.primarySSN, spouse_ssn: joint.spouse.ssn },
+    businesses,
+    wages: [],
+  }, 176100);
+  const pending = {
+    general: {
+      filing_status: "mfj",
+      taxpayer_ssn: filer.primarySSN,
+      spouse_ssn: joint.spouse.ssn,
+    },
+    f1040: {
+      filing_status: "mfj",
+      taxpayer_ssn: filer.primarySSN,
+      spouse_ssn: joint.spouse.ssn,
+    },
+    schedule_c: {
+      schedule_cs: businesses.filter((b) => b.kind === "schedule_c").map(
+        (b) => ({
+          business_reference: b.source_reference,
+          proprietor_recipient: b.recipient,
+          line_a_principal_business: "Consulting",
+          line_b_business_code: "541600",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: b.net_profit,
+        }),
+      ),
+    },
+    schedule_f: {
+      schedule_fs: businesses.filter((b) => b.kind === "schedule_f").map(
+        (b) => ({
+          farm_id: b.source_reference,
+          line_a_principal_crop_activity: "Grain farming",
+          line_b_agricultural_activity_code: "111100",
+          line_e_material_participation: true,
+          proprietor_recipient: b.recipient,
+          accounting_method: "cash",
+          line1_sales_livestock_resale: 0,
+          line2_sales_products_raised: b.net_profit,
+          line36_at_risk: "a",
+        }),
+      ),
+    },
+    schedule_se: {
+      owner_identity: owner.source.identity,
+      owner_business_sources: owner.source.businesses,
+      owner_wage_sources: [],
+      owner_instances: owner.instances,
+    },
+    schedule1: { line15_se_deduction: owner.deduction },
+    schedule2: { line4_se_tax: owner.tax },
+  };
+  const documents = rawScheduleSE.build(pending.schedule_se, {
+    filer: joint,
+    pending,
+  });
+  assert(
+    typeof documents !== "string",
+    "Retained owner source must emit distinct documents",
+  );
+  assertEquals(documents.length, 1);
+  const result = documents[0];
+  assertThrows(
+    () =>
+      rawScheduleSE.build({}, {
+        filer: joint,
+        pending: { ...pending, schedule_se: {} },
+      }),
+    Error,
+    "retained Schedule SE owner calculations",
+  );
+  assertStringIncludes(result, "<SSN>111223333</SSN>");
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>50000</NetFarmProfitLossAmt>",
+  );
+});

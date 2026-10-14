@@ -1,51 +1,167 @@
-import { eitc } from "./eitc.ts";
-import { irs1040 } from "./f1040.ts";
-import { form1116 } from "./f1116.ts";
-import { form2441 } from "./f2441.ts";
-import { form2555 } from "./f2555.ts";
-import { form4137 } from "./f4137.ts";
-import { form4562 } from "./f4562.ts";
-import { form461 } from "./f461.ts";
-import { form4684 } from "./f4684.ts";
-import { form4797 } from "./f4797.ts";
-import { form4952 } from "./f4952.ts";
-import { form4972 } from "./f4972.ts";
-import { form5329 } from "./f5329.ts";
-import { form5695 } from "./f5695.ts";
-import { form6198 } from "./f6198.ts";
-import { form6251 } from "./f6251.ts";
-import { form6252 } from "./f6252.ts";
-import { form6781 } from "./f6781.ts";
-import { form7206 } from "./f7206.ts";
-import { form8396 } from "./f8396.ts";
-import { form8582 } from "./f8582.ts";
-import { form8606 } from "./f8606.ts";
-import { form8615 } from "./f8615.ts";
-import { form8815 } from "./f8815.ts";
-import { form8824 } from "./f8824.ts";
-import { form8829 } from "./f8829.ts";
-import { form8839 } from "./f8839.ts";
-import { form8853 } from "./f8853.ts";
-import { form8880 } from "./f8880.ts";
-import { form8889 } from "./f8889.ts";
-import { form8919 } from "./f8919.ts";
-import { form8949 } from "./f8949.ts";
-import { form8959 } from "./f8959.ts";
-import { form8960 } from "./f8960.ts";
-import { form8962 } from "./f8962.ts";
-import { form8990 } from "./f8990.ts";
-import { form8995 } from "./f8995.ts";
-import { form8995a } from "./f8995a.ts";
-import { form982 } from "./f982.ts";
-import { schedule1 } from "./schedule1.ts";
-import { schedule2 } from "./schedule2.ts";
-import { schedule3 } from "./schedule3.ts";
-import { scheduleA } from "./schedule_a.ts";
-import { scheduleB } from "./schedule_b.ts";
-import { scheduleD } from "./schedule_d.ts";
-import { scheduleF } from "./schedule_f.ts";
-import { scheduleH } from "./schedule_h.ts";
-import { scheduleSE } from "./schedule_se.ts";
+import { form8853LtcStatement } from "./adjustments/health/f8853_ltc_statement.ts";
+import {
+  form4562ElectionOutStatement,
+  form4562ReducedBonusStatement,
+} from "./deductions/business/f4562_elections.ts";
+import {
+  form8886,
+  form8886AdditionalDetails,
+  form8886ExpectedBenefits,
+} from "../../domains/general/filing/form8886/mef-descriptors.ts";
+import { iraRecharacterizationStatement } from "./income/retirement/ira_recharacterization_statement.ts";
+import { form8853MedicareStatements } from "./adjustments/health/f8853_medicare_statements.ts";
+import { eitc } from "./credits/earned-income/eitc.ts";
+import { cccLoanStatement } from "./income/business/ccc_loan_statement.ts";
+import { cccLoanAccrualStatement } from "./income/business/ccc_loan_accrual_statement.ts";
+import { cropInsuranceDeferralStatement } from "./income/business/crop_insurance_deferral_statement.ts";
+import { jointOccupancyStatement } from "./general/return-assembly/joint_occupancy_statement.ts";
+import { irs1040 } from "./general/return-assembly/f1040.ts";
+import { iraDistributionStatement } from "./income/retirement/ira_distribution_statement.ts";
+import { f1099r } from "./income/retirement/f1099r.ts";
+import { form1116 } from "./credits/foreign/f1116/f1116.ts";
+import { form2106 } from "./adjustments/employment/f2106.ts";
+import { form2210f } from "./taxes/underpayment/f2210f_box_b.ts";
+import { form1116ScheduleB } from "./credits/foreign/f1116/f1116_schedule_b.ts";
+import { form2439 } from "./payments/investments/f2439.ts";
+import { form1116DirectExpenseStatement } from "./credits/foreign/f1116/f1116_direct_expense_statement.ts";
+import { form1116OtherDeductionsStatement } from "./credits/foreign/f1116/f1116_other_deductions_statement.ts";
+import { form1116AlternativeCompensationStatement } from "./credits/foreign/f1116/f1116_alternative_compensation_statement.ts";
+import { form2441 } from "./credits/individual/f2441.ts";
+import { form2555 } from "./income/foreign/f2555.ts";
+import { form3800 } from "./credits/business/f3800/f3800.ts";
+import { form3468 } from "./credits/business/f3468.ts";
+import { form3800CarryforwardStatement } from "./credits/business/f3800/f3800_carryforward_statement.ts";
+import { form4137 } from "./taxes/employment/f4137.ts";
+import { form4255 } from "./taxes/credit-recapture/f4255.ts";
+import { form4136 } from "./credits/business/f4136.ts";
+import { form4136DieselGovernmentSalesStatement } from "./credits/business/f4136_diesel_government_sales_statement.ts";
+import { form4136KeroseneGovernmentSalesStatement } from "./credits/business/f4136_kerosene_government_sales_statement.ts";
+import { form4136EmulsionBlendingStatement } from "./credits/business/f4136_emulsion_blending_statement.ts";
+import { form4136CreditCardUsersStatement } from "./credits/business/f4136_credit_card_users_statement.ts";
+import { form4562 } from "./deductions/business/f4562.ts";
+import { form461 } from "./income/business/f461.ts";
+import { form965a } from "./taxes/foreign/f965a.ts";
+import { form965aNetAdjustmentTransferStatement } from "./taxes/foreign/f965a_net_adjustment_transfer_statement.ts";
+import { form965aMultipleTransfereeStatement } from "./taxes/foreign/f965a_multiple_transferee_statement.ts";
+import { form4684 } from "./deductions/casualty/f4684.ts";
+import { form4797 } from "./income/business/f4797.ts";
+import { form4835 } from "./income/business/f4835.ts";
+import { form4952 } from "./deductions/investments/f4952/f4952.ts";
+import { form4972 } from "./taxes/retirement/f4972.ts";
+import { form5329 } from "./taxes/retirement/f5329.ts";
+import { form5471 } from "./general/foreign/f5471/f5471.ts";
+import { form5471ScheduleE } from "./general/foreign/f5471/f5471_schedule_e.ts";
+import { form5471ScheduleH } from "./general/foreign/f5471/f5471_schedule_h.ts";
+import { form5471ScheduleI1 } from "./general/foreign/f5471/f5471_schedule_i1.ts";
+import { form5471ScheduleJ } from "./general/foreign/f5471/f5471_schedule_j.ts";
+import { form5471ScheduleM } from "./general/foreign/f5471/f5471_schedule_m.ts";
+import { form5471ScheduleP } from "./general/foreign/f5471/f5471_schedule_p.ts";
+import { form5471ScheduleQ } from "./general/foreign/f5471/f5471_schedule_q.ts";
+import { form5471ScheduleR } from "./general/foreign/f5471/f5471_schedule_r.ts";
+import { form5695 } from "./credits/individual/f5695.ts";
+import { form5884 } from "./credits/business/f5884.ts";
+import { form8844 } from "./credits/business/f8844.ts";
+import { form8881 } from "./credits/business/f8881.ts";
+import { form8882 } from "./credits/business/f8882.ts";
+import { form8941 } from "./credits/health/f8941.ts";
+import { form8864 } from "./credits/business/f8864.ts";
+import { form5884ControlledGroupStatement } from "./credits/business/f5884_controlled_group_statement.ts";
+import { form5884DeductionDifferentiationStatement } from "./credits/business/f5884_deduction_differentiation_stmt.ts";
+import { form6198 } from "./income/business/f6198.ts";
+import { form4835AtRisk } from "./income/business/f4835_at_risk.ts";
+import { form6251 } from "./taxes/amt/f6251.ts";
+import { form6252 } from "./income/investments/f6252.ts";
+import { form6781 } from "./income/investments/f6781.ts";
+import { form7206 } from "./adjustments/health/f7206.ts";
+import { form7217 } from "./income/business/f7217.ts";
+import { form7203StockLoss } from "./income/business/f7203_stock_loss.ts";
+import { scheduleEStockLoss } from "./income/rental-passthrough/schedule_e_stock_loss.ts";
+import { form8283 } from "./deductions/charitable/f8283/f8283.ts";
+import { form8283VehicleStatement } from "./deductions/charitable/f8283/f8283_vehicle_statement.ts";
+import { form8283FmvReductionStatement } from "./deductions/charitable/f8283/f8283_fmv_reduction_statement.ts";
+import { form8396 } from "./credits/individual/f8396.ts";
+import { form8582 } from "./income/business/f8582/f8582.ts";
+import { form8582cr } from "./credits/business/f8582cr.ts";
+import { form8606 } from "./income/retirement/f8606.ts";
+import { form8611 } from "./taxes/credit-recapture/f8611.ts";
+import { form8615 } from "./taxes/investments/f8615.ts";
+import { form8621 } from "./income/foreign/f8621.ts";
+import { form8621ExcessStatement } from "./income/foreign/f8621_excess_statement.ts";
+import { form8621MtmDispositionsStatement } from "./income/foreign/f8621_mtm_dispositions_statement.ts";
+import { form8814 } from "./income/investments/f8814.ts";
+import { childTaxableInterestStatement } from "./income/investments/child_taxable_interest_statement.ts";
+import { form8815 } from "./income/investments/f8815.ts";
+import { form8824 } from "./income/business/f8824.ts";
+import { form8826 } from "./credits/business/f8826_draft.ts";
+import { form8820 } from "./credits/business/f8820.ts";
+import { form8820ControlledGroupStatement } from "./credits/business/f8820_controlled_group_statement.ts";
+import { form8829 } from "./deductions/business/f8829.ts";
+import { form8834 } from "./credits/individual/f8834.ts";
+import { form8839 } from "./credits/individual/f8839.ts";
+import { form8835 } from "./credits/business/f8835.ts";
+import { form8853 } from "./adjustments/health/f8853.ts";
+import { form8854 } from "./general/foreign/f8854/f8854.ts";
+import { form8854Annual } from "./general/foreign/f8854/f8854_annual.ts";
+import { form8854NativeStatements } from "./general/foreign/f8854/f8854_native_statements.ts";
+import { form8859 } from "./credits/individual/f8859.ts";
+import { form8862 } from "./credits/individual/f8862.ts";
+import { form8863 } from "./credits/individual/f8863.ts";
+import { form8874 } from "./credits/business/f8874.ts";
+import { form8880 } from "./credits/individual/f8880.ts";
+import { form8888 } from "./payments/refund/f8888.ts";
+import { form8889 } from "./adjustments/health/f8889.ts";
+import { form8911 } from "./credits/business/f8911.ts";
+import { form8912 } from "./credits/individual/f8912.ts";
+import { form8915F } from "./income/retirement/f8915f.ts";
+import { form8911ScheduleA } from "./credits/business/f8911_schedule_a.ts";
+import { form8936 } from "./credits/individual/f8936.ts";
+import { form8936ScheduleA } from "./credits/individual/f8936_schedule_a.ts";
+import { form8919 } from "./taxes/employment/f8919.ts";
+import { form8949 } from "./income/investments/f8949.ts";
+import { form8959 } from "./taxes/employment/f8959.ts";
+import { form8960 } from "./taxes/investments/f8960.ts";
+import { form8962 } from "./credits/health/f8962/f8962.ts";
+import { form8978 } from "./taxes/passthrough/f8978.ts";
+import { form8978ScheduleA } from "./taxes/passthrough/f8978_schedule_a.ts";
+import { form8994 } from "./credits/business/f8994.ts";
+import { anyOtherTaxesStatement } from "./taxes/other/any_other_taxes_statement.ts";
+import { schedule1OtherIncomeStatement } from "./income/other/schedule1/schedule1_other_income_statement.ts";
+import { scheduleAOtherTaxStatement } from "./deductions/itemized/schedule_a_other_tax_statement.ts";
+import { scheduleALine8bSellerStatement } from "./deductions/itemized/schedule_a_line8b_seller_statement.ts";
+import { scheduleALine16EstateStatement } from "./deductions/itemized/schedule_a_line16_estate_statement.ts";
+import { form8990 } from "./deductions/business/f8990.ts";
+import { form8992 } from "./income/foreign/f8992.ts";
+import { form8992ScheduleA } from "./income/foreign/f8992_schedule_a.ts";
+import { form8995 } from "./deductions/business/f8995/f8995.ts";
+import { form8995a } from "./deductions/business/f8995a/f8995a.ts";
+import { form8995aScheduleA } from "./deductions/business/f8995a/f8995a_schedule_a.ts";
+import { form8995aScheduleB } from "./deductions/business/f8995a/f8995a_schedule_b.ts";
+import { form8995aScheduleC } from "./deductions/business/f8995a/f8995a_schedule_c.ts";
+import { form8995aScheduleD } from "./deductions/business/f8995a/f8995a_schedule_d.ts";
+import { form9000 } from "./general/return-assembly/f9000.ts";
+import { form982 } from "./income/other/f982.ts";
+import { schedule1 } from "./general/return-assembly/schedule1/schedule1.ts";
+import { schedule1a } from "./deductions/additional/schedule1a/schedule1a.ts";
+import { schedule2 } from "./taxes/other/schedule2.ts";
+import { schedule3 } from "./general/return-assembly/schedule3.ts";
+import { schedule8812 } from "./credits/individual/schedule_8812.ts";
+import { scheduleA } from "./deductions/itemized/schedule_a.ts";
+import { scheduleB } from "./income/investments/schedule_b.ts";
+import { scheduleC } from "./income/business/schedule_c.ts";
+import { scheduleD } from "./income/investments/schedule_d.ts";
+import { scheduleE } from "./income/rental-passthrough/schedule_e.ts";
+import { scheduleF } from "./income/business/schedule_f.ts";
+import { scheduleH } from "./taxes/household-employment/schedule_h.ts";
+import { scheduleJ } from "./taxes/income-averaging/schedule_j.ts";
+import { scheduleLep } from "./general/return-assembly/schedule_lep.ts";
+import { scheduleR } from "./credits/individual/schedule_r.ts";
+import { scheduleSE } from "./taxes/self-employment/schedule_se.ts";
+import { w2 } from "./income/other/w2.ts";
+import { w2g } from "./income/other/w2g.ts";
+import {
+  fecRecord,
+  wagesNotShownSchedule,
+} from "./income/foreign/foreign_employer_wages.ts";
 
 // XSD-required element sequence from ReturnData1040.xsd.
 // Any reordering here must stay in sync with the sequence in that XSD or
@@ -53,51 +169,97 @@ import { scheduleSE } from "./schedule_se.ts";
 export const ALL_MEF_FORMS = [
   // 1. IRS1040 (required)
   irs1040,
-  // 2-4. Schedules 1-3
+  // Schedule 1-A follows Schedule 1 and precedes Schedule 2 in TY2025.
   schedule1,
+  schedule1a,
   schedule2,
   schedule3,
+  schedule8812,
   // 6-7. Schedule A, Schedule B
   scheduleA,
   scheduleB,
+  // 8. Schedule C
+  scheduleC,
   // 9. Schedule D
   scheduleD,
+  scheduleE,
+  scheduleEStockLoss,
   // 11. Schedule EIC (eitc)
   eitc,
   // 12. Schedule F
   scheduleF,
   // 13. Schedule H
   scheduleH,
+  // Schedule J follows H and precedes LEP in TY2025 ReturnData1040.xsd.
+  scheduleJ,
+  // Schedule LEP follows H/J and precedes R in TY2025 ReturnData1040.xsd.
+  scheduleLep,
+  // Schedule R follows Schedule LEP and precedes Schedule SE in ReturnData.
+  scheduleR,
   // 16. Schedule SE
   scheduleSE,
+  form7203StockLoss,
   // 18. Form 461
   form461,
+  // Form 965-A is the cumulative section 965 liability and payment record.
+  form965a,
   // 22. Form 982
   form982,
+  // 25. Form 1099-R (one document per distribution statement)
+  f1099r,
   // 26. Form 1116
   form1116,
+  // Form 1116 Schedule B follows Form 1116 in ReturnData1040.xsd.
+  form1116ScheduleB,
+  form2106,
+  // Form 2210-F follows Form 2210 and precedes Form 2439 in ReturnData1040.xsd.
+  form2210f,
+  // One native document per payer-issued Form 2439 with positive box 2.
+  form2439,
   // Form 2441
   form2441,
   // Form 2555
   form2555,
+  // Trust-sourced Form 3468 Part V: one attachment per qualified facility.
+  form3468,
+  // Form 3800 is one document after Form 2555 in ReturnData1040.xsd.
+  form3800,
+  // Form 4136 precedes Form 4137 in ReturnData1040.xsd.
+  form4136,
   // Form 4137
   form4137,
+  // Form 4255 follows Form 4137 in ReturnData1040.xsd.
+  form4255,
   // Form 4562
   form4562,
   // Form 4684
   form4684,
   // Form 4797
   form4797,
+  form4835,
   // Form 4952
   form4952,
   // Form 4972
   form4972,
   // Form 5329
   form5329,
+  // Form 5471 and its separate schedules follow ReturnData1040 order.
+  form5471,
+  form5471ScheduleE,
+  form5471ScheduleH,
+  form5471ScheduleI1,
+  form5471ScheduleJ,
+  form5471ScheduleM,
+  form5471ScheduleP,
+  form5471ScheduleQ,
+  form5471ScheduleR,
   // Form 5695
   form5695,
+  // Form 5884
+  form5884,
   // Form 6198
   form6198,
+  form4835AtRisk,
   // Form 6251
   form6251,
   // Form 6252
@@ -106,30 +268,75 @@ export const ALL_MEF_FORMS = [
   form6781,
   // Form 7206
   form7206,
+  // Form 7217 (one document per distribution date)
+  form7217,
+  // Form 8283
+  form8283,
   // Form 8396
   form8396,
   // Form 8582
   form8582,
+  // Form 8582-CR
+  form8582cr,
   // Form 8606
   form8606,
+  // Form 8611, one document per building.
+  form8611,
   // Form 8615
   form8615,
+  // Form 8621, one document per PFIC/QEF holding.
+  form8621,
+  // Form 8814 (one document per child)
+  form8814,
   // Form 8815
   form8815,
+  // Form 8820
+  form8820,
   // Form 8824
   form8824,
+  // Form 8826 only for self-earned disabled access credit.
+  form8826,
   // Form 8829
   form8829,
+  form8834,
+  // Form 8835 is one document per qualified facility.
+  form8835,
   // Form 8839
   form8839,
+  form8844,
+  form8881,
+  form8882,
   // Form 8853
   form8853,
+  // Initial Form 8854 follows Form 8853 in ReturnData1040.xsd.
+  form8854,
+  form8854Annual,
+  form8859,
+  // Form 8862
+  form8862,
+  // Form 8863
+  form8863,
+  form8864,
+  form8874,
   // Form 8880
   form8880,
+  form8886,
+  // Form 8888 refund allocation precedes Form 8889 in ReturnData1040.xsd.
+  form8888,
   // Form 8889
   form8889,
+  // Form 8911
+  form8911,
+  form8912,
+  form8915F,
   // Form 8919
   form8919,
+  // Form 8911 Schedule A follows Form 8919 in ReturnData1040.xsd.
+  form8911ScheduleA,
+  // Form 8936 and one Schedule A per clean vehicle follow Form 8911 Schedule A.
+  form8936,
+  form8936ScheduleA,
+  form8941,
   // Form 8949
   form8949,
   // Form 8959 (must come after 8949 per XSD sequence)
@@ -138,10 +345,85 @@ export const ALL_MEF_FORMS = [
   form8960,
   // Form 8962
   form8962,
+  // Form 8978 and its linked Schedule A follow Form 8962 in ReturnData1040.xsd.
+  form8978,
+  form8978ScheduleA,
   // Form 8990
   form8990,
+  // One Category 5a shareholder Form 8992 and its single-CFC Schedule A.
+  form8992,
+  form8992ScheduleA,
+  form8994,
   // Form 8995
   form8995,
   // Form 8995A
   form8995a,
+  form8995aScheduleA,
+  form8995aScheduleB,
+  form8995aScheduleC,
+  form8995aScheduleD,
+  // Form 9000 follows Form 8995-A Schedule D in ReturnData1040.xsd.
+  form9000,
+  // Form W-2 wage statements (one document per employer)
+  w2,
+  // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
+  w2g,
+  fecRecord,
+  scheduleALine8bSellerStatement,
+  // Form 1040 line 4c IRA statement precedes other income statements.
+  iraDistributionStatement,
+  // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
+  schedule1OtherIncomeStatement,
+  // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
+  anyOtherTaxesStatement,
+  wagesNotShownSchedule,
+  scheduleAOtherTaxStatement,
+  scheduleALine16EstateStatement,
+  // Form 4835 line 4a statement follows wage statements in ReturnData1040.xsd.
+  cccLoanAccrualStatement,
+  cccLoanStatement,
+  cropInsuranceDeferralStatement,
+  // Form 965-A native statements follow the farm statements in ReturnData.
+  form965aNetAdjustmentTransferStatement,
+  form965aMultipleTransfereeStatement,
+  // Form 1116 line 1b and Part I deduction statements precede joint occupancy.
+  form1116AlternativeCompensationStatement,
+  form1116DirectExpenseStatement,
+  form1116OtherDeductionsStatement,
+  // Native Form 3800 carryforward computations follow Form 1116 statements.
+  form4562ElectionOutStatement,
+  form3800CarryforwardStatement,
+  form4136EmulsionBlendingStatement,
+  form4136CreditCardUsersStatement,
+  form4136DieselGovernmentSalesStatement,
+  form4136KeroseneGovernmentSalesStatement,
+  // Form 5695 supporting document follows W-2 in ReturnData1040.xsd.
+  jointOccupancyStatement,
+  // Form 5884 controlled-group statements follow the Form 5695 statement.
+  form5884ControlledGroupStatement,
+  form5884DeductionDifferentiationStatement,
+  // Form 8283 vehicle acknowledgment follows numbered forms and other
+  // supporting statements in ReturnData1040.xsd.
+  form8283VehicleStatement,
+  // Form 8283 Section A column (h) FMV-reduction explanations follow the
+  // vehicle statement in ReturnData1040.xsd.
+  form8283FmvReductionStatement,
+  // Form 8606 IRA statements precede Form 8621 statements in ReturnData.
+  iraRecharacterizationStatement,
+  // Form 8621 mark-to-market sale statements precede Part V statements in MeF.
+  form8621MtmDispositionsStatement,
+  // Form 8621 Part V holding-period computation statements follow numbered forms.
+  form8621ExcessStatement,
+  // Form 8814 line 1a nominee and interest-adjustment statement.
+  childTaxableInterestStatement,
+  // Form 8820 controlled-group allocation follows Form 8814 statements.
+  form8820ControlledGroupStatement,
+  // Form 8853 owner statements precede Form 8854 supporting roots in ReturnData.
+  form8853LtcStatement,
+  form8853MedicareStatements,
+  // Form 8854 native roots follow Form 8820 controlled-group statements.
+  form8854NativeStatements,
+  form8886ExpectedBenefits,
+  form8886AdditionalDetails,
+  form4562ReducedBonusStatement,
 ] as const;

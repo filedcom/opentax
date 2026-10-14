@@ -1,0 +1,192 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684.5 251 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Business or activity to which this form relates. ,2,253 684.5 481.4 698.001,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Identification number. ,2,483.4 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_4[0],/Tx,1. Amortization of costs that began during your current tax year (see instructions): Row: 1. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 618.501 222.2 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_5[0],/Tx,Row: 1. Column: (b) Date amortization begins. ,2,224.2 618.501 287 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_6[0],/Tx,Row: 1. Column: (c) Amortizable amount. ,2,289 618.501 359 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_7[0],/Tx,Row: 1. Column: (d) Code section. ,2,361 618.501 431 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_8[0],/Tx,Row: 1. Column: (e) Amortization period or percentage. ,2,433 618.501 503 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow1[0].f1_9[0],/Tx,Row: 1. Column: (f) Amortization for this year. ,2,505 618.501 576 635.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_10[0],/Tx,Row: 2. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 600.501 222.2 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_11[0],/Tx,Row: 2. Column: (b) Date amortization begins. ,2,224.2 600.501 287 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_12[0],/Tx,Row: 2. Column: (c) Amortizable amount. ,2,289 600.501 359 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_13[0],/Tx,Row: 2. Column: (d) Code section. ,2,361 600.501 431 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_14[0],/Tx,Row: 2. Column: (e) Amortization period or percentage. ,2,433 600.501 503 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow2[0].f1_15[0],/Tx,Row: 2. Column: (f) Amortization for this year. ,2,505 600.501 576 617.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_16[0],/Tx,Row: 3. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 582.501 222.2 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_17[0],/Tx,Row: 3. Column: (b) Date amortization begins. ,2,224.2 582.501 287 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_18[0],/Tx,Row: 3. Column: (c) Amortizable amount. ,2,289 582.501 359 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_19[0],/Tx,Row: 3. Column: (d) Code section. ,2,361 582.501 431 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_20[0],/Tx,Row: 3. Column: (e) Amortization period or percentage. ,2,433 582.501 503 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow3[0].f1_21[0],/Tx,Row: 3. Column: (f) Amortization for this year. ,2,505 582.501 576 599.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_22[0],/Tx,Row: 4. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 564.501 222.2 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_23[0],/Tx,Row: 4. Column: (b) Date amortization begins. ,2,224.2 564.501 287 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_24[0],/Tx,Row: 4. Column: (c) Amortizable amount. ,2,289 564.501 359 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_25[0],/Tx,Row: 4. Column: (d) Code section. ,2,361 564.501 431 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_26[0],/Tx,Row: 4. Column: (e) Amortization period or percentage. ,2,433 564.501 503 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow4[0].f1_28[0],/Tx,Row: 4. Column: (f) Amortization for this year. ,2,505 564.501 576 581.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_29[0],/Tx,Row: 5. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 546.501 222.2 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_30[0],/Tx,Row: 5. Column: (b) Date amortization begins. ,2,224.2 546.501 287 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_31[0],/Tx,Row: 5. Column: (c) Amortizable amount. ,2,289 546.501 359 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_32[0],/Tx,Row: 5. Column: (d) Code section. ,2,361 546.501 431 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_33[0],/Tx,Row: 5. Column: (e) Amortization period or percentage. ,2,433 546.501 503 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow5[0].f1_34[0],/Tx,Row: 5. Column: (f) Amortization for this year.  ,2,505 546.501 576 563.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_35[0],/Tx,Row: 6. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 528.501 222.2 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_36[0],/Tx,Row: 6. Column: (b) Date amortization begins. ,2,224.2 528.501 287 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_37[0],/Tx,Row: 6. Column: (c) Amortizable amount. ,2,289 528.501 359 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_38[0],/Tx,Row: 6. Column: (d) Code section. ,2,361 528.501 431 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_39[0],/Tx,Row: 6. Column: (e) Amortization period or percentage. ,2,433 528.501 503 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow6[0].f1_40[0],/Tx,Row: 6. Column: (f) Amortization for this year. ,2,505 528.501 576 545.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_41[0],/Tx,Row: 7. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 510.501 222.2 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_42[0],/Tx,Row: 7. Column: (b) Date amortization begins. ,2,224.2 510.501 287 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_43[0],/Tx,Row: 7. Column: (c) Amortizable amount. ,2,289 510.501 359 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_44[0],/Tx,Row: 7. Column: (d) Code section. ,2,361 510.501 431 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_45[0],/Tx,Row: 7. Column: (e) Amortization period or percentage. ,2,433 510.501 503 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow7[0].f1_46[0],/Tx,Row: 7. Column: (f) Amortization for this year. ,2,505 510.501 576 527.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_47[0],/Tx,Row: 8. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 492.501 222.2 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_48[0],/Tx,Row: 8. Column: (b) Date amortization begins. ,2,224.2 492.501 287 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_49[0],/Tx,Row: 8. Column: (c) Amortizable amount. ,2,289 492.501 359 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_50[0],/Tx,Row: 8. Column: (d) Code section. ,2,361 492.501 431 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_51[0],/Tx,Row: 8. Column: (e) Amortization period or percentage. ,2,433 492.501 503 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow8[0].f1_52[0],/Tx,Row: 8. Column: (f) Amortization for this year. ,2,505 492.501 576 509.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_53[0],/Tx,Row: 9. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 474.501 222.2 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_54[0],/Tx,Row: 9. Column: (b) Date amortization begins. ,2,224.2 474.501 287 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_55[0],/Tx,Row: 9. Column: (c) Amortizable amount. ,2,289 474.501 359 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_56[0],/Tx,Row: 9. Column: (d) Code section. ,2,361 474.501 431 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_57[0],/Tx,Row: 9. Column: (e) Amortization period or percentage. ,2,433 474.501 503 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow9[0].f1_58[0],/Tx,Row: 9. Column: (f) Amortization for this year. ,2,505 474.501 576 491.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_59[0],/Tx,Row: 10. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 456.501 222.2 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_60[0],/Tx,Row: 10. Column: (b) Date amortization begins. ,2,224.2 456.501 287 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_61[0],/Tx,Row: 10. Column: (c) Amortizable amount. ,2,289 456.501 359 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_62[0],/Tx,Row: 10. Column: (d) Code section. ,2,361 456.501 431 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_63[0],/Tx,Row: 10. Column: (e) Amortization period or percentage. ,2,433 456.501 503 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow10[0].f1_64[0],/Tx,Row: 10. Column: (f) Amortization for this year. ,2,505 456.501 576 473.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_65[0],/Tx,Row: 11. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 438.501 222.2 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_66[0],/Tx,Row: 11. Column: (b) Date amortization begins. ,2,224.2 438.501 287 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_67[0],/Tx,Row: 11. Column: (c) Amortizable amount. ,2,289 438.501 359 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_68[0],/Tx,Row: 11. Column: (d) Code section. ,2,361 438.501 431 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_69[0],/Tx,Row: 11. Column: (e) Amortization period or percentage. ,2,433 438.501 503 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow11[0].f1_70[0],/Tx,Row: 11. Column: (f) Amortization for this year. ,2,505 438.501 576 455.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_71[0],/Tx,Row: 12. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 420.501 222.2 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_72[0],/Tx,Row: 12. Column: (b) Date amortization begins. ,2,224.2 420.501 287 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_73[0],/Tx,Row: 12. Column: (c) Amortizable amount. ,2,289 420.501 359 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_74[0],/Tx,Row: 12. Column: (d) Code section. ,2,361 420.501 431 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_75[0],/Tx,Row: 12. Column: (e) Amortization period or percentage. ,2,433 420.501 503 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow12[0].f1_76[0],/Tx,Row: 12. Column: (f) Amortization for this year. ,2,505 420.501 576 437.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_77[0],/Tx,Row: 13. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 402.501 222.2 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_78[0],/Tx,Row: 13. Column: (b) Date amortization begins. ,2,224.2 402.501 287 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_79[0],/Tx,Row: 13. Column: (c) Amortizable amount. ,2,289 402.501 359 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_80[0],/Tx,Row: 13. Column: (d) Code section. ,2,361 402.501 431 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_81[0],/Tx,Row: 13. Column: (e) Amortization period or percentage. ,2,433 402.501 503 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow13[0].f1_82[0],/Tx,Row: 13. Column: (f) Amortization for this year. ,2,505 402.501 576 419.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_83[0],/Tx,Row: 14. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 384.501 222.2 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_84[0],/Tx,Row: 14. Column: (b) Date amortization begins. ,2,224.2 384.501 287 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_85[0],/Tx,Row: 14. Column: (c) Amortizable amount. ,2,289 384.501 359 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_86[0],/Tx,Row: 14. Column: (d) Code section. ,2,361 384.501 431 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_87[0],/Tx,Row: 14. Column: (e) Amortization period or percentage. ,2,433 384.501 503 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow14[0].f1_88[0],/Tx,Row: 14. Column: (f) Amortization for this year. ,2,505 384.501 576 401.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_89[0],/Tx,Row: 15. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 366.501 222.2 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_90[0],/Tx,Row: 15. Column: (b) Date amortization begins. ,2,224.2 366.501 287 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_91[0],/Tx,Row: 15. Column: (c) Amortizable amount. ,2,289 366.501 359 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_92[0],/Tx,Row: 15. Column: (d) Code section. ,2,361 366.501 431 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_93[0],/Tx,Row: 15. Column: (e) Amortization period or percentage. ,2,433 366.501 503 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow15[0].f1_94[0],/Tx,Row: 15. Column: (f) Amortization for this year. ,2,505 366.501 576 383.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_95[0],/Tx,Row: 16. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 348.501 222.2 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_96[0],/Tx,Row: 16. Column: (b) Date amortization begins. ,2,224.2 348.501 287 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_97[0],/Tx,Row: 16. Column: (c) Amortizable amount. ,2,289 348.501 359 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_98[0],/Tx,Row: 16. Column: (d) Code section. ,2,361 348.501 431 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_99[0],/Tx,Row: 16. Column: (e) Amortization period or percentage. ,2,433 348.501 503 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow16[0].f1_100[0],/Tx,Row: 16. Column: (f) Amortization for this year. ,2,505 348.501 576 365.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_101[0],/Tx,Row: 17. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 330.501 222.2 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_102[0],/Tx,Row: 17. Column: (b) Date amortization begins. ,2,224.2 330.501 287 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_103[0],/Tx,Row: 17. Column: (c) Amortizable amount. ,2,289 330.501 359 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_104[0],/Tx,Row: 17. Column: (d) Code section. ,2,361 330.501 431 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_105[0],/Tx,Row: 17. Column: (e) Amortization period or percentage. ,2,433 330.501 503 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow17[0].f1_106[0],/Tx,Row: 17. Column: (f) Amortization for this year. ,2,505 330.501 576 347.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_107[0],/Tx,Row: 18. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 312.501 222.2 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_108[0],/Tx,Row: 18. Column: (b) Date amortization begins. ,2,224.2 312.501 287 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_109[0],/Tx,Row: 18. Column: (c) Amortizable amount. ,2,289 312.501 359 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_110[0],/Tx,Row: 18. Column: (d) Code section. ,2,361 312.501 431 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_111[0],/Tx,Row: 18. Column: (e) Amortization period or percentage. ,2,433 312.501 503 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow18[0].f1_112[0],/Tx,Row: 18. Column: (f) Amortization for this year. ,2,505 312.501 576 329.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_113[0],/Tx,Row: 19. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 294.501 222.2 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_114[0],/Tx,Row: 19. Column: (b) Date amortization begins. ,2,224.2 294.501 287 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_115[0],/Tx,Row: 19. Column: (c) Amortizable amount. ,2,289 294.501 359 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_116[0],/Tx,Row: 19. Column: (d) Code section. ,2,361 294.501 431 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_117[0],/Tx,Row: 19. Column: (e) Amortization period or percentage. ,2,433 294.501 503 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow19[0].f1_118[0],/Tx,Row: 19. Column: (f) Amortization for this year. ,2,505 294.501 576 311.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_119[0],/Tx,Row: 20. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 276.501 222.2 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_120[0],/Tx,Row: 20. Column: (b) Date amortization begins. ,2,224.2 276.501 287 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_121[0],/Tx,Row: 20. Column: (c) Amortizable amount. ,2,289 276.501 359 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_122[0],/Tx,Row: 20. Column: (d) Code section. ,2,361 276.501 431 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_123[0],/Tx,Row: 20. Column: (e) Amortization period or percentage. ,2,433 276.501 503 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow20[0].f1_124[0],/Tx,Row: 20. Column: (f) Amortization for this year. ,2,505 276.501 576 293.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_125[0],/Tx,Row: 21. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 258.501 222.2 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_126[0],/Tx,Row: 21. Column: (b) Date amortization begins. ,2,224.2 258.501 287 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_127[0],/Tx,Row: 21. Column: (c) Amortizable amount. ,2,289 258.501 359 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_128[0],/Tx,Row: 21. Column: (d) Code section. ,2,361 258.501 431 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_129[0],/Tx,Row: 21. Column: (e) Amortization period or percentage. ,2,433 258.501 503 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow21[0].f1_130[0],/Tx,Row: 21. Column: (f) Amortization for this year. ,2,505 258.501 576 275.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_131[0],/Tx,Row: 22. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 240.501 222.2 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_132[0],/Tx,Row: 22. Column: (b) Date amortization begins. ,2,224.2 240.501 287 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_133[0],/Tx,Row: 22. Column: (c) Amortizable amount. ,2,289 240.501 359 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_134[0],/Tx,Row: 22. Column: (d) Code section. ,2,361 240.501 431 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_135[0],/Tx,Row: 22. Column: (e) Amortization period or percentage. ,2,433 240.501 503 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow22[0].f1_136[0],/Tx,Row: 22. Column: (f) Amortization for this year. ,2,505 240.501 576 257.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_137[0],/Tx,Row: 23. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 222.501 222.2 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_138[0],/Tx,Row: 23. Column: (b) Date amortization begins. ,2,224.2 222.501 287 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_139[0],/Tx,Row: 23. Column: (c) Amortizable amount. ,2,289 222.501 359 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_141[0],/Tx,Row: 23. Column: (d) Code section. ,2,361 222.501 431 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_142[0],/Tx,Row: 23. Column: (e) Amortization period or percentage. ,2,433 222.501 503 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow23[0].f1_143[0],/Tx,Row: 23. Column: (f) Amortization for this year. ,2,505 222.501 576 239.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_144[0],/Tx,Row: 24. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 204.501 222.2 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_145[0],/Tx,Row: 24. Column: (b) Date amortization begins. ,2,224.2 204.501 287 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_146[0],/Tx,Row: 24. Column: (c) Amortizable amount. ,2,289 204.501 359 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_147[0],/Tx,Row: 24. Column: (d) Code section. ,2,361 204.501 431 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_148[0],/Tx,Row: 24. Column: (e) Amortization period or percentage. ,2,433 204.501 503 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow24[0].f1_149[0],/Tx,Row: 24. Column: (f) Amortization for this year. ,2,505 204.501 576 221.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_150[0],/Tx,Row: 25. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 186.501 222.2 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_151[0],/Tx,Row: 25. Column: (b) Date amortization begins. ,2,224.2 186.501 287 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_152[0],/Tx,Row: 25. Column: (c) Amortizable amount. ,2,289 186.501 359 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_153[0],/Tx,Row: 25. Column: (d) Code section. ,2,361 186.501 431 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_154[0],/Tx,Row: 25. Column: (e) Amortization period or percentage. ,2,433 186.501 503 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow25[0].f1_155[0],/Tx,Row: 25. Column: (f) Amortization for this year. ,2,505 186.501 576 203.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_156[0],/Tx,Row: 26. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 168.501 222.2 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_157[0],/Tx,Row: 26. Column: (b) Date amortization begins. ,2,224.2 168.501 287 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_158[0],/Tx,Row: 26. Column: (c) Amortizable amount. ,2,289 168.501 359 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_159[0],/Tx,Row: 26. Column: (d) Code section. ,2,361 168.501 431 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_160[0],/Tx,Row: 26. Column: (e) Amortization period or percentage. ,2,433 168.501 503 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow26[0].f1_161[0],/Tx,Row: 26. Column: (f) Amortization for this year. ,2,505 168.501 576 185.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_162[0],/Tx,Row: 27. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 150.501 222.2 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_163[0],/Tx,Row: 27. Column: (b) Date amortization begins. ,2,224.2 150.501 287 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_164[0],/Tx,Row: 27. Column: (c) Amortizable amount. ,2,289 150.501 359 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_165[0],/Tx,Row: 27. Column: (d) Code section. ,2,361 150.501 431 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_166[0],/Tx,Row: 27. Column: (e) Amortization period or percentage. ,2,433 150.501 503 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow27[0].f1_167[0],/Tx,Row: 27. Column: (f) Amortization for this year. ,2,505 150.501 576 167.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_168[0],/Tx,Row: 28. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 132.501 222.2 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_169[0],/Tx,Row: 28. Column: (b) Date amortization begins. ,2,224.2 132.501 287 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_170[0],/Tx,Row: 28. Column: (c) Amortizable amount. ,2,289 132.501 359 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_171[0],/Tx,Row: 28. Column: (d) Code section. ,2,361 132.501 431 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_172[0],/Tx,Row: 28. Column: (e) Amortization period or percentage. ,2,433 132.501 503 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow28[0].f1_173[0],/Tx,Row: 28. Column: (f) Amortization for this year. ,2,505 132.501 576 149.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_174[0],/Tx,Row: 29. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 114.501 222.2 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_175[0],/Tx,Row: 29. Column: (b) Date amortization begins. ,2,224.2 114.501 287 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_176[0],/Tx,Row: 29. Column: (c) Amortizable amount. ,2,289 114.501 359 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_178[0],/Tx,Row: 29. Column: (d) Code section. ,2,361 114.501 431 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_179[0],/Tx,Row: 29. Column: (e) Amortization period or percentage. ,2,433 114.501 503 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow29[0].f1_180[0],/Tx,Row: 29. Column: (f) Amortization for this year. ,2,505 114.501 576 131.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_181[0],/Tx,Row: 30. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 96.501 222.2 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_182[0],/Tx,Row: 30. Column: (b) Date amortization begins. ,2,224.2 96.501 287 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_183[0],/Tx,Row: 30. Column: (c) Amortizable amount. ,2,289 96.501 359 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_184[0],/Tx,Row: 30. Column: (d) Code section. ,2,361 96.501 431 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_185[0],/Tx,Row: 30. Column: (e) Amortization period or percentage. ,2,433 96.501 503 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow30[0].f1_186[0],/Tx,Row: 30. Column: (f) Amortization for this year. ,2,505 96.501 576 113.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_187[0],/Tx,Row: 31. Column: (a) Description of costs (see instructions for allowed entries). ,2,36 78.501 222.2 95.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_188[0],/Tx,Row: 31. Column: (b) Date amortization begins. ,2,224.2 78.501 287 95.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_189[0],/Tx,Row: 31. Column: (c) Amortizable amount. ,2,289 78.501 359 95.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_190[0],/Tx,Row: 31. Column: (d) Code section. ,2,361 78.501 431 95.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_191[0],/Tx,Row: 31. Column: (e) Amortization period or percentage. ,2,433 78.501 503 95.501,yes
+topmostSubform[0].Page1[0].PgTable[0].BodyRow31[0].f1_192[0],/Tx,Row: 31. Column: (f) Amortization for this year. ,2,505 78.501 576 95.501,yes
+topmostSubform[0].Page1[0].f1_193[0],/Tx,2. Amortization of costs that began before your current tax year. ,2,505 60.501 576 72.001,yes
+topmostSubform[0].Page1[0].f1_194[0],/Tx,"3. Total. Add amounts from line 1, column (f), and line 2. See the instructions on where to report. ",2,505 42.501 576 54.001,yes

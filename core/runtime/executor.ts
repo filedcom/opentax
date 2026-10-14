@@ -1,6 +1,11 @@
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { ExecutionStep } from "./planner.ts";
 import type { NodeContext } from "../types/node-context.ts";
+import {
+  type SourceDocumentBytes,
+  type SourceDocumentClaim,
+  VerifiedSourceDocuments,
+} from "./source-documents.ts";
 
 export type ExecutorDiagnosticEntry = {
   readonly severity: "error";
@@ -14,22 +19,54 @@ export type ExecuteResult = {
   readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly diagnostics: readonly ExecutorDiagnosticEntry[];
   readonly carryforwards: Readonly<Record<string, number>>;
+  readonly replayInputs?: Readonly<
+    Record<string, Readonly<Record<string, unknown>>>
+  >;
 };
+
+export type DocumentBoundExecuteResult = ExecuteResult & {
+  readonly verifiedSourceDocuments: VerifiedSourceDocuments;
+};
+
+/** Verify and privately retain the exact source bytes before graph execution. */
+export async function executeWithSourceDocuments(
+  plan: readonly ExecutionStep[],
+  registry: NodeRegistry,
+  inputs: Record<string, unknown>,
+  ctx: NodeContext,
+  claims: readonly SourceDocumentClaim[],
+  documents: readonly SourceDocumentBytes[],
+): Promise<DocumentBoundExecuteResult> {
+  const verifiedSourceDocuments = await VerifiedSourceDocuments.verify(
+    claims,
+    documents,
+  );
+  return {
+    ...execute(plan, registry, inputs, ctx),
+    verifiedSourceDocuments,
+  };
+}
 
 /**
  * Merges output.fields into pending[targetId].
  *
  * Rules:
+ * - A computed field replaces the same field deposited directly by the start node.
+ *   Derived context is authoritative for nodes that are both user inputs and output targets.
  * - If the target field already holds an array, append incoming scalar or concat incoming array.
  * - If the target field does not exist, set directly.
  * - If target is a scalar and incoming is scalar, promote both to an array (accumulation pattern:
  *   multiple upstream nodes depositing the same key produces an array, e.g. two W-2s → wages[]).
  * - If target is a scalar and incoming is an array, replace with the array.
+ * - A node's self-output is its finalized value and replaces its accumulated input.
  */
 function mergePending(
   pending: Record<string, Record<string, unknown>>,
+  directInputFields: Record<string, Set<string>>,
   targetId: string,
   input: Readonly<Record<string, unknown>>,
+  isDirectInput: boolean,
+  isSelfOutput: boolean,
 ): void {
   if (pending[targetId] === undefined) {
     pending[targetId] = {};
@@ -40,6 +77,19 @@ function mergePending(
   for (const key of Object.keys(input)) {
     const incoming = input[key];
     const existing = target[key];
+
+    if (isSelfOutput) {
+      target[key] = incoming;
+      directInputFields[targetId]?.delete(key);
+      continue;
+    }
+
+    if (isDirectInput) {
+      (directInputFields[targetId] ??= new Set()).add(key);
+    } else if (directInputFields[targetId]?.delete(key)) {
+      target[key] = incoming;
+      continue;
+    }
 
     if (Array.isArray(existing)) {
       target[key] = Array.isArray(incoming)
@@ -70,10 +120,12 @@ export function execute(
   ctx: NodeContext,
 ): ExecuteResult {
   const pending: Record<string, Record<string, unknown>> = {};
+  const directInputFields: Record<string, Set<string>> = {};
   pending["start"] = { ...inputs };
 
   const diagnostics: ExecutorDiagnosticEntry[] = [];
   const carryforwards: Record<string, number> = {};
+  const replayInputs: Record<string, Record<string, unknown>> = {};
 
   for (const step of plan) {
     const node = registry[step.nodeType];
@@ -91,7 +143,8 @@ export function execute(
           code: "EXECUTOR_NODE_FAILURE",
           nodeType: step.nodeType,
           nodeId: step.id,
-          message: `Zod validation failed for node "${step.nodeType}": ${parsed.error.message}`,
+          message:
+            `Zod validation failed for node "${step.nodeType}": ${parsed.error.message}`,
         });
       }
       continue;
@@ -99,8 +152,36 @@ export function execute(
 
     try {
       const result = node.compute(ctx, parsed.data);
+      if (result.replayInput !== undefined) {
+        replayInputs[step.id] = structuredClone(result.replayInput);
+      }
       for (const output of result.outputs) {
-        mergePending(pending, output.nodeType, output.fields);
+        mergePending(
+          pending,
+          directInputFields,
+          output.nodeType,
+          output.fields,
+          step.nodeType === "start",
+          output.nodeType === step.nodeType,
+        );
+      }
+      for (const finalized of result.finalizations ?? []) {
+        if (
+          !registry[finalized.nodeType] ||
+          pending[finalized.nodeType] === undefined
+        ) {
+          throw new Error(
+            `Cannot finalize node "${finalized.nodeType}" before it has pending values`,
+          );
+        }
+        mergePending(
+          pending,
+          directInputFields,
+          finalized.nodeType,
+          finalized.fields,
+          false,
+          true,
+        );
       }
       if (result.carryforwards) {
         Object.assign(carryforwards, result.carryforwards);
@@ -117,5 +198,10 @@ export function execute(
     }
   }
 
-  return { pending, diagnostics, carryforwards };
+  return {
+    pending,
+    diagnostics,
+    carryforwards,
+    ...(Object.keys(replayInputs).length > 0 ? { replayInputs } : {}),
+  };
 }

@@ -1,23 +1,154 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
-import { join } from "@std/path";
-import { normalizeAllPending } from "../pending.ts";
+import { assertForm8835TransferStatements } from "../mef/forms/credits/business/f8835_transfer_statement.ts";
+import { assertForm8835DomesticStatements } from "../mef/forms/credits/business/f8835_domestic_statement.ts";
+import { assertForm8835IncreaseStatements } from "../mef/forms/credits/business/f8835_increase_statement.ts";
+import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
+import { assertRequiredLtcSource } from "../mef/forms/adjustments/health/f8853_ltc.ts";
+import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
+import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
+import { assertSingleFarmQbiReturn } from "../domains/deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
+import { assertScheduleJSourceReturn } from "../domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
+import { executeComposedSourceReturn } from "../return-processing/composed_source_return.ts";
+import { reconcileForm8606RothInventories } from "../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
+import { reconcileForm8606RothActivity } from "../domains/income/retirement/form8606/form8606_roth_activity_reconciliation.ts";
+import { assertForm4852RetainedEvidence } from "../domains/income/wages/form4852/form4852_retained_evidence.ts";
+import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charitable/f8283/f8283_signed_fields.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
+import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
+import { PDFDocument, PDFName, StandardFonts } from "pdf-lib";
+import { loadPdfTemplate } from "./support/template-cache.ts";
+import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
-import type { FilerIdentity } from "../../mef/header.ts";
+import { form4972PaperPdf } from "./forms/taxes/retirement/f4972.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "./review-support/form-descriptor.ts";
+import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
+import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
+import {
+  assertPreparedBundleProjection,
+  type MefBundle,
+} from "../mef/builder.ts";
+import { assertPreparedAttachmentManifest } from "../mef/attachments/prepared-attachment-manifest.ts";
+import { assertW2GPayerCopyContents } from "../mef/identity/w2g-payer-copy.ts";
+import {
+  preparedSourceSha256,
+  sha256Hex,
+} from "../return-processing/prepared-source.ts";
+import {
+  assertDigitalAssetDispositionAnswer,
+  assertEitcChildSources,
+  assertF1040FinalHeader,
+  assertGeneral1040DependentSource,
+  assertGeneral1040DepositSource,
+  assertGeneral1040HeaderSource,
+  assertKIncomeClassification,
+  assertKPersonalSaleSources,
+  assertKReportedErrorSources,
+  assertKWithholdingSourceIdentity,
+  assertSchedule1Box3SourceIdentity,
+  assertSchedule1Box8SourceIdentity,
+  assertSchedule1Form8814Source,
+  assertSchedule1KSourceIdentity,
+  assertSchedule1NecSourceIdentity,
+  assertScheduleCReceiptSourceIdentity,
+  assertScheduleCStatutoryW2Sources,
+  assertScheduleFFarmSourceIdentity,
+} from "../domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "../mef/forms/income/investments/schedule_d.ts";
+import { assertPreparedVehicleAcknowledgments } from "../mef/forms/deductions/charitable/f8283/f8283_vehicle_sale_evidence.ts";
+import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/deductions/charitable/f8283/index.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../domains/income/foreign/schedule1-form8621-source.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
+import { assertBox11CodeKSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
+import { assertBox11CodeSSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_s.ts";
+import { assertScheduleDK1Source } from "../domains/income/investments/schedule-d/schedule-d-k1-source.ts";
+import { assertScheduleD1040Join } from "../domains/income/investments/schedule-d/schedule-d-1040-join.ts";
+import { assertForm8858FilingSource } from "../../nodes/inputs/general/foreign/f8858/index.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
+import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement/f8915f/index.ts";
+import { assertExtensionPaymentSource } from "../domains/payments/settlement/extension-payment-reconciliation.ts";
+import { assert1099RRecipientOwner } from "../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099n/f1099nec-withholding-owner.ts";
+import { assert1099BRecipientOwner } from "../domains/income/other/f1099b/f1099b-recipient-owner.ts";
+import {
+  assertCapitalSaleSourceRows,
+  assertNoRepeatedBrokerSaleSources,
+} from "../domains/income/investments/broker-sale-source-reconciliation.ts";
+import {
+  assertPatrIssuedCopies,
+  assertPatrWithholdingRecipient,
+} from "../domains/payments/withholding/f1099p/f1099patr-withholding-owner.ts";
+import {
+  assertForm4852FilingRoute,
+  assertLine1aWageSource,
+  assertLine1iCombatPayElectionSource,
+  assertW2WithholdingSource,
+} from "../domains/payments/withholding/w2-withholding-reconciliation.ts";
+import { assertLine1hSupportedSource } from "../domains/income/other/line1h-source.ts";
+import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
+import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
+import {
+  assertLine1cForm4137Income,
+  assertSchedule2Form4137Tax,
+} from "../domains/taxes/employment/schedule2-form4137-reconciliation.ts";
+import {
+  assertLine1gForm8919Wages,
+  assertSchedule2Form8919Tax,
+} from "../domains/taxes/employment/schedule2-form8919-reconciliation.ts";
+import { assertSchedule2ScheduleHTax } from "../domains/taxes/household-employment/schedule2-schedule-h-reconciliation.ts";
+import { assertSchedule2Form8960Tax } from "../domains/taxes/investments/schedule2-form8960-reconciliation.ts";
+import { assertSchedule2ScheduleSETax } from "../domains/taxes/self-employment/schedule2-schedule-se-reconciliation.ts";
+import { assertSchedule2Form8828Tax } from "../domains/taxes/credit-recapture/schedule2-form8828-reconciliation.ts";
+import { assertSchedule2Form8936Repayment } from "../domains/credits/individual/schedule2-form8936-reconciliation.ts";
+import { assertSchedule3Form8859Credit } from "../domains/credits/individual/schedule3-form8859-reconciliation.ts";
+import { assertSchedule3Form8834Credit } from "../domains/credits/individual/schedule3-form8834-reconciliation.ts";
+import { assertSchedule3Form8912Credit } from "../domains/credits/individual/schedule3-form8912-reconciliation.ts";
+import { assertSchedule3Form8396Credit } from "../domains/credits/individual/schedule3-form8396-reconciliation.ts";
+import {
+  assertSchedule2Line17HSources,
+  assertSchedule2W2Line13Sources,
+  assertSchedule2W2Line17KSource,
+} from "../domains/taxes/other/schedule2-w2-source-reconciliation.ts";
+import { assert1099WithholdingSource } from "../domains/payments/withholding/f1099/f1099-withholding-reconciliation.ts";
+import { assert1099GUnemploymentSource } from "../domains/income/other/f1099g/f1099g-unemployment-reconciliation.ts";
+import { assert1098EInterestSource } from "../domains/adjustments/education/f1098e/f1098e-source-reconciliation.ts";
+import { assertF8288WithholdingOwner } from "../domains/payments/withholding/f8288/f8288-withholding-owner.ts";
+import { assertOtherFormsWithholding } from "../domains/payments/withholding/f8288/f8288-withholding-reconciliation.ts";
+import {
+  assertFinalBalanceProjection,
+  assertQualifiedDividendSubset,
+} from "../return-processing/return-wide-arithmetic.ts";
+import { assertDividendIncomeSources } from "../domains/income/other/f1099d/f1099div-income-reconciliation.ts";
+import {
+  assertScheduleBInterestJoin,
+  assertScheduleBPreparedProjection,
+} from "../domains/income/investments/schedule-b/schedule-b-interest-reconciliation.ts";
+import { assertTaxExemptInterestSource } from "../domains/income/investments/tax-exempt-interest-reconciliation.ts";
+import {
+  assertBenefitStatementOwner,
+  assertSocialSecurityBenefitSource,
+} from "../domains/income/retirement/ssa-benefits-reconciliation.ts";
+import { assertRrb1099rPensionSource } from "../domains/income/retirement/rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../domains/income/retirement/ira1099r-income-reconciliation.ts";
+import { assertPositiveW2GRecipient } from "../mef/forms/income/other/w2g.ts";
+import { assertForm1098IssuerCopies } from "../../nodes/inputs/deductions/mortgage/f1098/issuer_copy.ts";
+import {
+  hasForm8994Claim,
+  reconcileForm8994EvidenceBytes,
+} from "../../nodes/inputs/credits/business/f8994/evidence_bytes.ts";
+import {
+  assertPublicForm8839Attachments,
+  hasForm8839Claim,
+} from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
-async function fetchWithCache(url: string, cacheDir: string): Promise<Uint8Array> {
-  const slug = url.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
-  const cachePath = join(cacheDir, `${slug}.pdf`);
-  try {
-    return await Deno.readFile(cachePath);
-  } catch {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch IRS PDF: ${url} (${res.status})`);
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    await Deno.mkdir(cacheDir, { recursive: true });
-    await Deno.writeFile(cachePath, bytes);
-    return bytes;
-  }
+/** Diagnostic origin of a page in a prepared filled-PDF review packet. */
+export interface PdfPageOrigin {
+  readonly pageNumber: number;
+  readonly formKey: string;
+  readonly formCopy: number;
 }
 
 /** Resolves dot-notation paths like "address.line1" against a nested object. */
@@ -37,64 +168,216 @@ function fillEntry(
   formKey: string,
 ): void {
   try {
+    if (typeof value === "number" && !Number.isFinite(value)) {
+      throw new Error(`nonfinite projected value ${String(value)}`);
+    }
     if (entry.kind === "text") {
+      if (typeof value !== "string" && typeof value !== "number") {
+        throw new Error("text field needs a string or finite number");
+      }
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
-      if (
-        typeof value === "number" && Math.round(value) === 0 &&
-        !("printZero" in entry && entry.printZero)
-      ) return;
-      const text = typeof value === "number"
-        ? Math.round(value).toString()
-        : String(value);
-      form.getTextField(entry.pdfField).setText(text);
+      const blankZero = typeof value === "number" &&
+        roundWholeDollars(value) === 0 &&
+        !("printZero" in entry && entry.printZero);
+      const field = form.getTextField(entry.pdfField);
+      if (entry.fontSize !== undefined) field.setFontSize(entry.fontSize);
+      if (!blankZero) {
+        const text = typeof value === "number"
+          ? roundWholeDollars(value).toString()
+          : String(value);
+        field.setText(text);
+      }
     } else if (entry.kind === "checkbox") {
+      if (typeof value !== "boolean") {
+        throw new Error("checkbox field needs a boolean");
+      }
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
     } else if (entry.kind === "checkboxWhen") {
-      if (String(value) === entry.whenValue) form.getCheckBox(entry.pdfField).check();
+      const box = form.getCheckBox(entry.pdfField);
+      if (String(value) === entry.whenValue) {
+        box.check();
+      } else {
+        box.uncheck();
+      }
     } else if (entry.kind === "radio") {
       const mapped = entry.valueMap[String(value)];
-      if (mapped) form.getRadioGroup(entry.pdfField).select(mapped);
+      if (!mapped) {
+        throw new Error(`unmapped radio value ${String(value)}`);
+      }
+      form.getRadioGroup(entry.pdfField).select(mapped);
     }
     // Fill any additional PDF fields that share the same domain value
     if ("extraPdfFields" in entry && entry.extraPdfFields) {
       for (const extraField of entry.extraPdfFields) {
         try {
           if (entry.kind === "text") {
-            if (typeof value === "number" && Math.round(value) === 0) continue;
-            const text = typeof value === "number"
-              ? Math.round(value).toString()
-              : String(value);
-            form.getTextField(extraField).setText(text);
+            const blankZero = typeof value === "number" &&
+              roundWholeDollars(value) === 0 &&
+              !("printZero" in entry && entry.printZero);
+            const field = form.getTextField(extraField);
+            if (!blankZero) {
+              const text = typeof value === "number"
+                ? roundWholeDollars(value).toString()
+                : String(value);
+              field.setText(text);
+            }
           } else if (entry.kind === "checkbox") {
+            if (typeof value !== "boolean") {
+              throw new Error("checkbox field needs a boolean");
+            }
             const box = form.getCheckBox(extraField);
             value ? box.check() : box.uncheck();
           }
         } catch (extraErr) {
-          console.error(
-            `[PDF] ${formKey}: failed to fill extra field "${extraField}" (${entry.kind}) — ${extraErr}`,
+          throw new Error(
+            `[PDF] ${formKey}: failed to fill extra field "${extraField}" (${entry.kind})`,
+            { cause: extraErr },
           );
         }
       }
     }
   } catch (err) {
-    console.error(
-      `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind}) — ${err}`,
+    if (
+      err instanceof Error &&
+      err.message.startsWith(`[PDF] ${formKey}: failed to fill extra field`)
+    ) {
+      throw err;
+    }
+    throw new Error(
+      `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind})`,
+      { cause: err },
     );
   }
 }
 
-async function fillFormPdf(
+/** A mapped value must appear on at least one page retained in the packet. */
+function assertRetainedPdfFields(
+  doc: PDFDocument,
+  descriptor: PdfFormDescriptor,
+  fields: Record<string, unknown>,
+  filerFields: ReadonlyArray<{ entry: PdfFieldEntry; value: unknown }>,
+  rowFields: ReadonlyArray<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  >,
+): void {
+  const indices = descriptor.pageIndices?.(fields);
+  if (indices === undefined) return;
+  const pages = doc.getPages();
+  if (
+    indices.length === 0 || new Set(indices).size !== indices.length ||
+    indices.some((index) =>
+      !Number.isInteger(index) || index < 0 || index >= pages.length
+    )
+  ) {
+    throw new Error(
+      `[PDF] ${descriptor.pendingKey}: invalid retained page selection`,
+    );
+  }
+  const retained = new Set(indices.map((index) => String(pages[index].ref)));
+  const form = doc.getForm();
+  const assertOnRetainedPage = (name: string): void => {
+    const widgets = form.getField(name).acroField.getWidgets();
+    if (
+      widgets.length === 0 ||
+      !widgets.some((widget) => {
+        const page = widget.P();
+        return page !== undefined && retained.has(String(page));
+      })
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: populated field "${name}" is not on a retained PDF page`,
+      );
+    }
+  };
+  for (
+    const { entry, value } of [
+      ...descriptor.fields.map((entry) => ({
+        entry,
+        value: fields[entry.domainKey],
+      })),
+      ...filerFields,
+    ]
+  ) {
+    const printable = entry.kind === "checkboxWhen"
+      ? value !== undefined && String(value) === entry.whenValue
+      : entry.kind === "checkbox"
+      ? value === true
+      : typeof value === "number"
+      ? roundWholeDollars(value) !== 0 ||
+        ("printZero" in entry && entry.printZero === true)
+      : typeof value === "string" && value.length > 0;
+    if (!printable) continue;
+    for (
+      const name of [
+        entry.pdfField,
+        ...("extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []),
+      ]
+    ) {
+      assertOnRetainedPage(name);
+    }
+  }
+  for (const { name, value, kind } of rowFields) {
+    if (
+      kind === "checkbox"
+        ? value === true
+        : typeof value === "number"
+        ? Number.isFinite(value)
+        : typeof value === "string" && value.length > 0
+    ) {
+      assertOnRetainedPage(name);
+    }
+  }
+}
+
+export async function fillFormPdf(
   descriptor: PdfFormDescriptor,
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir: string,
   allPending?: Record<string, Record<string, unknown>>,
 ): Promise<Uint8Array | undefined> {
+  // Keep retained projection bytes immutable while resolving an explicitly
+  // declared former operand name at this form's rendering boundary.
+  for (const entry of descriptor.fields) {
+    if (
+      entry.kind === "text" && entry.fallbackDomainKey &&
+      fields[entry.domainKey] === undefined &&
+      fields[entry.fallbackDomainKey] !== undefined
+    ) {
+      fields = {
+        ...fields,
+        [entry.domainKey]: fields[entry.fallbackDomainKey],
+      };
+    }
+  }
   if (descriptor.presenceKey !== undefined) {
     const gate = fields[descriptor.presenceKey];
     if (gate === undefined || gate === null) return undefined;
+  }
+
+  for (const entry of descriptor.fields) {
+    const value = fields[entry.domainKey];
+    if (value === undefined || value === null || entry.kind !== "text") {
+      continue;
+    }
+    if (
+      (typeof value !== "string" && typeof value !== "number") ||
+      (typeof value === "number" && !Number.isFinite(value))
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: failed to fill field "${entry.pdfField}" (text): expected a string or finite number`,
+      );
+    }
+  }
+  if (
+    descriptor.rows && fields[descriptor.rows.domainKey] !== undefined &&
+    !Array.isArray(fields[descriptor.rows.domainKey])
+  ) {
+    throw new Error(
+      `[PDF] ${descriptor.pendingKey}: row field "${descriptor.rows.domainKey}" needs an array`,
+    );
   }
 
   // A form is only emitted when it carries at least one *meaningful* value:
@@ -103,25 +386,49 @@ async function fillFormPdf(
   // 8959 / 8960 / 8962 pages to be included in the export.
   const isMeaningful = (v: unknown): boolean => {
     if (v === undefined || v === null) return false;
-    if (typeof v === "number") return Math.round(v) !== 0;
+    if (typeof v === "number") return roundWholeDollars(v) !== 0;
     if (typeof v === "boolean") return v;
     if (typeof v === "string") return v.length > 0;
     return false;
   };
   const hasData =
-    descriptor.fields.some(({ domainKey }) => isMeaningful(fields[domainKey])) ||
+    descriptor.fields.some(({ domainKey }) =>
+      isMeaningful(fields[domainKey])
+    ) ||
     (descriptor.rows !== undefined &&
       Array.isArray(fields[descriptor.rows.domainKey]) &&
       (fields[descriptor.rows.domainKey] as unknown[]).length > 0);
 
-  if (!hasData) return undefined;
-  if (descriptor.includeWhen !== undefined && !descriptor.includeWhen(fields, allPending)) {
-    return undefined;
+  if (!hasData && descriptor.includeWhenNoMappedData !== true) return undefined;
+  if (descriptor.includeWhen === undefined && !hasData) return undefined;
+  if (
+    descriptor.includeWhen !== undefined &&
+    !descriptor.includeWhen(fields, allPending)
+  ) return undefined;
+
+  if (descriptor.rows) {
+    const items = fields[descriptor.rows.domainKey];
+    if (Array.isArray(items) && items.length > descriptor.rows.maxRows) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: ${items.length} rows exceed the printable row limit of ${descriptor.rows.maxRows}`,
+      );
+    }
   }
 
-  const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
-  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const pdfBytes = await loadPdfTemplate(
+    descriptor.pdfUrl,
+    cacheDir,
+    descriptor.pdfSha256,
+  );
+  const doc = await PDFDocument.load(pdfBytes, {
+    ignoreEncryption: true,
+    updateMetadata: false,
+  });
   const form = doc.getForm();
+  const filledFilerFields: Array<{ entry: PdfFieldEntry; value: unknown }> = [];
+  const filledRowFields: Array<
+    { name: string; value: unknown; kind: "text" | "checkbox" }
+  > = [];
 
   // Fill computed fields
   for (const entry of descriptor.fields) {
@@ -133,10 +440,46 @@ async function fillFormPdf(
   // Fill filer identity fields (domainKey supports dot-notation, e.g. "address.line1")
   if (filer !== undefined) {
     const filerObj = filer as unknown as Record<string, unknown>;
-    for (const entry of descriptor.filerFields ?? []) {
-      const value = resolvePath(filerObj, entry.domainKey);
+    const activeFilerFields = (descriptor.filerFields ?? []).filter((entry) =>
+      entry.includeWhen?.(fields) !== false
+    );
+    const needsShownName = activeFilerFields.some((entry) =>
+      entry.domainKey === "nameShownOnForm1040"
+    );
+    let nameShownOnForm1040: string | undefined;
+    if (needsShownName) {
+      const first = filer.firstNameWithInitial?.trim();
+      const last = filer.lastName?.trim();
+      if (!first || !last) {
+        throw new Error(
+          `[PDF] ${descriptor.pendingKey}: name shown on Form 1040 needs the identified first-name field and last name`,
+        );
+      }
+      nameShownOnForm1040 = `${first} ${last}`;
+      if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+        const spouseFirst = filer.spouse?.firstName?.trim();
+        const spouseLast = filer.spouse?.lastName?.trim();
+        if (!spouseFirst || !spouseLast) {
+          throw new Error(
+            `[PDF] ${descriptor.pendingKey}: joint name shown on Form 1040 needs the identified spouse first and last names`,
+          );
+        }
+        const spouseName = [
+          spouseFirst,
+          filer.spouse?.middleInitial?.trim(),
+          spouseLast,
+        ]
+          .filter(Boolean).join(" ");
+        nameShownOnForm1040 += ` and ${spouseName}`;
+      }
+    }
+    for (const entry of activeFilerFields) {
+      const value = entry.domainKey === "nameShownOnForm1040"
+        ? nameShownOnForm1040
+        : resolvePath(filerObj, entry.domainKey);
       if (value === undefined || value === null) continue;
       fillEntry(form, entry, value, descriptor.pendingKey);
+      filledFilerFields.push({ entry, value });
     }
 
     // pdf-lib strips the IRS XFA layer, but the 2025 filing-status checkboxes
@@ -147,34 +490,65 @@ async function fillFormPdf(
   if (descriptor.rows) {
     const items = fields[descriptor.rows.domainKey];
     if (Array.isArray(items)) {
-      for (let i = 0; i < Math.min(items.length, descriptor.rows.maxRows); i++) {
+      for (let i = 0; i < items.length; i++) {
         const row = items[i] as Record<string, unknown>;
         for (const rf of descriptor.rows.rowFields) {
           let pdfField = rf.pdfFieldPattern.replace("{row}", String(i + 1));
-          if (rf.fieldNumBase !== undefined && descriptor.rows.rowStride !== undefined) {
+          if (
+            rf.fieldNumBase !== undefined &&
+            descriptor.rows.rowStride !== undefined
+          ) {
             const fieldNum = rf.fieldNumBase + i * descriptor.rows.rowStride;
-            pdfField = pdfField.replace("{field_num}", String(fieldNum).padStart(2, "0"));
+            pdfField = pdfField.replace(
+              "{field_num}",
+              String(fieldNum).padStart(2, "0"),
+            );
           }
           const value = row[rf.domainKey];
           if (value === undefined || value === null) continue;
           try {
+            if (typeof value === "number" && !Number.isFinite(value)) {
+              throw new Error(`nonfinite projected value ${String(value)}`);
+            }
             if (rf.kind === "checkbox") {
+              if (typeof value !== "boolean") {
+                throw new Error("row checkbox field needs a boolean");
+              }
               const box = form.getCheckBox(pdfField);
               value ? box.check() : box.uncheck();
             } else {
+              if (typeof value !== "string" && typeof value !== "number") {
+                throw new Error(
+                  "row text field needs a string or finite number",
+                );
+              }
               form.getTextField(pdfField).setText(
-                typeof value === "number" ? Math.round(value).toString() : String(value),
+                typeof value === "number"
+                  ? roundWholeDollars(value).toString()
+                  : String(value),
               );
             }
+            filledRowFields.push({ name: pdfField, value, kind: rf.kind });
           } catch (err) {
-            console.error(
-              `[PDF] ${descriptor.pendingKey}: row ${i + 1} field "${pdfField}" — ${err}`,
+            throw new Error(
+              `[PDF] ${descriptor.pendingKey}: failed to fill row ${
+                i + 1
+              } field "${pdfField}"`,
+              { cause: err },
             );
           }
         }
       }
     }
   }
+
+  assertRetainedPdfFields(
+    doc,
+    descriptor,
+    fields,
+    filledFilerFields,
+    filledRowFields,
+  );
 
   // IRS PDFs reference non-embedded fonts (e.g. HelveticaLTStd-Bold) in their
   // field DA strings. pdf-lib cannot synthesize these, so form.flatten() would
@@ -194,42 +568,538 @@ async function fillFormPdf(
  * @param filer     Filer identity (name, SSN, address)
  * @param cacheDir  Directory to cache downloaded IRS PDFs (default: .pdf-cache)
  */
-export async function buildPdfBytes(
+async function buildPdfBytesInternal(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
+  preparedBundleInput?: MefBundle,
+  pageOrigins?: PdfPageOrigin[],
+  paperOnly4972 = false,
 ): Promise<Uint8Array> {
+  // Preserve the authenticated disclosure identity and XML throughout awaits.
+  const preparedBundle = preparedBundleInput
+    ? { ...preparedBundleInput }
+    : undefined;
+  assertPreparedForm8886PublicSource(pending, preparedBundle?.form8886Packets);
+  assertForm8858FilingSource(pending.f8858);
+  assertDigitalAssetDispositionAnswer(pending);
+  await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
-  const merged = await PDFDocument.create();
+  assertEmployeeContributionReturn(normalized);
+  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
+  assertSingleFarmQbiReturn(normalized);
+  if (normalized.f1040) {
+    assertF1040FinalHeader(normalized.f1040, filer);
+    assertLine1hSupportedSource(normalized.f1040, normalized, filer);
+  }
+  assertGeneral1040HeaderSource(normalized);
+  assertGeneral1040DependentSource(normalized);
+  assertGeneral1040DepositSource(normalized, filer);
+  if (filer) assert1098EInterestSource(normalized, filer);
+  assertExtensionPaymentSource(normalized, filer);
+  assert1099RRecipientOwner(normalized.f1099r, filer);
+  assertPositiveW2GRecipient(normalized.w2g, filer);
+  assertNecWithholdingRecipient(normalized.f1099nec, filer);
+  assert1099BRecipientOwner(normalized.f1099b, filer);
+  assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
+  assertCapitalSaleSourceRows(normalized);
+  assertPatrIssuedCopies(normalized.f1099patr);
+  assertPatrWithholdingRecipient(normalized.f1099patr, filer);
+  assertLine1bHouseholdWageSource(normalized);
+  assertForm4852FilingRoute(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments !== undefined,
+  );
+  await assertForm4852RetainedEvidence(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments ?? [],
+  );
+  reconcileForm8606RothInventories(normalized, filer);
+  reconcileForm8606RothActivity(normalized, filer);
+  assertW2WithholdingSource(normalized, filer);
+  assert1099WithholdingSource(normalized, filer);
+  assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);
+  assertLine1aWageSource(normalized);
+  assertQualifiedDividendSubset(normalized.f1040 ?? {});
+  assertFinalBalanceProjection(normalized.f1040 ?? {});
+  assertDividendIncomeSources(normalized.f1040 ?? {}, normalized);
+  assertScheduleBInterestJoin(normalized);
+  assertScheduleBPreparedProjection(normalized);
+  assertTaxExemptInterestSource(normalized);
+  assertBusinessSchedule1Amounts(normalized);
+  assertOwned7203RequiredCopies(normalized);
+  assertHsaExcessRequiredCopy(normalized);
+  assertRequiredLtcSource({ pending: normalized, filer });
+  assertLine1iCombatPayElectionSource(normalized);
+  assertSchedule2W2Line13Sources(normalized);
+  assertSchedule2W2Line17KSource(normalized);
+  assertSchedule2Line17HSources(normalized, filer);
+  assertSchedule2Form4137Tax(normalized);
+  assertLine1cForm4137Income(normalized);
+  assertSchedule2Form8919Tax(normalized);
+  assertLine1gForm8919Wages(normalized);
+  assertSchedule2ScheduleHTax(normalized);
+  assertSchedule2Form8960Tax(normalized);
+  assertSchedule2ScheduleSETax(normalized);
+  assertSchedule2Form8828Tax(normalized);
+  assertSchedule2Form8936Repayment(normalized);
+  assertSchedule3Form8859Credit(normalized);
+  assertSchedule3Form8834Credit(normalized);
+  assertSchedule3Form8912Credit(normalized);
+  assertSchedule3Form8396Credit(normalized);
+  assert1099GUnemploymentSource(normalized);
+  assertF8288WithholdingOwner(normalized.f8288, filer);
+  assertSocialSecurityBenefitSource(normalized);
+  assertBenefitStatementOwner(normalized, filer);
+  assertRrb1099rPensionSource(normalized, filer);
+  assertIra1099rIncomeSource(normalized);
+  assertForm8915FSourceLinks(normalized);
+  assertKIncomeClassification(normalized);
+  if (filer) {
+    assertEitcChildSources(pending, filer);
+    assertKReportedErrorSources(normalized, filer);
+    assertScheduleCReceiptSourceIdentity(normalized, filer);
+    assertScheduleCStatutoryW2Sources(normalized, filer);
+    assertKWithholdingSourceIdentity(normalized, filer);
+    assertKPersonalSaleSources(pending, filer);
+    assertSchedule1Box3SourceIdentity(normalized, filer);
+    assertSchedule1Box8SourceIdentity(normalized, filer);
+    assertSchedule1Form8814Source(normalized);
+    assertSchedule1Form8621Source({
+      ...normalized,
+      form8949: pending.form8949,
+    });
+    assertSchedule1NecSourceIdentity(normalized, filer);
+    assertSchedule1KSourceIdentity(normalized, filer);
+    assertScheduleFFarmSourceIdentity(normalized, filer);
+  }
+  const k1Recipients = filer
+    ? [
+      filer.primarySSN,
+      ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+          filer.spouse?.ssn
+        ? [filer.spouse.ssn]
+        : []),
+    ]
+    : [];
+  assertBox11CodeJSources(normalized, k1Recipients);
+  assertBox11CodeESources(normalized, k1Recipients);
+  assertBox11CodeKSources(normalized, k1Recipients);
+  assertBox11CodeSSources(normalized, k1Recipients);
+  assertScheduleDK1Source(normalized.schedule_d ?? {}, normalized);
+  assertScheduleD1040Join(normalized);
+  assertBox11Line10Sources(normalized, k1Recipients);
+  if (
+    preparedBundle &&
+    await preparedSourceSha256(pending, filer) !==
+      preparedBundle.sourceSha256
+  ) {
+    throw new Error("PDF source differs from the prepared MeF return");
+  }
+  if (!preparedBundle) {
+    await assertForm8835TransferStatements(normalized.f8835, filer, []);
+    await assertForm8835DomesticStatements(normalized.f8835, filer, []);
+    await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
+  }
+  if (preparedBundle) {
+    if (
+      await preparedSourceSha256(preparedBundle.pending, filer) !==
+        preparedBundle.sourceSha256
+    ) {
+      throw new Error(
+        "PDF bundle pending differs from the prepared MeF return",
+      );
+    }
+    await assertPreparedAttachmentManifest(preparedBundle);
+    await assertForm8835TransferStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
+    await assertForm8835DomesticStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
+    await assertForm8835IncreaseStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
+    await assertReviewedForm8283PdfFields(
+      normalized.f8283,
+      filer,
+      preparedBundle.attachments,
+    );
+    if (!filer) {
+      throw new Error("Prepared MeF PDF needs its filer identity");
+    }
+    await assertW2GPayerCopyContents(
+      preparedBundle.pending,
+      filer,
+      preparedBundle.attachments,
+    );
+    if (
+      (preparedBundle.form3800Parts === undefined) !==
+        (preparedBundle.form3800PartsSha256 === undefined) ||
+      (preparedBundle.form3800Parts !== undefined &&
+        await sha256Hex(
+            new TextEncoder().encode(
+              JSON.stringify(preparedBundle.form3800Parts),
+            ),
+          ) !== preparedBundle.form3800PartsSha256)
+    ) {
+      throw new Error(
+        "Form 3800 PDF parts differ from the prepared MeF return",
+      );
+    }
+    assertPreparedBundleProjection(preparedBundle, filer);
+  }
+  if (
+    !preparedBundle && normalized.f8283 &&
+    (form8283SourceSchema.parse(normalized.f8283).section_b_items?.some((row) =>
+      row.signed_form_source_review?.reviewed_form_fields
+    ) ||
+      form8283SourceSchema.parse(normalized.f8283).section_a_items?.some(
+        (item) =>
+          item.contribution_year_disposition_reduction ||
+          item.natural_resource_ordinary_income_reduction ||
+          item.depreciation_ordinary_income_reduction,
+      ))
+  ) {
+    throw new Error(
+      "Reviewed signed Form8283 PDF needs its prepared return and retained field evidence",
+    );
+  }
+  const form8283Source = normalized.f8283
+    ? form8283SourceSchema.parse(normalized.f8283)
+    : undefined;
+  if (
+    form8283Source?.section_a_items?.some((item) =>
+      item.vehicle_sale_acknowledgment !== undefined ||
+      item.vehicle_needy_transfer_acknowledgment !== undefined ||
+      item.vehicle_significant_use_acknowledgment !== undefined ||
+      item.vehicle_material_improvement_acknowledgment !== undefined
+    )
+  ) {
+    if (!preparedBundle || !filer) {
+      throw new Error(
+        "Form 8283 vehicle PDF needs its prepared MeF return and reviewed acknowledgment bytes",
+      );
+    }
+    if (
+      await sha256Hex(new TextEncoder().encode(preparedBundle.xml)) !==
+        preparedBundle.xmlSha256
+    ) {
+      throw new Error("Form 8283 vehicle prepared MeF XML digest differs");
+    }
+    await assertPreparedVehicleAcknowledgments(
+      form8283Source,
+      preparedBundle.attachments,
+      preparedBundle.xml,
+      filer.primarySSN,
+    );
+  }
+  if ((pending.f8978 as Record<string, unknown> | undefined)?.reviewed_source) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form8978 reviewed source PDF needs prepared attachment bundle",
+      );
+    }
+    await assertForm8978SourceBytes(
+      pending as Record<string, Record<string, unknown>>,
+      filer,
+      preparedBundle.attachments,
+    );
+  }
+  if (hasForm8994Claim(pending)) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form 8994 PDF requires a prepared MeF bundle with validated policy and payroll attachments",
+      );
+    }
+    await reconcileForm8994EvidenceBytes(
+      pending.f8994,
+      preparedBundle.attachments,
+    );
+  }
+  if (hasForm8839Claim(pending)) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form 8839 PDF requires a prepared MeF bundle with reviewed attachment bytes",
+      );
+    }
+    const route = pending.form8839_route as
+      | { public_source?: unknown }
+      | undefined;
+    if (!route || !/<IRS8839\b/.test(preparedBundle.xml)) {
+      throw new Error("Form 8839 PDF needs its prepared native document");
+    }
+    await assertPublicForm8839Attachments(
+      route.public_source,
+      preparedBundle.attachments,
+    );
+    if (
+      await sha256Hex(new TextEncoder().encode(preparedBundle.xml)) !==
+        preparedBundle.xmlSha256
+    ) {
+      throw new Error("Form 8839 prepared MeF XML digest differs");
+    }
+  }
+  // The prepared MeF return stores canonical Form 8949 rows as an array;
+  // the existing PDF projector consumes them through its transaction field.
+  if (Array.isArray(pending.form8949)) {
+    normalized.form8949 = { transaction: pending.form8949 };
+  }
+  const form8949Rows = normalized.form8949?.transaction;
+  if (
+    form8949Rows !== undefined &&
+    (!Array.isArray(form8949Rows) || form8949Rows.length > 0) &&
+    !normalized.schedule_d
+  ) {
+    throw new Error("Form 8949 PDF needs its Schedule D");
+  }
+  if (normalized.schedule_d) {
+    if (form8949Rows !== undefined && !Array.isArray(form8949Rows)) {
+      throw new Error("Form 8949 PDF needs prepared transaction rows");
+    }
+    assertScheduleDSalesMatchPrepared(
+      normalized.schedule_d.transaction,
+      form8949Rows ?? [],
+    );
+  }
+  assertAttachmentCoverage(normalized, "pdf", preparedBundle?.form8886Packets);
+  const merged = await PDFDocument.create({ updateMetadata: false });
+  const copyCounts = new Map<string, number>();
 
-  for (const descriptor of ALL_PDF_FORMS) {
-    const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<string, unknown>;
+  for (const registeredDescriptor of ALL_PDF_FORMS) {
+    const descriptor = paperOnly4972 &&
+        registeredDescriptor.pendingKey === "form4972"
+      ? form4972PaperPdf
+      : registeredDescriptor;
+    const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const projectedFields = descriptor.projectFields?.(fields, normalized) ??
+      fields;
 
-    const effectiveFields = descriptor.rows
-      ? {
-        ...fields,
-        [descriptor.rows.domainKey]: pending[descriptor.rows.domainKey] ??
-          fields[descriptor.rows.domainKey],
-      }
-      : fields;
+    if (
+      descriptor.rows && pending[descriptor.rows.domainKey] !== undefined
+    ) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: top-level ${descriptor.rows.domainKey} rows are not bound to the prepared form source`,
+      );
+    }
 
-    const instances = descriptor.instances?.(effectiveFields) ?? [effectiveFields];
+    const instances = descriptor.instances?.(
+      projectedFields,
+      filer,
+      normalized,
+      preparedBundle?.form3800Parts,
+    ) ??
+      [projectedFields];
     for (const instance of instances) {
-      const filledBytes = await fillFormPdf(descriptor, instance, filer, cacheDir, normalized);
+      const filledBytes = await fillFormPdf(
+        descriptor,
+        instance,
+        filer,
+        cacheDir,
+        normalized,
+      );
       if (!filledBytes) continue;
+      const formKey = descriptor.printedFormKey ?? descriptor.pendingKey;
+      const formCopy = (copyCounts.get(formKey) ?? 0) + 1;
+      copyCounts.set(formKey, formCopy);
+      const firstPageNumber = merged.getPageCount() + 1;
 
-      const filledDoc = await PDFDocument.load(filledBytes);
-      const pageIndices = filledDoc.getPageIndices();
+      const filledDoc = await PDFDocument.load(filledBytes, {
+        updateMetadata: false,
+      });
+      const pageIndices = [
+        ...(descriptor.pageIndices?.(instance) ??
+          filledDoc.getPageIndices()),
+      ];
       const copiedPages = await merged.copyPages(filledDoc, pageIndices);
+      await descriptor.decoratePages?.(merged, copiedPages, instance, filer);
       for (const page of copiedPages) {
         merged.addPage(page);
+      }
+      await descriptor.appendSupplementalPages?.(
+        merged,
+        instance,
+        filer,
+        normalized,
+        preparedBundle?.form3800Parts,
+        cacheDir,
+      );
+      for (
+        let pageNumber = firstPageNumber;
+        pageNumber <= merged.getPageCount();
+        pageNumber++
+      ) {
+        pageOrigins?.push({
+          pageNumber,
+          formKey,
+          formCopy,
+        });
       }
     }
   }
 
+  // Reviewed copies are static; submitted attachment bytes are unchanged.
+  if (normalized.f8835 && preparedBundle) {
+    const rows = normalized.f8835.f8835s as Array<{
+      increased_credit_reason: string;
+      increased_credit_statement_file_name?: string;
+      pwa_form7220_file_name?: string;
+      domestic_content_bonus: boolean;
+      domestic_content_statement_file_name?: string;
+      transfer_source?: { transfers: Array<{ statement_file_name: string }> };
+    }>;
+    for (const [index, item] of rows.entries()) {
+      const statements: Array<[string, string | undefined]> = [];
+      if (
+        [
+          "under_one_mw",
+          "construction_before_2023_01_29",
+          "prevailing_wage_and_apprenticeship",
+        ].includes(
+          item.increased_credit_reason,
+        )
+      ) {
+        statements.push([
+          "f8835_increased_credit_statement",
+          item.increased_credit_statement_file_name,
+        ]);
+      }
+      if (
+        item.increased_credit_reason === "prevailing_wage_and_apprenticeship"
+      ) {
+        statements.push(["f8835_form7220", item.pwa_form7220_file_name]);
+      }
+      if (item.domestic_content_bonus) {
+        statements.push([
+          "f8835_domestic_content_statement",
+          item.domestic_content_statement_file_name,
+        ]);
+      }
+      for (const transfer of item.transfer_source?.transfers ?? []) {
+        statements.push([
+          "f8835_transfer_statement",
+          transfer.statement_file_name,
+        ]);
+      }
+      for (const [formKey, fileName] of statements) {
+        const attachment = preparedBundle.attachments.find((a) =>
+          a.fileName === fileName
+        )!;
+        const copy = await PDFDocument.load(attachment.bytes, {
+          updateMetadata: false,
+        });
+        copy.getForm().flatten({ updateFieldAppearances: false });
+        for (const page of copy.getPages()) {
+          page.node.delete(PDFName.of("Annots"));
+        }
+        for (
+          const page of await merged.copyPages(copy, copy.getPageIndices())
+        ) {
+          merged.addPage(page);
+          pageOrigins?.push({
+            pageNumber: merged.getPageCount(),
+            formKey,
+            formCopy: index + 1,
+          });
+        }
+      }
+    }
+  }
+
+  // These pages were rendered and authenticated with the disclosure source.
+  // Reuse the exact copies retained for the separate OTSA handoff.
+  for (
+    const [index, entry] of (preparedBundle?.form8886Packets?.packets ?? [])
+      .entries()
+  ) {
+    const packet = entry.packet;
+    const documents = [
+      packet.documents.formXml,
+      packet.documents.continuationXml,
+      ...packet.documents.generalContinuations.map((row) => row.xml),
+    ].filter((xml): xml is string => xml !== undefined);
+    if (documents.some((xml) => !preparedBundle!.xml.includes(xml))) {
+      throw new Error(
+        "Form 8886 printable copy is not bound to the finalized MeF return",
+      );
+    }
+    const bytes = packet.getPdf();
+    if (await sha256Hex(bytes) !== packet.metadata.pdf_sha256) {
+      throw new Error(
+        "Form 8886 printable copy differs from its prepared digest",
+      );
+    }
+    const copy = await PDFDocument.load(bytes, { updateMetadata: false });
+    const pages = await merged.copyPages(copy, copy.getPageIndices());
+    for (const page of pages) {
+      merged.addPage(page);
+      pageOrigins?.push({
+        pageNumber: merged.getPageCount(),
+        formKey: "form8886",
+        formCopy: index + 1,
+      });
+    }
+  }
+
   if (merged.getPageCount() === 0) {
-    throw new Error("No PDF forms were generated — return may have no computed data.");
+    throw new Error(
+      "No PDF forms were generated — return may have no computed data.",
+    );
   }
 
   return merged.save();
+}
+
+export function buildPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  preparedBundle?: MefBundle,
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    preparedBundle,
+    pageOrigins,
+  );
+}
+
+/** Produce a paper filing packet for a validated Form 4972 collection too large for MeF. */
+export async function buildForm4972PaperPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  const forms = (pending.form4972 as Record<string, unknown> | undefined)
+    ?.forms;
+  if (!Array.isArray(forms) || forms.length <= 2) {
+    throw new Error(
+      "Form 4972 paper-only export requires more than two elected participant forms",
+    );
+  }
+  if (!filer) {
+    throw new Error("Form 4972 paper-only export needs filer identity");
+  }
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    undefined,
+    pageOrigins,
+    true,
+  );
 }

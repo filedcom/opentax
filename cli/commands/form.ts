@@ -1,10 +1,13 @@
 import { join } from "@std/path";
+import { z } from "zod";
 import { catalog } from "../../catalog.ts";
+import type { FormDefinition } from "../../core/types/form-definition.ts";
 import {
   appendInput,
   deleteInput,
   getInput,
   listInputs,
+  loadInputs,
   loadMeta,
   updateInput,
 } from "../store/store.ts";
@@ -14,6 +17,42 @@ function getCatalogEntry(formType: string, year: number) {
   const def = catalog[key];
   if (!def) throw new Error(`Unsupported form: ${key}`);
   return def;
+}
+
+function getUserInputSchema(def: FormDefinition, nodeType: string) {
+  const entry = def.inputNodes.find((candidate) =>
+    (candidate.inputKey ?? candidate.node.nodeType) === nodeType
+  );
+  if (entry) return entry.isArray ? entry.itemSchema : entry.inputSchema;
+
+  // The start node is the graph's composite input and is routed directly.
+  if (nodeType === "start") return def.registry.start.inputSchema;
+
+  throw new Error(
+    `Node type ${nodeType} is not a valid input for ${def.formType}/${def.taxYear}`,
+  );
+}
+
+function rejectUnknownFields(schema: z.ZodTypeAny, data: unknown): void {
+  // Input schemas may wrap their object in superRefine. Inspect the original
+  // shape before Zod's default object parsing strips misspelled fields.
+  const objectSchema = schema instanceof z.ZodEffects
+    ? schema.innerType()
+    : schema;
+  if (
+    !(objectSchema instanceof z.ZodObject) ||
+    data === null || typeof data !== "object" || Array.isArray(data)
+  ) return;
+  const unknown = Object.keys(data).filter((key) =>
+    !(key in objectSchema.shape)
+  );
+  if (unknown.length > 0) {
+    throw new Error(
+      `Validation error: Unrecognized field${
+        unknown.length === 1 ? "" : "s"
+      }: ${unknown.join(", ")}`,
+    );
+  }
 }
 
 // ─── form add ─────────────────────────────────────────────────────────────────
@@ -44,24 +83,33 @@ export async function formAddCommand(
   const meta = await loadMeta(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
 
-  const entrySchemas = Object.fromEntries(
-    def.inputNodes
-      .filter((e): e is Extract<typeof e, { isArray: true }> => e.isArray)
-      .map((e) => [e.node.nodeType, e.itemSchema]),
-  );
-
-  const node = def.registry[args.nodeType];
-  if (!node) {
+  if (
+    args.nodeType !== "start" &&
+    !def.inputNodes.some((entry) =>
+      (entry.inputKey ?? entry.node.nodeType) === args.nodeType
+    )
+  ) {
     throw new Error(`Unknown node type: ${args.nodeType}`);
   }
 
-  const schema = entrySchemas[args.nodeType] ?? node.inputSchema;
+  const schema = getUserInputSchema(def, args.nodeType);
+  rejectUnknownFields(schema, data);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
-  const { id } = await appendInput(returnPath, args.nodeType, data);
+  const publicEntry = def.inputNodes.find((entry) =>
+    (entry.inputKey ?? entry.node.nodeType) === args.nodeType
+  );
+  if (
+    publicEntry && !publicEntry.isArray &&
+    (await loadInputs(returnPath))[args.nodeType]?.length
+  ) {
+    throw new Error(`Singleton input ${args.nodeType} already exists`);
+  }
+
+  const { id } = await appendInput(returnPath, args.nodeType, parsed.data);
 
   return { id, nodeType: args.nodeType };
 }
@@ -99,7 +147,7 @@ export type FormGetArgs = {
   readonly baseDir: string;
 };
 
-export async function formGetCommand(
+export function formGetCommand(
   args: FormGetArgs,
 ): Promise<FormListEntry> {
   const returnPath = join(args.baseDir, args.returnId);
@@ -137,24 +185,23 @@ export async function formUpdateCommand(
   // Find the existing entry to determine its nodeType for validation
   const existing = await getInput(returnPath, args.entryId);
 
-  const entrySchemas = Object.fromEntries(
-    def.inputNodes
-      .filter((e): e is Extract<typeof e, { isArray: true }> => e.isArray)
-      .map((e) => [e.node.nodeType, e.itemSchema]),
-  );
-
-  const node = def.registry[existing.nodeType];
-  if (!node) {
+  if (
+    existing.nodeType !== "start" &&
+    !def.inputNodes.some((entry) =>
+      (entry.inputKey ?? entry.node.nodeType) === existing.nodeType
+    )
+  ) {
     throw new Error(`Unknown node type: ${existing.nodeType}`);
   }
 
-  const schema = entrySchemas[existing.nodeType] ?? node.inputSchema;
+  const schema = getUserInputSchema(def, existing.nodeType);
+  rejectUnknownFields(schema, data);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
-  return updateInput(returnPath, args.entryId, data);
+  return updateInput(returnPath, args.entryId, parsed.data);
 }
 
 // ─── form delete ──────────────────────────────────────────────────────────────
@@ -170,7 +217,7 @@ export type FormDeleteResult = {
   readonly nodeType: string;
 };
 
-export async function formDeleteCommand(
+export function formDeleteCommand(
   args: FormDeleteArgs,
 ): Promise<FormDeleteResult> {
   const returnPath = join(args.baseDir, args.returnId);

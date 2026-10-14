@@ -1,0 +1,72 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on tax return. ,2,36 684 474.45 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,475.2 684 576 698.001,yes
+topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_1[0],/Btn,Check all applicable boxes. See instructions. A. Mixed straddle election. ,2,187.2 674.251 195.2 682.251,yes
+topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_2[0],/Btn,B. Straddle-by-straddle identification election. ,2,187.2 662.252 195.2 670.252,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,C. Mixed straddle account election. ,2,396 674.251 404 682.251,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,D. Net section 1256 contracts loss election. ,2,396 662.252 404 670.252,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row1[0].f1_3[0],/Tx,Part I. Section 1256 Contracts Marked to Market. 1. Row: 1. Column: (a) Identification of account. ,2,57.6 612 359.25 623.999,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row1[0].f1_4[0],/Tx,Row: 1. Column: (b) (Loss). ,2,360 612 431.25 623.999,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row1[0].f1_5[0],/Tx,Row: 1. Column: (c) Gain. ,2,432 612 503.25 623.999,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row2[0].f1_6[0],/Tx,Row: 2. Column: (a) Identification of account. ,2,36 600.001 359.25 612,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row2[0].f1_7[0],/Tx,Row: 2. Column: (b) (Loss). ,2,360 600.001 431.25 612,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row2[0].f1_8[0],/Tx,Row: 2. Column: (c) Gain. ,2,432 600.001 503.25 612,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row3[0].f1_9[0],/Tx,Row: 3. Column: (a) Identification of account. ,2,36 588.002 359.25 600.001,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row3[0].f1_10[0],/Tx,Row: 3. Column: (b) (Loss). ,2,360 588.002 431.25 600.001,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row3[0].f1_11[0],/Tx,Row: 3. Column: (c) Gain. ,2,432 588.002 503.25 600.001,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,2. Add the amounts on line 1 in columns (b) and (c). Open parenthesis. (b) (Loss). Close parenthesis. ,2,363 576 429 587.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,2. (c) Gain. ,2,432 576 503.25 587.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"3. Net gain or (loss). Combine line 2, columns (b) and (c). ",2,504 564.001 576 576,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,4. Form 1099-B adjustments. See instructions and attach statement. ,2,504 552.002 576 564.001,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,5. Combine lines 3 and 4. ,2,504 540 576 551.999,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"Note: If line 5 shows a net gain, skip line 6 and enter the gain on line 7. Partnerships and S corporations, see  instructions. 6. If you have a net section 1256 contracts loss and checked box D above, enter the amount of loss to be carried back. Enter the loss as a positive number. If you didn't check box D, enter 0. ",2,504 492.001 576 504,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,7. Combine lines 5 and 6.,2,504 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,8. Short-term capital gain or (loss).  Multiply line 7 by 40% (0.40). Enter here and include on line 4 of Schedule D or on Form 8949. See instructions. ,2,504 456.001 576 468,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,9. Long-term capital gain or (loss). Multiply line 7 by 60% (0.60). Enter here and include on line 11 of Schedule D or on Form 8949. See instructions. ,2,504 432 576 443.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_21[0],/Tx,Part I I. Gains and Losses From Straddles. Attach a separate statement listing each straddle and its components. Section—A. Losses From Straddles. 10. Row: 1. Column: (a) Description of property. ,2,57.6 335.999 186.45 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_22[0],/Tx,Row: 1. Column: (b) Date entered into or acquired. ,2,187.2 335.999 230.4 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_23[0],/Tx,Row: 1. Column: (c) Date closed out or sold. ,2,230.4 335.999 273.6 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_24[0],/Tx,Row: 1. Column: (d) Gross sales price. ,2,273.6 335.999 330.45 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_25[0],/Tx,Row: 1. Column: (e) Cost or other basis plus expense of sale. ,2,331.2 335.999 388.05 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_26[0],/Tx,"Row: 1. Column: (f) Loss. If column (e) is more than (d), enter difference. Otherwise, enter 0. ",2,388.8 335.999 445.65 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_27[0],/Tx,Row: 1. Column: (g) Unrecognized gain on offsetting positions. ,2,446.4 335.999 503.25 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row1[0].f1_28[0],/Tx,"Row: 1. Column: (h) Recognized loss. If column (f) is more than (g), enter difference. Otherwise, enter 0. ",2,504 335.999 576 347.998,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_29[0],/Tx,Row: 2. Column: (a) Description of property.,2,36 324 186.45 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_30[0],/Tx,Row: 2. Column: (b) Date entered into or acquired. ,2,187.2 324 230.4 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_31[0],/Tx,Row: 2. Column: (c) Date closed out or sold. ,2,230.4 324 273.6 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_32[0],/Tx,Row: 2. Column: (d) Gross sales price. ,2,273.6 324 330.45 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_33[0],/Tx,Row: 2. Column: (e) Cost or other basis plus expense of sale. ,2,331.2 324 388.05 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_34[0],/Tx,"Row: 2. Column: (f) Loss. If column (e) is more than (d), enter difference. Otherwise, enter 0. ",2,388.8 324 445.65 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_35[0],/Tx,Row: 2. Column: (g) Unrecognized gain on offsetting positions. ,2,446.4 324 503.25 335.999,yes
+topmostSubform[0].Page1[0].Table_Line10[0].Row2[0].f1_36[0],/Tx,"Row: 2. Column: (h) Recognized loss. If column (f) is more than (g), enter difference. Otherwise, enter 0. ",2,504 324 576 335.999,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,"11a. Open parenthesis. Enter the short-term portion of losses from line 10, column (h), here and include on line 4 of Schedule D or on Form 8949. See instructions. Close parenthesis. ",2,507 300.002 573 312.001,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,"11b. Open parenthesis. Enter the long-term portion of losses from line 10, column (h), here and include on line 11 of Schedule D or on Form 8949. See instructions. Close parenthesis. ",2,507 276.001 573 288,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_39[0],/Tx,Section B—Gains From Straddles. 12. Row: 1. Column: (a) Description of property. ,2,57.6 204.001 272.85 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_40[0],/Tx,Row: 1. Column: (b) Date entered into or acquired. ,2,273.6 204.001 316.8 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_41[0],/Tx,Row: 1. Column: (c) Date closed out or sold. ,2,316.8 204.001 360 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_42[0],/Tx,Row: 1. Column: (d) Gross sales price. ,2,360 204.001 431.25 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_43[0],/Tx,Row: 1. Column: (e) Cost or other basis plus expense of sale. ,2,432 204.001 503.25 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row1[0].f1_44[0],/Tx,"Row: 1. Column: (f) Gain. If column (d) is more than (e), enter difference. Otherwise, enter 0. ",2,504 204.001 576 216,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_45[0],/Tx,Row: 2. Column: (a) Description of property.,2,36 192.002 272.85 204.001,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_46[0],/Tx,Row: 2. Column: (b) Date entered into or acquired. ,2,273.6 192.002 316.8 204.001,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_47[0],/Tx,Row: 2. Column: (c) Date closed out or sold. ,2,316.8 192.002 360 204.001,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_48[0],/Tx,Row: 2. Column: (d) Gross sales price. ,2,360 192.002 431.25 204.001,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_49[0],/Tx,Row: 2. Column: (e) Cost or other basis plus expense of sale. ,2,432 192.002 503.25 204.001,yes
+topmostSubform[0].Page1[0].Table_Line12[0].Row2[0].f1_50[0],/Tx,"Row: 2. Column: (f) Gain. If column (d) is more than (e), enter difference. Otherwise, enter 0. ",2,504 192.002 576 204.001,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,"13a. Enter the short-term portion of gains from line 12, column (f), here and include on line 4 of Schedule D or on Form 8949. See instructions. ",2,504 168.001 576 180,yes
+topmostSubform[0].Page1[0].f1_52[0],/Tx,"13b. Enter the long-term portion of gains from line 12, column (f), here and include on line 11 of Schedule D or on Form 8949. See instructions. ",2,504 144 576 155.999,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row1[0].f1_53[0],/Tx,Part I I I. Unrecognized Gains From Positions Held on Last Day of Tax Year. Memo entry only (see instructions). 14. Row: 1. Column: (a) Description of property. ,2,57.6 72.003 316.05 84.002,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row1[0].f1_54[0],/Tx,Row: 1. Column: (b) Date acquired. ,2,316.8 72.003 360 84.002,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row1[0].f1_55[0],/Tx,Row: 1. Column: (c) Fair market value on last business day of tax year. ,2,360 72.003 431.25 84.002,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row1[0].f1_56[0],/Tx,Row: 1. Column: (d) Cost or other basis as adjusted. ,2,432 72.003 503.25 84.002,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row1[0].f1_57[0],/Tx,"Row: 1. Column: (e) Unrecognized gain. If column (c) is more than (d), enter difference. Otherwise, enter 0. ",2,504 72.003 576 84.002,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row2[0].f1_58[0],/Tx,Row: 2. Column: (a) Description of property.,2,36 60.004 316.05 72.003,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row2[0].f1_59[0],/Tx,Row: 2. Column: (b) Date acquired. ,2,316.8 60.004 360 72.003,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row2[0].f1_60[0],/Tx,Row: 2. Column: (c) Fair market value on last business day of tax year. ,2,360 60.004 431.25 72.003,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row2[0].f1_61[0],/Tx,Row: 2. Column: (d) Cost or other basis as adjusted. ,2,432 60.004 503.25 72.003,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row2[0].f1_62[0],/Tx,"Row: 2. Column: (e) Unrecognized gain. If column (c) is more than (d), enter difference. Otherwise, enter 0. ",2,504 60.004 576 72.003,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row3[0].f1_63[0],/Tx,Row: 3. Column: (a) Description of property.,2,36 48.005 316.05 60.004,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row3[0].f1_64[0],/Tx,Row: 3. Column: (b) Date acquired. ,2,316.8 48.005 360 60.004,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row3[0].f1_65[0],/Tx,Row: 3. Column: (c) Fair market value on last business day of tax year. ,2,360 48.005 431.25 60.004,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row3[0].f1_66[0],/Tx,Row: 3. Column: (d) Cost or other basis as adjusted. ,2,432 48.005 503.25 60.004,yes
+topmostSubform[0].Page1[0].Table_Line14[0].Row3[0].f1_67[0],/Tx,"Row: 3. Column: (e) Unrecognized gain. If column (c) is more than (d), enter difference. Otherwise, enter 0.",2,504 48.005 576 60.004,yes

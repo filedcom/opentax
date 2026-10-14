@@ -1,0 +1,460 @@
+{
+  "single-disability-16000": {
+    "inputs": {
+      "general": {
+        "filing_status": "single",
+        "taxpayer_first_name": "Alex",
+        "taxpayer_last_name": "Example",
+        "taxpayer_ssn": "111-22-3333",
+        "taxpayer_dob": "1970-06-15",
+        "child_eic_filer_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+        },
+        "prior_eic_disallowance_review": {
+          "status": "none",
+          "irs_account_record_reference": "Synthetic IRS account transcript review",
+          "no_nonclerical_disallowance_since_1996_verified": true
+        },
+        "eic_tax_residency_review": {
+          "status": "all_year_resident",
+          "taxpayer_status_record_reference": "Synthetic 2025 resident status review"
+        },
+        "address_line1": "1 Example Way",
+        "address_city": "Orlando",
+        "address_state": "FL",
+        "address_zip": "32801",
+        "digital_assets": false,
+        "taxpayer_age_65_or_older": false,
+        "taxpayer_ssn_valid_for_employment": true,
+        "taxpayer_ssn_issued_before_due_date": true,
+        "taxpayer_tin_issued_by_due_date": true,
+        "main_home_in_us_over_half_year": true,
+        "taxpayer_can_be_claimed_as_dependent": false,
+        "childless_eic_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "qualifying_child_status_record_reference": "Synthetic current family review"
+        }
+      },
+      "schedule_b_part_iii": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      },
+      "schedule1a": {
+        "senior_zero_exclusions_review": {
+          "no_section933_puerto_rico_excluded_income": true,
+          "section933_review_source_reference": "Synthetic residency and income review",
+          "no_form2555_filed": true,
+          "form2555_review_source_reference": "Synthetic foreign income review",
+          "no_form4563_filed": true,
+          "form4563_review_source_reference": "Synthetic Samoa income review"
+        }
+      },
+      "schedule_r": {
+        "filing_status": "single",
+        "taxpayer_age_65_or_older": false,
+        "taxpayer_disabled": true,
+        "taxpayer_disability_income": 16000,
+        "agi": 16000,
+        "taxpayer_disability_evidence": {
+          "retired_on_permanent_total_disability": true,
+          "below_mandatory_retirement_age_on_january_1": true,
+          "unable_to_perform_substantial_gainful_activity": true,
+          "condition_expected_to_last_one_year_or_result_in_death_verified": true,
+          "disability_income_source_reference": "Synthetic taxpayer disability W-2",
+          "disability_income_reported_on": "wages",
+          "eligibility_source_reference": "Synthetic taxpayer retirement review",
+          "physician_statement": "current_year",
+          "physician_statement_source_reference": "Synthetic taxpayer physician review",
+          "physician_or_va_statement_signed_verified": true
+        }
+      },
+      "w2": [
+        {
+          "box1_wages": 16000,
+          "box2_fed_withheld": 1000,
+          "employee_ssn": "111-22-3333",
+          "box3_ss_wages": 0,
+          "box4_ss_withheld": 0,
+          "box5_medicare_wages": 0,
+          "box6_medicare_withheld": 0,
+          "employer_ein": "12-3456789",
+          "employer_name": "Example Employer",
+          "employer_address_line1": "10 Employer Road",
+          "employer_address_city": "Austin",
+          "employer_address_state": "TX",
+          "employer_address_zip": "78701",
+          "box12_entries": []
+        }
+      ]
+    },
+    "expected": {
+      "taxBefore": 26,
+      "credit": 26,
+      "tax": 0,
+      "eitc": 236,
+      "refund": 1236,
+      "owed": 0
+    }
+  },
+  "single-disability-17000": {
+    "inputs": {
+      "general": {
+        "filing_status": "single",
+        "taxpayer_first_name": "Alex",
+        "taxpayer_last_name": "Example",
+        "taxpayer_ssn": "111-22-3333",
+        "taxpayer_dob": "1970-06-15",
+        "child_eic_filer_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+        },
+        "prior_eic_disallowance_review": {
+          "status": "none",
+          "irs_account_record_reference": "Synthetic IRS account transcript review",
+          "no_nonclerical_disallowance_since_1996_verified": true
+        },
+        "eic_tax_residency_review": {
+          "status": "all_year_resident",
+          "taxpayer_status_record_reference": "Synthetic 2025 resident status review"
+        },
+        "address_line1": "1 Example Way",
+        "address_city": "Orlando",
+        "address_state": "FL",
+        "address_zip": "32801",
+        "digital_assets": false,
+        "taxpayer_age_65_or_older": false,
+        "taxpayer_ssn_valid_for_employment": true,
+        "taxpayer_ssn_issued_before_due_date": true,
+        "taxpayer_tin_issued_by_due_date": true,
+        "main_home_in_us_over_half_year": true,
+        "taxpayer_can_be_claimed_as_dependent": false,
+        "childless_eic_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "qualifying_child_status_record_reference": "Synthetic current family review"
+        }
+      },
+      "schedule_b_part_iii": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      },
+      "schedule1a": {
+        "senior_zero_exclusions_review": {
+          "no_section933_puerto_rico_excluded_income": true,
+          "section933_review_source_reference": "Synthetic residency and income review",
+          "no_form2555_filed": true,
+          "form2555_review_source_reference": "Synthetic foreign income review",
+          "no_form4563_filed": true,
+          "form4563_review_source_reference": "Synthetic Samoa income review"
+        }
+      },
+      "schedule_r": {
+        "filing_status": "single",
+        "taxpayer_age_65_or_older": false,
+        "taxpayer_disabled": true,
+        "taxpayer_disability_income": 17000,
+        "agi": 17000,
+        "taxpayer_disability_evidence": {
+          "retired_on_permanent_total_disability": true,
+          "below_mandatory_retirement_age_on_january_1": true,
+          "unable_to_perform_substantial_gainful_activity": true,
+          "condition_expected_to_last_one_year_or_result_in_death_verified": true,
+          "disability_income_source_reference": "Synthetic taxpayer disability W-2",
+          "disability_income_reported_on": "wages",
+          "eligibility_source_reference": "Synthetic taxpayer retirement review",
+          "physician_statement": "prior_year",
+          "physician_statement_source_reference": "Synthetic retained prior-year signed line B physician review",
+          "physician_or_va_statement_signed_verified": true,
+          "prior_year_line_b_or_1983_verified": true
+        }
+      },
+      "w2": [
+        {
+          "box1_wages": 17000,
+          "box2_fed_withheld": 1000,
+          "employee_ssn": "111-22-3333",
+          "box3_ss_wages": 0,
+          "box4_ss_withheld": 0,
+          "box5_medicare_wages": 0,
+          "box6_medicare_withheld": 0,
+          "employer_ein": "12-3456789",
+          "employer_name": "Example Employer",
+          "employer_address_line1": "10 Employer Road",
+          "employer_address_city": "Austin",
+          "employer_address_state": "TX",
+          "employer_address_zip": "78701",
+          "box12_entries": []
+        }
+      ]
+    },
+    "expected": {
+      "taxBefore": 126,
+      "credit": 38,
+      "tax": 88,
+      "eitc": 159,
+      "refund": 1071,
+      "owed": 0
+    }
+  },
+  "mfs-ssa": {
+    "inputs": {
+      "general": {
+        "filing_status": "mfs",
+        "taxpayer_first_name": "Alex",
+        "taxpayer_last_name": "Example",
+        "taxpayer_ssn": "111-22-3333",
+        "taxpayer_dob": "1955-06-15",
+        "child_eic_filer_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+        },
+        "prior_eic_disallowance_review": {
+          "status": "none",
+          "irs_account_record_reference": "Synthetic IRS account transcript review",
+          "no_nonclerical_disallowance_since_1996_verified": true
+        },
+        "eic_tax_residency_review": {
+          "status": "all_year_resident",
+          "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+          "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+        },
+        "address_line1": "1 Example Way",
+        "address_city": "Orlando",
+        "address_state": "FL",
+        "address_zip": "32801",
+        "digital_assets": false,
+        "spouse_first_name": "Riley",
+        "spouse_last_name": "Example",
+        "spouse_ssn": "400-00-1070",
+        "taxpayer_age_65_or_older": true,
+        "spouse_age_65_or_older": false,
+        "spouse_dob": "1972-02-01",
+        "mfs_spouse_itemizing": true,
+        "mfs_spouse_lived_with_taxpayer": false
+      },
+      "schedule_b_part_iii": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      },
+      "schedule1a": {
+        "senior_zero_exclusions_review": {
+          "no_section933_puerto_rico_excluded_income": true,
+          "section933_review_source_reference": "Synthetic residency and income review",
+          "no_form2555_filed": true,
+          "form2555_review_source_reference": "Synthetic foreign income review",
+          "no_form4563_filed": true,
+          "form4563_review_source_reference": "Synthetic Samoa income review"
+        }
+      },
+      "schedule_r": {
+        "filing_status": "mfs",
+        "taxpayer_age_65_or_older": true,
+        "agi": 7500,
+        "age_65_source_reference": "Synthetic taxpayer birth record",
+        "mfs_lived_apart_all_year_source_reference": "Synthetic separate residence records",
+        "nontaxable_ssa": 1000,
+        "nontaxable_ssa_source_reference": "Synthetic SSA-1099 2025"
+      },
+      "f1099int": [
+        {
+          "payer_name": "Example Bank",
+          "payer_tin": "12-3456789",
+          "recipient_tin": "111223333",
+          "box1": 7500
+        }
+      ],
+      "ssa1099": [
+        {
+          "recipient_tin": "111223333",
+          "source_document_reference": "Synthetic SSA-1099 2025",
+          "box3_gross_benefits": 1000,
+          "box5_net_benefits": 1000
+        }
+      ]
+    },
+    "expected": {
+      "taxBefore": 753,
+      "credit": 225,
+      "tax": 528,
+      "eitc": 0,
+      "refund": 0,
+      "owed": 528
+    }
+  },
+  "mfs-mixed-benefits": {
+    "inputs": {
+      "general": {
+        "filing_status": "mfs",
+        "taxpayer_first_name": "Alex",
+        "taxpayer_last_name": "Example",
+        "taxpayer_ssn": "111-22-3333",
+        "taxpayer_dob": "1955-06-15",
+        "child_eic_filer_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+        },
+        "prior_eic_disallowance_review": {
+          "status": "none",
+          "irs_account_record_reference": "Synthetic IRS account transcript review",
+          "no_nonclerical_disallowance_since_1996_verified": true
+        },
+        "eic_tax_residency_review": {
+          "status": "all_year_resident",
+          "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+          "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+        },
+        "address_line1": "1 Example Way",
+        "address_city": "Orlando",
+        "address_state": "FL",
+        "address_zip": "32801",
+        "digital_assets": false,
+        "spouse_first_name": "Riley",
+        "spouse_last_name": "Example",
+        "spouse_ssn": "400-00-1070",
+        "taxpayer_age_65_or_older": true,
+        "spouse_age_65_or_older": false,
+        "spouse_dob": "1972-02-01",
+        "mfs_spouse_itemizing": true,
+        "mfs_spouse_lived_with_taxpayer": false
+      },
+      "schedule_b_part_iii": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      },
+      "schedule1a": {
+        "senior_zero_exclusions_review": {
+          "no_section933_puerto_rico_excluded_income": true,
+          "section933_review_source_reference": "Synthetic residency and income review",
+          "no_form2555_filed": true,
+          "form2555_review_source_reference": "Synthetic foreign income review",
+          "no_form4563_filed": true,
+          "form4563_review_source_reference": "Synthetic Samoa income review"
+        }
+      },
+      "schedule_r": {
+        "filing_status": "mfs",
+        "taxpayer_age_65_or_older": true,
+        "agi": 7500,
+        "age_65_source_reference": "Synthetic taxpayer birth record",
+        "mfs_lived_apart_all_year_source_reference": "Synthetic separate residence records",
+        "nontaxable_ssa": 1000,
+        "nontaxable_ssa_source_reference": "Synthetic SSA-1099 2025",
+        "nontaxable_pension": 300,
+        "nontaxable_pension_source_reference": "Synthetic qualifying nontaxable pension review",
+        "nontaxable_pension_line13b_eligible_verified": true,
+        "nontaxable_va": 200,
+        "nontaxable_va_source_reference": "Synthetic VA pension review",
+        "nontaxable_va_veterans_pension_verified": true
+      },
+      "f1099int": [
+        {
+          "payer_name": "Example Bank",
+          "payer_tin": "12-3456789",
+          "recipient_tin": "111223333",
+          "box1": 7500
+        }
+      ],
+      "ssa1099": [
+        {
+          "recipient_tin": "111223333",
+          "source_document_reference": "Synthetic SSA-1099 2025",
+          "box3_gross_benefits": 1000,
+          "box5_net_benefits": 1000
+        }
+      ]
+    },
+    "expected": {
+      "taxBefore": 753,
+      "credit": 150,
+      "tax": 603,
+      "eitc": 0,
+      "refund": 0,
+      "owed": 603
+    }
+  },
+  "mfs-benefit-exhausted": {
+    "inputs": {
+      "general": {
+        "filing_status": "mfs",
+        "taxpayer_first_name": "Alex",
+        "taxpayer_last_name": "Example",
+        "taxpayer_ssn": "111-22-3333",
+        "taxpayer_dob": "1955-06-15",
+        "child_eic_filer_review": {
+          "not_qualifying_child_of_another_taxpayer_verified": true,
+          "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+        },
+        "prior_eic_disallowance_review": {
+          "status": "none",
+          "irs_account_record_reference": "Synthetic IRS account transcript review",
+          "no_nonclerical_disallowance_since_1996_verified": true
+        },
+        "eic_tax_residency_review": {
+          "status": "all_year_resident",
+          "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+          "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+        },
+        "address_line1": "1 Example Way",
+        "address_city": "Orlando",
+        "address_state": "FL",
+        "address_zip": "32801",
+        "digital_assets": false,
+        "spouse_first_name": "Riley",
+        "spouse_last_name": "Example",
+        "spouse_ssn": "400-00-1070",
+        "taxpayer_age_65_or_older": true,
+        "spouse_age_65_or_older": false,
+        "spouse_dob": "1972-02-01",
+        "mfs_spouse_itemizing": true,
+        "mfs_spouse_lived_with_taxpayer": false
+      },
+      "schedule_b_part_iii": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      },
+      "schedule1a": {
+        "senior_zero_exclusions_review": {
+          "no_section933_puerto_rico_excluded_income": true,
+          "section933_review_source_reference": "Synthetic residency and income review",
+          "no_form2555_filed": true,
+          "form2555_review_source_reference": "Synthetic foreign income review",
+          "no_form4563_filed": true,
+          "form4563_review_source_reference": "Synthetic Samoa income review"
+        }
+      },
+      "schedule_r": {
+        "filing_status": "mfs",
+        "taxpayer_age_65_or_older": true,
+        "agi": 7500,
+        "age_65_source_reference": "Synthetic taxpayer birth record",
+        "mfs_lived_apart_all_year_source_reference": "Synthetic separate residence records",
+        "nontaxable_ssa": 2500,
+        "nontaxable_ssa_source_reference": "Synthetic SSA-1099 2025"
+      },
+      "f1099int": [
+        {
+          "payer_name": "Example Bank",
+          "payer_tin": "12-3456789",
+          "recipient_tin": "111223333",
+          "box1": 7500
+        }
+      ],
+      "ssa1099": [
+        {
+          "recipient_tin": "111223333",
+          "source_document_reference": "Synthetic SSA-1099 2025",
+          "box3_gross_benefits": 2500,
+          "box5_net_benefits": 2500
+        }
+      ]
+    },
+    "expected": {
+      "taxBefore": 753,
+      "credit": 0,
+      "tax": 753,
+      "eitc": 0,
+      "refund": 0,
+      "owed": 753
+    }
+  }
+}

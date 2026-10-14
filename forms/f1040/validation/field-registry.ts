@@ -43,6 +43,19 @@ function buildRegistry(): FieldRegistry {
   reg.set("PhoneNum", { form: "_header", pendingKey: "phone" });
   reg.set("EmailAddressTxt", { form: "_header", pendingKey: "email" });
   reg.set("TaxpayerPIN", { form: "_header", pendingKey: "signaturePin" });
+  reg.set("PrimarySignaturePIN", {
+    form: "_header",
+    pendingKey: "signaturePin",
+  });
+  reg.set("PrimarySignatureDt", {
+    form: "_header",
+    pendingKey: "signatureDate",
+  });
+  reg.set("PrimaryPINEnteredByCd", {
+    form: "_header",
+    pendingKey: "pinEnteredBy",
+  });
+  reg.set("NameLine1Txt", { form: "_header", pendingKey: "nameLine1" });
   reg.set("SpousePIN", { form: "_header", pendingKey: "spouseSignaturePin" });
   reg.set("PrimaryIPPIN", { form: "_header", pendingKey: "ipPin" });
   reg.set("SpouseIPPIN", { form: "_header", pendingKey: "spouseIpPin" });

@@ -1,18 +1,55 @@
 import type { ZodTypeAny } from "zod";
 import type { TaxNode } from "./tax-node.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
+import type { ExecuteResult } from "../runtime/executor.ts";
+import type { MefBundle } from "../../forms/f1040/2025/mef/builder.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
+
+export interface PreparedFormReturn {
+  readonly bundle: MefBundle;
+  readonly renderPdf: () => Promise<Uint8Array>;
+}
 
 export type InputNodeEntry =
-  | { readonly node: TaxNode; readonly itemSchema: ZodTypeAny; readonly isArray: true }
-  | { readonly node: TaxNode; readonly inputSchema: ZodTypeAny; readonly isArray: false };
+  | {
+    readonly node: TaxNode;
+    readonly inputKey?: string;
+    readonly itemSchema: ZodTypeAny;
+    readonly isArray: true;
+  }
+  | {
+    readonly node: TaxNode;
+    readonly inputKey?: string;
+    readonly inputSchema: ZodTypeAny;
+    readonly isArray: false;
+  };
 
 export interface FormDefinition {
-  readonly formType: string;         // e.g. "f1040"
-  readonly taxYear: number;          // e.g. 2025
+  readonly formType: string; // e.g. "f1040"
+  readonly taxYear: number; // e.g. 2025
   readonly mefSchemaVersion: string; // e.g. "2025v3.0"
   readonly inputNodes: readonly InputNodeEntry[];
   readonly registry: Record<string, TaxNode>;
-  readonly buildMefXml: (pending: Record<string, unknown>, filer?: FilerIdentity) => string;
-  readonly buildPdfBytes: (pending: Record<string, unknown>, filer?: FilerIdentity) => Promise<Uint8Array>;
-  readonly buildPending: (pending: Record<string, unknown>) => Record<string, unknown>;
+  /** Single form-owned execution entrypoint for validated source inputs. */
+  readonly executeReturn: (inputs: Record<string, unknown>) => ExecuteResult;
+  /** Build linked native documents once and retain their printable source. */
+  readonly prepareReturn: (
+    pending: Record<string, unknown>,
+    filer: FilerIdentity | undefined,
+    attachments?: ReadonlyArray<MefPdfAttachment>,
+    retainedSourceDocuments?: ReadonlyArray<
+      { document_reference: string; bytes: Uint8Array }
+    >,
+  ) => Promise<PreparedFormReturn>;
+  readonly buildMefXml: (
+    pending: Record<string, unknown>,
+    filer?: FilerIdentity,
+  ) => string;
+  readonly buildPdfBytes: (
+    pending: Record<string, unknown>,
+    filer?: FilerIdentity,
+  ) => Promise<Uint8Array>;
+  readonly buildPending: (
+    pending: Record<string, unknown>,
+  ) => Record<string, unknown>;
 }

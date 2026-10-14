@@ -1,6 +1,7 @@
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
+import { formAddCommand } from "./form.ts";
 
 Deno.test("createReturnCommand creates return.json with meta and inputs", async () => {
   const tmpDir = await Deno.makeTempDir();
@@ -87,6 +88,72 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
   }
 });
 
+Deno.test("CLI return reports the Form 4952 limit and carryforward", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    for (
+      const [nodeType, data] of [
+        ["general", { filing_status: "single" }],
+        ["w2", { box1_wages: 300_000, box2_fed_withheld: 60_000 }],
+        ["f1099int", {
+          payer_name: "Example Bank",
+          box1: 2_000,
+          investment_property_for_form4952: true,
+        }],
+        ["schedule_a", { line_8a_mortgage_interest_1098: 20_000 }],
+        ["form4952", {
+          investment_interest_expense: 50_000,
+          amt_refigure: {
+            prior_year_disallowed_interest: 0,
+            interest_on_private_activity_bonds: 0,
+            other_gross_income_adjustment: 0,
+            qualified_dividends_adjustment: 0,
+            net_disposition_gain_adjustment: 0,
+            net_capital_gain_adjustment: 0,
+            investment_expenses_adjustment: 0,
+          },
+        }],
+      ] as const
+    ) {
+      await formAddCommand({
+        returnId,
+        nodeType,
+        dataJson: JSON.stringify(data),
+        baseDir: tmpDir,
+      });
+    }
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.lines.line12c_deduction_total, 22_000);
+    assertEquals(result.carryforwards.investment_interest_excess_4952, 48_000);
+    assertEquals(result.forms.includes("form4952"), true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("getReturnCommand reports the standard deduction selected over Schedule A", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", { filing_status: "mfj" });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 100_000,
+      box2_fed_withheld: 15_000,
+    });
+    await appendInput(returnPath, "schedule_a", {
+      line_8a_mortgage_interest_1098: 18_349,
+    });
+
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.lines.line12c_deduction_total, 31_500);
+    assertEquals(result.summary.line15_taxable_income, 68_500);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -101,6 +168,47 @@ Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
     assertEquals(result.summary.line24_total_tax, 0);
     assertEquals(result.forms.length >= 0, true);
     assertEquals(result.warnings.length >= 0, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: "single",
+      taxpayer_dob: "1985-06-01",
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 180_000,
+      box2_fed_withheld: 30_000,
+      box3_ss_wages: 176_100,
+      box4_ss_withheld: 10_918.20,
+      box5_medicare_wages: 180_000,
+      box6_medicare_withheld: 2_610,
+    });
+    await appendInput(returnPath, "schedule_c", {
+      line_a_principal_business: "Consulting",
+      line_b_business_code: "541990",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 50_000,
+    });
+
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+
+    assertEquals(result.forms.includes("form8995a"), true);
+    assertEquals(
+      Math.round(result.summary.line15_taxable_income * 100) / 100,
+      206_926.37,
+    );
+    assertEquals(
+      Math.round(result.summary.line24_total_tax * 100) / 100,
+      44_854,
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

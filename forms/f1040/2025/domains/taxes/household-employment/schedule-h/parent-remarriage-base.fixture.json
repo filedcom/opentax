@@ -1,0 +1,304 @@
+{
+  "general": {
+    "filing_status": "mfj",
+    "taxpayer_first_name": "Alex",
+    "taxpayer_last_name": "Example",
+    "taxpayer_ssn": "111-22-3333",
+    "taxpayer_dob": "1985-06-15",
+    "child_eic_filer_review": {
+      "not_qualifying_child_of_another_taxpayer_verified": true,
+      "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+    },
+    "prior_eic_disallowance_review": {
+      "status": "none",
+      "irs_account_record_reference": "Synthetic IRS account transcript review",
+      "no_nonclerical_disallowance_since_1996_verified": true
+    },
+    "eic_tax_residency_review": {
+      "status": "all_year_resident",
+      "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+      "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+    },
+    "address_line1": "1 Example Way",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "digital_assets": false,
+    "spouse_first_name": "Riley",
+    "spouse_last_name": "Example",
+    "spouse_ssn": "400-00-1070"
+  },
+  "w2": [
+    {
+      "box1_wages": 75000,
+      "box2_fed_withheld": 11000,
+      "employee_ssn": "111-22-3333",
+      "box3_ss_wages": 75000,
+      "box4_ss_withheld": 4650,
+      "box5_medicare_wages": 75000,
+      "box6_medicare_withheld": 1087.5,
+      "employer_ein": "12-3456789",
+      "employer_name": "Example Employer",
+      "employer_address_line1": "10 Employer Road",
+      "employer_address_city": "Austin",
+      "employer_address_state": "TX",
+      "employer_address_zip": "78701",
+      "box12_entries": []
+    }
+  ],
+  "schedule_h": {
+    "employer_ein": "123456789",
+    "cash_wages_over_2025_limit": true,
+    "cash_wages_over_quarter_limit": false,
+    "ss_wages": 7800,
+    "medicare_wages": 7800,
+    "federal_income_tax_withheld": 300,
+    "fica_only_payroll": {
+      "all_household_employees_included": true,
+      "prior_year_payroll_source_reference": "reviewed-2024-complete-household-payroll",
+      "prior_year_quarter_cash_wages": [
+        950,
+        900,
+        850,
+        999
+      ],
+      "employee_wages": [
+        {
+          "employee_id": "main",
+          "payroll_source_reference": "2025-main-payroll",
+          "relationship": "unrelated",
+          "age_18_or_older_for_fica": true,
+          "ordinary_cash_only": true,
+          "annual_cash_wages": 2800,
+          "quarterly_cash_wages": [
+            700,
+            700,
+            700,
+            700
+          ],
+          "w2": {
+            "source_reference": "main-w2",
+            "box2_federal_income_tax_withheld": 40,
+            "box3_social_security_wages": 2800,
+            "box5_medicare_wages": 2800
+          },
+          "federal_withholding_agreement": {
+            "w4_source_reference": "main-w4",
+            "employee_requested_and_employer_agreed": true
+          }
+        },
+        {
+          "employee_id": "student-small",
+          "payroll_source_reference": "2025-student-small-payroll",
+          "relationship": "unrelated",
+          "age_18_or_older_for_fica": false,
+          "student_minor_fica_exclusion": {
+            "birth_date": "2008-05-10",
+            "birth_date_source_reference": "student-small-birth",
+            "student_enrollment_source_reference": "student-small-school",
+            "student_during_2025_verified": true
+          },
+          "ordinary_cash_only": true,
+          "annual_cash_wages": 400,
+          "quarterly_cash_wages": [
+            100,
+            100,
+            100,
+            100
+          ],
+          "w2": {
+            "source_reference": "student-small-w2",
+            "box2_federal_income_tax_withheld": 10,
+            "box3_social_security_wages": 0,
+            "box5_medicare_wages": 0
+          },
+          "federal_withholding_agreement": {
+            "w4_source_reference": "student-small-w4",
+            "employee_requested_and_employer_agreed": true
+          }
+        },
+        {
+          "employee_id": "adult-small",
+          "payroll_source_reference": "2025-adult-small-payroll",
+          "relationship": "unrelated",
+          "age_18_or_older_for_fica": true,
+          "ordinary_cash_only": true,
+          "annual_cash_wages": 400,
+          "quarterly_cash_wages": [
+            100,
+            100,
+            100,
+            100
+          ],
+          "w2": {
+            "source_reference": "adult-small-w2",
+            "box2_federal_income_tax_withheld": 0,
+            "box3_social_security_wages": 0,
+            "box5_medicare_wages": 0
+          }
+        },
+        {
+          "employee_id": "parent-employee",
+          "employee_ssn": "400001050",
+          "relationship_source_reference": "employer-parent-birth-record",
+          "payroll_source_reference": "2025-parent-payroll",
+          "ordinary_cash_only": true,
+          "annual_cash_wages": 5000,
+          "quarterly_cash_wages": [
+            1250,
+            1250,
+            1250,
+            1250
+          ],
+          "w2": {
+            "source_reference": "2025-parent-w2",
+            "employee_ssn": "400001050",
+            "box1_wages": 5000,
+            "box2_federal_income_tax_withheld": 250,
+            "box3_social_security_wages": 5000,
+            "box5_medicare_wages": 5000
+          },
+          "relationship": "parent",
+          "birth_date": "1955-06-15",
+          "birth_date_source_reference": "parent-birth-record",
+          "federal_withholding_agreement": {
+            "w4_source_reference": "2025-parent-w4",
+            "employee_requested_and_employer_agreed": true
+          },
+          "parent_fica_review": {
+            "classification": "quarterly_circumstances",
+            "quarterly_circumstances": [
+              {
+                "quarter": 1,
+                "home_residence_source_reference": "home-q1-occupancy",
+                "child": {
+                  "kind": "child",
+                  "child_ssn": "400001060",
+                  "relationship_source_reference": "employer-child-relationship",
+                  "birth_date": "2015-06-15",
+                  "birth_date_source_reference": "employer-child-birth-record",
+                  "lived_in_employers_home_throughout_service_quarter_verified": true
+                },
+                "employer_circumstances": {
+                  "kind": "spouse_incapable",
+                  "spouse_ssn": "400001070",
+                  "spouse_relationship_source_reference": "employer-marriage-record",
+                  "spouse_residence_source_reference": "spouse-q1-home",
+                  "living_with_spouse_throughout_quarter_verified": true,
+                  "incapable_care_period": {
+                    "from": "2025-01-01",
+                    "to": "2025-01-28",
+                    "medical_source_reference": "spouse-q1-incapacity"
+                  }
+                }
+              },
+              {
+                "quarter": 2,
+                "home_residence_source_reference": "home-q2-occupancy",
+                "child": {
+                  "kind": "child",
+                  "child_ssn": "400001060",
+                  "relationship_source_reference": "employer-child-relationship",
+                  "birth_date": "2015-06-15",
+                  "birth_date_source_reference": "employer-child-birth-record",
+                  "lived_in_employers_home_throughout_service_quarter_verified": true
+                },
+                "employer_circumstances": {
+                  "kind": "spouse_incapable",
+                  "spouse_ssn": "400001070",
+                  "spouse_relationship_source_reference": "employer-marriage-record",
+                  "spouse_residence_source_reference": "spouse-q2-home",
+                  "living_with_spouse_throughout_quarter_verified": true,
+                  "incapable_care_period": {
+                    "from": "2025-04-01",
+                    "to": "2025-04-28",
+                    "medical_source_reference": "spouse-q2-incapacity"
+                  }
+                }
+              },
+              {
+                "quarter": 3,
+                "home_residence_source_reference": "home-q3-occupancy",
+                "child": {
+                  "kind": "child",
+                  "child_ssn": "400001060",
+                  "relationship_source_reference": "employer-child-relationship",
+                  "birth_date": "2015-06-15",
+                  "birth_date_source_reference": "employer-child-birth-record",
+                  "lived_in_employers_home_throughout_service_quarter_verified": true
+                },
+                "employer_circumstances": {
+                  "kind": "spouse_incapable",
+                  "spouse_ssn": "400001070",
+                  "spouse_relationship_source_reference": "employer-marriage-record",
+                  "spouse_residence_source_reference": "spouse-q3-home",
+                  "living_with_spouse_throughout_quarter_verified": true,
+                  "incapable_care_period": {
+                    "from": "2025-07-01",
+                    "to": "2025-07-28",
+                    "medical_source_reference": "spouse-q3-incapacity"
+                  }
+                }
+              },
+              {
+                "quarter": 4,
+                "home_residence_source_reference": "home-q4-occupancy",
+                "child": {
+                  "kind": "child",
+                  "child_ssn": "400001060",
+                  "relationship_source_reference": "employer-child-relationship",
+                  "birth_date": "2015-06-15",
+                  "birth_date_source_reference": "employer-child-birth-record",
+                  "lived_in_employers_home_throughout_service_quarter_verified": true
+                },
+                "employer_circumstances": {
+                  "kind": "spouse_incapable",
+                  "spouse_ssn": "400001070",
+                  "spouse_relationship_source_reference": "employer-marriage-record",
+                  "spouse_residence_source_reference": "spouse-q4-home",
+                  "living_with_spouse_throughout_quarter_verified": true,
+                  "incapable_care_period": {
+                    "from": "2025-10-01",
+                    "to": "2025-10-28",
+                    "medical_source_reference": "spouse-q4-incapacity"
+                  }
+                }
+              }
+            ],
+            "wage_payments": [
+              {
+                "payment_reference": "parent-q1-bank-payment",
+                "paid_date": "2025-03-31",
+                "service_from": "2025-01-01",
+                "service_to": "2025-03-31",
+                "cash_wages": 1250
+              },
+              {
+                "payment_reference": "parent-q2-bank-payment",
+                "paid_date": "2025-06-30",
+                "service_from": "2025-04-01",
+                "service_to": "2025-06-30",
+                "cash_wages": 1250
+              },
+              {
+                "payment_reference": "parent-q3-bank-payment",
+                "paid_date": "2025-09-30",
+                "service_from": "2025-07-01",
+                "service_to": "2025-09-30",
+                "cash_wages": 1250
+              },
+              {
+                "payment_reference": "parent-q4-bank-payment",
+                "paid_date": "2025-12-31",
+                "service_from": "2025-10-01",
+                "service_to": "2025-12-31",
+                "cash_wages": 1250
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "family_employer_ssn": "111223333"
+  }
+}

@@ -137,13 +137,45 @@ $55,000 in wages, $15,750 standard deduction, $39,250 taxable income, $4,471.50 
 
 ---
 
+## Calculation, review, export and filing are different stages
+
+The catalog currently exposes federal Form 1040 for TY2025. Registered nodes do
+not prove complete coverage of every tax situation, other tax years or states.
+`return get` is useful for partial calculations and diagnostics; inspect its
+warnings before relying on amounts. `return validate` checks implemented MeF
+business rules, not all tax law or IRS acceptance criteria.
+
+Normal PDF/MeF export blocks on every executor diagnostic, even with `--force`.
+`--force` overrides only reject-severity business rules. It is not a calculation
+repair or evidence that a return is ready to file. Existing callers that used
+`--force` to export incomplete calculations must now opt into `--draft`.
+
+For diagnostic review, use `--draft` (and `--force` separately if business rules
+reject). Every draft XML includes a DRAFT/INCOMPLETE comment; every draft PDF is
+watermarked on each page. Draft mode does not guarantee that malformed data can
+be rendered. Successful non-draft API return types remain XML text or a PDF path.
+The new `ExportExecutionError` exposes executor entries separately from
+`ExportRejectedError`. Shell redirection may create an empty file on failure;
+check the command exit status, not just file existence.
+
+CLI export does not perform XSD validation. Optional developer XSD tests need
+the separate IRS schema bundle and skip when it is absent. The CLI has no
+transmission or acknowledgement retrieval command. Signatures, authorized
+transmission, applicable IRS testing/identifiers, state coverage and acceptance
+handling must be established separately. Export is neither filing nor acceptance;
+these facts do not establish any commercial product's IRS authorization.
+
+The CLI stores returns locally. Uploading source documents into a hosted
+assistant is a separate disclosure to that provider, not local-only processing.
+
 ## More commands
 
 ```bash
 # Validate against IRS MeF business rules
 opentax return validate --returnId a1b2c3
 
-# Export as IRS MeF XML (ready for e-file)
+# Export as IRS MeF XML for downstream validation or transmitter workflows.
+# This does not transmit a return or prove IRS acceptance.
 opentax return export --returnId a1b2c3 --type mef > return.xml
 
 # List entries in a return
@@ -193,7 +225,7 @@ opentax version
 
 131 input nodes covering the full range of 1040 source documents: W-2s, 1099s, all major schedules, credits, capital transactions, and more.
 
-See [`catalog.ts`](catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
+See [`catalog.ts`](./catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
 
 ```bash
 opentax node list
@@ -235,6 +267,22 @@ deno task bench
 # Run the CLI in dev mode
 deno task tax return create --year 2025
 ```
+
+### TY2026 research sources
+
+The [TY2026 research corpus](./docs/ty2026/README.md) contains the implementation
+plans, source manifest, and pinned IRS PDFs. These PDFs use Git LFS so they do
+not become ordinary Git blobs. Install Git LFS before working with the corpus:
+
+```bash
+git lfs install
+git lfs pull
+```
+
+When refreshing IRS sources, follow the [corpus instructions](./docs/ty2026/README.md#working-with-the-pinned-pdfs).
+Verify that new or changed PDFs appear in `git lfs ls-files` before pushing.
+Adding LFS tracking after a regular PDF commit does not remove that PDF from
+Git history.
 
 ### Contributing with Claude Code
 
@@ -297,6 +345,14 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 /tax-cases pub17              # pull new IRS examples
 /tax-fix f1040:2025           # fix loop against expanded case set
 ```
+
+---
+
+## Contributors
+
+Thanks to everyone who has contributed!
+
+[![Contributors](https://contrib.rocks/image?repo=filedcom/opentax)](https://github.com/filedcom/opentax/graphs/contributors)
 
 ---
 

@@ -1,0 +1,167 @@
+import { reconcileForm8911BusinessFiling } from "../../../../mef/forms/credits/business/f8911_source.ts";
+import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
+import type { FilerIdentity } from "../../../../../mef/header.ts";
+import {
+  computePersonalCreditAmounts,
+  type F8911Input,
+  type F8911Property,
+  inputSchema,
+  type PersonalCreditAmounts,
+  personalCreditProperties,
+} from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
+
+export interface Form8911PdfProperty {
+  readonly input: F8911Property;
+  readonly propertyAddress: string;
+  readonly constructionDate: string;
+  readonly serviceDate: string;
+}
+export interface Form8911PdfSource {
+  readonly input: F8911Input;
+  readonly properties: readonly Form8911PdfProperty[];
+  readonly amounts: PersonalCreditAmounts | undefined;
+  readonly filerName: string;
+  readonly filerTin: string;
+}
+
+function dateFor2025(value: string, label: string): string {
+  const date = new Date(value);
+  if (
+    Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+  ) {
+    throw new Error(`Form 8911 PDF ${label} needs a real calendar date`);
+  }
+  if (label === "placed-in-service date" && !value.startsWith("2025-")) {
+    throw new Error(
+      "Form 8911 PDF requires property placed in service in TY2025",
+    );
+  }
+  const [year, month, day] = value.split("-");
+  return `${month}/${day}/${year}`;
+}
+
+function projectProperty(input: F8911Property): Form8911PdfProperty {
+  if (
+    input.fuel_type === undefined
+  ) {
+    throw new Error(
+      "Form 8911 PDF currently supports identified personal-use refueling properties with no business use",
+    );
+  }
+  if (
+    !input.construction_began || !input.placed_in_service ||
+    !input.property_us_address
+  ) {
+    throw new Error("Form 8911 PDF needs the property dates and address");
+  }
+  const constructionDate = dateFor2025(
+    input.construction_began,
+    "construction date",
+  );
+  const serviceDate = dateFor2025(
+    input.placed_in_service,
+    "placed-in-service date",
+  );
+  if (input.construction_began > input.placed_in_service) {
+    throw new Error("Form 8911 PDF construction must begin before service");
+  }
+  const property = input.property_us_address;
+  if (
+    !property.line1.trim() || !property.city.trim() ||
+    !property.state.trim() || !property.zip.trim()
+  ) {
+    throw new Error("Form 8911 PDF needs a complete US property address");
+  }
+  const propertyAddress = [
+    property.line1,
+    property.line2,
+    `${property.city}, ${property.state} ${property.zip}`,
+  ].filter(Boolean).join(", ");
+  if (propertyAddress.length > 80) {
+    throw new Error(
+      "Form 8911 Schedule A PDF address exceeds its printed line",
+    );
+  }
+  return { input, propertyAddress, constructionDate, serviceDate };
+}
+
+export function form8911PdfSource(
+  allPending: Record<string, Record<string, unknown>>,
+  filer: FilerIdentity | undefined,
+): Form8911PdfSource | undefined {
+  const raw = allPending.f8911;
+  if (!raw) return undefined;
+  const input = inputSchema.parse(raw);
+  const business = (input.properties ?? [input]).some((p) =>
+    (p.business_use_pct ?? 0) > 0
+  );
+  if (business) reconcileForm8911BusinessFiling(input, allPending);
+  const amounts = computePersonalCreditAmounts(input, business);
+  if (!business && (!amounts || amounts.allowedCredit <= 0)) return undefined;
+  if ((input.certain_allowable_credits ?? 0) !== 0) {
+    throw new Error(
+      "Form 8911 PDF needs reviewed other allowable-credit worksheet amounts",
+    );
+  }
+  if (
+    amounts && ![
+      amounts.regularTaxBeforeCredits,
+      amounts.foreignTaxCredit,
+      amounts.certainAllowableCredits,
+      amounts.totalOtherCredits,
+      amounts.netRegularTax,
+      amounts.tentativeMinimumTax,
+      amounts.adjustedRegularTax,
+    ].every(Number.isInteger)
+  ) {
+    throw new Error(
+      "Form 8911 PDF needs whole-dollar tax-limit worksheet lines",
+    );
+  }
+  const properties = personalCreditProperties(input).map(projectProperty);
+  const filerName = filer?.nameLine1?.trim();
+  const filerTin = filer?.primarySSN?.replaceAll("-", "");
+  if (!filerName || !filerTin || !/^\d{9}$/.test(filerTin)) {
+    throw new Error("Form 8911 PDF needs the return name and TIN");
+  }
+  if (business) {
+    const credit = allPending.f3800?.allowed_credit;
+    if (typeof credit !== "number") {
+      throw new Error("Form 8911 PDF needs finalized Form 3800 credit");
+    }
+    assertForm3800FinalCreditJoin(credit, allPending);
+    const owner = allPending.f1040?.taxpayer_ssn;
+    if (typeof owner !== "string" || owner.replaceAll("-", "") !== filerTin) {
+      throw new Error("Form 8911 PDF filer differs from source proprietor");
+    }
+    return { input, properties, amounts, filerName, filerTin };
+  }
+  if (!amounts) return undefined;
+  const return1040 = allPending.f1040 ?? {};
+  const schedule3 = allPending.schedule3 ?? {};
+  const form6251 = allPending.form6251 ?? {};
+  const regularTax = return1040.line16_income_tax;
+  const schedule2Line1z = return1040.credit_limit_schedule2_line1z ?? 0;
+  if (
+    typeof regularTax !== "number" ||
+    typeof schedule2Line1z !== "number" ||
+    regularTax + schedule2Line1z !== amounts.regularTaxBeforeCredits ||
+    return1040.credit_limit_form6251_line9 !== amounts.tentativeMinimumTax ||
+    form6251.net_tmt !== amounts.tentativeMinimumTax ||
+    (schedule3.line1_foreign_tax_credit ?? 0) !== amounts.foreignTaxCredit ||
+    schedule3.line6j_alt_fuel_vehicle_refueling !== amounts.allowedCredit ||
+    return1040.line20_nonrefundable_credits !==
+      amounts.foreignTaxCredit + amounts.allowedCredit
+  ) {
+    throw new Error(
+      "Form 8911 PDF source tax limit or credit disagrees with finalized Form 1040, Form 6251, or Schedule 3",
+    );
+  }
+  return {
+    input,
+    properties,
+    amounts,
+    filerName,
+    filerTin,
+  };
+}

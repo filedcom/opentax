@@ -1,11 +1,11 @@
 import {
   AccountType,
-  FilingStatus,
-  PINEnteredBy,
   type BankAccount,
   type FilerIdentity,
+  FilingStatus,
   type OnlineFilerInfo,
   type OriginatorInfo,
+  PINEnteredBy,
   type PreparedByInfo,
   type SpouseIdentity,
 } from "./header.ts";
@@ -52,13 +52,14 @@ function extractSpouse(
   if (!ssn || !lastName) return undefined;
 
   return {
-    ssn,
+    ssn: ssn.replace(/-/g, ""),
     firstName: firstName ?? "",
     lastName,
     middleInitial: str(f1040["spouse_middle_initial"]),
     nameControl: nameControl(lastName),
     ipPin: str(f1040["spouse_ip_pin"]),
     signaturePin: str(f1040["spouse_signature_pin"]),
+    signatureDate: str(f1040["spouse_signature_date"]),
     deceased: bool(f1040["spouse_deceased"]),
     deathDate: str(f1040["spouse_death_date"]),
     occupation: str(f1040["spouse_occupation"]),
@@ -76,7 +77,9 @@ function extractBankAccount(
   return {
     routingNumber: routing,
     accountNumber: account,
-    accountType: type === "savings" ? AccountType.Savings : AccountType.Checking,
+    accountType: type === "savings"
+      ? AccountType.Savings
+      : AccountType.Checking,
   };
 }
 
@@ -97,7 +100,10 @@ function extractPreparedBy(
   const firmName = str(f1040["preparer_firm_name"]);
   const firmEin = str(f1040["preparer_firm_ein"]);
 
-  if (selfPrepared === undefined && ptin === undefined && firmName === undefined && firmEin === undefined) {
+  if (
+    selfPrepared === undefined && ptin === undefined &&
+    firmName === undefined && firmEin === undefined
+  ) {
     return undefined;
   }
 
@@ -150,8 +156,8 @@ export function extractFilerIdentity(
     typeof filingStatusRaw === "string" && filingStatusRaw in STATUS_MAP
       ? STATUS_MAP[filingStatusRaw]
       : typeof filingStatusRaw === "number"
-        ? (filingStatusRaw as FilingStatus)
-        : FilingStatus.Single;
+      ? (filingStatusRaw as FilingStatus)
+      : FilingStatus.Single;
 
   return {
     primarySSN,
@@ -160,8 +166,10 @@ export function extractFilerIdentity(
     firstName,
     lastName,
     middleInitial,
-    firstNameWithInitial: [firstName, middleInitial].filter(Boolean).join(" ") || undefined,
-    fullName: [firstName, middleInitial, lastName].filter(Boolean).join(" ") || undefined,
+    firstNameWithInitial:
+      [firstName, middleInitial].filter(Boolean).join(" ") || undefined,
+    fullName: [firstName, middleInitial, lastName].filter(Boolean).join(" ") ||
+      undefined,
     suffix: str(f1040["taxpayer_suffix"]),
     address: {
       line1: str(f1040["address_line1"]) ?? "",
@@ -181,6 +189,7 @@ export function extractFilerIdentity(
     occupation: str(f1040["taxpayer_occupation"]),
     ipPin: str(f1040["taxpayer_ip_pin"]),
     signaturePin: str(f1040["taxpayer_signature_pin"]),
+    signatureDate: str(f1040["taxpayer_signature_date"]),
     priorYearAgi: num(f1040["taxpayer_prior_year_agi"]),
     spouse: extractSpouse(f1040),
     pinEnteredBy: PINEnteredBy.Taxpayer,

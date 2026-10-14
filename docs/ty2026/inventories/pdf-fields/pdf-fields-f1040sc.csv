@@ -1,0 +1,110 @@
+field,type,tooltip,physical_pdf_page,on_state
+topmostSubform[0].Page1[0].f1_1[0],Text,Page 1. Name of proprietor.,2,
+topmostSubform[0].Page1[0].f1_2[0],Text,Social security number (S S N).,2,
+topmostSubform[0].Page1[0].f1_3[0],Text,"A. Principal business or profession, including product or service (see  instructions).",2,
+topmostSubform[0].Page1[0].f1_4[0],Text,B. Enter code from instructions.,2,
+topmostSubform[0].Page1[0].f1_5[0],Text,"C. Business name. If no separate business name, leave blank.",2,
+topmostSubform[0].Page1[0].BoxD[0].f1_6[0],Text,"D. Employer I D number (E I N), (see instr.).",2,
+topmostSubform[0].Page1[0].f1_7[0],Text,"E. Business name. Number and street. If you have a post office box, see instructions.",2,
+topmostSubform[0].Page1[0].f1_8[0],Text,E. Apt. no.,2,
+topmostSubform[0].Page1[0].f1_9[0],Text,"E. City, town, or post office.",2,
+topmostSubform[0].Page1[0].f1_10[0],Text,E. State.,2,
+topmostSubform[0].Page1[0].f1_11[0],Text,E. Z I P code.,2,
+topmostSubform[0].Page1[0].c1_1[0],Button,F. Accounting method: (1). Cash.,2,1
+topmostSubform[0].Page1[0].c1_1[1],Button,F. (2). Accrual.,2,2
+topmostSubform[0].Page1[0].c1_1[2],Button,F. (3). Other.,2,3
+topmostSubform[0].Page1[0].f1_12[0],Text,F. (3). Other (specify).,2,
+topmostSubform[0].Page1[0].c1_2[0],Button,"G. Did you ""materially participate"" in the operation of this business during 2026?  Yes.",2,1
+topmostSubform[0].Page1[0].c1_2[1],Button,"G. If ""No,"" see instructions for limit on losses. No.",2,2
+topmostSubform[0].Page1[0].c1_3[0],Button,"H. If you started or acquired this business during 2026, check here.",2,1
+topmostSubform[0].Page1[0].c1_4[0],Button,I. Did you make any payments in 2026 that would require you to file Form(s) 1099? See instructions. Yes.,2,1
+topmostSubform[0].Page1[0].c1_4[1],Button,I. No.,2,2
+topmostSubform[0].Page1[0].c1_5[0],Button,"J. If ""Yes,"" did you or will you file required Form(s) 1099? Yes.",2,1
+topmostSubform[0].Page1[0].c1_5[1],Button,J. No.,2,2
+topmostSubform[0].Page1[0].Line1_ReadOrder[0].c1_6[0],Button,Part I. Income. 1. Gross receipts or sales. See instructions for line 1 and check the box if this income was reported to you on Form W-2 and the “Statutory employee” box on that form was checked.,2,1
+topmostSubform[0].Page1[0].f1_13[0],Text,1. Amount.,2,
+topmostSubform[0].Page1[0].f1_14[0],Text,2. Returns and allowances.,2,
+topmostSubform[0].Page1[0].f1_15[0],Text,3. Subtract line 2 from line 1.,2,
+topmostSubform[0].Page1[0].f1_16[0],Text,4. Cost of goods sold (from line 42).,2,
+topmostSubform[0].Page1[0].f1_17[0],Text,5. Gross profit. Subtract line 4 from line 3.,2,
+topmostSubform[0].Page1[0].f1_18[0],Text,"6. Other income, including federal and state gasoline or fuel tax credit or refund (see instructions).",2,
+topmostSubform[0].Page1[0].f1_19[0],Text,7. Gross income. Add lines 5 and 6.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_20[0],Text,Part I I. Expenses. Enter expenses for business use of your home only on line 30. 8. Advertising.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_21[0],Text,9. Car and truck expenses (see instructions).,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_22[0],Text,10. Commissions and fees.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_23[0],Text,11. Contract labor (see instructions).,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_24[0],Text,12. Depletion.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_25[0],Text,13. Depreciation and section 179 expense deduction (not included in Part I I I) (see instructions).,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_26[0],Text,14. Employee benefit programs (other than on line 19).,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_27[0],Text,15. Insurance (other than health).,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_28[0],Text,"16. Interest (see instructions): a. Mortgage (paid to banks, etc.).",2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_29[0],Text,16b. Vehicle loan.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_31[0],Text,16c. Other.,2,
+topmostSubform[0].Page1[0].Lines8-16c_ReadOrder[0].f1_32[0],Text,17. Legal and professional services.,2,
+topmostSubform[0].Page1[0].f1_33[0],Text,18. Office expense (see instructions).,2,
+topmostSubform[0].Page1[0].f1_34[0],Text,19. Pension and profit-sharing plans.,2,
+topmostSubform[0].Page1[0].f1_35[0],Text,"20. Rent or lease (see instructions): a. Vehicles, machinery, and equipment.",2,
+topmostSubform[0].Page1[0].f1_36[0],Text,20b. Other business property.,2,
+topmostSubform[0].Page1[0].f1_37[0],Text,21. Repairs and maintenance.,2,
+topmostSubform[0].Page1[0].f1_38[0],Text,22. Supplies (not included in Part I I I).,2,
+topmostSubform[0].Page1[0].f1_39[0],Text,23. Taxes and licenses.,2,
+topmostSubform[0].Page1[0].f1_40[0],Text,24. Travel and meals: a. Travel.,2,
+topmostSubform[0].Page1[0].f1_41[0],Text,24b. Deductible meals (see instructions).,2,
+topmostSubform[0].Page1[0].f1_42[0],Text,25. Utilities.,2,
+topmostSubform[0].Page1[0].f1_43[0],Text,26. Wages (less employment credits).,2,
+topmostSubform[0].Page1[0].f1_44[0],Text,27a. Energy efficient commercial buildings deduction (attach Form 7205).,2,
+topmostSubform[0].Page1[0].f1_45[0],Text,27b. Other expenses (from line 48).,2,
+topmostSubform[0].Page1[0].f1_46[0],Text,28. Total expenses before expenses for business use of home. Add lines 8 through 27b.,2,
+topmostSubform[0].Page1[0].f1_47[0],Text,29. Tentative profit or (loss). Subtract line 28 from line 7.,2,
+topmostSubform[0].Page1[0].Line30_ReadOrder[0].f1_48[0],Text,30. Expenses for business use of your home. Do not report these expenses elsewhere. Attach Form 8829 unless using the simplified method. See instructions. Simplified method filers only: Enter the total square footage of (a) your home:,2,
+topmostSubform[0].Page1[0].Line30_ReadOrder[0].f1_49[0],Text,30. and (b) the part of your home used for business:,2,
+topmostSubform[0].Page1[0].f1_50[0],Text,30. Use the Simplified Method Worksheet in the instructions to figure the amount to enter on line 30.,2,
+topmostSubform[0].Page1[0].f1_51[0],Text,"31. Net profit or (loss). Subtract line 30 from line 29. If a profit, enter on both Schedule 1 (Form 1040), line 3, and on Schedule S E, line 2. (If you checked the box on line 1, see instructions.) Estates and trusts, enter on Form 1041, line 3. If a loss, you must go to line 32.",2,
+topmostSubform[0].Page1[0].c1_7[0],Button,"32. If you have a loss, check the box that describes your investment in this activity. See instructions. If you checked box 32a, enter the loss on both Schedule 1 (Form 1040), line 3 and on Schedule S E, line 2. (If you checked the box on line 1, see the line 31 instructions.) Estates and trusts, enter on Form 1041, line 3. If you checked box 32b, you must attach Form 6198. Your loss may be limited. a. All investment is at risk.",2,1
+topmostSubform[0].Page1[0].c1_7[1],Button,32b. Some investment is not at risk.,2,2
+topmostSubform[0].Page2[0].c2_1[0],Button,Page 2. Part I I I. Cost of Goods Sold (see instructions). 33. Method(s) used to value closing inventory: a. Cost.,3,1
+topmostSubform[0].Page2[0].c2_2[0],Button,33b. Lower of cost or market.,3,1
+topmostSubform[0].Page2[0].c2_3[0],Button,33c. Other (attach explanation).,3,1
+topmostSubform[0].Page2[0].c2_4[0],Button,"34. Was there any change in determining quantities, costs, or valuations between opening and closing inventory? If ""Yes,"" attach explanation. Yes.",3,1
+topmostSubform[0].Page2[0].c2_4[1],Button,34. No.,3,2
+topmostSubform[0].Page2[0].f2_1[0],Text,"35. Inventory at beginning of year. If different from last year's closing inventory, attach explanation.",3,
+topmostSubform[0].Page2[0].f2_2[0],Text,36. Purchases less cost of items withdrawn for personal use.,3,
+topmostSubform[0].Page2[0].f2_3[0],Text,37. Cost of labor. Do not include any amounts paid to yourself.,3,
+topmostSubform[0].Page2[0].f2_4[0],Text,38. Materials and supplies.,3,
+topmostSubform[0].Page2[0].f2_5[0],Text,39. Other costs.,3,
+topmostSubform[0].Page2[0].f2_6[0],Text,40. Add lines 35 through 39.,3,
+topmostSubform[0].Page2[0].f2_7[0],Text,41. Inventory at end of year.,3,
+topmostSubform[0].Page2[0].f2_8[0],Text,42. Cost of goods sold. Subtract line 41 from line 40. Enter the result here and on line 4.,3,
+topmostSubform[0].Page2[0].f2_9[0],Text,Part I V. Information on Your Vehicle. Complete this part only if you are claiming car or truck expenses on line 9 and are not required to file Form 4562 for this business. See the instructions for line 13 to find out if you must file Form 4562. 43. When did you place your vehicle in service for business purposes? (month/day/year). 2 digit month.,3,
+topmostSubform[0].Page2[0].f2_10[0],Text,43. 2 digit day.,3,
+topmostSubform[0].Page2[0].f2_11[0],Text,43. 4 digit year.,3,
+topmostSubform[0].Page2[0].f2_12[0],Text,"44. Of the total number of miles you drove your vehicle during 2026, enter the number of miles you used your vehicle for: a Business.",3,
+topmostSubform[0].Page2[0].f2_13[0],Text,44b. Commuting (see instructions).,3,
+topmostSubform[0].Page2[0].f2_14[0],Text,44c. Other.,3,
+topmostSubform[0].Page2[0].c2_5[0],Button,45. Was your vehicle available for personal use during off-duty hours? Yes.,3,1
+topmostSubform[0].Page2[0].c2_5[1],Button,45. No.,3,2
+topmostSubform[0].Page2[0].c2_6[0],Button,46. Do you (or your spouse) have another vehicle available for personal use? Yes.,3,1
+topmostSubform[0].Page2[0].c2_6[1],Button,46. No.,3,2
+topmostSubform[0].Page2[0].c2_7[0],Button,47a. Do you have evidence to support your deduction? Yes.,3,1
+topmostSubform[0].Page2[0].c2_7[1],Button,47a. No.,3,2
+topmostSubform[0].Page2[0].c2_8[0],Button,"47b. If ""Yes,"" is the evidence written? Yes.",3,1
+topmostSubform[0].Page2[0].c2_8[1],Button,47b. No.,3,2
+topmostSubform[0].Page2[0].f2_15[0],Text,"Part V. Other Expenses. List below business expenses not included on lines 8–27a, or line 30. Business expense. 1.",3,
+topmostSubform[0].Page2[0].f2_16[0],Text,Amount. 1.,3,
+topmostSubform[0].Page2[0].f2_17[0],Text,Business expense. 2.,3,
+topmostSubform[0].Page2[0].f2_18[0],Text,Amount. 2.,3,
+topmostSubform[0].Page2[0].f2_19[0],Text,Business expense. 3.,3,
+topmostSubform[0].Page2[0].f2_20[0],Text,Amount. 3.,3,
+topmostSubform[0].Page2[0].f2_21[0],Text,Business expense. 4.,3,
+topmostSubform[0].Page2[0].f2_22[0],Text,Amount. 4.,3,
+topmostSubform[0].Page2[0].f2_23[0],Text,Business expense. 5.,3,
+topmostSubform[0].Page2[0].f2_24[0],Text,Amount. 5.,3,
+topmostSubform[0].Page2[0].f2_25[0],Text,Business expense. 6.,3,
+topmostSubform[0].Page2[0].f2_26[0],Text,Amount. 6.,3,
+topmostSubform[0].Page2[0].f2_27[0],Text,Business expense. 7.,3,
+topmostSubform[0].Page2[0].f2_28[0],Text,Amount. 7.,3,
+topmostSubform[0].Page2[0].f2_29[0],Text,Business expense. 8.,3,
+topmostSubform[0].Page2[0].f2_30[0],Text,Amount. 8.,3,
+topmostSubform[0].Page2[0].f2_31[0],Text,Business expense. 9.,3,
+topmostSubform[0].Page2[0].f2_32[0],Text,Amount. 9.,3,
+topmostSubform[0].Page2[0].f2_33[0],Text,48. Total other expenses. Enter here and on line 27b.,3,

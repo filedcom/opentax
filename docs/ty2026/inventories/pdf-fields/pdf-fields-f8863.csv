@@ -1,0 +1,78 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684.5 460.05 696.001,yes
+topmostSubform[0].Page1[0].SocialSecurity[0].f1_2[0],/Tx,Your social security number. First 3-digits. ,2,461.8 684.5 502.799 695.999,yes
+topmostSubform[0].Page1[0].SocialSecurity[0].f1_3[0],/Tx,Middle 2-digits. ,2,505 684.5 532.001 695.999,yes
+topmostSubform[0].Page1[0].SocialSecurity[0].f1_4[0],/Tx,Last 4-digits. ,2,533.8 684.5 575.799 695.999,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"Caution. Complete a separate Part I I I on page 2 for each student for whom you're claiming either credit before you complete Parts I and I I. Part I. Refundable American Opportunity Credit. 1. After completing Part I I I for each student, enter the total of all amounts from all Parts I I I, line 30. ",2,505 589.012 576 599.753,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"2. Enter $180,000 if married filing jointly; or $90,000 if single, head of household, or qualifying surviving spouse. ",2,411.4 565.53 481.4 576.771,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"3. Enter the amount from Form 1040 or 1040-S R, line 11a. But if you're filing Form 2555 or 4563, or you're excluding income from Puerto Rico, see Pub. 970 for the amount to enter instead. ",2,411.4 530.301 481.4 541.542,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,"4. Subtract line 3 from line 2. If zero or less, stop; you can't take any education credit. ",2,411.4 506.816 481.4 518.057,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"5. Enter $20,000 if married filing jointly; or $10,000 if single, head of household, or qualifying surviving spouse. ",2,411.4 483.331 481.4 494.572,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,"6. If line 4 is: Equal to or more than line 5, enter 1.000 on line 6; or. Less than line 5, divide line 4 by line 5. Enter the result as a decimal (rounded to at least three places). Digits before the decimal. ",2,505 448.102 532.8 459.343,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,6. Digits after the decimal. ,2,540 448.102 576 459.343,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"7. Multiply line 1 by line 6. Caution: If you were under age 24 at the end of the year and meet the conditions described in the instructions, you can't take the refundable American opportunity credit; skip line 8, enter the amount from line 7 on line 9, and check this box. ",2,464 402.503 472 410.503,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,7. Amount. ,2,505 401.132 576 412.373,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,"8. Refundable American opportunity credit. Multiply line 7 by 40% (0.40). Enter the amount here and on Form 1040 or 1040-S R, line 29. Then go to line 9 below. ",2,505 377.647 576 388.888,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,Part I I. Nonrefundable Education Credits. 9. Subtract line 8 from line 7. Enter here and on line 2 of the Credit Limit Worksheet. See instructions. ,2,505 354.162 576 364.903,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"10. After completing Part I I I for each student, enter the total of all amounts from all Parts I I I, line 31. If zero, skip lines 11 through 17, enter 0 on line 18, and go to line 19. ",2,505 330.677 576 341.918,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"11. Enter the smaller of line 10 or $10,000. ",2,505 318.936 576 329.677,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,12. Multiply line 11 by 20% (0.20). ,2,505 307.192 576 317.933,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,"13. Enter $180,000 if married filing jointly; or $90,000 if single, head of household, or qualifying surviving spouse. ",2,411.4 283.71 481.4 294.951,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"14. Enter the amount from Form 1040 or 1040-S R, line 11a. But if you're filing Form 2555 or 4563, or you're excluding income from Puerto Rico, see Pub. 970 for the amount to enter instead. ",2,411.4 248.481 481.4 259.722,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"15. Subtract line 14 from line 13. If zero or less, skip lines 16 and 17, enter 0 on line 18, and go to line 19. ",2,411.4 224.996 481.4 236.237,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"16. Enter $20,000 if married filing jointly; or $10,000 if single, head of household, or qualifying surviving spouse. ",2,411.4 201.508 481.4 212.749,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,"17. If line 15 is: Equal to or more than line 16, enter 1.000 on line 17; or. Less than line 16, divide line 15 by line 16. Enter the result as a decimal (rounded to at least three places). Digits before the decimal. ",2,505 166.282 532.8 177.523,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,17. Digits after the decimal. ,2,540 166.282 576 177.523,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,18. Multiply line 12 by line 17. Enter here and on line 1 of the Credit Limit Worksheet. See instructions. ,2,505 142.796 576 154.037,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"19. Nonrefundable education credits. Enter the amount from line 7 of the Credit Limit Worksheet (see instructions) here and on Schedule 3 (Form 1040), line 3. ",2,505 119.311 576 130.552,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. Name(s) shown on return. ,3,36 720.5 459.8 732.001,yes
+topmostSubform[0].Page2[0].SSN[0].f2_2[0],/Tx,Your social security number. First 3-digits. ,3,461.8 720.5 503 731.999,yes
+topmostSubform[0].Page2[0].SSN[0].f2_3[0],/Tx,Middle 2-digits. ,3,505 720.5 531.8 731.999,yes
+topmostSubform[0].Page2[0].SSN[0].f2_4[0],/Tx,Last 4-digits. ,3,533.8 720.5 576 731.999,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,Caution. Complete Part I I I for each student for whom you're claiming either the American opportunity credit or lifetime learning credit. Use additional copies of page 2 as needed for each student. Part I I I. Student and Educational Institution Information (see instructions). 20. Student name (as shown on page 1 of your tax return). ,3,50.4 636.501 308.6 660.001,yes
+topmostSubform[0].Page2[0].StudentSSN[0].f2_6[0],/Tx,21. Student social security number (as shown on page 1 of your tax return). First 3-digits. ,3,324 636.501 416.6 648,yes
+topmostSubform[0].Page2[0].StudentSSN[0].f2_7[0],/Tx,21. Middle 2-digits. ,3,418.6 636.501 481.4 648,yes
+topmostSubform[0].Page2[0].StudentSSN[0].f2_8[0],/Tx,21. Last 4-digits. ,3,483.4 636.501 576 648,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_9[0],/Tx,22. Educational institution information (see instructions). a. Name of first educational institution. ,3,36 600.498 308.6 611.999,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_10[0],/Tx,"22a. (1) Address. Number and street (or P.O. box). City, town or post office, state, and Z I P code. If a foreign address, see instructions. ",3,36 540.5 308.6 568.001,yes
+topmostSubform[0].Page2[0].Line22a[0].c2_1[0],/Btn,22a. (2) Did the student receive Form 1098-T from this institution for 2026? Yes. ,3,226.4 524 234.4 532,yes
+topmostSubform[0].Page2[0].Line22a[0].c2_1[1],/Btn,22a. (2) No. ,3,269.6 524 277.6 532,yes
+topmostSubform[0].Page2[0].Line22a[0].c2_2[0],/Btn,22a. (3) Did the student receive Form 1098-T from this institution for 2025 with box 7 checked? Yes. ,3,226.4 493.999 234.4 501.999,yes
+topmostSubform[0].Page2[0].Line22a[0].c2_2[1],/Btn,22a. (3) No. ,3,269.6 493.999 277.6 501.999,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_11[0],/Tx,22a. (4) Enter the institution's employer identification number (E I N) if you're claiming the American opportunity credit or if you checked “Yes” in (2) or (3). You can get the E I N from Form 1098-T or from the institution. Digit 1 of 9. ,3,64.8 420.001 79.2 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_12[0],/Tx,22a. (4) Digit 2 of 9. ,3,86.4 420.001 100.8 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_13[0],/Tx,22a. (4) Digit 3 of 9. ,3,122.4 420.001 136.8 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_14[0],/Tx,22a. (4) Digit 4 of 9. ,3,144 420.001 158.4 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_15[0],/Tx,22a. (4) Digit 5 of 9. ,3,165.6 420.001 180 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_16[0],/Tx,22a. (4) Digit 6 of 9. ,3,187.2 420.001 201.6 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_17[0],/Tx,22a. (4) Digit 7 of 9. ,3,208.8 420.001 223.2 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_18[0],/Tx,22a. (4) Digit 8 of 9. ,3,230.4 420.001 244.8 432,yes
+topmostSubform[0].Page2[0].Line22a[0].f2_19[0],/Tx,22a. (4) Digit 9 of 9. ,3,252 420.001 266.4 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_20[0],/Tx,22b. Name of second educational institution (if any). ,3,310.6 600.498 576 611.999,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_21[0],/Tx,"22b. (1) Address. Number and street (or P.O. box). City, town or post office, state, and Z I P code. If a foreign address, see instructions. ",3,310.6 540.5 576 568.001,yes
+topmostSubform[0].Page2[0].Line22b[0].c2_3[0],/Btn,22b. (2) Did the student receive Form 1098-T from this institution for 2026? Yes. ,3,500 524 508 532,yes
+topmostSubform[0].Page2[0].Line22b[0].c2_3[1],/Btn,22b. (2) No. ,3,543.2 524 551.2 532,yes
+topmostSubform[0].Page2[0].Line22b[0].c2_4[0],/Btn,22b. (3) Did the student receive Form 1098-T from this institution for 2025 with box 7 checked? Yes. ,3,500 493.999 508 501.999,yes
+topmostSubform[0].Page2[0].Line22b[0].c2_4[1],/Btn,22b. (3) No. ,3,543.2 493.999 551.2 501.999,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_22[0],/Tx,22b. (4) Enter the institution's employer identification number (E I N) if you're claiming the American opportunity credit or if you checked “Yes” in (2) or (3). You can get the E I N from Form 1098-T or from the institution. Digit 1 of 9. ,3,338.4 420.001 352.8 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_23[0],/Tx,22b. (4) Digit 2 of 9. ,3,360 420.001 374.4 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_24[0],/Tx,22b. (4) Digit 3 of 9. ,3,396 420.001 410.4 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_25[0],/Tx,22b. (4) Digit 4 of 9. ,3,417.6 420.001 432 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_26[0],/Tx,22b. (4) Digit 5 of 9. ,3,439.2 420.001 453.6 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_27[0],/Tx,22b. (4) Digit 6 of 9. ,3,460.8 420.001 475.2 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_28[0],/Tx,22b. (4) Digit 7 of 9. ,3,482.4 420.001 496.8 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_29[0],/Tx,22b. (4) Digit 8 of 9. ,3,504 420.001 518.4 432,yes
+topmostSubform[0].Page2[0].Line22b[0].f2_30[0],/Tx,22b. (4) Digit 9 of 9. ,3,525.6 420.001 540 432,yes
+topmostSubform[0].Page2[0].c2_5[0],/Btn,23. Has the American opportunity credit been claimed for this student for any 4 prior tax years? Yes — Stop! Go to line 31 for this student. ,3,315.4 384.999 325.4 394.999,yes
+topmostSubform[0].Page2[0].c2_5[1],/Btn,23. No — Go to line 24. ,3,452.2 384.999 462.2 394.999,yes
+topmostSubform[0].Page2[0].c2_6[0],/Btn,"24. Was the student enrolled at least half-time for at least 1 academic period that began or is treated as having begun in 2026 at an eligible educational institution in a program leading toward a postsecondary degree, certificate, or other recognized postsecondary educational credential? See instructions. Yes — Go to line 25. ",3,315.4 330.999 325.4 340.999,yes
+topmostSubform[0].Page2[0].c2_6[1],/Btn,24. No — Stop! Go to line 31 for this student. ,3,452.2 330.999 462.2 340.999,yes
+topmostSubform[0].Page2[0].c2_7[0],/Btn,25. Did the student complete the first 4 years of postsecondary education before 2026? See instructions. Yes — Stop! Go to line 31 for this student. ,3,315.4 276.999 325.4 286.999,yes
+topmostSubform[0].Page2[0].c2_7[1],/Btn,25. No — Go to line 26. ,3,452.2 276.999 462.2 286.999,yes
+topmostSubform[0].Page2[0].c2_8[0],/Btn,"26. Was the student convicted, before the end of 2026, of a felony for possession or distribution of a controlled substance? Yes—Stop! Go to line 31 for this student. ",3,315.4 240.999 325.4 250.999,yes
+topmostSubform[0].Page2[0].c2_8[1],/Btn,26. No—Complete lines 27 through 30 for this student. ,3,452.2 240.999 462.2 250.999,yes
+topmostSubform[0].Page2[0].f2_31[0],/Tx,"Caution. You can't take the American opportunity credit and the lifetime learning credit for the same student in the same year. If you complete lines 27 through 30 for this student, don't complete line 31. American Opportunity Credit. 27. Adjusted qualified education expenses (see instructions). Don't enter more than $4,000. ",3,505 168.501 576 179.5,yes
+topmostSubform[0].Page2[0].f2_32[0],/Tx,"28. Subtract $2,000 from line 27. If zero or less, enter 0. ",3,505 156.502 576 167.501,yes
+topmostSubform[0].Page2[0].f2_33[0],/Tx,29. Multiply line 28 by 25% (0.25). ,3,505 144.5 576 155.499,yes
+topmostSubform[0].Page2[0].f2_34[0],/Tx,"30. If line 28 is zero, enter the amount from line 27. Otherwise, add $2,000 to the amount on line 29 and enter the result. Skip line 31. Include the total of all amounts from all Parts I I I, line 30 on Part I, line 1. ",3,505 120.502 576 132.001,yes
+topmostSubform[0].Page2[0].f2_35[0],/Tx,"Lifetime Learning Credit. 31. Adjusted qualified education expenses (see instructions). Include the total of all amounts from all Parts I I I, line 31, on Part I I, line 10. ",3,505 84.502 576 96.001,yes

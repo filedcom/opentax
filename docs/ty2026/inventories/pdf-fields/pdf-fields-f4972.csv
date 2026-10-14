@@ -1,0 +1,59 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name of recipient of distribution. ,2,36 684.468 460.05 697.969,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Identifying number. ,2,460.8 684.468 576 697.969,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"Part I. Complete this part to see if you can use Form 4972. 1. Was this a distribution of a plan participant’s entire balance (excluding deductible voluntary employee contributions and certain forfeited amounts) from all of an employer’s qualified plans of one kind (for example, pension, profit-sharing, or stock bonus)? Yes. ",2,540.6 625.967 548.6 633.967,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,"1. If “No,” don't use this form. No. ",2,562.2 625.967 570.2 633.967,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,"2. Did you roll over any part of the distribution? If “Yes,” don't use this form. Yes. ",2,540.6 613.968 548.6 621.968,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,2. No. ,2,562.2 613.968 570.2 621.968,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,"3. Was this distribution paid to you as a beneficiary of a plan participant who was born before January 2, 1936? Yes. ",2,540.6 601.969 548.6 609.969,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,3. No. ,2,562.2 601.969 570.2 609.969,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"4. Were you (a) a plan participant who received this distribution, (b) born before January 2, 1936, and (c) a participant in the plan for at least 5 years before the year of the distribution? Yes. ",2,540.6 577.969 548.6 585.969,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,"4. No. If you answered “No” to both questions 3 and 4, don't use this form. ",2,562.2 577.969 570.2 585.969,yes
+topmostSubform[0].Page1[0].c1_5[0],/Btn,"5a. Did you use Form 4972 after 1986 for a previous distribution from your own plan? If ""Yes,"" don't use this form for a 2026 distribution from your own plan. Yes. ",2,540.6 541.969 548.6 549.969,yes
+topmostSubform[0].Page1[0].c1_5[1],/Btn,5a. No. ,2,562.2 541.969 570.2 549.969,yes
+topmostSubform[0].Page1[0].c1_6[0],/Btn,"5b. If you are receiving this distribution as a beneficiary of a plan participant who died, did you use Form 4972 for a previous distribution received as a beneficiary of that participant after 1986? If “Yes,” don't  use this form for this distribution. Yes. ",2,540.6 505.968 548.6 513.968,yes
+topmostSubform[0].Page1[0].c1_6[1],/Btn,5b. No. ,2,562.2 505.968 570.2 513.968,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,"Part I I. Complete this part to choose the 20% capital gain election (see instructions). 6. Capital gain part from Form 1099-R, box 3. ",2,504 479.97 576 491.969,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,"7. Multiply line 6 by 20% (0.20). If you also choose to use Part I I I, go to line 8. Otherwise, include the amount from line 7 in the total  on  Form 1040, 1040-S R, or 1040-N R, line 16, or Form 1041, Schedule G, line 1b. Be sure to check box 2 on Form 1040, 1040-S R, or 1040-N R, line 16.",2,504 467.968 576 479.967,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,"Part I I I. Complete this part to choose the 10-year tax option (see instructions). 8. If you completed Part I I, enter the amount from Form 1099-R, box 2a minus box 3. If you didn't complete Part I I, enter the amount from box 2a. Multiple recipients (and recipients who elect to include net unrealized appreciation (N U A) in taxable income), see instructions. ",2,504 383.969 576 395.968,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,"9. Death benefit exclusion for a beneficiary of a plan participant who died before August 21, 1996. ",2,504 371.97 576 383.969,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,10. Total taxable amount. Subtract line 9 from line 8. ,2,504 359.968 576 371.967,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,"11. Current actuarial value of annuity from Form 1099-R, box 8a. If none, enter 0. ",2,504 347.969 576 359.968,yes
+topmostSubform[0].Page1[0].f1_09[0],/Tx,"12. Adjusted total taxable amount. Add lines 10 and 11. If this amount is $70,000 or more, skip lines 13 through 16, enter this amount on line 17, and go to line 18. ",2,504 323.968 576 335.967,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,"13. Multiply line 12 by 50% (0.50), but don't enter more than $10,000. ",2,410.4 311.969 481.65 323.968,yes
+topmostSubform[0].Page1[0].Line14_ReadOrder[0].f1_11[0],/Tx,"14. Subtract $20,000 from line 12. If line 12 is $20,000 or less, enter 0. ",2,316.8 287.968 388.05 299.967,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,15. Multiply line 14 by 20% (0.20). ,2,410.4 275.969 481.65 287.968,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,16. Minimum distribution allowance. Subtract line 15 from line 13. ,2,504 263.97 576 275.969,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,17. Subtract line 16 from line 12. ,2,504 251.968 576 263.967,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,18. Federal estate tax attributable to lump-sum distribution. ,2,504 239.969 576 251.968,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"19. Subtract line 18 from line 17. If line 11 is zero, skip lines 20 through 22 and go to line 23. ",2,504 227.97 576 239.969,yes
+topmostSubform[0].Page1[0].Line20_ReadOrder[0].f1_17[0],/Tx,20. Divide line 11 by line 12 and enter the result as a decimal (rounded to at least three places). Numbers before the decimal. ,2,410.4 203.969 432 215.968,yes
+topmostSubform[0].Page1[0].Line20_ReadOrder[0].f1_18[0],/Tx,20. Numbers after the decimal. ,2,439.2 203.969 482.4 215.968,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,21. Multiply line 16 by the decimal on line 20. ,2,410.4 191.97 481.65 203.969,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,22. Subtract line 21 from line 11. ,2,410.4 179.968 481.65 191.967,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,23. Multiply line 19 by 10% (0.10). ,2,504 167.969 576 179.968,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,24. Tax on amount on line 23. Use the Tax Rate Schedule in the instructions. ,2,504 155.97 576 167.969,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,"25. Multiply line 24 by 10.0. If line 11 is zero, skip lines 26 through 28, enter this amount on line 29, and go to line 30.",2,504 131.969 576 143.968,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,26. Multiply line 22 by 10% (0.10). ,2,410.4 119.97 481.65 131.969,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,27. Tax on amount on line 26. Use the Tax Rate Schedule in the instructions. ,2,410.4 107.968 481.65 119.967,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,28. Multiply line 27 by 10.0. ,2,504 95.969 576 107.968,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,"29. Subtract line 28 from line 25. Multiple recipients, see instructions. ",2,504 83.97 576 95.969,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"30. Tax on lump-sum distribution. Add lines 7 and 29. Also include this amount in the total on Form 1040, 1040-S R, or 1040-N R, line 16 (check box 2), or Form 1041, Schedule G, line 1b.",2,504 59.969 576 71.968,yes
+topmostSubform[0].Page3[0].Col3[0].A[0].f3_01[0],/Tx,Page 3. A. Subtract line 28 from line 25. ,4,525.6 436.32 576 448.319,yes
+topmostSubform[0].Page3[0].Col3[0].B[0].f3_02[0],/Tx,B. Enter your percentage of the distribution from box 9a. ,4,525.6 412.319 576 424.32,yes
+topmostSubform[0].Page3[0].Col3[0].C[0].f3_03[0],/Tx,"C. Multiply line A by line B. Enter here and on Form 4972, line 29. Also write “M R D” on the dotted line next to line 29. ",4,525.6 376.319 576 388.319,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_04[0],/Tx,"N U A Worksheet (keep for your records). A. Enter the amount from Form 1099-R, box 3. ",4,518.4 335.97 576 347.969,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_05[0],/Tx,"B. Enter the amount from Form 1099-R, box 2a. ",4,518.4 323.968 576 335.967,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_06[0],/Tx,C. Divide line A by line B and enter the result as a decimal (rounded to at least three places). Numbers before the decimal. ,4,518.4 299.97 532.8 311.969,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_07[0],/Tx,C. Numbers after the decimal. ,4,539.388 299.97 576 311.969,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_08[0],/Tx,"D. Enter the amount from Form 1099-R, box 6. ",4,518.4 287.968 576 299.967,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_09[0],/Tx,E. Capital gain portion of N U A. Multiply line C by line D. ,4,518.4 275.969 576 287.968,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_10[0],/Tx,F. Ordinary income portion of N U A. Subtract line E from line D. ,4,518.4 263.97 576 275.969,yes
+topmostSubform[0].Page3[0].NUAWorksheet_ReadOrder[0].f3_11[0],/Tx,"G. Total capital gain portion of distribution. Add lines A and E. Enter here and on Form 4972, line 6. On the dotted line next to line 6, write ""N U A"" and the amount from line E above. ",4,518.4 233.968 576 245.967,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_12[0],/Tx,"Death Benefit Worksheet (keep for your records). A. Enter the amount from Form 1099-R, box 3, or, if you are including N U A in taxable income, the amount from line G of the N U A Worksheet. ",4,518.4 179.968 576 191.967,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_13[0],/Tx,"B. Enter the amount from Form 1099-R, box 2a, plus, if you are including N U A in taxable income, the amount from Form 1099-R, box 6. ",4,518.4 155.97 576 167.969,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_14[0],/Tx,C. Divide line A by line B and enter the result as a decimal (rounded to at least three places). Numbers before the decimal. ,4,518.4 131.969 532.8 143.968,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_15[0],/Tx,C. Numbers after the decimal. ,4,540 131.969 576 143.968,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_16[0],/Tx,"D. Enter your share of the death benefit exclusion*. * Applies only for participants who died before August 21, 1996. If there are multiple recipients of the distribution, the allowable death benefit exclusion must be allocated among the recipients in the same proportion that they share the distribution. ",4,518.4 119.97 576 131.969,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_17[0],/Tx,E. Death benefit exclusion allocated to capital gain. Multiply line D by line C. ,4,518.4 95.969 576 107.968,yes
+topmostSubform[0].Page3[0].DeathBenefitsWorksheet_ReadOrder[0].f3_18[0],/Tx,"F. Subtract line E from line A. Enter here and on Form 4972, line 6. ",4,518.4 83.97 576 95.969,yes

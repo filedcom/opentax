@@ -1,14 +1,21 @@
 import { join } from "@std/path";
-import { execute } from "../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../core/runtime/planner.ts";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
+import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
+import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
+import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
+import { loadForm8839Attachments } from "./form8839-attachments.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
+import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
+import { reconcileForm4972Collection } from "../../forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -20,8 +27,10 @@ function getCatalogEntry(formType: string, year: number) {
 export type ExportReturnArgs = {
   readonly returnId: string;
   readonly baseDir: string;
-  /** Skip reject-severity validation gate and export anyway. */
+  /** Skip only reject-severity business rules; never bypass calculation failures. */
   readonly force?: boolean;
+  /** Always label output as draft; permit incomplete calculations for diagnostic review. */
+  readonly draft?: boolean;
 };
 
 /** Error thrown when reject-severity rules fail and --force is not set. */
@@ -31,29 +40,183 @@ export class ExportRejectedError extends Error {
   ) {
     const lines = entries.map((e) => `  [${e.ruleNumber}] ${e.message}`);
     super(
-      `Export blocked by ${entries.length} reject-level rule(s):\n${lines.join("\n")}\n\nRe-run with --force to override.`,
+      `Export blocked by ${entries.length} reject-level rule(s):\n${
+        lines.join("\n")
+      }\n\nRe-run with --force to override.`,
     );
     this.name = "ExportRejectedError";
   }
 }
 
+/** Error thrown when executor diagnostics make finalized export unsafe. */
+export class ExportExecutionError extends Error {
+  constructor(
+    readonly entries: readonly ExecutorDiagnosticEntry[],
+  ) {
+    const lines = entries.map((e) =>
+      `  [${e.code}] ${e.nodeType}: ${e.message}`
+    );
+    super(
+      `Finalized export blocked by ${entries.length} executor diagnostic(s):\n${
+        lines.join("\n")
+      }\n\nRe-run with --draft only for visibly labeled diagnostic output, or fix executor errors before exporting finalized PDF or MeF XML.`,
+    );
+    this.name = "ExportExecutionError";
+  }
+}
+
 type PipelineResult = {
-  readonly pending: Record<string, unknown>;
+  readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly def: ReturnType<typeof getCatalogEntry>;
   readonly filer: ReturnType<typeof extractFilerIdentity>;
+  readonly executorDiagnostics: readonly ExecutorDiagnosticEntry[];
 };
 
+const ALWAYS_APPLICABLE_RULE_PREFIXES = [
+  "IND",
+  "R0000",
+] as const;
+
+// These checks require transmitter/session metadata that is absent from a
+// return-only XML or PDF export. They belong to the later A2A submission gate.
+const TRANSMISSION_ONLY_RULES = new Set([
+  "IND-062", // transmitter IP address
+  "IND-063", // transmitter timestamp
+  "R0000-051-01",
+  "R0000-052-01",
+  "R0000-054-01",
+  "R0000-060",
+  "R0000-080-01",
+  "R0000-081-01",
+  "R0000-082",
+  "R0000-114",
+  "R0000-115",
+  "R0000-118-01",
+  "R0000-119-01",
+  "R0000-143",
+  "R0000-180",
+  "R0000-228",
+  "R0000-229",
+]);
+
+export function isTransmissionOnlyRule(ruleNumber: string): boolean {
+  if (TRANSMISSION_ONLY_RULES.has(ruleNumber)) return true;
+  const indNumber = /^IND-(\d+)/.exec(ruleNumber);
+  if (!indNumber) return false;
+  const number = Number(indNumber[1]);
+  // IND-189 through IND-203 require filing security or additional filer
+  // metadata gathered by a transmitter, not by the return-only exporters.
+  return number >= 189 && number <= 203;
+}
+
+function rulePrefixForDocumentTag(tag: string): string | undefined {
+  if (tag === "IRS1040") return "F1040";
+  if (tag === "IRSW2") return "FW2";
+  const schedule = /^IRS1040Schedule(.+)$/.exec(tag)?.[1];
+  if (schedule) return `S${schedule}`;
+  const form = /^IRS(.+)$/.exec(tag)?.[1];
+  return form ? `F${form}` : undefined;
+}
+
+function pendingFormIdsForPrefix(prefix: string): readonly string[] {
+  if (prefix === "F1040") return ["f1040"];
+  if (prefix === "FW2") return ["w2"];
+  if (prefix === "SEIC") return ["eitc"];
+  if (prefix === "SSE") return ["schedule_se"];
+  if (/^S[123]$/.test(prefix)) return [`schedule${prefix.slice(1)}`];
+  if (/^S[A-Z]$/.test(prefix)) {
+    return [`schedule_${prefix.slice(1).toLowerCase()}`];
+  }
+  if (prefix.startsWith("F")) {
+    const suffix = prefix.slice(1).toLowerCase();
+    return [`form${suffix}`, `form_${suffix}`];
+  }
+  return [];
+}
+
+interface EmittedValidationScope {
+  readonly rulePrefixes: ReadonlySet<string>;
+  readonly formCounts: ReadonlyMap<string, number>;
+  readonly returnVersion?: string;
+}
+
+export function emittedValidationScope(xml: string): EmittedValidationScope {
+  const prefixes = new Set<string>(ALWAYS_APPLICABLE_RULE_PREFIXES);
+  const formCounts = new Map<string, number>();
+  for (const match of xml.matchAll(/<(IRS[A-Za-z0-9]+) documentId=/g)) {
+    const prefix = rulePrefixForDocumentTag(match[1]);
+    if (!prefix) continue;
+    prefixes.add(prefix);
+    for (const formId of pendingFormIdsForPrefix(prefix)) {
+      formCounts.set(formId, (formCounts.get(formId) ?? 0) + 1);
+    }
+  }
+  const returnVersion = /<Return\b[^>]*\breturnVersion="([^"]+)"/.exec(xml)
+    ?.[1];
+  return { rulePrefixes: prefixes, formCounts, returnVersion };
+}
+
+export function validateBusinessRules(
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+  filer: PipelineResult["filer"],
+  force: boolean | undefined,
+  emittedScope?: EmittedValidationScope,
+): void {
+  const f1040 = pending["f1040"] ?? {};
+  const filerInfo = {
+    primarySSN: filer?.primarySSN ?? "",
+    spouseSSN: filer?.spouse?.ssn,
+    filingStatus: typeof f1040["filing_status"] === "number"
+      ? f1040["filing_status"] as number
+      : 0,
+    ...filer,
+    NameLine1Txt: filer ? returnHeaderNameLine1(filer) : undefined,
+    returnVersion: emittedScope?.returnVersion,
+  };
+  const ctx = createReturnContext(
+    pending,
+    filerInfo,
+    FIELD_REGISTRY,
+    emittedScope?.formCounts,
+  );
+  const report = evaluateRules(
+    ALL_RULES.filter((rule) => !isTransmissionOnlyRule(rule.ruleNumber)),
+    ctx,
+    emittedScope?.rulePrefixes,
+  );
+  const rejectEntries = report.entries.filter(
+    (entry) =>
+      entry.severity === "reject" || entry.severity === "reject_and_stop",
+  );
+
+  if (rejectEntries.length > 0 && !force) {
+    throw new ExportRejectedError(rejectEntries);
+  }
+
+  for (
+    const entry of report.entries.filter((item) => item.severity === "alert")
+  ) {
+    console.warn(`[ALERT] [${entry.ruleNumber}] ${entry.message}`);
+  }
+  if (rejectEntries.length > 0 && force) {
+    console.warn(
+      `[WARNING] Exporting with ${rejectEntries.length} reject-level rule failure(s) (--force override active).`,
+    );
+    for (const entry of rejectEntries) {
+      console.warn(`  [${entry.ruleNumber}] ${entry.message}`);
+    }
+  }
+}
+
 /** Shared: execute nodes, warn on failures, run validation gate. */
-async function runReturnPipeline(args: ExportReturnArgs): Promise<PipelineResult> {
+export async function runReturnPipeline(
+  args: ExportReturnArgs,
+): Promise<PipelineResult> {
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const executionPlan = buildExecutionPlan(def.registry);
-  const singletonNodeTypes = new Set(
-    def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
-  );
-  const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year, formType: meta.formType ?? "f1040" });
+  const engineInputs = buildEngineInputs(inputs, singletonPublicInputKeys(def));
+  const result = def.executeReturn(engineInputs);
 
   // Warn about executor node failures before building output
   for (const d of result.diagnostics) {
@@ -63,54 +226,67 @@ async function runReturnPipeline(args: ExportReturnArgs): Promise<PipelineResult
     console.warn(
       `[WARNING] ${result.diagnostics.length} node(s) failed during execution — exported output may be incomplete.`,
     );
-  }
-
-  // Extract filer identity for header field access
-  const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
-  const filer = extractFilerIdentity(f1040);
-
-  // Run validation gate
-  const filerInfo = {
-    primarySSN: filer?.primarySSN ?? "",
-    spouseSSN: filer?.spouse?.ssn,
-    filingStatus: typeof f1040["filing_status"] === "number"
-      ? f1040["filing_status"] as number
-      : 0,
-    ...filer,
-  };
-  const ctx = createReturnContext(result.pending, filerInfo, FIELD_REGISTRY);
-  const report = evaluateRules(ALL_RULES, ctx);
-
-  const rejectEntries = report.entries.filter(
-    (e) => e.severity === "reject" || e.severity === "reject_and_stop",
-  );
-
-  if (rejectEntries.length > 0 && !args.force) {
-    throw new ExportRejectedError(rejectEntries);
-  }
-
-  const alertEntries = report.entries.filter((e) => e.severity === "alert");
-  for (const entry of alertEntries) {
-    console.warn(`[ALERT] [${entry.ruleNumber}] ${entry.message}`);
-  }
-  if (rejectEntries.length > 0 && args.force) {
-    console.warn(
-      `[WARNING] Exporting with ${rejectEntries.length} reject-level rule failure(s) (--force override active).`,
-    );
-    for (const entry of rejectEntries) {
-      console.warn(`  [${entry.ruleNumber}] ${entry.message}`);
+    if (!args.draft) {
+      throw new ExportExecutionError(result.diagnostics);
     }
   }
 
-  return { pending: result.pending, def, filer };
+  // Extract filer identity for output builders and validation.
+  const pending = normalizeAllPending(result.pending);
+  const f1040 = pending["f1040"] ?? {};
+  const filer = extractFilerIdentity(f1040);
+
+  return {
+    pending,
+    def,
+    filer,
+    executorDiagnostics: result.diagnostics,
+  };
+}
+
+function draftXmlNotice(entries: readonly ExecutorDiagnosticEntry[]): string {
+  // Do not embed arbitrary diagnostic text in XML comments (it may contain "--").
+  return `<!-- DRAFT/INCOMPLETE: diagnostic review only; ${entries.length} executor diagnostic(s). Not finalized or filing-ready. -->\n`;
+}
+
+async function addDraftWatermark(pdfBytes: Uint8Array): Promise<Uint8Array> {
+  const doc = await PDFDocument.load(pdfBytes);
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  const label = "DRAFT / INCOMPLETE";
+  for (const page of doc.getPages()) {
+    const { width, height } = page.getSize();
+    const size = Math.min(36, width / 16);
+    page.drawText(label, {
+      x: (width - font.widthOfTextAtSize(label, size)) / 2,
+      y: height / 2,
+      size,
+      font,
+      color: rgb(0.4, 0.4, 0.4),
+      opacity: 0.14,
+    });
+  }
+  return doc.save();
 }
 
 export async function exportMefCommand(
   args: ExportReturnArgs,
 ): Promise<string> {
-  const { pending, def, filer } = await runReturnPipeline(args);
-  const normalized = def.buildPending(pending);
-  return def.buildMefXml(normalized, filer);
+  const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
+    args,
+  );
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
+  const prepared = await def.prepareReturn(pending, filer, attachments);
+  const xml = prepared.bundle.xml;
+  validateBusinessRules(
+    pending,
+    filer,
+    args.force,
+    emittedValidationScope(xml),
+  );
+  return args.draft ? draftXmlNotice(executorDiagnostics) + xml : xml;
 }
 
 export type ExportPdfArgs = ExportReturnArgs & {
@@ -121,9 +297,89 @@ export type ExportPdfArgs = ExportReturnArgs & {
 export async function exportPdfCommand(
   args: ExportPdfArgs,
 ): Promise<string> {
+  const { pending, def, filer } = await runReturnPipeline(
+    args,
+  );
+  const attachments = await loadForm8839Attachments(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
+  // An unidentified draft is a PDF preview; it has no fileable MeF return.
+  const prepared = args.draft && !filer
+    ? undefined
+    : await def.prepareReturn(pending, filer, attachments);
+  validateBusinessRules(
+    pending,
+    filer,
+    args.force,
+    prepared ? emittedValidationScope(prepared.bundle.xml) : undefined,
+  );
+  const pdfBytes = prepared
+    ? await prepared.renderPdf()
+    : await def.buildPdfBytes(def.buildPending(pending), filer);
+  const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
+  const outPath = args.outputPath ??
+    join(args.baseDir, args.returnId, "export.pdf");
+  await Deno.writeFile(outPath, outputBytes);
+  return outPath;
+}
+
+/** This route emits a paper packet only; it never constructs MeF XML. */
+export async function exportForm4972PaperCommand(
+  args: ExportPdfArgs,
+): Promise<string> {
+  if (args.force || args.draft) {
+    throw new Error(
+      "Form 4972 paper-only export cannot bypass filing checks or export a draft",
+    );
+  }
   const { pending, def, filer } = await runReturnPipeline(args);
-  const pdfBytes = await def.buildPdfBytes(pending, filer);
-  const outPath = args.outputPath ?? join(args.baseDir, args.returnId, "export.pdf");
-  await Deno.writeFile(outPath, pdfBytes);
+  if (def.formType !== "f1040" || def.taxYear !== 2025) {
+    throw new Error("Form 4972 paper-only export requires a TY2025 Form 1040");
+  }
+  // MeF business rules are scoped by emitted native documents. This route
+  // deliberately emits no native return; source and PDF guards still run.
+  const bytes = await buildForm4972PaperPdfBytes(
+    def.buildPending(pending),
+    filer,
+  );
+  const scoped = reconcileForm4972Collection(
+    pending.form4972,
+    pending,
+    filer,
+    "paper",
+  );
+  const outPath = args.outputPath ??
+    join(args.baseDir, args.returnId, "paper-only-form4972.pdf");
+  await Deno.writeFile(outPath, bytes);
+  await Deno.writeTextFile(
+    `${outPath}.source-manifest.json`,
+    JSON.stringify(
+      {
+        filingChannel: "paper_only",
+        taxYear: 2025,
+        electronicSubmissionAuthorized: false,
+        pdfSha256: await sha256Hex(bytes),
+        form1040Line16: pending.f1040.line16_income_tax,
+        form4972Tax: pending.f1040.form4972_tax,
+        participantForms: scoped.map(({ fields, sources, tax }, index) => ({
+          copy: index + 1,
+          recipient: fields.recipient,
+          participantName: sources[0].form4972_plan?.participant_name,
+          participantSsn: sources[0].form4972_plan?.participant_ssn,
+          planReference: sources[0].form4972_plan?.plan_reference,
+          sourceDocumentReferences: fields.source_document_references,
+          capitalGainElection: fields.elect_capital_gain,
+          tenYearAveragingElection: fields.elect_10yr_averaging,
+          determinedTax: tax,
+          line30Tax: fields.line30,
+        })),
+        sourceRetentionNotice:
+          "Retained source records and any required statements must be reviewed separately; this manifest is not an IRS attachment or acceptance record.",
+      },
+      null,
+      2,
+    ),
+  );
   return outPath;
 }

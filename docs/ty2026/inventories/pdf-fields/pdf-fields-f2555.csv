@@ -1,0 +1,161 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name shown on Form 1040 or 1040-S R. ,2,36 671.998 452.85 685.999,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,453.6 671.998 576 685.999,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Part I. General Information. 1. Your foreign address (including country). ,2,36 635.998 452.85 649.999,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2. Your occupation. ,2,454.6 635.998 576 649.999,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,3. Employer's name. ,2,136.8 624.002 576 636.001,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,4a. Employer's U.S. address. ,2,165.6 612 576 623.999,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,4b. Employer's foreign address. ,2,180 600.001 576 612,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,5. Employer is (check any that apply): 5a. A foreign entity. ,2,175.8 590.002 183.8 598.002,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,5b. A U.S. company. ,2,377.4 590.002 385.4 598.002,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,5c. Self. ,2,507 590.002 515 598.002,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,5d. A foreign affiliate of a U.S. company. ,2,175.8 578 183.8 586,yes
+topmostSubform[0].Page1[0].c1_5[0],/Btn,5e. Other. ,2,377.4 578 385.4 586,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,5e. Other (specify). ,2,460.8 576 576 587.999,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"6a. If you previously filed Form 2555 or Form 2555-E Z, enter the last tax year you filed the form. ",2,460.8 564.001 576 576,yes
+topmostSubform[0].Page1[0].c1_6[0],/Btn,"6b. If you didn't previously file Form 2555 or Form 2555-E Z to claim either of the exclusions, check here and go to line 7.  ",2,471.4 554.002 479.4 562.002,yes
+topmostSubform[0].Page1[0].c1_7[0],/Btn,6c. Have you ever revoked either of the exclusions? Yes. ,2,504 542 512 550,yes
+topmostSubform[0].Page1[0].c1_7[1],/Btn,6c. No. ,2,540 542 548 550,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,"6d. If you answered “Yes,” enter the type of exclusion and the tax year for which the revocation was effective. ",2,496.8 528.001 576 540,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,7. Of what country are you a citizen/national? ,2,237.6 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].c1_9[0],/Btn,8a. Did you maintain a separate foreign residence for your family because of adverse living conditions at your tax home? See Second foreign household in the instructions. Yes. ,2,504 494.001 512 502.001,yes
+topmostSubform[0].Page1[0].c1_9[1],/Btn,8a. No. ,2,540 494.001 548 502.001,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,"8b. If “Yes,” enter city and country of the separate foreign residence. Also enter the number of days during your tax year that you maintained a second household at that address. ",2,266.4 468 576 479.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,9. List your tax home(s) during your tax year and date(s) established. Line 1 of 2. ,2,331.2 456.001 576 468,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,9. Line 2 of 2. ,2,64.8 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"Next, complete either Part I I or Part I I I. If an item doesn't apply, enter “N A.” If you don't give the information asked for, any exclusion or deduction you claim may be disallowed. Part I I. Taxpayers Qualifying Under Bona Fide Residence Test. Note: Only U.S. citizens and resident aliens who are citizens or nationals of U.S. treaty countries can use this test. See instructions. 10. Date bona fide residence began. Date. ",2,194.4 360 345.6 371.999,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"10. , and ended. ",2,396 360 576 371.999,yes
+topmostSubform[0].Page1[0].c1_11[0],/Btn,11. Type of living quarters in foreign country. 11a. Purchased house. ,2,283.8 350.001 291.8 358.001,yes
+topmostSubform[0].Page1[0].c1_11[1],/Btn,11b. Rented house or apartment. ,2,427.8 350.001 435.8 358.001,yes
+topmostSubform[0].Page1[0].c1_11[2],/Btn,11c. Rented room. ,2,283.8 338.002 291.8 346.002,yes
+topmostSubform[0].Page1[0].c1_11[3],/Btn,11d. Quarters furnished by employer. ,2,427.8 338.002 435.8 346.002,yes
+topmostSubform[0].Page1[0].c1_15[0],/Btn,12a. Did any of your family live with you abroad during any part of the tax year? Yes. ,2,504 326 512 334,yes
+topmostSubform[0].Page1[0].c1_15[1],/Btn,12a. No. ,2,540 326 548 334,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"12b. If “Yes,” who and for what period? ",2,208.8 312.001 576 324,yes
+topmostSubform[0].Page1[0].c1_17[0],/Btn,13a. Have you submitted a statement to the authorities of the foreign country where you claim bona fide residence that you aren't a resident of that country? See instructions. Yes. ,2,504 290 512 298,yes
+topmostSubform[0].Page1[0].c1_17[1],/Btn,13a. No. ,2,540 290 548 298,yes
+topmostSubform[0].Page1[0].c1_19[0],/Btn,13b. Are you required to pay income tax to the country where you claim bona fide residence? See instructions. Yes. ,2,504 278.001 512 286.001,yes
+topmostSubform[0].Page1[0].c1_19[1],/Btn,"13b. No. If you answered ""Yes"" to 13a and ""No"" to 13b, you don't qualify as a bona fide resident. Don't complete the rest of this part. ",2,540 278.001 548 286.001,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow1[0].f1_18[0],/Tx,"14. If you were present in the United States or its territories during the tax year, complete columns (a)-(d) below. Don't include the income from column (d) in Part I V, but report it on Form 1040 or 1040-S R. Row: 1. Column: (a) Date arrived in U.S. ",2,36 192.002 100.8 204.001,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow1[0].f1_19[0],/Tx,Row: 1. Column: (b) Date left U.S. ,2,100.8 192.002 165.6 204.001,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow1[0].f1_20[0],/Tx,Row: 1. Column: (c) Number of days in U.S. on business. ,2,165.6 192.002 223.2 204.001,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow1[0].f1_21[0],/Tx,"Row: 1. Column: (d) Income earned in U.S. on business (attach computation). ",2,223.2 192.002 307.6 204.001,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow2[0].f1_22[0],/Tx,Row: 2. Column: (a) Date arrived in U.S. ,2,36 180.003 100.8 192.002,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow2[0].f1_23[0],/Tx,Row: 2. Column: (b) Date left U.S. ,2,100.8 180.003 165.6 192.002,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow2[0].f1_24[0],/Tx,Row: 2. Column: (c) Number of days in U.S. on business. ,2,165.6 180.003 223.2 192.002,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow2[0].f1_25[0],/Tx,"Row: 2. Column: (d) Income earned in U.S. on business (attach computation). ",2,223.2 180.003 307.6 192.002,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow3[0].f1_26[0],/Tx,Row: 3. Column: (a) Date arrived in U.S. ,2,36 168.004 100.8 180.003,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow3[0].f1_27[0],/Tx,Row: 3. Column: (b) Date left U.S. ,2,100.8 168.004 165.6 180.003,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow3[0].f1_28[0],/Tx,Row: 3. Column: (c) Number of days in U.S. on business. ,2,165.6 168.004 223.2 180.003,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow3[0].f1_29[0],/Tx,"Row: 3. Column: (d) Income earned in U.S. on business (attach computation). ",2,223.2 168.004 307.6 180.003,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow4[0].f1_30[0],/Tx,Row: 4. Column: (a) Date arrived in U.S. ,2,36 156.005 100.8 168.004,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow4[0].f1_31[0],/Tx,Row: 4. Column: (b) Date left U.S. ,2,100.8 156.005 165.6 168.004,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow4[0].f1_32[0],/Tx,Row: 4. Column: (c) Number of days in U.S. on business. ,2,165.6 156.005 223.2 168.004,yes
+topmostSubform[0].Page1[0].Table1_Line14[0].BodyRow4[0].f1_33[0],/Tx,"Row: 4. Column: (d) Income earned in U.S. on business (attach computation). ",2,223.2 156.005 307.6 168.004,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow5[0].f1_34[0],/Tx,Row: 5. Column: (a) Date arrived in U.S. ,2,309.6 192.002 374.4 204.001,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow5[0].f1_35[0],/Tx,Row: 5. Column: (b) Date left U.S. ,2,374.4 192.002 439.2 204.001,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow5[0].f1_36[0],/Tx,Row: 5. Column: (c) Number of days in U.S. on business. ,2,439.2 192.002 496.8 204.001,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow5[0].f1_37[0],/Tx,"Row: 5. Column: (d) Income earned in U.S. on business (attach computation). ",2,496.8 192.002 576 204.001,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow6[0].f1_38[0],/Tx,Row: 6. Column: (a) Date arrived in U.S. ,2,309.6 180.003 374.4 192.002,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow6[0].f1_39[0],/Tx,Row: 6. Column: (b) Date left U.S. ,2,374.4 180.003 439.2 192.002,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow6[0].f1_40[0],/Tx,Row: 6. Column: (c) Number of days in U.S. on business. ,2,439.2 180.003 496.8 192.002,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow6[0].f1_41[0],/Tx,"Row: 6. Column: (d) Income earned in U.S. on business (attach computation). ",2,496.8 180.003 576 192.002,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow7[0].f1_42[0],/Tx,Row: 7. Column: (a) Date arrived in U.S. ,2,309.6 168.004 374.4 180.003,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow7[0].f1_43[0],/Tx,Row: 7. Column: (b) Date left U.S. ,2,374.4 168.004 439.2 180.003,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow7[0].f1_44[0],/Tx,Row: 7. Column: (c) Number of days in U.S. on business. ,2,439.2 168.004 496.8 180.003,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow7[0].f1_45[0],/Tx,"Row: 7. Column: (d) Income earned in U.S. on business (attach computation). ",2,496.8 168.004 576 180.003,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow8[0].f1_46[0],/Tx,Row: 8. Column: (a) Date arrived in U.S. ,2,309.6 156.005 374.4 168.004,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow8[0].f1_47[0],/Tx,Row: 8. Column: (b) Date left U.S. ,2,374.4 156.005 439.2 168.004,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow8[0].f1_48[0],/Tx,Row: 8. Column: (c) Number of days in U.S. on business. ,2,439.2 156.005 496.8 168.004,yes
+topmostSubform[0].Page1[0].Table2_Line14[0].BodyRow8[0].f1_49[0],/Tx,"Row: 8. Column: (d) Income earned in U.S. on business (attach computation). ",2,496.8 156.005 576 168.004,yes
+topmostSubform[0].Page1[0].f1_50[0],/Tx,15a. List any contractual terms or other conditions relating to the length of your employment abroad. Line 1 of 2. ,2,453.6 144 576 155.999,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,15a. Line 2 of 2. ,2,64.8 132.001 576 144,yes
+topmostSubform[0].Page1[0].f1_52[0],/Tx,15b. Enter the type of visa under which you entered the foreign country. ,2,338.4 120.002 576 132.001,yes
+topmostSubform[0].Page1[0].c1_21[0],/Btn,"15c. Did your visa limit the length of your stay or employment in a foreign country? If “Yes,” attach explanation. Yes. ",2,504 110 512 118,yes
+topmostSubform[0].Page1[0].c1_21[1],/Btn,15c. No. ,2,540 110 548 118,yes
+topmostSubform[0].Page1[0].c1_23[0],/Btn,15d. Did you maintain a home in the United States while living abroad? Yes. ,2,504 98.001 512 106.001,yes
+topmostSubform[0].Page1[0].c1_23[1],/Btn,15d. No. ,2,540 98.001 548 106.001,yes
+topmostSubform[0].Page1[0].f1_53[0],/Tx,"15e. If “Yes,” enter address of your home, whether it was rented, the names of the occupants, and their relationship to you. Line 1 of 2. ",2,100.8 72 576 83.999,yes
+topmostSubform[0].Page1[0].f1_54[0],/Tx,15e. Line 2 of 2. ,2,64.8 60.001 576 72,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. Part I I I. Taxpayers Qualifying Under Physical Presence Test. Note: U.S. citizens and all resident aliens can use this test. See instructions. 16. The physical presence test is based on 330 full days of presence in a foreign country or countries during the 12-month period from.,3,86.4 695.999 316.8 708.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,16. through. ,3,352.8 695.999 576 708.001,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,17. Enter your principal country of employment during your tax year. ,3,331.2 684 576 695.999,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_4[0],/Tx,"18. If you traveled abroad during the 12-month period entered on line 16, complete columns (a)-(f) below. Exclude travel between foreign countries that didn't involve travel on or over international waters, or in or over the United States, for 24 hours or more. If you have no travel to report during the period, enter “Physically present in a foreign country or countries for the entire 12-month period.” Don't include the income from column (f) below in Part I V, but report it on Form 1040 or 1040-S R. Row: 1. Column: (a) Name of country (including U.S.). ",3,36 600.001 244.05 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_5[0],/Tx,Row: 1. Column: (b) Date arrived. ,3,244.8 600.001 316.8 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_6[0],/Tx,Row: 1. Column: (c) Date left. ,3,316.8 600.001 388.8 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_7[0],/Tx,Row: 1. Column: (d) Full days present in country. ,3,388.8 600.001 439.2 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_8[0],/Tx,Row: 1. Column: (e) Number of days in U.S. on business. ,3,439.2 600.001 489.6 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow1[0].f2_9[0],/Tx,Row: 1. Column: (f) Income earned in U.S. on business (attach computation). ,3,489.6 600.001 576 612,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_10[0],/Tx,Row: 2. Column: (a) Name of country (including U.S.). ,3,36 588.002 244.05 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_11[0],/Tx,Row: 2. Column: (b) Date arrived.,3,244.8 588.002 316.8 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_12[0],/Tx,Row: 2. Column: (c) Date left. ,3,316.8 588.002 388.8 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_13[0],/Tx,Row: 2. Column: (d) Full days present in country. ,3,388.8 588.002 439.2 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_14[0],/Tx,Row: 2. Column: (e) Number of days in U.S. on business. ,3,439.2 588.002 489.6 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow2[0].f2_15[0],/Tx,Row: 2. Column: (f) Income earned in U.S. on business (attach computation). ,3,489.6 588.002 576 600.001,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_16[0],/Tx,Row: 3. Column: (a) Name of country (including U.S.). ,3,36 576.003 244.05 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_17[0],/Tx,Row: 3. Column: (b) Date arrived.,3,244.8 576.003 316.8 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_18[0],/Tx,Row: 3. Column: (c) Date left. ,3,316.8 576.003 388.8 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_19[0],/Tx,Row: 3. Column: (d) Full days present in country. ,3,388.8 576.003 439.2 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_20[0],/Tx,Row: 3. Column: (e) Number of days in U.S. on business. ,3,439.2 576.003 489.6 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow3[0].f2_21[0],/Tx,Row: 3. Column: (f) Income earned in U.S. on business (attach computation). ,3,489.6 576.003 576 588.002,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_22[0],/Tx,Row: 4. Column: (a) Name of country (including U.S.).,3,36 564.004 244.05 576.003,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_23[0],/Tx,Row: 4. Column: (b) Date arrived.,3,244.8 564.004 316.8 576.003,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_24[0],/Tx,Row: 4. Column: (c) Date left. ,3,316.8 564.004 388.8 576.003,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_25[0],/Tx,Row: 4. Column: (d) Full days present in country. ,3,388.8 564.004 439.2 576.003,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_26[0],/Tx,Row: 4. Column: (e) Number of days in U.S. on business. ,3,439.2 564.004 489.6 576.003,yes
+topmostSubform[0].Page2[0].Table_Line18[0].BodyRow4[0].f2_27[0],/Tx,Row: 4. Column: (f) Income earned in U.S. on business (attach computation). ,3,489.6 564.004 576 576.003,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,"Part I V. All Taxpayers. Note: Enter on lines 19 through 23 all income, including noncash income, you earned and actually or constructively received during your 2026 tax year for services you performed in a foreign country. If any of the foreign earned income received this tax year was earned in a prior tax year, or will be earned in a later tax year (such as a bonus), see the instructions. Don't include income from line 14, column (d), or line 18, column (f). Report amounts in U.S. dollars, using the exchange rates in effect when you actually or constructively received the income. If you are a cash-basis taxpayer, report on Form 1040 or 1040-S R all income you received in 2026, no matter when you performed  the service. 2026 Foreign earned income. 19. Total wages, salaries, bonuses, commissions, etc. Amount (in U.S. dollars). ",3,504 432 576 443.999,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,20. Allowable share of income for personal services performed (see instructions): a. In a business (including farming) or profession. ,3,504 407.999 576 419.998,yes
+topmostSubform[0].Page2[0].f2_30[0],/Tx,20b. In a partnership. List partnership's name and address and type of income. Line 1 of 2. ,3,367.2 396 475.2 407.999,yes
+topmostSubform[0].Page2[0].f2_31[0],/Tx,20b. Line 2 of 2. ,3,64.8 383.998 475.2 395.997,yes
+topmostSubform[0].Page2[0].f2_32[0],/Tx,20b. Amount.,3,504 383.998 576 395.997,yes
+topmostSubform[0].Page2[0].f2_33[0],/Tx,21. Noncash income (market value of property or facilities furnished by employer—attach statement showing how it was determined): a. Home (lodging). ,3,504 347.998 576 359.997,yes
+topmostSubform[0].Page2[0].f2_34[0],/Tx,21b. Meals. ,3,504 336.002 576 348.001,yes
+topmostSubform[0].Page2[0].f2_35[0],/Tx,21c. Car. ,3,504 324 576 335.999,yes
+topmostSubform[0].Page2[0].f2_36[0],/Tx,21d. Other property or facilities. List type. Line 1 of 2. ,3,266.4 312.001 475.2 324,yes
+topmostSubform[0].Page2[0].f2_37[0],/Tx,21d. Line 2 of 2. ,3,64.8 299.999 475.2 311.998,yes
+topmostSubform[0].Page2[0].f2_38[0],/Tx,21d. and amount. ,3,504 299.999 576 311.998,yes
+topmostSubform[0].Page2[0].f2_39[0],/Tx,"22. Allowances, reimbursements, or expenses paid on your behalf for services you performed: 22a. Cost of living and overseas differential. ",3,410.4 276.001 482.4 288,yes
+topmostSubform[0].Page2[0].f2_40[0],/Tx,22b. Family. ,3,410.4 264.002 482.4 276.001,yes
+topmostSubform[0].Page2[0].f2_41[0],/Tx,22c. Education. ,3,410.4 252 482.4 263.999,yes
+topmostSubform[0].Page2[0].f2_42[0],/Tx,22d. Home Leave. ,3,410.4 240.001 482.4 252,yes
+topmostSubform[0].Page2[0].f2_43[0],/Tx,22e. Quarters. ,3,410.4 228.002 482.4 240.001,yes
+topmostSubform[0].Page2[0].f2_44[0],/Tx,22f. For any other purpose. List type. Line 1 of 2.,3,251.974 216 381.574 227.999,yes
+topmostSubform[0].Page2[0].f2_45[0],/Tx,22f. Line 2 of 2. ,3,64.774 204.001 381.574 216,yes
+topmostSubform[0].Page2[0].f2_46[0],/Tx,22f. and amount. ,3,410.4 204.001 482.4 216,yes
+topmostSubform[0].Page2[0].f2_47[0],/Tx,22g. Add lines 22a through 22f. ,3,504 192.002 576 204.001,yes
+topmostSubform[0].Page2[0].f2_48[0],/Tx,23. Other foreign earned income. List type. Line 1 of 2. ,3,280.8 180 475.2 191.999,yes
+topmostSubform[0].Page2[0].f2_49[0],/Tx,23. Line 2 of 2. ,3,64.8 167.998 475.2 179.997,yes
+topmostSubform[0].Page2[0].f2_50[0],/Tx,23. and amount. ,3,504 167.998 576 179.997,yes
+topmostSubform[0].Page2[0].f2_51[0],/Tx,"24. Add lines 19 through 21d, line 22g, and line 23. ",3,504 156.002 576 168.001,yes
+topmostSubform[0].Page2[0].f2_52[0],/Tx,25. Total amount of meals and lodging included on line 24 that is excludable (see instructions). ,3,504 144 576 155.999,yes
+topmostSubform[0].Page2[0].f2_53[0],/Tx,26. Subtract line 25 from line 24. Enter the result here and on line 27 on page 3. This is your 2026 foreign earned income. ,3,504 119.999 576 131.998,yes
+topmostSubform[0].Page3[0].Line27TagCorrectingSubform[0].f3_1[0],/Tx,Page 3. Part V. All Taxpayers. 27. Enter the amount from line 26. ,4,504 720 576 731.999,yes
+topmostSubform[0].Page3[0].c3_1[0],/Btn,27. Are you claiming the housing exclusion or housing deduction? Yes. Complete Part V I. ,4,64.8 697.999 72.8 705.999,yes
+topmostSubform[0].Page3[0].c3_1[1],/Btn,27. No. Go to Part V I I. ,4,64.8 686 72.8 694,yes
+topmostSubform[0].Page3[0].Line28TagCorrectingSubform[0].f3_2[0],/Tx,Part V I. Taxpayers Claiming the Housing Exclusion and/or Deduction. 28. Qualified housing expenses for the tax year (see instructions). ,4,504 660.002 576 672.001,yes
+topmostSubform[0].Page3[0].f3_3[0],/Tx,29a. Enter location where housing expenses incurred. See instructions. ,4,334.363 648 475.2 659.999,yes
+topmostSubform[0].Page3[0].f3_4[0],/Tx,29b. Enter limit on housing expenses. See instructions. ,4,504 636.001 576 648,yes
+topmostSubform[0].Page3[0].f3_5[0],/Tx,30. Enter the smaller of line 28 or line 29b. ,4,504 624.002 576 636.001,yes
+topmostSubform[0].Page3[0].f3_6[0],/Tx,31. Number of days in your qualifying period that fall within your 2026 tax year (see instructions). days. ,4,410.4 599.998 453.6 611.997,yes
+topmostSubform[0].Page3[0].f3_7[0],/Tx,"32. Multiply $58.26 by the number of days on line 31. If 365 is entered on line 31, enter $21,264 here.	",4,504 588.002 576 600.001,yes
+topmostSubform[0].Page3[0].f3_8[0],/Tx,"33. Subtract line 32 from line 30. If the result is zero or less, don't complete the rest of this part or any of Part I X. ",4,504 563.998 576 575.997,yes
+topmostSubform[0].Page3[0].f3_9[0],/Tx,34. Enter employer-provided amounts. See instructions. ,4,410.4 552.002 481.65 564.001,yes
+topmostSubform[0].Page3[0].f3_10[0],/Tx,"35. Divide line 34 by line 27. Enter the result as a decimal (rounded to at least three places), but don't enter more than “1.000”. Digit before the decimal. ",4,504 527.998 547.2 539.997,yes
+topmostSubform[0].Page3[0].f3_11[0],/Tx,35. Digits after the decimal. ,4,554.4 527.998 576 539.997,yes
+topmostSubform[0].Page3[0].f3_12[0],/Tx,"36. Housing exclusion. Multiply line 33 by line 35. Enter the result but don't enter more than the amount on line 34. Also, complete Part  V I I I. Note: The housing deduction is figured in Part I X. If you choose to claim the foreign earned income exclusion, complete Parts V I I and VI I I before Part I X. ",4,504 504.003 576 516.002,yes
+topmostSubform[0].Page3[0].f3_13[0],/Tx,"Part V I I. Taxpayers Claiming the Foreign Earned Income Exclusion. 37. Maximum foreign earned income exclusion. Enter $132,900.",4,504 456.001 576 468,yes
+topmostSubform[0].Page3[0].f3_14[0],/Tx,"38. If you completed Part V I, enter the number from line 31. All others, enter the number of days in your qualifying period that fall within your 2026 tax year. See the instructions for line 31. days. ",4,410.4 432 453.6 443.999,yes
+topmostSubform[0].Page3[0].f3_15[0],/Tx,"39. If line 38 and the number of days in your 2026 tax year (usually 365) are the same, enter “1.000.” Otherwise, divide line 38 by the number of days in your 2026 tax year and enter the result  as a decimal (rounded to at least three places). Digit before the decimal. ",4,504 396 547.2 407.999,yes
+topmostSubform[0].Page3[0].f3_16[0],/Tx,39. Digits after the decimal. ,4,554.4 396 576 407.999,yes
+topmostSubform[0].Page3[0].f3_17[0],/Tx,40. Multiply line 37 by line 39. ,4,504 372.002 576 384.001,yes
+topmostSubform[0].Page3[0].f3_18[0],/Tx,41. Subtract line 36 from line 27. ,4,504 360 576 371.999,yes
+topmostSubform[0].Page3[0].f3_19[0],/Tx,42. Foreign earned income exclusion. Enter the smaller of line 40 or line 41. Also complete Part V I I I. ,4,504 348.001 576 360,yes
+topmostSubform[0].Page3[0].f3_20[0],/Tx,"Part V I I I. Taxpayers Claiming the Housing Exclusion, Foreign Earned Income Exclusion, or Both. 43. Add lines 36 and 42. ",4,504 324 576 335.999,yes
+topmostSubform[0].Page3[0].f3_21[0],/Tx,"44. Deductions allowed in figuring your adjusted gross income (Form 1040 or 1040-S R, line 11a) that are allocable  to the excluded income. See instructions and attach computation. ",4,504 300.002 576 312.001,yes
+topmostSubform[0].Page3[0].f3_22[0],/Tx,"45. Subtract line 44 from line 43. Enter the result here and on Schedule 1 (Form 1040), line 8d. Complete the Foreign Earned Income Tax Worksheet in the Instructions for Form 1040 if you enter an amount on this line.",4,504 263.999 576 275.998,yes
+topmostSubform[0].Page3[0].f3_23[0],/Tx,"Part I X. Taxpayers Claiming the Housing Deduction—Complete this part only if (a) line 33 is more than line 36, and (b) line 27 is more than line 43. 46. Subtract line 36 from line 33. ",4,504 228.002 576 240.001,yes
+topmostSubform[0].Page3[0].f3_24[0],/Tx,47. Subtract line 43 from line 27. ,4,504 216 576 227.999,yes
+topmostSubform[0].Page3[0].f3_25[0],/Tx,48. Enter the smaller of line 46 or line 47. ,4,504 204.001 576 216,yes
+topmostSubform[0].Page3[0].f3_26[0],/Tx,"Note: If line 47 is more than line 48 and you couldn't deduct all of your 2025 housing deduction because of the 2025 limit, use the housing deduction carryover worksheet in the instructions to figure the amount to enter on line 49. Otherwise, go to line 50. 49. Housing deduction carryover from 2025 (from the housing deduction carryover worksheet in the instructions). ",4,504 144.003 576 156.002,yes
+topmostSubform[0].Page3[0].f3_27[0],/Tx,"50. Housing deduction. Add lines 48 and 49. Enter the total here and on Schedule 1 (Form 1040), line 24j. Complete the Foreign Earned Income Tax Worksheet in the Instructions for Forms 1040 if you enter an amount on this line.",4,504 108.003 576 120.002,yes

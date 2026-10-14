@@ -1,0 +1,85 @@
+component,ty2025_serializer,public_accepted_form,form_1040_max,accepted_workbook_row,public_attachment_xml,attachment_workbook_rows,public_inventory_status
+any_other_taxes_statement,forms/f1040/2025/mef/forms/any_other_taxes_statement.ts,,,,,,statement_dependency_review
+ccc_loan_accrual_statement,forms/f1040/2025/mef/forms/ccc_loan_accrual_statement.ts,,,,,,statement_dependency_review
+ccc_loan_statement,forms/f1040/2025/mef/forms/ccc_loan_statement.ts,,,,,,statement_dependency_review
+crop_insurance_deferral_statement,forms/f1040/2025/mef/forms/crop_insurance_deferral_statement.ts,,,,,,statement_dependency_review
+eitc,forms/f1040/2025/mef/forms/eitc.ts,Form 1040 Schedule EIC,1,14,IRS1040ScheduleEIC,736,listed;attachment_row_found
+f1040,forms/f1040/2025/mef/forms/f1040.ts,Form 1040,1,2,,,listed;return_root_not_attachment
+f1099r,forms/f1040/2025/mef/forms/f1099r.ts,Form 1099R,unbounded,33,,,listed;no_attachment_row
+f1116,forms/f1040/2025/mef/forms/f1116.ts,Form 1116,unbounded,34,IRS1116,466,listed;attachment_row_found
+f1116_direct_expense_statement,forms/f1040/2025/mef/forms/f1116_direct_expense_statement.ts,,,,,,statement_dependency_review
+f2441,forms/f1040/2025/mef/forms/f2441.ts,Form 2441,1,50,IRS2441,470,listed;attachment_row_found
+f2555,forms/f1040/2025/mef/forms/f2555.ts,Form 2555,2,51,IRS2555,379|381,listed;attachment_row_found
+f3800,forms/f1040/2025/mef/forms/f3800.ts,Form 3800,1,54,IRS3800,472|474,listed;attachment_row_found
+f4136,forms/f1040/2025/mef/forms/f4136.ts,Form 4136,1,57,IRS4136,476,listed;attachment_row_found
+f4136_diesel_government_sales_statement,forms/f1040/2025/mef/forms/f4136_diesel_government_sales_statement.ts,,,,,,statement_dependency_review
+f4137,forms/f1040/2025/mef/forms/f4137.ts,Form 4137,2,58,IRS4137,415|667|669,listed;attachment_row_found
+f4562,forms/f1040/2025/mef/forms/f4562.ts,Form 4562,unbounded,61,IRS4562,545|547|549|584|586|671|2893|2932|3603|3605|3607|3609|3611,listed;attachment_row_found
+f461,forms/f1040/2025/mef/forms/f461.ts,Form 461,1,64,IRS461,385,listed;attachment_row_found
+f4684,forms/f1040/2025/mef/forms/f4684.ts,Form 4684,unbounded,65,IRS4684,163|165|519|3613,listed;attachment_row_found
+f4797,forms/f1040/2025/mef/forms/f4797.ts,Form 4797,unbounded,66,IRS4797,387|3615|3617|3619,listed;attachment_row_found
+f4835,forms/f1040/2025/mef/forms/f4835.ts,Form 4835,4,67,IRS4835,241,listed;attachment_row_found
+f4835_at_risk,forms/f1040/2025/mef/forms/f4835_at_risk.ts,Form 6198,unbounded,94,IRS6198,551,listed;attachment_row_found;shares_form6198_document
+f4952,forms/f1040/2025/mef/forms/f4952.ts,Form 4952,1,69,IRS4952,243|521,listed;attachment_row_found
+f4972,forms/f1040/2025/mef/forms/f4972.ts,Form 4972,2,71,IRS4972,245|742,listed;attachment_row_found
+f5329,forms/f1040/2025/mef/forms/f5329.ts,Form 5329,2,74,IRS5329,417,listed;attachment_row_found
+f5695,forms/f1040/2025/mef/forms/f5695.ts,Form 5695,2,88,IRS5695,478,listed;attachment_row_found
+f6198,forms/f1040/2025/mef/forms/f6198.ts,Form 6198,unbounded,94,IRS6198,551,listed;attachment_row_found
+f6251,forms/f1040/2025/mef/forms/f6251.ts,Form 6251,1,95,IRS6251,419|1787,listed;attachment_row_found
+f6252,forms/f1040/2025/mef/forms/f6252.ts,Form 6252,unbounded,96,IRS6252,247,listed;attachment_row_found
+f6781,forms/f1040/2025/mef/forms/f6781.ts,Form 6781,unbounded,99,IRS6781,249|3627,listed;attachment_row_found
+f7206,forms/f1040/2025/mef/forms/f7206.ts,Form 7206,unbounded,103,,,listed;no_attachment_row
+f7217,forms/f1040/2025/mef/forms/f7217.ts,Form 7217,unbounded,108,,,listed;no_attachment_row
+f8283,forms/f1040/2025/mef/forms/f8283.ts,Form 8283,unbounded,114,IRS8283,167|523|3343,listed;attachment_row_found
+f8283_vehicle_statement,forms/f1040/2025/mef/forms/f8283_vehicle_statement.ts,,,,,,statement_dependency_review
+f8396,forms/f1040/2025/mef/forms/f8396.ts,Form 8396,1,118,IRS8396,480,listed;attachment_row_found
+f8582,forms/f1040/2025/mef/forms/f8582.ts,Form 8582,1,119,IRS8582,588|590,listed;attachment_row_found
+f8606,forms/f1040/2025/mef/forms/f8606.ts,Form 8606,25,123,IRS8606,261,listed;attachment_row_found
+f8615,forms/f1040/2025/mef/forms/f8615.ts,Form 8615,1,126,IRS8615,263,listed;attachment_row_found
+f8621,forms/f1040/2025/mef/forms/f8621.ts,Form 8621,unbounded,127,IRS8621,423|425|748,listed;attachment_row_found
+f8621_excess_statement,forms/f1040/2025/mef/forms/f8621_excess_statement.ts,,,,,,statement_dependency_review
+f8814,forms/f1040/2025/mef/forms/f8814.ts,Form 8814,10,132,IRS8814,269|271|750,listed;attachment_row_found
+f8815,forms/f1040/2025/mef/forms/f8815.ts,Form 8815,1,133,IRS8815,273|528,listed;attachment_row_found
+f8824,forms/f1040/2025/mef/forms/f8824.ts,Form 8824,unbounded,135,IRS8824,3645,listed;attachment_row_found
+f8826_draft,forms/f1040/2025/mef/forms/f8826_draft.ts,Form 8826,unbounded,138,IRS8826,1502|1504|3651,listed;attachment_row_found
+f8829,forms/f1040/2025/mef/forms/f8829.ts,Form 8829,32,140,IRS8829,555,listed;attachment_row_found
+f8834,forms/f1040/2025/mef/forms/f8834.ts,Form 8834,unbounded,142,IRS8834,484|3655,listed;attachment_row_found
+f8835,forms/f1040/2025/mef/forms/f8835.ts,Form 8835,unbounded,143,IRS8835,1506|1508|1510|1512|3657,listed;attachment_row_found
+f8839,forms/f1040/2025/mef/forms/f8839.ts,Form 8839,1,146,IRS8839,277|486|752,listed;attachment_row_found
+f8853,forms/f1040/2025/mef/forms/f8853.ts,Form 8853,1,152,IRS8853,283|389|391|427|429,listed;attachment_row_found
+f8859,forms/f1040/2025/mef/forms/f8859.ts,Form 8859,1,156,IRS8859,488,listed;attachment_row_found
+f8862,forms/f1040/2025/mef/forms/f8862.ts,Form 8862,1,157,,,listed;no_attachment_row
+f8863,forms/f1040/2025/mef/forms/f8863.ts,Form 8863,1,158,IRS8863,490|756,listed;attachment_row_found
+f8880,forms/f1040/2025/mef/forms/f8880.ts,Form 8880,1,172,IRS8880,492,listed;attachment_row_found
+f8889,forms/f1040/2025/mef/forms/f8889.ts,Form 8889,2,178,IRS8889,393|395|431|433,listed;attachment_row_found
+f8911,forms/f1040/2025/mef/forms/f8911.ts,Form 8911,unbounded,183,IRS8911,494|1562|1564|3699,listed;attachment_row_found
+f8911_schedule_a,forms/f1040/2025/mef/forms/f8911_schedule_a.ts,Form 8911 Schedule A,unbounded,184,,,listed;no_attachment_row
+f8912,forms/f1040/2025/mef/forms/f8912.ts,Form 8912,unbounded,185,IRS8912,496|3701,listed;attachment_row_found
+f8919,forms/f1040/2025/mef/forms/f8919.ts,Form 8919,2,187,IRS8919,435|681|683,listed;attachment_row_found
+f8936,forms/f1040/2025/mef/forms/f8936.ts,Form 8936,1,197,IRS8936,437|439|498|500|1574|1576|1578|1580,listed;attachment_row_found
+f8936_schedule_a,forms/f1040/2025/mef/forms/f8936_schedule_a.ts,Form 8936 Schedule A,unbounded,198,IRS8936ScheduleA,4338,listed;attachment_row_found
+f8949,forms/f1040/2025/mef/forms/f8949.ts,Form 8949,unbounded,201,IRS8949,565|948,listed;attachment_row_found
+f8959,forms/f1040/2025/mef/forms/f8959.ts,Form 8959,1,203,IRS8959,297|441|443|685|687|689|691|764,listed;attachment_row_found
+f8960,forms/f1040/2025/mef/forms/f8960.ts,Form 8960,1,204,IRS8960,445,listed;attachment_row_found
+f8962,forms/f1040/2025/mef/forms/f8962.ts,Form 8962,1,205,IRS8962,447|502,listed;attachment_row_found
+f8978,forms/f1040/2025/mef/forms/f8978.ts,Form 8978,6,208,IRS8978,504,listed;attachment_row_found
+f8978_schedule_a,forms/f1040/2025/mef/forms/f8978_schedule_a.ts,Form 8978 Schedule A,6,209,IRS8978ScheduleA,4483,listed;attachment_row_found
+f8990,forms/f1040/2025/mef/forms/f8990.ts,Form 8990,unbounded,210,,,listed;no_attachment_row
+f8995,forms/f1040/2025/mef/forms/f8995.ts,Form 8995,1,215,IRS8995,301|768,listed;attachment_row_found
+f8995a,forms/f1040/2025/mef/forms/f8995a.ts,Form 8995A,1,216,IRS8995A,299|766,listed;attachment_row_found
+f982,forms/f1040/2025/mef/forms/f982.ts,Form 982,1,227,IRS982,305,listed;attachment_row_found
+foreign_employer_wages,forms/f1040/2025/mef/forms/foreign_employer_wages.ts,,,,,,statement_dependency_review
+joint_occupancy_statement,forms/f1040/2025/mef/forms/joint_occupancy_statement.ts,,,,,,statement_dependency_review
+schedule1,forms/f1040/2025/mef/forms/schedule1.ts,Form 1040 Schedule 1,1,3,IRS1040Schedule1,213,listed;attachment_row_found
+schedule2,forms/f1040/2025/mef/forms/schedule2.ts,Form 1040 Schedule 2,1,5,IRS1040Schedule2,215,listed;attachment_row_found
+schedule3,forms/f1040/2025/mef/forms/schedule3.ts,Form 1040 Schedule 3,1,6,IRS1040Schedule3,219,listed;attachment_row_found
+schedule_8812,forms/f1040/2025/mef/forms/schedule_8812.ts,Form 1040 Schedule 8812,1,8,IRS1040Schedule8812,221|728,listed;attachment_row_found
+schedule_a,forms/f1040/2025/mef/forms/schedule_a.ts,Form 1040 Schedule A,1,9,,,listed;no_attachment_row
+schedule_b,forms/f1040/2025/mef/forms/schedule_b.ts,Form 1040 Schedule B,1,10,IRS1040ScheduleB,730|732,listed;attachment_row_found
+schedule_c,forms/f1040/2025/mef/forms/schedule_c.ts,Form 1040 Schedule C,8,11,IRS1040ScheduleC,365|659,listed;attachment_row_found
+schedule_d,forms/f1040/2025/mef/forms/schedule_d.ts,Form 1040 Schedule D,1,12,IRS1040ScheduleD,223|734,listed;attachment_row_found
+schedule_e,forms/f1040/2025/mef/forms/schedule_e.ts,Form 1040 Schedule E,1,13,IRS1040ScheduleE,367,listed;attachment_row_found
+schedule_f,forms/f1040/2025/mef/forms/schedule_f.ts,Form 1040 Schedule F,unbounded,15,IRS1040ScheduleF,369|661|3585,listed;attachment_row_found
+schedule_h,forms/f1040/2025/mef/forms/schedule_h.ts,Form 1040 Schedule H,2,16,IRS1040ScheduleH,411|663,listed;attachment_row_found
+schedule_se,forms/f1040/2025/mef/forms/schedule_se.ts,Form 1040 Schedule SE,2,20,IRS1040ScheduleSE,371|413|665,listed;attachment_row_found
+w2,forms/f1040/2025/mef/forms/w2.ts,Form W2,50,231,IRSW2,311|313|776,listed;attachment_row_found

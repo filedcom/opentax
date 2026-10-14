@@ -1,0 +1,21 @@
+field,type,tooltip,physical_pdf_page,on_state
+topmostSubform[0].Page1[0].PgHeader[0].CalendarYear[0].f1_1[0],Text,Page 1. For calendar year 20. 2 digit year.,2,
+topmostSubform[0].Page1[0].f1_2[0],Text,Name(s) shown on return.,2,
+topmostSubform[0].Page1[0].f1_3[0],Text,Your social security number.,2,
+topmostSubform[0].Page1[0].f1_4[0],Text,Direct Deposit. 1a. Amount to be deposited in first account (see instructions).,2,
+topmostSubform[0].Page1[0].Line1bCombfield[0].f1_5[0],Text,1b. Routing number.,2,
+topmostSubform[0].Page1[0].c1_1[0],Button,1c. Checking.,2,1
+topmostSubform[0].Page1[0].c1_1[1],Button,1c. Savings.,2,2
+topmostSubform[0].Page1[0].Line1dCombfield[0].f1_6[0],Text,1d. Account number.,2,
+topmostSubform[0].Page1[0].f1_7[0],Text,2a. Amount to be deposited in second account.,2,
+topmostSubform[0].Page1[0].Line2bCombfield[0].f1_8[0],Text,2b. Routing number.,2,
+topmostSubform[0].Page1[0].c1_2[0],Button,2c. Checking.,2,1
+topmostSubform[0].Page1[0].c1_2[1],Button,2c. Savings.,2,2
+topmostSubform[0].Page1[0].Line2dCombfield[0].f1_9[0],Text,2d. Account number.,2,
+topmostSubform[0].Page1[0].f1_10[0],Text,3a. Amount to be deposited in third account.,2,
+topmostSubform[0].Page1[0].Line3bCombfield[0].f1_11[0],Text,3b. Routing number.,2,
+topmostSubform[0].Page1[0].c1_3[0],Button,3c. Checking.,2,1
+topmostSubform[0].Page1[0].c1_3[1],Button,3c. Savings.,2,2
+topmostSubform[0].Page1[0].Line3dCombfield[0].f1_12[0],Text,3d. Account number.,2,
+topmostSubform[0].Page1[0].f1_13[0],Text,Reserved for Future Use. 4. Reserved for future use.,2,
+topmostSubform[0].Page1[0].f1_14[0],Text,"Total Allocation of Refund. 5. Add lines 1a, 2a, and 3a. The total must equal the refund amount shown on your tax return.",2,

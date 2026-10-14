@@ -1,0 +1,161 @@
+{
+  "age55-mixed-prior-coverage": {
+    "owners": 1,
+    "deductions": [
+      0
+    ],
+    "line18": [
+      2337
+    ],
+    "line19": [
+      0
+    ],
+    "prior_excess": [],
+    "absorbed_excess": [],
+    "remaining_excess": [],
+    "hsa_deduction": 0,
+    "additional_income": 2337,
+    "eligibility_tax": 233.7,
+    "excess_tax": 0.0,
+    "additional_tax": 233.7,
+    "agi": 92337,
+    "standard_deduction": 31500,
+    "taxable_income": 60837,
+    "regular_tax": 6822,
+    "total_tax": 7055.7,
+    "printed_total_tax": 7056,
+    "refund": 4944
+  },
+  "both-owner-prior-excess": {
+    "owners": 2,
+    "deductions": [
+      4300,
+      4300
+    ],
+    "line18": [
+      0,
+      0
+    ],
+    "line19": [
+      0,
+      0
+    ],
+    "prior_excess": [
+      3000,
+      4000
+    ],
+    "absorbed_excess": [
+      2300,
+      3300
+    ],
+    "remaining_excess": [
+      700,
+      700
+    ],
+    "hsa_deduction": 8600,
+    "additional_income": 0,
+    "eligibility_tax": 0.0,
+    "excess_tax": 84.0,
+    "additional_tax": 84.0,
+    "agi": 81400,
+    "standard_deduction": 31500,
+    "taxable_income": 49900,
+    "regular_tax": 5514,
+    "total_tax": 5598.0,
+    "printed_total_tax": 5598,
+    "refund": 6402
+  },
+  "december-ira-funding": {
+    "owners": 1,
+    "deductions": [
+      0
+    ],
+    "line18": [
+      0
+    ],
+    "line19": [
+      1000
+    ],
+    "prior_excess": [],
+    "absorbed_excess": [],
+    "remaining_excess": [],
+    "hsa_deduction": 0,
+    "additional_income": 1000,
+    "eligibility_tax": 100.0,
+    "excess_tax": 0.0,
+    "additional_tax": 100.0,
+    "agi": 91000,
+    "standard_deduction": 15750,
+    "taxable_income": 75250,
+    "regular_tax": 11475,
+    "total_tax": 11575.0,
+    "printed_total_tax": 11575,
+    "refund": 425
+  },
+  "paired-last-month-recapture": {
+    "owners": 2,
+    "deductions": [
+      2000,
+      1000
+    ],
+    "line18": [
+      3660,
+      3660
+    ],
+    "line19": [
+      0,
+      0
+    ],
+    "prior_excess": [],
+    "absorbed_excess": [],
+    "remaining_excess": [],
+    "hsa_deduction": 3000,
+    "additional_income": 7320,
+    "eligibility_tax": 732.0,
+    "excess_tax": 0.0,
+    "additional_tax": 732.0,
+    "agi": 94320,
+    "standard_deduction": 31500,
+    "taxable_income": 62820,
+    "regular_tax": 7062,
+    "total_tax": 7794.0,
+    "printed_total_tax": 7794,
+    "refund": 4206
+  },
+  "primary-prior-excess": {
+    "owners": 2,
+    "deductions": [
+      4300,
+      1000
+    ],
+    "line18": [
+      0,
+      0
+    ],
+    "line19": [
+      0,
+      0
+    ],
+    "prior_excess": [
+      3000
+    ],
+    "absorbed_excess": [
+      2300
+    ],
+    "remaining_excess": [
+      700
+    ],
+    "hsa_deduction": 5300,
+    "additional_income": 0,
+    "eligibility_tax": 0.0,
+    "excess_tax": 42.0,
+    "additional_tax": 42.0,
+    "agi": 84700,
+    "standard_deduction": 31500,
+    "taxable_income": 53200,
+    "regular_tax": 5910,
+    "total_tax": 5952.0,
+    "printed_total_tax": 5952,
+    "refund": 6048
+  }
+}

@@ -1,0 +1,423 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import type { z } from "zod";
+import type { NodeOutput } from "../../../../../../../core/types/tax-node.ts";
+import { f4852, FormType, itemSchema } from "./index.ts";
+import { TS } from "../../../../types.ts";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+type Item = z.infer<typeof itemSchema>;
+
+function w2Item(overrides: Partial<Item> = {}): Item {
+  return {
+    form_type: FormType.W2,
+    payer_name: "Acme Corp",
+    payer_tin: "12-3456789",
+    wages: 50000,
+    federal_withheld: 8000,
+    ...overrides,
+  };
+}
+
+function r1099Item(overrides: Partial<Item> = {}): Item {
+  return {
+    form_type: FormType.R_1099,
+    payer_name: "Big Pension Fund",
+    payer_tin: "98-7654321",
+    gross_distribution: 20000,
+    federal_withheld: 2000,
+    ...overrides,
+  };
+}
+
+function compute(items: Item[]) {
+  return f4852.compute({ taxYear: 2025, formType: "f1040" }, { f4852s: items });
+}
+
+function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
+  return result.outputs.find((o: NodeOutput) => o.nodeType === nodeType);
+}
+
+function f1040Fields(result: ReturnType<typeof compute>) {
+  return (findOutput(result, "f1040")?.fields ?? {}) as Record<string, unknown>;
+}
+
+Deno.test("Form 4852 withholding does not become an uncalculated Schedule 3 excess credit", () => {
+  const result = compute([
+    w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
+    w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
+  ]);
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+Deno.test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () => {
+  const result = compute([w2Item({
+    wages: 220_000,
+    medicare_wages: 220_000,
+    medicare_withheld: 3_190,
+  })]);
+  assertEquals(
+    findOutput(result, "form8959")?.fields.f4852_medicare_wages,
+    220_000,
+  );
+  assertEquals(
+    findOutput(result, "form8959")?.fields
+      .f4852_single_over_withholding_threshold,
+    true,
+  );
+});
+
+Deno.test("f4852: Medicare withholding needs substitute W-2 Medicare wages", () => {
+  assertEquals(
+    itemSchema.safeParse(w2Item({ medicare_withheld: 1_450 })).success,
+    false,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 1. Schema validation
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: empty array throws (min 1 required)", () => {
+  assertThrows(() =>
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, { f4852s: [] })
+  );
+});
+
+Deno.test("f4852: missing form_type throws", () => {
+  assertThrows(() =>
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
+      f4852s: [
+        {
+          payer_name: "Acme",
+          payer_tin: "12-3456789",
+          wages: 50000,
+          federal_withheld: 8000,
+        } as Item,
+      ],
+    })
+  );
+});
+
+Deno.test("f4852: missing payer_name throws", () => {
+  assertThrows(() =>
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
+      f4852s: [
+        {
+          form_type: FormType.W2,
+          payer_tin: "12-3456789",
+          wages: 50000,
+          federal_withheld: 8000,
+        } as Item,
+      ],
+    })
+  );
+});
+
+Deno.test("f4852: W2 type with no wages or federal_withheld throws", () => {
+  assertThrows(() =>
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
+      f4852s: [
+        {
+          form_type: FormType.W2,
+          payer_name: "Acme",
+          payer_tin: "12-3456789",
+        } as Item,
+      ],
+    })
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 2. Part I: Substitute W-2 — wages and withholding to f1040
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: Part I W2 substitute → wages to line1a, withheld to line25a_w2_withheld", () => {
+  const result = compute([w2Item({ wages: 50000, federal_withheld: 8000 })]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], 50000);
+  assertEquals(fields["line25a_w2_withheld"], 8000);
+});
+
+Deno.test("f4852: substitute type cannot silently discard the other form's fields", () => {
+  const wrongW2Fields: Array<Partial<Item>> = [
+    { gross_distribution: 2_000 },
+    { taxable_amount: 1_500 },
+    { taxable_amount_not_determined: false },
+    { total_distribution: false },
+    { is_ira: false },
+    { capital_gain: 100 },
+    { employee_contributions: 500 },
+    { distribution_code: "7" },
+  ];
+  const wrongR1099Fields: Array<Partial<Item>> = [
+    { wages: 3_000 },
+    { social_security_wages: 3_000 },
+    { social_security_withheld: 186 },
+    { social_security_tips: 100 },
+    { medicare_wages: 3_000 },
+    { medicare_withheld: 43.50 },
+  ];
+  for (const fields of wrongW2Fields) {
+    const item = w2Item(fields);
+    assertEquals(itemSchema.safeParse(item).success, false);
+    assertThrows(() => compute([item]));
+  }
+  for (const fields of wrongR1099Fields) {
+    const item = r1099Item(fields);
+    assertEquals(itemSchema.safeParse(item).success, false);
+    assertThrows(() => compute([item]));
+  }
+});
+
+Deno.test("f4852: Part I W2 substitute with only wages (no withholding)", () => {
+  const result = compute([w2Item({ wages: 40000, federal_withheld: 0 })]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], 40000);
+  // No withholding key expected when zero
+  assertEquals(fields["line25a_w2_withheld"], undefined);
+});
+
+Deno.test("f4852: Part I W2 substitute with no wages but withholding (edge)", () => {
+  const result = compute([w2Item({ wages: 0, federal_withheld: 500 })]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], undefined);
+  assertEquals(fields["line25a_w2_withheld"], 500);
+});
+
+// ---------------------------------------------------------------------------
+// 3. Part II: Substitute 1099-R — pension and withholding to f1040
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: Part II 1099-R pension → line5a/5b, withheld to line25b", () => {
+  const result = compute([
+    r1099Item({
+      gross_distribution: 20000,
+      taxable_amount: 18000,
+      federal_withheld: 2000,
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line5a_pension_gross"], 20000);
+  assertEquals(fields["line5b_pension_taxable"], 18000);
+  assertEquals(fields["line25b_withheld_1099"], 2000);
+});
+
+Deno.test("f4852: Part II 1099-R pension, taxable_amount omitted → defaults to gross", () => {
+  const result = compute([
+    r1099Item({ gross_distribution: 15000, federal_withheld: 1500 }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line5a_pension_gross"], 15000);
+  assertEquals(fields["line5b_pension_taxable"], 15000);
+  assertEquals(fields["line25b_withheld_1099"], 1500);
+});
+
+Deno.test("f4852: Part II taxable amount includes basis once", () => {
+  const stated = f1040Fields(compute([r1099Item({
+    gross_distribution: 20_000,
+    taxable_amount: 18_000,
+    employee_contributions: 2_000,
+  })]));
+  assertEquals(stated["line5a_pension_gross"], 20_000);
+  assertEquals(stated["line5b_pension_taxable"], 18_000);
+  const estimated = f1040Fields(compute([r1099Item({
+    gross_distribution: 20_000,
+    employee_contributions: 2_000,
+  })]));
+  assertEquals(estimated["line5b_pension_taxable"], 18_000);
+  assertEquals(
+    itemSchema.safeParse(r1099Item({
+      gross_distribution: 20_000,
+      taxable_amount: 21_000,
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(r1099Item({
+      gross_distribution: 20_000,
+      employee_contributions: 21_000,
+    })).success,
+    false,
+  );
+});
+
+Deno.test("f4852: undetermined 1099-R taxable amount cannot enter a calculated return", () => {
+  const item = r1099Item({
+    gross_distribution: 20_000,
+    employee_contributions: 2_000,
+    taxable_amount_not_determined: true,
+  });
+  assertEquals(itemSchema.safeParse(item).success, true);
+  assertThrows(
+    () => compute([item]),
+    Error,
+    "Form 4852 taxable amount is undetermined",
+  );
+});
+
+Deno.test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to line25b", () => {
+  const result = compute([
+    r1099Item({
+      gross_distribution: 10000,
+      taxable_amount: 10000,
+      federal_withheld: 1000,
+      is_ira: true,
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line4a_ira_gross"], 10000);
+  assertEquals(fields["line4b_ira_taxable"], 10000);
+  assertEquals(fields["line25b_withheld_1099"], 1000);
+  // Should NOT set pension lines
+  assertEquals(fields["line5a_pension_gross"], undefined);
+  assertEquals(fields["line5b_pension_taxable"], undefined);
+});
+
+Deno.test("f4852: Part II 1099-R pension with no withholding", () => {
+  const result = compute([
+    r1099Item({ gross_distribution: 12000, federal_withheld: 0 }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line5a_pension_gross"], 12000);
+  assertEquals(fields["line5b_pension_taxable"], 12000);
+  assertEquals(fields["line25b_withheld_1099"], undefined);
+});
+
+// ---------------------------------------------------------------------------
+// 4. Both parts populated in one call
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: Part I + Part II both populated → merged f1040 output", () => {
+  const result = compute([
+    w2Item({ wages: 60000, federal_withheld: 10000 }),
+    r1099Item({
+      gross_distribution: 20000,
+      taxable_amount: 18000,
+      federal_withheld: 2000,
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], 60000);
+  assertEquals(fields["line25a_w2_withheld"], 10000);
+  assertEquals(fields["line5a_pension_gross"], 20000);
+  assertEquals(fields["line5b_pension_taxable"], 18000);
+  assertEquals(fields["line25b_withheld_1099"], 2000);
+  // Only one f1040 output
+  const f1040Outputs = result.outputs.filter((o: NodeOutput) =>
+    o.nodeType === "f1040"
+  );
+  assertEquals(f1040Outputs.length, 1);
+});
+
+// ---------------------------------------------------------------------------
+// 5. Multiple 4852 forms (multiple employers/payers)
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: multiple W2 substitutes → wages and withholding summed", () => {
+  const result = compute([
+    w2Item({ wages: 30000, federal_withheld: 5000 }),
+    w2Item({
+      wages: 25000,
+      federal_withheld: 3000,
+      payer_name: "Second Employer",
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], 55000);
+  assertEquals(fields["line25a_w2_withheld"], 8000);
+});
+
+Deno.test("f4852: multiple 1099-R substitutes → pension amounts summed", () => {
+  const result = compute([
+    r1099Item({
+      gross_distribution: 10000,
+      taxable_amount: 10000,
+      federal_withheld: 1000,
+    }),
+    r1099Item({
+      gross_distribution: 15000,
+      taxable_amount: 12000,
+      federal_withheld: 1500,
+      payer_name: "Second Pension",
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line5a_pension_gross"], 25000);
+  assertEquals(fields["line5b_pension_taxable"], 22000);
+  assertEquals(fields["line25b_withheld_1099"], 2500);
+});
+
+Deno.test("f4852: multiple mixed forms (W2 + R_1099 + IRA) → all fields correct", () => {
+  const result = compute([
+    w2Item({ wages: 40000, federal_withheld: 6000 }),
+    r1099Item({
+      gross_distribution: 8000,
+      taxable_amount: 7000,
+      federal_withheld: 700,
+    }),
+    r1099Item({
+      gross_distribution: 5000,
+      taxable_amount: 5000,
+      federal_withheld: 500,
+      is_ira: true,
+      payer_name: "My IRA Custodian",
+    }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line1a_wages"], 40000);
+  assertEquals(fields["line25a_w2_withheld"], 6000);
+  assertEquals(fields["line5a_pension_gross"], 8000);
+  assertEquals(fields["line5b_pension_taxable"], 7000);
+  assertEquals(fields["line4a_ira_gross"], 5000);
+  assertEquals(fields["line4b_ira_taxable"], 5000);
+  assertEquals(fields["line25b_withheld_1099"], 1200);
+});
+
+// ---------------------------------------------------------------------------
+// 6. Edge: single R_1099 item with no withholding produces no line25b
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: R_1099 item zero withholding → no line25b in output", () => {
+  const result = compute([
+    r1099Item({ gross_distribution: 5000, federal_withheld: 0 }),
+  ]);
+  const fields = f1040Fields(result);
+  assertEquals(fields["line25b_withheld_1099"], undefined);
+});
+
+Deno.test("f4852: code-1 substitute identifies the recipient of Form 5329", () => {
+  const result = compute([r1099Item({
+    gross_distribution: 5_000,
+    taxable_amount: 4_000,
+    distribution_code: "1",
+    subject_ts: TS.S,
+  })]);
+  const owned = findOutput(result, "form5329")?.fields.owner_entries as Array<
+    Record<string, unknown>
+  >;
+  assertEquals(owned[0]?.early_distribution, 4_000);
+  assertEquals(owned[0]?.owner, TS.S);
+});
+
+Deno.test("f4852: code-1 substitute without a recipient fails closed", () => {
+  assertThrows(
+    () =>
+      compute([r1099Item({
+        gross_distribution: 5_000,
+        distribution_code: "1",
+      })]),
+    Error,
+    "Form 5329 recipient",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 7. W2 item with all zeros → schema rejects (requires nonzero wages or withheld)
+// ---------------------------------------------------------------------------
+
+Deno.test("f4852: W2 item with wages=0 and federal_withheld=0 → schema throws", () => {
+  assertThrows(() => compute([w2Item({ wages: 0, federal_withheld: 0 })]));
+});

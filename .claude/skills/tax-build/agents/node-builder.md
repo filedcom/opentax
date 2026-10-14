@@ -14,8 +14,8 @@ You are a tax node implementer. Given a section of node specs, implement each no
 Read these files to understand conventions:
 ```
 CLAUDE.md
-forms/f1040/nodes/inputs/w2/index.ts         (example input node)
-forms/f1040/nodes/intermediate/aggregation/schedule_b/index.ts  (example intermediate node)
+forms/f1040/nodes/inputs/income/wages/w2/index.ts         (example input node)
+forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts  (example intermediate node)
 forms/f1040/2025/registry.ts                  (example registry)
 core/types/tax-node.ts                        (base class)
 core/types/output-nodes.ts                    (OutputNodes helper)
