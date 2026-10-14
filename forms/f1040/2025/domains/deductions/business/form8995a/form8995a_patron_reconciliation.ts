@@ -1,3 +1,4 @@
+import { additionalMedicareTax } from "../../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
@@ -37,7 +38,10 @@ export function assertForm8995APatronReturn(
   input: Form8995AInput,
   raw: Readonly<Record<string, unknown>> | undefined,
 ): void {
-  if (input.independent_patron_sources) { assertIndependentPatronReturn(input, raw); return; }
+  if (input.independent_patron_sources) {
+    assertIndependentPatronReturn(input, raw);
+    return;
+  }
   if (!input.patron_business_source) return;
   if (!raw) throw new Error("Patron filing needs its complete source return");
   const pending = normalizeAllPending(raw as Record<string, unknown>);
@@ -66,13 +70,19 @@ export function assertForm8995APatronReturn(
   const joint = input.filing_status === "mfj";
   if (input.filing_status === "mfs") {
     const mfs = review.mfs_filing_review;
-    if (!mfs || pending.general?.address_state !== mfs.mailing_address_state ||
-      String(pending.general?.spouse_ssn ?? "").replaceAll("-", "") !== mfs.spouse_ssn ||
-      String(pending.f1040?.spouse_ssn ?? "").replaceAll("-", "") !== mfs.spouse_ssn ||
+    if (
+      !mfs || pending.general?.address_state !== mfs.mailing_address_state ||
+      String(pending.general?.spouse_ssn ?? "").replaceAll("-", "") !==
+        mfs.spouse_ssn ||
+      String(pending.f1040?.spouse_ssn ?? "").replaceAll("-", "") !==
+        mfs.spouse_ssn ||
       pending.general?.mfs_spouse_itemizing !== false ||
       pending.f1040?.mfs_spouse_itemizing !== false ||
-      pending.f1040?.filing_status !== input.filing_status) {
-      throw new Error("MFS patron needs the retained noncommunity property, actual spouse and deduction review to match the return");
+      pending.f1040?.filing_status !== input.filing_status
+    ) {
+      throw new Error(
+        "MFS patron needs the retained noncommunity property, actual spouse and deduction review to match the return",
+      );
     }
   }
   const primary = String(pending.general?.taxpayer_ssn ?? "").replaceAll(
@@ -86,11 +96,14 @@ export function assertForm8995APatronReturn(
   const spouseOwned = recipient === "S";
   const owner = spouseOwned ? spouse : primary;
   const primaryCopies = review.primary_w2_sources
-    ? w2Schema.parse({ w2s: review.primary_w2_sources }).w2s : [];
+    ? w2Schema.parse({ w2s: review.primary_w2_sources }).w2s
+    : [];
   const spouseCopies = review.spouse_w2_sources
-    ? w2Schema.parse({ w2s: review.spouse_w2_sources }).w2s : [];
+    ? w2Schema.parse({ w2s: review.spouse_w2_sources }).w2s
+    : [];
   const copies = patronW2Sources(review).length
-    ? w2Schema.parse({ w2s: patronW2Sources(review) }).w2s : [];
+    ? w2Schema.parse({ w2s: patronW2Sources(review) }).w2s
+    : [];
   const w2Input = pending.w2 ? w2Schema.parse(pending.w2) : undefined;
   const w2s = w2Input?.w2s ?? [];
   if (
@@ -98,15 +111,20 @@ export function assertForm8995APatronReturn(
     owner !== review.source_1099patr.recipient_tin ||
     (spouseOwned && !joint) ||
     (!joint && spouseCopies.length > 0) ||
-    primaryCopies.some((row) => row.employee_ssn?.replaceAll("-", "") !== primary) ||
-    spouseCopies.some((row) => row.employee_ssn?.replaceAll("-", "") !== spouse) ||
+    primaryCopies.some((row) =>
+      row.employee_ssn?.replaceAll("-", "") !== primary
+    ) ||
+    spouseCopies.some((row) =>
+      row.employee_ssn?.replaceAll("-", "") !== spouse
+    ) ||
     String(pending.f1040?.taxpayer_ssn ?? "").replaceAll("-", "") !== primary ||
     (joint && (!/^\d{9}$/.test(spouse) || spouse === primary ||
       String(pending.f1040?.spouse_ssn ?? "").replaceAll("-", "") !==
         spouse)) ||
     JSON.stringify(w2s) !== JSON.stringify(copies) ||
     (copies.length > 0 &&
-      JSON.stringify(w2Input?.patron_filing_review) !== JSON.stringify(review)) ||
+      JSON.stringify(w2Input?.patron_filing_review) !==
+        JSON.stringify(review)) ||
     copies.some((row) =>
       !row.source_document_reference || !row.employer_name ||
       !/^\d{9}$/.test((row.employer_ein ?? "").replaceAll("-", "")) ||
@@ -180,13 +198,13 @@ export function assertForm8995APatronReturn(
     ? 125000
     : 200000;
   const medicareTax =
-    Math.round(Math.max(0, medicareWages - medicareThreshold) * .009) +
-    Math.round(
+    additionalMedicareTax(Math.max(0, medicareWages - medicareThreshold)) +
+    additionalMedicareTax(
       Math.max(
         0,
         Math.round(seLines?.line6 ?? 0) -
           Math.max(0, medicareThreshold - medicareWages),
-      ) * .009,
+      ),
     );
   const investment = assertMultiBusinessInvestmentSources(
     { ...input, taxpayer_ssn: primary },
@@ -260,7 +278,8 @@ export function assertForm8995APatronReturn(
       amounts.profit ||
     !noAmount(se[isC ? "net_profit_schedule_f" : "net_profit_schedule_c"]) ||
     se.farm_optional_method_elected === true ||
-    (se.w2_ss_wages ?? 0) !== ownerSocialSecurityWages || !noAmount(se.unreported_tips_4137) ||
+    (se.w2_ss_wages ?? 0) !== ownerSocialSecurityWages ||
+    !noAmount(se.unreported_tips_4137) ||
     !noAmount(se.wages_8919) ||
     seLines.line13 !== source.se_tax_deduction ||
     health !== source.health_insurance_deduction ||
@@ -319,11 +338,16 @@ export function patronProprietorSsn(
   if (input.patron_business_source && input.filing_status === "mfs") {
     const review = sourceSchema.parse(input.patron_business_source).review;
     const mfs = review.mfs_filing_review;
-    if (!mfs || filer?.filingStatus !== MefFilingStatus.MarriedFilingSeparately ||
-      filer.primarySSN.replaceAll("-", "") !== review.source_1099patr.recipient_tin ||
+    if (
+      !mfs || filer?.filingStatus !== MefFilingStatus.MarriedFilingSeparately ||
+      filer.primarySSN.replaceAll("-", "") !==
+        review.source_1099patr.recipient_tin ||
       filer.spouse?.ssn.replaceAll("-", "") !== mfs.spouse_ssn ||
-      filer.address.state !== mfs.mailing_address_state) {
-      throw new Error("MFS patron owner, spouse and mailing state must match the final filer and separate-income review");
+      filer.address.state !== mfs.mailing_address_state
+    ) {
+      throw new Error(
+        "MFS patron owner, spouse and mailing state must match the final filer and separate-income review",
+      );
     }
   }
   const recipient = input.patron_business_source

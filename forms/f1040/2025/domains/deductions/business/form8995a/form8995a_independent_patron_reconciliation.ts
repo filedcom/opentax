@@ -1,3 +1,4 @@
+import { additionalMedicareTax } from "../../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import {
   assertPatron1099PATRSource,
@@ -56,8 +57,8 @@ export function assertIndependentPatronReturn(
   const retirement = result.family.retirement?.deduction ?? 0;
   const profit = result.family.profit,
     agi = profit - se.deduction - health - retirement;
-  const medicare = Math.round(
-    Math.max(0, Math.round(se.medicareEarnings) - 250000) * .009,
+  const medicare = additionalMedicareTax(
+    Math.max(0, Math.round(se.medicareEarnings) - 250000),
   );
   const zero = (v: unknown) => v === undefined || v === 0;
   const qbiRetirement = pending.form8995?.retirement_plan_deduction;

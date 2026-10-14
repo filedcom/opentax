@@ -1,5 +1,21 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 14 patron Medicare rounding review repair
+
+The earlier Form8959 repair correctly rounded exact half dollars, but the single
+patron and independent-farm return validators still multiplied by floating-point
+0.009. Two complete source-return cases reproduced rejected correct exports:
+MFS proprietor wage excess103,500 and MFJ combined SE excess103,500 each require
+932, while their old validators expected931. Adjacent103,499/103,501 cases passed.
+
+Both validators now call the shared exact-integer Additional Medicare calculation.
+All six source-return cases prepare native returns and project the parent PDF
+fields, while twelve altered native/PDF-projection calls reject. The combined
+patron/Form8959 regression passes55 tests; lint, formatting and diff checks pass.
+This is arithmetic and projection verification, with no new rendered-PDF or IRS
+acceptance claim. Evidence: `.state/research/pr-fixes-2026-10-14/` retains the
+baseline4-pass/2-fail and corrected55-pass logs.
+
 ## October 12 saved patron investment checkpoint
 
 [Saved-submission evidence](../../../../testing/ty2025-patron-submission-replay.md#october-12-investment-extension)
