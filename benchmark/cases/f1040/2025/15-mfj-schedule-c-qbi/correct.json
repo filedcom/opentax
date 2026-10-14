@@ -29,15 +29,15 @@
   },
   "correct": {
     "line9_total_income": 135000,
-    "line11_agi": 130054.65,
+    "line11_agi": 130054,
     "standard_deduction": 31500,
-    "qbi_deduction": 13010.93,
-    "line15_taxable_income": 85543.73,
-    "ordinary_taxable": 85543.73,
-    "income_tax": 9788.25,
-    "se_tax": 9890.69,
+    "qbi_deduction": 13011,
+    "line15_taxable_income": 85543,
+    "ordinary_taxable": 85543,
+    "income_tax": 9786,
+    "se_tax": 9891,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 19678.94,
+    "line18_tax_before_credits": 9786,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,20 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 19678.94,
+    "line24_total_tax": 19677,
     "line33_total_payments": 7000,
     "line35a_refund": 0,
-    "line37_amount_owed": 12678.94
+    "line37_amount_owed": 12677
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Schedule SE: net earnings 64645, tax 9891, deductible half 4946; Form8995 QBI deduction 13011; Tax Table/Tax Computation Worksheet tax 9786. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Joint business and W-2 owner identity is not established; these amounts assume the archived scenario with no Social Security wage-base overlap (combined wages plus SE earnings below the cap)."
+    ]
   }
 }

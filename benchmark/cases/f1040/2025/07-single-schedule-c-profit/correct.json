@@ -29,15 +29,15 @@
   },
   "correct": {
     "line9_total_income": 71000,
-    "line11_agi": 68456.68,
+    "line11_agi": 68456,
     "standard_deduction": 15750,
-    "qbi_deduction": 6691.34,
-    "line15_taxable_income": 46015.34,
-    "ordinary_taxable": 46015.34,
-    "income_tax": 5283.34,
-    "se_tax": 5086.64,
+    "qbi_deduction": 6691,
+    "line15_taxable_income": 46015,
+    "ordinary_taxable": 46015,
+    "income_tax": 5285,
+    "se_tax": 5087,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 10369.98,
+    "line18_tax_before_credits": 5285,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,18 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 10369.98,
+    "line24_total_tax": 10372,
     "line33_total_payments": 3000,
     "line35a_refund": 0,
-    "line37_amount_owed": 7369.98
+    "line37_amount_owed": 7372
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Schedule SE: net earnings 33246, tax 5087, deductible half 2544; Form8995 QBI deduction 6691; Tax Table/Tax Computation Worksheet tax 5285. Whole-dollar schedules."
+    ],
+    "source_limitations": []
   }
 }

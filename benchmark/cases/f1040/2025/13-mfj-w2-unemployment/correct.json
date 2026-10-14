@@ -34,10 +34,10 @@
     "qbi_deduction": 0,
     "line15_taxable_income": 51700,
     "ordinary_taxable": 51700,
-    "income_tax": 5727,
+    "income_tax": 5730,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 5727,
+    "line18_tax_before_credits": 5730,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,18 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 5727,
+    "line24_total_tax": 5730,
     "line33_total_payments": 9120,
-    "line35a_refund": 3393,
+    "line35a_refund": 3390,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
   }
 }

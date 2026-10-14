@@ -46,10 +46,19 @@
     "ptc_repayment": 0,
     "eitc": 0,
     "actc": 0,
-    "excess_ss_credit": 1481.8,
+    "excess_ss_credit": 1482,
     "line24_total_tax": 37067,
-    "line33_total_payments": 40481.8,
-    "line35a_refund": 3414.8,
+    "line33_total_payments": 40482,
+    "line35a_refund": 3415,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
   }
 }

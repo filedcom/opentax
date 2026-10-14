@@ -21,6 +21,19 @@ export const benchmarkExpectedSchema = z.union([
   requiredValues.parse("correct" in value ? value.correct : value)
 );
 
+/** A conditional calculation is not a passing, source-backed oracle. */
+export function benchmarkSourceIssues(
+  fixture: Record<string, unknown>,
+): string[] {
+  if (fixture.reconciliation === undefined) return [];
+  const review = z.object({
+    source_limitations: z.array(z.string().min(1)),
+  }).parse(fixture.reconciliation);
+  return review.source_limitations.map((issue) =>
+    `Unresolved fixture source: ${issue}`
+  );
+}
+
 export const createdReturnSchema = z.object({ returnId: z.string().min(1) });
 const financialLine = z.union([
   z.number().finite(),
@@ -49,14 +62,15 @@ export const benchmarkReturnSchema = z.object({
     line35a_refund: financialLine.optional(),
     line37_amount_owed: financialLine.optional(),
   }).passthrough().refine(
-    (lines) => [
-      lines.line11_agi,
-      lines.line15_taxable_income,
-      lines.line24_total_tax,
-      lines.line33_total_payments,
-      lines.line35a_refund,
-      lines.line37_amount_owed,
-    ].some((value) => value !== undefined),
+    (lines) =>
+      [
+        lines.line11_agi,
+        lines.line15_taxable_income,
+        lines.line24_total_tax,
+        lines.line33_total_payments,
+        lines.line35a_refund,
+        lines.line37_amount_owed,
+      ].some((value) => value !== undefined),
     "Computed f1040 lines are required",
   ),
   warnings: z.array(z.string()),

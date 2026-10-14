@@ -5,10 +5,22 @@
   "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked; Rev. Proc. 2024-40 §3.14: $1,600 per age/blindness factor for MFJ (p. 95)",
   "correct": {
     "line11_agi": 43500,
-    "line15_taxable_income": 8800,
-    "line24_total_tax": 880,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
     "line33_total_payments": 3000,
-    "line35a_refund": 2120,
+    "line35a_refund": 3000,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
   }
 }

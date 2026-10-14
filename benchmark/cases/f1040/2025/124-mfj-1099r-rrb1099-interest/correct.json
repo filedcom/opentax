@@ -5,10 +5,22 @@
   "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64–65 (income amounts adapted; SSEB taxability per IRC §86)",
   "correct": {
     "line11_agi": 46775,
-    "line15_taxable_income": 12075,
-    "line24_total_tax": 1207.5,
+    "line15_taxable_income": 75,
+    "line24_total_tax": 9,
     "line33_total_payments": 0,
     "line35a_refund": 0,
-    "line37_amount_owed": 1207.5
+    "line37_amount_owed": 9
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
   }
 }

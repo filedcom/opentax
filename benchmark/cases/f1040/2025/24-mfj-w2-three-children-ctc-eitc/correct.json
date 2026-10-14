@@ -34,22 +34,34 @@
     "qbi_deduction": 0,
     "line15_taxable_income": 10000,
     "ordinary_taxable": 10000,
-    "income_tax": 1000,
+    "income_tax": 1003,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 1000,
-    "nonref_ctc": 1000,
+    "line18_tax_before_credits": 1003,
+    "nonref_ctc": 1003,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
     "ptc_additional": 0,
     "ptc_repayment": 0,
-    "eitc": 5723,
+    "eitc": 5718,
     "actc": 5100,
     "excess_ss_credit": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 12923,
-    "line35a_refund": 12923,
+    "line33_total_payments": 12918,
+    "line35a_refund": 12918,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": [
+      "Third child relationship is \"other\" despite the declared three-child scenario; qualifying relationship/SSN eligibility requires evidence."
+    ]
   }
 }

@@ -28,16 +28,16 @@
     "fed_withheld": 13751.02
   },
   "correct": {
-    "line9_total_income": 171138.9,
-    "line11_agi": 170750.17,
+    "line9_total_income": 171139,
+    "line11_agi": 170750,
     "standard_deduction": 31500,
     "qbi_deduction": 0,
-    "line15_taxable_income": 139250.17,
-    "ordinary_taxable": 139250.17,
-    "income_tax": 20463.04,
+    "line15_taxable_income": 139250,
+    "ordinary_taxable": 139250,
+    "income_tax": 20463,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 20463.04,
+    "line18_tax_before_credits": 20463,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -46,11 +46,23 @@
     "ptc_repayment": 0,
     "eitc": 0,
     "actc": 0,
-    "excess_ss_credit": 1044.76,
-    "line24_total_tax": 20463.04,
-    "line33_total_payments": 14795.78,
+    "excess_ss_credit": 1045,
+    "line24_total_tax": 20463,
+    "line33_total_payments": 14796,
     "line35a_refund": 0,
-    "line37_amount_owed": 5667.26,
-    "itemized_deduction": 15936.64
+    "line37_amount_owed": 5667,
+    "itemized_deduction": 15937
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 171139, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 15937; line16 20463, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+    ]
   }
 }

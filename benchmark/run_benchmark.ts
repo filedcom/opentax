@@ -9,6 +9,7 @@ import {
   benchmarkExpectedSchema,
   benchmarkInputSchema,
   benchmarkReturnSchema,
+  benchmarkSourceIssues,
   createdReturnSchema,
   discoverBenchmarkCases,
 } from "./harness.ts";
@@ -349,9 +350,12 @@ async function runCase(name: string): Promise<CaseResult> {
   const sm = eng.summary ?? {};
   // Raw lines take precedence: summary normalization must not hide malformed values.
   const actualLines = benchmarkActualLines(l, sm);
-  const errors: string[] = (eng.warnings ?? []).filter((warning: string) =>
-    warning.startsWith("[EXECUTOR_")
-  );
+  const errors: string[] = [
+    ...benchmarkSourceIssues(correct),
+    ...(eng.warnings ?? []).filter((warning: string) =>
+      warning.startsWith("[EXECUTOR_")
+    ),
+  ];
 
   const engAgi = displayScalar(actualLines.line11_agi ?? 0);
   const engTi = displayScalar(actualLines.line15_taxable_income ?? 0);

@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Head of household with one qualifying child — tests HOH standard deduction ($23,625) and Child Tax Credit ($2,000) reducing tax to $225",
+  "scenario": "Head of household with one qualifying child: $23,625 standard deduction, $2,200 CTC, $25 tax, and $864 EIC under the stated eligibility assumptions.",
   "forms": [
     {
       "node_type": "start",

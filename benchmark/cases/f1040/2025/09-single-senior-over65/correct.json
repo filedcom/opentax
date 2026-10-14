@@ -32,12 +32,12 @@
     "line11_agi": 28000,
     "standard_deduction": 17750,
     "qbi_deduction": 0,
-    "line15_taxable_income": 10250,
-    "ordinary_taxable": 10250,
-    "income_tax": 1025,
+    "line15_taxable_income": 4250,
+    "ordinary_taxable": 4250,
+    "income_tax": 428,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 1025,
+    "line18_tax_before_credits": 428,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,21 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 1025,
+    "line24_total_tax": 428,
     "line33_total_payments": 1500,
-    "line35a_refund": 475,
+    "line35a_refund": 1072,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
   }
 }

@@ -33,17 +33,17 @@
     "itemized_deductions": 56199.59
   },
   "correct": {
-    "line9_total_income": 295230.09,
-    "line11_agi": 295230.09,
+    "line9_total_income": 295230,
+    "line11_agi": 295230,
     "standard_deduction": 31500,
     "qbi_deduction": 0,
-    "line15_taxable_income": 239030.5,
-    "ordinary_taxable": 239030.5,
-    "income_tax": 43061.32,
+    "line15_taxable_income": 239031,
+    "ordinary_taxable": 239031,
+    "income_tax": 43061,
     "se_tax": 0,
-    "add_medicare_tax": 452.07,
-    "line18_tax_before_credits": 43513.39,
-    "nonref_ctc": 4400.0,
+    "add_medicare_tax": 452,
+    "line18_tax_before_credits": 43061,
+    "nonref_ctc": 4400,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
@@ -51,11 +51,24 @@
     "ptc_repayment": 0,
     "eitc": 0.0,
     "actc": 0.0,
-    "excess_ss_credit": 5710.53,
-    "line24_total_tax": 39113.39,
-    "line33_total_payments": 46181.60,
-    "line35a_refund": 7068.21,
+    "excess_ss_credit": 5711,
+    "line24_total_tax": 39113,
+    "line33_total_payments": 46182,
+    "line35a_refund": 7069,
     "line37_amount_owed": 0,
-    "itemized_deduction": 56199.59
+    "itemized_deduction": 56199
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 295230, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 56199; line16 43061, SE 0, Medicare 452, NIIT 0, distribution tax 0, foreign tax credit 0.",
+      "Form 8959 / Form 1040 line25d total withholding: 40471; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+    ]
   }
 }

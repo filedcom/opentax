@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single filer with W-2 wages ($32,000) enrolled in ACA marketplace plan; SLCSP $5,800, annual premium $5,400, APTC advanced $3,600; computed PTC ~$3,384 (FPL ~204%); excess APTC repayment $216 added to tax liability",
+  "scenario": "Single filer with $32,000 wages and full-year marketplace coverage: 2025 Form 8962 annual method gives $5,006 allowed PTC, $3,600 APTC, and $1,406 net PTC (eligibility evidence remains incomplete).",
   "forms": [
     {
       "node_type": "start",

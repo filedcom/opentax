@@ -21,6 +21,7 @@ for (
     "executor-error",
     "missing-case",
     "unsupported",
+    "source-gap",
   ] as const
 ) {
   Deno.test(`benchmark process fails closed: ${scenario}`, async () => {
@@ -49,6 +50,13 @@ for (
       await Deno.writeTextFile(
         join(caseDir, "correct.json"),
         JSON.stringify({
+          ...(scenario === "source-gap"
+            ? {
+              reconciliation: {
+                source_limitations: ["W-2 spouse owner absent"],
+              },
+            }
+            : {}),
           correct: {
             line24_total_tax: 17867,
             line35a_refund: 0,
@@ -111,6 +119,12 @@ for (
             expected: 123,
             kind: "unmapped_oracle",
           }]);
+        } else if (scenario === "source-gap") {
+          assertEquals(report.failures[0].lineFailures, []);
+          assertEquals(report.failures[0].unsupportedChecks, []);
+          assertEquals(report.failures[0].errors, [
+            "Unresolved fixture source: W-2 spouse owner absent",
+          ]);
         } else {
           assertStringIncludes(
             report.failures[0].errors.join("\n"),

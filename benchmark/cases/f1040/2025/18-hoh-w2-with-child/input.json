@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Head of household with one qualifying child \u2014 tests HOH filing status and $22,500 standard deduction",
+  "scenario": "Head of household with one qualifying child and $23,625 standard deduction.",
   "forms": [
     {
       "node_type": "start",

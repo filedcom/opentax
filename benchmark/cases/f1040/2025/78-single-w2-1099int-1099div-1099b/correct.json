@@ -56,5 +56,12 @@
     "line33_total_payments": 285.66,
     "line35a_refund": 285.66,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "scope": "Unresolved source facts; archived amounts retained, not independently valid.",
+    "source_limitations": [
+      "Taxpayer DOB/childless EIC age eligibility absent. Conditional EIC table amount is 316; no age supplied."
+    ]
   }
 }

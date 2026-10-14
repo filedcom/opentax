@@ -7,9 +7,18 @@
     "line9_total_income": 70000,
     "line11_agi": 63000,
     "line15_taxable_income": 31500,
-    "line24_total_tax": 3103,
+    "line24_total_tax": 3106,
     "line33_total_payments": 4800,
-    "line35a_refund": 1697,
+    "line35a_refund": 1694,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
   }
 }

@@ -5,11 +5,20 @@
   "source": "IRS VITA Pub 4491 TY2025, illustrative case based on Self-Employment module (SEP-IRA deduction Schedule 1 Line 16, QBI deduction Form 8995); IRC §404(a)(8), §408(k), §199A; IRS Pub 560; SE tax per IRC §1401; QBI deduction per Rev. Proc. 2024-40",
   "correct": {
     "line9_total_income": 75000,
-    "line11_agi": 55943.42,
-    "line15_taxable_income": 32154.73,
-    "line24_total_tax": 14217.23,
+    "line11_agi": 55943,
+    "line15_taxable_income": 32154,
+    "line24_total_tax": 14221,
     "line33_total_payments": 0,
     "line35a_refund": 0,
-    "line37_amount_owed": 14217.23
+    "line37_amount_owed": 14221
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Schedule SE: net earnings 69263, tax 10598, deductible half 5299; Form8995 QBI deduction 8039; Tax Table/Tax Computation Worksheet tax 3623. Whole-dollar schedules."
+    ],
+    "source_limitations": []
   }
 }

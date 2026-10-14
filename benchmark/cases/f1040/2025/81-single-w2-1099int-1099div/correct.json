@@ -28,16 +28,16 @@
     "fed_withheld": 9663.51
   },
   "correct": {
-    "line9_total_income": 88023.39,
-    "line11_agi": 88023.39,
+    "line9_total_income": 88024,
+    "line11_agi": 88024,
     "standard_deduction": 15750,
     "qbi_deduction": 0,
-    "line15_taxable_income": 72273.39,
-    "ordinary_taxable": 69463.63,
-    "income_tax": 10617.46,
+    "line15_taxable_income": 72274,
+    "ordinary_taxable": 69464,
+    "income_tax": 10621,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 10617.46,
+    "line18_tax_before_credits": 10621,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,10 +47,21 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 10617.46,
-    "line33_total_payments": 9663.51,
+    "line24_total_tax": 10621,
+    "line33_total_payments": 9664,
     "line35a_refund": 0,
-    "line37_amount_owed": 953.95,
-    "itemized_deduction": 8105.57
+    "line37_amount_owed": 957,
+    "itemized_deduction": 8105
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 85466, net capital 2558, business/rental 0, other 0, taxable SSA 0; Schedule A 8105; line16 10621, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
   }
 }

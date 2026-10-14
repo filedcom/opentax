@@ -29,15 +29,15 @@
   },
   "correct": {
     "line9_total_income": 26222,
-    "line11_agi": 21955.8,
+    "line11_agi": 21955,
     "standard_deduction": 17750,
-    "qbi_deduction": 841.16,
-    "line15_taxable_income": 3364.64,
-    "ordinary_taxable": 3364.64,
-    "income_tax": 336.46,
-    "se_tax": 3532.39,
+    "qbi_deduction": 0,
+    "line15_taxable_income": 0,
+    "ordinary_taxable": 0,
+    "income_tax": 0,
+    "se_tax": 3533,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 3868.85,
+    "line18_tax_before_credits": 0,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,20 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 3868.85,
+    "line24_total_tax": 3533,
     "line33_total_payments": 89,
     "line35a_refund": 0,
-    "line37_amount_owed": 3779.85
+    "line37_amount_owed": 3444
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+    "basis": [
+      "Schedule SE: net earnings 23088, tax 3533, deductible half 1767; Form8995 QBI deduction 0; Tax Table/Tax Computation Worksheet tax 0. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Includes 6000 senior deduction conditional on valid employment SSN; age is stated but SSN evidence is absent."
+    ]
   }
 }

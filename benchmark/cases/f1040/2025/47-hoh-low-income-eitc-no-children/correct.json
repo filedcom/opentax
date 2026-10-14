@@ -44,12 +44,22 @@
     "aotc_refundable": 0,
     "ptc_additional": 0,
     "ptc_repayment": 0,
-    "eitc": 543.43,
+    "eitc": 542,
     "actc": 0,
     "excess_ss_credit": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 543.43,
-    "line35a_refund": 543.43,
+    "line33_total_payments": 542,
+    "line35a_refund": 542,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
   }
 }

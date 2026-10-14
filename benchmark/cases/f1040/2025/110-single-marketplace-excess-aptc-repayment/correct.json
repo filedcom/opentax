@@ -1,15 +1,27 @@
 {
   "case": "110-single-marketplace-excess-aptc-repayment",
-  "scenario": "Single filer with W-2 wages ($32,000) enrolled in ACA marketplace plan; SLCSP $5,800, annual premium $5,400, APTC advanced $3,600; TY2025 uses 2024 HHS FPL ($15,060 for size 1) per IRC §36B — income is 212.5% FPL; applicable contribution ~6.69%; PTC allowed $3,258; excess APTC repayment $342 added to tax via Schedule 2 line 2",
+  "scenario": "Single filer with $32,000 wages and full-year marketplace coverage: 2025 Form 8962 annual method gives $5,006 allowed PTC, $3,600 APTC, and $1,406 net PTC (eligibility evidence remains incomplete).",
   "year": 2025,
-  "source": "IRS VITA Pub 4491 TY2025, illustrative case based on Health Care Coverage module (Form 8962 — excess advance Premium Tax Credit repayment); IRC §36B; Rev. Proc. 2025-15 (PTC applicable percentages TY2025); 2024 HHS poverty guidelines ($15,060 base) apply for TY2025 per IRC §36B(d)(3)(C)",
+  "source": "2025 Form 1040 instructions and 2025 Form 8962 instructions, Tables 1-1 and 2; https://www.irs.gov/instructions/i8962 (212% FPL, applicable figure 0.0248). Rev. Proc. 2025-15 applies to 2026, not this tax year.",
   "correct": {
     "line9_total_income": 32000,
     "line11_agi": 32000,
     "line15_taxable_income": 16250,
-    "line24_total_tax": 2053.5,
-    "line33_total_payments": 2500,
-    "line35a_refund": 446.5,
+    "line24_total_tax": 1715,
+    "line33_total_payments": 3906,
+    "line35a_refund": 2191,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 212%, line7 0.0248, contribution 794, allowed PTC 5006, net 1406, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
   }
 }

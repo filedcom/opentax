@@ -34,22 +34,34 @@
     "qbi_deduction": 0,
     "line15_taxable_income": 68500,
     "ordinary_taxable": 68500,
-    "income_tax": 7743,
+    "income_tax": 7746,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 7743,
+    "line18_tax_before_credits": 7746,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
-    "ptc_additional": 3500,
+    "ptc_additional": 4700,
     "ptc_repayment": 0,
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 7743,
-    "line33_total_payments": 14000,
-    "line35a_refund": 6257,
+    "line24_total_tax": 7746,
+    "line33_total_payments": 15200,
+    "line35a_refund": 7454,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
   }
 }

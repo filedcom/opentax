@@ -3,10 +3,22 @@
   "year": 2025,
   "correct": {
     "line11_agi": 25000,
-    "line15_taxable_income": 7250,
-    "line24_total_tax": 725,
+    "line15_taxable_income": 1250,
+    "line24_total_tax": 126,
     "line33_total_payments": 1500,
-    "line35a_refund": 775,
+    "line35a_refund": 1374,
     "line37_amount_owed": 0
+  },
+  "reconciliation": {
+    "issue": 77,
+    "reviewed": "2026-10-14",
+    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
   }
 }

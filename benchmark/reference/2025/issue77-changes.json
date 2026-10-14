@@ -1,0 +1,4176 @@
+[
+  {
+    "case": "01-single-w2-minimal",
+    "changes": {
+      "eitc": {
+        "before": 313.93,
+        "after": 312
+      },
+      "line33_total_payments": {
+        "before": 313.93,
+        "after": 312
+      },
+      "line35a_refund": {
+        "before": 313.93,
+        "after": 312
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "02-single-w2-basic",
+    "changes": {
+      "income_tax": {
+        "before": 3871.5,
+        "after": 3875
+      },
+      "line18_tax_before_credits": {
+        "before": 3871.5,
+        "after": 3875
+      },
+      "line24_total_tax": {
+        "before": 3871.5,
+        "after": 3875
+      },
+      "line35a_refund": {
+        "before": 1128.5,
+        "after": 1125
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "04-single-w2-unemployment",
+    "changes": {
+      "income_tax": {
+        "before": 3607.5,
+        "after": 3611
+      },
+      "line18_tax_before_credits": {
+        "before": 3607.5,
+        "after": 3611
+      },
+      "line24_total_tax": {
+        "before": 3607.5,
+        "after": 3611
+      },
+      "line35a_refund": {
+        "before": 572.5,
+        "after": 569
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "05-single-w2-interest-income",
+    "changes": {
+      "income_tax": {
+        "before": 6519,
+        "after": 6525
+      },
+      "line18_tax_before_credits": {
+        "before": 6519,
+        "after": 6525
+      },
+      "line24_total_tax": {
+        "before": 6519,
+        "after": 6525
+      },
+      "line35a_refund": {
+        "before": 981,
+        "after": 975
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "06-single-w2-capital-gains",
+    "changes": {
+      "income_tax": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "line18_tax_before_credits": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "line24_total_tax": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "line35a_refund": {
+        "before": 828.5,
+        "after": 825
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "08-single-student-loan",
+    "changes": {
+      "income_tax": {
+        "before": 4171.5,
+        "after": 4175
+      },
+      "line18_tax_before_credits": {
+        "before": 4171.5,
+        "after": 4175
+      },
+      "line24_total_tax": {
+        "before": 4171.5,
+        "after": 4175
+      },
+      "line35a_refund": {
+        "before": 1828.5,
+        "after": 1825
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "09-single-senior-over65",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 10250,
+        "after": 4250
+      },
+      "ordinary_taxable": {
+        "before": 10250,
+        "after": 4250
+      },
+      "income_tax": {
+        "before": 1025,
+        "after": 428
+      },
+      "line18_tax_before_credits": {
+        "before": 1025,
+        "after": 428
+      },
+      "line24_total_tax": {
+        "before": 1025,
+        "after": 428
+      },
+      "line35a_refund": {
+        "before": 475,
+        "after": 1072
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "10-single-two-w2s",
+    "changes": {
+      "income_tax": {
+        "before": 8389,
+        "after": 8395
+      },
+      "line18_tax_before_credits": {
+        "before": 8389,
+        "after": 8395
+      },
+      "line24_total_tax": {
+        "before": 8389,
+        "after": 8395
+      },
+      "line37_amount_owed": {
+        "before": 889,
+        "after": 895
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "100-single-w2-gambling-winnings",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3031.5,
+        "after": 3035
+      },
+      "line35a_refund": {
+        "before": 768.5,
+        "after": 765
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "102-single-w2-residential-clean-energy-solar",
+    "changes": {
+      "line24_total_tax": {
+        "before": 1289,
+        "after": 1295
+      },
+      "line35a_refund": {
+        "before": 5911,
+        "after": 5905
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "103-mfj-w2-savers-credit-10pct",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3943,
+        "after": 3946
+      },
+      "line35a_refund": {
+        "before": 857,
+        "after": 854
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "104-single-w2-lifetime-learning-credit",
+    "changes": {
+      "line24_total_tax": {
+        "before": 2471.5,
+        "after": 2475
+      },
+      "line35a_refund": {
+        "before": 3028.5,
+        "after": 3025
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "105-single-w2-foreign-tax-credit-de-minimis",
+    "changes": {
+      "line24_total_tax": {
+        "before": 6444,
+        "after": 6450
+      },
+      "line35a_refund": {
+        "before": 356,
+        "after": 350
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "106-hoh-w2-child-dep-care-credit",
+    "changes": {
+      "line27_eitc": {
+        "before": 415,
+        "after": 385
+      },
+      "line33_total_payments": {
+        "before": 4430,
+        "after": 4400
+      },
+      "line35a_refund": {
+        "before": 4430,
+        "after": 4400
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "109-mfj-w2-ira-deduction-savers-credit",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3103,
+        "after": 3106
+      },
+      "line35a_refund": {
+        "before": 1697,
+        "after": 1694
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "11-mfj-both-w2s",
+    "changes": {
+      "income_tax": {
+        "before": 8343,
+        "after": 8346
+      },
+      "line18_tax_before_credits": {
+        "before": 8343,
+        "after": 8346
+      },
+      "line24_total_tax": {
+        "before": 8343,
+        "after": 8346
+      },
+      "line35a_refund": {
+        "before": 2157,
+        "after": 2154
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "110-single-marketplace-excess-aptc-repayment",
+    "changes": {
+      "line24_total_tax": {
+        "before": 2053.5,
+        "after": 1715
+      },
+      "line33_total_payments": {
+        "before": 2500,
+        "after": 3906
+      },
+      "line35a_refund": {
+        "before": 446.5,
+        "after": 2191
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 212%, line7 0.0248, contribution 794, allowed PTC 5006, net 1406, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "112-single-w2-1099r-early-ira-penalty",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3831.5,
+        "after": 3835
+      },
+      "line37_amount_owed": {
+        "before": 531.5,
+        "after": 535
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "113-single-1099r-rmd-ssa-senior",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 7250,
+        "after": 1250
+      },
+      "line24_total_tax": {
+        "before": 725,
+        "after": 126
+      },
+      "line35a_refund": {
+        "before": 775,
+        "after": 1374
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "114-single-w2-1099r-roth-conversion",
+    "changes": {
+      "line24_total_tax": {
+        "before": 5071.5,
+        "after": 5075
+      },
+      "line35a_refund": {
+        "before": 428.5,
+        "after": 425
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "115-single-w2-schedule-e-rental",
+    "changes": {
+      "line24_total_tax": {
+        "before": 5143.5,
+        "after": 5147
+      },
+      "line37_amount_owed": {
+        "before": 143.5,
+        "after": 147
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "116-single-1099r-disability-pension",
+    "changes": {
+      "line24_total_tax": {
+        "before": 1231.5,
+        "after": 1235
+      },
+      "line35a_refund": {
+        "before": 768.5,
+        "after": 765
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "117-single-w2-1099misc-prizes",
+    "changes": {
+      "line24_total_tax": {
+        "before": 4231.5,
+        "after": 4235
+      },
+      "line35a_refund": {
+        "before": 568.5,
+        "after": 565
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "118-single-w2-schedule-h-household",
+    "changes": {
+      "line24_total_tax": {
+        "before": 6949.5,
+        "after": 6953
+      },
+      "line37_amount_owed": {
+        "before": 449.5,
+        "after": 453
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "119-single-w2-nol-carryforward",
+    "changes": {
+      "line24_total_tax": {
+        "before": 485,
+        "after": 488
+      },
+      "line35a_refund": {
+        "before": 3015,
+        "after": 3012
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "12-mfj-w2-with-child",
+    "changes": {
+      "income_tax": {
+        "before": 5943,
+        "after": 5946
+      },
+      "line18_tax_before_credits": {
+        "before": 5943,
+        "after": 5946
+      },
+      "line24_total_tax": {
+        "before": 3743,
+        "after": 3746
+      },
+      "line35a_refund": {
+        "before": 5257,
+        "after": 5254
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "120-single-w2-alimony-received",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3151.5,
+        "after": 3155
+      },
+      "line37_amount_owed": {
+        "before": 951.5,
+        "after": 955
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "121-mfj-w2-1099r-early-401k-penalty",
+    "changes": {
+      "line24_total_tax": {
+        "before": 9543,
+        "after": 9546
+      },
+      "line37_amount_owed": {
+        "before": 543,
+        "after": 546
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "124-mfj-1099r-rrb1099-interest",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 12075,
+        "after": 75
+      },
+      "line24_total_tax": {
+        "before": 1207.5,
+        "after": 9
+      },
+      "line37_amount_owed": {
+        "before": 1207.5,
+        "after": 9
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "127-single-senior-1099r-ssa-age65",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 2750,
+        "after": 0
+      },
+      "line24_total_tax": {
+        "before": 275,
+        "after": 0
+      },
+      "line35a_refund": {
+        "before": 1225,
+        "after": 1500
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "128-mfj-senior-both65-1099r-interest",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 8800,
+        "after": 0
+      },
+      "line24_total_tax": {
+        "before": 880,
+        "after": 0
+      },
+      "line35a_refund": {
+        "before": 2120,
+        "after": 3000
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "129-mfj-w2-installment-sale-ltcg",
+    "changes": {
+      "line24_total_tax": {
+        "before": 2350,
+        "after": 2353
+      },
+      "line35a_refund": {
+        "before": 2650,
+        "after": 2647
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "13-mfj-w2-unemployment",
+    "changes": {
+      "income_tax": {
+        "before": 5727,
+        "after": 5730
+      },
+      "line18_tax_before_credits": {
+        "before": 5727,
+        "after": 5730
+      },
+      "line24_total_tax": {
+        "before": 5727,
+        "after": 5730
+      },
+      "line35a_refund": {
+        "before": 3393,
+        "after": 3390
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "130-single-w2-cod-income",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3151.5,
+        "after": 3155
+      },
+      "line35a_refund": {
+        "before": 48.5,
+        "after": 45
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "132-single-w2-hobby-income",
+    "changes": {
+      "line24_total_tax": {
+        "before": 3331.5,
+        "after": 3335
+      },
+      "line35a_refund": {
+        "before": 668.5,
+        "after": 665
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "133-hoh-w2-ctc",
+    "changes": {
+      "line33_total_payments": {
+        "before": 4394.5,
+        "after": 4364
+      },
+      "line35a_refund": {
+        "before": 4369.5,
+        "after": 4339
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "14-mfj-w2-dividends",
+    "changes": {
+      "income_tax": {
+        "before": 7191,
+        "after": 7194
+      },
+      "line18_tax_before_credits": {
+        "before": 7191,
+        "after": 7194
+      },
+      "line24_total_tax": {
+        "before": 7191,
+        "after": 7194
+      },
+      "line35a_refund": {
+        "before": 3309,
+        "after": 3306
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "16-mfj-retirement-ssa",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 10700,
+        "after": 0
+      },
+      "ordinary_taxable": {
+        "before": 10700,
+        "after": 0
+      },
+      "income_tax": {
+        "before": 1070,
+        "after": 0
+      },
+      "line18_tax_before_credits": {
+        "before": 1070,
+        "after": 0
+      },
+      "line24_total_tax": {
+        "before": 1070,
+        "after": 0
+      },
+      "line35a_refund": {
+        "before": 2530,
+        "after": 3600
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "17-mfj-excess-ss-tax",
+    "changes": {
+      "excess_ss_credit": {
+        "before": 1481.8,
+        "after": 1482
+      },
+      "line33_total_payments": {
+        "before": 40481.8,
+        "after": 40482
+      },
+      "line35a_refund": {
+        "before": 3414.8,
+        "after": 3415
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "18-hoh-w2-with-child",
+    "changes": {
+      "income_tax": {
+        "before": 1437.5,
+        "after": 1438
+      },
+      "line18_tax_before_credits": {
+        "before": 1437.5,
+        "after": 1438
+      },
+      "nonref_ctc": {
+        "before": 1437.5,
+        "after": 1438
+      },
+      "eitc": {
+        "before": 2012.66,
+        "after": 1983
+      },
+      "actc": {
+        "before": 762.5,
+        "after": 762
+      },
+      "line33_total_payments": {
+        "before": 5775.16,
+        "after": 5745
+      },
+      "line35a_refund": {
+        "before": 5775.16,
+        "after": 5745
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "21-single-w2-unemployment",
+    "changes": {
+      "income_tax": {
+        "before": 26829.8,
+        "after": 26830
+      },
+      "line18_tax_before_credits": {
+        "before": 26829.8,
+        "after": 26830
+      },
+      "line24_total_tax": {
+        "before": 26829.8,
+        "after": 26830
+      },
+      "line37_amount_owed": {
+        "before": 13594.8,
+        "after": 13595
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "22-single-w2-interest-qualified-dividends",
+    "changes": {
+      "income_tax": {
+        "before": 1858.26,
+        "after": 1859
+      },
+      "line18_tax_before_credits": {
+        "before": 1858.26,
+        "after": 1859
+      },
+      "line24_total_tax": {
+        "before": 1858.26,
+        "after": 1859
+      },
+      "line35a_refund": {
+        "before": 1596.74,
+        "after": 1596
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "24-mfj-w2-three-children-ctc-eitc",
+    "changes": {
+      "income_tax": {
+        "before": 1000,
+        "after": 1003
+      },
+      "line18_tax_before_credits": {
+        "before": 1000,
+        "after": 1003
+      },
+      "nonref_ctc": {
+        "before": 1000,
+        "after": 1003
+      },
+      "eitc": {
+        "before": 5723,
+        "after": 5718
+      },
+      "line33_total_payments": {
+        "before": 12923,
+        "after": 12918
+      },
+      "line35a_refund": {
+        "before": 12923,
+        "after": 12918
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": [
+      "Third child relationship is \"other\" despite the declared three-child scenario; qualifying relationship/SSN eligibility requires evidence."
+    ]
+  },
+  {
+    "case": "25-hoh-blind-ssa-unemployment-interest",
+    "changes": {
+      "income_tax": {
+        "before": 83.9,
+        "after": 84
+      },
+      "line18_tax_before_credits": {
+        "before": 83.9,
+        "after": 84
+      },
+      "line24_total_tax": {
+        "before": 83.9,
+        "after": 84
+      },
+      "line37_amount_owed": {
+        "before": 66.9,
+        "after": 67
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "26-single-high-income-additional-medicare",
+    "changes": {
+      "line18_tax_before_credits": {
+        "before": 42603,
+        "after": 42423
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "28-mfj-w2-ltcg-dividends",
+    "changes": {
+      "income_tax": {
+        "before": 5403,
+        "after": 5406
+      },
+      "line18_tax_before_credits": {
+        "before": 5403,
+        "after": 5406
+      },
+      "line24_total_tax": {
+        "before": 5403,
+        "after": 5406
+      },
+      "line35a_refund": {
+        "before": 4097,
+        "after": 4094
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "29-hoh-w2-three-children-eitc-actc",
+    "changes": {
+      "income_tax": {
+        "before": 337.5,
+        "after": 338
+      },
+      "line18_tax_before_credits": {
+        "before": 337.5,
+        "after": 338
+      },
+      "nonref_ctc": {
+        "before": 337.5,
+        "after": 338
+      },
+      "eitc": {
+        "before": 7311.22,
+        "after": 7272
+      },
+      "line33_total_payments": {
+        "before": 12786.22,
+        "after": 12747
+      },
+      "line35a_refund": {
+        "before": 12786.22,
+        "after": 12747
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "30-mfj-senior-both-pension-ssa",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 300,
+        "after": 0
+      },
+      "ordinary_taxable": {
+        "before": 300,
+        "after": 0
+      },
+      "income_tax": {
+        "before": 30,
+        "after": 0
+      },
+      "line18_tax_before_credits": {
+        "before": 30,
+        "after": 0
+      },
+      "line24_total_tax": {
+        "before": 30,
+        "after": 0
+      },
+      "line35a_refund": {
+        "before": 2470,
+        "after": 2500
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 12000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "31-single-w2-box12-hsa",
+    "changes": {
+      "income_tax": {
+        "before": 4831.5,
+        "after": 4835
+      },
+      "line18_tax_before_credits": {
+        "before": 4831.5,
+        "after": 4835
+      },
+      "line24_total_tax": {
+        "before": 4831.5,
+        "after": 4835
+      },
+      "line35a_refund": {
+        "before": 2168.5,
+        "after": 2165
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "32-single-schedule-c-loss",
+    "changes": {
+      "income_tax": {
+        "before": 2431.5,
+        "after": 2435
+      },
+      "line18_tax_before_credits": {
+        "before": 2431.5,
+        "after": 2435
+      },
+      "line24_total_tax": {
+        "before": 2431.5,
+        "after": 2435
+      },
+      "line35a_refund": {
+        "before": 2568.5,
+        "after": 2565
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "34-single-1099r-retirement",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 10250,
+        "after": 4250
+      },
+      "ordinary_taxable": {
+        "before": 10250,
+        "after": 4250
+      },
+      "income_tax": {
+        "before": 1025,
+        "after": 428
+      },
+      "line18_tax_before_credits": {
+        "before": 1025,
+        "after": 428
+      },
+      "line24_total_tax": {
+        "before": 1025,
+        "after": 428
+      },
+      "line35a_refund": {
+        "before": 1775,
+        "after": 2372
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "35-single-w2-aotc",
+    "changes": {
+      "income_tax": {
+        "before": 2911.5,
+        "after": 2915
+      },
+      "line18_tax_before_credits": {
+        "before": 2911.5,
+        "after": 2915
+      },
+      "line24_total_tax": {
+        "before": 1411.5,
+        "after": 1415
+      },
+      "line35a_refund": {
+        "before": 3788.5,
+        "after": 3785
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "36-single-w2-marketplace-1095a",
+    "changes": {
+      "income_tax": {
+        "before": 2071.5,
+        "after": 2075
+      },
+      "line18_tax_before_credits": {
+        "before": 2071.5,
+        "after": 2075
+      },
+      "ptc_additional": {
+        "before": 2170.24,
+        "after": 3952
+      },
+      "line24_total_tax": {
+        "before": 2071.5,
+        "after": 2075
+      },
+      "line33_total_payments": {
+        "before": 5670.24,
+        "after": 7452
+      },
+      "line35a_refund": {
+        "before": 3598.74,
+        "after": 5377
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 232%, line7 0.0328, contribution 1148, allowed PTC 3952, net 3952, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "37-single-w2-educator-expense",
+    "changes": {
+      "income_tax": {
+        "before": 3595.5,
+        "after": 3599
+      },
+      "line18_tax_before_credits": {
+        "before": 3595.5,
+        "after": 3599
+      },
+      "line24_total_tax": {
+        "before": 3595.5,
+        "after": 3599
+      },
+      "line35a_refund": {
+        "before": 1204.5,
+        "after": 1201
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "39-single-eitc-no-children",
+    "changes": {
+      "eitc": {
+        "before": 390.43,
+        "after": 389
+      },
+      "line33_total_payments": {
+        "before": 390.43,
+        "after": 389
+      },
+      "line35a_refund": {
+        "before": 390.43,
+        "after": 389
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "40-single-w2-box12-401k",
+    "changes": {
+      "income_tax": {
+        "before": 4111.5,
+        "after": 4115
+      },
+      "line18_tax_before_credits": {
+        "before": 4111.5,
+        "after": 4115
+      },
+      "line24_total_tax": {
+        "before": 4111.5,
+        "after": 4115
+      },
+      "line35a_refund": {
+        "before": 1388.5,
+        "after": 1385
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "41-mfj-w2-educator-both",
+    "changes": {
+      "income_tax": {
+        "before": 7671,
+        "after": 7674
+      },
+      "line18_tax_before_credits": {
+        "before": 7671,
+        "after": 7674
+      },
+      "line24_total_tax": {
+        "before": 7671,
+        "after": 7674
+      },
+      "line35a_refund": {
+        "before": 2829,
+        "after": 2826
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "42-single-w2-tips",
+    "changes": {
+      "income_tax": {
+        "before": 925,
+        "after": 928
+      },
+      "line18_tax_before_credits": {
+        "before": 925,
+        "after": 928
+      },
+      "line24_total_tax": {
+        "before": 925,
+        "after": 928
+      },
+      "line35a_refund": {
+        "before": 1575,
+        "after": 1572
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "43-single-multiple-1099r",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 13250,
+        "after": 7250
+      },
+      "ordinary_taxable": {
+        "before": 13250,
+        "after": 7250
+      },
+      "income_tax": {
+        "before": 1351.5,
+        "after": 728
+      },
+      "line18_tax_before_credits": {
+        "before": 1351.5,
+        "after": 728
+      },
+      "line24_total_tax": {
+        "before": 1351.5,
+        "after": 728
+      },
+      "line35a_refund": {
+        "before": 1748.5,
+        "after": 2372
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "44-mfj-w2-aotc",
+    "changes": {
+      "income_tax": {
+        "before": 5943,
+        "after": 5946
+      },
+      "line18_tax_before_credits": {
+        "before": 5943,
+        "after": 5946
+      },
+      "line24_total_tax": {
+        "before": 4443,
+        "after": 4446
+      },
+      "line35a_refund": {
+        "before": 5557,
+        "after": 5554
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "45-single-w2-educator-marketplace",
+    "changes": {
+      "income_tax": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "line18_tax_before_credits": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "ptc_additional": {
+        "before": 2071.54,
+        "after": 3860
+      },
+      "line24_total_tax": {
+        "before": 2671.5,
+        "after": 2675
+      },
+      "line33_total_payments": {
+        "before": 6071.54,
+        "after": 7860
+      },
+      "line35a_refund": {
+        "before": 3400.04,
+        "after": 5185
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 265%, line7 0.0460, contribution 1840, allowed PTC 3860, net 3860, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "47-hoh-low-income-eitc-no-children",
+    "changes": {
+      "eitc": {
+        "before": 543.43,
+        "after": 542
+      },
+      "line33_total_payments": {
+        "before": 543.43,
+        "after": 542
+      },
+      "line35a_refund": {
+        "before": 543.43,
+        "after": 542
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "48-mfj-w2-marketplace-1095a",
+    "changes": {
+      "income_tax": {
+        "before": 7743,
+        "after": 7746
+      },
+      "line18_tax_before_credits": {
+        "before": 7743,
+        "after": 7746
+      },
+      "ptc_additional": {
+        "before": 3500,
+        "after": 4700
+      },
+      "line24_total_tax": {
+        "before": 7743,
+        "after": 7746
+      },
+      "line33_total_payments": {
+        "before": 14000,
+        "after": 15200
+      },
+      "line35a_refund": {
+        "before": 6257,
+        "after": 7454
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 20440, line5 489%, line7 0.0850, contribution 8500, allowed PTC 4700, net 4700, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "51-single-senior-1099r-f1040es",
+    "changes": {
+      "line15_taxable_income": {
+        "before": 12250,
+        "after": 6250
+      },
+      "ordinary_taxable": {
+        "before": 12250,
+        "after": 6250
+      },
+      "income_tax": {
+        "before": 1231.5,
+        "after": 628
+      },
+      "line18_tax_before_credits": {
+        "before": 1231.5,
+        "after": 628
+      },
+      "line24_total_tax": {
+        "before": 1231.5,
+        "after": 628
+      },
+      "line35a_refund": {
+        "before": 7768.5,
+        "after": 8372
+      }
+    },
+    "basis": [
+      "Schedule 1-A Part V: 6000 enhanced senior deduction before taxable-income floor.",
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": [
+      "Senior calculation assumes valid employment SSNs; source input does not establish SSN validity. No identity facts added."
+    ]
+  },
+  {
+    "case": "52-single-w2-marketplace-ptc-no-aptc",
+    "changes": {
+      "income_tax": {
+        "before": 1231.5,
+        "after": 1235
+      },
+      "line18_tax_before_credits": {
+        "before": 1231.5,
+        "after": 1235
+      },
+      "ptc_additional": {
+        "before": 2031.99,
+        "after": 3600
+      },
+      "line24_total_tax": {
+        "before": 1231.5,
+        "after": 1235
+      },
+      "line33_total_payments": {
+        "before": 4831.99,
+        "after": 6400
+      },
+      "line35a_refund": {
+        "before": 3600.49,
+        "after": 5165
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 185%, line7 0.0140, contribution 392, allowed PTC 3600, net 3600, repayment 0."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "53-single-marketplace-ptc-with-aptc-repayment",
+    "changes": {
+      "income_tax": {
+        "before": 5749,
+        "after": 5755
+      },
+      "line18_tax_before_credits": {
+        "before": 5749,
+        "after": 9480
+      },
+      "ptc_repayment": {
+        "before": 4325,
+        "after": 3725
+      },
+      "line24_total_tax": {
+        "before": 10074,
+        "after": 9480
+      },
+      "line33_total_payments": {
+        "before": 6500.5,
+        "after": 6500
+      },
+      "line37_amount_owed": {
+        "before": 3573.5,
+        "after": 2980
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+      "Form8962 annual method: FPL 15060, line5 431%, line7 0.0850, contribution 5525, allowed PTC 1075, net 0, repayment 3725."
+    ],
+    "source_limitations": [
+      "Annual PTC arithmetic assumes the scenario's full-year eligible coverage and unchanged tax family; sparse 1095-A inputs do not establish all coverage/allocation eligibility facts."
+    ]
+  },
+  {
+    "case": "99-single-w2-savers-credit-20pct",
+    "changes": {
+      "line24_total_tax": {
+        "before": 425,
+        "after": 428
+      },
+      "line35a_refund": {
+        "before": 775,
+        "after": 772
+      }
+    },
+    "basis": [
+      "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "07-single-schedule-c-profit",
+    "changes": {
+      "line11_agi": {
+        "before": 68456.68,
+        "after": 68456
+      },
+      "qbi_deduction": {
+        "before": 6691.34,
+        "after": 6691
+      },
+      "line15_taxable_income": {
+        "before": 46015.34,
+        "after": 46015
+      },
+      "ordinary_taxable": {
+        "before": 46015.34,
+        "after": 46015
+      },
+      "income_tax": {
+        "before": 5283.34,
+        "after": 5285
+      },
+      "se_tax": {
+        "before": 5086.64,
+        "after": 5087
+      },
+      "line18_tax_before_credits": {
+        "before": 10369.98,
+        "after": 5285
+      },
+      "line24_total_tax": {
+        "before": 10369.98,
+        "after": 10372
+      },
+      "line37_amount_owed": {
+        "before": 7369.98,
+        "after": 7372
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 33246, tax 5087, deductible half 2544; Form8995 QBI deduction 6691; Tax Table/Tax Computation Worksheet tax 5285. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "108-single-w2-schedule-c-se-self-employed-health",
+    "changes": {
+      "line10_adjustments": {
+        "before": 2780.54,
+        "after": 2781
+      },
+      "line11_agi": {
+        "before": 123258.46,
+        "after": 123258
+      },
+      "line15_taxable_income": {
+        "before": 103023.97,
+        "after": 103024
+      },
+      "line24_total_tax": {
+        "before": 21140.34,
+        "after": 21140
+      },
+      "line37_amount_owed": {
+        "before": 6696.34,
+        "after": 6696
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 23275, tax 3561, deductible half 1781; Form8995 QBI deduction 4484; Tax Table/Tax Computation Worksheet tax 17579. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "111-single-schedule-c-sep-ira-qbi",
+    "changes": {
+      "line11_agi": {
+        "before": 55943.42,
+        "after": 55943
+      },
+      "line15_taxable_income": {
+        "before": 32154.73,
+        "after": 32154
+      },
+      "line24_total_tax": {
+        "before": 14217.23,
+        "after": 14221
+      },
+      "line37_amount_owed": {
+        "before": 14217.23,
+        "after": 14221
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 69263, tax 10598, deductible half 5299; Form8995 QBI deduction 8039; Tax Table/Tax Computation Worksheet tax 3623. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "15-mfj-schedule-c-qbi",
+    "changes": {
+      "line11_agi": {
+        "before": 130054.65,
+        "after": 130054
+      },
+      "qbi_deduction": {
+        "before": 13010.93,
+        "after": 13011
+      },
+      "line15_taxable_income": {
+        "before": 85543.73,
+        "after": 85543
+      },
+      "ordinary_taxable": {
+        "before": 85543.73,
+        "after": 85543
+      },
+      "income_tax": {
+        "before": 9788.25,
+        "after": 9786
+      },
+      "se_tax": {
+        "before": 9890.69,
+        "after": 9891
+      },
+      "line18_tax_before_credits": {
+        "before": 19678.94,
+        "after": 9786
+      },
+      "line24_total_tax": {
+        "before": 19678.94,
+        "after": 19677
+      },
+      "line37_amount_owed": {
+        "before": 12678.94,
+        "after": 12677
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 64645, tax 9891, deductible half 4946; Form8995 QBI deduction 13011; Tax Table/Tax Computation Worksheet tax 9786. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Joint business and W-2 owner identity is not established; these amounts assume the archived scenario with no Social Security wage-base overlap (combined wages plus SE earnings below the cap)."
+    ]
+  },
+  {
+    "case": "23-mfj-w2-schedule-c-student-loan",
+    "changes": {
+      "line11_agi": {
+        "before": 34181.26,
+        "after": 34181
+      },
+      "qbi_deduction": {
+        "before": 536.25,
+        "after": 536
+      },
+      "line15_taxable_income": {
+        "before": 2145.01,
+        "after": 2145
+      },
+      "ordinary_taxable": {
+        "before": 2145.01,
+        "after": 2145
+      },
+      "income_tax": {
+        "before": 214.5,
+        "after": 214
+      },
+      "se_tax": {
+        "before": 3279.47,
+        "after": 3280
+      },
+      "line18_tax_before_credits": {
+        "before": 3493.97,
+        "after": 214
+      },
+      "line24_total_tax": {
+        "before": 3493.97,
+        "after": 3494
+      },
+      "line37_amount_owed": {
+        "before": 3262.97,
+        "after": 3263
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 21434, tax 3280, deductible half 1640; Form8995 QBI deduction 536; Tax Table/Tax Computation Worksheet tax 214. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Joint business and W-2 owner identity is not established; these amounts assume the archived scenario with no Social Security wage-base overlap (combined wages plus SE earnings below the cap)."
+    ]
+  },
+  {
+    "case": "27-single-senior-schedule-c-ssa",
+    "changes": {
+      "line11_agi": {
+        "before": 21955.8,
+        "after": 21955
+      },
+      "qbi_deduction": {
+        "before": 841.16,
+        "after": 0
+      },
+      "line15_taxable_income": {
+        "before": 3364.64,
+        "after": 0
+      },
+      "ordinary_taxable": {
+        "before": 3364.64,
+        "after": 0
+      },
+      "income_tax": {
+        "before": 336.46,
+        "after": 0
+      },
+      "se_tax": {
+        "before": 3532.39,
+        "after": 3533
+      },
+      "line18_tax_before_credits": {
+        "before": 3868.85,
+        "after": 0
+      },
+      "line24_total_tax": {
+        "before": 3868.85,
+        "after": 3533
+      },
+      "line37_amount_owed": {
+        "before": 3779.85,
+        "after": 3444
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 23088, tax 3533, deductible half 1767; Form8995 QBI deduction 0; Tax Table/Tax Computation Worksheet tax 0. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Includes 6000 senior deduction conditional on valid employment SSN; age is stated but SSN evidence is absent."
+    ]
+  },
+  {
+    "case": "33-single-1099nec-schedule-c",
+    "changes": {
+      "line11_agi": {
+        "before": 43587.04,
+        "after": 43587
+      },
+      "qbi_deduction": {
+        "before": 3717.41,
+        "after": 3717
+      },
+      "line15_taxable_income": {
+        "before": 24119.64,
+        "after": 24120
+      },
+      "ordinary_taxable": {
+        "before": 24119.64,
+        "after": 24120
+      },
+      "income_tax": {
+        "before": 2655.86,
+        "after": 2657
+      },
+      "se_tax": {
+        "before": 2825.91,
+        "after": 2826
+      },
+      "line18_tax_before_credits": {
+        "before": 5481.77,
+        "after": 2657
+      },
+      "line24_total_tax": {
+        "before": 5481.77,
+        "after": 5483
+      },
+      "line37_amount_owed": {
+        "before": 2981.77,
+        "after": 2983
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 18470, tax 2826, deductible half 1413; Form8995 QBI deduction 3717; Tax Table/Tax Computation Worksheet tax 2657. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "38-single-schedule-c-estimated-tax",
+    "changes": {
+      "line11_agi": {
+        "before": 55761.13,
+        "after": 55761
+      },
+      "qbi_deduction": {
+        "before": 8002.23,
+        "after": 8002
+      },
+      "line15_taxable_income": {
+        "before": 32008.9,
+        "after": 32009
+      },
+      "ordinary_taxable": {
+        "before": 32008.9,
+        "after": 32009
+      },
+      "income_tax": {
+        "before": 3602.57,
+        "after": 3605
+      },
+      "se_tax": {
+        "before": 8477.73,
+        "after": 8478
+      },
+      "line18_tax_before_credits": {
+        "before": 12080.3,
+        "after": 3605
+      },
+      "line24_total_tax": {
+        "before": 12080.3,
+        "after": 12083
+      },
+      "line37_amount_owed": {
+        "before": 80.3,
+        "after": 83
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 55410, tax 8478, deductible half 4239; Form8995 QBI deduction 8002; Tax Table/Tax Computation Worksheet tax 3605. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "46-single-schedule-c-f1040es-qbi",
+    "changes": {
+      "line11_agi": {
+        "before": 69701.42,
+        "after": 69701
+      },
+      "qbi_deduction": {
+        "before": 10790.28,
+        "after": 10790
+      },
+      "line15_taxable_income": {
+        "before": 43161.14,
+        "after": 43161
+      },
+      "ordinary_taxable": {
+        "before": 43161.14,
+        "after": 43161
+      },
+      "income_tax": {
+        "before": 4940.84,
+        "after": 4943
+      },
+      "se_tax": {
+        "before": 10597.16,
+        "after": 10598
+      },
+      "line18_tax_before_credits": {
+        "before": 15538,
+        "after": 4943
+      },
+      "line24_total_tax": {
+        "before": 15538,
+        "after": 15541
+      },
+      "line35a_refund": {
+        "before": 2462,
+        "after": 2459
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 69263, tax 10598, deductible half 5299; Form8995 QBI deduction 10790; Tax Table/Tax Computation Worksheet tax 4943. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "49-single-1099nec-w2-no-withholding",
+    "changes": {
+      "line11_agi": {
+        "before": 43940.29,
+        "after": 43940
+      },
+      "qbi_deduction": {
+        "before": 2788.06,
+        "after": 2788
+      },
+      "line15_taxable_income": {
+        "before": 25402.23,
+        "after": 25402
+      },
+      "ordinary_taxable": {
+        "before": 25402.23,
+        "after": 25402
+      },
+      "income_tax": {
+        "before": 2809.77,
+        "after": 2813
+      },
+      "se_tax": {
+        "before": 2119.43,
+        "after": 2120
+      },
+      "line18_tax_before_credits": {
+        "before": 4929.2,
+        "after": 2813
+      },
+      "line24_total_tax": {
+        "before": 4929.2,
+        "after": 4933
+      },
+      "line37_amount_owed": {
+        "before": 1929.2,
+        "after": 1933
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 13853, tax 2120, deductible half 1060; Form8995 QBI deduction 2788; Tax Table/Tax Computation Worksheet tax 2813. Whole-dollar schedules."
+    ],
+    "source_limitations": []
+  },
+  {
+    "case": "50-mfj-schedule-c-estimated-tax-qbi",
+    "changes": {
+      "line11_agi": {
+        "before": 134348.18,
+        "after": 134348
+      },
+      "qbi_deduction": {
+        "before": 14869.64,
+        "after": 14870
+      },
+      "line15_taxable_income": {
+        "before": 87978.54,
+        "after": 87978
+      },
+      "ordinary_taxable": {
+        "before": 87978.54,
+        "after": 87978
+      },
+      "income_tax": {
+        "before": 10080.43,
+        "after": 10080
+      },
+      "se_tax": {
+        "before": 11303.64,
+        "after": 11304
+      },
+      "line18_tax_before_credits": {
+        "before": 21384.07,
+        "after": 10080
+      },
+      "line24_total_tax": {
+        "before": 21384.07,
+        "after": 21384
+      },
+      "line35a_refund": {
+        "before": 5615.93,
+        "after": 5616
+      }
+    },
+    "basis": [
+      "Schedule SE: net earnings 73880, tax 11304, deductible half 5652; Form8995 QBI deduction 14870; Tax Table/Tax Computation Worksheet tax 10080. Whole-dollar schedules."
+    ],
+    "source_limitations": [
+      "Joint business and W-2 owner identity is not established; these amounts assume the archived scenario with no Social Security wage-base overlap (combined wages plus SE earnings below the cap)."
+    ]
+  },
+  {
+    "case": "54-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line11_agi": {
+        "before": 906333.05,
+        "after": 906333
+      },
+      "line15_taxable_income": {
+        "before": 890583.05,
+        "after": 890583
+      },
+      "ordinary_taxable": {
+        "before": 839494.05,
+        "after": 839494
+      },
+      "income_tax": {
+        "before": 277850.85,
+        "after": 277851
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 316132.52,
+        "after": 277851
+      },
+      "line24_total_tax": {
+        "before": 316132.52,
+        "after": 316131
+      },
+      "line37_amount_owed": {
+        "before": 304946.52,
+        "after": 304945
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 276, business/rental 730384, other 0, taxable SSA 0; Schedule A 0; line16 277851, SE 25964, Medicare 4324, NIIT 6792, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "55-mfj-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 128998.62,
+        "after": 128998
+      },
+      "line11_agi": {
+        "before": 128998.62,
+        "after": 128998
+      },
+      "line15_taxable_income": {
+        "before": 97498.62,
+        "after": 97498
+      },
+      "ordinary_taxable": {
+        "before": 94406.17000000001,
+        "after": 94406
+      },
+      "income_tax": {
+        "before": 10971.53,
+        "after": 10974
+      },
+      "line18_tax_before_credits": {
+        "before": 10971.53,
+        "after": 10974
+      },
+      "line24_total_tax": {
+        "before": 10899.82,
+        "after": 10902
+      },
+      "line33_total_payments": {
+        "before": 20035.13,
+        "after": 20035
+      },
+      "line35a_refund": {
+        "before": 9135.31,
+        "after": 9133
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 91656, net capital 2295, business/rental 0, other 0, taxable SSA 35047; Schedule A 0; line16 10974, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 72."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "56-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line11_agi": {
+        "before": 11248263.43,
+        "after": 11248263
+      },
+      "line15_taxable_income": {
+        "before": 11232513.43,
+        "after": 11232513
+      },
+      "ordinary_taxable": {
+        "before": 10787294.43,
+        "after": 10787294
+      },
+      "income_tax": {
+        "before": 4037362.99,
+        "after": 4037363
+      },
+      "se_tax": {
+        "before": 250559.13,
+        "after": 250559
+      },
+      "add_medicare_tax": {
+        "before": 74027.96,
+        "after": 74026
+      },
+      "line18_tax_before_credits": {
+        "before": 4447782.62,
+        "after": 4037363
+      },
+      "line24_total_tax": {
+        "before": 4447782.62,
+        "after": 4447781
+      },
+      "line37_amount_owed": {
+        "before": 4436596.62,
+        "after": 4436595
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 848675, net capital 276, business/rental 10524592, other 0, taxable SSA 0; Schedule A 0; line16 4037363, SE 250559, Medicare 74026, NIIT 85833, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "57-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 907315.29,
+        "after": 907315
+      },
+      "line11_agi": {
+        "before": 894333.34,
+        "after": 894333
+      },
+      "line15_taxable_income": {
+        "before": 878583.34,
+        "after": 878583
+      },
+      "ordinary_taxable": {
+        "before": 827494.34,
+        "after": 827494
+      },
+      "income_tax": {
+        "before": 273410.96,
+        "after": 273411
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 310492.64,
+        "after": 273411
+      },
+      "line24_total_tax": {
+        "before": 310492.64,
+        "after": 310491
+      },
+      "line37_amount_owed": {
+        "before": 299306.64,
+        "after": 299305
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 176655, net capital 276, business/rental 730384, other 0, taxable SSA 0; Schedule A 0; line16 273411, SE 25964, Medicare 4324, NIIT 6792, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "58-single-w2-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 457477.19,
+        "after": 457477
+      },
+      "line11_agi": {
+        "before": 457477.19,
+        "after": 457477
+      },
+      "line15_taxable_income": {
+        "before": 441727.19,
+        "after": 441727
+      },
+      "ordinary_taxable": {
+        "before": 396402.79,
+        "after": 396403
+      },
+      "income_tax": {
+        "before": 115086.89,
+        "after": 115087
+      },
+      "add_medicare_tax": {
+        "before": 2698.32,
+        "after": 2698
+      },
+      "line18_tax_before_credits": {
+        "before": 119574.57,
+        "after": 115087
+      },
+      "line24_total_tax": {
+        "before": 119535.85,
+        "after": 119535
+      },
+      "line33_total_payments": {
+        "before": 93082.94,
+        "after": 93083
+      },
+      "line37_amount_owed": {
+        "before": 26452.91,
+        "after": 26452
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 413046, net capital 44431, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 115087, SE 0, Medicare 2698, NIIT 1789, distribution tax 0, foreign tax credit 39."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "59-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "changes": {
+      "line9_total_income": {
+        "before": 240461.52,
+        "after": 240461
+      },
+      "line11_agi": {
+        "before": 240461.52,
+        "after": 240461
+      },
+      "line15_taxable_income": {
+        "before": 208961.52,
+        "after": 208961
+      },
+      "ordinary_taxable": {
+        "before": 208961.52,
+        "after": 208961
+      },
+      "income_tax": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line18_tax_before_credits": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line24_total_tax": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line33_total_payments": {
+        "before": 27381.13,
+        "after": 27381
+      },
+      "line37_amount_owed": {
+        "before": 8463.63,
+        "after": 8464
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 193470, net capital 0, business/rental 0, other 0, taxable SSA 46991; Schedule A 0; line16 35845, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "60-single-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 100756.84,
+        "after": 100757
+      },
+      "line11_agi": {
+        "before": 100756.84,
+        "after": 100757
+      },
+      "line15_taxable_income": {
+        "before": 85006.84,
+        "after": 85007
+      },
+      "ordinary_taxable": {
+        "before": 31268.77,
+        "after": 31269
+      },
+      "income_tax": {
+        "before": 9012.28,
+        "after": 9014
+      },
+      "line18_tax_before_credits": {
+        "before": 9012.28,
+        "after": 9014
+      },
+      "line24_total_tax": {
+        "before": 8990.9,
+        "after": 8993
+      },
+      "line33_total_payments": {
+        "before": 653.47,
+        "after": 653
+      },
+      "line37_amount_owed": {
+        "before": 8337.43,
+        "after": 8340
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 35418, net capital 46897, business/rental 0, other 0, taxable SSA 18442; Schedule A 0; line16 9014, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 21."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "61-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "income_tax": {
+        "before": 35997.32,
+        "after": 35998
+      },
+      "line18_tax_before_credits": {
+        "before": 35997.32,
+        "after": 35998
+      },
+      "line24_total_tax": {
+        "before": 35941.32,
+        "after": 35942
+      },
+      "line33_total_payments": {
+        "before": 18381.87,
+        "after": 18382
+      },
+      "line37_amount_owed": {
+        "before": 17559.45,
+        "after": 17560
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 146665, net capital 650, business/rental 50265, other 0, taxable SSA 0; Schedule A 0; line16 35998, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 56."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "62-single-w2-1099r-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 189104.55,
+        "after": 189104
+      },
+      "line11_agi": {
+        "before": 189104.55,
+        "after": 189104
+      },
+      "line15_taxable_income": {
+        "before": 173354.55,
+        "after": 173354
+      },
+      "ordinary_taxable": {
+        "before": 173354.55,
+        "after": 173354
+      },
+      "income_tax": {
+        "before": 34452.09,
+        "after": 34452
+      },
+      "line18_tax_before_credits": {
+        "before": 34452.09,
+        "after": 34452
+      },
+      "line24_total_tax": {
+        "before": 34452.09,
+        "after": 34452
+      },
+      "line33_total_payments": {
+        "before": 32652.03,
+        "after": 32652
+      },
+      "line37_amount_owed": {
+        "before": 1800.06,
+        "after": 1800
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 189104, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 34452, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "63-hoh-w2",
+    "changes": {
+      "line9_total_income": {
+        "before": 78082.73,
+        "after": 78083
+      },
+      "line11_agi": {
+        "before": 78082.73,
+        "after": 78083
+      },
+      "line15_taxable_income": {
+        "before": 54457.73,
+        "after": 54458
+      },
+      "ordinary_taxable": {
+        "before": 54457.73,
+        "after": 54458
+      },
+      "income_tax": {
+        "before": 6194.93,
+        "after": 6197
+      },
+      "line18_tax_before_credits": {
+        "before": 6194.93,
+        "after": 6197
+      },
+      "line24_total_tax": {
+        "before": 6194.93,
+        "after": 6197
+      },
+      "line33_total_payments": {
+        "before": 5514.21,
+        "after": 5514
+      },
+      "line37_amount_owed": {
+        "before": 680.72,
+        "after": 683
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 78083, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 6197, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "64-mfj-w2-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 160243.81,
+        "after": 160244
+      },
+      "line11_agi": {
+        "before": 160243.81,
+        "after": 160244
+      },
+      "line15_taxable_income": {
+        "before": 128743.81,
+        "after": 128744
+      },
+      "ordinary_taxable": {
+        "before": 128743.81,
+        "after": 128744
+      },
+      "income_tax": {
+        "before": 18151.64,
+        "after": 18152
+      },
+      "line18_tax_before_credits": {
+        "before": 18151.64,
+        "after": 18152
+      },
+      "line24_total_tax": {
+        "before": 18151.64,
+        "after": 18152
+      },
+      "line33_total_payments": {
+        "before": 14898.42,
+        "after": 14898
+      },
+      "line37_amount_owed": {
+        "before": 3253.22,
+        "after": 3254
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 160244, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 18152, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "65-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "line9_total_income": {
+        "before": 919039.32,
+        "after": 919039
+      },
+      "line11_agi": {
+        "before": 906057.37,
+        "after": 906057
+      },
+      "line15_taxable_income": {
+        "before": 890307.37,
+        "after": 890307
+      },
+      "ordinary_taxable": {
+        "before": 839218.37,
+        "after": 839218
+      },
+      "income_tax": {
+        "before": 277748.85,
+        "after": 277749
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 316020.04,
+        "after": 277749
+      },
+      "line24_total_tax": {
+        "before": 316020.04,
+        "after": 316018
+      },
+      "line37_amount_owed": {
+        "before": 304834.04,
+        "after": 304832
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 0, business/rental 730384, other 0, taxable SSA 0; Schedule A 0; line16 277749, SE 25964, Medicare 4324, NIIT 6781, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "66-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "line11_agi": {
+        "before": 906057.05,
+        "after": 906057
+      },
+      "line15_taxable_income": {
+        "before": 890307.05,
+        "after": 890307
+      },
+      "ordinary_taxable": {
+        "before": 839218.05,
+        "after": 839218
+      },
+      "income_tax": {
+        "before": 277748.73,
+        "after": 277749
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 316019.91,
+        "after": 277749
+      },
+      "line24_total_tax": {
+        "before": 316019.91,
+        "after": 316018
+      },
+      "line37_amount_owed": {
+        "before": 304833.91,
+        "after": 304832
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 0, business/rental 730384, other 0, taxable SSA 0; Schedule A 0; line16 277749, SE 25964, Medicare 4324, NIIT 6781, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "67-single-w2-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 211363.47,
+        "after": 211365
+      },
+      "line11_agi": {
+        "before": 211363.47,
+        "after": 211365
+      },
+      "line15_taxable_income": {
+        "before": 179986.7,
+        "after": 179989
+      },
+      "ordinary_taxable": {
+        "before": 177912.01,
+        "after": 177913
+      },
+      "income_tax": {
+        "before": 35857.09,
+        "after": 35857
+      },
+      "add_medicare_tax": {
+        "before": 94.99,
+        "after": 0
+      },
+      "line18_tax_before_credits": {
+        "before": 35952.08,
+        "after": 35857
+      },
+      "line24_total_tax": {
+        "before": 35933.21,
+        "after": 35933
+      },
+      "line33_total_payments": {
+        "before": 32698.62,
+        "after": 32699
+      },
+      "line37_amount_owed": {
+        "before": 3234.59,
+        "after": 3234
+      },
+      "itemized_deduction": {
+        "before": 31376.77,
+        "after": 31376
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 198663, net capital 1717, business/rental 0, other 0, taxable SSA 10985; Schedule A 31376; line16 35857, SE 0, Medicare 0, NIIT 95, distribution tax 0, foreign tax credit 19."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "68-single-w2",
+    "changes": {
+      "income_tax": {
+        "before": 22466.12,
+        "after": 22466
+      },
+      "line18_tax_before_credits": {
+        "before": 22466.12,
+        "after": 22466
+      },
+      "line24_total_tax": {
+        "before": 22466.12,
+        "after": 22466
+      },
+      "line33_total_payments": {
+        "before": 30647.01,
+        "after": 30647
+      },
+      "line35a_refund": {
+        "before": 8180.89,
+        "after": 8181
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 139163, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 22466, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "69-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line11_agi": {
+        "before": 906333.05,
+        "after": 906333
+      },
+      "line15_taxable_income": {
+        "before": 815546.05,
+        "after": 815546
+      },
+      "ordinary_taxable": {
+        "before": 764457.05,
+        "after": 764457
+      },
+      "income_tax": {
+        "before": 250087.16,
+        "after": 250087
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 288368.83,
+        "after": 250087
+      },
+      "line24_total_tax": {
+        "before": 288368.83,
+        "after": 288367
+      },
+      "line37_amount_owed": {
+        "before": 277182.83,
+        "after": 277181
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 276, business/rental 730384, other 0, taxable SSA 0; Schedule A 90787; line16 250087, SE 25964, Medicare 4324, NIIT 6792, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "70-single-w2-k1-1099r-1099int-1099div-1099b-estimated-tax",
+    "changes": {
+      "line9_total_income": {
+        "before": 952229.36,
+        "after": 952228
+      },
+      "line11_agi": {
+        "before": 952229.36,
+        "after": 952228
+      },
+      "line15_taxable_income": {
+        "before": 933185.88,
+        "after": 933185
+      },
+      "ordinary_taxable": {
+        "before": 812683.81,
+        "after": 812683
+      },
+      "income_tax": {
+        "before": 281813.67,
+        "after": 281813
+      },
+      "add_medicare_tax": {
+        "before": 5586.74,
+        "after": 5587
+      },
+      "line18_tax_before_credits": {
+        "before": 293565.64,
+        "after": 281813
+      },
+      "excess_ss_credit": {
+        "before": 10918.2,
+        "after": 10918
+      },
+      "line24_total_tax": {
+        "before": 291939.13,
+        "after": 291938
+      },
+      "line33_total_payments": {
+        "before": 265182.78,
+        "after": 265182
+      },
+      "line37_amount_owed": {
+        "before": 26756.35,
+        "after": 26756
+      },
+      "itemized_deduction": {
+        "before": 19043.48,
+        "after": 19043
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 862292, net capital 89936, business/rental 0, other 0, taxable SSA 0; Schedule A 19043; line16 281813, SE 0, Medicare 5587, NIIT 6165, distribution tax 0, foreign tax credit 1627."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "71-single-1099r-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 1983.22,
+        "after": 1983
+      },
+      "line11_agi": {
+        "before": 1983.22,
+        "after": 1983
+      },
+      "itemized_deduction": {
+        "before": 15621.26,
+        "after": 15621
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 1983, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 15621; line16 0, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "72-mfj-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 129224.37,
+        "after": 129224
+      },
+      "line11_agi": {
+        "before": 129224.37,
+        "after": 129224
+      },
+      "line15_taxable_income": {
+        "before": 97724.37,
+        "after": 97724
+      },
+      "ordinary_taxable": {
+        "before": 94631.92,
+        "after": 94632
+      },
+      "income_tax": {
+        "before": 11032.49,
+        "after": 11032
+      },
+      "line18_tax_before_credits": {
+        "before": 11032.49,
+        "after": 11032
+      },
+      "line24_total_tax": {
+        "before": 10960.78,
+        "after": 10960
+      },
+      "line33_total_payments": {
+        "before": 20035.13,
+        "after": 20035
+      },
+      "line35a_refund": {
+        "before": 9074.35,
+        "after": 9075
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 91656, net capital 2295, business/rental 0, other 226, taxable SSA 35047; Schedule A 0; line16 11032, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 72."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "73-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line11_agi": {
+        "before": 11248263.43,
+        "after": 11248263
+      },
+      "line15_taxable_income": {
+        "before": 10177476.43,
+        "after": 10177476
+      },
+      "ordinary_taxable": {
+        "before": 9732257.43,
+        "after": 9732257
+      },
+      "income_tax": {
+        "before": 3646999.3,
+        "after": 3646999
+      },
+      "se_tax": {
+        "before": 250559.13,
+        "after": 250559
+      },
+      "add_medicare_tax": {
+        "before": 74027.96,
+        "after": 74026
+      },
+      "line18_tax_before_credits": {
+        "before": 4057418.93,
+        "after": 3646999
+      },
+      "line24_total_tax": {
+        "before": 4057418.93,
+        "after": 4057417
+      },
+      "line37_amount_owed": {
+        "before": 4046232.93,
+        "after": 4046231
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 848675, net capital 276, business/rental 10524592, other 0, taxable SSA 0; Schedule A 1070787; line16 3646999, SE 250559, Medicare 74026, NIIT 85833, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "74-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 907315.29,
+        "after": 907315
+      },
+      "line11_agi": {
+        "before": 894333.34,
+        "after": 894333
+      },
+      "line15_taxable_income": {
+        "before": 803546.21,
+        "after": 803546
+      },
+      "ordinary_taxable": {
+        "before": 752457.21,
+        "after": 752457
+      },
+      "income_tax": {
+        "before": 245647.22,
+        "after": 245647
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 282728.9,
+        "after": 245647
+      },
+      "line24_total_tax": {
+        "before": 282728.9,
+        "after": 282727
+      },
+      "line37_amount_owed": {
+        "before": 271542.9,
+        "after": 271541
+      },
+      "itemized_deduction": {
+        "before": 90787.13,
+        "after": 90787
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 176655, net capital 276, business/rental 730384, other 0, taxable SSA 0; Schedule A 90787; line16 245647, SE 25964, Medicare 4324, NIIT 6792, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "75-single-w2-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 457477.19,
+        "after": 457477
+      },
+      "line11_agi": {
+        "before": 457477.19,
+        "after": 457477
+      },
+      "line15_taxable_income": {
+        "before": 438572.55,
+        "after": 438572
+      },
+      "ordinary_taxable": {
+        "before": 393248.14999999997,
+        "after": 393248
+      },
+      "income_tax": {
+        "before": 113982.76,
+        "after": 113983
+      },
+      "add_medicare_tax": {
+        "before": 2698.32,
+        "after": 2698
+      },
+      "line18_tax_before_credits": {
+        "before": 118470.44,
+        "after": 113983
+      },
+      "line24_total_tax": {
+        "before": 118431.72,
+        "after": 118431
+      },
+      "line33_total_payments": {
+        "before": 93082.94,
+        "after": 93083
+      },
+      "line37_amount_owed": {
+        "before": 25348.78,
+        "after": 25348
+      },
+      "itemized_deduction": {
+        "before": 18904.64,
+        "after": 18905
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 413046, net capital 44431, business/rental 0, other 0, taxable SSA 0; Schedule A 18905; line16 113983, SE 0, Medicare 2698, NIIT 1789, distribution tax 0, foreign tax credit 39."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "76-mfj-w2-1099int-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 502287.3,
+        "after": 502287
+      },
+      "line11_agi": {
+        "before": 502287.3,
+        "after": 502287
+      },
+      "line15_taxable_income": {
+        "before": 458371.78,
+        "after": 458371
+      },
+      "ordinary_taxable": {
+        "before": 456504.77,
+        "after": 456504
+      },
+      "income_tax": {
+        "before": 100699.73,
+        "after": 100487
+      },
+      "add_medicare_tax": {
+        "before": 2580.34,
+        "after": 2580
+      },
+      "line18_tax_before_credits": {
+        "before": 103280.07,
+        "after": 100487
+      },
+      "excess_ss_credit": {
+        "before": 8198.73,
+        "after": 8199
+      },
+      "line24_total_tax": {
+        "before": 103280.07,
+        "after": 103279
+      },
+      "line33_total_payments": {
+        "before": 105501.89,
+        "after": 105502
+      },
+      "line35a_refund": {
+        "before": 2221.82,
+        "after": 2223
+      },
+      "itemized_deduction": {
+        "before": 43915.52,
+        "after": 43916
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 500055, net capital 2232, business/rental 0, other 0, taxable SSA 0; Schedule A 43916; line16 100487, SE 0, Medicare 2580, NIIT 212, distribution tax 0, foreign tax credit 0.",
+      "Form 8959 / Form 1040 line25d total withholding: 97303; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+    ]
+  },
+  {
+    "case": "77-single-1099r-1099int-1099div-1099b-ssa-estimated-tax",
+    "changes": {
+      "line9_total_income": {
+        "before": 206071.89,
+        "after": 206072
+      },
+      "line11_agi": {
+        "before": 206071.89,
+        "after": 206072
+      },
+      "line15_taxable_income": {
+        "before": 190321.89,
+        "after": 190322
+      },
+      "ordinary_taxable": {
+        "before": 139401.47,
+        "after": 139402
+      },
+      "income_tax": {
+        "before": 33941.41,
+        "after": 33941
+      },
+      "line18_tax_before_credits": {
+        "before": 34172.14,
+        "after": 33941
+      },
+      "line24_total_tax": {
+        "before": 34110.6,
+        "after": 34110
+      },
+      "line37_amount_owed": {
+        "before": 14405.6,
+        "after": 14405
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 144930, net capital 26146, business/rental 0, other 0, taxable SSA 34996; Schedule A 0; line16 33941, SE 0, Medicare 0, NIIT 231, distribution tax 0, foreign tax credit 62."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "79-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "changes": {
+      "line9_total_income": {
+        "before": 240461.52,
+        "after": 240461
+      },
+      "line11_agi": {
+        "before": 240461.52,
+        "after": 240461
+      },
+      "line15_taxable_income": {
+        "before": 208961.52,
+        "after": 208961
+      },
+      "ordinary_taxable": {
+        "before": 208961.52,
+        "after": 208961
+      },
+      "income_tax": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line18_tax_before_credits": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line24_total_tax": {
+        "before": 35844.76,
+        "after": 35845
+      },
+      "line33_total_payments": {
+        "before": 27381.13,
+        "after": 27381
+      },
+      "line37_amount_owed": {
+        "before": 8463.63,
+        "after": 8464
+      },
+      "itemized_deduction": {
+        "before": 22899.16,
+        "after": 22899
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 193470, net capital 0, business/rental 0, other 0, taxable SSA 46991; Schedule A 22899; line16 35845, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "80-single-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 100756.84,
+        "after": 100757
+      },
+      "line11_agi": {
+        "before": 100756.84,
+        "after": 100757
+      },
+      "line15_taxable_income": {
+        "before": 85006.84,
+        "after": 85007
+      },
+      "ordinary_taxable": {
+        "before": 31268.770000000004,
+        "after": 31269
+      },
+      "income_tax": {
+        "before": 9012.28,
+        "after": 9014
+      },
+      "line18_tax_before_credits": {
+        "before": 9012.28,
+        "after": 9014
+      },
+      "line24_total_tax": {
+        "before": 8990.9,
+        "after": 8993
+      },
+      "line33_total_payments": {
+        "before": 653.47,
+        "after": 653
+      },
+      "line37_amount_owed": {
+        "before": 8337.43,
+        "after": 8340
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 35418, net capital 46897, business/rental 0, other 0, taxable SSA 18442; Schedule A 0; line16 9014, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 21."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "81-single-w2-1099int-1099div",
+    "changes": {
+      "line9_total_income": {
+        "before": 88023.39,
+        "after": 88024
+      },
+      "line11_agi": {
+        "before": 88023.39,
+        "after": 88024
+      },
+      "line15_taxable_income": {
+        "before": 72273.39,
+        "after": 72274
+      },
+      "ordinary_taxable": {
+        "before": 69463.63,
+        "after": 69464
+      },
+      "income_tax": {
+        "before": 10617.46,
+        "after": 10621
+      },
+      "line18_tax_before_credits": {
+        "before": 10617.46,
+        "after": 10621
+      },
+      "line24_total_tax": {
+        "before": 10617.46,
+        "after": 10621
+      },
+      "line33_total_payments": {
+        "before": 9663.51,
+        "after": 9664
+      },
+      "line37_amount_owed": {
+        "before": 953.95,
+        "after": 957
+      },
+      "itemized_deduction": {
+        "before": 8105.57,
+        "after": 8105
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 85466, net capital 2558, business/rental 0, other 0, taxable SSA 0; Schedule A 8105; line16 10621, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "82-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "income_tax": {
+        "before": 36334.82,
+        "after": 36335
+      },
+      "line18_tax_before_credits": {
+        "before": 36334.82,
+        "after": 36335
+      },
+      "line24_total_tax": {
+        "before": 36278.82,
+        "after": 36279
+      },
+      "line33_total_payments": {
+        "before": 18381.87,
+        "after": 18382
+      },
+      "line37_amount_owed": {
+        "before": 17896.95,
+        "after": 17897
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 146665, net capital 2900, business/rental 50265, other 0, taxable SSA 0; Schedule A 0; line16 36335, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 56."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "83-single-w2-1099r-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 189104.55,
+        "after": 189104
+      },
+      "line11_agi": {
+        "before": 189104.55,
+        "after": 189104
+      },
+      "line15_taxable_income": {
+        "before": 164769.47,
+        "after": 164769
+      },
+      "ordinary_taxable": {
+        "before": 164769.47,
+        "after": 164769
+      },
+      "income_tax": {
+        "before": 32391.67,
+        "after": 32392
+      },
+      "line18_tax_before_credits": {
+        "before": 32391.67,
+        "after": 32392
+      },
+      "line24_total_tax": {
+        "before": 32391.67,
+        "after": 32392
+      },
+      "line33_total_payments": {
+        "before": 32652.03,
+        "after": 32652
+      },
+      "line35a_refund": {
+        "before": 260.36,
+        "after": 260
+      },
+      "itemized_deduction": {
+        "before": 24335.08,
+        "after": 24335
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 189104, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 24335; line16 32392, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "84-hoh-w2",
+    "changes": {
+      "line9_total_income": {
+        "before": 78082.73,
+        "after": 78083
+      },
+      "line11_agi": {
+        "before": 77128.77,
+        "after": 77129
+      },
+      "line15_taxable_income": {
+        "before": 53503.77,
+        "after": 53504
+      },
+      "ordinary_taxable": {
+        "before": 53503.77,
+        "after": 53504
+      },
+      "income_tax": {
+        "before": 6080.45,
+        "after": 6083
+      },
+      "line18_tax_before_credits": {
+        "before": 6080.45,
+        "after": 6083
+      },
+      "line24_total_tax": {
+        "before": 6080.45,
+        "after": 6083
+      },
+      "line33_total_payments": {
+        "before": 5514.21,
+        "after": 5514
+      },
+      "line37_amount_owed": {
+        "before": 566.24,
+        "after": 569
+      },
+      "itemized_deduction": {
+        "before": 16946.37,
+        "after": 16946
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 78083, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 16946; line16 6083, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "85-mfj-w2-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 160243.81,
+        "after": 160244
+      },
+      "line11_agi": {
+        "before": 160243.81,
+        "after": 160244
+      },
+      "line15_taxable_income": {
+        "before": 128743.81,
+        "after": 128744
+      },
+      "ordinary_taxable": {
+        "before": 128743.81,
+        "after": 128744
+      },
+      "income_tax": {
+        "before": 18151.64,
+        "after": 18152
+      },
+      "line18_tax_before_credits": {
+        "before": 18151.64,
+        "after": 18152
+      },
+      "line24_total_tax": {
+        "before": 15951.64,
+        "after": 15952
+      },
+      "line33_total_payments": {
+        "before": 14898.42,
+        "after": 14898
+      },
+      "line37_amount_owed": {
+        "before": 1053.22,
+        "after": 1054
+      },
+      "itemized_deduction": {
+        "before": 7087.34,
+        "after": 7087
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 160244, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 7087; line16 18152, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "86-mfj-w2",
+    "changes": {
+      "line9_total_income": {
+        "before": 295230.09,
+        "after": 295230
+      },
+      "line11_agi": {
+        "before": 295230.09,
+        "after": 295230
+      },
+      "line15_taxable_income": {
+        "before": 239030.5,
+        "after": 239031
+      },
+      "ordinary_taxable": {
+        "before": 239030.5,
+        "after": 239031
+      },
+      "income_tax": {
+        "before": 43061.32,
+        "after": 43061
+      },
+      "add_medicare_tax": {
+        "before": 452.07,
+        "after": 452
+      },
+      "line18_tax_before_credits": {
+        "before": 43513.39,
+        "after": 43061
+      },
+      "excess_ss_credit": {
+        "before": 5710.53,
+        "after": 5711
+      },
+      "line24_total_tax": {
+        "before": 39113.39,
+        "after": 39113
+      },
+      "line33_total_payments": {
+        "before": 46181.6,
+        "after": 46182
+      },
+      "line35a_refund": {
+        "before": 7068.21,
+        "after": 7069
+      },
+      "itemized_deduction": {
+        "before": 56199.59,
+        "after": 56199
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 295230, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 56199; line16 43061, SE 0, Medicare 452, NIIT 0, distribution tax 0, foreign tax credit 0.",
+      "Form 8959 / Form 1040 line25d total withholding: 40471; input-summary fed_withheld denotes regular withholding only. This does not settle the separate excess Social Security credit."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+    ]
+  },
+  {
+    "case": "87-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "line9_total_income": {
+        "before": 919039.32,
+        "after": 919039
+      },
+      "line11_agi": {
+        "before": 906057.37,
+        "after": 906057
+      },
+      "line15_taxable_income": {
+        "before": 815270.24,
+        "after": 815270
+      },
+      "ordinary_taxable": {
+        "before": 764181.24,
+        "after": 764181
+      },
+      "income_tax": {
+        "before": 249985.11,
+        "after": 249985
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 288256.3,
+        "after": 249985
+      },
+      "line24_total_tax": {
+        "before": 288256.3,
+        "after": 288254
+      },
+      "line37_amount_owed": {
+        "before": 277070.3,
+        "after": 277068
+      },
+      "itemized_deduction": {
+        "before": 90787.13,
+        "after": 90787
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 0, business/rental 730384, other 0, taxable SSA 0; Schedule A 90787; line16 249985, SE 25964, Medicare 4324, NIIT 6781, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "88-mfj-w2-1099r-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 86330.06,
+        "after": 109844
+      },
+      "line11_agi": {
+        "before": 86330.06,
+        "after": 109844
+      },
+      "line15_taxable_income": {
+        "before": 54830.06,
+        "after": 78344
+      },
+      "ordinary_taxable": {
+        "before": 29073.68,
+        "after": 52588
+      },
+      "income_tax": {
+        "before": 3011.84,
+        "after": 5832
+      },
+      "line18_tax_before_credits": {
+        "before": 3011.84,
+        "after": 5832
+      },
+      "line24_total_tax": {
+        "before": 2942.47,
+        "after": 5763
+      },
+      "line33_total_payments": {
+        "before": 3406.38,
+        "after": 3406
+      },
+      "line35a_refund": {
+        "before": 463.91,
+        "after": 0
+      },
+      "line37_amount_owed": {
+        "before": 0,
+        "after": 2357
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 82187, net capital 23500, business/rental 0, other 0, taxable SSA 4157; Schedule A 0; line16 5832, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 69."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "89-single-w2-k1-1099r-1099int-1099div",
+    "changes": {
+      "line11_agi": {
+        "before": 906057.05,
+        "after": 906057
+      },
+      "line15_taxable_income": {
+        "before": 815270.05,
+        "after": 815270
+      },
+      "ordinary_taxable": {
+        "before": 764181.05,
+        "after": 764181
+      },
+      "income_tax": {
+        "before": 249985.04,
+        "after": 249985
+      },
+      "se_tax": {
+        "before": 25963.9,
+        "after": 25964
+      },
+      "add_medicare_tax": {
+        "before": 4325.99,
+        "after": 4324
+      },
+      "line18_tax_before_credits": {
+        "before": 288256.22,
+        "after": 249985
+      },
+      "line24_total_tax": {
+        "before": 288256.22,
+        "after": 288254
+      },
+      "line37_amount_owed": {
+        "before": 277070.22,
+        "after": 277068
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 188655, net capital 0, business/rental 730384, other 0, taxable SSA 0; Schedule A 90787; line16 249985, SE 25964, Medicare 4324, NIIT 6781, distribution tax 1200, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "90-mfj-w2-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 1011603.58,
+        "after": 1011603
+      },
+      "line11_agi": {
+        "before": 1011603.58,
+        "after": 1011603
+      },
+      "line15_taxable_income": {
+        "before": 864589.37,
+        "after": 864589
+      },
+      "ordinary_taxable": {
+        "before": 863975.87,
+        "after": 863975
+      },
+      "income_tax": {
+        "before": 243856.27,
+        "after": 243856
+      },
+      "add_medicare_tax": {
+        "before": 7459.35,
+        "after": 7459
+      },
+      "line18_tax_before_credits": {
+        "before": 252187.24,
+        "after": 243856
+      },
+      "line24_total_tax": {
+        "before": 252187.24,
+        "after": 252187
+      },
+      "line33_total_payments": {
+        "before": 208643.91,
+        "after": 208644
+      },
+      "line37_amount_owed": {
+        "before": 43543.33,
+        "after": 43543
+      },
+      "itemized_deduction": {
+        "before": 147014.21,
+        "after": 147014
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 995317, net capital 16286, business/rental 0, other 0, taxable SSA 0; Schedule A 147014; line16 243856, SE 0, Medicare 7459, NIIT 872, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "91-single-w2-1099int-1099div-1099b-ssa",
+    "changes": {
+      "line9_total_income": {
+        "before": 57186.41,
+        "after": 57188
+      },
+      "line11_agi": {
+        "before": 57186.41,
+        "after": 57188
+      },
+      "line15_taxable_income": {
+        "before": 41436.41,
+        "after": 41438
+      },
+      "ordinary_taxable": {
+        "before": 36340.04,
+        "after": 36341
+      },
+      "income_tax": {
+        "before": 4122.3,
+        "after": 4121
+      },
+      "line18_tax_before_credits": {
+        "before": 4122.3,
+        "after": 4121
+      },
+      "line24_total_tax": {
+        "before": 4032.25,
+        "after": 4031
+      },
+      "line33_total_payments": {
+        "before": 1192.68,
+        "after": 1193
+      },
+      "line37_amount_owed": {
+        "before": 2839.57,
+        "after": 2838
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 35707, net capital 2294, business/rental 0, other 0, taxable SSA 19187; Schedule A 0; line16 4121, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 90."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "92-mfj-w2-1099r-1099int-1099div-estimated-tax",
+    "changes": {
+      "line9_total_income": {
+        "before": 157439.48,
+        "after": 157439
+      },
+      "line11_agi": {
+        "before": 157139.25,
+        "after": 157139
+      },
+      "line15_taxable_income": {
+        "before": 125639.25,
+        "after": 125639
+      },
+      "ordinary_taxable": {
+        "before": 125622.85,
+        "after": 125623
+      },
+      "income_tax": {
+        "before": 17467.49,
+        "after": 17467
+      },
+      "line18_tax_before_credits": {
+        "before": 17632.49,
+        "after": 17467
+      },
+      "line24_total_tax": {
+        "before": 13232.49,
+        "after": 13232
+      },
+      "line33_total_payments": {
+        "before": 31437.74,
+        "after": 31438
+      },
+      "line35a_refund": {
+        "before": 18205.25,
+        "after": 18206
+      },
+      "itemized_deduction": {
+        "before": 15430.32,
+        "after": 15431
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 157439, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 15431; line16 17467, SE 0, Medicare 0, NIIT 0, distribution tax 165, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "93-mfj-w2-k1",
+    "changes": {
+      "line9_total_income": {
+        "before": 127709.82,
+        "after": 127710
+      },
+      "line11_agi": {
+        "before": 127709.82,
+        "after": 127710
+      },
+      "line15_taxable_income": {
+        "before": 96209.82,
+        "after": 96210
+      },
+      "ordinary_taxable": {
+        "before": 96209.82,
+        "after": 96210
+      },
+      "income_tax": {
+        "before": 11068.18,
+        "after": 11070
+      },
+      "line18_tax_before_credits": {
+        "before": 11068.18,
+        "after": 11070
+      },
+      "nonref_ctc": {
+        "before": 0,
+        "after": 1000
+      },
+      "line24_total_tax": {
+        "before": 10068.18,
+        "after": 10070
+      },
+      "line33_total_payments": {
+        "before": 18121.38,
+        "after": 18121
+      },
+      "line35a_refund": {
+        "before": 8053.2,
+        "after": 8051
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 127710, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 11070, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "94-single-w2-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 531597.07,
+        "after": 531597
+      },
+      "line11_agi": {
+        "before": 531597.07,
+        "after": 531597
+      },
+      "line15_taxable_income": {
+        "before": 515847.07,
+        "after": 515847
+      },
+      "ordinary_taxable": {
+        "before": 514845.08,
+        "after": 514845
+      },
+      "income_tax": {
+        "before": 149893.33,
+        "after": 149893
+      },
+      "add_medicare_tax": {
+        "before": 3116.61,
+        "after": 3117
+      },
+      "line18_tax_before_credits": {
+        "before": 153078.49,
+        "after": 149893
+      },
+      "line24_total_tax": {
+        "before": 153078.49,
+        "after": 153079
+      },
+      "line33_total_payments": {
+        "before": 148341.5,
+        "after": 148342
+      },
+      "line37_amount_owed": {
+        "before": 4736.99,
+        "after": 4737
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 531367, net capital 230, business/rental 0, other 0, taxable SSA 0; Schedule A 0; line16 149893, SE 0, Medicare 3117, NIIT 69, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "95-single-w2-k1-1099r-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 972837.6,
+        "after": 972838
+      },
+      "line11_agi": {
+        "before": 972837.6,
+        "after": 972838
+      },
+      "line15_taxable_income": {
+        "before": 957087.6,
+        "after": 957088
+      },
+      "ordinary_taxable": {
+        "before": 883804.87,
+        "after": 883805
+      },
+      "income_tax": {
+        "before": 298684.6,
+        "after": 298685
+      },
+      "add_medicare_tax": {
+        "before": 4598.2,
+        "after": 4598
+      },
+      "line18_tax_before_credits": {
+        "before": 312931.99,
+        "after": 298685
+      },
+      "line24_total_tax": {
+        "before": 312560.31,
+        "after": 312560
+      },
+      "line33_total_payments": {
+        "before": 300080.49,
+        "after": 300080
+      },
+      "line37_amount_owed": {
+        "before": 12479.82,
+        "after": 12480
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 854210, net capital 30046, business/rental 20337, other 68245, taxable SSA 0; Schedule A 6; line16 298685, SE 0, Medicare 4598, NIIT 9649, distribution tax 0, foreign tax credit 372."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "96-mfj-w2-1099int-1099div-1099b",
+    "changes": {
+      "income_tax": {
+        "before": 11156.88,
+        "after": 11154
+      },
+      "line18_tax_before_credits": {
+        "before": 11156.88,
+        "after": 11154
+      },
+      "nonref_ctc": {
+        "before": 0,
+        "after": 500
+      },
+      "line24_total_tax": {
+        "before": 10656.88,
+        "after": 10654
+      },
+      "line35a_refund": {
+        "before": 1178.12,
+        "after": 1181
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 128432, net capital 17, business/rental 0, other 0, taxable SSA 0; Schedule A 18517; line16 11154, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+    ]
+  },
+  {
+    "case": "97-mfj-w2-1099int",
+    "changes": {
+      "line9_total_income": {
+        "before": 171138.9,
+        "after": 171139
+      },
+      "line11_agi": {
+        "before": 170750.17,
+        "after": 170750
+      },
+      "line15_taxable_income": {
+        "before": 139250.17,
+        "after": 139250
+      },
+      "ordinary_taxable": {
+        "before": 139250.17,
+        "after": 139250
+      },
+      "income_tax": {
+        "before": 20463.04,
+        "after": 20463
+      },
+      "line18_tax_before_credits": {
+        "before": 20463.04,
+        "after": 20463
+      },
+      "excess_ss_credit": {
+        "before": 1044.76,
+        "after": 1045
+      },
+      "line24_total_tax": {
+        "before": 20463.04,
+        "after": 20463
+      },
+      "line33_total_payments": {
+        "before": 14795.78,
+        "after": 14796
+      },
+      "line37_amount_owed": {
+        "before": 5667.26,
+        "after": 5667
+      },
+      "itemized_deduction": {
+        "before": 15936.64,
+        "after": 15937
+      }
+    },
+    "basis": [
+      "Whole-dollar source form lines: wages/interest/dividends/pension 171139, net capital 0, business/rental 0, other 0, taxable SSA 0; Schedule A 15937; line16 20463, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+    ],
+    "source_limitations": [
+      "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
+      "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
+    ]
+  }
+]

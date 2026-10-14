@@ -98,3 +98,13 @@ is emitted. Each valid expected record includes total tax, refund and amount
 owed. CLI output must pass the shared computed-return schema before the stricter
 per-field comparisons run. This preserves current-main validation while
 retaining the draft’s explicit unsupported-oracle diagnostics.
+
+## Issue 77 reconciliation
+
+The [October 14 review](./reference/2025/README.md) records corrections to 121
+fixtures against published TY2025 tables and worksheet arithmetic. The
+[change ledger](./reference/2025/issue77-changes.json) preserves prior values and
+calculation assumptions. A fixture's `reconciliation.source_limitations` are
+reported as errors: matching a conditional expectation is not a passing result.
+Source facts and eligibility gaps remain visible; historical `output.json` files
+were not regenerated into expected values.
