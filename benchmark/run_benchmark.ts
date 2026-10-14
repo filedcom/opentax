@@ -190,7 +190,7 @@ export type UnsupportedCheck = {
 };
 
 // Exact public summary keys: cli/commands/return.ts ReturnSummary/extractSummary.
-// Additional exact raw output keys: forms/f1040/nodes/outputs/f1040/index.ts inputSchema.
+// Additional exact raw output keys: forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts inputSchema.
 // No inferred aliases, aggregation, missing-to-zero conversion or intermediate mapping.
 const SUMMARY_FIELDS = new Set([
   "line1z_total_wages",

@@ -24,13 +24,13 @@ For folder layout and file formats, see
 summary outputs, exact raw output fields, intermediate oracles and fixture
 metadata. `run_benchmark.ts` lists supported exact keys traced to
 `ReturnSummary` in `cli/commands/return.ts` and the F1040 output schema in
-`forms/f1040/2025/nodes/output/f1040/index.ts`. No aliases or intermediate
-mappings have been approved. Numeric expectations outside that supported
-contract become explicit `unsupportedChecks` and prevent success, rather than
-being called engine defects. Envelope metadata (`case`, `scenario`, `year`,
-`inputs`, sources/notes) is not scored. The `correct` object is the oracle
-namespace; only explicitly named metadata fields may be nonnumeric. Malformed
-oracles, including unmapped ones, fail.
+`forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts`. No aliases
+or intermediate mappings have been approved. Numeric expectations outside that
+supported contract become explicit `unsupportedChecks` and prevent success,
+rather than being called engine defects. Envelope metadata (`case`, `scenario`,
+`year`, `inputs`, sources/notes) is not scored. The `correct` object is the
+oracle namespace; only explicitly named metadata fields may be nonnumeric.
+Malformed oracles, including unmapped ones, fail.
 
 **Pass criteria:** compare supported expected output keys, including AGI and
 payments, not only tax/refund/owed; no unsupported oracles, command failures or
