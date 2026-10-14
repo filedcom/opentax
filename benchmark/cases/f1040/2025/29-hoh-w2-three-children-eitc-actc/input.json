@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Head of household with W-2 income and three qualifying children — tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
+  "scenario": "Head of household with W-2 income and three qualifying children \u2014 tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
   "forms": [
     {
       "node_type": "start",
@@ -13,8 +13,6 @@
           "address_city": "Phoenix",
           "address_state": "AZ",
           "address_zip": "85001",
-          "hoh_qualifying_person_name": "Chris Brooks",
-          "hoh_qualifying_person_relationship": "son",
           "hoh_paid_more_than_half_home_costs": true,
           "dependents": [
             {
@@ -23,7 +21,17 @@
               "dob": "2015-06-10",
               "relationship": "son",
               "months_in_home": 12,
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn": "222-33-4400",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false,
+              "lived_in_us_over_half_year": true,
+              "months_lived_with_you_in_us": 12
             },
             {
               "first_name": "Alex",
@@ -31,7 +39,17 @@
               "dob": "2017-11-22",
               "relationship": "daughter",
               "months_in_home": 12,
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn": "222-33-4401",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false,
+              "lived_in_us_over_half_year": true,
+              "months_lived_with_you_in_us": 12
             },
             {
               "first_name": "Taylor",
@@ -39,9 +57,43 @@
               "dob": "2020-03-05",
               "relationship": "son",
               "months_in_home": 12,
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn": "222-33-4402",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false,
+              "lived_in_us_over_half_year": true,
+              "months_lived_with_you_in_us": 12
             }
-          ]
+          ],
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "main_home_in_us_over_half_year": true,
+          "taxpayer_can_be_claimed_as_dependent": false,
+          "childless_eic_review": {
+            "not_qualifying_child_of_another_taxpayer_verified": true,
+            "qualifying_child_status_record_reference": "SYNTHETIC issue77 family assumption",
+            "hoh_unmarried_at_year_end_verified": true
+          },
+          "prior_eic_disallowance_review": {
+            "status": "none",
+            "irs_account_record_reference": "SYNTHETIC issue77 no prior disallowance",
+            "no_nonclerical_disallowance_since_1996_verified": true
+          },
+          "eic_tax_residency_review": {
+            "status": "all_year_resident",
+            "taxpayer_status_record_reference": "SYNTHETIC issue77 residency"
+          },
+          "child_eic_filer_review": {
+            "not_qualifying_child_of_another_taxpayer_verified": true,
+            "relationship_age_residence_record_reference": "SYNTHETIC issue77 filer family review"
+          }
         }
       }
     },
@@ -55,6 +107,59 @@
         "box5_medicare_wages": 27000,
         "box6_medicare_withheld": 392
       }
+    },
+    {
+      "node_type": "f8812_credit_limit_worksheet",
+      "data": {
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    },
+    {
+      "node_type": "f8812_earned_income_worksheet",
+      "data": {
+        "earned_income_worksheet": {
+          "form1040_line1z_wages": 27000,
+          "nontaxable_combat_pay": 0,
+          "schedule_c_statutory_employee_income": 0,
+          "nonfarm_schedule_c_and_k1_net": 0,
+          "farm_schedule_f_and_k1_net": 0,
+          "farm_optional_method_used": false,
+          "excluded_medicaid_waiver_payments": 0,
+          "schedule1_line15_se_deduction": 0
+        },
+        "part_iib": {
+          "line21_w2_withheld_social_security_medicare": 2066,
+          "schedule1_line15": 0,
+          "schedule2_line5": 0,
+          "schedule2_line6": 0,
+          "schedule2_line13": 0,
+          "form1040_line27a_eic": 7272,
+          "schedule3_line11_adoption_credit": 0
+        }
+      }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Timely employment-valid filer and dependent SSNs; US residency; no other dependent claims; support and joint-return tests satisfied",
+      "No prior EIC disallowance; filer is not another taxpayer qualifying child",
+      "Legacy HOH named-person field represented by the existing dependent row; nondependent-child field omitted",
+      "Legacy HOH named-person field represented by the existing dependent row; nondependent-child field omitted",
+      "Dependent home months were all lived with the filer in the United States"
+    ]
+  }
 }

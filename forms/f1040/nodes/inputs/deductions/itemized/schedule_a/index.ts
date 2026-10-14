@@ -405,7 +405,8 @@ type ScheduleAInput = z.infer<typeof inputSchema>;
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
   return Math.max(
     0,
-    (input.line_1_medical ?? 0) - Math.max(0, agi) * MEDICAL_AGI_FLOOR_PCT,
+    Math.round(input.line_1_medical ?? 0) -
+      Math.round(Math.max(0, Math.round(agi)) * MEDICAL_AGI_FLOOR_PCT),
   );
 }
 
@@ -427,22 +428,22 @@ function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   const line5a = (input.line_5a_state_income_tax ?? 0) +
     (input.retirement_state_local_withholding ?? 0) +
     (input.line_5a_sales_tax ?? 0);
-  const saltTotal = line5a +
-    (input.line_5b_real_estate_tax ?? 0) +
-    (input.line_5c_personal_property_tax ?? 0);
-  return Math.min(saltTotal, effectiveSaltCap(input, cfg));
+  const saltTotal = Math.round(line5a) +
+    Math.round(input.line_5b_real_estate_tax ?? 0) +
+    Math.round(input.line_5c_personal_property_tax ?? 0);
+  return Math.min(saltTotal, Math.round(effectiveSaltCap(input, cfg)));
 }
 
 function computeInterestTotal(input: ScheduleAInput): number {
-  const mortgage = (input.line_8a_mortgage_interest_1098 ?? 0) +
-    (input.line_8b_mortgage_interest_no_1098 ?? 0);
+  const mortgage = Math.round(input.line_8a_mortgage_interest_1098 ?? 0) +
+    Math.round(input.line_8b_mortgage_interest_no_1098 ?? 0);
   return Math.max(
     0,
     mortgage -
-      (input.form8396_interest_credit_reduction ?? 0),
+      Math.round(input.form8396_interest_credit_reduction ?? 0),
   ) +
-    (input.line_8c_points_no_1098 ?? 0) +
-    (input.line_9_investment_interest ?? 0);
+    Math.round(input.line_8c_points_no_1098 ?? 0) +
+    Math.round(input.line_9_investment_interest ?? 0);
 }
 
 function computeContributions(
@@ -738,14 +739,14 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         "Form 8960 state tax allocation exceeds deductible state income tax",
       );
     }
-    const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
+    const taxesTotal = saltCapped + Math.round(input.line_6_other_taxes ?? 0);
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
       computeInterestTotal(input) +
-      contributions.cash + contributions.noncash +
-      electedCarryovers.allowed +
-      (input.line_15_casualty_theft_loss ?? 0) +
-      (input.line_16_other_deductions ?? 0);
+      Math.round(contributions.cash) + Math.round(contributions.noncash) +
+      Math.round(electedCarryovers.allowed) +
+      Math.round(input.line_15_casualty_theft_loss ?? 0) +
+      Math.round(input.line_16_other_deductions ?? 0);
 
     const outputs: NodeOutput[] = [
       ...(charitableAmt &&

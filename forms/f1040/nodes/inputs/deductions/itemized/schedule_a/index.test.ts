@@ -905,3 +905,24 @@ Deno.test("No filing_status: SALT uses $40,000 cap (OBBBA §70002, non-MFS defau
   const result = compute({ line_5a_state_income_tax: 15_000 });
   assertEquals(deductionInput(result).itemized_deductions, 15_000);
 });
+
+Deno.test("Schedule A adds rounded line amounts rather than rounding their combined cents", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    agi: 295230.09,
+    line_8a_mortgage_interest_1098: 35915.15,
+    line_5b_real_estate_tax: 20284.44,
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 56199);
+  assertEquals(deductionInput(result).itemized_taxes, 20284);
+});
+
+Deno.test("Schedule A combines sources on line 5a before rounding", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50000,
+    line_5a_state_income_tax: 100.40,
+    retirement_state_local_withholding: 100.40,
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 201);
+});

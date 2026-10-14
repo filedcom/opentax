@@ -128,6 +128,7 @@ import {
 import {
   creditLimitWorksheetSchema as f8812CreditLimitWorksheetSchema,
   f8812,
+  inputSchema as f8812InputSchema,
   itemSchema as f8812ItemSchema,
 } from "../nodes/inputs/credits/child/f8812/index.ts";
 import {
@@ -785,6 +786,15 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
+  {
+    node: f8812,
+    inputKey: "f8812_earned_income_worksheet",
+    inputSchema: f8812InputSchema.pick({
+      earned_income_worksheet: true,
+      part_iib: true,
+    }).required({ earned_income_worksheet: true }),
+    isArray: false,
+  },
   {
     node: f8812,
     inputKey: "f8812_credit_limit_worksheet",

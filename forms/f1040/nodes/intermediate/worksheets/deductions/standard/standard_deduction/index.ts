@@ -161,6 +161,23 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    // Form 1040 line 15 subtracts the amounts entered on lines 11b and 14.
+    // Round the aggregated line operands before subtracting; rounding only
+    // their difference can change the tax computation by a dollar.
+    for (
+      const key of [
+        "agi",
+        "itemized_deductions",
+        "itemized_taxes",
+        "qbi_deduction",
+        "additional_deductions",
+        "enhanced_senior_deduction",
+        "qualified_vehicle_loan_interest_deduction",
+        "nol_deduction",
+      ] as const
+    ) {
+      if (input[key] !== undefined) input[key] = Math.round(input[key]);
+    }
 
     const { deduction, takingStandard } = resolveDeduction(input, cfg);
     // Form 6251 line 2a must use Schedule A line 7 whenever the taxpayer

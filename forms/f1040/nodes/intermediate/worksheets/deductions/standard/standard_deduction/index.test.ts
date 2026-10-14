@@ -496,3 +496,23 @@ Deno.test("Itemizing: produces f1040 line15 output and income_tax_calculation, n
     80_000,
   );
 });
+
+Deno.test("taxable income subtracts rounded Form 1040 line operands", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    agi: 502287.30,
+    itemized_deductions: 43915.52,
+    itemized_taxes: 28500,
+  });
+  const fields = result.outputs.filter((o) => o.nodeType === "f1040")
+    .reduce(
+      (all, o) => ({ ...all, ...o.fields }),
+      {} as Record<string, unknown>,
+    );
+  assertEquals(fields.line12e_itemized_deductions, 43916);
+  assertEquals(fields.line15_taxable_income, 458371);
+  assertEquals(
+    findOutput(result, "income_tax_calculation")?.fields.taxable_income,
+    458371,
+  );
+});

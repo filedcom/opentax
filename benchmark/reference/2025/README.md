@@ -2,7 +2,7 @@
 
 This review changes arithmetic expectations in 121 fixtures. It does **not**
 certify 121 complete returns. The initial reconciliation retained 65 source or eligibility limitations.
-The synthetic completion work below reduces that number to 48; case 78 now
+The synthetic completion work below reduces that number to 47; case 78 now
 uses an explicitly invented eligible DOB and the correct 316 EIC expectation. The benchmark now reports those limitations
 as errors even if every compared number matches. Existing unsupported-oracle and
 executor errors still fail the benchmark; the $5 legacy tolerance is unchanged.
@@ -149,7 +149,7 @@ release build must pass these checks before publication.
 ## Synthetic completion work (ongoing)
 
 The user explicitly authorized completing missing benchmark facts with synthetic
-records. Eighteen inputs now contain labeled identity, eligibility or monthly
+records. Thirty inputs now contain labeled identity, eligibility or monthly
 coverage assumptions. The original inputs and expectations are retained in
 [issue77-original-incomplete.json](./issue77-original-incomplete.json). None of
 the original financial source amounts were replaced. Marketplace record hashes
@@ -165,3 +165,20 @@ withholding implied by its original W-2 boxes: payments 15,201, refund 7,455.
 Current focused gate: 31 passing tests, including complete-return graph checks.
 Rounding consistency and the remaining reported cases are still being reviewed;
 this checkpoint does not close the issue or supersede the final release smoke.
+
+
+The next checkpoint also supplies EIC residency/identity and dependent support
+facts for the reported child-credit cases, plus foreign ordinary-dividend source
+reviews for cases 67, 91 and 95. An earned-income worksheet input now permits
+ACTC verification without duplicating calculated return totals. Cases 18, 24,
+29, 106 and 133 reproduce their EIC, CTC/ACTC and refunds through the return graph;
+case 96 reproduces the 500 other-dependent credit. Case 24 explicitly treats the
+ambiguous third child as a niece/nephew; the original relationship is archived.
+Case 47 supplies the missing adult supported-brother facts for childless HOH EIC.
+
+Schedule A now adds rounded line operands, combining amounts belonging on the
+same line before rounding. Form 1040 taxable income subtracts rounded AGI and
+deduction operands, fixing the one-dollar case 76 tax discrepancy. Cases 76, 91
+and 95 reproduce income tax 100,487, 4,121 and 298,685. The combined focused gate
+is **138 passed, 0 failed**. Schedule D/SSA/income-total rounding remains under
+review before final smoke, release and issue closure.

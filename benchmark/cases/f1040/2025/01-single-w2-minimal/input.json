@@ -12,7 +12,30 @@
           "taxpayer_dob": "1990-03-15",
           "address_city": "Juneau",
           "address_state": "AK",
-          "address_zip": "99801"
+          "address_zip": "99801",
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "main_home_in_us_over_half_year": true,
+          "taxpayer_can_be_claimed_as_dependent": false,
+          "childless_eic_review": {
+            "not_qualifying_child_of_another_taxpayer_verified": true,
+            "qualifying_child_status_record_reference": "SYNTHETIC issue77 family assumption"
+          },
+          "prior_eic_disallowance_review": {
+            "status": "none",
+            "irs_account_record_reference": "SYNTHETIC issue77 no prior disallowance",
+            "no_nonclerical_disallowance_since_1996_verified": true
+          },
+          "eic_tax_residency_review": {
+            "status": "all_year_resident",
+            "taxpayer_status_record_reference": "SYNTHETIC issue77 residency"
+          },
+          "child_eic_filer_review": {
+            "not_qualifying_child_of_another_taxpayer_verified": true,
+            "relationship_age_residence_record_reference": "SYNTHETIC issue77 filer family review"
+          }
         }
       }
     },
@@ -27,5 +50,14 @@
         "box6_medicare_withheld": 218
       }
     }
-  ]
+  ],
+  "source": "synthetic",
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "Timely employment-valid filer and dependent SSNs; US residency; no other dependent claims; support and joint-return tests satisfied",
+      "No prior EIC disallowance; filer is not another taxpayer qualifying child"
+    ]
+  }
 }

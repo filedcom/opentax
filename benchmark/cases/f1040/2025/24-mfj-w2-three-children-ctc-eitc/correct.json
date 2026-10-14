@@ -1,6 +1,6 @@
 {
   "case": "24-mfj-w2-three-children-ctc-eitc",
-  "scenario": "Married filing jointly with moderate W-2 income and three qualifying children — tests CTC, ACTC, and EITC stacking for large family",
+  "scenario": "Married filing jointly with moderate W-2 income and three qualifying children \u2014 tests CTC, ACTC, and EITC stacking for large family",
   "year": 2025,
   "inputs": {
     "filing_status": "mfj",
@@ -55,13 +55,11 @@
   "reconciliation": {
     "issue": 77,
     "reviewed": "2026-10-14",
-    "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+    "scope": "Synthetic completed three-child benchmark; the ambiguous original relationship is resolved as niece/nephew in the labeled assumptions.",
     "basis": [
       "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
       "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
     ],
-    "source_limitations": [
-      "Third child relationship is \"other\" despite the declared three-child scenario; qualifying relationship/SSN eligibility requires evidence."
-    ]
+    "source_limitations": []
   }
 }

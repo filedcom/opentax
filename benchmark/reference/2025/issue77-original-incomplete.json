@@ -1955,5 +1955,1745 @@
         ]
       }
     }
+  },
+  "01-single-w2-minimal": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single filer with minimal wages equal to standard deduction \u2014 tests zero taxable income edge case",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Casey",
+              "taxpayer_last_name": "Jordan",
+              "taxpayer_dob": "1990-03-15",
+              "address_city": "Juneau",
+              "address_state": "AK",
+              "address_zip": "99801"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 15000,
+            "box2_fed_withheld": 0,
+            "box3_ss_wages": 15000,
+            "box4_ss_withheld": 930,
+            "box5_medicare_wages": 15000,
+            "box6_medicare_withheld": 218
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "01-single-w2-minimal",
+      "scenario": "Single filer with minimal wages equal to standard deduction \u2014 tests zero taxable income edge case",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 15000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 0
+      },
+      "correct": {
+        "line9_total_income": 15000,
+        "line11_agi": 15000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 312,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 312,
+        "line35a_refund": 312,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "18-hoh-w2-with-child": {
+    "input": {
+      "year": 2025,
+      "scenario": "Head of household with one qualifying child and $23,625 standard deduction.",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "hoh",
+              "taxpayer_first_name": "River",
+              "taxpayer_last_name": "Brown",
+              "taxpayer_dob": "1989-07-04",
+              "address_city": "Las Vegas",
+              "address_state": "NV",
+              "address_zip": "89101",
+              "hoh_qualifying_person_name": "Noah Brown",
+              "hoh_qualifying_person_relationship": "son",
+              "hoh_paid_more_than_half_home_costs": true,
+              "dependents": [
+                {
+                  "first_name": "Noah",
+                  "last_name": "Brown",
+                  "dob": "2014-06-12",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 38000,
+            "box2_fed_withheld": 3000,
+            "box3_ss_wages": 38000,
+            "box4_ss_withheld": 2356,
+            "box5_medicare_wages": 38000,
+            "box6_medicare_withheld": 551
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "18-hoh-w2-with-child",
+      "scenario": "Head of household with one qualifying child and $23,625 standard deduction.",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "hoh",
+        "wages": 38000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 1,
+        "eitc_children": 1,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 3000
+      },
+      "correct": {
+        "line9_total_income": 38000,
+        "line11_agi": 38000,
+        "standard_deduction": 23625,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 14375,
+        "ordinary_taxable": 14375,
+        "income_tax": 1438,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 1438,
+        "nonref_ctc": 1438,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 1983,
+        "actc": 762,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 5745,
+        "line35a_refund": 5745,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "24-mfj-w2-three-children-ctc-eitc": {
+    "input": {
+      "year": 2025,
+      "scenario": "Married filing jointly with moderate W-2 income and three qualifying children \u2014 tests CTC, ACTC, and EITC stacking for large family",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "Ponderosa",
+              "taxpayer_last_name": "Pine",
+              "taxpayer_dob": "1977-11-08",
+              "spouse_first_name": "Monterey",
+              "spouse_last_name": "Pine",
+              "spouse_dob": "1978-07-05",
+              "address_city": "Juneau",
+              "address_state": "AK",
+              "address_zip": "99801",
+              "dependents": [
+                {
+                  "first_name": "Spruce",
+                  "last_name": "Pine",
+                  "dob": "2019-06-01",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                },
+                {
+                  "first_name": "Sugar",
+                  "last_name": "Pine",
+                  "dob": "2016-03-03",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                },
+                {
+                  "first_name": "Spring",
+                  "last_name": "Pine",
+                  "dob": "2011-09-10",
+                  "relationship": "other",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 41500,
+            "box2_fed_withheld": 2100,
+            "box3_ss_wages": 41500,
+            "box4_ss_withheld": 2573,
+            "box5_medicare_wages": 41500,
+            "box6_medicare_withheld": 602
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "24-mfj-w2-three-children-ctc-eitc",
+      "scenario": "Married filing jointly with moderate W-2 income and three qualifying children \u2014 tests CTC, ACTC, and EITC stacking for large family",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 41500,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 3,
+        "eitc_children": 3,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 2100
+      },
+      "correct": {
+        "line9_total_income": 41500,
+        "line11_agi": 41500,
+        "standard_deduction": 31500,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 10000,
+        "ordinary_taxable": 10000,
+        "income_tax": 1003,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 1003,
+        "nonref_ctc": 1003,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 5718,
+        "actc": 5100,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 12918,
+        "line35a_refund": 12918,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": [
+          "Third child relationship is \"other\" despite the declared three-child scenario; qualifying relationship/SSN eligibility requires evidence."
+        ]
+      }
+    }
+  },
+  "29-hoh-w2-three-children-eitc-actc": {
+    "input": {
+      "year": 2025,
+      "scenario": "Head of household with W-2 income and three qualifying children \u2014 tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "hoh",
+              "taxpayer_first_name": "Dana",
+              "taxpayer_last_name": "Brooks",
+              "taxpayer_dob": "1988-02-14",
+              "address_city": "Phoenix",
+              "address_state": "AZ",
+              "address_zip": "85001",
+              "hoh_qualifying_person_name": "Chris Brooks",
+              "hoh_qualifying_person_relationship": "son",
+              "hoh_paid_more_than_half_home_costs": true,
+              "dependents": [
+                {
+                  "first_name": "Chris",
+                  "last_name": "Brooks",
+                  "dob": "2015-06-10",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                },
+                {
+                  "first_name": "Alex",
+                  "last_name": "Brooks",
+                  "dob": "2017-11-22",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                },
+                {
+                  "first_name": "Taylor",
+                  "last_name": "Brooks",
+                  "dob": "2020-03-05",
+                  "relationship": "son",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 27000,
+            "box2_fed_withheld": 1800,
+            "box3_ss_wages": 27000,
+            "box4_ss_withheld": 1674,
+            "box5_medicare_wages": 27000,
+            "box6_medicare_withheld": 392
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "29-hoh-w2-three-children-eitc-actc",
+      "scenario": "Head of household with W-2 income and three qualifying children \u2014 tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "hoh",
+        "wages": 27000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 3,
+        "eitc_children": 3,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 1800
+      },
+      "correct": {
+        "line9_total_income": 27000,
+        "line11_agi": 27000,
+        "standard_deduction": 23625,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 3375,
+        "ordinary_taxable": 3375,
+        "income_tax": 338,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 338,
+        "nonref_ctc": 338,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 7272,
+        "actc": 3675,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 12747,
+        "line35a_refund": 12747,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "39-single-eitc-no-children": {
+    "input": {
+      "year": 2025,
+      "scenario": "Single low-income filer with no dependents \u2014 tests EITC phase-out for 0 qualifying children at $14,000 earned income",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "Jamie",
+              "taxpayer_last_name": "Torres",
+              "taxpayer_dob": "1998-11-02",
+              "address_city": "El Paso",
+              "address_state": "TX",
+              "address_zip": "79901"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 14000,
+            "box2_fed_withheld": 0,
+            "box3_ss_wages": 14000,
+            "box4_ss_withheld": 868,
+            "box5_medicare_wages": 14000,
+            "box6_medicare_withheld": 203
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "39-single-eitc-no-children",
+      "scenario": "Single low-income filer with no dependents \u2014 tests EITC phase-out for 0 qualifying children at $14,000 earned income",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 14000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 0
+      },
+      "correct": {
+        "line9_total_income": 14000,
+        "line11_agi": 14000,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 389,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 389,
+        "line35a_refund": 389,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "47-hoh-low-income-eitc-no-children": {
+    "input": {
+      "year": 2025,
+      "scenario": "Head of household with low earned income and no qualifying children \u2014 EITC for 0 children applies with phase-out starting at $10,620",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "hoh",
+              "taxpayer_first_name": "Leslie",
+              "taxpayer_last_name": "Ramirez",
+              "taxpayer_dob": "1993-08-07",
+              "address_city": "Albuquerque",
+              "address_state": "NM",
+              "address_zip": "87101",
+              "hoh_qualifying_person_name": "Carlos Ramirez",
+              "hoh_qualifying_person_relationship": "brother",
+              "hoh_paid_more_than_half_home_costs": true
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 12000,
+            "box2_fed_withheld": 0,
+            "box3_ss_wages": 12000,
+            "box4_ss_withheld": 744,
+            "box5_medicare_wages": 12000,
+            "box6_medicare_withheld": 174
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "47-hoh-low-income-eitc-no-children",
+      "scenario": "Head of household with low earned income and no qualifying children \u2014 EITC for 0 children applies with phase-out starting at $10,620",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "hoh",
+        "wages": 12000,
+        "unemployment": 0,
+        "interest": 0,
+        "ordinary_dividends": 0,
+        "qualified_dividends": 0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 0
+      },
+      "correct": {
+        "line9_total_income": 12000,
+        "line11_agi": 12000,
+        "standard_deduction": 23625,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 0,
+        "ordinary_taxable": 0,
+        "income_tax": 0,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 0,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 542,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 0,
+        "line33_total_payments": 542,
+        "line35a_refund": 542,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "96-mfj-w2-1099int-1099div-1099b": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Married filing jointly with multiple W-2 wage income, interest income, dividend income, capital gains/losses ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "mfj",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_state": "IL",
+              "address_zip": "62701",
+              "spouse_first_name": "Sarah",
+              "spouse_last_name": "James",
+              "dependents": [
+                {
+                  "first_name": "MARTHA",
+                  "last_name": "DOUGLAS",
+                  "relationship": "parent",
+                  "months_in_home": 12,
+                  "dob": "1951-12-02",
+                  "middle_initial": "R",
+                  "ssn": "462943466",
+                  "taxpayer_provided_over_half_support": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 76078.0,
+            "box2_fed_withheld": 5641.0,
+            "box3_ss_wages": 81771.0,
+            "box4_ss_withheld": 5069.78,
+            "box5_medicare_wages": 81771.0,
+            "box6_medicare_withheld": 1185.67,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "93-1000083"
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 52350.0,
+            "box2_fed_withheld": 6194.0,
+            "box3_ss_wages": 52350.0,
+            "box4_ss_withheld": 3245.7,
+            "box5_medicare_wages": 52350.0,
+            "box6_medicare_withheld": 759.08,
+            "employer_name": "SUMMIT CONSULTING LLC",
+            "employer_ein": "94-1000084"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 1.0,
+            "payer_tin": "17-1000007"
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "LIBERTY INVESTMENTS LLC",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 3.0,
+            "box1b": 3.0
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Fidelity x4909 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 470.0,
+            "cost_basis": 453.0
+          }
+        },
+        {
+          "node_type": "schedule_a",
+          "data": {
+            "line_8a_mortgage_interest_1098": 10589.0,
+            "line_5b_real_estate_tax": 7928.0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "96-mfj-w2-1099int-1099div-1099b",
+      "scenario": "Married filing jointly with multiple W-2 wage income, interest income, dividend income, capital gains/losses ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "mfj",
+        "wages": 128428.0,
+        "unemployment": 0,
+        "interest": 1.0,
+        "ordinary_dividends": 3.0,
+        "qualified_dividends": 3.0,
+        "stcg": 17.0,
+        "ltcg": 0,
+        "pension": 0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 1,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 11835.0,
+        "foreign_tax_paid": 0,
+        "itemized_deductions": 18517.0
+      },
+      "correct": {
+        "line9_total_income": 128449,
+        "line11_agi": 128449,
+        "standard_deduction": 31500,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 96949,
+        "ordinary_taxable": 96946,
+        "income_tax": 11154,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 11154,
+        "nonref_ctc": 500,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0.0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 10654,
+        "line33_total_payments": 11835,
+        "line35a_refund": 1181,
+        "line37_amount_owed": 0,
+        "itemized_deduction": 18517
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 128432, net capital 17, business/rental 0, other 0, taxable SSA 0; Schedule A 18517; line16 11154, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 0."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+        ]
+      }
+    }
+  },
+  "106-hoh-w2-child-dep-care-credit": {
+    "input": {
+      "year": 2025,
+      "scenario": "Head of household with W-2 wages $48,000, one qualifying child age 5, childcare $3,000 \u2014 CTC $2,200 + dep care credit absorbs all tax; zero tax",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "hoh",
+              "taxpayer_first_name": "Keisha",
+              "taxpayer_last_name": "Washington",
+              "taxpayer_dob": "1990-05-22",
+              "address_city": "Atlanta",
+              "address_state": "GA",
+              "address_zip": "30301",
+              "hoh_qualifying_person_name": "Aaliyah Washington",
+              "hoh_qualifying_person_relationship": "daughter",
+              "hoh_paid_more_than_half_home_costs": true,
+              "dependents": [
+                {
+                  "first_name": "Aaliyah",
+                  "last_name": "Washington",
+                  "dob": "2020-05-15",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true,
+                  "ssn": "123-45-6789",
+                  "child_care_months": 12
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 48000,
+            "box2_fed_withheld": 3800,
+            "box3_ss_wages": 48000,
+            "box4_ss_withheld": 2976,
+            "box5_medicare_wages": 48000,
+            "box6_medicare_withheld": 696
+          }
+        },
+        {
+          "node_type": "f2441",
+          "data": {
+            "qualifying_person_count": 1,
+            "qualifying_expenses_paid": 3000,
+            "employer_dep_care_benefits": 0,
+            "filing_status": "hoh",
+            "earned_income_taxpayer": 48000
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "106-hoh-w2-child-dep-care-credit",
+      "scenario": "Head of household with W-2 wages $48,000, one qualifying child age 5, childcare $3,000 \u2014 CTC $2,200 + dep care credit absorbs all tax; zero tax",
+      "year": 2025,
+      "source": "IRS VITA Pub 4491 TY2025, illustrative case \u2014 Child and Dep Care Credit (Form 2441) + CTC; IRC \u00a721, \u00a724; 20% rate for AGI > $43,000",
+      "correct": {
+        "line11_agi": 48000,
+        "line15_taxable_income": 24375,
+        "line24_total_tax": 0,
+        "line27_eitc": 385,
+        "actc": 215,
+        "line33_total_payments": 4400,
+        "line35a_refund": 4400,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "133-hoh-w2-ctc": {
+    "input": {
+      "year": 2025,
+      "scenario": "Head of household with one qualifying child: $23,625 standard deduction, $2,200 CTC, $25 tax, and $864 EIC under the stated eligibility assumptions.",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "hoh",
+              "taxpayer_first_name": "Morgan",
+              "taxpayer_last_name": "Hayes",
+              "taxpayer_dob": "1985-04-10",
+              "address_city": "Reno",
+              "address_state": "NV",
+              "address_zip": "89501",
+              "hoh_qualifying_person_name": "Lily Hayes",
+              "hoh_qualifying_person_relationship": "daughter",
+              "hoh_paid_more_than_half_home_costs": true,
+              "dependents": [
+                {
+                  "first_name": "Lily",
+                  "last_name": "Hayes",
+                  "dob": "2015-07-22",
+                  "relationship": "daughter",
+                  "months_in_home": 12,
+                  "qualifying_child_for_ctc": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 45000,
+            "box2_fed_withheld": 3500,
+            "box3_ss_wages": 45000,
+            "box4_ss_withheld": 2790,
+            "box5_medicare_wages": 45000,
+            "box6_medicare_withheld": 653
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "133-hoh-w2-ctc",
+      "scenario": "Head of household with one qualifying child: $23,625 standard deduction, $2,200 CTC, $25 tax, and $864 EIC under the stated eligibility assumptions.",
+      "year": 2025,
+      "source": "IRS Pub 17 TY2025 (pre-OBBBA example); updated for OBBBA \u00a770001 CTC increase to $2,200/child (P.L. 119-21, July 4, 2025); EITC per IRC \u00a732 at $45,000 HOH earned income with 1 qualifying child",
+      "correct": {
+        "line11_agi": 45000,
+        "line15_taxable_income": 21375,
+        "line24_total_tax": 25,
+        "line33_total_payments": 4364,
+        "line35a_refund": 4339,
+        "line37_amount_owed": 0
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Targeted arithmetic correction, not full source/eligibility certification.",
+        "basis": [
+          "2025 Tax Table / QDCGT Worksheet, retaining the existing income and deduction basis except the stated senior deduction.",
+          "Published EIC Table, earned income equals AGI; CTC/ACTC recomputed where applicable."
+        ],
+        "source_limitations": []
+      }
+    }
+  },
+  "67-single-w2-1099r-1099int-1099div-1099b-ssa": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Single filer with W-2 wage income, retirement distributions, interest income, dividend income, capital gains/losses, Social Security benefits ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_zip": "62701",
+              "address_state": "IL"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 67.5,
+            "box2_fed_withheld": 0.0,
+            "box3_ss_wages": 67.5,
+            "box4_ss_withheld": 4.19,
+            "box5_medicare_wages": 67.5,
+            "box6_medicare_withheld": 0.98,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "11-1000001"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 1.32,
+            "payer_tin": "12-1000002"
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "LIBERTY INVESTMENTS LLC",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 782.63,
+            "box1b": 358.9,
+            "box7": 18.87
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Schwab x4464 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 25009.05,
+            "cost_basis": 25165.85,
+            "adjustment_amount": 0.05,
+            "adjustment_codes": "MW"
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Schwab x4464 ST Noncovered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 2.64,
+            "cost_basis": 0.0
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Schwab x4464 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 18612.61,
+            "cost_basis": 16743.43,
+            "adjustment_amount": 0.72,
+            "adjustment_codes": "MW"
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "HERITAGE FINANCIAL SERVICES",
+            "payer_ein": "12-1000002",
+            "box1_gross_distribution": 124157.17,
+            "box2a_taxable_amount": 124157.17,
+            "box4_federal_withheld": 18623.58,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": true
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "PIONEER TRUST COMPANY",
+            "payer_ein": "13-1000003",
+            "box1_gross_distribution": 70375.0,
+            "box2a_taxable_amount": 70375.0,
+            "box4_federal_withheld": 14075.04,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": true
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "GATEWAY SECURITIES INC",
+            "payer_ein": "14-1000004",
+            "box1_gross_distribution": 112844.0,
+            "box2a_taxable_amount": 3279.0,
+            "box4_federal_withheld": 0.0,
+            "box7_distribution_code": "7"
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "box3_gross_benefits": 12923.6,
+            "box6_federal_withheld": 0.0
+          }
+        },
+        {
+          "node_type": "schedule_a",
+          "data": {
+            "line_8a_mortgage_interest_1098": 21764.38,
+            "line_5b_real_estate_tax": 9612.39
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "67-single-w2-1099r-1099int-1099div-1099b-ssa",
+      "scenario": "Single filer with W-2 wage income, retirement distributions, interest income, dividend income, capital gains/losses, Social Security benefits ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 67.5,
+        "unemployment": 0,
+        "interest": 1.32,
+        "ordinary_dividends": 782.63,
+        "qualified_dividends": 358.9,
+        "stcg": -154.10999999999927,
+        "ltcg": 1869.9000000000003,
+        "pension": 197811.16999999998,
+        "ssa_gross": 12923.6,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 32698.620000000003,
+        "foreign_tax_paid": 18.87,
+        "itemized_deductions": 31376.77
+      },
+      "correct": {
+        "line9_total_income": 211365,
+        "line11_agi": 211365,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 179989,
+        "ordinary_taxable": 177913,
+        "income_tax": 35857,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 35857,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0.0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 35933,
+        "line33_total_payments": 32699,
+        "line35a_refund": 0,
+        "line37_amount_owed": 3234,
+        "itemized_deduction": 31376
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 198663, net capital 1717, business/rental 0, other 0, taxable SSA 10985; Schedule A 31376; line16 35857, SE 0, Medicare 0, NIIT 95, distribution tax 0, foreign tax credit 19."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+        ]
+      }
+    }
+  },
+  "91-single-w2-1099int-1099div-1099b-ssa": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses, Social Security benefits ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_state": "IL",
+              "address_zip": "62701"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 17307.72,
+            "box2_fed_withheld": 1192.68,
+            "box3_ss_wages": 17307.72,
+            "box4_ss_withheld": 1073.08,
+            "box5_medicare_wages": 17307.72,
+            "box6_medicare_withheld": 250.96,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "76-1000066"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 8564.43,
+            "payer_tin": "77-1000067"
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "LIBERTY INVESTMENTS LLC",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 9834.53,
+            "box1b": 2802.99,
+            "box2a": 2796.63,
+            "box7": 90.05
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Robert W. Baird x1060 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 24913.86,
+            "cost_basis": 25417.11
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Robert W. Baird x1060 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 50000.0,
+            "cost_basis": 50000.0
+          }
+        },
+        {
+          "node_type": "ssa1099",
+          "data": {
+            "box3_gross_benefits": 26556.0,
+            "box6_federal_withheld": 0.0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "91-single-w2-1099int-1099div-1099b-ssa",
+      "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses, Social Security benefits ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 17307.72,
+        "unemployment": 0,
+        "interest": 8564.43,
+        "ordinary_dividends": 9834.53,
+        "qualified_dividends": 2802.99,
+        "stcg": -503.25,
+        "ltcg": 2796.63,
+        "pension": 0,
+        "ssa_gross": 26556.0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 0,
+        "k1_rental": 0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 1192.68,
+        "foreign_tax_paid": 90.05,
+        "itemized_deductions": 0
+      },
+      "correct": {
+        "line9_total_income": 57188,
+        "line11_agi": 57188,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 41438,
+        "ordinary_taxable": 36341,
+        "income_tax": 4121,
+        "se_tax": 0,
+        "add_medicare_tax": 0,
+        "line18_tax_before_credits": 4121,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 4031,
+        "line33_total_payments": 1193,
+        "line35a_refund": 0,
+        "line37_amount_owed": 2838
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 35707, net capital 2294, business/rental 0, other 0, taxable SSA 19187; Schedule A 0; line16 4121, SE 0, Medicare 0, NIIT 0, distribution tax 0, foreign tax credit 90."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+        ]
+      }
+    }
+  },
+  "95-single-w2-k1-1099r-1099int-1099div-1099b": {
+    "input": {
+      "year": 2025,
+      "source": "irs",
+      "scenario": "Single filer with W-2 wage income, multiple K-1 partnership income, retirement distributions, interest income, dividend income, capital gains/losses ",
+      "forms": [
+        {
+          "node_type": "start",
+          "data": {
+            "general": {
+              "filing_status": "single",
+              "taxpayer_first_name": "John",
+              "taxpayer_last_name": "James",
+              "address_city": "Springfield",
+              "address_state": "IL",
+              "address_zip": "62701"
+            }
+          }
+        },
+        {
+          "node_type": "w2",
+          "data": {
+            "box1_wages": 710911.55,
+            "box2_fed_withheld": 295482.29,
+            "box3_ss_wages": 176100.0,
+            "box4_ss_withheld": 10918.2,
+            "box5_medicare_wages": 710911.55,
+            "box6_medicare_withheld": 14906.42,
+            "employer_name": "ACME INDUSTRIES INC",
+            "employer_ein": "85-1000075"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "FIRST NATIONAL BANK",
+            "box1": 6359.19,
+            "payer_tin": "86-1000076"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "LIBERTY INVESTMENTS LLC",
+            "box1": 371.38,
+            "payer_tin": "86-1000076"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "HERITAGE FINANCIAL SERVICES",
+            "box1": 55.94,
+            "payer_tin": "86-1000076"
+          }
+        },
+        {
+          "node_type": "f1099int",
+          "data": {
+            "payer_name": "PIONEER TRUST COMPANY",
+            "box1": 15.88,
+            "payer_tin": "14-1000004"
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "GATEWAY SECURITIES INC",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 66676.6,
+            "box1b": 0.0
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "COMMONWEALTH ADVISORS",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 46501.51,
+            "box1b": 42253.85,
+            "box7": 371.68
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "FIRST NATIONAL BANK",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 6.21,
+            "box1b": 0.0
+          }
+        },
+        {
+          "node_type": "f1099div",
+          "data": {
+            "payerName": "LIBERTY INVESTMENTS LLC",
+            "isNominee": false,
+            "box11": false,
+            "box1a": 521.46,
+            "box1b": 0.0
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO x7694 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 340000.0,
+            "cost_basis": 324721.61,
+            "adjustment_amount": 5278.39,
+            "adjustment_codes": "MD"
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO x7694 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 545000.0,
+            "cost_basis": 545000.0
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO x7694 ST Noncovered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 3963.49,
+            "cost_basis": 3963.49
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO x7694 LT Noncovered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 45145.46,
+            "cost_basis": 45145.46
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO Advisors x0335 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 27985.7,
+            "cost_basis": 28362.5
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "WELLS FARGO Advisors x0335 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 220762.05,
+            "cost_basis": 226267.24
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Wells Fargo x2123 ST Covered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 50628.71,
+            "cost_basis": 57994.1
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Wells Fargo x2123 ST Noncovered",
+            "part": "A",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 147230.34,
+            "cost_basis": 147230.34
+          }
+        },
+        {
+          "node_type": "f1099b",
+          "data": {
+            "description": "Wells Fargo x2123 LT Covered",
+            "part": "D",
+            "date_acquired": "various",
+            "date_sold": "12/31/25",
+            "proceeds": 345118.92,
+            "cost_basis": 337902.44
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "HERITAGE FINANCIAL SERVICES",
+            "payer_ein": "86-1000076",
+            "box1_gross_distribution": 8000.0,
+            "box2a_taxable_amount": 8000.0,
+            "box4_federal_withheld": 0.0,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": true
+          }
+        },
+        {
+          "node_type": "f1099r",
+          "data": {
+            "payer_name": "PIONEER TRUST COMPANY",
+            "payer_ein": "87-1000077",
+            "box1_gross_distribution": 15000.0,
+            "box2a_taxable_amount": 0.0,
+            "box4_federal_withheld": 0.0,
+            "box7_distribution_code": "G"
+          }
+        },
+        {
+          "node_type": "k1_partnership",
+          "data": {
+            "partnership_name": "OAK VENTURES LLP",
+            "box1_ordinary_business": 470.0,
+            "box2_rental_re": -62.0,
+            "box5_interest": 75.0,
+            "box9a_net_lt_cap_gain": -1566.0,
+            "partnership_ein": "88-1000078"
+          }
+        },
+        {
+          "node_type": "k1_partnership",
+          "data": {
+            "partnership_name": "MAPLE HOLDINGS LLP",
+            "box1_ordinary_business": 1578.0,
+            "box2_rental_re": 19052.0,
+            "box5_interest": 7184.0,
+            "box6a_ordinary_dividends": 6.0,
+            "box6b_qualified_dividends": 6.0,
+            "box9a_net_lt_cap_gain": 11367.0,
+            "box13_deductions": 4.0,
+            "partnership_ein": "89-1000079"
+          }
+        },
+        {
+          "node_type": "k1_partnership",
+          "data": {
+            "partnership_name": "CEDAR INVESTMENTS LLP",
+            "box1_ordinary_business": 1.0,
+            "box2_rental_re": -45.0,
+            "box5_interest": 5544.0,
+            "box6a_ordinary_dividends": 3.0,
+            "box9a_net_lt_cap_gain": 90.0,
+            "partnership_ein": "90-1000080"
+          }
+        },
+        {
+          "node_type": "k1_partnership",
+          "data": {
+            "partnership_name": "BIRCH CAPITAL LLP",
+            "box1_ordinary_business": -813.0,
+            "box2_rental_re": -12.0,
+            "box5_interest": 11.0,
+            "box6a_ordinary_dividends": 225.0,
+            "box6b_qualified_dividends": 225.0,
+            "box9a_net_lt_cap_gain": -12.0,
+            "box13_deductions": 2.0,
+            "partnership_ein": "91-1000081"
+          }
+        },
+        {
+          "node_type": "k1_partnership",
+          "data": {
+            "partnership_name": "ELM PARTNERS LLP",
+            "box1_ordinary_business": 168.0,
+            "box5_interest": 498.0,
+            "box6a_ordinary_dividends": 1244.0,
+            "box6b_qualified_dividends": 752.0,
+            "box9a_net_lt_cap_gain": 5641.0,
+            "partnership_ein": "92-1000082"
+          }
+        },
+        {
+          "node_type": "f1099m",
+          "data": {
+            "payer_name": "WELLS FARGO [7694]",
+            "payer_tin": "232384840",
+            "recipient_tin": "018500048",
+            "box3_other_income": 68245.0,
+            "box3_other_income_routing": "other_income",
+            "box3_niit_applicable": true
+          }
+        },
+        {
+          "node_type": "schedule_a",
+          "data": {
+            "line_11_cash_contributions": 6.0
+          }
+        }
+      ]
+    },
+    "expected": {
+      "case": "95-single-w2-k1-1099r-1099int-1099div-1099b",
+      "scenario": "Single filer with W-2 wage income, multiple K-1 partnership income, retirement distributions, interest income, dividend income, capital gains/losses ",
+      "year": 2025,
+      "inputs": {
+        "filing_status": "single",
+        "wages": 710911.55,
+        "unemployment": 0,
+        "interest": 20114.39,
+        "ordinary_dividends": 115183.78000000003,
+        "qualified_dividends": 43236.85,
+        "stcg": -7742.189999999999,
+        "ltcg": 37788.06999999999,
+        "pension": 8000.0,
+        "ssa_gross": 0,
+        "schedule_c_net": 0,
+        "k1_ordinary": 1404.0,
+        "k1_rental": 18933.0,
+        "other_income": 68245.0,
+        "student_loan_int": 0,
+        "hsa_employer": 0,
+        "educator_expenses": 0,
+        "educator_expenses_sp": 0,
+        "aotc_expenses": 0,
+        "marketplace_premium": 0,
+        "marketplace_slcsp": 0,
+        "marketplace_aptc": 0,
+        "qualifying_children": 0,
+        "eitc_children": 0,
+        "dep_care_expenses": 0,
+        "estimated_tax_payments": 0,
+        "fed_withheld": 300080.49,
+        "foreign_tax_paid": 371.68,
+        "itemized_deductions": 6.0
+      },
+      "correct": {
+        "line9_total_income": 972838,
+        "line11_agi": 972838,
+        "standard_deduction": 15750,
+        "qbi_deduction": 0,
+        "line15_taxable_income": 957088,
+        "ordinary_taxable": 883805,
+        "income_tax": 298685,
+        "se_tax": 0,
+        "add_medicare_tax": 4598,
+        "line18_tax_before_credits": 298685,
+        "nonref_ctc": 0,
+        "dependent_care_credit": 0,
+        "aotc_nonref": 0,
+        "aotc_refundable": 0,
+        "ptc_additional": 0,
+        "ptc_repayment": 0,
+        "eitc": 0,
+        "actc": 0,
+        "excess_ss_credit": 0,
+        "line24_total_tax": 312560,
+        "line33_total_payments": 300080,
+        "line35a_refund": 0,
+        "line37_amount_owed": 12480,
+        "itemized_deduction": 6
+      },
+      "reconciliation": {
+        "issue": 77,
+        "reviewed": "2026-10-14",
+        "scope": "Conditional arithmetic reconciliation; see source limitations before using as an oracle.",
+        "basis": [
+          "Whole-dollar source form lines: wages/interest/dividends/pension 854210, net capital 30046, business/rental 20337, other 68245, taxable SSA 0; Schedule A 6; line16 298685, SE 0, Medicare 4598, NIIT 9649, distribution tax 0, foreign tax credit 372."
+        ],
+        "source_limitations": [
+          "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction."
+        ]
+      }
+    }
   }
 }

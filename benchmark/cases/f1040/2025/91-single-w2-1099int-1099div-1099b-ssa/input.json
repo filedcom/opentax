@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "source": "irs",
+  "source": "synthetic",
   "scenario": "Single filer with W-2 wage income, interest income, dividend income, capital gains/losses, Social Security benefits ",
   "forms": [
     {
@@ -34,7 +34,8 @@
       "data": {
         "payer_name": "FIRST NATIONAL BANK",
         "box1": 8564.43,
-        "payer_tin": "77-1000067"
+        "payer_tin": "77-1000067",
+        "source_document_reference": "SYNTHETIC issue77 91 interest copy 2"
       }
     },
     {
@@ -46,7 +47,20 @@
         "box1a": 9834.53,
         "box1b": 2802.99,
         "box2a": 2796.63,
-        "box7": 90.05
+        "box7": 90.05,
+        "holdingPeriodDays": 31,
+        "foreign_source_dividends_usd": 7031.54,
+        "foreign_source_qualified_dividends_usd": 0,
+        "foreign_tax_irs_country_code": "CA",
+        "foreign_tax_holding_review": {
+          "ex_dividend_date": "2025-06-15",
+          "qualifying_held_days_in_31_day_window": 31,
+          "diminished_risk_days_excluded": 0,
+          "no_related_payment_obligation_confirmed": true,
+          "ordinary_stock_holding_rule_confirmed": true,
+          "review_reference": "SYNTHETIC issue77 91 holding/allocation assumption",
+          "reviewed_on": "2026-04-01"
+        }
       }
     },
     {
@@ -77,6 +91,36 @@
         "box3_gross_benefits": 26556.0,
         "box6_federal_withheld": 0.0
       }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
+    },
+    {
+      "node_type": "form1116_review",
+      "data": {
+        "all_foreign_sources_reviewed": true,
+        "foreign_qualified_dividends": 0,
+        "foreign_capital_gains_or_losses_present": false,
+        "source_document_references": [
+          "SYNTHETIC issue77 91 ordinary Canadian dividends; all other investments US source"
+        ],
+        "no_amt_liability_verified": true
+      }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "No foreign accounts or trusts; distinct interest copies",
+      "Foreign tax relates to Canadian ordinary nonqualified dividends only; qualified dividends are US source; stock held without diminished risk or related-payment obligation for 31 days",
+      "Hyphenated partnership EINs normalized without changing digits",
+      "Cash contributions assigned to 50-percent organizations; miscellaneous payment description supplied where absent",
+      "All capital gains and qualified dividends US source; no AMT liability or additional preferences"
+    ]
+  }
 }

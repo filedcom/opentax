@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "source": "irs",
+  "source": "synthetic",
   "scenario": "Single filer with W-2 wage income, multiple K-1 partnership income, retirement distributions, interest income, dividend income, capital gains/losses ",
   "forms": [
     {
@@ -34,7 +34,8 @@
       "data": {
         "payer_name": "FIRST NATIONAL BANK",
         "box1": 6359.19,
-        "payer_tin": "86-1000076"
+        "payer_tin": "86-1000076",
+        "source_document_reference": "SYNTHETIC issue77 95 interest copy 2"
       }
     },
     {
@@ -42,7 +43,8 @@
       "data": {
         "payer_name": "LIBERTY INVESTMENTS LLC",
         "box1": 371.38,
-        "payer_tin": "86-1000076"
+        "payer_tin": "86-1000076",
+        "source_document_reference": "SYNTHETIC issue77 95 interest copy 3"
       }
     },
     {
@@ -50,7 +52,8 @@
       "data": {
         "payer_name": "HERITAGE FINANCIAL SERVICES",
         "box1": 55.94,
-        "payer_tin": "86-1000076"
+        "payer_tin": "86-1000076",
+        "source_document_reference": "SYNTHETIC issue77 95 interest copy 4"
       }
     },
     {
@@ -58,7 +61,8 @@
       "data": {
         "payer_name": "PIONEER TRUST COMPANY",
         "box1": 15.88,
-        "payer_tin": "14-1000004"
+        "payer_tin": "14-1000004",
+        "source_document_reference": "SYNTHETIC issue77 95 interest copy 5"
       }
     },
     {
@@ -79,7 +83,20 @@
         "box11": false,
         "box1a": 46501.51,
         "box1b": 42253.85,
-        "box7": 371.68
+        "box7": 371.68,
+        "holdingPeriodDays": 31,
+        "foreign_source_dividends_usd": 4247.66,
+        "foreign_source_qualified_dividends_usd": 0,
+        "foreign_tax_irs_country_code": "CA",
+        "foreign_tax_holding_review": {
+          "ex_dividend_date": "2025-06-15",
+          "qualifying_held_days_in_31_day_window": 31,
+          "diminished_risk_days_excluded": 0,
+          "no_related_payment_obligation_confirmed": true,
+          "ordinary_stock_holding_rule_confirmed": true,
+          "review_reference": "SYNTHETIC issue77 95 holding/allocation assumption",
+          "reviewed_on": "2026-04-01"
+        }
       }
     },
     {
@@ -234,7 +251,7 @@
         "box2_rental_re": -62.0,
         "box5_interest": 75.0,
         "box9a_net_lt_cap_gain": -1566.0,
-        "partnership_ein": "88-1000078"
+        "partnership_ein": "881000078"
       }
     },
     {
@@ -248,7 +265,7 @@
         "box6b_qualified_dividends": 6.0,
         "box9a_net_lt_cap_gain": 11367.0,
         "box13_deductions": 4.0,
-        "partnership_ein": "89-1000079"
+        "partnership_ein": "891000079"
       }
     },
     {
@@ -260,7 +277,7 @@
         "box5_interest": 5544.0,
         "box6a_ordinary_dividends": 3.0,
         "box9a_net_lt_cap_gain": 90.0,
-        "partnership_ein": "90-1000080"
+        "partnership_ein": "901000080"
       }
     },
     {
@@ -274,7 +291,7 @@
         "box6b_qualified_dividends": 225.0,
         "box9a_net_lt_cap_gain": -12.0,
         "box13_deductions": 2.0,
-        "partnership_ein": "91-1000081"
+        "partnership_ein": "911000081"
       }
     },
     {
@@ -286,7 +303,7 @@
         "box6a_ordinary_dividends": 1244.0,
         "box6b_qualified_dividends": 752.0,
         "box9a_net_lt_cap_gain": 5641.0,
-        "partnership_ein": "92-1000082"
+        "partnership_ein": "921000082"
       }
     },
     {
@@ -297,14 +314,45 @@
         "recipient_tin": "018500048",
         "box3_other_income": 68245.0,
         "box3_other_income_routing": "other_income",
-        "box3_niit_applicable": true
+        "box3_niit_applicable": true,
+        "box3_other_income_description": "SYNTHETIC taxable investment incentive payment"
       }
     },
     {
       "node_type": "schedule_a",
       "data": {
-        "line_11_cash_contributions": 6.0
+        "cash_contributions_to_50_percent_organizations": 6.0
+      }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
+    },
+    {
+      "node_type": "form1116_review",
+      "data": {
+        "all_foreign_sources_reviewed": true,
+        "foreign_qualified_dividends": 0,
+        "foreign_capital_gains_or_losses_present": false,
+        "source_document_references": [
+          "SYNTHETIC issue77 95 ordinary Canadian dividends; all other investments US source"
+        ],
+        "no_amt_liability_verified": true
       }
     }
-  ]
+  ],
+  "synthetic_assumptions": {
+    "authorization": "User requested synthetic data to complete issue77 benchmarks",
+    "original_archive": "benchmark/reference/2025/issue77-original-incomplete.json",
+    "facts": [
+      "No foreign accounts or trusts; distinct interest copies",
+      "Foreign tax relates to Canadian ordinary nonqualified dividends only; qualified dividends are US source; stock held without diminished risk or related-payment obligation for 31 days",
+      "Hyphenated partnership EINs normalized without changing digits",
+      "Cash contributions assigned to 50-percent organizations; miscellaneous payment description supplied where absent",
+      "All capital gains and qualified dividends US source; no AMT liability or additional preferences"
+    ]
+  }
 }

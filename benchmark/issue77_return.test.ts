@@ -112,3 +112,38 @@ Deno.test("issue77 case48 preserves the source Medicare withholding dollar in pa
   assertEquals(pending.f1040.line33_total_payments, 10500 + 1 + 4700);
   assertEquals(pending.f1040.line35a_refund, 7455);
 });
+
+const familyCases: [string, number, number, number, number][] = [
+  ["01-single-w2-minimal", 312, 0, 0, 312],
+  ["18-hoh-w2-with-child", 1983, 1438, 762, 5745],
+  ["24-mfj-w2-three-children-ctc-eitc", 5718, 1003, 5100, 12918],
+  ["29-hoh-w2-three-children-eitc-actc", 7272, 338, 3675, 12747],
+  ["39-single-eitc-no-children", 389, 0, 0, 389],
+  ["47-hoh-low-income-eitc-no-children", 542, 0, 0, 542],
+  ["96-mfj-w2-1099int-1099div-1099b", 0, 500, 0, 1181],
+  ["106-hoh-w2-child-dep-care-credit", 385, 1985, 215, 4400],
+  ["133-hoh-w2-ctc", 864, 2200, 0, 4339],
+];
+for (const [name, eic, ctc, actc, refund] of familyCases) {
+  Deno.test(`issue77 child and dependent credits through complete return: ${name}`, async () => {
+    const { pending, diagnostics } = await replay(name);
+    assertEquals(diagnostics, []);
+    assertEquals(pending.f1040.line27_eitc ?? 0, eic);
+    assertEquals(pending.f1040.line19_child_tax_credit ?? 0, ctc);
+    assertEquals(pending.f1040.line28_actc ?? 0, actc);
+    assertEquals(pending.f1040.line35a_refund, refund);
+  });
+}
+for (
+  const [name, tax] of [
+    ["76-mfj-w2-1099int-1099b", 100487],
+    ["91-single-w2-1099int-1099div-1099b-ssa", 4121],
+    ["95-single-w2-k1-1099r-1099int-1099div-1099b", 298685],
+  ] as const
+) {
+  Deno.test(`issue77 reported investment income tax: ${name}`, async () => {
+    const { pending, diagnostics } = await replay(name);
+    assertEquals(diagnostics, []);
+    assertEquals(pending.f1040.line16_income_tax, tax);
+  });
+}
