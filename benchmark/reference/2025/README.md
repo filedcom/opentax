@@ -1,7 +1,7 @@
 # Issue 77 reconciliation — October 14, 2026
 
-This review changes arithmetic expectations in 121 fixtures. It does **not**
-certify 121 complete returns. The initial reconciliation retained 65 source or eligibility limitations.
+This review records arithmetic changes in 122 fixtures, including synthetic case 78.
+It does **not** certify 122 complete returns. The initial reconciliation retained 65 source or eligibility limitations.
 The synthetic completion work below reduces that number to 47; case 78 now
 uses an explicitly invented eligible DOB and the correct 316 EIC expectation. The benchmark now reports those limitations
 as errors even if every compared number matches. Existing unsupported-oracle and
@@ -181,8 +181,7 @@ Schedule A now adds rounded line operands, combining amounts belonging on the
 same line before rounding. Form 1040 taxable income subtracts rounded AGI and
 deduction operands, fixing the one-dollar case 76 tax discrepancy. Cases 76, 91
 and 95 reproduce income tax 100,487, 4,121 and 298,684. The combined focused gate
-is **138 passed, 0 failed**. Schedule D/SSA/income-total rounding remains under
-review before final smoke, release and issue closure.
+is **138 passed, 0 failed**. That checkpoint preceded the capital and income rounding corrections below.
 
 
 ### Capital and income rounding checkpoint
@@ -199,3 +198,10 @@ use rounded source income. Case 67 income is 211,365; case 91 income is 57,188;
 case 78 income is 14,962 with unchanged EIC 316 and refund 382. The release smoke
 now exercises all 30 completed fixtures and checks seven summary amounts exactly,
 in addition to the eight ownership/age variants and existing MeF/PDF smoke.
+
+
+The local compiled CLI smoke passed all 30 complete scenarios with exact summary
+comparisons, all eight ownership/age variants, and the existing finalized MeF and
+flattened two-page PDF checks. No executor diagnostics were accepted; only the
+known refundable-credit advisory was permitted. This is local release evidence;
+publication still requires the five-platform release workflow.

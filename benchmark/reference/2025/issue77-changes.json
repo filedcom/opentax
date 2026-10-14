@@ -4204,5 +4204,35 @@
       "Conditional worksheet arithmetic using supplied form amounts and archived classifications and deduction/credit eligibility; partnership passive/SE status, basis, AMT and source completeness are not certified by this correction.",
       "W-2 spouse ownership absent: excess Social Security credit and resulting payments/refund remain unresolved; archived excess credit retained as a conditional amount, not a verified claim."
     ]
+  },
+  {
+    "case": "78-single-w2-1099int-1099div-1099b",
+    "changes": {
+      "line9_total_income": {
+        "before": 14960.69,
+        "after": 14962
+      },
+      "line11_agi": {
+        "before": 14960.69,
+        "after": 14962
+      },
+      "eitc": {
+        "before": 219.66,
+        "after": 316
+      },
+      "line33_total_payments": {
+        "before": 285.66,
+        "after": 382
+      },
+      "line35a_refund": {
+        "before": 285.66,
+        "after": 382
+      }
+    },
+    "basis": [
+      "Original missing age is replaced only in the labeled synthetic fixture by DOB 1985-06-15; EIC table amount 316, payments/refund 382.",
+      "Rounded reported lines: wages 7212, interest 1589, dividends 750, short-term gain 4965, long-term sale 443 plus distributions 3; total income and AGI 14962."
+    ],
+    "source_limitations": []
   }
 ]
