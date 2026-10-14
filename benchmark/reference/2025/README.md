@@ -112,3 +112,24 @@ cases: **10 pass, 123 fail, 0 skipped**, with 273 line failures, 1,198 unsupport
 checks and 163 errors (categories overlap). The failures retain engine diagnostics
 and incomplete sources; no pass-rate or issue-closure claim is made. The separate
 full-suite run at pre-merge runtime `da40ac96d` is not evidence for this branch.
+
+## Synthetic follow-up scenarios
+
+The user authorized invented facts to exercise the unresolved paths. These
+assumptions live separately in [issue77-synthetic.json](./issue77-synthetic.json)
+and never replace the original source documents or their limitations.
+`benchmark/issue77_synthetic.test.ts` uses the archived W-2 financial boxes with
+synthetic employee SSNs and distinct synthetic copy references. For case 76,
+assigning both forms to one taxpayer gives an excess SS credit of **8,199**;
+assigning one to each spouse gives **0**. For case 86, assigning all three to one
+taxpayer gives **5,711**; assigning the first to the taxpayer and the remaining
+two to the spouse gives **0**.
+
+For case 78, the tests hold rounded earned income **7,212**, AGI **14,961**, and
+investment income **7,749** constant. With explicitly synthetic residency,
+valid-SSN, family and prior-disallowance assumptions, DOBs corresponding to ages
+**25 and 64** give EIC **316**, while ages **24 and 65** give **0**. These eight
+passing tests exercise the existing W-2 and EIC calculation nodes; they are not
+full-return preparation, PDF, MeF, or recovered-source verification. The engine
+code under test is the code released in v2.0.12; these follow-up test artifacts
+are maintained in ongoing PR #79.

@@ -1,0 +1,33 @@
+{
+  "provenance": "Invented test assumptions authorized by the user; not recovered taxpayer evidence and not replacements for the archived fixtures.",
+  "taxpayer_ssn": "111-22-3333",
+  "spouse_ssn": "444-55-6666",
+  "ownership": [
+    {
+      "case": "76-mfj-w2-1099int-1099b",
+      "owners": ["taxpayer", "taxpayer"],
+      "expected_excess_ss": 8199
+    },
+    {
+      "case": "76-mfj-w2-1099int-1099b",
+      "owners": ["taxpayer", "spouse"],
+      "expected_excess_ss": 0
+    },
+    {
+      "case": "86-mfj-w2",
+      "owners": ["taxpayer", "taxpayer", "taxpayer"],
+      "expected_excess_ss": 5711
+    },
+    {
+      "case": "86-mfj-w2",
+      "owners": ["taxpayer", "spouse", "spouse"],
+      "expected_excess_ss": 0
+    }
+  ],
+  "childless_eic": [
+    { "dob": "2001-01-02", "age": 24, "expected_eic": 0 },
+    { "dob": "2000-01-02", "age": 25, "expected_eic": 316 },
+    { "dob": "1961-01-02", "age": 64, "expected_eic": 316 },
+    { "dob": "1960-01-02", "age": 65, "expected_eic": 0 }
+  ]
+}
