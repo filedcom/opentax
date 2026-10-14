@@ -133,3 +133,13 @@ passing tests exercise the existing W-2 and EIC calculation nodes; they are not
 full-return preparation, PDF, MeF, or recovered-source verification. The engine
 code under test is the code released in v2.0.12; these follow-up test artifacts
 are maintained in ongoing PR #79.
+
+The release smoke also runs all eight variants through the compiled CLI. The
+ownership scenarios isolate the archived W-2s with synthetic joint identities;
+the age scenarios use all case 78 income forms with synthetic timely employment
+SSNs, eligibility reviews and negative foreign-account/trust answers. It
+requires no unexpected warnings (eligible EIC raises the expected refund
+advisory), verifies excess SS on Form 1040 line 31, and verifies EIC, total
+payments and refunds (382 when eligible, 66 when ineligible). The separate basic
+W-2 smoke still checks finalized MeF and flattened PDF values. Every platform
+release build must pass these checks before publication.
