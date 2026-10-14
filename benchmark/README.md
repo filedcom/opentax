@@ -49,11 +49,14 @@ nonzero. The trailing JSON keeps `failing` as case-name strings and adds
 `failures` with `lineFailures`, `unsupportedChecks` and `errors`.
 
 Some fixtures expect intermediate names not exposed by `return get`. These are
-reported as unsupported checks, not missing filed lines. Supported zero-valued
-output fields omitted by the CLI remain missing; there is no zero substitution.
-Resolving mappings/output coverage needs independent review, not changes to
-expected values or relaxed tolerances. A red benchmark is not by itself proof
-that every reported discrepancy is a tax-engine arithmetic error.
+reported as unsupported checks, not missing filed lines. The omitted refund side
+becomes zero only when a positive amount owed is present, and conversely for
+omitted amount owed with a positive refund. When both are omitted, both become
+zero only if finite tax and payments totals are equal. Explicit nulls, arrays
+and malformed values are never replaced, and no other missing filed line
+receives a default. Resolving mappings/output coverage needs independent review,
+not changes to expected values or relaxed tolerances. A red benchmark is not by
+itself proof that every reported discrepancy is a tax-engine arithmetic error.
 
 ## How to run
 

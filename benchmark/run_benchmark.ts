@@ -104,6 +104,30 @@ function singleNumericActual(
   return isFiniteNumber(value) ? value : "nonfinite";
 }
 
+/** The CLI omits the inactive balance side; other missing values remain missing. */
+export function benchmarkActualLines(
+  lines: Readonly<Record<string, unknown>>,
+  summary: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const actual = { ...summary, ...lines };
+  const refund = actual.line35a_refund;
+  const owed = actual.line37_amount_owed;
+  const noRefund = !("line35a_refund" in actual);
+  const noOwed = !("line37_amount_owed" in actual);
+  if (noRefund && isFiniteNumber(owed) && owed > 0) actual.line35a_refund = 0;
+  if (noOwed && isFiniteNumber(refund) && refund > 0) {
+    actual.line37_amount_owed = 0;
+  }
+  if (
+    noRefund && noOwed && isFiniteNumber(actual.line24_total_tax) &&
+    actual.line24_total_tax === actual.line33_total_payments
+  ) {
+    actual.line35a_refund = 0;
+    actual.line37_amount_owed = 0;
+  }
+  return actual;
+}
+
 export function compareExpectedNumericLines(
   actual: Readonly<Record<string, unknown>>,
   expected: Readonly<Record<string, unknown>>,
@@ -324,7 +348,7 @@ async function runCase(name: string): Promise<CaseResult> {
   const l = eng.lines ?? {};
   const sm = eng.summary ?? {};
   // Raw lines take precedence: summary normalization must not hide malformed values.
-  const actualLines = { ...sm, ...l };
+  const actualLines = benchmarkActualLines(l, sm);
   const errors: string[] = (eng.warnings ?? []).filter((warning: string) =>
     warning.startsWith("[EXECUTOR_")
   );

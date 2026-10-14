@@ -104,13 +104,7 @@ for (
             ["line11_agi", "line33_total_payments"],
           );
         } else if (scenario === "unsupported") {
-          // Missing inactive output stays visible under the unresolved zero policy.
-          assertEquals(
-            report.failures[0].lineFailures.map((f: { line: string }) =>
-              f.line
-            ),
-            ["line35a_refund"],
-          );
+          assertEquals(report.failures[0].lineFailures, []);
           assertEquals(report.failures[0].errors, []);
           assertEquals(report.failures[0].unsupportedChecks, [{
             field: "ordinary_taxable",

@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import {
+  benchmarkActualLines,
   compareExpectedNumericLines,
   taxCommandOutputOrThrow,
 } from "./run_benchmark.ts";
@@ -143,4 +144,46 @@ Deno.test("run_benchmark exits nonzero for an empty runnable case set", async ()
   } finally {
     await Deno.remove(join("benchmark", "cases", form), { recursive: true });
   }
+});
+
+Deno.test("only provably inactive CLI balances become zero", () => {
+  assertEquals(benchmarkActualLines({}, { line37_amount_owed: 10 }), {
+    line37_amount_owed: 10,
+    line35a_refund: 0,
+  });
+  assertEquals(benchmarkActualLines({}, { line35a_refund: 10 }), {
+    line35a_refund: 10,
+    line37_amount_owed: 0,
+  });
+  assertEquals(
+    benchmarkActualLines({}, {
+      line24_total_tax: 10,
+      line33_total_payments: 10,
+    }),
+    {
+      line24_total_tax: 10,
+      line33_total_payments: 10,
+      line35a_refund: 0,
+      line37_amount_owed: 0,
+    },
+  );
+  assertEquals(
+    benchmarkActualLines({}, {
+      line24_total_tax: 10,
+      line33_total_payments: 9,
+    }),
+    { line24_total_tax: 10, line33_total_payments: 9 },
+  );
+  assertEquals(benchmarkActualLines({}, {}), {});
+  assertEquals(
+    benchmarkActualLines({ line35a_refund: null }, { line37_amount_owed: 10 }),
+    { line35a_refund: null, line37_amount_owed: 10 },
+  );
+  assertEquals(benchmarkActualLines({ line37_amount_owed: [10, 10] }, {}), {
+    line37_amount_owed: [10, 10],
+  });
+  assertEquals(
+    benchmarkActualLines({ line35a_refund: 10, line37_amount_owed: 20 }, {}),
+    { line35a_refund: 10, line37_amount_owed: 20 },
+  );
 });
