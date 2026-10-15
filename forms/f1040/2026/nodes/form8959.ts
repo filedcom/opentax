@@ -1,3 +1,4 @@
+import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -202,7 +203,11 @@ export function calculateForm8959_2026(raw: Form8959Input2026) {
 class Form8959Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8959";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2_2026, f1040_2026_node]);
+  readonly outputNodes = new OutputNodes([
+    schedule2_2026,
+    f1040_2026_node,
+    f8812,
+  ]);
   compute(ctx: NodeContext, raw: Form8959Input2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Form 8959 needs f1040:2026 context");
@@ -211,6 +216,17 @@ class Form8959Node2026 extends TaxNode<typeof inputSchema> {
     const { line12, line18, line24 } = calculation.lines;
     return {
       outputs: [
+        {
+          nodeType: "f8812",
+          fields: {
+            medicare_payroll_2026: {
+              wage_tax: calculation.lines.line7,
+              additional_wage_withheld: calculation.lines.line22,
+              has_rrta_or_self_employment: calculation.has_rrta ||
+                calculation.has_self_employment,
+            },
+          },
+        },
         {
           nodeType: "form8959",
           fields: {

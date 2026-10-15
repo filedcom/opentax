@@ -1,3 +1,4 @@
+import { eicClaim2026Schema, eitc_2026 } from "./nodes/eitc.ts";
 import { childCreditClaim2026Schema, f8812_2026 } from "./nodes/f8812.ts";
 import {
   social_security_2026,
@@ -62,6 +63,7 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  { node: eitc_2026, isArray: false, inputSchema: eicClaim2026Schema },
   { node: f8812_2026, isArray: false, inputSchema: childCreditClaim2026Schema },
   {
     node: social_security_2026,

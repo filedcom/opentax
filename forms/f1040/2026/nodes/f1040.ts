@@ -76,6 +76,7 @@ export const inputSchema = identityInputSchema.extend({
   line27a_eic: amount.default(0),
   line27b_clergy_schedule_se: z.boolean().optional(),
   line27c_declines_eic: z.boolean().optional(),
+  eic_finalized: z.boolean().optional(),
   line28_actc: amount.default(0),
   line28_declines_actc: z.boolean().default(false),
   line29_refundable_aotc: amount.default(0),

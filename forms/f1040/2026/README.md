@@ -867,6 +867,18 @@ counts; AGI supplies earned wage lines; W-2 supplies combat pay; income tax and
 Schedule 2 supply the tax limit including AMT. CTC/ODC and the supported ACTC
 method finalize Form 1040 lines 19/28 and select draft Schedule 8812 in the bundle.
 Caller credit totals are rejected. Review fields establish the absence of other
-credits and unsupported income sources. Part II-B, EIC, other-credit ordering,
-Form 8862 and foreign/business cases still need their owners. See
+credits and unsupported income sources. Ordinary W-2 Part II-B now consumes
+finalized EIC and actual payroll withholding. RRTA/self-employment/excess-withholding,
+other-credit ordering, Form 8862 and foreign/business cases still need their owners. See
 [the current contract](../../../docs/ty2026/graphs/CHILD-CREDIT-CURRENT.md).
+
+
+## Source-backed EIC (October 15, 2026)
+
+The `eitc` claim now uses shared eligibility/worksheet logic with the published
+2026 table and annual thresholds. General and AGI supply source-derived children,
+filer eligibility, earned wages and investment income. W-2 supplies separate
+spouse combat-pay elections; only elected pay reaches Form 1040 line 1i. The credit
+flows to Form 1040 line 27a, ACTC Part II-B and Schedule 3-A. The draft bundle adds
+Schedule EIC for child-based claims. [Current scope, evidence and remaining work](../../../docs/ty2026/graphs/EIC-CURRENT.md)
+include explicit gates for unsupported sources and recertification.

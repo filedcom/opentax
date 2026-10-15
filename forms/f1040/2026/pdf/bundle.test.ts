@@ -38,7 +38,8 @@ Deno.test("2026 draft bundle selects forms, moves payer statements to the end an
   const input = draftBundleFixture2026();
   const result = await buildDraftReturnPdf2026(input);
   assertEquals(result.filingReady, false);
-  assert(result.unfinishedReceivers.includes("eitc"));
+  assert(!result.unfinishedReceivers.includes("eitc"));
+  assert(result.unfinishedReceivers.length > 0);
   assertEquals(result.attachments.map((a) => a.form), [
     "f1040",
     "schedule1",

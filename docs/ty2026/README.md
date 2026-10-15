@@ -159,7 +159,9 @@ regular Git files.
   and remaining repayment/IRA work.
 - [`CHILD-CREDIT-CURRENT.md`](./graphs/CHILD-CREDIT-CURRENT.md): shared child-credit
   arithmetic, 2026 source reviews, AMT tax limit, draft Schedule 8812 and remaining
-  EIC/payroll/other-credit dependencies.
+  payroll/other-credit dependencies.
+- [`EIC-CURRENT.md`](./graphs/EIC-CURRENT.md): published 2026 EIC table, shared
+  eligibility/worksheet reuse, combat elections, Schedule EIC and ACTC payroll routing.
 - [`SSA-LUMP-SUM-CURRENT.md`](./graphs/SSA-LUMP-SUM-CURRENT.md): historical return
   records, election comparison, AGI/MAGI destinations and draft line 6c.
 - [`RRB-1099-GRAPH.md`](./graphs/RRB-1099-GRAPH.md): pinned RRB issuer explanations

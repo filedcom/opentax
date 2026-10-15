@@ -428,6 +428,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
             spouse_can_be_claimed_as_dependent:
               input.spouse_can_be_claimed_as_dependent,
             filer_has_valid_ssns: filer.eitc,
+            filer_ssns_reviewed:
+              input.taxpayer_ssn_valid_for_employment !== undefined &&
+              input.taxpayer_ssn_issued_before_due_date !== undefined &&
+              input.taxpayer_tin_issued_by_due_date !== undefined &&
+              (!joint || (input.spouse_ssn_valid_for_employment !== undefined &&
+                input.spouse_ssn_issued_before_due_date !== undefined &&
+                input.spouse_tin_issued_by_due_date !== undefined)),
+            tax_residency: input.tax_residency,
             do_not_claim_eic: input.do_not_claim_eic,
             qualifying_children: eic.count,
             dependent_source_rows_2026: children,

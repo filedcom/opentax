@@ -382,7 +382,10 @@ export function calculateSchedule8812Lines(
 export function calculateSchedule8812LinesWithConfig(
   cfg: ChildCreditConfig,
   rawInput: F8812Input,
-  options: { roundActcEarnedIncome?: boolean } = {},
+  options: {
+    roundActcEarnedIncome?: boolean;
+    resolvePartIIB?: () => PartIIBDetails;
+  } = {},
 ) {
   const input = inputSchema.parse(rawInput);
   const explicitItems = input.f8812s ?? [];
@@ -594,12 +597,13 @@ export function calculateSchedule8812LinesWithConfig(
     (isPrResident || (line4 >= 3 && line20 < line17));
   let partIIBLines = null;
   if (needsPartIIB) {
-    if (!input.part_iib) {
+    const partIIB = input.part_iib ?? options.resolvePartIIB?.();
+    if (!partIIB) {
       throw new Error(
         "Schedule 8812 Part II-B needs its W-2, Schedule 1, Schedule 2, EIC, and adoption-credit line sources",
       );
     }
-    partIIBLines = calculatePartIIBLines(input.part_iib, line20);
+    partIIBLines = calculatePartIIBLines(partIIB, line20);
   }
   const line27 = Math.min(
     line17,

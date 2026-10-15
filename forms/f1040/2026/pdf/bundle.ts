@@ -1,3 +1,5 @@
+import type { calculateEic2026 } from "../nodes/eitc.ts";
+import { buildScheduleEicPdfBytes2026 } from "./schedule_eic.ts";
 import type { calculateChildCredit2026 } from "../nodes/f8812.ts";
 import { buildSchedule8812PdfBytes2026 } from "./schedule8812.ts";
 import type { calculateSocialSecuritySources2026 } from "../inputs/social-security-source.ts";
@@ -141,6 +143,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       "TY2026 information-return withholding components disagree with Form 1040",
     );
   }
+  const eic = retained<ReturnType<typeof calculateEic2026>>("eitc");
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
     "f8812",
   );
@@ -157,7 +160,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 3A,
-  // 07, 08, 24, 32, 47, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 24, 32, 43, 47, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -262,6 +265,18 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         filer,
       ));
+  }
+  if (eic?.file_schedule_eic) {
+    add(
+      "schedule_eic",
+      1,
+      () =>
+        buildScheduleEicPdfBytes2026(eic.source_input, {
+          form1040_line27a: line("line27a_eic"),
+          form1040_line11b: line("line11b_agi"),
+          form1040_line1i: line("line1i_combat_pay"),
+        }, filer),
+    );
   }
   if (childCredit?.file_schedule8812) {
     add("schedule8812", 2, () =>

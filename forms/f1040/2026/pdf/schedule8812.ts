@@ -119,6 +119,16 @@ export async function buildSchedule8812PdfBytes2026(
         if (lines.line18a > 2500) fill(2, 8, lines.line19);
         fill(2, 9, lines.line20);
         check(2, lines.line16b >= 5100 ? "c2_2[1]" : "c2_2[0]");
+        if (lines.partIIBLines) {
+          [
+            lines.partIIBLines.line21,
+            lines.partIIBLines.line22,
+            lines.partIIBLines.line23,
+            lines.partIIBLines.line24,
+            lines.partIIBLines.line25,
+            lines.partIIBLines.line26,
+          ].forEach((value, i) => fill(2, i + 10, value));
+        }
         fill(2, 16, lines.line27);
       }
     }

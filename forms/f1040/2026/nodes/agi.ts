@@ -213,7 +213,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     let adjustments = 0;
     let studentLoan = 0;
     const outputs = result.outputs.map((output) => {
-      if (output.nodeType === "f8812") {
+      if (output.nodeType === "f8812" || output.nodeType === "eitc") {
         return {
           ...output,
           fields: {
@@ -234,9 +234,21 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
                   : value ?? 0),
               0,
             ),
-            unsupported_earned_income_activity: [
+            [
+              output.nodeType === "eitc"
+                ? "unsupported_eic_activity"
+                : "unsupported_earned_income_activity"
+            ]: [
               input.line3_schedule_c,
               input.line6_schedule_f,
+              ...(output.nodeType === "eitc"
+                ? [
+                  input.line5_schedule_e,
+                  input.line4_other_gains,
+                  input.line4b_ira_taxable,
+                  input.line5b_pension_taxable,
+                ]
+                : []),
               input.line15_se_deduction,
               input.line8d_foreign_earned_income_exclusion,
             ].some((v) => (v ?? 0) !== 0),

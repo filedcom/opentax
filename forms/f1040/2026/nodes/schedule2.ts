@@ -35,7 +35,11 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
       outputs: [
         {
           nodeType: "f8812",
-          fields: { schedule2_part1_tax: lines.line3_part1_tax },
+          fields: {
+            schedule2_part1_tax: lines.line3_part1_tax,
+            schedule2_line16c: lines.line16c_additional_fica,
+            schedule2_line17c: input.line17c_w2_uncollected_fica ?? 0,
+          },
         },
         {
           nodeType: "schedule2",

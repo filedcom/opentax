@@ -32,6 +32,23 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   auto_income_tax_liability: amount,
   // Older wage emitters also deposit these facts; the worksheet uses the
   // normalized 1040 wage lines instead, including tips and Form 8919 wages.
+  finalized_eic: amount.optional(),
+  payroll_sources_2026: z.array(
+    z.object({
+      source_reference: z.string().min(1),
+      social_security_withheld: amount.optional(),
+      medicare_withheld: amount.optional(),
+      rrta: z.boolean(),
+    }).strict(),
+  ).default([]),
+  excess_social_security_from_w2: amount.default(0),
+  medicare_payroll_2026: z.object({
+    wage_tax: amount,
+    additional_wage_withheld: amount,
+    has_rrta_or_self_employment: z.boolean(),
+  }).strict().optional(),
+  schedule2_line16c: amount.optional(),
+  schedule2_line17c: amount.optional(),
   auto_earned_income: z.union([amount, z.array(amount)]).optional(),
   auto_se_earned_income: amount.optional(),
   wage_income_from_agi: amount,
@@ -106,9 +123,74 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       schedule3_line6m: 0,
       worksheet_b_applies: false,
     },
-    // Part II-B is intentionally absent until payroll and EIC are finalized.
-    // The shared calculator fails explicitly only when that method is needed.
-  }, { roundActcEarnedIncome: true });
+  }, {
+    roundActcEarnedIncome: true,
+    resolvePartIIB: () => {
+      const payroll = input.medicare_payroll_2026;
+      if (
+        input.finalized_eic === undefined || !payroll ||
+        input.schedule2_line16c === undefined ||
+        input.schedule2_line17c === undefined
+      ) {
+        throw new Error(
+          "2026 Schedule 8812 Part II-B needs finalized EIC, Medicare and Schedule 2 sources",
+        );
+      }
+      if (
+        payroll.has_rrta_or_self_employment ||
+        input.payroll_sources_2026.some((s) => s.rrta)
+      ) {
+        throw new Error(
+          "2026 Schedule 8812 Part II-B needs the RRTA/self-employment payroll worksheet owner",
+        );
+      }
+      if (input.excess_social_security_from_w2 > 0) {
+        throw new Error(
+          "2026 Schedule 8812 Part II-B needs finalized Schedule 3 excess-withholding credit",
+        );
+      }
+      if (
+        input.payroll_sources_2026.some((s) =>
+          s.social_security_withheld === undefined ||
+          s.medicare_withheld === undefined
+        )
+      ) {
+        throw new Error(
+          "2026 Schedule 8812 Part II-B needs actual W-2 boxes 4 and 6, including explicit zero amounts",
+        );
+      }
+      const ss = roundWholeDollars(
+        input.payroll_sources_2026.reduce(
+          (sum, s) => sum + s.social_security_withheld!,
+          0,
+        ),
+      );
+      const medicare = roundWholeDollars(
+        input.payroll_sources_2026.reduce(
+          (sum, s) => sum + s.medicare_withheld!,
+          0,
+        ),
+      );
+      const line21 = ss + medicare + payroll.wage_tax -
+        payroll.additional_wage_withheld;
+      if (line21 < 0) {
+        throw new Error(
+          "Schedule 8812 Medicare withholding exceeds reconciled payroll sources",
+        );
+      }
+      // Adapter to the preserved 2025 semantic arithmetic. These are the 2026
+      // line 22 operands, and the misleading legacy adoption field is excess SS.
+      return {
+        line21_w2_withheld_social_security_medicare: line21,
+        schedule1_line15: 0,
+        schedule2_line5: input.schedule2_line16c,
+        schedule2_line6: input.schedule2_line17c,
+        schedule2_line13: 0,
+        form1040_line27a_eic: input.finalized_eic,
+        schedule3_line11_adoption_credit: input.excess_social_security_from_w2,
+      };
+    },
+  });
   const lines = calculated && {
     ...calculated,
     // ODC-only filers still follow line 16a before stopping at zero children.

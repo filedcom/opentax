@@ -1019,6 +1019,19 @@ function passesEitcAgeTest(
   return false;
 }
 
+/** Child relationship, age, joint-return and residence tests before the TIN test.
+ * The 2026 self-only EIC attachment route must distinguish these children from
+ * a return that has no qualifying child at all.
+ */
+export function eicChildMeetsNonTinTests(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return dep.lived_in_us_over_half_year === true &&
+    passesJointReturnTest(dep) && passesRelationshipTest(dep) &&
+    passesEitcAgeTest(dep, rules) && passesResidencyTest(dep, rules);
+}
+
 // EITC uses its own child test: qualifying age and relationship, U.S. residency,
 // SSN, and no disqualifying joint return. It does not use the dependency support
 // test, and a noncustodial parent's CTC release does not confer EITC eligibility.

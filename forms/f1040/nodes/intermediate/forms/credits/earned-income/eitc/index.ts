@@ -3,7 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
@@ -178,12 +181,13 @@ function clampChildren(children: number): number {
 function meetsChildlessAgeTest(
   dob: string | undefined,
   deathDate: string | undefined,
+  taxYear: number,
 ): boolean {
   if (dob === undefined) return false;
   if (deathDate === undefined) {
-    return dob > "1960-12-31" && dob < "2001-01-02";
+    return dob > `${taxYear - 65}-12-31` && dob < `${taxYear - 24}-01-02`;
   }
-  if (!deathDate.startsWith("2025-")) return false;
+  if (!deathDate.startsWith(`${taxYear}-`)) return false;
   const year = Number(dob.slice(0, 4));
   const month = Number(dob.slice(5, 7));
   const day = Number(dob.slice(8, 10));
@@ -194,7 +198,10 @@ function meetsChildlessAgeTest(
     deathDate < age65.toISOString().slice(0, 10);
 }
 
-export function childlessEicEligible(input: EitcInput): boolean {
+export function childlessEicEligible(
+  input: EitcInput,
+  taxYear = 2025,
+): boolean {
   if (
     input.taxpayer_can_be_claimed_as_dependent === true ||
     input.spouse_can_be_claimed_as_dependent === true
@@ -207,8 +214,9 @@ export function childlessEicEligible(input: EitcInput): boolean {
   const ageEligible = meetsChildlessAgeTest(
     input.taxpayer_dob,
     input.taxpayer_death_date,
+    taxYear,
   ) || (isJoint &&
-    meetsChildlessAgeTest(input.spouse_dob, input.spouse_death_date));
+    meetsChildlessAgeTest(input.spouse_dob, input.spouse_death_date, taxYear));
   if (!ageEligible || input.main_home_in_us_over_half_year !== true) {
     return false;
   }
@@ -262,9 +270,18 @@ export function eicTaxResidencyEligible(input: EitcInput): boolean {
   return input.filing_status === FilingStatus.MFJ;
 }
 
-function computeEitc(
+export interface EicCalculationConfig {
+  taxYear: number;
+  investmentIncomeLimit: number;
+  agiThresholdChildless: { other: number; joint: number };
+  agiThresholdWithChildren: { other: number; joint: number };
+  lookup: (amount: number, children: number, joint: boolean) => number;
+}
+
+/** Reusable eligibility and two-lookup worksheet; annual table and dates are explicit. */
+export function computeEitcWithConfig(
   input: EitcInput,
-  investmentIncomeLimit: number,
+  config: EicCalculationConfig,
 ): number {
   if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +
@@ -285,13 +302,13 @@ function computeEitc(
     (children === 0 || input.mfs_separation_reviewed !== true)
   ) return 0;
 
-  if (children === 0 && !childlessEicEligible(input)) return 0;
+  if (children === 0 && !childlessEicEligible(input, config.taxYear)) return 0;
   if (children > 0 && !childEicFilerEligible(input)) return 0;
 
   // Investment income disqualifier (IRC §32(i))
   if (
     Math.max(input.investment_income ?? 0, input.investment_income_floor ?? 0) >
-      investmentIncomeLimit
+      config.investmentIncomeLimit
   ) return 0;
 
   // Must have earned income
@@ -299,12 +316,13 @@ function computeEitc(
 
   // Worksheet A/B: look up earned income first. AGI gets a second lookup only
   // at or above the worksheet threshold, then the smaller credit controls.
-  const earnedCredit = lookupEic2025(earnedIncome, children, isJoint);
-  const agiComparisonThreshold = children === 0
-    ? (isJoint ? 17_730 : 10_620)
-    : (isJoint ? 30_470 : 23_350);
+  const earnedCredit = config.lookup(earnedIncome, children, isJoint);
+  const thresholds = children === 0
+    ? config.agiThresholdChildless
+    : config.agiThresholdWithChildren;
+  const agiComparisonThreshold = isJoint ? thresholds.joint : thresholds.other;
   if (agi < agiComparisonThreshold) return earnedCredit;
-  return Math.min(earnedCredit, lookupEic2025(agi, children, isJoint));
+  return Math.min(earnedCredit, config.lookup(agi, children, isJoint));
 }
 
 function buildOutput(credit: number): NodeOutput[] {
@@ -324,7 +342,13 @@ class EitcNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
-    const credit = computeEitc(input, cfg.eitcInvestmentIncomeLimit);
+    const credit = computeEitcWithConfig(input, {
+      taxYear: 2025,
+      investmentIncomeLimit: cfg.eitcInvestmentIncomeLimit,
+      agiThresholdChildless: { other: 10_620, joint: 17_730 },
+      agiThresholdWithChildren: { other: 23_350, joint: 30_470 },
+      lookup: lookupEic2025,
+    });
     return {
       outputs: [
         ...buildOutput(credit),

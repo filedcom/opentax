@@ -39,7 +39,7 @@ earned-income worksheet and shared calculated lines when applicable.
 The static draft bundle selects Schedule 8812, sequence 47, only for a positive
 CTC/ODC or ACTC. It reconciles AGI, tax, dependent counts, credit totals and the
 opt-out answer before filling the pinned two-page form. Reserved line 15 and
-inapplicable payroll fields stay blank. The pinned 2026 Form 1040 has **no ACTC
+inapplicable payroll fields stay blank; applicable Part II-B lines 21–26 are filled. The pinned 2026 Form 1040 has **no ACTC
 opt-out checkbox**; `c2_14` is the unrelated Form 8888 refund indicator and must
 not be used for this election. An opt-out preserves nonrefundable credit and
 omits refundable worksheet amounts.
@@ -51,18 +51,29 @@ caller totals and static PDF reconciliation. CTC, ACTC, opt-out and limited ODC
 examples were rendered and inspected; flattened output has no AcroForm or page
 annotations. The 2025 Schedule 8812 regression suite remains intact.
 
+## Three-child payroll method
+
+The supported ordinary W-2 route now waits for finalized EIC, actual boxes 4/6,
+Form 8959 and Schedule 2. The 2026 Schedule 8812 withholding worksheet uses
+W-2 Social Security plus Medicare withholding, adds Form 8959 line 7 and subtracts
+its line 22; the latter includes uncollected code B/N amounts under the
+[2026 Form 8959 instructions](https://www.irs.gov/pub/irs-dft/i8959--dft.pdf).
+Part II-B line 22 uses Schedule 2 lines 16c/17c; line 24 deducts finalized EIC.
+The shared calculator chooses the larger earned-income/payroll method and caps
+it at line 17. Missing actual withholding stops the route rather than estimating
+it from wages. RRTA, self-employment and positive excess-withholding credits still
+require their remaining source owners. See [current EIC](EIC-CURRENT.md).
+
 ## Still required
 
-- Part II-B when three or more children need the payroll method: finalize EIC,
-  excess Social Security/tier 1 RRTA credit, actual W-2/PR withholding and the
-  Additional Medicare/RRTA worksheet. Current calculation fails explicitly when
-  the method is needed; pending EIC is never assumed to be zero.
+- Complete Part II-B for excess Social Security/tier 1 RRTA credit, Puerto Rico,
+  railroad compensation and self-employment. Pending EIC is never assumed zero.
 - Credit Limit Worksheets A/B with other credits. 2026 A uses Schedule 3 lines
   1, 2, 3, 4, 6d, 6f, 6l, 6m; B line 15 uses 5a, 6c, 6g, 6h. Part II-B line 22
   uses Schedule 1 line 15 and Schedule 2 lines 16c/17c, not the 2025 line names.
 - Form 8862/disallowance exceptions, Form 8332, birth/death without a TIN,
   self-employment, foreign and territory cases and Medicaid waiver elections.
-- EIC itself remains unfinished even where the supported ACTC method does not
-  depend on its amount. The bundle retains the incomplete implementation label.
+- EIC and child-credit source parity remain incomplete beyond the supported
+  reviewed wage route. The bundle retains the incomplete implementation label.
 - Final forms/instructions, current MeF and business rules, product registration,
   and ATS acceptance.

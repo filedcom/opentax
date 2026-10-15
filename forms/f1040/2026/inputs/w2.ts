@@ -243,6 +243,11 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       output.nodeType !== "schedule3" && output.nodeType !== "form8959" &&
       output.nodeType !== "schedule_a"
     ).map((output) => {
+      // Form 1040 line 1i is the EIC election, not the amount printed in W-2 Q.
+      if (output.nodeType === "f1040") {
+        const { line1i_combat_pay: _combat, ...fields } = output.fields;
+        return { ...output, fields };
+      }
       if (output.nodeType === "form8919") {
         const sources = output.fields.w2_sources as Record<string, unknown>[];
         return {
@@ -297,6 +302,21 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       };
     });
     outputs.push({
+      nodeType: "eitc",
+      fields: {
+        w2_eic_sources_2026: input.w2s.map((item) => ({
+          recipient: item.employee_ssn.replaceAll("-", "") === primary
+            ? "taxpayer"
+            : "spouse",
+          source_reference: item.source_document_reference,
+          combat_pay: (item.box12_entries ?? []).filter((entry) =>
+            entry.code === "Q"
+          ).reduce((n, entry) => n + entry.amount, 0),
+          statutory_employee: item.box13_statutory_employee === true,
+        })),
+      },
+    });
+    outputs.push({
       nodeType: "f8812",
       fields: {
         nontaxable_combat_pay_from_w2: input.w2s.reduce((sum, item) =>
@@ -346,6 +366,18 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
           ? Math.max(0, owner.withheld - wages2026.ssTaxPerEmployer)
           : 0), 0),
     );
+    outputs.push({
+      nodeType: "f8812",
+      fields: {
+        excess_social_security_from_w2: excessSs,
+        payroll_sources_2026: input.w2s.map((item, i) => ({
+          source_reference: item.source_document_reference,
+          social_security_withheld: item.box4_ss_withheld,
+          medicare_withheld: item.box6_medicare_withheld,
+          rrta: (box14Amount(projected[i], "RRTA compensation") ?? 0) > 0,
+        })),
+      },
+    });
     if (excessSs > 0) {
       outputs.push({
         nodeType: "schedule3",
