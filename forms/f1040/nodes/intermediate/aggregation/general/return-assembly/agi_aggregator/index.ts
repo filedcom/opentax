@@ -35,6 +35,14 @@ import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-pass
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
 
+export type AgiConfig = Pick<
+  import("../../../../../config/index.ts").F1040Config,
+  | "sliPhaseOutStartMfj"
+  | "sliPhaseOutEndMfj"
+  | "sliPhaseOutStartSingle"
+  | "sliPhaseOutEndSingle"
+>;
+
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
@@ -451,7 +459,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
 // "Other income" for provisional income = AGI from non-SSA sources (after exclusions/deductions).
 function resolveSsaTaxable(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
   const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
@@ -491,7 +499,7 @@ function resolveSsaTaxable(
 // Fields can be negative (e.g., capital loss, schedule C net loss).
 function grossIncome(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   const ssaTaxable = resolveSsaTaxable(input, cfg);
   return (
@@ -533,7 +541,7 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 // Phase-out: single/HOH/QSS $85k–$100k; MFJ $170k–$200k; MFS not eligible.
 function computeAdjustedSli(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   const raw = input.line21_student_loan_interest ?? 0;
   if (raw <= 0) return 0;
@@ -570,7 +578,7 @@ export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
 // IRC §62 allows these before arriving at AGI.
 function aboveLineDeductions(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input, cfg);
 }
@@ -700,7 +708,7 @@ function scheduleOnePartI(input: AgiInput): number {
 // AGI can be negative in large NOL scenarios (IRC §172); do not floor at 0.
 function computeAgi(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   return grossIncome(input, cfg) - exclusions(input) -
     aboveLineDeductions(input, cfg);
@@ -735,6 +743,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, rawInput, cfg);
+  }
+
+  /** Reuse aggregation with only its reviewed annual student-loan thresholds. */
+  computeWithConfig(
+    _ctx: NodeContext,
+    rawInput: AgiInput,
+    cfg: AgiConfig,
+  ): NodeResult {
     // Reject the obsolete input before Zod silently strips unknown keys.
     // Form 2555 line 50 requires a separately supported Schedule 1 line 24j source.
     if (

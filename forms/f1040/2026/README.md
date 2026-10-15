@@ -56,6 +56,47 @@ dependent eligibility, itemization, Schedule 1-A and charitable deductions,
 credits, other income/taxes, and withholding. Below $100,000, annual rate tax is
 an estimate until the final 2026 Tax Table is implemented and checked.
 
+## W-2 and AGI source integration
+
+The 2026 W-2 adapter calls the existing W-2 routing implementation with a narrow
+2026 configuration. The shared 2025 entry point still selects its own original
+configuration. The 2026 adapter requires issued-copy references and employer and
+employee identities, checks return ownership, and preserves the complete source
+record. `inputs.ts` now contains its repeated `w2s` input entry; the future
+general node must supply the return identity before that input node runs.
+
+- The 2026 schema supports box 14a/14b and new box 12 TP, TT and TA values.
+  Tip/overtime source amounts are retained for 2026 Schedule 1-A; neither is
+  added to box 1 again. Multiple occupation codes, including `000`, remain
+  explicit. The 2025 transitional employer-statement fields are rejected.
+- Ordinary wages, withholding, statutory-employee business sources, Medicare,
+  dependent-care, HSA/MSA, retirement and state/local-tax handoffs reuse the
+  existing source routing. W-2 uncollected FICA and golden-parachute tax use the
+  revised Schedule 2 destinations. These emitted handoffs still need their
+  complete 2026 receiving calculations and attachments.
+- Excess Social Security withholding uses the $184,500 wage base and $11,439 cap
+  separately for each owner, includes Social Security tips, and rejects
+  employer-level overwithholding before computing a multi-employer credit.
+- A narrow AGI configuration supplies the 2026 student-loan phaseout. The shared
+  AGI algorithm runs through a strict 2026 adapter, which remaps the Schedule 1
+  reconciliation fields and removes the old Form 1040 AGI key. Upstream activity
+  limits and source eligibility remain each source calculator's responsibility.
+- Positive Medicaid-waiver code II, section 409A code Z, and deferrals exceeding
+  the owner's base limit currently require further 2026 review. Catch-up/Roth,
+  enhanced SIMPLE limits, corrections/substitute W-2s and community-property
+  allocation are unfinished; no 2025 evidence is silently accepted for them.
+
+The internal graph test covers issued W-2 → AGI → Form 1040 settlement, with
+finalized deduction/tax supplied by the fixture. It intentionally exposes the
+remaining credit/form pending records. It is not a complete public return graph.
+The new Schedule 1-A source contract is `w2_2026_sources`; its receiving 2026
+calculator, occupation allocation and eligibility/phaseout checks remain to
+build.
+
+The 224-test combined 2026/W-2/AGI run passed; 21 focused tests passed after the
+final shared-line rounding and input-catalog changes. The existing 2025 W-2,
+community-property and AGI suites are included in the combined run.
+
 ## Reuse and folder rules for subsequent work
 
 Keep shared algorithms in the existing `nodes` domain folders and preserve
@@ -73,14 +114,14 @@ For each next node, separately prove:
 4. Regression behavior for the existing 2025 product and source-derived 2026
    boundary cases.
 
-Next work is source intake/identity and AGI integration, followed by upstream
-deduction and credit calculations feeding the internal assembly registry.
-Current general and W-2 nodes contain year-specific evidence schemas and
-cross-form routes, and the full income-tax node still invokes 2025
-preferential-income/Tax Table helpers. Do not register those entire nodes for
-2026 just because their arithmetic helpers are shared. Port individual
-differences from `b7c07b616` only after reconciling current paths and the latest
-2025 source-validation changes.
+Next work is the 2026 general/identity and dependent source node, followed by
+upstream deduction and credit calculations feeding the internal assembly
+registry. Extend the strict AGI bridge alongside its activity owners. Current
+general and W-2 nodes contain year-specific evidence schemas and cross-form
+routes, and the full income-tax node still invokes 2025 preferential-income/Tax
+Table helpers. Do not register those entire nodes for 2026 just because their
+arithmetic helpers are shared. Port individual differences from `b7c07b616` only
+after reconciling current paths and the latest 2025 source-validation changes.
 
 Complete PDF attachment coverage, current-version MeF schemas/rules, submission
 archives and ATS acceptance remain separate release gates. No complete public
@@ -118,3 +159,7 @@ components matched the hashes already recorded in the research corpus.
 - [Schedule 1](https://www.irs.gov/pub/irs-dft/f1040s1--dft.pdf)
 - [Schedule 2](https://www.irs.gov/pub/irs-dft/f1040s2--dft.pdf)
 - [Schedule 3-A](https://www.irs.gov/pub/irs-dft/f1040s3a--dft.pdf)
+
+- [2026 W-2/W-3 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf)
+- [Notice 2025-67 retirement limits](https://www.irs.gov/pub/irs-drop/n-25-67.pdf)
+- [2026 student-loan phaseouts, Rev. Proc. 2025-32 §4.29](https://www.irs.gov/irb/2025-45_IRB)

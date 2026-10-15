@@ -231,3 +231,16 @@ Deno.test("TY2026 core nodes execute in graph order with Schedule 3-A", () => {
   assertEquals(result.pending.f1040.line32b_public_benefit_reduction, 500);
   assertEquals(result.pending.schedule3a.line6_federal_public_benefit, 500);
 });
+
+Deno.test("TY2026 1040 aggregates both capital sources before rounding their shared line", () => {
+  const result = f1040_2026_node.compute(context, {
+    filing_status: FilingStatus.Single,
+    line7_capital_gain: 100.25,
+    line7a_cap_gain_distrib: 100.25,
+    line9_total_income: 201,
+    deduction_method: "standard",
+  });
+  const fields = result.outputs.find((row) => row.nodeType === "f1040")!.fields;
+  assertEquals(fields.line7a_capital_gain, 201);
+  assertEquals(fields.line11b_agi, 201);
+});

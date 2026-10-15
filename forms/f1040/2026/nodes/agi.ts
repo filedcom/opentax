@@ -1,0 +1,141 @@
+import { z } from "zod";
+import type { NodeContext } from "../../../../core/types/node-context.ts";
+import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
+import {
+  agi_aggregator,
+  inputSchema as sharedSchema,
+} from "../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { agi2026 } from "../../nodes/config/2026-agi.ts";
+import { FilingStatus } from "../../nodes/types.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
+
+/** Audited income/adjustment bridges; activity-limit routes are added with their owners. */
+export const inputSchema = sharedSchema.pick({
+  line1a_wages: true,
+  line1b_household_wages: true,
+  line1h_other_earned: true,
+  line1c_unreported_tips: true,
+  line1e_taxable_dep_care: true,
+  line1f_taxable_adoption_benefits: true,
+  line1g_wages_8919: true,
+  line2b_taxable_interest: true,
+  line3b_ordinary_dividends: true,
+  line4b_ira_taxable: true,
+  line5b_pension_taxable: true,
+  line6a_ss_gross: true,
+  line6b_ss_taxable: true,
+  tax_exempt_interest: true,
+  mfs_lived_with_spouse: true,
+  line7_capital_gain: true,
+  line7a_cap_gain_distrib: true,
+  line1_state_refund: true,
+  line2a_alimony_received: true,
+  line3_schedule_c: true,
+  line4_other_gains: true,
+  line5_schedule_e: true,
+  line6_schedule_f: true,
+  line7_unemployment: true,
+  line8a_nol_deduction: true,
+  line8c_cod_income: true,
+  line8d_foreign_earned_income_exclusion: true,
+  line8e_archer_msa_dist: true,
+  line8i_prizes_awards: true,
+  line8z_rtaa: true,
+  line11_educator_expenses: true,
+  line12_business_expenses: true,
+  line13_hsa_deduction: true,
+  line14_moving_expenses: true,
+  line15_se_deduction: true,
+  line16_sep_simple: true,
+  line17_se_health_insurance: true,
+  line18_early_withdrawal: true,
+  line20_ira_deduction: true,
+  line21_student_loan_interest: true,
+  line23_archer_msa_deduction: true,
+  line24f_501c18d: true,
+}).extend({ filing_status: z.nativeEnum(FilingStatus) }).strict();
+
+class Agi2026Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "agi_aggregator";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = agi_aggregator.outputNodes;
+
+  compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
+    if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
+      throw new Error("2026 AGI needs f1040:2026 context");
+    }
+    const parsed = inputSchema.parse(rawInput);
+    // Repeated sources for one printed line are added before rounding; signed
+    // halves use the same helper as the 2026 finalizer.
+    const normalized = Object.fromEntries(
+      Object.entries(parsed).map(([key, value]) => {
+        if (typeof value === "number" || Array.isArray(value)) {
+          const values = Array.isArray(value) ? value : [value];
+          if (values.some((amount) => !Number.isFinite(amount))) {
+            throw new Error("AGI amounts must be finite");
+          }
+          const amount = roundWholeDollars(
+            values.reduce((sum, part) => sum + part, 0),
+          );
+          if (!Number.isSafeInteger(amount)) {
+            throw new Error("AGI amount exceeds whole-dollar range");
+          }
+          return [key, amount];
+        }
+        return [key, value];
+      }),
+    );
+    // These two sources share one printed capital-gain line.
+    if (
+      parsed.line7_capital_gain !== undefined ||
+      parsed.line7a_cap_gain_distrib !== undefined
+    ) {
+      normalized.line7_capital_gain = roundWholeDollars(
+        (parsed.line7_capital_gain ?? 0) +
+          (parsed.line7a_cap_gain_distrib ?? 0),
+      );
+      normalized.line7a_cap_gain_distrib = undefined;
+    }
+    const input = inputSchema.parse(normalized);
+    if ((input.line21_student_loan_interest ?? 0) > 2_500) {
+      throw new Error(
+        "Student-loan input must be the eligible amount capped at $2,500",
+      );
+    }
+    const result = agi_aggregator.computeWithConfig(ctx, input, agi2026);
+    let additionalIncome = 0;
+    let adjustments = 0;
+    let studentLoan = 0;
+    const outputs = result.outputs.map((output) => {
+      if (output.nodeType === "f1040") {
+        const { line11_agi: _legacy, ...fields } = output.fields;
+        if (Object.hasOwn(fields, "line9_total_income")) {
+          additionalIncome = Number(fields.line8_additional_income ?? 0);
+          adjustments = Number(fields.line10_adjustments ?? 0);
+        }
+        return { nodeType: "f1040", fields };
+      }
+      if (output.nodeType === "schedule1") {
+        studentLoan = Number(output.fields.line21_student_loan_interest ?? 0);
+        return {
+          nodeType: "schedule1",
+          fields: { line21_student_loan_interest_from_agi: studentLoan },
+        };
+      }
+      return output;
+    });
+    outputs.push({
+      nodeType: "schedule1",
+      fields: {
+        agi_schedule1_line10: additionalIncome,
+        agi_schedule1_line26: adjustments,
+        ...(studentLoan === 0
+          ? { line21_student_loan_interest_from_agi: 0 }
+          : {}),
+      },
+    });
+    return { outputs };
+  }
+}
+
+export const agi_2026 = new Agi2026Node();

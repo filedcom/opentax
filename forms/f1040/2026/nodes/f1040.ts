@@ -147,8 +147,10 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     const line7aCapitalGain = input.line7_capital_gain === undefined &&
         input.line7a_cap_gain_distrib === undefined
       ? undefined
-      : (input.line7_capital_gain ?? 0) +
-        (input.line7a_cap_gain_distrib ?? 0);
+      : roundWholeDollars(
+        (parsed.line7_capital_gain ?? 0) +
+          (parsed.line7a_cap_gain_distrib ?? 0),
+      );
     const line7bScheduleDNotRequired =
       (input.line7a_cap_gain_distrib ?? 0) > 0 &&
       input.line7_capital_gain === undefined;

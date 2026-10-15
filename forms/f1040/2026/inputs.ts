@@ -1,0 +1,16 @@
+import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
+import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
+
+/**
+ * Incremental 2026 source catalog, not yet registered as a filing product.
+ * The general node must supply filing_status/taxpayer_ssn/spouse_ssn to W-2;
+ * identity is not repeated or trusted independently on each public input row.
+ */
+export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: w2_2026,
+    isArray: true,
+    inputKey: "w2s",
+    itemSchema: w2Item2026Schema,
+  },
+];

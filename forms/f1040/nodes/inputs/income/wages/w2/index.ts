@@ -36,6 +36,7 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { f8812 } from "../../../credits/child/f8812/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import type { F1040Config } from "../../../../config/types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 import {
   isQualifiedTipsOccupationCode,
@@ -1225,6 +1226,18 @@ class W2Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, input, cfg);
+  }
+
+  /** Shared source routing; callers supply reviewed annual limits and year-specific facts. */
+  computeWithConfig(
+    ctx: NodeContext,
+    input: z.infer<typeof inputSchema>,
+    cfg: Pick<
+      F1040Config,
+      "ssWageBase" | "ssTaxPerEmployer" | "retirementLimits"
+    >,
+  ): NodeResult {
     assertDistinctW2IssuedCopies(input.w2s);
     for (const item of input.w2s) {
       validateItem(
