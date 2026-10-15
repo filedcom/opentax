@@ -86,8 +86,9 @@ record. `inputs.ts` contains its repeated `w2s` input entry and the singleton
   enhanced SIMPLE limits, corrections/substitute W-2s and community-property
   allocation are unfinished; no 2025 evidence is silently accepted for them.
 
-The internal graph test covers general identity → issued W-2 → AGI → Form 1040 settlement, with
-finalized deduction/tax supplied by the fixture. It intentionally exposes the
+The internal graph test covers general identity and cash-gift records → issued
+W-2 → AGI → deduction resolution → Form 1040 settlement. Only finalized income
+tax is supplied by the fixture. It intentionally exposes the
 remaining credit/form pending records. It is not a complete public return graph.
 The new Schedule 1-A source contract is `w2_2026_sources`; its receiving 2026
 calculator, occupation allocation and eligibility/phaseout checks remain to
@@ -128,6 +129,52 @@ Sources checked October 15: [IRS qualifying-child rules](https://www.irs.gov/cre
 [Rev. Proc. 2025-32 §4.23](https://www.irs.gov/irb/2025-45_IRB), and
 [draft 2026 Schedule EIC](https://www.irs.gov/pub/irs-dft/f1040sei--dft.pdf).
 
+## Joint deduction resolution and cash-gift sources
+
+`deduction-resolution.ts` owns the standard/itemized comparison. It reuses the
+same standard-amount and election helpers as 2025, adds the nonitemizer cash
+candidate, applies the 2026 overall itemized limit, and retains both candidates
+and the selection reason. The selected values drive Form 1040 and the draft
+Form 6251 line 1b/2a handoff. Negative AMT bases remain signed.
+
+A QBI calculation interface takes actual pre-QBI taxable income for each
+candidate and retains that candidate's form results. Schedule A and QBI are
+solved together over the finite interval of possible filed dollar amounts;
+exactly one pair must reproduce both calculations. No monotonic QBI assumption
+is made across SSTB/other phase-ins. Zero or multiple solutions require rounding
+review. Searches exceeding one million candidates require a future piecewise
+solver instead of a silently approximate result.
+
+The graph adapter currently handles no-QBI calculations. AGI marks business
+income for the unfinished QBI source owner, and the adapter rejects a previously
+calculated `qbi_deduction`. The pure solver tests exercise the coupled equations
+with independent QBI test calculators; they do not establish completed Forms
+8995/8995-A. Final Schedule A source limits, Schedule 1-A source calculations,
+QBI forms/attachments, dependent earned-income classification, and foreign-tax
+allocation still need their receiving 2026 owners. The existing finalization API
+continues to accept upstream finalized amounts only.
+
+`cash_gifts` is a repeated source entry with donor/donee identity, current-year
+payment and classification records, benefits received, QCD status and
+contemporaneous acknowledgment facts. It excludes QCDs, donor-advised funds,
+supporting organizations and other ineligible recipients from the nonitemizer
+amount. Credits/reimbursements await a separate reduction review. The same
+identified gift records are retained for the future Schedule A category/floor
+calculator; they are not asserted as a net itemized deduction.
+
+The resolver applies the retained 60% contribution-base ceiling before the
+$1,000/$2,000 cap. Section 170(p) excludes carryforwards and the itemizer floor;
+it does not exclude section 170(b)(1)(G)(i). The contribution base may be supplied
+separately from AGI when an NOL carryback changes it. General supplies separate
+tax-residency and accounting-period answers for standard-deduction eligibility;
+work authorization alone is insufficient. Residency elections/treaty exceptions
+and disaster additions remain to implement.
+
+Sources checked October 15: [26 USC §170(b)(1)(G), (H), (p)](https://uscode.house.gov/us/usc/119-118/t26/s170/),
+[Publication 505 (2026), Worksheet 2-6](https://www.irs.gov/publications/p505),
+[standard-deduction eligibility](https://www.irs.gov/taxtopics/tc551), and
+[draft Form 6251 lines 1a–2a](https://www.irs.gov/pub/irs-dft/f6251--dft.pdf).
+
 ## Reuse and folder rules for subsequent work
 
 Keep shared algorithms in the existing `nodes` domain folders and preserve
@@ -145,8 +192,10 @@ For each next node, separately prove:
 4. Regression behavior for the existing 2025 product and source-derived 2026
    boundary cases.
 
-Next work is upstream deduction and credit calculations feeding the internal
-assembly registry, alongside the remaining general/dependent exception routes. Extend the strict AGI bridge alongside its activity owners. Current
+Next work is the source-backed Schedule A, Schedule 1-A and QBI calculators
+feeding deduction resolution, followed by income tax and credit calculations,
+alongside the remaining general/dependent exception routes. Extend the strict
+AGI bridge alongside its activity owners. Current
 general and W-2 nodes contain year-specific evidence schemas and cross-form
 routes, and the full income-tax node still invokes 2025 preferential-income/Tax
 Table helpers. Do not register those entire nodes for 2026 just because their
@@ -190,6 +239,12 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
 - Visually inspected synthetic newborn rows, the dependent continuation and the
   spouse-dependent checkbox in a five-page PDF QA fixture; it has no widgets or
   AcroForm tree. This checks source projection and rendering, not a filed return.
+
+- Deduction/source work passed 127 typed tests across all current 2026 modules,
+  the existing 2025 standard-deduction node and shared start-router regression.
+  These include coupled and nonunique QBI/itemized examples, all filing-status
+  overall-limit thresholds, source ownership/receipt checks, and the cash-gift
+  → deduction → settlement graph. The 137-test unit/preflight gate also passed.
 
 ## Source recheck
 

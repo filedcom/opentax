@@ -115,6 +115,19 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         }
         return { nodeType: "f1040", fields };
       }
+      if (output.nodeType === "standard_deduction") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            qbi_activity_pending: [
+              input.line3_schedule_c,
+              input.line5_schedule_e,
+              input.line6_schedule_f,
+            ].some((amount) => amount !== undefined && amount !== 0),
+          },
+        };
+      }
       if (output.nodeType === "schedule1") {
         studentLoan = Number(output.fields.line21_student_loan_interest ?? 0);
         return {

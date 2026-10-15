@@ -1,3 +1,4 @@
+import { cash_charity_2026 } from "./cash-charity.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
@@ -61,6 +62,11 @@ export const inputSchema = identityInputSchema.omit({
   taxpayer_can_be_claimed_as_dependent: z.boolean(),
   taxpayer_citizen_national_or_work_authorized: z.boolean(),
   digital_assets: z.boolean(),
+  tax_residency: z.enum([
+    "full_year_citizen_or_resident",
+    "nonresident_or_dual_status",
+  ]).optional(),
+  short_tax_year_due_to_accounting_change: z.boolean().optional(),
   spouse_ssn: tin.optional(),
   spouse_dob: z.string().date().optional(),
   dependent_earned_income: z.never().optional(),
@@ -86,6 +92,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     w2_2026,
+    cash_charity_2026,
     agi_2026,
     f1040_2026_node,
     standard_deduction,
@@ -295,6 +302,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       spouse_age_65_or_older: spouseAdditionEligible ? spouseAge65 : undefined,
       spouse_blind: spouseAdditionEligible ? input.spouse_blind : undefined,
     });
+    if (
+      (input.tax_residency === undefined) !==
+        (input.short_tax_year_due_to_accounting_change === undefined)
+    ) {
+      throw new Error(
+        "Standard deduction needs both tax-residency and accounting-period answers",
+      );
+    }
     const deductionFacts = {
       filing_status: input.filing_status,
       taxpayer_age_65_or_older: taxpayerAge65,
@@ -305,6 +320,11 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         input.taxpayer_can_be_claimed_as_dependent ||
         input.spouse_can_be_claimed_as_dependent === true,
       mfs_spouse_itemizing: input.mfs_spouse_itemizing,
+      ...(input.tax_residency === undefined ? {} : {
+        standard_deduction_eligible:
+          input.tax_residency === "full_year_citizen_or_resident" &&
+          input.short_tax_year_due_to_accounting_change === false,
+      }),
     };
     const owner = {
       filing_status: input.filing_status,
@@ -331,6 +351,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           },
         },
         { nodeType: "w2", fields: owner },
+        { nodeType: "cash_charity", fields: owner },
         {
           nodeType: "agi_aggregator",
           fields: {

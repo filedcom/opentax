@@ -15,6 +15,7 @@ import { form_1116 } from "../../../../forms/credits/foreign/form_1116/index.ts"
 import { form8960 } from "../../../../forms/taxes/investments/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { standardDeductionAmount } from "./amount.ts";
+import { chooseDeductionMethod } from "./choice.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -99,20 +100,16 @@ function resolveDeduction(
   const standardAmount = computeStandardAmount(input, cfg);
   const itemized = input.itemized_deductions ?? 0;
 
-  // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
-  if (input.mfs_spouse_itemizing === true) {
-    return { deduction: itemized, takingStandard: false };
-  }
-
-  if (input.force_itemized === true) {
-    return { deduction: itemized, takingStandard: false };
-  }
-
-  if (itemized > standardAmount) {
-    return { deduction: itemized, takingStandard: false };
-  }
-
-  return { deduction: standardAmount, takingStandard: true };
+  const choice = chooseDeductionMethod({
+    standardTotal: standardAmount,
+    itemizedTotal: itemized,
+    spouseItemizes: input.mfs_spouse_itemizing === true,
+    electItemized: input.force_itemized === true,
+  });
+  return {
+    deduction: choice.method === "standard" ? standardAmount : itemized,
+    takingStandard: choice.method === "standard",
+  };
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

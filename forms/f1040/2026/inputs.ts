@@ -1,4 +1,8 @@
 import {
+  cash_charity_2026,
+  cashGift2026Schema,
+} from "./inputs/cash-charity.ts";
+import {
   general_2026,
   inputSchema as generalSchema,
 } from "./inputs/general.ts";
@@ -12,6 +16,12 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  */
 export const inputNodes: readonly InputNodeEntry[] = [
   { node: general_2026, isArray: false, inputSchema: generalSchema },
+  {
+    node: cash_charity_2026,
+    isArray: true,
+    inputKey: "cash_gifts",
+    itemSchema: cashGift2026Schema,
+  },
   {
     node: w2_2026,
     isArray: true,
