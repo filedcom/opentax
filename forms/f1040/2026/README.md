@@ -1003,6 +1003,9 @@ care/education/child/energy credits from retained sources. It derives the draft
 form's tax difference and first installment without changing actual return
 credits, deductions or carryforwards. The main-form draft renderer verifies its
 receiving amounts and includes matching Schedule A components with original
-covenants. Election registration, installment ledger, settlement, bundle and
-MeF remain open; see the
+covenants. An internal installment workpaper now derives four equal amounts in
+cents, reconciles evidenced payment allocations and distinguishes the election
+filing deadline from ordinary payment dates. It flags late records and printed
+whole-dollar rounding differences for review. Special deadlines, acceleration,
+public election registration, settlement, bundle and MeF remain open; see the
 [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md).

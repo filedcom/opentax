@@ -359,6 +359,56 @@ Estimated-tax relief is in **Notice 2026-3**, published in
 "Notice 2026-2" label must not be turned into a guessed PDF URL: the actual
 `n-26-02.pdf` concerns pension interest rates and is unrelated to farmland.
 
+## Internal election timing and installment records
+
+`inputs/form1062-installments.ts` replays the retained tax source before deriving
+the payment workpaper. It binds the ledger to the election reference and return
+owners; no entered liability or installment amount can replace the calculation.
+It supports ordinary domestic calendar-year individuals with reviewed absence
+of special deadline relief, relevant state holidays, death, revocation,
+deficiencies and additions to tax. This is an internal workpaper, not a filed
+election or verified IRS account balance, and `filing_ready` remains false.
+
+The [Form 1062 instructions](https://www.irs.gov/instructions/i1062) distinguish
+the election deadline, including a valid filing extension, from the four annual
+payment dates, which exclude filing extensions. The workpaper retains planned
+versus reported filing dates and extension evidence. It flags a late election
+separately from payment review; it never treats a timely extended filing as
+evidence of timely payment.
+
+Ordinary payment dates computed for this restricted scope are April 15, 2027;
+April 18, 2028; April 17, 2029; and April 15, 2030. These are projections under
+the current calendar rules, not claims that future relief has been checked.
+[Publication 509](https://www.irs.gov/publications/p509) supplies the weekend and
+D.C. holiday adjustment rule; [D.C. Code section 1-612.02](https://code.dccouncil.gov/us/dc/council/code/sections/1-612.02)
+identifies Emancipation Day and its observed dates. The supported six-month
+extension ends October 15, 2027. Overseas, disaster, combat-zone and state-holiday
+cases need a separate deadline owner, with evidence current at filing/payment.
+
+Each obligation is exactly one quarter of recomputed Form 1062 line 14 in cents.
+For example, $3,369 produces four $842.25 installments. Printed line 15 rounds to
+$842; multiplying that by four would lose $1. The workpaper exposes the 25-cent
+difference and requires rounding reconciliation instead of silently reducing
+the liability or inventing a final-installment adjustment. Settlement treatment
+of this difference remains open.
+
+Payments require distinct payment references, an account evidence reference,
+effective dates and explicit allocations summing to the payment amount. One
+payment may cover several installments. No return withholding, estimated payment
+or bank debit is automatically treated as a payment of this election. Duplicate,
+future, fractional-cent, overallocated and unreconciled records fail. Amounts
+above one installment require evidence of allocation to the remaining ones.
+An installment paid late retains its review status even after its balance is
+zero. A due-today balance is not yet overdue. Input records are preserved.
+
+Acceleration is deliberately unresolved: the continuous instructions describe
+the failure date, while proposed section 1.1062-3(b) uses assessment of the
+addition to tax. The [September 29 proposed regulations](https://www.govinfo.gov/content/pkg/FR-2026-09-29/html/2026-19888.htm)
+are not final and permit reliance only with complete, consistent compliance.
+The ledger does not infer an assessment from a missed payment, compute an
+accelerated due date, or claim compliance with the entire proposal. A late or
+missing payment triggers review before any future settlement integration.
+
 ## Remaining connected implementation
 
 1. Extend the registered direct-land route to coordinated dependent support,
@@ -368,16 +418,18 @@ Estimated-tax relief is in **Notice 2026-3**, published in
    using the full [4797 contract](FORM4797-GRAPH.md).
 2. Register the implemented direct-sale qualification/Schedule A components with
    the completed election and tax owner. Resolve cross-form rounding differences,
-   timing and installment records. Support partnerships, S corporations and
-   allocations with their own source owners before enabling those claims.
+   public election timing and the remaining installment lifecycle. Support
+   partnerships, S corporations and allocations with their own source owners
+   before enabling those claims.
 3. Integrate the internal source-reconciled tax/credit replay above with the
    election owner and extend remaining tax/credit families. Preserve its
    regular-tax scope and hypothetical-only AMT/credit calculations; do not
    replace actual return credits, carryforwards, AMT, NIIT, SE or household tax.
 4. Post Form 1062 line 14 to Schedule 3 line 13e and the first installment to
    Form 1040 line 24b after credit resolution, without creating a graph cycle.
-   Retain the future installment ledger, election timing and acceleration
-   evidence. Integrate any estimated-tax relief from the applicable authority.
+   Connect the internal installment workpaper and resolve its rounding review,
+   special deadlines and acceleration evidence. Integrate any estimated-tax
+   relief from the applicable authority.
 5. Register the implemented Form 1062, Schedule A and covenant components
    alongside the registered Form 4797 component;
    reconcile source, printed lines, return settlement and current MeF/rules.
@@ -444,3 +496,10 @@ duplicate synthetic closing references and a fixture above the existing 8995-A
 boundary; the corrected fixtures exercise the intended source contracts. No
 2025 implementation changed in this step. Public election, timing/ledger,
 settlement, full return-bundle registration and filing acceptance remain open.
+
+The internal installment workpaper passed 21 typed focused checks (eight new
+ledger tests and thirteen existing tax replay tests) and all 736 tests in the
+2026 directory. Tests cover extension/payment separation, holiday dates,
+partial and late payments, cent conservation, allocation evidence and rejected
+unsupported lifecycle facts. No shared 2025 calculation or PDF implementation
+changed in this step. Public settlement and the remaining lifecycle are open.
