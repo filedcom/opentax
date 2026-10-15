@@ -89,6 +89,20 @@ The capital graph node and deduction finalizer deliberately reject this handoff
 until QBI, loss limitations and the remaining source/attachment routes are
 connected. This prevents an internal helper from bypassing ordinary-gain QBI.
 
+## Internal business-loss prerequisite
+
+The [Form 461 workpaper](FORM461-GRAPH.md) now replays the retained business,
+capital and land sources to calculate the 2026 excess-loss adjustment. It
+separates the individual-line filing trigger from the excess-loss threshold,
+removes investment capital losses, limits business capital gains and excludes
+employee services. A standalone draft PDF checks each receiving amount.
+The September 28 instruction draft is pinned in the corpus.
+
+This is not yet the loss attribution owner needed for final section 1231
+vintages or QBI. Mixed farm/nonfarm NOL allocation, qualified-loss fractions,
+current loss finalization, AGI registration and complete attachments remain
+open. No public land or Form 461 intake is enabled by this workpaper.
+
 ## Current IRS source checks
 
 The [October 1 draft Form 4797](../corpus/draft/f4797-2026-10-01.pdf) was fetched

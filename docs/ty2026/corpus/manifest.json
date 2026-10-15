@@ -2331,6 +2331,16 @@
       "year_check": "2026-present",
       "retrieved_utc": "2026-10-15",
       "note": "October 1 creation date; later draft preserved separately from September research snapshot. Schedule A destination on line 20a is now 17d."
+    },
+    {
+      "path": "draft/i461-2026-09-28.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i461--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 234106,
+      "sha256": "e3ba90d00f657eed6b83a4555fc5acffb823401a4a6ddda29160fc33a8376399",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-15T20:16:08.546018+00:00"
     }
   ]
 }
