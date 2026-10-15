@@ -2,8 +2,10 @@
 
 For the initial main-based assessment, read the
 [October 10 baseline assessment](./readiness/CURRENT-BASELINE-2026-10-10.md).
-The [October 15 shared-calculation foundation](../../forms/f1040/2026/README.md)
-now reuses the 2025 deduction and rate algorithms for a bounded 2026 wage preview.
+The [October 15 calculation and assembly foundation](../../forms/f1040/2026/README.md)
+now reuses the 2025 deduction/rate algorithms, input routing and PDF cache.
+It adds internal 2026 return assembly, local reconciliation and draft Form 1040/
+Schedule 3-A PDF components. Public source intake and filing remain unfinished.
 The historical prototype described below is recoverable at `b7c07b616`; its
 full registry and filing outputs have not been ported to this checkout.
 
