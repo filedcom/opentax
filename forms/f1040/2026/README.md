@@ -1043,3 +1043,12 @@ shared year-parameterized payment calculation, retaining the 2025 defaults.
 Matching receipts feed Schedule 3 line 10 once; recorded first-installment
 payments must reconcile to those receipts before an extended election settles.
 Other payment categories and later-installment settlement remain unconnected.
+
+An internal Form 8962 component now reuses the 2025 monthly/annual arithmetic
+with a separate 2026 annual policy. It checks ordinary monthly columns and
+annual totals, applies the 400% ceiling and full excess-APTC repayment, and
+returns separate Schedule 3, Schedule 2 and AMT contributions. It is not yet
+registered: current Marketplace/family source ownership, special eligibility,
+QSEHRA and self-employed health interactions, final instruction reconciliation,
+PDF output and MeF remain open. See the
+[Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).

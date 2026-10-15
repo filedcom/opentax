@@ -35,21 +35,39 @@ that can be reviewed for reuse after a 2026 visual/field audit.
 
 ## Current code boundary
 
-- `nodes/inputs/f1095a/index.ts` aggregates policy amounts and shared-policy
-  facts, but `f1095a` is **not** in the 2026 registry.
-- Shared `nodes/intermediate/forms/form8962/index.ts` has year-aware
-  applicable figures, the 400% cliff, 2026 uncapped repayment, FPL regional
-  data, monthly/annual calculation, MFS and below-100% eligibility facts,
-  shared-policy allocation and QSEHRA checks. Focused 2026 tests cover the
-  400/401 boundary and FPL regions. It is **not** registered for TY2026.
-- The shared node declares output targets from the TY2025 Schedule 2,
-  Schedule 3 and Form 6251 graph. The dedicated 2026 Schedule 2/3 and credit
-  resolver must consume the amounts; registration alone cannot make those
-  old target objects equivalent to the filed 2026 routes. The code's local
-  variable `line29` currently names the final repayment amount even when
-  `ctx.taxYear === 2026`; only `excess_advance_payment` is emitted as the
-  Form 8962 field in that year. Audit every pending key and printed field to
-  prevent a 2025 line-29 mapping from leaking into 2026.
+- `nodes/inputs/credits/health/f1095a/index.ts` aggregates policy amounts
+  and shared-policy facts, but `f1095a` is **not** in the 2026 registry.
+- The shared `nodes/intermediate/forms/credits/health/form8962/index.ts`
+  now exposes its existing arithmetic with an explicit annual policy. The
+  2025 node still selects its original FPL tables, enhanced applicable figures,
+  QSEHRA percentage and capped repayment. No full 2026 configuration is
+  inserted into the 2025 graph to enable this reuse.
+- `forms/f1040/2026/form8962-policy.ts` supplies the 2025 HHS regional
+  guidelines, Rev. Proc. 2025-25 contribution bands, the 400% ceiling and
+  uncapped repayment. Four-decimal interpolation is provisional pending
+  the final 2026 Table 2. Its QSEHRA percentage is parameterized, but the
+  2026 adapter does not yet accept QSEHRA facts.
+- `forms/f1040/2026/form8962.ts` is an **internal calculation component**,
+  not a registered source or a filed return route. It reuses the shared
+  monthly/annual calculation with strict ordinary-family inputs, requires
+  all twelve monthly columns, reconciles any annual totals in cents, and rejects
+  MFS, below-100% eligibility and advanced worksheet/source fields. Family
+  size, dependent MAGI and coverage eligibility still need source owners;
+  caller-provided totals are not public claim inputs.
+- The existing cent-summing helper now lives beside the shared calculation;
+  the 2025 domain reexports it without changing behavior. The 2026 component
+  retains source cents for reconciliation, validates unchanged monthly
+  coverage before annual line 11, rounds annual sums once for that line, and
+  rounds each monthly entry separately when using lines 12–23.
+- The component returns separate Schedule 3 line 9, Schedule 2 line 1a and
+  AMT regular-tax-limit contributions. Its 2026 form record omits both
+  `repayment_limitation` and `excess_advance_premium` (the old lines 28/29);
+  full repayment is `excess_advance_payment` (line 27). The dedicated 2026
+  Schedule 2/3 and AMT nodes do **not yet consume** these values. Tests
+  reconcile pure schedule totals, not end-to-end 1040/credit execution.
+- The original plan overstated this baseline: the node was 2025-only,
+  with hardcoded annual helpers, before the annual-policy extraction.
+  Registration alone still cannot establish a source-backed 2026 route.
 - The TY2025 MeF serializer contains `AdditionalTaxLimitationAmt` and
   `PremiumTaxCreditTaxLiabAmt` for the old limitation/liability lines. The
   current TY2026 XSD must define the replacement Form 8962 structure and
@@ -92,3 +110,22 @@ that can be reviewed for reuse after a 2026 visual/field audit.
    return and inspect business-rule rejects. Keep the final 2026 instruction
    refresh as a gate for Table 2, below-100%, QSEHRA and special worksheets.
    Run TY2025 tests to preserve its capped-repayment path.
+
+## Current calculation evidence
+
+`forms/f1040/2026/form8962.test.ts` covers the 400%/$1-over boundary,
+all contribution-band endpoints and selected interpolated figures, each regional
+FPL table through nine people, uncapped low-income repayment, changed monthly
+coverage, annual-versus-monthly cent rounding, dependent MAGI, zero records,
+reconciliation failures and unsupported
+facts. The $765/$3,000 case uses monthly premium $416.67 and SLCSP $833.33,
+whose annual source totals are $5,000.04 and $9,999.96; the filed whole-dollar
+credit/repayment remains the independent acceptance result above. Full 2025
+node/source/household regressions preserve its original eligibility and cap
+behavior. This evidence does not complete source ownership, PDF or MeF work.
+
+Current primary authorities checked October 16, 2026:
+[Rev. Proc. 2025-25](https://www.irs.gov/pub/irs-drop/rp-25-25.pdf),
+[2025 HHS poverty guidelines](https://www.govinfo.gov/content/pkg/FR-2025-01-17/html/2025-01377.htm),
+[IRS repayment-cap removal](https://www.irs.gov/tax-professionals/eitc-central/repayment-caps-eliminated-for-excess-advance-payments-of-the-premium-tax-credit),
+and [draft Form 8962](https://www.irs.gov/pub/irs-dft/f8962--dft.pdf).
