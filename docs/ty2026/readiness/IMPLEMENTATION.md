@@ -82,8 +82,11 @@ moving form and instructions, all ten PDF widgets, per-move deduction or
 taxable reimbursement routes, and educator Schedule A line 17k after the
 Schedule 1 limit. The educator source now applies the $350 annual cap,
 September 2026 early-childhood expansion and the broader itemized role/use
-rules, with receipts reconciled through AGI and deduction selection. Moving
-sources, education-exclusion coordination and filing output remain open.
+rules, with receipts reconciled through AGI and deduction selection. The moving
+source now validates per-move expenses/eligibility, reconciles issued W-2 code P
+and box 1 reimbursements, routes deduction/taxable excess and storage-only claims,
+and renders reviewed draft Form 3903 pages. Cross-year moving/2555 allocation,
+education-exclusion coordination and remaining filing output remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its 2026 draft and
 continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
 Part III income reconciliation and repeated asset statements. The shared

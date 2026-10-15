@@ -1,3 +1,4 @@
+import { moving_expenses_2026 } from "./moving-expenses.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -132,6 +133,9 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   // Shared destination identities; the 2026 registry must supply its own nodes.
   readonly outputNodes = w2.outputNodes;
+  override get outputNodeTypes(): readonly string[] {
+    return [...this.outputNodes.nodeTypes, moving_expenses_2026.nodeType];
+  }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
     if (ctx.formType !== "f1040" || ctx.taxYear !== 2026) {
@@ -378,6 +382,18 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
               box14Amount(projected[i], "Additional Medicare Tax") ?? 0,
           };
         }),
+      },
+    });
+    outputs.push({
+      nodeType: "f3903",
+      fields: {
+        w2_moving_sources_2026: input.w2s.map((item) => ({
+          source_document_reference: item.source_document_reference,
+          employee_ssn: item.employee_ssn,
+          employer_ein: item.employer_ein,
+          box1_wages: item.box1_wages,
+          box12_p: item.box12_entries?.find((e) => e.code === "P")?.amount ?? 0,
+        })),
       },
     });
     // The source record retains TA; it is excluded from box 1, not a second wage.

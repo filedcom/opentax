@@ -122,7 +122,11 @@ Schedule A line 17k after the capped Schedule 1 deduction.
 The educator source now implements the $350 cap and enacted early-childhood
 eligibility, separates Schedule 1 from the broader itemized categories and
 reconciles receipt allocations through AGI and deduction choice. Annual
-education-exclusion coordination, printing and MeF remain open.
+education-exclusion coordination, printing and MeF remain open. Moving sources
+now calculate military/intelligence/special-family moves with dated mileage,
+per-move reimbursements, W-2 reconciliation and foreign storage-only routing;
+reviewed Form 3903 draft pages check the receiving totals. Other cross-year
+claims, 2555 allocation, Schedule 1 printing and current MeF remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its
 December 2026 disclosure draft and continuous-use instructions. The shared
 node currently files nothing; threshold, asset detail, Part III income,

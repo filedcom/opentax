@@ -26,18 +26,56 @@ reimbursements on line 4. Allocate each expense and allowance once, then
 reconcile the printed form against the final instructions so no reimbursement
 is subtracted twice.
 
-The shared [`f3903` node](../../../forms/f1040/nodes/inputs/adjustments/moving/f3903/index.ts) is
-TY2025-only. It filters to an `active_duty_military` boolean, accepts an
-unverified `total_expenses`, clamps negative net reimbursement to zero, and
-aggregates Schedule 1/AGI. It cannot represent intelligence-community
-eligibility, the certification, separate printable moves, W-2 code P, taxable
-excess, the storage-only route, Form 2555 allocation, or dated mileage.
-Form 3903 has no TY2025 PDF descriptor or MeF serializer in the current
-inventories. The [2026 PDF inventory](../inventories/pdf-fields/pdf-fields-f3903.csv) records ten
-widgets, all in the field tree: name, SSN, certification `c1_1`, lines 1–4,
-the two line-5 choice buttons `c1_2[0/1]`, and line 5 amount. They are on
-PDF page 2 because page 1 is the draft cover sheet. Multi-move attachment
-rules and the current XSD/attachment decision remain open.
+Implementation checked October 15: the dedicated `f3903` source in
+`forms/f1040/2026/inputs/moving-source.ts` owns the move, household-trip,
+vehicle-method, dated expense and government-reimbursement ledgers. It reuses
+only the deduction/excess balance arithmetic with 2025; the old 2025 input
+contract and behavior remain intact. General supplies filer ownership, and W-2
+supplies issued box 1/code P records before the moving calculation. A positive
+code P without a move ledger fails rather than disappearing from income review.
+
+Military first/between/last-post moves, discharge/JTR deadlines, intelligence
+membership/assignment evidence and special spouse/dependent moves have separate
+eligibility records. Related family movements share one order/assignment group.
+Duplicate moves, receipts, reimbursement rows and a second trip for the same
+person are rejected. Vehicle mileage and actual gas/oil are mutually exclusive;
+dated mileage, parking/tolls, goods ownership and one domestic 30-day storage
+window are checked before calculation. Foreign storage uses the period the
+foreign post remains the principal workplace. Prior-year storage-only claims
+also require absence from the United States during storage and box 1 treatment
+for any government reimbursement.
+
+Government-provided services do not enter expenses. Special allowances reduce
+only explicitly allocated covered costs and never line 4. Qualified moving
+reimbursements enter line 4 once; amounts already included in box 1 remain
+wages and do not reduce the expense a second time. Payroll records reconcile
+all code P amounts by source/claimant, and disclosed wage reimbursements cannot
+exceed box 1. Unspent and refunded reimbursements can therefore produce taxable
+excess even with zero remaining expenses. Expense links and payroll evidence
+are retained; the conflicting draft prose about allowances must still be
+rechecked against final instructions. The printed line 4 explicitly excludes
+box 1 reimbursements and identifies code P as its source.
+
+Each regular move produces separately rounded lines 1–5. Deductions go to
+Schedule 1 line 14 and AGI; excess reimbursements go to 1040 line 1h and AGI.
+They do not net across moves. Prior-year storage is aggregated before rounding
+Schedule 1's line and sets its storage checkbox without a Form 3903 page.
+Source-to-return fixtures verify each route through AGI and deduction selection.
+
+`forms/f1040/2026/pdf/form3903.ts` recomputes the ledger, checks destination totals
+and filer identity, verifies all ten pinned canonical fields, and prints one
+static draft page per regular move with certification and the correct line-5
+choice. Deduction and taxable-excess pages were visually reviewed. The
+[PDF inventory](../inventories/pdf-fields/pdf-fields-f3903.csv) records ten widgets,
+all on PDF page 2 because the first source page is the draft cover sheet.
+
+This currently supports cash-method 2026 moves and qualifying prior-year foreign
+storage. Other cross-year payments/reimbursements, Form 2555 allocation and
+MFS community-property/shared nonfiler payments still require their owners;
+explicit source guards prevent those claims from being silently finalized.
+Schedule 1 printing, complete-bundle assembly and selected-MeF serialization
+remain open. Calculation/printing does not impose the public inventory's
+2-form limit; the current XSD/attachment rules must determine filing behavior.
 The [public TY2026 MeF inventory](../mef/MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
 lists `IRS3903` under Schedule 1 line 14 and a maximum of **two** Forms 3903
 for a 1040. The printed instructions require one form per qualifying move;

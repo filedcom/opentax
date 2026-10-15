@@ -1,3 +1,8 @@
+import { moving_expenses_2026 } from "./inputs/moving-expenses.ts";
+import {
+  syntheticForeignStorage2026,
+  syntheticMoving2026,
+} from "./inputs/moving.fixture.ts";
 import { mortgage_interest_2026 } from "./inputs/mortgage-interest.ts";
 import { educator_expenses_2026 } from "./inputs/educator-expenses.ts";
 import { syntheticEducator2026 } from "./inputs/educator.fixture.ts";
@@ -44,6 +49,9 @@ import { FilingStatus } from "../nodes/types.ts";
 for (
   const scenario of [
     "wages",
+    "moving",
+    "moving-excess",
+    "moving-storage",
     "itemized",
     "mortgage",
     "mortgage-refinance",
@@ -58,6 +66,13 @@ for (
     "misclassified-with-tips",
   ]
 ) {
+  const moving = scenario.startsWith("moving");
+  const movingDeduction = scenario === "moving"
+    ? 1044
+    : scenario === "moving-storage"
+    ? 2000
+    : 0;
+  const movingExcess = scenario === "moving-excess" ? 956 : 0;
   const refinance = scenario === "mortgage-refinance";
   const educator = scenario.startsWith("educator-");
   const mortgage = scenario === "mortgage" || refinance ||
@@ -90,6 +105,7 @@ for (
       schedule_a: schedule_a_2026,
       mortgage_interest: mortgage_interest_2026,
       educator_expenses: educator_expenses_2026,
+      f3903: moving_expenses_2026,
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
@@ -123,6 +139,25 @@ for (
         tax_residency: "full_year_citizen_or_resident",
         short_tax_year_due_to_accounting_change: false,
       },
+      ...(moving
+        ? {
+          f3903: (() => {
+            const raw = scenario === "moving-storage"
+              ? syntheticForeignStorage2026()
+              : syntheticMoving2026();
+            const {
+              filing_status: _status,
+              taxpayer_ssn: _taxpayer,
+              spouse_ssn: _spouse,
+              w2_moving_sources_2026: _w2,
+              ...claim
+            } = raw;
+            claim.moves[0].reimbursements[0].w2_document_reference = "w2-one";
+            if (movingExcess) claim.moves[0].reimbursements[0].amount = 3000;
+            return claim;
+          })(),
+        }
+        : {}),
       ...(educator
         ? {
           educator_expenses: (() => {
@@ -278,6 +313,14 @@ for (
           box5_medicare_wages: medicare ? 250_000 : vehicle ? 30_000 : 100_000,
           box6_medicare_withheld: medicare ? 4075 : vehicle ? 435 : 1450,
           ...(unreported ? { box8_allocated_tips: 2000 } : {}),
+          ...(moving && scenario !== "moving-storage"
+            ? {
+              box12_entries: [{
+                code: "P",
+                amount: movingExcess ? 3000 : 1000,
+              }],
+            }
+            : {}),
           box1_wages: vehicle ? 30_000.25 : 100_000.25,
           ...(overtime || unreported
             ? {
@@ -354,12 +397,13 @@ for (
     assertEquals(result.pending.f1040.line1a_wages, expectedWages);
     assertEquals(
       result.pending.f1040.line9_total_income,
-      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0) +
+        movingExcess,
     );
     assertEquals(
       result.pending.f1040.line11b_agi,
       expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0) -
-        (educator ? 350 : 0),
+        (educator ? 350 : 0) - movingDeduction + movingExcess,
     );
     assertEquals(
       result.pending.f1040.line25d_total_withholding,
@@ -414,6 +458,8 @@ for (
         ? 101_851
         : overtime
         ? 123_401
+        : moving
+        ? 133_401 - movingDeduction + movingExcess
         : educator
         ? 133_051
         : 133_401,
@@ -439,6 +485,17 @@ for (
       assertEquals(result.pending.f1040.line25c_other_withheld, 360);
       assertEquals(result.pending.f1040.schedule2_line20, 360);
       assertEquals(result.pending.form8959.file_form8959, true);
+    }
+    if (moving) {
+      assertEquals(
+        result.pending.schedule1.line14_moving_expenses,
+        movingDeduction,
+      );
+      assertEquals(
+        result.pending.schedule1.line14_storage_fees,
+        scenario === "moving-storage" ? true : undefined,
+      );
+      assertEquals(result.pending.f1040.line1h_other_earned, movingExcess);
     }
     if (educator) {
       assertEquals(result.pending.schedule1.line11_educator_expenses, 350);
@@ -509,7 +566,7 @@ for (
     assertEquals(
       result.pending.f8812.auto_agi,
       expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0) -
-        (educator ? 350 : 0),
+        (educator ? 350 : 0) - movingDeduction + movingExcess,
     );
   });
 }

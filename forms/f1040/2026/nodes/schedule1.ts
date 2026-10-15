@@ -32,6 +32,7 @@ export const inputSchema = z.object({
   line12_business_expenses: nonnegative.optional(),
   line13_hsa_deduction: nonnegative.optional(),
   line14_moving_expenses: nonnegative.optional(),
+  line14_storage_fees: z.literal(true).optional(),
   line15_se_deduction: nonnegative.optional(),
   line16_sep_simple: nonnegative.optional(),
   line17_se_health_insurance: nonnegative.optional(),

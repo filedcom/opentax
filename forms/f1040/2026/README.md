@@ -492,7 +492,26 @@ are removed before either deduction. Schedule A verifies identity, inventory
 and the adjustment supplied by AGI before deduction selection. The
 [educator source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
 records the authorities and unfinished annual-exclusion, cross-form education
-benefit, depreciation, moving-expense and filing-output routes.
+benefit, depreciation and filing-output routes.
+
+## Moving expenses
+
+The `f3903` singleton accepts a complete move/expense/reimbursement ledger;
+identity and issued W-2 records arrive from general and W-2. It reuses the 2025
+net-balance arithmetic while separately validating 2026 military, intelligence
+and special spouse/dependent eligibility. The source derives each move's lines,
+including the June/July mileage change, storage periods, excluded government
+services and allowance allocations. Code P must reconcile across all moves;
+box 1 reimbursements remain wages. Deductions and taxable excess are routed
+separately to Schedule 1/AGI and 1040/AGI, so different moves cannot cancel them.
+
+Prior-year foreign storage with reimbursements in wages sets Schedule 1's
+storage checkbox without creating Form 3903. The PDF component recomputes the
+ledger and validates receiving totals before rendering one static draft page
+per other move. The [source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
+records the reviewed instructions and boundaries. Other cross-year claims,
+Form 2555 coordination, community-property allocations, Schedule 1 printing,
+complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
 
 ## Reuse and folder rules for subsequent work
 
@@ -660,3 +679,9 @@ components matched the hashes already recorded in the research corpus.
   facilities, coach roles, school-year hours, spouses, refunds and other-benefit
   allocations. Unit and preflight gates passed. Schedule 1/A PDF/MeF and
   annual education-exclusion coordination remain unfinished.
+
+- Moving-expense verification: the full 2026 component suite plus the unchanged
+  2025 Form 3903 suite passed 250 tests before the additional leap-day boundary
+  check. Source-to-return cases cover deduction, taxable excess and foreign
+  storage-only routing. Draft PDF review covers separate deduction/excess
+  pages, certification/line-5 choices and removal of interactive fields.
