@@ -124,6 +124,8 @@ regular Git files.
 - [`FORM1099MISC-NEC-GRAPH.md`](./graphs/FORM1099MISC-NEC-GRAPH.md): final 2026
   forms and combined instructions, included cash-tip/overtime boxes,
   activity reconciliation and Schedule 1-A/2 destinations.
+- [`FORM1099G-CURRENT.md`](./graphs/FORM1099G-CURRENT.md): reviewed unemployment,
+  repayments, derived state-refund recovery, family leave, withholding and draft PDFs.
 - [`FORM1099G-GRAPH.md`](./graphs/FORM1099G-GRAPH.md): final 2026 government-payment
   form and instructions, family-leave authority, refund tax-benefit and
   farm/CCC route.

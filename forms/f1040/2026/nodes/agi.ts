@@ -1,4 +1,8 @@
 import {
+  calculateGovernmentPayments2026,
+  governmentSource2026Schema,
+} from "../inputs/government-source.ts";
+import {
   businessReturnSource2026Schema,
   resolveBusinessQbi2026,
 } from "../inputs/business-qbi.ts";
@@ -48,6 +52,7 @@ export const inputSchema = sharedSchema.pick({
   line8e_archer_msa_dist: true,
   line8i_prizes_awards: true,
   line8z_rtaa: true,
+  line8z_taxable_grants: true,
   line11_educator_expenses: true,
   line12_business_expenses: true,
   line13_hsa_deduction: true,
@@ -62,6 +67,8 @@ export const inputSchema = sharedSchema.pick({
   line24f_501c18d: true,
 }).extend({
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  government_sources_2026: governmentSource2026Schema.optional(),
+  line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
   social_security_lump_sum: benefitElectionBridge2026Schema.optional(),
 }).strict();
@@ -143,7 +150,11 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           "IRA deduction with Social Security needs coordinated Pub. 590-A worksheets",
         );
       }
-      const income = socialSecurityWorksheetIncome(input);
+      const income = socialSecurityWorksheetIncome({
+        ...input,
+        line8z_taxable_grants: (input.line8z_taxable_grants ?? 0) +
+          (input.line8z_family_leave ?? 0),
+      });
       const calculated = roundWholeDollars(computeSsaTaxable(
         input.line6a_ss_gross,
         income.other_income + income.foreign_earned_income_exclusion -
@@ -216,7 +227,30 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       // SSA worksheet, so the calculation is ordered rather than iterative.
       input.line6b_ss_taxable = taxable;
     }
-    const { business_sources_2026, ...sharedInput } = input;
+    const {
+      business_sources_2026,
+      government_sources_2026,
+      line8z_family_leave,
+      ...sharedInput
+    } = input;
+    const government = government_sources_2026
+      ? calculateGovernmentPayments2026(government_sources_2026)
+      : undefined;
+    if (
+      government &&
+      (government.source_input.filing_status !== input.filing_status ||
+        government.lines.state_refund !== (input.line1_state_refund ?? 0) ||
+        government.lines.unemployment !== (input.line7_unemployment ?? 0) ||
+        government.lines.rtaa !== (input.line8z_rtaa ?? 0) ||
+        government.lines.grants !== (input.line8z_taxable_grants ?? 0) ||
+        government.lines.family_leave !== (line8z_family_leave ?? 0))
+    ) {
+      throw new Error(
+        "Government income must reconcile actual sources before AGI",
+      );
+    }
+    sharedInput.line8z_taxable_grants =
+      (sharedInput.line8z_taxable_grants ?? 0) + (line8z_family_leave ?? 0);
     const business = business_sources_2026
       ? resolveBusinessQbi2026(business_sources_2026).business
       : undefined;
@@ -318,7 +352,8 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
               input.line5_schedule_e,
               input.line6_schedule_f,
               input.line8a_nol_deduction,
-              input.line1_state_refund,
+              (input.line1_state_refund ?? 0) -
+              (government?.lines.state_refund ?? 0),
             ].some((v) => (v ?? 0) !== 0),
             early_withdrawal_penalty_from_agi: input.line18_early_withdrawal ??
               0,

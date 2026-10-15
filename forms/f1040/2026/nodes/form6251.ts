@@ -1,4 +1,8 @@
 import {
+  calculateGovernmentPayments2026,
+  governmentSource2026Schema,
+} from "../inputs/government-source.ts";
+import {
   calculateCapitalGains2026,
   capitalGainInput2026Schema,
 } from "./capital-gains.ts";
@@ -44,6 +48,7 @@ export const inputSchema = z.object({
   taking_standard_deduction: z.boolean(),
   line2a_taxes_paid: money,
   iso_sources_2026: isoClaim2026Schema.optional(),
+  government_sources_2026: governmentSource2026Schema.optional(),
   investment_sources_2026: investmentClaim2026Schema.optional(),
   capital_sources_2026: capitalGainInput2026Schema.optional(),
   qualified_dividends: money.default(0),
@@ -103,9 +108,20 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       "AMT capital sources disagree with regular preference income",
     );
   }
+  const government = input.government_sources_2026
+    ? calculateGovernmentPayments2026(input.government_sources_2026)
+    : undefined;
+  if (
+    government &&
+    (government.source_input.filing_status !== input.filing_status ||
+      government.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+      government.source_input.spouse_ssn !== input.spouse_ssn)
+  ) throw new Error("AMT government sources must match return owners");
+  const line2b = government?.lines.state_refund ?? 0;
   const line2g = investment?.lines.amt_pab_interest ?? 0;
   const line2i = iso?.line2i ?? 0;
-  const base = input.regular_tax_income + input.line2a_taxes_paid + line2g +
+  const base = input.regular_tax_income + input.line2a_taxes_paid - line2b +
+    line2g +
     line2i;
   const mfsAddition = input.filing_status === FilingStatus.MFS
     ? computeMfsAddition(
@@ -171,6 +187,7 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
   return {
     source_input: input,
     iso,
+    government,
     investment,
     partThree,
     amtiBeforeMfsAddition: base,
@@ -180,6 +197,7 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       line1a: input.line1a_deductions_without_senior,
       line1b: input.regular_tax_income,
       line2a: input.line2a_taxes_paid,
+      ...(line2b > 0 ? { line2b } : {}),
       ...(iso ? { line2i } : {}),
       ...(investment ? { line2g } : {}),
       line4,

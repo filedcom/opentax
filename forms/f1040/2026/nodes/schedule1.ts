@@ -29,6 +29,7 @@ export const inputSchema = z.object({
   line8p_excess_business_loss: nonnegative.optional(),
   line8z_rtaa: nonnegative.optional(),
   line8z_taxable_grants: nonnegative.optional(),
+  line8z_family_leave: nonnegative.optional(),
   line8z_other: signed.optional(),
   line8z_description: z.string().trim().min(1).optional(),
   line11_educator_expenses: nonnegative.optional(),
@@ -101,6 +102,10 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
       }
     }
     const line8zRows = [
+      {
+        description: "State paid family leave",
+        amount: input.line8z_family_leave ?? 0,
+      },
       { description: "RTAA payments", amount: input.line8z_rtaa ?? 0 },
       {
         description: "Taxable grants",

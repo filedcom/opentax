@@ -107,6 +107,7 @@ export async function buildForm6251PdfBytes2026(
     line1a: 3,
     line1b: 4,
     line2a: 5,
+    line2b: 6,
     line2g: 11,
     line2i: 13,
     line4: 26,

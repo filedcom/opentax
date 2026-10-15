@@ -1,3 +1,7 @@
+import {
+  government_payments_2026,
+  governmentClaim2026Schema,
+} from "./inputs/government-payments.ts";
 import { childTaxClaim2026Schema, f8615_2026 } from "./inputs/child-tax.ts";
 import {
   business_2026,
@@ -78,6 +82,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: government_payments_2026,
+    isArray: false,
+    inputSchema: governmentClaim2026Schema,
+  },
   { node: f8615_2026, isArray: false, inputSchema: childTaxClaim2026Schema },
   {
     node: business_2026,

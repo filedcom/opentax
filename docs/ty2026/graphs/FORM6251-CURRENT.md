@@ -88,13 +88,16 @@ now explicitly compute zero AMT. No final tax amount is accepted by public input
 
 ## Remaining boundaries
 
-The strict calculation schema rejects refunds, NOL/ATNOLD, QSBS, trust,
+Reviewed 2025 state-tax recoveries now reach line 2b through the actual government
+source inventory; see [FORM1099G-CURRENT.md](FORM1099G-CURRENT.md). Other refunds,
+NOL/ATNOLD, QSBS, trust,
 depreciation/passive/business adjustments, AMT dispositions, Form 4952 elections,
-foreign exclusions/credits, Schedule J and specialized line 10 adjustments.
+foreign exclusions/credits, Schedule J and specialized line 10 adjustments remain
+rejected.
 It also rejects credit-driven attachment overrides until their credit owners
 are implemented. Negative-adjustment counterfactual filing tests are not needed
-for this positive ISO/PAB adjustment surface; they must be added when negative
-adjustments are enabled. Prior-year stock sales and minimum-tax-credit carryovers
+for the connected ISO/PAB and line 2b refund surface: that filing test starts
+at line 2c. They must be added when negative lines 2c through 3 are enabled. Prior-year stock sales and minimum-tax-credit carryovers
 need their own source and calculation routes despite the retained basis ledger.
 
 The draft PDF reconciles its sources and return destinations and was rendered

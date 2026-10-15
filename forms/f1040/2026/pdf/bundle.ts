@@ -1,3 +1,4 @@
+import type { calculateGovernmentPayments2026 } from "../inputs/government-source.ts";
 import type { calculateIncomeTax2026 } from "../nodes/income-tax.ts";
 import { buildForm8615PdfBytes2026 } from "./form8615.ts";
 import type { calculateBusiness2026 } from "../nodes/business.ts";
@@ -152,9 +153,13 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const benefits = retained<
     ReturnType<typeof calculateSocialSecuritySources2026>
   >("ssa1099");
+  const government = retained<
+    ReturnType<typeof calculateGovernmentPayments2026>
+  >("government_payments");
   if (
     Math.round(
-      (wages?.withholding ?? 0) + (b?.cents.federal_withholding ?? 0) +
+      (government?.cents.federal_withheld ?? 0) + (wages?.withholding ?? 0) +
+        (b?.cents.federal_withholding ?? 0) +
         (benefits?.federal_withholding ?? 0) + (capital?.withholding ?? 0),
     ) !== line("line25b_withheld_1099")
   ) {
