@@ -125,6 +125,11 @@ const fields: readonly PdfFieldEntry[] = [
   ]),
   {
     kind: "checkbox",
+    domainKey: "line6c_lump_sum_election",
+    pdfField: `${p1}c1_43[0]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "line6d_mfs_lived_apart",
     pdfField: `${p1}c1_44[0]`,
   },

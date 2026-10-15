@@ -1,3 +1,4 @@
+import { benefitElectionBridge2026Schema } from "../inputs/social-security-election.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -55,7 +56,10 @@ export const inputSchema = sharedSchema.pick({
   line21_student_loan_interest: true,
   line23_archer_msa_deduction: true,
   line24f_501c18d: true,
-}).extend({ filing_status: z.nativeEnum(FilingStatus) }).strict();
+}).extend({
+  filing_status: z.nativeEnum(FilingStatus),
+  social_security_lump_sum: benefitElectionBridge2026Schema.optional(),
+}).strict();
 
 class Agi2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
@@ -105,6 +109,10 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       );
     }
     let socialSecurityWorksheet;
+    let lumpSumElection;
+    if (input.social_security_lump_sum && input.line6a_ss_gross === undefined) {
+      throw new Error("Lump-sum comparison needs current net benefits");
+    }
     if (input.line6a_ss_gross !== undefined) {
       if (input.line6a_ss_gross < 0) {
         throw new Error(
@@ -137,9 +145,52 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         input.filing_status === FilingStatus.MFS &&
           input.mfs_lived_with_spouse === true,
       ));
-      // A future coordinated IRA/LSE owner may provide the reviewed final
-      // amount internally; public source input never accepts a taxable amount.
-      const taxable = input.line6b_ss_taxable ?? calculated;
+      const election = input.social_security_lump_sum;
+      if (election) {
+        if (
+          input.line6b_ss_taxable !== undefined ||
+          roundWholeDollars(election.net_benefits_before_rounding) !==
+            input.line6a_ss_gross
+        ) {
+          throw new Error(
+            "Lump-sum worksheet must own taxable benefits and reconcile to current source benefits",
+          );
+        }
+        const currentBenefits = Math.max(
+          0,
+          roundWholeDollars(
+            (Math.round(election.net_benefits_before_rounding * 100) -
+              Math.round(election.lump_sum_payments * 100)) / 100,
+          ),
+        );
+        const currentTaxable = roundWholeDollars(computeSsaTaxable(
+          currentBenefits,
+          income.other_income + income.foreign_earned_income_exclusion -
+            income.adjustments_except_student_loan,
+          input.tax_exempt_interest ?? 0,
+          input.filing_status === FilingStatus.MFJ,
+          input.filing_status === FilingStatus.MFS &&
+            input.mfs_lived_with_spouse === true,
+        ));
+        const alternative = election.additional_taxable_benefits === undefined
+          ? undefined
+          : currentTaxable + election.additional_taxable_benefits;
+        const elected = election.method === "use_if_lower" &&
+          alternative !== undefined && alternative < calculated;
+        lumpSumElection = {
+          ...election,
+          current_year_benefits_excluding_lump_sums: currentBenefits,
+          current_year_taxable_benefits: currentTaxable,
+          ordinary_taxable_benefits: calculated,
+          election_taxable_benefits: alternative,
+          elected,
+          taxable_benefits: elected ? alternative! : calculated,
+        };
+      }
+      // Coordinated IRA may later supply an internal final amount. Public
+      // sources cannot assert current taxable benefits or override an election.
+      const taxable = lumpSumElection?.taxable_benefits ??
+        input.line6b_ss_taxable ?? calculated;
       if (
         taxable < 0 || taxable > roundWholeDollars(.85 * input.line6a_ss_gross)
       ) {
@@ -151,6 +202,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         tax_exempt_interest: input.tax_exempt_interest ?? 0,
         ordinary_taxable_benefits: calculated,
         taxable_benefits: taxable,
+        ...(lumpSumElection ? { lump_sum_election: lumpSumElection } : {}),
       };
       // Resolve SSA before the shared SLI phaseout. SLI does not reduce the
       // SSA worksheet, so the calculation is ordered rather than iterative.
@@ -256,6 +308,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         fields: {
           // The shared aggregator suppresses zero amounts; 1040 line 6b needs 0.
           ...(input.line6b_ss_taxable === 0 ? { line6b_ss_taxable: 0 } : {}),
+          line6c_lump_sum_election: lumpSumElection?.elected ?? false,
           line6d_mfs_lived_apart: input.filing_status === FilingStatus.MFS &&
             input.mfs_lived_with_spouse === false,
         },

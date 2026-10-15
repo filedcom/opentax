@@ -156,7 +156,9 @@ regular Git files.
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`SSA-BENEFITS-GRAPH.md`](./graphs/SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
   distinctions, signed benefits, MFS residence, student-loan MAGI, draft PDF,
-  and remaining repayment/election/IRA work.
+  and remaining repayment/IRA work.
+- [`SSA-LUMP-SUM-CURRENT.md`](./graphs/SSA-LUMP-SUM-CURRENT.md): historical return
+  records, election comparison, AGI/MAGI destinations and draft line 6c.
 - [`RRB-1099-GRAPH.md`](./graphs/RRB-1099-GRAPH.md): pinned RRB issuer explanations
   and IRS pension/benefit publications, separate SSEB and pension statements,
   signed repayments, corrected sources and their 1040/MeF handoffs.

@@ -11,7 +11,10 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   benefit logic, resolves taxable benefits before student-loan MAGI, and handles
   MFS residence. Draft Form 1040 prints zero line 6b and the lived-apart checkbox.
   See [SSA-BENEFITS-GRAPH.md](../../../docs/ty2026/graphs/SSA-BENEFITS-GRAPH.md)
-  for remaining lump-sum, repayment, IRA and filing gates.
+  for remaining repayment, IRA and filing gates. The
+  [lump-sum election](../../../docs/ty2026/graphs/SSA-LUMP-SUM-CURRENT.md) retains
+  prior-return facts, compares both methods, feeds the selected amount through
+  AGI, and prints line 6c without appending private worksheets.
 
 - `student_loan_interest` reconciles 1098-E copies and loan payment records,
   including old-loan fees, capitalized interest, funding exclusions, corrections

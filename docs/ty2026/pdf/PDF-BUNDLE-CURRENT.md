@@ -13,7 +13,8 @@ settlement stop PDF generation. Each selected component recomputes its retained
 validated source input and reconciles its destination amounts to that execution.
 Information-return withholding also reconciles across investment, Form 8919
 and SSA/RRB benefit sources before rendering. Form 1040 prints taxable benefits,
-including zero, and the MFS full-year lived-apart indicator.
+including zero, the selected lump-sum election, and the MFS full-year lived-apart
+indicator. Historical benefit worksheets remain in calculation records.
 
 The result contains PDF `bytes`, the execution `calculation`, one-based
 `attachments` with separate `formPages` and `statementPages`, `filingReady: false`,

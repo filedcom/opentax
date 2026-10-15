@@ -124,7 +124,7 @@ NODE_PROGRESS = {
     "schedule_e": "2026 draft adds vehicle-interest line 13a; build activity-level Part I-V graph, PDF, MeF, and ATS 3/6; see SCHEDULEE-GRAPH.md",
     "f1099r": "final 2026 form/instructions pinned; fully and partially taxable normal pensions, code1 early tax, early SIMPLE Form5329 Part I, and pension code G rollover reach AGI/1040/PDF; add other codes, 8606/4972, current MeF; see FORM1099R-GRAPH.md",
     "f2441": "2026 form/instructions pinned; monthly deemed-income and provider continuation built; finish eligibility, prior-year expense, self-employed benefit, PDF and MeF; see FORM2441-GRAPH.md",
-    "ssa1099": "2026 SSA/RRB current-copy intake reuses box validation and income formula; signed worksheet, MFS residence, SLI ordering and draft PDF verified; repayment/LSE/IRA coordination, final instructions and MeF remain; see SSA-BENEFITS-GRAPH.md",
+    "ssa1099": "2026 SSA/RRB intake reuses box validation and income formula; historical lump-sum comparison, MFS residence, SLI ordering and draft PDF verified; repayment/IRA coordination, final instructions and MeF remain; see SSA-LUMP-SUM-CURRENT.md",
     "form5329": "dedicated 2026 Part I early SIMPLE 25% graph and PDF route; add exceptions, other parts, separate spouse forms, MeF; see FORM5329-GRAPH.md",
     "form8606": "2026 form and instructions pinned; dedicated per-owner basis and Roth calculation needed before registry; see FORM8606-GRAPH.md",
     "form8889": "2026 form/instructions pinned; shared node lacks month-by-month eligibility/spouse allocation, routes income/tax to wrong lines, and omits PDF/MeF parts; see FORM8889-GRAPH.md",

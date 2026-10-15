@@ -72,8 +72,8 @@ exclusion addback and other adjustments. The current SSA/RRB source now feeds
 the [benefit worksheet](./SSA-BENEFITS-GRAPH.md) before the shared student-loan
 phaseout; student-loan interest does not reduce the SSA worksheet operands.
 A source-to-PDF case verifies $85,000 wages plus $8,500 taxable benefits produce
-a $1,083 deduction and $92,417 AGI. Special SSA election/repayment/IRA worksheets
-remain unfinished. Form 2555/4563/territory source owners also remain unfinished;
+a $1,083 deduction and $92,417 AGI. The lump-sum election now supplies its selected taxable amount before this
+phaseout. Special SSA repayment/IRA worksheets remain unfinished. Form 2555/4563/territory source owners also remain unfinished;
 foreign housing deduction and territory exclusions require explicit zero-source
 reviews. Final 2026 worksheet reconciliation, current MeF serialization/rules,
 public catalog/CLI and ATS acceptance remain required. The node ledger stays

@@ -69,10 +69,16 @@ MFS residence and coordinated student-loan MAGI. Two PDF scenarios verify the
 benefit amounts, withholding, Schedule 1 deduction, zero line 6b and checkbox.
 A six-page synthetic review artifact was rendered and visually inspected.
 
+## Prior-year lump-sum election
+
+The [current election route](./SSA-LUMP-SUM-CURRENT.md) now accepts year
+allocations and historical return/worksheet records, compares the ordinary and
+election methods, and prints the selected result and line 6c. The source requires
+an explicit method review when a statement contains prior-year payments.
+
 ## Remaining work and explicit boundaries
 
-The current source requires reviewed absence of prior-year lump sums,
-disability repayments to an employer/insurer, savings-bond/adoption exclusions,
+The current source requires reviewed absence of disability repayments to an employer/insurer, savings-bond/adoption exclusions,
 foreign housing deduction, territory exclusions and IRA contributions requiring
 coordinated benefit worksheets. Their source owners and worksheet integrations
 remain unfinished. Negative combined benefits stop for repayment deduction or
@@ -80,7 +86,7 @@ credit review. Positive IRA deductions without internally finalized taxable
 benefits stop for Publication 590-A coordination; public inputs cannot assert
 a taxable-benefit amount.
 
-Implement and compare the lump-sum election, net-repayment relief and coordinated
-IRA worksheets before broadening these boundaries. Final 2026 instructions,
+Implement net-repayment relief and coordinated IRA worksheets before broadening
+these boundaries. Final 2026 instructions,
 current MeF serialization/business rules, public catalog/CLI and ATS acceptance
 remain release gates. The coverage ledger remains `audit-required`.

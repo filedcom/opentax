@@ -37,7 +37,14 @@ class SocialSecurity2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: this.nodeType, fields: { calculation_2026: calculation } },
         {
           nodeType: "agi_aggregator",
-          fields: { line6a_ss_gross: calculation.net_benefits },
+          fields: {
+            line6a_ss_gross: calculation.net_benefits,
+            ...(calculation.lump_sum_election
+              ? {
+                social_security_lump_sum: calculation.lump_sum_election.bridge,
+              }
+              : {}),
+          },
         },
         {
           nodeType: "f1040",

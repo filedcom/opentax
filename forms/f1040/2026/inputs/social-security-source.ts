@@ -1,3 +1,9 @@
+import {
+  benefitElection2026Schema,
+  calculateBenefitElectionSources2026,
+  type PriorBenefitAllocation2026,
+  priorBenefitPayment2026Schema,
+} from "./social-security-election.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import {
@@ -43,13 +49,19 @@ export const socialSecurityStatement2026Schema = sharedStatementSchema
     // Included in box 3; retain without adding again or netting against box 5.
     workers_compensation_offset_in_box3: positiveMoney,
     medicare_premiums_paid: positiveMoney,
-    no_prior_year_lump_sum_payments: z.literal(true),
+    no_prior_year_lump_sum_payments: z.boolean(),
+    prior_year_payments: z.array(priorBenefitPayment2026Schema).max(42)
+      .optional(),
+    rrb_box7_prior_year_benefits: positiveMoney.optional(),
+    rrb_box8_second_prior_year_benefits: positiveMoney.optional(),
+    rrb_box9_earlier_year_benefits: positiveMoney.optional(),
     no_disability_repayment_to_employer_or_insurer: z.literal(true),
   }).strict();
 
 export const socialSecurityClaim2026Schema = z.object({
   tax_year: z.literal(2026),
   statements: z.array(socialSecurityStatement2026Schema).min(1).max(100),
+  lump_sum_election: benefitElection2026Schema.optional(),
   inventory_record_reference: reference,
   all_current_statements_and_repayments_included: z.literal(true),
   worksheet_scope_review: z.object({
@@ -77,6 +89,7 @@ export function calculateSocialSecuritySources2026(
   raw: SocialSecuritySource2026,
 ) {
   const input = socialSecuritySource2026Schema.parse(raw);
+  const allocations: PriorBenefitAllocation2026[] = [];
   const seenClaims = new Set<string>();
   const issuedRefs = new Set(
     input.statements.map((s) => key(s.source_document_reference)),
@@ -139,6 +152,57 @@ export function calculateSocialSecuritySources2026(
         "Benefit statement needs the form-specific withholding box, including zero",
       );
     }
+    const priorPayments = s.prior_year_payments ?? [];
+    if (s.no_prior_year_lump_sum_payments !== (priorPayments.length === 0)) {
+      throw new Error(
+        "Prior benefit payments need a complete year allocation consistent with the review answer",
+      );
+    }
+    const seenYears = new Set<number>();
+    for (const payment of priorPayments) {
+      if (seenYears.has(payment.benefit_year)) {
+        throw new Error("Benefit statement repeats a prior-year allocation");
+      }
+      seenYears.add(payment.benefit_year);
+      allocations.push({
+        ...payment,
+        recipient_tin: ownerTin,
+        statement_reference: s.source_document_reference,
+      });
+    }
+    if (
+      priorPayments.reduce((sum, p) => sum + cents(p.amount_in_box3), 0) >
+        cents(s.box3_gross_benefits)
+    ) {
+      throw new Error(
+        "Prior benefit payments must already be included in box 3",
+      );
+    }
+    const rrbAmounts = [
+      s.rrb_box7_prior_year_benefits,
+      s.rrb_box8_second_prior_year_benefits,
+      s.rrb_box9_earlier_year_benefits,
+    ];
+    if (!s.is_rrb && rrbAmounts.some((n) => n !== undefined)) {
+      throw new Error("SSA statement cannot contain RRB prior-year boxes");
+    }
+    if (
+      s.is_rrb &&
+      (priorPayments.length || rrbAmounts.some((n) => n !== undefined))
+    ) {
+      const grouped = [2025, 2024, 0].map((year) =>
+        priorPayments.filter((p) =>
+          year ? p.benefit_year === year : p.benefit_year < 2024
+        ).reduce((sum, p) => sum + cents(p.amount_in_box3), 0)
+      );
+      if (
+        rrbAmounts.some((n, i) => n === undefined || cents(n) !== grouped[i])
+      ) {
+        throw new Error(
+          "RRB boxes 7, 8 and 9 need a complete matching year allocation",
+        );
+      }
+    }
     return { ...s, recipient_tin: ownerTin };
   });
   // Reuse box 3/4/5 equality, duplicate reference, and SSA/RRB withholding rules.
@@ -163,8 +227,24 @@ export function calculateSocialSecuritySources2026(
       "Negative combined benefits need repayment deduction or credit review",
     );
   }
+  if (allocations.length !== 0 && !input.lump_sum_election) {
+    throw new Error(
+      "Prior-year benefit payments need an explicit election method review",
+    );
+  }
+  if (allocations.length === 0 && input.lump_sum_election) {
+    throw new Error("Lump-sum election has no prior-year benefit payments");
+  }
+  const election = input.lump_sum_election
+    ? calculateBenefitElectionSources2026(
+      input.lump_sum_election,
+      allocations,
+      netCents / 100,
+    )
+    : undefined;
   return {
     source_input: input,
+    lump_sum_election: election,
     net_benefits: netCents / 100,
     federal_withholding: withheldCents / 100,
     medicare_premiums_paid: input.statements.reduce(
