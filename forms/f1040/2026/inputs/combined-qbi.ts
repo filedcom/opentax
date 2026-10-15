@@ -2,6 +2,8 @@ import { z } from "zod";
 import { calculateLandQbi2026, landQbiSource2026Schema } from "./land-qbi.ts";
 import {
   businessQbiComponentReview2026Schema,
+  type BusinessReturnSource2026,
+  resolveBusinessQbi2026,
   resolveBusinessQbiComponents2026,
 } from "./business-qbi.ts";
 import {
@@ -31,6 +33,36 @@ export const combinedQbiSource2026Schema = z.object({
   }).strict(),
 }).strict();
 export type CombinedQbiSource2026 = z.input<typeof combinedQbiSource2026Schema>;
+
+/** Repeated graph references must identify the same reviewed source, not a second owner. */
+export function reconcileCombinedBusiness2026(
+  raw: BusinessReturnSource2026,
+  combined: CombinedQbiSource2026,
+) {
+  const business = resolveBusinessQbi2026(raw),
+    source = combinedQbiSource2026Schema.parse(combined),
+    loss = source.land_sources.loss_sources.loss_sources;
+  const {
+    prior_losses,
+    no_current_qbi_sources_other_than_listed_businesses,
+    linked_land_qbi_inventory_reference,
+    ...review
+  } = business.source_input.qbi_review;
+  if (
+    no_current_qbi_sources_other_than_listed_businesses ||
+    linked_land_qbi_inventory_reference !==
+      loss.capital_sources.land_sources_2026?.source.claim.record_reference ||
+    business.source_input.loss_limit_review !== undefined ||
+    JSON.stringify(business.business.source_input) !==
+      JSON.stringify(loss.business_sources) ||
+    JSON.stringify(review) !== JSON.stringify(source.business_review) ||
+    JSON.stringify(prior_losses) !== JSON.stringify(source.prior_losses)
+  ) {
+    throw new Error(
+      "Combined QBI needs identical linked Schedule C sources and reviews; duplicate owners are invalid",
+    );
+  }
+}
 
 /** One current QBI inventory, one prior loss and one reconciled 461 origin. */
 export function resolveCombinedQbi2026(raw: CombinedQbiSource2026) {

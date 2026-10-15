@@ -58,12 +58,13 @@ export function calculateBusiness2026(raw: BusinessInput2026) {
       : {}),
     w2s: input.w2_sources_2026,
   });
-  // This source inventory has no other businesses. A potentially disallowed
-  // net loss needs a reviewed Form 461 handoff before the graph can finalize it.
+  // C-only net losses need their reviewed Form 461 handoff. Linked land sources
+  // are finalized by the combined owner before AGI and deduction selection.
   const netAfterSe = calculation.business.schedule1_line3 -
     calculation.business.schedule1_line15;
   if (
     !calculation.source_input.loss_limit_review &&
+    !calculation.source_input.qbi_review.linked_land_qbi_inventory_reference &&
     netAfterSe < -(input.filing_status === FilingStatus.MFJ ? 512000 : 256000)
   ) {
     throw new Error(
@@ -80,6 +81,7 @@ class Business2026Node extends TaxNode<typeof businessInput2026Schema> {
   override get outputNodeTypes() {
     return [
       "form461",
+      "land_dispositions",
       "agi_aggregator",
       "schedule1",
       "schedule2",
@@ -111,6 +113,10 @@ class Business2026Node extends TaxNode<typeof businessInput2026Schema> {
           },
         },
         { nodeType: this.nodeType, fields: { calculation_2026: result } },
+        {
+          nodeType: "land_dispositions",
+          fields: { business_sources_2026: r.source_input },
+        },
         {
           nodeType: "form461",
           fields: { business_sources_2026: r.source_input },

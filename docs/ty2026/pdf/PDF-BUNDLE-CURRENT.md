@@ -145,7 +145,9 @@ from the retained loss workpaper. A separate qualified suspended-loss origin is
 kept in the calculation; it is not a second current QBI loss.
 
 The shared Form 8995 renderer now serves both the existing Schedule C path and
-an internal combined C/land source component. The combined component replays
+the combined C/land source graph. The combined component replays
 deduction selection, checks the receiving 1040 amounts, and includes business
-continuations with retained TINs. Land intake, graph routing and bundle attachment
-selection remain unregistered; see [the current land contract](../graphs/FARMLAND-CURRENT.md).
+continuations with retained TINs. Reviewed direct land sales now attach Form 4797
+at sequence 27 and a single combined Form 8995 at 55, including land-only returns.
+Capital, Schedule 1, NIIT and Form 461 destinations reconcile to the same finalized
+sources; see [the current land contract](../graphs/FARMLAND-CURRENT.md).

@@ -210,6 +210,7 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
     return [
+      "land_dispositions",
       "form461",
       "f1040",
       "agi_aggregator",
@@ -225,66 +226,86 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Capital sources require f1040:2026 context");
     }
-    const r = calculateCapitalGains2026(input);
-    if (r.land) {
+    const parsed = capitalGainInput2026Schema.parse(input);
+    if (parsed.land_sources_2026) {
       throw new Error(
-        "Land disposition graph registration awaits QBI, loss-limit and Form 4797 attachment owners",
+        "Land graph accepts original disposition claims, not finalized capital handoffs",
       );
     }
-    const income = r.direct_distribution
-      ? { line7a_cap_gain_distrib: r.return_gain }
-      : r.file_schedule_d
-      ? { line7_capital_gain: r.return_gain }
-      : {};
+    if (parsed.claim?.land_disposition_inventory_reference) {
+      return {
+        outputs: [{
+          nodeType: "land_dispositions",
+          fields: { capital_sources_2026: parsed },
+        }],
+      };
+    }
+    const r = calculateCapitalGains2026(parsed);
     return {
       outputs: [
-        {
-          nodeType: "eitc",
-          fields: { capital_disposition_activity_2026: r.file_schedule_d },
-        },
-        {
-          nodeType: "capital_loss_carryover",
-          fields: {
-            filing_status: r.source_input.filing_status,
-            taxpayer_ssn: r.source_input.taxpayer_ssn,
-            ...(r.source_input.spouse_ssn
-              ? { spouse_ssn: r.source_input.spouse_ssn }
-              : {}),
-            schedule_d_line7: r.line7,
-            schedule_d_line15: r.line15,
-          },
-        },
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
-        {
-          nodeType: "form461",
-          fields: { capital_sources_2026: r.source_input },
-        },
-        {
-          nodeType: "standard_deduction",
-          fields: { capital_sources_2026: r.source_input },
-        },
-        {
-          nodeType: "f1040",
-          fields: {
-            ...income,
-            ...(r.withholding ? { line25b_withheld_1099: r.withholding } : {}),
-          },
-        },
-        { nodeType: "agi_aggregator", fields: income },
-        {
-          nodeType: "income_tax_calculation",
-          fields: { net_capital_gain: r.preferential_gain },
-        },
-        {
-          nodeType: "form6251",
-          fields: { capital_sources_2026: r.source_input },
-        },
-        {
-          nodeType: "form8960",
-          fields: { capital_sources_2026: r.source_input },
-        },
+        ...capitalResultOutputs2026(r).outputs,
       ],
     };
   }
 }
 export const capital_gains_2026 = new CapitalGainsNode2026();
+
+/** Final destinations are posted by exactly one capital/disposition owner. */
+export function capitalResultOutputs2026(
+  r: ReturnType<typeof calculateCapitalGains2026>,
+): NodeResult {
+  const income = r.direct_distribution
+    ? { line7a_cap_gain_distrib: r.return_gain }
+    : r.file_schedule_d
+    ? { line7_capital_gain: r.return_gain }
+    : {};
+  return {
+    outputs: [
+      {
+        nodeType: "eitc",
+        fields: { capital_disposition_activity_2026: r.file_schedule_d },
+      },
+      {
+        nodeType: "capital_loss_carryover",
+        fields: {
+          filing_status: r.source_input.filing_status,
+          taxpayer_ssn: r.source_input.taxpayer_ssn,
+          ...(r.source_input.spouse_ssn
+            ? { spouse_ssn: r.source_input.spouse_ssn }
+            : {}),
+          schedule_d_line7: r.line7,
+          schedule_d_line15: r.line15,
+        },
+      },
+      {
+        nodeType: "form461",
+        fields: { capital_sources_2026: r.source_input },
+      },
+      {
+        nodeType: "standard_deduction",
+        fields: { capital_sources_2026: r.source_input },
+      },
+      {
+        nodeType: "f1040",
+        fields: {
+          ...income,
+          ...(r.withholding ? { line25b_withheld_1099: r.withholding } : {}),
+        },
+      },
+      { nodeType: "agi_aggregator", fields: income },
+      {
+        nodeType: "income_tax_calculation",
+        fields: { net_capital_gain: r.preferential_gain },
+      },
+      {
+        nodeType: "form6251",
+        fields: { capital_sources_2026: r.source_input },
+      },
+      {
+        nodeType: "form8960",
+        fields: { capital_sources_2026: r.source_input },
+      },
+    ],
+  };
+}

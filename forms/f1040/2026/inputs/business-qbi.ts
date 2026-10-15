@@ -20,7 +20,8 @@ import type { QbiCalculator2026 } from "../deduction-resolution.ts";
 const ref = z.string().trim().min(1);
 export const businessQbiReview2026Schema = z.object({
   record_reference: ref,
-  no_current_qbi_sources_other_than_listed_businesses: z.literal(true),
+  no_current_qbi_sources_other_than_listed_businesses: z.boolean(),
+  linked_land_qbi_inventory_reference: ref.optional(),
   not_a_patron_of_a_specified_cooperative: z.literal(true),
   no_released_suspended_losses_or_qualified_tip_deduction: z.literal(true),
   no_adjustments_other_than_deductible_half_se_tax: z.literal(true),
@@ -46,6 +47,7 @@ export const businessQbiReview2026Schema = z.object({
 export const businessQbiComponentReview2026Schema = businessQbiReview2026Schema
   .omit({
     no_current_qbi_sources_other_than_listed_businesses: true,
+    linked_land_qbi_inventory_reference: true,
     prior_losses: true,
   });
 
@@ -70,6 +72,14 @@ export type BusinessReturnSource2026 = z.input<
 /** Replay business facts before allocating deductions; never accept caller QBI. */
 export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
   const source = businessReturnSource2026Schema.parse(raw);
+  if (
+    source.qbi_review.no_current_qbi_sources_other_than_listed_businesses ===
+      Boolean(source.qbi_review.linked_land_qbi_inventory_reference)
+  ) {
+    throw new Error(
+      "Schedule C QBI needs either a complete C inventory or a linked land inventory",
+    );
+  }
   const {
     qbi_review: review,
     loss_limit_review: _lossReview,
@@ -78,6 +88,7 @@ export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
   const {
     prior_losses: prior,
     no_current_qbi_sources_other_than_listed_businesses: _complete,
+    linked_land_qbi_inventory_reference: _land,
     ...componentReview
   } = review;
   const { review: _componentReview, ...component } =
@@ -160,6 +171,9 @@ export function businessQbiCalculator2026(
   lossSource?: BusinessLossSource2026,
 ): QbiCalculator2026 {
   const base = resolveBusinessQbi2026(raw);
+  if (base.source_input.qbi_review.linked_land_qbi_inventory_reference) {
+    throw new Error("Linked land QBI requires the combined calculation owner");
+  }
   const r = applyBusinessLossToQbi2026(base, lossSource);
   return simplifiedQbiCalculator2026(
     r,

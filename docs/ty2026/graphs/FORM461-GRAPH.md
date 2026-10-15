@@ -101,8 +101,8 @@ For example, $400,000 wages and a $400,000 regular C loss produce a $144,000
 addback, $144,000 AGI, a $256,000 current QBI loss and a separate $144,000
 qualified suspended origin.
 
-Land source integration, Schedule E/F/K-1, released suspensions, mixed
-qualified/nonqualified or farm/nonfarm allocation, Form 8995-A, negative-AGI
+Schedule E/F/K-1, released suspensions, general mixed-source and farming-loss
+allocation, Form 8995-A, negative-AGI
 NOL calculations and current MeF remain open. Child-tax claims with a positive
 461 adjustment still stop for their coordinated loss-addback worksheet.
 The [internal land limitation owner](FARMLAND-CURRENT.md) now derives deductible
@@ -111,7 +111,9 @@ replays the receiving amounts. Its separately reviewed source-bucket allocation
 does not replace the C-only QBI method. Farm losses with positive EBL still need
 Form 172. Land QBI retains qualified/nonqualified activity contributions, but
 the combined C/land QBI owner now reconciles those contributions, prior losses
-and deduction candidates. Public land graph/bundle integration remains open.
+and deduction candidates. Reviewed direct land sales now route through that owner
+in the source graph and draft bundle, including land-only returns. Repeated C and
+capital references must match the combined inventory exactly.
 Public intake accepts reviewed source facts,
 not Form 461 lines or an excess-loss override. Full filing remains disabled.
 

@@ -112,6 +112,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "household_employment",
       "f5695",
       "capital_gains",
+      "land_dispositions",
       "schedule_c",
     ];
   }
@@ -443,6 +444,10 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           },
         },
         { nodeType: "w2", fields: owner },
+        {
+          nodeType: "land_dispositions",
+          fields: { ...owner, tax_residency: input.tax_residency },
+        },
         {
           nodeType: "schedule_c",
           fields: { ...owner, tax_residency: input.tax_residency },

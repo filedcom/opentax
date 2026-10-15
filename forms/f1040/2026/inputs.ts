@@ -1,4 +1,8 @@
 import { f5695_2026 } from "./inputs/energy.ts";
+import {
+  land_dispositions_2026,
+  landDispositionClaimInput2026Schema,
+} from "./nodes/land-dispositions.ts";
 import { energyClaim2026Schema } from "./inputs/energy-source.ts";
 import { household_employment_2026 } from "./inputs/household-employment.ts";
 import { householdClaim2026Schema } from "./inputs/household-source.ts";
@@ -86,6 +90,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: land_dispositions_2026,
+    isArray: false,
+    inputSchema: landDispositionClaimInput2026Schema,
+  },
   { node: f5695_2026, isArray: false, inputSchema: energyClaim2026Schema },
   {
     node: household_employment_2026,

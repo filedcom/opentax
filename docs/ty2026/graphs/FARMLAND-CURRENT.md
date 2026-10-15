@@ -2,18 +2,18 @@
 
 ## Current state (October 15, 2026)
 
-The next ATS scenario 1 dependency is Form 1062. The current source graph still
-has no Form 1062 election, farmland sale or Form 4797 attachment route. The
-existing Form 1040/Schedule 3 arithmetic accepts internal settlement fields;
-that is not a source-derived deferral calculation. Do not mark scenario 1 or
-Form 1062 complete from those fields or the new helpers described here.
+The next ATS scenario 1 dependency is Form 1062. Reviewed direct business-land
+sales now enter the 2026 source graph and draft PDF bundle, including Form 4797.
+Form 1062 elections and source-derived deferral calculations remain open; internal
+Form 1040/Schedule 3 settlement fields do not complete that work or scenario 1.
 
-The first prerequisite now implemented is a reviewed land-disposition calculator
-and year-aware section 1231 history replay. Both are internal and unregistered.
-The public 2026 intake rejects `land_dispositions`. No land amount can yet be posted through the source return graph or public
-intake. Internal Schedule D, AMT and NIIT consumers and their component PDF
-builders now accept the retained source handoff described below; this is not
-a completed return or bundle route.
+The `land_dispositions` input accepts original property records and reviews.
+General supplies the return owners. The capital inventory links to the land
+inventory, and the land node derives preliminary capital/ordinary amounts,
+Form 461 allocation, finalized section 1231 history and combined QBI before
+posting final capital destinations. Schedule 1 line 4 and its Form 4797 checkbox,
+line 8p, AGI, AMT, NIIT and the selected deduction use those same records.
+Public intake cannot supply a finalized loss, QBI amount or Form 461 total.
 
 ## Shared calculation and annual records
 
@@ -53,8 +53,8 @@ net section 1231 is line 8, prior loss is line 9, residual capital gain is line
 10, ordinary section 1231 loss is line 12, prior-loss recapture is line 13, and
 ordinary totals are lines 19/20b. The standalone PDF component now applies the
 printed skip rules described below. No depreciable property, rental/passive allocation,
-K-1, casualty, QOF, livestock, Part III/IV or public land-return integration is claimed.
-NIIT support is limited to the explicitly reviewed internal handoff below.
+K-1, casualty, QOF, livestock or Part III/IV support is claimed.
+NIIT support requires the reviewed nonpassive activity handoff below.
 
 ## Internal capital and NIIT connection
 
@@ -185,17 +185,30 @@ and foreign-business suspended amounts reconcile to the single excess loss;
 current allowed losses and prior Form 8995 carryforwards remain separate.
 
 Deduction selection accepts the retained combined source only with identical
-finalized capital records and owners. Duplicate C/loss owners are rejected.
+finalized capital records and owners. Repeated graph references must match the
+combined owner exactly; conflicting C/loss records are rejected.
 Standard and itemized candidates use their own taxable income before QBI and
 section 68, one prior loss, the actual net capital gain/qualified dividends and
 one active-income minimum. Land businesses retain an EIN when supplied.
 
 The combined Form 8995 component replays selection and reconciles the receiving
 1040 deduction lines. It shares the pinned form mapping and continuation renderer
-with the existing C-only builder. Public land intake, graph routing and complete
-bundle registration remain open; this component does not yet enable a filed
-land return. Child-tax land/loss coordination, negative-AGI NOLs, farming-loss
-allocation and the remaining QBI source families still need their source owners.
+with the existing C-only builder. The source graph and draft bundle now select
+this component for both mixed C/land and land-only returns. Schedule C declares
+`no_current_qbi_sources_other_than_listed_businesses: false` and the matching
+`linked_land_qbi_inventory_reference`; its component review and prior losses
+must match the combined inventory. A second C-only loss-allocation review is
+rejected. The C-only QBI calculator cannot consume this linked contract.
+
+Form 4797 attaches at sequence 27, before Form 6251; one Form 8995 attaches at
+55, with Form 461 at 64 when required. The bundle replays receiving amounts,
+retains static draft markings and includes any continuations. Synthetic gain,
+mixed-loss and land-only cases verify once-only income and QBI routing; a
+separate investment sale verifies that NIIT excludes reviewed land amounts only.
+Child-tax land/loss coordination, negative-AGI NOLs, positive EBL with farming
+loss, eligible EIC disposition worksheets and remaining QBI source families
+still require their calculation owners. Public filing and current IRS acceptance
+remain disabled.
 
 ## Current IRS source checks
 
@@ -224,12 +237,11 @@ Estimated-tax relief is in **Notice 2026-3**, published in
 
 ## Remaining connected implementation
 
-1. Finish registering the internal Schedule D/AMT/NIIT handoff, post Schedule
-   1 line 4 once, and retain activity/source character for QBI,
-   dependent support and earned-income calculations. A 4797 ordinary amount is
-   not automatically earned income or self-employment income. Apply loss limits
-   before finalizing deductible losses and carryforward vintages. Expand asset
-   and recapture cases using the full [4797 contract](FORM4797-GRAPH.md).
+1. Extend the registered direct-land route to coordinated dependent support,
+   child-tax and EIC disposition calculations. A 4797 ordinary amount is not
+   automatically earned income or self-employment income. Preserve the existing
+   loss-limit-before-history ordering while expanding asset and recapture cases
+   using the full [4797 contract](FORM4797-GRAPH.md).
 2. Establish section 1062 qualification from the property-use history, buyer's
    qualified-farmer evidence and enforceable covenant. Reconcile each elected
    Schedule A gain to the same disposition inventory; retain actual covenant
@@ -245,8 +257,8 @@ Estimated-tax relief is in **Notice 2026-3**, published in
    Form 1040 line 24b after credit resolution, without creating a graph cycle.
    Retain the future installment ledger, election timing and acceleration
    evidence. Integrate any estimated-tax relief from the applicable authority.
-5. Connect the standalone Form 4797 component to the bundle and build Form 1062,
-   Schedule A and covenant attachments;
+5. Build Form 1062, Schedule A and covenant attachments alongside the registered
+   Form 4797 component;
    reconcile source, printed lines, return settlement and current MeF/rules.
    Verify the full ATS scenario independently. Its assumed $200 installment
    does not supply the missing farmland proceeds, basis, covenant or tax
@@ -254,8 +266,9 @@ Estimated-tax relief is in **Notice 2026-3**, published in
 
 Tests cover history rollover/expiry, oldest-first consumption, current limited
 losses, ownership, source conflicts, gain/loss netting, holding periods, basis
-and whole-dollar columns, corrected 1099-S copies and rejection by public
-intake. Full 2026 return integration and filing acceptance remain unfinished.
+and whole-dollar columns, corrected 1099-S copies and rejection of calculated
+public overrides. Advanced 2026 return integration and filing acceptance remain
+unfinished.
 
 Verification: the history prerequisite passed 86 focused/shared/2025
 return-workflow tests. The capital/NIIT connection passed 13 typed focused
@@ -281,3 +294,12 @@ checks. Gain, loss and nine-business continuation pages were rendered and
 inspected. The loss-case integration exposed and fixed a key-order mismatch:
 the limitation owner now returns its schema-parsed final inventory for downstream
 source comparisons. No 2025 implementation changed in this step.
+
+The direct-land source graph and bundle passed 38 typed focused tests, all 700
+tests in the 2026 directory and 137 unit checks. Three complete synthetic draft
+bundles (gain, mixed loss and land-only with investment NIIT) were rendered;
+all 36 pages were visually reviewed and verified without fields or annotations.
+The first full run found one obsolete guard-message expectation, updated to
+require original source claims rather than finalized capital handoffs. Final
+verification passed. The original worktree and all 2025 implementations were
+left unchanged in this step.

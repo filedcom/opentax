@@ -13,15 +13,54 @@ import {
 } from "./capital-gains.ts";
 import { businessLossLimitLines } from "../../nodes/intermediate/forms/income/business/form461/calculation.ts";
 import { FilingStatus } from "../../nodes/types.ts";
+import {
+  combinedQbiSource2026Schema,
+  reconcileCombinedBusiness2026,
+  resolveCombinedQbi2026,
+} from "../inputs/combined-qbi.ts";
 
 export const form461Input2026Schema = z.object({
   business_sources_2026: businessReturnSource2026Schema.optional(),
   capital_sources_2026: capitalGainInput2026Schema,
+  combined_qbi_sources_2026: combinedQbiSource2026Schema.optional(),
 }).strict();
 export function calculateForm461_2026(
   raw: z.input<typeof form461Input2026Schema>,
 ) {
   const input = form461Input2026Schema.parse(raw);
+  if (input.combined_qbi_sources_2026) {
+    const combined = resolveCombinedQbi2026(input.combined_qbi_sources_2026);
+    const calculation = combined.land.loss.calculation;
+    if (Boolean(input.business_sources_2026) !== Boolean(combined.business)) {
+      throw new Error(
+        "Combined loss owner needs the same Schedule C inventory as the graph",
+      );
+    }
+    if (input.business_sources_2026) {
+      reconcileCombinedBusiness2026(
+        input.business_sources_2026,
+        combined.source_input,
+      );
+    }
+    if (
+      JSON.stringify(input.capital_sources_2026) !==
+        JSON.stringify(calculation.capital.source_input)
+    ) {
+      throw new Error(
+        "Combined loss owner needs identical finalized capital sources",
+      );
+    }
+    return { source_input: input, calculation };
+  }
+  if (
+    input.business_sources_2026?.qbi_review
+      .linked_land_qbi_inventory_reference ||
+    input.capital_sources_2026.land_sources_2026
+  ) {
+    throw new Error(
+      "Linked land loss inventory requires the combined calculation owner",
+    );
+  }
   if (!input.business_sources_2026) {
     return { source_input: input, calculation: undefined };
   }
@@ -100,7 +139,15 @@ class Form461Node2026 extends TaxNode<typeof form461Input2026Schema> {
         },
         {
           nodeType: "standard_deduction",
-          fields: { business_loss_sources_2026: c.source_input },
+          fields: {
+            business_loss_sources_2026: c.source_input,
+            ...(result.source_input.combined_qbi_sources_2026
+              ? {
+                combined_qbi_sources_2026:
+                  result.source_input.combined_qbi_sources_2026,
+              }
+              : {}),
+          },
         },
       ],
     };

@@ -8,6 +8,7 @@ import { form8615 } from "../nodes/intermediate/forms/taxes/investments/form8615
 import { business_2026 } from "./nodes/business.ts";
 import { capital_carryover_2026 } from "./nodes/capital-carryover.ts";
 import { capital_gains_2026 } from "./nodes/capital-gains.ts";
+import { land_dispositions_2026 } from "./nodes/land-dispositions.ts";
 import { f8863_2026 } from "./nodes/f8863.ts";
 import { form2441_2026 } from "./inputs/dependent-care.ts";
 import { f2441_2026 } from "./nodes/f2441.ts";
@@ -58,6 +59,7 @@ export const sourceRegistry2026 = {
   schedule_c: business_2026,
   form461: form461_2026,
   capital_gains: capital_gains_2026,
+  land_dispositions: land_dispositions_2026,
   capital_loss_carryover: capital_carryover_2026,
   form2441: form2441_2026,
   f2441: f2441_2026,

@@ -984,7 +984,10 @@ land contribution. A combined C/land owner now applies one prior-loss record,
 reconciles qualified and nonqualified suspended origins, and evaluates the
 existing deduction candidates with their actual capital-gain limit. The shared
 Form 8995 renderer serves both the C-only and combined source paths, including
-continuations. Public land graph/bundle registration remains open. The existing
+continuations. Reviewed direct land sales now enter the source graph and draft
+bundle with matching capital, C and loss records; one combined QBI calculation
+supplies the selected deduction. Form 4797 attaches before Form 6251. The existing
 C-only route retains its reviewed allocation method; both routes reuse the same
 integer allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
-records these conventions, component PDF evidence and remaining graph/bundle work.
+records these conventions, graph/PDF evidence and remaining advanced cases.
+Form 1062, full parity, public filing and current IRS acceptance remain open.

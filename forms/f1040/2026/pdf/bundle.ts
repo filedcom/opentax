@@ -1,4 +1,7 @@
 import type { calculateForm461_2026 } from "../nodes/form461.ts";
+import type { calculateLandReturn2026 } from "../nodes/land-dispositions.ts";
+import { buildForm4797PdfBytes2026 } from "./form4797.ts";
+import { buildCombinedQbiPdfBytes2026 } from "./form8995.ts";
 import { buildForm461PdfBytes2026 } from "./form461.ts";
 import { buildForm5695PdfBytes2026 } from "./form5695.ts";
 import { buildScheduleHPdfBytes2026 } from "./schedule_h.ts";
@@ -152,9 +155,12 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const business = retained<ReturnType<typeof calculateBusiness2026>>(
     "schedule_c",
   );
+  const land = retained<ReturnType<typeof calculateLandReturn2026>>(
+    "land_dispositions",
+  )?.calculation;
   const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
     "capital_gains",
-  );
+  ) ?? land?.land.loss.calculation.capital;
   const benefits = retained<
     ReturnType<typeof calculateSocialSecuritySources2026>
   >("ssa1099");
@@ -202,7 +208,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -330,6 +336,12 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       form1040_line7b: f.line7b_schedule_d_not_required === true,
       form1040_line3a: line("line3a_qualified_dividends"),
       preferential_gain: amount(p.income_tax_calculation, "net_capital_gain"),
+      ...(capital.land
+        ? {
+          form4797_line10: capital.land.calculation.line10_long_term_gain,
+          schedule1_line4: amount(p.schedule1, "line4_other_gains"),
+        }
+        : {}),
     };
     add(
       "schedule_d",
@@ -379,6 +391,20 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
           schedule2_line16a: s2line("line16a_form4137_tip_tax"),
         },
         owners,
+      ));
+  }
+  if (capital?.land) {
+    add("form4797", 1, () =>
+      buildForm4797PdfBytes2026(
+        capital.land!.source_input.source,
+        {
+          schedule_d_line11: capital.line11_form4797,
+          schedule1_line4: amount(p.schedule1, "line4_other_gains"),
+          section1231_loss_taken_into_account:
+            capital.land!.calculation.history.current.loss_taken_into_account,
+        },
+        filer,
+        capital.land!.source_input.finalized_loss,
       ));
   }
   if (amt?.file_form6251) {
@@ -467,7 +493,22 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         }, filer),
     );
   }
-  if (business?.calculation) addBusiness("form8995", 1);
+  if (land) {
+    add("form8995", 1, () =>
+      buildCombinedQbiPdfBytes2026(
+        p.standard_deduction
+          .calculation_input_2026 as DeductionSelectionInput2026,
+        {
+          form1040_line11b: line("line11b_agi"),
+          form1040_line12e: line("line12e_standard_or_itemized"),
+          form1040_line12f: line("line12f_nonitemizer_charity"),
+          form1040_line13a: line("line13a_schedule1a"),
+          form1040_line13b: line("line13b_qbi"),
+          form1040_line15: line("line15_taxable_income"),
+        },
+        owners,
+      ));
+  } else if (business?.calculation) addBusiness("form8995", 1);
   if (wages?.forms.length) {
     add("form8919", undefined, () =>
       buildForm8919PdfBytes2026(
@@ -516,6 +557,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
           form1040_line11b: line("line11b_agi"),
           form1040_line12e: line("line12e_standard_or_itemized"),
           schedule1_line18: amount(p.schedule1, "line18_early_withdrawal"),
+          ...(capital?.land
+            ? { schedule1_line4: amount(p.schedule1, "line4_other_gains") }
+            : {}),
           ...(a
             ? {
               schedule_a_line5d: a.lines.line5d,

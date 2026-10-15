@@ -1,6 +1,7 @@
 import {
   combinedQbiCalculator2026,
   combinedQbiSource2026Schema,
+  reconcileCombinedBusiness2026,
   resolveCombinedQbi2026,
 } from "../inputs/combined-qbi.ts";
 import { businessLossSource2026Schema } from "../inputs/business-loss-source.ts";
@@ -71,17 +72,24 @@ export function calculateDeductionSelection2026(
   rawInput: z.input<typeof inputSchema>,
 ) {
   const input = inputSchema.parse(rawInput);
-  if (
-    input.combined_qbi_sources_2026 &&
-    (input.business_sources_2026 || input.business_loss_sources_2026)
-  ) {
-    throw new Error(
-      "Combined QBI owns its complete business and loss inventories; duplicate owners are invalid",
-    );
-  }
   const combined = input.combined_qbi_sources_2026
     ? resolveCombinedQbi2026(input.combined_qbi_sources_2026)
     : undefined;
+  if (combined && input.business_sources_2026) {
+    reconcileCombinedBusiness2026(
+      input.business_sources_2026,
+      combined.source_input,
+    );
+  }
+  if (
+    combined && input.business_loss_sources_2026 &&
+    JSON.stringify(input.business_loss_sources_2026) !==
+      JSON.stringify(combined.land.loss.finalized_sources)
+  ) {
+    throw new Error(
+      "Combined QBI needs identical loss sources; duplicate owners are invalid",
+    );
+  }
   if (
     combined &&
     (input.child_tax_source_2026 ||
@@ -222,7 +230,7 @@ export function calculateDeductionSelection2026(
   }
   if (
     input.business_loss_sources_2026 &&
-    (!input.business_sources_2026 ||
+    ((!input.business_sources_2026 && !combined) ||
       JSON.stringify(input.business_loss_sources_2026.capital_sources) !==
         JSON.stringify(capital?.source_input))
   ) {

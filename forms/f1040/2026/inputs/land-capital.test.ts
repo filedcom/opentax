@@ -229,13 +229,13 @@ Deno.test("2026 AMT replays the same land and investment preference source", () 
   );
 });
 
-Deno.test("2026 staged land handoff cannot enter the return graph before its remaining owners", () => {
+Deno.test("2026 capital node rejects finalized land handoffs in favor of the original source claim", () => {
   const input = landCapitalFixture2026();
   assertThrows(
     () =>
       capital_gains_2026.compute({ taxYear: 2026, formType: "f1040" }, input),
     Error,
-    "awaits QBI",
+    "original disposition claims",
   );
   const publicInput = capitalFixture2026();
   assertEquals(

@@ -387,7 +387,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
               input.line4b_ira_taxable,
               input.line5b_pension_taxable,
               business ? 0 : input.line3_schedule_c,
-              input.line4_other_gains,
+              loss?.capital.land ? 0 : input.line4_other_gains,
               input.line5_schedule_e,
               input.line6_schedule_f,
               input.line8a_nol_deduction,
@@ -399,6 +399,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             taxable_interest_from_agi: input.line2b_taxable_interest ?? 0,
             ordinary_dividends_from_agi: input.line3b_ordinary_dividends ?? 0,
             capital_gain_from_agi: input.line7_capital_gain ?? 0,
+            ordinary_disposition_gain_from_agi: input.line4_other_gains ?? 0,
           },
         };
       }
