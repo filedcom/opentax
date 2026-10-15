@@ -1,3 +1,4 @@
+import { renderForm8995Draft2026 } from "./form8995.ts";
 import {
   PDFDocument,
   PDFName,
@@ -38,12 +39,6 @@ const templateInfo = {
     pages: 3,
     fields: 27,
   },
-  form8995: {
-    file: "f8995",
-    hash: "d698390e2990de21b8df9ccb485f9309b817707d4871581118337bf7c1b14fd8",
-    pages: 2,
-    fields: 36,
-  },
 };
 const numeric = (n: number) => n < 0 ? `(${Math.abs(n)})` : String(n);
 
@@ -53,7 +48,7 @@ export async function buildBusinessPdfBytes2026(
   selection: SelectionInput,
   destinations: BusinessPdfDestinations2026,
   owners: { taxpayer: Owner; spouse?: Owner },
-  kind: keyof typeof templateInfo,
+  kind: "schedule_c" | "schedule_se" | "form8995",
 ): Promise<Uint8Array> {
   const c = calculateBusiness2026(raw).calculation;
   if (!c) throw new Error("Business PDF needs a complete business inventory");
@@ -101,6 +96,14 @@ export async function buildBusinessPdfBytes2026(
     ) {
       throw new Error("Business PDF needs matching proprietor identities");
     }
+  }
+  if (kind === "form8995") {
+    return renderForm8995Draft2026(qbi, {
+      name: [owners.taxpayer.name, owners.spouse?.name].filter(Boolean).join(
+        " & ",
+      ),
+      ssn: owners.taxpayer.ssn,
+    });
   }
   const ownerFor = (tin: string) =>
     tin === c.source_input.taxpayer_tin ? owners.taxpayer : owners.spouse!;
@@ -309,38 +312,6 @@ export async function buildBusinessPdfBytes2026(
       fill(1, 21, s.line12);
       fill(1, 22, s.line13);
       await append([1]);
-    }
-  } else {
-    const { fill, append } = await template();
-    const filer = {
-      name: [owners.taxpayer.name, owners.spouse?.name].filter(Boolean).join(
-        " & ",
-      ),
-      ssn: owners.taxpayer.ssn,
-    };
-    fill(1, 1, filer.name);
-    fill(1, 2, filer.ssn);
-    qbi.rows.slice(0, 5).forEach((r, i) => {
-      fill(1, 3 + i * 3, r.business_name);
-      fill(1, 4 + i * 3, r.identification_number);
-      fill(1, 5 + i * 3, r.qbi);
-    });
-    for (let line = 2; line <= 19; line++) {
-      fill(1, line + 16, qbi.lines[`line${line}`]);
-    }
-    await append([1]);
-    if (qbi.rows.length > 5) {
-      statements.push({
-        title: "2026 Form 8995 - Additional businesses included in line 2",
-        owner: filer,
-        rows: qbi.rows.slice(5).map((r) => ({
-          description: `${r.business_name} | TIN ${r.identification_number}`,
-          amount: numeric(r.qbi),
-        })),
-        total: `Line 2 includes all ${qbi.rows.length} businesses: ${
-          numeric(qbi.lines.line2)
-        }`,
-      });
     }
   }
   const font = await output.embedFont(StandardFonts.Helvetica);

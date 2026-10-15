@@ -8,15 +8,16 @@ import {
   businessSources2026Schema,
   calculateBusinessSources2026,
 } from "./business-source.ts";
-import { FilingStatus } from "../../nodes/types.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { allocateSharedSeDeduction } from "../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
-import { simplifiedQbiLines } from "../../nodes/intermediate/forms/deductions/business/form8995/calculation.ts";
+import {
+  qbiPriorLoss2026Schema,
+  resolveQbiPriorLoss2026,
+  simplifiedQbiCalculator2026,
+} from "./qbi-common.ts";
 import type { QbiCalculator2026 } from "../deduction-resolution.ts";
 
 const ref = z.string().trim().min(1);
-const tin = z.string().regex(/^\d{9}$/);
-const whole = z.number().int().safe().nonnegative();
 export const businessQbiReview2026Schema = z.object({
   record_reference: ref,
   no_current_qbi_sources_other_than_listed_businesses: z.literal(true),
@@ -38,25 +39,15 @@ export const businessQbiReview2026Schema = z.object({
       no_former_employee_presumption_or_rebuttal_needed: z.literal(true),
     }).strict(),
   ).min(1),
-  prior_losses: z.discriminatedUnion("kind", [
-    z.object({
-      kind: z.literal("none"),
-      record_reference: ref,
-      no_prior_qbi_or_reit_ptp_loss_carryover: z.literal(true),
-    }).strict(),
-    z.object({
-      kind: z.literal("form8995_2025"),
-      tax_year: z.literal(2025),
-      return_reference: ref,
-      taxpayer_tin: tin,
-      spouse_tin: tin.optional(),
-      filing_status: z.nativeEnum(FilingStatus),
-      ownership_and_filing_unit_unchanged: z.literal(true),
-      line16_business_loss_carryforward: whole,
-      line17_reit_ptp_loss_carryforward: whole,
-    }).strict(),
-  ]),
+  prior_losses: qbiPriorLoss2026Schema,
 }).strict();
+
+/** Schedule C component review; the caller separately owns the complete QBI inventory. */
+export const businessQbiComponentReview2026Schema = businessQbiReview2026Schema
+  .omit({
+    no_current_qbi_sources_other_than_listed_businesses: true,
+    prior_losses: true,
+  });
 
 export const businessReturnSource2026Schema = businessSources2026Schema.extend({
   qbi_review: businessQbiReview2026Schema,
@@ -84,6 +75,29 @@ export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
     loss_limit_review: _lossReview,
     ...businessSource
   } = source;
+  const {
+    prior_losses: prior,
+    no_current_qbi_sources_other_than_listed_businesses: _complete,
+    ...componentReview
+  } = review;
+  const { review: _componentReview, ...component } =
+    resolveBusinessQbiComponents2026(
+      businessSource,
+      componentReview,
+    );
+  return {
+    ...component,
+    source_input: source,
+    ...resolveQbiPriorLoss2026(prior, source),
+  };
+}
+
+export function resolveBusinessQbiComponents2026(
+  raw: z.input<typeof businessSources2026Schema>,
+  rawReview: z.input<typeof businessQbiComponentReview2026Schema>,
+) {
+  const businessSource = businessSources2026Schema.parse(raw);
+  const review = businessQbiComponentReview2026Schema.parse(rawReview);
   const business = calculateBusinessSources2026(businessSource);
   const refs = new Set(review.businesses.map((b) => b.business_reference));
   if (
@@ -92,18 +106,6 @@ export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
     business.businesses.some((b) => !refs.has(b.source.business_reference))
   ) {
     throw new Error("QBI reviews must identify every business exactly once");
-  }
-  const prior = review.prior_losses;
-  if (
-    prior.kind !== "none" && (
-      prior.taxpayer_tin !== source.taxpayer_tin ||
-      prior.spouse_tin !== source.spouse_tin ||
-      prior.filing_status !== source.filing_status
-    )
-  ) {
-    throw new Error(
-      "Prior QBI carryovers require unchanged ownership and filing unit",
-    );
   }
   const allocations = new Map<string, number>();
   for (const owner of business.owners) {
@@ -142,18 +144,13 @@ export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
   const qbi = rows.reduce((n, r) => n + r.qbi, 0);
   const active = business.schedule1_line3 - business.schedule1_line15;
   return {
-    source_input: source,
+    source_input: businessSource,
+    review,
     business,
     rows,
     qbi,
     active_qbi_before_rounding: active,
     minimum_deduction: active >= 1000 ? 400 : 0,
-    prior_business_loss: prior.kind === "none"
-      ? 0
-      : prior.line16_business_loss_carryforward,
-    prior_reit_ptp_loss: prior.kind === "none"
-      ? 0
-      : prior.line17_reit_ptp_loss_carryforward,
   };
 }
 
@@ -164,59 +161,9 @@ export function businessQbiCalculator2026(
 ): QbiCalculator2026 {
   const base = resolveBusinessQbi2026(raw);
   const r = applyBusinessLossToQbi2026(base, lossSource);
-  if (
-    !Number.isSafeInteger(netCapitalGainAndQualifiedDividends) ||
-    netCapitalGainAndQualifiedDividends < 0
-  ) {
-    throw new Error(
-      "QBI needs finalized net capital gain plus qualified dividends",
-    );
-  }
-  const limit = r.source_input.filing_status === FilingStatus.MFJ
-    ? 403500
-    : r.source_input.filing_status === FilingStatus.MFS
-    ? 201775
-    : 201750;
-  const maximumDeduction = Math.max(
-    r.minimum_deduction,
-    Math.round(Math.max(0, r.qbi - r.prior_business_loss) * .2),
+  return simplifiedQbiCalculator2026(
+    r,
+    r.source_input.filing_status,
+    netCapitalGainAndQualifiedDividends,
   );
-  return {
-    maximumDeduction,
-    evaluate(preQbiTaxableIncome) {
-      if (preQbiTaxableIncome > limit) {
-        throw new Error(
-          "2026 business income above the simplified QBI threshold needs Form 8995-A",
-        );
-      }
-      const { businessLossCarryforward, reitLossCarryforward, ...lines } =
-        simplifiedQbiLines({
-          businessIncome: r.qbi,
-          businessLossCarryforward: r.prior_business_loss,
-          reitAndPtpIncome: 0,
-          reitLossCarryforward: r.prior_reit_ptp_loss,
-          taxableIncomeBeforeQbi: preQbiTaxableIncome,
-          netCapitalGainAndQualifiedDividends,
-        });
-      const line17 = Math.max(lines.line15, r.minimum_deduction);
-      return {
-        deduction: line17,
-        forms: {
-          form8995: {
-            source_input: r.source_input,
-            rows: r.rows,
-            loss_attribution: r.loss_attribution,
-            active_qbi_before_rounding: r.active_qbi_before_rounding,
-            lines: {
-              ...lines,
-              line16: r.minimum_deduction,
-              line17,
-              line18: businessLossCarryforward,
-              line19: reitLossCarryforward,
-            },
-          },
-        },
-      };
-    },
-  };
 }

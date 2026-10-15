@@ -110,7 +110,9 @@ section 1231 loss from preliminary capital/461 sources, finalizes history and
 replays the receiving amounts. Its separately reviewed source-bucket allocation
 does not replace the C-only QBI method. Farm losses with positive EBL still need
 Form 172. Land QBI retains qualified/nonqualified activity contributions, but
-the return-wide QBI and graph integration remain open. Public intake accepts reviewed source facts,
+the combined C/land QBI owner now reconciles those contributions, prior losses
+and deduction candidates. Public land graph/bundle integration remains open.
+Public intake accepts reviewed source facts,
 not Form 461 lines or an excess-loss override. Full filing remains disabled.
 
 ## Build order and acceptance

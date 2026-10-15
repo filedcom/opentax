@@ -1,6 +1,6 @@
-/** Whole-dollar proportional allocation. The caller owns the reviewed tax method;
- * this helper only conserves dollars and makes rounding independent of row order. */
-export function allocateSourceDollars2026(
+/** Integer proportional allocation in a consistent unit (dollars or cents).
+ * The caller owns the reviewed tax method; rounding is independent of row order. */
+export function allocateSourceUnits2026(
   amount: number,
   rows: readonly { reference: string; weight: number }[],
 ) {
@@ -10,7 +10,7 @@ export function allocateSourceDollars2026(
     new Set(rows.map((r) => r.reference)).size !== rows.length
   ) {
     throw new Error(
-      "Source allocation needs safe nonnegative dollars and unique references",
+      "Source allocation needs safe nonnegative units and unique references",
     );
   }
   const total = rows.reduce((n, r) => n + BigInt(r.weight), 0n);
@@ -34,3 +34,6 @@ export function allocateSourceDollars2026(
   ) if (residual-- > 0) r.amount++;
   return shares.map(({ remainder: _remainder, ...r }) => r);
 }
+
+/** Whole-dollar callers use the same integer allocation. */
+export const allocateSourceDollars2026 = allocateSourceUnits2026;

@@ -174,7 +174,9 @@ export function finalizeLandBusinessLoss2026(raw: LandBusinessLossSource2026) {
     source_input: source,
     preliminary,
     finalized_loss: finalizedLoss,
-    finalized_sources: finalizedSources,
+    // Return the parsed final inventory, including canonical nested key order,
+    // so downstream source comparisons use the same schema-normalized records.
+    finalized_sources: final.source_input,
     calculation: final,
     loss_attribution: {
       source_reference: source.record_reference,

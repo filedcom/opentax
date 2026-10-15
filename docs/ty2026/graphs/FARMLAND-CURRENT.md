@@ -53,7 +53,7 @@ net section 1231 is line 8, prior loss is line 9, residual capital gain is line
 10, ordinary section 1231 loss is line 12, prior-loss recapture is line 13, and
 ordinary totals are lines 19/20b. The standalone PDF component now applies the
 printed skip rules described below. No depreciable property, rental/passive allocation,
-K-1, casualty, QOF, livestock, Part III/IV or return-wide QBI integration is claimed.
+K-1, casualty, QOF, livestock, Part III/IV or public land-return integration is claimed.
 NIIT support is limited to the explicitly reviewed internal handoff below.
 
 ## Internal capital and NIIT connection
@@ -88,9 +88,10 @@ Standalone draft components now print Schedule D line 11 and Form 8960 lines
 5a/5b/5d. They require matching Form 4797/Schedule 1 destinations, retain draft
 markings and are visually checked. These component PDFs are not a complete
 filing package: the graph and attachment/bundle owner remain unfinished.
-The capital graph node and deduction finalizer deliberately reject this handoff
-until QBI, loss limitations and the remaining source/attachment routes are
-connected. This prevents an internal helper from bypassing ordinary-gain QBI.
+The capital graph node still rejects this handoff pending the remaining source
+and attachment routes. Deduction selection now accepts it only through the
+combined QBI/loss owner below, with matching finalized capital sources. An
+unaccompanied internal land handoff still cannot bypass ordinary-gain QBI.
 
 ## Standalone Form 4797 draft component
 
@@ -155,8 +156,8 @@ negative activity amounts, separates qualified domestic non-SSTB items from
 reviewed foreign-business items, and retains material participation separately
 for active QBI. Suspended qualified and nonqualified amounts stay distinct from
 current allowed QBI and from Form 8995's allowed-loss carryforward. These are
-the land contributions only; the return still needs to combine Schedule C and
-other QBI, prior losses and taxable income before claiming a deduction. SSTBs,
+the land contributions only; the combined owner below now reconciles them with
+Schedule C, prior losses and deduction candidates. SSTBs,
 other exclusions and Form 8995-A need their own calculation routes.
 
 For example, a $400,000 nonfarm land loss gives a $144,000 Form 461 adjustment,
@@ -166,6 +167,35 @@ lookback recapture contributes $5,000 of ordinary QBI and $40,000 to Schedule D.
 These semantics follow the [2026 draft 8995 instructions](https://www.irs.gov/pub/irs-dft/i8995--dft.pdf)
 and [4797 instruction comparator](https://www.irs.gov/instructions/i4797);
 the proportional attribution conventions are reviewed implementation choices.
+
+## Combined QBI and deduction selection
+
+The combined source contract contains the land loss/QBI workpaper, a Schedule C
+component review when C records exist, one prior Form 8995 loss record, and a
+complete-inventory review. It does not reuse the C-only assertion that there
+are no other current QBI sources. Both paths share the C/SE contribution
+calculation, prior-owner checks and 2026 simplified deduction evaluator.
+
+The combined owner applies each C loss bucket's disallowed amount to its own
+business. A disallowed half-SE deduction is allocated in cents, weighted by the
+original source SE deduction allocations, so no business gets more than its
+original deduction. This convention is explicitly reviewed. Statutory-employee
+QBI remains in the qualified total but receives no Form 461 allocation. Qualified
+and foreign-business suspended amounts reconcile to the single excess loss;
+current allowed losses and prior Form 8995 carryforwards remain separate.
+
+Deduction selection accepts the retained combined source only with identical
+finalized capital records and owners. Duplicate C/loss owners are rejected.
+Standard and itemized candidates use their own taxable income before QBI and
+section 68, one prior loss, the actual net capital gain/qualified dividends and
+one active-income minimum. Land businesses retain an EIN when supplied.
+
+The combined Form 8995 component replays selection and reconciles the receiving
+1040 deduction lines. It shares the pinned form mapping and continuation renderer
+with the existing C-only builder. Public land intake, graph routing and complete
+bundle registration remain open; this component does not yet enable a filed
+land return. Child-tax land/loss coordination, negative-AGI NOLs, farming-loss
+allocation and the remaining QBI source families still need their source owners.
 
 ## Current IRS source checks
 
@@ -244,3 +274,10 @@ one typed two-form PDF reconciliation check, all 678 tests in the 2026 directory
 and 137 unit checks. The derived $400,000 loss example was rendered as Form 4797
 and Form 461 and inspected for full-loss versus limitation amounts, signs,
 identity and draft markings. No 2025 implementation changed in this step.
+
+Combined-owner verification passed 26 typed calculation/PDF checks, 31 existing
+business/capital typed checks, all 691 tests in the 2026 directory and 137 unit
+checks. Gain, loss and nine-business continuation pages were rendered and
+inspected. The loss-case integration exposed and fixed a key-order mismatch:
+the limitation owner now returns its schema-parsed final inventory for downstream
+source comparisons. No 2025 implementation changed in this step.

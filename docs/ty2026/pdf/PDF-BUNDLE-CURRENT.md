@@ -143,3 +143,9 @@ Reviewed Schedule C loss returns now attach Form 461 after Form 8995/8919 and
 before Form 8959. Schedule 1 line 8p, AGI and Form 8995 allowed losses are replayed
 from the retained loss workpaper. A separate qualified suspended-loss origin is
 kept in the calculation; it is not a second current QBI loss.
+
+The shared Form 8995 renderer now serves both the existing Schedule C path and
+an internal combined C/land source component. The combined component replays
+deduction selection, checks the receiving 1040 amounts, and includes business
+continuations with retained TINs. Land intake, graph routing and bundle attachment
+selection remain unregistered; see [the current land contract](../graphs/FARMLAND-CURRENT.md).

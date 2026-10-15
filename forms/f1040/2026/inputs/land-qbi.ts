@@ -18,6 +18,7 @@ export const landQbiSource2026Schema = z.object({
         owner_tin: z.string().regex(/^\d{9}$/),
         activity_reference: ref,
         business_name: ref,
+        ein: z.string().regex(/^\d{9}$/).optional(),
         record_reference: ref,
         materially_participated: z.boolean(),
         treatment: z.discriminatedUnion("kind", [

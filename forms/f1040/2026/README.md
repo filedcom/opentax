@@ -980,8 +980,11 @@ loss still requires the separate Form 172 allocation route.
 
 The land QBI component keeps ordinary/capital character, allowed/suspended loss
 and qualified/foreign-business treatment by owner and activity. It supplies the
-land contribution, not a complete Form 8995 deduction: current Schedule C/other
-QBI, prior losses and taxable income still need a combined return owner. The
-existing C-only route retains its reviewed allocation method. Both routes reuse
-one whole-dollar allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
+land contribution. A combined C/land owner now applies one prior-loss record,
+reconciles qualified and nonqualified suspended origins, and evaluates the
+existing deduction candidates with their actual capital-gain limit. The shared
+Form 8995 renderer serves both the C-only and combined source paths, including
+continuations. Public land graph/bundle registration remains open. The existing
+C-only route retains its reviewed allocation method; both routes reuse the same
+integer allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
 records these conventions, component PDF evidence and remaining graph/bundle work.

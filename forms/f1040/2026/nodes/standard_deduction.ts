@@ -1,3 +1,8 @@
+import {
+  combinedQbiCalculator2026,
+  combinedQbiSource2026Schema,
+  resolveCombinedQbi2026,
+} from "../inputs/combined-qbi.ts";
 import { businessLossSource2026Schema } from "../inputs/business-loss-source.ts";
 import {
   childTaxInput2026Schema,
@@ -56,6 +61,7 @@ export const inputSchema = sharedSchema.pick({
   // that may have been calculated against the wrong deduction candidate.
   qbi_deduction: z.never().optional(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  combined_qbi_sources_2026: combinedQbiSource2026Schema.optional(),
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
   capital_sources_2026: capitalGainInput2026Schema.optional(),
   qbi_activity_pending: z.boolean().optional(),
@@ -65,6 +71,27 @@ export function calculateDeductionSelection2026(
   rawInput: z.input<typeof inputSchema>,
 ) {
   const input = inputSchema.parse(rawInput);
+  if (
+    input.combined_qbi_sources_2026 &&
+    (input.business_sources_2026 || input.business_loss_sources_2026)
+  ) {
+    throw new Error(
+      "Combined QBI owns its complete business and loss inventories; duplicate owners are invalid",
+    );
+  }
+  const combined = input.combined_qbi_sources_2026
+    ? resolveCombinedQbi2026(input.combined_qbi_sources_2026)
+    : undefined;
+  if (
+    combined &&
+    (input.child_tax_source_2026 ||
+      (input.taxpayer_dob && input.taxpayer_dob > "2003-01-01" &&
+        input.filing_status !== FilingStatus.MFJ))
+  ) {
+    throw new Error(
+      "Land dispositions need coordinated child-tax income and loss-addback sources",
+    );
+  }
   const childTax = input.child_tax_source_2026
     ? resolveChildTax2026(input.child_tax_source_2026)
     : undefined;
@@ -87,7 +114,7 @@ export function calculateDeductionSelection2026(
   }
   const businessAmounts = input.business_sources_2026
     ? resolveBusinessQbi2026(input.business_sources_2026).business
-    : undefined;
+    : combined?.business?.business;
   if (
     businessAmounts &&
     (input.wage_income_from_agi === undefined ||
@@ -152,9 +179,20 @@ export function calculateDeductionSelection2026(
   const capital = input.capital_sources_2026
     ? calculateCapitalGains2026(input.capital_sources_2026)
     : undefined;
-  if (capital?.land) {
+  if (capital?.land && !combined) {
     throw new Error(
       "Land dispositions need their QBI and loss-limit owners before deduction finalization",
+    );
+  }
+  if (
+    combined && (!capital ||
+      combined.land.loss.finalized_sources.filing_status !==
+        input.filing_status ||
+      JSON.stringify(capital.source_input) !==
+        JSON.stringify(combined.land.loss.finalized_sources.capital_sources))
+  ) {
+    throw new Error(
+      "Combined QBI and deduction selection need identical finalized capital sources and owners",
     );
   }
   if (input.business_sources_2026 && !capital) {
@@ -177,7 +215,7 @@ export function calculateDeductionSelection2026(
       "QBI business, capital and deduction sources must have the same return owners",
     );
   }
-  if (input.business_sources_2026 && input.agi < 0) {
+  if ((input.business_sources_2026 || combined) && input.agi < 0) {
     throw new Error(
       "Business losses creating a negative AGI need the NOL/carryover owner",
     );
@@ -190,7 +228,9 @@ export function calculateDeductionSelection2026(
   ) {
     throw new Error("Deduction and loss owners need identical capital sources");
   }
-  const qbi = input.business_sources_2026
+  const qbi = input.combined_qbi_sources_2026
+    ? combinedQbiCalculator2026(input.combined_qbi_sources_2026)
+    : input.business_sources_2026
     ? businessQbiCalculator2026(
       input.business_sources_2026,
       capital!.preferential_gain + capital!.qualified_dividends,
@@ -216,6 +256,7 @@ export function calculateDeductionSelection2026(
     source_input: input,
     resolution: resolved,
     child_tax_review: childTax ?? null,
+    combined_qbi_workpaper: combined ?? null,
     business_child_income_workpaper: businessChildWorkpaper ?? null,
     form8615_screened_unearned_income: Math.max(0, unearned),
   };
