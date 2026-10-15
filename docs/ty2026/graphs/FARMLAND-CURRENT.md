@@ -250,8 +250,8 @@ two nonterminal container entries. The print component checks every terminal
 field, retains the current revision label and clears the printed date placeholder
 before painting the actual closing date.
 
-This component is not registered as a public election or a completed Form 1062.
-Timely election, installment records, settlement, full bundle and MeF work remain.
+These components now feed the internal draft election graph described below.
+They are not a public filing product; advanced election cases and MeF remain.
 
 ## Internal Form 1062 tax and credit replay
 
@@ -321,8 +321,8 @@ Schedule 3 line 13e and Form 1040 line 24b amounts. It reuses the Schedule A
 builder and requires the exact covenant bytes before generating the main draft.
 The returned components retain attachment sequences 106 and 106A, matching sale
 references, and separate original covenant PDFs. All generated pages are static
-and draft-marked. This does not yet wire the components into return settlement
-or the public election flow.
+and draft-marked. The internal graph below connects supported ordinary cases
+to draft settlement and the full return bundle; public filing remains open.
 
 ## Current IRS source checks
 
@@ -407,7 +407,73 @@ addition to tax. The [September 29 proposed regulations](https://www.govinfo.gov
 are not final and permit reliance only with complete, consistent compliance.
 The ledger does not infer an assessment from a missed payment, compute an
 accelerated due date, or claim compliance with the entire proposal. A late or
-missing payment triggers review before any future settlement integration.
+missing payment triggers review before draft settlement.
+
+## Document-bound internal election graph and bundle
+
+The internal source catalog accepts `form1062.claim` with the election, tax-scope
+review and installment records. It accepts no tax totals or finalized source
+handoffs. Six actual owners forward their retained inputs and relevant return
+lines: regular tax, AMT, Schedule 2, care, education and child/energy credits.
+`nodes/form1062.ts` follows all six, replays qualification/tax/credits and the
+installment workpaper, then precedes final Schedule 3 and Form 1040. It has no
+dependency on the completed Form 1040, so the graph remains acyclic. Actual
+income, deductions, credit amounts, AMT, other taxes and carryforwards remain
+unchanged; only the derived election amounts enter draft settlement.
+
+The extension-payment owner also precedes the election. It reuses the shared
+2025 payment calculation and evidence schema through an explicit year parameter;
+the legacy node and default schema still use 2025. The 2026 source requires
+reviewed, accepted ordinary extension receipts dated January 1–April 15, 2027,
+matching return owners, distinct payment confirmations and account references.
+Whole-dollar receipt amounts reach Schedule 3 line 10 once, including any portion
+paid toward regular tax beyond the first farmland installment. The same source
+also works on returns without a farmland election.
+
+A ledger allocation alone does not identify a return payment category. Every
+recorded installment payment in the draft election route must match a receipt's
+confirmation, account reference, effective date and extension reference; its
+allocated amount cannot exceed that receipt. Only first-installment allocations
+are currently connected to return payments. Later-installment/prepayment,
+estimated-tax, withholding-allocation and payments made with a filed return
+need their own source owners before those ledger records can settle. Evidence
+dated after the ledger review is rejected. This prevents an already paid first
+installment from being silently omitted from current-return payment credits,
+without treating every ledger entry as an extension payment.
+
+For the $3,368 synthetic election, a $1,000 extension receipt with $842 allocated
+to the first installment yields Schedule 3 line 10 of $1,000 and line 13e of
+$3,368. With $100 withholding, the return balance is $2,245, rather than the
+$3,245 balance before crediting the receipt. This follows the extension-payment
+line described in the [Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+and retained on the [2026 Schedule 3 draft](https://www.irs.gov/pub/irs-dft/f1040s3--dft.pdf).
+
+`executeDraftSources2026` parses the source catalog and binds the exact claimed
+covenant PDFs before graph execution. `Form1062Covenants2026` reuses the shared
+SHA-256 byte verifier, checks PDF readability and requires at least one page.
+Each execution receives its own node instance with those verified copies; no
+global capability or source document state changes. Ordinary synchronous graph
+execution cannot post an election without that binding. No-election executions
+keep the existing behavior, and surplus unclaimed documents are rejected.
+
+The node checks the qualified sale claims against the bound document manifest
+and rejects late election dates, overdue/late payment review and fractional
+installment rounding differences before posting. Existing schema gates hold
+special deadlines and acceleration events. Under the supported scope, line 14
+feeds Schedule 3 line 13e and line 15 feeds Form 1040 line 24b. For the synthetic
+$3,368 election, Schedule 3 receives $3,368 and Form 1040 receives $842, giving a
+$2,526 net deferral without replacing any actual credit calculation.
+
+The bundle executes through this bound path, independently reconciles the
+retained actual return lines to finalized Form 1040 and verifies both election
+destinations. It inserts Form 1062 and Schedule A at sequences 106 and 106A,
+with description continuations following official forms. Required covenant
+originals remain separate `sourceAttachments`, each linked to its Schedule A
+manifest entries, with byte-identical contents and their original fields and
+signatures preserved. Callers must retain both the generated PDF and those
+attachments. Neither this internal graph nor its draft packet establishes
+legal qualification, IRS filing acceptance or complete reliance on proposed
+regulations; all draft outputs remain marked incomplete and not for filing.
 
 ## Remaining connected implementation
 
@@ -416,23 +482,18 @@ missing payment triggers review before any future settlement integration.
    automatically earned income or self-employment income. Preserve the existing
    loss-limit-before-history ordering while expanding asset and recapture cases
    using the full [4797 contract](FORM4797-GRAPH.md).
-2. Register the implemented direct-sale qualification/Schedule A components with
-   the completed election and tax owner. Resolve cross-form rounding differences,
-   public election timing and the remaining installment lifecycle. Support
+2. Extend the connected direct-sale election beyond its current ordinary scope.
+   Resolve cross-form rounding differences, public filing timing and the
+   remaining installment lifecycle. Support
    partnerships, S corporations and allocations with their own source owners
    before enabling those claims.
-3. Integrate the internal source-reconciled tax/credit replay above with the
-   election owner and extend remaining tax/credit families. Preserve its
+3. Extend remaining tax/credit families in the connected election owner. Preserve its
    regular-tax scope and hypothetical-only AMT/credit calculations; do not
    replace actual return credits, carryforwards, AMT, NIIT, SE or household tax.
-4. Post Form 1062 line 14 to Schedule 3 line 13e and the first installment to
-   Form 1040 line 24b after credit resolution, without creating a graph cycle.
-   Connect the internal installment workpaper and resolve its rounding review,
-   special deadlines and acceleration evidence. Integrate any estimated-tax
-   relief from the applicable authority.
-5. Register the implemented Form 1062, Schedule A and covenant components
-   alongside the registered Form 4797 component;
-   reconcile source, printed lines, return settlement and current MeF/rules.
+4. Resolve fractional-installment settlement, special deadlines and acceleration
+   evidence. Integrate any estimated-tax relief from the applicable authority.
+5. Reconcile the connected Form 1062/Schedule A/covenant packet and settlement
+   with current MeF/rules and the remaining filing requirements.
    Verify the full ATS scenario independently. Its assumed $200 installment
    does not supply the missing farmland proceeds, basis, covenant or tax
    recalculation and must not become a public tax override.
@@ -503,3 +564,17 @@ ledger tests and thirteen existing tax replay tests) and all 736 tests in the
 partial and late payments, cent conservation, allocation evidence and rejected
 unsupported lifecycle facts. No shared 2025 calculation or PDF implementation
 changed in this step. Public settlement and the remaining lifecycle are open.
+
+The document-bound internal election graph and full draft bundle passed 34
+typed focused checks, all 750 tests in the 2026 directory and 137 unit checks.
+The focused checks include legacy 2025 extension-payment routing and return/XML
+source reconciliation after extracting the shared year-parameterized helper.
+Three complete synthetic bundles (ordinary election, ordered credits with an
+extension receipt, and AMT) were rendered; all 44 pages were visually reviewed.
+Generated pages have no form fields or annotations, and covenant originals
+remain byte-identical with their existing fields intact. Review found and fixed
+overlapping draft labels and a missing return-payment connection: paid first
+installments now require matching current-return extension receipts, whose full
+amount is credited once on Schedule 3 line 10. Unsupported payment categories,
+fractional installment rounding, special deadlines and acceleration remain
+held; public filing and IRS acceptance are unfinished.

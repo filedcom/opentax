@@ -990,7 +990,8 @@ supplies the selected deduction. Form 4797 attaches before Form 6251. The existi
 C-only route retains its reviewed allocation method; both routes reuse the same
 integer allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
 records these conventions, graph/PDF evidence and remaining advanced cases.
-Form 1062, full parity, public filing and current IRS acceptance remain open.
+Advanced Form 1062 cases, full parity, public filing and current IRS acceptance
+remain open.
 
 
 Form 1062 now has an internal direct-sale qualification and Schedule A component.
@@ -1006,6 +1007,20 @@ receiving amounts and includes matching Schedule A components with original
 covenants. An internal installment workpaper now derives four equal amounts in
 cents, reconciles evidenced payment allocations and distinguishes the election
 filing deadline from ordinary payment dates. It flags late records and printed
-whole-dollar rounding differences for review. Special deadlines, acceleration,
-public election registration, settlement, bundle and MeF remain open; see the
+whole-dollar rounding differences for review. `executeDraftSources2026` now
+binds exact covenant PDF copies to each internal source execution. The new
+`form1062.claim` source carries election, tax-scope review and installment
+records; tax and credit amounts come from preceding graph nodes. Qualified
+ordinary cases with timely records and no rounding difference post to Schedule 3
+and Form 1040 after credit resolution. The draft bundle includes main/Schedule A
+pages and returns required original covenants in `sourceAttachments`; callers
+must preserve those separate attachments with the generated PDF. Special
+deadlines, acceleration, fractional-installment settlement, public filing and
+MeF remain open; see the
 [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md).
+
+Reviewed ordinary extension receipts now use `extension_payments.claim` and the
+shared year-parameterized payment calculation, retaining the 2025 defaults.
+Matching receipts feed Schedule 3 line 10 once; recorded first-installment
+payments must reconcile to those receipts before an extended election settles.
+Other payment categories and later-installment settlement remain unconnected.

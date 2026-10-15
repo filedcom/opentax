@@ -269,7 +269,7 @@ class EducationCredit2026Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["schedule3", "f1040"];
+    return ["schedule3", "f1040", "form1062"];
   }
   compute(ctx: NodeContext, raw: EducationInput2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -278,6 +278,12 @@ class EducationCredit2026Node extends TaxNode<typeof inputSchema> {
     const calculation = calculateEducationCredit2026(raw);
     return {
       outputs: [{
+        nodeType: "form1062",
+        fields: {
+          education: calculation.source_input,
+          line29_refundable_aotc: calculation.lines?.line8 ?? 0,
+        },
+      }, {
         nodeType: "f8863",
         fields: { calculation_2026: calculation },
       }, {

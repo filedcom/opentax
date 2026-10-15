@@ -1,3 +1,5 @@
+import { form1062_2026 } from "./nodes/form1062.ts";
+import { extension_payments_2026 } from "./inputs/extension-payments.ts";
 import { form461_2026 } from "./nodes/form461.ts";
 import { f5695_2026 } from "./inputs/energy.ts";
 import { schedule3_final_2026 } from "./nodes/schedule3-final.ts";
@@ -50,6 +52,8 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  form1062: form1062_2026,
+  extension_payments: extension_payments_2026,
   f5695: f5695_2026,
   schedule3_final: schedule3_final_2026,
   household_employment: household_employment_2026,

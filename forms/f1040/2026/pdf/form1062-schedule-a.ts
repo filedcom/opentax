@@ -5,10 +5,8 @@ import {
   StandardFonts,
   TextAlignment,
 } from "pdf-lib";
-import {
-  type SourceDocumentBytes,
-  VerifiedSourceDocuments,
-} from "../../../../core/runtime/source-documents.ts";
+import type { SourceDocumentBytes } from "../../../../core/runtime/source-documents.ts";
+import { Form1062Covenants2026 } from "../inputs/form1062-documents.ts";
 import {
   type Form1062Election2026,
   resolveForm1062Sources2026,
@@ -30,25 +28,11 @@ export async function buildForm1062Schedules2026(
   ) {
     throw new Error("Form 1062 Schedule A needs matching filer identity");
   }
-  const verified = await VerifiedSourceDocuments.verify(
+  const verified = await Form1062Covenants2026.verify(
     calculation.covenant_claims,
     documents,
   );
-  const covenants = await Promise.all(verified.manifest.map(async (claim) => {
-    const bytes = verified.getBytes(claim.reference)!;
-    let doc: PDFDocument;
-    try {
-      doc = await PDFDocument.load(bytes);
-    } catch {
-      throw new Error(
-        "Form 1062 covenant must be a readable, unencrypted PDF copy",
-      );
-    }
-    if (doc.getPageCount() < 1) {
-      throw new Error("Form 1062 covenant PDF has no pages");
-    }
-    return { ...claim, bytes, pages: doc.getPageCount() };
-  }));
+  const covenants = verified.originals();
   const template = await loadPinnedDraft2026(
     new URL(
       "../../../../docs/ty2026/corpus/continuous/f1062sa.pdf",

@@ -12,6 +12,8 @@ const inputSchema = schedule3Input2026Schema.pick({
   line2_childcare_credit: true,
   line3_education_credit: true,
   line5a_residential_clean_energy: true,
+  line13e_section1062_tax: true,
+  line10_amount_paid_extension: true,
 }).strict();
 /** Final total follows the atomic energy/child-credit resolution. */
 class Schedule3Final2026 extends TaxNode<typeof inputSchema> {

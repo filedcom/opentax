@@ -106,7 +106,7 @@ class CareCreditNode2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["schedule3", "f8863"];
+    return ["schedule3", "f8863", "form1062"];
   }
   compute(ctx: NodeContext, raw: CareCreditInput2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -115,6 +115,13 @@ class CareCreditNode2026 extends TaxNode<typeof inputSchema> {
     const result = calculateCareCredit2026(raw);
     return {
       outputs: [
+        {
+          nodeType: "form1062",
+          fields: {
+            care: result.source_input,
+            line11b_agi: result.source_input.agi,
+          },
+        },
         {
           nodeType: "f8863",
           fields: {

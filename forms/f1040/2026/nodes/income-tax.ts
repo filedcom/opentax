@@ -197,7 +197,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "income_tax_calculation";
   readonly inputSchema = inputSchema;
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "f2441", "f8863"];
+    return [...this.outputNodes.nodeTypes, "f2441", "f8863", "form1062"];
   }
   // These shared identities do not register or execute legacy calculators in 2026.
   readonly outputNodes = new OutputNodes([
@@ -217,6 +217,14 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
     const tax = result.line16IncomeTax;
     return {
       outputs: [
+        {
+          nodeType: "form1062",
+          fields: {
+            income_tax: input,
+            line15_taxable_income: input.taxable_income,
+            line16_income_tax: tax,
+          },
+        },
         { nodeType: this.nodeType, fields: { calculation_2026: result } },
         ...(result.form8615
           ? [{ nodeType: "form8615", fields: { ...result.form8615.fields } }]

@@ -357,6 +357,9 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
 class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8812";
   readonly inputSchema = inputSchema;
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "form1062"];
+  }
   readonly outputNodes = new OutputNodes([
     f1040_2026_node,
     schedule3_final_2026,
@@ -368,6 +371,18 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
     const calculation = calculateChildCredit2026(raw);
     return {
       outputs: [
+        {
+          nodeType: "form1062",
+          fields: {
+            child: calculation.source_input,
+            line19_child_tax_credit: calculation.lines?.line14 ?? 0,
+            line28_actc: calculation.lines?.line27 ?? 0,
+            line20_nonrefundable_credits:
+              (calculation.source_input.finalized_dependent_care_credit ?? 0) +
+              (calculation.source_input.finalized_education_credit ?? 0) +
+              (calculation.energy_credit?.lines.line3 ?? 0),
+          },
+        },
         { nodeType: "f8812", fields: { calculation_2026: calculation } },
         {
           nodeType: "schedule3_final",

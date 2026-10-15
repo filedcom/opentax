@@ -156,9 +156,23 @@ sources; see [the current land contract](../graphs/FARMLAND-CURRENT.md).
 Form 1062 Schedule A is now an internal component using the IRS continuous-use
 December 2025 revision, with long-description continuations. Exact covenant
 references/digests must bind to readable PDF copies. The originals are returned
-unchanged and separately from the generated static Schedule A pages. This does
-not yet register Form 1062 or its election in the return bundle. The internal
-tax/credit replay now derives the main form's lines. Its renderer checks the
+unchanged and separately from the generated static Schedule A pages. The internal
+tax/credit replay derives the main form's lines. Its renderer checks the
 26-field inventory and receiving Schedule 3/1040 amounts, removes the IRS cover,
 and returns static main/Schedule A components plus separate original covenants.
-Settlement connection and full return-bundle registration remain open.
+The internal source graph now connects qualified ordinary elections to draft
+settlement after actual credit resolution. `buildDraftReturnPdf2026(raw,
+documents)` verifies exact covenant copies before execution and includes Form
+1062 at sequence 106 and each Schedule A at 106A. It reconciles the retained
+actual tax/credit lines against final Form 1040 as well as checking both election
+destinations. Original covenants are returned byte-identically in
+`sourceAttachments`, with references, digests, page counts and `requiredForForms`
+links to the Schedule A manifests. They are required separate attachments;
+the generated PDF alone is not the complete packet. It does not merge, flatten
+or stamp the originals. Late elections/payments, special deadline cases and
+unreconciled fractional-installment rounding fail before draft rendering.
+Public filing, full regulation review, advanced cases and MeF remain open.
+Reviewed extension-payment receipts also feed Schedule 3 line 10 and the return
+balance once. An installment ledger entry alone cannot supply that payment
+credit; the election graph reconciles it to the separate receipt source before
+rendering an extended return.

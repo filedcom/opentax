@@ -1,3 +1,8 @@
+import { form1062_2026, form1062Claim2026Schema } from "./nodes/form1062.ts";
+import {
+  extension_payments_2026,
+  extensionPaymentClaim2026Schema,
+} from "./inputs/extension-payments.ts";
 import { f5695_2026 } from "./inputs/energy.ts";
 import {
   land_dispositions_2026,
@@ -90,6 +95,12 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: extension_payments_2026,
+    isArray: false,
+    inputSchema: extensionPaymentClaim2026Schema,
+  },
+  { node: form1062_2026, isArray: false, inputSchema: form1062Claim2026Schema },
   {
     node: land_dispositions_2026,
     isArray: false,

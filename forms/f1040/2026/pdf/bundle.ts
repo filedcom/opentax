@@ -1,4 +1,8 @@
 import type { calculateForm461_2026 } from "../nodes/form461.ts";
+import { executeDraftSources2026 } from "../execute.ts";
+import type { SourceDocumentBytes } from "../../../../core/runtime/source-documents.ts";
+import type { calculateForm1062Tax2026 } from "../inputs/form1062-tax.ts";
+import { buildForm1062Draft2026 } from "./form1062.ts";
 import type { calculateLandReturn2026 } from "../nodes/land-dispositions.ts";
 import { buildForm4797PdfBytes2026 } from "./form4797.ts";
 import { buildCombinedQbiPdfBytes2026 } from "./form8995.ts";
@@ -26,8 +30,6 @@ import type { calculateChildCredit2026 } from "../nodes/f8812.ts";
 import { buildSchedule8812PdfBytes2026 } from "./schedule8812.ts";
 import type { calculateSocialSecuritySources2026 } from "../inputs/social-security-source.ts";
 import { PDFDocument, PDFName, rgb, StandardFonts } from "pdf-lib";
-import { execute } from "../../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { sourceRegistry2026 } from "../source-registry.ts";
 import type { calculateInvestmentClaim2026 } from "../inputs/investment-claim.ts";
@@ -71,18 +73,16 @@ export interface DraftAttachment2026 {
  * Accept only the currently registered source claims, execute once, then reconcile
  * every selected component against that execution. No caller-supplied line totals.
  */
-export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
+export async function buildDraftReturnPdf2026(
+  raw: Record<string, unknown>,
+  documents: readonly SourceDocumentBytes[] = [],
+) {
   // The executor can skip an entirely absent input; a return cannot lack a filer.
   if (!raw.general) {
     throw new Error("TY2026 draft bundle needs general filer input");
   }
   const input = sourceRegistry2026.start.inputSchema.parse(raw);
-  const calculation = execute(
-    buildExecutionPlan(sourceRegistry2026),
-    sourceRegistry2026,
-    input,
-    { taxYear: 2026, formType: "f1040" },
-  );
+  const calculation = await executeDraftSources2026(input, documents);
   if (calculation.diagnostics.length) {
     throw new Error(
       `TY2026 draft bundle calculation failed: ${
@@ -195,20 +195,55 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const s3 = retained<ReturnType<typeof calculateSchedule3_2026>>(
     "schedule3_final",
   );
+  const election = retained<ReturnType<typeof calculateForm1062Tax2026>>(
+    "form1062",
+  );
+  let electionForms:
+    | Awaited<ReturnType<typeof buildForm1062Draft2026>>
+    | undefined;
+  if (election) {
+    // Independent reconciliation against the finalized return catches any drift
+    // between graph handoffs and the actual printed income/tax/credit lines.
+    for (
+      const [key, value] of Object.entries(election.source_input.return_lines)
+    ) {
+      if (line(key) !== value) {
+        throw new Error(`Form 1062 source disagrees with final ${key}`);
+      }
+    }
+    const verified = calculation.verifiedSourceDocuments;
+    if (!verified) {
+      throw new Error("Form 1062 bundle needs execution-bound covenant copies");
+    }
+    electionForms = await buildForm1062Draft2026(
+      election.source_input,
+      verified.manifest.map((c) => ({
+        reference: c.reference,
+        bytes: verified.getBytes(c.reference)!,
+      })),
+      {
+        schedule3_line13e: s3?.input.line13e_section1062_tax ?? 0,
+        form1040_line24b: line("line24b_form1062"),
+      },
+      filer,
+    );
+  }
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
   const parts: {
     form: string;
     officialPages?: number;
     render: () => Promise<Uint8Array>;
+    hasIncompleteFooter: boolean;
   }[] = [];
   const add = (
     form: string,
     officialPages: number | undefined,
     render: () => Promise<Uint8Array>,
-  ) => parts.push({ form, officialPages, render });
+    hasIncompleteFooter = false,
+  ) => parts.push({ form, officialPages, render, hasIncompleteFooter });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -583,6 +618,18 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         }, filer),
     );
   }
+  if (electionForms) {
+    const forms = electionForms;
+    add("form1062", 1, () => Promise.resolve(forms.bytes), true);
+    for (const schedule of forms.schedules) {
+      add(
+        `form1062_schedule_a:${schedule.sale_reference}`,
+        schedule.official_pages,
+        () => Promise.resolve(schedule.bytes),
+        true,
+      );
+    }
+  }
   if (moving?.moves.some((m) => m.file_form3903)) {
     add("form3903", undefined, () =>
       buildForm3903PdfBytes2026(
@@ -611,16 +658,27 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       statementPages: [],
     };
     attachments.push(manifest);
-    rendered.push({ source, officialPages, manifest });
+    rendered.push({
+      source,
+      officialPages,
+      manifest,
+      hasIncompleteFooter: part.hasIncompleteFooter,
+    });
   }
+  const pagesWithIncompleteFooter = new Set<number>();
   for (const statements of [false, true]) {
-    for (const { source, officialPages, manifest } of rendered) {
+    for (
+      const { source, officialPages, manifest, hasIncompleteFooter } of rendered
+    ) {
       const indices = source.getPageIndices().filter((i) =>
         (i >= officialPages) === statements
       );
       for (const page of await document.copyPages(source, indices)) {
         page.node.delete(PDFName.of("Annots"));
         document.addPage(page);
+        if (hasIncompleteFooter) {
+          pagesWithIncompleteFooter.add(document.getPageCount());
+        }
         (statements ? manifest.statementPages : manifest.formPages).push(
           document.getPageCount(),
         );
@@ -628,7 +686,8 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     }
   }
   const font = await document.embedFont(StandardFonts.Helvetica);
-  for (const page of document.getPages()) {
+  for (const [index, page] of document.getPages().entries()) {
+    if (pagesWithIncompleteFooter.has(index + 1)) continue;
     page.drawText("INCOMPLETE 2026 IMPLEMENTATION", {
       x: 350,
       y: 12,
@@ -645,6 +704,14 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   return {
     bytes: await document.save({ updateFieldAppearances: false }),
     attachments,
+    // Never flatten/merge a signed covenant into generated return pages. These
+    // are required original attachments, not optional copies of rendered pages.
+    sourceAttachments: electionForms?.covenants.map((covenant) => ({
+      ...covenant,
+      requiredForForms: electionForms!.schedules.filter((s) =>
+        s.covenant_reference === covenant.reference
+      ).map((s) => `form1062_schedule_a:${s.sale_reference}`),
+    })) ?? [],
     calculation,
     filingReady: false as const,
     // Pending deposits are not evidence that a credit/activity was finalized.

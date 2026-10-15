@@ -288,6 +288,9 @@ class Form6251Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form6251";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2_2026]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "form1062"];
+  }
   compute(ctx: NodeContext, raw: Form6251Input2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Form 6251 needs f1040:2026 context");
@@ -295,6 +298,7 @@ class Form6251Node2026 extends TaxNode<typeof inputSchema> {
     const result = calculateForm6251_2026(raw);
     return {
       outputs: [
+        { nodeType: "form1062", fields: { amt: result.source_input } },
         {
           nodeType: this.nodeType,
           fields: {
