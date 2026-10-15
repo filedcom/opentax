@@ -16,7 +16,10 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   Reviewed qualifying-person records now support incapacity, ordinary custodial
   care and birth/death residence, with dated expenses and independent 1040
   dependency treatment. Claimable filers' deductions use actual wage income;
-  potential Form 8615 returns remain gated for their source/calculation owner. See
+  potential Form 8615 returns remain gated for their source/calculation owner.
+  MFS home reviews derive current-credit eligibility, while separate spouse W-2
+  records constrain benefits without adding spouse income to this return.
+  Eligible prior-year credits remain available to ordinary MFS. See
   [current care scope and remaining gates](../../../docs/ty2026/graphs/FORM2441-CURRENT.md).
 
 - `ssa1099` reconciles current SSA/RRB copies, ownership, signed repayments and

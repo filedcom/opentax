@@ -23,6 +23,7 @@ export function dependentCareFixture2026(
         credit: { taxpayer: false, spouse: false },
       },
       prior_year_expenses: { kind: "none" },
+      mfs_review: { kind: "not_mfs" },
       no_proprietor_or_partner_benefits: true,
       no_foreign_tax_or_form8978_credit: true,
       no_spouse_death_during_year: true,

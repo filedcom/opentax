@@ -81,13 +81,14 @@ export async function buildForm2441PdfBytes2026(
     form.getCheckBox(name(id, index)).check();
   fill("f1_1", filer.name);
   fill("f1_2", filer.ssn);
+  if (r.check_line_a) check("c1_1");
   if (r.benefit.details.student_or_disabled_deemed_income_used) check("c1_2");
   const providers = [...r.benefit.details.care_providers].sort((a, b) =>
     b.amount_paid - a.amount_paid
   );
-  const people = [...r.benefit.details.qualifying_people].sort((a, b) =>
-    b.credit_expenses_paid - a.credit_expenses_paid
-  );
+  const people =
+    (r.current_credit_eligible ? [...r.benefit.details.qualifying_people] : [])
+      .sort((a, b) => b.credit_expenses_paid - a.credit_expenses_paid);
   const providerName = (p: typeof providers[number]) =>
     p.kind === "person" ? `${p.first_name} ${p.last_name}` : p.name;
   const providerTin = (p: typeof providers[number]) =>
@@ -157,11 +158,13 @@ export async function buildForm2441PdfBytes2026(
     "line11",
   ] as const;
   for (const [i, key] of creditLines.entries()) {
+    if (!r.current_credit_eligible && (i < 6 || l.line9b === 0)) continue;
     fill(`f1_${27 + i}`, key === "line8" ? Math.round(l.line8 * 100) : l[key]);
   }
   if (r.part3) {
     check("c2_1", 0);
     for (let line = 12; line <= 31; line++) {
+      if (!r.current_credit_eligible && line >= 27) continue;
       fill(`f2_${line - 11}`, l[`line${line}` as keyof typeof l]);
     }
   }

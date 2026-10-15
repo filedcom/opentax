@@ -15,7 +15,7 @@ IRS release before filing.
 | Printed area | AcroForm widgets | Required projection |
 | --- | --- | --- |
 | Name and SSN | `f1_1`, `f1_2` | Form 1040 filer identity. |
-| A and B | `c1_1`, `c1_2` | MFS considered-unmarried answer and calculated student/disability deemed-income use from monthly facts. |
+| A and B | `c1_1`, `c1_2` | MFS current-credit eligibility or eligible prior-year credit, and calculated student/disability deemed-income use from monthly facts. |
 | More than three providers | `c1_3` | Check only with a provider continuation statement. |
 | Part I provider names, addresses, TINs, paid amounts | `f1_3`–`f1_14` | Three columns. Address widgets `f1_6`–`f1_8` have mismatched line spacing, so the current static builder draws street, unit, city, state, and ZIP directly on the printed rows. Preserve every provider beyond three on a continuation statement. |
 | Part I line 1d | `c1_4[0/1]`–`c1_6[0/1]` | Paired Yes/No checkboxes, `/1` and `/2` on-state values. Check exactly one per populated provider. Reconcile Yes providers with Schedule H facts. |
@@ -61,6 +61,13 @@ people, using resolved general identities and the calculated over-12/incapacity
 flag. These rows do not add Form 1040 dependents. The six-page October 15 QA set
 covers the disability and deemed-income boxes, a custodial child, a newborn and
 an additional disabled-person continuation with zero expenses.
+
+MFS benefit-only returns leave Part II and lines 27–31 blank. MFS prior-only
+credit checks A and prints zero on 9a, followed by 9b–11 and Worksheet A.
+Considered-unmarried MFS uses its own line-19 earnings and the $7,500 limit;
+ordinary MFS uses reconciled separate spouse earnings and the $3,750 limit.
+The eight-page MFS QA set verifies A/B boxes, both limits, disabled-spouse
+income, prior-only credit and static output without annotations or AcroForm.
 
 Before full filing support, complete the remaining eligibility,
 changed-filing-unit prior expenses, self-employed benefit and special-provider routes in the

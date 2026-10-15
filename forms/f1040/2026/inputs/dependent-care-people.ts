@@ -171,12 +171,13 @@ export function resolveCarePeople2026(
     let spouseIncapacityMonths: boolean[] | undefined;
     if (c.kind === "disabled_spouse") {
       if (
-        ctx.filing_status !== FilingStatus.MFJ || !ctx.spouse_ssn ||
+        ![FilingStatus.MFJ, FilingStatus.MFS].includes(ctx.filing_status) ||
+        !ctx.spouse_ssn ||
         id !== normalized(ctx.spouse_ssn) || !ctx.spouse_first_name ||
         !ctx.spouse_last_name || !ctx.spouse_dob
       ) {
         throw new Error(
-          "Disabled care spouse must match the identified joint spouse",
+          "Disabled care spouse must match the identified married spouse",
         );
       }
       firstName = ctx.spouse_first_name;

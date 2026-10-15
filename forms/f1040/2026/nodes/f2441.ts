@@ -1,3 +1,4 @@
+import { FilingStatus } from "../../nodes/types.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -60,10 +61,16 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
     dependentCare2026,
     benefit.credit_income!,
   );
+  const currentCreditEligible = details.filing_status !== FilingStatus.MFS ||
+    details.mfs_eligibility_met === true;
+  const line9a = currentCreditEligible ? core.line9a : 0;
+  // MFS without the current-year exception may still claim eligible prior-year
+  // expenses: i2441 (2026), line A. Only current credit is suppressed.
   const line9b = benefit.prior_year_worksheet?.lines.line13 ?? 0;
-  const line9c = core.line9a + line9b;
+  const line9c = line9a + line9b;
   const lines = {
     ...core,
+    line9a,
     line9b,
     line9c,
     line11: Math.min(line9c, core.line10),
@@ -76,6 +83,9 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
     source_input: input,
     benefit: { ...benefit, details },
     lines,
+    current_credit_eligible: currentCreditEligible,
+    check_line_a: details.filing_status === FilingStatus.MFS &&
+      (currentCreditEligible || line9b > 0),
     file_form2441: part3 || lines.line11 > 0,
     part3,
   };

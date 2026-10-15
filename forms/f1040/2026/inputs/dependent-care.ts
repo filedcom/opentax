@@ -1,3 +1,4 @@
+import { careMfs2026Schema, resolveCareMfs2026 } from "./dependent-care-mfs.ts";
 import {
   calculatePriorCareCredit2026,
   priorCarePayments2026Schema,
@@ -45,6 +46,7 @@ export const dependentCareClaim2026Schema = z.object({
     earned_income: careEarnedIncomeReview2026Schema,
     combat_pay_elections: careCombatElections2026Schema,
     prior_year_expenses: priorCarePayments2026Schema,
+    mfs_review: careMfs2026Schema,
     no_proprietor_or_partner_benefits: z.literal(true),
     no_foreign_tax_or_form8978_credit: z.literal(true),
     no_spouse_death_during_year: z.literal(true),
@@ -86,6 +88,7 @@ export const inputSchema = dependentCareClaim2026Schema.partial().extend({
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: tin,
   spouse_ssn: tin.optional(),
+  mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
   taxpayer_dob: z.string().date(),
   taxpayer_can_be_claimed_as_dependent: z.boolean(),
   spouse_first_name: reference.optional(),
@@ -123,11 +126,6 @@ export function calculateDependentCareBenefits2026(
       lines: null,
       credit_income: null,
     };
-  }
-  if (input.filing_status === FilingStatus.MFS) {
-    throw new Error(
-      "Form 2441 separate returns need the considered-unmarried and spouse-income source owner",
-    );
   }
   if (claim.providers.some((p) => p.household_employee)) {
     throw new Error(
@@ -217,8 +215,29 @@ export function calculateDependentCareBenefits2026(
   }
   const qualification = resolveCarePeople2026(claim.qualifying_people, input);
   const people = qualification.people;
+  const mfs = resolveCareMfs2026(
+    claim.mfs_review,
+    input,
+    people.map((p) => p.ssn),
+  );
+  const separate = input.filing_status === FilingStatus.MFS;
+  if (separate && claim.combat_pay_elections.credit.spouse) {
+    throw new Error(
+      "Separate spouse combat election only applies to the care-benefit worksheet",
+    );
+  }
+  if (mfs.spouse_earnings) annual.spouse = mfs.spouse_earnings;
+  const includeSpouseIncome = joint || mfs.spouse_earnings !== null;
   for (const person of people) {
     if (!person.spouse_incapacity_months) continue;
+    if (
+      separate && (mfs.considered_unmarried ||
+        input.mfs_spouse_lived_with_taxpayer === false)
+    ) {
+      throw new Error(
+        "Disabled care spouse's over-half-year home conflicts with the MFS residence review",
+      );
+    }
     const earned = claim.earned_income;
     if (
       earned.method !== "monthly" || !earned.spouse ||
@@ -280,7 +299,7 @@ export function calculateDependentCareBenefits2026(
     claim.combat_pay_elections,
     annual,
     people.length,
-    joint,
+    includeSpouseIncome,
     "benefits",
   );
   const details: Form2441FilingDetails = {
@@ -297,6 +316,14 @@ export function calculateDependentCareBenefits2026(
     taxpayer_earned_income: benefitIncome.taxpayer,
     spouse_earned_income: benefitIncome.spouse,
     tax_liability_limit: 0,
+    ...(separate
+      ? {
+        mfs_eligibility_met: mfs.considered_unmarried,
+        mfs_line19_income: mfs.considered_unmarried
+          ? benefitIncome.taxpayer
+          : benefitIncome.spouse,
+      }
+      : {}),
     total_qualified_expenses_incurred: expenses,
     benefits_carryover_used: claim.benefits?.carryover_used_in_2026 ?? 0,
     benefits_forfeited_or_carried_forward:
@@ -342,13 +369,14 @@ export function calculateDependentCareBenefits2026(
     claim.combat_pay_elections,
     annual,
     people.length,
-    joint,
+    includeSpouseIncome,
     "credit",
   );
   const part3 = box10 > 0 || (details.benefits_carryover_used ?? 0) > 0 ||
     (details.benefits_forfeited_or_carried_forward ?? 0) > 0;
   details.student_or_disabled_deemed_income_used =
-    creditIncome.deemed_income_used ||
+    ((!separate || mfs.considered_unmarried) &&
+      creditIncome.deemed_income_used) ||
     (part3 && benefitIncome.deemed_income_used);
   const totalWages = roundWholeDollars(
     input.wage_sources.reduce((n, w) => n + w.box1_wages, 0),
@@ -361,6 +389,7 @@ export function calculateDependentCareBenefits2026(
     expected_wage_income: totalWages + lines.line26,
     prior_year_worksheet: priorWorksheet,
     qualifying_person_workpaper: qualification,
+    mfs_workpaper: mfs,
     earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {
       taxpayer: creditIncome.taxpayer,

@@ -16,8 +16,8 @@ benefit-limit rules, separate Part II earned income, and a 2026-only allowance
 for no current qualifying people on prior-only claims. Its default entry keeps
 2025 behavior. The 2026 adapter supplies the complete two-stage 50%–20% rate
 table and $7,500/$3,750 exclusion limits. The pure 2026 rules include the full
-$7,500 limit for qualifying considered-unmarried MFS, but public MFS source
-handling remains gated pending spouse-income and eligibility reconciliation.
+$7,500 limit for qualifying considered-unmarried MFS, and the source route now derives MFS eligibility and spouse-income limits
+from the reviews described below.
 
 ## Connected source contract
 
@@ -70,7 +70,7 @@ Disabled-person records include reviewed incapacity periods and outside-home-car
 eligibility. Dependency exceptions for gross income, a joint return and a
 claimable filer must agree with general source facts. Care incapacity is distinct
 from permanent/total disability used for other qualifying-child age rules.
-A disabled spouse resolves to the joint spouse, requires over-half-year dated
+A disabled spouse resolves to the identified married spouse, requires over-half-year dated
 home evidence, and reconciles incapacity months with the earned-income ledger.
 
 The divorced/separated-parent care route requires reviewed parental support and
@@ -123,6 +123,39 @@ Form 2441 checkbox B is derived from deemed income actually entered on an
 applicable printed part. An unused benefits workpaper cannot check B on a
 credit-only form. The three-page monthly QA set includes checked and unchecked
 B examples and was rendered and inspected on October 15.
+
+## Married filing separately
+
+`claim.mfs_review` selects non-MFS, considered-unmarried, or ordinary MFS.
+Considered-unmarried records identify the qualifying person's main home, the
+complete spouse residence calendar, and total and taxpayer-paid home costs.
+The route checks over-half-year residence, no spouse presence from July through
+December, and payment of more than half the costs. It reconciles any general MFS
+residence answer. These returns use their own income on line 19 and the full
+$7,500 limit without changing their Form 1040 filing status.
+
+Ordinary MFS supplies evidence of a failed requirement and a reconciled inventory
+of the separate spouse's issued W-2s, including an explicitly reviewed empty
+inventory for zero wages. Identity and duplicate-employer checks protect that
+inventory. Spouse wages and elected combat pay constrain the exclusion on line
+19, with the $3,750 limit; they never enter this filer's wages, AGI or withholding.
+Monthly student/disability ledgers reconcile to those external sources and may
+supply deemed earnings. External spouse benefits, other earned-income sources
+and community-property allocations remain gated.
+
+Current credit is zero for ordinary MFS. An eligible 2025-expense credit can
+still reach line 9b and Schedule 3: the draft checks A, enters zero on 9a and
+completes 9b through 11 as instructed. Otherwise benefit-only MFS leaves Part II
+and Part III's current-credit lines 27–31 blank. Checkbox B reflects deemed
+income used in an applicable printed section. Considered-unmarried credit
+requires actual over-half-calendar-year main-home evidence; special lifetime
+exceptions for that status test still need review.
+
+Regression cases cover the full and separate exclusion limits, spouse income
+limits and zero earnings, monthly disability, independent combat elections,
+prior-only credit, and contradictory home/source reviews. The eight-page MFS
+QA set covers considered-unmarried, benefit-only, disabled-spouse and prior-only
+returns; all pages were rendered and inspected and have no AcroForm or annotations.
 
 ## 2025 care paid in 2026
 
@@ -178,7 +211,8 @@ rows were verified; no AcroForm or annotations remain.
 
 ## Still required
 
-MFS, special custody/HOH/EIC release cases, nonresident/foreign dependency
+MFS special lifetime/status cases, community-property allocations, external-spouse
+non-W-2 earnings or benefits, special custody/HOH/EIC release cases, nonresident/foreign dependency
 and unrelated-household lifetime exceptions, taxable-benefit allocation between multiple recipient spouses, self-employment, deferred/prepaid
 expenses, changed filing-unit or corrected/unfiled prior-return care allocations,
 proprietor/partner benefits, Schedule H, special provider TIN/address routes,
