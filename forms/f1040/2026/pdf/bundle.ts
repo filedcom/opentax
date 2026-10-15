@@ -1,3 +1,7 @@
+import {
+  type calculateGambling2026,
+  gamblingIssuedAttachments2026,
+} from "../inputs/gambling-source.ts";
 import type { calculateEstimatedPayments2026 } from "../inputs/estimated-payments.ts";
 import { buildForm8888PdfBytes2026 } from "./refund-allocation.ts";
 import type { calculateRefundAllocation2026 } from "../inputs/refund-allocation.ts";
@@ -138,6 +142,19 @@ export async function buildDraftReturnPdf2026(
   // These retained values are produced only by this execution's validated nodes.
   const retained = <T>(node: string) =>
     p[node]?.calculation_2026 as T | undefined;
+  const gambling = retained<ReturnType<typeof calculateGambling2026>>(
+    "gambling",
+  );
+  const gamblingAttachments = gambling
+    ? gamblingIssuedAttachments2026(gambling.source_input)
+    : [];
+  for (const attachment of gamblingAttachments) {
+    const issued = await PDFDocument.load(attachment.bytes);
+    attachment.pages = issued.getPageCount();
+    if (issued.isEncrypted || issued.getPageCount() === 0) {
+      throw new Error("Issued W-2G needs an unencrypted readable PDF");
+    }
+  }
   const estimates = retained<ReturnType<typeof calculateEstimatedPayments2026>>(
     "estimated_payments",
   );
@@ -731,12 +748,15 @@ export async function buildDraftReturnPdf2026(
     attachments,
     // Never flatten/merge a signed covenant into generated return pages. These
     // are required original attachments, not optional copies of rendered pages.
-    sourceAttachments: electionForms?.covenants.map((covenant) => ({
-      ...covenant,
-      requiredForForms: electionForms!.schedules.filter((s) =>
-        s.covenant_reference === covenant.reference
-      ).map((s) => `form1062_schedule_a:${s.sale_reference}`),
-    })) ?? [],
+    sourceAttachments: [
+      ...gamblingAttachments,
+      ...(electionForms?.covenants.map((covenant) => ({
+        ...covenant,
+        requiredForForms: electionForms!.schedules.filter((s) =>
+          s.covenant_reference === covenant.reference
+        ).map((s) => `form1062_schedule_a:${s.sale_reference}`),
+      })) ?? []),
+    ],
     calculation,
     filingReady: false as const,
     // Pending deposits are not evidence that a credit/activity was finalized.

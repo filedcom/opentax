@@ -163,7 +163,12 @@ export function calculateIncomeTax2026(raw: IncomeTax2026Input) {
     });
   }
   const childTax = childReview?.source
-    ? calculateForm8615(childReview.source, {
+    ? calculateForm8615({
+      ...childReview.source,
+      itemized_deductions_directly_connected: input.taking_standard_deduction
+        ? 0
+        : childReview.source.itemized_deductions_directly_connected,
+    }, {
       childTaxableIncome: input.taxable_income,
       childFilingStatus: input.filing_status,
       childRegularTax: normalTax,

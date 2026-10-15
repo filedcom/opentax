@@ -140,7 +140,7 @@ NODE_PROGRESS = {
     "form8995": "2026 simplified form and $400 minimum pinned; patron status requires Form 8995-A; remove estimated-income path for 2026; see QBI-COOPERATIVE-GRAPH.md",
     "form8995a": "2026 form/schedule A and continuous-use schedules B/C/D pinned; add patron reduction, 199A(g), $400 minimum, per-business PDF/MeF; see QBI-COOPERATIVE-GRAPH.md",
     "qbi_aggregation": "Schedule B 8995-A pinned; shared input captures groups but emits no filing/calculation route; see QBI-COOPERATIVE-GRAPH.md",
-    "w2g": "final Jan 2026 form/instructions pinned; shared box 2/3/7 labels stale and winnings route to 8z, not 2026 Schedule 1 line 8b; see ATS-SCENARIO-06.md",
+    "w2g": '2026 casual ledger and current W-2G copies reuse shared checks; 8b income, 25c withholding, 90-percent losses, child tax and draft/original PDF paths connected; business gambling/current MeF remain; see GAMBLING-CURRENT.md',
     "k1_partnership": "ATS 6 Part II row needs activity, allowed-loss evidence, Schedule E line 41 route, PDF and MeF; packet lacks K-1; see ATS-SCENARIO-06.md",
     "schedule_c": "ATS 2 statutory W-2 output is unused by shared node; line 16b/16c, 44a-c, 109-widget PDF and current MeF needed; see SCHEDULEC-GRAPH.md",
     "f8283": "Dec 2025 continuous-use form/instructions pinned; ATS 2 source record and Schedule A deduction/attachment choice need 2026 routing; see ATS-SCENARIO-02.md",

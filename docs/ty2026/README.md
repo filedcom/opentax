@@ -41,6 +41,9 @@ regular Git files.
 
 ## What is in this snapshot
 
+- [`GAMBLING-CURRENT.md`](./graphs/GAMBLING-CURRENT.md): W-2G and casual
+  winnings/loss records through income, deductions, child tax and draft output.
+
 - [`ESTIMATED-PAYMENTS-CURRENT.md`](./graphs/ESTIMATED-PAYMENTS-CURRENT.md):
   shared payment reconciliation, posted 2025 credits, signed joint allocations
   and draft Form 1040 line 26, with the final 2026 Form 1040-ES source.

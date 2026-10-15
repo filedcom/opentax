@@ -21,6 +21,7 @@ export const inputSchema = z.object({
   line6_schedule_f: signed.optional(),
   line7_unemployment: nonnegative.optional(),
   line7_repaid: nonnegative.optional(),
+  line8b_gambling_winnings: nonnegative.optional(),
   line8a_nol_deduction: nonnegative.optional(),
   line8c_cod_income: signed.optional(),
   line8d_foreign_earned_income_exclusion: nonnegative.optional(),
@@ -135,6 +136,7 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
       throw new Error("TY2026 Schedule 1 needs adjusted student-loan interest");
     }
     const line9 = -(input.line8a_nol_deduction ?? 0) +
+      (input.line8b_gambling_winnings ?? 0) +
       (input.line8c_cod_income ?? 0) -
       (input.line8d_foreign_earned_income_exclusion ?? 0) +
       (input.line8e_archer_msa_dist ?? 0) +

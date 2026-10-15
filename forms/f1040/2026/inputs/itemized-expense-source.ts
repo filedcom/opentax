@@ -95,7 +95,7 @@ export const w2TaxSource2026Schema = z.object({
   ),
 }).strict();
 export const informationReturnTaxSource2026Schema = z.object({
-  document_type: z.enum(["1099-INT", "1099-DIV", "1099-G"]),
+  document_type: z.enum(["1099-INT", "1099-DIV", "1099-G", "W-2G"]),
   source_document_reference: ref,
   recipient_tin: ssn,
   payer_tin: z.string().regex(/^\d{9}$/),

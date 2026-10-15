@@ -193,3 +193,12 @@ Reviewed extension-payment receipts also feed Schedule 3 line 10 and the return
 balance once. An installment ledger entry alone cannot supply that payment
 credit; the election graph reconciles it to the separate receipt source before
 rendering an extended return.
+
+## Gambling update
+
+The casual gambling source prints Schedule 1 line 8b and Schedule A line 17a,
+including deduction selection and connected child-tax amounts. Withheld W-2G
+copies require their retained, digest-verified original PDFs; assembly parses
+them and returns unchanged bytes and page counts in `sourceAttachments`. They
+are not flattened into generated return pages. See
+[current gambling coverage](../graphs/GAMBLING-CURRENT.md).

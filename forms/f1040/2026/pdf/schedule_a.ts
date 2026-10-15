@@ -193,6 +193,7 @@ export async function buildScheduleAPdfBytes2026(
     line14: [2, 4],
     line15: [2, 5],
     line16: [2, 6],
+    line17a: [2, 7],
     line17k: [2, 17],
     line17z: [2, 18],
   };

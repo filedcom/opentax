@@ -6,6 +6,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `gambling` reconciles current W-2G copies and the casual winnings/loss ledger,
+  reusing 2025 copy checks and sums. Schedule 1 line 8b, withholding line 25c,
+  the 90% loss limit, deduction choice, child tax and draft pages are connected.
+  Withheld copies remain original PDF attachments; see
+  [current gambling scope](../../../docs/ty2026/graphs/GAMBLING-CURRENT.md).
+
 - `estimated_payments` reuses 2025 payment reconciliation for posted 2026
   receipts, signed joint allocations and reconciled posted 2025 credits.
   Line 26 flows through settlement and refund allocation; draft PDFs replay

@@ -1,3 +1,7 @@
+import {
+  calculateGambling2026,
+  gamblingSource2026Schema,
+} from "./gambling-source.ts";
 import { businessReturnSource2026Schema } from "./business-qbi.ts";
 import { businessChildIncome2026 } from "./business-child-income.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -46,11 +50,14 @@ export const childTaxClaim2026Schema = z.object({
     // Full cross-return evidence is unnecessary when the child fails an
     // age/student/support/living-parent test. It is required when tax applies.
     family: childTaxFamily2026Schema.optional(),
-    no_directly_connected_itemized_deductions: z.literal(true),
+    no_directly_connected_itemized_deductions: z.literal(true).optional(),
+    no_directly_connected_itemized_deductions_except_gambling: z.literal(true)
+      .optional(),
   }).strict(),
 }).strict();
 export const childTaxInput2026Schema = childTaxClaim2026Schema.partial().extend(
   {
+    gambling_sources_2026: gamblingSource2026Schema.optional(),
     business_sources_2026: businessReturnSource2026Schema.optional(),
     child_context: z.object({
       taxpayer_ssn: tin,
@@ -126,6 +133,26 @@ export function resolveChildTax2026(
   ) {
     throw new Error(
       "Child-tax business inventory must bind this filer and the actual business sources",
+    );
+  }
+  const gambling = input.gambling_sources_2026
+    ? calculateGambling2026(input.gambling_sources_2026)
+    : undefined;
+  if (
+    gambling &&
+    (gambling.source_input.taxpayer_ssn !== c.taxpayer_ssn ||
+      gambling.source_input.filing_status !== c.filing_status)
+  ) throw new Error("Child gambling sources belong to another filer");
+  const connectedGambling = gambling?.schedule_a_line17a ?? 0;
+  if (
+    connectedGambling > 0
+      ? !claim.no_directly_connected_itemized_deductions_except_gambling ||
+        claim.no_directly_connected_itemized_deductions
+      : !claim.no_directly_connected_itemized_deductions ||
+        claim.no_directly_connected_itemized_deductions_except_gambling
+  ) {
+    throw new Error(
+      "Child connected-deduction review disagrees with gambling sources",
     );
   }
   const business = input.business_sources_2026
@@ -264,7 +291,7 @@ export function resolveChildTax2026(
     source: {
       ...family.source,
       child_unearned_income: line1,
-      itemized_deductions_directly_connected: 0,
+      itemized_deductions_directly_connected: connectedGambling,
       itemized_deductions_directly_connected_to_preferential_income: 0,
     },
   };

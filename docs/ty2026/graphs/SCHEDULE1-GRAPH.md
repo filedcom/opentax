@@ -85,7 +85,9 @@ that cannot fit legibly also gets a statement. Descriptions wrap and paginate
 without losing text, and each statement page carries filer identity and the
 line total. All output pages are static, retain draft warnings and have no
 widgets or AcroForm tree. Unsupported 1099-K header, alimony-paid, housing,
-gambling and other line sources remain blank and are not enabled by this work.
+and other line sources remain blank and are not enabled by this work.
+The [current gambling route](./GAMBLING-CURRENT.md) now supplies and prints
+line 8b using reconciled W-2G and annual ledger records.
 
 ## Verification and remaining gates
 

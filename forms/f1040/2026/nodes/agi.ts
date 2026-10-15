@@ -1,4 +1,8 @@
 import {
+  calculateGambling2026,
+  gamblingSource2026Schema,
+} from "../inputs/gambling-source.ts";
+import {
   businessLossSource2026Schema,
   calculateBusinessLoss2026,
 } from "../inputs/business-loss-source.ts";
@@ -52,6 +56,7 @@ export const inputSchema = sharedSchema.pick({
   line6_schedule_f: true,
   line7_unemployment: true,
   line8a_nol_deduction: true,
+  line8b_gambling_winnings: true,
   line8p_excess_business_loss: true,
   line8c_cod_income: true,
   line8d_foreign_earned_income_exclusion: true,
@@ -74,6 +79,7 @@ export const inputSchema = sharedSchema.pick({
 }).extend({
   business_sources_2026: businessReturnSource2026Schema.optional(),
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
+  gambling_sources_2026: gamblingSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
@@ -268,10 +274,21 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     const {
       business_sources_2026,
       business_loss_sources_2026: _lossSources,
+      gambling_sources_2026,
       government_sources_2026,
       line8z_family_leave,
       ...sharedInput
     } = input;
+    const gambling = gambling_sources_2026
+      ? calculateGambling2026(gambling_sources_2026)
+      : undefined;
+    if (
+      gambling &&
+        (gambling.source_input.filing_status !== input.filing_status ||
+          gambling.schedule1_line8b !==
+            (input.line8b_gambling_winnings ?? 0)) ||
+      !gambling && (input.line8b_gambling_winnings ?? 0) !== 0
+    ) throw new Error("AGI gambling income needs reconciled source records");
     const government = government_sources_2026
       ? calculateGovernmentPayments2026(government_sources_2026)
       : undefined;

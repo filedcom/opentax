@@ -134,6 +134,7 @@ export async function buildSchedule1PdfBytes2026(
     line7_repaid: [1, 11],
     line7_unemployment: [1, 12],
     line8a_nol_deduction: [1, 13],
+    line8b_gambling_winnings: [1, 14],
     line8c_cod_income: [1, 15],
     line8d_foreign_earned_income_exclusion: [1, 16],
     line8e_archer_msa_dist: [1, 17],
