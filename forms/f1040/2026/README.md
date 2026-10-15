@@ -81,6 +81,11 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - The 2025 and 2026 Tax Table, ordinary-rate and preferential worksheets share
   the same calculations with explicit year-specific configurations. The existing
   2025 entry points retain their behavior.
+- The shared Form 8615 calculator now uses its supplied annual rates for family
+  and child tax instead of calling 2025 tax functions. Independent 2026 table and
+  worksheet checks cover its ordinary/preferential calculations; eligibility,
+  parent selection, source integration and draft output remain unfinished. See
+  the [child-tax contract](../../../docs/ty2026/graphs/FORM8615-GRAPH.md).
 - `nodes/config/2026-income.ts` contains the audited subset of 2026 constants
   from [Rev. Proc. 2025-32 §§4.01, 4.14](https://www.irs.gov/irb/2025-45_IRB),
   checked October 15, 2026. It does not fill missing constants with 2025 values

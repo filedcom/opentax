@@ -1,10 +1,10 @@
-import { FilingStatus } from "../../../../../types.ts";
-import type { Bracket } from "../../../../../config/2025.ts";
+import type { FilingStatus } from "../../../../../types.ts";
 import type { F8615Input } from "../../../../../inputs/taxes/investments/f8615/schema.ts";
 import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+  ordinaryTaxWithConfig,
+  type QualifiedDividendTaxConfig,
+  qualifiedDividendTaxWithConfig,
+} from "../../../../worksheets/taxes/calculation/tax_worksheets.ts";
 
 export interface Form8615CalculationContext {
   childTaxableIncome: number;
@@ -18,14 +18,8 @@ export interface Form8615CalculationContext {
   childAdjustedGrossIncome?: number;
   childDeduction?: number;
   childForeignEarnedIncomeExclusion: number;
-  brackets: {
-    bracketsMfj: ReadonlyArray<Bracket>;
-    bracketsSingle: ReadonlyArray<Bracket>;
-    bracketsHoh: ReadonlyArray<Bracket>;
-    bracketsMfs: ReadonlyArray<Bracket>;
-    qdcgtZeroCeiling: Record<FilingStatus, number>;
-    qdcgtTwentyFloor: Record<FilingStatus, number>;
-  };
+  /** The return year's ordinary brackets and preferential-income thresholds. */
+  brackets: QualifiedDividendTaxConfig;
 }
 
 export interface Line5PreferentialIncome {
@@ -37,7 +31,7 @@ function roundedRatio(numerator: number, denominator: number): number {
   return Math.min(1, Math.round(numerator / denominator * 1_000) / 1_000);
 }
 
-// The three TY2025 Form 8615 Line 5 Worksheets allocate the child's
+// The three TY2025/TY2026 Form 8615 Line 5 Worksheets allocate the child's
 // qualified dividends and net capital gain between lines 5 and 14.
 export function line5PreferentialIncome(
   source: F8615Input,
@@ -252,7 +246,7 @@ export function calculateForm8615(
     };
   }
 
-  // The 2025 form stops before the family-tax worksheets when line 5 is zero.
+  // The form stops before the family-tax worksheets when line 5 is zero.
   // A preferential-rate or Form 2555 calculation is only needed if those
   // worksheets actually affect the child's Form 8615 tax.
   if (
@@ -350,13 +344,18 @@ export function calculateForm8615(
     (context.childNetCapitalGain ?? 0) - childPreferential.netCapitalGain,
   );
   const line9 = line8Qualified + line8Gain > 0
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTaxWithConfig(
       line8,
       line8Qualified,
       line8Gain,
       source.parent_filing_status,
+      context.brackets,
     )
-    : ordinaryTax2025(line8, source.parent_filing_status);
+    : ordinaryTaxWithConfig(
+      line8,
+      source.parent_filing_status,
+      context.brackets,
+    );
   const line10 = Math.round(source.parent_income_tax);
   if (line10 > line9) {
     throw new Error("Form 8615 parent line 10 tax exceeds family line 9 tax");
@@ -371,25 +370,31 @@ export function calculateForm8615(
   );
   const line15 = line14 > 0
     ? childQualifiedOnLine14 + childGainOnLine14 > 0
-      ? qualifiedDividendTax2025(
+      ? qualifiedDividendTaxWithConfig(
         line14,
         childQualifiedOnLine14,
         childGainOnLine14,
         context.childFilingStatus,
+        context.brackets,
       )
-      : ordinaryTax2025(line14, context.childFilingStatus)
+      : ordinaryTaxWithConfig(
+        line14,
+        context.childFilingStatus,
+        context.brackets,
+      )
     : 0;
   const line16 = line13 + line15;
   const childQualified = context.childQualifiedDividends ?? 0;
   const childGain = context.childNetCapitalGain ?? 0;
   const line17 = childQualified + childGain > 0
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTaxWithConfig(
       line4,
       childQualified,
       childGain,
       context.childFilingStatus,
+      context.brackets,
     )
-    : ordinaryTax2025(line4, context.childFilingStatus);
+    : ordinaryTaxWithConfig(line4, context.childFilingStatus, context.brackets);
   const line18 = Math.max(line16, line17);
   return {
     fields: {

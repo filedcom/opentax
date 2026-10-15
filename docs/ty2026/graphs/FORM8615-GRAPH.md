@@ -12,7 +12,9 @@ node. Nonjoint filers born after January 1, 2003 with more than $2,700 of
 source-derived unearned income stop for Form 8615 eligibility/calculation review.
 This protects the newly connected dependent wage-deduction route and also applies
 when the filer is not a dependent. It does not implement the parent/student/support
-tests or the form calculation; the full contract below remains unfinished.
+tests or connect the form calculation; the full source contract below remains
+unfinished. The shared ordinary/preferential calculator now consumes the supplied
+year's rates, with independent 2026 worksheet tests described below.
 
 ## Return ownership and source facts
 
@@ -65,19 +67,31 @@ post that child's elected income or Form 8814 tax to the child return.
   line 1 from source facts. `income_tax_calculation` optionally checks an
   independently supplied unearned-income total, but the source itself can
   be entered without that cross-check.
-- `calculateForm8615` covers ordinary-rate lines 1–18 and other-child
-  allocation. It hardcodes the 2026-compatible $2,700/$1,350 amounts, uses
-  bracket tax rather than the applicable Tax Table, and throws for parent
-  qualified-dividend, Schedule D, Schedule J and Form 2555 paths and for
-  child preferential/foreign-income paths. The high-value tax worksheet
-  graph therefore remains incomplete.
+- `calculateForm8615` now reuses the year-configured Tax Table, Tax Computation
+  Worksheet and qualified-dividend/capital-gain worksheet for lines 9, 15 and 17.
+  It no longer imports the 2025 tax functions or ignores its supplied rate data.
+  Existing 2025 callers continue supplying their 2025 configuration; 2026 uses
+  `incomeWorksheet2026`. Its shared $2,700/$1,350 deductions and all three Line 5
+  allocation worksheets agree with the pinned 2026 draft instructions.
+  Parent and sibling preferential income, the printed sibling allocation ratio,
+  the regular-tax floor, worksheet checkboxes and stop-after-line-3/5 records are
+  retained. Schedule D special-rate, Schedule J and Form 2555 family worksheets
+  still throw when required; year configuration does not enable those paths.
+- `forms/f1040/2026/nodes/form8615-calculation.test.ts` exercises the actual shared
+  calculator with 2026 operands. Lines 9/15/17 match both ends of all 8,248
+  independently extracted IRS Tax Table cells, plus the QSS joint column, and
+  each Tax Computation Worksheet bracket boundary. Other cases cover annual
+  gain thresholds for every parent status, child preferential-rate tax, all
+  three Line 5 allocations, siblings, the tax floor, stop forms and unsupported
+  worksheets. These are internal calculation fixtures, not reviewed source
+  claims or end-to-end 2026 Form 8615 returns.
 - The TY2025 PDF descriptor maps numeric fields and parent filing status,
   but it omits the printed worksheet checkboxes on lines 9/10/15/17. The
   [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f8615.csv) has **32 terminal widgets**,
   all in the field tree: 23 text and nine buttons. The TY2025 MeF serializer
   has numeric lines and parent fields, but no proven current 2026 XSD/rules.
-  Neither the calculator nor form/PDF/MeF serializers are registered in the
-  TY2026 product.
+  Neither the source/calculation route nor form/PDF/MeF serializers are registered
+  in the TY2026 product.
 
 ## Build order and acceptance
 

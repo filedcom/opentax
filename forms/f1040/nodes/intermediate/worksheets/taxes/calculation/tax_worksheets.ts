@@ -2,9 +2,12 @@ import { FilingStatus } from "../../../../types.ts";
 import type { IncomeTaxConfig } from "../../../../config/types.ts";
 import { bracketsForStatus, rateScheduleTax } from "./tax_brackets.ts";
 
-export type IncomeWorksheetConfig = IncomeTaxConfig & {
+export type QualifiedDividendTaxConfig = IncomeTaxConfig & {
   qdcgtZeroCeiling: Record<FilingStatus, number>;
   qdcgtTwentyFloor: Record<FilingStatus, number>;
+};
+
+export type IncomeWorksheetConfig = QualifiedDividendTaxConfig & {
   scheduleDLine19Limit: Record<FilingStatus, number>;
 };
 
@@ -61,7 +64,7 @@ export function qualifiedDividendTaxWithConfig(
   qualifiedDividends: number,
   netCapitalGain: number,
   status: FilingStatus,
-  cfg: IncomeWorksheetConfig,
+  cfg: QualifiedDividendTaxConfig,
 ): number {
   if (
     [taxableIncome, qualifiedDividends, netCapitalGain].some((n) =>
