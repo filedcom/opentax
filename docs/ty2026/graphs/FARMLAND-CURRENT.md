@@ -42,7 +42,7 @@ consuming losses oldest first. A 2020 balance may be consumed by 2025 gain but
 expires before the 2026 calculation. A remaining 2021 balance expires before
 2027. The preliminary amounts calculator replays only the opening history and
 returns sale amounts and character without a current deductible loss or outgoing
-vintage. This lets a future limitation owner consume the sale loss before
+vintage. The internal limitation owner now consumes the sale loss before
 finalizing its deductible amount, without a circular dependency. The final
 calculator still requires that owner's finalized loss-limitation amount and
 source reference for a net loss; only the amount taken into account is added
@@ -53,7 +53,7 @@ net section 1231 is line 8, prior loss is line 9, residual capital gain is line
 10, ordinary section 1231 loss is line 12, prior-loss recapture is line 13, and
 ordinary totals are lines 19/20b. The standalone PDF component now applies the
 printed skip rules described below. No depreciable property, rental/passive allocation,
-K-1, casualty, QOF, livestock, Part III/IV or QBI integration is claimed.
+K-1, casualty, QOF, livestock, Part III/IV or return-wide QBI integration is claimed.
 NIIT support is limited to the explicitly reviewed internal handoff below.
 
 ## Internal capital and NIIT connection
@@ -118,10 +118,54 @@ employee services. The Schedule C route now connects this calculation to AGI, al
 and the draft bundle; the land route remains internal.
 The September 28 instruction draft is pinned in the corpus.
 
-This is not yet the loss attribution owner needed for final section 1231
-vintages or QBI. Mixed farm/nonfarm NOL allocation, qualified-loss fractions,
-current land-loss finalization, land AGI registration and complete disposition
-attachments remain open. No public land or Form 461 intake is enabled by this workpaper.
+The internal land loss owner now runs preliminary capital/4797 amounts through
+the same Form 461 arithmetic, allocates the disallowed loss, finalizes section
+1231 history and replays the final capital/461 sources. It checks that the tax
+destinations did not change. A stale caller-supplied deductible loss is rejected.
+This is an internal component; public land intake remains disabled.
+
+The reviewed allocation convention is proportional to negative source buckets:
+each nonemployee Schedule C result, each owner's half-SE deduction, the net
+section 1231 ordinary result, and net short-term land result. Capped business
+capital gain offsets the Form 461 loss but never becomes an ordinary-loss
+bucket. Integer largest remainders and stable source references conserve
+dollars. This is explicitly a reviewed bookkeeping convention, **not an
+IRS-prescribed attribution rule**. Existing C-only QBI allocation keeps its
+own reviewed weights and reuses the same dollar-allocation helper.
+
+Every land owner/activity has a farming classification and a review confirming
+no omitted current income, deductions or suspended items for that activity.
+Positive EBL with farming loss stops for Form 172 and the farming-first
+threshold rule; a farm loss below the EBL limit can finalize its full amount.
+Mixed farm/nonfarm NOL allocation, complete qualified-loss attribution, land AGI
+registration and bundle integration remain open.
+
+## Internal land contribution to QBI
+
+The QBI component consumes the finalized loss owner and retains every sale's
+activity. Taxpayer-wide section 1231 netting occurs before activity-level QBI:
+in a net loss year all section 1231 amounts are ordinary; in a net gain year
+only lookback recapture is ordinary. A separately reviewed convention allocates
+recapture in proportion to positive net section 1231 gains by activity. The
+remaining capital amounts are excluded from QBI, including a losing activity's
+capital amount when the taxpayer has an overall section 1231 gain.
+
+The component allocates disallowed long/short losses to the corresponding
+negative activity amounts, separates qualified domestic non-SSTB items from
+reviewed foreign-business items, and retains material participation separately
+for active QBI. Suspended qualified and nonqualified amounts stay distinct from
+current allowed QBI and from Form 8995's allowed-loss carryforward. These are
+the land contributions only; the return still needs to combine Schedule C and
+other QBI, prior losses and taxable income before claiming a deduction. SSTBs,
+other exclusions and Form 8995-A need their own calculation routes.
+
+For example, a $400,000 nonfarm land loss gives a $144,000 Form 461 adjustment,
+$256,000 of current qualified loss and a $256,000 section 1231 vintage. Form
+4797 still prints the $400,000 disposition loss. A $45,000 gain with $5,000 of
+lookback recapture contributes $5,000 of ordinary QBI and $40,000 to Schedule D.
+These semantics follow the [2026 draft 8995 instructions](https://www.irs.gov/pub/irs-dft/i8995--dft.pdf)
+and [4797 instruction comparator](https://www.irs.gov/instructions/i4797);
+the proportional attribution conventions are reviewed implementation choices.
 
 ## Current IRS source checks
 
@@ -194,3 +238,9 @@ The preliminary/final history split and Form 4797 component passed 44 typed
 focused tests, all 661 tests in the 2026 directory, 75 shared/2025 history tests
 and 137 unit checks. Rendered gain, loss, multi-property and long-description
 continuations were checked for signs, skip rules, row spacing and pagination.
+
+The internal loss/QBI owner passed 43 typed calculation/integration checks and
+one typed two-form PDF reconciliation check, all 678 tests in the 2026 directory,
+and 137 unit checks. The derived $400,000 loss example was rendered as Form 4797
+and Form 461 and inspected for full-loss versus limitation amounts, signs,
+identity and draft markings. No 2025 implementation changed in this step.

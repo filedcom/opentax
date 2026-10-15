@@ -5,6 +5,7 @@ import {
   calculateBusinessSources2026,
 } from "./business-source.ts";
 import {
+  calculateCapitalAmounts2026,
   calculateCapitalGains2026,
   capitalGainInput2026Schema,
 } from "../nodes/capital-gains.ts";
@@ -35,8 +36,24 @@ export type BusinessLossSource2026 = z.input<
 >;
 
 export function calculateBusinessLoss2026(raw: BusinessLossSource2026) {
+  return calculateBusinessLossWithCapital2026(raw, calculateCapitalGains2026);
+}
+
+/** Calculate Form 461 before the disposition owner's loss history is finalized. */
+export function calculateBusinessLossAmounts2026(raw: BusinessLossSource2026) {
+  return calculateBusinessLossWithCapital2026(raw, calculateCapitalAmounts2026);
+}
+
+function calculateBusinessLossWithCapital2026<
+  C extends
+    | ReturnType<typeof calculateCapitalGains2026>
+    | ReturnType<typeof calculateCapitalAmounts2026>,
+>(
+  raw: BusinessLossSource2026,
+  calculateCapital: (raw: z.input<typeof capitalGainInput2026Schema>) => C,
+) {
   const source = businessLossSource2026Schema.parse(raw);
-  const c = calculateCapitalGains2026(source.capital_sources);
+  const c = calculateCapital(source.capital_sources);
   const b = source.business_sources
     ? calculateBusinessSources2026(source.business_sources)
     : undefined;

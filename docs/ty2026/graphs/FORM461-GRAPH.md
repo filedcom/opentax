@@ -105,8 +105,12 @@ Land source integration, Schedule E/F/K-1, released suspensions, mixed
 qualified/nonqualified or farm/nonfarm allocation, Form 8995-A, negative-AGI
 NOL calculations and current MeF remain open. Child-tax claims with a positive
 461 adjustment still stop for their coordinated loss-addback worksheet.
-The land source helper remains internal: its section 1231 loss vintage still
-needs the final limitation owner. Public intake accepts reviewed source facts,
+The [internal land limitation owner](FARMLAND-CURRENT.md) now derives deductible
+section 1231 loss from preliminary capital/461 sources, finalizes history and
+replays the receiving amounts. Its separately reviewed source-bucket allocation
+does not replace the C-only QBI method. Farm losses with positive EBL still need
+Form 172. Land QBI retains qualified/nonqualified activity contributions, but
+the return-wide QBI and graph integration remain open. Public intake accepts reviewed source facts,
 not Form 461 lines or an excess-loss override. Full filing remains disabled.
 
 ## Build order and acceptance

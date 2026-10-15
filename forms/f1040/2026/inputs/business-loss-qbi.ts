@@ -1,3 +1,4 @@
+import { allocateSourceDollars2026 } from "./source-allocation.ts";
 import {
   type BusinessLossSource2026,
   calculateBusinessLoss2026,
@@ -47,36 +48,11 @@ export function applyBusinessLossToQbi2026(
   }
   const excess = loss.schedule1_line8p;
   const regularRefs = new Set(regular.map((b) => b.source.business_reference));
-  const weights = base.rows.filter((r) =>
-    regularRefs.has(r.business_reference) && r.qbi < 0
-  )
-    .map((r) => ({
-      reference: r.business_reference,
-      weight: BigInt(-r.qbi),
-      amount: 0,
-      remainder: 0n,
-    }));
-  const total = weights.reduce((n, r) => n + r.weight, 0n);
-  if (BigInt(excess) > total) {
-    throw new Error("Disallowed loss exceeds qualified source losses");
-  }
-  for (const row of weights) {
-    row.amount = Number(BigInt(excess) * row.weight / total);
-    row.remainder = BigInt(excess) * row.weight % total;
-  }
-  let residual = excess - weights.reduce((n, r) => n + r.amount, 0);
-  // Largest remainder, stable source-reference tie break, conserves printed dollars.
-  for (
-    const row of [...weights].sort((a, b) =>
-      a.remainder === b.remainder
-        ? a.reference < b.reference ? -1 : a.reference > b.reference ? 1 : 0
-        : a.remainder > b.remainder
-        ? -1
-        : 1
-    )
-  ) {
-    if (residual-- > 0) row.amount++;
-  }
+  const weights = allocateSourceDollars2026(
+    excess,
+    base.rows.filter((r) => regularRefs.has(r.business_reference) && r.qbi < 0)
+      .map((r) => ({ reference: r.business_reference, weight: -r.qbi })),
+  );
   const rows = base.rows.map((row) => {
     const amount = weights.find((w) =>
       w.reference === row.business_reference

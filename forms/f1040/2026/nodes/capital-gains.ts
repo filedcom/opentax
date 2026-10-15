@@ -1,5 +1,6 @@
 import {
   landDispositionBridge2026Schema,
+  resolveLandDispositionAmountsBridge2026,
   resolveLandDispositionBridge2026,
 } from "../inputs/land-disposition-bridge.ts";
 import { z } from "zod";
@@ -28,6 +29,27 @@ export const capitalGainInput2026Schema = investmentOwner2026.extend({
 }).strict();
 export type CapitalGainInput2026 = z.input<typeof capitalGainInput2026Schema>;
 export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
+  return calculateCapitalWithLand2026(raw, resolveLandDispositionBridge2026);
+}
+
+/** Same netting before loss attribution; no current section 1231 vintage. */
+export function calculateCapitalAmounts2026(raw: CapitalGainInput2026) {
+  return calculateCapitalWithLand2026(
+    raw,
+    resolveLandDispositionAmountsBridge2026,
+  );
+}
+
+function calculateCapitalWithLand2026<
+  L extends
+    | ReturnType<typeof resolveLandDispositionBridge2026>
+    | ReturnType<typeof resolveLandDispositionAmountsBridge2026>,
+>(
+  raw: CapitalGainInput2026,
+  resolveLand: (
+    ...args: Parameters<typeof resolveLandDispositionBridge2026>
+  ) => L,
+) {
   const input = capitalGainInput2026Schema.parse(raw),
     owner = {
       filing_status: input.filing_status,
@@ -52,7 +74,7 @@ export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
     );
   }
   const land = input.land_sources_2026
-    ? resolveLandDispositionBridge2026(
+    ? resolveLand(
       input.land_sources_2026,
       owner,
       input.claim?.record_reference,

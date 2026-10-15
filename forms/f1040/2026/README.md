@@ -969,3 +969,19 @@ See [the loss contract](../../../docs/ty2026/graphs/FORM461-GRAPH.md) and
 route does not enable land, farm, Schedule E/K-1, mixed qualified-loss allocation,
 negative-AGI NOL computations or child-tax claims with an excess-loss addback.
 Those owners and current MeF acceptance remain part of the full 2026 work.
+
+### Internal land loss and QBI workpapers
+
+The land limitation owner now runs preliminary Schedule D/4797 sources through
+Form 461, applies its reviewed source-bucket allocation, finalizes section 1231
+history and replays the final tax destinations. Callers provide source records
+and reviews rather than a deductible-loss override. Positive EBL with farming
+loss still requires the separate Form 172 allocation route.
+
+The land QBI component keeps ordinary/capital character, allowed/suspended loss
+and qualified/foreign-business treatment by owner and activity. It supplies the
+land contribution, not a complete Form 8995 deduction: current Schedule C/other
+QBI, prior losses and taxable income still need a combined return owner. The
+existing C-only route retains its reviewed allocation method. Both routes reuse
+one whole-dollar allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
+records these conventions, component PDF evidence and remaining graph/bundle work.

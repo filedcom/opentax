@@ -30,6 +30,11 @@ below reflects that newer cross-reference. The remaining asset, loss-limit,
 bundle, MeF and source-acceptance requirements still apply. The standalone
 land-only Form 4797 component now prints Parts I/II and property continuations
 from finalized history, with matching capital/ordinary/loss destinations.
+The internal loss owner now derives that finalized history from preliminary
+capital/461 amounts. The land QBI component retains ordinary/capital character
+and allowed/suspended amounts by reviewed activity; return-wide QBI, graph and
+bundle registration remain unfinished. See the current farmland implementation
+for allocation conventions and the farming-loss/Form 172 boundary.
 
 ## Canonical disposition and history records
 

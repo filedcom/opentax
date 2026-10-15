@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  calculateLandDispositionAmounts2026,
   calculateLandDispositions2026,
   landDispositionSource2026Schema,
   section1231FinalizedLoss2026Schema,
@@ -39,7 +40,7 @@ export type LandDispositionBridge2026 = z.input<
   typeof landDispositionBridge2026Schema
 >;
 
-export function resolveLandDispositionBridge2026(
+function validateLandDispositionBridge2026(
   raw: LandDispositionBridge2026,
   ownerRaw: z.input<typeof investmentOwner2026>,
   capitalInventoryReference: string | undefined,
@@ -66,11 +67,34 @@ export function resolveLandDispositionBridge2026(
       "Land and capital inventories require matching reciprocal source references",
     );
   }
-  const calculation = calculateLandDispositions2026(
-    source,
-    bridge.finalized_loss,
-  );
-  return { source_input: bridge, calculation };
+  return bridge;
+}
+
+export function resolveLandDispositionBridge2026(
+  ...args: Parameters<typeof validateLandDispositionBridge2026>
+) {
+  const bridge = validateLandDispositionBridge2026(...args);
+  return {
+    source_input: bridge,
+    calculation: calculateLandDispositions2026(
+      bridge.source,
+      bridge.finalized_loss,
+    ),
+  };
+}
+
+/** Before the limitation owner runs, no caller-supplied finalized loss is valid. */
+export function resolveLandDispositionAmountsBridge2026(
+  ...args: Parameters<typeof validateLandDispositionBridge2026>
+) {
+  const bridge = validateLandDispositionBridge2026(...args);
+  if (bridge.finalized_loss !== undefined) {
+    throw new Error("Preliminary land sources cannot contain a finalized loss");
+  }
+  return {
+    source_input: bridge,
+    calculation: calculateLandDispositionAmounts2026(bridge.source),
+  };
 }
 
 /** Form 8960 instructions, lines 5a-5d worksheet: exclude the source gain,
