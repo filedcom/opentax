@@ -1,3 +1,4 @@
+import { form4137_2026 } from "./form4137.ts";
 import { vehicle_loan_interest_2026 } from "./vehicle-loan-interest.ts";
 import { cash_charity_2026 } from "./cash-charity.ts";
 import { z } from "zod";
@@ -95,6 +96,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     w2_2026,
     cash_charity_2026,
     vehicle_loan_interest_2026,
+    form4137_2026,
     agi_2026,
     f1040_2026_node,
     standard_deduction,
@@ -355,6 +357,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "w2", fields: owner },
         { nodeType: "cash_charity", fields: owner },
         { nodeType: "vehicle_loan_interest", fields: owner },
+        { nodeType: "form4137", fields: owner },
         {
           nodeType: "agi_aggregator",
           fields: {

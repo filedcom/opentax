@@ -3,6 +3,23 @@
 Status: source and dependency design, 2026-09-27. This is an implementation
 contract for the TY2026 `f1040` entry point, not a registered calculation path.
 
+## Current implementation boundary — October 15, 2026
+
+The older progress claims below describe a historical prototype. The active
+`forms/f1040/2026` path now has source-backed W-2 TP/TT, Form 4137, senior and
+vehicle-interest calculations, the joint deduction resolver and a pinned draft
+Schedule 1-A PDF component. It is not registered as a complete filing product.
+Form 4137 reuses 2025 payroll/diary algorithms under an explicit year policy,
+routes its income to AGI/1040 and tax to 2026 Schedule 2 line 16a, and supplies
+qualified line 1(c) tips for the per-owner/employer larger-of comparison. Its
+qualification records cover total tips, not just the unreported remainder.
+
+The active graph has no complete foreign/territorial exclusion source owners,
+business-tip/non-W-2 overtime path, Schedule A source-limit calculation or
+8995/8995-A implementation. Form 4137 PDF/MeF and full 8959/8919/SE/credit
+receivers are also pending. The existing pure finalizers and source handoffs do
+not establish those missing calculations or filing readiness.
+
 ## Sources and line contract
 
 - The [draft 2026 Schedule A](https://www.irs.gov/pub/irs-dft/f1040sa--dft.pdf)

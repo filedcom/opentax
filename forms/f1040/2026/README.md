@@ -33,7 +33,8 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - Separate Schedule 1 and Schedule 2 output calculations reject stale line
   mappings. Schedule 1 requires agreement with finalized AGI totals. Positive
   Schedule 2 section 965 installments remain held because the pinned draft's
-  line 12/15 instructions conflict. These sinks are not yet source-wired.
+  line 12/15 instructions conflict. The Schedule 2 graph sink currently accepts
+  only reviewed W-2 payroll/golden-parachute and Form 4137 sources.
 - Fourteen local rules reconcile income, tax, deductions, payments, refund and
   required attachments. They are arithmetic checks, not IRS MeF acceptance.
 - Draft Form 1040 and Schedule 3-A PDF components use pinned IRS hashes and the
@@ -199,12 +200,11 @@ calculator inputs, not public source fields. The Form 2555 line 45 addback must
 agree with the exclusion used by AGI. The foreign/territorial source calculators
 and their complete 2026 attachment routes are not yet implemented.
 
-This adapter currently covers ordinary employee W-2 tips/overtime, seniors and
-reviewed vehicle-loan interest. The source-inventory review holds Form 4137,
-business tips and non-W-2 overtime for their receiving calculators instead of
-dropping their amounts. Statutory-employee sources also need business coordination.
-In particular, the eventual Form 4137 path must compare qualified TP and Form 4137
-amounts by owner/employer using the larger amount, and business tips need net
+This adapter currently covers ordinary employee W-2 tips/overtime, Form 4137
+tips, seniors and reviewed vehicle-loan interest. Form 4137 and W-2 TP are
+compared separately for each owner/employer using the larger qualified amount.
+The source-inventory review must agree with the Form 4137 handoff. Business tips,
+non-W-2 overtime and statutory-employee sources still need their business/net
 profit and QBI coordination. Schedule 1-A MeF remains to build.
 
 The draft PDF recalculates its internal source inputs and checks line 44 against
@@ -220,6 +220,43 @@ Sources checked October 15:
 [2026 W-2 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf),
 [current tipped occupations](https://www.irs.gov/TippedOccupations), and
 [TD 10044 and the retained SSTB transition relief](https://www.irs.gov/irb/2026-18_IRB).
+
+## Form 4137 source and payroll integration
+
+The 2026 adapter reuses the existing employer matching, allocated-tip diary,
+below-$20-month and payroll-tax calculation. A year policy supplies the record
+window and January reporting deadlines; 2025 retains its original defaults.
+2026 calculations round printed row operands and use the $184,500 Social Security
+wage base separately for each spouse. All W-2 payroll amounts must be known when
+Form 4137 is filed; missing boxes are not silently assumed to be zero.
+
+Public intake supplies annual tip records, employer identities and qualification
+allocations, with source references. The qualifications must reconcile to **all**
+line 1(c) tips. Neither an asserted qualified total nor the unreported difference
+replaces those records. The adapter checks owner/employer/W-2 identity and rejects
+duplicate employers or issued copies. Below-allocation income requires reconciled
+daily records, including the December/January reporting boundaries.
+
+The unreported difference enters Form 1040 line 1c and AGI once. It also contributes
+to the pending earned-income credit calculations. Payroll tax goes to Schedule 2
+line 16a and its line 20/21 totals, then to Form 1040 settlement. Form 8959 receives
+Medicare tips; Form 8919 and Schedule SE retain separate owner payroll handoffs.
+Those receiving 2026 employment/credit calculators remain unfinished. MFS still
+owes payroll tax while receiving no tips deduction. Government-employee Social
+Security exclusions need a coverage record; Medicare tips remain taxable.
+
+The [March 2026 Form 4137 draft](https://www.irs.gov/pub/irs-dft/f4137--dft.pdf)
+still refers to the old Schedule 2 line 5. Routing follows the actual reviewed
+[2026 Schedule 2](https://www.irs.gov/pub/irs-dft/f1040s2--dft.pdf), line 16a.
+The internal integration fixture proves $2,000 of additional income, $153 of
+payroll tax and a $19,800 tips deduction after comparing $18,000 of qualified TP
+with $20,000 of qualified Form 4137 tips at $152,001 AGI.
+
+The issued W-2 source is still required. Applied-for EINs, substitute/corrected
+W-2s, railroad tips, statutory-employee coordination and noncash-tip income need
+separate source handling. Form 4137 PDF/MeF attachments and full payroll/credit
+integration remain release gates; the existing Schedule 1-A component already
+has the Form 4137 comparison column.
 
 ## Vehicle-loan source integration
 
@@ -343,6 +380,15 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
 - The 137-test unit/preflight gate passed. A six-page synthetic Schedule 1-A
   fixture was rendered and visually inspected, including all three continuation
   types; output has zero widgets and no AcroForm tree.
+
+- Form 4137 integration passed 175 typed tests across all 2026 modules and the
+  shared 2025 Form 4137/Schedule 1-A suites. Cases cover spouse ownership,
+  annual reporting deadlines, allocated-tip records, below-$20 months,
+  Social Security wage-base exhaustion, qualification and deduction overlap.
+- The 137-test unit/preflight gate passed. Thirteen additional 2025 replay/end-to-end
+  checks passed, including native XML/XSD and Schedule 2 PDF export. One legacy
+  income-export test could not finish because `pdftotext` is not installed;
+  its XML/XSD and PDF-generation steps completed before that dependency failure.
 
 ## Source recheck
 

@@ -1,3 +1,7 @@
+import {
+  form4137TipRowSchema,
+  tipReviewSchema,
+} from "../inputs/tip-qualification.ts";
 import { vehicleInterestRowSchema } from "../inputs/vehicle-loan-source.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -5,7 +9,6 @@ import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import {
-  isQualifiedTipsOccupationCode,
   seniorZeroExclusionsReviewSchema,
 } from "../../nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts";
 import {
@@ -22,32 +25,6 @@ const dollars = money.int();
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const ein = z.string().regex(/^\d{2}-?\d{7}$/);
 const normalize = (value: string) => value.replaceAll("-", "");
-
-// The published occupation codes were rechecked against IRS.gov/TippedOccupations
-// on October 15, 2026; they match the shared list. TP alone is not qualification.
-const tipReviewSchema = z.object({
-  source_document_reference: reference,
-  employee_ssn: ssn,
-  employer_ein: ein,
-  allocations: z.array(
-    z.object({
-      occupation_code: z.string().refine(
-        isQualifiedTipsOccupationCode,
-        "Occupation is not on the reviewed IRS tipped-occupation list",
-      ),
-      qualified_cash_tips: money.positive(),
-      occupation_and_tip_records_reference: reference,
-    }).strict(),
-  ),
-  excluded_cash_tips: money,
-  qualification_review_reference: reference,
-  voluntary_customer_tips_not_service_charges: z.literal(true),
-  no_recharacterized_wages_or_related_payor_tips: z.literal(true),
-  services_not_illegal_under_applicable_law: z.literal(true),
-  // Notice 2025-69 SSTB relief remains applicable for calendar 2026; the
-  // April 2026 final regulations reserve the SSTB rule for later guidance.
-  sstb_treatment: z.enum(["not_sstb", "notice_2025_69_transition_relief"]),
-}).strict();
 
 /** Public evidence, not calculated AGI, deduction amounts or W-2 copies. */
 export const claimInputSchema = z.object({
@@ -93,6 +70,7 @@ export const inputSchema = claimInputSchema.partial().extend({
   magi: z.number().int().safe(),
   form2555_line45_from_agi: dollars.optional(),
   w2_2026_sources: z.array(w2SourceSchema).default([]),
+  form4137_tips_2026: z.array(form4137TipRowSchema).default([]),
   vehicle_interest_2026: z.array(vehicleInterestRowSchema).default([]),
   magi_addbacks_2026: z.object({
     puerto_rico_excluded_income: addback,
@@ -103,7 +81,7 @@ export const inputSchema = claimInputSchema.partial().extend({
 }).strict();
 export type Schedule1A2026Input = z.input<typeof inputSchema>;
 
-/** Employee TP/TT and senior path. Other sources are held for their own owners. */
+/** Reviewed employee tips/overtime, vehicle interest and senior deductions. */
 export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   const input = inputSchema.parse(raw);
   const joint = input.filing_status === FilingStatus.MFJ;
@@ -128,6 +106,10 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   };
   if (input.filing_status !== FilingStatus.MFS) {
     const hasSource = (owner: string) =>
+      input.form4137_tips_2026.some((row) =>
+        normalize(row.employee_ssn) === normalize(owner) &&
+        row.qualified_tips > 0
+      ) ||
       input.w2_2026_sources.some((source) =>
         normalize(source.employee_ssn) === normalize(owner) &&
         (source.cash_tips > 0 || source.qualified_overtime > 0)
@@ -177,12 +159,44 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   }
   const scope = input.source_scope_review;
   if (
-    scope && (scope.has_form4137_tips || scope.has_business_tips ||
+    scope && (scope.has_business_tips ||
       scope.has_non_w2_overtime)
   ) {
     throw new Error(
-      "2026 Schedule 1-A Form 4137, business tips and non-W-2 overtime sources need their receiving calculators",
+      "2026 Schedule 1-A business tips and non-W-2 overtime sources need their receiving calculators",
     );
+  }
+  if (
+    Boolean(scope?.has_form4137_tips) !== (input.form4137_tips_2026.length > 0)
+  ) {
+    throw new Error(
+      "Form 4137 source scope must reconcile to reviewed tip records",
+    );
+  }
+  const form4137BySource = new Map<
+    string,
+    z.infer<typeof form4137TipRowSchema>
+  >();
+  for (const row of input.form4137_tips_2026) {
+    ownerEligible(row.employee_ssn);
+    const source = input.w2_2026_sources.find((s) =>
+      s.source_document_reference === row.source_document_reference
+    );
+    if (
+      !source ||
+      normalize(source.employee_ssn) !== normalize(row.employee_ssn) ||
+      normalize(source.employer_ein) !== normalize(row.employer_ein) ||
+      source.employer_name !== row.employer_name || source.statutory_employee ||
+      row.qualified_tips > Math.round(row.total_received)
+    ) {
+      throw new Error(
+        "Form 4137 handoff must reconcile to its W-2 owner/employer and received tips",
+      );
+    }
+    if (form4137BySource.has(row.source_document_reference)) {
+      throw new Error("Duplicate Form 4137 employer handoff");
+    }
+    form4137BySource.set(row.source_document_reference, row);
   }
   if (
     Boolean(scope?.has_vehicle_loan_interest) !==
@@ -246,7 +260,11 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   );
   const active = vehicleRows.some((r) => r.schedule1a_interest > 0) ||
     taxpayerSenior || spouseSenior ||
-    eligibleSources.some((s) => s.cash_tips > 0 || s.qualified_overtime > 0);
+    eligibleSources.some((s) =>
+      s.cash_tips > 0 || s.qualified_overtime > 0 ||
+      (form4137BySource.get(s.source_document_reference)?.qualified_tips ?? 0) >
+        0
+    );
   if (active && !scope) {
     throw new Error(
       "Schedule 1-A needs a source scope review before deductions are resolved",
@@ -313,24 +331,29 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
     }
     reviews.set(review.source_document_reference, review);
   }
-  const employeeRows = eligibleSources.filter((s) => s.cash_tips > 0).map(
+  const employeeRows = eligibleSources.filter((s) =>
+    s.cash_tips > 0 ||
+    (form4137BySource.get(s.source_document_reference)?.qualified_tips ?? 0) > 0
+  ).map(
     (source) => {
       const review = reviews.get(source.source_document_reference);
-      if (!review) {
+      if (!review && source.cash_tips > 0) {
         throw new Error(
           "TP cash tips require an occupation allocation and qualification review",
         );
       }
       const qualified = Math.round(
-        review.allocations.reduce((n, a) => n + a.qualified_cash_tips, 0),
+        review?.allocations.reduce((n, a) => n + a.qualified_cash_tips, 0) ?? 0,
       );
+      const form4137 = form4137BySource.get(source.source_document_reference);
+      const form4137Tips = form4137?.qualified_tips ?? 0;
       return {
         ...source,
         review,
+        form4137,
         qualified_w2_tips: qualified,
-        form4137_tips: 0,
-        // Form 4137 is explicitly excluded by the current source-scope contract.
-        line4_tips: qualified,
+        form4137_tips: form4137Tips,
+        line4_tips: Math.max(qualified, form4137Tips),
       };
     },
   );

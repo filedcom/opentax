@@ -1,3 +1,6 @@
+import { form4137_2026 } from "./inputs/form4137.ts";
+import { syntheticForm4137_2026 } from "./inputs/form4137.fixture.ts";
+import { schedule2_2026 } from "./nodes/schedule2.ts";
 import { vehicle_loan_interest_2026 } from "./inputs/vehicle-loan-interest.ts";
 import { syntheticVehicleLoan2026 } from "./inputs/vehicle-loan.fixture.ts";
 import {
@@ -22,11 +25,18 @@ import { standard_deduction_2026 } from "./nodes/standard_deduction.ts";
 import { FilingStatus } from "../nodes/types.ts";
 
 for (
-  const scenario of ["wages", "overtime", "tips-overtime-senior", "vehicle"]
+  const scenario of [
+    "wages",
+    "overtime",
+    "tips-overtime-senior",
+    "vehicle",
+    "unreported-tips",
+  ]
 ) {
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
   const vehicle = scenario === "vehicle";
+  const unreported = scenario === "unreported-tips";
   const expectedWages = vehicle ? 80_001 : 150_001;
   const seniorTips = scenario === "tips-overtime-senior";
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
@@ -45,6 +55,8 @@ for (
       cash_charity: cash_charity_2026,
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
+      form4137: form4137_2026,
+      schedule2: schedule2_2026,
       agi_aggregator: agi_2026,
       standard_deduction: standard_deduction_2026,
       schedule1: schedule1_2026,
@@ -71,16 +83,17 @@ for (
         tax_residency: "full_year_citizen_or_resident",
         short_tax_year_due_to_accounting_change: false,
       },
-      ...(overtime || vehicle
+      ...(overtime || vehicle || unreported
         ? {
           schedule1a: {
             tax_year: 2026,
             source_scope_review: {
               ...scopeReview2026,
               has_vehicle_loan_interest: vehicle,
+              has_form4137_tips: unreported,
             },
             part1_zero_exclusions_review: zeroExclusions2026,
-            ...(seniorTips
+            ...(seniorTips || unreported
               ? {
                 employee_tip_reviews: [{
                   source_document_reference: "w2-one",
@@ -105,6 +118,24 @@ for (
         : {}),
       cash_gifts: [syntheticCashGift2026],
       ...(vehicle ? { vehicle_loans: [syntheticVehicleLoan2026()] } : {}),
+      ...(unreported
+        ? {
+          form4137: {
+            tax_year: 2026,
+            forms: syntheticForm4137_2026().forms!.map((form) => ({
+              ...form,
+              employers: form.employers.map((row) => ({
+                ...row,
+                name: "First",
+                qualification_review: {
+                  ...row.qualification_review!,
+                  source_document_reference: "w2-one",
+                },
+              })),
+            })),
+          },
+        }
+        : {}),
       w2s: [
         {
           tax_year: 2026,
@@ -112,14 +143,20 @@ for (
           employer_name: "First",
           employee_ssn: "111223333",
           source_document_reference: "w2-one",
+          box3_ss_wages: 100_000,
+          ...(unreported ? { box8_allocated_tips: 2000 } : {}),
           box1_wages: vehicle ? 30_000.25 : 100_000.25,
-          ...(overtime
+          ...(overtime || unreported
             ? {
               box12_entries: [
-                { code: "TT", amount: 10_000 },
-                ...(seniorTips ? [{ code: "TP", amount: 20_000 }] : []),
+                ...(overtime ? [{ code: "TT", amount: 10_000 }] : []),
+                ...(seniorTips || unreported
+                  ? [{ code: "TP", amount: 20_000 }]
+                  : []),
               ],
-              ...(seniorTips ? { box14b_tipped_codes: ["102", "000"] } : {}),
+              ...(seniorTips || unreported
+                ? { box14b_tipped_codes: ["102", "000"] }
+                : {}),
             }
             : {}),
           box2_fed_withheld: 20_000.25,
@@ -131,11 +168,14 @@ for (
           employee_ssn: "111223333",
           source_document_reference: "w2-two",
           box1_wages: 50_000.25,
+          box3_ss_wages: 50_000,
           box2_fed_withheld: 10_000.25,
         },
       ],
       f1040: {
-        line16_income_tax: vehicle
+        line16_income_tax: unreported
+          ? 20_342
+          : vehicle
           ? 7_736
           : seniorTips
           ? 17_119
@@ -147,7 +187,15 @@ for (
     assertEquals(result.diagnostics, []);
     assertEquals(
       result.pending.f1040.line13a_schedule1a,
-      vehicle ? 4_200 : seniorTips ? 29_500 : overtime ? 10_000 : 0,
+      unreported
+        ? 19_800
+        : vehicle
+        ? 4_200
+        : seniorTips
+        ? 29_500
+        : overtime
+        ? 10_000
+        : 0,
     );
     assertEquals(
       result.pending.standard_deduction.schedule1a_line43,
@@ -156,8 +204,14 @@ for (
     assertEquals(result.pending.f1040.taxpayer_first_name, "Ada");
     assertEquals(result.pending.w2.taxpayer_ssn, "111223333");
     assertEquals(result.pending.f1040.line1a_wages, expectedWages);
-    assertEquals(result.pending.f1040.line9_total_income, expectedWages);
-    assertEquals(result.pending.f1040.line11b_agi, expectedWages);
+    assertEquals(
+      result.pending.f1040.line9_total_income,
+      expectedWages + (unreported ? 2000 : 0),
+    );
+    assertEquals(
+      result.pending.f1040.line11b_agi,
+      expectedWages + (unreported ? 2000 : 0),
+    );
     assertEquals(result.pending.f1040.line25d_total_withholding, 30_001);
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
@@ -166,12 +220,35 @@ for (
     assertEquals(result.pending.f1040.line12f_nonitemizer_charity, 500);
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
-      vehicle ? 59_201 : seniorTips ? 101_851 : overtime ? 123_401 : 133_401,
+      unreported
+        ? 115_601
+        : vehicle
+        ? 59_201
+        : seniorTips
+        ? 101_851
+        : overtime
+        ? 123_401
+        : 133_401,
     );
     assertEquals(
       result.pending.f1040.line35a_refund,
-      vehicle ? 22_265 : seniorTips ? 12_882 : overtime ? 7_787 : 5_387,
+      unreported
+        ? 9506
+        : vehicle
+        ? 22_265
+        : seniorTips
+        ? 12_882
+        : overtime
+        ? 7_787
+        : 5_387,
     );
+    if (unreported) {
+      assertEquals(result.pending.f1040.line1c_unreported_tips, 2000);
+      assertEquals(result.pending.f1040.line23_other_taxes, 153);
+      assertEquals(result.pending.f1040.schedule2_line20, 153);
+      assertEquals(result.pending.schedule3a, undefined); // No refundable credits in this fixture.
+      assertEquals(result.pending.form8959.unreported_tips, 2000);
+    }
     if (seniorTips) {
       assertEquals(
         result.pending.income_tax_calculation.form6251_line1b,
@@ -180,7 +257,13 @@ for (
     }
     assertEquals(result.pending.w2.issued_w2_sources instanceof Array, true);
     // Make the still-unwired credit routes visible; this is not filing readiness.
-    assertEquals(result.pending.eitc.earned_income, expectedWages - 0.5);
-    assertEquals(result.pending.f8812.auto_agi, expectedWages);
+    assertEquals(
+      result.pending.eitc.earned_income,
+      unreported ? [expectedWages - 0.5, 2000] : expectedWages - 0.5,
+    );
+    assertEquals(
+      result.pending.f8812.auto_agi,
+      expectedWages + (unreported ? 2000 : 0),
+    );
   });
 }

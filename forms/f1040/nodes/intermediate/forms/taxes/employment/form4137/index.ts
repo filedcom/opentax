@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
@@ -58,84 +61,116 @@ const below20TipMonthSchema = z.object({
   message: "Form 4137 below-$20 month reported tips exceed received tips",
 });
 
-const allocatedTipDailyRecordSchema = z.object({
-  date: z.string().refine((value) => {
-    if (!/^(2024-12|2025-\d{2})-\d{2}$/.test(value)) return false;
-    const date = new Date(`${value}T00:00:00Z`);
-    return !Number.isNaN(date.getTime()) &&
-      date.toISOString().slice(0, 10) === value;
-  }, "Form 4137 tip record date must be in December 2024 or 2025"),
-  cash_charge_tips_received: z.number().nonnegative(),
-  tips_reported_to_employer: z.number().nonnegative(),
-  report_date: z.string().refine((value) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const date = new Date(`${value}T00:00:00Z`);
-    return !Number.isNaN(date.getTime()) &&
-      date.toISOString().slice(0, 10) === value;
-  }, "Form 4137 report date must be valid").optional(),
-  evidence_type: z.enum([
-    "daily_tip_diary",
-    "receipt_or_charge_slip",
-    "employer_electronic_record",
-  ]),
-  evidence_reference: z.string().trim().min(1),
-}).strict().superRefine((record, ctx) => {
-  if (record.tips_reported_to_employer > record.cash_charge_tips_received) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 4137 daily reported tips exceed received tips",
-    });
-  }
-  if (
-    (record.tips_reported_to_employer > 0) !==
-      (record.report_date !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 4137 reported tips need a report date",
-    });
-  }
-  if (record.report_date !== undefined && record.report_date < record.date) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 4137 report date precedes tip receipt",
-    });
-  }
-});
+function allocatedTipDailyRecordSchemaForYear(taxYear: number) {
+  return z.object({
+    date: z.string().refine(
+      (value) => {
+        if (
+          !new RegExp(`^(${taxYear - 1}-12|${taxYear}-\\d{2})-\\d{2}$`).test(
+            value,
+          )
+        ) return false;
+        const date = new Date(`${value}T00:00:00Z`);
+        return !Number.isNaN(date.getTime()) &&
+          date.toISOString().slice(0, 10) === value;
+      },
+      `Form 4137 tip record date must be in December ${
+        taxYear - 1
+      } or ${taxYear}`,
+    ),
+    cash_charge_tips_received: z.number().nonnegative(),
+    tips_reported_to_employer: z.number().nonnegative(),
+    report_date: z.string().refine((value) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const date = new Date(`${value}T00:00:00Z`);
+      return !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value;
+    }, "Form 4137 report date must be valid").optional(),
+    evidence_type: z.enum([
+      "daily_tip_diary",
+      "receipt_or_charge_slip",
+      "employer_electronic_record",
+    ]),
+    evidence_reference: z.string().trim().min(1),
+  }).strict().superRefine((record, ctx) => {
+    if (record.tips_reported_to_employer > record.cash_charge_tips_received) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 4137 daily reported tips exceed received tips",
+      });
+    }
+    if (
+      (record.tips_reported_to_employer > 0) !==
+        (record.report_date !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 4137 reported tips need a report date",
+      });
+    }
+    if (record.report_date !== undefined && record.report_date < record.date) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 4137 report date precedes tip receipt",
+      });
+    }
+  });
+}
 
-const allocatedTipRecordSchema = z.object({
-  employer_index: z.number().int().min(1),
-  daily_records: z.array(allocatedTipDailyRecordSchema).min(1),
-}).strict();
+const allocatedTipDailyRecordSchema = allocatedTipDailyRecordSchemaForYear(
+  2025,
+);
 
-function included2025TipAmounts(
+function allocatedTipRecordSchemaForYear(taxYear: number) {
+  return z.object({
+    employer_index: z.number().int().min(1),
+    daily_records: z.array(allocatedTipDailyRecordSchemaForYear(taxYear)).min(
+      1,
+    ),
+  }).strict();
+}
+
+function januaryTipReportDeadline(year: number): string {
+  const date = new Date(Date.UTC(year, 0, 10));
+  if (date.getUTCDay() === 6) date.setUTCDate(12);
+  if (date.getUTCDay() === 0) date.setUTCDate(11);
+  return date.toISOString().slice(0, 10);
+}
+
+function includedTipAmounts(
   record: z.infer<typeof allocatedTipDailyRecordSchema>,
+  taxYear: number,
 ): { received: number; reported: number } {
   const unreported = record.cash_charge_tips_received -
     record.tips_reported_to_employer;
   const receiptYear = Number(record.date.slice(0, 4));
-  const reportedIn2025 = record.report_date !== undefined &&
-    (record.date.startsWith("2024-12-")
-      ? record.report_date > "2024-12-31" &&
-        record.report_date <= "2025-01-10"
-      : !(record.date.startsWith("2025-12-") &&
-        record.report_date > "2025-12-31" &&
-        record.report_date <= "2026-01-12"));
-  const reported = reportedIn2025 ? record.tips_reported_to_employer : 0;
+  const reportedInYear = record.report_date !== undefined &&
+    (record.date.startsWith(`${taxYear - 1}-12-`)
+      ? record.report_date > `${taxYear - 1}-12-31` &&
+        record.report_date <= januaryTipReportDeadline(taxYear)
+      : !(record.date.startsWith(`${taxYear}-12-`) &&
+        record.report_date > `${taxYear}-12-31` &&
+        record.report_date <= januaryTipReportDeadline(taxYear + 1)));
+  const reported = reportedInYear ? record.tips_reported_to_employer : 0;
   return {
-    received: (receiptYear === 2025 ? unreported : 0) + reported,
+    received: (receiptYear === taxYear ? unreported : 0) + reported,
     reported,
   };
 }
 
-const formSchema = z.object({
-  recipient: recipientSchema,
-  employers: z.array(employerSchema).min(1),
-  below_20_tip_months: z.array(below20TipMonthSchema).optional(),
-  allocated_tip_records: z.array(allocatedTipRecordSchema).optional(),
-  government_employee_tips: z.number().nonnegative().optional(),
-  ss_wages_from_w2: z.number().nonnegative().optional(),
-}).strict();
+export function form4137SchemaForYear(taxYear: number) {
+  return z.object({
+    recipient: recipientSchema,
+    employers: z.array(employerSchema).min(1),
+    below_20_tip_months: z.array(below20TipMonthSchema).optional(),
+    allocated_tip_records: z.array(allocatedTipRecordSchemaForYear(taxYear))
+      .optional(),
+    government_employee_tips: z.number().nonnegative().optional(),
+    ss_wages_from_w2: z.number().nonnegative().optional(),
+  }).strict();
+}
+
+const formSchema = form4137SchemaForYear(2025);
 
 const w2TipSourceSchema = z.object({
   employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
@@ -179,6 +214,10 @@ export type Form4137Calculation = {
 export function calculateForm4137(
   input: Form4137Input,
   ssWageBase: number,
+  policy: { taxYear: number; roundPrintedLines: boolean } = {
+    taxYear: 2025,
+    roundPrintedLines: false,
+  },
 ): Form4137Calculation[] {
   const forms = input.forms ?? [];
   const sources = input.w2_tip_sources ?? [];
@@ -312,7 +351,7 @@ export function calculateForm4137(
           throw new Error("Form 4137 duplicate daily tip record date");
         }
         dates.add(record.date);
-        const included = included2025TipAmounts(record);
+        const included = includedTipAmounts(record, policy.taxYear);
         received += included.received;
         reported += included.reported;
       }
@@ -398,8 +437,24 @@ export function calculateForm4137(
     if (incidentalTips > unreportedTips) {
       throw new Error("Form 4137 line 5 exceeds unreported tips");
     }
-    const medicareTips = unreportedTips - incidentalTips;
-    const governmentEmployeeTips = form.government_employee_tips ?? 0;
+    const printed = policy.roundPrintedLines ? Math.round : (n: number) => n;
+    const printedReceived = form.employers.reduce(
+      (sum, row) => sum + printed(row.tips_received),
+      0,
+    );
+    const printedReported = form.employers.reduce(
+      (sum, row) => sum + printed(row.tips_reported),
+      0,
+    );
+    const printedUnreported = printedReceived - printedReported;
+    const printedIncidental = printed(incidentalTips);
+    const medicareTips = printedUnreported - printedIncidental;
+    if (medicareTips < 0) {
+      throw new Error(
+        "Form 4137 printed line 5 exceeds line 4; reconcile rounding",
+      );
+    }
+    const governmentEmployeeTips = printed(form.government_employee_tips ?? 0);
     if (governmentEmployeeTips > medicareTips) {
       throw new Error(
         "Form 4137 government employee tips exceed Medicare tips",
@@ -429,7 +484,9 @@ export function calculateForm4137(
       (sum, source) => sum + (source.rrta_compensation ?? 0),
       0,
     );
-    const ssWagesAndTips = ssWages + Math.min(rrtaCompensation, ssWageBase);
+    const ssWagesAndTips = printed(
+      ssWages + Math.min(rrtaCompensation, ssWageBase),
+    );
     const ssWageBaseRoom = Math.max(0, ssWageBase - ssWagesAndTips);
     const ssTips = Math.min(
       Math.max(0, medicareTips - governmentEmployeeTips),
@@ -440,10 +497,10 @@ export function calculateForm4137(
     return {
       recipient: form.recipient,
       employers: form.employers,
-      totalTipsReceived,
-      totalTipsReported,
-      unreportedTips,
-      incidentalTips,
+      totalTipsReceived: printedReceived,
+      totalTipsReported: printedReported,
+      unreportedTips: printedUnreported,
+      incidentalTips: printedIncidental,
       medicareTips,
       ssWagesAndTips,
       ssWageBaseRoom,

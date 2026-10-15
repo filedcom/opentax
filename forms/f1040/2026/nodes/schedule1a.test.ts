@@ -60,7 +60,7 @@ Deno.test("2026 Schedule 1-A reconciles mixed occupations, printed cents and sen
   assertEquals(result.lines.line17, 10_001);
   assertEquals(result.lines.line43, 5_700);
   assertEquals(result.lines.line44, 33_701);
-  assertEquals(result.employee_rows[0].review.excluded_cash_tips, 2_000);
+  assertEquals(result.employee_rows[0].review!.excluded_cash_tips, 2_000);
 });
 Deno.test("2026 Schedule 1-A uses complete $1,000 steps separately for tips and overtime", () => {
   for (
@@ -161,7 +161,6 @@ Deno.test("2026 Schedule 1-A requires complete source scope and MAGI evidence", 
   );
   for (
     const key of [
-      "has_form4137_tips",
       "has_business_tips",
       "has_non_w2_overtime",
     ] as const

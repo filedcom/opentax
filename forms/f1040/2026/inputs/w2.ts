@@ -236,6 +236,21 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     const outputs = common.outputs.filter((output) =>
       output.nodeType !== "schedule3"
     ).map((output) => {
+      if (output.nodeType === "form4137") {
+        const sources = output.fields.w2_tip_sources as Record<
+          string,
+          unknown
+        >[];
+        return {
+          ...output,
+          fields: {
+            w2_tip_sources: sources.map((source, i) => ({
+              ...source,
+              source_document_reference: input.w2s[i].source_document_reference,
+            })),
+          },
+        };
+      }
       if (output.nodeType !== "schedule2") return output;
       const old = output.fields;
       const allowed = new Set([
@@ -286,11 +301,8 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     // Keep issued TP/TT evidence intact. The 2026 Schedule 1-A calculator must
     // apply recipient eligibility, occupation allocation and MAGI limits; do not
     // pretend box 7 or a 2025 employer statement is the new box 12 source.
-    const schedule1aSources = input.w2s.filter((item) =>
-      (item.box12_entries ?? []).some((entry) =>
-        (entry.code === "TP" || entry.code === "TT") && entry.amount > 0
-      )
-    ).map((item) => ({
+    // Retain employer identity even without TP: Form 4137 can supply its tips.
+    const schedule1aSources = input.w2s.map((item) => ({
       employee_ssn: item.employee_ssn,
       employer_ein: item.employer_ein,
       employer_name: item.employer_name,
