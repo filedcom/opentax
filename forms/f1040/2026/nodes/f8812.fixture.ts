@@ -32,7 +32,7 @@ export function childCreditGraphFixture2026(wages = 50_000, count = 1) {
       review_reference: "synthetic-child-credit-review",
       prior_disallowance: "none" as const,
       do_not_claim_actc: false,
-      no_nonrefundable_credits_other_than_dependent_care: true as const,
+      no_nonrefundable_credits_other_than_dependent_care_and_education: true as const,
       no_foreign_or_territory_exclusions: true as const,
       not_bona_fide_puerto_rico_resident: true as const,
       no_self_employment_or_statutory_employee_income: true as const,

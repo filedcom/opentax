@@ -1,3 +1,4 @@
+import { f8863_2026 } from "./nodes/f8863.ts";
 import { form2441_2026 } from "./inputs/dependent-care.ts";
 import { f2441_2026 } from "./nodes/f2441.ts";
 import { schedule3_2026 } from "./nodes/schedule3.ts";
@@ -39,6 +40,7 @@ export const sourceRegistry2026 = {
   general: general_2026,
   form2441: form2441_2026,
   f2441: f2441_2026,
+  f8863: f8863_2026,
   f8812: f8812_2026,
   eitc: eitc_2026,
   ssa1099: social_security_2026,

@@ -17,7 +17,9 @@ export const childCreditClaim2026Schema = z.object({
   review_reference: z.string().trim().min(1),
   prior_disallowance: z.enum(["none", "math_or_clerical_only"]),
   do_not_claim_actc: z.boolean(),
-  no_nonrefundable_credits_other_than_dependent_care: z.literal(true),
+  no_nonrefundable_credits_other_than_dependent_care_and_education: z.literal(
+    true,
+  ),
   no_foreign_or_territory_exclusions: z.literal(true),
   not_bona_fide_puerto_rico_resident: z.literal(true),
   no_self_employment_or_statutory_employee_income: z.literal(true),
@@ -34,6 +36,7 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   // normalized 1040 wage lines instead, including tips and Form 8919 wages.
   finalized_eic: amount.optional(),
   finalized_dependent_care_credit: amount.default(0),
+  finalized_education_credit: amount.default(0),
   finalized_excess_social_security: amount.optional(),
   payroll_sources_2026: z.array(
     z.object({
@@ -99,7 +102,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     excluded_medicaid_waiver_payments: 0,
     schedule1_line15_se_deduction: 0,
   };
-  // Dependent care is finalized before this worksheet; the source review
+  // Dependent care and education are finalized before this worksheet; the source review
   // proves the remaining nonrefundable credits are absent.
   // The old 5b field is deliberately zero: 2026 Worksheet A no longer uses it.
   const calculated = calculateSchedule8812LinesWithConfig(childCredit2026, {
@@ -116,7 +119,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     credit_limit_worksheet: {
       schedule3_line1: 0,
       schedule3_line2: input.finalized_dependent_care_credit,
-      schedule3_line3: 0,
+      schedule3_line3: input.finalized_education_credit,
       schedule3_line4: 0,
       schedule3_line5b: 0,
       schedule3_line6d: 0,

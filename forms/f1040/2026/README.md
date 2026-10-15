@@ -6,6 +6,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `f8863` reuses shared AOTC, phaseout and credit-limit formulas with 2026
+  student/payment sources and SSN eligibility. Tuition, refunds, aid and other
+  benefits reconcile before AOTC/LLC reach Schedule 3 and Form 1040. Draft Form
+  8863 supports multiple students and school continuations. See the
+  [current education scope](../../../docs/ty2026/graphs/EDUCATION-CURRENT.md).
+
 - `form2441` reuses shared benefit arithmetic before AGI; `f2441` applies the
   2026 rate after AGI and tax. Reviewed ordinary W-2/child-care expenses feed
   Schedule 3 and reduce Schedule 8812's tax capacity, with a reconciled draft

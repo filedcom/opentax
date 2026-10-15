@@ -103,7 +103,7 @@ export const inputSchema = identityInputSchema.omit({
 class General2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "form2441"];
+    return [...this.outputNodes.nodeTypes, "form2441", "f8863"];
   }
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
@@ -378,6 +378,44 @@ class General2026Node extends TaxNode<typeof inputSchema> {
                 line36_apply_to_2027:
                   input.apply_overpayment_to_2027_estimated_tax_amount,
               }),
+          },
+        },
+        {
+          nodeType: "f8863",
+          fields: {
+            education_context: {
+              filing_status: input.filing_status,
+              taxpayer_dob: input.taxpayer_dob,
+              tax_residency: input.tax_residency,
+              students: [
+                {
+                  tin: input.taxpayer_ssn,
+                  name:
+                    `${input.taxpayer_first_name} ${input.taxpayer_last_name}`,
+                  valid_ssn: filer.taxpayerValidSsn,
+                  owner: "taxpayer",
+                },
+                ...(joint
+                  ? [{
+                    tin: input.spouse_ssn!,
+                    name:
+                      `${input.spouse_first_name} ${input.spouse_last_name}`,
+                    valid_ssn: filer.spouseValidSsn,
+                    owner: "spouse",
+                  }]
+                  : []),
+                ...claimedChildren.filter((d) =>
+                  d.dependent_on_another_return !== true
+                ).map((d) => ({
+                  tin: (d.ssn ?? d.itin ?? d.atin)!,
+                  name: `${d.first_name} ${d.last_name}`,
+                  valid_ssn: !!d.ssn && d.ssn_valid_for_employment === true &&
+                    d.ssn_issued_before_due_date === true &&
+                    d.tin_issued_by_due_date === true,
+                  owner: "dependent",
+                })),
+              ],
+            },
           },
         },
         { nodeType: "w2", fields: owner },

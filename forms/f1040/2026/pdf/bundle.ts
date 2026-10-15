@@ -1,3 +1,5 @@
+import type { calculateEducationCredit2026 } from "../nodes/f8863.ts";
+import { buildForm8863PdfBytes2026 } from "./form8863.ts";
 import type { calculateCareCredit2026 } from "../nodes/f2441.ts";
 import { buildForm2441PdfBytes2026 } from "./form2441.ts";
 import type { calculateSchedule3_2026 } from "../schedule3.ts";
@@ -153,6 +155,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
     "f8812",
   );
+  const education = retained<ReturnType<typeof calculateEducationCredit2026>>(
+    "f8863",
+  );
   const s3 = retained<ReturnType<typeof calculateSchedule3_2026>>("schedule3");
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
@@ -167,7 +172,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 24, 32, 43, 47, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 24, 32, 43, 47, 50, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -330,6 +335,20 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         filer,
       ));
+  }
+  if (education?.file_form8863) {
+    add(
+      "form8863",
+      undefined,
+      () =>
+        buildForm8863PdfBytes2026(education.source_input, {
+          form1040_line11b: line("line11b_agi"),
+          form1040_line18: line("line18_total_tax_before_credits"),
+          form1040_line29: line("line29_refundable_aotc"),
+          schedule3_line2: amount(p.schedule3, "line2_childcare_credit"),
+          schedule3_line3: amount(p.schedule3, "line3_education_credit"),
+        }, filer),
+    );
   }
   if (wages?.forms.length) {
     add("form8919", undefined, () =>

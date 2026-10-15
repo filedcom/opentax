@@ -1,7 +1,8 @@
 # TY2026 credit recertification, education, and EIC graph contract
 
 Current implementation: [EIC-CURRENT.md](EIC-CURRENT.md) and
-[CHILD-CREDIT-CURRENT.md](CHILD-CREDIT-CURRENT.md). This broader contract includes
+[CHILD-CREDIT-CURRENT.md](CHILD-CREDIT-CURRENT.md), and
+[EDUCATION-CURRENT.md](EDUCATION-CURRENT.md). This broader contract includes
 unimplemented routes; the draft EIC table is now extracted and tested.
 
 Sources: the pinned [December 2025 continuous-use Form 8862](../corpus/authorities/f8862--2025.pdf)

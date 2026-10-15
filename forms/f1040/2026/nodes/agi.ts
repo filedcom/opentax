@@ -65,6 +65,9 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
   readonly outputNodes = agi_aggregator.outputNodes;
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "f8863"];
+  }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -340,6 +343,14 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       return output;
     });
     const earned = outputs.find((o) => o.nodeType === "f8812")?.fields;
+    outputs.push({
+      nodeType: "f8863",
+      fields: {
+        agi: earned?.auto_agi,
+        earned_income_from_agi: wageIncome,
+        unsupported_earned_income_activity: unsupportedEarnedActivity,
+      },
+    });
     outputs.push({
       nodeType: "f2441",
       fields: {

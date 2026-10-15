@@ -39,6 +39,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Form 6251 (32) | Retained filing condition | 2 |
 | Schedule EIC (43) | Positive supported child-based EIC | 1 |
 | Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
+| Form 8863 (50) | Positive supported AOTC or LLC | Totals plus student/school pages |
 | Form 8919 (61) | Calculated owner forms | All owner/employer continuation copies |
 | Form 8959 (71) | Retained filing/withholding condition, including zero tax | 1 |
 | Form 8960 (72) | Retained filing condition, including zero NIIT | 1 |
@@ -86,3 +87,11 @@ Its ordinary-W-2/child-care source route reconciles benefits, AGI and credit;
 Schedule 3 line 2 also reduces Schedule 8812's tax limit. Credit-only cases use
 one printed page, benefits use two, and provider/person continuations follow
 all forms. See [current scope](../graphs/FORM2441-CURRENT.md) for source gates.
+
+## Education update
+
+Form 8863 now occupies sequence 50. Its source-ledger calculation follows
+Form 2441 and precedes Schedule 8812 credit limits. The builder replays retained
+sources and reconciles both credit destinations before generating student and
+school pages. See [the current mapping](PDF-FORM8863-MAP.md). This adds draft
+coverage; it does not clear the source, final-authority or filing gates above.
