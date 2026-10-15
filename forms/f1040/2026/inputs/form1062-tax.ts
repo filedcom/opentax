@@ -40,7 +40,7 @@ const schedule2Schema = registeredSchedule2Schema.pick({
   line11_medicare_self_employment_tax: true,
   line17c_w2_uncollected_fica: true,
   line13k_golden_parachute_tax: true,
-}).strict();
+}).extend({ line1a_excess_advance_premium: z.literal(0).optional() }).strict();
 /** Internal retained calculation sources; this is not a public tax-amount input. */
 export const form1062TaxSource2026Schema = z.object({
   election: form1062Election2026Schema,

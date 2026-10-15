@@ -25,6 +25,7 @@ const electionInputSchema = form1062TaxSource2026Schema.omit({
 }).merge(form1062TaxSource2026Schema.shape.return_lines).merge(
   form1062Claim2026Schema,
 ).partial().extend({
+  marketplace_sources_present: z.literal(true).optional(),
   extension_payment_sources: extensionPaymentClaim2026Schema.shape.claim.shape
     .payments.element.array().optional(),
 }).strict();
@@ -32,6 +33,12 @@ const electionInputSchema = form1062TaxSource2026Schema.omit({
 // returns as additional source families are connected to the graph.
 const inputSchema = z.union([
   z.object({ claim: z.undefined() }).passthrough(),
+  // Preserve this known combination until compute can report the missing replay,
+  // even when its newly enabled Schedule 2 amount exceeds the zero-only contract.
+  z.object({
+    claim: form1062Claim2026Schema.shape.claim,
+    marketplace_sources_present: z.literal(true),
+  }).passthrough(),
   electionInputSchema,
 ]);
 
@@ -50,8 +57,14 @@ export class Form1062Node2026 extends TaxNode<typeof inputSchema> {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Form 1062 needs f1040:2026 context");
     }
-    const input = inputSchema.parse(raw);
-    if (!input.claim) return { outputs: [] };
+    const parsed = inputSchema.parse(raw);
+    if (!parsed.claim) return { outputs: [] };
+    if (parsed.marketplace_sources_present) {
+      throw new Error(
+        "Form 1062 Marketplace sources need a hypothetical-income and premium-deduction replay",
+      );
+    }
+    const input = electionInputSchema.required({ claim: true }).parse(parsed);
     if (!this.covenants) {
       throw new Error("Form 1062 needs execution-bound covenant PDF copies");
     }

@@ -1,3 +1,5 @@
+import { f1095a_2026 } from "./inputs/marketplace.ts";
+import { marketplaceReturnClaim2026Schema } from "./inputs/marketplace-return.ts";
 import { gambling_2026 } from "./inputs/gambling.ts";
 import { gamblingClaim2026Schema } from "./inputs/gambling-source.ts";
 import {
@@ -105,6 +107,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: f1095a_2026,
+    isArray: false,
+    inputSchema: marketplaceReturnClaim2026Schema,
+  },
   { node: gambling_2026, isArray: false, inputSchema: gamblingClaim2026Schema },
   {
     node: estimated_payments_2026,

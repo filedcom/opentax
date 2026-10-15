@@ -19,6 +19,7 @@ export const claimInputSchema = scheduleASource2026Schema.omit({
   w2_tax_sources: true,
   information_return_tax_sources: true,
   cash_gifts: true,
+  marketplace_reconciliation_2026: true,
   mortgage_source_2026: true,
   gambling_source_2026: true,
   educator_source_2026: true,
@@ -43,6 +44,7 @@ export const inputSchema = claimInputSchema.partial().extend({
     agi: true,
     w2_tax_sources: true,
     information_return_tax_sources: true,
+    marketplace_reconciliation_2026: true,
     mortgage_source_2026: true,
     gambling_source_2026: true,
     educator_source_2026: true,
@@ -67,6 +69,8 @@ class ScheduleA2026Node extends TaxNode<typeof inputSchema> {
     if (!input.source_scope_review) {
       if (
         input.tax_year !== undefined || input.tax_election !== undefined ||
+        input.marketplace_reconciliation_2026?.marketplace_sources_2026
+            .medical_review.treatment === "schedule_a" ||
         input.mortgage_source_2026 !== undefined ||
         input.educator_source_2026 !== undefined ||
         input.gambling_source_2026 !== undefined ||

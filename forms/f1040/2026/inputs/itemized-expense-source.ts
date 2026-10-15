@@ -31,6 +31,7 @@ export const medicalPayment2026Schema = z.object({
   tax_free_funding_amount: money,
   nonmedical_amount: money,
   no_ltc_capital_improvement_or_travel_limit: z.literal(true),
+  not_marketplace_premium: z.literal(true).optional(),
 }).strict();
 export const taxPayment2026Schema = z.discriminatedUnion("kind", [
   z.object({

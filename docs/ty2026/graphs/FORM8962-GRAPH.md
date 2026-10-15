@@ -35,8 +35,10 @@ that can be reviewed for reuse after a 2026 visual/field audit.
 
 ## Current code boundary
 
-- `nodes/inputs/credits/health/f1095a/index.ts` aggregates policy amounts
-  and shared-policy facts, but `f1095a` is **not** in the 2026 registry.
+- The internal 2026 source registry now includes dedicated `f1095a` and
+  `form8962` adapters. The source catalog accepts reviewed copies, family,
+  income and medical inventories; it does not accept computed income or credits.
+  This registry is still not a public filing product.
 - `forms/f1040/2026/inputs/marketplace-source.ts` now prepares ordinary
   2026 policy facts from issued copies and person-month reviews. It preserves
   source cents, corrected-copy lineage and issued VOID copies; verifies each
@@ -75,9 +77,12 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   are rejected. Foreign residence needs a separate rule review.
 - `marketplace-preparation.ts` combines these family facts and reviewed policy
   sources without accepting household-size, FPL-region or dependent-MAGI
-  overrides. It remains **not registered**. Primary/joint MAGI must still bind
-  to the executed AGI graph; it does not coordinate medical premium deductions
-  or prove all current-year filing eligibility. Shared allocations, marriage/divorce
+  overrides. `marketplace-return.ts` now binds primary/joint MAGI to the
+  executed AGI workpaper, including tax-exempt interest and nontaxable Social
+  Security. The dated income inventory must cover each actual filer exactly
+  once. It derives ordinary Schedule A premiums after the allowed PTC and
+  retains the complete sources for downstream replay. It does not establish
+  all current-year filing eligibility. Shared allocations, marriage/divorce
   changes, QSEHRA, self-employed plans, retroactive/mid-month special enrollment,
   protected partial payments and employer-offer affordability remain separate
   required source workpapers. An issued VOID copy is supported; a standalone
@@ -93,13 +98,15 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   the final 2026 Table 2. Its QSEHRA percentage is parameterized, but the
   2026 adapter does not yet accept QSEHRA facts.
 - `forms/f1040/2026/form8962.ts` is an **internal calculation component**,
-  not a registered source or a filed return route. It reuses the shared
+  consumed by the dedicated registered source adapter, not a public filing product. It reuses the shared
   monthly/annual calculation with strict ordinary-family inputs, requires
   all twelve monthly columns, reconciles any annual totals in cents, and rejects
   MFS, below-100% eligibility and advanced worksheet/source fields. The internal
   preparation component derives family size, dependent MAGI and ordinary
-  coverage facts; primary MAGI and downstream graph ownership remain pending.
-  Caller-provided totals are not public claim inputs.
+  coverage facts. AGI supplies primary MAGI and its income workpaper; the
+  adapter reconciles both before calculating. Caller-provided totals are not
+  public claim inputs. Actual W-2 QSEHRA benefits and a self-employed health
+  deduction require their coordinated route, regardless of a conflicting scope review.
 - The existing cent-summing helper now lives beside the shared calculation;
   the 2025 domain reexports it without changing behavior. The 2026 component
   retains source cents for reconciliation, validates unchanged monthly
@@ -109,8 +116,22 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   AMT regular-tax-limit contributions. Its 2026 form record omits both
   `repayment_limitation` and `excess_advance_premium` (the old lines 28/29);
   full repayment is `excess_advance_payment` (line 27). The dedicated 2026
-  Schedule 2/3 and AMT nodes do **not yet consume** these values. Tests
-  reconcile pure schedule totals, not end-to-end 1040/credit execution.
+  Schedule 2 and final Schedule 3 nodes now consume these amounts through final
+  1040 settlement and care/education/child-credit limits. AMT replays the retained
+  Marketplace source directly for Form 6251 line 10, avoiding a Schedule 2 cycle.
+- Schedule A replays the same sources, checks filer identities and AGI, and
+  adds eligible premiums once. The ordinary medical route requires exact
+  after-tax personal payments by the return filers during 2026 and a reviewed
+  Section 213 inventory. It subtracts allowed PTC from premiums, so repaid
+  advances are included and credited premiums are excluded. Unrelated medical
+  expenses remain eligible; separate insurance rows need an explicit non-Marketplace
+  review, and reused Marketplace receipt/document references are rejected.
+  Payments outside 2026 can still support PTC but need a medical timing workpaper
+  before entering this deduction route. This is not the self-employed deduction.
+- An active Form 1062 election with Marketplace sources is rejected until
+  hypothetical-income PTC and premium deductions can be replayed. Its ordinary
+  no-Marketplace Schedule 2 contract accepts the newly supplied zero line 1a,
+  but a positive regular-tax addition cannot silently become nondeferrable.
 - The original plan overstated this baseline: the node was 2025-only,
   with hardcoded annual helpers, before the annual-policy extraction.
   Registration alone still cannot establish a source-backed 2026 route.
@@ -119,8 +140,9 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   current TY2026 XSD must define the replacement Form 8962 structure and
   document order. Do not reuse these TY2025 element names by inference.
   `forms/f1040/2026/mef` does not yet exist.
-- The 2026 PDF builder has no Form 8962 attachment. The TY2025 descriptor
-  targets a 2025 form and must not be registered for a 2026 return as-is.
+- The 2026 PDF builder has no Form 8962 attachment and explicitly rejects
+  Marketplace bundles until the current-year attachment is implemented. The
+  TY2025 descriptor targets a 2025 form and cannot fill that requirement.
 - Marketplace premiums under a self-employed business plan create a
   deduction/PTC dependency with [Form 7206](./FORM7206-GRAPH.md). Its 2026
   instructions defer the computation to Publication 974; the pinned 2025
@@ -129,12 +151,10 @@ that can be reviewed for reuse after a 2026 visual/field audit.
 
 ## Build order and independent acceptance cases
 
-1. Register a 2026 Form 1095-A source and Form 8962 calculation with explicit
-   outputs to the dedicated 2026 Schedule 3 line 9 and Schedule 2 line 1a.
-   Carry its Schedule 2 line 1z effect into AMT and nonrefundable-credit
-   limits. Require the completed Form 8962 record whenever APTC or a PTC
-   claim makes it necessary, and suppress an empty form when no PTC/APTC
-   applies.
+1. The ordinary source-to-1040 graph is connected, including Schedule 3 line 9,
+   Schedule 2 line 1a, AMT and nonrefundable-credit limits. Finish attachment
+   selection and suppress an empty form when no PTC/APTC applies; do not enable
+   a draft bundle that omits a required Form 8962.
 2. Finish family-income/household facts, shared-policy allocation, MFS and
    below-100% exception validation, QSEHRA and self-employed health-insurance
    interactions, and year-of-marriage months. A source conflict or missing
@@ -168,7 +188,8 @@ facts. The $765/$3,000 case uses monthly premium $416.67 and SLCSP $833.33,
 whose annual source totals are $5,000.04 and $9,999.96; the filed whole-dollar
 credit/repayment remains the independent acceptance result above. Full 2025
 node/source/household regressions preserve its original eligibility and cap
-behavior. This evidence does not complete source ownership, PDF or MeF work.
+behavior. This evidence alone does not complete advanced source ownership,
+PDF or MeF work.
 
 Current primary authorities checked October 16, 2026:
 [Rev. Proc. 2025-25](https://www.irs.gov/pub/irs-drop/rp-25-25.pdf),
@@ -221,3 +242,14 @@ Annual dependent amounts were checked against
 The residence-table selection rule follows the
 [Form 8962 line 4 instructions](https://www.irs.gov/instructions/i8962),
 which still need comparison to the final 2026 instructions.
+
+`marketplace-graph.test.ts` now reconciles the one-person and joint 400% cliffs
+through final settlement, tax-exempt-interest MAGI, ISO AMT, child-credit limits,
+and Schedule A premium deductions. It also verifies mismatched ownership/AGI,
+duplicate receipts, incomplete joint income review, QSEHRA/SE-health interactions,
+medical payment timing, and rejection of unreplayed farmland elections or
+Marketplace PDF bundles. These graph tests do not establish Form 8962 PDF or
+MeF acceptance. Medical reconciliation follows the PTC examples in
+[Publication 502](https://www.irs.gov/publications/p502); AMT line 10 follows
+the [2026 draft Form 6251](https://www.irs.gov/pub/irs-dft/f6251--dft.pdf).
+Reconcile the medical rules to final 2026 guidance before public filing.

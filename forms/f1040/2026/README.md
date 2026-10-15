@@ -1044,24 +1044,19 @@ Matching receipts feed Schedule 3 line 10 once; recorded first-installment
 payments must reconcile to those receipts before an extended election settles.
 Other payment categories and later-installment settlement remain unconnected.
 
-An internal Form 8962 component now reuses the 2025 monthly/annual arithmetic
-with a separate 2026 annual policy. It checks ordinary monthly columns and
-annual totals, applies the 400% ceiling and full excess-APTC repayment, and
-returns separate Schedule 3, Schedule 2 and AMT contributions. It is not yet
-registered: primary/joint MAGI and downstream graph ownership, special eligibility,
-QSEHRA and self-employed health interactions, final instruction reconciliation,
-PDF output and MeF remain open. See the
+The 2026 Marketplace source and Form 8962 adapters now reuse the 2025
+monthly/annual arithmetic with separate annual rules. Issued/corrected/void
+copies, payment and coverage evidence, validated general family identities,
+sourced dependent income and filer residence histories determine the input.
+A complete filer income review binds primary/joint MAGI to the executed AGI
+workpaper. The credit and full excess-APTC repayment reach Schedule 3,
+Schedule 2, AMT, nonrefundable-credit limits and final 1040 settlement.
+
+Schedule A replays those same sources and adds eligible ordinary premiums
+net of the allowed PTC once, with payment timing, filer ownership and duplicate
+receipt checks. Unrelated medical expenses remain usable. QSEHRA, self-employed
+health, advanced eligibility and allocation cases, nonordinary medical timing,
+and Form 1062 hypothetical-income replay remain open. Marketplace PDF bundles
+are blocked until the required 2026 Form 8962 attachment is implemented.
+Final instructions, public filing support and MeF are still pending; see the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
-
-
-The Marketplace source component now reconciles ordinary current/corrected/void
-1095-A copies, coverage dates, monthly full-payment and outside-MEC reviews,
-and benchmark determinations. It reuses the 2025 copy selector, eligibility
-checks and state-level SLCSP grouping while preserving source cents and current
-year metadata. The general node now supplies validated family identities, and
-source preparation derives family size, dependent MAGI and FPL region from
-matched income records and complete filer residence histories. Dependent-income
-logic is shared with 2025 through explicit annual rules; filing tests preserve
-source cents while filed entries round once. It is not yet an input-catalog
-entry: primary/joint MAGI, premium-deduction coordination and the return/PDF
-route still need to consume and replay these records before filing can be enabled.

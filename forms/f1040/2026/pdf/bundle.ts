@@ -89,6 +89,11 @@ export async function buildDraftReturnPdf2026(
     throw new Error("TY2026 draft bundle needs general filer input");
   }
   const input = sourceRegistry2026.start.inputSchema.parse(raw);
+  if (input.f1095a !== undefined) {
+    throw new Error(
+      "Marketplace draft bundle needs the reconciled 2026 Form 8962 attachment",
+    );
+  }
   const calculation = await executeDraftSources2026(input, documents);
   if (calculation.diagnostics.length) {
     throw new Error(

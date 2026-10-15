@@ -1,4 +1,8 @@
 import {
+  calculateMarketplaceReturn2026,
+  marketplaceReturnInput2026Schema,
+} from "./inputs/marketplace-return.ts";
+import {
   calculateGambling2026,
   gamblingSource2026Schema,
 } from "./inputs/gambling-source.ts";
@@ -50,6 +54,7 @@ export const scopeReview2026Schema = z.object({
 }).strict();
 export const scheduleASource2026Schema = expenseInput2026Schema.extend({
   tax_year: z.literal(2026),
+  marketplace_reconciliation_2026: marketplaceReturnInput2026Schema.optional(),
   mortgage_source_2026: mortgageSource2026Schema.optional(),
   gambling_source_2026: gamblingSource2026Schema.optional(),
   educator_source_2026: educatorSource2026Schema.optional(),
@@ -90,6 +95,42 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
       Math.round(input.salt_addbacks?.form2555_line45.amount ?? 0)
   ) {
     throw new Error("Schedule A Form 2555 exclusion disagrees with AGI");
+  }
+  const marketplace = input.marketplace_reconciliation_2026
+    ? calculateMarketplaceReturn2026(input.marketplace_reconciliation_2026)
+    : undefined;
+  if (marketplace) {
+    const family = marketplace.source_input.marketplace_sources_2026.tax_family;
+    const audit = marketplace.source_input.pub974_income_audit;
+    if (
+      family.filing_status !== input.filing_status ||
+      family.taxpayer_tin !== input.taxpayer_ssn.replaceAll("-", "") ||
+      family.spouse_tin !== input.spouse_ssn?.replaceAll("-", "") ||
+      input.agi !==
+        audit.form1040_line9_total_income -
+          audit.schedule1_adjustments_except_line17 -
+          audit.schedule1_line17_se_health_insurance
+    ) {
+      throw new Error(
+        "Schedule A Marketplace owners and AGI must reconcile to the return",
+      );
+    }
+    for (const row of input.medical_payments) {
+      if (
+        (row.category === "medical_insurance" &&
+          row.not_marketplace_premium !== true) ||
+        marketplace.medical.payment_references.includes(
+          row.payment_reference,
+        ) ||
+        marketplace.medical.document_references.includes(
+          row.source_document_reference,
+        )
+      ) {
+        throw new Error(
+          "Schedule A Marketplace premiums must use the reconciled PTC source exactly once",
+        );
+      }
+    }
   }
   const scope = input.source_scope_review;
   if (
@@ -269,9 +310,11 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
       roundReduction: true,
     }) / (isMfs ? 2 : 1),
   );
-  const line1 = Math.round(expenses.amounts.medical);
+  const medicalExpenses = expenses.amounts.medical +
+    (marketplace?.medical.eligible_premiums ?? 0);
+  const line1 = Math.round(medicalExpenses);
   const line3 = Math.round(Math.max(0, input.agi) * .075);
-  const line4 = medicalExpenseDeduction(expenses.amounts.medical, input.agi);
+  const line4 = medicalExpenseDeduction(medicalExpenses, input.agi);
   const line5a = Math.round(expenses.selectedStateOrSales),
     line5b = Math.round(expenses.amounts.realEstate),
     line5c = Math.round(expenses.amounts.personalProperty);
@@ -313,6 +356,7 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     mortgage,
     educator,
     gambling,
+    marketplace,
     cash_gifts: cash,
     saltMagi,
     saltLimit,

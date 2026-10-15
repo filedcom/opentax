@@ -9,6 +9,7 @@ import {
 } from "../schedule3.ts";
 const inputSchema = schedule3Input2026Schema.pick({
   line11_excess_ss: true,
+  line9_premium_tax_credit: true,
   line2_childcare_credit: true,
   line3_education_credit: true,
   line5a_residential_clean_energy: true,

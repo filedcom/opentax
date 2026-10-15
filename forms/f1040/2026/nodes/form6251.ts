@@ -1,4 +1,8 @@
 import {
+  calculateMarketplaceReturn2026,
+  marketplaceReturnInput2026Schema,
+} from "../inputs/marketplace-return.ts";
+import {
   calculateGovernmentPayments2026,
   governmentSource2026Schema,
 } from "../inputs/government-source.ts";
@@ -47,6 +51,7 @@ export const inputSchema = z.object({
   regular_tax_income: signed,
   regular_taxable_income: money,
   regular_tax: money,
+  marketplace_reconciliation_2026: marketplaceReturnInput2026Schema.optional(),
   taking_standard_deduction: z.boolean(),
   line2a_taxes_paid: money,
   iso_sources_2026: isoClaim2026Schema.optional(),
@@ -71,6 +76,19 @@ export type Form6251Input2026 = z.input<typeof inputSchema>;
 
 export function calculateForm6251_2026(raw: Form6251Input2026) {
   const input = inputSchema.parse(raw);
+  const marketplace = input.marketplace_reconciliation_2026
+    ? calculateMarketplaceReturn2026(input.marketplace_reconciliation_2026)
+    : undefined;
+  if (marketplace) {
+    const family = marketplace.source_input.marketplace_sources_2026.tax_family;
+    if (
+      family.filing_status !== input.filing_status ||
+      family.taxpayer_tin !== input.taxpayer_ssn.replaceAll("-", "") ||
+      family.spouse_tin !== input.spouse_ssn?.replaceAll("-", "")
+    ) {
+      throw new Error("AMT Marketplace sources must match return owners");
+    }
+  }
   const capital = input.capital_sources_2026
     ? calculateCapitalGains2026(input.capital_sources_2026)
     : undefined;
@@ -139,6 +157,8 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       line2b,
       line2g,
       line2i,
+      marketplaceRepayment: marketplace?.calculation.amt.schedule2_line1z_tax ??
+        0,
       hasIso: !!iso,
       hasInvestment: !!investment,
     }),
@@ -151,6 +171,7 @@ function calculateForm6251Amounts2026(
     line2b: number;
     line2g: number;
     line2i: number;
+    marketplaceRepayment: number;
     hasIso: boolean;
     hasInvestment: boolean;
   },
@@ -215,10 +236,12 @@ function calculateForm6251Amounts2026(
       cfg.adjustmentStandard,
       cfg.adjustmentMfs,
     );
-  // No FTC, Schedule J, 4972, 8978, or Schedule 2 line 1z source is enabled in
-  // this contract; positive unsupported fields fail strict parsing above.
+  // Draft Form 6251 line 10 adds Schedule 2 line 1z. Its PTC amount is
+  // replayed directly to avoid a Schedule 2 -> AMT -> Schedule 2 cycle.
+  // FTC, Schedule J, 4972 and 8978 still need their own source contracts.
   const line9 = line7;
-  const line10 = input.regular_tax;
+  const line10 = input.regular_tax +
+    adjustments.marketplaceRepayment;
   const line11 = Math.max(0, line9 - line10);
   return {
     partThree,
@@ -253,6 +276,11 @@ export function refigureForm6251For1062_2026(
   regularTaxWithoutGain: number,
 ) {
   const actual = calculateForm6251_2026(raw), input = actual.source_input;
+  if (input.marketplace_reconciliation_2026) {
+    throw new Error(
+      "Form 1062 Marketplace sources need a hypothetical-income and premium-deduction replay",
+    );
+  }
   if (!input.capital_sources_2026) {
     throw new Error("Form 1062 AMT replay needs the linked capital sources");
   }
@@ -278,6 +306,7 @@ export function refigureForm6251For1062_2026(
       line2b: actual.government?.lines.state_refund ?? 0,
       line2g: actual.investment?.lines.amt_pab_interest ?? 0,
       line2i: actual.iso?.line2i ?? 0,
+      marketplaceRepayment: 0,
       hasIso: !!actual.iso,
       hasInvestment: !!actual.investment,
     }),

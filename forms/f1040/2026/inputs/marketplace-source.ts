@@ -76,7 +76,10 @@ const benchmark = z.object({
 
 const monthReview = ordinaryEvidence.extend({
   source_document_reference: ref,
-  premium_payment: ordinaryEvidence.shape.premium_payment.extend({ amount })
+  premium_payment: ordinaryEvidence.shape.premium_payment.extend({
+    amount,
+    payer_tin: tin.optional(),
+  })
     .strict(),
   applicable_slcsp: benchmark,
 }).strict();
@@ -363,7 +366,12 @@ export function calculateMarketplaceSources2026(raw: MarketplaceSource2026) {
       {
         ...copy,
         covered_individual_ssns: allPeople,
-        aptc_monthly_evidence: evidence,
+        aptc_monthly_evidence: evidence.map((row) => ({
+          ...row,
+          premium_payment: ordinaryEvidence.shape.premium_payment.strip().parse(
+            row.premium_payment,
+          ),
+        })),
       },
       undefined,
       true,
