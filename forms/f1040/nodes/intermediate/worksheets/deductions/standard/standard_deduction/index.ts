@@ -14,6 +14,7 @@ import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging
 import { form_1116 } from "../../../../forms/credits/foreign/form_1116/index.ts";
 import { form8960 } from "../../../../forms/taxes/investments/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { standardDeductionAmount } from "./amount.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -68,47 +69,17 @@ type StandardDeductionInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Statuses for which spouse factors apply
-const SPOUSE_STATUSES = new Set<FilingStatus>([
-  FilingStatus.MFJ,
-  FilingStatus.MFS,
-  FilingStatus.QSS,
-]);
-
-// ─── Standard Deduction helpers ───────────────────────────────────────────────
-
-// Count the total number of additional-deduction factors for age/blindness.
-// Each factor is $1,600 (MFJ/MFS/QSS) or $2,000 (Single/HOH) for TY2025 per OBBBA.
-function additionalFactorCount(input: StandardDeductionInput): number {
-  let count = 0;
-  if (input.taxpayer_age_65_or_older) count += 1;
-  if (input.taxpayer_blind) count += 1;
-  if (SPOUSE_STATUSES.has(input.filing_status)) {
-    if (input.spouse_age_65_or_older) count += 1;
-    if (input.spouse_blind) count += 1;
-  }
-  return count;
-}
-
-// Compute the standard deduction amount (base + additional for age/blindness).
+// Keep TY2025 filing decisions here; the amount algorithm is shared with TY2026.
 function computeStandardAmount(
   input: StandardDeductionInput,
   cfg: import("../../../../../config/index.ts").F1040Config,
 ): number {
-  const base = cfg.standardDeductionBase[input.filing_status];
-  const additionalPerFactor =
-    cfg.standardDeductionAdditional[input.filing_status];
-  if (input.taxpayer_can_be_claimed_as_dependent === true) {
-    if (input.dependent_earned_income === undefined) {
-      throw new Error("Dependent standard deduction needs earned income");
-    }
-    const dependentBase = Math.min(
-      base,
-      Math.max(1_350, input.dependent_earned_income + 450),
-    );
-    return dependentBase + additionalFactorCount(input) * additionalPerFactor;
-  }
-  return base + additionalFactorCount(input) * additionalPerFactor;
+  return standardDeductionAmount(input, {
+    standardDeductionBase: cfg.standardDeductionBase,
+    standardDeductionAdditional: cfg.standardDeductionAdditional,
+    dependentMinimum: 1_350,
+    dependentEarnedIncomeAddition: 450,
+  });
 }
 
 /** Match the deduction decision's TY2025 comparison for Schedule A line 18. */

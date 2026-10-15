@@ -20,6 +20,8 @@ export type CreateReturnArgs = {
 export async function createReturnCommand(
   args: CreateReturnArgs,
 ): Promise<{ returnId: string }> {
+  // Validate before creating files: a saved year is not evidence of a supported product.
+  getCatalogEntry(args.formType ?? "f1040", args.year);
   const { returnId } = await createReturn(
     args.year,
     args.baseDir,

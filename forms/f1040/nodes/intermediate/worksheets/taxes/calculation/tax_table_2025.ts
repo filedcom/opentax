@@ -8,7 +8,7 @@ import {
   QDCGT_TWENTY_FLOOR_2025,
   QDCGT_ZERO_CEILING_2025,
 } from "../../../../config/2025.ts";
-import { taxFromBrackets } from "./tax_brackets.ts";
+import { rateScheduleTax } from "./tax_brackets.ts";
 
 /**
  * TY2025 Form 1040 Tax Table, for taxable income below $100,000.
@@ -70,10 +70,12 @@ export function ordinaryTax2025(income: number, status: FilingStatus): number {
   const wholeDollarIncome = Math.round(income);
   return wholeDollarIncome < 100_000
     ? taxTable2025(wholeDollarIncome, status)
-    : Math.round(taxFromBrackets(
-      wholeDollarIncome,
-      bracketsForTableStatus(status),
-    ));
+    : rateScheduleTax(wholeDollarIncome, status, {
+      bracketsMfj: BRACKETS_MFJ_2025,
+      bracketsSingle: BRACKETS_SINGLE_2025,
+      bracketsHoh: BRACKETS_HOH_2025,
+      bracketsMfs: BRACKETS_MFS_2025,
+    });
 }
 
 /**
