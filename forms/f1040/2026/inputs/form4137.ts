@@ -3,7 +3,7 @@ import { f1040_2026_node } from "../nodes/f1040.ts";
 import { agi_2026 } from "../nodes/agi.ts";
 import { schedule2_2026 } from "../nodes/schedule2.ts";
 import { schedule1a_2026 } from "../nodes/schedule1a.ts";
-import { form8959 } from "../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
+import { form8959_2026 } from "../nodes/form8959.ts";
 import { form8919 } from "../../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
 import { eitc } from "../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
@@ -221,7 +221,7 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
     agi_2026,
     schedule2_2026,
     schedule1a_2026,
-    form8959,
+    form8959_2026,
     form8919,
     eitc,
     f8812,
@@ -238,10 +238,7 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
       0,
     );
     const tax = calculation.forms.reduce((sum, form) => sum + form.totalTax, 0);
-    const medicareTips = calculation.forms.reduce(
-      (sum, form) => sum + form.medicareTips,
-      0,
-    );
+
     return {
       outputs: [
         { nodeType: "form4137", fields: { calculation_2026: calculation } },
@@ -268,7 +265,18 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
           nodeType: "schedule1a",
           fields: { form4137_tips_2026: calculation.tip_rows },
         },
-        { nodeType: "form8959", fields: { unreported_tips: medicareTips } },
+        {
+          nodeType: "form8959",
+          fields: {
+            form4137_medicare_sources_2026: calculation.forms.map((form) => ({
+              employee_ssn: form.recipient === "taxpayer"
+                ? calculation.source_input.taxpayer_ssn
+                : calculation.source_input.spouse_ssn!,
+              source_reference: `form4137:2026:${form.recipient}`,
+              amount: form.medicareTips,
+            })),
+          },
+        },
         {
           nodeType: "form8919",
           fields: {

@@ -29,8 +29,8 @@ function toCents(amount: number): number {
   return Math.round(amount * 100) / 100;
 }
 
-function validateRecipientYear(
-  items: CT2Item[],
+export function validateRecipientYear(
+  items: Omit<CT2Item, "tax_year">[],
   recipient: CT2Item["recipient"],
 ): void {
   if (items.length !== 4) {

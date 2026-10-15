@@ -1,3 +1,4 @@
+import { ct2_2026 } from "./ct2.ts";
 import { form4137_2026 } from "./form4137.ts";
 import { vehicle_loan_interest_2026 } from "./vehicle-loan-interest.ts";
 import { cash_charity_2026 } from "./cash-charity.ts";
@@ -31,7 +32,7 @@ import { standard_deduction } from "../../nodes/intermediate/worksheets/deductio
 import { eitc } from "../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
 import { schedule1a_2026 as schedule1a } from "../nodes/schedule1a.ts";
-import { form8959 } from "../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
+import { form8959_2026 } from "../nodes/form8959.ts";
 import { form8880 } from "../../nodes/intermediate/forms/credits/individual/form8880/index.ts";
 import { form8960 } from "../../nodes/intermediate/forms/taxes/investments/form8960/index.ts";
 import { form8995 } from "../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
@@ -103,7 +104,8 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     eitc,
     f8812,
     schedule1a,
-    form8959,
+    form8959_2026,
+    ct2_2026,
     form8880,
     form8960,
     form8995,
@@ -421,6 +423,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           },
         },
         { nodeType: "form8959", fields: owner },
+        { nodeType: "ct2", fields: owner },
         {
           nodeType: "form8880",
           fields: {

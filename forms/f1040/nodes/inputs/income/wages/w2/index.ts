@@ -450,7 +450,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
   return { amount, owners };
 }
 
-function box14Amount(item: W2Item, description: string): number | undefined {
+export function box14Amount(item: W2Item, description: string): number | undefined {
   const matches = (item.box14_entries ?? []).filter((entry) =>
     entry.description === description
   );

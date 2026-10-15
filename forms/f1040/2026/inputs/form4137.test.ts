@@ -307,7 +307,13 @@ Deno.test("2026 Form 4137 routes income once and keeps payroll, credit and SE ha
   assertEquals(fields("f1040"), { line1c_unreported_tips: 2000 });
   assertEquals(fields("agi_aggregator"), { line1c_unreported_tips: 2000 });
   assertEquals(fields("schedule2"), { line16a_form4137_tip_tax: 153 });
-  assertEquals(fields("form8959"), { unreported_tips: 2000 });
+  assertEquals(fields("form8959"), {
+    form4137_medicare_sources_2026: [{
+      employee_ssn: "111223333",
+      source_reference: "form4137:2026:taxpayer",
+      amount: 2000,
+    }],
+  });
   assertEquals(fields("eitc"), { earned_income: 2000 });
   assertEquals(fields("f8812"), { auto_earned_income: 2000 });
   assertEquals(fields("schedule_se"), {

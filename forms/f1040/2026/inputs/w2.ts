@@ -3,6 +3,7 @@ import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import {
   Box12Code,
+  box14Amount,
   w2,
   w2ItemSchema,
 } from "../../nodes/inputs/income/wages/w2/index.ts";
@@ -234,7 +235,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     );
     const common = w2.computeWithConfig(ctx, { w2s: projected }, wages2026);
     const outputs = common.outputs.filter((output) =>
-      output.nodeType !== "schedule3"
+      output.nodeType !== "schedule3" && output.nodeType !== "form8959"
     ).map((output) => {
       if (output.nodeType === "form4137") {
         const sources = output.fields.w2_tip_sources as Record<
@@ -321,6 +322,28 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
         fields: { w2_2026_sources: schedule1aSources },
       });
     }
+    outputs.push({
+      nodeType: "form8959",
+      fields: {
+        w2_medicare_sources_2026: input.w2s.map((item, i) => {
+          const rrta = box14Amount(projected[i], "RRTA compensation") ?? 0;
+          const uncollected = (item.box12_entries ?? []).filter((entry) =>
+            entry.code === Box12Code.B || entry.code === Box12Code.N
+          ).reduce((n, entry) => n + entry.amount, 0);
+          return {
+            employee_ssn: item.employee_ssn,
+            employer_ein: item.employer_ein,
+            source_document_reference: item.source_document_reference,
+            box5_medicare_wages: item.box5_medicare_wages,
+            box6_medicare_withheld: item.box6_medicare_withheld,
+            uncollected_fica_medicare: rrta > 0 ? 0 : uncollected,
+            rrta_compensation: rrta,
+            rrta_additional_withheld:
+              box14Amount(projected[i], "Additional Medicare Tax") ?? 0,
+          };
+        }),
+      },
+    });
     // The source record retains TA; it is excluded from box 1, not a second wage.
     outputs.push({ nodeType: "w2", fields: { issued_w2_sources: input.w2s } });
     return { outputs };

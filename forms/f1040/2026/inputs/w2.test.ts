@@ -38,7 +38,13 @@ Deno.test("2026 W-2 reuses ordinary source routes and keeps issued facts", () =>
   assertEquals(fields(outputs, "agi_aggregator"), [{
     line1a_wages: 150_000.25,
   }]);
-  assertEquals(fields(outputs, "form8959")[0].w2_medicare_wages, 150_000);
+  assertEquals(
+    (fields(outputs, "form8959")[0].w2_medicare_sources_2026 as Record<
+      string,
+      unknown
+    >[])[0].box5_medicare_wages,
+    150_000,
+  );
   assertEquals(fields(outputs, "w2")[0].issued_w2_sources, [source]);
 });
 Deno.test("2026 W-2 accepts its annual SS cap while 2025 retains its cap", () => {
@@ -237,4 +243,56 @@ Deno.test("2026 repeated W-2 public inputs use the shared start router", async (
   const start = buildStartNode(inputNodes);
   const result = start.compute(context, { w2s: [source] });
   assertEquals(result.outputs, [{ nodeType: "w2", fields: { w2s: [source] } }]);
+});
+
+Deno.test("2026 W-2 Medicare sources retain actual boxes and exclude RRTA B/N amounts", () => {
+  const fica = {
+    ...source,
+    box1_wages: 130_000,
+    box12_entries: [{ code: Box12Code.B, amount: 50 }, {
+      code: Box12Code.N,
+      amount: 25,
+    }],
+  };
+  const ficaRows = fields(
+    w2_2026.compute(context, { ...identity, w2s: [fica] }).outputs,
+    "form8959",
+  )[0].w2_medicare_sources_2026 as Record<string, unknown>[];
+  assertEquals(ficaRows[0].box5_medicare_wages, 150_000);
+  assertEquals(ficaRows[0].box6_medicare_withheld, 2175);
+  assertEquals(ficaRows[0].uncollected_fica_medicare, 75);
+  const railroad = {
+    ...fica,
+    box3_ss_wages: 0,
+    box4_ss_withheld: 0,
+    box5_medicare_wages: 0,
+    box6_medicare_withheld: 0,
+    box14a_entries: [{
+      description: "RRTA compensation",
+      amount: 250_000,
+      is_state_sdi_pfml: false,
+    }, {
+      description: "Additional Medicare Tax",
+      amount: 450,
+      is_state_sdi_pfml: false,
+    }],
+  };
+  const rows = fields(
+    w2_2026.compute(context, { ...identity, w2s: [railroad] }).outputs,
+    "form8959",
+  )[0].w2_medicare_sources_2026 as Record<string, unknown>[];
+  assertEquals([
+    rows[0].rrta_compensation,
+    rows[0].rrta_additional_withheld,
+    rows[0].uncollected_fica_medicare,
+  ], [250_000, 450, 0]);
+  assertThrows(
+    () =>
+      w2_2026.compute(context, {
+        ...identity,
+        w2s: [{ ...railroad, box5_medicare_wages: 150_000 }],
+      }),
+    Error,
+    "cannot share FICA",
+  );
 });

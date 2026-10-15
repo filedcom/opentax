@@ -1,3 +1,5 @@
+import { form8959_2026 } from "./nodes/form8959.ts";
+import { ct2_2026 } from "./inputs/ct2.ts";
 import { form4137_2026 } from "./inputs/form4137.ts";
 import { syntheticForm4137_2026 } from "./inputs/form4137.fixture.ts";
 import { schedule2_2026 } from "./nodes/schedule2.ts";
@@ -31,12 +33,16 @@ for (
     "tips-overtime-senior",
     "vehicle",
     "unreported-tips",
+    "medicare",
+    "ct2",
   ]
 ) {
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
   const vehicle = scenario === "vehicle";
   const unreported = scenario === "unreported-tips";
+  const medicare = scenario === "medicare";
+  const ct2 = scenario === "ct2";
   const expectedWages = vehicle ? 80_001 : 150_001;
   const seniorTips = scenario === "tips-overtime-senior";
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
@@ -56,6 +62,8 @@ for (
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
+      form8959: form8959_2026,
+      ct2: ct2_2026,
       schedule2: schedule2_2026,
       agi_aggregator: agi_2026,
       standard_deduction: standard_deduction_2026,
@@ -117,6 +125,21 @@ for (
         }
         : {}),
       cash_gifts: [syntheticCashGift2026],
+      ...(ct2
+        ? {
+          ct2s: [1, 2, 3, 4].map((quarter) => ({
+            recipient: "taxpayer",
+            recipient_ssn: "111223333",
+            tax_year: 2026,
+            quarter,
+            source_document_reference: `ct2-quarter-${quarter}`,
+            line2_tier1_medicare_compensation: 60_000,
+            line3_additional_medicare_compensation: quarter === 4 ? 40_000 : 0,
+            line3_additional_medicare_tax_paid: quarter === 4 ? 360 : 0,
+            payment_reference: "ct2-payment",
+          })),
+        }
+        : {}),
       ...(vehicle ? { vehicle_loans: [syntheticVehicleLoan2026()] } : {}),
       ...(unreported
         ? {
@@ -144,6 +167,8 @@ for (
           employee_ssn: "111223333",
           source_document_reference: "w2-one",
           box3_ss_wages: 100_000,
+          box5_medicare_wages: medicare ? 250_000 : vehicle ? 30_000 : 100_000,
+          box6_medicare_withheld: medicare ? 4075 : vehicle ? 435 : 1450,
           ...(unreported ? { box8_allocated_tips: 2000 } : {}),
           box1_wages: vehicle ? 30_000.25 : 100_000.25,
           ...(overtime || unreported
@@ -169,6 +194,8 @@ for (
           source_document_reference: "w2-two",
           box1_wages: 50_000.25,
           box3_ss_wages: 50_000,
+          box5_medicare_wages: 50_000,
+          box6_medicare_withheld: 725,
           box2_fed_withheld: 10_000.25,
         },
       ],
@@ -212,7 +239,10 @@ for (
       result.pending.f1040.line11b_agi,
       expectedWages + (unreported ? 2000 : 0),
     );
-    assertEquals(result.pending.f1040.line25d_total_withholding, 30_001);
+    assertEquals(
+      result.pending.f1040.line25d_total_withholding,
+      medicare ? 30_451 : ct2 ? 30_361 : 30_001,
+    );
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
       seniorTips ? 18_150 : 16_100,
@@ -232,7 +262,9 @@ for (
     );
     assertEquals(
       result.pending.f1040.line35a_refund,
-      unreported
+      medicare
+        ? 4937
+        : unreported
         ? 9506
         : vehicle
         ? 22_265
@@ -242,12 +274,29 @@ for (
         ? 7_787
         : 5_387,
     );
+    if (ct2) {
+      assertEquals(result.pending.f1040.line23_other_taxes, 360);
+      assertEquals(result.pending.f1040.line25c_other_withheld, 360);
+      assertEquals(result.pending.f1040.schedule2_line20, 360);
+      assertEquals(result.pending.form8959.file_form8959, true);
+    }
+    if (medicare) {
+      assertEquals(result.pending.f1040.line23_other_taxes, 900);
+      assertEquals(result.pending.f1040.line25c_other_withheld, 450);
+      assertEquals(result.pending.f1040.schedule2_line20, 900);
+      assertEquals(result.pending.form8959.file_form8959, true);
+    }
     if (unreported) {
       assertEquals(result.pending.f1040.line1c_unreported_tips, 2000);
       assertEquals(result.pending.f1040.line23_other_taxes, 153);
       assertEquals(result.pending.f1040.schedule2_line20, 153);
       assertEquals(result.pending.schedule3a, undefined); // No refundable credits in this fixture.
-      assertEquals(result.pending.form8959.unreported_tips, 2000);
+      assertEquals(
+        (result.pending.form8959.calculation_2026 as ReturnType<
+          typeof import("./nodes/form8959.ts").calculateForm8959_2026
+        >).lines.line2,
+        2000,
+      );
     }
     if (seniorTips) {
       assertEquals(

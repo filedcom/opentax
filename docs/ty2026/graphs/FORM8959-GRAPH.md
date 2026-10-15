@@ -25,29 +25,38 @@ the draft coversheet. It is one printed page. Field names still run
 position-based TY2025 descriptor would silently misprint RRTA, SE and total
 tax. Verify by printed line label and tooltip, then render and inspect.
 
-## Current code boundary
+## Current implementation boundary — October 15, 2026
 
-- The shared `form8959` calculator is a TY2025 shape. It puts SE income in
-  line 8 and RRTA in line 14, computes one line 18 tax total, and sends that
-  total to the old Schedule 2 line 11 key. The 2026 form instead puts RRTA
-  in Part II, wage+RRTA total on line 12, SE in Part IV, and SE tax on line
-  18. The 2026 Schedule 2 sink already has distinct
-  `line17b_medicare_wage_tax` and
-  `line11_medicare_self_employment_tax` inputs.
-- W-2 source code currently has a box 1 `medicare_wages` fallback as well
-  as box 5. The 2026 calculation must require actual box 5 (or explicit
-  corrected source evidence) for line 1. Form 4137, Form 8919, Schedule SE,
-  RRTA and joint-spouse amounts must converge before tax calculation.
-- The shared node targets the TY2025 `f1040` output for withholding. The
-  2026 final node accepts `line25c_other_withheld`; aggregate Form 8959 line
-  24 with other valid 25c sources without replacing or duplicating them.
-- The TY2025 PDF descriptor maps its old 24 domain keys positionally into
-  `f1_3`–`f1_26`. The TY2025 MeF module builds the old combined tax group
-  and recalculates tax from source fields. Both need a current-year field
-  map that agrees with the calculated 2026 lines and XSD.
-- `form8959` is not in the TY2026 registry or public inputs, although W-2
-  declares an edge to it. An ordinary wage source can therefore deposit
-  pending data into an absent target without producing a filed Form 8959.
+- `forms/f1040/2026/nodes/form8959.ts` calculates the revised lines 1–24,
+  preserving separate wage/RRTA and SE tax destinations. It reuses the exact
+  0.9% helper extracted from 2025, sums source cents before rounding, and uses
+  exact integer arithmetic for the 1.45% withholding comparison.
+- The W-2 adapter deposits identified owner/employer records with actual box
+  5/6 values and box 14a RRTA compensation/Additional Medicare withholding.
+  Missing Medicare boxes fail validation; box 1 is never substituted. B/N
+  uncollected FICA enters line 19, while RRTA B/N does not. Mixed FICA/RRTA B/N
+  amounts need a dedicated allocation source before they can be accepted.
+- Form 4137 supplies one finalized line 6 per owner. Form 8919 and Schedule SE
+  have strict internal owner-result contracts, but their 2026 source calculators
+  are still unfinished. SE losses are excluded separately for each spouse.
+- The repeated `ct2s` input reuses 2025 quarterly reconciliation with a strict
+  2026 year/source/owner schema. All four quarters and payment references are
+  required; unsupported partial payments still need allocation evidence.
+- General, W-2, Form 4137 and CT-2 are connected in the internal graph. Form 8959
+  sends line 12 to Schedule 2 line 17b, line 18 to line 11, and line 24 to Form
+  1040 line 25c. Source thresholds retain filing when the tax rounds to zero,
+  and withholding remains creditable when joint-return liability is zero.
+- The pinned one-page PDF component recalculates source input, verifies its
+  two Schedule 2 destinations and its own withholding component, and maps the
+  new printed line meanings. Inapplicable parts are blank; draft markings stay
+  visible. The complete return bundle and current-version MeF remain pending.
+
+The source-driven graph covers actual W-2 boxes, Form 4137 tips and CT-2
+quarters through Form 1040. Direct calculator tests cover all three tax pools
+and the future 8919/SE interfaces; those tests do not prove that the missing
+source owners or a full filing product exist. Substitute/territory/household
+wages, corrected W-2s and remaining community-property exceptions also need
+separate source work.
 
 ## Build and acceptance order
 

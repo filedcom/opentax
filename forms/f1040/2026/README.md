@@ -34,7 +34,7 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   mappings. Schedule 1 requires agreement with finalized AGI totals. Positive
   Schedule 2 section 965 installments remain held because the pinned draft's
   line 12/15 instructions conflict. The Schedule 2 graph sink currently accepts
-  only reviewed W-2 payroll/golden-parachute and Form 4137 sources.
+  reviewed W-2 payroll/golden-parachute, Form 4137 and Form 8959 sources.
 - Fourteen local rules reconcile income, tax, deductions, payments, refund and
   required attachments. They are arithmetic checks, not IRS MeF acceptance.
 - Draft Form 1040 and Schedule 3-A PDF components use pinned IRS hashes and the
@@ -241,7 +241,8 @@ The unreported difference enters Form 1040 line 1c and AGI once. It also contrib
 to the pending earned-income credit calculations. Payroll tax goes to Schedule 2
 line 16a and its line 20/21 totals, then to Form 1040 settlement. Form 8959 receives
 Medicare tips; Form 8919 and Schedule SE retain separate owner payroll handoffs.
-Those receiving 2026 employment/credit calculators remain unfinished. MFS still
+The 2026 Form 8959 receiver is implemented below; Form 8919, Schedule SE and
+credit calculators remain unfinished. MFS still
 owes payroll tax while receiving no tips deduction. Government-employee Social
 Security exclusions need a coverage record; Medicare tips remain taxable.
 
@@ -257,6 +258,39 @@ W-2s, railroad tips, statutory-employee coordination and noncash-tip income need
 separate source handling. Form 4137 PDF/MeF attachments and full payroll/credit
 integration remain release gates; the existing Schedule 1-A component already
 has the Form 4137 comparison column.
+
+## Additional Medicare Tax and CT-2
+
+The 2026 Form 8959 node implements the revised 24 lines, using the shared exact
+0.9% tax helper and a whole-dollar 1.45% withholding calculation. Wage and RRTA
+taxes go to Schedule 2 line 17b; SE tax goes separately to line 11. The resulting
+Schedule 2 line 20 employment-tax amount remains separate for Schedule 3-A.
+Form 8959 withholding adds to Form 1040 line 25c even when liability is zero.
+
+W-2 records retain owner/employer/source identity and actual Medicare box 5/6
+values. Missing amounts fail validation, including below-threshold returns;
+explicit source zeros are accepted. Code B/N uncollected FICA is included for
+withholding reconciliation, but uncollected RRTA is excluded. Mixed B/N amounts
+require allocation evidence. Each owner/employer must have one reconciled copy.
+
+Form 4137 now sends identified per-owner line 6 results. The strict internal
+interfaces also accept finalized Form 8919 line 6 and Schedule SE line 6 results;
+those source calculators remain unfinished. SE losses cannot offset a spouse's
+positive income. RRTA uses its own threshold and never reduces the SE threshold.
+The source-level filing test remains true when a tax amount rounds to zero.
+
+The repeated `ct2s` source reuses existing annual/quarterly validation with 2026
+records and filer identity. All four quarterly records are reconciled before
+compensation and paid Additional Medicare Tax reach Form 8959. Payment references
+are required; partial payments, corrections and incomplete quarters remain held.
+
+A static one-page Form 8959 PDF component uses the pinned 2026 template and its
+revised line map, preserving draft markings and blank inapplicable parts. It
+checks the two Schedule 2 destinations and the Form 8959 share of line 25c;
+other withholding sources must remain separate at assembly. The whole return
+bundle and current-version MeF serialization remain pending. The source contract
+and remaining acceptance work are in
+[FORM8959-GRAPH.md](../../../docs/ty2026/graphs/FORM8959-GRAPH.md).
 
 ## Vehicle-loan source integration
 
@@ -389,6 +423,14 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
   checks passed, including native XML/XSD and Schedule 2 PDF export. One legacy
   income-export test could not finish because `pdftotext` is not installed;
   its XML/XSD and PDF-generation steps completed before that dependency failure.
+
+- Form 8959/CT-2 integration passed 186 typed tests across all 2026 modules and
+  the existing 2025 Form 8959/CT-2 suites. They cover the separated tax pools,
+  status thresholds, source rounding, spouse SE losses, zero-tax withholding,
+  W-2/RRTA distinctions, quarterly payment evidence and seven source graph cases.
+- The 137-test unit/preflight gate passed. The new pinned one-page Form 8959 PDF
+  was rendered and visually inspected with all parts populated; it has no widgets
+  or AcroForm tree and retains visible draft markings.
 
 ## Source recheck
 

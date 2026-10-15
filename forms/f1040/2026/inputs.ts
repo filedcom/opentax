@@ -1,3 +1,4 @@
+import { ct2_2026, ct2Item2026Schema } from "./inputs/ct2.ts";
 import {
   claimInputSchema as form4137Schema,
   form4137_2026,
@@ -27,6 +28,12 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: ct2_2026,
+    isArray: true,
+    inputKey: "ct2s",
+    itemSchema: ct2Item2026Schema,
+  },
   { node: form4137_2026, isArray: false, inputSchema: form4137Schema },
   {
     node: vehicle_loan_interest_2026,

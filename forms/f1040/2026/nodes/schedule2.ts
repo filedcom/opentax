@@ -12,6 +12,8 @@ import {
 // the full line contract; each remaining source must be audited before wiring.
 export const inputSchema = schedule2Input2026Schema.pick({
   line16a_form4137_tip_tax: true,
+  line17b_medicare_wage_tax: true,
+  line11_medicare_self_employment_tax: true,
   line17c_w2_uncollected_fica: true,
   line13k_golden_parachute_tax: true,
 }).strict();
