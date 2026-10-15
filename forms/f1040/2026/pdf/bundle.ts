@@ -1,3 +1,5 @@
+import type { calculateBusiness2026 } from "../nodes/business.ts";
+import { buildBusinessPdfBytes2026 } from "./business.ts";
 import type { calculateCapitalGains2026 } from "../nodes/capital-gains.ts";
 import { buildCapitalPdfBytes2026 } from "./capital-gains.ts";
 import type { calculateEducationCredit2026 } from "../nodes/f8863.ts";
@@ -139,6 +141,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const moving = retained<ReturnType<typeof calculateMovingSources2026>>(
     "f3903",
   );
+  const business = retained<ReturnType<typeof calculateBusiness2026>>(
+    "schedule_c",
+  );
   const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
     "capital_gains",
   );
@@ -177,7 +182,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 12, 12A, 21, 24, 32, 43, 47, 50, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 43, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -268,6 +273,37 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         filer,
       ));
   }
+  const addBusiness = (
+    kind: "schedule_c" | "schedule_se" | "form8995",
+    pages: number,
+  ) => {
+    if (!business?.calculation) return;
+    add(kind, pages, () =>
+      buildBusinessPdfBytes2026(
+        business.source_input,
+        p.standard_deduction
+          .calculation_input_2026 as DeductionSelectionInput2026,
+        {
+          schedule1_line3: amount(p.schedule1, "line3_schedule_c"),
+          schedule1_line15: amount(p.schedule1, "line15_se_deduction"),
+          schedule2_line4: s2line("line4_self_employment_tax"),
+          form1040_line11b: line("line11b_agi"),
+          form1040_line12e: line("line12e_standard_or_itemized"),
+          form1040_line12f: line("line12f_nonitemizer_charity"),
+          form1040_line13a: line("line13a_schedule1a"),
+          form1040_line13b: line("line13b_qbi"),
+          form1040_line15: line("line15_taxable_income"),
+        },
+        owners,
+        kind,
+      ));
+  };
+  if (business?.calculation) {
+    addBusiness(
+      "schedule_c",
+      business.calculation.business.businesses.length * 2,
+    );
+  }
   if (capital?.file_schedule_d) {
     const destinations = {
       form1040_line7a: line("line7a_capital_gain"),
@@ -296,6 +332,10 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         ));
     }
   }
+  const seForms =
+    business?.calculation?.business.owners.filter((o) => o.schedule_se)
+      .length ?? 0;
+  if (seForms) addBusiness("schedule_se", seForms);
   if (care?.file_form2441) {
     add("form2441", care.part3 ? 2 : 1, () =>
       buildForm2441PdfBytes2026(
@@ -383,6 +423,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         }, filer),
     );
   }
+  if (business?.calculation) addBusiness("form8995", 1);
   if (wages?.forms.length) {
     add("form8919", undefined, () =>
       buildForm8919PdfBytes2026(

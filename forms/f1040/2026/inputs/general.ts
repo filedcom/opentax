@@ -108,6 +108,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "form2441",
       "f8863",
       "capital_gains",
+      "schedule_c",
     ];
   }
   readonly inputSchema = inputSchema;
@@ -424,6 +425,10 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           },
         },
         { nodeType: "w2", fields: owner },
+        {
+          nodeType: "schedule_c",
+          fields: { ...owner, tax_residency: input.tax_residency },
+        },
         {
           nodeType: "form2441",
           fields: {

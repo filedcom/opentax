@@ -29,6 +29,9 @@ class CT2Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ct2";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8959_2026]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "schedule_c"];
+  }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("CT-2 needs f1040:2026 context");
@@ -71,6 +74,10 @@ class CT2Node2026 extends TaxNode<typeof inputSchema> {
     }
     return {
       outputs: [
+        {
+          nodeType: "schedule_c",
+          fields: { unsupported_payroll_sources: ["ct2"] },
+        },
         { nodeType: "ct2", fields: { reviewed_sources_2026: input.ct2s } },
         { nodeType: "form8959", fields: { ct2_medicare_sources_2026: rows } },
       ],

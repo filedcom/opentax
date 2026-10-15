@@ -6,12 +6,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
-- A development business-source calculator reuses shared Schedule C/SE arithmetic
-  for reviewed cash service activities, owner-specific wage bases, linked statutory
-  W-2s and 2026 vehicle records. It is not registered in the source graph yet:
-  QBI, credit/earned-income consumers, loss limits and filing representations still
-  need integration. See the
-  [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
+- The `schedule_c` source claim reuses shared Schedule C/SE/8995 arithmetic and
+  connects reviewed service businesses, statutory W-2s and vehicle records to
+  income, owner SE tax, Additional Medicare, QBI and draft attachments. It includes
+  the 2026 active-business minimum and separate prior QBI losses. Advanced QBI,
+  business credit consumers and broader source/loss coverage remain unfinished.
+  See the [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
 
 - `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
   reviewed 1099-B, 1099-DA and unreported ordinary investment sales. All twelve
@@ -269,22 +269,18 @@ candidate, applies the 2026 overall itemized limit, and retains both candidates
 and the selection reason. The selected values drive Form 1040 and the draft
 Form 6251 line 1b/2a handoff. Negative AMT bases remain signed.
 
-A QBI calculation interface takes actual pre-QBI taxable income for each
-candidate and retains that candidate's form results. Schedule A and QBI are
-solved together over the finite interval of possible filed dollar amounts;
-exactly one pair must reproduce both calculations. No monotonic QBI assumption
-is made across SSTB/other phase-ins. Zero or multiple solutions require rounding
-review. Searches exceeding one million candidates require a future piecewise
-solver instead of a silently approximate result.
+The QBI interface evaluates each candidate's income before QBI **and section
+68**, using unreduced Schedule A for itemizers. It then applies the overall
+itemized limit using that QBI result. The earlier finite fixed-point search was
+removed because the 2026 statutory definition excludes section 68 from QBI's
+income base. Each candidate retains its complete form result.
 
-The graph adapter currently handles no-QBI calculations. AGI marks business
-income for the unfinished QBI source owner, and the adapter rejects a previously
-calculated `qbi_deduction`. The pure solver tests exercise the coupled equations
-with independent QBI test calculators; they do not establish completed Forms
-8995/8995-A. Remaining Schedule A categories, the remaining Schedule 1-A source branches,
-QBI forms/attachments, dependent earned-income classification, and foreign-tax
-allocation still need their receiving 2026 owners. The existing finalization API
-continues to accept upstream finalized amounts only.
+The graph supports reviewed service-business simplified Form 8995, including the
+active-business minimum, prior losses and actual capital-gain/qualified-dividend
+limits. It rejects caller-calculated `qbi_deduction` and unsupported QBI activity.
+Form 8995-A/cooperatives, remaining source categories, dependent earned-income
+classification and foreign-tax allocation still need their 2026 owners. The
+existing finalization API continues to accept upstream finalized amounts only.
 
 `cash_gifts` is a repeated source entry with donor/donee identity, current-year
 payment and classification records, benefits received, QCD status and
@@ -449,8 +445,8 @@ withholding reconciliation, but uncollected RRTA is excluded. Mixed B/N amounts
 require allocation evidence. Each owner/employer must have one reconciled copy.
 
 Forms 4137 and 8919 send identified per-owner line 6 results. The strict internal
-interface also accepts finalized Schedule SE line 6 results; that source
-calculator remains unfinished. SE losses cannot offset a spouse's
+interface receives finalized per-owner Schedule SE line 6 from the supported
+business source graph; broader SE methods remain unfinished. SE losses cannot offset a spouse's
 positive income. RRTA uses its own threshold and never reduces the SE threshold.
 The source-level filing test remains true when a tax amount rounds to zero.
 
@@ -770,7 +766,8 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
 
 - Deduction/source work passed 127 typed tests across all current 2026 modules,
   the existing 2025 standard-deduction node and shared start-router regression.
-  These include coupled and nonunique QBI/itemized examples, all filing-status
+  Those historical QBI cycle examples are superseded by pre-section-68 tests;
+  coverage also includes all filing-status
   overall-limit thresholds, source ownership/receipt checks, and the cash-gift
   → deduction → settlement graph. The 137-test unit/preflight gate also passed.
 

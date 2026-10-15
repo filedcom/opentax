@@ -166,6 +166,7 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
       "form6251",
       "form8960",
       "capital_loss_carryover",
+      "standard_deduction",
     ];
   }
   compute(ctx: NodeContext, input: CapitalGainInput2026): NodeResult {
@@ -193,6 +194,10 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
           },
         },
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
+        {
+          nodeType: "standard_deduction",
+          fields: { capital_sources_2026: r.source_input },
+        },
         {
           nodeType: "f1040",
           fields: {

@@ -3,20 +3,34 @@
 // checkbox: Part II line 15, repeated on Part I line 4b, conveys it.
 export const NET_EARNINGS_MULTIPLIER = 0.9235;
 
-export function scheduleSELines(input: {
-  readonly net_profit_schedule_c?: number | null;
-  readonly net_profit_schedule_f?: number | null;
-  readonly farm_optional_method_elected?: boolean | null;
-  readonly gross_farm_income?: number | null;
-  readonly w2_ss_wages?: number | null;
-  readonly unreported_tips_4137?: number | null;
-  readonly wages_8919?: number | null;
-}, ssWageBase: number) {
+export function scheduleSELines(
+  input: {
+    readonly net_profit_schedule_c?: number | null;
+    readonly net_profit_schedule_f?: number | null;
+    readonly farm_optional_method_elected?: boolean | null;
+    readonly gross_farm_income?: number | null;
+    readonly w2_ss_wages?: number | null;
+    readonly unreported_tips_4137?: number | null;
+    readonly wages_8919?: number | null;
+  },
+  ssWageBase: number,
+  options: { roundRegularNetEarnings?: boolean } = {},
+) {
   const optional = farmOptionalMethodLines(input);
   const line3 = optional?.line3 ??
     ((input.net_profit_schedule_c ?? 0) + (input.net_profit_schedule_f ?? 0));
-  const line4a = optional?.line4a ??
+  if (optional && options.roundRegularNetEarnings) {
+    throw new Error(
+      "Whole-dollar regular SE option cannot select a farm optional method",
+    );
+  }
+  const rawLine4a = optional?.line4a ??
     (line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3);
+  // The 2026 source owner elects whole-dollar reporting throughout, including
+  // the earnings line tested against $400. Preserve existing callers' policy.
+  const line4a = options.roundRegularNetEarnings
+    ? Math.round(rawLine4a)
+    : rawLine4a;
   const line4c = optional?.line4c ?? line4a;
   if (line4c < 400) return undefined;
   const line6 = optional?.line6 ?? line4c;

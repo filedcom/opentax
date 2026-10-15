@@ -1,5 +1,9 @@
 # TY2026 deduction graph: Schedule A, Schedule 1-A, and QBI
 
+Current implementation: [business/SE/simplified QBI](BUSINESS-CURRENT.md).
+The 2026 resolver uses pre-section-68 QBI income; earlier cycle-solving plans
+are superseded. Advanced 8995-A/cooperative work below remains a plan.
+
 Current source update (October 15): AGI supplies actual taxable wage income to
 the dependent standard-deduction calculation, including taxable care benefits and
 excluding care deemed income or combat-pay elections. General DOB also reaches
@@ -36,7 +40,7 @@ business-tip/non-W-2 overtime path or 8995/8995-A implementation. Forms 4137,
 SE/credit receivers and MeF remain pending. Schedule A now calculates ordinary
 medical expenses, sourced income/actual-sales/property taxes and current cash
 charity with explicit absence reviews for unsupported categories. Its candidate
-feeds the no-QBI deduction resolver and Form 6251 tax handoff. Mortgage sources now add continuing acquisition-loan interest, points and
+feeds the deduction resolver and Form 6251 tax handoff. Mortgage sources now add continuing acquisition-loan interest, points and
 insurance to lines 8a–8d. Mortgage exceptions/investment interest, noncash/prior gifts, special medical/property allocations, other deductions,
 carryforward persistence and Schedule A PDF/MeF remain unfinished. See the
 [active source contract](../../../forms/f1040/2026/README.md#schedule-a-expense-sources-and-deduction-selection).
@@ -91,14 +95,12 @@ flowchart LR
   D --> G[Form 6251 and income tax]
 ```
 
-Build **one TY2026 deduction-resolution stage** that owns deduction choice,
-Schedule A's overall limit, and the QBI income limit. It must evaluate the
-standard and itemized paths using their actual taxable-income bases. Where
-Schedule A and QBI constrain each other, solve their shared result explicitly
-with dollar rounding and a tested convergence/uniqueness rule; do not insert
-a graph cycle or use the TY2025 standard-deduction estimate. The resolver
-should publish the two candidate outcomes and the reason for the chosen one
-for review, then emit a single finalized set of form lines.
+The implemented TY2026 deduction-resolution stage owns both candidates and
+selection. Under P.L. 119-21 section 70111(b), QBI taxable income excludes the
+section 68 reduction. Thus the itemized path evaluates QBI using Schedule A
+before its overall limit, then applies that limit using the resulting QBI.
+There is no fixed-point search or uniqueness test. The selected form results and
+reason are retained before final Form 1040 amounts are emitted.
 
 ## Inputs that must be supplied or computed upstream
 

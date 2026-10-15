@@ -53,7 +53,10 @@ function getArrayNodeKey(
  * The generated start node uses the public input key and routes each present
  * input to the declared downstream node. The key defaults to nodeType.
  */
-export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
+export function buildStartNode(
+  entries: readonly InputNodeEntry[],
+  options: { routeLegacyJointSeOwners?: boolean } = {},
+): TaxNode {
   const generatedSchema = buildInputSchema(entries);
   type StartInput = z.infer<typeof generatedSchema>;
 
@@ -70,7 +73,8 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
       const general = publicInput.general as
         | Record<string, unknown>
         | undefined;
-      const jointSE = general?.filing_status === "mfj" &&
+      const jointSE = options.routeLegacyJointSeOwners !== false &&
+        general?.filing_status === "mfj" &&
         (publicInput.schedule_c !== undefined ||
           publicInput.schedule_f !== undefined);
       const ownerIdentity = jointSE

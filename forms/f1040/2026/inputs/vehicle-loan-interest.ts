@@ -17,6 +17,7 @@ export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: ssn,
   spouse_ssn: ssn.optional(),
+  business_vehicle_vins_2026: z.array(z.string()).default([]),
   business_interest_deductions_2026: z.array(vehicleBusinessDeductionSchema)
     .optional(),
 }).strict();
@@ -29,6 +30,15 @@ class VehicleLoanInterest2026Node extends TaxNode<typeof inputSchema> {
       throw new Error("Vehicle interest needs f1040:2026 context");
     }
     const input = inputSchema.parse(raw);
+    if (
+      input.vehicle_loans.some((loan) =>
+        input.business_vehicle_vins_2026.includes(loan.vin.toUpperCase())
+      )
+    ) {
+      throw new Error(
+        "Shared vehicle needs Schedule C/Schedule 1-A loan and interest reconciliation",
+      );
+    }
     const sources = calculateVehicleInterestSources2026(
       input.vehicle_loans,
       input,

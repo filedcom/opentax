@@ -15,7 +15,7 @@ export interface QbiEvaluation2026 {
   /** Retain the selected calculation's filed lines/attachments for its owner. */
   forms: Readonly<Record<string, unknown>>;
 }
-/** Evaluate actual pre-QBI income from eligible business facts for each candidate. */
+/** Evaluate taxable income before QBI AND section 68 for each candidate. */
 export interface QbiCalculator2026 {
   maximumDeduction: number;
   evaluate(preQbiTaxableIncome: number): QbiEvaluation2026;
@@ -131,8 +131,8 @@ export function resolveDeductions2026(
     }
     const preQbiTaxableIncome = Math.max(
       0,
-      agi - lines.line12eStandardOrItemized - lines.line12fNonitemizerCharity -
-        schedule1a,
+      agi - (method === "itemized" ? beforeLimit : deduction) -
+        lines.line12fNonitemizerCharity - schedule1a,
     );
     return {
       method,
@@ -168,44 +168,17 @@ export function resolveDeductions2026(
       qbiDeduction,
       itemizedBeforeOverallLimit: beforeLimit,
     });
-  // The §68 formula is monotone in QBI, but QBI itself need not be monotone
-  // in pre-QBI income (SSTB/wage phase-ins). Enumerate the finite interval of
-  // possible whole-dollar Schedule A totals instead of assuming convergence.
-  // Each surviving pair must reproduce BOTH printed calculations. More than
-  // one pair, or a one-dollar rounding cycle with no pair, requires review.
-  const minimumItemized = itemizedAt(0).allowedItemizedDeductions;
-  const maximumItemized =
-    itemizedAt(qbi.maximumDeduction).allowedItemizedDeductions;
-  const evaluations = maximumItemized - minimumItemized + 1;
-  if (evaluations > 1_000_000) {
-    throw new Error(
-      "Schedule A/QBI search needs an owner-supplied piecewise solver above one million candidates",
-    );
-  }
-  let itemized: ReturnType<typeof candidate> | undefined;
-  let itemizedLimit: ReturnType<typeof itemizedAt> | undefined;
-  for (
-    let deduction = minimumItemized;
-    deduction <= maximumItemized;
-    deduction++
-  ) {
-    const preQbi = Math.max(0, agi - deduction - schedule1a);
-    const result = evaluate(preQbi);
-    const limit = itemizedAt(result.deduction);
-    if (limit.allowedItemizedDeductions !== deduction) continue;
-    if (itemized !== undefined) {
-      throw new Error(
-        "Schedule A/QBI has multiple reconciled whole-dollar fixed points; review is required",
-      );
-    }
-    itemizedLimit = limit;
-    itemized = candidate("itemized", deduction, result);
-  }
-  if (!itemized || !itemizedLimit) {
-    throw new Error(
-      "Schedule A/QBI has no reconciled whole-dollar fixed point; rounding review is required",
-    );
-  }
+  // IRC 199A(e)(1), as amended by P.L. 119-21 section 70111(b),
+  // excludes section 68 when computing QBI taxable income. Calculate QBI
+  // from unreduced Schedule A once, then apply section 68 using that QBI.
+  // There is no circular dependency or whole-dollar fixed-point search.
+  const itemizedQbi = evaluate(Math.max(0, agi - beforeLimit - schedule1a));
+  const itemizedLimit = itemizedAt(itemizedQbi.deduction);
+  const itemized = candidate(
+    "itemized",
+    itemizedLimit.allowedItemizedDeductions,
+    itemizedQbi,
+  );
   const choice = chooseDeductionMethod({
     standardTotal: standard?.line14TotalDeductions,
     itemizedTotal: itemized.line14TotalDeductions,
@@ -225,6 +198,6 @@ export function resolveDeductions2026(
     itemizedLimit,
     selected,
     reason: choice.reason,
-    itemizedEvaluations: evaluations,
+    itemizedEvaluations: 1,
   };
 }

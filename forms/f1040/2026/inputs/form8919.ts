@@ -326,6 +326,9 @@ class Form8919Node2026 extends TaxNode<typeof inputSchema> {
     eitc,
     f8812,
   ]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "schedule_c"];
+  }
   compute(ctx: NodeContext, raw: Form8919Input2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Form 8919 needs f1040:2026 context");
@@ -343,6 +346,10 @@ class Form8919Node2026 extends TaxNode<typeof inputSchema> {
     }));
     return {
       outputs: [
+        {
+          nodeType: "schedule_c",
+          fields: { unsupported_payroll_sources: ["form8919"] },
+        },
         { nodeType: "form8919", fields: { calculation_2026: calculation } },
         {
           nodeType: "f1040",

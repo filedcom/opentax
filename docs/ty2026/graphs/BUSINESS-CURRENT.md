@@ -1,10 +1,13 @@
-# Current TY2026 business source calculator
+# Current TY2026 business, SE and simplified QBI graph
 
-`forms/f1040/2026/inputs/business-source.ts` now reuses the shared Schedule C
-gross-income, expense and net-profit helpers and the regular Schedule SE
-calculator. It is a development component, **not yet an input in
-`sourceRegistry2026`**, a complete return, a PDF producer or a filing registration.
-This increment does not change TY2025 calculators or the original worktree.
+The strict `schedule_c` source claim is connected to `sourceRegistry2026`.
+It reuses the shared Schedule C, regular Schedule SE, SE-deduction allocation and
+simplified Form 8995 arithmetic. General filer identities and issued W-2s join
+inside the 2026 business owner; the shared start router retains its old routing
+by default and disables that injection only for this graph. The result reaches
+AGI, Schedules 1/2, Additional Medicare tax, deduction selection and draft PDFs.
+This remains a development route with `filingReady: false`, not public filing
+registration or complete business coverage.
 
 ## Implemented boundary
 
@@ -44,39 +47,57 @@ This increment does not change TY2025 calculators or the original worktree.
   constants can enter this schema.
 
 Amounts for each Schedule C line aggregate source cents before rounding. The
-shared regular SE helper retains intermediate net-earnings precision and rounds
-its tax lines; its threshold and eventual printed-line rounding must be reconciled
-when the Schedule SE PDF/MeF owner is added. Source amounts and calculated totals
-must remain within safe numeric ranges. Final allowed QBI is deliberately absent.
+2026 caller opts into whole-dollar regular SE net earnings before the $400 test;
+$433 profit produces $400 of net earnings and $62 of SE tax. Existing shared
+callers retain their prior precision behavior. No optional-method constants enter
+this route.
 
-## Reuse and next integration
+## QBI and deduction selection
 
-The current shared Schedule C node already checks `statutory_w2_sources` against
-one matching activity and its entered receipts. The older
-[Schedule C plan](SCHEDULEC-GRAPH.md) described an earlier implementation that did
-not consume those sources. The new adapter goes further by deriving statutory
-receipts from the linked W-2 rather than accepting a second receipt total.
+Each activity needs a current section 162/199A qualification review, including
+statutory employee wages. Each owner's deductible half of regular SE tax is
+allocated proportionately over that owner's positive regular profits; statutory
+activity receives none. Prior 2025 Form 8995 business and REIT/PTP losses retain
+separate source lines and require the same owners and filing unit. The selected
+form retains 2027 carryforward amounts on lines 18/19.
 
-Likewise, the current shared `auto_expense` code still embeds the 2025 70-cent
-rate. The historical constants ledger's assertion that its 2026 split was already
-implemented does not describe this branch. This component implements the split
-directly; broader auto-expense/Form 2106 reuse still requires a year-aware adapter.
+The simplified route supports taxable income up to $403,500 MFJ, $201,775 MFS
+and $201,750 otherwise. It adds the $400 minimum when aggregate current active
+QBI is at least $1,000, including when prior losses eliminate the ordinary
+20% deduction. Current REIT/PTP income, cooperatives, released suspended losses,
+qualified business tips and adjustments other than the SE deduction remain
+explicitly outside this source contract. Above-threshold income requires 8995-A.
 
-Before public graph registration:
+For each deduction candidate, QBI taxable income is computed **before section
+68**, using unreduced Schedule A and the actual Schedule 1-A amount. QBI is then
+used once to compute the section 68 limit. The earlier fixed-point search was
+incorrect for 2026 and has been removed. Actual capital sources supply net capital
+gain and qualified dividends to the QBI income limit.
 
-1. Reconcile these retained sources against the actual general/W-2 inventory,
-   preserve normal wage and withholding routing, and order Schedule C/SE before AGI.
-2. Build QBI source classification, carryovers, owner deduction allocation and
-   Form 8995/8995-A calculations, including the new minimum deduction, inside the
-   existing joint deduction resolver. Cooperative patron activity requires its own
-   evidence and cannot be assumed to have zero QBI.
-3. Connect SE earnings to Additional Medicare tax, care, EIC, ACTC, education
-   support/earned income and dependent deductions. Review business loss limits,
-   AMT, NIIT and Schedule 1-A loan/tip allocations before accepting full returns.
-4. Expand information-return receipt reconciliation, COGS, business debt, vehicle
-   methods, depreciation, home office, at-risk/passive losses, benefits and other
-   business sources with their owners. Build Schedule C/SE/QBI PDF and MeF from
-   the same reconciled results, using current schemas and business rules.
+## Attachments and remaining boundaries
+
+Schedule C prints two official pages per activity, preserving the 2026 vehicle
+interest line and dated mileage. Part V statements retain all source cents and
+never count expenses twice. Schedule SE prints the regular-method page for each
+owner who needs it. Form 8995 prints all selected lines and a continuation when
+more than five businesses exist. Every builder replays retained sources and
+matches its Schedule 1/2 and Form 1040 destinations before rendering. Statements
+follow official forms; static drafts have no AcroForm or page annotations.
+
+The graph rejects actual Form 4137/8919/CT-2 sources alongside this business claim
+until joint SE wage-base reconciliation is implemented. It also rejects a vehicle
+present in both Schedule C and Schedule 1-A sources until loan/payment allocation
+is connected. Active nontrading business income is excluded from NIIT only after
+its source review. Potential Form 461 losses and negative-AGI/NOL cases stop for
+their missing owners. Business earned income for EIC, ACTC, dependent care,
+education support and dependent deductions remains guarded; those consumers are
+not yet complete.
+
+Next work includes information-return receipts, COGS, depreciation, home office,
+other business debt, at-risk/passive losses, benefits, optional SE methods,
+8995-A/cooperatives, credit consumers and current MeF/business-rule validation.
+The shared auto-expense node still embeds the 2025 70-cent rate; the 2026 adapter
+owns the midyear split without changing that node.
 
 The synthetic statutory test reproduces $29,623 receipts less $2,555 expenses
 (including 648 pre-July miles rounded to $470), giving $27,068 and no regular SE
@@ -86,6 +107,12 @@ facts in [ATS scenario 2](../ats/ATS-SCENARIO-02.md), and is not ATS acceptance.
 ## Evidence and verification
 
 Authorities checked October 15, 2026:
+
+- [Draft Form 8995 instructions](https://www.irs.gov/pub/irs-dft/i8995--dft.pdf),
+  What’s New and lines 11/17; [P.L. 119-21](https://www.govinfo.gov/content/pkg/PLAW-119publ21/html/PLAW-119publ21.htm),
+  sections 70105 and 70111(b), including the minimum and section 68 exclusion.
+  The instructions retain stale line labels; the pinned 2026 form governs the
+  line 17 deduction and Form 1040 line 13b handoff.
 
 - [Draft 2026 Schedule C](https://www.irs.gov/pub/irs-dft/f1040sc--dft.pdf),
   lines 16b/16c, 28–31 and 44a–44c.
@@ -103,6 +130,14 @@ spouse wage bases, statutory wage-base consumption, losses, source duplication,
 ownership mismatches, missing records and explicit unsupported-scope rejection.
 Run it with the 2026 suite and shared Schedule C/SE regressions.
 
-Validation for this increment: 633 regression tests passed across the 2026 and
-shared Schedule C/SE suites; the final typed business suite passed all 13 tests.
-The unit verification task, changed-file lint and whitespace checks also passed.
+`business-qbi.test.ts` adds full-graph settlement, joint ownership/Medicare,
+statutory wages, capital limits, prior losses, minimum thresholds and real-source
+overlap rejection. `pdf/business.test.ts` reconciles selected destinations and
+checks both owners, all overflow records, statutory income and negative amounts.
+Run these with all 2026 tests and the shared Schedule C/SE/8995 suites.
+
+Validation: all 692 tests in the 2026 and shared Schedule C/SE/8995 regression
+suites passed. Focused typed graph/PDF/router tests and unit verification passed.
+The 31-page synthetic business QA PDF was reopened to confirm no annotations or
+AcroForm and visually inspected, including joint owners, overflow detail, losses,
+statutory wages and the $433 SE threshold case. This is not ATS acceptance.

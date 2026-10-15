@@ -18,7 +18,7 @@ import {
 } from "../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { wages2026 } from "../../nodes/config/2026-wages.ts";
-import { form4137TipRowSchema, tipReviewSchema } from "./tip-qualification.ts";
+import { type form4137TipRowSchema, tipReviewSchema } from "./tip-qualification.ts";
 
 const reference = z.string().trim().min(1);
 const money = z.number().finite().nonnegative().max(
@@ -227,6 +227,9 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
     f8812,
     schedule_se,
   ]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "schedule_c"];
+  }
   compute(ctx: NodeContext, raw: Form4137Input2026): NodeResult {
     if (ctx.formType !== "f1040" || ctx.taxYear !== 2026) {
       throw new Error("Form 4137 needs f1040:2026 context");
@@ -241,6 +244,10 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: [
+        {
+          nodeType: "schedule_c",
+          fields: { unsupported_payroll_sources: ["form4137"] },
+        },
         { nodeType: "form4137", fields: { calculation_2026: calculation } },
         { nodeType: "eitc", fields: { earned_income: income } },
         { nodeType: "f8812", fields: { auto_earned_income: income } },

@@ -151,9 +151,9 @@ Deno.test("2026 resolver supplies distinct actual pre-QBI income for standard an
   assertEquals(result.selected.line15TaxableIncome, 25_000);
   assertEquals(result.selected.qbi.forms, { preQbi: 30_000 });
 });
-Deno.test("2026 coupled Schedule A/QBI resolves one pair using the printed whole-dollar operands", () => {
-  // D=99,818; T_before_QBI=680,182; Q=round(136,036.4)=136,036.
-  // §68 excess=3,364; reduction=round(181.656)=182; 100,000-182=D.
+Deno.test("2026 QBI excludes section 68 before calculating the overall itemized limit", () => {
+  // QBI uses 780,000 - 100,000 = 680,000, so Q = 136,000.
+  // Section 68 excess = 3,400; reduction = round(183.60) = 184.
   const qbi: QbiCalculator2026 = {
     maximumDeduction: 200_000,
     evaluate: (income) => ({
@@ -166,9 +166,9 @@ Deno.test("2026 coupled Schedule A/QBI resolves one pair using the printed whole
     adjustedGrossIncome: 780_000,
     itemized: { beforeOverallLimit: 100_000, taxes: 40_000 },
   }, qbi);
-  assertEquals(result.itemized.line12eStandardOrItemized, 99_818);
-  assertEquals(result.itemized.qbi.deduction, 136_036);
-  assertEquals(result.itemizedLimit.reduction, 182);
+  assertEquals(result.itemized.line12eStandardOrItemized, 99_816);
+  assertEquals(result.itemized.qbi.deduction, 136_000);
+  assertEquals(result.itemizedLimit.reduction, 184);
   assertEquals(result.selected.method, "itemized");
   assertEquals(
     result.itemized.qbi.deduction,
@@ -185,36 +185,24 @@ Deno.test("2026 coupled Schedule A/QBI resolves one pair using the printed whole
     }).allowedItemizedDeductions,
   );
 });
-Deno.test("2026 resolver rejects nonunique and unreconciled rounding pairs", () => {
-  const input = {
+Deno.test("2026 section 68 cannot change a QBI threshold or create artificial rounding cycles", () => {
+  const seen: number[] = [];
+  const result = resolveDeductions2026({
     ...base,
     adjustedGrossIncome: 640_619,
     itemized: { beforeOverallLimit: 30_000, taxes: 0 },
-  };
-  const cycle: QbiCalculator2026 = {
+  }, {
     maximumDeduction: 10,
-    evaluate: (income) => ({
-      deduction: income === 610_619 ? 0 : 10,
-      forms: {},
-    }),
-  };
-  assertThrows(
-    () => resolveDeductions2026(input, cycle),
-    Error,
-    "no reconciled",
-  );
-  const ambiguous: QbiCalculator2026 = {
-    maximumDeduction: 10,
-    evaluate: (income) => ({
-      deduction: income === 610_619 ? 10 : 0,
-      forms: {},
-    }),
-  };
-  assertThrows(
-    () => resolveDeductions2026(input, ambiguous),
-    Error,
-    "multiple reconciled",
-  );
+    evaluate: (income) => {
+      seen.push(income);
+      return { deduction: income === 610_619 ? 0 : 10, forms: {} };
+    },
+  });
+  assertEquals(result.itemized.preQbiTaxableIncome, 610_619);
+  assertEquals(result.itemized.qbi.deduction, 0);
+  assertEquals(result.itemized.line12eStandardOrItemized, 29_999);
+  assertEquals(result.itemizedEvaluations, 1);
+  assertEquals(seen.includes(610_620), false);
 });
 Deno.test("2026 AMT bridge removes only Schedule 1-A line 43 and preserves a negative line 1b", () => {
   const result = resolveDeductions2026({

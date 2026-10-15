@@ -9,7 +9,7 @@ import {
 import { scheduleSELines } from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { wages2026 } from "../../nodes/config/2026-wages.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
-import { w2Item2026Schema } from "./w2.ts";
+import { w2Item2026Schema } from "./w2-source.ts";
 
 const reference = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{9}$/).refine((v) => v !== "000000000");
@@ -474,10 +474,14 @@ export function calculateBusinessSources2026(raw: unknown) {
         ownWages.flatMap((w) => [w.box3_ss_wages ?? 0, w.box7_ss_tips ?? 0]),
       );
       const net = sum(regular.map((b) => b.lines.line31));
-      const se = scheduleSELines({
-        net_profit_schedule_c: net,
-        w2_ss_wages: wageBase,
-      }, wages2026.ssWageBase);
+      const se = scheduleSELines(
+        {
+          net_profit_schedule_c: net,
+          w2_ss_wages: wageBase,
+        },
+        wages2026.ssWageBase,
+        { roundRegularNetEarnings: true },
+      );
       return {
         owner_tin: owner,
         business_references: regular.map((b) => b.source.business_reference),

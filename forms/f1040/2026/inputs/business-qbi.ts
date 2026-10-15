@@ -1,0 +1,205 @@
+import { z } from "zod";
+import {
+  businessSources2026Schema,
+  calculateBusinessSources2026,
+} from "./business-source.ts";
+import { FilingStatus } from "../../nodes/types.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
+import { allocateSharedSeDeduction } from "../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
+import { simplifiedQbiLines } from "../../nodes/intermediate/forms/deductions/business/form8995/calculation.ts";
+import type { QbiCalculator2026 } from "../deduction-resolution.ts";
+
+const ref = z.string().trim().min(1);
+const tin = z.string().regex(/^\d{9}$/);
+const whole = z.number().int().safe().nonnegative();
+export const businessQbiReview2026Schema = z.object({
+  record_reference: ref,
+  no_current_qbi_sources_other_than_listed_businesses: z.literal(true),
+  not_a_patron_of_a_specified_cooperative: z.literal(true),
+  no_released_suspended_losses_or_qualified_tip_deduction: z.literal(true),
+  no_adjustments_other_than_deductible_half_se_tax: z.literal(true),
+  not_business_of_trading_financial_instruments_or_commodities: z.literal(true),
+  se_deduction_allocation: z.literal(
+    "positive_net_profit_proportion_per_owner",
+  ),
+  businesses: z.array(
+    z.object({
+      business_reference: ref,
+      record_reference: ref,
+      section162_business_and_current_income_qualifies_under199a: z.literal(
+        true,
+      ),
+      no_excluded_investment_capital_or_other_non_qbi_items: z.literal(true),
+      no_former_employee_presumption_or_rebuttal_needed: z.literal(true),
+    }).strict(),
+  ).min(1),
+  prior_losses: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("none"),
+      record_reference: ref,
+      no_prior_qbi_or_reit_ptp_loss_carryover: z.literal(true),
+    }).strict(),
+    z.object({
+      kind: z.literal("form8995_2025"),
+      tax_year: z.literal(2025),
+      return_reference: ref,
+      taxpayer_tin: tin,
+      spouse_tin: tin.optional(),
+      filing_status: z.nativeEnum(FilingStatus),
+      ownership_and_filing_unit_unchanged: z.literal(true),
+      line16_business_loss_carryforward: whole,
+      line17_reit_ptp_loss_carryforward: whole,
+    }).strict(),
+  ]),
+}).strict();
+
+export const businessReturnSource2026Schema = businessSources2026Schema.extend({
+  qbi_review: businessQbiReview2026Schema,
+}).strict();
+export const businessClaim2026Schema = businessReturnSource2026Schema.omit({
+  filing_status: true,
+  taxpayer_tin: true,
+  spouse_tin: true,
+  w2s: true,
+});
+export type BusinessReturnSource2026 = z.input<
+  typeof businessReturnSource2026Schema
+>;
+
+/** Replay business facts before allocating deductions; never accept caller QBI. */
+export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
+  const source = businessReturnSource2026Schema.parse(raw);
+  const { qbi_review: review, ...businessSource } = source;
+  const business = calculateBusinessSources2026(businessSource);
+  const refs = new Set(review.businesses.map((b) => b.business_reference));
+  if (
+    refs.size !== review.businesses.length ||
+    refs.size !== business.businesses.length ||
+    business.businesses.some((b) => !refs.has(b.source.business_reference))
+  ) {
+    throw new Error("QBI reviews must identify every business exactly once");
+  }
+  const prior = review.prior_losses;
+  if (
+    prior.kind !== "none" && (
+      prior.taxpayer_tin !== source.taxpayer_tin ||
+      prior.spouse_tin !== source.spouse_tin ||
+      prior.filing_status !== source.filing_status
+    )
+  ) {
+    throw new Error(
+      "Prior QBI carryovers require unchanged ownership and filing unit",
+    );
+  }
+  const allocations = new Map<string, number>();
+  for (const owner of business.owners) {
+    const regular = business.businesses.filter((b) =>
+      b.source.owner_tin === owner.owner_tin &&
+      b.source.kind === "sole_proprietor"
+    ).toSorted((a, b) =>
+      a.source.business_reference < b.source.business_reference
+        ? -1
+        : a.source.business_reference > b.source.business_reference
+        ? 1
+        : 0
+    );
+    const shares = allocateSharedSeDeduction(
+      regular.map((b) => b.lines.line31),
+      owner.schedule_se?.line13 ?? 0,
+    );
+    regular.forEach((b, i) =>
+      allocations.set(b.source.business_reference, shares[i])
+    );
+  }
+  const rows = business.businesses.map((b) => {
+    const deduction = allocations.get(b.source.business_reference) ?? 0;
+    return {
+      business_reference: b.source.business_reference,
+      owner_tin: b.source.owner_tin,
+      business_name: b.source.business_name ?? b.source.principal_business,
+      identification_number: b.source.ein ?? b.source.owner_tin,
+      net_profit: b.lines.line31,
+      allocated_se_deduction: deduction,
+      qbi_before_rounding: b.lines.line31 - deduction,
+      qbi: roundWholeDollars(b.lines.line31 - deduction),
+      materially_participated: true as const,
+    };
+  });
+  const qbi = rows.reduce((n, r) => n + r.qbi, 0);
+  const active = business.schedule1_line3 - business.schedule1_line15;
+  return {
+    source_input: source,
+    business,
+    rows,
+    qbi,
+    active_qbi_before_rounding: active,
+    minimum_deduction: active >= 1000 ? 400 : 0,
+    prior_business_loss: prior.kind === "none"
+      ? 0
+      : prior.line16_business_loss_carryforward,
+    prior_reit_ptp_loss: prior.kind === "none"
+      ? 0
+      : prior.line17_reit_ptp_loss_carryforward,
+  };
+}
+
+export function businessQbiCalculator2026(
+  raw: BusinessReturnSource2026,
+  netCapitalGainAndQualifiedDividends: number,
+): QbiCalculator2026 {
+  const r = resolveBusinessQbi2026(raw);
+  if (
+    !Number.isSafeInteger(netCapitalGainAndQualifiedDividends) ||
+    netCapitalGainAndQualifiedDividends < 0
+  ) {
+    throw new Error(
+      "QBI needs finalized net capital gain plus qualified dividends",
+    );
+  }
+  const limit = r.source_input.filing_status === FilingStatus.MFJ
+    ? 403500
+    : r.source_input.filing_status === FilingStatus.MFS
+    ? 201775
+    : 201750;
+  const maximumDeduction = Math.max(
+    r.minimum_deduction,
+    Math.round(Math.max(0, r.qbi - r.prior_business_loss) * .2),
+  );
+  return {
+    maximumDeduction,
+    evaluate(preQbiTaxableIncome) {
+      if (preQbiTaxableIncome > limit) {
+        throw new Error(
+          "2026 business income above the simplified QBI threshold needs Form 8995-A",
+        );
+      }
+      const { businessLossCarryforward, reitLossCarryforward, ...lines } =
+        simplifiedQbiLines({
+          businessIncome: r.qbi,
+          businessLossCarryforward: r.prior_business_loss,
+          reitAndPtpIncome: 0,
+          reitLossCarryforward: r.prior_reit_ptp_loss,
+          taxableIncomeBeforeQbi: preQbiTaxableIncome,
+          netCapitalGainAndQualifiedDividends,
+        });
+      const line17 = Math.max(lines.line15, r.minimum_deduction);
+      return {
+        deduction: line17,
+        forms: {
+          form8995: {
+            source_input: r.source_input,
+            rows: r.rows,
+            active_qbi_before_rounding: r.active_qbi_before_rounding,
+            lines: {
+              ...lines,
+              line16: r.minimum_deduction,
+              line17,
+              line18: businessLossCarryforward,
+              line19: reitLossCarryforward,
+            },
+          },
+        },
+      };
+    },
+  };
+}

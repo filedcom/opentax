@@ -1,4 +1,8 @@
 import {
+  business_2026,
+  businessClaimInput2026Schema,
+} from "./nodes/business.ts";
+import {
   capital_gains_2026,
   capitalGainClaimInput2026Schema,
 } from "./nodes/capital-gains.ts";
@@ -73,6 +77,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: business_2026,
+    isArray: false,
+    inputSchema: businessClaimInput2026Schema,
+  },
   {
     node: capital_gains_2026,
     isArray: false,

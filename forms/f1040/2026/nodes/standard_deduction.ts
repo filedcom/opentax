@@ -1,3 +1,11 @@
+import {
+  businessQbiCalculator2026,
+  businessReturnSource2026Schema,
+} from "../inputs/business-qbi.ts";
+import {
+  calculateCapitalGains2026,
+  capitalGainInput2026Schema,
+} from "./capital-gains.ts";
 import { form8960_2026 } from "./form8960.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -37,6 +45,8 @@ export const inputSchema = sharedSchema.pick({
   // QBI must be computed inside the joint resolver, not deposited as an amount
   // that may have been calculated against the wrong deduction candidate.
   qbi_deduction: z.never().optional(),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
+  capital_sources_2026: capitalGainInput2026Schema.optional(),
   qbi_activity_pending: z.boolean().optional(),
 }).strict();
 
@@ -71,6 +81,40 @@ export function calculateDeductionSelection2026(
       "Schedule A requires both its pre-limit total and line 7 taxes, including zero",
     );
   }
+  const capital = input.capital_sources_2026
+    ? calculateCapitalGains2026(input.capital_sources_2026)
+    : undefined;
+  if (input.business_sources_2026 && !capital) {
+    throw new Error(
+      "Business QBI needs the complete capital/qualified-dividend inventory, including zero",
+    );
+  }
+  const business = input.business_sources_2026;
+  if (
+    business && (business.filing_status !== input.filing_status ||
+      capital!.source_input.filing_status !== input.filing_status ||
+      business.taxpayer_tin !==
+        capital!.source_input.taxpayer_ssn.replaceAll("-", "") ||
+      business.spouse_tin !==
+        (input.filing_status === FilingStatus.MFJ
+          ? capital!.source_input.spouse_ssn?.replaceAll("-", "")
+          : undefined))
+  ) {
+    throw new Error(
+      "QBI business, capital and deduction sources must have the same return owners",
+    );
+  }
+  if (input.business_sources_2026 && input.agi < 0) {
+    throw new Error(
+      "Business losses creating a negative AGI need the NOL/carryover owner",
+    );
+  }
+  const qbi = input.business_sources_2026
+    ? businessQbiCalculator2026(
+      input.business_sources_2026,
+      capital!.preferential_gain + capital!.qualified_dividends,
+    )
+    : noQbi2026;
   const resolved = resolveDeductions2026({
     ...input,
     adjustedGrossIncome: input.agi,
@@ -85,7 +129,7 @@ export function calculateDeductionSelection2026(
     charitableContributionBase: input.charitable_contribution_base,
     schedule1aLine44: input.schedule1a_line44 ?? 0,
     schedule1aLine43: input.schedule1a_line43 ?? 0,
-  }, noQbi2026);
+  }, qbi);
   return { source_input: input, resolution: resolved };
 }
 
@@ -104,8 +148,7 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
     const { source_input: input, resolution: resolved } =
       calculateDeductionSelection2026(rawInput);
     const chosen = resolved.selected;
-    // This node's current graph adapter covers no-QBI returns. The QBI owner
-    // must call the same resolver with its actual form calculator when wired.
+    // Both deduction candidates replay the same business and capital sources.
     return {
       outputs: [
         {

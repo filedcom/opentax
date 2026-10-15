@@ -1,3 +1,4 @@
+import { business_2026 } from "./nodes/business.ts";
 import { capital_carryover_2026 } from "./nodes/capital-carryover.ts";
 import { capital_gains_2026 } from "./nodes/capital-gains.ts";
 import { f8863_2026 } from "./nodes/f8863.ts";
@@ -38,8 +39,10 @@ import { schedule3a } from "./nodes/schedule3a.ts";
 /** Connected 2026 source graph; unfinished credit/activity receivers remain
  * pending. This is not a FormDefinition or a supported filing catalog entry. */
 export const sourceRegistry2026 = {
-  start: buildStartNode(inputNodes),
+  // This year joins issued wages and owner identities inside its business node.
+  start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  schedule_c: business_2026,
   capital_gains: capital_gains_2026,
   capital_loss_carryover: capital_carryover_2026,
   form2441: form2441_2026,

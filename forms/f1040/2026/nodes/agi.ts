@@ -1,3 +1,7 @@
+import {
+  businessReturnSource2026Schema,
+  resolveBusinessQbi2026,
+} from "../inputs/business-qbi.ts";
 import { benefitElectionBridge2026Schema } from "../inputs/social-security-election.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -57,6 +61,7 @@ export const inputSchema = sharedSchema.pick({
   line23_archer_msa_deduction: true,
   line24f_501c18d: true,
 }).extend({
+  business_sources_2026: businessReturnSource2026Schema.optional(),
   filing_status: z.nativeEnum(FilingStatus),
   social_security_lump_sum: benefitElectionBridge2026Schema.optional(),
 }).strict();
@@ -211,7 +216,21 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       // SSA worksheet, so the calculation is ordered rather than iterative.
       input.line6b_ss_taxable = taxable;
     }
-    const result = agi_aggregator.computeWithConfig(ctx, input, agi2026);
+    const { business_sources_2026, ...sharedInput } = input;
+    const business = business_sources_2026
+      ? resolveBusinessQbi2026(business_sources_2026).business
+      : undefined;
+    if (
+      business &&
+      (business.source_input.filing_status !== input.filing_status ||
+        business.schedule1_line3 !== (input.line3_schedule_c ?? 0) ||
+        business.schedule1_line15 !== (input.line15_se_deduction ?? 0))
+    ) {
+      throw new Error(
+        "AGI business amounts disagree with retained business sources",
+      );
+    }
+    const result = agi_aggregator.computeWithConfig(ctx, sharedInput, agi2026);
     let additionalIncome = 0;
     let adjustments = 0;
     let studentLoan = 0;
@@ -299,7 +318,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             other_niit_income_pending: [
               input.line4b_ira_taxable,
               input.line5b_pension_taxable,
-              input.line3_schedule_c,
+              business ? 0 : input.line3_schedule_c,
               input.line4_other_gains,
               input.line5_schedule_e,
               input.line6_schedule_f,
@@ -326,7 +345,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
               ? {}
               : { dependent_earned_income: wageIncome }),
             qbi_activity_pending: [
-              input.line3_schedule_c,
+              business ? 0 : input.line3_schedule_c,
               input.line5_schedule_e,
               input.line6_schedule_f,
             ].some((amount) => amount !== undefined && amount !== 0),

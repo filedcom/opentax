@@ -35,13 +35,16 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule 3-A (3A) | Settlement emits schedule | 1 |
 | Schedule A (07) | Selected itemized method | 2 |
 | Schedule B (08) | Source workpaper requires attachment | 1 |
+| Schedule C (09) | Reviewed business source claim | Two pages per activity |
 | Schedule D (12) | Source dispositions or usable prior loss carryovers | 2 |
 | Form 8949 (12A) | Sales requiring detail | One category per page, eleven rows each |
+| Schedule SE (17) | Regular SE owner requires form | One page per owner |
 | Form 4137 (24) | Calculated owner forms | All owner/employer continuation copies |
 | Form 6251 (32) | Retained filing condition | 2 |
 | Schedule EIC (43) | Positive supported child-based EIC | 1 |
 | Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
 | Form 8863 (50) | Positive supported AOTC or LLC | Totals plus student/school pages |
+| Form 8995 (55) | Reviewed business QBI calculation | One page plus business continuation |
 | Form 8919 (61) | Calculated owner forms | All owner/employer continuation copies |
 | Form 8959 (71) | Retained filing/withholding condition, including zero tax | 1 |
 | Form 8960 (72) | Retained filing condition, including zero NIIT | 1 |
@@ -59,6 +62,12 @@ owner's own name and SSN. IRS cover/instruction pages are excluded by the
 component builders. The assembled artifact is static, with no page annotations
 or catalog AcroForm tree. Form 1040 and its dependent statements also receive a
 consistent draft footer when rendered independently.
+
+Business attachments replay the complete business and deduction sources and
+match Schedule 1 lines 3/15, Schedule 2 line 4 and Form 1040 deduction destinations.
+Schedule C/SE use each proprietor's identity. Part V preserves source cents in
+statements; Form 8995 continues after five businesses without duplicating totals.
+See [current business coverage](../graphs/BUSINESS-CURRENT.md).
 
 ## Verification and limits
 
