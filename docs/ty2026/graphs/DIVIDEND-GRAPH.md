@@ -1,5 +1,11 @@
 # TY2026 Form 1099-DIV graph contract
 
+> Historical prototype notes. Claims below that a source, graph or PDF is
+> registered describe the earlier prototype, not the current-main rebuild.
+> See [the October 15 investment workpaper status](INVESTMENTS-CURRENT.md)
+> for verified current behavior and the unfinished runtime/PDF handoffs.
+
+
 Sources: the IRS continuous-use [Form 1099-DIV](https://www.irs.gov/pub/irs-prior/f1099div--2024.pdf)
 and [instructions](https://www.irs.gov/pub/irs-prior/i1099div--2024.pdf), both January
 2024 revisions pinned under `corpus/authorities/`, plus the pinned 2026 draft

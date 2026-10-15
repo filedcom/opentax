@@ -1,5 +1,11 @@
 # TY2026 interest income: 1099-INT/OID to the return
 
+> Historical prototype notes. Claims below that a source, graph or PDF is
+> registered describe the earlier prototype, not the current-main rebuild.
+> See [the October 15 investment workpaper status](INVESTMENTS-CURRENT.md)
+> for verified current behavior and the unfinished runtime/PDF handoffs.
+
+
 Source: pinned [2026 draft Schedule B](../corpus/draft/f1040sb.pdf) and its
 [August 2026 draft instructions](../corpus/draft/i1040sb.pdf). The instruction
 PDF is recorded by URL, byte count, SHA-256, and retrieval time in

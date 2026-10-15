@@ -585,6 +585,24 @@ records the reviewed instructions and boundaries. Other cross-year claims,
 Form 2555 coordination, community-property allocations, Schedule 1 printing,
 complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
 
+## Investment source workpaper
+
+`calculateInvestmentIncome2026` reuses the existing 1099-INT, 1099-DIV and
+Schedule B calculators behind strict 2026 source reconciliation. It retains
+issued copies, validates ownership and duplicates, accounts for gross/net
+premium reporting, derives qualified dividends from holding records and
+reconciles income outputs without duplicating below-threshold dividends.
+PAB, withholding, early penalties, gain distributions and state taxes remain
+separate amounts with their source records. Dividend and NIIT shared calculators
+accept explicit configurations while preserving their 2025 entry points.
+
+This workpaper is not registered in the source catalog. Runtime NIIT/MAGI and
+expense routing, PAB-to-AMT, gain inventory, state-tax deductions and Schedule
+B/Form 8960 PDF components are the next required integration. The
+[current investment contract](../../../docs/ty2026/graphs/INVESTMENTS-CURRENT.md)
+records source boundaries and distinguishes this implementation from the
+historical prototype claims.
+
 ## Reuse and folder rules for subsequent work
 
 Keep shared algorithms in the existing `nodes` domain folders and preserve
@@ -765,3 +783,9 @@ components matched the hashes already recorded in the research corpus.
   the source catalog also rejects direct tax/worksheet injection. The ordinary
   rate calculation agreed with independent integer-cent bracket arithmetic for
   every whole-dollar income from $100,000 through $1 million in all five statuses.
+
+- Investment workpaper verification: 490 combined 2026/shared source tests
+  passed, followed by all 16 focused tests after the fractional-dollar PAB
+  allocation case. The repository unit gate and its module-graph preflight
+  passed. This covers source reconciliation and shared calculator reuse, not
+  a registered investment return or new Schedule B/Form 8960 PDF components.

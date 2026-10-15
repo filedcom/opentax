@@ -3,12 +3,18 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
+import {
+  CONFIG_BY_YEAR,
+  type F1040Config,
+} from "../../../../../config/index.ts";
 import { normalizeArray } from "../../../../../utils.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
@@ -110,11 +116,16 @@ const printFieldsSchema = z.object({
 type Form8960Input = z.infer<typeof inputSchema>;
 type Form8960PrintFields = z.infer<typeof printFieldsSchema>;
 
+export type NiitConfig = Pick<
+  F1040Config,
+  "niitThresholdMfj" | "niitThresholdMfs" | "niitThresholdOther"
+>;
+
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
 // MAGI threshold by filing status
 // Form 8960 line 14; not indexed for inflation (TY2025)
-function threshold(status: FilingStatus, cfg: F1040Config): number {
+function threshold(status: FilingStatus, cfg: NiitConfig): number {
   if (status === FilingStatus.MFJ) return cfg.niitThresholdMfj;
   if (status === FilingStatus.QSS) return cfg.niitThresholdMfj;
   if (status === FilingStatus.MFS) return cfg.niitThresholdMfs;
@@ -205,6 +216,14 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8960Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, rawInput, cfg);
+  }
+
+  computeWithConfig(
+    _ctx: NodeContext,
+    rawInput: Form8960Input,
+    cfg: NiitConfig,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const limit = threshold(input.filing_status, cfg);
