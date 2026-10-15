@@ -2341,6 +2341,15 @@
       "sha256": "e3ba90d00f657eed6b83a4555fc5acffb823401a4a6ddda29160fc33a8376399",
       "year_check": "2026-present",
       "retrieved_utc": "2026-10-15T20:16:08.546018+00:00"
+    },
+    {
+      "path": "continuous/f1062sa.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1062sa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 88431,
+      "sha256": "dc50ba9b52db27a01492962b7349b71070812956c56feff376928dcd17a4953d",
+      "year_check": "December 2025 continuous-use revision; checked for 2026 on 2026-10-15"
     }
   ]
 }

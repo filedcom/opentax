@@ -4,7 +4,8 @@
 
 The next ATS scenario 1 dependency is Form 1062. Reviewed direct business-land
 sales now enter the 2026 source graph and draft PDF bundle, including Form 4797.
-Form 1062 elections and source-derived deferral calculations remain open; internal
+Form 1062 source qualification and covenant-bound Schedule A drafts are now
+implemented as components. Election registration and tax deferral remain open; internal
 Form 1040/Schedule 3 settlement fields do not complete that work or scenario 1.
 
 The `land_dispositions` input accepts original property records and reviews.
@@ -87,9 +88,9 @@ would be wrong. State-tax allocation uses income after this exclusion.
 Standalone draft components now print Schedule D line 11 and Form 8960 lines
 5a/5b/5d. They require matching Form 4797/Schedule 1 destinations, retain draft
 markings and are visually checked. These component PDFs are not a complete
-filing package: the graph and attachment/bundle owner remain unfinished.
-The capital graph node still rejects this handoff pending the remaining source
-and attachment routes. Deduction selection now accepts it only through the
+filing package. The registered land source owner now supplies the graph and
+draft bundle; the capital graph node stages original linked records rather
+than accepting a finalized land handoff. Deduction selection accepts it through the
 combined QBI/loss owner below, with matching finalized capital sources. An
 unaccompanied internal land handoff still cannot bypass ordinary-gain QBI.
 
@@ -107,7 +108,7 @@ More than four properties, or an overlong description, uses a continuation with
 all seven columns and seller/sale references. Long descriptions can span pages;
 amounts appear once per detail row and totals reconcile to the official form.
 Output is flattened with no form fields or annotations, retains draft markings,
-and is not yet registered in the return bundle or public intake.
+and is included by the registered land route in the draft return bundle.
 
 ## Internal business-loss prerequisite
 
@@ -116,14 +117,14 @@ capital and land sources to calculate the 2026 excess-loss adjustment. It
 separates the individual-line filing trigger from the excess-loss threshold,
 removes investment capital losses, limits business capital gains and excludes
 employee services. The Schedule C route now connects this calculation to AGI, allowed-loss QBI
-and the draft bundle; the land route remains internal.
+and the draft bundle; the registered land route reuses the same calculation.
 The September 28 instruction draft is pinned in the corpus.
 
 The internal land loss owner now runs preliminary capital/4797 amounts through
 the same Form 461 arithmetic, allocates the disallowed loss, finalizes section
 1231 history and replays the final capital/461 sources. It checks that the tax
 destinations did not change. A stale caller-supplied deductible loss is rejected.
-This is an internal component; public land intake remains disabled.
+The registered land route calls this component from original source claims.
 
 The reviewed allocation convention is proportional to negative source buckets:
 each nonemployee Schedule C result, each owner's half-SE deduction, the net
@@ -138,8 +139,8 @@ Every land owner/activity has a farming classification and a review confirming
 no omitted current income, deductions or suspended items for that activity.
 Positive EBL with farming loss stops for Form 172 and the farming-first
 threshold rule; a farm loss below the EBL limit can finalize its full amount.
-Mixed farm/nonfarm NOL allocation, complete qualified-loss attribution, land AGI
-registration and bundle integration remain open.
+Mixed farm/nonfarm NOL allocation and complete qualified-loss attribution remain
+open; the supported direct-land route is registered with AGI and the draft bundle.
 
 ## Internal land contribution to QBI
 
@@ -210,6 +211,53 @@ loss, eligible EIC disposition worksheets and remaining QBI source families
 still require their calculation owners. Public filing and current IRS acceptance
 remain disabled.
 
+## Form 1062 source qualification and Schedule A
+
+`inputs/form1062-source.ts` reuses the original land-source calculator. Each
+elected sale must match its return owner and property; the election may select
+a subset but cannot duplicate a sale. The component derives Schedule A gross
+proceeds, net sales price, original basis, adjusted basis and recognized gain
+from the same closing and basis ledger used by Form 4797. Loss elections and
+asserted gain totals fail. If separately rounded Schedule A and Form 4797 columns
+differ, tax deferral stops pending coordinated rounding; no gain is invented to
+force reconciliation.
+
+The source records retain U.S. property location, the qualified individual
+buyer's evidence under 7 USC 1308-1(b)/(c), and dated farming/qualified-tenant use.
+The ten-year lookback ends on the sale date. Distinct nonoverlapping periods
+produce supported-day and gap workpapers. A substantive substantially-all
+review must address any gaps; the code does not invent a percentage threshold.
+Covenant evidence must identify the same property, seller and buyer, bind on the
+sale date and cover the entire ten-year restriction beginning the following day.
+These are reviewed source assertions, not independent legal authentication.
+
+`pdf/form1062-schedule-a.ts` uses the shared `VerifiedSourceDocuments` verifier
+for the exact reference/digest set. It requires readable, unencrypted covenant
+PDF copies before checking Schedule A line 8. One document may cover multiple
+parcels if the repeated reference has a consistent digest. Covenant originals
+are returned separately without byte changes, preserving existing fields and
+signatures; only generated Schedule A pages are flattened and draft-marked.
+Long property descriptions continue on source-identified attachment pages.
+
+The current IRS Schedule A revision is December 2025 (continuous-use, not an
+annual 2025 tax form). The October 15 source check follows the IRS Form 1062
+landing page to `https://www.irs.gov/pub/irs-pdf/f1062sa.pdf`. The pinned file at
+`corpus/continuous/f1062sa.pdf` has SHA-256
+`dc50ba9b52db27a01492962b7349b71070812956c56feff376928dcd17a4953d`.
+Its field inventory records 27 terminal widgets; the canonical tree also contains
+two nonterminal container entries. The print component checks every terminal
+field, retains the current revision label and clears the printed date placeholder
+before painting the actual closing date.
+
+This component is not registered as a public election or a completed Form 1062.
+The main tax/credit replay, timely election, installment ledger, settlement,
+full bundle and MeF work remain. The instructions prescribe taxable income less
+elected gain on line 8 and recalculated credits against line 11. Section 26(b)
+excludes specified taxes, including AMT, from regular tax; Schedule 2 is not a
+single deferrable amount. The current 1040 credit owners retain source inputs
+that can be replayed, but their hypothetical tax limits and AMT interactions
+still need the dedicated Form 1062 coordinator.
+
 ## Current IRS source checks
 
 The [October 1 draft Form 4797](../corpus/draft/f4797-2026-10-01.pdf) was fetched
@@ -227,8 +275,9 @@ covenant. The [2026 draft Form 1062](https://www.irs.gov/pub/irs-dft/f1062--dft.
 uses regular tax and applicable credits both with and without elected gain;
 its first installment is one quarter of the resulting net tax difference.
 The [Schedule A](https://www.irs.gov/pub/irs-pdf/f1062sa.pdf) supplies the property
-and gain information. These sources were checked but no Form 1062 calculation
-or attachment is implemented by this prerequisite work.
+and gain information. The Schedule A component below implements that current
+continuous-use form; the main Form 1062 tax calculation and return attachment
+registration remain open.
 
 Estimated-tax relief is in **Notice 2026-3**, published in
 [IRB 2026-02](https://www.irs.gov/irb/2026-02_IRB). The Form 1062 landing page's
@@ -242,12 +291,10 @@ Estimated-tax relief is in **Notice 2026-3**, published in
    automatically earned income or self-employment income. Preserve the existing
    loss-limit-before-history ordering while expanding asset and recapture cases
    using the full [4797 contract](FORM4797-GRAPH.md).
-2. Establish section 1062 qualification from the property-use history, buyer's
-   qualified-farmer evidence and enforceable covenant. Reconcile each elected
-   Schedule A gain to the same disposition inventory; retain actual covenant
-   bytes and their filing references. Source records alone are not the required
-   attached covenant. Support partnerships, S corporations and allocations with
-   their own source owners before enabling those claims.
+2. Register the implemented direct-sale qualification/Schedule A components with
+   the completed election and tax owner. Resolve cross-form rounding differences,
+   timing and installment records. Support partnerships, S corporations and
+   allocations with their own source owners before enabling those claims.
 3. Recalculate tax and the applicable credits with elected gain removed using
    shared tax/credit calculators and correct gain character, rather than a flat
    rate, user-asserted tax difference or copied current credit. Resolve the
@@ -303,3 +350,12 @@ The first full run found one obsolete guard-message expectation, updated to
 require original source claims rather than finalized capital handoffs. Final
 verification passed. The original worktree and all 2025 implementations were
 left unchanged in this step.
+
+The Form 1062 source and Schedule A components passed 12 typed focused tests,
+all 712 tests in the 2026 directory and 137 unit checks. Four rendered pages
+cover the ordinary Schedule A and a long-description continuation; each was
+visually inspected after correcting the date placeholder and word wrapping.
+Generated pages have no fields or annotations. Tests verify that original
+covenant bytes and their existing form fields remain unchanged, and reject
+missing, altered or mismatched documents. The main Form 1062 tax calculation,
+public election and return-bundle registration remain unfinished.

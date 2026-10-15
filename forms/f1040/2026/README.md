@@ -991,3 +991,12 @@ C-only route retains its reviewed allocation method; both routes reuse the same
 integer allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
 records these conventions, graph/PDF evidence and remaining advanced cases.
 Form 1062, full parity, public filing and current IRS acceptance remain open.
+
+
+Form 1062 now has an internal direct-sale qualification and Schedule A component.
+It reuses land basis/closing records, retains ten-year farming and covenant
+reviews, and verifies the exact covenant PDF bytes with the shared document
+verifier. Generated Schedule A pages are static drafts; original covenant copies
+remain byte-identical separate attachments. The main Form 1062 tax/credit replay,
+election registration, installment ledger, bundle and MeF remain open; see the
+[current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md).

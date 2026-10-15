@@ -40,7 +40,7 @@ const informationReturn = z.discriminatedUnion("kind", [
       .literal(true),
   }).strict(),
 ]);
-/** Staged source contract. Registration waits for 4797/QBI/NIIT and loss-limit consumers. */
+/** Original property records shared by the land return and Form 1062 qualification. */
 export const landDispositionSource2026Schema = investmentOwner2026.extend({
   claim: z.object({
     tax_year: z.literal(2026),

@@ -151,3 +151,11 @@ continuations with retained TINs. Reviewed direct land sales now attach Form 479
 at sequence 27 and a single combined Form 8995 at 55, including land-only returns.
 Capital, Schedule 1, NIIT and Form 461 destinations reconcile to the same finalized
 sources; see [the current land contract](../graphs/FARMLAND-CURRENT.md).
+
+
+Form 1062 Schedule A is now an internal component using the IRS continuous-use
+December 2025 revision, with long-description continuations. Exact covenant
+references/digests must bind to readable PDF copies. The originals are returned
+unchanged and separately from the generated static Schedule A pages. This does
+not yet register Form 1062 or its election in the return bundle; tax/credit replay,
+settlement and the full attachment assembly remain open.
