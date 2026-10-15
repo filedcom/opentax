@@ -140,9 +140,19 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   current TY2026 XSD must define the replacement Form 8962 structure and
   document order. Do not reuse these TY2025 element names by inference.
   `forms/f1040/2026/mef` does not yet exist.
-- The 2026 PDF builder has no Form 8962 attachment and explicitly rejects
-  Marketplace bundles until the current-year attachment is implemented. The
-  TY2025 descriptor targets a 2025 form and cannot fill that requirement.
+- The 2026 PDF builder now replays retained Marketplace sources, checks actual
+  return income, family and schedule destinations, and attaches two static
+  Form 8962 pages in sequence 73. Annual and monthly entries use the pinned
+  2026 widget map; unused allocation/marriage parts and reserved lines 28/29
+  remain blank. No credit or advances means no attachment; positive source
+  advances still require reconciliation when printed dollars round to zero.
+  Form 6251 PDF line 10 also reconciles the Schedule 2 line 1z addition.
+- The above-400% print branch leaves lines 7/8 and columns (a)–(e) blank,
+  printing only annual/monthly advances, zero line 24 and the resulting
+  line 25/27 amounts. The primary historical layout comparator is
+  [2019 Form 8962 instructions, line 5](https://www.irs.gov/pub/irs-prior/i8962--2019.pdf),
+  not its eligibility rules or repayment cap. Final 2026 instructions must
+  confirm this provisional print path before public filing support.
 - Marketplace premiums under a self-employed business plan create a
   deduction/PTC dependency with [Form 7206](./FORM7206-GRAPH.md). Its 2026
   instructions defer the computation to Publication 974; the pinned 2025
@@ -152,9 +162,9 @@ that can be reviewed for reuse after a 2026 visual/field audit.
 ## Build order and independent acceptance cases
 
 1. The ordinary source-to-1040 graph is connected, including Schedule 3 line 9,
-   Schedule 2 line 1a, AMT and nonrefundable-credit limits. Finish attachment
-   selection and suppress an empty form when no PTC/APTC applies; do not enable
-   a draft bundle that omits a required Form 8962.
+   Schedule 2 line 1a, AMT and nonrefundable-credit limits. Ordinary draft
+   attachment selection is connected and omits a form when no PTC/APTC applies;
+   final instruction reconciliation and advanced attachments remain required.
 2. Finish family-income/household facts, shared-policy allocation, MFS and
    below-100% exception validation, QSEHRA and self-employed health-insurance
    interactions, and year-of-marriage months. A source conflict or missing
@@ -167,10 +177,10 @@ that can be reviewed for reuse after a 2026 visual/field audit.
    rather than checking the form alone. Add Alaska/Hawaii, 99/100% exception,
    MFS exception, monthly policy change, multiple policies, shared-policy
    continuation, QSEHRA, and marriage-alternative cases.
-4. Map and render all applicable 2026 widgets, including line 6 and Part
-   III's line 27, and inspect both pages plus any allocation continuation.
-   Compare Form 8962 line 26/27 to the corresponding schedules and final
-   1040 fields.
+4. Ordinary annual/monthly widgets, line 6 and Part III line 27 are mapped
+   and visually inspected on both pages. Continue with allocation/marriage
+   continuation rendering when those source routes are implemented. Keep
+   Form 8962 line 26/27 reconciled to schedules and final 1040 fields.
 5. Obtain the current TY2026 MeF XSD and active rules, map Form 8962 and
    Form 1095-A/allocations to their actual XML groups, validate a complete
    return and inspect business-rule rejects. Keep the final 2026 instruction
@@ -189,7 +199,7 @@ whose annual source totals are $5,000.04 and $9,999.96; the filed whole-dollar
 credit/repayment remains the independent acceptance result above. Full 2025
 node/source/household regressions preserve its original eligibility and cap
 behavior. This evidence alone does not complete advanced source ownership,
-PDF or MeF work.
+advanced PDF attachments or MeF work.
 
 Current primary authorities checked October 16, 2026:
 [Rev. Proc. 2025-25](https://www.irs.gov/pub/irs-drop/rp-25-25.pdf),
@@ -253,3 +263,16 @@ MeF acceptance. Medical reconciliation follows the PTC examples in
 [Publication 502](https://www.irs.gov/publications/p502); AMT line 10 follows
 the [2026 draft Form 6251](https://www.irs.gov/pub/irs-dft/f6251--dft.pdf).
 Reconcile the medical rules to final 2026 guidance before public filing.
+
+`forms/f1040/2026/pdf/form8962.test.ts` verifies actual PDF text at independent
+page coordinates for annual credits, uncapped repayment, monthly coverage gaps,
+source advances that round to zero, equal credit/advances, regional FPL values,
+voided policies, dependent families and sourced Social Security MAGI. Stale
+schedule/income/family destinations and unrelated filer identities are rejected.
+A combined itemized-medical/ISO-AMT/split-refund bundle verifies attachment order
+and repayment reconciliation. Four synthetic QA PDFs (17 pages total) were
+rendered and visually reviewed, including reserved fields, checkboxes, Part IV/V,
+Schedule A, Schedule 2, Form 6251, Form 8888 and final 1040 settlement. Output is
+static, carries draft markings and is not filing-ready. The retained 2025
+calculator still defaults to its original no-form behavior unless the caller
+supplies the separate fact that source advances were paid before rounding.

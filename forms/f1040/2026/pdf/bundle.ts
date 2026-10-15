@@ -1,4 +1,9 @@
 import {
+  buildForm8962PdfBytes2026,
+  type MarketplaceResult2026,
+  requiresForm8962_2026,
+} from "./form8962.ts";
+import {
   type calculateGambling2026,
   gamblingIssuedAttachments2026,
 } from "../inputs/gambling-source.ts";
@@ -89,11 +94,6 @@ export async function buildDraftReturnPdf2026(
     throw new Error("TY2026 draft bundle needs general filer input");
   }
   const input = sourceRegistry2026.start.inputSchema.parse(raw);
-  if (input.f1095a !== undefined) {
-    throw new Error(
-      "Marketplace draft bundle needs the reconciled 2026 Form 8962 attachment",
-    );
-  }
   const calculation = await executeDraftSources2026(input, documents);
   if (calculation.diagnostics.length) {
     throw new Error(
@@ -498,6 +498,7 @@ export async function buildDraftReturnPdf2026(
           schedule1a_line43: s1a?.lines.line43 ?? 0,
           ...(a ? { schedule_a_line7: a.lines.line7 } : {}),
           schedule2_line2: s2line("line2_amt"),
+          schedule2_line1z: s2line("line1z_additions"),
         },
         filer,
       ));
@@ -652,6 +653,34 @@ export async function buildDraftReturnPdf2026(
         },
         filer,
       ));
+  }
+  const marketplace = retained<MarketplaceResult2026>("form8962");
+  if (marketplace && requiresForm8962_2026(marketplace)) {
+    const dependents = f.dependent_details as {
+      ssn?: string;
+      itin?: string;
+      atin?: string;
+    }[] | undefined;
+    add(
+      "form8962",
+      2,
+      () =>
+        buildForm8962PdfBytes2026(marketplace.source_input, {
+          form1040_line11b: line("line11b_agi"),
+          form1040_line2a: line("line2a_tax_exempt"),
+          form1040_nontaxable_social_security: line("line6a_ss_gross") -
+            line("line6b_ss_taxable"),
+          schedule3_line9: s3?.input.line9_premium_tax_credit ?? 0,
+          schedule2_line1a: s2line("line1a_excess_advance_premium"),
+          schedule2_line1z: s2line("line1z_additions"),
+          filing_status: String(f.filing_status),
+          tax_family_tins: [
+            taxpayer.ssn,
+            ...(spouse ? [spouse.ssn] : []),
+            ...(dependents ?? []).map((d) => d.ssn ?? d.itin ?? d.atin ?? ""),
+          ],
+        }, filer),
+    );
   }
   if (childCredit?.energy_credit?.file_form5695) {
     add(

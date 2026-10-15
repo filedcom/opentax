@@ -23,6 +23,7 @@ export interface Form6251Destinations2026 {
   schedule1a_line43: number;
   schedule_a_line7?: number;
   schedule2_line2: number;
+  schedule2_line1z?: number;
 }
 
 /** Static draft component; the complete attachment-selecting bundle is separate. */
@@ -51,6 +52,7 @@ export async function buildForm6251PdfBytes2026(
         : d.schedule_a_line7) ||
     input.regular_taxable_income !== d.form1040_line15 ||
     input.regular_tax !== d.form1040_line16 ||
+    result.lines.line10 !== d.form1040_line16 + (d.schedule2_line1z ?? 0) ||
     result.lines.line11 !== d.schedule2_line2 ||
     (result.investment &&
       (result.investment.lines.line2a !== d.form1040_line2a ||

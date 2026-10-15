@@ -24,7 +24,6 @@ import {
   calculateScheduleA2026,
   type ScheduleASource2026,
 } from "../schedule-a.ts";
-import { buildDraftReturnPdf2026 } from "../pdf/bundle.ts";
 import { childCreditGraphFixture2026 } from "../nodes/f8812.fixture.ts";
 import { form1062GraphFixture2026 } from "./form1062-graph.fixture.ts";
 
@@ -334,7 +333,7 @@ Deno.test("2026 Marketplace repayment reaches the child-credit nonrefundable lim
   );
 });
 
-Deno.test("2026 Marketplace prevents an unrefigured farmland election and an incomplete PDF bundle", async () => {
+Deno.test("2026 Marketplace prevents an unrefigured farmland election", async () => {
   const { graph: input, documents } = await form1062GraphFixture2026();
   const claim = marketplaceGraph2026().f1095a;
   // The fixture's taxpayer is retargeted throughout all Marketplace source evidence.
@@ -368,11 +367,6 @@ Deno.test("2026 Marketplace prevents an unrefigured farmland election and an inc
       ),
     Error,
     "hypothetical-income",
-  );
-  await assertRejects(
-    () => buildDraftReturnPdf2026(marketplaceGraph2026()),
-    Error,
-    "Form 8962 attachment",
   );
 });
 

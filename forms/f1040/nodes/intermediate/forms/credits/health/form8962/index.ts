@@ -613,8 +613,9 @@ function aptcOnlyRepayment(
   aptc: number,
   baseFields: Form8962BaseFields,
   policy: Form8962AnnualPolicy,
+  sourceAdvancePaid = false,
 ): NodeResult {
-  if (aptc === 0) return noForm8962Required();
+  if (aptc === 0 && !sourceAdvancePaid) return noForm8962Required();
   const monthlyAptc = input.monthly_aptcs;
   const monthly = monthlyAptc !== undefined &&
     input.annual_line11_eligible !== true;
@@ -676,6 +677,8 @@ export function validateForm8962AnnualCoverage(input: Form8962Input): void {
 export function calculateForm8962WithPolicy(
   rawInput: Form8962Input,
   policy: Form8962AnnualPolicy,
+  // Source fact retained by callers that round issued cents before calculation.
+  sourceAdvancePaid = false,
 ): NodeResult {
   const input = inputSchema.parse(rawInput);
 
@@ -699,7 +702,7 @@ export function calculateForm8962WithPolicy(
   const aptc = totalAptc(input);
   if (
     premium === 0 && slcsp === 0 && aptc === 0 &&
-    !input.shared_policy_allocations?.length
+    !input.shared_policy_allocations?.length && !sourceAdvancePaid
   ) {
     return input.annual_premium !== undefined ||
         input.annual_slcsp !== undefined ||
@@ -942,7 +945,13 @@ export function calculateForm8962WithPolicy(
     throw new Error("Form 8962 shared policy must use monthly calculation");
   }
   if (mfsStatus?.basis === "no_exception") {
-    return aptcOnlyRepayment(input, aptc, baseFields, policy);
+    return aptcOnlyRepayment(
+      input,
+      aptc,
+      baseFields,
+      policy,
+      sourceAdvancePaid,
+    );
   }
   if (incomePct < 100) {
     const status = input.below_100_fpl_status;
@@ -957,7 +966,13 @@ export function calculateForm8962WithPolicy(
       );
     }
     if (status.basis === "not_applicable") {
-      return aptcOnlyRepayment(input, aptc, baseFields, policy);
+      return aptcOnlyRepayment(
+        input,
+        aptc,
+        baseFields,
+        policy,
+        sourceAdvancePaid,
+      );
     }
   }
 
@@ -1154,7 +1169,7 @@ export function calculateForm8962WithPolicy(
   const line25 = Math.round(aptc);
   // Pub. 974 Worksheet N/Q: no Form 8962 when QSEHRA leaves no PTC and
   // no APTC was paid for anyone in the tax family.
-  if (qsehraFacts && line24 === 0 && line25 === 0) {
+  if (qsehraFacts && line24 === 0 && line25 === 0 && !sourceAdvancePaid) {
     return noForm8962Required();
   }
   const line26 = alternativeMarriage ? 0 : Math.max(0, line24 - line25);

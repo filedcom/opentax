@@ -1056,7 +1056,10 @@ Schedule A replays those same sources and adds eligible ordinary premiums
 net of the allowed PTC once, with payment timing, filer ownership and duplicate
 receipt checks. Unrelated medical expenses remain usable. QSEHRA, self-employed
 health, advanced eligibility and allocation cases, nonordinary medical timing,
-and Form 1062 hypothetical-income replay remain open. Marketplace PDF bundles
-are blocked until the required 2026 Form 8962 attachment is implemented.
+and Form 1062 hypothetical-income replay remain open. Marketplace draft bundles
+now attach reconciled annual/monthly Form 8962 pages, including full repayment
+on line 27 and blank reserved lines 28/29. Positive advances still trigger an
+attachment when printed dollars round to zero; empty and void-only cases do not.
+The above-400% print path remains provisional pending final 2026 instructions.
 Final instructions, public filing support and MeF are still pending; see the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).

@@ -270,7 +270,8 @@ regular Git files.
   2026 Schedule 3 line 6i, and all 11 current PDF widgets.
 - [`FORM8962-GRAPH.md`](./graphs/FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
-  143 PDF widgets, and MeF/graph acceptance order.
+  143 PDF widgets, ordinary annual/monthly draft attachments, and remaining
+  advanced-source/MeF acceptance order.
 - [`FORM1116-GRAPH.md`](./graphs/FORM1116-GRAPH.md), `pdf-fields-f1116.csv`,
   `pdf-fields-f1116sb.csv`, and `pdf-fields-f1116sc.csv`: category credit,
   2026 line 18/20 tax bases, carryovers and redeterminations, full PDF

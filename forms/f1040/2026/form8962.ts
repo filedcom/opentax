@@ -116,6 +116,7 @@ export function calculateForm8962_2026(raw: Form8962CalculationInput2026) {
   const result = calculateForm8962WithPolicy(
     calculationInput,
     form8962Policy2026,
+    input.monthly_aptcs.some((v) => v > 0),
   );
   const fields =
     result.outputs.find((row) => row.nodeType === "form8962")!.fields;
