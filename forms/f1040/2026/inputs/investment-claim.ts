@@ -17,12 +17,18 @@ export const investmentClaim2026Schema = investmentIncome2026Schema.omit({
     no_other_niit_income_expenses_or_carryovers: z.literal(true),
     no_foreign_entities_or_niit_magi_adjustments: z.literal(true),
   }).strict(),
-  capital_gain_inventory_review: z.object({
-    record_reference: ref,
-    only_regular_capital_gain_distributions: z.literal(true),
-    no_dispositions_exchanges_or_other_schedule_d_items: z.literal(true),
-    no_capital_loss_carryovers: z.literal(true),
-  }).strict().optional(),
+  capital_gain_inventory_review: z.union([
+    z.object({
+      record_reference: ref,
+      only_regular_capital_gain_distributions: z.literal(true),
+      no_dispositions_exchanges_or_other_schedule_d_items: z.literal(true),
+      no_capital_loss_carryovers: z.literal(true),
+    }).strict(),
+    z.object({
+      record_reference: ref,
+      capital_transaction_inventory_reference: ref,
+    }).strict(),
+  ]).optional(),
   state_income_tax_allocation_review: z.object({
     record_reference: ref,
     method: z.literal("nii_to_agi_after_proportional_salt_limit"),

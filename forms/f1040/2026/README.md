@@ -6,6 +6,13 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
+  reviewed 1099-B, 1099-DA and unreported ordinary investment sales. All twelve
+  reporting categories, basis/expense/wash-sale adjustments and prior losses
+  reach AGI, preferential tax, AMT, NIIT and draft Schedule D/Form 8949.
+  `capital_loss_carryover` derives the 2027 workpaper after final deductions.
+  See the [current capital scope](../../../docs/ty2026/graphs/CAPITAL-CURRENT.md).
+
 - `f8863` reuses shared AOTC, phaseout and credit-limit formulas with 2026
   student/payment sources and SSN eligibility. Tuition, refunds, aid and other
   benefits reconcile before AOTC/LLC reach Schedule 3 and Form 1040. Draft Form

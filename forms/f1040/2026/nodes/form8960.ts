@@ -1,3 +1,7 @@
+import {
+  calculateCapitalGains2026,
+  capitalGainInput2026Schema,
+} from "./capital-gains.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -35,6 +39,7 @@ export const inputSchema = investmentOwner2026.extend({
   itemized_before_overall_limit: money,
   itemized_after_overall_limit: money,
   investment_sources_2026: investmentClaim2026Schema.optional(),
+  capital_sources_2026: capitalGainInput2026Schema.optional(),
   schedule_a_tax_facts: z.object({
     tax_election: z.enum(["income", "actual_sales"]),
     income_taxes: money,
@@ -45,6 +50,9 @@ export const inputSchema = investmentOwner2026.extend({
 export type Form8960Input2026 = z.input<typeof inputSchema>;
 export function calculateForm8960_2026(raw: Form8960Input2026) {
   const input = inputSchema.parse(raw);
+  const capital = input.capital_sources_2026
+    ? calculateCapitalGains2026(input.capital_sources_2026)
+    : undefined;
   const investment = input.investment_sources_2026
     ? calculateInvestmentClaim2026({
       ...input.investment_sources_2026,
@@ -55,7 +63,8 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
     : undefined;
   const line1 = investment?.lines.line2b ?? 0;
   const line2 = investment?.lines.line3b ?? 0;
-  const line5 = investment?.lines.capital_gain_distributions ?? 0;
+  const line5 = capital?.return_gain ??
+    investment?.lines.capital_gain_distributions ?? 0;
   const line10 = investment?.lines.early_withdrawal_penalty ?? 0;
   if (
     line1 !== input.taxable_interest_from_agi ||
@@ -77,7 +86,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
     ? cfg.niitThresholdMfs
     : cfg.niitThresholdOther;
   if (
-    (investment || input.magi > limit) &&
+    (investment || capital?.source_input.claim || input.magi > limit) &&
     input.tax_residency !== "full_year_citizen_or_resident"
   ) {
     throw new Error(
@@ -107,7 +116,10 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
     !input.taking_standard_deduction && input.magi > limit && gross > 0 &&
     taxes?.tax_election === "income" && taxes.income_taxes > 0
   ) {
-    if (!input.investment_sources_2026?.state_income_tax_allocation_review) {
+    if (
+      !input.investment_sources_2026?.state_income_tax_allocation_review &&
+      !capital?.source_input.claim?.state_income_tax_allocation_review
+    ) {
       throw new Error(
         "NIIT itemized income taxes need a reasonable allocation review",
       );

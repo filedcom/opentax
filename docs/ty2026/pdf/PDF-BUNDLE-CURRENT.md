@@ -35,6 +35,8 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule 3-A (3A) | Settlement emits schedule | 1 |
 | Schedule A (07) | Selected itemized method | 2 |
 | Schedule B (08) | Source workpaper requires attachment | 1 |
+| Schedule D (12) | Source dispositions or usable prior loss carryovers | 2 |
+| Form 8949 (12A) | Sales requiring detail | One category per page, eleven rows each |
 | Form 4137 (24) | Calculated owner forms | All owner/employer continuation copies |
 | Form 6251 (32) | Retained filing condition | 2 |
 | Schedule EIC (43) | Positive supported child-based EIC | 1 |
@@ -95,3 +97,12 @@ Form 2441 and precedes Schedule 8812 credit limits. The builder replays retained
 sources and reconciles both credit destinations before generating student and
 school pages. See [the current mapping](PDF-FORM8863-MAP.md). This adds draft
 coverage; it does not clear the source, final-authority or filing gates above.
+
+## Capital sales update
+
+Capital sales now occupy attachment 12/12A before Form 2441. The current
+source route reconciles ordinary securities/digital assets, distributions and
+losses through AGI, regular tax, AMT and NIIT. Direct sales appear only on
+Schedule D; remaining transactions retain their twelve categories and page
+totals on Form 8949. Information-return withholding includes the capital source
+once. See [the current source and output contract](../graphs/CAPITAL-CURRENT.md).

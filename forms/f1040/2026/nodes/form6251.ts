@@ -1,4 +1,8 @@
 import {
+  calculateCapitalGains2026,
+  capitalGainInput2026Schema,
+} from "./capital-gains.ts";
+import {
   calculateInvestmentClaim2026,
   investmentClaim2026Schema,
 } from "../inputs/investment-claim.ts";
@@ -41,6 +45,7 @@ export const inputSchema = z.object({
   line2a_taxes_paid: money,
   iso_sources_2026: isoClaim2026Schema.optional(),
   investment_sources_2026: investmentClaim2026Schema.optional(),
+  capital_sources_2026: capitalGainInput2026Schema.optional(),
   qualified_dividends: money.default(0),
   net_capital_gain: money.default(0),
   unrecaptured_1250_gain: money.default(0),
@@ -59,6 +64,9 @@ export type Form6251Input2026 = z.input<typeof inputSchema>;
 
 export function calculateForm6251_2026(raw: Form6251Input2026) {
   const input = inputSchema.parse(raw);
+  const capital = input.capital_sources_2026
+    ? calculateCapitalGains2026(input.capital_sources_2026)
+    : undefined;
   if (
     input.net_capital_gain === 0 &&
     (input.unrecaptured_1250_gain > 0 || input.rate_28_gain > 0)
@@ -82,10 +90,17 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
   if (
     investment &&
     (investment.lines.line3a !== input.qualified_dividends ||
-      investment.lines.capital_gain_distributions !== input.net_capital_gain)
+      (capital?.preferential_gain ??
+          investment.lines.capital_gain_distributions) !==
+        input.net_capital_gain)
   ) {
     throw new Error(
       "AMT investment sources disagree with regular preference income",
+    );
+  }
+  if (capital && capital.preferential_gain !== input.net_capital_gain) {
+    throw new Error(
+      "AMT capital sources disagree with regular preference income",
     );
   }
   const line2g = investment?.lines.amt_pab_interest ?? 0;

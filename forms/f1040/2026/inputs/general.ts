@@ -103,7 +103,12 @@ export const inputSchema = identityInputSchema.omit({
 class General2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "form2441", "f8863"];
+    return [
+      ...this.outputNodes.nodeTypes,
+      "form2441",
+      "f8863",
+      "capital_gains",
+    ];
   }
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
@@ -443,6 +448,10 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "f3903", fields: owner },
         { nodeType: "f3921", fields: owner },
         { nodeType: "investment_income", fields: owner },
+        {
+          nodeType: "capital_gains",
+          fields: { ...owner, digital_assets_answer: input.digital_assets },
+        },
         { nodeType: "ssa1099", fields: owner },
         {
           nodeType: "student_loan_interest",

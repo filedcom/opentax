@@ -31,6 +31,9 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
     form6251_2026,
     form8960_2026,
   ]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "capital_gains"];
+  }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Investment sources need f1040:2026 context");
@@ -73,6 +76,10 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: result } },
+        {
+          nodeType: "capital_gains",
+          fields: { investment_sources_2026: claim },
+        },
         // These are aggregate income categories. Withholding and exempt income
         // retain cents so future OTHER source types can join the same line once.
         {
@@ -83,9 +90,6 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
             line3a_qualified_dividends: c.qualified_dividends,
             line2a_tax_exempt: c.tax_exempt_interest,
             line25b_withheld_1099: c.federal_withholding,
-            ...(c.capital_gain_distributions > 0
-              ? { line7a_cap_gain_distrib: c.capital_gain_distributions }
-              : {}),
           },
         },
         {
@@ -95,9 +99,6 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
             line3b_ordinary_dividends: c.ordinary_dividends,
             tax_exempt_interest: c.tax_exempt_interest,
             line18_early_withdrawal: lines.early_withdrawal_penalty,
-            ...(c.capital_gain_distributions > 0
-              ? { line7a_cap_gain_distrib: c.capital_gain_distributions }
-              : {}),
           },
         },
         {
@@ -108,7 +109,6 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
           nodeType: "income_tax_calculation",
           fields: {
             qualified_dividends: c.qualified_dividends,
-            net_capital_gain: lines.capital_gain_distributions,
           },
         },
         { nodeType: "form6251", fields: { investment_sources_2026: claim } },

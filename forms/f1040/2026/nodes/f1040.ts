@@ -93,6 +93,9 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1040";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3a]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "capital_loss_carryover"];
+  }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -284,6 +287,15 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line38_underpayment_penalty: input.line38_underpayment_penalty,
       },
     }];
+    outputs.push({
+      nodeType: "capital_loss_carryover",
+      fields: {
+        form1040_line7a: line7aCapitalGain ?? 0,
+        form1040_line11b: line11Agi,
+        form1040_line14: outputs[0].fields.line14_total_deductions,
+        form1040_line15: outputs[0].fields.line15_taxable_income,
+      },
+    });
     if (settlement.schedule3a) {
       outputs.push({
         nodeType: schedule3a.nodeType,

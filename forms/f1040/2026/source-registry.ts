@@ -1,3 +1,5 @@
+import { capital_carryover_2026 } from "./nodes/capital-carryover.ts";
+import { capital_gains_2026 } from "./nodes/capital-gains.ts";
 import { f8863_2026 } from "./nodes/f8863.ts";
 import { form2441_2026 } from "./inputs/dependent-care.ts";
 import { f2441_2026 } from "./nodes/f2441.ts";
@@ -38,6 +40,8 @@ import { schedule3a } from "./nodes/schedule3a.ts";
 export const sourceRegistry2026 = {
   start: buildStartNode(inputNodes),
   general: general_2026,
+  capital_gains: capital_gains_2026,
+  capital_loss_carryover: capital_carryover_2026,
   form2441: form2441_2026,
   f2441: f2441_2026,
   f8863: f8863_2026,

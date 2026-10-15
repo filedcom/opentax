@@ -1,5 +1,9 @@
 # TY2026 Schedule D PDF map
 
+Current implementation: [CAPITAL-CURRENT.md](../graphs/CAPITAL-CURRENT.md).
+Implementation-status paragraphs below describe the earlier prototype; retain
+the source and field inventory, but use the current contract for supported routes.
+
 Source: the hash-pinned [2026 draft Schedule D](../corpus/draft/f1040sd.pdf)
 (`0df9af0711964b3198ea04bb0037b29d6afa85578a671553daed46251630b5f1`).
 Physical page 1 is an IRS draft cover. Printed Schedule D pages are physical

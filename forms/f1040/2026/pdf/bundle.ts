@@ -1,3 +1,5 @@
+import type { calculateCapitalGains2026 } from "../nodes/capital-gains.ts";
+import { buildCapitalPdfBytes2026 } from "./capital-gains.ts";
 import type { calculateEducationCredit2026 } from "../nodes/f8863.ts";
 import { buildForm8863PdfBytes2026 } from "./form8863.ts";
 import type { calculateCareCredit2026 } from "../nodes/f2441.ts";
@@ -137,13 +139,16 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const moving = retained<ReturnType<typeof calculateMovingSources2026>>(
     "f3903",
   );
+  const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
+    "capital_gains",
+  );
   const benefits = retained<
     ReturnType<typeof calculateSocialSecuritySources2026>
   >("ssa1099");
   if (
     Math.round(
       (wages?.withholding ?? 0) + (b?.cents.federal_withholding ?? 0) +
-        (benefits?.federal_withholding ?? 0),
+        (benefits?.federal_withholding ?? 0) + (capital?.withholding ?? 0),
     ) !== line("line25b_withheld_1099")
   ) {
     throw new Error(
@@ -172,7 +177,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 24, 32, 43, 47, 50, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 12, 12A, 21, 24, 32, 43, 47, 50, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -262,6 +267,34 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         filer,
       ));
+  }
+  if (capital?.file_schedule_d) {
+    const destinations = {
+      form1040_line7a: line("line7a_capital_gain"),
+      form1040_line7b: f.line7b_schedule_d_not_required === true,
+      form1040_line3a: line("line3a_qualified_dividends"),
+      preferential_gain: amount(p.income_tax_calculation, "net_capital_gain"),
+    };
+    add(
+      "schedule_d",
+      2,
+      () =>
+        buildCapitalPdfBytes2026(
+          capital.source_input,
+          destinations,
+          filer,
+          "schedule_d",
+        ),
+    );
+    if (capital.file_form8949) {
+      add("form8949", undefined, () =>
+        buildCapitalPdfBytes2026(
+          capital.source_input,
+          destinations,
+          filer,
+          "form8949",
+        ));
+    }
   }
   if (care?.file_form2441) {
     add("form2441", care.part3 ? 2 : 1, () =>
