@@ -18,7 +18,7 @@ IRS release before filing.
 | A and B | `c1_1`, `c1_2` | MFS current-credit eligibility or eligible prior-year credit, and calculated student/disability deemed-income use from monthly facts. |
 | More than three providers | `c1_3` | Check only with a provider continuation statement. |
 | Part I provider names, addresses, TINs, paid amounts | `f1_3`–`f1_14` | Three columns. Address widgets `f1_6`–`f1_8` have mismatched line spacing, so the current static builder draws street, unit, city, state, and ZIP directly on the printed rows. Preserve every provider beyond three on a continuation statement. |
-| Part I line 1d | `c1_4[0/1]`–`c1_6[0/1]` | Paired Yes/No checkboxes, `/1` and `/2` on-state values. Check exactly one per populated provider. Reconcile Yes providers with Schedule H facts. |
+| Part I line 1d | `c1_4[0/1]`–`c1_6[0/1]` | Paired Yes/No checkboxes, `/1` and `/2` on-state values. Check exactly one per populated provider. Reconcile Yes providers with Schedule H facts; this route remains gated. |
 | Dependent-care benefits question | **No widget** | The printed No/Yes lines after Part I are unfillable in the source AcroForm. Draw an overlay or use a verified static replacement and check its render. |
 | More than three qualifying people | `c1_7` | Check only with a qualifying-person continuation statement. |
 | Part II line 2 | `f1_15`–`f1_26`, `c1_8`–`c1_10` | Three rows: first/last name, SSN, over-12-and-disabled answer, and 2026 paid credit expenses. Preserve all extra rows in a statement. |
@@ -69,6 +69,18 @@ ordinary MFS uses reconciled separate spouse earnings and the $3,750 limit.
 The eight-page MFS QA set verifies A/B boxes, both limits, disabled-spouse
 income, prior-only credit and static output without annotations or AcroForm.
 
+Special provider output prints `Tax-Exempt`, `LAFCP`, `See W-2`, or
+`See Attached Statement` from the reviewed source variant. Employer-furnished
+care prints zero paid and a blank TIN; no-provider taxable benefits print `none`
+on line 1a. Foreign address rows retain city, province, postal code and country.
+Missing-information labels require lifting the TIN widget's 11-character limit
+for static output while retaining the width/minimum-font check. Due-diligence
+explanations and request histories paginate after the official forms, including
+when the provider itself appears on a continuation or prior-year Worksheet A.
+The 15-page provider QA set covers every label, the three-largest-payments sort,
+zero-paid employer care, missing information, two-page explanation continuation,
+prior-only credit and output without annotations or AcroForm.
+
 Before full filing support, complete the remaining eligibility,
-changed-filing-unit prior expenses, self-employed benefit and special-provider routes in the
+changed-filing-unit prior expenses, self-employed benefits and employer-source aggregation in the
 current contract, then reconcile final IRS forms and current MeF/business rules.

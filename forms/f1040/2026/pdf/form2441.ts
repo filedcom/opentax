@@ -1,3 +1,4 @@
+import { careProviderStatement2026 } from "../inputs/dependent-care-providers.ts";
 import {
   PDFDocument,
   PDFName,
@@ -64,7 +65,7 @@ export async function buildForm2441PdfBytes2026(
     }
     return matches[0].getName();
   };
-  const fill = (id: string, value: string | number) => {
+  const fill = (id: string, value: string | number, printedLabel = false) => {
     const field = form.getTextField(name(id));
     const rect = field.acroField.getWidgets()[0].getRectangle();
     const text = String(value);
@@ -73,6 +74,9 @@ export async function buildForm2441PdfBytes2026(
       9 * (rect.width - 4) / Math.max(1, font.widthOfTextAtSize(text, 9)),
     );
     if (size < 6) throw new Error(`Form 2441 ${id} text exceeds field width`);
+    // The draft TIN widget permits 11 characters, but the instructions require
+    // this longer label. Static output uses the verified width, not that limit.
+    if (printedLabel) field.removeMaxLength();
     field.setFontSize(size);
     if (typeof value === "number") field.setAlignment(TextAlignment.Right);
     field.setText(text);
@@ -83,32 +87,26 @@ export async function buildForm2441PdfBytes2026(
   fill("f1_2", filer.ssn);
   if (r.check_line_a) check("c1_1");
   if (r.benefit.details.student_or_disabled_deemed_income_used) check("c1_2");
-  const providers = [...r.benefit.details.care_providers].sort((a, b) =>
+  const providers = [...r.benefit.providers!].sort((a, b) =>
     b.amount_paid - a.amount_paid
   );
   const people =
     (r.current_credit_eligible ? [...r.benefit.details.qualifying_people] : [])
       .sort((a, b) => b.credit_expenses_paid - a.credit_expenses_paid);
-  const providerName = (p: typeof providers[number]) =>
-    p.kind === "person" ? `${p.first_name} ${p.last_name}` : p.name;
-  const providerTin = (p: typeof providers[number]) =>
-    p.kind === "person" ? p.ssn : p.ein;
+  const providerName = (p: typeof providers[number]) => p.name;
+  if (
+    !providers.length && !r.benefit.details.qualifying_people.length && r.part3
+  ) {
+    fill("f1_3", "none");
+  }
   for (const [i, p] of providers.slice(0, 3).entries()) {
     fill(`f1_${3 + i}`, providerName(p));
     // The source address widget has six lines; street has two, apartment one.
     // Static overlays align each item with its printed label.
     const rect = form.getTextField(name(`f1_${6 + i}`)).acroField
       .getWidgets()[0].getRectangle();
-    const a = p.us_address;
-    for (
-      const [text, offset] of [
-        [a.line1, 8],
-        [a.line2 ?? "", 32],
-        [a.city, 44],
-        [a.state, 56],
-        [a.zip, 68],
-      ] as const
-    ) {
+    for (const [line, text] of p.address_lines.entries()) {
+      const offset = [8, 32, 44, 56, 68][line];
       if (!text) continue;
       const size = Math.min(
         8,
@@ -124,7 +122,7 @@ export async function buildForm2441PdfBytes2026(
         size,
       });
     }
-    fill(`f1_${9 + i}`, providerTin(p));
+    if (p.tin) fill(`f1_${9 + i}`, p.tin, p.tin === "See Attached Statement");
     check(`c1_${4 + i}`, p.household_employee ? 0 : 1);
     fill(`f1_${12 + i}`, p.amount_paid);
   }
@@ -179,16 +177,9 @@ export async function buildForm2441PdfBytes2026(
   if (providers.length > 3) {
     statements.push({
       title: "Additional care providers",
-      rows: providers.slice(3).map((p) => {
-        const a = p.us_address;
-        return `${providerName(p)} | ${a.line1}${
-          a.line2 ? `, ${a.line2}` : ""
-        }, ${a.city}, ${a.state} ${a.zip} | ID ${
-          providerTin(p)
-        } | Household employee: ${
-          p.household_employee ? "Yes" : "No"
-        } | Amount paid: $${p.amount_paid}`;
-      }),
+      rows: providers.slice(3).map((p) =>
+        `${careProviderStatement2026(p)} | Amount paid: $${p.amount_paid}`
+      ),
     });
   }
   if (people.length > 3) {
@@ -226,14 +217,8 @@ export async function buildForm2441PdfBytes2026(
     });
     const paidProviders = new Set(source.payments.map((p) => p.provider_index));
     for (const index of paidProviders) {
-      const p = r.benefit.details.care_providers[index], a = p.us_address;
-      rows.push(
-        `14. ${providerName(p)} | ${a.line1}${
-          a.line2 ? `, ${a.line2}` : ""
-        }, ${a.city}, ${a.state} ${a.zip} | ID ${
-          providerTin(p)
-        } | Household employee: ${p.household_employee ? "Yes" : "No"}`,
-      );
+      const p = r.benefit.providers![index];
+      rows.push(`14. ${careProviderStatement2026(p)}`);
     }
     for (const person of source.prior_return.qualifying_people) {
       const paid = source.payments.filter((p) => p.person_ssn === person.ssn);
@@ -248,7 +233,7 @@ export async function buildForm2441PdfBytes2026(
         rows.push(
           `Care ${payment.incurred_start_date} through ${payment.incurred_end_date}; paid ${payment.paid_date} to ${
             providerName(
-              r.benefit.details.care_providers[payment.provider_index],
+              r.benefit.providers![payment.provider_index],
             )
           }: $${payment.amount_paid}`,
         );
@@ -257,6 +242,26 @@ export async function buildForm2441PdfBytes2026(
     statements.push({
       title: "2025 expenses paid in 2026 - Worksheet A",
       rows,
+    });
+  }
+  for (const p of providers) {
+    if (!p.due_diligence) continue;
+    statements.push({
+      title: "Care provider missing information",
+      rows: [
+        careProviderStatement2026(p),
+        `Amount paid in 2026: $${p.amount_paid}`,
+        `The provider did not supply the requested information. ${p.due_diligence.explanation}`,
+        ...p.due_diligence.requests.map((r) => {
+          const method = {
+            written: "in writing",
+            telephone: "by telephone",
+            in_person: "in person",
+            electronic: "electronically",
+          }[r.method];
+          return `Requested information on ${r.date} ${method}.`;
+        }),
+      ],
     });
   }
   for (const s of statements) {

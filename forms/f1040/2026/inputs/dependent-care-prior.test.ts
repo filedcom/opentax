@@ -5,7 +5,10 @@ import { sourceRegistry2026 } from "../source-registry.ts";
 import { priorCareFixture2026 } from "./dependent-care-prior.fixture.ts";
 import { calculatePriorCareCredit2026 } from "./dependent-care-prior.ts";
 import { dependentCareFixture2026 } from "./dependent-care.fixture.ts";
-import { calculateForm2441 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
+import {
+  calculateForm2441,
+  careProviderSchema,
+} from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependentCare2026 } from "../../nodes/config/2026-dependent-care.ts";
 import { calculateCareCredit2026 } from "../nodes/f2441.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -121,9 +124,15 @@ Deno.test("Prior-only care needs no current qualifying person or fabricated curr
   assertEquals(r.file_form2441, true);
   assertEquals(r.part3, false);
   // Default 2025 contract remains strict; only 2026 opts into zero current people.
-  assertThrows(() => calculateForm2441(r.benefit.details!, 50000, 0));
+  const legacy = {
+    ...r.benefit.details!,
+    care_providers: priorCareFixture2026(true).form2441.claim.providers.map((
+      p,
+    ) => careProviderSchema.parse(p)),
+  };
+  assertThrows(() => calculateForm2441(legacy, 50000, 0));
   assertEquals(
-    calculateForm2441(r.benefit.details!, 50000, 0, dependentCare2026).line11,
+    calculateForm2441(legacy, 50000, 0, dependentCare2026).line11,
     0,
   );
 });

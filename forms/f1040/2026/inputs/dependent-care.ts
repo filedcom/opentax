@@ -1,3 +1,7 @@
+import {
+  careProvider2026Schema,
+  resolveCareProviders2026,
+} from "./dependent-care-providers.ts";
 import { careMfs2026Schema, resolveCareMfs2026 } from "./dependent-care-mfs.ts";
 import {
   calculatePriorCareCredit2026,
@@ -19,9 +23,8 @@ import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import { dependentCare2026 } from "../../nodes/config/2026-dependent-care.ts";
 import {
-  calculateForm2441Benefits,
-  careProviderSchema,
-  type Form2441FilingDetails,
+  calculateForm2441BenefitsFromAmounts,
+  type Form2441CalculationDetails,
 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependent2026Schema } from "./dependents.ts";
 import { w2Item2026Schema } from "./w2.ts";
@@ -55,7 +58,7 @@ export const dependentCareClaim2026Schema = z.object({
     no_medical_deduction_or_other_reimbursement_for_these_expenses: z.literal(
       true,
     ),
-    providers: z.array(careProviderSchema).min(1).max(25),
+    providers: z.array(careProvider2026Schema).max(25),
     qualifying_people: z.array(carePerson2026Schema).max(25),
     expenses: z.array(
       z.object({
@@ -137,27 +140,14 @@ export function calculateDependentCareBenefits2026(
       "Form 2441 statutory employees need the self-employment earned-income worksheet",
     );
   }
-  const familyTins = new Set(
-    [
+  const providers = resolveCareProviders2026(claim.providers, {
+    family_tins: [
       input.taxpayer_ssn,
       input.spouse_ssn,
       ...input.dependents.map((d) => d.ssn ?? d.itin ?? d.atin),
-    ].filter((s): s is string => !!s).map(normalize),
-  );
-  const providerTins = new Set<string>();
-  for (const p of claim.providers) {
-    const tin = p.kind === "person" ? p.ssn : p.ein;
-    const key = `${p.kind}:${tin}`;
-    if (providerTins.has(key)) {
-      throw new Error("Duplicate care provider identity");
-    }
-    providerTins.add(key);
-    if (p.kind === "person" && familyTins.has(tin)) {
-      throw new Error(
-        "Care provider cannot be the filer, spouse or a listed dependent",
-      );
-    }
-  }
+    ].filter((s): s is string => !!s),
+    wage_sources: input.wage_sources,
+  });
   const reviews = claim.benefits?.w2_box10_reviews ?? [];
   const reviewed = new Set<string>();
   let alreadyBox1 = 0;
@@ -254,7 +244,7 @@ export function calculateDependentCareBenefits2026(
   const priorWorksheet = calculatePriorCareCredit2026(
     claim.prior_year_expenses,
     input,
-    claim.providers,
+    providers,
   );
   if (
     !people.length && !priorWorksheet && box10 === 0 &&
@@ -264,9 +254,18 @@ export function calculateDependentCareBenefits2026(
       "Care claim needs qualifying people, benefits or prior-year payments",
     );
   }
+  if (
+    !providers.length &&
+    (people.length || priorWorksheet ||
+      (box10 === 0 && !claim.benefits?.carryover_used_in_2026))
+  ) {
+    throw new Error(
+      "No-provider care is only for benefits with no qualifying person or care provider",
+    );
+  }
   const paidByProvider = priorWorksheet
     ? [...priorWorksheet.provider_paid]
-    : claim.providers.map(() => 0);
+    : providers.map(() => 0);
   const receipts = new Set<string>(priorWorksheet?.receipt_references ?? []);
   for (const row of claim.expenses) {
     const person = people.find((p) => p.ssn === normalize(row.person_tin));
@@ -288,7 +287,7 @@ export function calculateDependentCareBenefits2026(
     paidByProvider[row.provider_index] +=
       row.qualified_amount_incurred_and_paid_in_2026;
   }
-  if (paidByProvider.some((v, i) => v > claim.providers[i].amount_paid)) {
+  if (paidByProvider.some((v, i) => v > providers[i].expense_capacity)) {
     throw new Error(
       "Qualified care receipts exceed the amount paid to the provider",
     );
@@ -302,9 +301,8 @@ export function calculateDependentCareBenefits2026(
     includeSpouseIncome,
     "benefits",
   );
-  const details: Form2441FilingDetails = {
+  const details: Form2441CalculationDetails = {
     filing_status: input.filing_status,
-    care_providers: claim.providers,
     qualifying_people: people.map((p) => ({
       first_name: p.first_name,
       last_name: p.last_name,
@@ -335,7 +333,7 @@ export function calculateDependentCareBenefits2026(
       "Forfeited or carried-forward care benefits must be included on line 12",
     );
   }
-  const preliminary = calculateForm2441Benefits(
+  const preliminary = calculateForm2441BenefitsFromAmounts(
     details,
     benefits,
     dependentCare2026,
@@ -355,7 +353,11 @@ export function calculateDependentCareBenefits2026(
       credit_expenses_paid: p.credit_expenses_paid - used,
     };
   });
-  const lines = calculateForm2441Benefits(details, benefits, dependentCare2026);
+  const lines = calculateForm2441BenefitsFromAmounts(
+    details,
+    benefits,
+    dependentCare2026,
+  );
   if (lines.line26 > 0) {
     if (benefitOwners.size !== 1) {
       throw new Error(
@@ -389,6 +391,7 @@ export function calculateDependentCareBenefits2026(
     expected_wage_income: totalWages + lines.line26,
     prior_year_worksheet: priorWorksheet,
     qualifying_person_workpaper: qualification,
+    providers,
     mfs_workpaper: mfs,
     earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {

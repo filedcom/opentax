@@ -11,7 +11,9 @@ required Worksheet A statement. Reviewed incapacity, ordinary custodial-care
 exceptions and birth/death residence now feed that source route; changed joint
 units, special custody/status cases and other filing work remain. Reviewed MFS
 home facts and separate spouse W-2 income now support ordinary benefit-only and
-considered-unmarried returns, including the prior-only line 9b exception.
+considered-unmarried returns, including the prior-only line 9b exception. Special
+provider identities, employer-furnished care, due-diligence statements and
+no-provider taxable benefits now feed the same shared arithmetic and draft.
 
 Sources: pinned [2026 draft Form 2441](../corpus/draft/f2441.pdf)
 (SHA-256 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`)

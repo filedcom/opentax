@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import {
-  type careProviderSchema,
   form2441CreditRate2025,
   qualifyingPersonSchema,
 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
@@ -62,7 +61,7 @@ export function calculatePriorCareCredit2026(
     taxpayer_ssn: string;
     spouse_ssn?: string;
   },
-  providers: z.infer<typeof careProviderSchema>[],
+  providers: { amount_paid: number }[],
 ) {
   const input = priorCarePayments2026Schema.parse(raw);
   if (input.kind === "none") return null;

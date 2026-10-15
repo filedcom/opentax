@@ -3,7 +3,7 @@ import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
-import { calculateForm2441 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
+import { calculateForm2441FromAmounts } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependentCare2026 } from "../../nodes/config/2026-dependent-care.ts";
 import {
   calculateDependentCareBenefits2026,
@@ -54,15 +54,16 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
     ...benefit.details,
     tax_liability_limit: input.regular_tax + input.schedule2_part1_tax,
   };
-  const core = calculateForm2441(
+  const core = calculateForm2441FromAmounts(
     details,
     input.agi,
     benefit.benefits,
     dependentCare2026,
     benefit.credit_income!,
   );
-  const currentCreditEligible = details.filing_status !== FilingStatus.MFS ||
-    details.mfs_eligibility_met === true;
+  const currentCreditEligible = details.qualifying_people.length > 0 &&
+    (details.filing_status !== FilingStatus.MFS ||
+      details.mfs_eligibility_met === true);
   const line9a = currentCreditEligible ? core.line9a : 0;
   // MFS without the current-year exception may still claim eligible prior-year
   // expenses: i2441 (2026), line A. Only current credit is suppressed.

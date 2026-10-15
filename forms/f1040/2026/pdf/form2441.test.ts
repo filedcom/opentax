@@ -79,6 +79,7 @@ export function careOverflowFixture2026(count = 25) {
   );
   const c = input.form2441.claim;
   const provider = c.providers[0];
+  assert(provider.kind === "business");
   c.providers = Array.from(
     { length: count },
     (_, i) => ({

@@ -63,6 +63,12 @@ export const filingDetailsSchema = z.object({
 }).strict();
 
 export type Form2441FilingDetails = z.infer<typeof filingDetailsSchema>;
+const calculationDetailsSchema = filingDetailsSchema.omit({
+  care_providers: true,
+});
+export type Form2441CalculationDetails = z.infer<
+  typeof calculationDetailsSchema
+>;
 
 export interface Form2441Lines {
   readonly line3: number;
@@ -102,7 +108,7 @@ export function form2441CreditRate2025(agi: number): number {
 /** Annual differences only; existing callers retain their 2025 behavior. */
 export interface Form2441Rules {
   creditRate(agi: number, filingStatus: FilingStatus): number;
-  benefitLimit(details: Form2441FilingDetails): number;
+  benefitLimit(details: Form2441CalculationDetails): number;
   allowNoCurrentQualifyingPeople?: boolean;
 }
 export const form2441Rules2025: Form2441Rules = {
@@ -111,15 +117,30 @@ export const form2441Rules2025: Form2441Rules = {
     details.filing_status === FilingStatus.MFS ? 2500 : 5000,
 };
 
-function parseDetails(
-  raw: Form2441FilingDetails,
+function parseCalculationDetails(
+  raw: Form2441CalculationDetails,
   rules: Form2441Rules,
-): Form2441FilingDetails {
+): Form2441CalculationDetails {
   return (rules.allowNoCurrentQualifyingPeople
-    ? filingDetailsSchema.extend({
+    ? calculationDetailsSchema.extend({
       qualifying_people: z.array(qualifyingPersonSchema).max(25),
     })
-    : filingDetailsSchema).parse(raw);
+    : calculationDetailsSchema).parse(raw);
+}
+
+/** Keep the legacy filing contract at the 2025 boundary. Provider identities
+ * are not operands; later years validate their own provider/source contracts. */
+function legacyCalculationDetails(
+  raw: Form2441FilingDetails,
+  rules: Form2441Rules,
+) {
+  const { care_providers: _providers, ...amounts } =
+    (rules.allowNoCurrentQualifyingPeople
+      ? filingDetailsSchema.extend({
+        qualifying_people: z.array(qualifyingPersonSchema).max(25),
+      })
+      : filingDetailsSchema).parse(raw);
+  return amounts;
 }
 
 export type Form2441BenefitLines = Pick<
@@ -145,12 +166,12 @@ export type Form2441BenefitLines = Pick<
 >;
 
 /** Part III is AGI-independent and must run before the AGI aggregator. */
-export function calculateForm2441Benefits(
-  rawDetails: Form2441FilingDetails,
+export function calculateForm2441BenefitsFromAmounts(
+  rawDetails: Form2441CalculationDetails,
   benefits: number,
   rules: Form2441Rules = form2441Rules2025,
 ): Form2441BenefitLines {
-  const details = parseDetails(rawDetails, rules);
+  const details = parseCalculationDetails(rawDetails, rules);
   if (!Number.isInteger(benefits) || benefits < 0) {
     throw new Error("Form 2441 needs nonnegative whole-dollar benefits");
   }
@@ -244,18 +265,22 @@ export function calculateForm2441Benefits(
 }
 
 /** Complete Form 2441 after the AGI aggregator has finalized line 11. */
-export function calculateForm2441(
-  rawDetails: Form2441FilingDetails,
+export function calculateForm2441FromAmounts(
+  rawDetails: Form2441CalculationDetails,
   agi: number,
   benefits: number,
   rules: Form2441Rules = form2441Rules2025,
   creditIncome?: { taxpayer: number; spouse?: number },
 ): Form2441Lines {
-  const details = parseDetails(rawDetails, rules);
+  const details = parseCalculationDetails(rawDetails, rules);
   if (!Number.isInteger(agi)) {
     throw new Error("Form 2441 needs calculated whole-dollar AGI");
   }
-  const benefitLines = calculateForm2441Benefits(details, benefits, rules);
+  const benefitLines = calculateForm2441BenefitsFromAmounts(
+    details,
+    benefits,
+    rules,
+  );
   const line3 = benefitLines.line15 > 0
     ? benefitLines.line31
     : Math.min(benefitLines.line30, benefitLines.line27);
@@ -284,4 +309,32 @@ export function calculateForm2441(
     line11,
     ...benefitLines,
   };
+}
+
+export function calculateForm2441Benefits(
+  rawDetails: Form2441FilingDetails,
+  benefits: number,
+  rules: Form2441Rules = form2441Rules2025,
+): Form2441BenefitLines {
+  return calculateForm2441BenefitsFromAmounts(
+    legacyCalculationDetails(rawDetails, rules),
+    benefits,
+    rules,
+  );
+}
+
+export function calculateForm2441(
+  rawDetails: Form2441FilingDetails,
+  agi: number,
+  benefits: number,
+  rules: Form2441Rules = form2441Rules2025,
+  creditIncome?: { taxpayer: number; spouse?: number },
+): Form2441Lines {
+  return calculateForm2441FromAmounts(
+    legacyCalculationDetails(rawDetails, rules),
+    agi,
+    benefits,
+    rules,
+    creditIncome,
+  );
 }

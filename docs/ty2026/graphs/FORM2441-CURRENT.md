@@ -11,7 +11,10 @@ The [August 21 instructions](https://www.irs.gov/pub/irs-dft/i2441--dft.pdf) hav
 SHA-256 `7fdecfe193df435542bb452ba108bee011bef7032fda8abe972d6fbd5de233e7`.
 Recheck final releases before filing.
 
-The existing detailed 2025 calculator now accepts explicit annual rate and
+The existing detailed 2025 calculator now exposes shared amount-only operations
+behind its unchanged provider-validation boundary. The 2026 source owner validates
+its own provider variants and passes only calculation operands to that core.
+The calculator accepts explicit annual rate and
 benefit-limit rules, separate Part II earned income, and a 2026-only allowance
 for no current qualifying people on prior-only claims. Its default entry keeps
 2025 behavior. The 2026 adapter supplies the complete two-stage 50%–20% rate
@@ -57,6 +60,48 @@ Joint returns use separate spouses' wages. Taxable benefits are attributed to th
 single recipient identified by W-2 and carryover plan records. Positive taxable
 benefits from multiple recipients still need a per-spouse exclusion allocation;
 that route remains gated. Joint carryover records must identify the plan owner.
+
+## Provider identity and employer-furnished care
+
+Provider records retain ordinary people/businesses and add reviewed tax-exempt,
+foreign, incomplete-information and employer-furnished variants. Special records
+carry stable provider/review references. Known individual TINs still cannot match
+the filer, spouse or listed dependents; duplicate references, known TINs and
+matching name/address records are rejected. The existing unrelated-provider and
+work-purpose reviews remain required. Household employees still need Schedule H.
+
+Foreign records retain an actual foreign address and either a U.S. TIN or a
+review of the filer's citizen/resident status abroad and the provider's lack of
+a U.S. TIN requirement. The latter prints `LAFCP`; reviewed tax-exempt providers
+print `Tax-Exempt`. Missing-information records preserve every available field,
+requests with dates and record references, and an explanation of the provider's
+failure to supply information. The draft prints `See Attached Statement` in
+missing fields and appends the explanation and request history. A complete
+record cannot select the missing-information route.
+
+Employer-furnished care resolves its name from one issued W-2 and reconciles the
+reviewed care value to box 10. Receipt-backed care value may enter line 16, but
+line 1e stays zero; the address says `See W-2`, the TIN stays blank, and the
+household answer is No. This differs from third-party care paid on the filer's
+behalf, which uses the actual provider and includes employer-paid amounts in
+that provider's payments. Current receipt allocation checks the appropriate
+payment/value capacity. Prior-year cash payments cannot borrow an employer
+furnished value allowance. Repeated employer sources must be reconciled before
+intake; multiple recipient-spouse taxable-benefit allocations remain gated.
+
+A benefits-only claim can have no qualifying person and no provider. Its taxable
+benefits still reach wages/AGI; line 1a prints `none` and unused credit sections
+stay blank. Prior-only credit still prints 9a through 11 and Worksheet A.
+Providers sort by actual payments for the first three printed columns, retaining
+all additional providers, special labels and explanations in statements. These
+identities also flow into the prior-expense Worksheet A statement.
+
+The 15-page provider QA set covers all special variants, no-provider benefits,
+a mixed five-provider return, a two-page due-diligence explanation and prior-only
+credit. Every page was rendered and inspected; output has no AcroForm or
+annotations. The TIN field's 11-character draft limit is removed only for the
+required missing-information label, with the existing minimum font/width check.
+The shared 2025 provider contract and default calculations remain unchanged.
 
 ## Qualifying people and custody
 
@@ -215,6 +260,6 @@ MFS special lifetime/status cases, community-property allocations, external-spou
 non-W-2 earnings or benefits, special custody/HOH/EIC release cases, nonresident/foreign dependency
 and unrelated-household lifetime exceptions, taxable-benefit allocation between multiple recipient spouses, self-employment, deferred/prepaid
 expenses, changed filing-unit or corrected/unfiled prior-return care allocations,
-proprietor/partner benefits, Schedule H, special provider TIN/address routes,
+proprietor/partner benefits, Schedule H, multi-W-2 employer-furnished aggregation,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.
 The [full acceptance contract](FORM2441-GRAPH.md) remains broader than this slice.

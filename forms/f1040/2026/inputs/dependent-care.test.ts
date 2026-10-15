@@ -9,6 +9,7 @@ import { FilingStatus } from "../../nodes/types.ts";
 import {
   calculateForm2441,
   calculateForm2441Benefits,
+  careProviderSchema,
   type Form2441FilingDetails,
 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependentCareClaim2026Schema } from "./dependent-care.ts";
@@ -63,7 +64,9 @@ Deno.test("Shared care arithmetic preserves 2025 rules and applies the 2026 MFS 
   const f = dependentCareFixture2026();
   const details: Form2441FilingDetails = {
     filing_status: FilingStatus.Single,
-    care_providers: f.form2441.claim.providers,
+    care_providers: f.form2441.claim.providers.map((p) =>
+      careProviderSchema.parse(p)
+    ),
     qualifying_people: [{
       first_name: "Child",
       last_name: "Investor",
@@ -305,7 +308,8 @@ Deno.test("Care eligibility rejects contradictory dependent and provider identit
     last_name: "Investor",
     name_control: "INVE",
     ssn: family.general.dependents[0].ssn,
-    us_address: family.form2441.claim.providers[0].us_address,
+    us_address:
+      careProviderSchema.parse(family.form2441.claim.providers[0]).us_address,
     amount_paid: 6000,
     household_employee: false,
   };
