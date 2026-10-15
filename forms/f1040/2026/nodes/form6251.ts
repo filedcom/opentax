@@ -29,6 +29,8 @@ import {
   isoClaim2026Schema,
 } from "../inputs/iso-source.ts";
 import { schedule2_2026 } from "./schedule2.ts";
+import { refigureForm1062Gain2026 } from "../inputs/form1062-gain-replay.ts";
+import type { Form1062Election2026 } from "../inputs/form1062-source.ts";
 
 const signed = z.number().finite().int().min(-Number.MAX_SAFE_INTEGER / 100)
   .max(Number.MAX_SAFE_INTEGER / 100);
@@ -128,6 +130,32 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
   const line2b = government?.lines.state_refund ?? 0;
   const line2g = investment?.lines.amt_pab_interest ?? 0;
   const line2i = iso?.line2i ?? 0;
+  return {
+    source_input: input,
+    iso,
+    government,
+    investment,
+    ...calculateForm6251Amounts2026(input, {
+      line2b,
+      line2g,
+      line2i,
+      hasIso: !!iso,
+      hasInvestment: !!investment,
+    }),
+  };
+}
+
+function calculateForm6251Amounts2026(
+  input: z.output<typeof inputSchema>,
+  adjustments: {
+    line2b: number;
+    line2g: number;
+    line2i: number;
+    hasIso: boolean;
+    hasInvestment: boolean;
+  },
+) {
+  const { line2b, line2g, line2i } = adjustments;
   const base = input.regular_tax_income + input.line2a_taxes_paid - line2b +
     line2g +
     line2i;
@@ -193,10 +221,6 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
   const line10 = input.regular_tax;
   const line11 = Math.max(0, line9 - line10);
   return {
-    source_input: input,
-    iso,
-    government,
-    investment,
     partThree,
     amtiBeforeMfsAddition: base,
     mfsAddition,
@@ -206,8 +230,8 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       line1b: input.regular_tax_income,
       line2a: input.line2a_taxes_paid,
       ...(line2b > 0 ? { line2b } : {}),
-      ...(iso ? { line2i } : {}),
-      ...(investment ? { line2g } : {}),
+      ...(adjustments.hasIso ? { line2i } : {}),
+      ...(adjustments.hasInvestment ? { line2g } : {}),
       line4,
       line5,
       line6,
@@ -217,6 +241,46 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       line11,
       ...partThree,
     },
+  };
+}
+
+/** Recompute AMT for hypothetical credit limits, never as a deferred tax.
+ * Keep the actual deduction/adjustment sources and subtract only elected gain.
+ */
+export function refigureForm6251For1062_2026(
+  raw: Form6251Input2026,
+  election: Form1062Election2026,
+  regularTaxWithoutGain: number,
+) {
+  const actual = calculateForm6251_2026(raw), input = actual.source_input;
+  if (!input.capital_sources_2026) {
+    throw new Error("Form 1062 AMT replay needs the linked capital sources");
+  }
+  const gain = refigureForm1062Gain2026(input.capital_sources_2026, election);
+  const working = inputSchema.parse({
+    ...input,
+    regular_tax_income: input.regular_tax_income -
+      gain.qualification.elected_gain,
+    regular_taxable_income: Math.max(
+      0,
+      input.regular_taxable_income - gain.qualification.elected_gain,
+    ),
+    regular_tax: regularTaxWithoutGain,
+    net_capital_gain: gain.without_elected_gain.preferential_gain,
+  });
+  return {
+    actual_source_input: input,
+    hypothetical_for_form1062: true as const,
+    working_taxable_income: working.regular_taxable_income,
+    working_regular_tax_income: working.regular_tax_income,
+    gain_replay: gain,
+    ...calculateForm6251Amounts2026(working, {
+      line2b: actual.government?.lines.state_refund ?? 0,
+      line2g: actual.investment?.lines.amt_pab_interest ?? 0,
+      line2i: actual.iso?.line2i ?? 0,
+      hasIso: !!actual.iso,
+      hasInvestment: !!actual.investment,
+    }),
   };
 }
 

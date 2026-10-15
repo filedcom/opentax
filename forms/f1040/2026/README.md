@@ -997,6 +997,12 @@ Form 1062 now has an internal direct-sale qualification and Schedule A component
 It reuses land basis/closing records, retains ten-year farming and covenant
 reviews, and verifies the exact covenant PDF bytes with the shared document
 verifier. Generated Schedule A pages are static drafts; original covenant copies
-remain byte-identical separate attachments. The main Form 1062 tax/credit replay,
-election registration, installment ledger, bundle and MeF remain open; see the
+remain byte-identical separate attachments. An internal Form 1062 tax component
+now replays shared land/capital netting, regular tax, AMT credit limits and ordered
+care/education/child/energy credits from retained sources. It derives the draft
+form's tax difference and first installment without changing actual return
+credits, deductions or carryforwards. The main-form draft renderer verifies its
+receiving amounts and includes matching Schedule A components with original
+covenants. Election registration, installment ledger, settlement, bundle and
+MeF remain open; see the
 [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md).

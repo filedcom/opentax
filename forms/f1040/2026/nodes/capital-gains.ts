@@ -179,6 +179,7 @@ function calculateCapitalWithLand2026<
     carry.long_term > 0 || landCapitalGain > 0;
   return {
     source_input: input,
+    shared_input: sharedInput,
     land,
     line11_form4797: landCapitalGain,
     ordinary_disposition_gain_loss:

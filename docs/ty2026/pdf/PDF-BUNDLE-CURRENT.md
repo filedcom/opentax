@@ -157,5 +157,8 @@ Form 1062 Schedule A is now an internal component using the IRS continuous-use
 December 2025 revision, with long-description continuations. Exact covenant
 references/digests must bind to readable PDF copies. The originals are returned
 unchanged and separately from the generated static Schedule A pages. This does
-not yet register Form 1062 or its election in the return bundle; tax/credit replay,
-settlement and the full attachment assembly remain open.
+not yet register Form 1062 or its election in the return bundle. The internal
+tax/credit replay now derives the main form's lines. Its renderer checks the
+26-field inventory and receiving Schedule 3/1040 amounts, removes the IRS cover,
+and returns static main/Schedule A components plus separate original covenants.
+Settlement connection and full return-bundle registration remain open.

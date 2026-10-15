@@ -5,7 +5,8 @@
 The next ATS scenario 1 dependency is Form 1062. Reviewed direct business-land
 sales now enter the 2026 source graph and draft PDF bundle, including Form 4797.
 Form 1062 source qualification and covenant-bound Schedule A drafts are now
-implemented as components. Election registration and tax deferral remain open; internal
+implemented as components. The internal tax/credit replay now derives the draft
+Form 1062 lines. Election registration and settlement remain open; internal
 Form 1040/Schedule 3 settlement fields do not complete that work or scenario 1.
 
 The `land_dispositions` input accepts original property records and reviews.
@@ -250,13 +251,78 @@ field, retains the current revision label and clears the printed date placeholde
 before painting the actual closing date.
 
 This component is not registered as a public election or a completed Form 1062.
-The main tax/credit replay, timely election, installment ledger, settlement,
-full bundle and MeF work remain. The instructions prescribe taxable income less
-elected gain on line 8 and recalculated credits against line 11. Section 26(b)
-excludes specified taxes, including AMT, from regular tax; Schedule 2 is not a
-single deferrable amount. The current 1040 credit owners retain source inputs
-that can be replayed, but their hypothetical tax limits and AMT interactions
-still need the dedicated Form 1062 coordinator.
+Timely election, installment records, settlement, full bundle and MeF work remain.
+
+## Internal Form 1062 tax and credit replay
+
+`inputs/form1062-tax.ts` consumes retained income-tax, AMT, care, education,
+child/energy and Schedule 2 sources, the qualified election, and actual return
+lines. It checks return owners, income, deductions, tax, prior credit handoffs,
+earned-income sources and actual refundable/nonrefundable credits before
+calculating a tax difference. This is an internal calculation contract, not
+public intake for asserted tax totals.
+
+`form1062-gain-replay.ts` removes only the selected sales from the property
+inventory and reruns the shared Form 4797 calculator against the original
+opening section 1231 loss balance. It then reuses the shared Schedule D input
+and calculator with the recomputed land-capital contribution. Investment sales,
+losses, carryovers, qualified dividends and distributions remain. A remaining
+sale may change from capital to ordinary treatment after the election subset is
+removed. Hypothetical net losses do not produce a filed section 1231 vintage.
+The actual history, capital carryovers and source records remain unchanged.
+
+The [Form 1062 instructions](https://www.irs.gov/instructions/i1062), lines 6–12,
+prescribe actual taxable income less Schedule A elected gain, floored at zero,
+followed by tax and credit recomputation. The component follows that form
+mechanic and retains the actual AGI, deduction choice and QBI deduction. It does
+not rerun the whole source graph after deleting the sale. Ordinary/preferential
+tax uses the existing 2026 calculator. AMT arithmetic is shared with the existing
+Form 6251 owner: the hypothetical credit-limit calculation subtracts the elected
+gain from signed regular-tax income, uses the line 8 taxable amount and new
+preference mix, and retains the actual deduction and adjustment sources.
+
+The credit order is care, education, then the shared child/energy coordinator.
+The actual and hypothetical calculations each retain full workpapers.
+Nonrefundable care/education/energy credits enter lines 4b/12b and nonrefundable
+child/other-dependent credits enter 4d/12d. Refundable ACTC and AOTC are excluded:
+[section 24(d)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapA-partIV-subpartA-sec24.htm)
+and [section 25A(i)(6)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapA-partIV-subpartA-sec25A.htm)
+treat those portions as subpart C credits. Hypothetical ACTC or energy
+carryforwards never replace the actual return's credits or carryforwards.
+
+[Section 26(b)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapA-partIV-subpartA-sec26.htm)
+excludes AMT from regular tax, while section 26(a) allows personal credits to
+offset AMT. The currently registered SE, NIIT, employment and section 4999 taxes
+are also outside chapter 1. The component therefore has zero additions on
+lines 2/10 for its explicit audited Schedule 2 field set, and preserves the
+actual amounts on the return. New regular-tax addition sources require their
+own replay before extending that set. Foreign/general-business and other credit
+families, child-tax, special-rate and investment-interest election routes remain
+unimplemented for Form 1062 rather than silently contributing zero.
+
+The [2026 draft](../corpus/draft/f1062.pdf) explicitly caps line 12z at line 11;
+it prints no corresponding cap on line 4z. The component retains that asymmetry,
+including a potentially negative line 5 when personal credits offset AMT, and
+floors line 14 at zero. The first installment is rounded from 25% of line 14.
+Final form/instruction and current MeF verification remain required before filing.
+
+For example, $40,000 wages and $45,000 land gain (including $5,000 ordinary
+lookback gain), with $17,100 actual deductions, produce taxable income $67,900
+and regular tax $5,871. Line 8 is $22,900 and recalculated tax is $2,503. Without
+credits the applicable tax is $3,368 and first installment $842. With the tested
+care, AOTC, child and energy records, actual applicable credits are $4,850 and
+hypothetical credits $2,503: applicable tax becomes $1,021, first installment
+$255. Copying the original credit totals would not reproduce this result.
+
+`pdf/form1062.ts` now renders the pinned December 2026 main-form draft from
+that replay. It checks all 26 canonical fields/widgets, removes the IRS cover,
+prints negative net income tax in parentheses, and verifies the receiving
+Schedule 3 line 13e and Form 1040 line 24b amounts. It reuses the Schedule A
+builder and requires the exact covenant bytes before generating the main draft.
+The returned components retain attachment sequences 106 and 106A, matching sale
+references, and separate original covenant PDFs. All generated pages are static
+and draft-marked. This does not yet wire the components into return settlement
+or the public election flow.
 
 ## Current IRS source checks
 
@@ -276,8 +342,17 @@ uses regular tax and applicable credits both with and without elected gain;
 its first installment is one quarter of the resulting net tax difference.
 The [Schedule A](https://www.irs.gov/pub/irs-pdf/f1062sa.pdf) supplies the property
 and gain information. The Schedule A component below implements that current
-continuous-use form; the main Form 1062 tax calculation and return attachment
-registration remain open.
+continuous-use form. The internal main-form tax and PDF components above now
+derive and render its lines; return settlement and attachment registration
+remain open.
+
+The September 29 [proposed section 1062 regulations](https://www.govinfo.gov/content/pkg/FR-2026-09-29/html/2026-19888.htm)
+were found during the October 15 tax-source review. Their regular-tax definition
+also references section 26(b). They permit pre-final reliance only with complete,
+consistent compliance. Before opening the election route, audit that entire
+package, including property use/acquisitions, covenant requirements, timing,
+payment allocation and acceleration. The current reviewed source component does
+not claim complete reliance on those proposed regulations.
 
 Estimated-tax relief is in **Notice 2026-3**, published in
 [IRB 2026-02](https://www.irs.gov/irb/2026-02_IRB). The Form 1062 landing page's
@@ -295,17 +370,16 @@ Estimated-tax relief is in **Notice 2026-3**, published in
    the completed election and tax owner. Resolve cross-form rounding differences,
    timing and installment records. Support partnerships, S corporations and
    allocations with their own source owners before enabling those claims.
-3. Recalculate tax and the applicable credits with elected gain removed using
-   shared tax/credit calculators and correct gain character, rather than a flat
-   rate, user-asserted tax difference or copied current credit. Resolve the
-   regular-tax scope against section 26(b); do not automatically defer AMT,
-   NIIT, SE or household taxes merely because they appear on Schedule 2.
+3. Integrate the internal source-reconciled tax/credit replay above with the
+   election owner and extend remaining tax/credit families. Preserve its
+   regular-tax scope and hypothetical-only AMT/credit calculations; do not
+   replace actual return credits, carryforwards, AMT, NIIT, SE or household tax.
 4. Post Form 1062 line 14 to Schedule 3 line 13e and the first installment to
    Form 1040 line 24b after credit resolution, without creating a graph cycle.
    Retain the future installment ledger, election timing and acceleration
    evidence. Integrate any estimated-tax relief from the applicable authority.
-5. Build Form 1062, Schedule A and covenant attachments alongside the registered
-   Form 4797 component;
+5. Register the implemented Form 1062, Schedule A and covenant components
+   alongside the registered Form 4797 component;
    reconcile source, printed lines, return settlement and current MeF/rules.
    Verify the full ATS scenario independently. Its assumed $200 installment
    does not supply the missing farmland proceeds, basis, covenant or tax
@@ -357,5 +431,16 @@ cover the ordinary Schedule A and a long-description continuation; each was
 visually inspected after correcting the date placeholder and word wrapping.
 Generated pages have no fields or annotations. Tests verify that original
 covenant bytes and their existing form fields remain unchanged, and reject
-missing, altered or mismatched documents. The main Form 1062 tax calculation,
-public election and return-bundle registration remain unfinished.
+missing, altered or mismatched documents. At that milestone the main Form 1062
+tax calculation, public election and return-bundle registration were unfinished.
+
+The internal Form 1062 tax and main-form PDF components passed 32 typed
+calculation/reconciliation checks and six typed PDF checks, all 728 tests in the
+2026 directory and 137 unit checks. Three synthetic main-form/Schedule A pairs
+(no credits, ordered credits, and AMT with the line 12z cap) were rendered;
+all six pages were visually inspected, with no fields or annotations in the
+generated output. Original covenant bytes remain unchanged. Early tests exposed
+duplicate synthetic closing references and a fixture above the existing 8995-A
+boundary; the corrected fixtures exercise the intended source contracts. No
+2025 implementation changed in this step. Public election, timing/ledger,
+settlement, full return-bundle registration and filing acceptance remain open.

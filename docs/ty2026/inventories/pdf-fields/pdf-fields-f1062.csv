@@ -1,0 +1,27 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name. ,2,36 683.968 445.65 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,447.15 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,File this form with your return to elect under section 1062 to defer payment of net income tax attributable to the gain on the sale or exchange of qualified farmland property during the tax year. File a separate Schedule A (Form 1062) for each qualified sale or exchange of qualified farmland that you want to take into account for purposes of this election. Enter the total number of Schedules A (Form 1062) you are filing. ,2,504 636.469 576 647.968,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"Part I. Net Income Tax (Determined Including Section 1062 Gain Recognized From the Sale or Exchange of Qualified Farmland Property). 1. Regular income tax (Form 1120, Schedule J, line 1a, or the applicable line of your return). ",2,504.75 593.968 576 605.967,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,2. Additions to regular tax (see instructions). ,2,504.75 575.968 576 587.967,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,3. Regular tax liability. Add lines 1 and 2. ,2,504.75 557.968 576 569.967,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,4a. Foreign tax credit. ,2,504.75 539.968 576 551.967,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,4b. Nonrefundable personal credits. ,2,504.75 521.968 576 533.967,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,4c. General business credits. ,2,504.75 503.968 576 515.967,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,4d. Other credits (see instructions). ,2,504.75 485.968 576 497.967,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,4z. Total applicable credits. Add lines 4a through 4d. ,2,504.75 467.968 576 479.967,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,5. Net income tax. Subtract line 4z from line 3. ,2,504.75 449.968 576 461.967,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,"Part I I. Net Income Tax Redetermined Without Regard to Section 1062 Gain Recognized From the Sale or Exchange of Qualified Farmland Property to Qualified Farmers. 6. Taxable income (Form 1120, line 30, or the applicable line of your return).",2,504.75 407.97 576 419.969,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,7. Total elected section 1062 gain from the sale or exchange of qualified farmland property to a qualified farmer (see instructions). ,2,504.75 377.968 576 389.967,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"8. Taxable income excluding section 1062 gain on line 7. Subtract line 7 from line 6. If zero or less, enter 0. ",2,504.75 359.968 576 371.967,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,9. Refigure your income tax on line 1 using line 8 as your taxable income. ,2,504.75 341.968 576 353.967,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,10. Refigure any additions to tax on line 2 using line 8 as your taxable income. ,2,504.75 323.968 576 335.967,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,11. Redetermined regular tax liability. Add lines 9 and 10. ,2,504.75 305.968 576 317.967,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,12. Refigure the credits on lines 4a through 4d using line 11 instead of line 3 as your regular tax liability. 12a. Foreign tax credit. ,2,504.75 269.968 576 281.967,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,12b. Nonrefundable personal credits. ,2,504.75 251.968 576 263.967,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,12c. General business credits. ,2,504.75 233.968 576 245.967,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,12d. Other credits (see instructions). ,2,504.75 215.968 576 227.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,12z. Total applicable credits. Add lines 12a through 12d. Do not enter more than line 11. ,2,504.75 197.968 576 209.967,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,13. Redetermined net income tax. Subtract line 12z from line 11.,2,504.75 179.968 576 191.967,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"Part I I I. Total Section 1062 Applicable Net Tax Liability and First Installment Due. 14. Total section 1062 applicable net tax liability. Subtract line 13 from line 5. Enter here and on Form 1120, Schedule J, line 22b, or the applicable line of your return. See instructions.",2,504.75 137.97 576 149.969,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,"15. First installment due. Enter 25% (0.25) of line 14 here and on Form 1120, line 32, or the applicable line of your return. See instructions. ",2,504.75 107.968 576 119.967,yes
