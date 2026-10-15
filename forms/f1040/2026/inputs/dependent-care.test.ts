@@ -235,9 +235,9 @@ Deno.test("Joint care credits use separate spouses' earnings and the two-child c
     }],
   };
   // Both children qualify even though all expenses are for the first child.
-  input.form2441.claim.children.push({
-    ...input.form2441.claim.children[0],
-    ssn: "222334445",
+  input.form2441.claim.qualifying_people.push({
+    ...input.form2441.claim.qualifying_people[0],
+    tin: "222334445",
   });
   const c = complete(input).f2441.calculation_2026 as {
     lines: Record<string, number>;

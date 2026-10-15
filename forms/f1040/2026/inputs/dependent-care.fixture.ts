@@ -43,15 +43,20 @@ export function dependentCareFixture2026(
         household_employee: false,
         amount_paid: expenses,
       }],
-      children: [{
-        ssn: base.general.dependents[0].ssn,
+      qualifying_people: [{
+        kind: "dependent_child",
+        review_reference: "care-person-review",
+        tin: base.general.dependents[0].ssn,
         care_only_while_under_13: true,
         custodial_parent_and_dependency_requirements_met: true,
       }],
       expenses: [{
         receipt_reference: "care-receipt-2026",
         provider_index: 0,
-        child_ssn: base.general.dependents[0].ssn,
+        person_tin: base.general.dependents[0].ssn,
+        incurred_start_date: "2026-01-01",
+        incurred_end_date: "2026-12-31",
+        paid_date: "2026-12-31",
         qualified_amount_incurred_and_paid_in_2026: expenses,
       }],
       ...(benefits > 0

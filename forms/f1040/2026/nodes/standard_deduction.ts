@@ -1,5 +1,6 @@
 import { form8960_2026 } from "./form8960.ts";
 import { z } from "zod";
+import { FilingStatus } from "../../nodes/types.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
@@ -21,6 +22,7 @@ export const inputSchema = sharedSchema.pick({
   force_itemized: true,
 }).extend({
   agi: z.number().finite(),
+  taxpayer_dob: z.string().date().optional(),
   standard_deduction_eligible: z.boolean(),
   dependent_earned_income: money.optional(),
   // Retain AGI's child-tax metadata; a 2026 Form 8615 owner must review it.
@@ -42,6 +44,20 @@ export function calculateDeductionSelection2026(
   rawInput: z.input<typeof inputSchema>,
 ) {
   const input = inputSchema.parse(rawInput);
+  // The public source graph supplies DOB. Do not open the dependent wage
+  // deduction route by silently applying ordinary rates to a potential 8615
+  // return. Parent/student/support eligibility and the child's tax owner remain
+  // pending; the annual threshold and January 1 boundary are from i8615 (2026).
+  if (
+    input.taxpayer_dob && input.taxpayer_dob > "2003-01-01" &&
+    input.filing_status !== FilingStatus.MFJ &&
+    (input.form8615_total_income ?? input.agi) -
+          (input.dependent_earned_income ?? 0) > 2700
+  ) {
+    throw new Error(
+      "2026 Form 8615 source eligibility and child-tax calculation need review before deduction/tax finalization",
+    );
+  }
   if (input.qbi_activity_pending) {
     throw new Error(
       "2026 QBI source owner must participate in joint deduction resolution",

@@ -9,7 +9,11 @@ import {
   careEarnedIncomeReview2026Schema,
   type CareOwner2026,
 } from "./dependent-care-earned.ts";
-import { passesRelationshipTest } from "../../nodes/inputs/general/filing/general/index.ts";
+import {
+  assertCareServiceDates2026,
+  carePerson2026Schema,
+  resolveCarePeople2026,
+} from "./dependent-care-people.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import { dependentCare2026 } from "../../nodes/config/2026-dependent-care.ts";
@@ -31,7 +35,7 @@ const reference = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const normalize = (s: string) => s.replaceAll("-", "");
 
-/** First source slice: ordinary W-2 earnings and care for dependent children.
+/** Reviewed W-2 care sources, including qualifying spouses and nondependents.
  * Expense rows are receipt facts, never calculated credits or AGI. */
 export const dependentCareClaim2026Schema = z.object({
   claim: z.object({
@@ -50,18 +54,15 @@ export const dependentCareClaim2026Schema = z.object({
       true,
     ),
     providers: z.array(careProviderSchema).min(1).max(25),
-    children: z.array(
-      z.object({
-        ssn: tin,
-        care_only_while_under_13: z.literal(true),
-        custodial_parent_and_dependency_requirements_met: z.literal(true),
-      }).strict(),
-    ).max(25),
+    qualifying_people: z.array(carePerson2026Schema).max(25),
     expenses: z.array(
       z.object({
         receipt_reference: reference,
         provider_index: z.number().int().nonnegative(),
-        child_ssn: tin,
+        person_tin: tin,
+        incurred_start_date: z.string().date(),
+        incurred_end_date: z.string().date(),
+        paid_date: z.string().date(),
         // This slice excludes deferred, prepaid and prior-year care.
         qualified_amount_incurred_and_paid_in_2026: whole,
       }).strict(),
@@ -85,6 +86,12 @@ export const inputSchema = dependentCareClaim2026Schema.partial().extend({
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: tin,
   spouse_ssn: tin.optional(),
+  taxpayer_dob: z.string().date(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean(),
+  spouse_first_name: reference.optional(),
+  spouse_last_name: reference.optional(),
+  spouse_dob: z.string().date().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   dependents: z.array(dependent2026Schema).default([]),
   wage_sources: z.array(w2Item2026Schema).default([]),
   dep_care_benefits: money.optional(),
@@ -136,7 +143,7 @@ export function calculateDependentCareBenefits2026(
     [
       input.taxpayer_ssn,
       input.spouse_ssn,
-      ...input.dependents.map((d) => d.ssn),
+      ...input.dependents.map((d) => d.ssn ?? d.itin ?? d.atin),
     ].filter((s): s is string => !!s).map(normalize),
   );
   const providerTins = new Set<string>();
@@ -208,34 +215,22 @@ export function calculateDependentCareBenefits2026(
   if (box10 > 0 && !claim.benefits) {
     throw new Error("Care benefits need employer plan records");
   }
-  const people = claim.children.map((c) => {
-    const matches = input.dependents.filter((d) =>
-      normalize(d.ssn ?? "") === normalize(c.ssn)
-    );
-    const d = matches[0];
+  const qualification = resolveCarePeople2026(claim.qualifying_people, input);
+  const people = qualification.people;
+  for (const person of people) {
+    if (!person.spouse_incapacity_months) continue;
+    const earned = claim.earned_income;
     if (
-      matches.length !== 1 || !d || d.claim_as_dependent === false ||
-      !passesRelationshipTest(d) || d.dependent_on_another_return === true ||
-      d.provided_over_half_own_support !== false ||
-      d.filed_joint_return_except_refund_only !== false ||
-      !d.dob || d.dob <= "2013-01-01" || d.dob > "2026-12-31" ||
-      (d.months_in_home ?? 0) <= 6
+      earned.method !== "monthly" || !earned.spouse ||
+      earned.spouse.months.some((m) =>
+        m.incapable_of_self_care !==
+          person.spouse_incapacity_months![m.month - 1]
+      )
     ) {
       throw new Error(
-        "Care child needs matching dependent, under-13 age and over-half-year residence facts",
+        "Disabled care spouse needs monthly earned-income incapacity matching the care records",
       );
     }
-    return {
-      first_name: d.first_name,
-      last_name: d.last_name,
-      name_control: d.last_name.replace(/[^A-Za-z]/g, "").slice(0, 4)
-        .toUpperCase(),
-      ssn: normalize(c.ssn),
-      credit_expenses_paid: 0,
-    };
-  });
-  if (new Set(people.map((p) => p.ssn)).size !== people.length) {
-    throw new Error("Duplicate care child");
   }
   const priorWorksheet = calculatePriorCareCredit2026(
     claim.prior_year_expenses,
@@ -255,10 +250,16 @@ export function calculateDependentCareBenefits2026(
     : claim.providers.map(() => 0);
   const receipts = new Set<string>(priorWorksheet?.receipt_references ?? []);
   for (const row of claim.expenses) {
-    const person = people.find((p) => p.ssn === normalize(row.child_ssn));
+    const person = people.find((p) => p.ssn === normalize(row.person_tin));
     if (!person || !claim.providers[row.provider_index]) {
-      throw new Error("Care receipt references an unknown child or provider");
+      throw new Error("Care receipt references an unknown person or provider");
     }
+    assertCareServiceDates2026(
+      person,
+      row.incurred_start_date,
+      row.incurred_end_date,
+      row.paid_date,
+    );
     if (receipts.has(row.receipt_reference)) {
       throw new Error("Duplicate care receipt reference");
     }
@@ -285,7 +286,14 @@ export function calculateDependentCareBenefits2026(
   const details: Form2441FilingDetails = {
     filing_status: input.filing_status,
     care_providers: claim.providers,
-    qualifying_people: people.map((p) => ({ ...p, credit_expenses_paid: 0 })),
+    qualifying_people: people.map((p) => ({
+      first_name: p.first_name,
+      last_name: p.last_name,
+      name_control: p.name_control,
+      ssn: p.ssn,
+      over_12_and_disabled: p.over_12_and_disabled,
+      credit_expenses_paid: 0,
+    })),
     taxpayer_earned_income: benefitIncome.taxpayer,
     spouse_earned_income: benefitIncome.spouse,
     tax_liability_limit: 0,
@@ -311,7 +319,14 @@ export function calculateDependentCareBenefits2026(
   details.qualifying_people = people.map((p) => {
     const used = Math.min(remaining, p.credit_expenses_paid);
     remaining -= used;
-    return { ...p, credit_expenses_paid: p.credit_expenses_paid - used };
+    return {
+      first_name: p.first_name,
+      last_name: p.last_name,
+      name_control: p.name_control,
+      ssn: p.ssn,
+      over_12_and_disabled: p.over_12_and_disabled,
+      credit_expenses_paid: p.credit_expenses_paid - used,
+    };
   });
   const lines = calculateForm2441Benefits(details, benefits, dependentCare2026);
   if (lines.line26 > 0) {
@@ -345,6 +360,7 @@ export function calculateDependentCareBenefits2026(
     lines,
     expected_wage_income: totalWages + lines.line26,
     prior_year_worksheet: priorWorksheet,
+    qualifying_person_workpaper: qualification,
     earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {
       taxpayer: creditIncome.taxpayer,

@@ -89,13 +89,18 @@ export function careOverflowFixture2026(count = 25) {
       amount_paid: 400 + i,
     }),
   );
-  c.children = input.general.dependents.map((d) => ({
-    ssn: d.ssn,
+  c.qualifying_people = input.general.dependents.map((d) => ({
+    kind: "dependent_child",
+    review_reference: "care-person-review",
+    tin: d.ssn,
     care_only_while_under_13: true,
     custodial_parent_and_dependency_requirements_met: true,
   }));
-  c.expenses = c.children.map((d, i) => ({
-    child_ssn: d.ssn,
+  c.expenses = c.qualifying_people.map((d, i) => ({
+    person_tin: d.tin,
+    incurred_start_date: "2026-01-01",
+    incurred_end_date: "2026-12-31",
+    paid_date: "2026-12-31",
     provider_index: i,
     receipt_reference: `receipt-${i}`,
     qualified_amount_incurred_and_paid_in_2026: 400 + i,

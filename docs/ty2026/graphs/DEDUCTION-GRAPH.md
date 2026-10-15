@@ -1,5 +1,15 @@
 # TY2026 deduction graph: Schedule A, Schedule 1-A, and QBI
 
+Current source update (October 15): AGI supplies actual taxable wage income to
+the dependent standard-deduction calculation, including taxable care benefits and
+excluding care deemed income or combat-pay elections. General DOB also reaches
+the resolver: potential under-24, nonjoint Form 8615 returns over the $2,700
+unearned-income threshold stop for the unfinished child-tax owner. Business and
+scholarship sources must extend the dependent-earned-income bridge before opening.
+See [current care source integration](FORM2441-CURRENT.md) and
+[the complete child-tax contract](FORM8615-GRAPH.md).
+
+
 Current print increment: the two-page Schedule A draft now recomputes source
 expenses and the retained deduction-selection input, verifies Form 1040 totals,
 and prints seller statements, educator remainder and the final overall limit.

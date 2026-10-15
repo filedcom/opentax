@@ -7,6 +7,13 @@ and [2026 draft instructions](../corpus/draft/i8615.pdf), SHA-256
 They are research sources until final release. Reconcile final 1040, Schedule D,
 Schedule J, Form 2555, Form 8814 and current MeF rules before filing.
 
+Current source protection (October 15): general DOB reaches the 2026 deduction
+node. Nonjoint filers born after January 1, 2003 with more than $2,700 of
+source-derived unearned income stop for Form 8615 eligibility/calculation review.
+This protects the newly connected dependent wage-deduction route and also applies
+when the filer is not a dependent. It does not implement the parent/student/support
+tests or the form calculation; the full contract below remains unfinished.
+
 ## Return ownership and source facts
 
 Form 8615 attaches to the **child's** Form 1040 or 1040-NR. The 2026

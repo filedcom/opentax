@@ -56,6 +56,12 @@ qualifying-person identity/disability answers and payment dates. Prior-only
 claims leave current line-2 person rows empty and current credit expenses zero.
 The statement wraps and paginates using the existing continuation renderer.
 
+Current line-2 rows now include disabled spouses and eligible nondependent
+people, using resolved general identities and the calculated over-12/incapacity
+flag. These rows do not add Form 1040 dependents. The six-page October 15 QA set
+covers the disability and deemed-income boxes, a custodial child, a newborn and
+an additional disabled-person continuation with zero expenses.
+
 Before full filing support, complete the remaining eligibility,
 changed-filing-unit prior expenses, self-employed benefit and special-provider routes in the
 current contract, then reconcile final IRS forms and current MeF/business rules.

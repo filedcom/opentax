@@ -893,12 +893,13 @@ function hasTin(dep: DependentItem): boolean {
 function isQualifyingChildForODC(
   dep: DependentItem,
   rules: DependentYearRules = dependentRules2025,
+  disregardJointReturn = false,
 ): boolean {
   return (
     passesResidencyTest(dep, rules) &&
     passesRelationshipTest(dep) &&
     passesEitcAgeTest(dep, rules) &&
-    passesJointReturnTest(dep) &&
+    (disregardJointReturn || passesJointReturnTest(dep)) &&
     passesQualifyingChildSupportTest(dep)
   );
 }
@@ -909,9 +910,15 @@ function isQualifyingChildForODC(
 function isQualifyingRelativeForODC(
   dep: DependentItem,
   rules: DependentYearRules = dependentRules2025,
+  careExceptions?: {
+    disregardJointReturn: boolean;
+    disregardGrossIncome: boolean;
+  },
 ): boolean {
-  if (!hasTin(dep)) return false;
-  if (!passesJointReturnTest(dep)) return false;
+  if (!careExceptions && !hasTin(dep)) return false;
+  if (!careExceptions?.disregardJointReturn && !passesJointReturnTest(dep)) {
+    return false;
+  }
   // Family relationships listed in Pub. 501 do not require co-residency.
   // "Other" represents an unrelated household member. Family relationships
   // such as grandparents and in-laws have their own input values.
@@ -923,7 +930,24 @@ function isQualifyingRelativeForODC(
   }
   if (dep.taxpayer_provided_over_half_support !== true) return false;
   return dep.gross_income !== undefined &&
-    dep.gross_income < rules.qualifyingRelativeGrossIncomeLimit;
+    (careExceptions?.disregardGrossIncome === true ||
+      dep.gross_income < rules.qualifyingRelativeGrossIncomeLimit);
+}
+
+/** Section 21 qualifying-person dependency tests. Care does not require a
+ * credit-valid TIN by the CTC/ODC deadline, and permits two statutory exceptions.
+ * Filer-dependent restrictions and custody exceptions are handled by the caller.
+ * Default CTC/ODC/education paths above retain their original requirements. */
+export function careDependentSourceEligible(
+  dep: DependentItem,
+  rules: DependentYearRules,
+  exceptions = { disregardJointReturn: false, disregardGrossIncome: false },
+): boolean {
+  return dep.us_citizen_national_or_resident === true &&
+    dep.provided_over_half_own_support !== true &&
+    dep.dependent_on_another_return !== true &&
+    (isQualifyingChildForODC(dep, rules, exceptions.disregardJointReturn) ||
+      isQualifyingRelativeForODC(dep, rules, exceptions));
 }
 
 /** Ordinary dependency facts reused by education ownership reconciliation. */

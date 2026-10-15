@@ -340,6 +340,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       );
     }
     const deductionFacts = {
+      taxpayer_dob: input.taxpayer_dob,
       filing_status: input.filing_status,
       taxpayer_age_65_or_older: taxpayerAge65,
       taxpayer_blind: input.taxpayer_blind,
@@ -382,7 +383,18 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "w2", fields: owner },
         {
           nodeType: "form2441",
-          fields: { ...owner, dependents: input.dependents },
+          fields: {
+            ...owner,
+            dependents: input.dependents,
+            taxpayer_dob: input.taxpayer_dob,
+            taxpayer_can_be_claimed_as_dependent:
+              input.taxpayer_can_be_claimed_as_dependent,
+            spouse_first_name: input.spouse_first_name,
+            spouse_last_name: input.spouse_last_name,
+            spouse_dob: input.spouse_dob,
+            spouse_can_be_claimed_as_dependent:
+              input.spouse_can_be_claimed_as_dependent,
+          },
         },
         { nodeType: "cash_charity", fields: owner },
         { nodeType: "schedule_a", fields: owner },

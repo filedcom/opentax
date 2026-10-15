@@ -7,7 +7,9 @@ Schedule 3/8812 ordering and draft PDF. See [current implementation and explicit
 remaining gates](FORM2441-CURRENT.md), which supersedes the implementation-status
 claims below. Monthly deemed income and independent care combat elections are
 now connected, along with reviewed 2025-return expenses paid in 2026 and the
-required Worksheet A statement; changed joint units and other special cases remain.
+required Worksheet A statement. Reviewed incapacity, ordinary custodial-care
+exceptions and birth/death residence now feed that source route; changed joint
+units, special custody/status cases and other filing work remain.
 
 Sources: pinned [2026 draft Form 2441](../corpus/draft/f2441.pdf)
 (SHA-256 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`)

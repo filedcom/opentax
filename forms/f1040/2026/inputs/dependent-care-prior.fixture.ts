@@ -42,7 +42,7 @@ export function priorCareFixture2026(priorOnly = false) {
     }],
   };
   if (priorOnly) {
-    f.form2441.claim.children = [];
+    f.form2441.claim.qualifying_people = [];
     f.form2441.claim.expenses = [];
     f.general.dependents = [];
   }

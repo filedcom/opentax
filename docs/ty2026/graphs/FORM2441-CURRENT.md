@@ -22,14 +22,15 @@ handling remains gated pending spouse-income and eligibility reconciliation.
 ## Connected source contract
 
 Public `form2441.claim` accepts reviewed provider identities and paid amounts,
-qualifying-child references, receipt amounts allocated to provider and child,
+qualifying-person references, dated receipts allocated to provider and person,
 employer plan records, and the prior-return records described below. It accepts
 no caller-calculated current earned-income, AGI, tax-limit or credit totals. Receipt amounts are whole dollars; W-2 cents are combined before rounding.
 
-- General supplies filer identity, filing status and dependent source facts.
-  Children must match claimed dependents with under-13 age and over-half-year
-  residence facts; review confirms care occurred while under 13 and custody
-  requirements are met. Birth/death residence exceptions remain gated.
+- General supplies filer identity, filing status, DOB, dependency answers and
+  person records. `claim.qualifying_people` replaces the prototype child-only
+  list with dependent-child, disabled-person, disabled-spouse and custodial-child
+  variants. References resolve SSN, ITIN or ATIN; care eligibility does not
+  create a Form 1040 dependent or a CTC/ODC entitlement.
 - The W-2 node supplies original issued sources and box 10. Each positive box 10
   needs a source-specific review of benefits already reported in box 1. These
   remain in wage income and are removed from Form 2441 line 12 to avoid taxing
@@ -37,11 +38,11 @@ no caller-calculated current earned-income, AGI, tax-limit or credit totals. Rec
   also includes newly taxable benefits from line 26.
 - Employer plan maximum, grace-period use and forfeiture/carryforward are
   explicit records. Forfeiture cannot exceed the amount included on line 12.
-- Each receipt references one known provider and child. Duplicate receipts and
-  children are rejected, and qualified receipts cannot exceed provider payments.
-  Current receipts require care incurred and paid in 2026; prior receipts use
-  their own reviewed source contract. Excluded benefits are
-  allocated once across receipt-backed child expenses before the credit cap.
+- Each current receipt references a known provider and `person_tin`, with
+  incurred start/end dates and payment date in 2026. Every service day must be
+  within the person's eligible age/lifetime/incapacity periods. Duplicate receipts
+  and people are rejected, and current plus prior receipts cannot exceed provider
+  payments. Excluded benefits are allocated once before the credit cap.
 - Reviews require ordinary W-2 earnings,
   no proprietor/partner benefits, no spouse death,
   no FTC/Form 8978 credit, eligible providers and no double use as medical or
@@ -56,6 +57,42 @@ Joint returns use separate spouses' wages. Taxable benefits are attributed to th
 single recipient identified by W-2 and carryover plan records. Positive taxable
 benefits from multiple recipients still need a per-spouse exclusion allocation;
 that route remains gated. Joint carryover records must identify the plan owner.
+
+## Qualifying people and custody
+
+Ordinary dependency, relationship and support checks reuse the shared 2025
+functions with 2026 annual rules. Care-specific exceptions do not alter default
+CTC/ODC or education behavior. A care TIN is not subject to those credits'
+issuance-deadline tests. Birth/death cases reuse dated lifetime residence;
+ordinary children need service dates before their thirteenth birthday.
+
+Disabled-person records include reviewed incapacity periods and outside-home-care
+eligibility. Dependency exceptions for gross income, a joint return and a
+claimable filer must agree with general source facts. Care incapacity is distinct
+from permanent/total disability used for other qualifying-child age rules.
+A disabled spouse resolves to the joint spouse, requires over-half-year dated
+home evidence, and reconciles incapacity months with the earned-income ledger.
+
+The divorced/separated-parent care route requires reviewed parental support and
+status, over-half-year combined custody, and a home calendar matching the filer's
+overnight count. A noncustodial parent is rejected even if the child is claimed
+on that parent's return. Equal nights require the other parent's AGI; the late
+care node compares it with actual final AGI before the credit reaches settlement.
+The care route can include a person released to the other parent's return
+without inserting that person into Form 1040's dependent list. Separate HOH/EIC
+release handling and special night-worker custody rules still need their owners.
+
+The return retains eligible periods and monthly person counts as workpaper
+evidence. The deemed-income floor still uses the number of people qualifying at
+**any time during the year**, as the instructions require; the workpaper does not
+prorate the $250/$500 floor for births or part-year qualification.
+
+Claimable filers now receive actual taxable wage income from AGI for their
+standard deduction, including taxable care benefits but excluding care deemed
+income and combat-pay elections. Business/scholarship owners must extend that
+bridge before their routes open. The source graph stops potential under-24,
+nonjoint returns with unearned income over $2,700 for unfinished Form 8615
+eligibility/calculation; it does not silently apply ordinary tax.
 
 ## Monthly income and combat-pay elections
 
@@ -134,11 +171,15 @@ visually inspected. Tests cover every rate boundary, old/new exclusion rules,
 plan limits, carryover/forfeiture, benefits already in box 1, tax limitation,
 spouses' separate earnings, two-child cap, CTC/ACTC ordering, rejection paths,
 attachment order, continuation completeness and destination tampering.
+The six-page disabled-person/spouse, custodial child, newborn and disabled-person
+continuation QA set was rendered and inspected on October 15. Disability and
+deemed-income checkboxes, zero-expense qualifying people and nondependent identity
+rows were verified; no AcroForm or annotations remain.
 
 ## Still required
 
-Disability qualifying people, custodial exceptions, MFS, taxable-benefit
-allocation between multiple recipient spouses, self-employment, deferred/prepaid
+MFS, special custody/HOH/EIC release cases, nonresident/foreign dependency
+and unrelated-household lifetime exceptions, taxable-benefit allocation between multiple recipient spouses, self-employment, deferred/prepaid
 expenses, changed filing-unit or corrected/unfiled prior-return care allocations,
 proprietor/partner benefits, Schedule H, special provider TIN/address routes,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.

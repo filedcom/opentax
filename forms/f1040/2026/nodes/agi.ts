@@ -212,28 +212,33 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     let additionalIncome = 0;
     let adjustments = 0;
     let studentLoan = 0;
+    const wageIncome = [
+      input.line1a_wages,
+      input.line1b_household_wages,
+      input.line1c_unreported_tips,
+      input.line1e_taxable_dep_care,
+      input.line1f_taxable_adoption_benefits,
+      input.line1g_wages_8919,
+      input.line1h_other_earned,
+    ].reduce<number>(
+      (sum, value) =>
+        sum +
+        (Array.isArray(value) ? value.reduce((a, b) => a + b, 0) : value ?? 0),
+      0,
+    );
+    const unsupportedEarnedActivity = [
+      input.line3_schedule_c,
+      input.line6_schedule_f,
+      input.line15_se_deduction,
+      input.line8d_foreign_earned_income_exclusion,
+    ].some((v) => (v ?? 0) !== 0);
     const outputs = result.outputs.map((output) => {
       if (output.nodeType === "f8812" || output.nodeType === "eitc") {
         return {
           ...output,
           fields: {
             ...output.fields,
-            wage_income_from_agi: [
-              input.line1a_wages,
-              input.line1b_household_wages,
-              input.line1c_unreported_tips,
-              input.line1e_taxable_dep_care,
-              input.line1f_taxable_adoption_benefits,
-              input.line1g_wages_8919,
-              input.line1h_other_earned,
-            ].reduce<number>(
-              (sum, value) =>
-                sum +
-                (Array.isArray(value)
-                  ? value.reduce((a, b) => a + b, 0)
-                  : value ?? 0),
-              0,
-            ),
+            wage_income_from_agi: wageIncome,
             [
               output.nodeType === "eitc"
                 ? "unsupported_eic_activity"
@@ -311,6 +316,12 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           ...output,
           fields: {
             ...output.fields,
+            // Only actual taxable wage income reaches the dependent deduction.
+            // Care deemed income and combat elections never enter this amount.
+            // Extend with business/scholarship owners before opening those routes.
+            ...(unsupportedEarnedActivity
+              ? {}
+              : { dependent_earned_income: wageIncome }),
             qbi_activity_pending: [
               input.line3_schedule_c,
               input.line5_schedule_e,

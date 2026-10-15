@@ -37,6 +37,16 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
   ) {
     throw new Error("Form 2441 needs reconciliation of non-W-2 earned income");
   }
+  for (const person of benefit.qualifying_person_workpaper!.people) {
+    if (
+      person.custody_other_parent_agi !== undefined &&
+      input.agi <= person.custody_other_parent_agi
+    ) {
+      throw new Error(
+        "Equal-night care custody requires calculated AGI greater than the other parent's AGI",
+      );
+    }
+  }
   // Current intake explicitly reviews FTC and Form 8978 as absent. Their
   // finalized credit owners must feed this worksheet before those routes open.
   const details = {
