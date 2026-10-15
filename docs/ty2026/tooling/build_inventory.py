@@ -74,7 +74,7 @@ NODE_PROGRESS = {
     "f965": "Current Jan 2021 Form 965-A/instructions pinned; 2026 Schedule 2 prints line 12 but line 15 omits it; shared node uses obsolete line 9 and 2017-only final-year assumption; build liability/payment/deferral ledger, PDF/current MeF; see FORM965A-GRAPH.md",
     "schedule_r": "2026 form/instructions pinned; shared node skips tax-liability worksheet, QSS base and MFJ mixed-age disability rules; derive box/line 10-22 from owner facts, add PDF/current MeF; see SCHEDULER-GRAPH.md",
     "schedule_j": "2026 form and 2025 instruction comparator pinned; derive 2023-25 base-year income/tax and current farming/fishing election, calculate lines 1-23 and compare regular tax before 1040 line 16, PDF/current MeF; see SCHEDULEJ-GRAPH.md",
-    "schedule_a": "2026 deduction source/choice and noncash-gift attachment need the SALT, charity floor, mortgage-interest and AGI loops; reconcile Form 8283/ATS 2 and current PDF/MeF; see DEDUCTION-GRAPH.md",
+    "schedule_a": "2026 source deductions and selection replay feed verified two-page draft PDF with seller statements; remaining deduction sources/QBI/8283/bundle/current MeF open; see PDF-SCHEDULEA-MAP.md",
     "eitc": "2026 qualifying-child, earned-income, recertification and opt-out answers must reconcile Schedule EIC/8862, 1040 line 27 and ATS 4/ATS 2; see FORM8862-8863-EIC-GRAPH.md",
     "form5695": "2026 draft is prior-year residential clean-energy carryforward only; remove new-expense/joint-occupancy branches and finish credit ordering/PDF/MeF; see FORM5695-CREDIT-GRAPH.md",
     "schedule3": "2026 lines 6c/6i/6j/6k/6l, line 12 fuel credit and refundable Part II need source credits, ordering, PDF and current MeF; see PDF-SCHEDULE3-MAP.md",

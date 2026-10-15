@@ -38,6 +38,41 @@ export const inputSchema = sharedSchema.pick({
   qbi_activity_pending: z.boolean().optional(),
 }).strict();
 
+export function calculateDeductionSelection2026(
+  rawInput: z.input<typeof inputSchema>,
+) {
+  const input = inputSchema.parse(rawInput);
+  if (input.qbi_activity_pending) {
+    throw new Error(
+      "2026 QBI source owner must participate in joint deduction resolution",
+    );
+  }
+  if (
+    (input.itemized_before_overall_limit === undefined) !==
+      (input.itemized_taxes === undefined)
+  ) {
+    throw new Error(
+      "Schedule A requires both its pre-limit total and line 7 taxes, including zero",
+    );
+  }
+  const resolved = resolveDeductions2026({
+    ...input,
+    adjustedGrossIncome: input.agi,
+    standardDeductionEligible: input.standard_deduction_eligible,
+    spouseItemizes: input.mfs_spouse_itemizing,
+    electItemized: input.force_itemized,
+    itemized: input.itemized_before_overall_limit === undefined ? undefined : {
+      beforeOverallLimit: input.itemized_before_overall_limit,
+      taxes: input.itemized_taxes!,
+    },
+    nonitemizerCashContributions: input.nonitemizer_cash_contributions ?? 0,
+    charitableContributionBase: input.charitable_contribution_base,
+    schedule1aLine44: input.schedule1a_line44 ?? 0,
+    schedule1aLine43: input.schedule1a_line43 ?? 0,
+  }, noQbi2026);
+  return { source_input: input, resolution: resolved };
+}
+
 class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "standard_deduction";
   readonly inputSchema = inputSchema;
@@ -50,43 +85,17 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("2026 deduction resolution needs f1040:2026 context");
     }
-    const input = inputSchema.parse(rawInput);
-    if (input.qbi_activity_pending) {
-      throw new Error(
-        "2026 QBI source owner must participate in joint deduction resolution",
-      );
-    }
-    if (
-      (input.itemized_before_overall_limit === undefined) !==
-        (input.itemized_taxes === undefined)
-    ) {
-      throw new Error(
-        "Schedule A requires both its pre-limit total and line 7 taxes, including zero",
-      );
-    }
-    const resolved = resolveDeductions2026({
-      ...input,
-      adjustedGrossIncome: input.agi,
-      standardDeductionEligible: input.standard_deduction_eligible,
-      spouseItemizes: input.mfs_spouse_itemizing,
-      electItemized: input.force_itemized,
-      itemized: input.itemized_before_overall_limit === undefined
-        ? undefined
-        : {
-          beforeOverallLimit: input.itemized_before_overall_limit,
-          taxes: input.itemized_taxes!,
-        },
-      nonitemizerCashContributions: input.nonitemizer_cash_contributions ?? 0,
-      charitableContributionBase: input.charitable_contribution_base,
-      schedule1aLine44: input.schedule1a_line44 ?? 0,
-      schedule1aLine43: input.schedule1a_line43 ?? 0,
-    }, noQbi2026);
+    const { source_input: input, resolution: resolved } =
+      calculateDeductionSelection2026(rawInput);
     const chosen = resolved.selected;
     // This node's current graph adapter covers no-QBI returns. The QBI owner
     // must call the same resolver with its actual form calculator when wired.
     return {
       outputs: [
-        { nodeType: this.nodeType, fields: { resolution_2026: resolved } },
+        {
+          nodeType: this.nodeType,
+          fields: { resolution_2026: resolved, calculation_input_2026: input },
+        },
         {
           nodeType: "form8960",
           fields: {

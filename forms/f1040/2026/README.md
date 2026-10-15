@@ -585,6 +585,23 @@ records the reviewed instructions and boundaries. Other cross-year claims,
 Form 2555 coordination, community-property allocations, remaining Schedule 1 sources,
 complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
 
+## Schedule A draft attachment
+
+The Schedule A PDF component recomputes reviewed expenses and the same deduction
+selection used by the graph. The deduction node retains `calculation_input_2026`
+for this replay. Source totals, AGI, filing status, contribution facts and Form
+1040 lines 11b/12e/12f/13a/13b must agree, and itemization must be selected.
+
+The two printed pages include medical/SALT limits, mortgage interest and
+insurance, cash-gift limits/floor, educator remainder, the overall deduction
+limit and itemization election. Seller-financed mortgage details get complete,
+paginated statements. The pinned 47-field inventory is verified before printing;
+the cover is removed and output is static and marked as a draft. See the
+[Schedule A map](../../../docs/ty2026/pdf/PDF-SCHEDULEA-MAP.md) for the screening
+checkbox distinction, supported source scope and six focused tests. All 294
+current-2026 tests passed and eleven synthetic QA pages were visually inspected.
+Complete source coverage, bundle assembly, QBI and filing acceptance remain open.
+
 ## Schedule 1 draft attachment
 
 The Schedule 1 sink retains `calculation_input_2026`. Its new static draft PDF

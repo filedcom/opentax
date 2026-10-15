@@ -1,5 +1,11 @@
 # TY2026 deduction graph: Schedule A, Schedule 1-A, and QBI
 
+Current print increment: the two-page Schedule A draft now recomputes source
+expenses and the retained deduction-selection input, verifies Form 1040 totals,
+and prints seller statements, educator remainder and the final overall limit.
+The [Schedule A component map](../pdf/PDF-SCHEDULEA-MAP.md) records its reviewed
+47-field source, supported branches and remaining bundle/QBI/MeF gates.
+
 Status: source and dependency design, 2026-09-27. This is an implementation
 contract for the TY2026 `f1040` entry point, not a registered calculation path.
 
