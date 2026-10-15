@@ -1,3 +1,5 @@
+import { f5695_2026 } from "./inputs/energy.ts";
+import { schedule3_final_2026 } from "./nodes/schedule3-final.ts";
 import { household_employment_2026 } from "./inputs/household-employment.ts";
 import { government_payments_2026 } from "./inputs/government-payments.ts";
 import { f8615_2026 } from "./inputs/child-tax.ts";
@@ -46,6 +48,8 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  f5695: f5695_2026,
+  schedule3_final: schedule3_final_2026,
   household_employment: household_employment_2026,
   government_payments: government_payments_2026,
   f8615: f8615_2026,

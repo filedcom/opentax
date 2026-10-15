@@ -49,6 +49,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Form 8919 (61) | Calculated owner forms | All owner/employer continuation copies |
 | Form 8959 (71) | Retained filing/withholding condition, including zero tax | 1 |
 | Form 8960 (72) | Retained filing condition, including zero NIIT | 1 |
+| Form 5695 (75) | Reviewed positive prior carryforward, including zero current credit | 1 |
 | Form 3903 (170) | At least one eligible move requires a form | All qualifying move pages |
 
 Sequence numbers come from the pinned draft forms. Supplemental statements
@@ -130,3 +131,8 @@ requires filing. It replays the employer source, matches the return owner and
 reconciles tax to Schedule 2 line 17a. Both official pages are retained, including
 blank skipped sections. See [the household contract](../graphs/SCHEDULEH-CURRENT.md)
 for the four draft cases and remaining Section B/payroll/MeF limits.
+
+Energy carryforward now resolves jointly with the child credit before final
+Schedule 3. The bundle consumes `schedule3_final`, replays the retained energy
+sources, and attaches the one-page Form 5695 even when all credit carries to
+2027. See [the energy contract](../graphs/FORM5695-CREDIT-GRAPH.md).

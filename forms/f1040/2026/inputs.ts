@@ -1,3 +1,5 @@
+import { f5695_2026 } from "./inputs/energy.ts";
+import { energyClaim2026Schema } from "./inputs/energy-source.ts";
 import { household_employment_2026 } from "./inputs/household-employment.ts";
 import { householdClaim2026Schema } from "./inputs/household-source.ts";
 import {
@@ -84,6 +86,7 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  { node: f5695_2026, isArray: false, inputSchema: energyClaim2026Schema },
   {
     node: household_employment_2026,
     isArray: false,

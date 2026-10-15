@@ -110,6 +110,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "f8615",
       "government_payments",
       "household_employment",
+      "f5695",
       "capital_gains",
       "schedule_c",
     ];
@@ -472,6 +473,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "investment_income", fields: owner },
         { nodeType: "government_payments", fields: owner },
         { nodeType: "household_employment", fields: owner },
+        { nodeType: "f5695", fields: owner },
         {
           nodeType: "capital_gains",
           fields: { ...owner, digital_assets_answer: input.digital_assets },

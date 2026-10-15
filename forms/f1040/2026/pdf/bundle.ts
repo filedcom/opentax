@@ -1,3 +1,4 @@
+import { buildForm5695PdfBytes2026 } from "./form5695.ts";
 import { buildScheduleHPdfBytes2026 } from "./schedule_h.ts";
 import type { calculateHousehold2026 } from "../inputs/household-source.ts";
 import type { calculateGovernmentPayments2026 } from "../inputs/government-source.ts";
@@ -183,7 +184,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const education = retained<ReturnType<typeof calculateEducationCredit2026>>(
     "f8863",
   );
-  const s3 = retained<ReturnType<typeof calculateSchedule3_2026>>("schedule3");
+  const s3 = retained<ReturnType<typeof calculateSchedule3_2026>>(
+    "schedule3_final",
+  );
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
   const parts: {
@@ -197,7 +200,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 71, 72, 75, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -508,6 +511,18 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         filer,
       ));
+  }
+  if (childCredit?.energy_credit?.file_form5695) {
+    add(
+      "form5695",
+      1,
+      () =>
+        buildForm5695PdfBytes2026(childCredit.source_input, {
+          form1040_line18: line("line18_total_tax_before_credits"),
+          form1040_line19: line("line19_child_tax_credit"),
+          schedule3_line5a: s3?.input.line5a_residential_clean_energy ?? 0,
+        }, filer),
+    );
   }
   if (moving?.moves.some((m) => m.file_form3903)) {
     add("form3903", undefined, () =>

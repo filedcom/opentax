@@ -94,7 +94,7 @@ Deno.test("2026 Schedule 3 combines source cents before rounding each printed li
 Deno.test("2026 excess W-2 Social Security credit reaches settlement once", () => {
   const r = run(excessWithholdingFixture2026());
   assertEquals(r.diagnostics, []);
-  const c = r.pending.schedule3.calculation_2026 as ReturnType<
+  const c = r.pending.schedule3_final.calculation_2026 as ReturnType<
     typeof calculateSchedule3_2026
   >;
   assertEquals(c.input.line11_excess_ss, 7161);
@@ -137,7 +137,7 @@ Deno.test("2026 joint excess Social Security stays separate for each spouse", ()
   assertEquals(r.diagnostics, []);
   assertEquals(r.pending.f1040.line31_other_payments, 0);
   assertEquals(
-    (r.pending.schedule3.calculation_2026 as ReturnType<
+    (r.pending.schedule3_final.calculation_2026 as ReturnType<
       typeof calculateSchedule3_2026
     >).file_schedule3,
     false,

@@ -16,7 +16,8 @@ Form 1040 line 20; Part II line 15 reaches Form 1040 line 31.
 
 ## Current graph (October 15, 2026)
 
-The current-main source graph now registers `schedule3_2026`. W-2s finalize
+The source graph registers `schedule3_2026` for preliminary credit sources and
+`schedule3_final_2026` after the energy/child-credit resolution. W-2s finalize
 excess Social Security withholding, including an explicit zero when absent.
 Schedule 3 line 11 flows through line 15 to Form 1040 line 31, Schedule 3-A's
 other-payment subtraction, and Schedule 8812 Part II-B line 24. The ACTC node
@@ -38,7 +39,8 @@ lines, adds 6z detail and 13b–13e/13z, and rounds combined source amounts on e
 printed line before totaling. Unsupported pending-credit signals and reserved
 2025 line 5b are rejected. It is not a public input accepting caller credit totals.
 Only reviewed registered producers can feed the active node: W-2 excess
-withholding and finalized Form 2441 dependent-care credit. Care credit reaches
+withholding, finalized Form 2441 care and Form 8863 education credits, and the
+resolved Form 5695 carryforward credit. Care credit reaches
 1040 line 20 and reduces Schedule 8812 Worksheet A's tax capacity. See
 [the current care route](../graphs/FORM2441-CURRENT.md). Other source-credit and
 payment calculations remain pending.

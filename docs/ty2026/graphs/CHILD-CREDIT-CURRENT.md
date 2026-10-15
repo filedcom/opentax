@@ -22,7 +22,8 @@ increase that limit. Whole-dollar ACTC reaches settlement and Schedule 3-A.
 
 A public singleton `f8812` source claim requires a review reference, prior
 credit-disallowance answer, ACTC opt-out answer, and explicit absence reviews for
-nonrefundable credits other than dependent care and education, foreign/territory exclusions, Puerto Rico residence,
+nonrefundable credits other than dependent care and education (or a matching
+energy inventory reference), foreign/territory exclusions, Puerto Rico residence,
 Medicaid waiver payments and either no business income or a reference to the
 complete supported business inventory. It cannot
 supply counts, AGI, tax or calculated credit amounts. Schedule 3 supplies finalized dependent-care credit to Worksheet A line 2; the
@@ -84,11 +85,21 @@ losses, statutory expenses, subthreshold SE, combat elections, separate joint
 SE liability, the three-child payroll branch, and mismatched/contradictory sources.
 The existing PDF builder replays these inputs for Schedule 8812.
 
+## Energy carryforward integration
+
+A retained `f5695` source now activates Worksheet B where required. `f8812`
+calculates its line 14 before energy and line 15 afterward, then finalizes CTC,
+ACTC and the downstream Schedule 3 total. This reuses the shared calculator and
+retains the full worksheet and 2027 carryforward for review. No-dependent and
+fully phased-out cases still resolve energy and attach Form 5695 when needed.
+See the [current source and PDF contract](FORM5695-CREDIT-GRAPH.md).
+
 ## Still required
 
 - Complete Part II-B for tier 1 RRTA credit, Puerto Rico, railroad compensation
   and broader self-employment sources. Pending EIC is never assumed zero.
-- Complete Credit Limit Worksheets A/B beyond connected dependent care. 2026 A uses Schedule 3 lines
+- Complete Credit Limit Worksheets A/B beyond connected care, education and
+  [energy carryforward](FORM5695-CREDIT-GRAPH.md). 2026 A uses Schedule 3 lines
   1, 2, 3, 4, 6d, 6f, 6l, 6m; B line 15 uses 5a, 6c, 6g, 6h. Part II-B line 22
   uses Schedule 1 line 15 and Schedule 2 lines 16c/17c, not the 2025 line names.
 - Form 8862/disallowance exceptions, Form 8332, birth/death without a TIN,

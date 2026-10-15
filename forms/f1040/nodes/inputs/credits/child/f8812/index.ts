@@ -233,12 +233,14 @@ export function calculateCreditLimitWorksheetBLines(
   earnedIncomeWorksheet: EarnedIncomeWorksheet,
   bonaFidePrResident: boolean,
   payrollAndCredits?: PartIIBDetails,
+  roundEarnedIncome = false,
 ) {
   const line1 = line12;
   const line2 = qualifyingChildren * 1_700;
   const line3 = calculateEarnedIncomeWorksheet(earnedIncomeWorksheet).line7;
   const line4 = Math.max(0, line3 - 2_500);
-  const line5 = line4 * ACTC_EARNED_INCOME_RATE;
+  const rawLine5 = line4 * ACTC_EARNED_INCOME_RATE;
+  const line5 = roundEarnedIncome ? Math.round(rawLine5) : rawLine5;
   const usesPayrollBranch = line2 < 5_100
     ? bonaFidePrResident && line5 < line1
     : line5 < line1;
@@ -540,6 +542,7 @@ export function calculateSchedule8812LinesWithConfig(
       worksheetInput!,
       isPrResident,
       input.part_iib,
+      options.roundActcEarnedIncome,
     )
     : null;
   const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
