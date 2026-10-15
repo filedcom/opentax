@@ -155,7 +155,8 @@ regular Git files.
 - [`DIVIDEND-GRAPH.md`](./graphs/DIVIDEND-GRAPH.md): continuous-use 1099-DIV source,
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`SSA-BENEFITS-GRAPH.md`](./graphs/SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
-  distinctions, taxable-benefit route, and remaining repayment/election work.
+  distinctions, signed benefits, MFS residence, student-loan MAGI, draft PDF,
+  and remaining repayment/election/IRA work.
 - [`RRB-1099-GRAPH.md`](./graphs/RRB-1099-GRAPH.md): pinned RRB issuer explanations
   and IRS pension/benefit publications, separate SSEB and pension statements,
   signed repayments, corrected sources and their 1040/MeF handoffs.

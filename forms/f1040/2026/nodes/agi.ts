@@ -3,7 +3,9 @@ import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import {
   agi_aggregator,
+  computeSsaTaxable,
   inputSchema as sharedSchema,
+  socialSecurityWorksheetIncome,
 } from "../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { agi2026 } from "../../nodes/config/2026-agi.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -102,13 +104,57 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         "Student-loan input must be the eligible amount capped at $2,500",
       );
     }
-    if (
-      (input.line21_student_loan_interest ?? 0) > 0 &&
-      (input.line6a_ss_gross ?? 0) > 0 && input.line6b_ss_taxable === undefined
-    ) {
-      throw new Error(
-        "Student-loan MAGI needs finalized taxable Social Security before its phaseout",
-      );
+    let socialSecurityWorksheet;
+    if (input.line6a_ss_gross !== undefined) {
+      if (input.line6a_ss_gross < 0) {
+        throw new Error(
+          "Negative net benefits need repayment deduction or credit review",
+        );
+      }
+      if (
+        input.filing_status === FilingStatus.MFS &&
+        input.mfs_lived_with_spouse === undefined
+      ) {
+        throw new Error(
+          "MFS Social Security needs the full-year spouse residence answer",
+        );
+      }
+      if (
+        (input.line20_ira_deduction ?? 0) > 0 &&
+        input.line6b_ss_taxable === undefined
+      ) {
+        throw new Error(
+          "IRA deduction with Social Security needs coordinated Pub. 590-A worksheets",
+        );
+      }
+      const income = socialSecurityWorksheetIncome(input);
+      const calculated = roundWholeDollars(computeSsaTaxable(
+        input.line6a_ss_gross,
+        income.other_income + income.foreign_earned_income_exclusion -
+          income.adjustments_except_student_loan,
+        input.tax_exempt_interest ?? 0,
+        input.filing_status === FilingStatus.MFJ,
+        input.filing_status === FilingStatus.MFS &&
+          input.mfs_lived_with_spouse === true,
+      ));
+      // A future coordinated IRA/LSE owner may provide the reviewed final
+      // amount internally; public source input never accepts a taxable amount.
+      const taxable = input.line6b_ss_taxable ?? calculated;
+      if (
+        taxable < 0 || taxable > roundWholeDollars(.85 * input.line6a_ss_gross)
+      ) {
+        throw new Error("Taxable Social Security exceeds the benefit limit");
+      }
+      socialSecurityWorksheet = {
+        net_benefits: input.line6a_ss_gross,
+        ...income,
+        tax_exempt_interest: input.tax_exempt_interest ?? 0,
+        ordinary_taxable_benefits: calculated,
+        taxable_benefits: taxable,
+      };
+      // Resolve SSA before the shared SLI phaseout. SLI does not reduce the
+      // SSA worksheet, so the calculation is ordered rather than iterative.
+      input.line6b_ss_taxable = taxable;
     }
     const result = agi_aggregator.computeWithConfig(ctx, input, agi2026);
     let additionalIncome = 0;
@@ -198,6 +244,23 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           : {}),
       },
     });
+    if (socialSecurityWorksheet) {
+      outputs.push({
+        nodeType: "agi_aggregator",
+        fields: {
+          social_security_worksheet_2026: socialSecurityWorksheet,
+        },
+      });
+      outputs.push({
+        nodeType: "f1040",
+        fields: {
+          // The shared aggregator suppresses zero amounts; 1040 line 6b needs 0.
+          ...(input.line6b_ss_taxable === 0 ? { line6b_ss_taxable: 0 } : {}),
+          line6d_mfs_lived_apart: input.filing_status === FilingStatus.MFS &&
+            input.mfs_lived_with_spouse === false,
+        },
+      });
+    }
     return { outputs };
   }
 }

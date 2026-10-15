@@ -89,6 +89,7 @@ const fields: readonly PdfFieldEntry[] = [
     kind: "text" as const,
     domainKey,
     pdfField,
+    ...(domainKey === "line6b_ss_taxable" ? { printZero: true } : {}),
   })),
   ...(["single", "mfj", "mfs"] as const).map((whenValue, index) => ({
     kind: "checkboxWhen" as const,
@@ -122,6 +123,11 @@ const fields: readonly PdfFieldEntry[] = [
       whenValue,
     },
   ]),
+  {
+    kind: "checkbox",
+    domainKey: "line6d_mfs_lived_apart",
+    pdfField: `${p1}c1_44[0]`,
+  },
   {
     kind: "checkbox",
     domainKey: "taxpayer_can_be_claimed_as_dependent",

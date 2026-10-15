@@ -6,12 +6,19 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `ssa1099` reconciles current SSA/RRB copies, ownership, signed repayments and
+  form-specific withholding. The 2026 AGI wrapper reuses shared income and
+  benefit logic, resolves taxable benefits before student-loan MAGI, and handles
+  MFS residence. Draft Form 1040 prints zero line 6b and the lived-apart checkbox.
+  See [SSA-BENEFITS-GRAPH.md](../../../docs/ty2026/graphs/SSA-BENEFITS-GRAPH.md)
+  for remaining lump-sum, repayment, IRA and filing gates.
+
 - `student_loan_interest` reconciles 1098-E copies and loan payment records,
   including old-loan fees, capitalized interest, funding exclusions, corrections
   and borrower eligibility. It reuses the shared cap and AGI phaseout, with 2026
   amounts, then reaches Schedule 1 and the draft bundle. See the
   [current source contract](../../../docs/ty2026/graphs/STUDENT-LOANS-CURRENT.md)
-  for remaining foreign/SSA source and filing gates.
+  for remaining foreign sources, special SSA worksheets and filing gates.
 
 - `buildDraftReturnPdf2026` in `pdf/bundle.ts` runs the current strict source
   graph and assembles reconciled draft components in attachment order, followed

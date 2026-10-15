@@ -67,13 +67,14 @@ interest at $190,000 joint MAGI to a $1,250 deduction and $188,750 AGI, and chec
 that a fully phased-out claim alone does not select Schedule 1. A four-page
 synthetic joint draft was rendered and visually inspected.
 
-The AGI boundary test includes finalized taxable Social Security, the foreign
-income exclusion addback and other adjustments. A positive claim with gross
-Social Security but no finalized taxable amount is rejected, preventing the
-shared provisional-MAGI shortcut from silently omitting taxable benefits.
-The current public source path still lacks the SSA and Form 2555/4563/territory
-owners. Foreign housing deduction and territory exclusions therefore require
-explicit zero-source reviews; those source routes and any coordinated SSA
-worksheet calculation remain unfinished. Final 2026 worksheet reconciliation,
-current MeF serialization/rules, public catalog/CLI and ATS acceptance remain
-required. The node ledger stays `audit-required`.
+The AGI boundary tests cover taxable Social Security, the foreign income
+exclusion addback and other adjustments. The current SSA/RRB source now feeds
+the [benefit worksheet](./SSA-BENEFITS-GRAPH.md) before the shared student-loan
+phaseout; student-loan interest does not reduce the SSA worksheet operands.
+A source-to-PDF case verifies $85,000 wages plus $8,500 taxable benefits produce
+a $1,083 deduction and $92,417 AGI. Special SSA election/repayment/IRA worksheets
+remain unfinished. Form 2555/4563/territory source owners also remain unfinished;
+foreign housing deduction and territory exclusions require explicit zero-source
+reviews. Final 2026 worksheet reconciliation, current MeF serialization/rules,
+public catalog/CLI and ATS acceptance remain required. The node ledger stays
+`audit-required`.

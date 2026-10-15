@@ -284,11 +284,7 @@ Deno.test("2026 student-loan MAGI includes finalized taxable Social Security and
       o.fields.line21_student_loan_interest_from_agi
     ).find((x) => x !== undefined);
   };
-  assertThrows(
-    () => calc({ line6a_ss_gross: 10000 }),
-    Error,
-    "finalized taxable Social Security",
-  );
+  assertEquals(calc({ line6a_ss_gross: 10000 }), 1083);
   assertEquals(calc({ line6a_ss_gross: 10000, line6b_ss_taxable: 8500 }), 1083);
   assertEquals(
     calc({

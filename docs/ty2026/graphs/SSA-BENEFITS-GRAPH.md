@@ -1,32 +1,86 @@
-# TY2026 SSA and railroad-equivalent benefits
+# Current TY2026 Social Security and railroad-equivalent benefits
 
-Sources: the pinned [2026 draft Form 1040](../corpus/draft/f1040.pdf),
-[IRS Publication 915 (2025)](../corpus/authorities/p915--2025.pdf) as the
-latest published benefits/box guide available in this snapshot, and the
-existing Social Security taxability worksheet in the shared AGI node. Replace
-the publication comparator with the 2026 edition when issued, and check any
-revised Form 1040 instructions before product registration.
-The pinned [RRB issuer explanation and pension statement plan](./RRB-1099-GRAPH.md)
-distinguishes the SSEB RRB-1099 from RRB-1099-R, whose same-numbered boxes
-have different meanings. The shared `rrb1099r` node must not be registered
-as a second SSEB source beside this dedicated owner.
+Implemented October 15, 2026 in the isolated 2026 source registry. The public
+`ssa1099` claim contains current SSA-1099 and RRB-1099 statements; `general`
+supplies return owners and filing status. This is draft preparation, not a
+registered filing product.
 
-| Statement | Source boxes | Registered route |
-| --- | --- | --- |
-| SSA-1099 | Box 3 gross, box 4 repayments, box 5 net, box 6 withholding | Net benefits to 1040 line 6a and the AGI taxability worksheet; box 6 to line 25b. |
-| RRB-1099 | Box 3 gross SSEB, box 4 repayments, box 5 net SSEB, **box 10 withholding** | Same 1040 lines; the RRB-1099 box 6 is a workers' compensation offset and is not a withholding source. |
+## Sources and reuse
 
-The dedicated 2026 `ssa1099` source accepts a list of typed statements and
-requires box 5 to equal boxes 3 less 4 on each one. It sums signed net
-benefits across statements before sending the nonnegative total to line 6a.
-The shared AGI node calculates line 6b from other income and tax-exempt
-interest, and the dedicated 2026 Form 1040 sums line 25b withholding with
-other withholding. The current graph and PDF test covers one SSA-1099; a
-second graph test mixes SSA-1099 and RRB-1099 and checks box 10 withholding.
+- [IRC 86](https://uscode.house.gov/us/usc/119-118/t26/s86/) supplies the
+  benefit inclusion formula and modified-income exclusions.
+- [IRS Publication 915](https://www.irs.gov/publications/p915), currently the
+  **2025** edition, supplies Worksheet 1, statement box meanings, repayment
+  and prior-year election treatment. Final 2026 instructions must still be
+  reconciled before release.
+- The pinned [2026 draft Form 1040](../corpus/draft/f1040.pdf) supplies lines
+  6a/6b, the line 6d lived-apart checkbox and line 25b withholding.
 
-If aggregate repayments exceed benefits, the source emits an explicit
-diagnostic. That case needs its repayment-deduction path before it can be
-filed. Lump-sum benefits attributable to earlier years need the Publication
-915 election worksheet and remain outside the registered calculation. The
-2026 MeF element mapping, current-year instructions, and ATS comparison
-remain open.
+The existing 2025 statement validator is reused for boxes 3/4/5, repeated
+issued-copy references and form-specific withholding. The shared AGI income
+classification and ordinary benefit formula are reused; an optional MFS
+provisional-income branch supports 2026 without changing existing 2025 calls.
+The 2026 wrapper orders the SSA calculation before the existing student-loan
+phaseout, using annual student-loan configuration.
+
+## Source contract
+
+| Statement | Net benefits | Federal withholding | Retained informational amounts |
+| --- | --- | --- | --- |
+| SSA-1099 | Signed box 5 reconciles to box 3 minus box 4 | Box 6 | Workers' compensation already in box 3; Medicare premiums |
+| RRB-1099 | Signed SSEB box 5 reconciles to box 3 minus box 4 | **Box 10** | Box 6 is workers' compensation, not withholding; Medicare premiums |
+
+`inputs/social-security-source.ts` validates tax year, recipient, claim number,
+current-copy evidence, corrected-copy replacement references, monetary precision
+and complete statement inventory. Masked TINs require matching last four digits
+and a retained identity review. Spouse benefits require a joint return; child
+and other recipients cannot enter through the parent's claim. Duplicate claims
+and included superseded originals fail. Full statement facts remain available
+in `calculation_2026.source_input`.
+
+The source adds signed box 5 amounts across both owners before deciding whether
+repayment review is required. It retains cents until each printed line's
+combined total is rounded. Premiums and workers' compensation are not subtracted
+from the reported net benefit, and offsets are not added again. Premiums are
+retained as evidence; there is no automatic medical deduction.
+
+RRB-1099-R pension payments are a different source with different boxes; the
+shared mixed `rrb1099r` node is not registered here. See
+[RRB-1099-GRAPH.md](./RRB-1099-GRAPH.md).
+
+## Calculation and printing
+
+`nodes/agi.ts` retains the worksheet operands and taxable result. Signed income
+and losses remain signed. Tax-exempt interest enters the calculation, the
+supported foreign earned income exclusion is restored, and student-loan
+interest is excluded from worksheet deductions. The finalized taxable benefit
+then enters shared student-loan MAGI, total income, AGI and downstream tax.
+
+MFS requires the full-year spouse-residence answer. If the couple lived
+together, the calculation limits inclusion using both positive provisional
+income and net benefits. A filer living apart uses the ordinary single base
+and receives the draft line 6d checkbox. Zero taxable benefits print **0** on
+line 6b. The PDF bundle reconciles benefit withholding with investment and
+misclassified-wage withholding before producing Form 1040 line 25b.
+
+Tests cover both forms, joint signed offsets, cent rounding, corrected copies,
+wrong owners, worksheet bands, signed losses, exempt interest, foreign exclusion,
+MFS residence and coordinated student-loan MAGI. Two PDF scenarios verify the
+benefit amounts, withholding, Schedule 1 deduction, zero line 6b and checkbox.
+A six-page synthetic review artifact was rendered and visually inspected.
+
+## Remaining work and explicit boundaries
+
+The current source requires reviewed absence of prior-year lump sums,
+disability repayments to an employer/insurer, savings-bond/adoption exclusions,
+foreign housing deduction, territory exclusions and IRA contributions requiring
+coordinated benefit worksheets. Their source owners and worksheet integrations
+remain unfinished. Negative combined benefits stop for repayment deduction or
+credit review. Positive IRA deductions without internally finalized taxable
+benefits stop for Publication 590-A coordination; public inputs cannot assert
+a taxable-benefit amount.
+
+Implement and compare the lump-sum election, net-repayment relief and coordinated
+IRA worksheets before broadening these boundaries. Final 2026 instructions,
+current MeF serialization/business rules, public catalog/CLI and ATS acceptance
+remain release gates. The coverage ledger remains `audit-required`.

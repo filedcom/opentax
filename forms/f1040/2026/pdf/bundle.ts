@@ -1,3 +1,4 @@
+import type { calculateSocialSecuritySources2026 } from "../inputs/social-security-source.ts";
 import { PDFDocument, PDFName, rgb, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -125,9 +126,13 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const moving = retained<ReturnType<typeof calculateMovingSources2026>>(
     "f3903",
   );
+  const benefits = retained<
+    ReturnType<typeof calculateSocialSecuritySources2026>
+  >("ssa1099");
   if (
     Math.round(
-      (wages?.withholding ?? 0) + (b?.cents.federal_withholding ?? 0),
+      (wages?.withholding ?? 0) + (b?.cents.federal_withholding ?? 0) +
+        (benefits?.federal_withholding ?? 0),
     ) !== line("line25b_withheld_1099")
   ) {
     throw new Error(

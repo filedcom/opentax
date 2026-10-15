@@ -11,8 +11,9 @@ catalog, requires general filer facts, and runs `sourceRegistry2026` once.
 Caller-supplied Form 1040 totals are rejected. Executor diagnostics or missing
 settlement stop PDF generation. Each selected component recomputes its retained
 validated source input and reconciles its destination amounts to that execution.
-Information-return withholding also reconciles across investment and Form 8919
-sources before rendering.
+Information-return withholding also reconciles across investment, Form 8919
+and SSA/RRB benefit sources before rendering. Form 1040 prints taxable benefits,
+including zero, and the MFS full-year lived-apart indicator.
 
 The result contains PDF `bytes`, the execution `calculation`, one-based
 `attachments` with separate `formPages` and `statementPages`, `filingReady: false`,

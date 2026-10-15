@@ -1,3 +1,4 @@
+import { social_security_2026 } from "./social-security.ts";
 import { student_loan_interest_2026 } from "./student-loan-interest.ts";
 import { investments_2026 } from "./investments.ts";
 import { f3921_2026 } from "./f3921.ts";
@@ -112,6 +113,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     f3921_2026,
     investments_2026,
     student_loan_interest_2026,
+    social_security_2026,
     form6251_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
@@ -382,6 +384,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "f3903", fields: owner },
         { nodeType: "f3921", fields: owner },
         { nodeType: "investment_income", fields: owner },
+        { nodeType: "ssa1099", fields: owner },
         {
           nodeType: "student_loan_interest",
           fields: {

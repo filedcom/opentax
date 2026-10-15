@@ -342,13 +342,24 @@ const SSA_UPPER_THRESHOLD_MFJ = 44_000;
 const SSA_BASE_THRESHOLD_OTHER = 25_000;
 const SSA_UPPER_THRESHOLD_OTHER = 34_000;
 
-function computeSsaTaxable(
+export function computeSsaTaxable(
   ssaGross: number,
   otherIncome: number,
   taxExemptInterest: number,
   isMfj: boolean,
+  mfsLivedWithSpouse = false,
 ): number {
   if (ssaGross <= 0) return 0;
+  if (mfsLivedWithSpouse) {
+    // Pub. 915 Worksheet 1, lines 8, 17–19: both base amounts are zero.
+    return Math.min(
+      0.85 * ssaGross,
+      0.85 * Math.max(
+        0,
+        otherIncome + taxExemptInterest + 0.5 * ssaGross,
+      ),
+    );
+  }
 
   const baseThreshold = isMfj
     ? SSA_BASE_THRESHOLD_MFJ
@@ -644,6 +655,17 @@ export function remainingAllowedPassiveLoss(input: AgiInput): number {
 // This is what "other income" means for the provisional income calculation.
 function nonSsaIncome(input: AgiInput): number {
   return nonSsaIncomeBeforePal(input) - remainingAllowedPassiveLoss(input);
+}
+
+/** Shared income classification for Pub. 915 Worksheet 1. Callers supply
+ * separately reviewed exclusions not represented by the income graph. SLI is
+ * deliberately excluded from worksheet line 7 (IRC 86(b)(2)). */
+export function socialSecurityWorksheetIncome(input: AgiInput) {
+  return {
+    other_income: nonSsaIncome(input) - exclusions(input),
+    foreign_earned_income_exclusion: exclusions(input),
+    adjustments_except_student_loan: aboveLineDeductionsExceptSli(input),
+  };
 }
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
