@@ -106,6 +106,7 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
             filing_status: input.filing_status,
             taxable_income: chosen.line15TaxableIncome,
             taking_standard_deduction: chosen.method === "standard",
+            form6251_line1a: chosen.form6251Line1a,
             form6251_line1b: chosen.form6251Line1b,
             form6251_line2a: chosen.form6251Line2a,
           },

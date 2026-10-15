@@ -21,8 +21,8 @@ pinned template has 68 fields across the two printed pages.
 
 Changed destinations include Form 4137 on 16a, Form 8919 on 16b, Form 8959
 SE tax on 11 and wage/RRTA tax on 17b, plus W-2 uncollected FICA on 17c.
-The source graph currently accepts only its reviewed payroll/golden-parachute
-routes. The PDF's broader finalized-amount interface does not implement missing
+The source graph accepts reviewed payroll/golden-parachute routes and the
+bounded Form 6251 AMT route. The PDF's broader finalized-amount interface does not implement missing
 source calculators or establish taxpayer eligibility.
 
 Separate print details retain Form 4255 line selections for 1e/1f, SE exemption
@@ -45,18 +45,27 @@ $30 of W-2 uncollected FICA makes line 20 $793. A separate $100 golden-parachute
 tax makes line 21 $893. This verifies component reconciliation, not complete
 return eligibility, all attachments or IRS acceptance.
 
-## Form 6251 and complete bundle (remaining work)
+## Form 6251 (current October 15 component)
 
-The September historical prototype mapped Form 6251 line 1b, modeled
-adjustments, Part I/II totals and optional Part III worksheet lines, with
-cross-checks against Form 1040. That prototype's descriptor, six-page sample
-and bundle are not implemented in this current main-based checkout.
+The [current calculator contract](../graphs/FORM6251-CURRENT.md) now connects
+source deduction resolution and Form 3921 exercises to Schedule 2 line 2.
+The [2026 PDF component](../../../forms/f1040/2026/pdf/form6251.ts) uses the
+pinned 62-field inventory: identity, line 1a/1b/2a, supported ISO line 2i,
+Part I/II totals and applicable Part III lines. Unsupported adjustment fields
+stay blank because their sources are rejected by the calculator.
 
-The current deduction resolver emits the Form 6251 basis and senior-deduction
-adjustment handoffs. Full AMT source limits, separate printed 2b–2t adjustments,
-Part III calculations, draft PDF, current MeF and attachment selection remain
-unfinished. Build the 2026 calculator from audited shared 2025 logic and current
-sources before treating the existing handoffs as completed AMT.
+Before rendering, the component recomputes the source result and reconciles
+Form 1040 lines 11b, 12e, 14–16, Schedule 1-A line 43, itemized taxes when
+applicable, and Schedule 2 line 2. It requires matching filer identity and the
+calculated attachment trigger. The ordinary and preferential branches produce
+two static printed pages, remove the cover/widgets and preserve draft markings.
+Both pages of the preferential synthetic case were visually checked; $100,000
+of ISO spread and $20,000 of qualified dividends give $39,374 tentative minimum
+tax, $22,934 regular tax and $16,440 AMT in that component case.
+
+This does not implement the remaining Form 6251 sources or the historical
+prototype's complete bundle. Foreign tax, investment-interest elections,
+credit-driven attachment triggers and AMT disposition refigures remain held.
 
 The future complete PDF bundle must select and reconcile Schedule 2 when Form
 1040 line 17/23 requires it, require Form 6251 for AMT, and include all other

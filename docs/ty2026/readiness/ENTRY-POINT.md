@@ -1,5 +1,11 @@
 # TY2026 Form 1040 entry point — implementation plan
 
+Current AMT increment: source deduction results and reviewed Form 3921 exercise
+copies now feed the shared 2026 Form 6251 calculation, Schedule 2 and Form 1040
+line 17, with a reconciled two-page draft PDF. The
+[bounded AMT contract](../graphs/FORM6251-CURRENT.md) lists the still-rejected
+adjustments, foreign/credit branches and remaining filing work.
+
 Current-main update (October 15): the connected 2026 source tests now calculate
 ordinary income tax and refunds rather than injecting line 16. The pinned draft
 Publication 1040 provides all 8,248 Tax Table cells and the Tax Computation

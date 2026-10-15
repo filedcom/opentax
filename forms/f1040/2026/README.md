@@ -35,7 +35,7 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   mappings. Schedule 1 requires agreement with finalized AGI totals. Positive
   Schedule 2 section 965 installments remain held because the pinned draft's
   line 12/15 instructions conflict. The Schedule 2 graph sink currently accepts
-  reviewed W-2 payroll/golden-parachute, Form 4137, Form 8919 and Form 8959 sources.
+  reviewed W-2 payroll/golden-parachute, Form 4137, Form 8919, Form 8959 and Form 6251 sources.
 - Fourteen local rules reconcile income, tax, deductions, payments, refund and
   required attachments. They are arithmetic checks, not IRS MeF acceptance.
 - Draft Form 1040 and Schedule 3-A PDF components use pinned IRS hashes and the
@@ -63,8 +63,8 @@ checked draft 2026 Tax Table; final IRS revisions remain a filing gate.
 The 2026 `income_tax_calculation` node receives resolved taxable income and
 signed AMT inputs from deduction resolution. It derives Form 1040 line 16 and
 forwards tax/preference facts to the AMT, child-credit, foreign-tax-credit and
-Form 8978 owners. Those pending destinations still need their 2026 calculators;
-the income-tax node does not imply they are complete.
+Form 8978 owners. The bounded AMT route below now consumes its handoff; the other
+destinations still need their 2026 calculators.
 
 The [August 28 draft Publication 1040](../../../docs/ty2026/corpus/draft/p1040.pdf)
 is pinned at SHA-256
@@ -90,6 +90,43 @@ Form 8615, parent elections, lump-sum and PFIC/reporting-year tax adjustments ar
 rejected as unsupported inputs here until their calculation order is implemented.
 The shared special-rate foreign worksheet still rejects capital-gain-excess
 refigures. No asserted tax amount is exposed by the public source catalog.
+
+## AMT and ISO exercise sources
+
+The 2026 Form 6251 node now follows deduction and income-tax calculation, sends
+line 11 to Schedule 2 line 2, and reaches Form 1040 line 17 through Schedule 2.
+Schedule 2's filing decision covers both its income-tax and other-tax sections.
+All seventeen source-graph cases run the AMT calculation; the ISO case derives
+$16,830 of AMT from issued-copy exercise facts, with no asserted tax input.
+
+The 2025 and 2026 nodes call the same exemption, ordinary AMT and Part III
+arithmetic. Explicit 2026 policy supplies exemptions, phaseout starts/rates,
+MFS addition and tax brackets. The 2025 wrappers retain their original defaults.
+For current source and legal details, see the [AMT contract](../../../docs/ty2026/graphs/FORM6251-CURRENT.md).
+The connected graph supports standard/itemized tax addback, the separately
+resolved senior addback, and unrestricted ISO exercises retained through year
+end. Domestic qualified-dividend, net-capital-gain and 1250/28% calculations
+are internal building blocks until their source owners are connected.
+
+The public Form 3921 adapter reuses the existing lot calculation with an explicit
+exercise year. It validates return ownership, unique issued-copy references,
+grant/exercise dates, unrestricted rights, no option cost, no exercise-year
+sale, and a year-end brokerage review covering every copy. It sums lot cents
+before rounding line 2i and retains regular/AMT basis for later dispositions.
+The fixture is synthetic; a real completed-year claim needs its own records.
+
+The draft Form 6251 PDF recalculates the source result and checks Form 1040
+income, deductions and regular tax, Schedule A taxes, Schedule 1-A senior
+amount and Schedule 2 AMT. It fills the canonical fields, removes the cover and
+widgets, preserves draft markings and prints both pages. The PDF tests cover
+ordinary/preferential cases, senior/itemized reconciliation and mismatches;
+both preferential-case pages were rendered and visually reviewed.
+
+This is still a bounded calculation and draft component. Refund/NOL/PAB and
+business adjustments, AMT dispositions and carryovers, foreign exclusions/FTC,
+Form 4952 elections, Schedule J and credit-driven filing triggers are rejected
+until their source owners and refigures are connected. Final 2026 instructions,
+complete attachment selection, MeF and filing registration remain unfinished.
 
 ## W-2 and AGI source integration
 

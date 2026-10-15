@@ -11,6 +11,7 @@ import {
 // Only reviewed, connected sources are accepted here. The pure finalizer has
 // the full line contract; each remaining source must be audited before wiring.
 export const inputSchema = schedule2Input2026Schema.pick({
+  line2_amt: true,
   line16a_form4137_tip_tax: true,
   line16b_form8919_wage_tax: true,
   line17b_medicare_wage_tax: true,
@@ -35,12 +36,14 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
           fields: {
             ...input,
             ...lines,
-            file_schedule2: lines.line21_total_additional_taxes > 0,
+            file_schedule2: lines.line3_part1_tax > 0 ||
+              lines.line21_total_additional_taxes > 0,
           },
         },
         {
           nodeType: "f1040",
           fields: {
+            line17_additional_taxes: lines.line3_part1_tax,
             line23_other_taxes: lines.line21_total_additional_taxes,
             schedule2_line20: lines.line20_employment_and_other_taxes,
           },

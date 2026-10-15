@@ -33,6 +33,7 @@ Deno.test("2026 deduction node routes one selected deduction and AMT basis to th
       filing_status: FilingStatus.Single,
       taxable_income: 124_900,
       taking_standard_deduction: true,
+      form6251_line1a: 19_100,
       form6251_line1b: 130_900,
       form6251_line2a: 16_100,
     },

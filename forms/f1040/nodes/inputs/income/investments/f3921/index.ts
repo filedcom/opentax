@@ -62,10 +62,18 @@ export interface IsoAmtBasisLot {
 export function buildIsoAmtBasisLedger(
   source: unknown,
 ): readonly IsoAmtBasisLot[] {
+  return buildIsoAmtBasisLedgerForYear(source, 2025);
+}
+
+/** Same source-lot calculation with an explicit exercise year. */
+export function buildIsoAmtBasisLedgerForYear<Year extends 2025 | 2026>(
+  source: unknown,
+  taxYear: Year,
+): readonly (Omit<IsoAmtBasisLot, "tax_year"> & { readonly tax_year: Year })[] {
   const parsed = inputSchema.parse(source);
   return parsed.f3921s.map((item) => {
-    if (!item.box2_date_option_exercised.startsWith("2025-")) {
-      throw new Error("Form 3921 line 2i exercise must occur in 2025");
+    if (!item.box2_date_option_exercised.startsWith(`${taxYear}-`)) {
+      throw new Error(`Form 3921 line 2i exercise must occur in ${taxYear}`);
     }
     const regularBasisCents = Math.round(
       item.box3_exercise_price_per_share * item.box5_shares_transferred * 100,
@@ -81,7 +89,7 @@ export function buildIsoAmtBasisLedger(
     }
     const adjustmentCents = Math.max(0, fairValueCents - regularBasisCents);
     return {
-      tax_year: 2025 as const,
+      tax_year: taxYear,
       source_document_reference: item.source_document_reference,
       corporation_ein: item.corporation_ein.replaceAll("-", ""),
       employee_tin: item.employee_tin.replaceAll("-", ""),

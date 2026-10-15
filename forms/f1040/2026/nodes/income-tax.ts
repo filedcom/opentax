@@ -10,7 +10,7 @@ import {
   preferentialTax,
 } from "../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/preferential_tax.ts";
 import { f1040_2026_node } from "./f1040.ts";
-import { form6251 } from "../../nodes/intermediate/forms/taxes/amt/form6251/index.ts";
+import { form6251_2026 } from "./form6251.ts";
 import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
 import { form_1116 } from "../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import { form8978_reporting_year } from "../../nodes/intermediate/worksheets/taxes/passthrough/form8978_reporting_year/index.ts";
@@ -23,6 +23,7 @@ const accumulated = z.union([money, z.array(money)]);
 export const inputSchema = z.object({
   taxable_income: money.int(),
   filing_status: z.nativeEnum(FilingStatus),
+  form6251_line1a: money.int().optional(),
   form6251_line1b: z.number().finite().int(),
   form6251_line2a: money.int(),
   taking_standard_deduction: z.boolean(),
@@ -148,7 +149,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
   // These shared identities do not register or execute legacy calculators in 2026.
   readonly outputNodes = new OutputNodes([
     f1040_2026_node,
-    form6251,
+    form6251_2026,
     f8812,
     form_1116,
     form8978_reporting_year,
@@ -169,6 +170,9 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
         {
           nodeType: "form6251",
           fields: {
+            ...(input.form6251_line1a === undefined
+              ? {}
+              : { line1a_deductions_without_senior: input.form6251_line1a }),
             regular_tax: tax,
             regular_tax_income: input.form6251_line1b,
             regular_taxable_income: input.taxable_income,

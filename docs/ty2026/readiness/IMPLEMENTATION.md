@@ -1,5 +1,11 @@
 # TY2026 Form 1040 end-to-end implementation plan
 
+Current AMT increment: source deduction results and reviewed Form 3921 exercise
+copies now feed the shared 2026 Form 6251 calculation, Schedule 2 and Form 1040
+line 17, with a reconciled two-page draft PDF. The
+[bounded AMT contract](../graphs/FORM6251-CURRENT.md) lists the still-rejected
+adjustments, foreign/credit branches and remaining filing work.
+
 Target: a `f1040:2026` return can be created, populated, calculated, validated,
 exported to MeF XML and IRS PDF, and checked against TY2026 ATS scenarios for
 the complete Form 1040 family supported by the TY2025 implementation. This

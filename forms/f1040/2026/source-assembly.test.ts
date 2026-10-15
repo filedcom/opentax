@@ -1,3 +1,6 @@
+import { form6251_2026 } from "./nodes/form6251.ts";
+import { f3921_2026 } from "./inputs/f3921.ts";
+import { syntheticIso2026 } from "./inputs/iso.fixture.ts";
 import { income_tax_2026 } from "./nodes/income-tax.ts";
 import { moving_expenses_2026 } from "./inputs/moving-expenses.ts";
 import {
@@ -50,6 +53,7 @@ import { FilingStatus } from "../nodes/types.ts";
 for (
   const scenario of [
     "wages",
+    "iso",
     "moving",
     "moving-excess",
     "moving-storage",
@@ -91,10 +95,12 @@ for (
   const seniorTips = scenario === "tips-overtime-senior";
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
     // The connected ordinary-income path calculates line 16 from source deductions.
-    // Remaining credit/AMT owners are visible pending routes, not filing approval.
+    // Remaining credit owners are visible pending routes, not filing approval.
     const registry = {
       start: buildStartNode(inputNodes),
       income_tax_calculation: income_tax_2026,
+      form6251: form6251_2026,
+      f3921: f3921_2026,
       general: general_2026,
       cash_charity: cash_charity_2026,
       schedule_a: schedule_a_2026,
@@ -134,6 +140,7 @@ for (
         tax_residency: "full_year_citizen_or_resident",
         short_tax_year_due_to_accounting_change: false,
       },
+      ...(scenario === "iso" ? { f3921: syntheticIso2026() } : {}),
       ...(moving
         ? {
           f3903: (() => {
@@ -450,6 +457,7 @@ for (
     );
     const expectedTax: Record<string, number> = {
       wages: 24614,
+      iso: 24614,
       moving: 24364,
       "moving-excess": 24844,
       "moving-storage": 24134,
@@ -468,6 +476,7 @@ for (
     };
     const expectedRefund: Record<string, number> = {
       wages: 5387,
+      iso: 0,
       moving: 5637,
       "moving-excess": 5157,
       "moving-storage": 5867,
@@ -491,6 +500,33 @@ for (
       expectedTax[scenario],
     );
     assertEquals(result.pending.form6251.regular_tax, expectedTax[scenario]);
+    assertEquals(result.pending.form6251.file_form6251, scenario === "iso");
+    assertEquals(
+      result.pending.f1040.line17_additional_taxes,
+      scenario === "iso" ? 16830 : 0,
+    );
+    if (scenario === "iso") {
+      assertObjectMatch(result.pending.form6251, {
+        calculation_2026: {
+          lines: {
+            line1a: 16600,
+            line1b: 133401,
+            line2a: 16100,
+            line2i: 100000,
+            line4: 249501,
+            line5: 90100,
+            line6: 159401,
+            line7: 41444,
+            line9: 41444,
+            line10: 24614,
+            line11: 16830,
+          },
+        },
+      });
+      assertEquals(result.pending.schedule2.file_schedule2, true);
+      assertEquals(result.pending.schedule2.line2_amt, 16830);
+      assertEquals(result.pending.f1040.line37_amount_owed, 11443);
+    }
     if (ct2) {
       assertEquals(result.pending.f1040.line23_other_taxes, 360);
       assertEquals(result.pending.f1040.line25c_other_withheld, 360);

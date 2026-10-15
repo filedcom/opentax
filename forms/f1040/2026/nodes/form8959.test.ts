@@ -45,7 +45,11 @@ Deno.test("2026 Medicare separates wage/RRTA tax from self-employment tax and wi
     schedule2_2026.compute(context, taxes).outputs.find((o) =>
       o.nodeType === "f1040"
     )!.fields;
-  assertEquals(settled, { line23_other_taxes: 1800, schedule2_line20: 1350 });
+  assertEquals(settled, {
+    line17_additional_taxes: 0,
+    line23_other_taxes: 1800,
+    schedule2_line20: 1350,
+  });
   assertEquals(output.find((o) => o.nodeType === "f1040")!.fields, {
     line25c_other_withheld: 1350,
   });

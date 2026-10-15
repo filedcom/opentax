@@ -1,3 +1,5 @@
+import { f3921_2026 } from "./f3921.ts";
+import { form6251_2026 } from "../nodes/form6251.ts";
 import { moving_expenses_2026 } from "./moving-expenses.ts";
 import { mortgage_interest_2026 } from "./mortgage-interest.ts";
 import { educator_expenses_2026 } from "./educator-expenses.ts";
@@ -105,6 +107,8 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     mortgage_interest_2026,
     educator_expenses_2026,
     moving_expenses_2026,
+    f3921_2026,
+    form6251_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
     form8919_2026,
@@ -372,6 +376,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "mortgage_interest", fields: owner },
         { nodeType: "educator_expenses", fields: owner },
         { nodeType: "f3903", fields: owner },
+        { nodeType: "f3921", fields: owner },
+        {
+          nodeType: "form6251",
+          fields: {
+            taxpayer_ssn: owner.taxpayer_ssn,
+            ...(owner.spouse_ssn ? { spouse_ssn: owner.spouse_ssn } : {}),
+          },
+        },
         { nodeType: "vehicle_loan_interest", fields: owner },
         { nodeType: "form4137", fields: owner },
         { nodeType: "form8919", fields: owner },
