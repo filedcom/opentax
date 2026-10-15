@@ -20,8 +20,8 @@ the same review when both claims exist, rejects inconsistent facts, and retains
 its distinct less-than-half refundable-credit boundary. Dependency alone does
 not decide child tax.
 
-For the connected wage/investment sources, gross unearned income is total income
-less wages. Line 1 uses AGI without earned income, or total income less wages and
+For connected wage/investment sources without business activity, gross unearned
+income is total income less wages. Line 1 uses AGI without earned income, or total income less wages and
 the savings penalty with earned income. The connected Schedule D netting and
 annual capital-loss limit reach these operands before this calculation.
 Eligibility and line 1 remain separate, allowing a required form to stop after
@@ -34,12 +34,30 @@ a filing requirement, calculation stops for the remaining gross-income and
 special-filing review. This is not a complete voluntary-return/filing-requirement
 classifier.
 
-Business, farm, rental, NOL and foreign-income activity is explicitly gated in
-this source claim. Non-W-2 scholarships, qualified disability trusts and directly
-connected itemized expenses also need their source owners. Existing business
-child-income screening remains in place when no complete child-tax review is
-provided; this implementation does not convert education business earnings into
-Form 8615 earnings.
+The child claim now links the actual Schedule C inventory. A retained business
+workpaper reuses activity validation, gross/net calculations and the allocated
+half-SE deduction. Service-only support earnings use gross business income;
+line 1 excludes service net income, with losses added back under the alternate
+worksheet. Statutory employee gross is counted once through Schedule C, while
+its net reaches line 1 and the dependent deduction. Material-capital activities
+use reasonable compensation limited to 30% of profit after the allocated SE
+deduction; when there is no profit the instruction removes that cap. The workpaper
+preserves both the uncapped reviewed allowance and the loss add-back. A child
+with no earned income and no loss uses AGI for line 1.
+
+Filing evidence also includes business gross receipts and the actual Schedule SE
+filing requirement. Dependent deductions continue using net income after half-SE;
+education retains its own net-service support calculation. Both downstream owners
+reconcile the complete business inventory to the child-tax record rather than
+accepting a second set of business facts. Tests distinguish the child-tax and
+education support boundaries using the same sources.
+
+Farm, partnership, rental, NOL and foreign-income activity still need their
+source owners. Non-W-2 scholarships, qualified disability trusts and directly
+connected itemized expenses also remain. Existing business source limits (including
+no inventory/COGS or unsupported assets) still apply; the child-tax route does
+not expand those business-source capabilities. Under-24 screening reuses the
+business child workpaper when no complete child-tax claim exists.
 
 ## Parent and sibling returns
 
@@ -94,9 +112,13 @@ parent/custody/remarriage selection, missing or inconsistent cross-return facts,
 sibling allocation, capital losses, actual early-withdrawal penalties,
 nondependent children, Form 8615/education boundaries, AMT and stop forms.
 Seven PDF bundle cases cover ordinary and preferential tax, both stop points,
-sibling ratios, AMT, and rounding the ratio to one.
+sibling ratios, AMT, and rounding the ratio to one. Three additional business
+bundles reconcile Schedule C, SE and QBI with ordinary, material-capital and
+loss/stop Form 8615 results. Typed source tests cover service gross versus net,
+losses with/without wages, mixed activities, penalties, statutory wages,
+capital compensation with/without profit, filing evidence and source mismatches.
 
-Complete business and other earned/unearned source classification, remaining
+Complete remaining earned/unearned source classification, remaining
 filing-requirement cases, connected itemized-expense allocation, advanced family
 worksheets, final forms/instructions, current MeF and ATS acceptance remain
 required. This is progress toward full 2025 parity, not completion of that goal.

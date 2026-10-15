@@ -81,10 +81,10 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - The 2025 and 2026 Tax Table, ordinary-rate and preferential worksheets share
   the same calculations with explicit year-specific configurations. The existing
   2025 entry points retain their behavior.
-- `f8615` derives wage/investment child eligibility, selects a linked parent
+- `f8615` derives wage/investment/business child eligibility, selects a linked parent
   return and reconciles sibling worksheets before using the shared annual tax
   calculator. The tax reaches Form 1040, AMT and credit limits, with a reconciled
-  draft Form 8615 including stop forms and worksheet checkboxes. Business,
+  draft Form 8615 including stop forms and worksheet checkboxes. Remaining income sources,
   advanced family worksheets and remaining filing cases still need completion;
   see the [current child-tax scope](../../../docs/ty2026/graphs/FORM8615-CURRENT.md).
 - `nodes/config/2026-income.ts` contains the audited subset of 2026 constants
@@ -164,9 +164,16 @@ sources use preferential calculations; foreign calculations remain internal
 building blocks until their 2026 source owners are connected. Schedule J,
 parent elections, lump-sum distribution tax and PFIC/reporting-year tax
 adjustments are rejected until their calculation order is implemented.
-Form 8615 now uses the reviewed wage/investment child-tax route described above.
+Form 8615 now uses the reviewed wage/investment/business child-tax route described above.
 The shared special-rate foreign worksheet still rejects capital-gain-excess
 refigures. No asserted tax amount is exposed by the public source catalog.
+
+The child-tax business workpaper links the actual Schedule C inventory and keeps
+gross support earnings, line-1 service net, loss add-backs and capital-service
+compensation separate from the education and dependent-deduction calculations.
+Business gross income and the actual SE requirement also establish filing evidence.
+Three business PDF cases reconcile Schedule C, SE, QBI and Form 8615 through
+regular tax; source tests cover support boundaries and mismatched inventories.
 
 ## AMT and ISO exercise sources
 

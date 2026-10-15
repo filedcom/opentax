@@ -374,18 +374,19 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "f8615",
       fields: {
+        ...(business_sources_2026 ? { business_sources_2026 } : {}),
         income_context: {
           agi: earned?.auto_agi,
           total_income: returnIncome?.line9_total_income ?? 0,
           wages: wageIncome,
           early_withdrawal_penalty: input.line18_early_withdrawal ?? 0,
-          unsupported_child_income_activity: Boolean(business_sources_2026) || [
-            input.line3_schedule_c,
+          unsupported_child_income_activity: [
+            business ? 0 : input.line3_schedule_c,
             input.line6_schedule_f,
             input.line5_schedule_e,
             input.line8a_nol_deduction,
             input.line8d_foreign_earned_income_exclusion,
-            input.line15_se_deduction,
+            business ? 0 : input.line15_se_deduction,
           ].some((v) => (v ?? 0) !== 0),
         },
       },

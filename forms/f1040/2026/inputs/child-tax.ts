@@ -1,3 +1,6 @@
+import { businessReturnSource2026Schema } from "./business-qbi.ts";
+import { businessChildIncome2026 } from "./business-child-income.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
 import { standardDeduction2026 as deductionConfig } from "../../nodes/config/2026-income.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -18,6 +21,7 @@ export const childTaxClaim2026Schema = z.object({
     tax_year: z.literal(2026),
     record_reference: ref,
     child_tin: tin,
+    business_inventory_reference: ref.optional(),
     parent_form8814_election_for_this_child: z.literal(false),
     all_child_income_sources_included: z.literal(true),
     no_nonw2_scholarship_or_qualified_disability_trust_income: z.literal(true),
@@ -47,6 +51,7 @@ export const childTaxClaim2026Schema = z.object({
 }).strict();
 export const childTaxInput2026Schema = childTaxClaim2026Schema.partial().extend(
   {
+    business_sources_2026: businessReturnSource2026Schema.optional(),
     child_context: z.object({
       taxpayer_ssn: tin,
       taxpayer_dob: z.string().date(),
@@ -110,6 +115,24 @@ export function resolveChildTax2026(
       "Child cannot be their own parent in child-tax eligibility",
     );
   }
+  if (
+    Boolean(input.business_sources_2026) !==
+      Boolean(claim.business_inventory_reference) ||
+    input.business_sources_2026 &&
+      (claim.business_inventory_reference !==
+          input.business_sources_2026.record_reference ||
+        input.business_sources_2026.taxpayer_tin !== c.taxpayer_ssn ||
+        input.business_sources_2026.filing_status !== c.filing_status)
+  ) {
+    throw new Error(
+      "Child-tax business inventory must bind this filer and the actual business sources",
+    );
+  }
+  const business = input.business_sources_2026
+    ? businessChildIncome2026(input.business_sources_2026)
+    : null;
+  const supportEarned = income.wages +
+    (business?.earned_income_for_support ?? 0);
   const age = 2026 - Number(c.taxpayer_dob.slice(0, 4)) +
     (c.taxpayer_dob.endsWith("-01-01") ? 1 : 0);
   const fullTimeStudent = claim.full_time_student_months.length >= 5;
@@ -121,15 +144,26 @@ export function resolveChildTax2026(
     r.alive_on_2026_12_31
   );
   const ageApplies = age < 18 ||
-    (age === 18 || age < 24 && fullTimeStudent) && income.wages * 2 <= support;
+    (age === 18 || age < 24 && fullTimeStudent) && supportEarned * 2 <= support;
   // The filing/age tests use gross unearned income; line 1 has its own
   // deduction worksheet and can be lower, requiring a stop-after-line-3 form.
-  const grossUnearned = Math.max(0, income.total_income - income.wages);
+  const grossUnearned = Math.max(
+    0,
+    roundWholeDollars(
+      income.total_income - income.wages - (business?.schedule1_line3 ?? 0) +
+        (business?.unearned_business_income ?? 0),
+    ),
+  );
   const line1 = Math.max(
     0,
-    income.wages === 0
-      ? income.agi
-      : income.total_income - income.wages - income.early_withdrawal_penalty,
+    roundWholeDollars(
+      business && (supportEarned > 0 || business.loss_addback > 0)
+        ? income.total_income + business.loss_addback - income.wages -
+          business.earned_income_for_line1 - income.early_withdrawal_penalty
+        : income.wages === 0
+        ? income.agi
+        : income.total_income - income.wages - income.early_withdrawal_penalty,
+    ),
   );
   const baseThreshold = deductionConfig.standardDeductionBase[c.filing_status];
   const blindAddition = c.taxpayer_blind
@@ -138,18 +172,32 @@ export function resolveChildTax2026(
   const basicThreshold = c.filing_status === FilingStatus.MFS
     ? 5
     : baseThreshold;
-  const filingRequiredProven = c.taxpayer_can_be_claimed_as_dependent
+  const deductionEarned = Math.max(
+    0,
+    income.wages +
+      (business?.rows.reduce(
+        (n, b) => n + b.net_profit - b.allocated_se_deduction,
+        0,
+      ) ?? 0),
+  );
+  const grossIncomeForFiling = income.total_income -
+    (business?.schedule1_line3 ?? 0) +
+    (business?.rows.reduce((n, b) => n + b.gross_income, 0) ?? 0);
+  const incomeFilingRequired = c.taxpayer_can_be_claimed_as_dependent
     ? grossUnearned > deductionConfig.dependentMinimum + blindAddition ||
-      income.wages > baseThreshold + blindAddition ||
-      income.total_income >
+      deductionEarned > baseThreshold + blindAddition ||
+      grossIncomeForFiling >
         Math.max(
             deductionConfig.dependentMinimum,
             Math.min(
-              income.wages,
+              deductionEarned,
               baseThreshold - deductionConfig.dependentEarnedIncomeAddition,
             ) + deductionConfig.dependentEarnedIncomeAddition,
           ) + blindAddition
-    : income.total_income >= basicThreshold;
+    : grossIncomeForFiling >= basicThreshold +
+        (c.filing_status === FilingStatus.MFS ? 0 : blindAddition);
+  const filingRequiredProven = incomeFilingRequired ||
+    Boolean(business?.self_employment_filing_required);
   const meetsOtherTests = grossUnearned > 2700 && ageApplies && parentAlive &&
     c.filing_status !== FilingStatus.MFJ;
   if (meetsOtherTests && !filingRequiredProven) {
@@ -162,11 +210,13 @@ export function resolveChildTax2026(
     age,
     full_time_student: fullTimeStudent,
     support,
-    earned_income_for_support: income.wages,
+    earned_income_for_support: supportEarned,
+    business_workpaper: business,
     parent_alive: parentAlive,
     gross_unearned_income: grossUnearned,
     line1_unearned_income: line1,
     filing_required_proven: filingRequiredProven,
+    gross_income_for_filing: grossIncomeForFiling,
     applies,
   };
   if (!applies) {

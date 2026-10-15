@@ -87,8 +87,11 @@ under the [2026 Form 8615 instructions, line 1](https://www.irs.gov/pub/irs-dft/
 It removes service-business income before the SE adjustment, restores business
 losses so they cannot hide investment income, retains income attributable to
 capital, deducts the savings early-withdrawal penalty, and rounds the line-1
-amount once. More than $2,700 still stops for the unfinished child-tax owner;
-passing this screen is not implementation of Form 8615 or its support test.
+amount once. More than $2,700 requires the reviewed child-tax source route.
+That route now reconciles the same business inventory, school, support and
+living-parent facts while preserving Form 8615's separate gross-service and
+capital-compensation rules. See [current child-tax scope](FORM8615-CURRENT.md);
+passing the deduction screen alone is not a complete child-tax review.
 
 Tests cover exact half-support and cent-over boundaries, the capital cap and a
 lower reasonable allowance, statutory gross versus deduction net, source/owner

@@ -97,9 +97,10 @@ monthly allocations for student/disability rules. See the
 [care source contract](FORM2441-CURRENT.md#supported-business-earned-income).
 Education support and dependent deductions now use distinct earned-income
 bridges, including source-reviewed personal services, the material-capital limit,
-statutory gross/net differences and the actual half-SE deduction. Potential child
-tax remains separately screened; [education scope](EDUCATION-CURRENT.md#business-earnings-and-dependent-deductions)
-describes the supported sources and remaining Form 8615 gate.
+statutory gross/net differences and the actual half-SE deduction. Child tax now
+uses the same sources with its own support and line-1 workpaper; see the
+[child-tax scope](FORM8615-CURRENT.md). The guard remains for potential child-tax
+returns without the required review.
 
 Next work includes information-return receipts, COGS, depreciation, home office,
 other business debt, at-risk/passive losses, benefits, optional SE methods,
@@ -149,3 +150,13 @@ suites passed. Focused typed graph/PDF/router tests and unit verification passed
 The 31-page synthetic business QA PDF was reopened to confirm no annotations or
 AcroForm and visually inspected, including joint owners, overflow detail, losses,
 statutory wages and the $433 SE threshold case. This is not ATS acceptance.
+
+## Child-tax integration
+
+The reviewed child-tax claim now links the actual Schedule C inventory. It
+reuses business gross/net results and the allocated SE deduction while keeping
+Form 8615 support earnings and regular/alternate line 1 separate from education
+and dependent-deduction amounts. Complete source reconciliation, loss add-backs,
+material-capital compensation, statutory wages and three full draft bundles are
+covered in [FORM8615-CURRENT.md](FORM8615-CURRENT.md). Remaining business source
+limits and final filing gates still apply.

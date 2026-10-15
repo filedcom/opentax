@@ -7,7 +7,7 @@ import {
   businessReturnSource2026Schema,
   resolveBusinessQbi2026,
 } from "../inputs/business-qbi.ts";
-import { businessPersonalServices2026 } from "../inputs/business-personal-services.ts";
+import { businessChildIncome2026 } from "../inputs/business-child-income.ts";
 import {
   calculateCapitalGains2026,
   capitalGainInput2026Schema,
@@ -74,7 +74,10 @@ export function calculateDeductionSelection2026(
       childTax.source_input.income_context.agi !== input.agi ||
       childTax.source_input.income_context.total_income !==
         input.form8615_total_income ||
-      childTax.source_input.income_context.wages !== input.wage_income_from_agi)
+      childTax.source_input.income_context.wages !==
+        input.wage_income_from_agi ||
+      JSON.stringify(childTax.source_input.business_sources_2026) !==
+        JSON.stringify(input.business_sources_2026))
   ) {
     throw new Error(
       "Child-tax review must reconcile the deduction owner's identity and income sources",
@@ -100,36 +103,28 @@ export function calculateDeductionSelection2026(
   let unearned = (input.form8615_total_income ?? input.agi) -
     (input.dependent_earned_income ?? 0);
   let businessChildWorkpaper:
-    | ReturnType<typeof businessPersonalServices2026>
+    | ReturnType<typeof businessChildIncome2026>
     | undefined;
   if (
     input.business_sources_2026 && input.taxpayer_dob &&
     input.taxpayer_dob > "2003-01-01" &&
     input.filing_status !== FilingStatus.MFJ
   ) {
-    businessChildWorkpaper = businessPersonalServices2026(
+    businessChildWorkpaper = businessChildIncome2026(
       input.business_sources_2026,
     );
-    // i8615 line 1 restores business losses and excludes ordinary service net
-    // before the half-SE deduction. Capital-produced income remains unearned.
-    const capitalProduced = businessChildWorkpaper.rows.reduce(
-      (n, r) =>
-        n +
-        (r.capital_limit === null
-          ? 0
-          : Math.max(0, r.net_profit - r.education_earned_income)),
-      0,
-    );
     unearned = roundWholeDollars(
-      (input.form8615_total_income ?? input.agi) -
-        input.wage_income_from_agi! - businessAmounts!.schedule1_line3 +
-        capitalProduced - (input.form8615_early_withdrawal_penalty ?? 0),
+      (input.form8615_total_income ?? input.agi) +
+        businessChildWorkpaper.loss_addback -
+        input.wage_income_from_agi! -
+        businessChildWorkpaper.earned_income_for_line1 -
+        (input.form8615_early_withdrawal_penalty ?? 0),
     );
   }
   // The public source graph supplies DOB. Do not open the dependent wage
   // deduction route by silently applying ordinary rates to a potential 8615
-  // return. Parent/student/support eligibility and the child's tax owner remain
-  // pending; the annual threshold and January 1 boundary are from i8615 (2026).
+  // return. Parent/student/support evidence is supplied by the child-tax route;
+  // the annual threshold and January 1 boundary are from i8615 (2026).
   if (
     input.taxpayer_dob && input.taxpayer_dob > "2003-01-01" &&
     input.filing_status !== FilingStatus.MFJ &&

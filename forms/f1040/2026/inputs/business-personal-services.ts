@@ -54,6 +54,7 @@ export function businessPersonalServices2026(raw: BusinessReturnSource2026) {
       owner_tin: b.source.owner_tin,
       review: evidence,
       net_profit: b.lines.line31,
+      gross_income: b.lines.line7,
       statutory_gross_income: statutory ? b.lines.line1 : 0,
       allocated_se_deduction: qbi.allocated_se_deduction,
       capital_limit: capitalCap,
@@ -62,6 +63,9 @@ export function businessPersonalServices2026(raw: BusinessReturnSource2026) {
   });
   return {
     rows,
+    self_employment_filing_required: r.business.owners.some((o) =>
+      o.owner_tin === r.source_input.taxpayer_tin && o.schedule_se !== undefined
+    ),
     // Nonjoint refundability uses only the primary filer's own services.
     taxpayer_education_earned_income: rows.filter((b) =>
       b.owner_tin === r.source_input.taxpayer_tin

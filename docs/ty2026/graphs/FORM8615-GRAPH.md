@@ -8,11 +8,11 @@ They are research sources until final release. Reconcile final 1040, Schedule D,
 Schedule J, Form 2555, Form 8814 and current MeF rules before filing.
 
 Current implementation (October 15): the reviewed `f8615` source route now
-connects wage/investment child eligibility, parent selection, sibling worksheets,
+connects wage/investment/business child eligibility, parent selection, sibling worksheets,
 shared annual tax, credit/AMT handoffs and a reconciled draft attachment. See
 [FORM8615-CURRENT.md](FORM8615-CURRENT.md) for the exact source contract and tests.
-The blanket under-24 guard remains when a qualifying review is absent. Business,
-advanced family worksheets, remaining filing cases and filing registration still
+The blanket under-24 guard remains when a qualifying review is absent. Remaining
+income sources, advanced family worksheets, filing cases and filing registration still
 need completion; the full contract below remains the target.
 
 ## Return ownership and source facts

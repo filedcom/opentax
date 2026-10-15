@@ -170,6 +170,8 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
         child.source_input.income_context.agi !== input.agi ||
         child.source_input.income_context.wages !==
           input.earned_income_from_agi ||
+        JSON.stringify(child.source_input.business_sources_2026) !==
+          JSON.stringify(input.business_sources_2026) ||
         facts.parent_alive !== review.at_least_one_parent_alive ||
         facts.support !== support ||
         JSON.stringify(
