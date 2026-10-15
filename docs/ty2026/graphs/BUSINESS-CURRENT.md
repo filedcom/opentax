@@ -91,8 +91,12 @@ is connected. Active nontrading business income is excluded from NIIT only after
 its source review. Potential Form 461 losses and negative-AGI/NOL cases stop for
 their missing owners. EIC and ACTC now consume this inventory through replayed earned-income
 worksheets, including signed losses, statutory gross wages and the three-child
-payroll method. Dependent care, education support and dependent deductions remain
-guarded until their distinct earned-income definitions and allocations are connected.
+payroll method. Dependent care now consumes the same sources before benefit
+exclusion and again after AGI, preserving separate spouse earnings and reviewed
+monthly allocations for student/disability rules. See the
+[care source contract](FORM2441-CURRENT.md#supported-business-earned-income).
+Education support and dependent deductions remain guarded until their distinct
+earned-income definitions and allocations are connected.
 
 Next work includes information-return receipts, COGS, depreciation, home office,
 other business debt, at-risk/passive losses, benefits, optional SE methods,

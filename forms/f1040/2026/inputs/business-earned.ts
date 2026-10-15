@@ -42,6 +42,20 @@ export function businessCreditEarnings2026(
     business_earned_income: regularNet + statutoryGross - part1d,
     se_medicare_earnings: filedSe.reduce((n, o) => n + o.schedule_se!.line6, 0),
     has_schedule_se: filedSe.length > 0,
+    // Form 2441 applies each spouse's income limit separately. Preserve signed
+    // net profits here; a loss must offset that owner's wages before flooring.
+    owners: b.owners.map((o) => {
+      const gross = statutory.filter((r) => r.source.owner_tin === o.owner_tin)
+        .reduce((n, r) => n + r.lines.line1, 0);
+      const deduction = o.schedule_se?.line13 ?? 0;
+      return {
+        owner_tin: o.owner_tin,
+        regular_net_profit: o.net_profit_subject_to_se,
+        statutory_gross_income: gross,
+        se_deduction: deduction,
+        business_earned_income: o.net_profit_subject_to_se + gross - deduction,
+      };
+    }),
     // EIC Worksheet B, Parts 1-3. Optional methods and church wages are outside
     // this retained source contract; no prior-year optional constants are used.
     eic_worksheet_b: {

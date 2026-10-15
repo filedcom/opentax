@@ -183,7 +183,7 @@ Deno.test("Opening EIC and ACTC business income does not bypass care or educatio
   });
   assert(
     result.diagnostics.some((d) =>
-      d.nodeType === "f2441" && d.message.includes("non-W-2")
+      d.nodeType === "form2441" && d.message.includes("business inventory")
     ),
     JSON.stringify(result.diagnostics),
   );

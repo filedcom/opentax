@@ -27,7 +27,9 @@ import {
   type Form2441CalculationDetails,
 } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependent2026Schema } from "./dependents.ts";
-import { w2Item2026Schema } from "./w2.ts";
+import { w2Item2026Schema } from "./w2-source.ts";
+import { businessReturnSource2026Schema } from "./business-qbi.ts";
+import { businessCreditEarnings2026 } from "./business-earned.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -45,7 +47,8 @@ export const dependentCareClaim2026Schema = z.object({
   claim: z.object({
     tax_year: z.literal(2026),
     review_reference: reference,
-    ordinary_w2_earnings_only: z.literal(true),
+    ordinary_w2_earnings_only: z.literal(true).optional(),
+    business_inventory_reference: reference.optional(),
     earned_income: careEarnedIncomeReview2026Schema,
     combat_pay_elections: careCombatElections2026Schema,
     prior_year_expenses: priorCarePayments2026Schema,
@@ -100,6 +103,7 @@ export const inputSchema = dependentCareClaim2026Schema.partial().extend({
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   dependents: z.array(dependent2026Schema).default([]),
   wage_sources: z.array(w2Item2026Schema).default([]),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
   dep_care_benefits: money.optional(),
 }).strict();
 export type DependentCareInput2026 = z.input<typeof inputSchema>;
@@ -135,7 +139,39 @@ export function calculateDependentCareBenefits2026(
       "Form 2441 household employees need Schedule H reconciliation",
     );
   }
-  if (input.wage_sources.some((w) => w.box13_statutory_employee)) {
+  const business = input.business_sources_2026
+    ? businessCreditEarnings2026(
+      input.business_sources_2026,
+      input.filing_status,
+      input,
+    )
+    : undefined;
+  if (business) {
+    if (
+      claim.ordinary_w2_earnings_only ||
+      claim.business_inventory_reference !==
+        business.source_input.record_reference
+    ) throw new Error("Care claim needs the actual business inventory review");
+    const orderedWages = (wages: typeof input.wage_sources) =>
+      [...wages].sort((a, b) =>
+        a.source_document_reference.localeCompare(b.source_document_reference)
+      );
+    if (
+      JSON.stringify(orderedWages(input.wage_sources)) !==
+        JSON.stringify(orderedWages(business.source_input.w2s))
+    ) {
+      throw new Error(
+        "Care and business calculations need the same issued W-2 inventory",
+      );
+    }
+  } else if (
+    !claim.ordinary_w2_earnings_only || claim.business_inventory_reference
+  ) {
+    throw new Error(
+      "Care business review needs an actual business source inventory",
+    );
+  }
+  if (!business && input.wage_sources.some((w) => w.box13_statutory_employee)) {
     throw new Error(
       "Form 2441 statutory employees need the self-employment earned-income worksheet",
     );
@@ -155,6 +191,21 @@ export function calculateDependentCareBenefits2026(
     taxpayer: { wages: 0, combat: 0, taxable_care: 0 },
     spouse: { wages: 0, combat: 0, taxable_care: 0 },
   };
+  for (const row of business?.owners ?? []) {
+    if (
+      !business!.source_input.businesses.some((b) =>
+        b.owner_tin === row.owner_tin
+      )
+    ) continue;
+    const owner = row.owner_tin === normalize(input.taxpayer_ssn)
+      ? "taxpayer"
+      : "spouse";
+    annual[owner].business = {
+      regular_net_profit: row.regular_net_profit,
+      statutory_gross_income: row.statutory_gross_income,
+      se_deduction: row.se_deduction,
+    };
+  }
   const benefitOwners = new Set<CareOwner2026>();
   for (const w of input.wage_sources) {
     const owner = normalize(w.employee_ssn) === normalize(input.taxpayer_ssn)
@@ -179,7 +230,8 @@ export function calculateDependentCareBenefits2026(
     }
     if (rows.length) reviewed.add(w.source_document_reference);
     alreadyBox1 += included;
-    annual[owner].wages += w.box1_wages;
+    // Statutory gross income comes from the linked Schedule C once.
+    if (!w.box13_statutory_employee) annual[owner].wages += w.box1_wages;
     annual[owner].combat += (w.box12_entries ?? []).filter((e) =>
       e.code === "Q"
     ).reduce((n, e) => n + e.amount, 0);
@@ -381,7 +433,10 @@ export function calculateDependentCareBenefits2026(
       creditIncome.deemed_income_used) ||
     (part3 && benefitIncome.deemed_income_used);
   const totalWages = roundWholeDollars(
-    input.wage_sources.reduce((n, w) => n + w.box1_wages, 0),
+    input.wage_sources.reduce(
+      (n, w) => n + (w.box13_statutory_employee ? 0 : w.box1_wages),
+      0,
+    ),
   );
   return {
     source_input: input,
@@ -393,6 +448,7 @@ export function calculateDependentCareBenefits2026(
     qualifying_person_workpaper: qualification,
     providers,
     mfs_workpaper: mfs,
+    business_earned_income_workpaper: business ?? null,
     earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {
       taxpayer: creditIncome.taxpayer,

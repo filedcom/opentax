@@ -46,7 +46,7 @@ no caller-calculated current earned-income, AGI, tax-limit or credit totals. Rec
   within the person's eligible age/lifetime/incapacity periods. Duplicate receipts
   and people are rejected, and current plus prior receipts cannot exceed provider
   payments. Excluded benefits are allocated once before the credit cap.
-- Reviews require ordinary W-2 earnings,
+- Reviews require either ordinary W-2 earnings or the matching supported business inventory,
   no proprietor/partner benefits, no spouse death,
   no FTC/Form 8978 credit, eligible providers and no double use as medical or
   reimbursed expenses. Household employees require unfinished Schedule H work.
@@ -56,7 +56,7 @@ no caller-calculated current earned-income, AGI, tax-limit or credit totals. Rec
 to the reviewed W-2 route, adds regular tax and Schedule 2 Part I for the Credit
 Limit Worksheet, and sends line 11 to Schedule 3 line 2. Schedule 3 finalizes that
 credit before Schedule 8812, whose Worksheet A deducts it from available tax.
-Joint returns use separate spouses' wages. Taxable benefits are attributed to the
+Joint returns use separate spouses' wages and business earnings. Taxable benefits are attributed to the
 single recipient identified by W-2 and carryover plan records. Positive taxable
 benefits from multiple recipients still need a per-spouse exclusion allocation;
 that route remains gated. Joint carryover records must identify the plan owner.
@@ -141,7 +141,7 @@ eligibility/calculation; it does not silently apply ordinary tax.
 
 ## Monthly income and combat-pay elections
 
-`claim.earned_income` selects an explicitly reviewed annual-W-2 route or a
+`claim.earned_income` selects an explicitly reviewed `annual_w2`, `annual_business`, or a
 12-month ledger for each filer. The monthly route requires every calendar month
 exactly once, actual W-2 wages, nontaxable combat pay, student and incapacity
 facts, and source references. The annual wages and combat amounts must reconcile
@@ -168,6 +168,43 @@ Form 2441 checkbox B is derived from deemed income actually entered on an
 applicable printed part. An unused benefits workpaper cannot check B on a
 credit-only form. The three-page monthly QA set includes checked and unchecked
 B examples and was rendered and inspected on October 15.
+
+## Supported business earned income
+
+The business owner supplies the complete retained Schedule C/SE inventory before
+care benefits run. A care claim with business activity must identify that inventory
+in `business_inventory_reference` and omit the contradictory W-2-only assertion.
+The benefit calculator replays the business sources, checks actual filer identities,
+and requires the same issued W-2 inventory. After AGI, the credit calculator also
+checks that benefits and AGI used identical business sources.
+
+Under the August 21 draft instructions for lines 4/5 and 18/19, each owner's
+ordinary Schedule C net profit (including losses and amounts below the SE filing
+threshold) is reduced by that owner's actual deductible half of SE tax. Statutory
+activity contributes Schedule C line 1 gross income, not net profit; its W-2 box 1
+is excluded from ordinary wages so it enters care income exactly once. Wages,
+signed business income and elected combat pay combine before flooring annual
+earned income at zero. A spouse's positive earnings never absorb the other spouse's
+loss for the separate Form 2441 limits. The existing shared calculator continues
+to determine exclusions, taxable benefits, credit amounts and tax limits.
+
+Monthly business records separately allocate ordinary net profit, statutory gross
+income and the deductible half of SE tax. All twelve months and an identified
+review of the actual months earned and deduction allocation are required for each
+business owner. Each component must reconcile to that owner's replayed annual
+Schedule C/SE result. The calculator does not infer equal monthly earnings from
+annual totals. These signed monthly amounts enter the existing student/disability
+comparison before taxable benefits are added for Part II. Monthly allocations
+are reviewed records, not automatically inferred from cash payment dates.
+
+`business-care.test.ts` checks owner limits, ordinary losses, statutory gross
+income, subthreshold profit, monthly student floors, taxable-benefit ordering and
+source mismatches. Proprietor/partner benefit plans remain outside this route.
+The complete-return PDF test covers ordinary profit, a loss-limited exclusion and
+monthly student income. Eight synthetic Form 1040/2441 pages were reopened and
+visually inspected on October 15; amounts and checkbox B reconcile, with no
+remaining AcroForm or annotations. The focused typed tests, 548-test 2026/shared
+care regression suite and repository unit checks passed.
 
 ## Married filing separately
 
@@ -258,7 +295,7 @@ rows were verified; no AcroForm or annotations remain.
 
 MFS special lifetime/status cases, community-property allocations, external-spouse
 non-W-2 earnings or benefits, special custody/HOH/EIC release cases, nonresident/foreign dependency
-and unrelated-household lifetime exceptions, taxable-benefit allocation between multiple recipient spouses, self-employment, deferred/prepaid
+and unrelated-household lifetime exceptions, taxable-benefit allocation between multiple recipient spouses, business sources outside the supported Schedule C/SE inventory, deferred/prepaid
 expenses, changed filing-unit or corrected/unfiled prior-return care allocations,
 proprietor/partner benefits, Schedule H, multi-W-2 employer-furnished aggregation,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.

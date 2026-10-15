@@ -84,6 +84,7 @@ class Business2026Node extends TaxNode<typeof businessInput2026Schema> {
       "form8959",
       "standard_deduction",
       "vehicle_loan_interest",
+      "form2441",
     ];
   }
   compute(ctx: NodeContext, raw: BusinessInput2026) {
@@ -113,6 +114,10 @@ class Business2026Node extends TaxNode<typeof businessInput2026Schema> {
           fields: { ...income, business_sources_2026: r.source_input },
         },
         { nodeType: "schedule1", fields: income },
+        {
+          nodeType: "form2441",
+          fields: { business_sources_2026: r.source_input },
+        },
         {
           nodeType: "schedule2",
           fields: { line4_self_employment_tax: b.schedule2_line4 },

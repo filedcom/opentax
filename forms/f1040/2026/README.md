@@ -10,10 +10,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   connects reviewed service businesses, statutory W-2s and vehicle records to
   income, owner SE tax, Additional Medicare, QBI and draft attachments. It includes
   the 2026 active-business minimum and separate prior QBI losses. Advanced QBI,
-  business care/education consumers and broader source/loss coverage remain unfinished.
+  business education consumers and broader source/loss coverage remain unfinished.
   EIC and ACTC now replay supported business sources, including statutory gross
   wages, losses, SE deductions and the three-child payroll method.
   See the [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
+  Dependent care replays these sources by spouse, including losses and statutory
+  gross earnings, with reconciled monthly records for student/disability cases.
 
 - `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
   reviewed 1099-B, 1099-DA and unreported ordinary investment sales. All twelve

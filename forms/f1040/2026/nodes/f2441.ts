@@ -5,6 +5,7 @@ import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { calculateForm2441FromAmounts } from "../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { dependentCare2026 } from "../../nodes/config/2026-dependent-care.ts";
+import { businessReturnSource2026Schema } from "../inputs/business-qbi.ts";
 import {
   calculateDependentCareBenefits2026,
   inputSchema as benefitSchema,
@@ -18,6 +19,7 @@ export const inputSchema = z.object({
   schedule2_part1_tax: whole,
   wage_income_from_agi: whole,
   unsupported_earned_income_activity: z.boolean(),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
 }).strict();
 export type CareCreditInput2026 = z.input<typeof inputSchema>;
 export function calculateCareCredit2026(raw: CareCreditInput2026) {
@@ -31,6 +33,14 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
       file_form2441: false,
       part3: false,
     };
+  }
+  if (
+    JSON.stringify(input.business_sources_2026) !==
+      JSON.stringify(benefit.source_input.business_sources_2026)
+  ) {
+    throw new Error(
+      "Care benefits and final AGI must use the same business sources",
+    );
   }
   if (
     input.unsupported_earned_income_activity ||
