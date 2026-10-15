@@ -28,8 +28,9 @@ do not copy blank lines as zeros.
    Schedule 2, income tax, Form 1062, and the final 1040. Store source facts,
    expected amounts, and application results in separate columns.
 3. Register 2026 Schedule H, Form 5695, and Form 1062 calculation and PDF
-   routes before calling this scenario end-to-end. The current 2026 graph does
-   not yet supply those three attachments.
+   routes before calling this scenario end-to-end. Schedule H now has a
+   source-derived draft route; see [its current contract](../graphs/SCHEDULEH-CURRENT.md). The other two
+   attachments and the missing Schedule H employee/quarter facts remain open.
 4. Produce the full PDF bundle and compare every printed amount and attachment
    count. Build and XSD/business-rule-check the XML only against the selected
    current TY2026 MeF package. The local May v1 package is unsuitable for this

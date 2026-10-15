@@ -78,7 +78,7 @@ NODE_PROGRESS = {
     "eitc": "Shared EIC worksheet with published 2026 table, source reviews, spouse combat elections and draft Schedule EIC connected; business/special cases, recertification and current MeF/ATS remain; see EIC-CURRENT.md",
     "form5695": "2026 draft is prior-year residential clean-energy carryforward only; remove new-expense/joint-occupancy branches and finish credit ordering/PDF/MeF; see FORM5695-CREDIT-GRAPH.md",
     "schedule3": "Shared totals and full 2026 line/PDF contract; W-2 excess SS and Form 2441 care credit reach settlement and ACTC/CTC; other owners and MeF remain; see PDF-SCHEDULE3-MAP.md",
-    "schedule_h": "Dedicated 2026 FUTA Section A and household-tax PDF begun; Section B, payroll derivation and MeF remain; see SCHEDULEH-GRAPH.md",
+    "schedule_h": "Reviewed 2026 employee payroll derives FICA, FUTA quarters, withholding and Section A; shared arithmetic and two-page draft reach Schedule 2; complex family/payroll, Section B final rates and MeF/ATS remain; see SCHEDULEH-CURRENT.md",
     "agi_aggregator": "Reconcile 2026 Schedule 1/1-A, 1040 sources and foreign exclusions before deduction/tax; close all missing route targets and ATS graphs; see SCHEDULE1-GRAPH.md and GRAPH-ROUTES.md",
     "income_tax_calculation": "2026 ordinary/preferential tax, AMT, Form 8978 and credit-limit order must derive 1040 line 16 from return sources; see CAPITAL-GAIN-GRAPH.md and DEDUCTION-GRAPH.md",
     "standard_deduction": "2026 age/blind/dependent/status limits and deduction choice feed 1040; actual wage income now supplies dependent deductions; potential child-tax and business owners remain; see DEDUCTION-GRAPH.md",

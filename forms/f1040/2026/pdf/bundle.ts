@@ -1,3 +1,5 @@
+import { buildScheduleHPdfBytes2026 } from "./schedule_h.ts";
+import type { calculateHousehold2026 } from "../inputs/household-source.ts";
 import type { calculateGovernmentPayments2026 } from "../inputs/government-source.ts";
 import type { calculateIncomeTax2026 } from "../nodes/income-tax.ts";
 import { buildForm8615PdfBytes2026 } from "./form8615.ts";
@@ -153,6 +155,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const benefits = retained<
     ReturnType<typeof calculateSocialSecuritySources2026>
   >("ssa1099");
+  const household = retained<ReturnType<typeof calculateHousehold2026>>(
+    "household_employment",
+  );
   const government = retained<
     ReturnType<typeof calculateGovernmentPayments2026>
   >("government_payments");
@@ -192,7 +197,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -410,6 +415,21 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
           form1040_line11b: line("line11b_agi"),
           form1040_line1i: line("line1i_combat_pay"),
         }, filer),
+    );
+  }
+  if (household?.file_schedule_h) {
+    const employer = household.source_input.claim.employer_tin ===
+        household.source_input.taxpayer_ssn
+      ? owners.taxpayer
+      : owners.spouse;
+    if (!employer) throw new Error("Schedule H employer identity is missing");
+    add(
+      "schedule_h",
+      2,
+      () =>
+        buildScheduleHPdfBytes2026(household.source_input, {
+          schedule2_line17a: s2line("line17a_household_employment_tax"),
+        }, employer),
     );
   }
   if (childCredit?.file_schedule8812) {

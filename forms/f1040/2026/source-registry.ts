@@ -1,3 +1,4 @@
+import { household_employment_2026 } from "./inputs/household-employment.ts";
 import { government_payments_2026 } from "./inputs/government-payments.ts";
 import { f8615_2026 } from "./inputs/child-tax.ts";
 import { form8615 } from "../nodes/intermediate/forms/taxes/investments/form8615/index.ts";
@@ -45,6 +46,7 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  household_employment: household_employment_2026,
   government_payments: government_payments_2026,
   f8615: f8615_2026,
   form8615,

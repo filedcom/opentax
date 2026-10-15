@@ -122,3 +122,11 @@ selected parent, complete lines/worksheet indicators, and the sibling allocation
 ratio. Its seven bundle cases include both required stop forms, preferential
 tax, AMT and a ratio rounded to one. See
 [the current child-tax contract](../graphs/FORM8615-CURRENT.md).
+
+## Household employment
+
+The bundle now includes Schedule H at sequence 44 when its payroll calculation
+requires filing. It replays the employer source, matches the return owner and
+reconciles tax to Schedule 2 line 17a. Both official pages are retained, including
+blank skipped sections. See [the household contract](../graphs/SCHEDULEH-CURRENT.md)
+for the four draft cases and remaining Section B/payroll/MeF limits.
