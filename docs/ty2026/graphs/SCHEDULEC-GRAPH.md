@@ -1,5 +1,11 @@
 # TY2026 Schedule C implementation contract
 
+Current implementation: [BUSINESS-CURRENT.md](BUSINESS-CURRENT.md). This historical
+plan's statements about unused statutory W-2 sources predate the current shared
+node's source reconciliation. The development 2026 adapter now derives receipts
+from linked W-2s and reuses the shared arithmetic; graph/QBI/filing integration
+remains pending.
+
 Sources: pinned [2026 draft Schedule C](../corpus/draft/f1040sc.pdf) (hash in the
 [manifest](../corpus/manifest.json)), final [2026 Publication 15-A](../corpus/authorities/p15a--2026.pdf),
 [draft 2026 Schedule SE instructions](../corpus/draft/i1040sse.pdf),

@@ -6,6 +6,13 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- A development business-source calculator reuses shared Schedule C/SE arithmetic
+  for reviewed cash service activities, owner-specific wage bases, linked statutory
+  W-2s and 2026 vehicle records. It is not registered in the source graph yet:
+  QBI, credit/earned-income consumers, loss limits and filing representations still
+  need integration. See the
+  [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
+
 - `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
   reviewed 1099-B, 1099-DA and unreported ordinary investment sales. All twelve
   reporting categories, basis/expense/wash-sale adjustments and prior losses
