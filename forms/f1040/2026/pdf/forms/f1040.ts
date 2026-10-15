@@ -129,6 +129,11 @@ const fields: readonly PdfFieldEntry[] = [
   },
   {
     kind: "checkbox",
+    domainKey: "spouse_can_be_claimed_as_dependent",
+    pdfField: `${p2}c2_2[0]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "mfs_spouse_itemizing",
     pdfField: `${p2}c2_3[0]`,
   },

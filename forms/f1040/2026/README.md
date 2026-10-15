@@ -62,8 +62,8 @@ The 2026 W-2 adapter calls the existing W-2 routing implementation with a narrow
 2026 configuration. The shared 2025 entry point still selects its own original
 configuration. The 2026 adapter requires issued-copy references and employer and
 employee identities, checks return ownership, and preserves the complete source
-record. `inputs.ts` now contains its repeated `w2s` input entry; the future
-general node must supply the return identity before that input node runs.
+record. `inputs.ts` contains its repeated `w2s` input entry and the singleton
+2026 general source node, which supplies the return identity before W-2 runs.
 
 - The 2026 schema supports box 14a/14b and new box 12 TP, TT and TA values.
   Tip/overtime source amounts are retained for 2026 Schedule 1-A; neither is
@@ -86,7 +86,7 @@ general node must supply the return identity before that input node runs.
   enhanced SIMPLE limits, corrections/substitute W-2s and community-property
   allocation are unfinished; no 2025 evidence is silently accepted for them.
 
-The internal graph test covers issued W-2 → AGI → Form 1040 settlement, with
+The internal graph test covers general identity → issued W-2 → AGI → Form 1040 settlement, with
 finalized deduction/tax supplied by the fixture. It intentionally exposes the
 remaining credit/form pending records. It is not a complete public return graph.
 The new Schedule 1-A source contract is `w2_2026_sources`; its receiving 2026
@@ -96,6 +96,37 @@ build.
 The 224-test combined 2026/W-2/AGI run passed; 21 focused tests passed after the
 final shared-line rounding and input-catalog changes. The existing 2025 W-2,
 community-property and AGI suites are included in the combined run.
+
+## Filer and dependent sources
+
+The 2026 general node reuses the existing dependency classification, credit-SSN
+checks and age-65 helper. An explicit year policy supplies the 2026 age cutoff,
+$5,300 qualifying-relative gross-income limit, younger-than-filer test and
+reviewed residence behavior; existing 2025 callers retain their original policy.
+Counts and credit categories are derived from source rows rather than accepted
+as asserted totals.
+
+- Identity is checked across taxpayer, spouse, dependents and W-2 owners. Joint
+  returns require spouse facts; HOH/QSS need qualifying-person and home-cost
+  reviews, including the applicable spouse-death year for QSS.
+- `claim_as_dependent: false` retains an EIC source child without adding a
+  dependent row or child/dependent credit count. EIC does not use the child's
+  self-support test. Student status needs at least five full-time months.
+- Dated residence checks inclusive days, lifetime boundaries, overlapping
+  periods and actual calendar months. Birth/death exceptions require their
+  source records; Schedule EIC printed months remain separate from actual
+  months. The Form 1040 rows and continuation use the reviewed residence result.
+- The node routes identity and eligibility facts to pending deduction and
+  credit owners, but those 2026 calculators are still unfinished. It does not
+  establish a final EIC or child-credit amount.
+- Custody releases, PTC households, competing-claim/tiebreaker evidence,
+  adoption/placement exceptions, multiple-support agreements, nonclaimed
+  HOH/QSS exceptions, deceased filers and born-and-died children without a TIN
+  still need dedicated 2026 handling. The old 2025 review objects are rejected.
+
+Sources checked October 15: [IRS qualifying-child rules](https://www.irs.gov/credits-deductions/individuals/earned-income-tax-credit/qualifying-child-rules),
+[Rev. Proc. 2025-32 §4.23](https://www.irs.gov/irb/2025-45_IRB), and
+[draft 2026 Schedule EIC](https://www.irs.gov/pub/irs-dft/f1040sei--dft.pdf).
 
 ## Reuse and folder rules for subsequent work
 
@@ -114,9 +145,8 @@ For each next node, separately prove:
 4. Regression behavior for the existing 2025 product and source-derived 2026
    boundary cases.
 
-Next work is the 2026 general/identity and dependent source node, followed by
-upstream deduction and credit calculations feeding the internal assembly
-registry. Extend the strict AGI bridge alongside its activity owners. Current
+Next work is upstream deduction and credit calculations feeding the internal
+assembly registry, alongside the remaining general/dependent exception routes. Extend the strict AGI bridge alongside its activity owners. Current
 general and W-2 nodes contain year-specific evidence schemas and cross-form
 routes, and the full income-tax node still invokes 2025 preferential-income/Tax
 Table helpers. Do not register those entire nodes for 2026 just because their
@@ -149,6 +179,17 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
   fixture. All pages retain draft markings, amounts reconcile across forms, and
   no editable widgets remain. This exercises rendering and assembly; its
   supplied credit amounts do not establish taxpayer eligibility.
+
+- General/dependent work passed 138 tests in the combined 2026 and existing
+  general/source regression run. Eight additional native XML tests initially
+  lacked execution permission and local schema fixtures; after copying those
+  fixtures into this worktree, all ten dated/death-residence tests passed.
+- The final focused source suite passed 12 tests, including the added lifetime
+  boundary case and the general-to-W-2-to-AGI integration.
+- The 137-test unit gate and complete module-graph preflight passed again.
+- Visually inspected synthetic newborn rows, the dependent continuation and the
+  spouse-dependent checkbox in a five-page PDF QA fixture; it has no widgets or
+  AcroForm tree. This checks source projection and rendering, not a filed return.
 
 ## Source recheck
 

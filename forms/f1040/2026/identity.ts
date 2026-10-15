@@ -1,6 +1,6 @@
+import { dependentFiling2026Schema } from "./inputs/dependents.ts";
 import { z } from "zod";
 import {
-  dependentFilingSchema,
   inputSchema as generalInputSchema,
 } from "../nodes/inputs/general/filing/general/index.ts";
 
@@ -49,6 +49,7 @@ export const identityInputSchema = generalInputSchema.pick({
   extension_filed: true,
   mfs_spouse_itemizing: true,
   taxpayer_can_be_claimed_as_dependent: true,
+  spouse_can_be_claimed_as_dependent: true,
   hoh_paid_more_than_half_home_costs: true,
   qss_spouse_death_year: true,
   taxpayer_signature_pin: true,
@@ -63,5 +64,5 @@ export const identityInputSchema = generalInputSchema.pick({
   dependent_count: z.number().int().nonnegative().default(0),
   qualifying_child_tax_credit_count: z.number().int().nonnegative().default(0),
   other_dependent_count: z.number().int().nonnegative().default(0),
-  dependent_details: z.array(dependentFilingSchema).optional(),
+  dependent_details: z.array(dependentFiling2026Schema).optional(),
 });

@@ -1,3 +1,5 @@
+import { reviewedResidence2026 } from "../inputs/dependent-residency.ts";
+import { dependentFiling2026Schema as dependentFilingSchema } from "../inputs/dependents.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { loadPinnedDraft2026 } from "./source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -5,7 +7,6 @@ import { z } from "zod";
 import type { PdfFieldEntry } from "../../2025/pdf/review-support/form-descriptor.ts";
 import {
   DependentCreditCategory,
-  dependentFilingSchema,
 } from "../../nodes/inputs/general/filing/general/index.ts";
 import { irs1040Pdf2026 } from "./forms/f1040.ts";
 
@@ -85,7 +86,9 @@ function fillDependentRows(
     const lived = `${root}Table_Dependents[0].Row5[0].Dependent${
       index + 1
     }[0].`;
-    if (dep.months_in_home > 6) {
+    if (
+      (reviewedResidence2026(dep)?.overHalfWithFiler ?? dep.months_in_home > 6)
+    ) {
       form.getCheckBox(`${lived}c1_${14 + 2 * index}[0]`).check();
     }
     if (dep.lived_in_us_over_half_year) {
@@ -173,9 +176,12 @@ async function appendDependentStatements(
           dep.ssn ?? dep.itin ?? dep.atin
         }`,
         relationship(dep),
-        `${dep.months_in_home > 6 ? "Yes" : "No"} / ${
-          dep.lived_in_us_over_half_year ? "Yes" : "No"
-        }`,
+        `${
+          (reviewedResidence2026(dep)?.overHalfWithFiler ??
+              dep.months_in_home > 6)
+            ? "Yes"
+            : "No"
+        } / ${dep.lived_in_us_over_half_year ? "Yes" : "No"}`,
         `${dep.full_time_student ? "Yes" : "No"} / ${
           dep.disabled ? "Yes" : "No"
         }`,

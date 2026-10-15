@@ -738,8 +738,43 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
 }
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Tax year-end reference date for age calculations
-const TAX_YEAR_END = new Date("2025-12-31");
+/** Annual facts and reviewed residency behavior for shared dependency tests. */
+export interface DependentYearRules {
+  readonly taxYear: number;
+  readonly qualifyingRelativeGrossIncomeLimit: number;
+  readonly livedWithFilerOverHalfYear: (dep: DependentItem) => boolean;
+  readonly qualifyingChildAgeAllowed: (dep: DependentItem) => boolean;
+  readonly assertEicResidence: (
+    dep: DependentItem,
+    qualifyingIdentity: boolean,
+    otherwiseQualified: boolean,
+  ) => void;
+}
+
+const dependentRules2025: DependentYearRules = {
+  taxYear: 2025,
+  qualifyingRelativeGrossIncomeLimit: 5_200,
+  livedWithFilerOverHalfYear: dependentLivedWithFilerOverHalfYear,
+  qualifyingChildAgeAllowed: () => true,
+  assertEicResidence(dep, qualifyingIdentity, otherwiseQualified) {
+    if (
+      qualifyingIdentity && dep.dob.startsWith("2025-") &&
+      dep.months_in_home <= 6 &&
+      dep.eic_birth_residency_review === undefined &&
+      dep.eic_death_residency_review === undefined
+    ) {
+      throw new Error(
+        "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
+      );
+    }
+    if (otherwiseQualified && dep.months_lived_with_you_in_us === undefined) {
+      throw new Error(
+        "EIC qualifying child needs exact U.S. months no greater than home months",
+      );
+    }
+    if (otherwiseQualified) scheduleEicLine6Months(dep);
+  },
+};
 
 // Relationships that qualify for the qualifying-child test (CTC relationship test)
 // IRS Pub 501: child, stepchild, foster child, sibling (or step/half), grandchild,
@@ -758,9 +793,10 @@ const CTC_QUALIFYING_RELATIONSHIPS = new Set<DependentRelationship>([
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Age at December 31, 2025 (tax year end).
+// Age at December 31 of the selected tax year.
 // Returns integer age in completed years.
-function ageAtYearEnd(dob: string): number {
+function ageAtYearEnd(dob: string, taxYear: number): number {
+  const TAX_YEAR_END = new Date(`${taxYear}-12-31`);
   const birth = new Date(dob);
   const yearDiff = TAX_YEAR_END.getFullYear() - birth.getFullYear();
   const birthdayThisYear = new Date(
@@ -786,13 +822,20 @@ function passesSSNTest(dep: DependentItem): boolean {
 
 // IRS CTC age test: under 17 at end of tax year. Disability can extend
 // qualifying-child status for ODC, but not the CTC age limit.
-function passesAgeTest(dep: DependentItem): boolean {
-  return ageAtYearEnd(dep.dob) < 17;
+function passesAgeTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return rules.qualifyingChildAgeAllowed(dep) &&
+    ageAtYearEnd(dep.dob, rules.taxYear) < 17;
 }
 
 // IRS CTC residency test: lived with taxpayer MORE than 6 months.
-function passesResidencyTest(dep: DependentItem): boolean {
-  return dependentLivedWithFilerOverHalfYear(dep);
+function passesResidencyTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return rules.livedWithFilerOverHalfYear(dep);
 }
 
 export function dependentLivedWithFilerOverHalfYear(
@@ -821,15 +864,18 @@ function passesRelationshipTest(dep: DependentItem): boolean {
 // Determine whether a dependent qualifies for the Child Tax Credit.
 // A true override can account for a special residency exception; it cannot
 // waive the SSN, age, or relationship requirements.
-function isQualifyingChildForCTC(dep: DependentItem): boolean {
+function isQualifyingChildForCTC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
   if (dep.qualifying_child_for_ctc === false) return false;
   return (
     passesSSNTest(dep) &&
-    passesAgeTest(dep) &&
+    passesAgeTest(dep, rules) &&
     passesRelationshipTest(dep) &&
     passesJointReturnTest(dep) &&
     passesQualifyingChildSupportTest(dep) &&
-    (passesResidencyTest(dep) || dep.qualifying_child_for_ctc === true)
+    (passesResidencyTest(dep, rules) || dep.qualifying_child_for_ctc === true)
   );
 }
 
@@ -844,11 +890,14 @@ function hasTin(dep: DependentItem): boolean {
 // This matches the EITC age test — broader than CTC (< 17) but narrower than hasTin alone.
 // IRC §152(c): a qualifying child who is too old for CTC but under 19 (or student < 24)
 // still qualifies as a "qualifying child" and therefore qualifies for ODC.
-function isQualifyingChildForODC(dep: DependentItem): boolean {
+function isQualifyingChildForODC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
   return (
-    passesResidencyTest(dep) &&
+    passesResidencyTest(dep, rules) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep) &&
+    passesEitcAgeTest(dep, rules) &&
     passesJointReturnTest(dep) &&
     passesQualifyingChildSupportTest(dep)
   );
@@ -857,7 +906,10 @@ function isQualifyingChildForODC(dep: DependentItem): boolean {
 // The ordinary qualifying-relative path requires confirmed support and gross
 // income facts. Exceptional cases such as multiple-support agreements need
 // separate facts and cannot be inferred from an unanswered question.
-function isQualifyingRelativeForODC(dep: DependentItem): boolean {
+function isQualifyingRelativeForODC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
   if (!hasTin(dep)) return false;
   if (!passesJointReturnTest(dep)) return false;
   // Family relationships listed in Pub. 501 do not require co-residency.
@@ -870,21 +922,26 @@ function isQualifyingRelativeForODC(dep: DependentItem): boolean {
     return false;
   }
   if (dep.taxpayer_provided_over_half_support !== true) return false;
-  // The 2025 gross-income limit is $5,200. Zero is a valid explicit answer.
-  return dep.gross_income !== undefined && dep.gross_income < 5200;
+  return dep.gross_income !== undefined &&
+    dep.gross_income < rules.qualifyingRelativeGrossIncomeLimit;
 }
 
 /** Ordinary dependency facts reused by education ownership reconciliation. */
-export function educationDependentSourceEligible(dep: DependentItem): boolean {
+export function educationDependentSourceEligible(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
   return dep.us_citizen_national_or_resident === true &&
     dep.provided_over_half_own_support !== true &&
     dep.dependent_on_another_return !== true &&
-    (isQualifyingChildForODC(dep) || isQualifyingRelativeForODC(dep));
+    (isQualifyingChildForODC(dep, rules) ||
+      isQualifyingRelativeForODC(dep, rules));
 }
 
 export function dependentCreditCategory(
   dep: DependentItem,
   filer: FilerCreditEligibility,
+  rules: DependentYearRules = dependentRules2025,
 ): DependentCreditCategory {
   if (
     dep.us_citizen_national_or_resident !== true ||
@@ -892,13 +949,13 @@ export function dependentCreditCategory(
   ) {
     return DependentCreditCategory.None;
   }
-  if (filer.ctc && isQualifyingChildForCTC(dep)) {
+  if (filer.ctc && isQualifyingChildForCTC(dep, rules)) {
     return DependentCreditCategory.ChildTaxCredit;
   }
   if (
     filer.odc && (
-      (isQualifyingChildForODC(dep) && hasTin(dep)) ||
-      isQualifyingRelativeForODC(dep)
+      (isQualifyingChildForODC(dep, rules) && hasTin(dep)) ||
+      isQualifyingRelativeForODC(dep, rules)
     )
   ) {
     return DependentCreditCategory.OtherDependentCredit;
@@ -907,9 +964,10 @@ export function dependentCreditCategory(
 }
 
 // Count dependents in each category, excluding those claimed on another return.
-function dependentCounts(
+export function dependentCounts(
   deps: DependentItem[],
   filer: FilerCreditEligibility,
+  rules: DependentYearRules = dependentRules2025,
 ): {
   qualifying_child_tax_credit_count: number;
   other_dependent_count: number;
@@ -919,7 +977,7 @@ function dependentCounts(
   let ctcCount = 0;
   let odcCount = 0;
   for (const dep of claimable) {
-    const category = dependentCreditCategory(dep, filer);
+    const category = dependentCreditCategory(dep, filer, rules);
     if (category === DependentCreditCategory.ChildTaxCredit) {
       ctcCount += 1;
     } else if (category === DependentCreditCategory.OtherDependentCredit) {
@@ -936,21 +994,26 @@ function dependentCounts(
 /** Claimable dependent rows exactly as the general node sends to Form 1040. */
 export function filedDependentsFromGeneral(
   input: GeneralInput,
+  rules: DependentYearRules = dependentRules2025,
 ): DependentFiling[] {
   const filer = filerCreditEligibility(input);
   return (input.dependents ?? [])
     .filter((dep) => dep.dependent_on_another_return !== true)
     .map((dep) => ({
       ...dep,
-      credit_category: dependentCreditCategory(dep, filer),
+      credit_category: dependentCreditCategory(dep, filer, rules),
     }));
 }
 
 // EITC age test: under 19 at year-end, OR full-time student under 24, OR permanently disabled.
 // IRC §32(c)(3)(A); broader than CTC age test (< 17).
-function passesEitcAgeTest(dep: DependentItem): boolean {
+function passesEitcAgeTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  if (!rules.qualifyingChildAgeAllowed(dep)) return false;
   if (dep.disabled === true) return true;
-  const age = ageAtYearEnd(dep.dob);
+  const age = ageAtYearEnd(dep.dob, rules.taxYear);
   if (age < 19) return true;
   if (dep.full_time_student === true && age < 24) return true;
   return false;
@@ -961,6 +1024,7 @@ function passesEitcAgeTest(dep: DependentItem): boolean {
 // test, and a noncustodial parent's CTC release does not confer EITC eligibility.
 function isEitcQualifyingChild(
   dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
 ): dep is DependentItem & {
   ssn: string;
   months_lived_with_you_in_us: number;
@@ -971,33 +1035,17 @@ function isEitcQualifyingChild(
     dep.tin_issued_by_due_date === true &&
     passesJointReturnTest(dep) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep);
-  if (
-    qualifyingIdentity && dep.dob.startsWith("2025-") &&
-    dep.months_in_home <= 6 &&
-    dep.eic_birth_residency_review === undefined &&
-    dep.eic_death_residency_review === undefined
-  ) {
-    throw new Error(
-      "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
-    );
-  }
-  const otherwiseQualified = passesResidencyTest(dep) && qualifyingIdentity;
-  if (
-    otherwiseQualified &&
-    dep.months_lived_with_you_in_us === undefined
-  ) {
-    throw new Error(
-      "EIC qualifying child needs exact U.S. months no greater than home months",
-    );
-  }
-  if (otherwiseQualified) scheduleEicLine6Months(dep);
+    passesEitcAgeTest(dep, rules);
+  const otherwiseQualified = passesResidencyTest(dep, rules) &&
+    qualifyingIdentity;
+  rules.assertEicResidence(dep, qualifyingIdentity, otherwiseQualified);
   return otherwiseQualified;
 }
 
 function eitcQualifyingChildren(
   deps: DependentItem[],
   ownerSsns: ReadonlySet<string>,
+  rules: DependentYearRules = dependentRules2025,
 ): Array<
   DependentItem & {
     ssn: string;
@@ -1008,7 +1056,7 @@ function eitcQualifyingChildren(
     dep.dependent_on_another_return !== true ||
     dep.custodial_eitc_release_review !== undefined
   )
-    .filter(isEitcQualifyingChild);
+    .filter((dep) => isEitcQualifyingChild(dep, rules));
   const seenSsns = new Set<string>();
   for (const child of children) {
     const ssn = child.ssn.replaceAll("-", "");
@@ -1026,13 +1074,20 @@ function eitcQualifyingChildren(
 }
 
 /** The exact child rows projected by the general source into Schedule EIC. */
-export function eicChildSourceProjection(parsed: GeneralInput) {
+export function eicChildSourceProjection(
+  parsed: GeneralInput,
+  rules: DependentYearRules = dependentRules2025,
+) {
   const ownerSsns = new Set(
     [parsed.taxpayer_ssn, parsed.spouse_ssn]
       .filter((ssn): ssn is string => ssn !== undefined)
       .map((ssn) => ssn.replaceAll("-", "")),
   );
-  const children = eitcQualifyingChildren(parsed.dependents ?? [], ownerSsns);
+  const children = eitcQualifyingChildren(
+    parsed.dependents ?? [],
+    ownerSsns,
+    rules,
+  );
   return {
     children,
     count: Math.min(children.length, 3),
