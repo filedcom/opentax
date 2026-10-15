@@ -41,7 +41,8 @@ input, not a registered filing product.
 
 It reconciles line 26 to Form 1040 line 1e, line 7 to AGI, line 10 to tax before
 credits (FTC/Form 8978 are explicitly absent), and line 11 to Schedule 3 line 2.
-Lines 9b, 22 and 24 remain zero behind explicit source gates. Schedule 3's care
+Line 9b comes from the retained 2025-expense Worksheet A; lines 22 and 24
+remain zero behind explicit proprietor/partner source gates. Schedule 3's care
 credit reduces Schedule 8812's tax limit. One-page credit, two-page benefits and
 25-row continuation cases were rendered and inspected on October 15.
 
@@ -49,6 +50,12 @@ The current source route computes checkbox B from monthly student/disability
 income actually entered on the printed parts, including independent care combat
 elections. Checked and unchecked examples were rendered and inspected.
 
+A positive line 9b adds an equivalent Worksheet A statement after official forms.
+It includes all numeric lines, provider identity/address/household answers, prior
+qualifying-person identity/disability answers and payment dates. Prior-only
+claims leave current line-2 person rows empty and current credit expenses zero.
+The statement wraps and paginates using the existing continuation renderer.
+
 Before full filing support, complete the remaining eligibility,
-prior-year expense, self-employed benefit and special-provider routes in the
+changed-filing-unit prior expenses, self-employed benefit and special-provider routes in the
 current contract, then reconcile final IRS forms and current MeF/business rules.

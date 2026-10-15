@@ -198,6 +198,64 @@ export async function buildForm2441PdfBytes2026(
       ),
     });
   }
+  const prior = r.benefit.prior_year_worksheet;
+  if (prior && prior.lines.line13 > 0) {
+    const w = prior.lines;
+    const source = prior.source_input;
+    const labels = [
+      "2025 Form 2441 line 3 expenses",
+      "Qualified 2025 expenses paid in 2026",
+      "Total expenses (lines 1 + 2)",
+      "2025 qualifying-person expense limit",
+      "2025 deducted and excluded benefits (Form 2441 lines 24 + 25)",
+      "Remaining expense limit (line 4 - line 5)",
+      "Smaller 2025 earned income",
+      "Smallest of lines 3, 6 and 7",
+      "2025 credit expense base (Form 2441 line 6)",
+      "Additional eligible expenses (line 8 - line 9)",
+      "2025 adjusted gross income (Form 1040 line 11a)",
+      "2025 credit rate",
+      "Additional credit (line 10 x line 12) to 2026 Form 2441 line 9b",
+    ];
+    const rows = labels.map((label, i) => {
+      const value = w[`line${i + 1}` as keyof typeof w];
+      return `${i + 1}. ${label}: ${i === 11 ? value.toFixed(2) : `$${value}`}`;
+    });
+    const paidProviders = new Set(source.payments.map((p) => p.provider_index));
+    for (const index of paidProviders) {
+      const p = r.benefit.details.care_providers[index], a = p.us_address;
+      rows.push(
+        `14. ${providerName(p)} | ${a.line1}${
+          a.line2 ? `, ${a.line2}` : ""
+        }, ${a.city}, ${a.state} ${a.zip} | ID ${
+          providerTin(p)
+        } | Household employee: ${p.household_employee ? "Yes" : "No"}`,
+      );
+    }
+    for (const person of source.prior_return.qualifying_people) {
+      const paid = source.payments.filter((p) => p.person_ssn === person.ssn);
+      rows.push(
+        `15. ${person.first_name} ${person.last_name} | SSN ${person.ssn} | Over 12 and disabled during care: ${
+          person.over_12_and_disabled ? "Yes" : "No"
+        } | 2025 care paid in 2026: $${
+          paid.reduce((n, p) => n + p.amount_paid, 0)
+        }`,
+      );
+      for (const payment of paid) {
+        rows.push(
+          `Care ${payment.incurred_start_date} through ${payment.incurred_end_date}; paid ${payment.paid_date} to ${
+            providerName(
+              r.benefit.details.care_providers[payment.provider_index],
+            )
+          }: $${payment.amount_paid}`,
+        );
+      }
+    }
+    statements.push({
+      title: "2025 expenses paid in 2026 - Worksheet A",
+      rows,
+    });
+  }
   for (const s of statements) {
     let page = doc.addPage([612, 792]), y = 706;
     const header = () => {

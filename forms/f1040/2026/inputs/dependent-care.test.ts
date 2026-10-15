@@ -192,7 +192,10 @@ Deno.test("Care intake rejects unsupported arrangements and contradictory source
   );
   assertThrows(() =>
     dependentCareClaim2026Schema.parse({
-      claim: { ...i.form2441.claim, no_prior_year_expenses_paid: false },
+      claim: {
+        ...i.form2441.claim,
+        prior_year_expenses: { kind: "paid_2025_in_2026", credit: 210 },
+      },
     })
   );
 });

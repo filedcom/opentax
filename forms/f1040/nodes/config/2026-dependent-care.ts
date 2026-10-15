@@ -6,6 +6,7 @@ import type { Form2441Rules } from "../intermediate/forms/credits/individual/for
  * SHA-256 7fdecfe193df435542bb452ba108bee011bef7032fda8abe972d6fbd5de233e7
  */
 export const dependentCare2026: Form2441Rules = {
+  allowNoCurrentQualifyingPeople: true,
   creditRate(agi, status) {
     const firstReduction = Math.min(
       15,

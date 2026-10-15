@@ -103,12 +103,24 @@ export function form2441CreditRate2025(agi: number): number {
 export interface Form2441Rules {
   creditRate(agi: number, filingStatus: FilingStatus): number;
   benefitLimit(details: Form2441FilingDetails): number;
+  allowNoCurrentQualifyingPeople?: boolean;
 }
 export const form2441Rules2025: Form2441Rules = {
   creditRate: form2441CreditRate2025,
   benefitLimit: (details) =>
     details.filing_status === FilingStatus.MFS ? 2500 : 5000,
 };
+
+function parseDetails(
+  raw: Form2441FilingDetails,
+  rules: Form2441Rules,
+): Form2441FilingDetails {
+  return (rules.allowNoCurrentQualifyingPeople
+    ? filingDetailsSchema.extend({
+      qualifying_people: z.array(qualifyingPersonSchema).max(25),
+    })
+    : filingDetailsSchema).parse(raw);
+}
 
 export type Form2441BenefitLines = Pick<
   Form2441Lines,
@@ -138,7 +150,7 @@ export function calculateForm2441Benefits(
   benefits: number,
   rules: Form2441Rules = form2441Rules2025,
 ): Form2441BenefitLines {
-  const details = filingDetailsSchema.parse(rawDetails);
+  const details = parseDetails(rawDetails, rules);
   if (!Number.isInteger(benefits) || benefits < 0) {
     throw new Error("Form 2441 needs nonnegative whole-dollar benefits");
   }
@@ -163,7 +175,11 @@ export function calculateForm2441Benefits(
     (sum, person) => sum + person.credit_expenses_paid,
     0,
   );
-  const line27 = details.qualifying_people.length > 1 ? 6_000 : 3_000;
+  const line27 = details.qualifying_people.length === 0
+    ? 0
+    : details.qualifying_people.length > 1
+    ? 6_000
+    : 3_000;
   const line12 = benefits;
   const line13 = details.benefits_carryover_used ?? 0;
   const line14 = details.benefits_forfeited_or_carried_forward ?? 0;
@@ -235,7 +251,7 @@ export function calculateForm2441(
   rules: Form2441Rules = form2441Rules2025,
   creditIncome?: { taxpayer: number; spouse?: number },
 ): Form2441Lines {
-  const details = filingDetailsSchema.parse(rawDetails);
+  const details = parseDetails(rawDetails, rules);
   if (!Number.isInteger(agi)) {
     throw new Error("Form 2441 needs calculated whole-dollar AGI");
   }

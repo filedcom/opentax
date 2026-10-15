@@ -12,7 +12,8 @@ SHA-256 `7fdecfe193df435542bb452ba108bee011bef7032fda8abe972d6fbd5de233e7`.
 Recheck final releases before filing.
 
 The existing detailed 2025 calculator now accepts explicit annual rate and
-benefit-limit rules and separate Part II earned income. Its default entry keeps
+benefit-limit rules, separate Part II earned income, and a 2026-only allowance
+for no current qualifying people on prior-only claims. Its default entry keeps
 2025 behavior. The 2026 adapter supplies the complete two-stage 50%–20% rate
 table and $7,500/$3,750 exclusion limits. The pure 2026 rules include the full
 $7,500 limit for qualifying considered-unmarried MFS, but public MFS source
@@ -22,8 +23,8 @@ handling remains gated pending spouse-income and eligibility reconciliation.
 
 Public `form2441.claim` accepts reviewed provider identities and paid amounts,
 qualifying-child references, receipt amounts allocated to provider and child,
-and employer plan records. It accepts no earned-income, AGI, tax-limit or credit
-totals. Receipt amounts are whole dollars; W-2 cents are combined before rounding.
+employer plan records, and the prior-return records described below. It accepts
+no caller-calculated current earned-income, AGI, tax-limit or credit totals. Receipt amounts are whole dollars; W-2 cents are combined before rounding.
 
 - General supplies filer identity, filing status and dependent source facts.
   Children must match claimed dependents with under-13 age and over-half-year
@@ -38,10 +39,11 @@ totals. Receipt amounts are whole dollars; W-2 cents are combined before roundin
   explicit records. Forfeiture cannot exceed the amount included on line 12.
 - Each receipt references one known provider and child. Duplicate receipts and
   children are rejected, and qualified receipts cannot exceed provider payments.
-  This slice requires care incurred and paid in 2026. Excluded benefits are
+  Current receipts require care incurred and paid in 2026; prior receipts use
+  their own reviewed source contract. Excluded benefits are
   allocated once across receipt-backed child expenses before the credit cap.
 - Reviews require ordinary W-2 earnings,
-  no prior-year paid expenses, no proprietor/partner benefits, no spouse death,
+  no proprietor/partner benefits, no spouse death,
   no FTC/Form 8978 credit, eligible providers and no double use as medical or
   reimbursed expenses. Household employees require unfinished Schedule H work.
 
@@ -85,6 +87,37 @@ applicable printed part. An unused benefits workpaper cannot check B on a
 credit-only form. The three-page monthly QA set includes checked and unchecked
 B examples and was rendered and inspected on October 15.
 
+## 2025 care paid in 2026
+
+`claim.prior_year_expenses` explicitly selects no prior payments or provides
+2025 Form 2441 lines 3–6, 24 and 25, Form 1040 line 11a, the prior qualifying-person
+inventory, and dated receipts paid in 2026. Each source includes a review or record
+reference. The prior taxpayer and any joint spouse must match the current filing
+unit; changed joint filing units need allocation review and remain gated.
+
+Worksheet A uses the shared **2025** 35%–20% rate, prior earned income and prior
+benefit-adjusted expense limit. It validates the historical expense base before
+calculating the additional credit, including the zero/negative stop. The late
+node adds that amount to current credit on lines 9b/9c before the current tax limit
+and Schedule 8812 ordering. A full current $7,500 exclusion does not erase an
+otherwise eligible prior credit.
+
+Current and prior receipts share duplicate and provider-payment checks. Prior
+payments do not enter current expense rows or benefit exclusions. Prior-only
+claims may have no current qualifying people; they receive no current expense
+cap or monthly deemed income. The 2025 default calculator still requires at least
+one qualifying person.
+
+When line 9b is positive, the draft includes a paginated statement with Worksheet A
+lines 1–13, provider addresses/TINs/household-employee answers, qualifying-person
+names/TINs/disability answers, and dated payment associations. It follows official
+forms in the bundle. Source identity, dates, duplicate receipts, historical line
+reconciliation, exhausted limits, prior-only returns and current-benefit coexistence
+have regression coverage. The eight-page prior-only, full-current-exclusion and
+25-person continuation QA set was rendered and visually inspected on October 15;
+static checks confirmed no AcroForm or annotations. Changed joint units and prior returns needing corrected
+or unfiled expense calculations remain outside this reviewed prior-return route.
+
 ## Draft PDF and verification
 
 The bundle attaches Form 2441 at sequence 21, with one credit-only page or both
@@ -106,7 +139,7 @@ attachment order, continuation completeness and destination tampering.
 
 Disability qualifying people, custodial exceptions, MFS, taxable-benefit
 allocation between multiple recipient spouses, self-employment, deferred/prepaid
-expenses, prior-year Worksheet A,
+expenses, changed filing-unit or corrected/unfiled prior-return care allocations,
 proprietor/partner benefits, Schedule H, special provider TIN/address routes,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.
 The [full acceptance contract](FORM2441-GRAPH.md) remains broader than this slice.

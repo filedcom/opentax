@@ -310,3 +310,20 @@ Deno.test("Each spouse elects all combat pay independently for benefits and cred
     "enrollment records",
   );
 });
+
+Deno.test("No current care person means no monthly deemed income on a prior-only claim", () => {
+  const review = monthly();
+  review.taxpayer.months[0].incapable_of_self_care = true;
+  review.taxpayer.months[1].w2_wages = 100;
+  const r = calculateCareEarnedIncome2026(
+    review,
+    elections,
+    annual(100),
+    0,
+    false,
+    "credit",
+  );
+  assertEquals(r.taxpayer, 100);
+  assertEquals(r.deemed_income_used, false);
+  assertEquals(r.monthly![0].deemed_owner, null);
+});

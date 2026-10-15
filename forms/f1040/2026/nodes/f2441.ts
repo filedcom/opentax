@@ -50,10 +50,13 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
     dependentCare2026,
     benefit.credit_income!,
   );
+  const line9b = benefit.prior_year_worksheet?.lines.line13 ?? 0;
+  const line9c = core.line9a + line9b;
   const lines = {
     ...core,
-    line9b: 0,
-    line9c: core.line9a,
+    line9b,
+    line9c,
+    line11: Math.min(line9c, core.line10),
     line22: 0,
     line24: 0,
   };

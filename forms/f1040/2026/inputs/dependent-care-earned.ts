@@ -70,8 +70,10 @@ export function calculateCareEarnedIncome2026(
 ) {
   const review = careEarnedIncomeReview2026Schema.parse(raw);
   const elected = careCombatElections2026Schema.parse(elections)[stage];
-  if (!Number.isInteger(qualifyingPeople) || qualifyingPeople < 1) {
-    throw new Error("Care earned income needs qualifying people");
+  if (!Number.isInteger(qualifyingPeople) || qualifyingPeople < 0) {
+    throw new Error(
+      "Care earned income needs a nonnegative qualifying-person count",
+    );
   }
   if (!joint && (elections.benefits.spouse || elections.credit.spouse)) {
     throw new Error("Spouse care combat election needs a joint return");
@@ -101,7 +103,11 @@ export function calculateCareEarnedIncome2026(
       "Monthly care ledger needs exactly the return's taxpayer and spouse",
     );
   }
-  const minimum = qualifyingPeople >= 2 ? 500 : 250;
+  const minimum = qualifyingPeople === 0
+    ? 0
+    : qualifyingPeople >= 2
+    ? 500
+    : 250;
   const rows = new Map<
     CareOwner2026,
     { month: number; actual: number; eligible: boolean }[]
@@ -146,8 +152,8 @@ export function calculateCareEarnedIncome2026(
         month: m.month,
         actual: m.w2_wages + (elected[owner] ? m.nontaxable_combat_pay : 0) +
           (stage === "credit" ? m.taxable_care_benefits : 0),
-        eligible: m.incapable_of_self_care ||
-          (studentQualifies && m.full_time_student),
+        eligible: qualifyingPeople > 0 && (m.incapable_of_self_care ||
+          (studentQualifies && m.full_time_student)),
       })),
     );
   }

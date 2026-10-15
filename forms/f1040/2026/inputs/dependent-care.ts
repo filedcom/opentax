@@ -1,4 +1,8 @@
 import {
+  calculatePriorCareCredit2026,
+  priorCarePayments2026Schema,
+} from "./dependent-care-prior.ts";
+import {
   calculateCareEarnedIncome2026,
   type CareAnnualEarnings2026,
   careCombatElections2026Schema,
@@ -36,7 +40,7 @@ export const dependentCareClaim2026Schema = z.object({
     ordinary_w2_earnings_only: z.literal(true),
     earned_income: careEarnedIncomeReview2026Schema,
     combat_pay_elections: careCombatElections2026Schema,
-    no_prior_year_expenses_paid: z.literal(true),
+    prior_year_expenses: priorCarePayments2026Schema,
     no_proprietor_or_partner_benefits: z.literal(true),
     no_foreign_tax_or_form8978_credit: z.literal(true),
     no_spouse_death_during_year: z.literal(true),
@@ -52,7 +56,7 @@ export const dependentCareClaim2026Schema = z.object({
         care_only_while_under_13: z.literal(true),
         custodial_parent_and_dependency_requirements_met: z.literal(true),
       }).strict(),
-    ).min(1).max(25),
+    ).max(25),
     expenses: z.array(
       z.object({
         receipt_reference: reference,
@@ -233,8 +237,23 @@ export function calculateDependentCareBenefits2026(
   if (new Set(people.map((p) => p.ssn)).size !== people.length) {
     throw new Error("Duplicate care child");
   }
-  const paidByProvider = claim.providers.map(() => 0);
-  const receipts = new Set<string>();
+  const priorWorksheet = calculatePriorCareCredit2026(
+    claim.prior_year_expenses,
+    input,
+    claim.providers,
+  );
+  if (
+    !people.length && !priorWorksheet && box10 === 0 &&
+    !claim.benefits?.carryover_used_in_2026
+  ) {
+    throw new Error(
+      "Care claim needs qualifying people, benefits or prior-year payments",
+    );
+  }
+  const paidByProvider = priorWorksheet
+    ? [...priorWorksheet.provider_paid]
+    : claim.providers.map(() => 0);
+  const receipts = new Set<string>(priorWorksheet?.receipt_references ?? []);
   for (const row of claim.expenses) {
     const person = people.find((p) => p.ssn === normalize(row.child_ssn));
     if (!person || !claim.providers[row.provider_index]) {
@@ -325,6 +344,7 @@ export function calculateDependentCareBenefits2026(
     benefits,
     lines,
     expected_wage_income: totalWages + lines.line26,
+    prior_year_worksheet: priorWorksheet,
     earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {
       taxpayer: creditIncome.taxpayer,

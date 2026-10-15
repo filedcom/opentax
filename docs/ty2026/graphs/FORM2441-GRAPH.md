@@ -6,7 +6,8 @@ connects the bounded ordinary-W-2/child-care route, shared annual arithmetic,
 Schedule 3/8812 ordering and draft PDF. See [current implementation and explicit
 remaining gates](FORM2441-CURRENT.md), which supersedes the implementation-status
 claims below. Monthly deemed income and independent care combat elections are
-now connected; prior-year expenses and other special cases remain unfinished.
+now connected, along with reviewed 2025-return expenses paid in 2026 and the
+required Worksheet A statement; changed joint units and other special cases remain.
 
 Sources: pinned [2026 draft Form 2441](../corpus/draft/f2441.pdf)
 (SHA-256 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`)
