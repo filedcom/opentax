@@ -13,6 +13,7 @@ const textFields: readonly (readonly [string, string])[] = [
   ["spouse_first_name", `${p1}f1_17[0]`],
   ["spouse_last_name", `${p1}f1_18[0]`],
   ["spouse_ssn", `${p1}f1_19[0]`],
+  ["mfs_spouse_full_name", `${p1}f1_28[0]`],
   ["address_line1", `${p1}Address_ReadOrder[0].f1_20[0]`],
   ["address_line2", `${p1}Address_ReadOrder[0].f1_21[0]`],
   ["address_city", `${p1}Address_ReadOrder[0].f1_22[0]`],
@@ -66,6 +67,7 @@ const textFields: readonly (readonly [string, string])[] = [
   ["line25c_other_withheld", `${p2}f2_22[0]`],
   ["line25d_total_withholding", `${p2}f2_23[0]`],
   ["line26_estimated_payments", `${p2}f2_24[0]`],
+  ["line26_former_spouse_ssn", `${p2}Estimated_ReadOrder[0].f2_25[0]`],
   ["line27a_eic", `${p2}f2_26[0]`],
   ["line28_actc", `${p2}f2_27[0]`],
   ["line29_refundable_aotc", `${p2}f2_28[0]`],
@@ -209,6 +211,15 @@ export const irs1040Pdf2026: PdfFormDescriptor = {
   fields,
   pageIndices: () => [1, 2],
   projectFields: (rawFields) => {
+    if (
+      rawFields.filing_status === "mfs" &&
+      (![rawFields.spouse_first_name, rawFields.spouse_last_name].every((v) =>
+        typeof v === "string" && v.trim()
+      ) || typeof rawFields.spouse_ssn !== "string" ||
+        !/^\d{3}-?\d{2}-?\d{4}$/.test(rawFields.spouse_ssn))
+    ) {
+      throw new Error("TY2026 MFS PDF needs spouse name and SSN");
+    }
     if (rawFields.digital_assets === undefined) {
       throw new Error("TY2026 PDF needs the digital-assets answer");
     }
@@ -233,6 +244,18 @@ export const irs1040Pdf2026: PdfFormDescriptor = {
     }
     return {
       ...rawFields,
+      spouse_first_name: rawFields.filing_status === "mfj"
+        ? rawFields.spouse_first_name
+        : undefined,
+      spouse_last_name: rawFields.filing_status === "mfj"
+        ? rawFields.spouse_last_name
+        : undefined,
+      spouse_occupation: rawFields.filing_status === "mfj"
+        ? rawFields.spouse_occupation
+        : undefined,
+      mfs_spouse_full_name: rawFields.filing_status === "mfs"
+        ? [rawFields.spouse_first_name, rawFields.spouse_last_name].join(" ")
+        : undefined,
       taxpayer_first_name_with_initial: [
         rawFields.taxpayer_first_name,
         rawFields.taxpayer_middle_initial,

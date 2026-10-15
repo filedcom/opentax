@@ -58,7 +58,7 @@ class ExtensionPayments2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["schedule3_final", "form1062"];
+    return ["schedule3_final", "form1062", "estimated_payments"];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -68,6 +68,13 @@ class ExtensionPayments2026 extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: calculation } },
+        {
+          nodeType: "estimated_payments",
+          fields: {
+            extension_payment_sources:
+              calculation.source_input.claim?.payments ?? [],
+          },
+        },
         {
           nodeType: "schedule3_final",
           fields: {

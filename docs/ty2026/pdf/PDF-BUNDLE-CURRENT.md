@@ -75,6 +75,14 @@ remainder from final line 35a and reuses the shared ownership, checksum and
 refund-sum checks. General bank details need a matching reviewed single-account
 claim. See [current refund allocation](../graphs/REFUND-CURRENT.md).
 
+Line 26 replays retained estimated-payment sources before rendering. The
+standalone `buildF1040PdfBytes2026` accepts these as its third argument after
+the refund claim; the bundle supplies them from its own graph execution.
+Divorced joint allocations print the former spouse's SSN beside line 26; MFS
+keeps the current spouse's SSN in the header and name in the separate-filing
+box. No estimated-tax voucher or private allocation agreement is appended.
+See [current estimated payments](../graphs/ESTIMATED-PAYMENTS-CURRENT.md).
+
 Business attachments replay the complete business and deduction sources and
 match Schedule 1 lines 3/15, Schedule 2 line 4 and Form 1040 deduction destinations.
 Schedule C/SE use each proprietor's identity. Part V preserves source cents in

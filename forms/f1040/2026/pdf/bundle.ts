@@ -1,3 +1,4 @@
+import type { calculateEstimatedPayments2026 } from "../inputs/estimated-payments.ts";
 import { buildForm8888PdfBytes2026 } from "./refund-allocation.ts";
 import type { calculateRefundAllocation2026 } from "../inputs/refund-allocation.ts";
 import type { calculateForm461_2026 } from "../nodes/form461.ts";
@@ -137,6 +138,9 @@ export async function buildDraftReturnPdf2026(
   // These retained values are produced only by this execution's validated nodes.
   const retained = <T>(node: string) =>
     p[node]?.calculation_2026 as T | undefined;
+  const estimates = retained<ReturnType<typeof calculateEstimatedPayments2026>>(
+    "estimated_payments",
+  );
   const refund = retained<ReturnType<typeof calculateRefundAllocation2026>>(
     "refund_allocation",
   );
@@ -249,7 +253,16 @@ export async function buildDraftReturnPdf2026(
   ) => parts.push({ form, officialPages, render, hasIncompleteFooter });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
   // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
-  add("f1040", 2, () => buildF1040PdfBytes2026(f, refund?.source_input.claim));
+  add(
+    "f1040",
+    2,
+    () =>
+      buildF1040PdfBytes2026(
+        f,
+        refund?.source_input.claim,
+        estimates?.source_input,
+      ),
+  );
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
       buildSchedule1PdfBytes2026(

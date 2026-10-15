@@ -6,6 +6,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `estimated_payments` reuses 2025 payment reconciliation for posted 2026
+  receipts, signed joint allocations and reconciled posted 2025 credits.
+  Line 26 flows through settlement and refund allocation; draft PDFs replay
+  retained sources and print former-spouse and MFS identity fields correctly.
+  See [current estimated payments](../../../docs/ty2026/graphs/ESTIMATED-PAYMENTS-CURRENT.md).
+
 - `refund_allocation` runs after settlement and reuses the 2025 account/refund
   reconciliation for one to three reviewed deposit accounts. Fixed amounts or
   one remainder resolve against line 35a after any 2027 estimated-tax election.

@@ -20,7 +20,7 @@ remaining IRS publication, MeF and ATS gates.
 
 ## Working with the pinned PDFs
 
-All 248 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
+All 254 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
 the repository's `.gitattributes`. Install Git LFS before working with this
 corpus. After cloning or switching to a checkout that already has pointer
 files, fetch the PDF content with:
@@ -40,6 +40,10 @@ PDF from Git history. The MeF inventory spreadsheets and text ledgers remain
 regular Git files.
 
 ## What is in this snapshot
+
+- [`ESTIMATED-PAYMENTS-CURRENT.md`](./graphs/ESTIMATED-PAYMENTS-CURRENT.md):
+  shared payment reconciliation, posted 2025 credits, signed joint allocations
+  and draft Form 1040 line 26, with the final 2026 Form 1040-ES source.
 
 - [`PDF-F1040-MAP.md`](./pdf/PDF-F1040-MAP.md) and `pdf-fields-f1040.csv`: the
   draft 2026 Form 1040 AcroForm inventory and changed-line mapping for the

@@ -1,4 +1,8 @@
 import {
+  estimated_payments_2026,
+  estimatedPaymentClaim2026Schema,
+} from "./inputs/estimated-payments.ts";
+import {
   refund_allocation_2026,
   refundAllocationClaim2026Schema,
 } from "./inputs/refund-allocation.ts";
@@ -99,6 +103,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: estimated_payments_2026,
+    isArray: false,
+    inputSchema: estimatedPaymentClaim2026Schema,
+  },
   {
     node: refund_allocation_2026,
     isArray: false,

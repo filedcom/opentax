@@ -2350,6 +2350,17 @@
       "bytes": 88431,
       "sha256": "dc50ba9b52db27a01492962b7349b71070812956c56feff376928dcd17a4953d",
       "year_check": "December 2025 continuous-use revision; checked for 2026 on 2026-10-15"
+    },
+    {
+      "path": "authorities/f1040es--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1040es.pdf",
+      "kind": "final-form-instructions",
+      "status": "downloaded",
+      "bytes": 331490,
+      "sha256": "396ffad25baa737b33a67d27624f7444be3ac4e7245d287aebe5f89864f90b54",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-16",
+      "scope": "Estimated payment records, 2025 overpayment credits, joint-payment eligibility, dates and name-change statements; not a completed Form 2210 penalty calculation"
     }
   ]
 }

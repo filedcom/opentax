@@ -1,3 +1,7 @@
+import {
+  type EstimatedPaymentSource2026,
+  reconcileEstimatedPaymentReturn2026,
+} from "../inputs/estimated-payments.ts";
 import { projectRefundFields2026 } from "./refund-allocation.ts";
 import type { refundAllocationClaim2026Schema } from "../inputs/refund-allocation.ts";
 import { reviewedResidence2026 } from "../inputs/dependent-residency.ts";
@@ -256,7 +260,9 @@ function fillField(
 export async function buildF1040PdfBytes2026(
   rawFields: Record<string, unknown>,
   refundClaim?: z.input<typeof refundAllocationClaim2026Schema>["claim"],
+  estimatedPayments?: EstimatedPaymentSource2026,
 ): Promise<Uint8Array> {
+  reconcileEstimatedPaymentReturn2026(estimatedPayments, rawFields);
   const projected = projectRefundFields2026(rawFields, refundClaim).fields;
   const fields = irs1040Pdf2026.projectFields!(projected, { f1040: projected });
   const dependentRows = dependents(fields);
