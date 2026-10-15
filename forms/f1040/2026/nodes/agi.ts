@@ -115,6 +115,16 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         }
         return { nodeType: "f1040", fields };
       }
+      if (output.nodeType === "schedule1a") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            form2555_line45_from_agi:
+              input.line8d_foreign_earned_income_exclusion ?? 0,
+          },
+        };
+      }
       if (output.nodeType === "standard_deduction") {
         return {
           ...output,

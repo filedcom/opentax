@@ -90,9 +90,8 @@ The internal graph test covers general identity and cash-gift records → issued
 W-2 → AGI → deduction resolution → Form 1040 settlement. Only finalized income
 tax is supplied by the fixture. It intentionally exposes the
 remaining credit/form pending records. It is not a complete public return graph.
-The new Schedule 1-A source contract is `w2_2026_sources`; its receiving 2026
-calculator, occupation allocation and eligibility/phaseout checks remain to
-build.
+The `w2_2026_sources` handoff now feeds the employee/senior Schedule 1-A
+calculator described below; its other source branches remain unfinished.
 
 The 224-test combined 2026/W-2/AGI run passed; 21 focused tests passed after the
 final shared-line rounding and input-catalog changes. The existing 2025 W-2,
@@ -149,7 +148,7 @@ The graph adapter currently handles no-QBI calculations. AGI marks business
 income for the unfinished QBI source owner, and the adapter rejects a previously
 calculated `qbi_deduction`. The pure solver tests exercise the coupled equations
 with independent QBI test calculators; they do not establish completed Forms
-8995/8995-A. Final Schedule A source limits, Schedule 1-A source calculations,
+8995/8995-A. Final Schedule A source limits, the remaining Schedule 1-A source branches,
 QBI forms/attachments, dependent earned-income classification, and foreign-tax
 allocation still need their receiving 2026 owners. The existing finalization API
 continues to accept upstream finalized amounts only.
@@ -174,6 +173,45 @@ Sources checked October 15: [26 USC §170(b)(1)(G), (H), (p)](https://uscode.hou
 [Publication 505 (2026), Worksheet 2-6](https://www.irs.gov/publications/p505),
 [standard-deduction eligibility](https://www.irs.gov/taxtopics/tc551), and
 [draft Form 6251 lines 1a–2a](https://www.irs.gov/pub/irs-dft/f6251--dft.pdf).
+
+## Schedule 1-A employee and senior calculation
+
+The 2026 Schedule 1-A adapter reuses the existing stepped-phaseout and senior
+arithmetic. The 2025 node calls those same extracted helpers without changing
+its source contract or form lines. Current 2026 TP/TT sources, filer eligibility
+and AGI now feed deduction selection: line 44 becomes Form 1040 line 13a, while
+line 43 remains separate for the Form 6251 basis adjustment.
+
+Public `schedule1a` input contains source-inventory and qualification evidence,
+not calculated amounts. Each TP review reconciles qualified occupation amounts
+plus excluded tips to the issued W-2, retains its records, and checks the
+current occupation list. TP alone does not establish qualified tips. The source
+owner and employer must match, duplicate sources/reviews are rejected, and
+missing SSN review facts cannot silently become a zero deduction. Issued TT
+supplies qualified overtime; return-level caps, completed-$1,000 phaseout steps
+and the per-person senior reduction follow the 2026 draft. Printed source rows
+round before their line totals are added. Ineligible and fully phased-out
+outcomes remain inspectable.
+
+Part I requires either the existing sourced zero-exclusions review or all four
+upstream exclusion amounts with references. Positive addbacks are internal
+calculator inputs, not public source fields. The Form 2555 line 45 addback must
+agree with the exclusion used by AGI. The foreign/territorial source calculators
+and their complete 2026 attachment routes are not yet implemented.
+
+This adapter currently covers ordinary employee W-2 tips/overtime and seniors.
+The source-inventory review holds Form 4137, business tips, non-W-2 overtime and
+vehicle interest for their receiving calculators instead of dropping their
+amounts. Statutory-employee sources also need business coordination. In
+particular, the eventual Form 4137 path must compare qualified TP and Form 4137
+amounts by owner/employer using the larger amount, and business tips need net
+profit and QBI coordination. Schedule 1-A PDF/MeF attachments remain to build.
+
+Sources checked October 15:
+[2026 Schedule 1-A draft](https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf),
+[2026 W-2 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf),
+[current tipped occupations](https://www.irs.gov/TippedOccupations), and
+[TD 10044 and the retained SSTB transition relief](https://www.irs.gov/irb/2026-18_IRB).
 
 ## Reuse and folder rules for subsequent work
 
@@ -245,6 +283,12 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
   These include coupled and nonunique QBI/itemized examples, all filing-status
   overall-limit thresholds, source ownership/receipt checks, and the cash-gift
   → deduction → settlement graph. The 137-test unit/preflight gate also passed.
+
+- Schedule 1-A integration passed 194 typed tests across all current 2026
+  modules and the existing 2025 Schedule 1-A and AGI suites. Graph fixtures
+  cover wages alone, W-2 overtime, and combined tips/overtime/senior deductions,
+  including the distinct senior adjustment to the Form 6251 basis.
+- The 137-test repository unit/preflight gate passed again.
 
 ## Source recheck
 

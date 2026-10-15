@@ -1,4 +1,8 @@
 import {
+  claimInputSchema as schedule1aSchema,
+  schedule1a_2026,
+} from "./nodes/schedule1a.ts";
+import {
   cash_charity_2026,
   cashGift2026Schema,
 } from "./inputs/cash-charity.ts";
@@ -15,6 +19,7 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  { node: schedule1a_2026, isArray: false, inputSchema: schedule1aSchema },
   { node: general_2026, isArray: false, inputSchema: generalSchema },
   {
     node: cash_charity_2026,

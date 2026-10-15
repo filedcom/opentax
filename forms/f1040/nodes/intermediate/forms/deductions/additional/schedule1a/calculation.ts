@@ -1,3 +1,7 @@
+import {
+  seniorDeductionPerPerson,
+  steppedDeductionPhaseout,
+} from "./amounts.ts";
 import { z } from "zod";
 import {
   calculateSingleScheduleCForm7206,
@@ -514,9 +518,12 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
-  return Math.floor(
-    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
-  ) * 100;
+  return steppedDeductionPhaseout(
+    schedule1APart1Magi(input)!,
+    threshold,
+    100,
+    "down",
+  ).reduction;
 }
 
 /** Eligible tips after each establishing business's allocable deductions. */
@@ -877,9 +884,12 @@ export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
   const threshold = input.filing_status === FilingStatus.MFJ
     ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
     : VEHICLE_PHASEOUT_THRESHOLD;
-  const phaseout = Math.ceil(
-    Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
-  ) * 200;
+  const phaseout = steppedDeductionPhaseout(
+    schedule1APart1Magi(input)!,
+    threshold,
+    200,
+    "up",
+  ).reduction;
   return Math.max(
     0,
     Math.min(qualifiedInterest, VEHICLE_INTEREST_CAP) - phaseout,
@@ -912,14 +922,12 @@ export function seniorDeduction(
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
   const part1Magi = schedule1APart1Magi(input)!;
-  const perPerson = Math.max(
-    0,
-    cfg.seniorDeductionMax -
-      Math.round(
-        Math.max(0, part1Magi - threshold) *
-          cfg.seniorDeductionPhaseoutRate,
-      ),
-  );
+  const perPerson = seniorDeductionPerPerson(
+    part1Magi,
+    threshold,
+    cfg.seniorDeductionMax,
+    cfg.seniorDeductionPhaseoutRate,
+  ).amount;
   return eligiblePeople * perPerson;
 }
 

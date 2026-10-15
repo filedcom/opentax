@@ -28,7 +28,7 @@ import { f1040_2026_node } from "../nodes/f1040.ts";
 import { standard_deduction } from "../../nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts";
 import { eitc } from "../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
-import { schedule1a } from "../../nodes/intermediate/forms/deductions/additional/schedule1a/index.ts";
+import { schedule1a_2026 as schedule1a } from "../nodes/schedule1a.ts";
 import { form8959 } from "../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 import { form8880 } from "../../nodes/intermediate/forms/credits/individual/form8880/index.ts";
 import { form8960 } from "../../nodes/intermediate/forms/taxes/investments/form8960/index.ts";
@@ -400,6 +400,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           nodeType: "schedule1a",
           fields: {
             ...owner,
+            taxpayer_ssn_review_complete:
+              input.taxpayer_ssn_valid_for_employment !== undefined &&
+              input.taxpayer_ssn_issued_before_due_date !== undefined &&
+              input.taxpayer_tin_issued_by_due_date !== undefined,
+            spouse_ssn_review_complete: joint &&
+              input.spouse_ssn_valid_for_employment !== undefined &&
+              input.spouse_ssn_issued_before_due_date !== undefined &&
+              input.spouse_tin_issued_by_due_date !== undefined,
             taxpayer_has_valid_ssn: filer.taxpayerValidSsn,
             spouse_has_valid_ssn: filer.spouseValidSsn,
             taxpayer_age_65_or_older: taxpayerAge65,
