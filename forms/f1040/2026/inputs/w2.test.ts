@@ -169,7 +169,13 @@ Deno.test("2026 W-2 preserves benefit and statutory-employee source routing", ()
       box17_state_withheld: 300,
     }],
   }).outputs;
-  assertEquals(fields(outputs, "form2441"), [{ dep_care_benefits: 3_000 }]);
+  const careOutputs = fields(outputs, "form2441");
+  assertEquals(careOutputs[0], { dep_care_benefits: 3_000 });
+  assertEquals(careOutputs[1], {
+    wage_sources: outputs.find((o) =>
+      o.nodeType === "w2"
+    )!.fields.issued_w2_sources,
+  });
   assertEquals(fields(outputs, "form8889").length, 1);
   assertEquals(fields(outputs, "form8853").length, 1);
   assertEquals(fields(outputs, "schedule_a"), [{

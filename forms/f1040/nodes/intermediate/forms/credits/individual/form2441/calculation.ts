@@ -94,10 +94,21 @@ export interface Form2441Lines {
   readonly line31: number;
 }
 
-function creditRate(agi: number): number {
+export function form2441CreditRate2025(agi: number): number {
   if (agi <= 15_000) return 0.35;
   return Math.max(0.20, (35 - Math.ceil((agi - 15_000) / 2_000)) / 100);
 }
+
+/** Annual differences only; existing callers retain their 2025 behavior. */
+export interface Form2441Rules {
+  creditRate(agi: number, filingStatus: FilingStatus): number;
+  benefitLimit(details: Form2441FilingDetails): number;
+}
+export const form2441Rules2025: Form2441Rules = {
+  creditRate: form2441CreditRate2025,
+  benefitLimit: (details) =>
+    details.filing_status === FilingStatus.MFS ? 2500 : 5000,
+};
 
 export type Form2441BenefitLines = Pick<
   Form2441Lines,
@@ -125,6 +136,7 @@ export type Form2441BenefitLines = Pick<
 export function calculateForm2441Benefits(
   rawDetails: Form2441FilingDetails,
   benefits: number,
+  rules: Form2441Rules = form2441Rules2025,
 ): Form2441BenefitLines {
   const details = filingDetailsSchema.parse(rawDetails);
   if (!Number.isInteger(benefits) || benefits < 0) {
@@ -174,9 +186,7 @@ export function calculateForm2441Benefits(
     ? details.mfs_line19_income!
     : line18;
   const line20 = Math.min(line17, line18, line19);
-  const statutoryLimit = details.filing_status === FilingStatus.MFS
-    ? 2_500
-    : 5_000;
+  const statutoryLimit = rules.benefitLimit(details);
   if (line15 > 0 && details.dependent_care_plan_limit === undefined) {
     throw new Error("Form 2441 benefits need the dependent-care plan limit");
   }
@@ -222,22 +232,24 @@ export function calculateForm2441(
   rawDetails: Form2441FilingDetails,
   agi: number,
   benefits: number,
+  rules: Form2441Rules = form2441Rules2025,
+  creditIncome?: { taxpayer: number; spouse?: number },
 ): Form2441Lines {
   const details = filingDetailsSchema.parse(rawDetails);
   if (!Number.isInteger(agi)) {
     throw new Error("Form 2441 needs calculated whole-dollar AGI");
   }
-  const benefitLines = calculateForm2441Benefits(details, benefits);
+  const benefitLines = calculateForm2441Benefits(details, benefits, rules);
   const line3 = benefitLines.line15 > 0
     ? benefitLines.line31
     : Math.min(benefitLines.line30, benefitLines.line27);
-  const line4 = benefitLines.line18;
+  const line4 = money.parse(creditIncome?.taxpayer ?? benefitLines.line18);
   const line5 = details.filing_status === FilingStatus.MFJ
-    ? benefitLines.line19
-    : benefitLines.line18;
+    ? money.parse(creditIncome?.spouse ?? benefitLines.line19)
+    : line4;
   const line6 = Math.min(line3, line4, line5);
   const line7 = agi;
-  const line8 = creditRate(agi);
+  const line8 = rules.creditRate(agi, details.filing_status);
   const line9a = Math.round(line6 * line8);
   const line10 = details.tax_liability_limit;
   const line11 = details.filing_status === FilingStatus.MFS &&

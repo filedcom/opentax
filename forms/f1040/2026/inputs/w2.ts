@@ -469,6 +469,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       },
     });
     // The source record retains TA; it is excluded from box 1, not a second wage.
+    outputs.push({ nodeType: "form2441", fields: { wage_sources: input.w2s } });
     outputs.push({ nodeType: "w2", fields: { issued_w2_sources: input.w2s } });
     return { outputs };
   }

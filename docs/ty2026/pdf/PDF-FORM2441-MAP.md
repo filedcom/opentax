@@ -32,28 +32,19 @@ IRS release before filing.
 | Line 22 decision | `c2_1[0/1]`, `f2_11` | Separate No and Yes widgets; print the sole-proprietor/partnership amount only on Yes. |
 | Lines 23–31 | `f2_12`–`f2_20` | Deductible, excluded, taxable benefits and remaining credit expenses in line order. |
 
-## Filing checks before enabling the public input
+## Current implementation and remaining filing checks
 
-1. Complete the [Form 2441 calculation contract](../graphs/FORM2441-GRAPH.md): prior-year
-   paid expenses and Worksheet A (9b/9c), proprietor/partner benefits
-   (22/24), person eligibility, provider
-   reconciliation, and earlier-credit inputs to line 10.
-2. Fill every populated provider/person row and the applicable printed pages.
-   The current builder prints the three highest-paid providers and three
-   people with the highest qualifying expenses on the IRS form, checks the
-   overflow boxes, and appends the remaining rows on statements. Both a
-   fourth-row case and the 25-row maximum were rendered and inspected.
-3. Reconcile line 26 to Form 1040 line 1e, line 11 to Schedule 3 line 2,
-   line 9c to 9a+9b, and line 28 to 24+25 before rendering. The graph
-   currently supports line 24 and 9b only as zero, so do not publicly file
-   those cases yet.
-4. Check the field values and widget appearances before flattening, then
-   inspect rendered pages. The current builder fills the initial one- and
-   two-page employee cases, overlays the source's missing benefits answer,
-   and paginates provider/person continuations. Complete the MFS,
-   student/disability, prior-year expense, and self-employed cases before
-   exposing the filing input publicly.
+The current builder is `forms/f1040/2026/pdf/form2441.ts`; the source graph
+connects the reviewed ordinary-W-2/child-care slice described in
+[FORM2441-CURRENT.md](../graphs/FORM2441-CURRENT.md). This is a draft-only source
+input, not a registered filing product.
 
-This map records the draft layout and field topology. The current draft PDF
-builder covers only the graph's employee-benefit calculation slice; it is
-not a complete filing attachment for all Form 2441 cases.
+It reconciles line 26 to Form 1040 line 1e, line 7 to AGI, line 10 to tax before
+credits (FTC/Form 8978 are explicitly absent), and line 11 to Schedule 3 line 2.
+Lines 9b, 22 and 24 remain zero behind explicit source gates. Schedule 3's care
+credit reduces Schedule 8812's tax limit. One-page credit, two-page benefits and
+25-row continuation cases were rendered and inspected on October 15.
+
+Before full filing support, complete the remaining eligibility, monthly income,
+prior-year expense, self-employed benefit and special-provider routes in the
+current contract, then reconcile final IRS forms and current MeF/business rules.

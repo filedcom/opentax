@@ -12,6 +12,7 @@ import {
 // Grow this selection with reviewed source owners, never caller-supplied totals.
 export const inputSchema = schedule3Input2026Schema.pick({
   line11_excess_ss: true,
+  line2_childcare_credit: true,
 }).strict();
 class Schedule3Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule3";
@@ -28,6 +29,8 @@ class Schedule3Node2026 extends TaxNode<typeof inputSchema> {
         {
           nodeType: "f8812",
           fields: {
+            finalized_dependent_care_credit:
+              calculation.input.line2_childcare_credit ?? 0,
             finalized_excess_social_security:
               calculation.input.line11_excess_ss ?? 0,
           },

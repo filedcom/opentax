@@ -328,6 +328,15 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       }
       return output;
     });
+    const earned = outputs.find((o) => o.nodeType === "f8812")?.fields;
+    outputs.push({
+      nodeType: "f2441",
+      fields: {
+        wage_income_from_agi: earned?.wage_income_from_agi ?? 0,
+        unsupported_earned_income_activity:
+          earned?.unsupported_earned_income_activity ?? false,
+      },
+    });
     outputs.push({
       nodeType: "schedule1",
       fields: {

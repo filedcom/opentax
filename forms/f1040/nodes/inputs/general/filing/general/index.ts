@@ -857,7 +857,7 @@ function passesQualifyingChildSupportTest(dep: DependentItem): boolean {
 }
 
 // IRS CTC relationship test: qualifying child relationship only.
-function passesRelationshipTest(dep: DependentItem): boolean {
+export function passesRelationshipTest(dep: DependentItem): boolean {
   return CTC_QUALIFYING_RELATIONSHIPS.has(dep.relationship);
 }
 

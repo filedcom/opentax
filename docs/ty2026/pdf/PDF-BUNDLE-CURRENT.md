@@ -78,3 +78,11 @@ sources and forms, final form revisions, public catalog/CLI, complete MeF
 serialization/validation, and ATS acceptance are still required. The source
 scope reviews and existing guards remain in force; assembling a development
 PDF does not clear any of those gates.
+
+## Dependent care update
+
+Form 2441 now occupies sequence 21 after Schedule B and before Form 4137.
+Its ordinary-W-2/child-care source route reconciles benefits, AGI and credit;
+Schedule 3 line 2 also reduces Schedule 8812's tax limit. Credit-only cases use
+one printed page, benefits use two, and provider/person continuations follow
+all forms. See [current scope](../graphs/FORM2441-CURRENT.md) for source gates.

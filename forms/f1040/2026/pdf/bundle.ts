@@ -1,3 +1,5 @@
+import type { calculateCareCredit2026 } from "../nodes/f2441.ts";
+import { buildForm2441PdfBytes2026 } from "./form2441.ts";
 import type { calculateSchedule3_2026 } from "../schedule3.ts";
 import { buildSchedule3PdfBytes2026 } from "./schedule3.ts";
 import { inputSchema as w2Schema } from "../inputs/w2.ts";
@@ -146,6 +148,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       "TY2026 information-return withholding components disagree with Form 1040",
     );
   }
+  const care = retained<ReturnType<typeof calculateCareCredit2026>>("f2441");
   const eic = retained<ReturnType<typeof calculateEic2026>>("eitc");
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
     "f8812",
@@ -251,6 +254,19 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         {
           form1040_line2b: line("line2b_taxable_interest"),
           form1040_line3b: line("line3b_ordinary_dividends"),
+        },
+        filer,
+      ));
+  }
+  if (care?.file_form2441) {
+    add("form2441", care.part3 ? 2 : 1, () =>
+      buildForm2441PdfBytes2026(
+        care.source_input,
+        {
+          form1040_line1e: line("line1e_taxable_dep_care"),
+          form1040_line11b: line("line11b_agi"),
+          form1040_line18: line("line18_total_tax_before_credits"),
+          schedule3_line2: s3?.input.line2_childcare_credit ?? 0,
         },
         filer,
       ));

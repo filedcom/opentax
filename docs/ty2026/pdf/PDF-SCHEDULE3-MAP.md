@@ -37,8 +37,11 @@ node's existing behavior. The 2026 internal contract covers all nonreserved form
 lines, adds 6z detail and 13b–13e/13z, and rounds combined source amounts on each
 printed line before totaling. Unsupported pending-credit signals and reserved
 2025 line 5b are rejected. It is not a public input accepting caller credit totals.
-Only reviewed registered producers can feed the active node; today that is W-2
-excess withholding. Other source-credit and payment calculations remain pending.
+Only reviewed registered producers can feed the active node: W-2 excess
+withholding and finalized Form 2441 dependent-care credit. Care credit reaches
+1040 line 20 and reduces Schedule 8812 Worksheet A's tax capacity. See
+[the current care route](../graphs/FORM2441-CURRENT.md). Other source-credit and
+payment calculations remain pending.
 
 The draft builder recomputes all subtotals, checks Form 1040 lines 20/31, and
 replays the original identified W-2 records before printing line 11. Schedule 3

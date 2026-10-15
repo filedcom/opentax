@@ -22,11 +22,11 @@ increase that limit. Whole-dollar ACTC reaches settlement and Schedule 3-A.
 
 A public singleton `f8812` source claim requires a review reference, prior
 credit-disallowance answer, ACTC opt-out answer, and explicit absence reviews for
-other nonrefundable credits, foreign/territory exclusions, Puerto Rico residence,
+nonrefundable credits other than dependent care, foreign/territory exclusions, Puerto Rico residence,
 self-employment/statutory-employee income and Medicaid waiver payments. It cannot
-supply counts, AGI, tax or calculated credit amounts. The no-other-credit review
-justifies zero Credit Limit Worksheet A offsets; it does not stand in for future
-credit calculations. The old Worksheet A line 5b slot is held at zero because
+supply counts, AGI, tax or calculated credit amounts. Schedule 3 supplies finalized dependent-care credit to Worksheet A line 2; the
+review justifies zero remaining offsets and does not stand in for future credit
+calculations. See [current care route](FORM2441-CURRENT.md). The old Worksheet A line 5b slot is held at zero because
 2026 no longer includes that line.
 
 ## Output and verification
@@ -69,7 +69,7 @@ owners. See [current EIC](EIC-CURRENT.md).
 
 - Complete Part II-B for tier 1 RRTA credit, Puerto Rico, railroad compensation
   and self-employment. Pending EIC is never assumed zero.
-- Credit Limit Worksheets A/B with other credits. 2026 A uses Schedule 3 lines
+- Complete Credit Limit Worksheets A/B beyond connected dependent care. 2026 A uses Schedule 3 lines
   1, 2, 3, 4, 6d, 6f, 6l, 6m; B line 15 uses 5a, 6c, 6g, 6h. Part II-B line 22
   uses Schedule 1 line 15 and Schedule 2 lines 16c/17c, not the 2025 line names.
 - Form 8862/disallowance exceptions, Form 8332, birth/death without a TIN,

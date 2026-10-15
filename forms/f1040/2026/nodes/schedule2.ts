@@ -24,6 +24,9 @@ export const inputSchema = schedule2Input2026Schema.pick({
 class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule2";
   readonly inputSchema = inputSchema;
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "f2441"];
+  }
   readonly outputNodes = new OutputNodes([f1040_2026_node, f8812]);
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -33,6 +36,10 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
     const lines = calculateSchedule2_2026(input);
     return {
       outputs: [
+        {
+          nodeType: "f2441",
+          fields: { schedule2_part1_tax: lines.line3_part1_tax },
+        },
         {
           nodeType: "f8812",
           fields: {
