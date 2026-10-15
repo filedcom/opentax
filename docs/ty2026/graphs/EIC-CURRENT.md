@@ -68,6 +68,9 @@ command, targeted type checks and changed-file formatting/lint checks passed.
 
 ## Still required
 
+- Dependent parents claiming child-based EIC: [IRC §32(c)(1)](https://uscode.house.gov/us/usc/119-120/t26/s32/)
+  limits the general dependency exclusion to childless filers. The current adapter
+  stops for a separate review route instead of incorrectly finalizing zero.
 - Form 8862 recertification, competing-child/tiebreaker cases, separated-spouse
   MFS eligibility and self-only EIC with a qualifying child lacking a valid SSN.
 - Complete earned-income/Worksheet B, business/farm/passive/rental/disposition

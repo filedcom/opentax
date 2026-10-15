@@ -175,6 +175,14 @@ export function calculateEic2026(raw: EicInput2026) {
     input.taxpayer_can_be_claimed_as_dependent ||
     input.spouse_can_be_claimed_as_dependent
   ) {
+    // IRC 32(c)(1)(A)(ii)(III) excludes dependent filers only from childless
+    // EIC. A dependent parent with a qualifying child needs a separate reviewed
+    // route; do not inherit the broader dependency check of the legacy helper.
+    if (children.count > 0) {
+      throw new Error(
+        "Child-based EIC for a dependent filer needs the qualifying-relative versus qualifying-child review route",
+      );
+    }
     return { ...base, disposition: "filer_is_dependent" };
   }
   if (input.investment_income_floor > eic2026.investmentIncomeLimit) {

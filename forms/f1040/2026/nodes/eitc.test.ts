@@ -219,3 +219,41 @@ Deno.test("2026 EIC rejects unsupported source activity and claimant-supplied to
     ),
   );
 });
+
+Deno.test("2026 dependent-parent EIC stops for review instead of silently treating the filer as childless", () => {
+  const base = eicGraphFixture2026(4000, 1);
+  const result = run({
+    ...base,
+    general: {
+      ...base.general,
+      taxpayer_can_be_claimed_as_dependent: true,
+      dependents: base.general.dependents.map((d) => ({
+        ...d,
+        claim_as_dependent: false,
+      })),
+    },
+  });
+  assert(
+    result.diagnostics.some((d) =>
+      d.nodeType === "eitc" && d.message.includes("dependent filer")
+    ),
+  );
+  const childless = eicGraphFixture2026(4000, 0);
+  // Dependent standard-deduction source routing is separate and unfinished;
+  // inspect the EIC result without claiming a complete dependent return.
+  const noChild = run({
+    ...childless,
+    general: {
+      ...childless.general,
+      taxpayer_can_be_claimed_as_dependent: true,
+    },
+  });
+  assertEquals(noChild.diagnostics.filter((d) => d.nodeType === "eitc"), []);
+  assertEquals(
+    (noChild.pending.eitc.calculation_2026 as ReturnType<
+      typeof calculateEic2026
+    >).disposition,
+    "filer_is_dependent",
+  );
+  assertEquals(noChild.pending.f8812.finalized_eic, 0);
+});
