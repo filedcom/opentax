@@ -15,7 +15,7 @@ and MeF.
 | 1–4 | One row per employer, including EIN, total cash/charge tips received and reported. W-2 box 8 allocated tips are included unless records prove a lower unreported amount. Sum all employers, including continuation rows. Line 4 is received minus reported tips and flows to 2026 Form 1040 line 1c/AGI. Keep W-2 box 1 reported tips out of this extra income. |
 | 5–6 | Remove tips under the per-employer $20 monthly reporting threshold from the FICA base, but retain them in line 4 income. Line 6 also feeds Form 8959 line 2 when Additional Medicare Tax applies. |
 | 7–10 | Use the printed 2026 Social Security wage base **$184,500**. Line 8 combines W-2 boxes 3 and 7 and applicable RRTA compensation; line 10 is the smaller of line 6 (with the stated government-employee comparison adjustment) or remaining wage base. Reconcile the same recipient's Form 8919 line 8 so the base is shared once. |
-| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../corpus/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current 2026 graph uses 16a; its Form 4137 PDF remains to build. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
+| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../corpus/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current 2026 graph and Schedule 2 PDF use 16a. The Form 4137 PDF preserves the source draft's outdated label. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
 
 The 2026 draft requires a separate Form 4137 for each spouse with unreported
 tips. Its printed instructions allow a statement or additional first-page
@@ -44,8 +44,13 @@ latter. The 2026 draft no longer prints reason codes B, D, E or F.
   and payroll calculation with a 2026 policy. It connects W-2 evidence, income,
   Schedule 1-A qualification, Schedule 2 line 16a and Form 8959 line 2.
   Its owner-keyed line 10 feeds Form 8919 before that form computes line 8.
-  Form 4137 PDF/MeF components remain unfinished; the historical prototype PDF
-  is not the current implementation.
+  The [current Form 4137 PDF](../../../forms/f1040/2026/pdf/form4137.ts) recalculates
+  these sources, checks the Form 1040/Schedule 2 destinations and matches filer
+  identity. It prints separate spouse forms, first-page continuations beyond
+  five employers, rounded rows and the line 10 government-employee annotation.
+  Totals appear only on the first copy per recipient; the preprinted wage-base
+  dummy widget stays empty. Draft markings and the source cross-reference
+  conflict remain visible. MeF and complete bundle assembly remain unfinished.
 - The [2026 Form 8919 adapter](../../../forms/f1040/2026/inputs/form8919.ts)
   reuses the shared per-firm A/C/G/H evidence checks and payroll arithmetic.
   The shared 2025 node retains its original input and destinations. The 2026
@@ -82,8 +87,8 @@ latter. The 2026 draft no longer prints reason codes B, D, E or F.
    statutory-employee exceptions, noncash tips, full NEC/MISC source ownership
    and their Schedule 1-A branches. Connect receiving Schedule SE and credit
    calculations; do not treat emitted pending records as completed routes.
-3. Build Form 4137 PDF/continuations and complete the combined return bundle.
-   Map both current `IRS4137`/`IRS8919` documents, supporting attachments and
+3. Connect the Form 4137/8919 and Schedule 2 PDF components in the complete
+   return bundle. Map both current `IRS4137`/`IRS8919` documents, supporting attachments and
    active reject rules. Validate taxpayer-only, spouse-only and joint outputs.
 4. Retain the existing source, owner, A/C/G/H, rounding, same-payment overlap,
    five/more-than-five PDF and Form 4137/8919 wage-base tests. Extend them to

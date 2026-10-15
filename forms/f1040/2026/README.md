@@ -255,9 +255,18 @@ with $20,000 of qualified Form 4137 tips at $152,001 AGI.
 
 The issued W-2 source is still required. Applied-for EINs, substitute/corrected
 W-2s, railroad tips, statutory-employee coordination and noncash-tip income need
-separate source handling. Form 4137 PDF/MeF attachments and full payroll/credit
-integration remain release gates; the existing Schedule 1-A component already
+separate source handling. Form 4137 MeF, complete PDF bundle selection and full
+payroll/credit integration remain release gates; the existing Schedule 1-A component already
 has the Form 4137 comparison column.
+
+The Form 4137 PDF component now uses the pinned 34-field draft, recalculates
+sources and checks Form 1040 line 1c, Schedule 2 line 16a and recipient identity.
+It prints a separate form per spouse and additional first-page rows beyond five
+employers, with all totals on the first copy only. Printed row rounding follows
+the calculator. The line 10 government-employee annotation retains the Medicare
+amount excluded only from Social Security. Draft markings and the source's old
+Schedule 2 reference remain visible; the destination check uses the reviewed
+2026 line 16a. No editable widgets remain.
 
 ## Form 8919 employee wage sources and draft attachment
 
@@ -325,6 +334,30 @@ other withholding sources must remain separate at assembly. The whole return
 bundle and current-version MeF serialization remain pending. The source contract
 and remaining acceptance work are in
 [FORM8959-GRAPH.md](../../../docs/ty2026/graphs/FORM8959-GRAPH.md).
+
+## Schedule 2 draft attachment
+
+The two-page Schedule 2 component maps all 68 fields in the pinned draft and
+recalculates its subtotals from finalized source-owner amounts. It checks Part I
+against Form 1040 line 17, the total against line 23, and employment/other tax
+against the amount used by Schedule 3-A. The PDF API covers the printed contract;
+its presence does not enable the remaining source calculators in the graph.
+
+Form 4255 selections, SE exemptions and the Form 5329 exception checkbox remain
+explicit print details. Other-tax/credit-recapture disclosures must reconcile
+itemized descriptions and amounts to their line. Long disclosures produce
+identified, paginated statements with a final total. Static output preserves
+draft markings, removes widgets and retains both printed pages. Positive
+section 965 installments remain held for the existing line 12/15 source conflict.
+
+The combined payroll PDF test uses $184,000 of W-2 Social Security wages:
+Form 4137 consumes the remaining $500 before Form 8919 runs. The resulting
+$60/$145 payroll taxes, $558 Additional Medicare Tax and $30 uncollected W-2 FICA
+produce $793 of Schedule 2 line 20 employment tax. A separate $100 additional
+income tax produces $893 on line 21. This is a source/component reconciliation
+case; it does not establish complete public return, bundle or MeF support.
+The [Schedule 2/6251 PDF plan](../../../docs/ty2026/pdf/PDF-SCHEDULE2-6251-MAP.md)
+records current component scope and remaining AMT/bundle work.
 
 ## Vehicle-loan source integration
 
@@ -474,6 +507,18 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
   firms plus a spouse, all A/C/G/H reason codes, IRS dates, unknown TIN, checkboxes
   and separate totals. Continuation totals are blank, draft markings remain,
   and all pages have no widgets or AcroForm tree.
+
+- Form 4137/Schedule 2 PDF work passed 192 typed tests across all 2026 modules
+  and the shared 2025 Forms 4137/8919 suites. The 137-test unit/preflight gate
+  passed. The six focused component tests cover all Schedule 2 numeric fields
+  and checkboxes, missing disclosures, destination mismatches, pagination and
+  the combined payroll calculation above.
+- Rendered and visually inspected all eight pages of two synthetic QA files:
+  three Form 4137 pages (six employers plus spouse) and five Schedule 2 pages
+  (two form pages plus 35 disclosure items across three statements). Text
+  extraction confirmed every statement item appears once, the statement total
+  is retained, continuation totals stay blank and the government-tip note prints.
+  Both PDFs retain draft markings and have no editable widgets.
 
 ## Source recheck
 
