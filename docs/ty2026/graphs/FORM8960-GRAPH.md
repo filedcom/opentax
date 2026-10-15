@@ -1,5 +1,11 @@
 # TY2026 Form 8960 investment-income tax contract
 
+> Current-main update, October 15: the investment source graph, reviewed
+> income-tax allocation, Schedule 2 line-6 route and one-page draft PDF are now
+> implemented. See [the current investment contract](INVESTMENTS-CURRENT.md)
+> for the exact scope; the broader paths below remain the completion plan.
+
+
 The pinned [2026 draft Form 8960](../corpus/draft/f8960.pdf), SHA-256
 `2306f4f334a8b3b1ed73fd5045dec86eed194902923462bf485431c756f66982`,
 prints the individual NIIT calculation on lines 1–17. The current [IRS
@@ -28,28 +34,23 @@ the exact 2026 filing instruction before retaining or changing that gate.
 
 ## Current code boundary
 
-- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/taxes/investments/form8960/index.ts)
-  is registered in the 2026 graph and already sends positive NIIT to
-  Schedule 2 line 6. Its status thresholds and 3.8% calculation are useful
-  baselines. `agi_aggregator` currently passes AGI straight to the `magi`
-  input, so §911 and other line-13 modifications are missing.
-- The input and print schema have **no** line 5c, 6 or 9c values or the
-  three election answers. The current `line4b_rental_net` name describes a
-  rental source, whereas printed line 4b is a non-§1411 business adjustment;
-  audit all Schedule E/K-1 producers before reusing it. The calculator
-  returns no form when MAGI is at/below the threshold or NII is zero; this
-  must be reconciled to the 2026 attachment instruction.
-- The 2026 [PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/forms/f8960.ts)
-  and [builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f8960.ts) fill 21 numeric lines
-  but omit the election boxes and printed lines 5c, 6 and 9c. The PDF
-  attachment gate requires line 17 > 0. The complete [draft field
-  inventory](../inventories/pdf-fields/pdf-fields-f8960.csv) is the map for closing this gap.
-- The TY2025 [MeF serializer](../../../forms/f1040/2025/mef/forms/taxes/investments/f8960.ts)
-  emits only a subset of inputs. It omits intermediate/final line values
-  and 5c/6/9c/elections; the TY2025 rule set already contains arithmetic
-  assertions for those computed fields. There is no TY2026 MeF module, so
-  current XSD elements, attachment rules and active reject IDs remain to
-  map. Do not infer 2026 XML from the May v1 package alone.
+- The [2026 adapter](../../../forms/f1040/2026/nodes/form8960.ts) uses the shared
+  NIIT arithmetic with explicit thresholds and whole-dollar rounding. It
+  recomputes investment claims, reconciles AGI income/penalties, waits for
+  deduction selection and sends tax to Schedule 2 line 6. Positive foreign
+  exclusions or unowned activity fail instead of defaulting to ordinary AGI.
+- Income-tax allocation currently supports the reviewed proportional-SALT,
+  gross-NII/AGI method described in the current contract. Other allocation
+  methods, investment-interest expenses and broader adjustments still need
+  their source owners. There is no public input for asserted NIIT or deductions.
+- The new [PDF component](../../../forms/f1040/2026/pdf/form8960.ts) uses the
+  [38-field inventory](../inventories/pdf-fields/pdf-fields-f8960.csv), verifies
+  calculation destinations, and prints one static draft page without the IRS
+  cover. Above-threshold zero-tax forms are retained. Unsupported elections,
+  5c, 6 and 9c remain blank because those branches are not accepted.
+- The historical prototype's PDF/registry and the TY2025 MeF serializer are
+  comparators, not 2026 filing evidence. Current XSD elements, attachments and
+  active reject IDs remain to map; the May v1 package alone is insufficient.
 
 ## Build order and acceptance
 

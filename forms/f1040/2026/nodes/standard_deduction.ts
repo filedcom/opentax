@@ -1,3 +1,4 @@
+import { form8960_2026 } from "./form8960.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -43,6 +44,7 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040_2026_node,
     income_tax_2026,
+    form8960_2026,
   ]);
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -85,6 +87,17 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { resolution_2026: resolved } },
+        {
+          nodeType: "form8960",
+          fields: {
+            taking_standard_deduction: chosen.method === "standard",
+            itemized_before_overall_limit:
+              input.itemized_before_overall_limit ?? 0,
+            itemized_after_overall_limit: chosen.method === "itemized"
+              ? chosen.line12eStandardOrItemized
+              : 0,
+          },
+        },
         {
           nodeType: "f1040",
           fields: {

@@ -13,6 +13,9 @@ import { loadPinnedDraft2026 } from "./source.ts";
 
 export interface Form6251Destinations2026 {
   form1040_line11b: number;
+  form1040_line2a?: number;
+  form1040_line3a?: number;
+  form1040_line7a?: number;
   form1040_line12e: number;
   form1040_line14: number;
   form1040_line15: number;
@@ -48,7 +51,12 @@ export async function buildForm6251PdfBytes2026(
         : d.schedule_a_line7) ||
     input.regular_taxable_income !== d.form1040_line15 ||
     input.regular_tax !== d.form1040_line16 ||
-    result.lines.line11 !== d.schedule2_line2
+    result.lines.line11 !== d.schedule2_line2 ||
+    (result.investment &&
+      (result.investment.lines.line2a !== d.form1040_line2a ||
+        result.investment.lines.line3a !== d.form1040_line3a ||
+        result.investment.lines.capital_gain_distributions !==
+          d.form1040_line7a))
   ) {
     throw new Error(
       "Form 6251 PDF destinations disagree with calculated sources",
@@ -99,6 +107,7 @@ export async function buildForm6251PdfBytes2026(
     line1a: 3,
     line1b: 4,
     line2a: 5,
+    line2g: 11,
     line2i: 13,
     line4: 26,
     line5: 27,

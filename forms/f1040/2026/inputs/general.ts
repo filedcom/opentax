@@ -1,3 +1,4 @@
+import { investments_2026 } from "./investments.ts";
 import { f3921_2026 } from "./f3921.ts";
 import { form6251_2026 } from "../nodes/form6251.ts";
 import { moving_expenses_2026 } from "./moving-expenses.ts";
@@ -41,7 +42,7 @@ import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
 import { schedule1a_2026 as schedule1a } from "../nodes/schedule1a.ts";
 import { form8959_2026 } from "../nodes/form8959.ts";
 import { form8880 } from "../../nodes/intermediate/forms/credits/individual/form8880/index.ts";
-import { form8960 } from "../../nodes/intermediate/forms/taxes/investments/form8960/index.ts";
+import { form8960_2026 as form8960 } from "../nodes/form8960.ts";
 import { form8995 } from "../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
 
 const reference = z.string().trim().min(1);
@@ -108,6 +109,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     educator_expenses_2026,
     moving_expenses_2026,
     f3921_2026,
+    investments_2026,
     form6251_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
@@ -377,6 +379,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "educator_expenses", fields: owner },
         { nodeType: "f3903", fields: owner },
         { nodeType: "f3921", fields: owner },
+        { nodeType: "investment_income", fields: owner },
         {
           nodeType: "form6251",
           fields: {
@@ -461,7 +464,12 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         },
         {
           nodeType: "form8960",
-          fields: { filing_status: input.filing_status },
+          fields: {
+            ...owner,
+            ...(input.tax_residency
+              ? { tax_residency: input.tax_residency }
+              : {}),
+          },
         },
         { nodeType: "form8995", fields: { ...owner, ...deductionFacts } },
       ],

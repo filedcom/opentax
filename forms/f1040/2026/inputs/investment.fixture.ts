@@ -66,3 +66,27 @@ export const syntheticPabDividendReview2026 = () => ({
   taxpayer_expense_review_reference: "synthetic-expense-inventory",
   reviewed_on: "2027-02-01",
 });
+
+export const syntheticInvestmentClaim2026 = () => ({
+  ...investmentDisclosures,
+  f1099ints: [syntheticInterest2026()],
+  f1099divs: [syntheticDividend2026()],
+  source_scope_review: {
+    record_reference: "synthetic-investment-inventory",
+    all_interest_and_dividend_copies_included: true as const,
+    property_held_for_investment_not_a_trade_or_business: true as const,
+    no_other_niit_income_expenses_or_carryovers: true as const,
+    no_foreign_entities_or_niit_magi_adjustments: true as const,
+  },
+  capital_gain_inventory_review: {
+    record_reference: "synthetic-gain-inventory",
+    only_regular_capital_gain_distributions: true as const,
+    no_dispositions_exchanges_or_other_schedule_d_items: true as const,
+    no_capital_loss_carryovers: true as const,
+  },
+  state_income_tax_allocation_review: {
+    record_reference: "synthetic-state-tax-allocation",
+    method: "nii_to_agi_after_proportional_salt_limit" as const,
+    reasonable_for_reported_income_and_tax_payments: true as const,
+  },
+});

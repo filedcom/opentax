@@ -143,6 +143,7 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     medical_payments: input.medical_payments,
     tax_payments: input.tax_payments,
     w2_tax_sources: input.w2_tax_sources,
+    information_return_tax_sources: input.information_return_tax_sources,
     tax_election: input.tax_election,
     spouse_sales_tax_method: input.spouse_sales_tax_method,
   });

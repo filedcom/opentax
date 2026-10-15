@@ -1,3 +1,7 @@
+import {
+  investmentClaim2026Schema,
+  investments_2026,
+} from "./inputs/investments.ts";
 import { f3921_2026, isoClaim2026Schema } from "./inputs/f3921.ts";
 import {
   moving_expenses_2026,
@@ -49,6 +53,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: investments_2026,
+    isArray: false,
+    inputSchema: investmentClaim2026Schema,
+  },
   { node: f3921_2026, isArray: false, inputSchema: isoClaim2026Schema },
   {
     node: moving_expenses_2026,

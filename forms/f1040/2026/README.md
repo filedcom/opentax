@@ -585,23 +585,27 @@ records the reviewed instructions and boundaries. Other cross-year claims,
 Form 2555 coordination, community-property allocations, Schedule 1 printing,
 complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
 
-## Investment source workpaper
+## Investment sources and NIIT
 
-`calculateInvestmentIncome2026` reuses the existing 1099-INT, 1099-DIV and
-Schedule B calculators behind strict 2026 source reconciliation. It retains
-issued copies, validates ownership and duplicates, accounts for gross/net
-premium reporting, derives qualified dividends from holding records and
-reconciles income outputs without duplicating below-threshold dividends.
-PAB, withholding, early penalties, gain distributions and state taxes remain
-separate amounts with their source records. Dividend and NIIT shared calculators
-accept explicit configurations while preserving their 2025 entry points.
+The `investment_income` singleton uses existing 1099-INT, 1099-DIV and Schedule B
+calculators with strict 2026 source reconciliation. It validates ownership,
+issuer copies, gross/net premium treatment and qualified-dividend holding
+periods, then routes income, withholding, penalties and reviewed direct gain
+distributions. State withholding reaches Schedule A as identified 1099 sources.
+Form 6251 recomputes PAB preferences from retained copies and reconciles them to
+regular preference income. Returns without wages need no synthetic W-2.
 
-This workpaper is not registered in the source catalog. Runtime NIIT/MAGI and
-expense routing, PAB-to-AMT, gain inventory, state-tax deductions and Schedule
-B/Form 8960 PDF components are the next required integration. The
-[current investment contract](../../../docs/ty2026/graphs/INVESTMENTS-CURRENT.md)
-records source boundaries and distinguishes this implementation from the
-historical prototype claims.
+`sourceRegistry2026` is the common incremental source graph. Form 8960 waits for
+AGI and the selected deduction, reconciles its income and penalty, applies the
+reviewed state-income-tax allocation and routes whole-dollar NIIT to Schedule 2
+line 6. Its new one-page static draft PDF checks all receiving amounts. Form
+6251's PDF includes the PAB preference. The Schedule B workpaper is connected;
+its 2026 PDF and broader investment branches remain pending.
+
+The [current investment contract](../../../docs/ty2026/graphs/INVESTMENTS-CURRENT.md)
+records the source scope, authorities, interpretation of the 2026 overall
+itemized limit and remaining work. This registry does not enable a complete
+public filing product, unfinished credits/activities, MeF or ATS acceptance.
 
 ## Reuse and folder rules for subsequent work
 
@@ -789,3 +793,10 @@ components matched the hashes already recorded in the research corpus.
   allocation case. The repository unit gate and its module-graph preflight
   passed. This covers source reconciliation and shared calculator reuse, not
   a registered investment return or new Schedule B/Form 8960 PDF components.
+
+- Connected investment verification: 604 combined 2026/shared investment/W-2
+  tests passed. The eight graph cases include investment-only and joint
+  returns, penalties, PAB AMT, selected state-tax deductions and NIIT. Direct
+  whole-dollar NIIT avoids a cents-to-dollars rounding error. A three-page
+  Form 6251/8960 QA fixture was rendered and visually inspected; it retains
+  draft labels and has no widgets or AcroForm tree.

@@ -1,53 +1,31 @@
-import { form6251_2026 } from "./nodes/form6251.ts";
-import { f3921_2026 } from "./inputs/f3921.ts";
+import { sourceRegistry2026 } from "./source-registry.ts";
 import { syntheticIso2026 } from "./inputs/iso.fixture.ts";
-import { income_tax_2026 } from "./nodes/income-tax.ts";
-import { moving_expenses_2026 } from "./inputs/moving-expenses.ts";
 import {
   syntheticForeignStorage2026,
   syntheticMoving2026,
 } from "./inputs/moving.fixture.ts";
-import { mortgage_interest_2026 } from "./inputs/mortgage-interest.ts";
-import { educator_expenses_2026 } from "./inputs/educator-expenses.ts";
 import { syntheticEducator2026 } from "./inputs/educator.fixture.ts";
 import {
   syntheticMortgage2026,
   syntheticMortgageRefinance2026,
 } from "./inputs/mortgage.fixture.ts";
-import { schedule_a_2026 } from "./nodes/schedule-a.ts";
 import {
   itemizedClaim2026,
   syntheticMedical2026,
   syntheticPropertyTax2026,
 } from "./schedule-a.fixture.ts";
 import { syntheticForm8919_2026 } from "./inputs/form8919.fixture.ts";
-import { form8919_2026 } from "./inputs/form8919.ts";
-import { form8959_2026 } from "./nodes/form8959.ts";
-import { ct2_2026 } from "./inputs/ct2.ts";
-import { form4137_2026 } from "./inputs/form4137.ts";
 import { syntheticForm4137_2026 } from "./inputs/form4137.fixture.ts";
-import { schedule2_2026 } from "./nodes/schedule2.ts";
-import { vehicle_loan_interest_2026 } from "./inputs/vehicle-loan-interest.ts";
 import { syntheticVehicleLoan2026 } from "./inputs/vehicle-loan.fixture.ts";
 import {
   scopeReview2026,
   zeroExclusions2026,
 } from "./nodes/schedule1a.fixture.ts";
-import { schedule1a_2026 } from "./nodes/schedule1a.ts";
-import { cash_charity_2026 } from "./inputs/cash-charity.ts";
 import { syntheticCashGift2026 } from "./inputs/cash-charity.fixture.ts";
 import { assertEquals, assertObjectMatch } from "@std/assert";
-import { buildStartNode } from "../start.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
-import { w2_2026 } from "./inputs/w2.ts";
-import { agi_2026 } from "./nodes/agi.ts";
-import { f1040_2026_node } from "./nodes/f1040.ts";
-import { schedule1_2026 } from "./nodes/schedule1.ts";
 import { schedule3a } from "./nodes/schedule3a.ts";
-import { inputNodes } from "./inputs.ts";
-import { general_2026 } from "./inputs/general.ts";
-import { standard_deduction_2026 } from "./nodes/standard_deduction.ts";
 import { FilingStatus } from "../nodes/types.ts";
 
 for (
@@ -96,31 +74,7 @@ for (
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
     // The connected ordinary-income path calculates line 16 from source deductions.
     // Remaining credit owners are visible pending routes, not filing approval.
-    const registry = {
-      start: buildStartNode(inputNodes),
-      income_tax_calculation: income_tax_2026,
-      form6251: form6251_2026,
-      f3921: f3921_2026,
-      general: general_2026,
-      cash_charity: cash_charity_2026,
-      schedule_a: schedule_a_2026,
-      mortgage_interest: mortgage_interest_2026,
-      educator_expenses: educator_expenses_2026,
-      f3903: moving_expenses_2026,
-      vehicle_loan_interest: vehicle_loan_interest_2026,
-      w2: w2_2026,
-      form4137: form4137_2026,
-      form8919: form8919_2026,
-      form8959: form8959_2026,
-      ct2: ct2_2026,
-      schedule2: schedule2_2026,
-      agi_aggregator: agi_2026,
-      standard_deduction: standard_deduction_2026,
-      schedule1: schedule1_2026,
-      schedule1a: schedule1a_2026,
-      f1040: f1040_2026_node,
-      schedule3a,
-    };
+    const registry = sourceRegistry2026;
     const plan = buildExecutionPlan(registry);
     const result = execute(plan, registry, {
       general: {

@@ -1,3 +1,4 @@
+import { form8960_2026 } from "./form8960.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -16,6 +17,7 @@ export const claimInputSchema = scheduleASource2026Schema.omit({
   spouse_ssn: true,
   agi: true,
   w2_tax_sources: true,
+  information_return_tax_sources: true,
   cash_gifts: true,
   mortgage_source_2026: true,
   educator_source_2026: true,
@@ -39,6 +41,7 @@ export const inputSchema = claimInputSchema.partial().extend({
     spouse_ssn: true,
     agi: true,
     w2_tax_sources: true,
+    information_return_tax_sources: true,
     mortgage_source_2026: true,
     educator_source_2026: true,
     educator_adjustment_from_agi: true,
@@ -50,7 +53,10 @@ export const inputSchema = claimInputSchema.partial().extend({
 class ScheduleA2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([standard_deduction_2026]);
+  readonly outputNodes = new OutputNodes([
+    standard_deduction_2026,
+    form8960_2026,
+  ]);
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Schedule A needs f1040:2026 context");
@@ -64,6 +70,9 @@ class ScheduleA2026Node extends TaxNode<typeof inputSchema> {
         (input.medical_payments?.length ?? 0) ||
         (input.tax_payments?.length ?? 0) ||
         input.cash_gift_sources_2026.length ||
+        input.information_return_tax_sources.some((row) =>
+          row.state_withheld > 0
+        ) ||
         input.w2_tax_sources.some((row) =>
           row.box17_state_withheld + row.box19_local_withheld +
               row.mandatory_state_contributions.reduce(
@@ -88,6 +97,19 @@ class ScheduleA2026Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: calculation } },
+        {
+          nodeType: "form8960",
+          fields: {
+            schedule_a_tax_facts: {
+              tax_election: calculation.source_input.tax_election,
+              income_taxes: Math.round(
+                calculation.expenses.amounts.stateIncome,
+              ),
+              total_taxes_before_limit: calculation.lines.line5d,
+              allowed_taxes: calculation.lines.line7,
+            },
+          },
+        },
         {
           nodeType: "standard_deduction",
           fields: {

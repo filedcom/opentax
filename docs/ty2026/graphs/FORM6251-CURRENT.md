@@ -35,6 +35,16 @@ and draft instruction URL still serve 2025. Their unrestricted-exercise example
 and regular/AMT basis retention inform the reused ISO calculation; their annual
 numbers do not supply 2026 policy.
 
+## Investment extension
+
+The `investment_income` source now passes retained 1099-INT/DIV claims to Form
+6251. It recomputes reviewed PAB amounts, including gross/net bond-premium
+allocation, and sums them before rounding line 2g. Regular qualified-dividend
+and gain-distribution facts must match the source workpaper. The draft PDF
+fills line 2g and verifies 1040 exempt/preferential income as well as the tax
+and deduction destinations. See [the investment contract](INVESTMENTS-CURRENT.md)
+for source scope and remaining foreign, interest-expense and disposition paths.
+
 ## Connected graph and reuse
 
 ```text
@@ -67,7 +77,8 @@ The 2025 and 2026 nodes share exemption, MFS addition, ordinary AMT and Part III
 arithmetic. Annual inputs are explicit for 2026. Part III currently permits
 domestic preferences without AMT basis or election differences; its regular-tax
 worksheet lines 20/27 and AMT preference lines therefore use the same facts.
-The graph has not yet connected the dividend/capital-gain source owners.
+The graph now connects reviewed qualified dividends and direct capital-gain
+distributions through the investment source owner; other dispositions remain open.
 
 In the synthetic full graph, wages $150,001, standard deduction $16,100 and
 nonitemizer charity $500 yield regular tax $24,614. A $100,000 ISO spread gives
@@ -77,12 +88,12 @@ now explicitly compute zero AMT. No final tax amount is accepted by public input
 
 ## Remaining boundaries
 
-The strict calculation schema rejects refunds, NOL/ATNOLD, PAB/QSBS, trust,
+The strict calculation schema rejects refunds, NOL/ATNOLD, QSBS, trust,
 depreciation/passive/business adjustments, AMT dispositions, Form 4952 elections,
 foreign exclusions/credits, Schedule J and specialized line 10 adjustments.
 It also rejects credit-driven attachment overrides until their credit owners
 are implemented. Negative-adjustment counterfactual filing tests are not needed
-for this positive-ISO-only adjustment surface; they must be added when negative
+for this positive ISO/PAB adjustment surface; they must be added when negative
 adjustments are enabled. Prior-year stock sales and minimum-tax-credit carryovers
 need their own source and calculation routes despite the retained basis ledger.
 

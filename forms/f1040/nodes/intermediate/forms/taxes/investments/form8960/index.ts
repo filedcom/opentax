@@ -88,7 +88,7 @@ export const inputSchema = z.object({
   line10_additional_modifications: z.number().nonnegative().optional(),
 });
 
-const printFieldsSchema = z.object({
+export const printFieldsSchema = z.object({
   line1_taxable_interest: z.number(),
   line2_ordinary_dividends: z.number(),
   line3_annuities: z.number(),
@@ -192,8 +192,8 @@ function toCents(n: number): number {
 
 // Part III, Line 17: Net Investment Income Tax = line16 × 3.8%
 // Form 8960 line 17 → Schedule 2 line 12
-function niitTax(base: number): number {
-  return toCents(base * NIIT_RATE);
+function niitTax(base: number, roundTax: (amount: number) => number): number {
+  return roundTax(base * NIIT_RATE);
 }
 
 // Route NIIT to schedule2 line 12 when > 0
@@ -223,6 +223,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     _ctx: NodeContext,
     rawInput: Form8960Input,
     cfg: NiitConfig,
+    roundTax: (amount: number) => number = toCents,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
 
@@ -242,7 +243,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     const nii = netInvestmentIncome(gross, deductions);
 
     const base = taxableBase(nii, excess);
-    const niit = niitTax(base);
+    const niit = niitTax(base, roundTax);
 
     const line4a = input.line4a_passive_income ?? 0;
     const line4b = input.line4b_rental_net ?? 0;

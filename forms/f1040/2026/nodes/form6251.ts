@@ -1,3 +1,7 @@
+import {
+  calculateInvestmentClaim2026,
+  investmentClaim2026Schema,
+} from "../inputs/investment-claim.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -36,6 +40,7 @@ export const inputSchema = z.object({
   taking_standard_deduction: z.boolean(),
   line2a_taxes_paid: money,
   iso_sources_2026: isoClaim2026Schema.optional(),
+  investment_sources_2026: investmentClaim2026Schema.optional(),
   qualified_dividends: money.default(0),
   net_capital_gain: money.default(0),
   unrecaptured_1250_gain: money.default(0),
@@ -66,8 +71,27 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       ...(input.spouse_ssn ? { spouse_ssn: input.spouse_ssn } : {}),
     })
     : undefined;
+  const investment = input.investment_sources_2026
+    ? calculateInvestmentClaim2026({
+      ...input.investment_sources_2026,
+      filing_status: input.filing_status,
+      taxpayer_ssn: input.taxpayer_ssn,
+      ...(input.spouse_ssn ? { spouse_ssn: input.spouse_ssn } : {}),
+    })
+    : undefined;
+  if (
+    investment &&
+    (investment.lines.line3a !== input.qualified_dividends ||
+      investment.lines.capital_gain_distributions !== input.net_capital_gain)
+  ) {
+    throw new Error(
+      "AMT investment sources disagree with regular preference income",
+    );
+  }
+  const line2g = investment?.lines.amt_pab_interest ?? 0;
   const line2i = iso?.line2i ?? 0;
-  const base = input.regular_tax_income + input.line2a_taxes_paid + line2i;
+  const base = input.regular_tax_income + input.line2a_taxes_paid + line2g +
+    line2i;
   const mfsAddition = input.filing_status === FilingStatus.MFS
     ? computeMfsAddition(
       base,
@@ -132,6 +156,7 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
   return {
     source_input: input,
     iso,
+    investment,
     partThree,
     amtiBeforeMfsAddition: base,
     mfsAddition,
@@ -141,6 +166,7 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
       line1b: input.regular_tax_income,
       line2a: input.line2a_taxes_paid,
       ...(iso ? { line2i } : {}),
+      ...(investment ? { line2g } : {}),
       line4,
       line5,
       line6,

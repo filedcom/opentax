@@ -103,3 +103,37 @@ Deno.test("2026 Form 6251 prints senior addback and itemized tax basis using sep
     "destinations disagree",
   );
 });
+
+Deno.test("2026 Form 6251 recomputes PAB sources and verifies exempt/preferential return lines", async () => {
+  const { syntheticInvestmentClaim2026, syntheticPabReview2026 } = await import(
+    "../inputs/investment.fixture.ts"
+  );
+  const claim = syntheticInvestmentClaim2026();
+  claim.f1099divs = [];
+  Object.assign(claim.f1099ints[0], {
+    recipient_tin: "111223333",
+    box1: 0,
+    box8: 100000,
+    box9: 100000,
+    pab_review: syntheticPabReview2026(),
+  });
+  const raw = {
+    ...amtFixture2026,
+    iso_sources_2026: undefined,
+    investment_sources_2026: claim,
+  };
+  const d = {
+    ...destinations,
+    form1040_line2a: 100000,
+    form1040_line3a: 0,
+    form1040_line7a: 0,
+  };
+  const bytes = await buildForm6251PdfBytes2026(raw, d, filer);
+  assertEquals((await PDFDocument.load(bytes)).getPageCount(), 2);
+  await assertRejects(
+    () =>
+      buildForm6251PdfBytes2026(raw, { ...d, form1040_line2a: 99999 }, filer),
+    Error,
+    "destinations disagree",
+  );
+});

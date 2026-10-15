@@ -1,4 +1,4 @@
-# Investment source workpaper on current main
+# Investment sources and return graph on current main
 
 Checked October 15, 2026, on `codex/ty2026-readiness`. This supersedes the
 executable-state claims in the historical interest and dividend graph notes.
@@ -9,8 +9,10 @@ source validation lives under `forms/f1040/2026/inputs`; shared algorithms stay
 in their current domain folders. Dividend and NIIT calculations now also accept
 explicit configurations, while their 2025 entry points still select 2025 config.
 
-This is an **unregistered calculation workpaper**. It is not an added public
-input, a complete return, a PDF attachment, or a claim of IRS acceptance.
+The `investment_income` singleton is now in the incremental source catalog.
+`sourceRegistry2026` connects the existing wage/deduction/ISO routes and these
+investment sources through tax and settlement. This registry is not a complete
+FormDefinition, supported filing catalog entry, or claim of IRS acceptance.
 
 ## Source reconciliation
 
@@ -37,8 +39,9 @@ input, a complete return, a PDF attachment, or a claim of IRS acceptance.
   an unresolved open window fails instead of predicting future holding.
   December distributions can require holding records extending into 2027.
 - State withholding requires state/payer identifiers and remains in the source
-  result for the future Schedule A owner. PAB sources require eligibility and
-  expense evidence; the workpaper computes their combined AMT preference.
+  result and reaches Schedule A as identified 1099 withholding, separately from
+  W-2 sources. PAB sources require eligibility and expense evidence; Form 6251
+  recomputes their combined preference from retained copies.
 - Unsupported foreign-tax, QBI, special-rate gains, nondividend/liquidation and
   dividend-nominee branches fail strict source parsing. Foreign account/trust
   reporting and OID are not enabled. Source review does not establish every
@@ -50,23 +53,62 @@ B, the dividends appear on its workpaper without reaching income twice. The
 workpaper compares shared 1040, AGI, qualified-dividend and NIIT income outputs.
 It preserves early-withdrawal penalties separately from gross interest.
 
-## Required next integration
+## Connected routes and output
 
-1. Wire source ownership and accumulated income into the 2026 runtime and
-   maintain one owner for every amount. The workpaper is absent from the public
-   input catalog until receiving branches are connected.
-2. Deliver early-withdrawal penalties to both Schedule 1 and AGI, and to the
-   NIIT deduction owner when applicable. Map NIIT to 2026 Schedule 2 **line 6**;
-   the shared node still emits the legacy line-12 destination. Reconcile MAGI,
-   expense allocations, itemization/2026 limitations and filing requirements.
-3. Recompute retained PAB source records in Form 6251 and update its PDF
-   reconciliation. Its current runtime contract only accepts the previously
-   connected ordinary, deduction and ISO adjustments.
-4. Add the complete Schedule D inventory before deciding whether capital-gain
-   distributions may use the direct Form 1040 exception. Preserve state taxes
-   through Schedule A rather than treating them as W-2 withholding.
-5. Build and verify pinned 2026 Schedule B and Form 8960 PDF components and
-   complete-bundle attachment decisions. Current MeF, CLI and ATS remain gates.
+```text
+General identity + issued investment copies + scope/holding/election reviews
+    |
+    +-- shared INT/DIV/Schedule B workpaper -> income, withholding -> 1040
+    +-- early penalty -> Schedule 1 and AGI -> deduction resolution
+    +-- qualified dividends + reviewed distributions -> income tax
+    +-- original PAB copies -> Form 6251 -> Schedule 2 line 2 -> 1040 line 17
+    +-- state withholding -> Schedule A -> chosen deduction and tax allocation
+    +-- sources + AGI + chosen deduction -> Form 8960
+                                              |
+                                     Schedule 2 line 6 -> 1040 line 23
+```
+
+The public source accepts records and inventory reviews, not computed tax,
+MAGI, preference adjustments or NIIT deductions. Direct gain-distribution
+reporting requires a review excluding other dispositions, loss carryovers and
+other Schedule D items. Qualified dividends remain part of ordinary dividends;
+they do not become a second NIIT income item. Source/AGI amounts must agree in
+Form 8960, and preference amounts must agree in Form 6251. Returns without
+wages no longer require an invented W-2.
+
+Form 8960 uses the non-indexed $200,000/$250,000/$125,000 status thresholds.
+An above-threshold individual calculation retains the attachment decision even
+when NII or the rounded tax is zero. The shared 2025 calculator keeps its cents
+rounder; 2026 explicitly selects direct whole-dollar rounding, avoiding the
+$3.496 -> $3.50 -> $4 double-rounding error.
+
+Itemized income-tax allocation requires a retained reasonable-method review.
+The current method allocates the allowed SALT deduction proportionally to
+income taxes, then applies gross NII/AGI (capped at one). Personal-use property
+taxes are not investment expenses. Standard deduction and sales-tax elections
+produce no income-tax NIIT deduction. The amount is capped by the selected
+itemized deduction after §68; early-withdrawal penalties remain separately on
+line 10. Other methods and positive unsupported expense/activity/MAGI branches
+need their source owners and currently fail explicitly.
+
+The new Form 8960 PDF component validates the 38 canonical fields/widgets,
+recomputes its source calculation, checks receiving return/Schedule 1/A/2
+amounts, removes the IRS cover and produces one static draft page. Form 6251's
+PDF now fills line 2g and reconciles exempt/preferential return lines when
+investment copies are present. The source graph's Schedule B workpaper retains
+its filing decision, payer rows and adjustments; its 2026 PDF is still pending.
+
+## Remaining work
+
+- Schedule B PDF/continuations, broader foreign-account/trust disclosures,
+  nominee-dividend, foreign credit, investment interest, QBI, nondividend/basis,
+  OID and other disposition sources still need their full receiver paths.
+- The direct distribution review does not implement general Schedule D.
+  Pass-throughs, annuities, foreign elections, §1411 NOL and other MAGI/expense
+  branches remain separate work. The current AGI receiver flags potentially
+  relevant unsupported activity instead of silently classifying it as zero.
+- Final 2026 instructions, complete PDF attachment selection, the public product
+  catalog, CLI, current MeF and ATS acceptance remain release gates.
 
 ## Authorities rechecked
 
@@ -83,12 +125,28 @@ It preserves early-withdrawal penalties separately from gross interest.
   still identify **2025**, despite the 2026 form draft. Their early-withdrawal
   penalty and filing instructions inform the integration audit; they do not
   verify 2026 expense limitations or the new Schedule 2 destination.
+- [26 CFR §1.1411-4(f)(7), (g)(1)](https://www.govinfo.gov/link/cfr/26/1?link-type=pdf&sectionnum=1411-4&year=mostrecent),
+  pages 80–81: lesser-of itemized-deduction limit and reasonable NII/AGI
+  allocation. [P.L. 119-21 §70111](https://www.govinfo.gov/content/pkg/PLAW-119publ21/pdf/PLAW-119publ21.pdf),
+  pages 164–165, replaces §68 effective 2026 and removes its former subsection
+  (c) exceptions. Applying the regulation's lesser-of rule to the entire new
+  §68 itemized total is the current implementation's interpretation of these
+  primary authorities; recheck final 2026 guidance before release. The selected
+  itemized total itself uses the reviewed 2026 Pub. 505 worksheet.
 
 ## Verification
 
-The combined current-2026 and shared 1099-INT, 1099-DIV, Schedule B and Form
-8960 suites passed **490 tests**. All **16** investment workpaper tests passed
-again after an additional fractional-dollar PAB allocation case. The repository
-unit gate and its module-graph preflight passed. These results verify the
-workpaper and preserve existing source behavior; they do not establish the
-unfinished runtime or filing routes listed above.
+The combined current-2026, shared investment and existing W-2 suites passed
+**604 tests**. The repository unit gate and its module-graph preflight also
+passed. Eight source graph scenarios cover wages plus investments,
+investment-only returns, PAB AMT, state-tax allocation, SALT/overall limits,
+standard/sales elections, rejected claims and joint ownership. NIIT tests cover
+all five status thresholds and direct whole-dollar rounding. The PDF tests
+verify receiving amounts, identities, zero-tax attachment and field removal.
+
+A synthetic source graph with AGI $304,800, regular income tax $63,849, PAB AMT
+$18,662 and NIIT $1,874 produced consistent Form 6251/8960 draft components.
+All three pages were rendered with Poppler and visually inspected; PAB line 2g,
+preferential AMT and NIIT deductions/tax are legible, draft markings remain,
+and the outputs have no widgets or AcroForm tree. This is component QA, not a
+complete filing bundle or IRS acceptance.

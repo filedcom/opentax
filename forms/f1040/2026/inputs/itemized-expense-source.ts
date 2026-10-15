@@ -94,6 +94,16 @@ export const w2TaxSource2026Schema = z.object({
     z.object({ description: ref, amount: money }).strict(),
   ),
 }).strict();
+export const informationReturnTaxSource2026Schema = z.object({
+  document_type: z.enum(["1099-INT", "1099-DIV"]),
+  source_document_reference: ref,
+  recipient_tin: ssn,
+  payer_tin: z.string().regex(/^\d{9}$/),
+  account_number: ref,
+  state: ref,
+  payer_state_id: ref,
+  state_withheld: money,
+}).strict();
 export const expenseInput2026Schema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: ssn,
@@ -101,6 +111,8 @@ export const expenseInput2026Schema = z.object({
   medical_payments: z.array(medicalPayment2026Schema).default([]),
   tax_payments: z.array(taxPayment2026Schema).default([]),
   w2_tax_sources: z.array(w2TaxSource2026Schema).default([]),
+  information_return_tax_sources: z.array(informationReturnTaxSource2026Schema)
+    .default([]),
   tax_election: z.enum(["income", "actual_sales"]),
   // MFS spouses must both use tables when both elect sales tax and one uses tables.
   spouse_sales_tax_method: z.enum(["not_elected", "actual", "tables"])
@@ -148,6 +160,20 @@ export function calculateItemizedExpenseSources2026(
     pairs.add(pair);
     stateIncome += w2.box17_state_withheld + w2.box19_local_withheld +
       w2.mandatory_state_contributions.reduce((n, row) => n + row.amount, 0);
+  }
+  for (const row of input.information_return_tax_sources) {
+    checkOwner(row.recipient_tin);
+    const pair = `${row.document_type}:${
+      normalize(row.recipient_tin)
+    }:${row.payer_tin}:${row.account_number}`;
+    if (docs.has(row.source_document_reference) || pairs.has(pair)) {
+      throw new Error(
+        "Duplicate itemized information-return withholding source",
+      );
+    }
+    docs.add(row.source_document_reference);
+    pairs.add(pair);
+    stateIncome += row.state_withheld;
   }
   const checkPayment = (
     row: {

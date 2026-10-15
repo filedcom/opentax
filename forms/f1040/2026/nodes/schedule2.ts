@@ -12,6 +12,7 @@ import {
 // the full line contract; each remaining source must be audited before wiring.
 export const inputSchema = schedule2Input2026Schema.pick({
   line2_amt: true,
+  line6_niit: true,
   line16a_form4137_tip_tax: true,
   line16b_form8919_wage_tax: true,
   line17b_medicare_wage_tax: true,

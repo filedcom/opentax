@@ -133,6 +133,31 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           },
         };
       }
+      if (output.nodeType === "form8960") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            foreign_earned_income_exclusion_from_agi:
+              input.line8d_foreign_earned_income_exclusion ?? 0,
+            other_niit_income_pending: [
+              input.line4b_ira_taxable,
+              input.line5b_pension_taxable,
+              input.line3_schedule_c,
+              input.line4_other_gains,
+              input.line5_schedule_e,
+              input.line6_schedule_f,
+              input.line8a_nol_deduction,
+              input.line1_state_refund,
+            ].some((v) => (v ?? 0) !== 0),
+            early_withdrawal_penalty_from_agi: input.line18_early_withdrawal ??
+              0,
+            taxable_interest_from_agi: input.line2b_taxable_interest ?? 0,
+            ordinary_dividends_from_agi: input.line3b_ordinary_dividends ?? 0,
+            capital_gain_from_agi: input.line7_capital_gain ?? 0,
+          },
+        };
+      }
       if (output.nodeType === "standard_deduction") {
         return {
           ...output,

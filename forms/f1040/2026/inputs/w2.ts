@@ -122,7 +122,7 @@ export const w2Item2026Schema = sourceShape.omit({
 });
 
 export const inputSchema = z.object({
-  w2s: z.array(w2Item2026Schema).min(1),
+  w2s: z.array(w2Item2026Schema).default([]),
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: ssn,
   spouse_ssn: ssn.optional(),
@@ -142,6 +142,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       throw new Error("2026 W-2 needs f1040:2026 context");
     }
     const input = inputSchema.parse(rawInput);
+    if (input.w2s.length === 0) return { outputs: [] };
     const primary = input.taxpayer_ssn.replaceAll("-", "");
     const spouse = input.spouse_ssn?.replaceAll("-", "");
     if (
