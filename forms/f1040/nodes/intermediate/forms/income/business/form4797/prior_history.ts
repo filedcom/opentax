@@ -171,14 +171,12 @@ function annualLosses(
   };
 }
 
-/** Reconcile each filed year before applying the current year's net section 1231 result. */
-export function calculateSection1231HistoryForYear(
+/** Replay filed sources and expose the opening ledger without finalizing current losses. */
+export function replaySection1231PriorYears(
   taxYear: 2025 | 2026,
   raw: AnnualSection1231History,
-  currentNet: number,
 ) {
   const history = section1231HistorySchemaForYear(taxYear).parse(raw);
-  signedDollars.parse(currentNet);
   const replay = history.filed_years.reduce((state, filed) => {
     const year = annualLosses(
       state.losses,
@@ -199,6 +197,26 @@ export function calculateSection1231HistoryForYear(
     losses: history.opening_period_losses as Balance[],
     years: [] as ReturnType<typeof annualLosses>[],
   });
+  const opening = annualLosses(replay.losses, taxYear, 0, 0);
+  return {
+    owner: history.owner,
+    prior_years: replay.years,
+    prior_year_ending_losses: replay.losses,
+    opening_losses: opening.opening_losses,
+    opening_nonrecaptured_loss: opening.opening_nonrecaptured_loss,
+    expired_before_current_year: opening.expired_loss,
+  };
+}
+
+/** Finalize current character and carryforward only with the actual allowed loss. */
+export function calculateSection1231HistoryForYear(
+  taxYear: 2025 | 2026,
+  raw: AnnualSection1231History,
+  currentNet: number,
+) {
+  const history = section1231HistorySchemaForYear(taxYear).parse(raw);
+  signedDollars.parse(currentNet);
+  const replay = replaySection1231PriorYears(taxYear, history);
   if (
     currentNet < 0 &&
     (history.current_year_loss_taken_into_account === undefined ||
@@ -209,7 +227,7 @@ export function calculateSection1231HistoryForYear(
     );
   }
   const current = annualLosses(
-    replay.losses,
+    replay.prior_year_ending_losses,
     taxYear,
     currentNet,
     history.current_year_loss_taken_into_account ?? 0,
@@ -219,7 +237,7 @@ export function calculateSection1231HistoryForYear(
   );
   return {
     owner: history.owner,
-    prior_years: replay.years,
+    prior_years: replay.prior_years,
     current,
     next_tax_year: taxYear + 1,
     opening_next_year_losses: nextOpening,

@@ -40,16 +40,19 @@ existing schema, field names and output. The 2026 adapter requires filed
 It reconciles each filed gain/loss, prior-loss line and recapture amount before
 consuming losses oldest first. A 2020 balance may be consumed by 2025 gain but
 expires before the 2026 calculation. A remaining 2021 balance expires before
-2027. Current net losses require a finalized loss-limitation amount and source
-reference supplied by the future limitation owner; the sale history cannot
-assert that current deductible amount. Only the amount taken into account is
-added to the new loss vintage.
+2027. The preliminary amounts calculator replays only the opening history and
+returns sale amounts and character without a current deductible loss or outgoing
+vintage. This lets a future limitation owner consume the sale loss before
+finalizing its deductible amount, without a circular dependency. The final
+calculator still requires that owner's finalized loss-limitation amount and
+source reference for a net loss; only the amount taken into account is added
+to the new loss vintage. Public intake cannot assert that deductible amount.
 
 The 2026 result separates the semantic history workpaper from printed lines:
 net section 1231 is line 8, prior loss is line 9, residual capital gain is line
 10, ordinary section 1231 loss is line 12, prior-loss recapture is line 13, and
-ordinary totals are lines 19/20b. Skip/attachment decisions remain part of the
-unimplemented PDF route. No depreciable property, rental/passive allocation,
+ordinary totals are lines 19/20b. The standalone PDF component now applies the
+printed skip rules described below. No depreciable property, rental/passive allocation,
 K-1, casualty, QOF, livestock, Part III/IV or QBI integration is claimed.
 NIIT support is limited to the explicitly reviewed internal handoff below.
 
@@ -84,10 +87,26 @@ would be wrong. State-tax allocation uses income after this exclusion.
 Standalone draft components now print Schedule D line 11 and Form 8960 lines
 5a/5b/5d. They require matching Form 4797/Schedule 1 destinations, retain draft
 markings and are visually checked. These component PDFs are not a complete
-filing package: Form 4797 and its attachment/bundle owner remain unfinished.
+filing package: the graph and attachment/bundle owner remain unfinished.
 The capital graph node and deduction finalizer deliberately reject this handoff
 until QBI, loss limitations and the remaining source/attachment routes are
 connected. This prevents an internal helper from bypassing ordinary-gain QBI.
+
+## Standalone Form 4797 draft component
+
+The component replays the finalized land source and requires matching Schedule D
+line 11, Schedule 1 line 4 and current deductible section 1231 loss destinations.
+It uses the pinned October 1 draft, verifies its page/field inventory, prints
+Parts I/II, and omits the cover and unused Parts III/IV page. Positive gain
+without a lookback loss skips lines 9/10/12/13; a loss prints its full disposition
+amount on line 12 even when a separately finalized deductible loss is smaller.
+The line 1a information-return control aggregates cents before dollar rounding.
+
+More than four properties, or an overlong description, uses a continuation with
+all seven columns and seller/sale references. Long descriptions can span pages;
+amounts appear once per detail row and totals reconcile to the official form.
+Output is flattened with no form fields or annotations, retains draft markings,
+and is not yet registered in the return bundle or public intake.
 
 ## Internal business-loss prerequisite
 
@@ -152,7 +171,8 @@ Estimated-tax relief is in **Notice 2026-3**, published in
    Form 1040 line 24b after credit resolution, without creating a graph cycle.
    Retain the future installment ledger, election timing and acceleration
    evidence. Integrate any estimated-tax relief from the applicable authority.
-5. Build current Form 4797, Form 1062, Schedule A and covenant attachments;
+5. Connect the standalone Form 4797 component to the bundle and build Form 1062,
+   Schedule A and covenant attachments;
    reconcile source, printed lines, return settlement and current MeF/rules.
    Verify the full ATS scenario independently. Its assumed $200 installment
    does not supply the missing farmland proceeds, basis, covenant or tax
@@ -169,3 +189,8 @@ checks, all 631 tests in the 2026 directory, and 137 unit checks. Three rendered
 component pages were inspected for the line 11 and NIIT adjustments, identity,
 branch selection and draft markings. The legacy 2025 history schema and
 carryforward output are preserved.
+
+The preliminary/final history split and Form 4797 component passed 44 typed
+focused tests, all 661 tests in the 2026 directory, 75 shared/2025 history tests
+and 137 unit checks. Rendered gain, loss, multi-property and long-description
+continuations were checked for signs, skip rules, row spacing and pagination.

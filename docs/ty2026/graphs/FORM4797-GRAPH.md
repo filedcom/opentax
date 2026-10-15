@@ -27,7 +27,9 @@ is not registered in public intake or the return graph. The
 `66e57b82213189baa8564ed9cb83e75d6f556edb0bd051df458879280bc1fec9`, is preserved
 alongside the older snapshot. Its line 20a points to Schedule A 17d; the table
 below reflects that newer cross-reference. The remaining asset, loss-limit,
-PDF, MeF and source-acceptance requirements still apply.
+bundle, MeF and source-acceptance requirements still apply. The standalone
+land-only Form 4797 component now prints Parts I/II and property continuations
+from finalized history, with matching capital/ordinary/loss destinations.
 
 ## Canonical disposition and history records
 
@@ -78,14 +80,18 @@ prevent separate Form 2439 transactions from colliding with it.
   do not establish a complete 2026 asset/recapture ledger.
 - The staged 2026 land calculator supplies derived property amounts and the
   annual loss balance to shared arithmetic; it reconciles its ordinary/capital
-  split independently. It does not forward the shared node's outputs into the
+  split independently. Preliminary amounts expose no current deductible loss
+  or outgoing vintage; finalization still requires the limitation owner's
+  amount and source reference. It does not forward the shared node's outputs into the
   2026 graph. That prevents the legacy Schedule D catchall and ordinary-income
   routes from bypassing the required 2026 source consumers.
 - Existing 2025 PDF/MeF routes have their own source/filing restrictions. Reuse
   requires a current-year mapping audit, rather than assuming the old output
   fields cover 2026. The newer draft has 188 terminal widgets on two printed
-  pages plus cover; this source fetch is not rendered-output verification.
-- `form4797` remains absent from the 2026 registry/PDF builder and has no 2026
+  pages plus cover. The standalone land component verifies the template and
+  prints only the applicable page, plus seven-column overflow statements.
+  Gain, loss and multi-page continuations have been rendered and inspected.
+- `form4797` remains absent from the 2026 registry/bundle builder and has no 2026
   MeF serializer. The 2025 generated validation rules are not active 2026 rules.
 
 ## Build order and acceptance

@@ -5,6 +5,7 @@ import { roundWholeDollars } from "../../whole-dollars.ts";
 import { form4797 } from "../../nodes/intermediate/forms/income/business/form4797/index.ts";
 import {
   calculateSection1231History2026,
+  calculateSection1231Opening2026,
   section1231History2026Schema,
 } from "./section1231-history.ts";
 
@@ -91,10 +92,9 @@ export const section1231FinalizedLoss2026Schema = z.object({
   finalized_limitation_workpaper_reference: ref,
 }).strict();
 
-/** Property rows and tax character only. Does not elect section 1062 or post return totals. */
-export function calculateLandDispositions2026(
+/** Source amounts and character before final loss limits; no outgoing loss vintage. */
+export function calculateLandDispositionAmounts2026(
   raw: LandDispositionSource2026,
-  finalizedLoss?: z.input<typeof section1231FinalizedLoss2026Schema>,
 ) {
   const source = landDispositionSource2026Schema.parse(raw),
     claim = source.claim;
@@ -241,33 +241,14 @@ export function calculateLandDispositions2026(
       (n, r) => n + r.printed.gain,
       0,
     );
-  const loss = finalizedLoss
-    ? section1231FinalizedLoss2026Schema.parse(finalizedLoss)
-    : undefined;
-  if (loss && net1231 >= 0) {
-    throw new Error("Finalized section 1231 loss supplied for a nonloss year");
-  }
-  const history = calculateSection1231History2026(
-    {
-      ...claim.prior_history,
-      ...(loss
-        ? {
-          current_year_loss_taken_into_account: loss.amount_taken_into_account,
-          current_year_loss_source_reference:
-            loss.finalized_limitation_workpaper_reference,
-        }
-        : {}),
-    },
-    net1231,
-    {
-      filing_status: source.filing_status,
-      taxpayer_ssn: source.taxpayer_ssn,
-      spouse_ssn: source.spouse_ssn,
-    },
-  );
+  const opening = calculateSection1231Opening2026(claim.prior_history, {
+    filing_status: source.filing_status,
+    taxpayer_ssn: source.taxpayer_ssn,
+    spouse_ssn: source.spouse_ssn,
+  });
   const shared = form4797.compute({ taxYear: 2026, formType: "f1040" }, {
     section_1231_gain: net1231,
-    nonrecaptured_1231_loss: history.current.opening_nonrecaptured_loss,
+    nonrecaptured_1231_loss: opening.opening_nonrecaptured_loss,
     ordinary_gain: shortOrdinary,
   });
   const value = (node: string, field: string) =>
@@ -280,11 +261,7 @@ export function calculateLandDispositions2026(
     );
   const capital = value("schedule_d", "line_11_form2439"),
     ordinary = value("schedule1", "line4_other_gains");
-  if (
-    capital !== history.current.long_term_gain ||
-    ordinary !== history.current.ordinary_gain_loss + shortOrdinary ||
-    capital + ordinary !== net1231 + shortOrdinary
-  ) {
+  if (capital + ordinary !== net1231 + shortOrdinary) {
     throw new Error(
       "Shared Form 4797 character does not reconcile to land sale sources",
     );
@@ -292,19 +269,73 @@ export function calculateLandDispositions2026(
   return {
     source_input: source,
     rows,
-    history,
+    opening_history: opening,
+    history_finalized: false as const,
     line1a_information_return_proceeds: roundWholeDollars(
-      copies.reduce((n, c) => n + c.box2_gross_proceeds, 0),
+      copies.reduce((n, c) => n + Math.round(c.box2_gross_proceeds * 100), 0) /
+        100,
     ),
     line8_net_section1231: net1231,
-    line9_nonrecaptured_loss: history.current.nonrecaptured_loss_for_return,
+    line9_nonrecaptured_loss: net1231 > 0
+      ? opening.opening_nonrecaptured_loss
+      : 0,
     line10_long_term_gain: capital,
-    line13_prior_loss_recapture: history.current.ordinary_recapture,
+    line13_prior_loss_recapture: Math.min(
+      Math.max(0, net1231),
+      opening.opening_nonrecaptured_loss,
+    ),
     short_term_ordinary_gain_loss: shortOrdinary,
     line12_section1231_loss: Math.min(0, net1231),
     line19_ordinary_gain_loss: ordinary,
     line20b_schedule1_gain_loss: ordinary,
-    opening_2027_losses: history.opening_next_year_losses,
     filing_ready: false as const,
+  };
+}
+
+/** Finalize history only after a limitation owner supplies the allowed current loss. */
+export function calculateLandDispositions2026(
+  raw: LandDispositionSource2026,
+  finalizedLoss?: z.input<typeof section1231FinalizedLoss2026Schema>,
+) {
+  const amounts = calculateLandDispositionAmounts2026(raw),
+    source = amounts.source_input;
+  const loss = finalizedLoss
+    ? section1231FinalizedLoss2026Schema.parse(finalizedLoss)
+    : undefined;
+  if (loss && amounts.line8_net_section1231 >= 0) {
+    throw new Error("Finalized section 1231 loss supplied for a nonloss year");
+  }
+  const history = calculateSection1231History2026(
+    {
+      ...source.claim.prior_history,
+      ...(loss
+        ? {
+          current_year_loss_taken_into_account: loss.amount_taken_into_account,
+          current_year_loss_source_reference:
+            loss.finalized_limitation_workpaper_reference,
+        }
+        : {}),
+    },
+    amounts.line8_net_section1231,
+    {
+      filing_status: source.filing_status,
+      taxpayer_ssn: source.taxpayer_ssn,
+      spouse_ssn: source.spouse_ssn,
+    },
+  );
+  if (
+    amounts.line10_long_term_gain !== history.current.long_term_gain ||
+    amounts.line20b_schedule1_gain_loss !==
+      history.current.ordinary_gain_loss + amounts.short_term_ordinary_gain_loss
+  ) {
+    throw new Error(
+      "Final section 1231 history disagrees with source character",
+    );
+  }
+  return {
+    ...amounts,
+    history,
+    history_finalized: true as const,
+    opening_2027_losses: history.opening_next_year_losses,
   };
 }
