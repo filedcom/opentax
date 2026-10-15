@@ -58,16 +58,17 @@ Form 8959 and Schedule 2. The 2026 Schedule 8812 withholding worksheet uses
 W-2 Social Security plus Medicare withholding, adds Form 8959 line 7 and subtracts
 its line 22; the latter includes uncollected code B/N amounts under the
 [2026 Form 8959 instructions](https://www.irs.gov/pub/irs-dft/i8959--dft.pdf).
-Part II-B line 22 uses Schedule 2 lines 16c/17c; line 24 deducts finalized EIC.
+Part II-B line 22 uses Schedule 2 lines 16c/17c; line 24 deducts finalized EIC
+and finalized Schedule 3 excess Social Security credit, reconciled to W-2.
 The shared calculator chooses the larger earned-income/payroll method and caps
 it at line 17. Missing actual withholding stops the route rather than estimating
-it from wages. RRTA, self-employment and positive excess-withholding credits still
-require their remaining source owners. See [current EIC](EIC-CURRENT.md).
+it from wages. RRTA and self-employment still require their remaining source
+owners. See [current EIC](EIC-CURRENT.md).
 
 ## Still required
 
-- Complete Part II-B for excess Social Security/tier 1 RRTA credit, Puerto Rico,
-  railroad compensation and self-employment. Pending EIC is never assumed zero.
+- Complete Part II-B for tier 1 RRTA credit, Puerto Rico, railroad compensation
+  and self-employment. Pending EIC is never assumed zero.
 - Credit Limit Worksheets A/B with other credits. 2026 A uses Schedule 3 lines
   1, 2, 3, 4, 6d, 6f, 6l, 6m; B line 15 uses 5a, 6c, 6g, 6h. Part II-B line 22
   uses Schedule 1 line 15 and Schedule 2 lines 16c/17c, not the 2025 line names.

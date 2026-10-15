@@ -142,7 +142,11 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       throw new Error("2026 W-2 needs f1040:2026 context");
     }
     const input = inputSchema.parse(rawInput);
-    if (input.w2s.length === 0) return { outputs: [] };
+    if (input.w2s.length === 0) {
+      return {
+        outputs: [{ nodeType: "schedule3", fields: { line11_excess_ss: 0 } }],
+      };
+    }
     const primary = input.taxpayer_ssn.replaceAll("-", "");
     const spouse = input.spouse_ssn?.replaceAll("-", "");
     if (
@@ -155,7 +159,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     }
     const employerTotals = new Map<
       string,
-      { wages: number; withheld: number }
+      { wages: number; withheld: number; missingWithholding: boolean }
     >();
     const deferralsByOwner = new Map<string, number>();
     for (const item of input.w2s) {
@@ -167,7 +171,16 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
         throw new Error("W-2 employee does not belong to this return");
       }
       const pair = `${owner}:${item.employer_ein.replaceAll("-", "")}`;
-      const totals = employerTotals.get(pair) ?? { wages: 0, withheld: 0 };
+      const totals = employerTotals.get(pair) ??
+        { wages: 0, withheld: 0, missingWithholding: false };
+      if (
+        (item.box4_ss_withheld ?? 0) > 0 && item.box3_ss_wages === undefined
+      ) {
+        throw new Error(
+          "W-2 Social Security withholding needs actual box 3 wages, including explicit zero",
+        );
+      }
+      totals.missingWithholding ||= item.box4_ss_withheld === undefined;
       totals.wages += (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
       totals.withheld += item.box4_ss_withheld ?? 0;
       employerTotals.set(pair, totals);
@@ -348,16 +361,32 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     });
     const ownerTotals = new Map<
       string,
-      { employers: number; wages: number; withheld: number }
+      {
+        employers: number;
+        wages: number;
+        withheld: number;
+        missingWithholding: boolean;
+      }
     >();
     for (const [pair, employer] of employerTotals) {
       const owner = pair.split(":")[0];
       const total = ownerTotals.get(owner) ??
-        { employers: 0, wages: 0, withheld: 0 };
-      if (employer.withheld > 0) total.employers++;
+        { employers: 0, wages: 0, withheld: 0, missingWithholding: false };
+      if (employer.wages > 0 || employer.withheld > 0) total.employers++;
+      total.missingWithholding ||= employer.missingWithholding;
       total.wages += employer.wages;
       total.withheld += employer.withheld;
       ownerTotals.set(owner, total);
+    }
+    if (
+      [...ownerTotals.values()].some((owner) =>
+        owner.employers > 1 &&
+        owner.wages > wages2026.ssWageBase && owner.missingWithholding
+      )
+    ) {
+      throw new Error(
+        "Excess Social Security credit needs actual W-2 box 4 withholding from every employer",
+      );
     }
     const excessSs = Math.round(
       [...ownerTotals.values()].reduce((sum, owner) =>
@@ -378,12 +407,10 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
         })),
       },
     });
-    if (excessSs > 0) {
-      outputs.push({
-        nodeType: "schedule3",
-        fields: { line11_excess_ss: excessSs },
-      });
-    }
+    outputs.push({
+      nodeType: "schedule3",
+      fields: { line11_excess_ss: excessSs },
+    });
     // Keep issued TP/TT evidence intact. The 2026 Schedule 1-A calculator must
     // apply recipient eligibility, occupation allocation and MAGI limits; do not
     // pretend box 7 or a 2025 employer statement is the new box 12 source.

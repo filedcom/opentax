@@ -868,7 +868,7 @@ Schedule 2 supply the tax limit including AMT. CTC/ODC and the supported ACTC
 method finalize Form 1040 lines 19/28 and select draft Schedule 8812 in the bundle.
 Caller credit totals are rejected. Review fields establish the absence of other
 credits and unsupported income sources. Ordinary W-2 Part II-B now consumes
-finalized EIC and actual payroll withholding. RRTA/self-employment/excess-withholding,
+finalized EIC, Schedule 3 excess Social Security and actual payroll withholding. RRTA/self-employment,
 other-credit ordering, Form 8862 and foreign/business cases still need their owners. See
 [the current contract](../../../docs/ty2026/graphs/CHILD-CREDIT-CURRENT.md).
 
@@ -882,3 +882,13 @@ spouse combat-pay elections; only elected pay reaches Form 1040 line 1i. The cre
 flows to Form 1040 line 27a, ACTC Part II-B and Schedule 3-A. The draft bundle adds
 Schedule EIC for child-based claims. [Current scope, evidence and remaining work](../../../docs/ty2026/graphs/EIC-CURRENT.md)
 include explicit gates for unsupported sources and recertification.
+
+
+## Schedule 3 and excess withholding (October 15, 2026)
+
+The source graph now finalizes ordinary W-2 excess Social Security withholding
+through Schedule 3, Form 1040 line 31 and ACTC Part II-B. The annual Schedule 3
+finalizer reuses 2025 totals and handles the revised 2026 line contract; the draft
+bundle replays original W-2 sources, omits the cover, and places Schedule 3 before
+Schedule 3-A. [Current contract and PDF map](../../../docs/ty2026/pdf/PDF-SCHEDULE3-MAP.md)
+distinguish the registered W-2 source from the broader internal line/PDF mapping.

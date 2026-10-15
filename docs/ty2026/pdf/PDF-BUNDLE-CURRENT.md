@@ -31,6 +31,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule 1 (01) | Retained `file_schedule1` | 2 |
 | Schedule 1-A (1A) | Eligible activity, even after complete phaseout | 3 |
 | Schedule 2 (02) | Retained `file_schedule2` | 2 |
+| Schedule 3 (03) | Positive finalized credits/payments | 1 |
 | Schedule 3-A (3A) | Settlement emits schedule | 1 |
 | Schedule A (07) | Selected itemized method | 2 |
 | Schedule B (08) | Source workpaper requires attachment | 1 |
@@ -66,7 +67,10 @@ A synthetic 15-page bundle was rendered and visually inspected: eleven official
 form pages followed by four complete Schedule B statements. Reopened output has
 no annotations or AcroForm fields.
 
-Schedule 3-A now also has connected EIC/ACTC bundle coverage. Schedule EIC
+Schedule 3 now replays original W-2 sources before attaching excess Social
+Security credit and routes it into ACTC. Its component supports complete 6z/13z
+continuations; broader source owners remain unregistered. Schedule 3-A now also
+has connected EIC/ACTC bundle coverage. Schedule EIC
 reconciles the credit, AGI and elected combat pay and excludes its cover/instructions.
 Schedule 8812 prints the supported ordinary W-2 payroll method. Nine additional
 synthetic credit QA pages were rendered and inspected with no fields or annotations. Remaining 2025-supported

@@ -33,6 +33,7 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   // Older wage emitters also deposit these facts; the worksheet uses the
   // normalized 1040 wage lines instead, including tips and Form 8919 wages.
   finalized_eic: amount.optional(),
+  finalized_excess_social_security: amount.optional(),
   payroll_sources_2026: z.array(
     z.object({
       source_reference: z.string().min(1),
@@ -128,12 +129,13 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     resolvePartIIB: () => {
       const payroll = input.medicare_payroll_2026;
       if (
-        input.finalized_eic === undefined || !payroll ||
+        input.finalized_eic === undefined ||
+        input.finalized_excess_social_security === undefined || !payroll ||
         input.schedule2_line16c === undefined ||
         input.schedule2_line17c === undefined
       ) {
         throw new Error(
-          "2026 Schedule 8812 Part II-B needs finalized EIC, Medicare and Schedule 2 sources",
+          "2026 Schedule 8812 Part II-B needs finalized EIC, Schedule 3, Medicare and Schedule 2 sources",
         );
       }
       if (
@@ -144,9 +146,12 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
           "2026 Schedule 8812 Part II-B needs the RRTA/self-employment payroll worksheet owner",
         );
       }
-      if (input.excess_social_security_from_w2 > 0) {
+      if (
+        input.excess_social_security_from_w2 !==
+          input.finalized_excess_social_security
+      ) {
         throw new Error(
-          "2026 Schedule 8812 Part II-B needs finalized Schedule 3 excess-withholding credit",
+          "2026 Schedule 8812 Part II-B Schedule 3 excess-withholding credit differs from W-2 source",
         );
       }
       if (
@@ -187,7 +192,8 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
         schedule2_line6: input.schedule2_line17c,
         schedule2_line13: 0,
         form1040_line27a_eic: input.finalized_eic,
-        schedule3_line11_adoption_credit: input.excess_social_security_from_w2,
+        schedule3_line11_adoption_credit:
+          input.finalized_excess_social_security,
       };
     },
   });

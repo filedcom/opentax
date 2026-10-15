@@ -1,3 +1,4 @@
+import { schedule3_2026 } from "./nodes/schedule3.ts";
 import { eitc_2026 } from "./nodes/eitc.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
 import { social_security_2026 } from "./inputs/social-security.ts";
@@ -55,6 +56,7 @@ export const sourceRegistry2026 = {
   form8959: form8959_2026,
   schedule_a: schedule_a_2026,
   schedule2: schedule2_2026,
+  schedule3: schedule3_2026,
   agi_aggregator: agi_2026,
   standard_deduction: standard_deduction_2026,
   schedule1: schedule1_2026,

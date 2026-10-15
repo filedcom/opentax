@@ -1,3 +1,6 @@
+import type { calculateSchedule3_2026 } from "../schedule3.ts";
+import { buildSchedule3PdfBytes2026 } from "./schedule3.ts";
+import { inputSchema as w2Schema } from "../inputs/w2.ts";
 import type { calculateEic2026 } from "../nodes/eitc.ts";
 import { buildScheduleEicPdfBytes2026 } from "./schedule_eic.ts";
 import type { calculateChildCredit2026 } from "../nodes/f8812.ts";
@@ -147,6 +150,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
     "f8812",
   );
+  const s3 = retained<ReturnType<typeof calculateSchedule3_2026>>("schedule3");
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
   const parts: {
@@ -159,7 +163,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     officialPages: number | undefined,
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
-  // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 3A,
+  // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
   // 07, 08, 24, 32, 43, 47, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
@@ -195,6 +199,23 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
           schedule3a_line4: line("schedule2_line20"),
         },
         filer,
+      ));
+  }
+  if (s3?.file_schedule3) {
+    add("schedule3", 1, () =>
+      buildSchedule3PdfBytes2026(
+        s3.source_input,
+        {
+          form1040_line20: line("line20_nonrefundable_credits"),
+          form1040_line31: line("line31_other_payments"),
+        },
+        filer,
+        w2Schema.parse({
+          filing_status: f.filing_status,
+          taxpayer_ssn: f.taxpayer_ssn,
+          spouse_ssn: f.spouse_ssn,
+          w2s: p.w2?.issued_w2_sources ?? [],
+        }),
       ));
   }
   if (p.schedule3a) {

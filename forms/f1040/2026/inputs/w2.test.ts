@@ -140,7 +140,7 @@ Deno.test("2026 W-2 excess SS uses each owner's wage and tip base", () => {
     spouse_ssn: "444556666",
     w2s: [first, { ...second, employee_ssn: "444556666" }],
   }).outputs;
-  assertEquals(fields(joint, "schedule3"), []);
+  assertEquals(fields(joint, "schedule3"), [{ line11_excess_ss: 0 }]);
   assertThrows(
     () =>
       w2_2026.compute(context, {

@@ -192,6 +192,22 @@ function partIITotal(input: Schedule3Input): number {
   );
 }
 
+/** Shared printed arithmetic; source eligibility and annual line changes belong to adapters. */
+export function calculateSchedule3Totals(input: Schedule3Input) {
+  const line13a = sumAccumulable(input.line13a_tax_paid_by_ric_or_reit);
+  return {
+    line1_total: line1(input),
+    line6a_total: line6a(input),
+    line6f_total: sumAccumulable(input.line6f_clean_vehicle_credit),
+    line6m_total: sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit),
+    line7_total: line7(input),
+    line8_total: partITotal(input),
+    line13a_total: line13a,
+    line14_total: line13a,
+    line15_total: partIITotal(input),
+  };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Schedule3Node extends TaxNode<typeof inputSchema> {
@@ -202,8 +218,9 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Schedule3Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const credits = partITotal(input);
-    const payments = partIITotal(input);
+    const totals = calculateSchedule3Totals(input);
+    const credits = totals.line8_total;
+    const payments = totals.line15_total;
 
     if (
       credits === 0 && payments === 0 &&
@@ -277,19 +294,9 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     // PDF/MeF builders can print the schedule (same pattern as the f1040 node).
     // Keys are distinct from inputSchema keys to avoid executor merge-accumulation.
     const printFields: Record<string, number> = {};
-    const line1Total = line1(input);
-    if (line1Total > 0) printFields.line1_total = line1Total;
-    if (line6a(input) > 0) printFields.line6a_total = line6a(input);
-    const line13a = sumAccumulable(input.line13a_tax_paid_by_ric_or_reit);
-    if (line13a > 0) {
-      printFields.line13a_total = line13a;
-      printFields.line14_total = line13a;
+    for (const [key, value] of Object.entries(totals)) {
+      if (value > 0) printFields[key] = value;
     }
-    if (cleanNew > 0) printFields.line6f_total = cleanNew;
-    if (cleanUsed > 0) printFields.line6m_total = cleanUsed;
-    if (line7(input) > 0) printFields.line7_total = line7(input);
-    if (credits > 0) printFields.line8_total = credits;
-    if (payments > 0) printFields.line15_total = payments;
     if (Object.keys(printFields).length > 0) {
       outputs.push({ nodeType: this.nodeType, fields: printFields });
     }
