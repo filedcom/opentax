@@ -1,4 +1,8 @@
 import {
+  mortgage_interest_2026,
+  mortgageClaim2026Schema,
+} from "./inputs/mortgage-interest.ts";
+import {
   claimInputSchema as scheduleASchema,
   schedule_a_2026,
 } from "./nodes/schedule-a.ts";
@@ -36,6 +40,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: mortgage_interest_2026,
+    isArray: false,
+    inputSchema: mortgageClaim2026Schema,
+  },
   { node: schedule_a_2026, isArray: false, inputSchema: scheduleASchema },
   { node: form8919_2026, isArray: false, inputSchema: form8919Schema },
   {

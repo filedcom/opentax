@@ -1,3 +1,5 @@
+import { mortgage_interest_2026 } from "./inputs/mortgage-interest.ts";
+import { syntheticMortgage2026 } from "./inputs/mortgage.fixture.ts";
 import { schedule_a_2026 } from "./nodes/schedule-a.ts";
 import {
   itemizedClaim2026,
@@ -38,6 +40,7 @@ for (
   const scenario of [
     "wages",
     "itemized",
+    "mortgage",
     "overtime",
     "tips-overtime-senior",
     "vehicle",
@@ -47,6 +50,7 @@ for (
     "misclassified-with-tips",
   ]
 ) {
+  const mortgage = scenario === "mortgage";
   const itemized = scenario === "itemized";
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
@@ -72,6 +76,7 @@ for (
       general: general_2026,
       cash_charity: cash_charity_2026,
       schedule_a: schedule_a_2026,
+      mortgage_interest: mortgage_interest_2026,
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
@@ -138,8 +143,31 @@ for (
           },
         }
         : {}),
+      ...(mortgage
+        ? {
+          mortgage_interest: (() => {
+            const {
+              filing_status: _status,
+              taxpayer_ssn: _taxpayer,
+              spouse_ssn: _spouse,
+              ...claim
+            } = syntheticMortgage2026();
+            return claim;
+          })(),
+        }
+        : {}),
       schedule_a: {
         ...itemizedClaim2026,
+        ...(mortgage
+          ? {
+            source_scope_review: {
+              ...itemizedClaim2026.source_scope_review,
+              no_mortgage_or_investment_interest: undefined,
+              has_mortgage_interest_sources: true,
+              no_investment_interest: true,
+            },
+          }
+          : {}),
         ...(itemized
           ? {
             medical_payments: [syntheticMedical2026()],
@@ -293,12 +321,20 @@ for (
     );
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
-      itemized ? 53_250 : seniorTips ? 18_150 : 16_100,
+      mortgage ? 24_000 : itemized ? 53_250 : seniorTips ? 18_150 : 16_100,
     );
     assertEquals(
       result.pending.f1040.line12f_nonitemizer_charity,
-      itemized ? 0 : 500,
+      itemized || mortgage ? 0 : 500,
     );
+    if (mortgage) {
+      assertEquals(result.pending.f1040.deduction_method, "itemized");
+      assertEquals(
+        result.pending.standard_deduction.itemized_before_overall_limit,
+        24_000,
+      );
+      assertEquals(result.pending.income_tax_calculation.form6251_line2a, 0);
+    }
     if (itemized) {
       assertEquals(result.pending.f1040.deduction_method, "itemized");
       assertEquals(
@@ -312,7 +348,9 @@ for (
     }
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
-      itemized
+      mortgage
+        ? 126_001
+        : itemized
         ? 96_751
         : misclassified
         ? 126_601

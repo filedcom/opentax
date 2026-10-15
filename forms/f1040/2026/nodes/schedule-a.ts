@@ -17,6 +17,7 @@ export const claimInputSchema = scheduleASource2026Schema.omit({
   agi: true,
   w2_tax_sources: true,
   cash_gifts: true,
+  mortgage_source_2026: true,
   salt_addbacks: true,
   form2555_line45_from_agi: true,
 });
@@ -36,6 +37,7 @@ export const inputSchema = claimInputSchema.partial().extend({
     spouse_ssn: true,
     agi: true,
     w2_tax_sources: true,
+    mortgage_source_2026: true,
     salt_addbacks: true,
     form2555_line45_from_agi: true,
   }).shape,
@@ -53,6 +55,7 @@ class ScheduleA2026Node extends TaxNode<typeof inputSchema> {
     if (!input.source_scope_review) {
       if (
         input.tax_year !== undefined || input.tax_election !== undefined ||
+        input.mortgage_source_2026 !== undefined ||
         (input.medical_payments?.length ?? 0) ||
         (input.tax_payments?.length ?? 0) ||
         input.cash_gift_sources_2026.length ||

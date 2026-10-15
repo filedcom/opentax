@@ -1,3 +1,8 @@
+import {
+  calculateMortgageSources2026,
+  mortgageInsuranceDeduction2026,
+  mortgageSource2026Schema,
+} from "./inputs/mortgage-source.ts";
 import { z } from "zod";
 import { FilingStatus } from "../nodes/types.ts";
 import { itemized2026 } from "../nodes/config/2026-itemized.ts";
@@ -23,13 +28,16 @@ const addback = z.object({ amount, source_reference: ref }).strict();
 export const scopeReview2026Schema = z.object({
   record_reference: ref,
   no_other_deductible_taxes: z.literal(true),
-  no_mortgage_or_investment_interest: z.literal(true),
+  no_mortgage_or_investment_interest: z.literal(true).optional(),
+  has_mortgage_interest_sources: z.literal(true).optional(),
+  no_investment_interest: z.literal(true).optional(),
   no_noncash_gifts_or_prior_charitable_carryovers: z.literal(true),
   no_casualty_or_other_itemized_deductions: z.literal(true),
   no_nol_carryback: z.literal(true),
 }).strict();
 export const scheduleASource2026Schema = expenseInput2026Schema.extend({
   tax_year: z.literal(2026),
+  mortgage_source_2026: mortgageSource2026Schema.optional(),
   agi: z.number().int().safe(),
   source_scope_review: scopeReview2026Schema,
   salt_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
@@ -67,6 +75,31 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
   ) {
     throw new Error("Schedule A Form 2555 exclusion disagrees with AGI");
   }
+  const scope = input.source_scope_review;
+  if (
+    input.mortgage_source_2026
+      ? (scope.no_mortgage_or_investment_interest ||
+        !scope.has_mortgage_interest_sources || !scope.no_investment_interest)
+      : (!scope.no_mortgage_or_investment_interest ||
+        scope.has_mortgage_interest_sources || scope.no_investment_interest)
+  ) {
+    throw new Error(
+      "Schedule A mortgage inventory review disagrees with its source owner",
+    );
+  }
+  if (
+    input.mortgage_source_2026 &&
+    (input.mortgage_source_2026.filing_status !== input.filing_status ||
+      input.mortgage_source_2026.taxpayer_ssn.replaceAll("-", "") !==
+        input.taxpayer_ssn.replaceAll("-", "") ||
+      input.mortgage_source_2026.spouse_ssn?.replaceAll("-", "") !==
+        input.spouse_ssn?.replaceAll("-", ""))
+  ) {
+    throw new Error("Schedule A mortgage filer identities disagree");
+  }
+  const mortgage = input.mortgage_source_2026
+    ? calculateMortgageSources2026(input.mortgage_source_2026)
+    : undefined;
   const expenses = calculateItemizedExpenseSources2026({
     filing_status: input.filing_status,
     taxpayer_ssn: input.taxpayer_ssn,
@@ -180,7 +213,16 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     line5c = Math.round(expenses.amounts.personalProperty);
   const line5d = line5a + line5b + line5c, line5e = Math.min(line5d, saltLimit);
   const line11 = allowed60 + allowed30, line13 = line11 - floor30 - floor60;
-  const beforeOverallLimit = line4 + line5e + line13;
+  const line8a = mortgage?.lines.line8a ?? 0,
+    line8b = mortgage?.lines.line8b ?? 0,
+    line8c = mortgage?.lines.line8c ?? 0;
+  const line8d = mortgageInsuranceDeduction2026(
+    mortgage?.insuranceBeforeIncomeLimit ?? 0,
+    input.agi,
+    input.filing_status,
+  );
+  const line8e = line8a + line8b + line8c + line8d;
+  const beforeOverallLimit = line4 + line5e + line8e + line13;
   if (
     [
       saltMagi,
@@ -201,6 +243,7 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
   return {
     source_input: input,
     expenses,
+    mortgage,
     cash_gifts: cash,
     saltMagi,
     saltLimit,
@@ -216,13 +259,13 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
       line5e,
       line6: 0,
       line7: line5e,
-      line8a: 0,
-      line8b: 0,
-      line8c: 0,
-      line8d: 0,
-      line8e: 0,
+      line8a,
+      line8b,
+      line8c,
+      line8d,
+      line8e,
       line9: 0,
-      line10: 0,
+      line10: line8e,
       line11,
       line12: 0,
       line13,

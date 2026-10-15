@@ -437,12 +437,37 @@ carryover/NOL rules. The cash-only policy rejects noncash gifts rather than
 applying the old mixed-property ordering.
 
 This is a bounded source implementation: the inventory review must establish no
-other deductible taxes, mortgage/investment interest, noncash gifts or prior
-charitable carryovers, casualty/other deductions, or NOL carryback. Those owners,
-Schedule A PDF/MeF and final instructions still need implementation. The internal
+other deductible taxes, investment interest, noncash gifts or prior
+charitable carryovers, casualty/other deductions, or NOL carryback. Mortgage interest requires the separate source inventory described below. Those
+remaining owners, Schedule A PDF/MeF and final instructions still need implementation. The internal
 graph fixture derives a $53,250 itemized candidate from receipts and W-2 sources
 at $150,001 AGI, selects it, removes the nonitemizer deduction and retains $38,750
 of taxes for the AMT handoff. Its income-tax fixture is still supplied explicitly.
+
+## Mortgage sources, points and insurance
+
+The `mortgage_interest` source entry now supplies Schedule A lines 8a–8d from
+one inventory of loans and qualified homes. It reuses the Table 1 loan-limit and
+ratable-points arithmetic with 2025 while retaining separate evidence schemas.
+The inventory joins borrower/property identity, payment records, lender
+statements, twelve monthly balances, debt dates and acquisition use. One loan
+limit covers all included homes; the same source cannot be entered twice.
+
+Reported and unreported interest/points remain separate through their printed
+lines. Current purchase points can be immediate or ratable, with limits for
+customary charges and funds supplied at closing. Prior points require a retained
+allocation ledger. Mortgage-insurance sources reconcile to box 5, apply current
+or prepaid allocation, and then the restored 2026 income phaseout. The Schedule A
+receiver verifies owners and its inventory review before deduction selection.
+
+The source model currently covers continuing, wholly acquisition-use personal
+mortgages. In-year refinance/payoff, mixed-use proceeds, lender transfers,
+shared nonfiler expenses, credit-certificate reductions, prior-interest recoveries,
+prior-year prepaid interest and the 2022–2025 prepaid-insurance transition still
+need their source owners. PDF/MeF and persisted points remainders are also pending.
+See the [mortgage source graph](../../../docs/ty2026/graphs/FORM1098-1098E-GRAPH.md)
+for current authorities and boundaries. A passing mortgage calculation does not
+establish complete 2026 Schedule A or filing support.
 
 ## Reuse and folder rules for subsequent work
 
@@ -588,3 +613,10 @@ components matched the hashes already recorded in the research corpus.
   cash-category coordination, floor attribution and the itemized graph handoff.
   The unit and preflight gates passed; this does not establish complete Schedule A
   categories, income-tax calculation or filing readiness.
+
+- Mortgage integration passed 252 typed tests across all 2026 modules and the
+  shared 2025 Form 1098/refinance-points suites. A final 23-test mortgage and
+  return-assembly run also passed after tightening year, identity and payment
+  evidence. The 137-test unit gate and preflight passed. Cases cover whole-return
+  debt limits, old/new debt, MFS, purchase and ratable points, prepaid insurance,
+  phaseout rounding, source mismatches and the selected Schedule A deduction.
