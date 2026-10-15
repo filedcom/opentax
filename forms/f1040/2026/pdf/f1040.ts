@@ -2,7 +2,7 @@ import { reviewedResidence2026 } from "../inputs/dependent-residency.ts";
 import { dependentFiling2026Schema as dependentFilingSchema } from "../inputs/dependents.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { loadPinnedDraft2026 } from "./source.ts";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFName, rgb, StandardFonts } from "pdf-lib";
 import { z } from "zod";
 import type { PdfFieldEntry } from "../../2025/pdf/review-support/form-descriptor.ts";
 import {
@@ -278,5 +278,19 @@ export async function buildF1040PdfBytes2026(
   );
   for (const page of pages) document.addPage(page);
   await appendDependentStatements(document, fields, dependentRows);
-  return document.save();
+  const footer = await document.embedFont(StandardFonts.Helvetica);
+  for (const page of document.getPages()) {
+    page.drawText("DRAFT - NOT FOR FILING", {
+      x: 36,
+      y: 12,
+      size: 8,
+      font: footer,
+      color: rgb(.4, .1, .1),
+    });
+  }
+  for (const page of document.getPages()) {
+    page.node.delete(PDFName.of("Annots"));
+  }
+  document.catalog.delete(PDFName.of("AcroForm"));
+  return document.save({ updateFieldAppearances: false });
 }

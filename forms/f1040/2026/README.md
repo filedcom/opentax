@@ -6,6 +6,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `buildDraftReturnPdf2026` in `pdf/bundle.ts` runs the current strict source
+  graph and assembles reconciled draft components in attachment order, followed
+  by continuation statements. It returns page manifests and unfinished receiver
+  names with `filingReady: false`; every page identifies the incomplete
+  implementation. See the [current bundle contract](../../../docs/ty2026/pdf/PDF-BUNDLE-CURRENT.md).
+
 - The existing 2025 standard-deduction node and the 2026 wage baseline call the
   same `standardDeductionAmount` implementation. Year-specific amounts are
   supplied explicitly, including dependent minimum/earned-income additions.

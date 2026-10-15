@@ -4,8 +4,9 @@ For the initial main-based assessment, read the
 [October 10 baseline assessment](./readiness/CURRENT-BASELINE-2026-10-10.md).
 The [October 15 calculation and assembly foundation](../../forms/f1040/2026/README.md)
 now reuses the 2025 deduction/rate algorithms, input routing and PDF cache.
-It adds internal 2026 return assembly, local reconciliation and draft Form 1040/
-Schedule 3-A PDF components. Public source intake and filing remain unfinished.
+It adds internal 2026 return assembly, local reconciliation and a
+[source-driven development PDF bundle](./pdf/PDF-BUNDLE-CURRENT.md) for the
+currently implemented sources. Full source parity and filing remain unfinished.
 The historical prototype described below is recoverable at `b7c07b616`; its
 full registry and filing outputs have not been ported to this checkout.
 
