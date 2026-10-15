@@ -1,3 +1,7 @@
+import {
+  childTaxInput2026Schema,
+  resolveChildTax2026,
+} from "../inputs/child-tax.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -35,6 +39,7 @@ export const inputSchema = educationClaim2026Schema.partial().extend({
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   regular_tax: whole,
+  child_tax_source_2026: childTaxInput2026Schema.optional(),
   schedule2_part1_tax: whole,
   finalized_dependent_care_credit: whole,
 }).strict();
@@ -155,6 +160,33 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
       (n, r) => n + (fullTime && r.payer === "scholarship" ? 0 : r.amount),
       0,
     );
+    if (input.child_tax_source_2026) {
+      const child = resolveChildTax2026(input.child_tax_source_2026);
+      const c = child.source_input.child_context, facts = child.eligibility;
+      if (
+        !facts || c.taxpayer_dob !== context.taxpayer_dob ||
+        c.taxpayer_ssn !==
+          filers.find((p) => p.owner === "taxpayer")?.tin.replaceAll("-", "") ||
+        child.source_input.income_context.agi !== input.agi ||
+        child.source_input.income_context.wages !==
+          input.earned_income_from_agi ||
+        facts.parent_alive !== review.at_least_one_parent_alive ||
+        facts.support !== support ||
+        JSON.stringify(
+            [...child.source_input.claim!.full_time_student_months].sort((
+              a,
+              b,
+            ) => a - b),
+          ) !==
+          JSON.stringify(
+            [...review.full_time_student_months].sort((a, b) => a - b),
+          )
+      ) {
+        throw new Error(
+          "Education and child-tax reviews must reconcile the same filer, school, support and living-parent facts",
+        );
+      }
+    }
     const under18 = context.taxpayer_dob > "2009-01-01";
     const age18 = context.taxpayer_dob > "2008-01-01" && !under18;
     denied = review.at_least_one_parent_alive &&

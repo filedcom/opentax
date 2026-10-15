@@ -26,8 +26,8 @@ added to line 4. It is not the old 25%/$900,350/$68,500 rule.
 
 The same extension retains §55(d)(4)(A)(iii)'s suspension of §59(j). The indexed
 child amount in Rev. Proc. §4.11 therefore is not installed as an active AMT
-exemption cap. Regular Form 8615 source/parent-tax handling remains separate
-unfinished work. Final 2026 instructions must be checked before filing.
+exemption cap. The reviewed Form 8615 source route now passes its final tax into the regular-tax
+comparison. Child/PAB tests retain the ordinary exemption and verify that handoff. Final 2026 instructions must be checked before filing.
 
 The current [Form 3921 instructions](https://www.irs.gov/instructions/i3921)
 are continuous-use April 2025. The [Form 6251 instructions](https://www.irs.gov/instructions/i6251)

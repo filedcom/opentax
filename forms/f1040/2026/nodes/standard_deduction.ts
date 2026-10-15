@@ -1,4 +1,8 @@
 import {
+  childTaxInput2026Schema,
+  resolveChildTax2026,
+} from "../inputs/child-tax.ts";
+import {
   businessQbiCalculator2026,
   businessReturnSource2026Schema,
   resolveBusinessQbi2026,
@@ -33,6 +37,7 @@ export const inputSchema = sharedSchema.pick({
   force_itemized: true,
 }).extend({
   agi: z.number().finite(),
+  child_tax_source_2026: childTaxInput2026Schema.optional(),
   taxpayer_dob: z.string().date().optional(),
   standard_deduction_eligible: z.boolean(),
   dependent_earned_income: money.optional(),
@@ -58,6 +63,23 @@ export function calculateDeductionSelection2026(
   rawInput: z.input<typeof inputSchema>,
 ) {
   const input = inputSchema.parse(rawInput);
+  const childTax = input.child_tax_source_2026
+    ? resolveChildTax2026(input.child_tax_source_2026)
+    : undefined;
+  if (
+    childTax &&
+    (childTax.source_input.child_context.filing_status !==
+        input.filing_status ||
+      childTax.source_input.child_context.taxpayer_dob !== input.taxpayer_dob ||
+      childTax.source_input.income_context.agi !== input.agi ||
+      childTax.source_input.income_context.total_income !==
+        input.form8615_total_income ||
+      childTax.source_input.income_context.wages !== input.wage_income_from_agi)
+  ) {
+    throw new Error(
+      "Child-tax review must reconcile the deduction owner's identity and income sources",
+    );
+  }
   const businessAmounts = input.business_sources_2026
     ? resolveBusinessQbi2026(input.business_sources_2026).business
     : undefined;
@@ -111,7 +133,7 @@ export function calculateDeductionSelection2026(
   if (
     input.taxpayer_dob && input.taxpayer_dob > "2003-01-01" &&
     input.filing_status !== FilingStatus.MFJ &&
-    unearned > 2700
+    unearned > 2700 && !childTax?.eligibility
   ) {
     throw new Error(
       "2026 Form 8615 source eligibility and child-tax calculation need review before deduction/tax finalization",
@@ -182,6 +204,7 @@ export function calculateDeductionSelection2026(
   return {
     source_input: input,
     resolution: resolved,
+    child_tax_review: childTax ?? null,
     business_child_income_workpaper: businessChildWorkpaper ?? null,
     form8615_screened_unearned_income: Math.max(0, unearned),
   };
@@ -251,6 +274,12 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
             form6251_line1a: chosen.form6251Line1a,
             form6251_line1b: chosen.form6251Line1b,
             form6251_line2a: chosen.form6251Line2a,
+            ...(input.child_tax_source_2026
+              ? {
+                child_tax_source_2026: input.child_tax_source_2026,
+                form8615_child_deduction: chosen.line12eStandardOrItemized,
+              }
+              : {}),
           },
         },
       ],

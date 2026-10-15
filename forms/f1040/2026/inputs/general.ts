@@ -107,6 +107,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       ...this.outputNodes.nodeTypes,
       "form2441",
       "f8863",
+      "f8615",
       "capital_gains",
       "schedule_c",
     ];
@@ -369,6 +370,20 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     };
     return {
       outputs: [
+        {
+          nodeType: "f8615",
+          fields: {
+            child_context: {
+              taxpayer_ssn: input.taxpayer_ssn,
+              taxpayer_dob: input.taxpayer_dob,
+              filing_status: input.filing_status,
+              taxpayer_can_be_claimed_as_dependent:
+                input.taxpayer_can_be_claimed_as_dependent,
+              taxpayer_blind: input.taxpayer_blind,
+              tax_residency: input.tax_residency,
+            },
+          },
+        },
         {
           nodeType: "f1040",
           fields: {

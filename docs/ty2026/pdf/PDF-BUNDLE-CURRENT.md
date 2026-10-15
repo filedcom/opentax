@@ -41,6 +41,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule SE (17) | Regular SE owner requires form | One page per owner |
 | Form 4137 (24) | Calculated owner forms | All owner/employer continuation copies |
 | Form 6251 (32) | Retained filing condition | 2 |
+| Form 8615 (33) | Reviewed child-tax eligibility, including line 3/5 stops | 1 |
 | Schedule EIC (43) | Positive supported child-based EIC | 1 |
 | Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
 | Form 8863 (50) | Positive supported AOTC or LLC | Totals plus student/school pages |
@@ -115,3 +116,9 @@ losses through AGI, regular tax, AMT and NIIT. Direct sales appear only on
 Schedule D; remaining transactions retain their twelve categories and page
 totals on Form 8949. Information-return withholding includes the capital source
 once. See [the current source and output contract](../graphs/CAPITAL-CURRENT.md).
+
+Form 8615 now replays child and cross-return family sources before printing the
+selected parent, complete lines/worksheet indicators, and the sibling allocation
+ratio. Its seven bundle cases include both required stop forms, preferential
+tax, AMT and a ratio rounded to one. See
+[the current child-tax contract](../graphs/FORM8615-CURRENT.md).

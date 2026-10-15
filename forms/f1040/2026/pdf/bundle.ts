@@ -1,3 +1,5 @@
+import type { calculateIncomeTax2026 } from "../nodes/income-tax.ts";
+import { buildForm8615PdfBytes2026 } from "./form8615.ts";
 import type { calculateBusiness2026 } from "../nodes/business.ts";
 import { buildBusinessPdfBytes2026 } from "./business.ts";
 import type { calculateCapitalGains2026 } from "../nodes/capital-gains.ts";
@@ -160,6 +162,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       "TY2026 information-return withholding components disagree with Form 1040",
     );
   }
+  const incomeTax = retained<ReturnType<typeof calculateIncomeTax2026>>(
+    "income_tax_calculation",
+  );
   const care = retained<ReturnType<typeof calculateCareCredit2026>>("f2441");
   const eic = retained<ReturnType<typeof calculateEic2026>>("eitc");
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
@@ -182,7 +187,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 43, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 47, 50, 55, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -380,6 +385,15 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         filer,
       ));
+  }
+  if (incomeTax?.form8615) {
+    add("form8615", 1, () =>
+      buildForm8615PdfBytes2026(incomeTax.source_input, {
+        form1040_line11b: line("line11b_agi"),
+        form1040_line12e: line("line12e_standard_or_itemized"),
+        form1040_line15: line("line15_taxable_income"),
+        form1040_line16: line("line16_income_tax"),
+      }, filer));
   }
   if (eic?.file_schedule_eic) {
     add(

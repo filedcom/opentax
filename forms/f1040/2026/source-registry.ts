@@ -1,3 +1,5 @@
+import { f8615_2026 } from "./inputs/child-tax.ts";
+import { form8615 } from "../nodes/intermediate/forms/taxes/investments/form8615/index.ts";
 import { business_2026 } from "./nodes/business.ts";
 import { capital_carryover_2026 } from "./nodes/capital-carryover.ts";
 import { capital_gains_2026 } from "./nodes/capital-gains.ts";
@@ -42,6 +44,8 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  f8615: f8615_2026,
+  form8615,
   schedule_c: business_2026,
   capital_gains: capital_gains_2026,
   capital_loss_carryover: capital_carryover_2026,

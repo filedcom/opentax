@@ -71,7 +71,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = agi_aggregator.outputNodes;
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "f8863"];
+    return [...this.outputNodes.nodeTypes, "f8863", "f8615"];
   }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
@@ -368,6 +368,28 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       return output;
     });
     const earned = outputs.find((o) => o.nodeType === "f8812")?.fields;
+    const returnIncome = outputs.find((o) =>
+      o.nodeType === "f1040" && o.fields.line9_total_income !== undefined
+    )?.fields;
+    outputs.push({
+      nodeType: "f8615",
+      fields: {
+        income_context: {
+          agi: earned?.auto_agi,
+          total_income: returnIncome?.line9_total_income ?? 0,
+          wages: wageIncome,
+          early_withdrawal_penalty: input.line18_early_withdrawal ?? 0,
+          unsupported_child_income_activity: Boolean(business_sources_2026) || [
+            input.line3_schedule_c,
+            input.line6_schedule_f,
+            input.line5_schedule_e,
+            input.line8a_nol_deduction,
+            input.line8d_foreign_earned_income_exclusion,
+            input.line15_se_deduction,
+          ].some((v) => (v ?? 0) !== 0),
+        },
+      },
+    });
     outputs.push({
       nodeType: "f8863",
       fields: {

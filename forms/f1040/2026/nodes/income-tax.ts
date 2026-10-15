@@ -1,3 +1,9 @@
+import {
+  childTaxInput2026Schema,
+  resolveChildTax2026,
+} from "../inputs/child-tax.ts";
+import { calculateForm8615 } from "../../nodes/intermediate/forms/taxes/investments/form8615/calculation.ts";
+import { form8615 } from "../../nodes/intermediate/forms/taxes/investments/form8615/index.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -22,6 +28,8 @@ const accumulated = z.union([money, z.array(money)]);
 /** Internal upstream results, never a public input accepting an asserted line 16. */
 export const inputSchema = z.object({
   taxable_income: money.int(),
+  child_tax_source_2026: childTaxInput2026Schema.optional(),
+  form8615_child_deduction: money.int().optional(),
   filing_status: z.nativeEnum(FilingStatus),
   form6251_line1a: money.int().optional(),
   form6251_line1b: z.number().finite().int(),
@@ -133,8 +141,50 @@ export function calculateIncomeTax2026(raw: IncomeTax2026Input) {
       ? preferentialTax(facts, incomeWorksheet2026)
       : ordinary(input.taxable_income);
   }
+  const normalTax = tax;
+  let childReview = input.child_tax_source_2026
+    ? resolveChildTax2026(input.child_tax_source_2026)
+    : null;
+  if (
+    childReview &&
+    (childReview.source_input.child_context.filing_status !==
+        input.filing_status || input.form8615_child_deduction === undefined)
+  ) {
+    throw new Error(
+      "Child tax needs its actual filing status and selected deduction",
+    );
+  }
+  if (
+    childReview?.source && input.taxable_income > 0 &&
+    childReview.source.child_unearned_income > 2700
+  ) {
+    childReview = resolveChildTax2026(input.child_tax_source_2026!, {
+      requireFamilyTax: true,
+    });
+  }
+  const childTax = childReview?.source
+    ? calculateForm8615(childReview.source, {
+      childTaxableIncome: input.taxable_income,
+      childFilingStatus: input.filing_status,
+      childRegularTax: normalTax,
+      takingStandardDeduction: input.taking_standard_deduction,
+      childHasPreferentialIncome: hasPreference,
+      childQualifiedDividends: qualDiv,
+      childNetCapitalGain: netCg,
+      childNeedsScheduleDWorksheet: special1250 > 0 || special28 > 0 ||
+        election > 0,
+      childAdjustedGrossIncome: childReview.source_input.income_context.agi,
+      childDeduction: input.form8615_child_deduction,
+      childForeignEarnedIncomeExclusion: foreignExclusion,
+      brackets: incomeWorksheet2026,
+    })
+    : null;
+  if (childTax) tax = childTax.line18Tax;
   return {
     source_input: input,
+    normal_tax_before_child_tax: normalTax,
+    child_tax_review: childReview,
+    form8615: childTax,
     method,
     line16IncomeTax: tax,
     ordinaryTaxWithoutPreferences: ordinary(input.taxable_income),
@@ -152,6 +202,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
   // These shared identities do not register or execute legacy calculators in 2026.
   readonly outputNodes = new OutputNodes([
     f1040_2026_node,
+    form8615,
     form6251_2026,
     f8812,
     form_1116,
@@ -167,10 +218,21 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: result } },
+        ...(result.form8615
+          ? [{ nodeType: "form8615", fields: { ...result.form8615.fields } }]
+          : []),
         { nodeType: "f1040", fields: { line16_income_tax: tax } },
         { nodeType: "f8812", fields: { auto_income_tax_liability: tax } },
         { nodeType: "f2441", fields: { regular_tax: tax } },
-        { nodeType: "f8863", fields: { regular_tax: tax } },
+        {
+          nodeType: "f8863",
+          fields: {
+            regular_tax: tax,
+            ...(input.child_tax_source_2026
+              ? { child_tax_source_2026: input.child_tax_source_2026 }
+              : {}),
+          },
+        },
         { nodeType: "form8978_reporting_year", fields: { regular_tax: tax } },
         {
           nodeType: "form6251",
@@ -226,7 +288,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
               form4952_election: input.form4952_election ?? 0,
               foreign_earned_income_exclusion:
                 input.foreign_earned_income_exclusion ?? 0,
-              form8615_applies: false,
+              form8615_applies: result.form8615 !== null,
               regular_tax_before_additional_items: tax,
             },
           },

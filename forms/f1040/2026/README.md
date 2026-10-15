@@ -44,7 +44,7 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   Reviewed qualifying-person records now support incapacity, ordinary custodial
   care and birth/death residence, with dated expenses and independent 1040
   dependency treatment. Claimable filers' deductions use actual wage income;
-  potential Form 8615 returns remain gated for their source/calculation owner.
+  potential Form 8615 returns require the reviewed child-tax source route.
   MFS home reviews derive current-credit eligibility, while separate spouse W-2
   records constrain benefits without adding spouse income to this return.
   Eligible prior-year credits remain available to ordinary MFS. Reviewed special
@@ -81,11 +81,12 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - The 2025 and 2026 Tax Table, ordinary-rate and preferential worksheets share
   the same calculations with explicit year-specific configurations. The existing
   2025 entry points retain their behavior.
-- The shared Form 8615 calculator now uses its supplied annual rates for family
-  and child tax instead of calling 2025 tax functions. Independent 2026 table and
-  worksheet checks cover its ordinary/preferential calculations; eligibility,
-  parent selection, source integration and draft output remain unfinished. See
-  the [child-tax contract](../../../docs/ty2026/graphs/FORM8615-GRAPH.md).
+- `f8615` derives wage/investment child eligibility, selects a linked parent
+  return and reconciles sibling worksheets before using the shared annual tax
+  calculator. The tax reaches Form 1040, AMT and credit limits, with a reconciled
+  draft Form 8615 including stop forms and worksheet checkboxes. Business,
+  advanced family worksheets and remaining filing cases still need completion;
+  see the [current child-tax scope](../../../docs/ty2026/graphs/FORM8615-CURRENT.md).
 - `nodes/config/2026-income.ts` contains the audited subset of 2026 constants
   from [Rev. Proc. 2025-32 §§4.01, 4.14](https://www.irs.gov/irb/2025-45_IRB),
   checked October 15, 2026. It does not fill missing constants with 2025 values
@@ -158,10 +159,12 @@ The 2026 Form 1040/Schedule D instruction URLs still serve 2025 worksheets;
 final 2026 worksheet-layout review remains required.
 
 The graph scenarios derive tax/refunds for wages, tips/overtime, vehicle interest,
-mortgages, educators and moving expenses. Preferential/foreign calculations are
-internal building blocks until their 2026 source owners are connected. Schedule J,
-Form 8615, parent elections, lump-sum and PFIC/reporting-year tax adjustments are
-rejected as unsupported inputs here until their calculation order is implemented.
+mortgages, educators and moving expenses. Connected investment and child-tax
+sources use preferential calculations; foreign calculations remain internal
+building blocks until their 2026 source owners are connected. Schedule J,
+parent elections, lump-sum distribution tax and PFIC/reporting-year tax
+adjustments are rejected until their calculation order is implemented.
+Form 8615 now uses the reviewed wage/investment child-tax route described above.
 The shared special-rate foreign worksheet still rejects capital-gain-excess
 refigures. No asserted tax amount is exposed by the public source catalog.
 
