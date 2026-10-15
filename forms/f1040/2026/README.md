@@ -1052,3 +1052,12 @@ registered: current Marketplace/family source ownership, special eligibility,
 QSEHRA and self-employed health interactions, final instruction reconciliation,
 PDF output and MeF remain open. See the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
+
+
+The Marketplace source component now reconciles ordinary current/corrected/void
+1095-A copies, coverage dates, monthly full-payment and outside-MEC reviews,
+and benchmark determinations. It reuses the 2025 copy selector, eligibility
+checks and state-level SLCSP grouping while preserving source cents and current
+year metadata. It is not yet an input-catalog entry: general/dependent ownership,
+household income, premium-deduction coordination and the return/PDF route still
+need to consume and replay these records before filing can be enabled.

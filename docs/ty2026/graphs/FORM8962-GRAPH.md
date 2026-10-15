@@ -37,6 +37,31 @@ that can be reviewed for reuse after a 2026 visual/field audit.
 
 - `nodes/inputs/credits/health/f1095a/index.ts` aggregates policy amounts
   and shared-policy facts, but `f1095a` is **not** in the 2026 registry.
+- `forms/f1040/2026/inputs/marketplace-source.ts` now prepares ordinary
+  2026 policy facts from issued copies and person-month reviews. It preserves
+  source cents, corrected-copy lineage and issued VOID copies; verifies each
+  current copy's annual totals; and requires payment and outside-MEC reviews
+  for every covered month. Zero-APTC and mixed-APTC months use the same review
+  path with the 2027 ordinary payment deadline.
+- The source component reuses shared corrected-copy selection, state-level
+  SLCSP combination and year-parameterized eligibility validation. The 2025
+  public helper keeps its original concrete signature, including callers that
+  inspect its return type. Shared payment comparisons now use integer cents
+  and reject malformed amounts, avoiding false underpayment from floating-point
+  addition in either year.
+- Benchmark reviews bind the applicable SLCSP to the complete eligible coverage
+  family in each state. Matching same-state policy benchmarks count once;
+  different-state families combine their benchmarks. Missing/incorrect column B
+  needs a dated determination reference and digest. A changing coverage family
+  forces monthly calculation even when the dollar amounts stay constant.
+- This preparation component is **not registered**. Its `tax_family_tins` must
+  still be supplied by validated general/dependent selection before public use.
+  It does not derive household MAGI, coordinate medical premium deductions,
+  or prove current-year filing eligibility. Shared allocations, marriage/divorce
+  changes, QSEHRA, self-employed plans, retroactive/mid-month special enrollment,
+  protected partial payments and employer-offer affordability remain separate
+  required source workpapers. An issued VOID copy is supported; a standalone
+  void letter needs its own document contract.
 - The shared `nodes/intermediate/forms/credits/health/form8962/index.ts`
   now exposes its existing arithmetic with an explicit annual policy. The
   2025 node still selects its original FPL tables, enhanced applicable figures,
@@ -129,3 +154,36 @@ Current primary authorities checked October 16, 2026:
 [2025 HHS poverty guidelines](https://www.govinfo.gov/content/pkg/FR-2025-01-17/html/2025-01377.htm),
 [IRS repayment-cap removal](https://www.irs.gov/tax-professionals/eitc-central/repayment-caps-eliminated-for-excess-advance-payments-of-the-premium-tax-credit),
 and [draft Form 8962](https://www.irs.gov/pub/irs-dft/f8962--dft.pdf).
+
+`forms/f1040/2026/inputs/marketplace-source.test.ts` also checks corrected and
+void lineage, same-state benchmark deduplication, distinct-state family coverage,
+source ownership, mixed advances, payment deadlines, benchmark determinations,
+changing coverage families and stale/duplicate/incomplete records. Its positive
+cases feed the internal Form 8962 calculator; they do not yet execute a complete
+1040 graph. The retained source records must be replayed at that later boundary.
+Additional references are the
+[2026 draft Form 1095-A instructions](https://www.irs.gov/pub/irs-dft/i1095a--dft.pdf),
+[IRS corrected/void statement guidance](https://www.irs.gov/affordable-care-act/corrected-incorrect-or-voided-form-1095-a),
+and the coverage-month regulation published in
+[IRB 2025-04](https://www.irs.gov/pub/irs-irbs/irb25-04.pdf).
+The 2025 Form 8962 instructions remain a comparator pending the 2026 edition.
+
+### Required return integration
+
+The 2026 AGI node already emits taxpayer modified AGI and a Publication 974
+income audit to the pending `form8962` receiver. General must supply the actual
+claimed family, and required-filing dependent records must derive Worksheet 1-2
+using 2026 filing thresholds before that receiver is enabled. Residence evidence
+must determine the FPL region; coverage state alone is not the residence test.
+Positive W-2 QSEHRA or self-employed health deductions must not be hidden by a
+policy-scope assertion. Schedule A needs source-level premium coordination to
+prevent a duplicate deduction for credited premiums.
+
+The current graph uses `schedule3_final` for final refundable totals. Add line 9
+there; add repayment line 1a to the connected Schedule 2 contract and its effect
+to AMT regular-tax line 10. The Form 1062 hypothetical-income replay must also
+recompute PTC repayment and affected credit limits from the retained Marketplace
+sources rather than carrying the original-income result into its comparison.
+Until that replay exists, a combined election/Marketplace source claim must
+remain explicitly unsupported. Registering the legacy node object is not a
+substitute for these dependencies or the draft attachment and replay checks.
