@@ -88,20 +88,18 @@ PDF/MeF and the remaining exception sources are unfinished.
 
 | Source facts | 2026 calculation and handoff |
 | --- | --- |
-| Borrower, lender/account, box 1 | Deduplicate servicer and loan records. Verify the taxpayer is legally obligated, paid the interest and is not claimable as another person's dependent. Check qualified education-loan use, eligible student/institution, excluded employer assistance and other double benefits. The lender's $600 issuance threshold does not disallow lower paid interest. |
+| Borrower, lender/account, box 1 | Deduplicate servicer and loan records. Verify the taxpayer is legally obligated, paid the interest and is not claimed on another person's return. Check qualified education-loan use, eligible student/institution, excluded employer assistance and other double benefits. The lender's $600 issuance threshold does not disallow lower paid interest. |
 | Box 2 old-loan checkbox | For loans before September 1, 2004, obtain the amount of capitalized interest/qualifying origination charges actually paid but omitted from box 1. The checkbox itself is not a dollar deduction. For later loans the lender includes those qualifying interest charges in box 1; do not add them again. |
 | Allowed amount | Sum qualified interest across loans, cap at **$2,500 per return**, then apply 2026 filing status and MAGI phaseout. MFS is ineligible. The 2026 indexed config currently uses $85,000–$100,000 for single/HOH/QSS and $175,000–$205,000 for MFJ; verify these against final 2026 Schedule 1 instructions and the pinned inflation guidance before release. MAGI must exclude this deduction and apply foreign-income/housing and territory addbacks; do not calculate from a provisional AGI that drops taxable Social Security. Send the adjusted result to **2026 Schedule 1 line 21**, 1040 line 10 and AGI. |
 
-The shared [`f1098e` input](../../../forms/f1040/nodes/inputs/adjustments/education/f1098e/index.ts)
-was registered in the historical prototype, but is not an input in the active
-2026 source catalog. Its shared implementation caps reported box 1 at $2,500
-and sends the legacy semantic key to AGI. The dedicated 2026 Schedule 1
-node accepts the AGI-adjusted result on line 21, and a focused graph/PDF
-test exercises that handoff. The source intake has no loan, borrower,
-eligible-expense or paid-but-unreported old-loan interest fields. Its box 2
-comment incorrectly treats the box 1 amount alone as a complete deduction
-when qualifying paid interest is omitted. The AGI implementation needs a
-full MAGI/source-order audit, including Social Security and Form 2555.
+The [current student-loan source implementation](./STUDENT-LOANS-CURRENT.md)
+now registers `student_loan_interest`, reconciles issued copies and payment
+ledgers, and routes the eligible capped amount through shared AGI phaseout to
+Schedule 1 and Form 1040. Its source and PDF tests include old-loan supplemental
+interest, excluded funding, joint cap/phaseout and dependency claims. General
+claimability and actual dependency claims are separate reviewed facts.
+Foreign housing/territory source routes, coordinated SSA worksheets and final
+2026 instructions/MeF remain unfinished; see the current contract for guards.
 
 ## Build and acceptance
 

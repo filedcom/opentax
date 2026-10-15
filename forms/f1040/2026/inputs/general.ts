@@ -1,3 +1,4 @@
+import { student_loan_interest_2026 } from "./student-loan-interest.ts";
 import { investments_2026 } from "./investments.ts";
 import { f3921_2026 } from "./f3921.ts";
 import { form6251_2026 } from "../nodes/form6251.ts";
@@ -110,6 +111,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     moving_expenses_2026,
     f3921_2026,
     investments_2026,
+    student_loan_interest_2026,
     form6251_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
@@ -380,6 +382,16 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "f3903", fields: owner },
         { nodeType: "f3921", fields: owner },
         { nodeType: "investment_income", fields: owner },
+        {
+          nodeType: "student_loan_interest",
+          fields: {
+            ...owner,
+            taxpayer_can_be_claimed_as_dependent:
+              input.taxpayer_can_be_claimed_as_dependent,
+            spouse_can_be_claimed_as_dependent:
+              input.spouse_can_be_claimed_as_dependent,
+          },
+        },
         {
           nodeType: "form6251",
           fields: {

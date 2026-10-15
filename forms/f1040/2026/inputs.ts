@@ -1,4 +1,8 @@
 import {
+  student_loan_interest_2026,
+  studentLoanClaim2026Schema,
+} from "./inputs/student-loan-interest.ts";
+import {
   investmentClaim2026Schema,
   investments_2026,
 } from "./inputs/investments.ts";
@@ -53,6 +57,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: student_loan_interest_2026,
+    isArray: false,
+    inputSchema: studentLoanClaim2026Schema,
+  },
   {
     node: investments_2026,
     isArray: false,

@@ -6,6 +6,13 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `student_loan_interest` reconciles 1098-E copies and loan payment records,
+  including old-loan fees, capitalized interest, funding exclusions, corrections
+  and borrower eligibility. It reuses the shared cap and AGI phaseout, with 2026
+  amounts, then reaches Schedule 1 and the draft bundle. See the
+  [current source contract](../../../docs/ty2026/graphs/STUDENT-LOANS-CURRENT.md)
+  for remaining foreign/SSA source and filing gates.
+
 - `buildDraftReturnPdf2026` in `pdf/bundle.ts` runs the current strict source
   graph and assembles reconciled draft components in attachment order, followed
   by continuation statements. It returns page manifests and unfinished receiver

@@ -101,5 +101,11 @@ Seven synthetic QA pages were rendered with Poppler and visually inspected,
 including checked gain/repayment/storage/IRA fields, signed NOL/FEIE, the two
 printed pages, a multi-type statement and a two-page long-description statement.
 All 288 current-2026 tests passed, as did the repository unit/preflight gate.
-Complete source ownership, 1099-G/1098-E public inputs, Form 2555 coordination,
+Complete remaining source ownership, 1099-G public inputs, Form 2555 coordination,
 complete attachment selection, current MeF and ATS acceptance remain unfinished.
+
+
+The [student-loan source route](./STUDENT-LOANS-CURRENT.md) now supplies reviewed
+1098-E/payment records through the shared cap and 2026 AGI phaseout to line 21.
+The draft bundle prints that finalized amount and omits a Schedule 1 whose only
+potential deduction is completely phased out.

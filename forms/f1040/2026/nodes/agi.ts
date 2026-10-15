@@ -102,6 +102,14 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         "Student-loan input must be the eligible amount capped at $2,500",
       );
     }
+    if (
+      (input.line21_student_loan_interest ?? 0) > 0 &&
+      (input.line6a_ss_gross ?? 0) > 0 && input.line6b_ss_taxable === undefined
+    ) {
+      throw new Error(
+        "Student-loan MAGI needs finalized taxable Social Security before its phaseout",
+      );
+    }
     const result = agi_aggregator.computeWithConfig(ctx, input, agi2026);
     let additionalIncome = 0;
     let adjustments = 0;
