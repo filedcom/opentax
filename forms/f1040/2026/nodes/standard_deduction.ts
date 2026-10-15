@@ -1,7 +1,9 @@
 import {
   businessQbiCalculator2026,
   businessReturnSource2026Schema,
+  resolveBusinessQbi2026,
 } from "../inputs/business-qbi.ts";
+import { businessPersonalServices2026 } from "../inputs/business-personal-services.ts";
 import {
   calculateCapitalGains2026,
   capitalGainInput2026Schema,
@@ -16,6 +18,7 @@ import { inputSchema as sharedSchema } from "../../nodes/intermediate/worksheets
 import { income_tax_2026 } from "./income-tax.ts";
 import { f1040_2026_node } from "./f1040.ts";
 import { noQbi2026, resolveDeductions2026 } from "../deduction-resolution.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
 
 const money = z.number().finite().nonnegative();
 /** Internal upstream results; none of these calculated totals is a public input. */
@@ -33,6 +36,7 @@ export const inputSchema = sharedSchema.pick({
   taxpayer_dob: z.string().date().optional(),
   standard_deduction_eligible: z.boolean(),
   dependent_earned_income: money.optional(),
+  wage_income_from_agi: money.optional(),
   // Retain AGI's child-tax metadata; a 2026 Form 8615 owner must review it.
   form8615_total_income: z.number().finite().optional(),
   form8615_early_withdrawal_penalty: money.optional(),
@@ -54,6 +58,52 @@ export function calculateDeductionSelection2026(
   rawInput: z.input<typeof inputSchema>,
 ) {
   const input = inputSchema.parse(rawInput);
+  const businessAmounts = input.business_sources_2026
+    ? resolveBusinessQbi2026(input.business_sources_2026).business
+    : undefined;
+  if (
+    businessAmounts &&
+    (input.wage_income_from_agi === undefined ||
+      input.dependent_earned_income !==
+        Math.max(
+          0,
+          input.wage_income_from_agi + businessAmounts.schedule1_line3 -
+            businessAmounts.schedule1_line15,
+        ))
+  ) {
+    throw new Error(
+      "Dependent earned income must reconcile wages, Schedule C net and the actual SE deduction",
+    );
+  }
+  let unearned = (input.form8615_total_income ?? input.agi) -
+    (input.dependent_earned_income ?? 0);
+  let businessChildWorkpaper:
+    | ReturnType<typeof businessPersonalServices2026>
+    | undefined;
+  if (
+    input.business_sources_2026 && input.taxpayer_dob &&
+    input.taxpayer_dob > "2003-01-01" &&
+    input.filing_status !== FilingStatus.MFJ
+  ) {
+    businessChildWorkpaper = businessPersonalServices2026(
+      input.business_sources_2026,
+    );
+    // i8615 line 1 restores business losses and excludes ordinary service net
+    // before the half-SE deduction. Capital-produced income remains unearned.
+    const capitalProduced = businessChildWorkpaper.rows.reduce(
+      (n, r) =>
+        n +
+        (r.capital_limit === null
+          ? 0
+          : Math.max(0, r.net_profit - r.education_earned_income)),
+      0,
+    );
+    unearned = roundWholeDollars(
+      (input.form8615_total_income ?? input.agi) -
+        input.wage_income_from_agi! - businessAmounts!.schedule1_line3 +
+        capitalProduced - (input.form8615_early_withdrawal_penalty ?? 0),
+    );
+  }
   // The public source graph supplies DOB. Do not open the dependent wage
   // deduction route by silently applying ordinary rates to a potential 8615
   // return. Parent/student/support eligibility and the child's tax owner remain
@@ -61,8 +111,7 @@ export function calculateDeductionSelection2026(
   if (
     input.taxpayer_dob && input.taxpayer_dob > "2003-01-01" &&
     input.filing_status !== FilingStatus.MFJ &&
-    (input.form8615_total_income ?? input.agi) -
-          (input.dependent_earned_income ?? 0) > 2700
+    unearned > 2700
   ) {
     throw new Error(
       "2026 Form 8615 source eligibility and child-tax calculation need review before deduction/tax finalization",
@@ -130,7 +179,12 @@ export function calculateDeductionSelection2026(
     schedule1aLine44: input.schedule1a_line44 ?? 0,
     schedule1aLine43: input.schedule1a_line43 ?? 0,
   }, qbi);
-  return { source_input: input, resolution: resolved };
+  return {
+    source_input: input,
+    resolution: resolved,
+    business_child_income_workpaper: businessChildWorkpaper ?? null,
+    form8615_screened_unearned_income: Math.max(0, unearned),
+  };
 }
 
 class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
@@ -145,15 +199,22 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("2026 deduction resolution needs f1040:2026 context");
     }
-    const { source_input: input, resolution: resolved } =
-      calculateDeductionSelection2026(rawInput);
+    const calculation = calculateDeductionSelection2026(rawInput);
+    const { source_input: input, resolution: resolved } = calculation;
     const chosen = resolved.selected;
     // Both deduction candidates replay the same business and capital sources.
     return {
       outputs: [
         {
           nodeType: this.nodeType,
-          fields: { resolution_2026: resolved, calculation_input_2026: input },
+          fields: {
+            resolution_2026: resolved,
+            calculation_input_2026: input,
+            business_child_income_workpaper_2026:
+              calculation.business_child_income_workpaper,
+            form8615_screened_unearned_income:
+              calculation.form8615_screened_unearned_income,
+          },
         },
         {
           nodeType: "form8960",

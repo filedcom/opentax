@@ -13,6 +13,9 @@ import {
   resolveEducationExpenses2026,
 } from "../inputs/education-source.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
+import { businessReturnSource2026Schema } from "../inputs/business-qbi.ts";
+import { businessCreditEarnings2026 } from "../inputs/business-earned.ts";
+import { businessPersonalServices2026 } from "../inputs/business-personal-services.ts";
 const whole = z.number().int().nonnegative();
 const person = z.object({
   tin: z.string(),
@@ -30,6 +33,7 @@ export const inputSchema = educationClaim2026Schema.partial().extend({
   agi: z.number().int(),
   earned_income_from_agi: whole,
   unsupported_earned_income_activity: z.boolean(),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
   regular_tax: whole,
   schedule2_part1_tax: whole,
   finalized_dependent_care_credit: whole,
@@ -62,6 +66,41 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
     );
   }
   const filers = context.students.filter((p) => p.owner !== "dependent");
+  const under24 = context.filing_status !== FilingStatus.MFJ &&
+    context.taxpayer_dob > "2003-01-01";
+  let businessWorkpaper:
+    | ReturnType<typeof businessPersonalServices2026>
+    | undefined;
+  if (input.business_sources_2026) {
+    if (
+      claim.business_inventory_reference !==
+        input.business_sources_2026.record_reference
+    ) {
+      throw new Error(
+        "Education claim needs the actual business inventory reference",
+      );
+    }
+    businessCreditEarnings2026(
+      input.business_sources_2026,
+      context.filing_status,
+      {
+        taxpayer_ssn: filers.find((p) => p.owner === "taxpayer")?.tin,
+        spouse_ssn: filers.find((p) => p.owner === "spouse")?.tin,
+      },
+    );
+    if (under24 || input.business_sources_2026.earned_income_review) {
+      businessWorkpaper = businessPersonalServices2026(
+        input.business_sources_2026,
+      );
+    }
+  } else if (claim.business_inventory_reference) {
+    throw new Error("Education business review needs actual business sources");
+  }
+  const supportEarned = Math.max(
+    0,
+    input.earned_income_from_agi +
+      (businessWorkpaper?.taxpayer_education_earned_income ?? 0),
+  );
   if (!filers.some((p) => p.valid_ssn)) {
     throw new Error(
       "2026 education credits require an employment-valid SSN issued by the due date for at least one filer",
@@ -96,8 +135,6 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
       aotc_lines: s.credit_type === "aotc" ? aotc_lines : null,
     };
   });
-  const under24 = context.filing_status !== FilingStatus.MFJ &&
-    context.taxpayer_dob > "2003-01-01";
   const review = claim.refundable_review;
   if (under24 !== (review.kind === "under24_nonjoint")) {
     throw new Error(
@@ -122,7 +159,7 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
     const age18 = context.taxpayer_dob > "2008-01-01" && !under18;
     denied = review.at_least_one_parent_alive &&
       (under18 ||
-        ((age18 || fullTime) && input.earned_income_from_agi * 2 < support));
+        ((age18 || fullTime) && supportEarned * 2 < support));
   }
   const line1 = students.reduce((n, s) => n + (s.aotc_lines?.line30 ?? 0), 0);
   const joint = context.filing_status === FilingStatus.MFJ,
@@ -163,6 +200,11 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
     students,
     under24_nonrefundable: denied,
     support_workpaper: support,
+    earned_income_workpaper: {
+      wages: input.earned_income_from_agi,
+      business: businessWorkpaper ?? null,
+      earned_income_for_support: under24 ? supportEarned : null,
+    },
     credit_limit_worksheet,
     lines: {
       line1,

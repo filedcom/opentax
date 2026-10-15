@@ -47,12 +47,59 @@ instructions SHA-256 is
   full-time months, complete support ledger and actual earned income. Full-time
   scholarships are excluded from support. Exactly half support is tested
   separately from less than half. No student/deemed-care earnings substitute for
-  actual wages. Current business/foreign earned-income routes are rejected.
+  actual wages. Supported business sources now enter through the distinct
+  personal-services review below; foreign earned-income routes remain unfinished.
 
 The public claim accepts source records and review evidence, not adjusted
 expense totals or calculated credits. Claim-level reviews exclude another
 return actually claiming either filer, foreign exclusions, taxable scholarships,
 prior recapture, unsupported credit-limit offsets and Form 8862 requirements.
+
+## Business earnings and dependent deductions
+
+The education claim identifies the actual business inventory. AGI replays that
+inventory before forwarding it; education verifies its filer identities. For a
+potential under-24 nonjoint support test, `earned_income_review` identifies every
+business once and distinguishes the owner's services alone, material services
+and capital, and statutory employment. Older and joint filers do not need an
+otherwise inapplicable support review.
+
+The [2026 Form 8863 instructions, line 7](https://www.irs.gov/pub/irs-dft/i8863--dft.pdf)
+govern this workpaper. Service-only activity contributes signed net profit less
+the allocated deductible half of SE tax. Where services and capital are both
+material, the calculator uses the smaller of documented reasonable compensation
+and 30% of profit after that deduction. Statutory employee compensation contributes
+gross receipts once. The existing QBI owner allocation supplies each activity's
+share of the SE deduction; education does not treat QBI itself as earned income.
+The primary filer's business amount combines with actual taxable wages before
+the half-support comparison. Fractions remain intact at this comparison.
+
+Dependent standard deductions use a different bridge: taxable wages plus
+Schedule 1 line 3 net profit, including statutory expenses, less line 15. The
+shared standard-deduction calculator applies the 2026 $1,350 minimum, $450 add-on
+and filing-status ceiling. See [2026 Publication 505, Worksheet 2-4](https://www.irs.gov/publications/p505)
+and the current [1040 dependent worksheet](https://www.irs.gov/instructions/i1040gi).
+The latter still describes 2025 and is a semantic comparator; final 2026 full
+instructions remain a release check.
+
+For potential Form 8615 returns, the deduction owner separately screens income
+under the [2026 Form 8615 instructions, line 1](https://www.irs.gov/pub/irs-dft/i8615--dft.pdf).
+It removes service-business income before the SE adjustment, restores business
+losses so they cannot hide investment income, retains income attributable to
+capital, deducts the savings early-withdrawal penalty, and rounds the line-1
+amount once. More than $2,700 still stops for the unfinished child-tax owner;
+passing this screen is not implementation of Form 8615 or its support test.
+
+Tests cover exact half-support and cent-over boundaries, the capital cap and a
+lower reasonable allowance, statutory gross versus deduction net, source/owner
+mismatches, dependent deductions, business losses and the $2,700/$2,701 screen.
+A combined return verifies care, education and child-credit tax-capacity order.
+The final 638-test 2026/shared education and deduction regression suite and
+repository unit checks passed. Twelve focused typed business tests and the
+complete-return PDF test cover this integration. Seven synthetic 1040/8863 pages
+were reopened, rendered and visually inspected on October 15: refundable and
+nonrefundable amounts, the under-24 checkbox and dependent deduction reconcile,
+with no AcroForm or page annotations remaining.
 
 ## Draft output and verification
 
@@ -73,5 +120,5 @@ Foreign institution addresses; other 1098-T exceptions; scholarships allocated
 between education and living costs or elected into income; service scholarships;
 prior-year adjustments/recapture and amendments; cross-institution aid allocation;
 separately issued insurer statements; fuller special dependency/ownership cases;
-self-employment earned income; Form 8862 and foreign/prior-AMT credit-limit
+business sources outside the supported Schedule C/SE inventory; Form 8862 and foreign/prior-AMT credit-limit
 inputs; final forms/instructions, current MeF/rules, public registration and ATS.

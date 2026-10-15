@@ -10,6 +10,7 @@ import { scheduleSELines } from "../../nodes/intermediate/forms/taxes/self-emplo
 import { wages2026 } from "../../nodes/config/2026-wages.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { w2Item2026Schema } from "./w2-source.ts";
+import { businessEarnedReview2026Schema } from "./business-earned-review.ts";
 
 const reference = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{9}$/).refine((v) => v !== "000000000");
@@ -165,11 +166,12 @@ export const businessActivity2026Schema = z.object({
   }).strict(),
 }).strict();
 
-/** Development source calculator. Not registered until QBI and other consumers
- * can replay these facts together; callers cannot deposit its totals in 1040. */
+/** Source inventory replayed by the 2026 business, QBI and earned-income owners.
+ * Public callers provide records, not calculated Schedule C/SE totals. */
 export const businessSources2026Schema = z.object({
   tax_year: z.literal(2026),
   record_reference: reference,
+  earned_income_review: businessEarnedReview2026Schema.optional(),
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_tin: tin,
   spouse_tin: tin.optional(),

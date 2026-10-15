@@ -248,12 +248,6 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         (Array.isArray(value) ? value.reduce((a, b) => a + b, 0) : value ?? 0),
       0,
     );
-    const unsupportedEarnedActivity = [
-      input.line3_schedule_c,
-      input.line6_schedule_f,
-      input.line15_se_deduction,
-      input.line8d_foreign_earned_income_exclusion,
-    ].some((v) => (v ?? 0) !== 0);
     const outputs = result.outputs.map((output) => {
       if (output.nodeType === "f8812" || output.nodeType === "eitc") {
         return {
@@ -339,12 +333,23 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           ...output,
           fields: {
             ...output.fields,
-            // Only actual taxable wage income reaches the dependent deduction.
-            // Care deemed income and combat elections never enter this amount.
-            // Extend with business/scholarship owners before opening those routes.
-            ...(unsupportedEarnedActivity
+            // The dependent worksheet uses Schedule C net, including statutory
+            // expenses, less deductible half-SE tax. It is not EIC gross income.
+            wage_income_from_agi: wageIncome,
+            ...([
+                business ? 0 : input.line3_schedule_c,
+                input.line6_schedule_f,
+                business ? 0 : input.line15_se_deduction,
+                input.line8d_foreign_earned_income_exclusion,
+              ].some((v) => (v ?? 0) !== 0)
               ? {}
-              : { dependent_earned_income: wageIncome }),
+              : {
+                dependent_earned_income: Math.max(
+                  0,
+                  wageIncome + (business?.schedule1_line3 ?? 0) -
+                    (business?.schedule1_line15 ?? 0),
+                ),
+              }),
             qbi_activity_pending: [
               business ? 0 : input.line3_schedule_c,
               input.line5_schedule_e,
@@ -368,7 +373,13 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       fields: {
         agi: earned?.auto_agi,
         earned_income_from_agi: wageIncome,
-        unsupported_earned_income_activity: unsupportedEarnedActivity,
+        ...(business_sources_2026 ? { business_sources_2026 } : {}),
+        unsupported_earned_income_activity: [
+          business ? 0 : input.line3_schedule_c,
+          input.line6_schedule_f,
+          business ? 0 : input.line15_se_deduction,
+          input.line8d_foreign_earned_income_exclusion,
+        ].some((v) => (v ?? 0) !== 0),
       },
     });
     outputs.push({

@@ -6,10 +6,13 @@ are superseded. Advanced 8995-A/cooperative work below remains a plan.
 
 Current source update (October 15): AGI supplies actual taxable wage income to
 the dependent standard-deduction calculation, including taxable care benefits and
-excluding care deemed income or combat-pay elections. General DOB also reaches
-the resolver: potential under-24, nonjoint Form 8615 returns over the $2,700
-unearned-income threshold stop for the unfinished child-tax owner. Business and
-scholarship sources must extend the dependent-earned-income bridge before opening.
+excluding care deemed income or combat-pay elections. Replayed business sources
+now add Schedule C net and subtract the actual deductible half of SE tax; statutory
+expenses remain deductible in this worksheet. Potential under-24, nonjoint returns
+use a separate business income-character review for the Form 8615 screen, restoring
+losses and retaining capital-produced income. Amounts over $2,700 stop for the
+unfinished child-tax owner. See the [business earnings contract](EDUCATION-CURRENT.md#business-earnings-and-dependent-deductions).
+Scholarship sources and full child-tax eligibility/calculation remain unfinished.
 See [current care source integration](FORM2441-CURRENT.md) and
 [the complete child-tax contract](FORM8615-GRAPH.md).
 
