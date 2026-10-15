@@ -15,7 +15,7 @@ and MeF.
 | 1–4 | One row per employer, including EIN, total cash/charge tips received and reported. W-2 box 8 allocated tips are included unless records prove a lower unreported amount. Sum all employers, including continuation rows. Line 4 is received minus reported tips and flows to 2026 Form 1040 line 1c/AGI. Keep W-2 box 1 reported tips out of this extra income. |
 | 5–6 | Remove tips under the per-employer $20 monthly reporting threshold from the FICA base, but retain them in line 4 income. Line 6 also feeds Form 8959 line 2 when Additional Medicare Tax applies. |
 | 7–10 | Use the printed 2026 Social Security wage base **$184,500**. Line 8 combines W-2 boxes 3 and 7 and applicable RRTA compensation; line 10 is the smaller of line 6 (with the stated government-employee comparison adjustment) or remaining wage base. Reconcile the same recipient's Form 8919 line 8 so the base is shared once. |
-| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../corpus/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current graph/PDF uses 16a. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
+| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../corpus/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current 2026 graph uses 16a; its Form 4137 PDF remains to build. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
 
 The 2026 draft requires a separate Form 4137 for each spouse with unreported
 tips. Its printed instructions allow a statement or additional first-page
@@ -37,46 +37,58 @@ Form 8919 does not replace Schedule C/SE for genuine independent-contractor
 income and does not calculate tax on unreported tips; Form 4137 owns the
 latter. The 2026 draft no longer prints reason codes B, D, E or F.
 
-## Current code boundary
+## Current code boundary (October 15)
 
-- The shared [Form 4137 node](../../../forms/f1040/nodes/intermediate/forms/taxes/employment/form4137/index.ts)
-  is in the 2026 registry, sends tips to 1040 line 1c and tax to Schedule 2
-  line 16a, and exposes tip sources to Schedule 1-A. The [2026 PDF
-  builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f4137.ts) renders separate recipient
-  forms and employer continuations. Check its line 8 W-2/RRTA base, $20
-  month evidence, government-employee exception and Form 8959 handoff
-  against the embedded instructions. Its [draft field
-  inventory](../inventories/pdf-fields/pdf-fields-f4137.csv) includes all widgets.
-- The shared [Form 8919 node](../../../forms/f1040/nodes/intermediate/forms/taxes/employment/form8919/index.ts)
-  is **not** registered in the 2026 registry. It accepts a single aggregate
-  `wages` amount and reason code A–H, has no per-firm evidence, and still
-  outputs the TY2025 Schedule 2 line 6 key. Its reason-code definitions do
-  not match the printed 2026 A/C/G/H descriptions; simply switching the
-  tax year would be wrong. Its Form 1040 line 1g output and Schedule SE
-  wage-base handoff also need 2026 graph review.
-- TY2025 PDF and MeF descriptors exist for both forms, but TY2026 has no
-  Form 8919 PDF or MeF implementation. The 2025 XML names, spouse document
-  handling and continuation representation require current XSD/rule checks.
+- The [2026 Form 4137 adapter](../../../forms/f1040/2026/inputs/form4137.ts)
+  reuses the current shared employer, allocated-tip diary, monthly reporting
+  and payroll calculation with a 2026 policy. It connects W-2 evidence, income,
+  Schedule 1-A qualification, Schedule 2 line 16a and Form 8959 line 2.
+  Its owner-keyed line 10 feeds Form 8919 before that form computes line 8.
+  Form 4137 PDF/MeF components remain unfinished; the historical prototype PDF
+  is not the current implementation.
+- The [2026 Form 8919 adapter](../../../forms/f1040/2026/inputs/form8919.ts)
+  reuses the shared per-firm A/C/G/H evidence checks and payroll arithmetic.
+  The shared 2025 node retains its original input and destinations. The 2026
+  adapter derives each firm's wages from identified NEC/MISC or payment records,
+  checks owner/payer identity, same-firm W-2 evidence for H and dated SS-8/IRS
+  records for A/C/G. Duplicate documents and underlying wage payments fail.
+  Separately documented payments without an information return may supplement a
+  firm's 1099 amount; they are reconciled before rounding the firm's wages.
+- The focused [employee payment intake](../../../forms/f1040/2026/inputs/employee-payments.ts)
+  accepts NEC box 1a or MISC box 3 wages with payment-ledger reconciliation and
+  box 4 withholding. Corrected forms, positive cash-tip/overtime detail, NEC
+  excess golden parachute and other reportable boxes need their remaining
+  source owners. This is not complete generic NEC/MISC source support.
+- The internal source graph routes Form 8919 line 6 to Form 1040 line 1g and
+  AGI once, tax to Schedule 2 line 16b, withholding to line 25b and Medicare
+  wages to Form 8959 line 3. Earned-income and Schedule SE payroll records are
+  emitted, but their receiving 2026 calculations remain unfinished. The public
+  filing registry is not enabled.
+- The [2026 Form 8919 PDF component](../../../forms/f1040/2026/pdf/form8919.ts)
+  verifies the pinned draft hash and all 40 fields, recalculates sources and
+  checks destination amounts and filer identity. It renders a separate form
+  per recipient and additional first-page copies beyond five firms, with totals
+  only on each recipient's first page. The one-point line 7 dummy field remains
+  empty because $184,500 is preprinted. Output is static and marked draft.
+- Both 2026 MeF serializers, current XSD/rule validation and the complete return
+  bundle remain to build. Existing 2025 XML names do not establish 2026 parity.
 
-## Build order and acceptance
+## Remaining acceptance
 
-1. Resolve the final Form 4137 line 13/Schedule 2 cross-reference and
-   confirm the final 2026 wage base, reason codes, Form 8959 and Schedule
-   1-A handoffs. Pin any revised source and record its hash.
-2. Build owner-keyed W-2/1099/employer and firm ledgers. Apply Form 4137
-   line 10 before Form 8919 line 8, then Form 8959. Reconcile 1040 lines
-   1c/1g, Schedule 2 lines 16a/16b and the Social Security wage base.
-3. Replace Form 8919's aggregate/reason-code input with the printed
-   per-firm rows and evidence. Register the validated 2026 route and add
-   its PDF/continuation; audit Form 4137's existing 2026 PDF against the
-   complete widget inventory.
-4. Map both current `IRS4137`/`IRS8919` MeF documents, statement/binary
-   attachments and active reject rules. Validate full XML and PDFs for
-   taxpayer-only, spouse-only and both-spouse cases.
-5. Test exactly five and more-than-five employers/firms, allocated tips,
-   monthly sub-$20 tips, government-only Medicare tips, code G SS-8, code H
-   duplicate 1099/W-2, Form 4137 plus 8919 wage-base coordination, and
-   Form 8959 thresholds. Preserve TY2025 regressions on reused logic.
+1. Resolve the final Form 4137 line 13/Schedule 2 cross-reference and recheck
+   final forms, wage base, reason codes and dependent-form instructions. Pin
+   revised sources and record hashes before adopting them.
+2. Complete source corrections, substitute/missing W-2 handling, railroad and
+   statutory-employee exceptions, noncash tips, full NEC/MISC source ownership
+   and their Schedule 1-A branches. Connect receiving Schedule SE and credit
+   calculations; do not treat emitted pending records as completed routes.
+3. Build Form 4137 PDF/continuations and complete the combined return bundle.
+   Map both current `IRS4137`/`IRS8919` documents, supporting attachments and
+   active reject rules. Validate taxpayer-only, spouse-only and joint outputs.
+4. Retain the existing source, owner, A/C/G/H, rounding, same-payment overlap,
+   five/more-than-five PDF and Form 4137/8919 wage-base tests. Extend them to
+   the remaining source cases and full XML/ATS evidence, preserving 2025
+   regressions on shared logic.
 
-This contract maps the filing work; the current 2026 slice is incomplete,
-especially for Form 8919 and MeF.
+This contract maps the filing work; calculation and draft PDF milestones do
+not establish complete 2026 filing readiness.

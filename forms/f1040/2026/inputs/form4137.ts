@@ -4,7 +4,7 @@ import { agi_2026 } from "../nodes/agi.ts";
 import { schedule2_2026 } from "../nodes/schedule2.ts";
 import { schedule1a_2026 } from "../nodes/schedule1a.ts";
 import { form8959_2026 } from "../nodes/form8959.ts";
-import { form8919 } from "../../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
+import { form8919_2026 } from "./form8919.ts";
 import { eitc } from "../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
 import { schedule_se } from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
@@ -222,7 +222,7 @@ class Form4137Node2026 extends TaxNode<typeof inputSchema> {
     schedule2_2026,
     schedule1a_2026,
     form8959_2026,
-    form8919,
+    form8919_2026,
     eitc,
     f8812,
     schedule_se,

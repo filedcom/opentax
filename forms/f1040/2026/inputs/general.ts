@@ -1,3 +1,4 @@
+import { form8919_2026 } from "./form8919.ts";
 import { ct2_2026 } from "./ct2.ts";
 import { form4137_2026 } from "./form4137.ts";
 import { vehicle_loan_interest_2026 } from "./vehicle-loan-interest.ts";
@@ -98,6 +99,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     cash_charity_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
+    form8919_2026,
     agi_2026,
     f1040_2026_node,
     standard_deduction,
@@ -360,6 +362,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "cash_charity", fields: owner },
         { nodeType: "vehicle_loan_interest", fields: owner },
         { nodeType: "form4137", fields: owner },
+        { nodeType: "form8919", fields: owner },
         {
           nodeType: "agi_aggregator",
           fields: {

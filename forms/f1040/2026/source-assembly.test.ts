@@ -1,3 +1,5 @@
+import { syntheticForm8919_2026 } from "./inputs/form8919.fixture.ts";
+import { form8919_2026 } from "./inputs/form8919.ts";
 import { form8959_2026 } from "./nodes/form8959.ts";
 import { ct2_2026 } from "./inputs/ct2.ts";
 import { form4137_2026 } from "./inputs/form4137.ts";
@@ -35,12 +37,14 @@ for (
     "unreported-tips",
     "medicare",
     "ct2",
+    "misclassified-with-tips",
   ]
 ) {
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
   const vehicle = scenario === "vehicle";
-  const unreported = scenario === "unreported-tips";
+  const misclassified = scenario === "misclassified-with-tips";
+  const unreported = scenario === "unreported-tips" || misclassified;
   const medicare = scenario === "medicare";
   const ct2 = scenario === "ct2";
   const expectedWages = vehicle ? 80_001 : 150_001;
@@ -62,6 +66,7 @@ for (
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
+      form8919: form8919_2026,
       form8959: form8959_2026,
       ct2: ct2_2026,
       schedule2: schedule2_2026,
@@ -125,6 +130,15 @@ for (
         }
         : {}),
       cash_gifts: [syntheticCashGift2026],
+      ...(misclassified
+        ? {
+          form8919: {
+            tax_year: 2026,
+            evidence_review_date: "2027-02-10",
+            forms: syntheticForm8919_2026().forms,
+          },
+        }
+        : {}),
       ...(ct2
         ? {
           ct2s: [1, 2, 3, 4].map((quarter) => ({
@@ -166,7 +180,7 @@ for (
           employer_name: "First",
           employee_ssn: "111223333",
           source_document_reference: "w2-one",
-          box3_ss_wages: 100_000,
+          box3_ss_wages: misclassified ? 130_000 : 100_000,
           box5_medicare_wages: medicare ? 250_000 : vehicle ? 30_000 : 100_000,
           box6_medicare_withheld: medicare ? 4075 : vehicle ? 435 : 1450,
           ...(unreported ? { box8_allocated_tips: 2000 } : {}),
@@ -214,7 +228,9 @@ for (
     assertEquals(result.diagnostics, []);
     assertEquals(
       result.pending.f1040.line13a_schedule1a,
-      unreported
+      misclassified
+        ? 18_800
+        : unreported
         ? 19_800
         : vehicle
         ? 4_200
@@ -233,15 +249,15 @@ for (
     assertEquals(result.pending.f1040.line1a_wages, expectedWages);
     assertEquals(
       result.pending.f1040.line9_total_income,
-      expectedWages + (unreported ? 2000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
     );
     assertEquals(
       result.pending.f1040.line11b_agi,
-      expectedWages + (unreported ? 2000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
     );
     assertEquals(
       result.pending.f1040.line25d_total_withholding,
-      medicare ? 30_451 : ct2 ? 30_361 : 30_001,
+      misclassified ? 31_001 : medicare ? 30_451 : ct2 ? 30_361 : 30_001,
     );
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
@@ -250,7 +266,9 @@ for (
     assertEquals(result.pending.f1040.line12f_nonitemizer_charity, 500);
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
-      unreported
+      misclassified
+        ? 126_601
+        : unreported
         ? 115_601
         : vehicle
         ? 59_201
@@ -262,7 +280,9 @@ for (
     );
     assertEquals(
       result.pending.f1040.line35a_refund,
-      medicare
+      misclassified
+        ? 10206
+        : medicare
         ? 4937
         : unreported
         ? 9506
@@ -288,14 +308,35 @@ for (
     }
     if (unreported) {
       assertEquals(result.pending.f1040.line1c_unreported_tips, 2000);
-      assertEquals(result.pending.f1040.line23_other_taxes, 153);
-      assertEquals(result.pending.f1040.schedule2_line20, 153);
+      assertEquals(
+        result.pending.f1040.line23_other_taxes,
+        misclassified ? 453 : 153,
+      );
+      assertEquals(
+        result.pending.f1040.schedule2_line20,
+        misclassified ? 453 : 153,
+      );
       assertEquals(result.pending.schedule3a, undefined); // No refundable credits in this fixture.
       assertEquals(
         (result.pending.form8959.calculation_2026 as ReturnType<
           typeof import("./nodes/form8959.ts").calculateForm8959_2026
         >).lines.line2,
         2000,
+      );
+    }
+    if (misclassified) {
+      assertEquals(result.pending.f1040.line1g_wages_8919, 10_000);
+      assertEquals(result.pending.f1040.line25b_withheld_1099, 1000);
+      assertEquals(result.pending.schedule2.line16b_form8919_wage_tax, 300);
+      const form = (result.pending.form8919.calculation_2026 as ReturnType<
+        typeof import("./inputs/form8919.ts").calculateForm8919_2026
+      >).forms[0];
+      assertEquals([form.line8, form.line10], [182_000, 2500]);
+      assertEquals(
+        (result.pending.form8959.calculation_2026 as ReturnType<
+          typeof import("./nodes/form8959.ts").calculateForm8959_2026
+        >).lines.line3,
+        10_000,
       );
     }
     if (seniorTips) {
@@ -308,11 +349,15 @@ for (
     // Make the still-unwired credit routes visible; this is not filing readiness.
     assertEquals(
       result.pending.eitc.earned_income,
-      unreported ? [expectedWages - 0.5, 2000] : expectedWages - 0.5,
+      misclassified
+        ? [expectedWages - 0.5, 2000, 10_000]
+        : unreported
+        ? [expectedWages - 0.5, 2000]
+        : expectedWages - 0.5,
     );
     assertEquals(
       result.pending.f8812.auto_agi,
-      expectedWages + (unreported ? 2000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
     );
   });
 }

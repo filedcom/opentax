@@ -36,13 +36,13 @@ tax. Verify by printed line label and tooltip, then render and inspect.
   Missing Medicare boxes fail validation; box 1 is never substituted. B/N
   uncollected FICA enters line 19, while RRTA B/N does not. Mixed FICA/RRTA B/N
   amounts need a dedicated allocation source before they can be accepted.
-- Form 4137 supplies one finalized line 6 per owner. Form 8919 and Schedule SE
-  have strict internal owner-result contracts, but their 2026 source calculators
-  are still unfinished. SE losses are excluded separately for each spouse.
+- Forms 4137 and 8919 supply one finalized line 6 per owner. Schedule SE
+  has a strict internal owner-result contract, but its 2026 source calculator
+  remains unfinished. SE losses are excluded separately for each spouse.
 - The repeated `ct2s` input reuses 2025 quarterly reconciliation with a strict
   2026 year/source/owner schema. All four quarters and payment references are
   required; unsupported partial payments still need allocation evidence.
-- General, W-2, Form 4137 and CT-2 are connected in the internal graph. Form 8959
+- General, W-2, Forms 4137/8919 and CT-2 are connected in the internal graph. Form 8959
   sends line 12 to Schedule 2 line 17b, line 18 to line 11, and line 24 to Form
   1040 line 25c. Source thresholds retain filing when the tax rounds to zero,
   and withholding remains creditable when joint-return liability is zero.
@@ -51,9 +51,9 @@ tax. Verify by printed line label and tooltip, then render and inspect.
   new printed line meanings. Inapplicable parts are blank; draft markings stay
   visible. The complete return bundle and current-version MeF remain pending.
 
-The source-driven graph covers actual W-2 boxes, Form 4137 tips and CT-2
-quarters through Form 1040. Direct calculator tests cover all three tax pools
-and the future 8919/SE interfaces; those tests do not prove that the missing
+The source-driven graph covers actual W-2 boxes, Form 4137 tips, Form 8919
+wages and CT-2 quarters through Form 1040. Direct calculator tests cover all
+three tax pools and the future Schedule SE interface; those tests do not prove that the missing
 source owners or a full filing product exist. Substitute/territory/household
 wages, corrected W-2s and remaining community-property exceptions also need
 separate source work.

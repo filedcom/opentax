@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
@@ -22,89 +25,95 @@ const validDate = z.string().refine((value) => {
 
 export const reasonCodeSchema = z.enum(["A", "C", "G", "H"]);
 
-export const employerSchema = z.object({
-  name: z.string().trim().min(1),
-  tin_type: z.enum(["ein", "ssn", "unknown"]),
-  tin: tin.optional(),
-  reason_code: reasonCodeSchema,
-  correspondence_received_date: validDate.optional(),
-  correspondence_reference: z.string().trim().min(1).optional(),
-  ss8_filed_date: validDate.optional(),
-  ss8_filing_reference: z.string().trim().min(1).optional(),
-  form1099_received: z.boolean(),
-  wages: amount.positive(),
-  form1099_payer_tin: tin.optional(),
-}).strict().superRefine((employer, ctx) => {
-  if ((employer.tin_type === "unknown") === (employer.tin !== undefined)) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 firm needs a TIN or an unknown-TIN indicator",
-    });
-  }
-  if (
-    employer.tin && employer.tin_type === "ein" &&
-    !/^\d{2}-?\d{7}$/.test(employer.tin)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 employer EIN has the wrong format",
-    });
-  }
-  if (
-    employer.tin && employer.tin_type === "ssn" &&
-    !/^\d{3}-?\d{2}-?\d{4}$/.test(employer.tin)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 employer SSN has the wrong format",
-    });
-  }
-  if (
-    ["A", "C"].includes(employer.reason_code) !==
-      (employer.correspondence_received_date !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message:
-        "Form 8919 reason A/C needs a correspondence date, G/H must omit it",
-    });
-  }
-  if (
-    ["A", "C"].includes(employer.reason_code) !==
-      (employer.correspondence_reference !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 reason A/C needs an IRS correspondence reference",
-    });
-  }
-  const ss8Required = ["A", "G"].includes(employer.reason_code);
-  const ss8Complete = employer.ss8_filed_date !== undefined &&
-    employer.ss8_filing_reference !== undefined;
-  const ss8Present = employer.ss8_filed_date !== undefined ||
-    employer.ss8_filing_reference !== undefined;
-  if ((ss8Required && !ss8Complete) || (!ss8Required && ss8Present)) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 reason A/G needs Form SS-8 filing date and reference",
-    });
-  }
-  if (employer.reason_code === "H" && !employer.form1099_received) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 reason H needs a 1099-MISC or 1099-NEC",
-    });
-  }
-  if (
-    employer.form1099_received !==
-      (employer.form1099_payer_tin !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8919 column (e) must match a 1099-MISC/NEC source link",
-    });
-  }
-});
+export function employerSchemaForWages(
+  wagesSchema: z.ZodNumber = amount.positive(),
+) {
+  return z.object({
+    name: z.string().trim().min(1),
+    tin_type: z.enum(["ein", "ssn", "unknown"]),
+    tin: tin.optional(),
+    reason_code: reasonCodeSchema,
+    correspondence_received_date: validDate.optional(),
+    correspondence_reference: z.string().trim().min(1).optional(),
+    ss8_filed_date: validDate.optional(),
+    ss8_filing_reference: z.string().trim().min(1).optional(),
+    form1099_received: z.boolean(),
+    wages: wagesSchema,
+    form1099_payer_tin: tin.optional(),
+  }).strict().superRefine((employer, ctx) => {
+    if ((employer.tin_type === "unknown") === (employer.tin !== undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 firm needs a TIN or an unknown-TIN indicator",
+      });
+    }
+    if (
+      employer.tin && employer.tin_type === "ein" &&
+      !/^\d{2}-?\d{7}$/.test(employer.tin)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 employer EIN has the wrong format",
+      });
+    }
+    if (
+      employer.tin && employer.tin_type === "ssn" &&
+      !/^\d{3}-?\d{2}-?\d{4}$/.test(employer.tin)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 employer SSN has the wrong format",
+      });
+    }
+    if (
+      ["A", "C"].includes(employer.reason_code) !==
+        (employer.correspondence_received_date !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8919 reason A/C needs a correspondence date, G/H must omit it",
+      });
+    }
+    if (
+      ["A", "C"].includes(employer.reason_code) !==
+        (employer.correspondence_reference !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 reason A/C needs an IRS correspondence reference",
+      });
+    }
+    const ss8Required = ["A", "G"].includes(employer.reason_code);
+    const ss8Complete = employer.ss8_filed_date !== undefined &&
+      employer.ss8_filing_reference !== undefined;
+    const ss8Present = employer.ss8_filed_date !== undefined ||
+      employer.ss8_filing_reference !== undefined;
+    if ((ss8Required && !ss8Complete) || (!ss8Required && ss8Present)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8919 reason A/G needs Form SS-8 filing date and reference",
+      });
+    }
+    if (employer.reason_code === "H" && !employer.form1099_received) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 reason H needs a 1099-MISC or 1099-NEC",
+      });
+    }
+    if (
+      employer.form1099_received !==
+        (employer.form1099_payer_tin !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8919 column (e) must match a 1099-MISC/NEC source link",
+      });
+    }
+  });
+}
+export const employerSchema = employerSchemaForWages();
 
 export const formSchema = z.object({
   recipient: z.enum(["taxpayer", "spouse"]),
@@ -159,6 +168,11 @@ const digits = (value: string) => value.replace(/\D/g, "");
 export function calculateForm8919(
   input: Form8919Input,
   ssWageBase: number,
+  additionalPaymentSources: readonly {
+    recipient: "taxpayer" | "spouse";
+    firm_tin: string;
+    amount: number;
+  }[] = [],
 ): Form8919Calculation[] {
   const forms = input.forms ?? [];
   if (
@@ -254,6 +268,24 @@ export function calculateForm8919(
       name: source.payer_name,
     });
   }
+  const additionalPayments = new Map<string, number>();
+  for (const payment of additionalPaymentSources) {
+    if (!Number.isFinite(payment.amount) || payment.amount < 0) {
+      throw new Error("Form 8919 additional payment must be nonnegative");
+    }
+    const key = `${payment.recipient}:${digits(payment.firm_tin)}`;
+    additionalPayments.set(
+      key,
+      (additionalPayments.get(key) ?? 0) + payment.amount,
+    );
+  }
+  for (const key of additionalPayments.keys()) {
+    if (!sourceTotals.has(key)) {
+      throw new Error(
+        "Form 8919 additional payments need matching 1099 firm sources",
+      );
+    }
+  }
   const matchedSources = new Set<string>();
   const result = forms.map((form) => {
     for (const employer of form.employers) {
@@ -267,7 +299,9 @@ export function calculateForm8919(
       matchedSources.add(key);
       const source = sourceTotals.get(key);
       if (
-        !source || Math.round(source.amount) !== employer.wages ||
+        !source ||
+        Math.round(source.amount + (additionalPayments.get(key) ?? 0)) !==
+          employer.wages ||
         source.name !== employer.name
       ) {
         throw new Error(

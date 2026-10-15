@@ -34,7 +34,7 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   mappings. Schedule 1 requires agreement with finalized AGI totals. Positive
   Schedule 2 section 965 installments remain held because the pinned draft's
   line 12/15 instructions conflict. The Schedule 2 graph sink currently accepts
-  reviewed W-2 payroll/golden-parachute, Form 4137 and Form 8959 sources.
+  reviewed W-2 payroll/golden-parachute, Form 4137, Form 8919 and Form 8959 sources.
 - Fourteen local rules reconcile income, tax, deductions, payments, refund and
   required attachments. They are arithmetic checks, not IRS MeF acceptance.
 - Draft Form 1040 and Schedule 3-A PDF components use pinned IRS hashes and the
@@ -241,8 +241,8 @@ The unreported difference enters Form 1040 line 1c and AGI once. It also contrib
 to the pending earned-income credit calculations. Payroll tax goes to Schedule 2
 line 16a and its line 20/21 totals, then to Form 1040 settlement. Form 8959 receives
 Medicare tips; Form 8919 and Schedule SE retain separate owner payroll handoffs.
-The 2026 Form 8959 receiver is implemented below; Form 8919, Schedule SE and
-credit calculators remain unfinished. MFS still
+The 2026 Form 8919 and Form 8959 receivers are implemented below; Schedule SE
+and credit calculators remain unfinished. MFS still
 owes payroll tax while receiving no tips deduction. Government-employee Social
 Security exclusions need a coverage record; Medicare tips remain taxable.
 
@@ -259,6 +259,40 @@ separate source handling. Form 4137 PDF/MeF attachments and full payroll/credit
 integration remain release gates; the existing Schedule 1-A component already
 has the Form 4137 comparison column.
 
+## Form 8919 employee wage sources and draft attachment
+
+The 2026 adapter reuses the existing per-firm A/C/G/H evidence validation and
+payroll calculator with the $184,500 wage base. Employer wages are derived from
+identified 2026 NEC box 1a, MISC box 3 or direct payment records. Each information
+return reconciles to underlying wage-payment IDs; repeated documents or payments
+fail. Same-firm cash payments omitted from information returns can supplement
+those sources before rounding. A positive source amount may round to zero on
+its printed row; the 2025 positive-input schema remains unchanged.
+
+The adapter checks recipient/firm identity, SS-8 and IRS correspondence dates,
+actual W-2 payroll boxes, reason H's same-firm W-2, and the review that payments
+are employee wages omitted from W-2/other income with no FICA withheld. Form 4137
+line 10 consumes the same owner's wage base first. The resulting Form 8919 wages
+reach Form 1040 line 1g and AGI once, tax reaches Schedule 2 line 16b, source
+withholding reaches Form 1040 line 25b and Medicare wages reach Form 8959 line 3.
+Earned-income and Schedule SE receivers remain pending.
+
+This is focused employee-compensation intake. Corrected NEC/MISC copies,
+positive tip/overtime detail, NEC golden parachutes and other reportable boxes
+remain held for their respective source owners. It does not replace the full
+business/property source nodes or enable the public filing registry.
+
+The pinned Form 8919 PDF component checks source calculations, destination
+amounts and recipient identity. Each spouse receives a separate form, with
+additional first-page copies beyond five firms and totals on only the first
+copy. All 40 template fields are inventoried; line 7's tiny dummy widget stays
+empty because the wage base is preprinted. The static output retains draft
+markings. Current MeF serialization and full return attachment assembly remain
+release gates. Sources checked October 15:
+[2026 Form 8919 draft and instructions](https://www.irs.gov/pub/irs-dft/f8919--dft.pdf),
+[2026 Form 1099-NEC](https://www.irs.gov/pub/irs-pdf/f1099nec.pdf) and
+[2026 Form 1099-MISC](https://www.irs.gov/pub/irs-pdf/f1099msc.pdf).
+
 ## Additional Medicare Tax and CT-2
 
 The 2026 Form 8959 node implements the revised 24 lines, using the shared exact
@@ -273,9 +307,9 @@ explicit source zeros are accepted. Code B/N uncollected FICA is included for
 withholding reconciliation, but uncollected RRTA is excluded. Mixed B/N amounts
 require allocation evidence. Each owner/employer must have one reconciled copy.
 
-Form 4137 now sends identified per-owner line 6 results. The strict internal
-interfaces also accept finalized Form 8919 line 6 and Schedule SE line 6 results;
-those source calculators remain unfinished. SE losses cannot offset a spouse's
+Forms 4137 and 8919 send identified per-owner line 6 results. The strict internal
+interface also accepts finalized Schedule SE line 6 results; that source
+calculator remains unfinished. SE losses cannot offset a spouse's
 positive income. RRTA uses its own threshold and never reduces the SE threshold.
 The source-level filing test remains true when a tax amount rounds to zero.
 
@@ -431,6 +465,15 @@ and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
 - The 137-test unit/preflight gate passed. The new pinned one-page Form 8959 PDF
   was rendered and visually inspected with all parts populated; it has no widgets
   or AcroForm tree and retains visible draft markings.
+
+- Form 8919 work passed 164 typed tests across all 2026 modules and the shared
+  2025 Form 8919 suite. Cases cover classification evidence, payment-ledger
+  reconciliation, joint ownership, missing payroll boxes, withheld tax and the
+  combined Form 4137/8919 source graph. The 137-test unit/preflight gate passed.
+- Rendered and visually inspected the three-page Form 8919 fixture: six primary
+  firms plus a spouse, all A/C/G/H reason codes, IRS dates, unknown TIN, checkboxes
+  and separate totals. Continuation totals are blank, draft markings remain,
+  and all pages have no widgets or AcroForm tree.
 
 ## Source recheck
 

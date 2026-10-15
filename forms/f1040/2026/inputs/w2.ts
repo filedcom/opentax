@@ -237,6 +237,23 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     const outputs = common.outputs.filter((output) =>
       output.nodeType !== "schedule3" && output.nodeType !== "form8959"
     ).map((output) => {
+      if (output.nodeType === "form8919") {
+        const sources = output.fields.w2_sources as Record<string, unknown>[];
+        return {
+          ...output,
+          fields: {
+            w2_sources: sources.map((source, i) => ({
+              ...source,
+              source_document_reference: input.w2s[i].source_document_reference,
+              ss_wages_and_tips: input.w2s[i].box3_ss_wages === undefined &&
+                  input.w2s[i].box7_ss_tips === undefined &&
+                  box14Amount(projected[i], "RRTA compensation") === undefined
+                ? undefined
+                : source.ss_wages_and_tips,
+            })),
+          },
+        };
+      }
       if (output.nodeType === "form4137") {
         const sources = output.fields.w2_tip_sources as Record<
           string,
