@@ -14,8 +14,14 @@ export function dependentCareFixture2026(
       tax_year: 2026,
       review_reference: "synthetic-care-review",
       ordinary_w2_earnings_only: true,
-      no_student_or_disability_deemed_income: true,
-      no_combat_pay_election_for_care: true,
+      earned_income: {
+        method: "annual_w2",
+        no_student_or_disability_deemed_income: true,
+      },
+      combat_pay_elections: {
+        benefits: { taxpayer: false, spouse: false },
+        credit: { taxpayer: false, spouse: false },
+      },
       no_prior_year_expenses_paid: true,
       no_proprietor_or_partner_benefits: true,
       no_foreign_tax_or_form8978_credit: true,

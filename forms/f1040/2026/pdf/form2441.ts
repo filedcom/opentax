@@ -81,6 +81,7 @@ export async function buildForm2441PdfBytes2026(
     form.getCheckBox(name(id, index)).check();
   fill("f1_1", filer.name);
   fill("f1_2", filer.ssn);
+  if (r.benefit.details.student_or_disabled_deemed_income_used) check("c1_2");
   const providers = [...r.benefit.details.care_providers].sort((a, b) =>
     b.amount_paid - a.amount_paid
   );

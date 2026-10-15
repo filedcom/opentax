@@ -45,6 +45,10 @@ Lines 9b, 22 and 24 remain zero behind explicit source gates. Schedule 3's care
 credit reduces Schedule 8812's tax limit. One-page credit, two-page benefits and
 25-row continuation cases were rendered and inspected on October 15.
 
-Before full filing support, complete the remaining eligibility, monthly income,
+The current source route computes checkbox B from monthly student/disability
+income actually entered on the printed parts, including independent care combat
+elections. Checked and unchecked examples were rendered and inspected.
+
+Before full filing support, complete the remaining eligibility,
 prior-year expense, self-employed benefit and special-provider routes in the
 current contract, then reconcile final IRS forms and current MeF/business rules.

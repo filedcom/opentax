@@ -40,7 +40,7 @@ totals. Receipt amounts are whole dollars; W-2 cents are combined before roundin
   children are rejected, and qualified receipts cannot exceed provider payments.
   This slice requires care incurred and paid in 2026. Excluded benefits are
   allocated once across receipt-backed child expenses before the credit cap.
-- Reviews require ordinary W-2 earnings, no deemed-income or combat-pay election,
+- Reviews require ordinary W-2 earnings,
   no prior-year paid expenses, no proprietor/partner benefits, no spouse death,
   no FTC/Form 8978 credit, eligible providers and no double use as medical or
   reimbursed expenses. Household employees require unfinished Schedule H work.
@@ -50,8 +50,40 @@ totals. Receipt amounts are whole dollars; W-2 cents are combined before roundin
 to the reviewed W-2 route, adds regular tax and Schedule 2 Part I for the Credit
 Limit Worksheet, and sends line 11 to Schedule 3 line 2. Schedule 3 finalizes that
 credit before Schedule 8812, whose Worksheet A deducts it from available tax.
-Joint returns use separate spouses' wages; positive taxable joint benefits need
-an unfinished per-spouse exclusion allocation and currently produce a diagnostic.
+Joint returns use separate spouses' wages. Taxable benefits are attributed to the
+single recipient identified by W-2 and carryover plan records. Positive taxable
+benefits from multiple recipients still need a per-spouse exclusion allocation;
+that route remains gated. Joint carryover records must identify the plan owner.
+
+## Monthly income and combat-pay elections
+
+`claim.earned_income` selects an explicitly reviewed annual-W-2 route or a
+12-month ledger for each filer. The monthly route requires every calendar month
+exactly once, actual W-2 wages, nontaxable combat pay, student and incapacity
+facts, and source references. The annual wages and combat amounts must reconcile
+to the issued W-2s by owner. Monthly taxable-care allocations must reconcile to
+the calculated annual amount and its recipient, so they cannot create income or
+transfer taxable benefits to a different spouse.
+
+Enrollment at a qualifying school must cover parts of at least five months;
+nonconsecutive months count. Disability has no five-month minimum. For an
+eligible month, actual income is compared with $250 ($500 for two or more
+qualifying people). The monthly maxima are summed before annual rounding.
+When both spouses qualify in the same month, a recorded choice assigns deemed
+income to one spouse; the other retains actual earnings. An unrecorded or
+contradictory overlap choice is rejected.
+
+`claim.combat_pay_elections` separately records each spouse's elections for
+benefits (Part III) and credit (Part II). Each election includes all that owner's
+W-2 code Q pay. In the monthly route it enters actual income before applying the
+floor. Part II also includes newly taxable care benefits; Part III excludes
+those benefits. These workpapers never change AGI or Form 1040's EIC combat-pay
+election. The return retains both workpapers for source replay.
+
+Form 2441 checkbox B is derived from deemed income actually entered on an
+applicable printed part. An unused benefits workpaper cannot check B on a
+credit-only form. The three-page monthly QA set includes checked and unchecked
+B examples and was rendered and inspected on October 15.
 
 ## Draft PDF and verification
 
@@ -72,9 +104,9 @@ attachment order, continuation completeness and destination tampering.
 
 ## Still required
 
-Monthly student/disability income, disability qualifying people, custodial
-exceptions, MFS, taxable-benefit allocation between spouses, self-employment,
-combat-pay elections, deferred/prepaid expenses, prior-year Worksheet A,
+Disability qualifying people, custodial exceptions, MFS, taxable-benefit
+allocation between multiple recipient spouses, self-employment, deferred/prepaid
+expenses, prior-year Worksheet A,
 proprietor/partner benefits, Schedule H, special provider TIN/address routes,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.
 The [full acceptance contract](FORM2441-GRAPH.md) remains broader than this slice.

@@ -1,3 +1,10 @@
+import {
+  calculateCareEarnedIncome2026,
+  type CareAnnualEarnings2026,
+  careCombatElections2026Schema,
+  careEarnedIncomeReview2026Schema,
+  type CareOwner2026,
+} from "./dependent-care-earned.ts";
 import { passesRelationshipTest } from "../../nodes/inputs/general/filing/general/index.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -27,8 +34,8 @@ export const dependentCareClaim2026Schema = z.object({
     tax_year: z.literal(2026),
     review_reference: reference,
     ordinary_w2_earnings_only: z.literal(true),
-    no_student_or_disability_deemed_income: z.literal(true),
-    no_combat_pay_election_for_care: z.literal(true),
+    earned_income: careEarnedIncomeReview2026Schema,
+    combat_pay_elections: careCombatElections2026Schema,
     no_prior_year_expenses_paid: z.literal(true),
     no_proprietor_or_partner_benefits: z.literal(true),
     no_foreign_tax_or_form8978_credit: z.literal(true),
@@ -59,6 +66,7 @@ export const dependentCareClaim2026Schema = z.object({
       plan_record_reference: reference,
       plan_maximum_exclusion: whole,
       carryover_used_in_2026: whole,
+      carryover_owner: z.enum(["taxpayer", "spouse"]).optional(),
       forfeited_or_carried_to_2027: whole,
       w2_box10_reviews: z.array(
         z.object({
@@ -144,7 +152,11 @@ export function calculateDependentCareBenefits2026(
   const reviews = claim.benefits?.w2_box10_reviews ?? [];
   const reviewed = new Set<string>();
   let alreadyBox1 = 0;
-  const earned = { taxpayer: 0, spouse: 0 };
+  const annual: CareAnnualEarnings2026 = {
+    taxpayer: { wages: 0, combat: 0, taxable_care: 0 },
+    spouse: { wages: 0, combat: 0, taxable_care: 0 },
+  };
+  const benefitOwners = new Set<CareOwner2026>();
   for (const w of input.wage_sources) {
     const owner = normalize(w.employee_ssn) === normalize(input.taxpayer_ssn)
       ? "taxpayer"
@@ -168,12 +180,27 @@ export function calculateDependentCareBenefits2026(
     }
     if (rows.length) reviewed.add(w.source_document_reference);
     alreadyBox1 += included;
-    earned[owner] += w.box1_wages;
+    annual[owner].wages += w.box1_wages;
+    annual[owner].combat += (w.box12_entries ?? []).filter((e) =>
+      e.code === "Q"
+    ).reduce((n, e) => n + e.amount, 0);
+    if ((w.box10_dep_care ?? 0) > included) benefitOwners.add(owner);
   }
   if (reviewed.size !== reviews.length) {
     throw new Error("Care benefit review references an unknown W-2");
   }
   const benefits = roundWholeDollars(box10 - alreadyBox1);
+  const joint = input.filing_status === FilingStatus.MFJ;
+  if ((claim.benefits?.carryover_used_in_2026 ?? 0) > 0) {
+    const owner = claim.benefits?.carryover_owner;
+    if (joint && !owner) {
+      throw new Error("Joint care carryover needs the source plan owner");
+    }
+    if (!joint && owner === "spouse") {
+      throw new Error("Spouse care carryover needs a joint return");
+    }
+    benefitOwners.add(owner ?? "taxpayer");
+  }
   if (box10 > 0 && !claim.benefits) {
     throw new Error("Care benefits need employer plan records");
   }
@@ -228,12 +255,20 @@ export function calculateDependentCareBenefits2026(
     );
   }
   const expenses = people.reduce((n, p) => n + p.credit_expenses_paid, 0);
+  const benefitIncome = calculateCareEarnedIncome2026(
+    claim.earned_income,
+    claim.combat_pay_elections,
+    annual,
+    people.length,
+    joint,
+    "benefits",
+  );
   const details: Form2441FilingDetails = {
     filing_status: input.filing_status,
     care_providers: claim.providers,
     qualifying_people: people.map((p) => ({ ...p, credit_expenses_paid: 0 })),
-    taxpayer_earned_income: roundWholeDollars(earned.taxpayer),
-    spouse_earned_income: roundWholeDollars(earned.spouse),
+    taxpayer_earned_income: benefitIncome.taxpayer,
+    spouse_earned_income: benefitIncome.spouse,
     tax_liability_limit: 0,
     total_qualified_expenses_incurred: expenses,
     benefits_carryover_used: claim.benefits?.carryover_used_in_2026 ?? 0,
@@ -260,11 +295,27 @@ export function calculateDependentCareBenefits2026(
     return { ...p, credit_expenses_paid: p.credit_expenses_paid - used };
   });
   const lines = calculateForm2441Benefits(details, benefits, dependentCare2026);
-  if (input.filing_status === FilingStatus.MFJ && lines.line26 > 0) {
-    throw new Error(
-      "Joint taxable care benefits need per-spouse exclusion allocation",
-    );
+  if (lines.line26 > 0) {
+    if (benefitOwners.size !== 1) {
+      throw new Error(
+        "Taxable benefits from multiple spouses need per-spouse exclusion allocation",
+      );
+    }
+    annual[[...benefitOwners][0]].taxable_care = lines.line26;
   }
+  const creditIncome = calculateCareEarnedIncome2026(
+    claim.earned_income,
+    claim.combat_pay_elections,
+    annual,
+    people.length,
+    joint,
+    "credit",
+  );
+  const part3 = box10 > 0 || (details.benefits_carryover_used ?? 0) > 0 ||
+    (details.benefits_forfeited_or_carried_forward ?? 0) > 0;
+  details.student_or_disabled_deemed_income_used =
+    creditIncome.deemed_income_used ||
+    (part3 && benefitIncome.deemed_income_used);
   const totalWages = roundWholeDollars(
     input.wage_sources.reduce((n, w) => n + w.box1_wages, 0),
   );
@@ -274,11 +325,10 @@ export function calculateDependentCareBenefits2026(
     benefits,
     lines,
     expected_wage_income: totalWages + lines.line26,
-    // Part II includes taxable benefits; Part III excludes all line-12 benefits.
+    earned_income_worksheets: { benefits: benefitIncome, credit: creditIncome },
     credit_income: {
-      taxpayer: roundWholeDollars(earned.taxpayer) +
-        lines.line26,
-      spouse: roundWholeDollars(earned.spouse),
+      taxpayer: creditIncome.taxpayer,
+      spouse: creditIncome.spouse,
     },
   };
 }

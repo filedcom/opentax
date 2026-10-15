@@ -9,7 +9,8 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - `form2441` reuses shared benefit arithmetic before AGI; `f2441` applies the
   2026 rate after AGI and tax. Reviewed ordinary W-2/child-care expenses feed
   Schedule 3 and reduce Schedule 8812's tax capacity, with a reconciled draft
-  Form 2441 and provider/child continuations. See the
+  Form 2441 and provider/child continuations. Monthly student/disability income
+  and independent care combat elections reconcile to issued W-2 records. See the
   [current care scope and remaining gates](../../../docs/ty2026/graphs/FORM2441-CURRENT.md).
 
 - `ssa1099` reconciles current SSA/RRB copies, ownership, signed repayments and
