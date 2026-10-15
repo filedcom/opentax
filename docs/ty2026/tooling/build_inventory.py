@@ -54,7 +54,7 @@ NODE_PROGRESS = {
     "form8880": "2026 contribution/distribution/student tests, phased percentage and tax-limit worksheet route saver credit through Schedule 3; see FORM8396-8859-8880-GRAPH.md",
     "form8919": "2026 reason-code wages and Social Security/Medicare tax route to 1040 line 1g and Schedule 2 line 16b; see FORM4137-8919-GRAPH.md",
     "form8960": "2026 source/AGI/deduction reconciliation, reviewed tax allocation and direct whole-dollar tax reach Schedule 2 line 6; 38-field static draft PDF verified; broader activities/elections/current MeF open; see INVESTMENTS-CURRENT.md",
-    "schedule_b": "Shared payer/adjustment workpaper reused for 2026 sources without duplicate income; current 2026 Schedule B PDF/foreign disclosures/current MeF still open; see INVESTMENTS-CURRENT.md",
+    "schedule_b": "Shared payer/adjustment workpaper reused for 2026 sources without duplicate income; 2026 draft PDF with payer/adjustment continuations and buyer details verified; foreign disclosures/bundle selection/current MeF still open; see INVESTMENTS-CURRENT.md",
     "alimony_received": "Pre-2019 agreement/modification evidence gates taxable 2026 Schedule 1 line 2a and 2b original-date field; reconcile AGI; see SCHEDULE1-GRAPH.md",
     "general": "2026 ages, relative limit, and no-dependent identity graph updated; audit credits",
     "w2": "2026 SIMPLE, TP/TT, and Schedule 2 box12 updated; ATS 2 statutory box13 must route to Schedule C once, not 1040 wages; see ATS-SCENARIO-02.md",

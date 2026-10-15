@@ -96,11 +96,14 @@ recomputes its source calculation, checks receiving return/Schedule 1/A/2
 amounts, removes the IRS cover and produces one static draft page. Form 6251's
 PDF now fills line 2g and reconciles exempt/preferential return lines when
 investment copies are present. The source graph's Schedule B workpaper retains
-its filing decision, payer rows and adjustments; its 2026 PDF is still pending.
+its filing decision, payer rows and adjustments. The new Schedule B PDF
+recomputes those retained sources, checks Form 1040 totals and includes complete
+payer/adjustment continuations and seller-financed buyer details. See the
+[Schedule B component map](../pdf/PDF-SCHEDULEB-MAP.md) for scope and validation.
 
 ## Remaining work
 
-- Schedule B PDF/continuations, broader foreign-account/trust disclosures,
+- Broader foreign-account/trust disclosures,
   nominee-dividend, foreign credit, investment interest, QBI, nondividend/basis,
   OID and other disposition sources still need their full receiver paths.
 - The direct distribution review does not implement general Schedule D.
@@ -150,3 +153,8 @@ All three pages were rendered with Poppler and visually inspected; PAB line 2g,
 preferential AMT and NIIT deductions/tax are legible, draft markings remain,
 and the outputs have no widgets or AcroForm tree. This is component QA, not a
 complete filing bundle or IRS acceptance.
+
+Schedule B printing subsequently passed four focused tests and a 480-test
+current-2026/shared-investment regression run. Six synthetic QA pages were
+rendered and visually inspected for payer completeness, adjustments, buyer
+details, cents-to-whole-dollar totals and static draft output.

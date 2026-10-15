@@ -599,8 +599,10 @@ regular preference income. Returns without wages need no synthetic W-2.
 AGI and the selected deduction, reconciles its income and penalty, applies the
 reviewed state-income-tax allocation and routes whole-dollar NIIT to Schedule 2
 line 6. Its new one-page static draft PDF checks all receiving amounts. Form
-6251's PDF includes the PAB preference. The Schedule B workpaper is connected;
-its 2026 PDF and broader investment branches remain pending.
+6251's PDF includes the PAB preference. Schedule B's static draft component
+recomputes the connected workpaper, checks return totals and prints complete
+payer/adjustment statements and seller-financed buyer details. Broader investment
+branches and complete attachment selection remain pending.
 
 The [current investment contract](../../../docs/ty2026/graphs/INVESTMENTS-CURRENT.md)
 records the source scope, authorities, interpretation of the 2026 overall
