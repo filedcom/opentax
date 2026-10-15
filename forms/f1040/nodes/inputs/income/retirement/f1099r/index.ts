@@ -2039,6 +2039,34 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
   return outputs;
 }
 
+/** Reusable amount calculation after the caller validates year-specific source facts.
+ * This does not determine eligibility, select current copies, or resolve IRA basis.
+ */
+export function calculateReportedRetirementIncome(
+  items: R1099Items,
+  limits: { qcdAnnualLimit: number; psoExclusionLimit: number },
+) {
+  return {
+    iraFields: iraF1040Fields(
+      items,
+      limits.qcdAnnualLimit,
+      limits.psoExclusionLimit,
+    ),
+    pensionFields: pensionF1040Fields(
+      items,
+      limits.qcdAnnualLimit,
+      limits.psoExclusionLimit,
+    ),
+    disWagesFields: disabilityWagesF1040Fields(
+      items,
+      limits.qcdAnnualLimit,
+      limits.psoExclusionLimit,
+    ),
+    correctiveFields: correctivePlanF1040Fields(items),
+    withholdingFields: withholdingF1040Fields(items),
+  };
+}
+
 class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099r";
   readonly inputSchema = inputSchema;
@@ -2110,27 +2138,13 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
         : []),
     ];
 
-    // IRA f1040 fields
-    const iraFields = iraF1040Fields(
-      r1099s,
-      cfg.qcdAnnualLimit,
-      cfg.psoExclusionLimit,
-    );
-    // Pension f1040 fields
-    const pensionFields = pensionF1040Fields(
-      r1099s,
-      cfg.qcdAnnualLimit,
-      cfg.psoExclusionLimit,
-    );
-    // Disability-as-wages fields
-    const disWagesFields = disabilityWagesF1040Fields(
-      r1099s,
-      cfg.qcdAnnualLimit,
-      cfg.psoExclusionLimit,
-    );
-    const correctiveFields = correctivePlanF1040Fields(r1099s);
-    // Withholding fields
-    const withholdingFields = withholdingF1040Fields(r1099s);
+    const {
+      iraFields,
+      pensionFields,
+      disWagesFields,
+      correctiveFields,
+      withholdingFields,
+    } = calculateReportedRetirementIncome(r1099s, cfg);
 
     // Merge all f1040 fields into one output
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {

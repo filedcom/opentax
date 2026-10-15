@@ -1,4 +1,8 @@
 import {
+  calculateRetirementSources2026,
+  retirementSource2026Schema,
+} from "../inputs/retirement-source.ts";
+import {
   calculateGambling2026,
   gamblingSource2026Schema,
 } from "../inputs/gambling-source.ts";
@@ -80,6 +84,7 @@ export const inputSchema = sharedSchema.pick({
   business_sources_2026: businessReturnSource2026Schema.optional(),
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
   gambling_sources_2026: gamblingSource2026Schema.optional(),
+  retirement_sources_2026: retirementSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
@@ -131,6 +136,22 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       normalized.line7a_cap_gain_distrib = undefined;
     }
     const input = inputSchema.parse(normalized);
+    const retirement = input.retirement_sources_2026
+      ? calculateRetirementSources2026(input.retirement_sources_2026)
+      : undefined;
+    if (
+      retirement &&
+      (retirement.source_input.filing_status !== input.filing_status ||
+        retirement.lines.line4b_ira_taxable !==
+          (input.line4b_ira_taxable ?? 0) ||
+        retirement.lines.line5b_pension_taxable !==
+          (input.line5b_pension_taxable ?? 0))
+    ) {
+      throw new Error(
+        "AGI retirement income must reconcile retained distribution sources",
+      );
+    }
+
     if ((input.line21_student_loan_interest ?? 0) > 2_500) {
       throw new Error(
         "Student-loan input must be the eligible amount capped at $2,500",
@@ -275,6 +296,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       business_sources_2026,
       business_loss_sources_2026: _lossSources,
       gambling_sources_2026,
+      retirement_sources_2026: _retirementSources,
       government_sources_2026,
       line8z_family_leave,
       ...sharedInput
@@ -357,8 +379,8 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
                 ? [
                   input.line5_schedule_e,
                   input.line4_other_gains,
-                  input.line4b_ira_taxable,
-                  input.line5b_pension_taxable,
+                  retirement ? 0 : input.line4b_ira_taxable,
+                  retirement ? 0 : input.line5b_pension_taxable,
                 ]
                 : []),
               business ? 0 : input.line15_se_deduction,
@@ -401,8 +423,8 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             foreign_earned_income_exclusion_from_agi:
               input.line8d_foreign_earned_income_exclusion ?? 0,
             other_niit_income_pending: [
-              input.line4b_ira_taxable,
-              input.line5b_pension_taxable,
+              retirement ? 0 : input.line4b_ira_taxable,
+              retirement ? 0 : input.line5b_pension_taxable,
               business ? 0 : input.line3_schedule_c,
               loss?.capital.land ? 0 : input.line4_other_gains,
               input.line5_schedule_e,

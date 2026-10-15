@@ -4,79 +4,92 @@ Sources: pinned final [2026 Form 1099-R](../corpus/authorities/f1099r--2026.pdf)
 (SHA-256 `d3de9319bed344f02621f97760a50bd19093de22f7d1e3352bd8ff10f61a4c44`)
 and [2026 instructions](../corpus/authorities/i1099r--2026.pdf)
 (SHA-256 `0bb009120b7793c15445c0e4be2cd525bc37b19c215f2478b6df627dcf23db14`).
-The draft [2026 Form 1040](../corpus/draft/f1040.pdf) supplies the destination
-line labels. The current TY2025 `f1099r` node, its Form 8606/5329/4972
-dependencies, and the TY2025 MeF serializer are audit inputs, not a 2026
-input contract. A dedicated TY2026 node now handles normal, fully taxable
-  IRA and pension distributions and a code G pension-plan rollover; the
-  remaining cases below are still required.
+The pinned draft [2026 Form 1040](../corpus/draft/f1040.pdf) supplies destination
+fields. Final 2026 Form 1040 instructions, current MeF rules and ATS acceptance
+remain filing gates. The currently served draft 1040 instructions still describe
+2025; their ordinary income/rollover display conventions are provisional method
+comparators, not final 2026 authority.
+
+## Current implementation
+
+The registered `f1099r` source accepts a reviewed inventory of issued statements,
+original/corrected copy lineage, recipient identities, actual 2026 boxes and
+separate treatment evidence. It calls `calculateReportedRetirementIncome`, the
+same amount helper used by the existing 2025 node, after validating the 2026
+source contract. The 2025 node retains its existing validation and annual policy.
+No directory-wide reorganization or copied calculation engine is required.
+
+Supported current source treatments are:
+
+- Traditional, SEP and SIMPLE IRA distributions with no basis, current
+  nondeductible contribution, rollover, conversion or special exclusion.
+- Qualified employer-plan and governmental 457(b) distributions with
+  payer-determined taxability, including a taxable amount below gross.
+- Single codes 7, 2 and 4 with normal-age, known-exception or death-benefit
+  evidence respectively. Owner matching includes jointly filing spouses and
+  reviewed masked recipient TINs.
+- Single-code G direct plan rollovers to eligible non-Roth destinations or Roth
+  destinations, with transfer date, amount, destination and after-tax basis
+  reconciled to gross, taxable amount and zero withholding. IRA code G and
+  distributions from designated Roth accounts remain separate unfinished paths.
+
+Current copies alone feed IRA/pension income, federal withholding and Schedule A
+state/local withholding. Exact cents are summed before whole-dollar line rounding.
+The source replay reconciles income in AGI and the draft bundle, including Social
+Security taxability, Marketplace MAGI, EIC/ACTC and NIIT: qualified retirement
+income increases AGI/MAGI without becoming wages or net investment income.
+
+Fully taxable ordinary distributions print only the taxable line. Partial pensions
+and direct plan rollovers retain gross on line 5a; zero-taxable rollovers print zero
+on 5b and check 5c(1). Box 4 joins other information-return withholding on 25b.
+Withheld current 1099-Rs require their unchanged original PDF, verified by hash and
+readability and returned as separate required source attachments. Generated draft
+pages remain static, marked incomplete and not for filing. Attachment references
+and filenames must be distinct across the bundle.
 
 ## Source shape changes
 
-| 2025 source field | 2026 form | Required code change |
-| --- | --- | --- |
-| `box7_distribution_code`, `box7_code2` | **7a** distribution codes | Accept one or two actual 7a codes and retain code order. Code Y for a QCD is optional in 2026, and when used must precede code 4, 7, or K. A missing Y does not disprove a QCD. |
-| `box7_ira_simple_indicator` | **7b** IRA/SEP/SIMPLE checkbox | Route 7b to IRA 1040 lines 4a/4b; pension and annuity distributions route to 5a/5b. Do not infer the checkbox from code 7a. |
-| no source field | **7c** Trump account checkbox | Keep these distributions out of ordinary IRA/pension calculation until the distinct excess-contribution, ABLE rollover, and death rules are implemented. |
-| no source field | **7d** earnings on excess contributions | This amount can be separate from box 1; the 2026 instructions' example reports $100 in box 1 and $9 of earnings in 7d. Do not quietly add it to box 1 or treat it as taxable box 2a. |
-| `box8_other` | **8a** other amount and **8b** percentage of annuity contract | Separate amount and percentage, including the 2026 optional actuarial-value reporting rule. Review Form 4972 mapping. |
-| payer/recipient address lines | street, suite, city, state/province, country, postal code split | Preserve each printed field for the eventual TY2026 MeF attachment. |
+| 2025 source field | 2026 source treatment |
+| --- | --- |
+| box 7 codes | Actual 7a code array retained; the current calculation accepts one supported code. Optional QCD code Y and combinations require their own route. Absence of Y does not establish absence of a QCD. |
+| IRA/SEP/SIMPLE indicator | Actual box 7b must match the reviewed plan type. |
+| no Trump-account field | Box 7c is retained and explicitly blocked pending its own calculation. |
+| no excess-earnings field | Box 7d is separate from gross and explicitly blocked when positive. |
+| box 8 amount | Distinct 8a dollar amount and 8b annuity percentage; special calculation is required. |
+| combined address lines | Optional split payer/recipient address facts are retained for future attachment mapping. |
 
-## Calculation edges to build
+Review evidence excludes QCD/HSA funding/PSO exclusions, disaster and corrective
+treatments, special tax methods, indirect rollovers, excess contributions and RMD
+shortfalls. Pensions with undetermined taxable amounts require an annuity/basis
+workpaper. A no-basis IRA can derive taxable gross when box 2a is absent and 2b is
+checked; an explicit conflicting taxable amount is rejected rather than discarded.
+Duplicate current statements, broken correction chains, mismatched owners,
+duplicate state/local rows and withholding above gross fail before aggregation.
 
-1. Expand the dedicated 2026 item schema from its registered normal
-   distribution branch to all relevant actual box fields. It already
-   requires payer, recipient, gross and taxable amounts, 7a codes, and the
-   7b IRA checkbox; unsupported codes and elections receive diagnostics. Do
-   not expose the legacy 2025 box-7 shape as a second TY2026 input.
-2. Classify each 7a code and 7b/7c flag before aggregating. Ordinary IRA
-   distributions feed Form 1040 lines 4a/4b; pensions and annuities feed
-   5a/5b; box 4 feeds 25b. Disability before minimum retirement age,
-   rollovers, QCDs, Roth conversions, and designated Roth distributions
-   require their documented routes. The code G pension-plan route now keeps
-   gross and taxable amounts separate and marks line 5c rollover; other 4c/5c
-   check boxes still need their calculation paths.
-3. Feed Form 8606 for nondeductible IRA basis and Roth conversion, Form 5329
-   for applicable additional tax through the **2026** Schedule 2 layout,
-   and Form 4972 for an explicit lump-sum election. Reconcile every gross,
-   taxable, and withholding amount against AGI and the printed 1040. The
-   shared TY2025 node already has parts of these calculations, but its
-   no-box-2a assumption and exclusion branches need source-by-source review.
-4. Build the 2026 MeF 1099-R attachment only after comparing the current
-   TY2026 XSD/rules with the pinned source fields. The May v1 package is
-   research material; a current package is needed for element names and
-   schema/rule acceptance. Check the 2026 1040 PDF's 4a/4b, 5a/5b, 5c,
-   and 25b output and add ATS/source fixtures.
+## Required remaining work
 
-## Filing gates
+- Form 8606 owner-wide IRA basis, Roth distributions/conversions and contribution
+  records; QCD with and without Y, HSA funding and public-safety exclusions.
+- Form 5329 early distributions, exceptions, SIMPLE first-two-year rules, excess
+  contributions and RMD shortfalls. Earlier prototype notes described code 1 and
+  25% SIMPLE routes; those routes are **not registered in this current graph**.
+- General Rule/Simplified Method annuity workpapers, disability wages, NUA,
+  Form 4972 elections, disaster/repayment routes and additional code combinations.
+- Trump-account and excess-contribution earnings rules; nonqualified commercial
+  annuities with their separate NIIT treatment.
+- Current 2026 MeF source/attachment mapping, final-instruction PDF reconciliation
+  and ATS coverage. The May v1 XSD package remains research material.
 
-- A straightforward fully taxable IRA and a fully taxable pension must
-  reach the correct 1040/AGI lines and withholding totals from box facts.
-  This graph and two-page PDF case now passes, including simultaneous
-  SSA-1099 and W-2 withholding.
-- A normal code 7 pension with a determined box 2a below box 1 now reports
-  box 1 on Form 1040 line 5a and only box 2a on line 5b and in AGI. Box 5
-  contributions or insurance premiums are preserved as source data. IRA
-  distributions with basis still require Form 8606.
-- A single-code G pension-plan direct rollover now prints its box 1 gross on
-  Form 1040 line 5a, box 2a taxable amount on line 5b, and checks 5c(1).
-  A zero-taxable rollover and a taxable rollover to a Roth account can be
-  aggregated while only the taxable amount enters AGI. IRA code G, in-plan
-  Roth details, and other rollover codes remain to map.
-- Code 1 with the full amount subject to 10% now routes directly to 2026
-  Schedule 2 line 5, then Form 1040 line 23 and the PDF, as allowed by the
-  pinned [2026 draft Form 5329 instructions](../corpus/draft/i5329.pdf). The
-  source requires explicit full-tax and SIMPLE IRA first-two-years facts.
-  An early SIMPLE IRA distribution within its first two years now takes the
-  25% Part I route through Form 5329, Schedule 2 line 5, and a three-page
-  draft Form 5329 attachment. A normal code 7 statement can coexist with
-  this Form 5329 route. The direct 10% route still requires all 1099-R
-  statements to carry code 1. See the [Form 5329 contract](./FORM5329-GRAPH.md).
-- Other rollover forms, early-distribution exceptions, IRA
-  basis with Form 8606, and QCD with and without optional code Y need
-  independent calculation fixtures.
-- A box 7c or 7d Trump-account statement must take its own verified path or
-  raise an explicit diagnostic. Box 8b may not be interpreted as a dollar
-  amount.
-- The output set must pass current TY2026 MeF XSD, business rules, PDF
-  reconciliation, ATS, and TY2025 regression checks before product release.
+These are required parity work, not excluded product scope. The current source,
+graph and PDF tests cover correction selection, owner matching, taxable amounts,
+rollovers, downstream tax/credit interactions, attachments and explicit diagnostics;
+the existing 2025 retirement tests guard the shared-helper extraction.
+
+## Validation evidence
+
+The implementation passed 855 current 2026 tests, 125 focused retirement tests
+(including the existing 2025 node regression suite), nine final attachment tests,
+and all 137 repository unit checks. Five rendered pages across ordinary-retirement,
+rollover and explicitly synthetic issued-copy fixtures were visually reviewed;
+static draft fields and original attachment bytes are also checked in tests.
+These results establish development behavior, not IRS filing acceptance.

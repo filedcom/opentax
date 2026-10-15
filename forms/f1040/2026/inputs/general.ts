@@ -118,6 +118,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "gambling",
       "schedule_c",
       "f1095a",
+      "f1099r",
     ];
   }
   readonly inputSchema = inputSchema;
@@ -523,6 +524,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           fields: { ...owner, digital_assets_answer: input.digital_assets },
         },
         { nodeType: "ssa1099", fields: owner },
+        {
+          nodeType: "f1099r",
+          fields: {
+            ...owner,
+            taxpayer_dob: input.taxpayer_dob,
+            ...(joint ? { spouse_dob: input.spouse_dob } : {}),
+          },
+        },
         {
           nodeType: "student_loan_interest",
           fields: {

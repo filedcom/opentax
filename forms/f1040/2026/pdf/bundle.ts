@@ -1,4 +1,8 @@
 import {
+  calculateRetirementSources2026,
+  retirementIssuedAttachments2026,
+} from "../inputs/retirement-source.ts";
+import {
   buildForm8962PdfBytes2026,
   type MarketplaceResult2026,
   requiresForm8962_2026,
@@ -192,6 +196,37 @@ export async function buildDraftReturnPdf2026(
   const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
     "capital_gains",
   ) ?? land?.land.loss.calculation.capital;
+  const retirement = retained<
+    ReturnType<typeof calculateRetirementSources2026>
+  >("f1099r");
+  if (retirement) {
+    const replay = calculateRetirementSources2026(retirement.source_input);
+    for (
+      const key of [
+        "line4a_ira_gross",
+        "line4b_ira_taxable",
+        "line5a_pension_gross",
+        "line5b_pension_taxable",
+        "line5c_rollover",
+      ] as const
+    ) {
+      if (f[key] !== (replay.filed_lines as Record<string, unknown>)[key]) {
+        throw new Error(
+          "Retirement draft lines disagree with reviewed sources",
+        );
+      }
+    }
+  }
+  const retirementAttachments = retirement
+    ? retirementIssuedAttachments2026(retirement)
+    : [];
+  for (const attachment of retirementAttachments) {
+    const issued = await PDFDocument.load(attachment.bytes);
+    if (issued.isEncrypted || issued.getPageCount() === 0) {
+      throw new Error("Issued Form 1099-R needs an unencrypted readable PDF");
+    }
+    attachment.pages = issued.getPageCount();
+  }
   const benefits = retained<
     ReturnType<typeof calculateSocialSecuritySources2026>
   >("ssa1099");
@@ -205,7 +240,8 @@ export async function buildDraftReturnPdf2026(
     Math.round(
       (government?.cents.federal_withheld ?? 0) + (wages?.withholding ?? 0) +
         (b?.cents.federal_withholding ?? 0) +
-        (benefits?.federal_withholding ?? 0) + (capital?.withholding ?? 0),
+        (benefits?.federal_withholding ?? 0) + (capital?.withholding ?? 0) +
+        (retirement?.cents.line25b_withheld_1099 ?? 0),
     ) !== line("line25b_withheld_1099")
   ) {
     throw new Error(
@@ -776,21 +812,35 @@ export async function buildDraftReturnPdf2026(
     page.node.delete(PDFName.of("Annots"));
   }
   document.catalog.delete(PDFName.of("AcroForm"));
+  const sourceAttachments = [
+    ...gamblingAttachments,
+    ...retirementAttachments,
+    ...(electionForms?.covenants.map((covenant) => ({
+      ...covenant,
+      requiredForForms: electionForms!.schedules.filter((s) =>
+        s.covenant_reference === covenant.reference
+      ).map((s) => `form1062_schedule_a:${s.sale_reference}`),
+    })) ?? []),
+  ];
+  const sourceFileNames = sourceAttachments.flatMap((a) =>
+    "fileName" in a ? [a.fileName] : []
+  );
+  if (
+    new Set(sourceFileNames).size !== sourceFileNames.length ||
+    new Set(sourceAttachments.map((a) => a.reference)).size !==
+      sourceAttachments.length
+  ) {
+    throw new Error(
+      "Original source attachments need distinct filenames and references",
+    );
+  }
   document.setTitle("2026 development draft - not for filing");
   return {
     bytes: await document.save({ updateFieldAppearances: false }),
     attachments,
     // Never flatten/merge a signed covenant into generated return pages. These
     // are required original attachments, not optional copies of rendered pages.
-    sourceAttachments: [
-      ...gamblingAttachments,
-      ...(electionForms?.covenants.map((covenant) => ({
-        ...covenant,
-        requiredForForms: electionForms!.schedules.filter((s) =>
-          s.covenant_reference === covenant.reference
-        ).map((s) => `form1062_schedule_a:${s.sale_reference}`),
-      })) ?? []),
-    ],
+    sourceAttachments,
     calculation,
     filingReady: false as const,
     // Pending deposits are not evidence that a credit/activity was finalized.

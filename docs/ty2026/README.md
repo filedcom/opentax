@@ -179,9 +179,9 @@ regular Git files.
   and IRS pension/benefit publications, separate SSEB and pension statements,
   signed repayments, corrected sources and their 1040/MeF handoffs.
 - [`FORM1099R-GRAPH.md`](./graphs/FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
-  IRA/pension downstream routes, and filing gates.
-- [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): early SIMPLE IRA Part I tax and
-  attachment route, with the remaining additional-tax work.
+  reviewed IRA/pension sources, shared 2025 amounts, draft attachments and filing gates.
+- [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): early SIMPLE IRA Part I design and
+  additional-tax work still required in the current registry.
 - [`FORM8606-GRAPH.md`](./graphs/FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.
 - [`FORM8889-GRAPH.md`](./graphs/FORM8889-GRAPH.md) and `pdf-fields-f8889.csv`:

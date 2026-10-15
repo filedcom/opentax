@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createHash } from "node:crypto";
+import { issuedPdfAttachment2026 } from "./issued-pdf.ts";
 import { investmentOwner2026 } from "./investment-source.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -187,37 +187,5 @@ export function gamblingIssuedAttachments2026(
 ) {
   return calculateGambling2026(source).source_input.claim.copies.filter((c) =>
     c.box4_federal_withheld > 0
-  ).map((c) => {
-    if (
-      !c.issued_copy_pdf_base64 || !c.issued_copy_pdf_sha256 ||
-      !c.issued_copy_attachment_file_name
-    ) {
-      throw new Error(
-        "Withheld W-2G needs its original issued PDF for draft assembly",
-      );
-    }
-    let bytes: Uint8Array;
-    try {
-      bytes = Uint8Array.from(
-        atob(c.issued_copy_pdf_base64),
-        (v) => v.charCodeAt(0),
-      );
-    } catch {
-      throw new Error("Invalid issued W-2G PDF bytes");
-    }
-    if (
-      new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-" ||
-      !new TextDecoder().decode(bytes.slice(-16)).includes("%%EOF") ||
-      createHash("sha256").update(bytes).digest("hex") !==
-        c.issued_copy_pdf_sha256
-    ) throw new Error("Issued W-2G PDF differs from retained digest");
-    return {
-      reference: c.source_document_reference,
-      fileName: c.issued_copy_attachment_file_name,
-      sha256: c.issued_copy_pdf_sha256,
-      bytes,
-      requiredForForms: ["f1040"],
-      pages: 0,
-    };
-  });
+  ).map((c) => issuedPdfAttachment2026(c, "W-2G"));
 }

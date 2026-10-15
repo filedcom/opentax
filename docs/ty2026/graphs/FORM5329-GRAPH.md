@@ -7,9 +7,15 @@ and [draft instructions](../corpus/draft/i5329.pdf)
 The form is still a draft, so its fields and instructions must be checked
 against the final version before filing.
 
-## Implemented Part I branch
+## Earlier prototype Part I design (not registered)
 
-The registered TY2026 `f1099r` source accepts a single-code 1 distribution
+The current 2026 source registry does not contain this Form 5329 route. Its
+reviewed 1099-R source rejects code 1 and early SIMPLE distributions pending
+implementation. The description below records the earlier prototype design;
+its prior sample is not evidence that the current graph or PDF supports it.
+See [current retirement scope](./FORM1099R-GRAPH.md).
+
+The earlier prototype TY2026 `f1099r` source accepted a single-code 1 distribution
 whose box 2a equals box 1 and whose source facts affirm that the full amount
 is subject to additional tax. It also requires a fact identifying whether a
 SIMPLE IRA distribution occurs within its first two years. That fact must
@@ -18,7 +24,7 @@ early SIMPLE fact, the complete 10% tax goes directly to Schedule 2 line 5,
 as the instructions permit for an all-code-1 set of statements. If an early
 SIMPLE statement is present, the Form 5329 Part I node calculates:
 
-| Form 5329 line | Current calculation |
+| Form 5329 line | Prototype calculation |
 | --- | --- |
 | 1 | Sum of eligible regular early and early SIMPLE taxable distributions |
 | 2 | Zero; exception claims are not yet accepted |

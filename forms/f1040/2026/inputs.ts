@@ -1,3 +1,5 @@
+import { retirement_2026 } from "./inputs/retirement.ts";
+import { retirementClaim2026Schema } from "./inputs/retirement-source.ts";
 import { f1095a_2026 } from "./inputs/marketplace.ts";
 import { marketplaceReturnClaim2026Schema } from "./inputs/marketplace-return.ts";
 import { gambling_2026 } from "./inputs/gambling.ts";
@@ -107,6 +109,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: retirement_2026,
+    isArray: false,
+    inputSchema: retirementClaim2026Schema,
+  },
   {
     node: f1095a_2026,
     isArray: false,

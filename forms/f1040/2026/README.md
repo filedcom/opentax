@@ -6,6 +6,13 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `f1099r` reconciles issued 2026 statements and treatment reviews before reusing
+  the 2025 retirement amount helper. Ordinary no-basis IRAs, payer-determined
+  qualified pensions, inherited distributions and direct plan rollovers reach
+  AGI, withholding, state/local deductions and draft Form 1040. Withheld originals
+  remain separate verified PDF attachments. See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
+  for supported codes, correction checks and required basis/penalty/filing work.
+
 - `gambling` reconciles current W-2G copies and the casual winnings/loss ledger,
   reusing 2025 copy checks and sums. Schedule 1 line 8b, withholding line 25c,
   the 90% loss limit, deduction choice, child tax and draft pages are connected.

@@ -96,11 +96,12 @@ export const w2TaxSource2026Schema = z.object({
   ),
 }).strict();
 export const informationReturnTaxSource2026Schema = z.object({
-  document_type: z.enum(["1099-INT", "1099-DIV", "1099-G", "W-2G"]),
+  document_type: z.enum(["1099-INT", "1099-DIV", "1099-G", "W-2G", "1099-R"]),
   source_document_reference: ref,
   recipient_tin: ssn,
   payer_tin: z.string().regex(/^\d{9}$/),
   account_number: ref,
+  statement_identifier: ref.optional(),
   state: ref,
   payer_state_id: ref,
   state_withheld: money,
@@ -166,7 +167,7 @@ export function calculateItemizedExpenseSources2026(
     checkOwner(row.recipient_tin);
     const pair = `${row.document_type}:${
       normalize(row.recipient_tin)
-    }:${row.payer_tin}:${row.account_number}`;
+    }:${row.payer_tin}:${row.account_number}:${row.statement_identifier ?? ""}`;
     if (docs.has(row.source_document_reference) || pairs.has(pair)) {
       throw new Error(
         "Duplicate itemized information-return withholding source",
