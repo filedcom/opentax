@@ -62,6 +62,54 @@ export const section1231PriorHistorySchema = z.object({
   }
 });
 
+/** Same five-year replay contract, with the window determined by the return year. */
+export function section1231HistorySchemaForYear(taxYear: 2025 | 2026) {
+  const firstYear = taxYear - 5;
+  return z.object({
+    tax_year: z.literal(taxYear),
+    owner,
+    opening_period_source_reference: reference,
+    opening_period_losses: z.array(balanceSchema.extend({
+      loss_year: z.number().int().min(firstYear - 5).max(firstYear - 1),
+    })).max(5),
+    filed_years: z.array(yearSchema.extend({
+      tax_year: z.number().int().min(firstYear).max(taxYear - 1),
+    })).length(5),
+    current_year_loss_taken_into_account: dollars.optional(),
+    current_year_loss_source_reference: reference.optional(),
+  }).strict().superRefine((history, context) => {
+    const years = history.filed_years.map((year) => year.tax_year);
+    const references = history.filed_years.map((year) =>
+      year.source_document_reference
+    );
+    if (
+      years.some((year, index) => year !== firstYear + index) ||
+      new Set(history.opening_period_losses.map((row) => row.loss_year))
+          .size !== history.opening_period_losses.length ||
+      new Set(references).size !== 5 ||
+      new Set(history.filed_years.map((year) => year.filed_return_reference))
+          .size !== 5 ||
+      references.includes(history.opening_period_source_reference) ||
+      history.owner.taxpayer_ssn === history.owner.spouse_ssn ||
+      history.filed_years.some((year) =>
+        year.owner.taxpayer_ssn !== history.owner.taxpayer_ssn ||
+        year.owner.spouse_ssn !== history.owner.spouse_ssn
+      )
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          `Form 4797 history needs distinct loss vintages, ordered ${firstYear}-${
+            taxYear - 1
+          } filed sources and consistent owners`,
+      });
+    }
+  });
+}
+export type AnnualSection1231History = z.infer<
+  ReturnType<typeof section1231HistorySchemaForYear>
+>;
+
 export const priorHistoryPublicSchema = z.object({
   section_1231_prior_history: section1231PriorHistorySchema,
 }).strict();
@@ -124,11 +172,12 @@ function annualLosses(
 }
 
 /** Reconcile each filed year before applying the current year's net section 1231 result. */
-export function calculateSection1231History(
-  raw: Section1231PriorHistory,
+export function calculateSection1231HistoryForYear(
+  taxYear: 2025 | 2026,
+  raw: AnnualSection1231History,
   currentNet: number,
 ) {
-  const history = section1231PriorHistorySchema.parse(raw);
+  const history = section1231HistorySchemaForYear(taxYear).parse(raw);
   signedDollars.parse(currentNet);
   const replay = history.filed_years.reduce((state, filed) => {
     const year = annualLosses(
@@ -147,7 +196,7 @@ export function calculateSection1231History(
     }
     return { losses: year.ending_losses, years: [...state.years, year] };
   }, {
-    losses: history.opening_2020_losses as Balance[],
+    losses: history.opening_period_losses as Balance[],
     years: [] as ReturnType<typeof annualLosses>[],
   });
   if (
@@ -161,20 +210,45 @@ export function calculateSection1231History(
   }
   const current = annualLosses(
     replay.losses,
-    2025,
+    taxYear,
     currentNet,
     history.current_year_loss_taken_into_account ?? 0,
   );
-  const opening2026 = current.ending_losses.filter((row) =>
-    row.loss_year >= 2021
+  const nextOpening = current.ending_losses.filter((row) =>
+    row.loss_year >= taxYear - 4
   );
   return {
     owner: history.owner,
     prior_years: replay.years,
     current,
-    opening_2026_losses: opening2026,
-    opening_2026_nonrecaptured_loss: total(opening2026),
-    expires_before_2026: total(current.ending_losses) - total(opening2026),
+    next_tax_year: taxYear + 1,
+    opening_next_year_losses: nextOpening,
+    opening_next_year_nonrecaptured_loss: total(nextOpening),
+    expires_before_next_year: total(current.ending_losses) - total(nextOpening),
+  };
+}
+
+/** Preserve the TY2025 public contract and retained carryforward field names. */
+export function calculateSection1231History(
+  raw: Section1231PriorHistory,
+  currentNet: number,
+) {
+  const history = section1231PriorHistorySchema.parse(raw);
+  const { opening_2020_source_reference, opening_2020_losses, ...rest } =
+    history;
+  const result = calculateSection1231HistoryForYear(2025, {
+    ...rest,
+    opening_period_source_reference: opening_2020_source_reference,
+    opening_period_losses: opening_2020_losses,
+  }, currentNet);
+  return {
+    owner: result.owner,
+    prior_years: result.prior_years,
+    current: result.current,
+    opening_2026_losses: result.opening_next_year_losses,
+    opening_2026_nonrecaptured_loss:
+      result.opening_next_year_nonrecaptured_loss,
+    expires_before_2026: result.expires_before_next_year,
   };
 }
 

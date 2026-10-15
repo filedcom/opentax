@@ -33,7 +33,8 @@ do not copy blank lines as zeros.
    Form 5695 now has a source/credit-order/PDF route; see
    [its current contract](../graphs/FORM5695-CREDIT-GRAPH.md). Form 1062, the
    prior energy-return provenance and missing Schedule H employee/quarter facts
-   remain open.
+   remain open. See [Form 1062 prerequisites](../graphs/FARMLAND-CURRENT.md);
+   the packet's installment alone does not establish an elected farmland sale.
 4. Produce the full PDF bundle and compare every printed amount and attachment
    count. Build and XSD/business-rule-check the XML only against the selected
    current TY2026 MeF package. The local May v1 package is unsuitable for this
