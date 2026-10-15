@@ -1,3 +1,5 @@
+import { buildForm8888PdfBytes2026 } from "./refund-allocation.ts";
+import type { calculateRefundAllocation2026 } from "../inputs/refund-allocation.ts";
 import type { calculateForm461_2026 } from "../nodes/form461.ts";
 import { executeDraftSources2026 } from "../execute.ts";
 import type { SourceDocumentBytes } from "../../../../core/runtime/source-documents.ts";
@@ -135,6 +137,9 @@ export async function buildDraftReturnPdf2026(
   // These retained values are produced only by this execution's validated nodes.
   const retained = <T>(node: string) =>
     p[node]?.calculation_2026 as T | undefined;
+  const refund = retained<ReturnType<typeof calculateRefundAllocation2026>>(
+    "refund_allocation",
+  );
   const a = retained<ReturnType<typeof calculateScheduleA2026>>("schedule_a");
   const b = retained<ReturnType<typeof calculateInvestmentClaim2026>>(
     "investment_income",
@@ -243,8 +248,8 @@ export async function buildDraftReturnPdf2026(
     hasIncompleteFooter = false,
   ) => parts.push({ form, officialPages, render, hasIncompleteFooter });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
-  add("f1040", 2, () => buildF1040PdfBytes2026(f));
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
+  add("f1040", 2, () => buildF1040PdfBytes2026(f, refund?.source_input.claim));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
       buildSchedule1PdfBytes2026(
@@ -544,6 +549,13 @@ export async function buildDraftReturnPdf2026(
         owners,
       ));
   } else if (business?.calculation) addBusiness("form8995", 1);
+  if (refund?.file_form8888) {
+    add(
+      "form8888",
+      1,
+      () => buildForm8888PdfBytes2026(refund.source_input.claim!, f),
+    );
+  }
   if (wages?.forms.length) {
     add("form8919", undefined, () =>
       buildForm8919PdfBytes2026(

@@ -94,7 +94,11 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3a]);
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "capital_loss_carryover"];
+    return [
+      ...this.outputNodes.nodeTypes,
+      "capital_loss_carryover",
+      "refund_allocation",
+    ];
   }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
@@ -287,6 +291,10 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line38_underpayment_penalty: input.line38_underpayment_penalty,
       },
     }];
+    outputs.push({
+      nodeType: "refund_allocation",
+      fields: { settled_return: { ...outputs[0].fields } },
+    });
     outputs.push({
       nodeType: "capital_loss_carryover",
       fields: {

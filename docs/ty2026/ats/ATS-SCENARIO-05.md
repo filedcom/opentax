@@ -27,6 +27,16 @@ reject the split if the refund is less than $1,000.
 
 ## Current route and acceptance order
 
+The October 16 implementation now supplies the internal allocation graph and
+draft packet in steps 1–3 below; see [current refund coverage](../graphs/REFUND-CURRENT.md).
+It shares the current 2025 account/refund reconciler, computes the checking
+remainder after settlement, and supports single-account 1040 deposits as well
+as Form 8888 splits. Its source-backed example derives tax $3,883 and refund
+$6,385, allocated $5,385/$1,000. The fixture's explicitly reviewed answers and
+synthetic address do not resolve all ATS evidence/filing gates. The historical
+route assessment below describes the work queue, not the current implementation
+of those completed internal components.
+
 1. The shared [Form 8888 input](../../../forms/f1040/nodes/inputs/payments/refund/f8888/index.ts)
    is metadata-only: it emits no result, is absent from the 2026 registry,
    does not reconcile account amounts to the computed refund, and still has

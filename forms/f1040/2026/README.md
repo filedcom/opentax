@@ -6,6 +6,13 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 
 ## Implemented
 
+- `refund_allocation` runs after settlement and reuses the 2025 account/refund
+  reconciliation for one to three reviewed deposit accounts. Fixed amounts or
+  one remainder resolve against line 35a after any 2027 estimated-tax election.
+  The draft packet prints single-account details on Form 1040, or the split
+  indicator and Form 8888; general bank fields require a matching reviewed claim.
+  See [current refund allocation](../../../docs/ty2026/graphs/REFUND-CURRENT.md).
+
 - The `schedule_c` source claim reuses shared Schedule C/SE/8995 arithmetic and
   connects reviewed service businesses, statutory W-2s and vehicle records to
   income, owner SE tax, Additional Medicare, QBI and draft attachments. It includes

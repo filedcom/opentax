@@ -1,6 +1,6 @@
 # Current TY2026 development PDF bundle
 
-Implemented October 15, 2026 in `forms/f1040/2026/pdf/bundle.ts`.
+Updated October 16, 2026 in `forms/f1040/2026/pdf/bundle.ts`.
 This replaces no 2025 builder and does not register `f1040:2026` as a filing
 product. The historical prototype's `pdf/builder.ts` is not the current API.
 
@@ -46,6 +46,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
 | Form 8863 (50) | Positive supported AOTC or LLC | Totals plus student/school pages |
 | Form 8995 (55) | Reviewed business QBI calculation | One page plus business continuation |
+| Form 8888 (56) | Two or three reviewed deposit accounts matching the final refund | 1 |
 | Form 8919 (61) | Calculated owner forms | All owner/employer continuation copies |
 | Form 461 (64) | Reviewed business-loss filing trigger, including zero addback | 1 |
 | Form 8959 (71) | Retained filing/withholding condition, including zero tax | 1 |
@@ -65,6 +66,14 @@ owner's own name and SSN. IRS cover/instruction pages are excluded by the
 component builders. The assembled artifact is static, with no page annotations
 or catalog AcroForm tree. Form 1040 and its dependent statements also receive a
 consistent draft footer when rendered independently.
+
+Refund allocations are reconciled after the 1040 refund and any line 36
+election are finalized. One account prints on 1040 lines 35b–35d; two or three
+accounts select its Form 8888 indicator and print the separate schedule, leaving
+those single-account fields blank. The PDF component resolves a requested
+remainder from final line 35a and reuses the shared ownership, checksum and
+refund-sum checks. General bank details need a matching reviewed single-account
+claim. See [current refund allocation](../graphs/REFUND-CURRENT.md).
 
 Business attachments replay the complete business and deduction sources and
 match Schedule 1 lines 3/15, Schedule 2 line 4 and Form 1040 deduction destinations.

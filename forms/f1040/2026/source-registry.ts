@@ -1,3 +1,4 @@
+import { refund_allocation_2026 } from "./inputs/refund-allocation.ts";
 import { form1062_2026 } from "./nodes/form1062.ts";
 import { extension_payments_2026 } from "./inputs/extension-payments.ts";
 import { form461_2026 } from "./nodes/form461.ts";
@@ -52,6 +53,7 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  refund_allocation: refund_allocation_2026,
   form1062: form1062_2026,
   extension_payments: extension_payments_2026,
   f5695: f5695_2026,

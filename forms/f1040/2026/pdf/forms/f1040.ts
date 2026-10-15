@@ -77,6 +77,8 @@ const textFields: readonly (readonly [string, string])[] = [
   ["line33_total_payments", `${p2}f2_34[0]`],
   ["line34_overpayment", `${p2}f2_35[0]`],
   ["line35a_refund", `${p2}f2_36[0]`],
+  ["line35b_routing_number", `${p2}RoutingNo[0].f2_37[0]`],
+  ["line35d_account_number", `${p2}AccountNo[0].f2_38[0]`],
   ["line36_apply_to_2027", `${p2}f2_39[0]`],
   ["line37_amount_owed", `${p2}f2_40[0]`],
   ["line38_underpayment_penalty", `${p2}f2_41[0]`],
@@ -85,6 +87,17 @@ const textFields: readonly (readonly [string, string])[] = [
 ];
 
 const fields: readonly PdfFieldEntry[] = [
+  {
+    kind: "checkbox",
+    domainKey: "form8888_attached",
+    pdfField: `${p2}c2_14[0]`,
+  },
+  ...(["checking", "savings"] as const).map((whenValue, index) => ({
+    kind: "checkboxWhen" as const,
+    domainKey: "line35c_account_type",
+    pdfField: `${p2}c2_15[${index}]`,
+    whenValue,
+  })),
   ...textFields.map(([domainKey, pdfField]) => ({
     kind: "text" as const,
     domainKey,

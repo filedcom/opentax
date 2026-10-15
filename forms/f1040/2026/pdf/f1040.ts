@@ -1,3 +1,5 @@
+import { projectRefundFields2026 } from "./refund-allocation.ts";
+import type { refundAllocationClaim2026Schema } from "../inputs/refund-allocation.ts";
 import { reviewedResidence2026 } from "../inputs/dependent-residency.ts";
 import { dependentFiling2026Schema as dependentFilingSchema } from "../inputs/dependents.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -253,8 +255,10 @@ function fillField(
 /** Fill the pinned TY2026 draft Form 1040; this is one component of the future PDF bundle. */
 export async function buildF1040PdfBytes2026(
   rawFields: Record<string, unknown>,
+  refundClaim?: z.input<typeof refundAllocationClaim2026Schema>["claim"],
 ): Promise<Uint8Array> {
-  const fields = irs1040Pdf2026.projectFields!(rawFields, { f1040: rawFields });
+  const projected = projectRefundFields2026(rawFields, refundClaim).fields;
+  const fields = irs1040Pdf2026.projectFields!(projected, { f1040: projected });
   const dependentRows = dependents(fields);
   const source = await loadPinnedDraft2026(
     pinnedDraft,
