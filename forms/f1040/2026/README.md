@@ -582,8 +582,24 @@ storage checkbox without creating Form 3903. The PDF component recomputes the
 ledger and validates receiving totals before rendering one static draft page
 per other move. The [source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
 records the reviewed instructions and boundaries. Other cross-year claims,
-Form 2555 coordination, community-property allocations, Schedule 1 printing,
+Form 2555 coordination, community-property allocations, remaining Schedule 1 sources,
 complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
+
+## Schedule 1 draft attachment
+
+The Schedule 1 sink retains `calculation_input_2026`. Its new static draft PDF
+recomputes that input and checks lines 10/26 against Form 1040 lines 8/10. It
+prints the connected educator, moving/storage and investment-penalty amounts,
+signed income, adjusted student-loan interest, checkbox/date facts and line 8z
+statements with readable pagination. The 73-field source inventory is checked
+before filling, the cover is removed and all output remains marked as a draft.
+
+The [current Schedule 1 contract](../../../docs/ty2026/graphs/SCHEDULE1-GRAPH.md)
+distinguishes mapped internal print fields from registered public sources.
+Adding alimony/gain/IRA print facts does not enable those source calculations.
+The component's five focused tests include a connected educator/investment
+return; seven rendered synthetic QA pages were visually inspected. Complete
+source ownership, bundle selection, current MeF and ATS remain release gates.
 
 ## Investment sources and NIIT
 

@@ -82,7 +82,7 @@ NODE_PROGRESS = {
     "agi_aggregator": "Reconcile 2026 Schedule 1/1-A, 1040 sources and foreign exclusions before deduction/tax; close all missing route targets and ATS graphs; see SCHEDULE1-GRAPH.md and GRAPH-ROUTES.md",
     "income_tax_calculation": "2026 ordinary/preferential tax, AMT, Form 8978 and credit-limit order must derive 1040 line 16 from return sources; see CAPITAL-GAIN-GRAPH.md and DEDUCTION-GRAPH.md",
     "standard_deduction": "2026 age/blind/dependent/status limits and itemized-vs-standard choice feed 1040 line 12; reconcile ATS 2 and Schedule A; see DEDUCTION-GRAPH.md",
-    "schedule1": "2026 Schedule 1 lines and source ownership differ from 2025, including gambling, 8p loss, 13 HSA and 24j housing; build PDF/current MeF; see SCHEDULE1-GRAPH.md",
+    "schedule1": "2026 sink and draft PDF reconcile retained source input with AGI/1040; statements and date/checkbox facts verified; remaining source owners/bundle/current MeF open; see SCHEDULE1-GRAPH.md",
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
     "form_1116": "2026 line 18 adds Schedule 1-A line 43 and line 20 needs Schedule 2 line 1z; shared node omits full category/carryover and new PDF/MeF route; see FORM1116-GRAPH.md",
     "form2555": "2026 form/instructions and Notice 2026-25 pinned; structured filing rejects 2026 and housing route uses legacy Schedule 1 key; see FORM2555-GRAPH.md",

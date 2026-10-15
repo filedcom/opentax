@@ -12,8 +12,11 @@ const accumulated = z.union([signed, z.array(signed)]);
 export const inputSchema = z.object({
   line1_state_refund: signed.optional(),
   line2a_alimony_received: nonnegative.optional(),
+  line2b_alimony_agreement_date: z.string().date().optional(),
   line3_schedule_c: signed.optional(),
   line4_other_gains: signed.optional(),
+  line4_from_form4797: z.boolean().optional(),
+  line4_from_form4684: z.boolean().optional(),
   line5_schedule_e: accumulated.optional(),
   line6_schedule_f: signed.optional(),
   line7_unemployment: nonnegative.optional(),
@@ -42,6 +45,7 @@ export const inputSchema = z.object({
   line19_student_loan_interest: nonnegative.optional(),
   line21_student_loan_interest_from_agi: nonnegative.optional(),
   line20_ira_deduction: nonnegative.optional(),
+  line20_mfs_lived_apart_all_year: z.boolean().optional(),
   line23_archer_msa_deduction: nonnegative.optional(),
   line24f_501c18d: nonnegative.optional(),
   agi_schedule1_line10: signed.optional(),
@@ -172,7 +176,8 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
         key !== "line21_student_loan_interest_from_agi" &&
         key !== "line19_student_loan_interest" &&
         key !== "line8z_description" &&
-        value !== undefined && value !== 0
+        key !== "line2b_alimony_agreement_date" &&
+        value !== undefined && value !== 0 && value !== false
       ) || adjustedSli !== 0;
     if (!hasPrintedData) return { outputs: [] };
     return {
@@ -180,6 +185,7 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
         nodeType: this.nodeType,
         fields: {
           file_schedule1: true,
+          calculation_input_2026: input,
           ...input,
           line5_schedule_e: sum(input.line5_schedule_e),
           line8a_nol_deduction: input.line8a_nol_deduction === undefined
