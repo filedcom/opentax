@@ -1,3 +1,4 @@
+import { vehicle_loan_interest_2026 } from "./vehicle-loan-interest.ts";
 import { cash_charity_2026 } from "./cash-charity.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -93,6 +94,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     w2_2026,
     cash_charity_2026,
+    vehicle_loan_interest_2026,
     agi_2026,
     f1040_2026_node,
     standard_deduction,
@@ -352,6 +354,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         },
         { nodeType: "w2", fields: owner },
         { nodeType: "cash_charity", fields: owner },
+        { nodeType: "vehicle_loan_interest", fields: owner },
         {
           nodeType: "agi_aggregator",
           fields: {

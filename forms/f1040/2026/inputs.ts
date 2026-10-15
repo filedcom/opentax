@@ -1,4 +1,8 @@
 import {
+  vehicle_loan_interest_2026,
+  vehicleLoan2026Schema,
+} from "./inputs/vehicle-loan-interest.ts";
+import {
   claimInputSchema as schedule1aSchema,
   schedule1a_2026,
 } from "./nodes/schedule1a.ts";
@@ -19,6 +23,12 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: vehicle_loan_interest_2026,
+    isArray: true,
+    inputKey: "vehicle_loans",
+    itemSchema: vehicleLoan2026Schema,
+  },
   { node: schedule1a_2026, isArray: false, inputSchema: schedule1aSchema },
   { node: general_2026, isArray: false, inputSchema: generalSchema },
   {

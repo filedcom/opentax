@@ -1,3 +1,5 @@
+import { vehicle_loan_interest_2026 } from "./inputs/vehicle-loan-interest.ts";
+import { syntheticVehicleLoan2026 } from "./inputs/vehicle-loan.fixture.ts";
 import {
   scopeReview2026,
   zeroExclusions2026,
@@ -19,8 +21,13 @@ import { general_2026 } from "./inputs/general.ts";
 import { standard_deduction_2026 } from "./nodes/standard_deduction.ts";
 import { FilingStatus } from "../nodes/types.ts";
 
-for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
-  const overtime = scenario !== "wages";
+for (
+  const scenario of ["wages", "overtime", "tips-overtime-senior", "vehicle"]
+) {
+  const overtime = scenario === "overtime" ||
+    scenario === "tips-overtime-senior";
+  const vehicle = scenario === "vehicle";
+  const expectedWages = vehicle ? 80_001 : 150_001;
   const seniorTips = scenario === "tips-overtime-senior";
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
     // Internal integration fixture: income-tax finalization is still supplied here.
@@ -36,6 +43,7 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
       ]),
       general: general_2026,
       cash_charity: cash_charity_2026,
+      vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       agi_aggregator: agi_2026,
       standard_deduction: standard_deduction_2026,
@@ -63,11 +71,14 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
         tax_residency: "full_year_citizen_or_resident",
         short_tax_year_due_to_accounting_change: false,
       },
-      ...(overtime
+      ...(overtime || vehicle
         ? {
           schedule1a: {
             tax_year: 2026,
-            source_scope_review: scopeReview2026,
+            source_scope_review: {
+              ...scopeReview2026,
+              has_vehicle_loan_interest: vehicle,
+            },
             part1_zero_exclusions_review: zeroExclusions2026,
             ...(seniorTips
               ? {
@@ -93,6 +104,7 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
         }
         : {}),
       cash_gifts: [syntheticCashGift2026],
+      ...(vehicle ? { vehicle_loans: [syntheticVehicleLoan2026()] } : {}),
       w2s: [
         {
           tax_year: 2026,
@@ -100,7 +112,7 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
           employer_name: "First",
           employee_ssn: "111223333",
           source_document_reference: "w2-one",
-          box1_wages: 100_000.25,
+          box1_wages: vehicle ? 30_000.25 : 100_000.25,
           ...(overtime
             ? {
               box12_entries: [
@@ -123,13 +135,19 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
         },
       ],
       f1040: {
-        line16_income_tax: seniorTips ? 17_119 : overtime ? 22_214 : 24_614,
+        line16_income_tax: vehicle
+          ? 7_736
+          : seniorTips
+          ? 17_119
+          : overtime
+          ? 22_214
+          : 24_614,
       },
     }, { formType: "f1040", taxYear: 2026 });
     assertEquals(result.diagnostics, []);
     assertEquals(
       result.pending.f1040.line13a_schedule1a,
-      seniorTips ? 29_500 : overtime ? 10_000 : 0,
+      vehicle ? 4_200 : seniorTips ? 29_500 : overtime ? 10_000 : 0,
     );
     assertEquals(
       result.pending.standard_deduction.schedule1a_line43,
@@ -137,9 +155,9 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
     );
     assertEquals(result.pending.f1040.taxpayer_first_name, "Ada");
     assertEquals(result.pending.w2.taxpayer_ssn, "111223333");
-    assertEquals(result.pending.f1040.line1a_wages, 150_001);
-    assertEquals(result.pending.f1040.line9_total_income, 150_001);
-    assertEquals(result.pending.f1040.line11b_agi, 150_001);
+    assertEquals(result.pending.f1040.line1a_wages, expectedWages);
+    assertEquals(result.pending.f1040.line9_total_income, expectedWages);
+    assertEquals(result.pending.f1040.line11b_agi, expectedWages);
     assertEquals(result.pending.f1040.line25d_total_withholding, 30_001);
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
@@ -148,11 +166,11 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
     assertEquals(result.pending.f1040.line12f_nonitemizer_charity, 500);
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
-      seniorTips ? 101_851 : overtime ? 123_401 : 133_401,
+      vehicle ? 59_201 : seniorTips ? 101_851 : overtime ? 123_401 : 133_401,
     );
     assertEquals(
       result.pending.f1040.line35a_refund,
-      seniorTips ? 12_882 : overtime ? 7_787 : 5_387,
+      vehicle ? 22_265 : seniorTips ? 12_882 : overtime ? 7_787 : 5_387,
     );
     if (seniorTips) {
       assertEquals(
@@ -162,7 +180,7 @@ for (const scenario of ["wages", "overtime", "tips-overtime-senior"]) {
     }
     assertEquals(result.pending.w2.issued_w2_sources instanceof Array, true);
     // Make the still-unwired credit routes visible; this is not filing readiness.
-    assertEquals(result.pending.eitc.earned_income, 150_000.5);
-    assertEquals(result.pending.f8812.auto_agi, 150_001);
+    assertEquals(result.pending.eitc.earned_income, expectedWages - 0.5);
+    assertEquals(result.pending.f8812.auto_agi, expectedWages);
   });
 }

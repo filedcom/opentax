@@ -1,3 +1,4 @@
+import { vehicleInterestRowSchema } from "../inputs/vehicle-loan-source.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -92,6 +93,7 @@ export const inputSchema = claimInputSchema.partial().extend({
   magi: z.number().int().safe(),
   form2555_line45_from_agi: dollars.optional(),
   w2_2026_sources: z.array(w2SourceSchema).default([]),
+  vehicle_interest_2026: z.array(vehicleInterestRowSchema).default([]),
   magi_addbacks_2026: z.object({
     puerto_rico_excluded_income: addback,
     form2555_line45: addback,
@@ -176,12 +178,64 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   const scope = input.source_scope_review;
   if (
     scope && (scope.has_form4137_tips || scope.has_business_tips ||
-      scope.has_non_w2_overtime || scope.has_vehicle_loan_interest)
+      scope.has_non_w2_overtime)
   ) {
     throw new Error(
-      "2026 Schedule 1-A Form 4137, business, non-W-2 overtime and vehicle sources need their receiving calculators",
+      "2026 Schedule 1-A Form 4137, business tips and non-W-2 overtime sources need their receiving calculators",
     );
   }
+  if (
+    Boolean(scope?.has_vehicle_loan_interest) !==
+      (input.vehicle_interest_2026.length > 0)
+  ) {
+    throw new Error(
+      "Vehicle source scope must reconcile to current-year reviewed loan records",
+    );
+  }
+  const vehicleByVin = new Map<
+    string,
+    {
+      vin: string;
+      qualified_interest: number;
+      business_interest: number;
+      schedule1a_interest: number;
+    }
+  >();
+  const vehicleLoanIds = new Set<string>();
+  for (const row of input.vehicle_interest_2026) {
+    if (vehicleLoanIds.has(row.loan_id)) {
+      throw new Error("Duplicate vehicle loan handoff");
+    }
+    vehicleLoanIds.add(row.loan_id);
+    if (
+      Math.abs(
+          row.qualified_interest - row.business_interest_deducted -
+            row.schedule1a_interest,
+        ) > 0.000001 ||
+      ((!row.original_use || !row.us_final_assembly) &&
+        row.qualified_interest > 0)
+    ) {
+      throw new Error(
+        "Vehicle source amounts or qualification do not reconcile",
+      );
+    }
+    const prior = vehicleByVin.get(row.vin) ??
+      {
+        vin: row.vin,
+        qualified_interest: 0,
+        business_interest: 0,
+        schedule1a_interest: 0,
+      };
+    prior.qualified_interest += row.qualified_interest;
+    prior.business_interest += row.business_interest_deducted;
+    prior.schedule1a_interest += row.schedule1a_interest;
+    vehicleByVin.set(row.vin, prior);
+  }
+  const vehicleRows = [...vehicleByVin.values()].map((r) => ({
+    ...r,
+    line28_business_interest: Math.round(r.business_interest),
+    line28_schedule1a_interest: Math.round(r.schedule1a_interest),
+  }));
   const marriedSeparate = input.filing_status === FilingStatus.MFS;
   const taxpayerSenior = !marriedSeparate && input.taxpayer_has_valid_ssn &&
     input.taxpayer_age_65_or_older;
@@ -190,7 +244,8 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   const eligibleSources = input.w2_2026_sources.filter((source) =>
     !marriedSeparate && ownerEligible(source.employee_ssn)
   );
-  const active = taxpayerSenior || spouseSenior ||
+  const active = vehicleRows.some((r) => r.schedule1a_interest > 0) ||
+    taxpayerSenior || spouseSenior ||
     eligibleSources.some((s) => s.cash_tips > 0 || s.qualified_overtime > 0);
   if (active && !scope) {
     throw new Error(
@@ -292,6 +347,19 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
   const line15 = Math.max(0, line9 - phaseout.reduction);
   const line21 = Math.min(line17, joint ? 25_000 : 12_500);
   const line27 = Math.max(0, line21 - phaseout.reduction);
+  const line29 = vehicleRows.reduce(
+    (n, r) => n + r.line28_schedule1a_interest,
+    0,
+  );
+  const line30 = Math.min(line29, 10_000);
+  const vehicleThreshold = joint ? 200_000 : 100_000;
+  const vehiclePhaseout = steppedDeductionPhaseout(
+    magi,
+    vehicleThreshold,
+    200,
+    "up",
+  );
+  const line36 = Math.max(0, line30 - vehiclePhaseout.reduction);
   const seniorThreshold = joint ? 150_000 : 75_000;
   const senior = seniorDeductionPerPerson(magi, seniorThreshold, 6_000, 0.06);
   const line42a = taxpayerSenior ? senior.amount : 0;
@@ -301,6 +369,7 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
     source_input: input,
     employee_rows: employeeRows,
     overtime_rows: overtimeRows,
+    vehicle_rows: vehicleRows,
     // Eligibility and phaseout-zero results are retained even when no deduction remains.
     has_eligible_activity: Boolean(active),
     lines: {
@@ -331,7 +400,14 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
       line25: phaseout.steps,
       line26: phaseout.reduction,
       line27,
-      line36: 0,
+      line29,
+      line30,
+      line31: magi,
+      line32: vehicleThreshold,
+      line33: vehiclePhaseout.excess,
+      line34: vehiclePhaseout.steps,
+      line35: vehiclePhaseout.reduction,
+      line36,
       line37: magi,
       line38: seniorThreshold,
       line39: senior.excess,
@@ -340,7 +416,7 @@ export function calculateSchedule1A2026(raw: Schedule1A2026Input) {
       line42a,
       line42b,
       line43,
-      line44: line15 + line27 + line43,
+      line44: line15 + line27 + line36 + line43,
     },
   };
 }

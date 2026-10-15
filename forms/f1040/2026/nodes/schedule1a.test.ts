@@ -164,7 +164,6 @@ Deno.test("2026 Schedule 1-A requires complete source scope and MAGI evidence", 
       "has_form4137_tips",
       "has_business_tips",
       "has_non_w2_overtime",
-      "has_vehicle_loan_interest",
     ] as const
   ) {
     assertThrows(
