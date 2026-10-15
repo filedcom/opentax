@@ -37,9 +37,23 @@ It supports wholly acquisition-use personal homes with continuing loans, current
 purchases/construction/improvements and qualifying older refinances. One Table 1
 ratio covers grandfathered, pre-2017 and post-2017 debt; MFS uses separate caps
 and a payment/home-selection review. The 2017 binding-contract exception requires
-its contract and closing dates. Current-year refinancing, payoff, mixed use,
+its contract and closing dates. Mixed use,
 servicer/account transfers, nonfiler sharing, cooperative homes and mortgage
 credit certificates still require their source paths.
+
+Payoffs and one current-year refinance of a prior-year loan now reconcile both
+loan IDs, the payoff statement, dates, principal, property and borrowers. The
+replacement must preserve acquisition history without cash out or term extension.
+Monthly closing balances become zero at payoff; the divisor counts months the
+property qualified, not months each loan existed. This follows the lender-statement
+method in [Publication 936](https://www.irs.gov/publications/p936), used as a
+prior-year method comparator. Remaining points are deductible on repayment or
+different-lender refinancing; same-lender refinancing amortizes the remainder
+over the replacement term, separately from new points. The old loan retains no
+duplicate remainder. Prepaid insurance allocations stop in the payoff month,
+without a writeoff of unused premiums under 26 CFR 1.163-11. Repeated in-year
+refinances, binding-contract-exception refinancing and homes ceasing to qualify
+during the year remain outside this source path.
 
 Interest payments must reconcile to the statement after same-year refunds;
 January prepaid interest included in a current 1098 is excluded from the current
@@ -65,6 +79,8 @@ Schedule A verifies the mortgage source owner and inventory review, recalculates
 its source result and passes the combined candidate to deduction resolution.
 The graph fixture itemizes $24,000 of sourced mortgage interest at $150,001 AGI;
 insurance is fully phased out and the nonitemizer gift deduction is removed.
+The same-lender refinance fixture combines $24,000 interest and $92 points,
+selects $24,092 itemized deductions and supplies $125,909 taxable income.
 The fixture still supplies income-tax finalization independently. Mortgage
 PDF/MeF and the remaining exception sources are unfinished.
 

@@ -1,5 +1,8 @@
 import { mortgage_interest_2026 } from "./inputs/mortgage-interest.ts";
-import { syntheticMortgage2026 } from "./inputs/mortgage.fixture.ts";
+import {
+  syntheticMortgage2026,
+  syntheticMortgageRefinance2026,
+} from "./inputs/mortgage.fixture.ts";
 import { schedule_a_2026 } from "./nodes/schedule-a.ts";
 import {
   itemizedClaim2026,
@@ -41,6 +44,7 @@ for (
     "wages",
     "itemized",
     "mortgage",
+    "mortgage-refinance",
     "overtime",
     "tips-overtime-senior",
     "vehicle",
@@ -50,7 +54,9 @@ for (
     "misclassified-with-tips",
   ]
 ) {
-  const mortgage = scenario === "mortgage";
+  const refinance = scenario === "mortgage-refinance";
+  const mortgage = scenario === "mortgage" || refinance;
+  const mortgageDeduction = refinance ? 24092 : 24000;
   const itemized = scenario === "itemized";
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
@@ -151,7 +157,9 @@ for (
               taxpayer_ssn: _taxpayer,
               spouse_ssn: _spouse,
               ...claim
-            } = syntheticMortgage2026();
+            } = refinance
+              ? syntheticMortgageRefinance2026(true)
+              : syntheticMortgage2026();
             return claim;
           })(),
         }
@@ -321,7 +329,13 @@ for (
     );
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
-      mortgage ? 24_000 : itemized ? 53_250 : seniorTips ? 18_150 : 16_100,
+      mortgage
+        ? mortgageDeduction
+        : itemized
+        ? 53_250
+        : seniorTips
+        ? 18_150
+        : 16_100,
     );
     assertEquals(
       result.pending.f1040.line12f_nonitemizer_charity,
@@ -331,7 +345,7 @@ for (
       assertEquals(result.pending.f1040.deduction_method, "itemized");
       assertEquals(
         result.pending.standard_deduction.itemized_before_overall_limit,
-        24_000,
+        mortgageDeduction,
       );
       assertEquals(result.pending.income_tax_calculation.form6251_line2a, 0);
     }
@@ -349,7 +363,7 @@ for (
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
       mortgage
-        ? 126_001
+        ? expectedWages - mortgageDeduction
         : itemized
         ? 96_751
         : misclassified

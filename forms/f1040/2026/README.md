@@ -460,8 +460,18 @@ allocation ledger. Mortgage-insurance sources reconcile to box 5, apply current
 or prepaid allocation, and then the restored 2026 income phaseout. The Schedule A
 receiver verifies owners and its inventory review before deduction selection.
 
-The source model currently covers continuing, wholly acquisition-use personal
-mortgages. In-year refinance/payoff, mixed-use proceeds, lender transfers,
+The source model covers wholly acquisition-use personal mortgages, documented
+payoffs and one in-year refinance of a prior-year loan without cash out or term
+extension. Property qualification dates determine the monthly-balance divisor;
+old and replacement balances share one debt cap. Payoff statements must reconcile
+loan links, dates, principal, borrowers and property. Remaining points are
+deducted on repayment or a different-lender refinance; a same-lender refinance
+transfers the remainder to the replacement term after the old loan's regular
+allocation. New points remain separate, and prepaid MIP stops at payoff without
+an accelerated deduction. Returned remainders belong to the replacement loan.
+
+Repeated in-year refinancing, refinancing a binding-contract-exception loan,
+property qualification ending during the year, mixed-use proceeds, lender transfers,
 shared nonfiler expenses, credit-certificate reductions, prior-interest recoveries,
 prior-year prepaid interest and the 2022–2025 prepaid-insurance transition still
 need their source owners. PDF/MeF and persisted points remainders are also pending.
@@ -620,3 +630,10 @@ components matched the hashes already recorded in the research corpus.
   evidence. The 137-test unit gate and preflight passed. Cases cover whole-return
   debt limits, old/new debt, MFS, purchase and ratable points, prepaid insurance,
   phaseout rounding, source mismatches and the selected Schedule A deduction.
+
+- Payoff/refinance integration passed 261 typed tests across all 2026 modules
+  and the shared 2025 Form 1098/refinance-points suites, including 31 focused
+  mortgage/return-assembly cases. Coverage adds replacement-debt averaging,
+  unchanged acquisition caps, retained points on same/different-lender refinance,
+  new points alongside carried points, order independence, broken source links,
+  and insurance stopping at payoff. Unit and preflight gates also passed.

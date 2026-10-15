@@ -14,6 +14,8 @@ export function syntheticMortgage2026(): MortgageSource2026 {
       address: "100 Example Street",
       residence: "main",
       ownership_and_residence_record: "deed-and-residency",
+      qualified_home_since: "1980-01-01",
+      remains_qualified_through_year_end: true,
       real_property_or_qualified_manufactured_home: true,
       personal_use_only_all_year: true,
       owned_by_filers_only: true,
@@ -95,6 +97,7 @@ export function syntheticMortgage2026(): MortgageSource2026 {
 }
 export function syntheticPurchasePoints2026(): MortgageSource2026 {
   const raw = syntheticMortgage2026();
+  raw.properties[0].qualified_home_since = "2026-07-01";
   const loan = raw.loans[0];
   loan.origination_date = "2026-07-01";
   loan.maturity_date = "2056-07-01";
@@ -139,5 +142,103 @@ export function syntheticPurchasePoints2026(): MortgageSource2026 {
       (_, i) => ({ month: i + 7, payment_record: `points-month-${i + 7}` }),
     ),
   }];
+  return raw;
+}
+
+export function syntheticMortgagePayoff2026(): MortgageSource2026 {
+  const raw = syntheticMortgage2026();
+  const loan = raw.loans[0];
+  loan.payoff = {
+    paid_on: "2026-07-01",
+    payoff_statement_reference: "july-payoff",
+    principal_before_payoff: 490000,
+    full_payoff_verified: true,
+    reason: "repayment",
+  };
+  loan.monthly_balances.forEach((b) => {
+    if (b.month >= 7) b.closing_balance = 0;
+  });
+  const s = loan.interest_statements[0];
+  s.payments = s.payments.slice(0, 7);
+  s.interest_received = 14000;
+  s.form1098!.box5_mortgage_insurance = 0;
+  loan.mortgage_insurance = [];
+  loan.points = [{
+    points_id: "original-points",
+    source_document_reference: "2020-closing",
+    payer_ssn: "111223333",
+    paid_on: loan.origination_date,
+    points_paid_separately_not_financed: true,
+    total_points: 3000,
+    seller_paid_points: 0,
+    service_charges: 0,
+    reported_on_form1098: false,
+    treatment: "ratable",
+    loan_term_months: 360,
+    comparable_local_loan_terms_reference: "2020-comparable-terms",
+    payment_months_2026: Array.from({ length: 6 }, (_, i) => ({
+      month: i + 1,
+      payment_record: `old-points-${i + 1}`,
+    })),
+    prior_allocation: {
+      filed_return_and_points_workpaper_reference: "prior-points-ledger",
+      allocated_before_2026: 600,
+      remaining_unallocated_at_start_2026: 2400,
+    },
+  }];
+  return raw;
+}
+
+export function syntheticMortgageRefinance2026(
+  sameLender = false,
+): MortgageSource2026 {
+  const raw = syntheticMortgagePayoff2026();
+  const old = raw.loans[0];
+  old.payoff!.reason = "refinance";
+  old.payoff!.successor_loan_id = "replacement-loan";
+  const loan = structuredClone(old);
+  loan.loan_id = "replacement-loan";
+  loan.account_number = "replacement-account";
+  loan.lender_tin = sameLender ? old.lender_tin : "987654321";
+  loan.origination_date = "2026-07-01";
+  loan.original_principal = 490000;
+  loan.original_note_reference = "replacement-note";
+  loan.payoff = undefined;
+  loan.purpose = "refinance";
+  loan.refinance = {
+    original_acquisition_date: old.origination_date,
+    original_acquisition_record: old.acquisition_use_record_reference,
+    predecessor_payoff_reference: old.payoff!.payoff_statement_reference,
+    predecessor_principal_at_refinance: 490000,
+    original_maturity_date: old.maturity_date,
+    no_cashout_or_term_extension: true,
+    predecessor_loan_id: old.loan_id,
+    carried_points_payment_months_2026: sameLender
+      ? Array.from(
+        { length: 5 },
+        (_, i) => ({ month: i + 8, payment_record: `new-points-${i + 8}` }),
+      )
+      : undefined,
+  };
+  loan.points = [];
+  loan.monthly_balances.forEach((b) => {
+    b.closing_balance = b.month < 7 ? 0 : 490000;
+    b.lender_statement_reference = `new-${b.month}`;
+  });
+  const s = loan.interest_statements[0];
+  s.source_document_reference = "1098-replacement";
+  s.lender_tin = loan.lender_tin;
+  s.account_number = loan.account_number;
+  s.form1098!.box2_outstanding_principal = 490000;
+  s.form1098!.box3_origination_date = loan.origination_date;
+  s.payments = syntheticMortgage2026().loans[0].interest_statements[0].payments
+    .slice(7)
+    .map((p) => ({
+      ...p,
+      payment_id: `new-${p.payment_id}`,
+      payment_record: `new-${p.payment_record}`,
+    }));
+  s.interest_received = 10000;
+  raw.loans.push(loan);
   return raw;
 }

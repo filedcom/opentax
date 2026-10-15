@@ -24,6 +24,8 @@ export const mortgageProperty2026Schema = z.object({
   address: ref,
   residence: z.enum(["main", "second"]),
   ownership_and_residence_record: ref,
+  qualified_home_since: date,
+  remains_qualified_through_year_end: z.literal(true),
   real_property_or_qualified_manufactured_home: z.literal(true),
   personal_use_only_all_year: z.literal(true),
   owned_by_filers_only: z.literal(true),
@@ -133,6 +135,14 @@ export const mortgageLoan2026Schema = z.object({
   original_principal: money.refine((n) => n > 0),
   original_note_reference: ref,
   maturity_date: date,
+  payoff: z.object({
+    paid_on: currentDate,
+    payoff_statement_reference: ref,
+    principal_before_payoff: money,
+    full_payoff_verified: z.literal(true),
+    reason: z.enum(["repayment", "refinance"]),
+    successor_loan_id: ref.optional(),
+  }).strict().optional(),
   purpose: z.enum(["purchase", "construction", "improvement", "refinance"]),
   acquisition_use_record_reference: ref,
   all_proceeds_acquire_build_or_improve_secured_home: z.literal(true),
@@ -148,6 +158,13 @@ export const mortgageLoan2026Schema = z.object({
     predecessor_principal_at_refinance: money,
     original_maturity_date: date,
     no_cashout_or_term_extension: z.literal(true),
+    predecessor_loan_id: ref.optional(),
+    carried_points_payment_months_2026: z.array(
+      z.object({
+        month: z.number().int().min(1).max(12),
+        payment_record: ref,
+      }).strict(),
+    ).max(12).optional(),
   }).strict().optional(),
   grandfathered_continuous_security_record: ref.optional(),
   binding_contract_exception: z.object({
@@ -230,6 +247,78 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
     }
   };
   const close = (a: number, b: number) => Math.abs(a - b) < .010001;
+  const byId = new Map(input.loans.map((l) => [l.loan_id, l]));
+  // Refinance links are checked before any deductions or carryovers are emitted.
+  for (const loan of input.loans) {
+    const payoff = loan.payoff;
+    if (payoff) {
+      if (
+        payoff.paid_on < loan.origination_date ||
+        payoff.paid_on > loan.maturity_date ||
+        payoff.principal_before_payoff > loan.original_principal ||
+        (payoff.reason === "refinance") !== !!payoff.successor_loan_id
+      ) {
+        throw new Error(
+          "Mortgage payoff must reconcile date, principal and successor",
+        );
+      }
+      if (payoff.successor_loan_id) {
+        const next = byId.get(payoff.successor_loan_id);
+        if (!next || next.refinance?.predecessor_loan_id !== loan.loan_id) {
+          throw new Error("Mortgage payoff needs its linked successor loan");
+        }
+      }
+    }
+    const history = loan.refinance;
+    if (
+      loan.purpose === "refinance" && loan.origination_date.startsWith("2026-")
+    ) {
+      const old = history?.predecessor_loan_id
+        ? byId.get(history.predecessor_loan_id)
+        : undefined;
+      if (
+        !history || !old || !old.payoff || old === loan ||
+        old.payoff.reason !== "refinance" ||
+        old.payoff.successor_loan_id !== loan.loan_id ||
+        old.payoff.paid_on !== loan.origination_date ||
+        old.payoff.payoff_statement_reference !==
+          history.predecessor_payoff_reference ||
+        !close(
+          old.payoff.principal_before_payoff,
+          history.predecessor_principal_at_refinance,
+        ) ||
+        old.property_id !== loan.property_id ||
+        loan.maturity_date > old.maturity_date ||
+        [...old.borrower_ssns].map(normalize).sort().join() !==
+          [...loan.borrower_ssns].map(normalize).sort().join() ||
+        history.original_acquisition_date !==
+          (old.refinance?.original_acquisition_date ?? old.origination_date) ||
+        history.original_maturity_date !==
+          (old.refinance?.original_maturity_date ?? old.maturity_date)
+      ) {
+        throw new Error(
+          "A 2026 refinance needs a reconciled predecessor payoff and loan history",
+        );
+      }
+      // Multiple refinancing events and the binding-contract exception need
+      // their own carryover/category history before that wider path is enabled.
+      if (
+        old.origination_date.startsWith("2026-") ||
+        old.binding_contract_exception || loan.payoff
+      ) {
+        throw new Error(
+          "Repeated in-year refinancing needs additional allocation history",
+        );
+      }
+    } else if (
+      history?.predecessor_loan_id ||
+      history?.carried_points_payment_months_2026
+    ) {
+      throw new Error(
+        "Current refinance links belong only to a 2026 refinance",
+      );
+    }
+  }
   const reviewed = input.loans.map((loan) => {
     unique(loans, loan.loan_id, "loan ID");
     unique(
@@ -250,8 +339,9 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
     loan.borrower_ssns.forEach(checkOwner);
     if (
       loan.origination_date > "2026-12-31" ||
-      loan.maturity_date <= "2026-12-31" ||
-      loan.maturity_date <= loan.origination_date
+      loan.maturity_date <= "2026-12-31" && !loan.payoff ||
+      loan.maturity_date <= loan.origination_date ||
+      property.qualified_home_since > loan.origination_date
     ) {
       throw new Error(
         "Mortgage payoff, maturity or future origination needs its source allocation",
@@ -259,11 +349,6 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
     }
     let acquisitionDate = loan.origination_date;
     if (loan.purpose === "refinance") {
-      if (loan.origination_date.startsWith("2026-")) {
-        throw new Error(
-          "A 2026 refinance needs the predecessor payoff and partial-year loan allocation",
-        );
-      }
       const prior = loan.refinance;
       if (
         !prior || prior.original_acquisition_date >= loan.origination_date ||
@@ -311,6 +396,9 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
     const startMonth = loan.origination_date.startsWith("2026-")
       ? Number(loan.origination_date.slice(5, 7))
       : 1;
+    const payoffMonth = loan.payoff
+      ? Number(loan.payoff.paid_on.slice(5, 7))
+      : 13;
     const balances = [...loan.monthly_balances].sort((a, b) =>
       a.month - b.month
     );
@@ -318,7 +406,7 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
       new Set(balances.map((b) => b.lender_statement_reference)).size !== 12 ||
       balances.some((b, i) =>
         b.month !== i + 1 ||
-        (b.month < startMonth
+        (b.month < startMonth || b.month >= payoffMonth
           ? b.closing_balance !== 0
           : b.closing_balance <= 0 ||
             b.closing_balance > loan.original_principal)
@@ -339,7 +427,20 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
       );
     }
     const average = balances.reduce((n, b) => n + b.closing_balance, 0) /
-      (13 - startMonth);
+      (property.qualified_home_since.startsWith("2026-")
+        ? 13 - Number(property.qualified_home_since.slice(5, 7))
+        : 12);
+    if (loan.payoff) {
+      const previous = balances.find((b) => b.month === payoffMonth - 1);
+      if (
+        loan.payoff.principal_before_payoff >
+          (payoffMonth > startMonth && previous
+            ? previous.closing_balance
+            : loan.original_principal)
+      ) {
+        throw new Error("Payoff principal exceeds the preceding balance");
+      }
+    }
     averages[category] += average;
     averages.total += average;
     const statements = new Map<
@@ -381,12 +482,15 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
         checkOwner(p.payer_ssn);
         if (
           p.paid_on < loan.origination_date ||
+          loan.payoff && p.paid_on > loan.payoff.paid_on ||
           p.current_year_interest_refund > p.interest_paid
         ) throw new Error("Mortgage payment date/refund does not reconcile");
         paid += p.interest_paid - p.current_year_interest_refund;
       }
       if (
-        !close(paid, s.interest_received) || s.interest_allocable_to_2027 > paid
+        !close(paid, s.interest_received) ||
+        s.interest_allocable_to_2027 > paid ||
+        loan.payoff && s.interest_allocable_to_2027 > 0
       ) {
         throw new Error(
           "Mortgage interest payments disagree with statement or accrual allocation",
@@ -426,7 +530,7 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
       if (
         new Set(months.map((m) => m.month)).size !== months.length ||
         new Set(months.map((m) => m.payment_record)).size !== months.length ||
-        months.some((m) => m.month < startMonth)
+        months.some((m) => m.month < startMonth || m.month > payoffMonth)
       ) {
         throw new Error(
           "Points need distinct current-year payment months after origination",
@@ -487,7 +591,7 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
           "Immediate points review conflicts with ratable election",
         );
       }
-      const beforeLimit = Math.min(
+      let beforeLimit = Math.min(
         p.prior_allocation?.remaining_unallocated_at_start_2026 ?? amount,
         ratableMortgagePoints(
           amount,
@@ -498,6 +602,15 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
           false,
         ),
       );
+      const successor = loan.payoff?.successor_loan_id
+        ? byId.get(loan.payoff.successor_loan_id)
+        : undefined;
+      const sameLender = successor &&
+        normalize(successor.lender_tin) === normalize(loan.lender_tin);
+      if (loan.payoff && !sameLender) {
+        beforeLimit = p.prior_allocation?.remaining_unallocated_at_start_2026 ??
+          amount;
+      }
       return {
         points_id: p.points_id,
         reported: p.reported_on_form1098,
@@ -530,6 +643,7 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
       checkOwner(p.payer_ssn);
       if (
         p.paid_on > "2026-12-31" || p.paid_on < loan.origination_date ||
+        loan.payoff && p.paid_on > loan.payoff.paid_on ||
         p.contract_issued_on > p.paid_on || p.refunded_amount > p.amount_paid
       ) throw new Error("Mortgage insurance dates/refunds do not reconcile");
       if (
@@ -571,7 +685,8 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
         );
         const months = Math.max(
           0,
-          Math.min(start + term, 2027 * 12) - Math.max(start, 2026 * 12),
+          Math.min(start + term, 2026 * 12 + Math.min(payoffMonth, 12)) -
+            Math.max(start, 2026 * 12),
         );
         amount = amount * months / term;
       }
@@ -586,6 +701,55 @@ export function calculateMortgageSources2026(raw: MortgageSource2026) {
       insurance,
     };
   });
+  for (const loan of input.loans) {
+    const oldId = loan.refinance?.predecessor_loan_id;
+    if (!oldId) continue;
+    const old = byId.get(oldId)!;
+    const months = loan.refinance?.carried_points_payment_months_2026;
+    const prior = reviewed.find((r) => r.loan_id === oldId)!;
+    const sameLender = normalize(old.lender_tin) === normalize(loan.lender_tin);
+    const hasRemainder = prior.points.some((p) => p.remaining_allocation > 0);
+    if (!sameLender || !hasRemainder) {
+      if (months) {
+        throw new Error(
+          "Carried points need a same-lender unallocated balance",
+        );
+      }
+      continue;
+    }
+    const startMonth = Number(loan.origination_date.slice(5, 7));
+    if (
+      !months || new Set(months.map((m) => m.month)).size !== months.length ||
+      new Set(months.map((m) => m.payment_record)).size !== months.length ||
+      months.some((m) => m.month < startMonth)
+    ) {
+      throw new Error(
+        "Same-lender points need distinct replacement-loan payment months",
+      );
+    }
+    const next = reviewed.find((r) => r.loan_id === loan.loan_id)!;
+    for (const p of prior.points) {
+      const carried = p.remaining_allocation;
+      if (!carried) continue;
+      const beforeLimit = ratableMortgagePoints(
+        carried,
+        0,
+        months.length,
+        monthIndex(loan.maturity_date) - monthIndex(loan.origination_date),
+        1,
+        false,
+      );
+      next.points.push({
+        points_id: p.points_id,
+        reported: false,
+        beforeLimit,
+        seller_basis_reduction: 0,
+        remaining_allocation: carried - beforeLimit,
+      });
+      // The retained remainder now belongs to the replacement loan only.
+      p.remaining_allocation = 0;
+    }
+  }
   if (
     input.properties.some((p) =>
       !input.loans.some((l) => l.property_id === p.property_id)

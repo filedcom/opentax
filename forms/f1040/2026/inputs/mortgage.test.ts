@@ -7,6 +7,8 @@ import {
 } from "./mortgage-source.ts";
 import {
   syntheticMortgage2026,
+  syntheticMortgagePayoff2026,
+  syntheticMortgageRefinance2026,
   syntheticPurchasePoints2026,
 } from "./mortgage.fixture.ts";
 import { calculateScheduleA2026 } from "../schedule-a.ts";
@@ -357,4 +359,184 @@ Deno.test("2026 newly refinanced loans require the predecessor payoff source pat
     Error,
     "predecessor payoff",
   );
+});
+
+Deno.test("2026 payoff writes off only the unallocated points and zeros subsequent balances", () => {
+  const raw = syntheticMortgagePayoff2026();
+  const r = calculateMortgageSources2026(raw);
+  assertEquals(r.loans[0].average, 245000);
+  assertEquals(r.lines, { line8a: 14000, line8b: 0, line8c: 2400 });
+  assertEquals(r.loans[0].points[0].remaining_allocation, 0);
+  raw.loans[0].monthly_balances[7].closing_balance = 1;
+  assertThrows(
+    () => calculateMortgageSources2026(raw),
+    Error,
+    "monthly balance",
+  );
+});
+
+Deno.test("2026 refinancing uses qualified-home months without doubling replacement debt", () => {
+  for (const sameLender of [false, true]) {
+    const raw = syntheticMortgageRefinance2026(sameLender);
+    const r = calculateMortgageSources2026(raw);
+    assertEquals(r.loans.map((l) => l.average), [245000, 245000]);
+    assertEquals([r.table1.line12, r.table1.ratio, r.lines.line8a], [
+      490000,
+      1,
+      24000,
+    ]);
+    // Old loan: $3,000 / 360 * 6 = $50. Carry $2,350 across the
+    // replacement loan's 282-month term, with five payments in 2026.
+    assertEquals(r.lines.line8c, sameLender ? 92 : 2400);
+    assertEquals(r.loans[0].points[0].remaining_allocation, 0);
+    if (sameLender) {
+      assertEquals(
+        r.loans[1].points[0].remaining_allocation,
+        2350 - 2350 * 5 / 282,
+      );
+      raw.loans.reverse();
+      assertEquals(calculateMortgageSources2026(raw).lines, r.lines);
+    }
+  }
+});
+
+Deno.test("2026 refinancing reconciles links, identities, principal and evidence before deduction", () => {
+  const changes: Array<
+    (r: ReturnType<typeof syntheticMortgageRefinance2026>) => void
+  > = [
+    (r) => {
+      r.loans[1].refinance!.predecessor_loan_id = "missing";
+    },
+    (r) => {
+      r.loans[0].payoff!.successor_loan_id = "missing";
+    },
+    (r) => {
+      r.loans[1].refinance!.predecessor_payoff_reference = "other-payoff";
+    },
+    (r) => {
+      r.loans[1].refinance!.predecessor_principal_at_refinance++;
+    },
+    (r) => {
+      r.loans[1].original_principal = 500000;
+    },
+    (r) => {
+      r.loans[1].origination_date = "2026-07-02";
+    },
+    (r) => {
+      r.loans[1].borrower_ssns = ["222334444"];
+    },
+    (r) => {
+      r.loans[0].payoff!.principal_before_payoff = 499000;
+    },
+    (r) => {
+      r.loans[1].refinance!.carried_points_payment_months_2026 = undefined;
+    },
+    (r) => {
+      r.loans[1].refinance!.carried_points_payment_months_2026![0].month = 6;
+    },
+    (r) => {
+      r.loans[0].points![0].payment_months_2026.push({
+        month: 8,
+        payment_record: "after-payoff",
+      });
+    },
+    (r) => {
+      r.loans[0].interest_statements[0].payments[6].paid_on = "2026-07-02";
+    },
+  ];
+  for (const change of changes) {
+    const raw = syntheticMortgageRefinance2026(true);
+    change(raw);
+    assertThrows(() => calculateMortgageSources2026(raw));
+  }
+});
+
+Deno.test("2026 prepaid insurance stops at payoff without writing off the unused premium", () => {
+  const raw = syntheticMortgagePayoff2026();
+  raw.loans[0].mortgage_insurance = [{
+    premium_id: "original-premium",
+    source_document_reference: "2020-insurance",
+    payer_ssn: "111223333",
+    paid_on: "2020-01-01",
+    contract_issued_on: "2020-01-01",
+    provider: "FHA",
+    qualified_insurance_record: "2020-policy",
+    amount_paid: 8400,
+    refunded_amount: 0,
+    allocation: {
+      method: "prepaid",
+      coverage_starts_on: "2020-01-01",
+      mortgage_term_months: 360,
+      allocation_record_reference: "insurance-workpaper",
+      not_previously_deducted_for_2026: true,
+    },
+  }];
+  assertEquals(
+    calculateMortgageSources2026(raw).insuranceBeforeIncomeLimit,
+    700,
+  );
+  raw.loans[0].payoff!.paid_on = "2026-12-31";
+  raw.loans[0].monthly_balances.forEach((b) =>
+    b.closing_balance = b.month < 12 ? 490000 : 0
+  );
+  assertEquals(
+    calculateMortgageSources2026(raw).insuranceBeforeIncomeLimit,
+    1200,
+  );
+});
+
+Deno.test("2026 new improvement loan on an already qualified home averages over all qualified months", () => {
+  const raw = syntheticPurchasePoints2026();
+  raw.properties[0].qualified_home_since = "2020-01-01";
+  raw.loans[0].purpose = "improvement";
+  raw.loans[0].points![0].seller_paid_points = 0;
+  assertEquals(calculateMortgageSources2026(raw).loans[0].average, 245000);
+});
+
+Deno.test("2026 refinanced debt retains the one acquisition cap and original debt vintage", () => {
+  const raw = syntheticMortgageRefinance2026();
+  for (const loan of raw.loans) {
+    loan.original_principal = 1000000;
+    loan.monthly_balances.forEach((b) => {
+      if (b.closing_balance) b.closing_balance = 1000000;
+    });
+  }
+  raw.loans[0].payoff!.principal_before_payoff = 1000000;
+  raw.loans[1].refinance!.predecessor_principal_at_refinance = 1000000;
+  const r = calculateMortgageSources2026(raw);
+  assertEquals([
+    r.table1.line12,
+    r.table1.ratio,
+    r.lines.line8a,
+    r.lines.line8c,
+  ], [1000000, .75, 18000, 1800]);
+  raw.loans[0].origination_date = "2010-01-01";
+  raw.loans[0].interest_statements[0].form1098!.box3_origination_date =
+    "2010-01-01";
+  raw.loans[0].points = [];
+  raw.loans[1].refinance!.original_acquisition_date = "2010-01-01";
+  const older = calculateMortgageSources2026(raw);
+  assertEquals(older.loans.map((l) => l.category), ["pre2017", "pre2017"]);
+  assertEquals(older.table1.line11, 1000000);
+});
+
+Deno.test("2026 same-lender carried points remain separate from new refinance charges", () => {
+  const raw = syntheticMortgageRefinance2026(true);
+  const next = raw.loans[1];
+  next.points = [{
+    ...structuredClone(raw.loans[0].points![0]),
+    points_id: "new-points",
+    source_document_reference: "new-closing-points",
+    paid_on: next.origination_date,
+    total_points: 2820,
+    loan_term_months: 282,
+    prior_allocation: undefined,
+    payment_months_2026: next.refinance!.carried_points_payment_months_2026!,
+  }];
+  const r = calculateMortgageSources2026(raw);
+  assertEquals(r.lines.line8c, 142);
+  assertEquals(r.loans[1].points.map((p) => p.points_id), [
+    "new-points",
+    "original-points",
+  ]);
 });
