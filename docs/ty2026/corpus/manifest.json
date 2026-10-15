@@ -2298,6 +2298,17 @@
       "bytes": 205786,
       "sha256": "15977bb641b55d9ca8acb81b1da10e04371f10acf15ec9fb09bce829bd1a5c77",
       "retrieved_utc": "2026-09-27T17:04:40.997867+00:00"
+    },
+    {
+      "path": "authorities/pl119-111--2026.pdf",
+      "url": "https://www.govinfo.gov/content/pkg/PLAW-119publ111/pdf/PLAW-119publ111.pdf",
+      "kind": "enacted-law",
+      "status": "downloaded",
+      "bytes": 278902,
+      "sha256": "49ac8c667cd9e443eb2fd64f7655c42fc68e7ad0c594cb5e233a520539abe4cc",
+      "retrieved_utc": "2026-10-15T11:28:39.050882+00:00",
+      "year_check": "2026-present",
+      "scope": "Division B, section 1, page 25: early-childhood educator eligibility applies from tax year 2026"
     }
   ]
 }

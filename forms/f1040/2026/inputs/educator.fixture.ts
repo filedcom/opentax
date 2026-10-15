@@ -1,0 +1,66 @@
+import { FilingStatus } from "../../nodes/types.ts";
+import type { EducatorSource2026 } from "./educator-source.ts";
+export function syntheticEducator2026(): EducatorSource2026 {
+  return {
+    tax_year: 2026,
+    filing_status: FilingStatus.Single,
+    taxpayer_ssn: "111223333",
+    inventory_record_reference: "educator-inventory",
+    cash_method_of_accounting: true,
+    all_educator_expenses_and_benefits_included: true,
+    educators: [{
+      educator_ssn: "111223333",
+      benefit_inventory_record: "education-benefits-inventory",
+      no_section135_529_530_exclusions: true,
+      school_years: [{
+        school_year_id: "2025-2026",
+        starts_on: "2025-08-01",
+        ends_on: "2026-07-31",
+        hours_do_not_overlap_between_assignments: true,
+        assignments: [{
+          assignment_id: "teacher-job",
+          school_name: "Example Elementary School",
+          school: {
+            type: "k12",
+            provides_elementary_or_secondary_education_under_state_law: true,
+            state_law_qualification_record: "school-accreditation",
+          },
+          role: "teacher",
+          hours_worked: 900,
+          service_starts_on: "2025-08-01",
+          service_ends_on: "2026-06-30",
+          employment_and_hours_record: "school-hours-record",
+          employee_not_self_employed: true,
+        }],
+      }],
+    }],
+    expenses: [{
+      expense_id: "classroom-supplies",
+      educator_ssn: "111223333",
+      assignment_id: "teacher-job",
+      source_document_reference: "supplies-invoice",
+      receipt_line_reference: "1",
+      payment_record: "supplies-payment",
+      paid_by_educator_from_own_or_joint_funds: true,
+      paid_on: "2026-02-01",
+      payee: "Example School Supplies",
+      category: "supplies",
+      use: "classroom",
+      health_or_physical_education: false,
+      athletic_supply: false,
+      ordinary_and_necessary: true,
+      purpose_and_qualification_record: "classroom-use",
+      not_capitalized_or_depreciated: true,
+      amount_paid: 1200,
+      current_payment_refund: 100,
+      personal_use_amount: 100,
+      benefits_review_record: "receipt-benefits-review",
+      benefit_allocations: [{
+        kind: "tax_free_reimbursement",
+        amount: 200,
+        source_reference: "school-reimbursement",
+      }],
+      all_other_uses_of_this_expense_disclosed: true,
+    }],
+  };
+}

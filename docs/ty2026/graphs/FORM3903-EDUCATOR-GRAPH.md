@@ -45,32 +45,54 @@ the XSD/rules must resolve any return with more than two moves.
 
 ## Educator expenses split across Schedule 1 and Schedule A
 
-[Publication 505](https://www.irs.gov/publications/p505) says that, starting
-in 2026, an eligible educator may take a Schedule 1 deduction and then
-determine an additional itemized deduction; the qualifying expense types
-differ. The draft forms print Schedule 1 line 11 and Schedule A line 17k
-(`Deductible educator expenses not reported on Schedule 1`). The current
-[IRS educator topic](https://www.irs.gov/taxtopics/tc458) supplies the
-900-hour K–12 teacher/instructor/counselor/principal/aide test and $300
-per-educator Schedule 1 limit ($600 jointly when both qualify). Final 2026
-Schedule A instructions must settle its exact expense categories and
-substantiation before implementing the itemized calculation.
+The implementation was rechecked October 15. The earlier $300/K–12-only plan
+was stale. [Rev. Proc. 2025-32 §4.12](https://www.irs.gov/irb/2025-45_IRB)
+sets the 2026 adjustment cap at **$350 per eligible educator**, with separate
+caps for joint filers. [Public Law 119-111, Division B §1](https://www.govinfo.gov/content/pkg/PLAW-119publ111/pdf/PLAW-119publ111.pdf#page=25),
+enacted September 18, extends §62(d) to early-childhood educators for expenses
+in tax years beginning after 2025. A qualifying early-childhood school/facility
+serves more than two nonresident children under six and operates publicly or
+receives a fee, payment or grant for those services. The 900-hour school-year
+test remains. The law is pinned in `corpus/authorities/pl119-111--2026.pdf`
+(278,902 bytes; SHA-256
+`49ac8c667cd9e443eb2fd64f7655c42fc68e7ad0c594cb5e233a520539abe4cc`).
 
-Use an owner-keyed expense ledger: educator, school year/hours and role;
-date, payee, amount, category and classroom/work purpose; reimbursement,
-tax-free education assistance or 529/Coverdell/savings-bond benefit; and
-whether the exact expense was assigned to Schedule 1, Schedule A, another
-deduction/credit, or excluded. Apply the Schedule 1 cap per educator first.
-Only separately eligible, still-unclaimed expenses can enter Schedule A
-line 17k; include that line in the [deduction choice and overall itemized
-limit](./DEDUCTION-GRAPH.md). Reconcile both filed lines and ensure one receipt
-is never used twice, including Form 8863 education-credit expenses.
+[Public Law 119-21 §70110](https://www.govinfo.gov/content/pkg/PLAW-119publ21/html/PLAW-119publ21.htm)
+adds the separate §67(b)(13)/(g) itemized route. It includes interscholastic
+coaches/sports administrators, nonathletic health/PE supplies and materials
+used in instructional activity outside the classroom. These extensions do not
+expand Schedule 1's role/use rules. [Publication 505](https://www.irs.gov/publications/p505)
+directs taking the Schedule 1 adjustment first. The draft forms place the
+adjustment on Schedule 1 line 11 and the eligible remainder on Schedule A 17k.
 
-The shared [`educator_expenses` node](../../../forms/f1040/nodes/inputs/adjustments/education/educator_expenses/index.ts)
-assumes eligibility when hours are missing, merges all categories into one
-amount, caps only Schedule 1, and has no Schedule A output. It is absent
-from the focused TY2026 registry. Add explicit eligibility and expense
-facts before registration; preserve TY2025 behavior in the TY2025 registry.
+The new `educator_expenses` input owns a receipt ledger with filer identity,
+school/facility qualification, dated employment, role/hours by school year,
+expense date/category/use, and evidence for reimbursements, personal use,
+refunds and allocations to other benefits. Hours can combine qualifying jobs
+within one school year; they cannot combine different school years. Coach
+hours cannot establish the narrower Schedule 1 eligibility. One educator's
+annual cap does not restart with the next school year or transfer to a spouse.
+MFS requires separate-funds/noncommunity-property evidence.
+
+A small cap helper is reused with the existing 2025 node. The 2026 node sends
+one adjustment to both Schedule 1 and AGI, and the original ledger to Schedule
+A. Schedule A recomputes the remainder, reconciles the adjustment received
+from AGI, and includes 17k in deduction choice and the overall itemized limit.
+Receipt allocations remain available for inspection even when standard
+deduction wins; the itemized candidate is not then claimed on Form 1040.
+
+The source currently covers employee expenses paid on the cash method,
+including directly expensed equipment and professional-development course
+costs with qualification evidence. Self-employed expenses, depreciation,
+travel/meals and cross-return community-property allocations need their own
+owners. Positive annual §135/529/530 exclusions require the exclusion owners
+and coordination under §62(d)(2), rather than treating this as only a
+same-receipt reimbursement test. They are rejected by an explicit zero-exclusion
+review until connected. Disclosed education-credit/other-benefit allocations
+reduce receipts, but automated cross-form receipt reconciliation with Form
+8863/8815/1099-Q remains open. Final 2026 instructions, Schedule 1/A printing,
+MeF and ATS reconciliation remain release gates; the current draft instruction
+URLs still returned 2025 instructions when checked.
 
 ## Build and acceptance
 
@@ -87,6 +109,6 @@ facts before registration; preserve TY2025 behavior in the TY2025 registry.
    government service and allowance exclusions, code P versus W-2 wages,
    positive deduction versus taxable excess, Form 2555 allocation, and
    multiple moves. For educators test one and two qualified owners, missing
-   or under-900-hour evidence, mixed categories, reimbursements, the $300
+   or under-900-hour evidence, mixed categories, reimbursements, the $350
    cap, itemized versus standard choice, overall itemized limit, no duplicate
    8863 claim, printable lines and selected-MeF XML/ATS validation.

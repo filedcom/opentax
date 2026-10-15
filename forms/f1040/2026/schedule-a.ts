@@ -4,6 +4,10 @@ import {
   mortgageSource2026Schema,
 } from "./inputs/mortgage-source.ts";
 import { z } from "zod";
+import {
+  calculateEducatorSources2026,
+  educatorSource2026Schema,
+} from "./inputs/educator-source.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { itemized2026 } from "../nodes/config/2026-itemized.ts";
 import {
@@ -32,12 +36,16 @@ export const scopeReview2026Schema = z.object({
   has_mortgage_interest_sources: z.literal(true).optional(),
   no_investment_interest: z.literal(true).optional(),
   no_noncash_gifts_or_prior_charitable_carryovers: z.literal(true),
-  no_casualty_or_other_itemized_deductions: z.literal(true),
+  no_casualty_or_other_itemized_deductions: z.literal(true).optional(),
+  has_educator_expense_sources: z.literal(true).optional(),
+  no_casualty_or_other_itemized_except_educator: z.literal(true).optional(),
   no_nol_carryback: z.literal(true),
 }).strict();
 export const scheduleASource2026Schema = expenseInput2026Schema.extend({
   tax_year: z.literal(2026),
   mortgage_source_2026: mortgageSource2026Schema.optional(),
+  educator_source_2026: educatorSource2026Schema.optional(),
+  educator_adjustment_from_agi: amount.optional(),
   agi: z.number().int().safe(),
   source_scope_review: scopeReview2026Schema,
   salt_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
@@ -76,6 +84,34 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     throw new Error("Schedule A Form 2555 exclusion disagrees with AGI");
   }
   const scope = input.source_scope_review;
+  if (
+    input.educator_source_2026
+      ? scope.no_casualty_or_other_itemized_deductions ||
+        !scope.has_educator_expense_sources ||
+        !scope.no_casualty_or_other_itemized_except_educator
+      : !scope.no_casualty_or_other_itemized_deductions ||
+        scope.has_educator_expense_sources ||
+        scope.no_casualty_or_other_itemized_except_educator
+  ) {
+    throw new Error(
+      "Schedule A educator inventory review disagrees with its source owner",
+    );
+  }
+  const educator = input.educator_source_2026
+    ? calculateEducatorSources2026(input.educator_source_2026)
+    : undefined;
+  if (
+    educator && (educator.source_input.filing_status !== input.filing_status ||
+      educator.source_input.taxpayer_ssn.replaceAll("-", "") !==
+        input.taxpayer_ssn.replaceAll("-", "") ||
+      educator.source_input.spouse_ssn?.replaceAll("-", "") !==
+        input.spouse_ssn?.replaceAll("-", ""))
+  ) {
+    throw new Error("Schedule A educator filer identities disagree");
+  }
+  if (
+    educator && input.educator_adjustment_from_agi !== educator.schedule1Line11
+  ) throw new Error("Schedule A educator adjustment disagrees with AGI");
   if (
     input.mortgage_source_2026
       ? (scope.no_mortgage_or_investment_interest ||
@@ -222,7 +258,8 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     input.filing_status,
   );
   const line8e = line8a + line8b + line8c + line8d;
-  const beforeOverallLimit = line4 + line5e + line8e + line13;
+  const line17k = educator?.scheduleALine17k ?? 0;
+  const beforeOverallLimit = line4 + line5e + line8e + line13 + line17k;
   if (
     [
       saltMagi,
@@ -244,6 +281,7 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
     source_input: input,
     expenses,
     mortgage,
+    educator,
     cash_gifts: cash,
     saltMagi,
     saltLimit,
@@ -272,7 +310,8 @@ export function calculateScheduleA2026(raw: ScheduleASource2026) {
       line14: 0,
       line15: line13,
       line16: 0,
-      line17z: 0,
+      line17k,
+      line17z: line17k,
     },
     beforeOverallLimit,
     charity: {

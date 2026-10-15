@@ -119,6 +119,10 @@ The [Form 3903 and educator contract](../graphs/FORM3903-EDUCATOR-GRAPH.md)
 pins 2026 moving instructions and maps the intelligence-community expansion,
 per-move Form 3903, Schedule 1/1040 reimbursement routes and educator
 Schedule A line 17k after the capped Schedule 1 deduction.
+The educator source now implements the $350 cap and enacted early-childhood
+eligibility, separates Schedule 1 from the broader itemized categories and
+reconciles receipt allocations through AGI and deduction choice. Annual
+education-exclusion coordination, printing and MeF remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its
 December 2026 disclosure draft and continuous-use instructions. The shared
 node currently files nothing; threshold, asset detail, Part III income,

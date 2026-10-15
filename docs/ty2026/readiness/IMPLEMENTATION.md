@@ -80,8 +80,10 @@ to Schedule 1-A Part IV or business-interest schedules.
 The [Form 3903/educator contract](../graphs/FORM3903-EDUCATOR-GRAPH.md) pins the 2026
 moving form and instructions, all ten PDF widgets, per-move deduction or
 taxable reimbursement routes, and educator Schedule A line 17k after the
-Schedule 1 limit. Both shared input nodes need 2026 source facts before
-registration.
+Schedule 1 limit. The educator source now applies the $350 annual cap,
+September 2026 early-childhood expansion and the broader itemized role/use
+rules, with receipts reconciled through AGI and deduction selection. Moving
+sources, education-exclusion coordination and filing output remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its 2026 draft and
 continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
 Part III income reconciliation and repeated asset statements. The shared

@@ -1,4 +1,6 @@
 import { mortgage_interest_2026 } from "./inputs/mortgage-interest.ts";
+import { educator_expenses_2026 } from "./inputs/educator-expenses.ts";
+import { syntheticEducator2026 } from "./inputs/educator.fixture.ts";
 import {
   syntheticMortgage2026,
   syntheticMortgageRefinance2026,
@@ -25,7 +27,7 @@ import {
 import { schedule1a_2026 } from "./nodes/schedule1a.ts";
 import { cash_charity_2026 } from "./inputs/cash-charity.ts";
 import { syntheticCashGift2026 } from "./inputs/cash-charity.fixture.ts";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertObjectMatch } from "@std/assert";
 import { buildStartNode } from "../start.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
@@ -45,6 +47,8 @@ for (
     "itemized",
     "mortgage",
     "mortgage-refinance",
+    "educator-standard",
+    "educator-itemized",
     "overtime",
     "tips-overtime-senior",
     "vehicle",
@@ -55,8 +59,10 @@ for (
   ]
 ) {
   const refinance = scenario === "mortgage-refinance";
-  const mortgage = scenario === "mortgage" || refinance;
-  const mortgageDeduction = refinance ? 24092 : 24000;
+  const educator = scenario.startsWith("educator-");
+  const mortgage = scenario === "mortgage" || refinance ||
+    scenario === "educator-itemized";
+  const mortgageDeduction = refinance ? 24092 : educator ? 24450 : 24000;
   const itemized = scenario === "itemized";
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
@@ -83,6 +89,7 @@ for (
       cash_charity: cash_charity_2026,
       schedule_a: schedule_a_2026,
       mortgage_interest: mortgage_interest_2026,
+      educator_expenses: educator_expenses_2026,
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
@@ -116,6 +123,19 @@ for (
         tax_residency: "full_year_citizen_or_resident",
         short_tax_year_due_to_accounting_change: false,
       },
+      ...(educator
+        ? {
+          educator_expenses: (() => {
+            const {
+              filing_status: _status,
+              taxpayer_ssn: _taxpayer,
+              spouse_ssn: _spouse,
+              ...claim
+            } = syntheticEducator2026();
+            return claim;
+          })(),
+        }
+        : {}),
       ...(overtime || vehicle || unreported
         ? {
           schedule1a: {
@@ -180,6 +200,23 @@ for (
           ? {
             medical_payments: [syntheticMedical2026()],
             tax_payments: [syntheticPropertyTax2026()],
+          }
+          : {}),
+        ...(educator
+          ? {
+            source_scope_review: {
+              ...itemizedClaim2026.source_scope_review,
+              ...(mortgage
+                ? {
+                  no_mortgage_or_investment_interest: undefined,
+                  has_mortgage_interest_sources: true,
+                  no_investment_interest: true,
+                }
+                : {}),
+              no_casualty_or_other_itemized_deductions: undefined,
+              has_educator_expense_sources: true,
+              no_casualty_or_other_itemized_except_educator: true,
+            },
           }
           : {}),
       },
@@ -321,7 +358,8 @@ for (
     );
     assertEquals(
       result.pending.f1040.line11b_agi,
-      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0) -
+        (educator ? 350 : 0),
     );
     assertEquals(
       result.pending.f1040.line25d_total_withholding,
@@ -363,7 +401,7 @@ for (
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
       mortgage
-        ? expectedWages - mortgageDeduction
+        ? expectedWages - mortgageDeduction - (educator ? 350 : 0)
         : itemized
         ? 96_751
         : misclassified
@@ -376,6 +414,8 @@ for (
         ? 101_851
         : overtime
         ? 123_401
+        : educator
+        ? 133_051
         : 133_401,
     );
     assertEquals(
@@ -399,6 +439,17 @@ for (
       assertEquals(result.pending.f1040.line25c_other_withheld, 360);
       assertEquals(result.pending.f1040.schedule2_line20, 360);
       assertEquals(result.pending.form8959.file_form8959, true);
+    }
+    if (educator) {
+      assertEquals(result.pending.schedule1.line11_educator_expenses, 350);
+      assertEquals(result.pending.schedule1.agi_schedule1_line26, 350);
+      assertObjectMatch(result.pending.schedule_a, {
+        calculation_2026: { lines: { line17k: 450 } },
+      });
+      assertEquals(
+        result.pending.f1040.deduction_method,
+        mortgage ? "itemized" : "standard",
+      );
     }
     if (medicare) {
       assertEquals(result.pending.f1040.line23_other_taxes, 900);
@@ -457,7 +508,8 @@ for (
     );
     assertEquals(
       result.pending.f8812.auto_agi,
-      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0),
+      expectedWages + (unreported ? 2000 : 0) + (misclassified ? 10_000 : 0) -
+        (educator ? 350 : 0),
     );
   });
 }

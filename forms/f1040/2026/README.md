@@ -479,6 +479,21 @@ See the [mortgage source graph](../../../docs/ty2026/graphs/FORM1098-1098E-GRAPH
 for current authorities and boundaries. A passing mortgage calculation does not
 establish complete 2026 Schedule A or filing support.
 
+## Educator expenses
+
+The `educator_expenses` source routes a receipt-based deduction to Schedule 1
+line 11 and AGI, with the remaining eligible expenses on Schedule A line 17k.
+It applies the 2026 $350 per-educator cap, explicit school-year hours and the
+September 2026 early-childhood eligibility expansion. Coaches, nonathletic
+health/PE supplies and instructional use outside the classroom use the broader
+itemized rules. It reuses the 2025 cap arithmetic with separate source rules.
+Refunds, personal use and disclosed reimbursement/credit/deduction allocations
+are removed before either deduction. Schedule A verifies identity, inventory
+and the adjustment supplied by AGI before deduction selection. The
+[educator source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
+records the authorities and unfinished annual-exclusion, cross-form education
+benefit, depreciation, moving-expense and filing-output routes.
+
 ## Reuse and folder rules for subsequent work
 
 Keep shared algorithms in the existing `nodes` domain folders and preserve
@@ -637,3 +652,11 @@ components matched the hashes already recorded in the research corpus.
   unchanged acquisition caps, retained points on same/different-lender refinance,
   new points alongside carried points, order independence, broken source links,
   and insurance stopping at payoff. Unit and preflight gates also passed.
+
+- Educator integration passed 231 typed tests across all 2026 modules and the
+  existing 2025 educator suite. The receipt-to-return fixtures verify both
+  standard and itemized choices, the adjustment's effect on AGI, and the
+  separate itemized remainder. Eligibility cases include early-childhood
+  facilities, coach roles, school-year hours, spouses, refunds and other-benefit
+  allocations. Unit and preflight gates passed. Schedule 1/A PDF/MeF and
+  annual education-exclusion coordination remain unfinished.
