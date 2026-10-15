@@ -525,6 +525,8 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         {
           nodeType: "f8812",
           fields: {
+            taxpayer_ssn: input.taxpayer_ssn,
+            spouse_ssn: input.spouse_ssn,
             auto_qualifying_children: counts.qualifying_child_tax_credit_count,
             auto_other_dependents: counts.other_dependent_count,
             auto_filing_status: input.filing_status,

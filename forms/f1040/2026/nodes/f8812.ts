@@ -1,3 +1,5 @@
+import { businessCreditEarnings2026 } from "../inputs/business-earned.ts";
+import { businessReturnSource2026Schema } from "../inputs/business-qbi.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -22,11 +24,15 @@ export const childCreditClaim2026Schema = z.object({
   ),
   no_foreign_or_territory_exclusions: z.literal(true),
   not_bona_fide_puerto_rico_resident: z.literal(true),
-  no_self_employment_or_statutory_employee_income: z.literal(true),
+  no_self_employment_or_statutory_employee_income: z.literal(true).optional(),
+  business_inventory_reference: z.string().trim().min(1).optional(),
   no_medicaid_waiver_payments: z.literal(true),
 }).strict();
 const amount = z.number().finite().nonnegative();
 export const inputSchema = childCreditClaim2026Schema.partial().extend({
+  taxpayer_ssn: z.string().optional(),
+  spouse_ssn: z.string().optional(),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
   auto_qualifying_children: z.number().int().nonnegative(),
   auto_other_dependents: z.number().int().nonnegative(),
   auto_filing_status: z.nativeEnum(FilingStatus),
@@ -51,6 +57,9 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
     wage_tax: amount,
     additional_wage_withheld: amount,
     has_rrta_or_self_employment: z.boolean(),
+    has_rrta: z.boolean().optional(),
+    self_employment_tax: amount.optional(),
+    self_employment_earnings: amount.optional(),
   }).strict().optional(),
   schedule2_line16c: amount.optional(),
   schedule2_line17c: amount.optional(),
@@ -81,10 +90,36 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       key,
     ) => [key, input[key as keyof typeof input]]),
   ));
+  const business = input.business_sources_2026
+    ? businessCreditEarnings2026(
+      input.business_sources_2026,
+      input.auto_filing_status,
+      input,
+    )
+    : undefined;
+  if (business) {
+    if (
+      review.business_inventory_reference !==
+        business.source_input.record_reference ||
+      review.no_self_employment_or_statutory_employee_income !== undefined
+    ) {
+      throw new Error(
+        "Child credit needs the matching business inventory review and no contradictory no-business answer",
+      );
+    }
+  } else if (
+    review.no_self_employment_or_statutory_employee_income !== true ||
+    review.business_inventory_reference !== undefined
+  ) {
+    throw new Error(
+      "Child credit business review requires a complete retained business inventory",
+    );
+  }
   if (
     input.unsupported_earned_income_activity ||
-    input.statutory_employee_from_w2 ||
-    (input.auto_se_earned_income ?? 0) !== 0
+    (!business &&
+      (input.statutory_employee_from_w2 ||
+        (input.auto_se_earned_income ?? 0) !== 0))
   ) {
     throw new Error(
       "2026 child credit needs the self-employment, statutory-employee or foreign-income worksheet owner",
@@ -95,12 +130,12 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     nontaxable_combat_pay: roundWholeDollars(
       input.nontaxable_combat_pay_from_w2 ?? 0,
     ),
-    schedule_c_statutory_employee_income: 0,
-    nonfarm_schedule_c_and_k1_net: 0,
+    schedule_c_statutory_employee_income: business?.statutory_gross_income ?? 0,
+    nonfarm_schedule_c_and_k1_net: business?.regular_net_profit ?? 0,
     farm_schedule_f_and_k1_net: 0,
     farm_optional_method_used: false,
     excluded_medicaid_waiver_payments: 0,
-    schedule1_line15_se_deduction: 0,
+    schedule1_line15_se_deduction: business?.se_deduction ?? 0,
   };
   // Dependent care and education are finalized before this worksheet; the source review
   // proves the remaining nonrefundable credits are absent.
@@ -143,11 +178,22 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
         );
       }
       if (
-        payroll.has_rrta_or_self_employment ||
+        payroll.has_rrta === true ||
+        (payroll.has_rrta_or_self_employment &&
+          (!business || payroll.has_rrta !== false)) ||
         input.payroll_sources_2026.some((s) => s.rrta)
       ) {
         throw new Error(
           "2026 Schedule 8812 Part II-B needs the RRTA/self-employment payroll worksheet owner",
+        );
+      }
+      if (
+        business &&
+        (payroll.self_employment_earnings !== business.se_medicare_earnings ||
+          payroll.self_employment_tax === undefined)
+      ) {
+        throw new Error(
+          "Schedule 8812 needs Medicare sources matching the business SE earnings",
         );
       }
       if (
@@ -181,7 +227,8 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
         ),
       );
       const line21 = ss + medicare + payroll.wage_tax -
-        payroll.additional_wage_withheld;
+        payroll.additional_wage_withheld +
+        roundWholeDollars((payroll.self_employment_tax ?? 0) * .5);
       if (line21 < 0) {
         throw new Error(
           "Schedule 8812 Medicare withholding exceeds reconciled payroll sources",
@@ -191,7 +238,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       // line 22 operands, and the misleading legacy adoption field is excess SS.
       return {
         line21_w2_withheld_social_security_medicare: line21,
-        schedule1_line15: 0,
+        schedule1_line15: business?.se_deduction ?? 0,
         schedule2_line5: input.schedule2_line16c,
         schedule2_line6: input.schedule2_line17c,
         schedule2_line13: 0,
@@ -211,6 +258,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   return {
     source_input: input,
     earned_income_worksheet: earned,
+    business_earned_income_workpaper: business,
     lines,
     do_not_claim_actc: review.do_not_claim_actc,
     file_schedule8812: !!lines && (lines.line14 > 0 || lines.line27 > 0),

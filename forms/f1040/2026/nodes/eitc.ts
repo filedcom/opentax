@@ -1,3 +1,5 @@
+import { businessCreditEarnings2026 } from "../inputs/business-earned.ts";
+import { businessReturnSource2026Schema } from "../inputs/business-qbi.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -38,7 +40,10 @@ export const eicClaim2026Schema = z.object({
   no_form2555: z.literal(true),
   no_business_farm_rental_passive_or_capital_disposition_sources: z.literal(
     true,
-  ),
+  ).optional(),
+  business_inventory_reference: reference.optional(),
+  no_other_farm_rental_passive_or_capital_disposition_sources: z.literal(true)
+    .optional(),
   no_retirement_disability_inmate_or_workfare_wages: z.literal(true),
   no_medicaid_waiver_payments: z.literal(true),
   no_community_property_allocation: z.literal(true),
@@ -86,6 +91,8 @@ export const inputSchema = eicClaim2026Schema.partial().extend({
   earned_income: z.union([money, z.array(money)]).optional(),
   wage_income_from_agi: money,
   unsupported_eic_activity: z.boolean(),
+  capital_disposition_activity_2026: z.boolean().default(false),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
   w2_eic_sources_2026: z.array(
     z.object({
       recipient: z.enum(["taxpayer", "spouse"]),
@@ -120,6 +127,15 @@ export function calculateEic2026(raw: EicInput2026) {
       "EIC child counts and details must reconcile to general source rows",
     );
   }
+  const business = input.business_sources_2026
+    ? businessCreditEarnings2026(
+      input.business_sources_2026,
+      input.filing_status,
+      input,
+    )
+    : undefined;
+  const earnedBeforeCombat = input.wage_income_from_agi +
+    (business?.business_earned_income ?? 0);
   const base = {
     source_input: input,
     credit_amount: 0,
@@ -132,7 +148,8 @@ export function calculateEic2026(raw: EicInput2026) {
     })),
     combat_pay_elected: { taxpayer: false, spouse: false },
     elected_combat_pay: 0,
-    earned_income_for_eic: input.wage_income_from_agi,
+    earned_income_for_eic: earnedBeforeCombat,
+    business_earned_income_workpaper: business,
   };
   if (input.do_not_claim_eic === true) {
     return { ...base, disposition: "declined" };
@@ -142,11 +159,11 @@ export function calculateEic2026(raw: EicInput2026) {
   ][children.count];
   if (input.agi >= maxIncome) return { ...base, disposition: "agi_phaseout" };
   if (
-    input.unsupported_eic_activity ||
-    input.w2_eic_sources_2026.some((s) => s.statutory_employee)
+    input.unsupported_eic_activity || input.capital_disposition_activity_2026 ||
+    (!business && input.w2_eic_sources_2026.some((s) => s.statutory_employee))
   ) {
     throw new Error(
-      "EIC needs the business, foreign, retirement or statutory-employee source owner",
+      "EIC needs the business, capital-disposition, foreign, retirement or statutory-employee source owner",
     );
   }
   const combat = Object.fromEntries(
@@ -160,7 +177,7 @@ export function calculateEic2026(raw: EicInput2026) {
       ) / 100,
     ]),
   ) as Record<"taxpayer" | "spouse", number>;
-  if (input.wage_income_from_agi + combat.taxpayer + combat.spouse === 0) {
+  if (earnedBeforeCombat + combat.taxpayer + combat.spouse <= 0) {
     return { ...base, disposition: "no_earned_income" };
   }
   if (!input.filer_ssns_reviewed) {
@@ -195,6 +212,30 @@ export function calculateEic2026(raw: EicInput2026) {
       ) => [key, input[key as keyof typeof input]]),
     ),
   );
+  if (business) {
+    if (
+      review.business_inventory_reference !==
+        business.source_input.record_reference ||
+      review.no_other_farm_rental_passive_or_capital_disposition_sources !==
+        true ||
+      review.no_business_farm_rental_passive_or_capital_disposition_sources !==
+        undefined
+    ) {
+      throw new Error(
+        "EIC needs the matching business inventory review and no contradictory no-business answer",
+      );
+    }
+  } else if (
+    review.no_business_farm_rental_passive_or_capital_disposition_sources !==
+      true ||
+    review.business_inventory_reference !== undefined ||
+    review.no_other_farm_rental_passive_or_capital_disposition_sources !==
+      undefined
+  ) {
+    throw new Error(
+      "EIC business review requires a complete retained business inventory",
+    );
+  }
   if (
     input.tax_residency !== "full_year_citizen_or_resident" ||
     (input.filing_status === FilingStatus.MFJ &&
@@ -264,7 +305,7 @@ export function calculateEic2026(raw: EicInput2026) {
     // Keep source validation/2026 residency fields in this adapter; the shared
     // arithmetic and eligibility helpers consume only reviewed semantic facts.
     qualifying_child_details: undefined,
-    earned_income: input.wage_income_from_agi,
+    earned_income: Math.max(0, earnedBeforeCombat),
     prior_eic_disallowance_review: review.prior_disallowance_review,
     childless_eic_review: {
       not_qualifying_child_of_another_taxpayer_verified: true,
@@ -308,7 +349,7 @@ export function calculateEic2026(raw: EicInput2026) {
         amount,
         credit: computeEitcWithConfig({
           ...shared,
-          earned_income: input.wage_income_from_agi + amount,
+          earned_income: Math.max(0, earnedBeforeCombat + amount),
         }, eic2026),
       };
       comparisons.push(candidate);
@@ -322,7 +363,7 @@ export function calculateEic2026(raw: EicInput2026) {
     file_schedule_eic: best.credit > 0 && children.count > 0,
     combat_pay_elected: { taxpayer: best.taxpayer, spouse: best.spouse },
     elected_combat_pay: best.amount,
-    earned_income_for_eic: input.wage_income_from_agi + best.amount,
+    earned_income_for_eic: earnedBeforeCombat + best.amount,
     combat_pay_comparisons: comparisons,
   };
 }

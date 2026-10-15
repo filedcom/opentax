@@ -261,12 +261,13 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           fields: {
             ...output.fields,
             wage_income_from_agi: wageIncome,
+            ...(business_sources_2026 ? { business_sources_2026 } : {}),
             [
               output.nodeType === "eitc"
                 ? "unsupported_eic_activity"
                 : "unsupported_earned_income_activity"
             ]: [
-              input.line3_schedule_c,
+              business ? 0 : input.line3_schedule_c,
               input.line6_schedule_f,
               ...(output.nodeType === "eitc"
                 ? [
@@ -276,7 +277,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
                   input.line5b_pension_taxable,
                 ]
                 : []),
-              input.line15_se_deduction,
+              business ? 0 : input.line15_se_deduction,
               input.line8d_foreign_earned_income_exclusion,
             ].some((v) => (v ?? 0) !== 0),
           },
@@ -374,8 +375,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       nodeType: "f2441",
       fields: {
         wage_income_from_agi: earned?.wage_income_from_agi ?? 0,
-        unsupported_earned_income_activity:
-          earned?.unsupported_earned_income_activity ?? false,
+        unsupported_earned_income_activity: unsupportedEarnedActivity,
       },
     });
     outputs.push({

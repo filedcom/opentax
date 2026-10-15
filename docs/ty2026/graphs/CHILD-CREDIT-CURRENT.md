@@ -22,8 +22,9 @@ increase that limit. Whole-dollar ACTC reaches settlement and Schedule 3-A.
 
 A public singleton `f8812` source claim requires a review reference, prior
 credit-disallowance answer, ACTC opt-out answer, and explicit absence reviews for
-nonrefundable credits other than dependent care, foreign/territory exclusions, Puerto Rico residence,
-self-employment/statutory-employee income and Medicaid waiver payments. It cannot
+nonrefundable credits other than dependent care and education, foreign/territory exclusions, Puerto Rico residence,
+Medicaid waiver payments and either no business income or a reference to the
+complete supported business inventory. It cannot
 supply counts, AGI, tax or calculated credit amounts. Schedule 3 supplies finalized dependent-care credit to Worksheet A line 2; the
 review justifies zero remaining offsets and does not stand in for future credit
 calculations. See [current care route](FORM2441-CURRENT.md). The old Worksheet A line 5b slot is held at zero because
@@ -58,23 +59,47 @@ Form 8959 and Schedule 2. The 2026 Schedule 8812 withholding worksheet uses
 W-2 Social Security plus Medicare withholding, adds Form 8959 line 7 and subtracts
 its line 22; the latter includes uncollected code B/N amounts under the
 [2026 Form 8959 instructions](https://www.irs.gov/pub/irs-dft/i8959--dft.pdf).
-Part II-B line 22 uses Schedule 2 lines 16c/17c; line 24 deducts finalized EIC
+Part II-B line 22 uses Schedule 1 line 15 and Schedule 2 lines 16c/17c; line 24 deducts finalized EIC
 and finalized Schedule 3 excess Social Security credit, reconciled to W-2.
 The shared calculator chooses the larger earned-income/payroll method and caps
 it at line 17. Missing actual withholding stops the route rather than estimating
-it from wages. RRTA and self-employment still require their remaining source
-owners. See [current EIC](EIC-CURRENT.md).
+it from wages. Supported business owners now supply their half-SE-tax deduction
+and one-half of Form 8959 line 18 Additional Medicare tax; the latter belongs
+in line 21. The Medicare earnings must match the replayed SE sources. RRTA
+remains unfinished. See [current EIC](EIC-CURRENT.md).
+
+## Business worksheet integration
+
+The credit replays the same owner-identified service-business sources used by
+Schedule C/SE and AGI. Ordinary signed profits enter earned-income line 2b;
+statutory gross wages enter line 2a from Schedule C line 1. Source expenses reduce
+AGI but do not replace statutory gross income on this worksheet. Line 5 uses
+the actual sum of each owner's SE deduction. All combat pay is included once,
+regardless of EIC election. Farm/optional methods and special exemptions remain
+outside the current business source contract.
+
+A business claim requires `business_inventory_reference`; the old absence answer
+must be omitted. Both credits retain the source workpaper. Tests cover profits,
+losses, statutory expenses, subthreshold SE, combat elections, separate joint
+SE liability, the three-child payroll branch, and mismatched/contradictory sources.
+The existing PDF builder replays these inputs for Schedule 8812.
 
 ## Still required
 
 - Complete Part II-B for tier 1 RRTA credit, Puerto Rico, railroad compensation
-  and self-employment. Pending EIC is never assumed zero.
+  and broader self-employment sources. Pending EIC is never assumed zero.
 - Complete Credit Limit Worksheets A/B beyond connected dependent care. 2026 A uses Schedule 3 lines
   1, 2, 3, 4, 6d, 6f, 6l, 6m; B line 15 uses 5a, 6c, 6g, 6h. Part II-B line 22
   uses Schedule 1 line 15 and Schedule 2 lines 16c/17c, not the 2025 line names.
 - Form 8862/disallowance exceptions, Form 8332, birth/death without a TIN,
-  self-employment, foreign and territory cases and Medicaid waiver elections.
+  broader self-employment, foreign and territory cases and Medicaid waiver elections.
 - EIC and child-credit source parity remain incomplete beyond the supported
-  reviewed wage route. The bundle retains the incomplete implementation label.
+  reviewed wage and service-business routes. The bundle retains the incomplete implementation label.
 - Final forms/instructions, current MeF and business rules, product registration,
   and ATS acceptance.
+
+Business integration verification: 625 regression tests passed across the 2026
+and shared EIC/8812 suites. Typed business-credit/PDF tests and unit verification
+also passed. Twelve synthetic settlement/EIC/8812 pages were reopened without
+AcroForm or annotations and visually inspected for ordinary, statutory and joint
+loss/Additional-Medicare cases. This does not establish filing or ATS acceptance.

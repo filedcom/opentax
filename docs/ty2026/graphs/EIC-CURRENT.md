@@ -33,7 +33,8 @@ even when only the first three fit on Schedule EIC. AGI supplies normalized earn
 wage lines and the investment-income floor. W-2 supplies combat pay by recipient.
 
 Ordinary wage cases support zero through three-or-more qualifying children and
-childless eligibility. Explicit reviews exclude unsupported business, rental,
+childless eligibility. Reviewed service-business claims now supply Worksheet B
+amounts as described below. Explicit reviews exclude other business, rental,
 passive, capital-disposition, special-wage, foreign and community-property cases.
 Missing reviews stop calculation; opt-out, no earnings, known disqualification
 or complete AGI phaseout can finalize zero without a positive claim review.
@@ -45,6 +46,31 @@ are unchanged. ACTC includes all combat pay independently of the EIC election.
 Retained calculation evidence includes election comparisons and source inputs.
 EIC finalizes Form 1040 line 27a and Schedule 8812's payroll-method EIC deduction,
 then settlement and Schedule 3-A apply their existing benefit rules.
+
+## Business earned income
+
+The connected `schedule_c` source inventory now supplies ordinary signed net
+profits, owner SE deductions and linked statutory gross wages. The EIC claim
+references the inventory and confirms no other farm/rental/passive/disposition
+sources; it must not simultaneously claim that no business exists. AGI retains
+and reconciles the source, and the credit owner replays it against actual filer
+identities. Caller-calculated earned income remains unavailable.
+
+Worksheet B Parts 1-3 distinguish owners filing SE from owners with losses or
+subthreshold earnings. The ordinary net amounts and SE deductions combine with
+wages before the zero-earned-income test; losses are not discarded. Statutory
+income uses Schedule C **line 1**, not its net profit, and is excluded from the
+ordinary SE amount. Its expenses still reduce AGI and QBI. Combat elections add
+to this combined amount before the published table lookup.
+
+The [currently available Form 1040 instructions](https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf)
+still identify Worksheet B as 2025 on October 15; that worksheet is a semantic
+comparator, while the 2026 published table supplies annual values. The
+[2026 Schedule 8812 instructions](https://www.irs.gov/pub/irs-dft/i1040s8--dft.pdf)
+independently use the same ordinary net/SE-deduction and statutory line-1 sources
+for their earned-income worksheet. Refresh final EIC instructions before filing.
+Actual capital-disposition presence now stops this reviewed route even if its
+income nets to zero; the review cannot conceal missing investment-income work.
 
 ## Draft PDFs and verification
 
@@ -58,7 +84,7 @@ including the special newborn/deceased and more-than-half-year rules.
 
 Connected tests cover childless/child credits, joint combat elections, whole-dollar
 aggregation, opt-out, missing/invalid SSN reviews, rejected supplied totals,
-unsupported statutory-employee activity, three-child ACTC, actual payroll
+unmatched statutory-employee activity, three-child ACTC, actual payroll
 withholding and Medicare reconciliation. PDF tests cover attachment order,
 reconciliation and student, disabled and newborn children. Nine synthetic QA
 pages were rendered and inspected, including both credit schedules, settlement,
@@ -73,10 +99,17 @@ command, targeted type checks and changed-file formatting/lint checks passed.
   stops for a separate review route instead of incorrectly finalizing zero.
 - Form 8862 recertification, competing-child/tiebreaker cases, separated-spouse
   MFS eligibility and self-only EIC with a qualifying child lacking a valid SSN.
-- Complete earned-income/Worksheet B, business/farm/passive/rental/disposition
+- Expand earned-income/Worksheet B beyond the reviewed service-business route,
+  including farm/passive/rental/disposition
   investment-income treatment, Medicaid waiver elections, clergy, retirement
   disability wages, foreign/territory and community-property cases.
 - Final 2026 Form 1040 instructions and Publication 596: the draft URLs still
   returned 2025 material when checked. Those are comparators, not final 2026
   authority; refresh before filing and recheck worksheet/eligibility instructions.
 - Complete current MeF/business rules, public product registration and ATS.
+
+Business integration verification: 625 regression tests passed across the 2026
+and shared EIC/8812 suites. Typed business-credit/PDF tests and unit verification
+also passed. Twelve synthetic settlement/EIC/8812 pages were reopened without
+AcroForm or annotations and visually inspected for ordinary, statutory and joint
+loss/Additional-Medicare cases. This does not establish filing or ATS acceptance.

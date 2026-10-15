@@ -167,6 +167,7 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
       "form8960",
       "capital_loss_carryover",
       "standard_deduction",
+      "eitc",
     ];
   }
   compute(ctx: NodeContext, input: CapitalGainInput2026): NodeResult {
@@ -181,6 +182,10 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
       : {};
     return {
       outputs: [
+        {
+          nodeType: "eitc",
+          fields: { capital_disposition_activity_2026: r.file_schedule_d },
+        },
         {
           nodeType: "capital_loss_carryover",
           fields: {

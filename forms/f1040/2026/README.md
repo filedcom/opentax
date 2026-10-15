@@ -10,7 +10,9 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   connects reviewed service businesses, statutory W-2s and vehicle records to
   income, owner SE tax, Additional Medicare, QBI and draft attachments. It includes
   the 2026 active-business minimum and separate prior QBI losses. Advanced QBI,
-  business credit consumers and broader source/loss coverage remain unfinished.
+  business care/education consumers and broader source/loss coverage remain unfinished.
+  EIC and ACTC now replay supported business sources, including statutory gross
+  wages, losses, SE deductions and the three-child payroll method.
   See the [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
 
 - `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
@@ -903,8 +905,10 @@ Schedule 2 supply the tax limit including AMT. CTC/ODC and the supported ACTC
 method finalize Form 1040 lines 19/28 and select draft Schedule 8812 in the bundle.
 Caller credit totals are rejected. Review fields establish the absence of other
 credits and unsupported income sources. Ordinary W-2 Part II-B now consumes
-finalized EIC, Schedule 3 excess Social Security and actual payroll withholding. RRTA/self-employment,
-other-credit ordering, Form 8862 and foreign/business cases still need their owners. See
+finalized EIC, Schedule 3 excess Social Security and actual payroll withholding.
+Supported business sources now supply credit earned income, half-SE tax and half
+of Additional Medicare tax on SE. RRTA, advanced business sources, other-credit
+ordering, Form 8862 and foreign cases still need their owners. See
 [the current contract](../../../docs/ty2026/graphs/CHILD-CREDIT-CURRENT.md).
 
 

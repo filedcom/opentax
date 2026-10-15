@@ -89,9 +89,10 @@ until joint SE wage-base reconciliation is implemented. It also rejects a vehicl
 present in both Schedule C and Schedule 1-A sources until loan/payment allocation
 is connected. Active nontrading business income is excluded from NIIT only after
 its source review. Potential Form 461 losses and negative-AGI/NOL cases stop for
-their missing owners. Business earned income for EIC, ACTC, dependent care,
-education support and dependent deductions remains guarded; those consumers are
-not yet complete.
+their missing owners. EIC and ACTC now consume this inventory through replayed earned-income
+worksheets, including signed losses, statutory gross wages and the three-child
+payroll method. Dependent care, education support and dependent deductions remain
+guarded until their distinct earned-income definitions and allocations are connected.
 
 Next work includes information-return receipts, COGS, depreciation, home office,
 other business debt, at-risk/passive losses, benefits, optional SE methods,

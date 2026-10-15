@@ -222,6 +222,9 @@ class Form8959Node2026 extends TaxNode<typeof inputSchema> {
             medicare_payroll_2026: {
               wage_tax: calculation.lines.line7,
               additional_wage_withheld: calculation.lines.line22,
+              has_rrta: calculation.has_rrta,
+              self_employment_tax: calculation.lines.line18,
+              self_employment_earnings: calculation.lines.line13,
               has_rrta_or_self_employment: calculation.has_rrta ||
                 calculation.has_self_employment,
             },
