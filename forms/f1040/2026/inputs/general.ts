@@ -1,3 +1,4 @@
+import { schedule_a_2026 } from "../nodes/schedule-a.ts";
 import { form8919_2026 } from "./form8919.ts";
 import { ct2_2026 } from "./ct2.ts";
 import { form4137_2026 } from "./form4137.ts";
@@ -97,6 +98,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     w2_2026,
     cash_charity_2026,
+    schedule_a_2026,
     vehicle_loan_interest_2026,
     form4137_2026,
     form8919_2026,
@@ -360,6 +362,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         },
         { nodeType: "w2", fields: owner },
         { nodeType: "cash_charity", fields: owner },
+        { nodeType: "schedule_a", fields: owner },
         { nodeType: "vehicle_loan_interest", fields: owner },
         { nodeType: "form4137", fields: owner },
         { nodeType: "form8919", fields: owner },

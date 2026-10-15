@@ -115,7 +115,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         }
         return { nodeType: "f1040", fields };
       }
-      if (output.nodeType === "schedule1a") {
+      if (output.nodeType === "schedule1a" || output.nodeType === "schedule_a") {
         return {
           ...output,
           fields: {

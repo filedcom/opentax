@@ -149,7 +149,7 @@ The graph adapter currently handles no-QBI calculations. AGI marks business
 income for the unfinished QBI source owner, and the adapter rejects a previously
 calculated `qbi_deduction`. The pure solver tests exercise the coupled equations
 with independent QBI test calculators; they do not establish completed Forms
-8995/8995-A. Final Schedule A source limits, the remaining Schedule 1-A source branches,
+8995/8995-A. Remaining Schedule A categories, the remaining Schedule 1-A source branches,
 QBI forms/attachments, dependent earned-income classification, and foreign-tax
 allocation still need their receiving 2026 owners. The existing finalization API
 continues to accept upstream finalized amounts only.
@@ -159,8 +159,8 @@ payment and classification records, benefits received, QCD status and
 contemporaneous acknowledgment facts. It excludes QCDs, donor-advised funds,
 supporting organizations and other ineligible recipients from the nonitemizer
 amount. Credits/reimbursements await a separate reduction review. The same
-identified gift records are retained for the future Schedule A category/floor
-calculator; they are not asserted as a net itemized deduction.
+identified gift records feed the Schedule A category/floor calculator below;
+they are not asserted as a net itemized deduction.
 
 The resolver applies the retained 60% contribution-base ceiling before the
 $1,000/$2,000 cap. Section 170(p) excludes carryforwards and the itemizer floor;
@@ -397,6 +397,53 @@ The plan's broader acceptance requirements are retained in
 Sources checked October 15: [TD 10054, §§1.163-16 and 1.6050AA-1](https://www.irs.gov/irb/2026-39_irb)
 and [Form 1098-VLI instructions](https://www.irs.gov/pub/irs-pdf/i1098vli.pdf).
 
+## Schedule A expense sources and deduction selection
+
+The incremental `schedule_a` input accepts dated medical and tax payment records,
+an income-versus-actual-sales-tax election, charity classifications and a source
+inventory review. Filer identity, AGI, W-2 withholding and cash gifts come from
+upstream owners. The receiver calculates a candidate before the overall limit;
+the joint resolver decides itemizing versus standard plus nonitemizer charity,
+applies the overall limit, and sends the selected amounts to Form 1040 and the
+Form 6251 handoff. No duplicate charity or W-2 tax total is accepted publicly.
+
+Ordinary medical payments exclude reimbursements, tax-free funding and nonmedical
+charges before the shared 7.5% AGI floor. Tax records distinguish income payments,
+value-based personal-property taxes, domestic real-estate taxes and actual sales
+receipts. They exclude assessments, service charges and current-payment refunds.
+Vehicle sales tax is capped at the general rate before subtracting a refund of
+its deductible general-tax portion. Sales-tax tables, mixed business/property
+allocations, ownership changes and special medical limits remain outside this
+source contract. W-2 sources retain document, employee and employer identity;
+repeated employer records require reconciliation before itemizing.
+
+The 2026 policy supplies the $40,400 SALT cap and $505,000/$252,500 thresholds.
+SALT MAGI requires either an explicit exclusion review or internally sourced
+Puerto Rico, Form 2555 lines 45 and 50, and Form 4563 amounts. The Form 2555
+exclusion must agree with AGI. Printed worksheet inputs and reduction are rounded
+before the final MFS division. Under [IRC §164(b)(6)–(7)](https://uscode.house.gov/us/usc/119-118/t26/s164/),
+the full limit is reduced before halving for MFS: MAGI of $262,500 produces an
+$18,700 cap. The legacy 2025 node currently halves first; this branch preserves
+that behavior during extraction, so its MFS regression is not evidence of the
+correct 2026 policy. Correcting that legacy ordering remains separate work.
+
+Current cash gifts reuse the shared percentage-limit calculator with the amended
+2026 cash-only coordination rule in [IRC §170(b)(1)(B)](https://uscode.house.gov/us/usc/119-118/t26/s170/).
+The 0.5% floor reduces the other-30 category before cash-60. Nonpublic-recipient
+classification and DAF exclusive-control acknowledgment require source records.
+Percentage excess and eligible floor carryover are retained as **candidates**;
+no carryforward is persisted before deduction selection and the remaining
+carryover/NOL rules. The cash-only policy rejects noncash gifts rather than
+applying the old mixed-property ordering.
+
+This is a bounded source implementation: the inventory review must establish no
+other deductible taxes, mortgage/investment interest, noncash gifts or prior
+charitable carryovers, casualty/other deductions, or NOL carryback. Those owners,
+Schedule A PDF/MeF and final instructions still need implementation. The internal
+graph fixture derives a $53,250 itemized candidate from receipts and W-2 sources
+at $150,001 AGI, selects it, removes the nonitemizer deduction and retains $38,750
+of taxes for the AMT handoff. Its income-tax fixture is still supplied explicitly.
+
 ## Reuse and folder rules for subsequent work
 
 Keep shared algorithms in the existing `nodes` domain folders and preserve
@@ -414,7 +461,7 @@ For each next node, separately prove:
 4. Regression behavior for the existing 2025 product and source-derived 2026
    boundary cases.
 
-Next work is the source-backed Schedule A, Schedule 1-A and QBI calculators
+Next work is the remaining Schedule A, Schedule 1-A and QBI calculators
 feeding deduction resolution, followed by income tax and credit calculations,
 alongside the remaining general/dependent exception routes. Extend the strict
 AGI bridge alongside its activity owners. Current
@@ -533,3 +580,11 @@ components matched the hashes already recorded in the research corpus.
 - [2026 W-2/W-3 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf)
 - [Notice 2025-67 retirement limits](https://www.irs.gov/pub/irs-drop/n-25-67.pdf)
 - [2026 student-loan phaseouts, Rev. Proc. 2025-32 §4.29](https://www.irs.gov/irb/2025-45_IRB)
+
+- Schedule A source integration passed 267 typed tests across all 2026 modules
+  and the shared 2025 Schedule A/standard-deduction suites. Coverage includes
+  medical reimbursements, payment ownership and duplicate checks, actual-sales
+  elections, SALT phase-down/rounding and MFS ordering, sourced exclusion addbacks,
+  cash-category coordination, floor attribution and the itemized graph handoff.
+  The unit and preflight gates passed; this does not establish complete Schedule A
+  categories, income-tax calculation or filing readiness.

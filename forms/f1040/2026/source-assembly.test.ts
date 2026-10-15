@@ -1,3 +1,9 @@
+import { schedule_a_2026 } from "./nodes/schedule-a.ts";
+import {
+  itemizedClaim2026,
+  syntheticMedical2026,
+  syntheticPropertyTax2026,
+} from "./schedule-a.fixture.ts";
 import { syntheticForm8919_2026 } from "./inputs/form8919.fixture.ts";
 import { form8919_2026 } from "./inputs/form8919.ts";
 import { form8959_2026 } from "./nodes/form8959.ts";
@@ -31,6 +37,7 @@ import { FilingStatus } from "../nodes/types.ts";
 for (
   const scenario of [
     "wages",
+    "itemized",
     "overtime",
     "tips-overtime-senior",
     "vehicle",
@@ -40,6 +47,7 @@ for (
     "misclassified-with-tips",
   ]
 ) {
+  const itemized = scenario === "itemized";
   const overtime = scenario === "overtime" ||
     scenario === "tips-overtime-senior";
   const vehicle = scenario === "vehicle";
@@ -63,6 +71,7 @@ for (
       ]),
       general: general_2026,
       cash_charity: cash_charity_2026,
+      schedule_a: schedule_a_2026,
       vehicle_loan_interest: vehicle_loan_interest_2026,
       w2: w2_2026,
       form4137: form4137_2026,
@@ -129,7 +138,19 @@ for (
           },
         }
         : {}),
-      cash_gifts: [syntheticCashGift2026],
+      schedule_a: {
+        ...itemizedClaim2026,
+        ...(itemized
+          ? {
+            medical_payments: [syntheticMedical2026()],
+            tax_payments: [syntheticPropertyTax2026()],
+          }
+          : {}),
+      },
+      cash_gifts: [{
+        ...syntheticCashGift2026,
+        ...(itemized ? { amount_paid: 10_100 } : {}),
+      }],
       ...(misclassified
         ? {
           form8919: {
@@ -199,6 +220,17 @@ for (
             }
             : {}),
           box2_fed_withheld: 20_000.25,
+          ...(itemized
+            ? {
+              box17_state_withheld: 8_000,
+              box19_local_withheld: 1_000,
+              box14a_entries: [{
+                description: "SDI",
+                amount: 500,
+                is_state_sdi_pfml: true,
+              }],
+            }
+            : {}),
         },
         {
           tax_year: 2026,
@@ -261,12 +293,28 @@ for (
     );
     assertEquals(
       result.pending.f1040.line12e_standard_or_itemized,
-      seniorTips ? 18_150 : 16_100,
+      itemized ? 53_250 : seniorTips ? 18_150 : 16_100,
     );
-    assertEquals(result.pending.f1040.line12f_nonitemizer_charity, 500);
+    assertEquals(
+      result.pending.f1040.line12f_nonitemizer_charity,
+      itemized ? 0 : 500,
+    );
+    if (itemized) {
+      assertEquals(result.pending.f1040.deduction_method, "itemized");
+      assertEquals(
+        result.pending.income_tax_calculation.form6251_line2a,
+        38_750,
+      );
+      assertEquals(
+        result.pending.standard_deduction.itemized_before_overall_limit,
+        53_250,
+      );
+    }
     assertEquals(
       result.pending.income_tax_calculation.taxable_income,
-      misclassified
+      itemized
+        ? 96_751
+        : misclassified
         ? 126_601
         : unreported
         ? 115_601

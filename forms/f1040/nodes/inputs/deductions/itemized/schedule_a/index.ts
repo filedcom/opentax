@@ -1,3 +1,4 @@
+import { medicalExpenseDeduction, reducedSaltLimit } from "./amounts.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import {
   calculateCharitableNaturalResource,
@@ -113,9 +114,6 @@ export function reviewedHomeMortgageNonqualifyingUse(
   }
   return true;
 }
-
-// 7.5% AGI floor for medical deductions
-const MEDICAL_AGI_FLOOR_PCT = 0.075;
 
 export const inputSchema = z.object({
   // MFS filers receive $20,000 SALT cap (half of $40,000) per OBBBA §70002
@@ -403,11 +401,7 @@ export const inputSchema = z.object({
 type ScheduleAInput = z.infer<typeof inputSchema>;
 
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
-  return Math.max(
-    0,
-    Math.round(input.line_1_medical ?? 0) -
-      Math.round(Math.max(0, Math.round(agi)) * MEDICAL_AGI_FLOOR_PCT),
-  );
+  return medicalExpenseDeduction(input.line_1_medical ?? 0, agi);
 }
 
 function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
@@ -418,9 +412,12 @@ function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
     ? cfg.saltPhaseoutThresholdMfs
     : cfg.saltPhaseoutThreshold;
   const magi = input.agi ?? 0;
-  if (magi <= threshold) return baseCap;
-  const reduction = (magi - threshold) * cfg.saltPhaseoutRate;
-  return Math.max(floor, baseCap - reduction);
+  return reducedSaltLimit(magi, {
+    cap: baseCap,
+    floor,
+    threshold,
+    reductionRate: cfg.saltPhaseoutRate,
+  });
 }
 
 function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
@@ -446,10 +443,11 @@ function computeInterestTotal(input: ScheduleAInput): number {
     Math.round(input.line_9_investment_interest ?? 0);
 }
 
-function computeContributions(
+export function computeContributions(
   input: ScheduleAInput,
   agi: number,
   taxYear: number,
+  cashOnlyOther30OffsetRate = 0,
 ) {
   const sourceCash = input.cash_contributions_to_50_percent_organizations ?? 0;
   const sourceCashOther30 = input.cash_contributions_other_30 ?? 0;
@@ -472,12 +470,25 @@ function computeContributions(
     byCategory.noncash_50,
     floorZero(positiveAgi * .5 - cash),
   );
+  // The 2026 cash-only adapter applies amended §170(b)(1)(B)(ii).
+  // Full mixed-property coordination needs its separate 2026 source owner.
+  if (
+    cashOnlyOther30OffsetRate !== 0 &&
+    Object.values(byCategory).some((n) => n !== 0)
+  ) {
+    throw new Error(
+      "Cash-only charitable coordination cannot accept noncash gifts",
+    );
+  }
+  const cashReservation = cashOnlyOther30OffsetRate === 0
+    ? sourceCash
+    : cash - Math.min(cash, positiveAgi * cashOnlyOther30OffsetRate);
   const sourceOther30 = sourceCashOther30 + byCategory.other_30;
   const other30 = Math.min(
     sourceOther30,
     floorZero(
       positiveAgi * .5 - byCategory.capital_gain_30 -
-        byCategory.noncash_50 - sourceCash,
+        byCategory.noncash_50 - cashReservation,
     ),
     positiveAgi * .3,
   );

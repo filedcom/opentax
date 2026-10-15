@@ -235,7 +235,8 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     );
     const common = w2.computeWithConfig(ctx, { w2s: projected }, wages2026);
     const outputs = common.outputs.filter((output) =>
-      output.nodeType !== "schedule3" && output.nodeType !== "form8959"
+      output.nodeType !== "schedule3" && output.nodeType !== "form8959" &&
+      output.nodeType !== "schedule_a"
     ).map((output) => {
       if (output.nodeType === "form8919") {
         const sources = output.fields.w2_sources as Record<string, unknown>[];
@@ -289,6 +290,24 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
           ),
         },
       };
+    });
+    outputs.push({
+      nodeType: "schedule_a",
+      fields: {
+        w2_tax_sources: input.w2s.map((item) => ({
+          source_document_reference: item.source_document_reference,
+          employee_ssn: item.employee_ssn,
+          employer_ein: item.employer_ein,
+          box17_state_withheld: item.box17_state_withheld ?? 0,
+          box19_local_withheld: item.box19_local_withheld ?? 0,
+          mandatory_state_contributions: (item.box14a_entries ?? [])
+            .filter((entry) => entry.is_state_sdi_pfml)
+            .map((entry) => ({
+              description: entry.description,
+              amount: entry.amount,
+            })),
+        })),
+      },
     });
     const ownerTotals = new Map<
       string,

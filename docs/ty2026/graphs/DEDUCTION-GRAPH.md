@@ -15,10 +15,16 @@ qualified line 1(c) tips for the per-owner/employer larger-of comparison. Its
 qualification records cover total tips, not just the unreported remainder.
 
 The active graph has no complete foreign/territorial exclusion source owners,
-business-tip/non-W-2 overtime path, Schedule A source-limit calculation or
-8995/8995-A implementation. Form 4137 PDF/MeF and full 8959/8919/SE/credit
-receivers are also pending. The existing pure finalizers and source handoffs do
-not establish those missing calculations or filing readiness.
+business-tip/non-W-2 overtime path or 8995/8995-A implementation. Forms 4137,
+8919 and 8959 now have source calculations and pinned draft PDF components;
+SE/credit receivers and MeF remain pending. Schedule A now calculates ordinary
+medical expenses, sourced income/actual-sales/property taxes and current cash
+charity with explicit absence reviews for unsupported categories. Its candidate
+feeds the no-QBI deduction resolver and Form 6251 tax handoff. Mortgage/interest,
+noncash/prior gifts, special medical/property allocations, other deductions,
+carryforward persistence and Schedule A PDF/MeF remain unfinished. See the
+[active source contract](../../../forms/f1040/2026/README.md#schedule-a-expense-sources-and-deduction-selection).
+These components do not establish a complete filing product.
 
 ## Sources and line contract
 
@@ -82,10 +88,10 @@ for review, then emit a single finalized set of form lines.
 
 | Area | Required detail | Current status |
 | --- | --- | --- |
-| Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI graph exists; SALT MAGI source path pending. |
+| Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI and strict SALT addback/zero-review contract exist; full foreign source owners pending. |
 | Home-office SALT split | [Form 8829](./FORM8829-GRAPH.md) line 11 worksheet divides business and personal property tax; limited cases iterate through Schedule C, SE, AGI and Schedule A until MAGI stabilizes. | Shared home-office node omits this loop; keep both allocations from one property-tax source. |
-| Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | `schedule-a.ts` assembles lines from already allowed values. Input nodes and each separate eligibility limit pending. |
-| Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Pure 0.5% floor exists; category-limit and carryforward accounting pending. Do not treat raw 11/12/14 amounts as all deductible. |
+| Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | Medical, income/actual-sales/property-tax sources feed the shared limits and deduction resolver; remaining categories require absence reviews. |
+| Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Current cash categories and ordered floor exist with 2026 cash coordination; noncash, prior gifts and persisted carryforward accounting remain pending. |
 | Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks, W-2 TP/TT, and employer-level Form 4137 reconciliation exist. Puerto Rico/Form 4563 addbacks remain. |
 | QBI | All Form 8995/8995-A business, wage, UBIA, loss, gain, and carryforward facts | Existing shared nodes need a 2026 output contract and pre-QBI income from the joint resolver. |
 
@@ -97,9 +103,9 @@ resolver until that source shape is corrected and reconciled.
 
 ## Implementation order and gates
 
-1. Build TY2026 Schedule A input and form-line node from the pure calculator.
-   Wire upstream allowed amounts without guessing percentage limits,
-   mortgage-insurance eligibility, Form 4952, or contribution carryovers.
+1. Extend the TY2026 Schedule A source node beyond ordinary medical, taxes and
+   current cash gifts. Add mortgage-insurance eligibility, Form 4952, noncash
+   categories and contribution carryovers with source-specific limits.
 2. Finish Schedule 1-A's 2026 source inputs: Puerto Rico/Form 4563 MAGI
    addbacks. W-2 TP and Form 4137 line 1(c) now reconcile by filer and
    employer using the draft's larger-of rule. Mixed or unverified occupations
