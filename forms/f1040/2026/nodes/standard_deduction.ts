@@ -150,6 +150,11 @@ export function calculateDeductionSelection2026(
   const capital = input.capital_sources_2026
     ? calculateCapitalGains2026(input.capital_sources_2026)
     : undefined;
+  if (capital?.land) {
+    throw new Error(
+      "Land dispositions need their QBI and loss-limit owners before deduction finalization",
+    );
+  }
   if (input.business_sources_2026 && !capital) {
     throw new Error(
       "Business QBI needs the complete capital/qualified-dividend inventory, including zero",

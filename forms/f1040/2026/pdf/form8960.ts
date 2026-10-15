@@ -17,6 +17,7 @@ export interface Form8960Destinations2026 {
   form1040_line11b: number;
   form1040_line12e: number;
   schedule1_line18: number;
+  schedule1_line4?: number;
   schedule_a_line5d?: number;
   schedule_a_line7?: number;
   schedule2_line6: number;
@@ -42,6 +43,8 @@ export async function buildForm8960PdfBytes2026(
     (!input.taking_standard_deduction &&
       d.form1040_line12e !== input.itemized_after_overall_limit) ||
     d.schedule1_line18 !== input.early_withdrawal_penalty_from_agi ||
+    (input.capital_sources_2026?.land_sources_2026 !== undefined &&
+      d.schedule1_line4 !== input.ordinary_disposition_gain_from_agi) ||
     d.schedule2_line6 !== result.tax ||
     (input.schedule_a_tax_facts &&
       (d.schedule_a_line5d !==

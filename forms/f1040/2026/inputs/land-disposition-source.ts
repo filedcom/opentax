@@ -86,7 +86,7 @@ export const landDispositionSource2026Schema = investmentOwner2026.extend({
 export type LandDispositionSource2026 = z.input<
   typeof landDispositionSource2026Schema
 >;
-const lossResultSchema = z.object({
+export const section1231FinalizedLoss2026Schema = z.object({
   amount_taken_into_account: z.number().int().nonnegative().safe(),
   finalized_limitation_workpaper_reference: ref,
 }).strict();
@@ -94,7 +94,7 @@ const lossResultSchema = z.object({
 /** Property rows and tax character only. Does not elect section 1062 or post return totals. */
 export function calculateLandDispositions2026(
   raw: LandDispositionSource2026,
-  finalizedLoss?: z.input<typeof lossResultSchema>,
+  finalizedLoss?: z.input<typeof section1231FinalizedLoss2026Schema>,
 ) {
   const source = landDispositionSource2026Schema.parse(raw),
     claim = source.claim;
@@ -242,7 +242,7 @@ export function calculateLandDispositions2026(
       0,
     );
   const loss = finalizedLoss
-    ? lossResultSchema.parse(finalizedLoss)
+    ? section1231FinalizedLoss2026Schema.parse(finalizedLoss)
     : undefined;
   if (loss && net1231 >= 0) {
     throw new Error("Finalized section 1231 loss supplied for a nonloss year");

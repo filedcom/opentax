@@ -63,6 +63,8 @@ export const capitalClaim2026Schema = z.object({
   tax_year: z.literal(2026),
   record_reference: ref,
   complete_disposition_inventory: z.literal(true),
+  // The linked business-land inventory is outside the investment sale rows.
+  land_disposition_inventory_reference: ref.optional(),
   no_other_capital_sources_qof_or_special_rate_gains: z.literal(true),
   no_form4952_election_or_filing: z.literal(true),
   no_niit_exclusions_or_amt_basis_differences: z.literal(true),

@@ -17,6 +17,8 @@ export async function buildCapitalPdfBytes2026(
     form1040_line7b: boolean;
     form1040_line3a: number;
     preferential_gain: number;
+    form4797_line10?: number;
+    schedule1_line4?: number;
   },
   filer: { name: string; ssn: string },
   kind: "schedule_d" | "form8949",
@@ -30,7 +32,11 @@ export async function buildCapitalPdfBytes2026(
     r.return_gain !== destinations.form1040_line7a ||
     r.direct_distribution !== destinations.form1040_line7b ||
     r.qualified_dividends !== destinations.form1040_line3a ||
-    r.preferential_gain !== destinations.preferential_gain
+    r.preferential_gain !== destinations.preferential_gain ||
+    (r.land !== undefined && (
+      destinations.form4797_line10 !== r.line11_form4797 ||
+      destinations.schedule1_line4 !== r.ordinary_disposition_gain_loss
+    ))
   ) {
     throw new Error(
       "Capital PDF destinations disagree with calculated sources",
@@ -127,6 +133,7 @@ export async function buildCapitalPdfBytes2026(
         }
         if (r.carry.short_term) fill(21, r.carry.short_term);
         fill(22, r.line7);
+        if (r.line11_form4797) fill(39, r.line11_form4797);
         if (r.distributions) fill(41, r.distributions);
         if (r.carry.long_term) fill(42, r.carry.long_term);
         fill(43, r.line15);

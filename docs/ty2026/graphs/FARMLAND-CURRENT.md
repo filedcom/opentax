@@ -10,8 +10,10 @@ Form 1062 complete from those fields or the new helpers described here.
 
 The first prerequisite now implemented is a reviewed land-disposition calculator
 and year-aware section 1231 history replay. Both are internal and unregistered.
-The public 2026 intake rejects `land_dispositions`. No new tax, payment, credit,
-PDF or XML amount can be posted from this staged calculator yet.
+The public 2026 intake rejects `land_dispositions`. No land amount can yet be posted through the source return graph or public
+intake. Internal Schedule D, AMT and NIIT consumers and their component PDF
+builders now accept the retained source handoff described below; this is not
+a completed return or bundle route.
 
 ## Shared calculation and annual records
 
@@ -48,7 +50,44 @@ net section 1231 is line 8, prior loss is line 9, residual capital gain is line
 10, ordinary section 1231 loss is line 12, prior-loss recapture is line 13, and
 ordinary totals are lines 19/20b. Skip/attachment decisions remain part of the
 unimplemented PDF route. No depreciable property, rental/passive allocation,
-K-1, casualty, QOF, livestock, Part III/IV or QBI/NIIT integration is claimed.
+K-1, casualty, QOF, livestock, Part III/IV or QBI integration is claimed.
+NIIT support is limited to the explicitly reviewed internal handoff below.
+
+## Internal capital and NIIT connection
+
+`land-disposition-bridge.ts` retains the actual property records and any internal
+finalized-loss workpaper. The capital and land inventories cross-reference one
+another, require identical return owners, and explicitly reconcile regular/AMT
+basis and history. A linked inventory without the corresponding sources fails.
+No calculated land gain or NIIT exclusion is accepted from public intake.
+
+The existing capital calculator replays the 4797 source, sends its residual
+long-term gain through the shared Schedule D line-11 key, and nets it with
+investment sales, distributions and prior carryovers. Its result separately
+retains ordinary disposition gain/loss for Schedule 1. All-lookback gain can be
+entirely ordinary without forcing Schedule D. AMT replays the same combined
+preference source. The regular 2027 capital-loss workpaper consumes the actual
+combined short/long results, while section 1231 history keeps its own vintages.
+
+The [Form 8960 instructions](https://www.irs.gov/instructions/i8960), checked
+October 15 as a **2025 comparator**, specify the lines 5a-5d worksheet. The
+internal NIIT route now reconciles both capital and ordinary amounts against
+its AGI handoffs. Exclusion requires one owner/activity review per business,
+participation history throughout ownership, section 162 treatment, no financial
+trading or former-passive adjustments, and no prior NIIT capital-loss adjustment.
+The source gain is excluded without applying a second capital-loss limit.
+For example, $100,000 of investment loss plus $40,000 of excluded capital gain
+and $5,000 of excluded ordinary gain gives line 5a of $2,000, line 5b of
+-$45,000 and line 5d of -$43,000. A new Schedule D calculation capped at -$3,000
+would be wrong. State-tax allocation uses income after this exclusion.
+
+Standalone draft components now print Schedule D line 11 and Form 8960 lines
+5a/5b/5d. They require matching Form 4797/Schedule 1 destinations, retain draft
+markings and are visually checked. These component PDFs are not a complete
+filing package: Form 4797 and its attachment/bundle owner remain unfinished.
+The capital graph node and deduction finalizer deliberately reject this handoff
+until QBI, loss limitations and the remaining source/attachment routes are
+connected. This prevents an internal helper from bypassing ordinary-gain QBI.
 
 ## Current IRS source checks
 
@@ -77,8 +116,8 @@ Estimated-tax relief is in **Notice 2026-3**, published in
 
 ## Remaining connected implementation
 
-1. Connect the canonical disposition result to Schedule D line 11 and Schedule
-   1 line 4 once, retaining activity/source character for QBI, NIIT, AMT,
+1. Finish registering the internal Schedule D/AMT/NIIT handoff, post Schedule
+   1 line 4 once, and retain activity/source character for QBI,
    dependent support and earned-income calculations. A 4797 ordinary amount is
    not automatically earned income or self-employment income. Apply loss limits
    before finalizing deductible losses and carryforward vintages. Expand asset
@@ -109,5 +148,9 @@ losses, ownership, source conflicts, gain/loss netting, holding periods, basis
 and whole-dollar columns, corrected 1099-S copies and rejection by public
 intake. Full 2026 return integration and filing acceptance remain unfinished.
 
-Verification: 86 focused/shared/2025 return-workflow tests and 137 unit checks
-passed. The legacy 2025 history schema and carryforward output are preserved.
+Verification: the history prerequisite passed 86 focused/shared/2025
+return-workflow tests. The capital/NIIT connection passed 13 typed focused
+checks, all 631 tests in the 2026 directory, and 137 unit checks. Three rendered
+component pages were inspected for the line 11 and NIIT adjustments, identity,
+branch selection and draft markings. The legacy 2025 history schema and
+carryforward output are preserved.

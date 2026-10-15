@@ -1,3 +1,7 @@
+import {
+  landDispositionBridge2026Schema,
+  resolveLandDispositionBridge2026,
+} from "../inputs/land-disposition-bridge.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -20,6 +24,7 @@ export const capitalGainInput2026Schema = investmentOwner2026.extend({
   claim: capitalClaim2026Schema.optional(),
   digital_assets_answer: z.boolean(),
   investment_sources_2026: investmentClaim2026Schema.optional(),
+  land_sources_2026: landDispositionBridge2026Schema.optional(),
 }).strict();
 export type CapitalGainInput2026 = z.input<typeof capitalGainInput2026Schema>;
 export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
@@ -38,6 +43,23 @@ export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
   const sources = input.claim
     ? resolveCapitalSources2026(input.claim, owner)
     : undefined;
+  if (
+    input.claim?.land_disposition_inventory_reference &&
+    !input.land_sources_2026
+  ) {
+    throw new Error(
+      "Linked land inventory needs its actual disposition sources",
+    );
+  }
+  const land = input.land_sources_2026
+    ? resolveLandDispositionBridge2026(
+      input.land_sources_2026,
+      owner,
+      input.claim?.record_reference,
+      input.claim?.land_disposition_inventory_reference,
+    )
+    : undefined;
+  const landCapitalGain = land?.calculation.line10_long_term_gain ?? 0;
   if (sources?.has_digital_sales && !input.digital_assets_answer) {
     throw new Error(
       "Digital-asset dispositions require the Form 1040 digital-assets answer",
@@ -82,6 +104,8 @@ export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
     line_6_carryover: carry.short_term,
     line_14_carryover: carry.long_term,
     line13_cap_gain_distrib: distributions,
+    // Legacy shared key covers Form 4797 as well as Form 2439.
+    line_11_form2439: landCapitalGain,
   };
   const shared = schedule_d.compute(
     { taxYear: 2026, formType: "f1040" },
@@ -118,7 +142,7 @@ export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
   const line7 = short.gain + groups.line1b.gain + groups.line2.gain +
     groups.line3.gain - carry.short_term;
   const line15 = long.gain + groups.line8b.gain + groups.line9.gain +
-    groups.line10.gain + distributions - carry.long_term;
+    groups.line10.gain + landCapitalGain + distributions - carry.long_term;
   const line16 = line7 + line15,
     limit = input.filing_status === "mfs" ? 1500 : 3000;
   if (
@@ -130,9 +154,13 @@ export function calculateCapitalGains2026(raw: CapitalGainInput2026) {
     );
   }
   const fileSchedule = rows.length > 0 || carry.short_term > 0 ||
-    carry.long_term > 0;
+    carry.long_term > 0 || landCapitalGain > 0;
   return {
     source_input: input,
+    land,
+    line11_form4797: landCapitalGain,
+    ordinary_disposition_gain_loss:
+      land?.calculation.line20b_schedule1_gain_loss ?? 0,
     investment,
     sources,
     rows,
@@ -175,6 +203,11 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
       throw new Error("Capital sources require f1040:2026 context");
     }
     const r = calculateCapitalGains2026(input);
+    if (r.land) {
+      throw new Error(
+        "Land disposition graph registration awaits QBI, loss-limit and Form 4797 attachment owners",
+      );
+    }
     const income = r.direct_distribution
       ? { line7a_cap_gain_distrib: r.return_gain }
       : r.file_schedule_d

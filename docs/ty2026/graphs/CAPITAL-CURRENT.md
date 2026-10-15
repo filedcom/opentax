@@ -94,6 +94,17 @@ prior and outgoing carryovers, tax/NIIT reconciliation, PDF destination mismatch
 and continuation after eleven trades. Eighteen synthetic QA pages cover all
 categories, continuation and negative net gain. They are not ATS acceptance.
 
+## Staged business-land handoff
+
+The internal calculator also accepts the source-backed business-land handoff
+in [FARMLAND-CURRENT.md](FARMLAND-CURRENT.md). It reconciles inventory/owner
+identity, adds the derived residual 4797 gain to Schedule D line 11 and retains
+ordinary character separately. AMT, NIIT and standalone draft components replay
+those sources. The source graph still rejects land until QBI, limitations,
+ordinary-income routing and Form 4797 attachments are connected; this is not a
+new public capital input. The existing investment-only source route remains
+unchanged, including its narrower NIIT/AMT review assertions.
+
 ## Remaining scope
 
 Other acquisition/basis histories and replacement-lot propagation; inherited,

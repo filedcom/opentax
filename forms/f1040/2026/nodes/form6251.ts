@@ -73,6 +73,14 @@ export function calculateForm6251_2026(raw: Form6251Input2026) {
     ? calculateCapitalGains2026(input.capital_sources_2026)
     : undefined;
   if (
+    capital && (
+      capital.source_input.filing_status !== input.filing_status ||
+      capital.source_input.taxpayer_ssn !==
+        input.taxpayer_ssn.replaceAll("-", "") ||
+      capital.source_input.spouse_ssn !== input.spouse_ssn?.replaceAll("-", "")
+    )
+  ) throw new Error("AMT capital sources must match return owners");
+  if (
     input.net_capital_gain === 0 &&
     (input.unrecaptured_1250_gain > 0 || input.rate_28_gain > 0)
   ) throw new Error("AMT special-rate gains need reconciled net capital gain");

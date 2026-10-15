@@ -1,3 +1,4 @@
+import { landNiitExclusion2026 } from "../inputs/land-disposition-bridge.ts";
 import {
   calculateCapitalGains2026,
   capitalGainInput2026Schema,
@@ -35,6 +36,9 @@ export const inputSchema = investmentOwner2026.extend({
   taxable_interest_from_agi: money,
   ordinary_dividends_from_agi: money,
   capital_gain_from_agi: z.number().finite().int().safe(),
+  ordinary_disposition_gain_from_agi: z.number().finite().int().safe().default(
+    0,
+  ),
   taking_standard_deduction: z.boolean(),
   itemized_before_overall_limit: money,
   itemized_after_overall_limit: money,
@@ -63,13 +67,27 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
     : undefined;
   const line1 = investment?.lines.line2b ?? 0;
   const line2 = investment?.lines.line3b ?? 0;
-  const line5 = capital?.return_gain ??
+  if (
+    capital && (
+      capital.source_input.filing_status !== input.filing_status ||
+      capital.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+      capital.source_input.spouse_ssn !== input.spouse_ssn
+    )
+  ) throw new Error("NIIT capital sources must match return owners");
+  const capitalGain = capital?.return_gain ??
     investment?.lines.capital_gain_distributions ?? 0;
+  const ordinaryGain = capital?.ordinary_disposition_gain_loss ?? 0;
+  const landExclusion = capital?.land
+    ? landNiitExclusion2026(capital.land)
+    : undefined;
+  const line5 = capitalGain + ordinaryGain;
+  const line5b = landExclusion?.line5b_adjustment ?? 0;
   const line10 = investment?.lines.early_withdrawal_penalty ?? 0;
   if (
     line1 !== input.taxable_interest_from_agi ||
     line2 !== input.ordinary_dividends_from_agi ||
-    line5 !== input.capital_gain_from_agi ||
+    capitalGain !== input.capital_gain_from_agi ||
+    ordinaryGain !== input.ordinary_disposition_gain_from_agi ||
     line10 !== input.early_withdrawal_penalty_from_agi
   ) {
     throw new Error(
@@ -93,7 +111,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
       "NIIT needs reviewed full-year citizen/resident status; dual-status elections need their owner",
     );
   }
-  const gross = line1 + line2 + line5;
+  const gross = line1 + line2 + line5 + line5b;
   let line9b = 0;
   const taxes = input.schedule_a_tax_facts;
   if (
@@ -141,6 +159,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
     line1_taxable_interest: line1,
     line2_ordinary_dividends: line2,
     line5a_net_gain: line5,
+    line5b_net_gain_adjustment: line5b,
     line9b_state_local_tax: line9b,
     line10_additional_modifications: line10,
   };
@@ -157,6 +176,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
   return {
     source_input: input,
     investment,
+    land_exclusion_workpaper: landExclusion,
     shared_input: sharedInput,
     file_form8960: input.magi > limit,
     lines: printed ? { ...printed, line17_niit: tax } : undefined,

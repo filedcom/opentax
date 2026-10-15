@@ -20,7 +20,9 @@ do not encode the stale cross-references.
 
 The [current farmland prerequisite](FARMLAND-CURRENT.md) now reuses shared 4797
 character arithmetic and year-aware loss-history replay for a staged 2026 land
-source ledger. It is not registered in public intake or the return graph. The
+source ledger. Its internal handoff now reaches shared Schedule D netting, AMT
+and reviewed NIIT exclusions, with corresponding draft component output. It
+is not registered in public intake or the return graph. The
 [October 1 draft](../corpus/draft/f4797-2026-10-01.pdf), SHA-256
 `66e57b82213189baa8564ed9cb83e75d6f556edb0bd051df458879280bc1fec9`, is preserved
 alongside the older snapshot. Its line 20a points to Schedule A 17d; the table
