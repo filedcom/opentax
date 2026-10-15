@@ -54,10 +54,30 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   different-state families combine their benchmarks. Missing/incorrect column B
   needs a dated determination reference and digest. A changing coverage family
   forces monthly calculation even when the dollar amounts stay constant.
-- This preparation component is **not registered**. Its `tax_family_tins` must
-  still be supplied by validated general/dependent selection before public use.
-  It does not derive household MAGI, coordinate medical premium deductions,
-  or prove current-year filing eligibility. Shared allocations, marriage/divorce
+- The validated 2026 general node now emits an internal Marketplace family
+  projection containing the filer identities and only actually claimed dependents.
+  `marketplace-family.ts` binds a complete income inventory to those dependents,
+  rejects reused or foreign-owned documents, and derives Worksheet 1-2 MAGI.
+  It supports reviewed no-income, wage-only/interest-only non-filing and sourced
+  single-dependent filed returns; Form 8814 and other dependent income types
+  still need their own current-year routes.
+- The shared dependent-income schema and calculation now live beside general,
+  with an explicit annual policy. The existing 2025 entrypoint preserves its
+  original schema and amounts. The 2026 policy uses Rev. Proc. 2025-32 §4.14:
+  $16,100 single deduction, $1,350 dependent minimum, $450 earned-income
+  addition and $2,050 for each age/blind condition. Filing thresholds use source
+  cents; each combined filed income entry rounds once, and MAGI uses the
+  reconciled filed entries. Dependency gross income must agree when supplied.
+- FPL region is derived from the complete taxpayer/spouse residence history,
+  including moves and different spouse states, choosing the higher applicable
+  table. Policy coverage state and the mailing address cannot override it.
+  Residence gaps, overlaps, outside-filer records and incomplete-year reviews
+  are rejected. Foreign residence needs a separate rule review.
+- `marketplace-preparation.ts` combines these family facts and reviewed policy
+  sources without accepting household-size, FPL-region or dependent-MAGI
+  overrides. It remains **not registered**. Primary/joint MAGI must still bind
+  to the executed AGI graph; it does not coordinate medical premium deductions
+  or prove all current-year filing eligibility. Shared allocations, marriage/divorce
   changes, QSEHRA, self-employed plans, retroactive/mid-month special enrollment,
   protected partial payments and employer-offer affordability remain separate
   required source workpapers. An issued VOID copy is supported; a standalone
@@ -76,9 +96,10 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   not a registered source or a filed return route. It reuses the shared
   monthly/annual calculation with strict ordinary-family inputs, requires
   all twelve monthly columns, reconciles any annual totals in cents, and rejects
-  MFS, below-100% eligibility and advanced worksheet/source fields. Family
-  size, dependent MAGI and coverage eligibility still need source owners;
-  caller-provided totals are not public claim inputs.
+  MFS, below-100% eligibility and advanced worksheet/source fields. The internal
+  preparation component derives family size, dependent MAGI and ordinary
+  coverage facts; primary MAGI and downstream graph ownership remain pending.
+  Caller-provided totals are not public claim inputs.
 - The existing cent-summing helper now lives beside the shared calculation;
   the 2025 domain reexports it without changing behavior. The 2026 component
   retains source cents for reconciliation, validates unchanged monthly
@@ -187,3 +208,16 @@ sources rather than carrying the original-income result into its comparison.
 Until that replay exists, a combined election/Marketplace source claim must
 remain explicitly unsupported. Registering the legacy node object is not a
 substitute for these dependencies or the draft attachment and replay checks.
+
+`forms/f1040/2026/inputs/marketplace-family.test.ts` checks validated general
+selection, complete dependent classification, $16,100/$16,100.01 wage and
+$1,350/$1,350.01 unearned boundaries, combined-income thresholds, the 65th
+birthday boundary, blindness, source-cent versus filed-entry rounding,
+foreign/reused/stale documents, and complete Alaska/Hawaii/joint residence.
+The preparation-to-calculator test preserves the independent $765 credit and
+$3,000 repayment at the 400% cliff; it is not an end-to-end return test.
+Annual dependent amounts were checked against
+[Rev. Proc. 2025-32 §4.14](https://www.irs.gov/pub/irs-drop/rp-25-32.pdf).
+The residence-table selection rule follows the
+[Form 8962 line 4 instructions](https://www.irs.gov/instructions/i8962),
+which still need comparison to the final 2026 instructions.

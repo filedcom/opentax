@@ -1048,7 +1048,7 @@ An internal Form 8962 component now reuses the 2025 monthly/annual arithmetic
 with a separate 2026 annual policy. It checks ordinary monthly columns and
 annual totals, applies the 400% ceiling and full excess-APTC repayment, and
 returns separate Schedule 3, Schedule 2 and AMT contributions. It is not yet
-registered: current Marketplace/family source ownership, special eligibility,
+registered: primary/joint MAGI and downstream graph ownership, special eligibility,
 QSEHRA and self-employed health interactions, final instruction reconciliation,
 PDF output and MeF remain open. See the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
@@ -1058,6 +1058,10 @@ The Marketplace source component now reconciles ordinary current/corrected/void
 1095-A copies, coverage dates, monthly full-payment and outside-MEC reviews,
 and benchmark determinations. It reuses the 2025 copy selector, eligibility
 checks and state-level SLCSP grouping while preserving source cents and current
-year metadata. It is not yet an input-catalog entry: general/dependent ownership,
-household income, premium-deduction coordination and the return/PDF route still
-need to consume and replay these records before filing can be enabled.
+year metadata. The general node now supplies validated family identities, and
+source preparation derives family size, dependent MAGI and FPL region from
+matched income records and complete filer residence histories. Dependent-income
+logic is shared with 2025 through explicit annual rules; filing tests preserve
+source cents while filed entries round once. It is not yet an input-catalog
+entry: primary/joint MAGI, premium-deduction coordination and the return/PDF
+route still need to consume and replay these records before filing can be enabled.

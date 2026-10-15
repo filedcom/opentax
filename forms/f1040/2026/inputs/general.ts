@@ -117,6 +117,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "estimated_payments",
       "gambling",
       "schedule_c",
+      "f1095a",
     ];
   }
   readonly inputSchema = inputSchema;
@@ -377,6 +378,32 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     };
     return {
       outputs: [
+        {
+          nodeType: "f1095a",
+          fields: {
+            tax_family: {
+              tax_year: 2026,
+              filing_status: input.filing_status,
+              taxpayer_tin: input.taxpayer_ssn.replaceAll("-", ""),
+              ...(joint
+                ? {
+                  spouse_tin: input.spouse_ssn!.replaceAll("-", ""),
+                  spouse_claimable: input.spouse_can_be_claimed_as_dependent,
+                }
+                : {}),
+              taxpayer_claimable: input.taxpayer_can_be_claimed_as_dependent,
+              claimed_dependents: claimedChildren.filter((d) =>
+                d.dependent_on_another_return !== true
+              ).map((d) => ({
+                tin: (d.ssn ?? d.itin ?? d.atin)!.replaceAll("-", ""),
+                dob: d.dob,
+                ...(d.gross_income === undefined
+                  ? {}
+                  : { gross_income: d.gross_income }),
+              })),
+            },
+          },
+        },
         {
           nodeType: "f8615",
           fields: {
