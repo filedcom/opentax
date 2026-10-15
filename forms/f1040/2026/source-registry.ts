@@ -1,3 +1,4 @@
+import { form461_2026 } from "./nodes/form461.ts";
 import { f5695_2026 } from "./inputs/energy.ts";
 import { schedule3_final_2026 } from "./nodes/schedule3-final.ts";
 import { household_employment_2026 } from "./inputs/household-employment.ts";
@@ -55,6 +56,7 @@ export const sourceRegistry2026 = {
   f8615: f8615_2026,
   form8615,
   schedule_c: business_2026,
+  form461: form461_2026,
   capital_gains: capital_gains_2026,
   capital_loss_carryover: capital_carryover_2026,
   form2441: form2441_2026,

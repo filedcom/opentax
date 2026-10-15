@@ -95,13 +95,14 @@ The [Form 461 workpaper](FORM461-GRAPH.md) now replays the retained business,
 capital and land sources to calculate the 2026 excess-loss adjustment. It
 separates the individual-line filing trigger from the excess-loss threshold,
 removes investment capital losses, limits business capital gains and excludes
-employee services. A standalone draft PDF checks each receiving amount.
+employee services. The Schedule C route now connects this calculation to AGI, allowed-loss QBI
+and the draft bundle; the land route remains internal.
 The September 28 instruction draft is pinned in the corpus.
 
 This is not yet the loss attribution owner needed for final section 1231
 vintages or QBI. Mixed farm/nonfarm NOL allocation, qualified-loss fractions,
-current loss finalization, AGI registration and complete attachments remain
-open. No public land or Form 461 intake is enabled by this workpaper.
+current land-loss finalization, land AGI registration and complete disposition
+attachments remain open. No public land or Form 461 intake is enabled by this workpaper.
 
 ## Current IRS source checks
 

@@ -1,3 +1,4 @@
+import { businessLossSource2026Schema } from "../inputs/business-loss-source.ts";
 import {
   childTaxInput2026Schema,
   resolveChildTax2026,
@@ -55,6 +56,7 @@ export const inputSchema = sharedSchema.pick({
   // that may have been calculated against the wrong deduction candidate.
   qbi_deduction: z.never().optional(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  business_loss_sources_2026: businessLossSource2026Schema.optional(),
   capital_sources_2026: capitalGainInput2026Schema.optional(),
   qbi_activity_pending: z.boolean().optional(),
 }).strict();
@@ -180,10 +182,19 @@ export function calculateDeductionSelection2026(
       "Business losses creating a negative AGI need the NOL/carryover owner",
     );
   }
+  if (
+    input.business_loss_sources_2026 &&
+    (!input.business_sources_2026 ||
+      JSON.stringify(input.business_loss_sources_2026.capital_sources) !==
+        JSON.stringify(capital?.source_input))
+  ) {
+    throw new Error("Deduction and loss owners need identical capital sources");
+  }
   const qbi = input.business_sources_2026
     ? businessQbiCalculator2026(
       input.business_sources_2026,
       capital!.preferential_gain + capital!.qualified_dividends,
+      input.business_loss_sources_2026,
     )
     : noQbi2026;
   const resolved = resolveDeductions2026({

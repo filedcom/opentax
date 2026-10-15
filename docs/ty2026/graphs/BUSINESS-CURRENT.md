@@ -88,8 +88,9 @@ The graph rejects actual Form 4137/8919/CT-2 sources alongside this business cla
 until joint SE wage-base reconciliation is implemented. It also rejects a vehicle
 present in both Schedule C and Schedule 1-A sources until loan/payment allocation
 is connected. Active nontrading business income is excluded from NIIT only after
-its source review. Potential Form 461 losses and negative-AGI/NOL cases stop for
-their missing owners. EIC and ACTC now consume this inventory through replayed earned-income
+its source review. Reviewed Form 461 losses now pass through the connected
+[loss owner](FORM461-GRAPH.md#connected-schedule-c-route), AGI, allowed-loss QBI
+and draft attachment. Negative-AGI/NOL cases still stop for their missing owner. EIC and ACTC now consume this inventory through replayed earned-income
 worksheets, including signed losses, statutory gross wages and the three-child
 payroll method. Dependent care now consumes the same sources before benefit
 exclusion and again after AGI, preserving separate spouse earnings and reviewed
@@ -160,3 +161,10 @@ and dependent-deduction amounts. Complete source reconciliation, loss add-backs,
 material-capital compensation, statutory wages and three full draft bundles are
 covered in [FORM8615-CURRENT.md](FORM8615-CURRENT.md). Remaining business source
 limits and final filing gates still apply.
+
+
+The loss review records a proportional negative-qualified-business allocation
+convention. It is required whenever Form 461 must be filed, even if no loss is
+disallowed. Current 461-origin qualified losses are retained separately from
+Form 8995 carryforwards; statutory-employee QBI is not reduced by that allocation.
+This does not add land dispositions, farming losses or general NOL support.

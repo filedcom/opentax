@@ -188,6 +188,7 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
     return [
+      "form461",
       "f1040",
       "agi_aggregator",
       "income_tax_calculation",
@@ -232,6 +233,10 @@ class CapitalGainsNode2026 extends TaxNode<typeof capitalGainInput2026Schema> {
           },
         },
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
+        {
+          nodeType: "form461",
+          fields: { capital_sources_2026: r.source_input },
+        },
         {
           nodeType: "standard_deduction",
           fields: { capital_sources_2026: r.source_input },

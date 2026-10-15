@@ -1,3 +1,5 @@
+import type { calculateForm461_2026 } from "../nodes/form461.ts";
+import { buildForm461PdfBytes2026 } from "./form461.ts";
 import { buildForm5695PdfBytes2026 } from "./form5695.ts";
 import { buildScheduleHPdfBytes2026 } from "./schedule_h.ts";
 import type { calculateHousehold2026 } from "../inputs/household-source.ts";
@@ -200,7 +202,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 71, 72, 75, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 32, 33, 43, 44, 47, 50, 55, 61, 64, 71, 72, 75, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -477,6 +479,19 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
         },
         owners,
       ));
+  }
+  const loss = retained<ReturnType<typeof calculateForm461_2026>>("form461")
+    ?.calculation;
+  if (loss?.file_form461) {
+    add("form461", 1, () =>
+      buildForm461PdfBytes2026(loss.source_input, {
+        schedule1_line3: amount(p.schedule1, "line3_schedule_c"),
+        form1040_line7a: line("line7a_capital_gain"),
+        schedule1_line4: amount(p.schedule1, "line4_other_gains"),
+        schedule1_line15: amount(p.schedule1, "line15_se_deduction"),
+        schedule1_line8p: amount(p.schedule1, "line8p_excess_business_loss"),
+        excess_loss_origin_2026: loss.carryforward?.amount ?? 0,
+      }, filer));
   }
   if (medicare?.file_form8959) {
     add("form8959", 1, () =>

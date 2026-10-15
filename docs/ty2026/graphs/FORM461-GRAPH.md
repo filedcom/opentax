@@ -42,11 +42,10 @@ preserving the origin year and any farming carryback treatment.
 The one-page draft has [18 terminal AcroForm widgets](../inventories/pdf-fields/pdf-fields-f461.csv),
 all in the field tree on PDF page 2. The header is `f1_1`/`f1_2`;
 line 16 is `f1_18`. Check PDF appearance, signed values and any ELA notation.
-The TY2025 PDF descriptor incorrectly maps `excess_business_loss` to
-`f1_1`, which is the **name** field on this 2026 draft; copying it would print
-the loss as the filer's name. The TY2025 MeF serializer has only one aggregate
-element; derive the 2026 XML form and attachment rules from the selected
-current XSD, not its shape.
+The current TY2025 descriptor maps signed tax lines separately from the name/ID
+header and reserved fields. Its native serializer is also line-based. These are
+reuse references; 2026 XML and attachment acceptance still require the selected
+current XSD and business rules rather than an assumed identical shape.
 
 ## Current graph boundary
 
@@ -70,18 +69,45 @@ The standalone draft PDF prints all supported lines, leaves reserved lines
 blank, checks receiving amounts and identity, and removes interactive fields
 and the IRS cover. It supports a filing-trigger-only case with no addback.
 
-This workpaper and PDF are **internal and unregistered**. Schedule E/F/K-1,
-released suspended losses, other adjustments, mixed farm/nonfarm NOL allocation
-and complete QBI attribution remain unsupported. A negative section 1231
-history still requires a finalized limitation workpaper from a future owner;
-this helper does not resolve that ordering dependency or finalize its vintage.
-The current Schedule C graph cannot yet attach a required filing-trigger-only
-Form 461, and its excessive-loss guard remains in place.
+## Connected Schedule C route
 
-The 2026 Schedule 1 accepts `line8p_excess_business_loss`, but the AGI/source
-graph, deduction/QBI finalizer, PDF bundle and MeF route are not connected to
-this workpaper. Registration must consume pre-adjustment source amounts and
-post 8p once, without feeding final Schedule 1 totals back into Form 461.
+The 2026 registry now has one Form 461 owner after the business and capital
+inventories. Required returns supply `schedule_c.claim.loss_limit_review`;
+missing review fails even for the filing-only case. The owner deposits line 8p
+once into Schedule 1 and AGI. AGI replays the retained sources and checks all
+receiving amounts before Social Security and student-loan worksheets run.
+The shared AGI addition defaults to zero for existing 2025 callers.
+
+QBI replays the same business, capital and loss workpapers. For the currently
+supported fully qualified, nonfarm C businesses, the reviewed bookkeeping
+method allocates the suspended loss among negative regular-business QBI rows
+in proportion to their losses. Integer largest remainders and a stable source
+reference tie break conserve printed dollars. This is an explicit allocation
+convention, **not a claimed statutory rule for other source families**.
+Statutory-employee amounts remain eligible for reviewed QBI but receive no
+461 allocation. Each source keeps its owner, allowed loss and disallowed loss.
+The qualified 2026-origin 461 loss remains separate from Form 8995 line 18.
+
+The [2026 Form 8995 draft instructions](https://www.irs.gov/pub/irs-dft/i8995--dft.pdf)
+exclude suspended losses from current QBI and require preservation of qualified
+character. [Treasury's final rules](https://www.irs.gov/irb/2020-29_IRB) address
+the subsequent deduction of a 461-origin NOL for QBI. The current implementation
+does not consume that future loss or calculate a complete Form 172 NOL.
+
+The bundle now includes Form 461 at attachment sequence 64, including a
+filing-trigger-only form with zero addback. Its amounts reconcile to Schedule 1,
+1040 and the separately retained loss origin. Form 8995 prints allowed losses.
+For example, $400,000 wages and a $400,000 regular C loss produce a $144,000
+addback, $144,000 AGI, a $256,000 current QBI loss and a separate $144,000
+qualified suspended origin.
+
+Land source integration, Schedule E/F/K-1, released suspensions, mixed
+qualified/nonqualified or farm/nonfarm allocation, Form 8995-A, negative-AGI
+NOL calculations and current MeF remain open. Child-tax claims with a positive
+461 adjustment still stop for their coordinated loss-addback worksheet.
+The land source helper remains internal: its section 1231 loss vintage still
+needs the final limitation owner. Public intake accepts reviewed source facts,
+not Form 461 lines or an excess-loss override. Full filing remains disabled.
 
 ## Build order and acceptance
 
@@ -122,3 +148,13 @@ were inspected: a $94,000 excess loss and a filing-only loss with no addback.
 Reserved fields remain blank, negative values retain their sign and receiving
 amounts are reconciled before PDF construction.
 The full 2026 directory passed 642 tests and the unit lane passed 137 checks.
+
+
+Connected-route verification covers single, joint and separate filers, strict
+filing boundaries, proportional dollar conservation, statutory-employee QBI,
+Social Security ordering, mismatched handoffs and required bundle attachment.
+The shared AGI/2025 loss and benefit regressions passed 105 checks. Visual review
+covered 1040, Schedule 1, Form 461 and Form 8995, including the filing-only case.
+The final connected route passed 10 typed integration/PDF checks, all 652 tests
+in the 2026 directory, and the 137-check unit lane. Attachment order was checked
+against sequence 55 (8995), 64 (461) and 71 (8959).

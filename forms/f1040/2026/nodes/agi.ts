@@ -1,4 +1,9 @@
 import {
+  businessLossSource2026Schema,
+  calculateBusinessLoss2026,
+} from "../inputs/business-loss-source.ts";
+import { businessSources2026Schema } from "../inputs/business-source.ts";
+import {
   calculateGovernmentPayments2026,
   governmentSource2026Schema,
 } from "../inputs/government-source.ts";
@@ -47,6 +52,7 @@ export const inputSchema = sharedSchema.pick({
   line6_schedule_f: true,
   line7_unemployment: true,
   line8a_nol_deduction: true,
+  line8p_excess_business_loss: true,
   line8c_cod_income: true,
   line8d_foreign_earned_income_exclusion: true,
   line8e_archer_msa_dist: true,
@@ -67,6 +73,7 @@ export const inputSchema = sharedSchema.pick({
   line24f_501c18d: true,
 }).extend({
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  business_loss_sources_2026: businessLossSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
@@ -122,6 +129,37 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       throw new Error(
         "Student-loan input must be the eligible amount capped at $2,500",
       );
+    }
+    const loss = input.business_loss_sources_2026
+      ? calculateBusinessLoss2026(input.business_loss_sources_2026)
+      : undefined;
+    if (input.line8p_excess_business_loss !== undefined && !loss) {
+      throw new Error(
+        "AGI business-loss adjustment needs its retained source workpaper",
+      );
+    }
+    if (loss) {
+      const b = input.business_sources_2026;
+      const core = b
+        ? (() => {
+          const { qbi_review: _q, loss_limit_review: _l, ...rest } = b;
+          return businessSources2026Schema.parse(rest);
+        })()
+        : undefined;
+      if (
+        loss.source_input.filing_status !== input.filing_status ||
+        JSON.stringify(core) !==
+          JSON.stringify(loss.source_input.business_sources) ||
+        loss.lines.line2 !== (input.line3_schedule_c ?? 0) ||
+        loss.lines.line3 !== (input.line7_capital_gain ?? 0) ||
+        loss.lines.line4 !== (input.line4_other_gains ?? 0) ||
+        -loss.lines.line8 !== (input.line15_se_deduction ?? 0) ||
+        loss.schedule1_line8p !== (input.line8p_excess_business_loss ?? 0)
+      ) {
+        throw new Error(
+          "AGI loss workpaper disagrees with retained sources and receiving lines",
+        );
+      }
     }
     let socialSecurityWorksheet;
     let lumpSumElection;
@@ -229,6 +267,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     }
     const {
       business_sources_2026,
+      business_loss_sources_2026: _lossSources,
       government_sources_2026,
       line8z_family_leave,
       ...sharedInput
@@ -420,6 +459,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             input.line6_schedule_f,
             input.line5_schedule_e,
             input.line8a_nol_deduction,
+            input.line8p_excess_business_loss,
             input.line8d_foreign_earned_income_exclusion,
             business ? 0 : input.line15_se_deduction,
           ].some((v) => (v ?? 0) !== 0),

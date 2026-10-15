@@ -952,3 +952,20 @@ finalizer reuses 2025 totals and handles the revised 2026 line contract; the dra
 bundle replays original W-2 sources, omits the cover, and places Schedule 3 before
 Schedule 3-A. [Current contract and PDF map](../../../docs/ty2026/pdf/PDF-SCHEDULE3-MAP.md)
 distinguish the registered W-2 source from the broader internal line/PDF mapping.
+
+
+### Reviewed business-loss returns
+
+The Schedule C source route now requires `loss_limit_review` whenever Form 461
+must be filed, including the individual-line filing trigger with no addback.
+One return-wide owner replays business and capital sources, posts Schedule 1
+line 8p through AGI once, and supplies the retained workpaper to QBI. Qualified
+461-origin losses are kept separately from Form 8995 losses already allowed in
+2026. Statutory employees remain distinct in the two calculations. The draft
+bundle includes Form 461 at sequence 64 and prints allowed QBI amounts.
+
+See [the loss contract](../../../docs/ty2026/graphs/FORM461-GRAPH.md) and
+[the executable source fixture](inputs/business-loss-graph.fixture.ts). This
+route does not enable land, farm, Schedule E/K-1, mixed qualified-loss allocation,
+negative-AGI NOL computations or child-tax claims with an excess-loss addback.
+Those owners and current MeF acceptance remain part of the full 2026 work.

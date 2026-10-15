@@ -124,6 +124,7 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Internal sourced NOL projection; public carry intake remains guarded.
   line8a_nol_deduction: z.number().int().nonnegative().optional(),
+  line8p_excess_business_loss: z.number().int().nonnegative().optional(),
   // Line 1 — State and local income tax refunds (Form 1099-G)
   line1_state_refund: z.number().optional(),
   // Line 3 — Net profit or (loss) from business (Schedule C)
@@ -396,6 +397,7 @@ export function computeSsaTaxable(
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
+    (input.line8p_excess_business_loss ?? 0) +
     Math.round(sumField(input.line1a_wages)) +
     Math.round(sumField(input.line1b_household_wages)) +
     Math.round(sumField(input.line1h_other_earned)) +
@@ -673,6 +675,7 @@ export function socialSecurityWorksheetIncome(input: AgiInput) {
 function scheduleOnePartI(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
+    (input.line8p_excess_business_loss ?? 0) +
     (input.line1_state_refund ?? 0) +
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +

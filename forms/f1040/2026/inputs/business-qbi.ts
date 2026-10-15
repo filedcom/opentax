@@ -1,3 +1,8 @@
+import {
+  businessLossReview2026Schema,
+  type BusinessLossSource2026,
+} from "./business-loss-source.ts";
+import { applyBusinessLossToQbi2026 } from "./business-loss-qbi.ts";
 import { z } from "zod";
 import {
   businessSources2026Schema,
@@ -55,6 +60,11 @@ export const businessQbiReview2026Schema = z.object({
 
 export const businessReturnSource2026Schema = businessSources2026Schema.extend({
   qbi_review: businessQbiReview2026Schema,
+  loss_limit_review: businessLossReview2026Schema.extend({
+    qbi_loss_allocation: z.literal(
+      "negative_qualified_business_income_proportion",
+    ),
+  }).strict().optional(),
 }).strict();
 export const businessClaim2026Schema = businessReturnSource2026Schema.omit({
   filing_status: true,
@@ -69,7 +79,11 @@ export type BusinessReturnSource2026 = z.input<
 /** Replay business facts before allocating deductions; never accept caller QBI. */
 export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
   const source = businessReturnSource2026Schema.parse(raw);
-  const { qbi_review: review, ...businessSource } = source;
+  const {
+    qbi_review: review,
+    loss_limit_review: _lossReview,
+    ...businessSource
+  } = source;
   const business = calculateBusinessSources2026(businessSource);
   const refs = new Set(review.businesses.map((b) => b.business_reference));
   if (
@@ -146,8 +160,10 @@ export function resolveBusinessQbi2026(raw: BusinessReturnSource2026) {
 export function businessQbiCalculator2026(
   raw: BusinessReturnSource2026,
   netCapitalGainAndQualifiedDividends: number,
+  lossSource?: BusinessLossSource2026,
 ): QbiCalculator2026 {
-  const r = resolveBusinessQbi2026(raw);
+  const base = resolveBusinessQbi2026(raw);
+  const r = applyBusinessLossToQbi2026(base, lossSource);
   if (
     !Number.isSafeInteger(netCapitalGainAndQualifiedDividends) ||
     netCapitalGainAndQualifiedDividends < 0
@@ -189,6 +205,7 @@ export function businessQbiCalculator2026(
           form8995: {
             source_input: r.source_input,
             rows: r.rows,
+            loss_attribution: r.loss_attribution,
             active_qbi_before_rounding: r.active_qbi_before_rounding,
             lines: {
               ...lines,

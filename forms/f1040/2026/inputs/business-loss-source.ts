@@ -12,21 +12,23 @@ import { businessLossLimitLines } from "../../nodes/intermediate/forms/income/bu
 import { FilingStatus } from "../../nodes/types.ts";
 const ref = z.string().trim().min(1);
 
+export const businessLossReview2026Schema = z.object({
+  record_reference: ref,
+  all_business_sources_included: z.literal(true),
+  no_schedule_e_f_k1_or_other_business_sources: z.literal(true),
+  no_other_business_adjustments_or_released_suspended_losses: z.literal(true),
+  basis_at_risk_and_passive_limits_resolved: z.literal(true),
+  // Investment claims and business-land sources retain their own tax review.
+  // Employee-service income/expense is excluded even when reported on C.
+  employee_service_classification_reviewed: z.literal(true),
+}).strict();
+
 /** Internal return-wide workpaper. No public Form 461 line or loss override. */
 export const businessLossSource2026Schema = investmentOwner2026.extend({
   record_reference: ref,
   business_sources: businessSources2026Schema.optional(),
   capital_sources: capitalGainInput2026Schema,
-  review: z.object({
-    record_reference: ref,
-    all_business_sources_included: z.literal(true),
-    no_schedule_e_f_k1_or_other_business_sources: z.literal(true),
-    no_other_business_adjustments_or_released_suspended_losses: z.literal(true),
-    basis_at_risk_and_passive_limits_resolved: z.literal(true),
-    // Investment claims and business-land sources retain their own tax review.
-    // Employee-service income/expense is excluded even when reported on C.
-    employee_service_classification_reviewed: z.literal(true),
-  }).strict(),
+  review: businessLossReview2026Schema,
 }).strict();
 export type BusinessLossSource2026 = z.input<
   typeof businessLossSource2026Schema
@@ -44,7 +46,10 @@ export function calculateBusinessLoss2026(raw: BusinessLossSource2026) {
     c.source_input.spouse_ssn !== source.spouse_ssn ||
     b && (b.source_input.filing_status !== source.filing_status ||
         b.source_input.taxpayer_tin !== source.taxpayer_ssn ||
-        b.source_input.spouse_tin !== source.spouse_ssn)
+        b.source_input.spouse_tin !==
+          (source.filing_status === FilingStatus.MFJ
+            ? source.spouse_ssn
+            : undefined))
   ) {
     throw new Error(
       "Form 461 source inventories must have identical filing owners",
