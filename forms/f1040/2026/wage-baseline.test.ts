@@ -13,7 +13,7 @@ Deno.test("2026 wage baseline uses shared algorithms and 2026 constants", () => 
   assertEquals(single.ordinaryTaxBeforeCreditsAndOtherTaxes, 24_734);
   assertEquals(single.canFile, false);
   assertEquals(single.status, "calculation-preview");
-  assertEquals(single.method, "annual-rate-schedule");
+  assertEquals(single.method, "tax-computation-worksheet");
   // Joint: 150000 - 32200 = 117800; 11600 + (117800 - 100800)*.22 = 15340.
   const joint = calculateWageBaseline2026({
     filing_status: "mfj",
@@ -55,4 +55,14 @@ Deno.test("2026 wage baseline rejects unsupported facts instead of silently omit
       { filing_status: "single", wages: [Number.MAX_VALUE, Number.MAX_VALUE] },
     ]
   ) assertThrows(() => calculateWageBaseline2026(input));
+});
+
+Deno.test("2026 wage baseline uses the draft Tax Table below $100,000", () => {
+  const result = calculateWageBaseline2026({
+    filing_status: "mfj",
+    wages: [57500],
+  });
+  assertEquals(result.taxableIncomeBeforeOtherDeductions, 25300);
+  assertEquals(result.ordinaryTaxBeforeCreditsAndOtherTaxes, 2543);
+  assertEquals(result.method, "tax-table");
 });

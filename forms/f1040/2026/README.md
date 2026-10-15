@@ -9,15 +9,16 @@ product. The ongoing branch is `codex/ty2026-readiness`.
 - The existing 2025 standard-deduction node and the 2026 wage baseline call the
   same `standardDeductionAmount` implementation. Year-specific amounts are
   supplied explicitly, including dependent minimum/earned-income additions.
-- The existing 2025 ordinary-tax path above the Tax Table cutoff and the 2026
-  baseline call the same `rateScheduleTax` implementation. The existing 2025 Tax
-  Table and preferential-income worksheets retain their behavior.
+- The 2025 and 2026 Tax Table, ordinary-rate and preferential worksheets share
+  the same calculations with explicit year-specific configurations. The existing
+  2025 entry points retain their behavior.
 - `nodes/config/2026-income.ts` contains the audited subset of 2026 constants
   from [Rev. Proc. 2025-32 §§4.01, 4.14](https://www.irs.gov/irb/2025-45_IRB),
   checked October 15, 2026. It does not fill missing constants with 2025 values
   or enable unaudited nodes through a complete `F1040Config` registration.
 - `calculateWageBaseline2026` sums classified taxable wages, applies the base
-  standard deduction and calculates an ordinary rate-schedule preview. It
+  standard deduction and calculates an ordinary-tax preview from the draft
+  Tax Table or Tax Computation Worksheet. It
   rejects unrecognized input fields and reports `canFile: false`.
 - The CLI rejects unsupported return products before creating metadata files.
 - `assembleReturn2026` runs the shared input router and executor with a bounded
@@ -54,8 +55,41 @@ $24,734 ordinary rate-schedule tax before credits and other taxes. It does not
 calculate total tax, a refund or an amount due. In particular, the preview
 assumes base-standard-deduction eligibility and excludes age/blind additions,
 dependent eligibility, itemization, Schedule 1-A and charitable deductions,
-credits, other income/taxes, and withholding. Below $100,000, annual rate tax is
-an estimate until the final 2026 Tax Table is implemented and checked.
+credits, other income/taxes, and withholding. Below $100,000 it now uses the
+checked draft 2026 Tax Table; final IRS revisions remain a filing gate.
+
+## Income-tax worksheets
+
+The 2026 `income_tax_calculation` node receives resolved taxable income and
+signed AMT inputs from deduction resolution. It derives Form 1040 line 16 and
+forwards tax/preference facts to the AMT, child-credit, foreign-tax-credit and
+Form 8978 owners. Those pending destinations still need their 2026 calculators;
+the income-tax node does not imply they are complete.
+
+The [August 28 draft Publication 1040](../../../docs/ty2026/corpus/draft/p1040.pdf)
+is pinned at SHA-256
+`407bc35ab09aaf034689341d7469b9b082cd2ceaa652e38ca5874c1dd1c3f12e`.
+Its 2,062 Tax Table rows were independently extracted into
+`docs/ty2026/evidence/tax-table-2026.csv`, retaining PDF page provenance.
+Tests compare all 8,248 printed tax cells at both interval endpoints, plus QSS
+against the joint column, and each Tax Computation Worksheet bracket boundary.
+The reproducible extractor reads the pinned PDF; it does not compute tax.
+
+Qualified-dividend/0%/15%/20%, Schedule D special-rate/election, and foreign
+exclusion stacking calculations now accept explicit 2026 annual configuration.
+The shared helpers still default to 2025 for existing callers. Annual thresholds
+come from Rev. Proc. 2025-32 §§4.01/4.03; the 2026 Form 1116 draft corroborates
+Schedule D's status-specific 24% ceiling, including the distinct HOH amount.
+The 2026 Form 1040/Schedule D instruction URLs still serve 2025 worksheets;
+final 2026 worksheet-layout review remains required.
+
+The graph scenarios derive tax/refunds for wages, tips/overtime, vehicle interest,
+mortgages, educators and moving expenses. Preferential/foreign calculations are
+internal building blocks until their 2026 source owners are connected. Schedule J,
+Form 8615, parent elections, lump-sum and PFIC/reporting-year tax adjustments are
+rejected as unsupported inputs here until their calculation order is implemented.
+The shared special-rate foreign worksheet still rejects capital-gain-excess
+refigures. No asserted tax amount is exposed by the public source catalog.
 
 ## W-2 and AGI source integration
 
@@ -88,8 +122,8 @@ record. `inputs.ts` contains its repeated `w2s` input entry and the singleton
   allocation are unfinished; no 2025 evidence is silently accepted for them.
 
 The internal graph test covers general identity and cash-gift records → issued
-W-2 → AGI → deduction resolution → Form 1040 settlement. Only finalized income
-tax is supplied by the fixture. It intentionally exposes the
+W-2 → AGI → deduction resolution → income-tax calculation → Form 1040
+settlement. Line 16 is calculated rather than supplied by the fixture. It exposes the
 remaining credit/form pending records. It is not a complete public return graph.
 The `w2_2026_sources` handoff now feeds the employee/senior Schedule 1-A
 calculator described below; its other source branches remain unfinished.
@@ -442,7 +476,8 @@ charitable carryovers, casualty/other deductions, or NOL carryback. Mortgage int
 remaining owners, Schedule A PDF/MeF and final instructions still need implementation. The internal
 graph fixture derives a $53,250 itemized candidate from receipts and W-2 sources
 at $150,001 AGI, selects it, removes the nonitemizer deduction and retains $38,750
-of taxes for the AMT handoff. Its income-tax fixture is still supplied explicitly.
+of taxes for the AMT handoff. Its graph fixture now calculates line 16 from the
+resolved taxable income.
 
 ## Mortgage sources, points and insurance
 
@@ -685,3 +720,11 @@ components matched the hashes already recorded in the research corpus.
   check. Source-to-return cases cover deduction, taxable excess and foreign
   storage-only routing. Draft PDF review covers separate deduction/excess
   pages, certification/line-5 choices and removal of interactive fields.
+
+- Income-tax verification: 346 combined 2026/shared-2025 tests passed, including
+  income tax, Tax Table, Form 8615, Form 2555 and Schedule J. The complete draft
+  table comparison covers 8,248 published cells at both endpoints plus QSS.
+  All 16 source-to-return scenarios now derive line 16 and their refunds;
+  the source catalog also rejects direct tax/worksheet injection. The ordinary
+  rate calculation agreed with independent integer-cent bracket arithmetic for
+  every whole-dollar income from $100,000 through $1 million in all five statuses.

@@ -1,3 +1,4 @@
+import { income_tax_2026 } from "./nodes/income-tax.ts";
 import { moving_expenses_2026 } from "./inputs/moving-expenses.ts";
 import {
   syntheticForeignStorage2026,
@@ -38,7 +39,7 @@ import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { w2_2026 } from "./inputs/w2.ts";
 import { agi_2026 } from "./nodes/agi.ts";
-import { f1040_2026_node, inputSchema as returnSchema } from "./nodes/f1040.ts";
+import { f1040_2026_node } from "./nodes/f1040.ts";
 import { schedule1_2026 } from "./nodes/schedule1.ts";
 import { schedule3a } from "./nodes/schedule3a.ts";
 import { inputNodes } from "./inputs.ts";
@@ -89,17 +90,11 @@ for (
   const expectedWages = vehicle ? 80_001 : 150_001;
   const seniorTips = scenario === "tips-overtime-senior";
   Deno.test(`2026 ${scenario} feed shared AGI and deduction settlement`, () => {
-    // Internal integration fixture: income-tax finalization is still supplied here.
-    // The full public registry must also resolve every emitted credit/form route.
+    // The connected ordinary-income path calculates line 16 from source deductions.
+    // Remaining credit/AMT owners are visible pending routes, not filing approval.
     const registry = {
-      start: buildStartNode([
-        ...inputNodes,
-        {
-          node: f1040_2026_node,
-          inputSchema: returnSchema.pick({ line16_income_tax: true }),
-          isArray: false,
-        },
-      ]),
+      start: buildStartNode(inputNodes),
+      income_tax_calculation: income_tax_2026,
       general: general_2026,
       cash_charity: cash_charity_2026,
       schedule_a: schedule_a_2026,
@@ -361,17 +356,6 @@ for (
           box2_fed_withheld: 10_000.25,
         },
       ],
-      f1040: {
-        line16_income_tax: unreported
-          ? 20_342
-          : vehicle
-          ? 7_736
-          : seniorTips
-          ? 17_119
-          : overtime
-          ? 22_214
-          : 24_614,
-      },
     }, { formType: "f1040", taxYear: 2026 });
     assertEquals(result.diagnostics, []);
     assertEquals(
@@ -464,22 +448,49 @@ for (
         ? 133_051
         : 133_401,
     );
+    const expectedTax: Record<string, number> = {
+      wages: 24614,
+      moving: 24364,
+      "moving-excess": 24844,
+      "moving-storage": 24134,
+      itemized: 16003,
+      mortgage: 22838,
+      "mortgage-refinance": 22816,
+      "educator-standard": 24530,
+      "educator-itemized": 22646,
+      overtime: 22214,
+      "tips-overtime-senior": 17119,
+      vehicle: 7742,
+      "unreported-tips": 20342,
+      medicare: 24614,
+      ct2: 24614,
+      "misclassified-with-tips": 22982,
+    };
+    const expectedRefund: Record<string, number> = {
+      wages: 5387,
+      moving: 5637,
+      "moving-excess": 5157,
+      "moving-storage": 5867,
+      itemized: 13998,
+      mortgage: 7163,
+      "mortgage-refinance": 7185,
+      "educator-standard": 5471,
+      "educator-itemized": 7355,
+      overtime: 7787,
+      "tips-overtime-senior": 12882,
+      vehicle: 22259,
+      "unreported-tips": 9506,
+      medicare: 4937,
+      ct2: 5387,
+      "misclassified-with-tips": 7566,
+    };
+    assertEquals(result.pending.f1040.line16_income_tax, expectedTax[scenario]);
+    assertEquals(result.pending.f1040.line35a_refund, expectedRefund[scenario]);
     assertEquals(
-      result.pending.f1040.line35a_refund,
-      misclassified
-        ? 10206
-        : medicare
-        ? 4937
-        : unreported
-        ? 9506
-        : vehicle
-        ? 22_265
-        : seniorTips
-        ? 12_882
-        : overtime
-        ? 7_787
-        : 5_387,
+      result.pending.f8812.auto_income_tax_liability,
+      expectedTax[scenario],
     );
+    assertEquals(result.pending.form6251.regular_tax, expectedTax[scenario]);
     if (ct2) {
       assertEquals(result.pending.f1040.line23_other_taxes, 360);
       assertEquals(result.pending.f1040.line25c_other_withheld, 360);

@@ -3,7 +3,7 @@ import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { inputSchema as sharedSchema } from "../../nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts";
-import { income_tax_calculation } from "../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
+import { income_tax_2026 } from "./income-tax.ts";
 import { f1040_2026_node } from "./f1040.ts";
 import { noQbi2026, resolveDeductions2026 } from "../deduction-resolution.ts";
 
@@ -42,7 +42,7 @@ class StandardDeduction2026Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     f1040_2026_node,
-    income_tax_calculation,
+    income_tax_2026,
   ]);
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {

@@ -20,6 +20,13 @@ an authorized e-Services/SOR mailbox. Use the current
 [`GRAPH-ROUTES.md`](../graphs/GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
+On the current-main rebuild, the source graph now derives line 16 from resolved
+taxable income using the checked 2026 draft Tax Table/Tax Computation Worksheet.
+The shared preferential and foreign-stacking helpers accept 2026 configuration,
+but their source owners and specialist tax elections remain incomplete. See the
+[current code scope](../../../forms/f1040/2026/README.md#income-tax-worksheets);
+historical progress notes below are not proof that those routes are registered
+on this branch.
 The [parity queue](./PARITY-QUEUE.md) groups retained TY2025 PDF/MeF surfaces
 and TY2026-only attachments into coding waves, with the cross-form evidence
 required to close each route.

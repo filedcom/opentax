@@ -139,3 +139,22 @@ writing final field maps or claiming MeF support.
 
 Do not silently carry a 2025 rule forward. Record each unchanged decision with
 the 2026 source used to verify it.
+
+## Income-tax table verification, October 15
+
+The [2026 draft Publication 1040](https://www.irs.gov/pub/irs-dft/p1040--dft.pdf)
+(August 28) is pinned as `corpus/draft/p1040.pdf`, 2,705,378 bytes, SHA-256
+`407bc35ab09aaf034689341d7469b9b082cd2ceaa652e38ca5874c1dd1c3f12e`.
+The extractor in `tooling/extract_tax_table_2026.py` reproduces the 2,062 rows
+and 8,248 printed cells in `evidence/tax-table-2026.csv` without deriving them
+from brackets. Tests verify all cells and Tax Computation Worksheet boundaries.
+The same publication includes the EIC table, which has not been extracted or
+verified for a 2026 EIC owner yet. Final publication revisions remain a gate.
+
+[Rev. Proc. 2025-32 §4.03](https://www.irs.gov/irb/2025-45_IRB) supplies the 2026
+capital-gain thresholds. The [2026 Form 1116 draft instructions](https://www.irs.gov/pub/irs-dft/i1116--dft.pdf),
+printed page 27, corroborate Schedule D's 24% ceilings of $403,550 MFJ/QSS,
+$201,775 Single/MFS and $201,750 HOH. The `i1040gi` and `i1040sd` draft URLs
+still serve 2025 instructions; worksheet structure uses that comparator pending
+final 2026 review. These are calculator authorities, not source eligibility or
+current-MeF/ATS acceptance evidence.

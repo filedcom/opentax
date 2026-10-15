@@ -2309,6 +2309,17 @@
       "retrieved_utc": "2026-10-15T11:28:39.050882+00:00",
       "year_check": "2026-present",
       "scope": "Division B, section 1, page 25: early-childhood educator eligibility applies from tax year 2026"
+    },
+    {
+      "path": "draft/p1040.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/p1040--dft.pdf",
+      "kind": "draft-publication",
+      "status": "downloaded",
+      "bytes": 2705378,
+      "sha256": "407bc35ab09aaf034689341d7469b9b082cd2ceaa652e38ca5874c1dd1c3f12e",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-15",
+      "scope": "Aug 28 draft; Tax Table printed pages 2-13 and Tax Computation Worksheet pages 14-15; EIC table separately unverified"
     }
   ]
 }

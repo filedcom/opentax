@@ -1,5 +1,13 @@
 # TY2026 Form 1040 entry point — implementation plan
 
+Current-main update (October 15): the connected 2026 source tests now calculate
+ordinary income tax and refunds rather than injecting line 16. The pinned draft
+Publication 1040 provides all 8,248 Tax Table cells and the Tax Computation
+Worksheet. Preferential/special-rate/foreign helpers reuse 2025 arithmetic with
+2026 configuration; their complete source routes and specialist elections are
+still pending. See [current scope](../../../forms/f1040/2026/README.md#income-tax-worksheets)
+before treating historical prototype notes below as current implementation.
+
 Status: research snapshot, 2026-09-27, from code commit `b7c07b61`.
 The 2026 code snapshot had a calculation registry for a verified subset;
 `f1040_2026` was not registered in `catalog.ts` yet. This plan belongs with
