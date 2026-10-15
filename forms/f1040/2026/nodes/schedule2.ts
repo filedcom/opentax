@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { f8812 } from "../../nodes/inputs/credits/child/f8812/index.ts";
+import type { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
@@ -23,7 +24,7 @@ export const inputSchema = schedule2Input2026Schema.pick({
 class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule2";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040_2026_node]);
+  readonly outputNodes = new OutputNodes([f1040_2026_node, f8812]);
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Schedule 2 needs f1040:2026 context");
@@ -32,6 +33,10 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
     const lines = calculateSchedule2_2026(input);
     return {
       outputs: [
+        {
+          nodeType: "f8812",
+          fields: { schedule2_part1_tax: lines.line3_part1_tax },
+        },
         {
           nodeType: "schedule2",
           fields: {

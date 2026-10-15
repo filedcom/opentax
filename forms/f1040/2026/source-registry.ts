@@ -1,3 +1,4 @@
+import { f8812_2026 } from "./nodes/f8812.ts";
 import { social_security_2026 } from "./inputs/social-security.ts";
 import { student_loan_interest_2026 } from "./inputs/student-loan-interest.ts";
 import { buildStartNode } from "../start.ts";
@@ -32,6 +33,7 @@ import { schedule3a } from "./nodes/schedule3a.ts";
 export const sourceRegistry2026 = {
   start: buildStartNode(inputNodes),
   general: general_2026,
+  f8812: f8812_2026,
   ssa1099: social_security_2026,
   student_loan_interest: student_loan_interest_2026,
   investment_income: investments_2026,

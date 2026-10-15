@@ -297,6 +297,18 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       };
     });
     outputs.push({
+      nodeType: "f8812",
+      fields: {
+        nontaxable_combat_pay_from_w2: input.w2s.reduce((sum, item) =>
+          sum +
+          (item.box12_entries ?? []).filter((entry) => entry.code === "Q")
+            .reduce((n, entry) => n + entry.amount, 0), 0),
+        statutory_employee_from_w2: input.w2s.some((item) =>
+          item.box13_statutory_employee === true
+        ),
+      },
+    });
+    outputs.push({
       nodeType: "schedule_a",
       fields: {
         w2_tax_sources: input.w2s.map((item) => ({

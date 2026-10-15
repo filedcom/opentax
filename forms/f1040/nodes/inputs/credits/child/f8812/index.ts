@@ -9,6 +9,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { filingStatusSchema } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import type { ChildCreditConfig } from "../../../../config/types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 
 export const earnedIncomeWorksheetSchema = z.object({
@@ -374,6 +375,15 @@ export function calculateSchedule8812Lines(
 ) {
   const cfg = CONFIG_BY_YEAR[taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  return calculateSchedule8812LinesWithConfig(cfg, rawInput);
+}
+
+/** Shared arithmetic; callers own year-specific source and worksheet routing. */
+export function calculateSchedule8812LinesWithConfig(
+  cfg: ChildCreditConfig,
+  rawInput: F8812Input,
+  options: { roundActcEarnedIncome?: boolean } = {},
+) {
   const input = inputSchema.parse(rawInput);
   const explicitItems = input.f8812s ?? [];
   if (explicitItems.length > 0) {
@@ -571,10 +581,15 @@ export function calculateSchedule8812Lines(
     );
   }
   const line19 = Math.max(0, (line18a ?? 0) - cfg.actcEarnedIncomeFloor);
-  const line20 = computeActcEarnedIncomeBased(
+  const earnedMethodAmount = computeActcEarnedIncomeBased(
     line18a ?? 0,
     cfg.actcEarnedIncomeFloor,
   );
+  // Whole-dollar returns compare the printed line 20 with line 17 before
+  // deciding whether Part II-B is required. Preserve the legacy default.
+  const line20 = options.roundActcEarnedIncome
+    ? Math.round(earnedMethodAmount)
+    : earnedMethodAmount;
   const needsPartIIB = line17 > 0 &&
     (isPrResident || (line4 >= 3 && line20 < line17));
   let partIIBLines = null;

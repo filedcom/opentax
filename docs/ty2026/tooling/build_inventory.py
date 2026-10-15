@@ -116,7 +116,7 @@ NODE_PROGRESS = {
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
     "schedule2": "dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources",
-    "f8812": "2026 Part II-B uses Schedule 2 lines 16c/17c; Worksheets A/B use 2026 Schedule 3 lines; finish credit graph",
+    "f8812": "Shared CTC/ODC and earned-method ACTC connected to 2026 source reviews and draft PDF; Part II-B payroll/EIC and other-credit ordering remain; see CHILD-CREDIT-CURRENT.md",
     "f1099div": "Reviewed 2026 ordinary/qualified/exempt dividends and direct gain distributions reach tax, PAB/AMT and NIIT with withholding; special gains, basis/QBI/foreign sources and MeF remain open; see INVESTMENTS-CURRENT.md",
     "schedule_d": "2026 box2a, carryover, and 1099-B/DA transaction PDF routes verified; add other capital sources, QOF, and MeF",
     "f1099b": "dedicated 2026 1099-B input registered with Form 8949/Schedule D PDF; add unsupported broker branches and MeF",

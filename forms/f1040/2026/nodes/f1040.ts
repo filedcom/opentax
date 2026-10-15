@@ -77,6 +77,7 @@ export const inputSchema = identityInputSchema.extend({
   line27b_clergy_schedule_se: z.boolean().optional(),
   line27c_declines_eic: z.boolean().optional(),
   line28_actc: amount.default(0),
+  line28_declines_actc: z.boolean().default(false),
   line29_refundable_aotc: amount.default(0),
   line30_refundable_adoption: amount.default(0),
   line31_other_payments: amount.default(0),
@@ -131,6 +132,9 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     }
     if (input.line27c_declines_eic && input.line27a_eic > 0) {
       throw new Error("Form 1040 line 27c cannot decline a claimed EIC");
+    }
+    if (input.line28_declines_actc && input.line28_actc > 0) {
+      throw new Error("Form 1040 line 28 cannot decline a claimed ACTC");
     }
     const line11Agi = input.line9_total_income - input.line10_adjustments;
     const wageLines = [
@@ -263,6 +267,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line27b_clergy_schedule_se: input.line27b_clergy_schedule_se,
         line27c_declines_eic: input.line27c_declines_eic,
         line28_actc: input.line28_actc,
+        line28_declines_actc: input.line28_declines_actc,
         line29_refundable_aotc: input.line29_refundable_aotc,
         line30_refundable_adoption: input.line30_refundable_adoption,
         line31_other_payments: input.line31_other_payments,

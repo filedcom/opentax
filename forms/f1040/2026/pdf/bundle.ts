@@ -1,3 +1,5 @@
+import type { calculateChildCredit2026 } from "../nodes/f8812.ts";
+import { buildSchedule8812PdfBytes2026 } from "./schedule8812.ts";
 import type { calculateSocialSecuritySources2026 } from "../inputs/social-security-source.ts";
 import { PDFDocument, PDFName, rgb, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -139,6 +141,9 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
       "TY2026 information-return withholding components disagree with Form 1040",
     );
   }
+  const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
+    "f8812",
+  );
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
   const parts: {
@@ -152,7 +157,7 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
     render: () => Promise<Uint8Array>,
   ) => parts.push({ form, officialPages, render });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 3A,
-  // 07, 08, 24, 32, 61, 71, 72, 170. Additional statements go at the end.
+  // 07, 08, 24, 32, 47, 61, 71, 72, 170. Additional statements go at the end.
   add("f1040", 2, () => buildF1040PdfBytes2026(f));
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
@@ -254,6 +259,22 @@ export async function buildDraftReturnPdf2026(raw: Record<string, unknown>) {
           schedule1a_line43: s1a?.lines.line43 ?? 0,
           ...(a ? { schedule_a_line7: a.lines.line7 } : {}),
           schedule2_line2: s2line("line2_amt"),
+        },
+        filer,
+      ));
+  }
+  if (childCredit?.file_schedule8812) {
+    add("schedule8812", 2, () =>
+      buildSchedule8812PdfBytes2026(
+        childCredit.source_input,
+        {
+          form1040_line11b: line("line11b_agi"),
+          form1040_line18: line("line18_total_tax_before_credits"),
+          form1040_line19: line("line19_child_tax_credit"),
+          form1040_line28: line("line28_actc"),
+          qualifying_children: line("qualifying_child_tax_credit_count"),
+          other_dependents: line("other_dependent_count"),
+          declines_actc: f.line28_declines_actc === true,
         },
         filer,
       ));

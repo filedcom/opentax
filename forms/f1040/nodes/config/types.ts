@@ -24,6 +24,16 @@ export type StandardDeductionConfig =
     readonly dependentEarnedIncomeAddition: number;
   };
 
+export type ChildCreditConfig = Pick<
+  F1040Config,
+  | "ctcPerChild"
+  | "odcPerDependent"
+  | "actcMaxPerChild"
+  | "ctcPhaseOutThresholdMfj"
+  | "ctcPhaseOutThresholdOther"
+  | "actcEarnedIncomeFloor"
+>;
+
 export interface F1040Config {
   // ── Tax brackets ──────────────────────────────────────────────────────────
   bracketsMfj: ReadonlyArray<Bracket>;

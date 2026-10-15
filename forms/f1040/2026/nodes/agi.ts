@@ -213,6 +213,36 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     let adjustments = 0;
     let studentLoan = 0;
     const outputs = result.outputs.map((output) => {
+      if (output.nodeType === "f8812") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            wage_income_from_agi: [
+              input.line1a_wages,
+              input.line1b_household_wages,
+              input.line1c_unreported_tips,
+              input.line1e_taxable_dep_care,
+              input.line1f_taxable_adoption_benefits,
+              input.line1g_wages_8919,
+              input.line1h_other_earned,
+            ].reduce<number>(
+              (sum, value) =>
+                sum +
+                (Array.isArray(value)
+                  ? value.reduce((a, b) => a + b, 0)
+                  : value ?? 0),
+              0,
+            ),
+            unsupported_earned_income_activity: [
+              input.line3_schedule_c,
+              input.line6_schedule_f,
+              input.line15_se_deduction,
+              input.line8d_foreign_earned_income_exclusion,
+            ].some((v) => (v ?? 0) !== 0),
+          },
+        };
+      }
       if (output.nodeType === "f1040") {
         const { line11_agi: _legacy, ...fields } = output.fields;
         if (Object.hasOwn(fields, "line9_total_income")) {

@@ -157,6 +157,9 @@ regular Git files.
 - [`SSA-BENEFITS-GRAPH.md`](./graphs/SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
   distinctions, signed benefits, MFS residence, student-loan MAGI, draft PDF,
   and remaining repayment/IRA work.
+- [`CHILD-CREDIT-CURRENT.md`](./graphs/CHILD-CREDIT-CURRENT.md): shared child-credit
+  arithmetic, 2026 source reviews, AMT tax limit, draft Schedule 8812 and remaining
+  EIC/payroll/other-credit dependencies.
 - [`SSA-LUMP-SUM-CURRENT.md`](./graphs/SSA-LUMP-SUM-CURRENT.md): historical return
   records, election comparison, AGI/MAGI destinations and draft line 6c.
 - [`RRB-1099-GRAPH.md`](./graphs/RRB-1099-GRAPH.md): pinned RRB issuer explanations

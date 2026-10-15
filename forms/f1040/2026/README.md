@@ -858,3 +858,15 @@ components matched the hashes already recorded in the research corpus.
   whole-dollar NIIT avoids a cents-to-dollars rounding error. A three-page
   Form 6251/8960 QA fixture was rendered and visually inspected; it retains
   draft labels and has no widgets or AcroForm tree.
+
+## Source-backed child credits (October 15, 2026)
+
+The `f8812` singleton claim now connects reviewed source facts to the shared
+child-credit calculator with explicit 2026 configuration. General derives credit
+counts; AGI supplies earned wage lines; W-2 supplies combat pay; income tax and
+Schedule 2 supply the tax limit including AMT. CTC/ODC and the supported ACTC
+method finalize Form 1040 lines 19/28 and select draft Schedule 8812 in the bundle.
+Caller credit totals are rejected. Review fields establish the absence of other
+credits and unsupported income sources. Part II-B, EIC, other-credit ordering,
+Form 8862 and foreign/business cases still need their owners. See
+[the current contract](../../../docs/ty2026/graphs/CHILD-CREDIT-CURRENT.md).

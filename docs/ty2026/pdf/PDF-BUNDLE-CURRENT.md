@@ -36,6 +36,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Schedule B (08) | Source workpaper requires attachment | 1 |
 | Form 4137 (24) | Calculated owner forms | All owner/employer continuation copies |
 | Form 6251 (32) | Retained filing condition | 2 |
+| Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
 | Form 8919 (61) | Calculated owner forms | All owner/employer continuation copies |
 | Form 8959 (71) | Retained filing/withholding condition, including zero tax | 1 |
 | Form 8960 (72) | Retained filing condition, including zero NIIT | 1 |
