@@ -1,4 +1,4 @@
-import { basename, dirname, join } from "@std/path";
+import { basename, dirname, join, relative } from "@std/path";
 import { z } from "zod";
 import { catalog } from "../catalog.ts";
 import type { FormDefinition } from "../core/types/form-definition.ts";
@@ -200,13 +200,22 @@ export async function validateCase(
   validateCaseSource(expected, directory);
 }
 
+export type CaseProblem = {
+  readonly directory: string;
+  readonly message: string;
+};
+export type CaseInspection = {
+  readonly found: readonly string[];
+  readonly problems: readonly CaseProblem[];
+};
+
 /** Cases are leaves; an incomplete leaf must never disappear from the report. */
-export async function discoverBenchmarkCases(
+export async function inspectBenchmarkCases(
   root: string,
   products: Readonly<Record<string, FormDefinition>> = catalog,
-): Promise<string[]> {
+): Promise<CaseInspection> {
   const found: string[] = [];
-  const problems: string[] = [];
+  const problems: CaseProblem[] = [];
   async function visit(directory: string): Promise<void> {
     const entries = [];
     for await (const entry of Deno.readDir(directory)) entries.push(entry);
@@ -220,7 +229,7 @@ export async function discoverBenchmarkCases(
         await validateCase(directory, products);
         found.push(directory);
       } catch (error) {
-        problems.push(describe(error));
+        problems.push({ directory, message: describe(error) });
       }
       return;
     }
@@ -231,15 +240,79 @@ export async function discoverBenchmarkCases(
     for (const child of children) await visit(join(directory, child.name));
   }
   await visit(root);
+  return { found, problems };
+}
+
+export async function discoverBenchmarkCases(
+  root: string,
+  products: Readonly<Record<string, FormDefinition>> = catalog,
+): Promise<string[]> {
+  const { found, problems } = await inspectBenchmarkCases(root, products);
   if (problems.length > 0) {
     throw new Error(
       `${problems.length} invalid benchmark case${
         problems.length === 1 ? "" : "s"
-      }:\n${problems.join("\n")}`,
+      }:\n${problems.map((problem) => problem.message).join("\n")}`,
     );
   }
   if (found.length === 0) throw new Error(`No benchmark cases: ${root}`);
-  return found;
+  return [...found];
+}
+
+export const CASE_BASELINE_PATH = "benchmark/cases/baseline.json";
+const caseBaselineEntrySchema = z.object({
+  /** <form>/<year>/<case>, relative to benchmark/cases. */
+  case: z.string().min(1),
+  reason: z.string().min(1),
+  expires: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+  approvedBy: z.string().min(1),
+});
+export const caseBaselineSchema = z.array(caseBaselineEntrySchema);
+export type CaseBaseline = z.infer<typeof caseBaselineSchema>;
+
+export async function readCaseBaseline(repo: string): Promise<CaseBaseline> {
+  try {
+    return caseBaselineSchema.parse(
+      JSON.parse(await Deno.readTextFile(join(repo, CASE_BASELINE_PATH))),
+    );
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) return [];
+    throw error;
+  }
+}
+
+/** Known-invalid cases are allowed with a reason and an expiry; new ones fail. */
+export function applyCaseBaseline(
+  root: string,
+  problems: readonly CaseProblem[],
+  baseline: CaseBaseline,
+  today: string,
+): { readonly open: readonly CaseProblem[]; readonly allowed: number } {
+  const name = (directory: string) => relative(root, directory);
+  const open = problems.flatMap((problem) => {
+    const entry = baseline.find((candidate) =>
+      candidate.case === name(problem.directory)
+    );
+    if (!entry) return [problem];
+    if (entry.expires < today) {
+      return [{
+        ...problem,
+        message:
+          `${problem.message}\n  baseline exception expired on ${entry.expires}; fix the case or renew the entry in ${CASE_BASELINE_PATH}`,
+      }];
+    }
+    return [];
+  });
+  const stale = baseline
+    .filter((entry) =>
+      !problems.some((problem) => name(problem.directory) === entry.case)
+    )
+    .map((entry) => ({
+      directory: join(root, entry.case),
+      message:
+        `${entry.case}: baseline entry no longer matches an invalid case; remove it from ${CASE_BASELINE_PATH}`,
+    }));
+  return { open: [...open, ...stale], allowed: baseline.length - stale.length };
 }
 
 export function checkedCommandOutput(

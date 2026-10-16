@@ -86,6 +86,7 @@ expired entries, and on entries that no longer match anything.
 | Expected values change only with a cited ledger entry       | `scripts/testing/oracle.ts` (`check:oracle`)     |
 | Unmapped expected lines fail instead of passing             | `benchmark/run_benchmark.ts`                     |
 | Test modules are discovered exactly, never partially        | `scripts/testing/run.ts`                         |
+| The checks above run on every pull request                  | `.github/workflows/test.yml`                     |
 
 ## Benchmark case formats
 

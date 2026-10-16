@@ -1,0 +1,170 @@
+[
+  {
+    "case": "f1040/2025/100-single-w2-gambling-winnings",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: w2g: data: Positive W-2G winnings or withholding need an issued-copy reference and identified payer name and EIN",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/101-mfj-w2-itemized-mortgage-salt-charity",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: schedule_a: line_11_cash_contributions: Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions. Prior",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/108-single-w2-schedule-c-se-self-employed-health",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: self_employed_health_insurance: Validation error: Unrecognized field: premiums_paid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/118-single-w2-schedule-h-household",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: schedule_h: Validation error: Unrecognized fields: total_cash_wages, employee_ss_withheld, employee_medicare_withheld, futa_tax",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/120-single-w2-alimony-received",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: alimony_received: agreement_reference: Required; recipient_ssn: Required; post_2018_modification_excludes_alimony: Required",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/132-single-w2-hobby-income",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: f1099m: box3_other_income_description: 1099-MISC box 3 other income needs a reviewed payment description",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/33-single-1099nec-schedule-c",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: f1099nec: schedule_c_business_reference: 1099-NEC Schedule C income needs a business and recipient TIN",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/49-single-1099nec-w2-no-withholding",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: f1099nec: schedule_c_business_reference: 1099-NEC Schedule C income needs a business and recipient TIN",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/54-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/56-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/57-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/59-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/61-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/65-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/66-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/69-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/70-single-w2-k1-1099r-1099int-1099div-1099b-estimated-tax",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/72-mfj-1099r-1099int-1099div-1099b-ssa",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: f1099m: box3_other_income_description: 1099-MISC box 3 other income needs a reviewed payment description",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/73-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/74-single-w2-k1-1099r-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/75-single-w2-1099int-1099div-1099b",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: schedule_a: line_11_cash_contributions: Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions. Prior",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/79-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/81-single-w2-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: schedule_a: line_12_noncash_contributions: Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions. Pr",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/82-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/84-hoh-w2",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: schedule_a: line_12_noncash_contributions: Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions. Pr",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/87-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/89-single-w2-k1-1099r-1099int-1099div",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  },
+  {
+    "case": "f1040/2025/93-mfj-w2-k1",
+    "reason": "Inputs no longer fit the node schema; update the case from its cited source: k1_partnership: partnership_ein: Invalid",
+    "expires": "2027-01-31",
+    "approvedBy": "a7ul"
+  }
+]

@@ -19,6 +19,14 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - name: Fetch the base branch for the oracle check
+        run: git fetch --no-tags --depth=1 origin main
+      - name: Nodes placed, registered and reachable
+        run: deno task check:structure
+      - name: Benchmark cases fit their node schemas and cite a publication
+        run: deno task check:cases
+      - name: Expected values change only with a cited ledger entry
+        run: deno task check:oracle --base origin/main
       - name: Graph preflight and typed unit and harness verification
         run: deno task test:unit
       - name: Preserve verification report

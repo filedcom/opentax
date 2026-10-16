@@ -108,7 +108,9 @@ input and expected-value schemas, the product read from `<form>/<year>/<case>`,
 each form entry against the node schema `form add` applies (unknown fields
 rejected, required fields named), and any `source`, which must cite a
 publication and never the engine. Every invalid case is reported in one error;
-`deno task check:cases` runs only this step, without the engine. Empty or
+`deno task check:cases` runs only this step, without the engine, allowing the
+known-invalid cases listed in `benchmark/cases/baseline.json` (with a reason,
+an expiry and an approver) until their entry expires. Empty or
 incomplete directories and malformed fixtures terminate with an error; no
 partial-success JSON report is emitted. Each valid expected record includes
 total tax, refund and amount owed. CLI output must pass the shared

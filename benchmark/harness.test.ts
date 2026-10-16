@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import {
+  applyCaseBaseline,
   benchmarkExitCode,
   benchmarkExpectedSchema,
   benchmarkReturnSchema,
@@ -8,6 +9,7 @@ import {
   checkedCommandOutput,
   createdReturnSchema,
   discoverBenchmarkCases,
+  inspectBenchmarkCases,
 } from "./harness.ts";
 
 async function caseDirectory(root: string, name: string) {
@@ -279,4 +281,42 @@ Deno.test("discovery reports every invalid case in one error, not just the first
   assertEquals(error.message.startsWith("2 invalid benchmark cases:\n"), true);
   assertEquals(error.message.includes("box1_interest"), true);
   assertEquals(error.message.includes("non-empty citation"), true);
+});
+
+Deno.test("known-invalid cases are allowed by the baseline until it expires, and a stale entry is reported", async () => {
+  const root = await Deno.makeTempDir();
+  await caseWith(root, "f1040/2025/01", [start, {
+    node_type: "f1099int",
+    data: { box1_interest: 1 },
+  }]);
+  await caseWith(root, "f1040/2025/02", [start]);
+  const { found, problems } = await inspectBenchmarkCases(root);
+  assertEquals(found.length, 1);
+  assertEquals(problems.length, 1);
+  const entry = {
+    case: "f1040/2025/01",
+    reason: "renamed field",
+    expires: "2027-01-31",
+    approvedBy: "a7ul",
+  };
+  assertEquals(
+    applyCaseBaseline(root, problems, [], "2026-10-16").open,
+    problems,
+  );
+  assertEquals(applyCaseBaseline(root, problems, [entry], "2026-10-16"), {
+    open: [],
+    allowed: 1,
+  });
+  const expired = applyCaseBaseline(root, problems, [entry], "2027-02-01");
+  assertEquals(expired.open.length, 1);
+  assertEquals(expired.open[0].message.includes("expired on 2027-01-31"), true);
+  const stale = applyCaseBaseline(root, problems, [{
+    ...entry,
+    case: "f1040/2025/02",
+  }], "2026-10-16");
+  assertEquals(stale.open.map((p) => p.message.includes("no longer matches")), [
+    false,
+    true,
+  ]);
+  assertEquals(stale.allowed, 0);
 });
