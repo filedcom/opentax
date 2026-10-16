@@ -1,3 +1,4 @@
+import { hsaTestingPeriodIncome } from "./testing-income.ts";
 import { hsaPriorExcess } from "./prior-excess.ts";
 import {
   hsaDistributionAdditionalTax,
@@ -1519,11 +1520,12 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const penalty = nonQualifiedPenalty(input, taxable, ctx.taxYear);
     const failure = input.testing_period_failure;
     const lastMonthIncome = lastMonthRuleIncome(input, pairedPriorYear);
-    const partIIIIncome = failure
-      ? lastMonthIncome +
-        failure.qualified_funding_distribution_amount
-      : 0;
-    const eligibilityTax = partIIIIncome * 0.1;
+    const testingIncome = hsaTestingPeriodIncome(
+      failure ? lastMonthIncome : 0,
+      failure?.qualified_funding_distribution_amount ?? 0,
+    );
+    const partIIIIncome = testingIncome.income;
+    const eligibilityTax = testingIncome.additionalTax;
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(

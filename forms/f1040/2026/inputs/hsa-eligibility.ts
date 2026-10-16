@@ -1,9 +1,8 @@
+import { classifyHsaCoverage2026 } from "./hsa-plan-eligibility.ts";
 import { z } from "zod";
 import { CoverageType } from "../../nodes/intermediate/forms/adjustments/health/form8889/contribution-limit.ts";
-import { hsa2026 } from "../../nodes/config/2026-hsa.ts";
 import {
   isSourceMoney,
-  sourceCents,
 } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 const ref = z.string().trim().min(1);
 const date = z.string().date();
@@ -231,84 +230,17 @@ export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
           "HSA permitted other coverage needs its statutory classification evidence",
         );
       }
-      const planEligibility = plans.map((p) => {
-        if (p.kind !== "ordinary_health_plan") {
-          return {
-            source_reference: p.source_document_reference,
-            coverage: p.coverage,
-            qualified: true,
-          };
-        }
-        if (p.annual_out_of_pocket_maximum < p.annual_deductible) {
-          throw Error(
-            "HSA ordinary plan deductible exceeds its out-of-pocket maximum",
-          );
-        }
-        if (
-          p.plan_year_begins > first ||
-          p.coverage === CoverageType.SelfOnly &&
-            p.embedded_individual_deductible !== null
-        ) {
-          throw Error(
-            "HSA ordinary plan year or embedded deductible contradicts coverage",
-          );
-        }
-        const minimum = hsa2026.minimumDeductible[p.coverage];
-        const qualified = p.annual_deductible >= minimum &&
-          p.annual_out_of_pocket_maximum <=
-            hsa2026.maximumOutOfPocket[p.coverage] &&
-          (p.embedded_individual_deductible === null ||
-            p.embedded_individual_deductible >= minimum) &&
-          !p.nonpermitted_benefits_before_minimum_deductible &&
-          (!p.telehealth_or_remote_care_before_deductible ||
-            p.plan_year_begins >= "2025-01-01");
-        return {
-          source_reference: p.source_document_reference,
-          coverage: p.coverage,
-          qualified,
-        };
-      });
-      // LCM(1..12) makes aggregate periodic fees exact even for three-/seven-month
-      // contracts; rounding an annualized fee must not turn an excess into $150.
-      const denominator = 27720;
-      const feeUnits = dpcs.reduce((n, p) =>
-        n +
-        sourceCents(p.fixed_periodic_fee) *
-          (denominator / p.billing_period_months), 0);
-      const cap = dpcs.some((p) => p.covers_more_than_one_individual)
-        ? hsa2026.directPrimaryCareMonthlyFee.multiple
-        : hsa2026.directPrimaryCareMonthlyFee.single;
-      const dpcQualified =
-        dpcs.every((p) =>
-          p.statutory_primary_care_practitioners_only &&
-          p.solely_primary_care_without_prohibited_services &&
-          p.fixed_fee_is_sole_compensation_for_care_within_arrangement
-        ) && feeUnits <= cap * 100 * denominator;
-      const reasons = [
-        ...(input.can_be_claimed_as_dependent ? ["dependent"] : []),
-        ...(m.medicare.enrolled ? ["medicare"] : []),
-        ...(m.other_coverage.disposition === "disqualifying"
-          ? ["other_coverage"]
-          : []),
-        ...(!plans.length ? ["no_health_plan"] : []),
-        ...(planEligibility.some((p) => !p.qualified)
-          ? ["nonqualifying_health_plan"]
-          : []),
-        ...(!dpcQualified ? ["direct_primary_care"] : []),
-      ];
-      const coverage = reasons.length
-        ? null
-        : plans.some((p) => p.coverage === CoverageType.Family)
-        ? CoverageType.Family
-        : CoverageType.SelfOnly;
       return {
         month: m.month,
         first_day: first,
-        eligible_coverage: coverage,
-        disqualification_reasons: reasons,
-        plan_review: planEligibility,
-        direct_primary_care_monthly_fee: feeUnits / denominator / 100,
-        direct_primary_care_monthly_cap: cap,
+        ...classifyHsaCoverage2026(
+          plans,
+          dpcs,
+          input.can_be_claimed_as_dependent,
+          m.medicare.enrolled,
+          m.other_coverage.disposition,
+          first,
+        ),
       };
     },
   );

@@ -425,8 +425,51 @@ with 3,824 graph modules and unchanged runtime; formatting, lint and
 generated-inventory checks pass.
 
 This is an internal source workpaper. Public graph/PDF attachment binding,
-Part III testing-period recapture, broader historical corrections and the
-remaining advanced HSA routes are still required for complete return support.
+prior-origin Part III testing-period histories, broader historical corrections
+and the remaining advanced HSA routes are still required for complete return support.
+
+## Current-origin testing-period settlement
+
+`hsa-testing-period.ts` consumes the reconciled annual source workpaper and
+retains dated coverage for every day of 2026. It shares plan/DPC classification
+with first-of-month eligibility, and requires complete Medicare/other-coverage
+periods that agree with the existing monthly source records. Gaps, overlaps,
+contradictory sources and stale reviews fail before income is computed. Testing
+uses the monthly eligibility definition in section 223(c)(1): a temporary HDHP
+lapse between eligible first days does not itself create an ineligible month.
+A lapse continuing through the next first day can trigger funding recapture;
+a December lapse after December 1 does not invent current-year last-month tax.
+
+The [2026 instructions](https://www.irs.gov/pub/irs-dft/i8889--dft.pdf),
+[Notice 2008-51](https://www.irs.gov/pub/irs-drop/n-08-51.pdf) and
+[Notice 2008-52](https://www.irs.gov/pub/irs-drop/n-08-52.pdf) govern this workpaper.
+Each reconciled IRA funding transfer retains its own testing window; an earlier
+lapse does not fail a later qualified transfer's window. The December last-month
+window is separate. Current failures derive lines 18/19, shared 2025 Part III
+arithmetic combines line 20 and the ten-percent tax, and filed tax rounding
+occurs only after filed income lines. The workpaper identifies Schedule 1 line
+8f and Schedule 2 line 13d without changing Part VII excess or treating the
+funding transfer as another personal contribution.
+
+The last-month exposure is limited to allowed nonfunding cash, with timely
+returns settled and retained excess excluded. Exact monthly fractions remain
+available alongside the filed amount. A physician-supported disability exception
+also needs evidence tying the disability-caused coverage loss to the first
+ineligible testing month; a later disability does not erase an earlier ordinary
+loss. Dated coverage and statutory monthly eligibility remain separate outputs. Future obligations
+remain pending through their actual 2027 end dates, not marked complete from a
+2026 review.
+
+This increment handles obligations originating in 2026 for living owners. It
+requires explicit reviewed absence of earlier testing obligations and rejects
+contradictory 2025 funding history. Actual 2025 contribution/election and testing
+records, death/inherited-account routes, public graph/PDF binding and MeF remain
+unfinished. The annual workpaper is still internal, not a public HSA input.
+
+Validation: 426 focused HSA/IRA/retirement and 2025 source/MeF regressions pass,
+including 12 testing-period cases. The repository unit gate passes 137 checks
+with 3,828 graph modules and unchanged runtime. Formatting, lint and generated
+inventory checks pass. No public graph or PDF route is claimed by these checks.
 
 ## Required source integration
 

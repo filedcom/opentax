@@ -436,9 +436,13 @@ retain 2027 earnings separately, and reconcile employer income with actual W-2s.
 An annual excess workpaper now replays filed 2025 owner history, absorbs prior
 excess using current room and taxable distributions, and computes Part VII tax
 with sourced year-end/following-year account-value caps and separate spouse lines.
+Current-origin testing now reconciles dated coverage with monthly eligibility,
+tracks separate last-month and qualified-funding windows, checks disability
+causation, and retains
+pending 2027 obligations using shared Part III arithmetic.
 Basis-depleting/Roth funding, public retirement-income integration,
 remaining rollover/excess withdrawals, broader historical corrections,
-testing-period recapture, graph binding and complete Form 8889
+prior-origin testing histories, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule
