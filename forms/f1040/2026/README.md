@@ -776,10 +776,13 @@ The return bundle prints each substitute with actual owner/address and complete
 explanations while preserving unrelated withheld 1099-R originals. Plan direct
 rollovers now reconcile multiple payments and destination receipts, including
 mixed pretax non-Roth and Roth transfers, before the shared code G projection.
-After-tax non-Roth destinations need a separate basis integration. State/local
+After-tax IRA receipts bind to the annual receiving account inventory and Form
+8606 line 2 before same-year allocations. Non-Roth plan receipts retain separate
+basis-transfer events; next-year receipts do not enter current-year IRA basis.
+State/local
 withholding comes from the substitute ledger without invented issuer state IDs.
 The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md) records
-remaining HSA funding/non-Roth destination basis/special retirement cases, complex
+remaining HSA funding/special retirement cases, complex
 corrections and remaining MeF/acceptance work. These remain development drafts.
 
 ## Investment sources and NIIT

@@ -116,8 +116,12 @@ Deno.test("2026 direct transfer receipts require ownership chronology and exact 
     );
   }
 });
-Deno.test("2026 direct transfer ledger rejects after-tax non-Roth destinations pending basis integration", async () => {
+Deno.test("2026 after-tax IRA receipts require an annual receiving basis inventory", async () => {
   const g = directTransfersGraph2026();
+  const s = g.f4852.claim.records[0];
+  if (s.kind !== "1099r") throw Error();
+  s.amounts.taxable_amount = 0;
+  s.distribution_sources[0].taxable_amount = 0;
   g.f1099r!.claim.reviews[0].direct_rollover_payments!.payments[0]
     .destinations[0].destination_type = "traditional_ira";
   assert(

@@ -1,6 +1,6 @@
+import { calculatePlanTransfers2026 } from "./retirement-plan-transfers.ts";
 import {
   directTransferLedger2026Schema,
-  reconcileDirectTransfers2026,
 } from "./retirement-direct-transfers.ts";
 import {
   calculateForm4852Bridge2026,
@@ -395,6 +395,38 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       "Retirement HSA funding needs the executed HSA return inventory",
     );
   }
+  const transferEntries = current.flatMap((copy) => {
+    const review = reviews.get(copy.source_document_reference)!;
+    return review.direct_rollover_payments
+      ? [{
+        copy,
+        reviewed_on: review.reviewed_on,
+        ledger: review.direct_rollover_payments,
+      }]
+      : [];
+  });
+  const planTransfers = transferEntries.length
+    ? calculatePlanTransfers2026({
+      filing_status: input.filing_status,
+      taxpayer_ssn: input.taxpayer_ssn,
+      spouse_ssn: input.spouse_ssn,
+      taxpayer_dob: input.taxpayer_dob,
+      spouse_dob: input.spouse_dob,
+      reviewed_on: claim.reviewed_on,
+      entries: transferEntries,
+      form4852_sources_2026: input.form4852_sources_2026,
+    })
+    : undefined;
+  if (
+    planTransfers?.basis_records.some((d) =>
+      d.destination_type === "traditional_ira" && d.basis_year === 2026 &&
+      !claim.ira_basis?.owners.some((o) => o.owner_tin === d.owner_tin)
+    )
+  ) {
+    throw Error(
+      "After-tax plan rollovers into an IRA need destination basis integration through its annual account inventory",
+    );
+  }
   const basisOwners = new Set(claim.ira_basis?.owners.map((o) => o.owner_tin));
   const iraBasis = claim.ira_basis
     ? bindIraBasis2026({
@@ -411,12 +443,12 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         c.box7b_ira_sep_simple && basisOwners.has(owner(c))
       ),
       form4852_sources_2026: input.form4852_sources_2026,
+      plan_transfers_2026: planTransfers?.source_input,
       claim: claim.ira_basis,
       wage_sources: input.wage_sources,
       business_sources_2026: input.business_sources_2026,
     })
     : undefined;
-  const transferReceipts = new Set<string>();
   const paymentRecords = new Set<string>();
   const accountDecedents = new Map<string, string>();
   const disabilityPlanDates = new Map<string, string>();
@@ -701,29 +733,19 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     const ownerDob = c.recipient === "spouse"
       ? input.spouse_dob!
       : input.taxpayer_dob;
-    const directTransfers = r.direct_rollover_payments
-      ? reconcileDirectTransfers2026(
-        r.direct_rollover_payments,
-        c,
-        id,
-        r.reviewed_on,
-        ownerDob,
-        substitute,
-      )
-      : undefined;
-    for (const reference of directTransfers?.receipt_references ?? []) {
-      if (transferReceipts.has(reference)) {
-        throw Error(
-          "Direct transfer receipt is reused across retirement statements",
-        );
-      }
-      transferReceipts.add(reference);
-    }
+    const directTransfers = planTransfers?.rows.find((row) =>
+      row.source_document_reference === c.source_document_reference
+    )?.calculation;
     if (r.direct_rollover) {
       const t = r.direct_rollover,
         roth = ["roth_ira", "designated_roth_plan"].includes(
           t.destination_type,
         );
+      if (!roth && t.source_after_tax_basis > 0) {
+        throw Error(
+          "After-tax non-Roth rollover basis needs dated payment and destination receipts",
+        );
+      }
       if (
         !t.transfer_date.startsWith("2026-") || t.transfer_date < ownerDob ||
         t.amount_transferred !== c.box1_gross_distribution ||
@@ -1291,6 +1313,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   return {
     source_input: input,
     form4852: substitutes,
+    plan_transfers: planTransfers,
     ira_basis: iraBasis,
     early_owners: earlyOwners,
     line5_early_tax: earlyTax,

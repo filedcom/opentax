@@ -113,11 +113,6 @@ export function reconcileDirectTransfers2026(
       const roth = ["roth_ira", "designated_roth_plan"].includes(
         d.destination_type,
       );
-      if (!roth && d.after_tax_basis > 0) {
-        throw Error(
-          "After-tax plan rollovers into non-Roth accounts need destination basis integration",
-        );
-      }
       return {
         ...d,
         taxable: roth

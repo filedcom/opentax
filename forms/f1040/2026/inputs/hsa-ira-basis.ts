@@ -91,6 +91,7 @@ export function bindIraHsaFunding2026(
  * the annual Form 5498 balance or subtract funding from basis pro rata. */
 export function verifyIraHsaBasisPreserved2026(input: {
   prior_basis: number;
+  basis_additions?: { received_on: string; amount: number }[];
   contributions: { received_on: string; amount: number }[];
   accounts: { custodian_tin: string; account_number: string }[];
   transfers: { source_reference: string; paid_on: string; amount: number }[];
@@ -114,6 +115,8 @@ export function verifyIraHsaBasisPreserved2026(input: {
   return input.transfers.map((t) => {
     const basisUpperBound = sumSourceMoney([
       input.prior_basis,
+      ...(input.basis_additions ?? []).filter((r) => r.received_on <= t.paid_on)
+        .map((r) => r.amount),
       ...input.contributions.filter((c) => c.received_on <= t.paid_on).map((
         c,
       ) => c.amount),

@@ -241,7 +241,37 @@ lint and inventory checks pass. The unit gate passes 137 tests with a
 3. Add current MeF/ATS outputs and review final 2026 forms/instructions before
    registering a public filing product. These remain required scope.
 
-### Validation
+### Incoming after-tax plan basis
+
+The [2026 draft Form 8606 instructions](https://www.irs.gov/pub/irs-dft/i8606--dft.pdf)
+(line 2, checked October 16) add previously unreported nontaxable qualified-plan
+rollover basis. The internal plan-transfer bridge replays actual issued or
+substituted plan copies and their dated payments/destination receipts. Public
+IRA claims identify those receipts rather than entering a calculated addition.
+Every current-year IRA destination must match the complete owned-account inventory;
+a SIMPLE receiving account must satisfy its two-year period. Prior filed basis
+history explicitly distinguishes these additions from other intervening changes.
+
+Exact receipt cents join prior basis and are rounded once for line 2. Ordinary
+withdrawals and conversions reuse the existing annual pro-rata calculation and
+carryforward; rollovers alone preserve basis without inventing a regular
+contribution or requiring Form 8606 solely for that transfer. HSA funding's
+taxable-first proof includes only basis received by its actual payment date.
+Next-year receipt events stay outside 2026 line 2 and carry an explicit effective
+year. The transfer-event ledger is not a remaining-basis balance and must not be
+added again to an already calculated annual carryforward. Employer-plan receipt
+basis remains separately attached to that destination, outside the IRA pool.
+
+The new source/graph tests cover original and substitute statements, joint spouse
+ownership, SIMPLE anniversaries, cents, missing/duplicate receipts, future-year
+receipts, basis-only years and HSA chronology. Printed Form 1040, Form 8606,
+Form 4852 and Form 5329 values are reconciled in the combined return PDF test.
+The affected retirement, IRA, HSA and substitute-statement suite passes 412
+checks; the repository unit gate passes 137 with 3,879 modules in preflight and
+unchanged runtime files. New source/PDF modules pass type checking. Rendered
+Form 1040 and Form 8606 pages were visually inspected.
+
+### Earlier validation
 
 The multi-date ledger increment passes 36 typed source, graph and PDF checks,
 the complete 964-test TY2026 runtime suite, and the 137-test unit gate with a

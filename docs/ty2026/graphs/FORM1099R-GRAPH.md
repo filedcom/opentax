@@ -46,8 +46,10 @@ Supported current source treatments are:
   `direct_rollover_payments` ledger handles multiple dated payments/destinations
   with actual owner receipts, gross/basis allocation and zero withholding. It
   is required for Form 4852 code G substitutes; it can also replace the aggregate
-  review for an issued statement. The two reviews cannot coexist. After-tax
-  non-Roth destination basis remains outside that ledger's current scope; see
+  review for an issued statement. The two reviews cannot coexist. After-tax IRA
+  destinations bind to the receiving annual account inventory and Form 8606
+  line 2; non-Roth plan destinations retain separate dated basis-transfer events.
+  Only current-year receipts enter current-year IRA basis. See
   the [substitute transfer contract](./FORM4852-GRAPH.md). IRA code G and
   distributions from designated Roth accounts remain separate unfinished paths.
 

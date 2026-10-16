@@ -81,9 +81,16 @@ and [2026 Form 1099-R code G/basis reporting](https://www.irs.gov/instructions/i
 rechecked October 16. Plan records must establish the distribution's
 proportionate basis and the simultaneous-destination allocation; the software
 does not infer those facts from an account balance. After-tax amounts entering
-non-Roth destinations still require a destination basis integration and are
-rejected by this ledger. Pretax non-Roth transfers and Roth transfers with
-reconciled recovered basis are supported.
+an IRA now require its annual owner/account inventory and exact current-year
+receipt references. The receiving basis enters Form 8606 line 2 once, before
+same-year withdrawal/conversion allocation; it is not a regular contribution.
+SIMPLE receiving accounts must have completed their two-year period. Employer
+plan destinations retain separate basis-transfer events with actual owner,
+custodian, account, payment and receipt evidence. These events are not annual
+remaining-basis balances. Next-year receipts are retained with their effective
+year and do not increase 2026 IRA basis. Never add a current-year event again to
+the calculated 2027 IRA carryforward. Aggregate issued-statement rollover reviews
+cannot carry after-tax non-Roth basis without the dated receipt ledger.
 
 HSA funding, other distribution codes and special treatment remain explicitly
 closed until their source/payment bridges are reconciled. These are software

@@ -1,3 +1,7 @@
+import {
+  calculatePlanTransfers2026,
+  planTransferSources2026Schema,
+} from "./retirement-plan-transfers.ts";
 import { hsaQualifiedFunding2026Schema } from "./hsa-qualified-funding.ts";
 import {
   calculateForm4852Bridge2026,
@@ -17,7 +21,10 @@ import {
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import { investmentOwner2026 } from "./investment-source.ts";
-import { retirementCopy2026Schema } from "./retirement-statement.ts";
+import {
+  addCalendarMonths,
+  retirementCopy2026Schema,
+} from "./retirement-statement.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import {
   isSourceMoney,
@@ -44,6 +51,7 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   current_copies: z.array(retirementCopy2026Schema).max(100),
+  plan_transfers_2026: planTransferSources2026Schema.optional(),
   form4852_sources_2026: form4852Bridge2026Schema.optional(),
   claim: z.object({
     tax_year: z.literal(2026),
@@ -68,6 +76,7 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
           true,
         ),
         no_rmd_shortfall_or_excess_contribution: z.literal(true),
+        plan_rollover_receipt_references: z.array(ref).max(1000).default([]),
         prior_basis: z.discriminatedUnion("kind", [
           z.object({
             kind: z.literal("none"),
@@ -80,7 +89,9 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
             tax_year: z.number().int().min(2001).max(2025),
             line14: whole,
             line15c_worksheet_line6: whole,
-            no_intervening_basis_changes_verified: z.literal(true),
+            no_intervening_basis_changes_verified: z.literal(true).optional(),
+            no_other_intervening_basis_changes_verified: z.literal(true)
+              .optional(),
           }).strict(),
         ]),
         accounts: z.array(
@@ -172,6 +183,22 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         "IRA basis must reconcile actual Form 4852 owners, current copies and review chronology",
       );
     }
+  }
+  const planTransfers = input.plan_transfers_2026
+    ? calculatePlanTransfers2026(input.plan_transfers_2026)
+    : undefined;
+  if (
+    planTransfers &&
+    (planTransfers.source_input.filing_status !== input.filing_status ||
+      planTransfers.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+      planTransfers.source_input.spouse_ssn !== input.spouse_ssn ||
+      planTransfers.source_input.taxpayer_dob !== input.taxpayer_dob ||
+      planTransfers.source_input.spouse_dob !== input.spouse_dob ||
+      planTransfers.rows.some((r) => r.reviewed_on > c.reviewed_on))
+  ) {
+    throw Error(
+      "IRA basis and plan transfers need the same actual owners and completed review chronology",
+    );
   }
   if (c.reviewed_on < "2027-01-01") {
     throw Error("IRA basis inventory needs a completed-year review");
@@ -290,6 +317,64 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       }
       prior = o.prior_basis.line14 + o.prior_basis.line15c_worksheet_line6;
     }
+    const incoming = planTransfers?.destinations.filter((d) =>
+      d.owner_tin === o.owner_tin && d.destination_type === "traditional_ira" &&
+      d.received_on <= "2026-12-31"
+    ) ?? [];
+    if (
+      new Set(o.plan_rollover_receipt_references).size !==
+        o.plan_rollover_receipt_references.length ||
+      incoming.length !== o.plan_rollover_receipt_references.length ||
+      incoming.some((d) =>
+        !o.plan_rollover_receipt_references.includes(d.receipt_reference)
+      )
+    ) {
+      throw Error(
+        "IRA basis review must identify every actual current-year plan rollover receipt exactly once",
+      );
+    }
+    for (const receipt of incoming) {
+      const a = accounts.get(key(receipt));
+      if (
+        !a ||
+        (a.plan_type === "simple_ira" &&
+          (!a.simple_first_contribution_date ||
+            receipt.received_on <
+              addCalendarMonths(a.simple_first_contribution_date, 24)))
+      ) {
+        throw Error(
+          "Plan rollover needs its actual eligible receiving IRA in the complete year-end account inventory",
+        );
+      }
+      document(receipt.receipt_reference);
+    }
+    const basisAdditions = incoming.filter((d) =>
+      d.after_tax_basis > 0
+    ).map((d) => ({
+      receipt_reference: d.receipt_reference,
+      received_on: d.received_on,
+      amount: d.after_tax_basis,
+    }));
+    if (
+      o.prior_basis.kind === "filed_form8606" && (basisAdditions.length
+        ? !o.prior_basis.no_other_intervening_basis_changes_verified ||
+          o.prior_basis.no_intervening_basis_changes_verified
+        : !o.prior_basis.no_intervening_basis_changes_verified ||
+          o.prior_basis.no_other_intervening_basis_changes_verified)
+    ) {
+      throw Error(
+        "Prior IRA basis history must distinguish the listed plan rollover additions from other intervening changes",
+      );
+    }
+    const filedBasis = prior;
+    prior = roundWholeDollars(
+      sumSourceMoney([
+        prior,
+        ...basisAdditions.map((d) =>
+          d.amount
+        ),
+      ]),
+    );
     const contributionAccounts = new Set<string>();
     const receipts = o.contributions.flatMap((r) => {
       const f = r.form5498, a = accounts.get(key(f));
@@ -317,7 +402,9 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         }
       }
       if (
-        sumSourceMoney(r.receipts.map((r) => r.amount)) !==
+        sumSourceMoney(r.receipts.map((r) =>
+          r.amount
+        )) !==
           f.box1_ira_contributions
       ) {
         throw Error(
@@ -346,7 +433,8 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
     }
     const hsaBasis = funding
       ? verifyIraHsaBasisPreserved2026({
-        prior_basis: prior,
+        prior_basis: filedBasis,
+        basis_additions: basisAdditions,
         contributions: receipts,
         accounts: o.accounts,
         transfers: funding.transfers,
@@ -562,6 +650,7 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       owner_tin: o.owner_tin,
       source: o,
       distributions,
+      plan_rollover_basis_additions: basisAdditions,
       raw_gross: gross,
       raw_qualified_hsa_funding: sumSourceMoney(
         distributions.map((d) => d.qualified_hsa_funding),
@@ -593,5 +682,10 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       "IRA basis workpaper must reconcile every supplied current copy",
     );
   }
-  return { source_input: input, forms, hsa_funding: hsa };
+  return {
+    source_input: input,
+    forms,
+    hsa_funding: hsa,
+    plan_transfers: planTransfers,
+  };
 }

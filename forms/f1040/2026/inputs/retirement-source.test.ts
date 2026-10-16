@@ -93,7 +93,7 @@ Deno.test("2026 direct plan rollovers reconcile zero taxable and taxable Roth de
       destination_account_reference: "destination-trustee-account",
       destination_type: roth ? "roth_ira" : "traditional_ira",
       amount_transferred: 12000.25,
-      source_after_tax_basis: 2000,
+      source_after_tax_basis: roth ? 2000 : 0,
       eligible_direct_transfer_no_rmd_or_other_ineligible_amount_verified: true,
       no_cash_received_by_filer_verified: true,
     };
