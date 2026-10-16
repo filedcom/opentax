@@ -5,7 +5,7 @@ import { assertCurrentPassiveLine10Return } from "../../../../domains/income/bus
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   allocateOtherPassivePrior4797,
   inputSchema as form8582InputSchema,

@@ -2,7 +2,7 @@ import {
   assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 
 const base = "topmostSubform[0].Page1[0].";

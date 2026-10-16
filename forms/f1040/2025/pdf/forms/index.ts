@@ -1,5 +1,5 @@
 import { form4852RetainedPdf } from "./income/wages/f4852_retained.ts";
-import type { PdfFormDescriptor } from "../review-support/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { irs1040Pdf } from "./general/return-assembly/f1040.ts";
 import { schedule1aPdf } from "./deductions/additional/schedule1a/schedule1a.ts";
 import { schedule8812Pdf } from "./credits/individual/schedule_8812.ts";

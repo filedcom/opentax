@@ -1,7 +1,7 @@
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import { EnergyType } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 

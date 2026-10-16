@@ -9,7 +9,7 @@ import {
   itemSchema,
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // Taxpayer/ERO packet copy. Final rendering separately verifies the completed
 // official source PDF and retained workpaper bytes before producing this copy.

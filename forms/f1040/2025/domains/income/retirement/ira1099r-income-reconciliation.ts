@@ -1,5 +1,5 @@
 import { reconcileRothOwnerInventoryCopies } from "../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
-import { roundWholeDollars } from "../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../shared/whole-dollars.ts";
 import { f1099r } from "../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { reviewedRothActivity } from "../../../../nodes/intermediate/forms/income/retirement/form8606/roth-activity.ts";
 import { f4852 } from "../../../../nodes/inputs/income/wages/f4852/index.ts";

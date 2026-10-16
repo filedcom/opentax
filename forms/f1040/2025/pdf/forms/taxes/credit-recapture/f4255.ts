@@ -3,7 +3,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f4255/index.ts";
 import { reconcileForm4255Schedule2 } from "../../../../mef/forms/taxes/credit-recapture/f4255.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // December 2025 Form 4255, Part I. The bounded EP-only route fills one
 // Form 3468 Part IV row and/or one Form 8933 row. Part II and III remain blank.

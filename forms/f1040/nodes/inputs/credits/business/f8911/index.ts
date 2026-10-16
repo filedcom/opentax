@@ -1,7 +1,7 @@
 import { constructionReviewSchema } from "./construction-review.ts";
 import { f3800 } from "../f3800/index.ts";
 import { calculatePropertyCredit } from "./property-credit.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

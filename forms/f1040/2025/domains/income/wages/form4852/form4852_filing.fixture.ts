@@ -12,7 +12,7 @@ import {
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form4852RetainedPdf } from "../../../../pdf/forms/income/wages/f4852_retained.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import type { Form4852RetainedDocument } from "./form4852_source.ts";
 
 export const form4852Filer: FilerIdentity = {

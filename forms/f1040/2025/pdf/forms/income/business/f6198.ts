@@ -17,7 +17,7 @@ import type {
   AtRiskNet,
   SimplifiedAtRiskFacts,
 } from "../../../../../nodes/intermediate/forms/income/business/form6198/simplified.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // Verified against the November 2025 AcroForm field tree and printed line order:
 // f1_3 is the activity description; f1_4-16 are lines 1 through 10b;

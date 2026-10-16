@@ -19,7 +19,7 @@ import {
   reviewFiler,
   reviewSourceFileContents,
 } from "./ty2025-pdf-review-source.ts";
-import { assertReviewArtifactInventory } from "../verification/ty2025-pdf-review-inventory.ts";
+import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 import { assertReviewPdfReplay } from "./ty2025-pdf-review-replay.ts";
 import { assertReviewTemplateCacheEvidence } from "./ty2025-pdf-review-template-cache.ts";
 import {

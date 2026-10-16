@@ -25,7 +25,7 @@ These sections reflect familiar tax-software navigation rather than a universal 
 | Native and printed forms | [MeF forms](../../forms/f1040/2025/mef/forms/README.md), [PDF forms](../../forms/f1040/2025/pdf/forms/README.md) |
 | Review fixtures and complete returns | [PDF reviews](../../forms/f1040/2025/pdf/reviews/README.md), [E2E scenarios](../../forms/f1040/e2e/README.md); ATS stays together |
 | Business-rule registry | [Rule sections](../../forms/f1040/validation/rules/README.md) |
-| Research evidence | [TY2025 documents](../mef/ty2025/README.md) |
+| Research evidence | [TY2025 documents](../ty2025/README.md) |
 | Testing, research, maintenance and release tools | [Scripts](../../scripts/README.md) |
 
 One whole form has one canonical home. Cross-effects are documented: Forms 8889/8853 also affect Income/Taxes; 8962 includes tax repayment; 2439 includes capital gains; 8621 includes tax/interest; 8997 is informational gain tracking. Focused tests can live in a different section from a whole-return serializer when they verify a specific effect. Mixed complete-return fixtures live under General/composed-returns.

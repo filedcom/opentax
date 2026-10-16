@@ -17,7 +17,7 @@ import {
 } from "./elections.ts";
 import { z } from "zod";
 import { bonusActivitySchema, bonusAssetCoreSchema } from "./bonus.ts";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 
 export enum DepreciationConvention {
   HalfYear = "HY",

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 import {
   rothActivityReviewSchema,
   rothPaymentAgeFacts,

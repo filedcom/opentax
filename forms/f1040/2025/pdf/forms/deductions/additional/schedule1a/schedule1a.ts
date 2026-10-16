@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
 import {
   calculateQualifiedTipsSchedule1A,
   calculateSeniorOnlySchedule1A,

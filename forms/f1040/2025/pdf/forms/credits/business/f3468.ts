@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { reconcileFiledTrustPartVClaims } from "../../../../mef/forms/credits/business/f3468_source.ts";
 import { inputSchema as f3468InputSchema } from "../../../../../nodes/inputs/credits/business/f3468/index.ts";

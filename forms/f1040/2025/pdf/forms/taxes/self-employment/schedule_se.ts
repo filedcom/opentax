@@ -1,5 +1,5 @@
 import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";

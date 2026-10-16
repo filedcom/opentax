@@ -1,7 +1,7 @@
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import { reconcileForm4952DividendPath } from "../../../../domains/deductions/investments/form4952/form4952_dividend_reconciliation.ts";
 import { reconcileForm4952InterestPath } from "../../../../domains/deductions/investments/form4952/form4952_interest_reconciliation.ts";
 import { reconcileForm4952CombinedPath } from "../../../../domains/deductions/investments/form4952/form4952_combined_reconciliation.ts";

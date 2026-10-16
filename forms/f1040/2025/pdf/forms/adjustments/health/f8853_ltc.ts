@@ -3,7 +3,7 @@ import { reconcileLtcReturn } from "../../../../mef/forms/adjustments/health/f88
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 
 const field = (n: number) => `topmostSubform[0].Page2[0].f2_${n}[0]`;
 export const ltcPdfFields: ReadonlyArray<PdfFieldEntry> = [

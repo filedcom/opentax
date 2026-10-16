@@ -11,7 +11,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { inputSchema as form2106InputSchema } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
-import type { PdfFieldEntry } from "../../../../pdf/review-support/form-descriptor.ts";
+import type { PdfFieldEntry } from "../../../../pdf/form-descriptor.ts";
 import { z } from "zod";
 import { inputSchema as w2InputSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 

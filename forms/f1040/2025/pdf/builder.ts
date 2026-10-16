@@ -13,7 +13,7 @@ import { reconcileForm8606RothInventories } from "../domains/income/retirement/f
 import { reconcileForm8606RothActivity } from "../domains/income/retirement/form8606/form8606_roth_activity_reconciliation.ts";
 import { assertForm4852RetainedEvidence } from "../domains/income/wages/form4852/form4852_retained_evidence.ts";
 import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charitable/f8283/f8283_signed_fields.ts";
-import { roundWholeDollars } from "../../whole-dollars.ts";
+import { roundWholeDollars } from "../../shared/whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
 import { PDFDocument, PDFName, StandardFonts } from "pdf-lib";
 import { loadPdfTemplate } from "./support/template-cache.ts";
@@ -23,7 +23,7 @@ import { form4972PaperPdf } from "./forms/taxes/retirement/f4972.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "./review-support/form-descriptor.ts";
+} from "./form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
 import {
@@ -87,8 +87,8 @@ import {
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
 } from "../domains/payments/withholding/w2-withholding-reconciliation.ts";
-import { assertLine1hSupportedSource } from "../domains/income/other/line1h-source.ts";
-import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
+import { assertLine1hSupportedSource } from "../domains/income/wages/line1h-source.ts";
+import { assertLine1bHouseholdWageSource } from "../domains/income/wages/line1b-household-wages.ts";
 import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
 import {
   assertLine1cForm4137Income,

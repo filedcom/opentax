@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 
 const date = z.string().date().refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);

@@ -1,4 +1,4 @@
-import type { PdfFieldEntry } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry } from "../../../form-descriptor.ts";
 import { finalizedForm2210BoxESchema } from "../../../../mef/forms/taxes/underpayment/f2210_box_e.ts";
 import { reconcileForm2210BoxEFinalized2025 } from "../../../../domains/taxes/underpayment/form2210/form2210_box_e_finalized.ts";
 

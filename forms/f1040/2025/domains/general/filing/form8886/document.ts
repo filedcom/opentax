@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import {
   disclosureSchema,
   EntityType,

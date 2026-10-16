@@ -6,7 +6,7 @@ import { k1Partnership } from "../../../../../../nodes/inputs/income/rental-pass
 import { calculateForm4952 } from "../../../../../../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
 import { form4952Pdf } from "../../../../../pdf/forms/deductions/investments/f4952.ts";
 import { form4952 } from "./f4952.ts";
-import { testFiler } from "../../../../execution/test-filer.ts";
+import { testFiler } from "../../../../support/test-filer.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
 
 const filer = testFiler();

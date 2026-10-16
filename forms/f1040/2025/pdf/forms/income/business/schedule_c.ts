@@ -3,7 +3,7 @@ import { filedOwnedScheduleC } from "../../../../../nodes/owned-business-filing.
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "../../../../mef/forms/credits/health/f8941_source.ts";
 import { roundSignedQbiDollars } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";

@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { calculateScheduleR, scheduleR } from "../../../../mef/forms/credits/individual/schedule_r.ts";
 
 // Canonical fields inspected on the two-page 2025 IRS Schedule R AcroForm.

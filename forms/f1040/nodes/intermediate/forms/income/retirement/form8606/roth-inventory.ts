@@ -15,7 +15,7 @@ import {
   rothDistributionYearSchema,
 } from "./roth-history.ts";
 import { isDeepStrictEqual } from "node:util";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 import {
   rothActivityReviewSchema,
   rothPaymentAgeFacts,

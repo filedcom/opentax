@@ -1,7 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
-import { assertPrintableSourceTextFields } from "../../../../../source-printable-fields.ts";
+import { assertPrintableSourceTextFields } from "../../../../../shared/source-printable-fields.ts";
 import { trustK1CanonicalFields } from "./trust-k1-canonical-fields.ts";
 import { assertTrustK1PrintableCheckboxes } from "./trust-k1-printable-checkboxes.ts";
 import { assertTrustK1StaticPages } from "./trust-k1-static-pages.ts";

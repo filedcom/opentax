@@ -8,7 +8,7 @@ import { agi_aggregator } from "../../../../../nodes/intermediate/aggregation/ge
 import { executePreQefSourceReturn } from "../../../../return-processing/staged_source_return.ts";
 import { executeForm172Form8990Return } from "./form172_form8990_return.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 
 function amount(value: unknown): number {
   if (value === undefined) return 0;

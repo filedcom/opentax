@@ -1,7 +1,7 @@
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   assertForm8880EligibleTotals,
   assertForm8880FiledCalculation,

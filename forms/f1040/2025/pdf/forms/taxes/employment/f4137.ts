@@ -10,7 +10,7 @@ import {
   type Form4137Calculation,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const text = (domainKey: string, pdfField: string): PdfFieldEntry => ({

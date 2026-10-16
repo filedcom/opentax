@@ -10,7 +10,7 @@ import {
   rateForForm4136Claim,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 type Claim = Form4136Input["claims"][number];
 type Line = Claim["line"];

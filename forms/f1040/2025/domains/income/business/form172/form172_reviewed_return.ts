@@ -3,7 +3,7 @@ import { reconcileForm172ModifiedIncome } from "./form172_modified_income.ts";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import { stageForm172CurrentDeductionSource } from "./form172_current_deduction_source.ts";
 

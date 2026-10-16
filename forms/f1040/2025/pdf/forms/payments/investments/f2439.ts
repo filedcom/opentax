@@ -4,7 +4,7 @@ import {
 } from "../../../../../nodes/inputs/payments/investments/f2439/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // The current IRS Form 2439 is the November 2021 revision. Copy B occupies
 // page 3; its AcroForm widgets were read from the official PDF, not inferred

@@ -1,11 +1,11 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
 import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";
 import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
 import { appendScheduleBInterestAdjustmentsStatement } from "./schedule_b_interest_adjustments_statement.ts";
 import { appendScheduleBNomineeDividendStatement } from "./schedule_b_nominee_dividend_statement.ts";
-import { scheduleBFilingRequired } from "../../../../../../schedule_b_filing.ts";
+import { scheduleBFilingRequired } from "../../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/schedule_b_filing.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,

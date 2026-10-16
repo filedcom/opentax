@@ -8,7 +8,7 @@ import {
   inputSchema,
   modifiedAgi,
 } from "../../../../../nodes/inputs/credits/individual/f8936/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 const p1 = "topmostSubform[0].Page1[0].";
 const p2 = "topmostSubform[0].Page2[0].";

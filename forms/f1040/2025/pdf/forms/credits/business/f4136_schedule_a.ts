@@ -3,7 +3,7 @@ import {
   inputSchema,
   rateForForm4136Claim,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { form4136Pdf, projectForm4136Fields } from "./f4136.ts";
 
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;

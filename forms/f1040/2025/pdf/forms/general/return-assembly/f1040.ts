@@ -1,7 +1,7 @@
 import { assertDependentKiddieTaxFamilyReturn } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
 import { assertW2ArcherContributionSources } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/other/education_income/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { AccountType } from "../../../../../mef/header.ts";
 import { ty2025IrsCountryName } from "../../../support/irs_country_name.ts";
@@ -21,7 +21,7 @@ import { assertOtherFormsWithholding } from "../../../../domains/payments/withho
 import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
-import { assertLine1hSupportedSource } from "../../../../domains/income/other/line1h-source.ts";
+import { assertLine1hSupportedSource } from "../../../../domains/income/wages/line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../../../domains/income/other/f1099i/f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../../../domains/income/other/f1099o/f1099oid-owner-reconciliation.ts";
 import { assertPositive1099DivOwner } from "../../../../domains/income/other/f1099d/f1099div-owner-reconciliation.ts";

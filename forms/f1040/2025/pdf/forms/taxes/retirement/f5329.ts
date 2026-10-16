@@ -9,7 +9,7 @@ import { TS } from "../../../../../nodes/types.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 
 // Verified against the canonical 2025 Form 5329 AcroForm. Page 1 fields
 // f1_3–f1_8 are the stand-alone filing address, not Part I amounts.

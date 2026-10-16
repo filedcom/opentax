@@ -4,7 +4,7 @@ import {
   worksheetRatio,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { reconcileForm4972Nua } from "../../../../domains/taxes/retirement/form4972/form4972_nua_reconciliation.ts";
 import { reconcileForm4972MultipleRecipients } from "../../../../domains/taxes/retirement/form4972/form4972_multiple_recipient_reconciliation.ts";
 import { reconcileForm4972EstatePartII } from "../../../../domains/taxes/retirement/form4972/form4972_estate_part2_reconciliation.ts";

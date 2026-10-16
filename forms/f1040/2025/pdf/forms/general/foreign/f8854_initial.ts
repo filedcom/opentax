@@ -5,7 +5,7 @@ import {
   isCoveredExpatriate,
   sectionAExceptionAnswers,
 } from "../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // TY2025 initial statement for a noncovered former citizen with cash only.
 // All five Section A tax amounts remain tied to prior filed-return records.

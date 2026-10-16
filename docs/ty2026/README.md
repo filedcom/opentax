@@ -22,7 +22,7 @@ git lfs pull
 
 The [manifest](./corpus/manifest.json) records each downloaded source's URL,
 byte length and SHA-256. To refresh the snapshot, run
-`python3 docs/ty2026/corpus/download.py` from the repository root, review
+`python3 scripts/research/ty2026/download_corpus.py` from the repository root, review
 the source and manifest changes, then verify that each new or changed PDF is
 listed by `git lfs ls-files` before pushing. Keep the LFS rule in
 `.gitattributes`; adding it after an ordinary PDF commit does not remove that
@@ -328,7 +328,7 @@ regular Git files.
   Forms 8283 and 8862 with instructions, 2026 Publication 15-A,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
-  docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
+  scripts/research/ty2026/download_corpus.py` to refresh the snapshot; review all hash
   changes before using new values or layouts.
 - [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): each current TY2025 PDF descriptor,
   its IRS source URL, and whether a matching TY2026 draft is in the snapshot.
@@ -346,7 +346,7 @@ regular Git files.
 - [`year-literals.csv`](./inventories/year-literals.csv): all `2025` occurrences in non-test
   calculation node source, including comments. These are review leads, not
   proof of a bug. Regenerate the four CSVs with `python3
-  docs/ty2026/tooling/build_inventory.py` after a source or code change.
+  scripts/research/ty2026/build_inventory.py` after a source or code change.
 - [`FORM-DELTA.md`](./readiness/FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](./graphs/DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.

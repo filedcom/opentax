@@ -3,7 +3,7 @@ import { reconcileRentedHomeEvidence } from "../../../../../nodes/intermediate/f
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   calculateRentedHomeForm8829,
   type Form8829Lines,

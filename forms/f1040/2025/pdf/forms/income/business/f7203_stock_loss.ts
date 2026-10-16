@@ -5,7 +5,7 @@ import { projectOverflowDebtInventory } from "../../../../domains/income/busines
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../../../domains/income/business/form7203/form7203_stock_loss_projection.ts";
 import { sumPrincipalRepayments } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
 

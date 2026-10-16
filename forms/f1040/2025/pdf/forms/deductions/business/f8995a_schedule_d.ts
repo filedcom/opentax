@@ -1,7 +1,7 @@
 import { calculateIndependentPatronBusinesses } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import { patronProprietorSsn } from "../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import {
   calculatePatronScheduleDLines,
   inputSchema,

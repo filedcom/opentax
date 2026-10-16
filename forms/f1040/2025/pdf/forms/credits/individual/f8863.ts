@@ -1,7 +1,7 @@
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   calculateAocStudentLines,
   calculateForm8863Lines,

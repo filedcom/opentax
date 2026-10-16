@@ -1,5 +1,5 @@
 import { PDFDocument } from "pdf-lib";
-import { assertPrintableSourceTextFields } from "../../../source-printable-fields.ts";
+import { assertPrintableSourceTextFields } from "../../../shared/source-printable-fields.ts";
 import { inputSchema } from "../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { w2gPdf } from "../../pdf/forms/income/other/w2g.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";

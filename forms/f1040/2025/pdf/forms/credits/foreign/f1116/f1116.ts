@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../../review-support/form-descriptor.ts";
+} from "../../../../form-descriptor.ts";
 import {
   alternativeCompensationWorldwideTotal,
   inputSchema as fecInputSchema,

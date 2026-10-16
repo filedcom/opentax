@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { ForeignAssetType } from "../../../../../nodes/inputs/general/foreign/f8938/index.ts";
 import {
   projectForm8938,

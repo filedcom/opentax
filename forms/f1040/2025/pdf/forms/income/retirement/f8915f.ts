@@ -14,7 +14,7 @@ import {
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";

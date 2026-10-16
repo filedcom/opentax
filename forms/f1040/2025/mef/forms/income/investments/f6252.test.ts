@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { F6252Item } from "../../../../../nodes/intermediate/forms/income/investments/form6252/index.ts";
 import { buildMefXml } from "../../../builder.ts";
-import { testFiler } from "../../../execution/test-filer.ts";
+import { testFiler } from "../../../support/test-filer.ts";
 import { form6252 } from "./f6252.ts";
 
 const sale = {

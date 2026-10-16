@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { qualifyingChildDetailSchema } from "../../../../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
 import { scheduleEicLine6Months } from "../../../../domains/credits/earned-income/earned-income/eic-birth-residency.ts";

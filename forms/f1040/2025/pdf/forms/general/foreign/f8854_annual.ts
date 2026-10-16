@@ -1,7 +1,7 @@
 import { annualInputSchema } from "../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
 import { validateAnnualForm8854Filing } from "../../../../../nodes/inputs/general/foreign/f8854/annual_node.ts";
 import { reconcileAnnualForm8854Form8949Properties } from "../../../../../nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // TY2025 annual statement: one or more prior deferred properties with no
 // current disposition or distribution. The initial statement uses other parts.

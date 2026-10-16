@@ -7,7 +7,7 @@ import {
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateSingleScheduleCForm7206,

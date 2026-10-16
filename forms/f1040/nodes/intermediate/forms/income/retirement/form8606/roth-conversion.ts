@@ -3,7 +3,7 @@ import {
   rothActivityReviewSchema,
   rothPaymentAgeFacts,
 } from "./roth-activity.ts";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{9}$/);
 const money = rothActivityReviewSchema.shape.payment.shape.gross_distribution;

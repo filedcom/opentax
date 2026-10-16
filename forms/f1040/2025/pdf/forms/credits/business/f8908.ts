@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { reconciledForm8908Source } from "../../../../mef/forms/credits/business/f8908_source_reconciliation.ts";
 
 // Official December 2025 fillable three-page PDF field paths, inspected from

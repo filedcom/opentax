@@ -5,7 +5,7 @@ import {
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
 // Schedule A (Form 8911), Rev. December 2025, one copy per qualified property.

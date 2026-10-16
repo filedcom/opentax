@@ -6,7 +6,7 @@ import {
   reviewedRothOwnerInventory,
   rothOwnerInventorySchema,
 } from "../../../income/retirement/form8606/roth-inventory.ts";
-import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../../shared/whole-dollars.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

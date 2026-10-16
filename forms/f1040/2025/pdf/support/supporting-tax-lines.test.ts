@@ -7,7 +7,7 @@ import {
   inputSchema as form8959InputSchema,
 } from "../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import type { PdfFormDescriptor } from "../review-support/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "../forms/taxes/employment/f8959.ts";
 import { form8960Pdf } from "../forms/taxes/investments/f8960.ts";
 import { form6251Pdf } from "../forms/taxes/amt/f6251.ts";

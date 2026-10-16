@@ -39,7 +39,7 @@ require dated 2025 payment-account records and a separate assistance inventory;
 current issued/exception evidence and dated payment/assistance inventories. Special
 MAGI addbacks and broader source authenticity remain open. Retained packet
 evidence is recorded in the
-[PDF review](../../../../../../../../docs/mef/ty2025/domains/credits/individual/form8863/ty2025-form8863-pdf-gap.md).
+[PDF review](../../../../../../../../docs/ty2025/domains/credits/individual/form8863/ty2025-form8863-pdf-gap.md).
 
 **Form 8863 feeds two downstream destinations:**
 

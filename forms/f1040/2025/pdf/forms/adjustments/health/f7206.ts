@@ -8,7 +8,7 @@ import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,

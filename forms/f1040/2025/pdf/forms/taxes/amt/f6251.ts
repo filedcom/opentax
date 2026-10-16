@@ -1,5 +1,5 @@
 import { assertForm6251CharitableSource } from "../../../../domains/taxes/amt/form6251/form6251_charitable_source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../../../domains/taxes/amt/form6251/form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../../../nodes/inputs/income/investments/f3921/index.ts";
 import { assertForm6251QualifiedDividendSource } from "../../../../domains/taxes/amt/form6251/form6251_iso_qualified_dividends.ts";

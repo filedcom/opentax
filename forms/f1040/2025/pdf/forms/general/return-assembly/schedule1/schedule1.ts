@@ -3,7 +3,7 @@ import { assertEducationIncomeSource } from "../../../../../../nodes/inputs/inco
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../../review-support/form-descriptor.ts";
+} from "../../../../form-descriptor.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../../../../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import {

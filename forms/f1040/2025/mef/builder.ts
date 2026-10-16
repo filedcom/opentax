@@ -78,7 +78,7 @@ import { assertForm8858FilingSource } from "../../nodes/inputs/general/foreign/f
 import { assertBox11Line10Sources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./identity/w2g-payer-copy.ts";
-import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
+import { assertLine1bHouseholdWageSource } from "../domains/income/wages/line1b-household-wages.ts";
 import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "./forms/income/other/w2g.ts";
 import { reconciledForm8908Source } from "./forms/credits/business/f8908_source_reconciliation.ts";

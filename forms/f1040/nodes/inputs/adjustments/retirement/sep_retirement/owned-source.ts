@@ -3,7 +3,7 @@ import {
   ownedScheduleSE,
   ownerSourcesSchema,
 } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 const reference = z.string().trim().min(1);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => {
   const d = new Date(v + "T00:00:00Z");

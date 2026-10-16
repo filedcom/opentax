@@ -5,7 +5,7 @@ import {
   reconcileRothOwnerInventoryCopies,
   rothOwnerPrintFields,
 } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 
 /** Final filing joins use every actual source copy and separate owner forms. */

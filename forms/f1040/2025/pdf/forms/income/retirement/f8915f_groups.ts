@@ -3,7 +3,7 @@ import {
   groupedDistributionXml,
   reconcileDistributionGroups,
 } from "../../../../mef/forms/income/retirement/f8915f_groups.ts";
-import type { PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 export const groupedDistributionInstances: NonNullable<
   PdfFormDescriptor["instances"]

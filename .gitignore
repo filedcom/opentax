@@ -16,4 +16,4 @@ benchmark/returns
 
 # Tracked state (committed)
 # .state/bench/       ← state.json + progress.md are tracked
-# .state/field-dumps/ ← IRS field extracts are tracked
+# (IRS PDF field extracts live in forms/f1040/2025/pdf/field-dumps/)

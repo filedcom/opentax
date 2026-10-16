@@ -39,7 +39,7 @@ export function verificationInputPaths(paths: string[]): string[] {
         "benchmark/",
         "core/",
         "cli/",
-        ".state/field-dumps/",
+        "forms/f1040/2025/pdf/field-dumps/",
         "scripts/testing/",
       ].some((
         prefix,

@@ -1,5 +1,5 @@
 import { filedOwnedScheduleC } from "../../../../owned-business-filing.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { computeNetProfit, type ScheduleCItem } from "./model.ts";
 
 /** IRS whole-dollar losses round by absolute value, including exact half dollars. */

@@ -1,7 +1,7 @@
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { StandardFonts } from "pdf-lib";
 import {

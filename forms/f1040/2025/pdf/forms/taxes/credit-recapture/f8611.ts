@@ -5,7 +5,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f8611/index.ts";
 import { reconcileForm8611Schedule2 } from "../../../../mef/forms/taxes/credit-recapture/f8611.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 
 // Rev. December 2021 Form 8611 is the form used for TY2025. Its first page
 // is the tax form; pages 2-3 contain instructions. The field mapping below was

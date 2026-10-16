@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { assertScheduleDK1Source } from "../../../../domains/income/investments/schedule-d/schedule-d-k1-source.ts";

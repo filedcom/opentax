@@ -15,7 +15,7 @@ import { scheduleF } from "../../2025/mef/forms/income/business/schedule_f.ts";
 import { scheduleSE as scheduleSeMef } from "../../2025/mef/forms/taxes/self-employment/schedule_se.ts";
 import { scheduleFPdf } from "../../2025/pdf/forms/income/business/schedule_f.ts";
 import { scheduleSePdf } from "../../2025/pdf/forms/taxes/self-employment/schedule_se.ts";
-import { testFiler } from "../../2025/mef/execution/test-filer.ts";
+import { testFiler } from "../../2025/mef/support/test-filer.ts";
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { PDFDocument } from "pdf-lib";

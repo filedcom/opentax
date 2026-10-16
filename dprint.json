@@ -13,7 +13,7 @@
     "node_modules",
     ".state",
     "bun.lock",
-    "docs/build"
+    "site/build"
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.96.1.wasm",

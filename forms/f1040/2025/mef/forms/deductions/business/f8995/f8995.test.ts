@@ -10,7 +10,7 @@ import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../../registry.ts";
 import { pdfReviewFixtures } from "../../../../../pdf/review-fixtures.ts";
 import { buildMefXml } from "../../../../builder.ts";
-import { testFiler } from "../../../../execution/test-filer.ts";
+import { testFiler } from "../../../../support/test-filer.ts";
 
 const return1040Xsd = new URL(
   "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

@@ -18,7 +18,7 @@ import {
 import { isDeepStrictEqual } from "node:util";
 import { PDFCheckBox, PDFDocument, PDFTextField } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import {
   effectiveTaxable,
   form4852CalculationSources,

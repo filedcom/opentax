@@ -1,5 +1,5 @@
 import { StandardFonts } from "pdf-lib";
-import type { PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../../../form-descriptor.ts";
 import { categorySummarySchema } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import { assertAlternativeCompensationSources } from "../../../../../mef/forms/credits/foreign/f1116/f1116_alternative_compensation_source.ts";
 

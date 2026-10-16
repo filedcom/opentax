@@ -3,7 +3,7 @@ import { FilingStatus } from "../../../../../mef/header.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   current1095AStatements,
   inputSchema as form1095aSchema,

@@ -2,7 +2,7 @@ import { StandardFonts } from "pdf-lib";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../review-support/form-descriptor.ts";
+} from "../../../form-descriptor.ts";
 import {
   calculateScheduleCLossLines,
   inputSchema,

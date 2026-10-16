@@ -14,7 +14,7 @@ import { inputNodes } from "../../forms/f1040/2025/inputs.ts";
 const nodes = Object.keys(registry).length;
 const inputs = inputNodes.length;
 
-const pages = ["docs/index.html", "docs/build/index.html"];
+const pages = ["site/index.html", "site/build/index.html"];
 
 // Matches "186 registered nodes" and "<b>186</b> registered nodes".
 const nodePattern = /(\b|<b>)\d+(<\/b>)?(\s+registered nodes)/g;

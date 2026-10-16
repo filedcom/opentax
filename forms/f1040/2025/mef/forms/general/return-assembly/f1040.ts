@@ -4,7 +4,7 @@ import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/
 import { element, elements } from "../../../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
-import { assertLine1hSupportedSource } from "../../../../domains/income/other/line1h-source.ts";
+import { assertLine1hSupportedSource } from "../../../../domains/income/wages/line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../../../domains/income/other/f1099i/f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../../../domains/income/other/f1099o/f1099oid-owner-reconciliation.ts";
 import { assertPositive1099DivOwner } from "../../../../domains/income/other/f1099d/f1099div-owner-reconciliation.ts";

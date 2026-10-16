@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
 import {
   form8839Page1FieldMap,

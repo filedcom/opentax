@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { scheduleR } from "../../../../mef/forms/credits/individual/schedule_r.ts";
 import { assertSchedule3Line8Join } from "../../../../domains/credits/individual/schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../../../domains/payments/refundable/schedule3_line13a_source.ts";

@@ -118,5 +118,5 @@ This file describes the old face-amount/holding-days model and is not an
 implementation guide. The current Form 8912 source inputs follow Parts III and
 IV of the IRS form, and positive claims are blocked until the Part II limit and
 source document are integrated. See `../index.ts`, `../calculation.ts`, and
-`../../../../../../docs/mef/general-business-credit-routing.md` for the current
+`../../../../../../../../docs/ty2025/domains/credits/business/general-business-credit-routing.md` for the current
 WIP status.

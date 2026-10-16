@@ -10,7 +10,7 @@ import {
   conservationDeduction,
   type ScheduleFItem,
 } from "./intermediate/forms/income/business/schedule_f/model.ts";
-import { roundWholeDollars } from "../whole-dollars.ts";
+import { roundWholeDollars } from "../shared/whole-dollars.ts";
 
 function filedLeaves<T extends object>(source: T): T {
   return Object.fromEntries(

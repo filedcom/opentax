@@ -4,7 +4,7 @@ import {
 } from "./f8815_address.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { type PDFFont, StandardFonts } from "pdf-lib";
-import type { PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../../form-descriptor.ts";
 import {
   calculateForm8815,
   inputSchema,

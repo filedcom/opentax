@@ -1,5 +1,5 @@
 import { appendForm8997Continuation } from "./f8997_continuation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { type Form8997Part } from "../../../../../nodes/inputs/general/investments/f8997/ledger.ts";
 import { reconcileForm8997Pending } from "../../../../../nodes/inputs/general/investments/f8997/reconciliation.ts";
 

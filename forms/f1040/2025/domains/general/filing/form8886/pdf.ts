@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { form8886Narrative } from "./document.ts";
 import { ty2025IrsCountryName } from "../../../../pdf/support/irs_country_name.ts";
 import {

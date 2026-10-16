@@ -1,6 +1,6 @@
 import { PDFCheckBox, PDFDocument, PDFTextField, StandardFonts } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
