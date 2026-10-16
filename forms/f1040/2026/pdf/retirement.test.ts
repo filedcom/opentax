@@ -12,6 +12,59 @@ import {
   disabilityMovingGraph2026,
   monthlyDisabilityCareGraph2026,
 } from "../inputs/retirement-earned.fixture.ts";
+import { retirementIraLedgerGraph2026 } from "../inputs/retirement-ira-ledger.fixture.ts";
+
+Deno.test("2026 multi-payment IRA draft reconciles annual basis, dated age exception and unchanged withheld original", async () => {
+  const graph = retirementIraLedgerGraph2026();
+  graph.general.taxpayer_dob = "1966-12-01";
+  const c = graph.f1099r.claim.copies[0];
+  const e = graph.f1099r.claim.reviews[0].early_distribution!;
+  e.no_additional_tax_exception_applies_verified = undefined;
+  e.exception_review = {
+    record_reference: "age-review",
+    owner_tin: graph.general.taxpayer_ssn,
+    account_number: c.account_number,
+    complete_exception_inventory_verified: true,
+    no_other_payment_exception_applies_verified: true,
+    claims: [{
+      kind: "age59_half",
+      record_reference: "birth-and-payment-record",
+      payment_reference: "ira-payment-june",
+      actual_payment_date_and_birth_record_verified: true,
+    }],
+  };
+  const original = await addRetirementIssuedPdf2026(c);
+  const b = await buildDraftReturnPdf2026(graph);
+  assertEquals(b.sourceAttachments.length, 1);
+  assertEquals(b.sourceAttachments[0].bytes, original);
+  const basis = b.attachments.find((a) => a.form === "form8606:taxpayer")!;
+  const early = b.attachments.find((a) => a.form === "form5329:taxpayer")!;
+  assertEquals(b.calculation.pending.f1040.line4b_ira_taxable, 14800);
+  assertEquals(b.calculation.pending.schedule2.line5_form5329_early_tax, 370);
+  await inspect(b.bytes, async (read) => {
+    assertEquals(await read(1, [253, 174, 70, 12]), "16000");
+    assertEquals(await read(1, [505, 174, 71, 12]), "14800");
+    assertEquals(await read(2, [411, 456, 71, 12]), "1000");
+    assertEquals(await read(basis.formPages[0], [505, 96, 71, 12]), "2800");
+    assertEquals(await read(basis.formPages[1], [505, 636, 71, 12]), "5550");
+    assertEquals(await read(basis.formPages[1], [505, 516, 71, 12]), "9250");
+    assertEquals(await read(early.formPages[0], [505, 528, 71, 12]), "5550");
+    assertEquals(await read(early.formPages[0], [505, 504, 71, 12]), "1850");
+    assertEquals(await read(early.formPages[0], [505, 492, 71, 12]), "3700");
+    assertEquals(await read(early.formPages[0], [505, 480, 71, 12]), "370");
+    for (
+      let p = 1;
+      p <= (await PDFDocument.load(b.bytes)).getPageCount();
+      p++
+    ) {
+      assertEquals((await read(p)).includes("ira-payment-may"), false);
+      assertEquals(
+        (await read(p)).includes("custodian-annual-payment-ledger"),
+        false,
+      );
+    }
+  });
+});
 
 Deno.test("2026 retirement draft prints combined line 1h while Form 3903 retains only the moving component", async () => {
   const r = await buildDraftReturnPdf2026(disabilityMovingGraph2026());

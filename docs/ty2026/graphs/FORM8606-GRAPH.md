@@ -86,8 +86,9 @@ does not yet support spousal compensation allocation, deductible contributions o
 concurrent regular Roth contributions. Current receipts through April 15, 2027
 are retained, with post-year amounts removed from the distribution-year basis.
 
-Actual current 1099-R copies bind to distinct account dispositions. Gross amounts
-reconcile to owner cash, federal/state/local withholding and direct Roth receipts.
+Actual current 1099-R copies bind to distinct account dispositions or complete
+dated payment ledgers. Gross amounts reconcile to owner cash,
+federal/state/local withholding and direct Roth receipts.
 Conversion receipts reconcile to destination Form 5498 box 3. A SIMPLE conversion
 requires the actual first-contribution date and completed two-year period, using
 the same calendar-anniversary helper as the retirement source adapter. Same-owner
@@ -135,8 +136,33 @@ are the display-method comparator; the served draft instructions still describe
 2025 and need final 2026 review.
 
 Early IRA basis payments supply the actual nonconverted amount and date, without
-an entered taxable amount. The current disposition contract describes one dated
-payment per issued copy; multi-date basis statements need a broader source ledger.
+an entered taxable amount. Single-payment dispositions remain supported. An
+owner's `statement_payment_ledgers` additionally describes every actual payment
+on a multi-date issued copy. A copy must appear in exactly one of these routes.
+Each ledger payment retains its own reference, gross, date, cash, federal
+withholding, state/local withholding by jurisdiction and optional direct Roth
+receipt. Every payment reconciles independently, and the ledger totals reconcile
+the issued gross and every withholding jurisdiction before annual basis is
+calculated. No annual amount is allocated across invented dates.
+
+Ledger payment and conversion receipt references must be distinct across the
+annual inventory. Corrections still resolve before ledger binding; a ledger for
+a retired copy cannot replace the current copy's evidence. Conversion receipts
+reconcile to each destination Form 5498 independently, including several Roth
+destinations. The new ledger route excludes modified substantially equal payment
+series and recapture until their own calculation is connected.
+
+Early-tax reviews must reference all and only the same nonconversion payments,
+with matching dates and amounts. Conversion-only payments cannot receive an
+early-tax exception. Age evidence applies on the exact payment date; code 7
+requires every payment to follow age 59 1/2. SIMPLE first-contribution evidence
+is applied separately on each payment date. A statement cannot combine payments
+that require incompatible distribution codes across its two-year anniversary;
+the [2026 1099-R instructions](https://www.irs.gov/pub/irs-pdf/i1099r.pdf) require
+separate issued statements for incompatible codes. Correctly separated code S
+and code 1 statements still aggregate into the same owner's annual basis and
+retain their respective additional-tax rates.
+
 Cash and withholding left outside a direct conversion remain nonconversion
 income. Code 2 partial conversions before age 59 1/2 therefore need a payment
 review; full conversions need no early ledger. Exceptions remain tied to actual
@@ -160,13 +186,24 @@ development drafts, not filing products.
 1. Add statutory-employee expense reconciliation and other compensation sources,
    deductible IRA contribution/SSA worksheet coordination, spousal compensation
    allocation and concurrent regular Roth contributions.
-2. Expand dated payment ledgers and remaining Form 5329 exceptions; finish
+2. Add remaining Form 5329 exceptions and modified-payment-series recapture; finish
    inherited basis, Roth ordering, indirect rollovers, recharacterizations,
    QCD/HSA, disaster/repayment and older basis-chart sources.
 3. Add current MeF/ATS outputs and review final 2026 forms/instructions before
    registering a public filing product. These remain required scope.
 
 ### Validation
+
+The multi-date ledger increment passes 36 typed source, graph and PDF checks,
+the complete 964-test TY2026 runtime suite, and the 137-test unit gate with a
+3,767-module preflight and unchanged runtime snapshot. Tests cover per-payment
+and per-jurisdiction reconciliation, corrected-copy replacement, multiple Roth
+destinations, cents, exact age/SIMPLE anniversaries and rejected substituted
+payment references. Form 1040, Form 8606 and Form 5329 printed values reconcile;
+the withheld original is preserved byte-for-byte. The affected rendered pages
+were visually inspected, including the age-boundary exemption and resulting tax.
+
+Earlier return integration validation:
 
 The integrated route passes 31 typed compensation, retirement, graph, exception
 and PDF checks, the complete 952-test TY2026 runtime suite, and the 137-test unit

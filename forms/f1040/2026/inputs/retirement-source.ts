@@ -374,9 +374,6 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     const basis = ira
       ? iraBasis?.calculation.forms.find((o) => o.owner_tin === id)
       : undefined;
-    const disposition = basis?.source.distributions.find((d) =>
-      d.source_document_reference === c.source_document_reference
-    );
     const basisAmounts = basis?.distributions.find((d) =>
       d.source_document_reference === c.source_document_reference
     );
@@ -461,7 +458,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       }
     }
     if (
-      code === "2" && !disposition?.conversion &&
+      code === "2" && !basisAmounts?.converted &&
       !r.payer_code2_exception_verified
     ) {
       throw new Error("Code 2 needs the payer's known-exception review");
@@ -569,16 +566,26 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       : input.taxpayer_dob;
     const early = basisAmounts
       ? basisAmounts.nonconversion > 0 && (code === "1" || code === "S" ||
-        code === "2" && !!disposition?.conversion &&
-          disposition.distributed_on < addCalendarMonths(ownerDob, 59 * 12 + 6))
+        code === "2" && basisAmounts.converted > 0 &&
+          basisAmounts.payments.some((p) =>
+            p.nonconversion > 0 &&
+            p.payment_date < addCalendarMonths(ownerDob, 59 * 12 + 6)
+          ))
       : code === "1" || code === "S";
     const earlyPayments = r.early_distribution?.payments.map((p) => {
       if (basisAmounts) {
+        const actual = basisAmounts.payments.find((v) =>
+          v.nonconversion > 0 &&
+          (v.record_reference
+            ? v.record_reference === p.record_reference
+            : basisAmounts.payments.length === 1)
+        );
         if (
-          p.taxable !== undefined ||
-          p.payment_date !== disposition!.distributed_on ||
-          r.early_distribution!.payments.length !== 1 ||
-          p.gross !== basisAmounts.nonconversion
+          p.taxable !== undefined || !actual ||
+          p.payment_date !== actual.payment_date ||
+          p.gross !== actual.nonconversion ||
+          r.early_distribution!.payments.length !==
+            basisAmounts.payments.filter((v) => v.nonconversion > 0).length
         ) {
           throw Error(
             "IRA basis early review needs the actual dated nonconversion payment without entered taxable income",

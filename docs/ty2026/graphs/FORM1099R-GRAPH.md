@@ -26,6 +26,8 @@ Supported current source treatments are:
 - Annual owned traditional/SEP/SIMPLE basis, all-nondeductible contributions and
   direct Roth conversions with resolved-copy and executed compensation bindings;
   owner Form 8606, basis carryforward and basis-adjusted Form 5329 are connected.
+  Multi-date IRA ledgers reconcile every payment and withholding jurisdiction;
+  dated exceptions use the same payment references and nonconversion amounts.
   See the [annual basis contract](./FORM8606-GRAPH.md) for precise source limits.
 - Qualified employer-plan and governmental 457(b) distributions with
   payer-determined taxability, including a taxable amount below gross.

@@ -1,14 +1,16 @@
+import {
+  type IraDisposition2026,
+  iraSingleDisposition2026Schema,
+  iraStatementPaymentLedger2026Schema,
+  resolveIraDisposition2026,
+} from "./ira-disposition.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import { investmentOwner2026 } from "./investment-source.ts";
-import {
-  addCalendarMonths,
-  retirementCopy2026Schema,
-} from "./retirement-statement.ts";
+import { retirementCopy2026Schema } from "./retirement-statement.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import {
   isSourceMoney,
-  sourceCents,
   sumSourceMoney,
 } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { traditionalIraBasisAmounts } from "../../nodes/intermediate/forms/income/retirement/form8606/traditional-amounts.ts";
@@ -105,26 +107,9 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
           own_eligible_compensation: money,
           no_spousal_compensation_allocation: z.literal(true),
         }).strict().optional(),
-        distributions: z.array(
-          z.object({
-            source_document_reference: ref,
-            disposition_record_reference: ref,
-            distributed_on: date,
-            cash_paid_to_owner: money,
-            no_unlisted_distribution_or_conversion: z.literal(true),
-            conversion: z.object({
-              receipt: z.object({
-                ...owned,
-                ...account,
-                received_on: date,
-                amount: money,
-              }).strict(),
-              direct_trustee_transfer_verified: z.literal(true),
-              not_required_minimum_distribution_verified: z.literal(true),
-              destination_roth_ira_verified: z.literal(true),
-            }).strict().optional(),
-          }).strict(),
-        ).max(100),
+        distributions: z.array(iraSingleDisposition2026Schema).max(100),
+        statement_payment_ledgers: z.array(iraStatementPaymentLedger2026Schema)
+          .max(100).optional(),
         roth_conversion_forms5498: z.array(
           z.object({
             ...owned,
@@ -280,7 +265,15 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
     }
     const transfers = new Map<string, number[]>(),
       statementKeys = new Set<string>();
-    const distributions = o.distributions.map((d) => {
+    const dispositions: IraDisposition2026[] = [
+      ...o.distributions.map((source) => ({ kind: "single" as const, source })),
+      ...(o.statement_payment_ledgers ?? []).map((source) => ({
+        kind: "ledger" as const,
+        source,
+      })),
+    ];
+    const distributions = dispositions.map((disposition) => {
+      const d = disposition.source;
       const s = copies.get(d.source_document_reference);
       if (!s || usedCopies.has(d.source_document_reference)) {
         throw Error(
@@ -289,7 +282,6 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       }
       usedCopies.add(d.source_document_reference);
       document(d.source_document_reference);
-      document(d.disposition_record_reference);
       const id = s.recipient === "spouse"
         ? input.spouse_ssn
         : input.taxpayer_ssn;
@@ -313,15 +305,6 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         );
       }
       statementKeys.add(statementKey);
-      const code = s.box7a_distribution_codes[0];
-      if (
-        code === "S" && a.plan_type !== "simple_ira" ||
-        code === "7" && d.distributed_on < addCalendarMonths(dob, 59 * 12 + 6)
-      ) {
-        throw Error(
-          "IRA issued distribution code conflicts with account type or payment-date age",
-        );
-      }
       if (
         s.box2a_taxable_amount !== undefined &&
         s.box2a_taxable_amount > s.box1_gross_distribution
@@ -344,67 +327,31 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
           "IRA basis workpaper requires ordinary owned traditional distributions or conversions",
         );
       }
-      if (
-        !d.distributed_on.startsWith("2026-") || d.distributed_on < dob ||
-        s.box13_payment_date && s.box13_payment_date !== d.distributed_on
-      ) {
-        throw Error(
-          "IRA disposition date disagrees with year, birth or issued payment date",
-        );
-      }
-      const converted = d.conversion?.receipt.amount ?? 0;
-      const withheld = sumSourceMoney([
-        s.box4_federal_withheld,
-        ...s.state_information.map((v) => v.box14_state_withheld),
-        ...s.local_information.map((v) => v.box17_local_withheld),
-      ]);
-      if (
-        sumSourceMoney([converted, d.cash_paid_to_owner, withheld]) !==
-          s.box1_gross_distribution
-      ) {
-        throw Error(
-          "IRA gross distribution must reconcile conversion, cash and withholding",
-        );
-      }
-      if (d.conversion) {
-        const receipt = d.conversion.receipt;
-        matchOwner(receipt);
+      const resolved = resolveIraDisposition2026(disposition, s, {
+        owner_tin: o.owner_tin,
+        dob,
+      }, a);
+      document(resolved.record_reference);
+      for (const p of resolved.payments) {
+        if (p.record_reference) document(p.record_reference);
+        if (!p.conversion) continue;
+        const receipt = p.conversion.receipt;
         document(receipt.source_document_reference);
-        if (
-          converted <= 0 || receipt.received_on < d.distributed_on ||
-          receipt.received_on > "2026-12-31"
-        ) {
-          throw Error(
-            "Direct IRA conversion requires a positive receipt after distribution within 2026",
-          );
-        }
         if (accounts.has(key(receipt))) {
           throw Error(
             "Roth conversion destination cannot be a traditional account",
           );
         }
-        if (a.plan_type === "simple_ira") {
-          const first = a.simple_first_contribution_date;
-          if (
-            !first || d.distributed_on < addCalendarMonths(first, 24) ||
-            code === "S"
-          ) {
-            throw Error(
-              "SIMPLE conversion needs its completed two-year participation period",
-            );
-          }
-        }
         const values = transfers.get(key(receipt)) ?? [];
-        values.push(converted);
+        values.push(p.converted);
         transfers.set(key(receipt), values);
       }
       return {
         source_document_reference: d.source_document_reference,
         gross: s.box1_gross_distribution,
-        converted,
-        nonconversion:
-          (sourceCents(s.box1_gross_distribution) - sourceCents(converted)) /
-          100,
+        converted: resolved.converted,
+        nonconversion: resolved.nonconversion,
+        payments: resolved.payments,
       };
     });
     const roth = new Set<string>();

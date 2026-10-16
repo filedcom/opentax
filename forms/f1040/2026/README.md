@@ -25,7 +25,9 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   executed wage/business compensation. Contributions, distributions and direct
   Roth conversions produce taxable IRA income, 2027 basis carryforward and
   basis-adjusted early tax. Separate two-page owner Form 8606 drafts reconcile
-  to Form 1040. See the [Form 8606 contract](../../../docs/ty2026/graphs/FORM8606-GRAPH.md)
+  to Form 1040. Multi-date IRA payment ledgers reconcile each cash, withholding
+  and conversion amount to the current copy and bind age/SIMPLE exceptions to
+  actual payment dates. See the [Form 8606 contract](../../../docs/ty2026/graphs/FORM8606-GRAPH.md)
   for remaining Roth, inherited, deduction, special-source and native filing work.
 
 - `schedule_r` selects the elderly/disability credit box from filer identities,
