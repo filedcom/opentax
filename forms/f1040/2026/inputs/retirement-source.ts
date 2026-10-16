@@ -1,4 +1,8 @@
 import {
+  directTransferLedger2026Schema,
+  reconcileDirectTransfers2026,
+} from "./retirement-direct-transfers.ts";
+import {
   calculateForm4852Bridge2026,
   form4852Bridge2026Schema,
 } from "./form4852-bridge.ts";
@@ -186,6 +190,7 @@ const review = z.object({
     record_reference: ref,
     no_inherited_basis_or_special_tax_treatment_verified: z.literal(true),
   }).strict().optional(),
+  direct_rollover_payments: directTransferLedger2026Schema.optional(),
   direct_rollover: z.object({
     record_reference: ref,
     transfer_date: date,
@@ -411,6 +416,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       business_sources_2026: input.business_sources_2026,
     })
     : undefined;
+  const transferReceipts = new Set<string>();
   const paymentRecords = new Set<string>();
   const accountDecedents = new Map<string, string>();
   const disabilityPlanDates = new Map<string, string>();
@@ -480,7 +486,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     if (substitute) {
       if (
         c.box7a_distribution_codes.length !== 1 ||
-        !(basis ? ["1", "2", "7", "S"] : ["1", "7"]).includes(
+        !(basis ? ["1", "2", "7", "S"] : ["1", "7", "G"]).includes(
           c.box7a_distribution_codes[0],
         ) ||
         !r.no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified
@@ -675,10 +681,43 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       }
       taxable = c.box2a_taxable_amount;
     }
-    if ((code === "G") !== !!r.direct_rollover) {
+    if (r.direct_rollover && r.direct_rollover_payments) {
+      throw Error(
+        "Direct rollover needs one transfer inventory, not two competing reviews",
+      );
+    }
+    if (substitute && code === "G" && !r.direct_rollover_payments) {
+      throw Error(
+        "Form 4852 direct rollover needs dated payment and destination receipts",
+      );
+    }
+    if (
+      (code === "G") !== !!(r.direct_rollover || r.direct_rollover_payments)
+    ) {
       throw new Error(
         "Direct rollover code G needs matching transfer evidence",
       );
+    }
+    const ownerDob = c.recipient === "spouse"
+      ? input.spouse_dob!
+      : input.taxpayer_dob;
+    const directTransfers = r.direct_rollover_payments
+      ? reconcileDirectTransfers2026(
+        r.direct_rollover_payments,
+        c,
+        id,
+        r.reviewed_on,
+        ownerDob,
+        substitute,
+      )
+      : undefined;
+    for (const reference of directTransfers?.receipt_references ?? []) {
+      if (transferReceipts.has(reference)) {
+        throw Error(
+          "Direct transfer receipt is reused across retirement statements",
+        );
+      }
+      transferReceipts.add(reference);
     }
     if (r.direct_rollover) {
       const t = r.direct_rollover,
@@ -686,7 +725,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
           t.destination_type,
         );
       if (
-        !t.transfer_date.startsWith("2026-") ||
+        !t.transfer_date.startsWith("2026-") || t.transfer_date < ownerDob ||
         t.amount_transferred !== c.box1_gross_distribution ||
         t.source_after_tax_basis > t.amount_transferred ||
         totalWithheld !== 0 ||
@@ -701,9 +740,6 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
     }
-    const ownerDob = c.recipient === "spouse"
-      ? input.spouse_dob!
-      : input.taxpayer_dob;
     const early = basisAmounts
       ? basisAmounts.nonconversion > 0 && (code === "1" || code === "S" ||
         code === "2" && basisAmounts.converted > 0 &&
@@ -1057,6 +1093,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       review: r,
       owner_tin: id,
       taxable: basis ? undefined : taxable,
+      direct_transfers: directTransfers,
       ira_basis_owner_tin: basis?.owner_tin,
       ira_nonconversion_before_basis: basisAmounts?.nonconversion,
       disability_wage_payments: disability.wage_payments,
@@ -1218,7 +1255,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     )
     : earlyOwners.reduce((n, o) => n + o.line4, 0);
   const pensionRollover = rows.some((r) =>
-    r.review.direct_rollover !== undefined
+    r.review.direct_rollover !== undefined || r.direct_transfers !== undefined
   );
   const hasIra = rows.some((r) => r.copy.box7b_ira_sep_simple);
   const hasPension = rows.some((r) =>

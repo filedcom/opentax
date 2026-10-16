@@ -42,7 +42,13 @@ Supported current source treatments are:
   directly or separate owner Form 5329 drafts; see the [early-tax contract](./FORM5329-GRAPH.md).
 - Single-code G direct plan rollovers to eligible non-Roth destinations or Roth
   destinations, with transfer date, amount, destination and after-tax basis
-  reconciled to gross, taxable amount and zero withholding. IRA code G and
+  reconciled to gross, taxable amount and zero withholding. A separate
+  `direct_rollover_payments` ledger handles multiple dated payments/destinations
+  with actual owner receipts, gross/basis allocation and zero withholding. It
+  is required for Form 4852 code G substitutes; it can also replace the aggregate
+  review for an issued statement. The two reviews cannot coexist. After-tax
+  non-Roth destination basis remains outside that ledger's current scope; see
+  the [substitute transfer contract](./FORM4852-GRAPH.md). IRA code G and
   distributions from designated Roth accounts remain separate unfinished paths.
 
 Current copies alone feed IRA/pension income, federal withholding and Schedule A

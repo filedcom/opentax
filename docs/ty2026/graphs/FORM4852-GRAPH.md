@@ -65,9 +65,28 @@ A single-payment review is valid only for one actual substitute payment; a
 multi-payment ledger must match every payment reference. Unrelated corrected
 issuer copies retain the retirement owner's current-copy selection.
 
-HSA funding, plan direct rollovers, other distribution codes and special
-treatment remain explicitly closed until their source/payment bridges are
-reconciled. These are software
+Code G plan direct rollovers now use `direct_rollover_payments`: a complete
+ledger of dated plan payments, reviewed basis allocations and destination
+receipts. One payment may have several eligible Roth/non-Roth destinations.
+Each amount and receipt belongs to the actual owner, and every payment must
+match the substitute's gross, taxable amount, basis and zero withholding.
+Receipts cannot be reused across current retirement statements. The existing
+shared retirement calculation supplies line 5a/5b and the rollover checkbox;
+code G does not become an ordinary early-withdrawal tax merely because the
+owner is under 59½. Bank receipt evidence can be dated after year end but must
+exist by the completed treatment review.
+
+This allocation follows the [IRS after-tax rollover guidance](https://www.irs.gov/retirement-plans/rollovers-of-after-tax-contributions-in-retirement-plans)
+and [2026 Form 1099-R code G/basis reporting](https://www.irs.gov/instructions/i1099r),
+rechecked October 16. Plan records must establish the distribution's
+proportionate basis and the simultaneous-destination allocation; the software
+does not infer those facts from an account balance. After-tax amounts entering
+non-Roth destinations still require a destination basis integration and are
+rejected by this ledger. Pretax non-Roth transfers and Roth transfers with
+reconciled recovered basis are supported.
+
+HSA funding, other distribution codes and special treatment remain explicitly
+closed until their source/payment bridges are reconciled. These are software
 coverage limits, not claims about the legal availability of Form 4852.
 
 Substitute retirement state/local withholding reaches Schedule A from its own
@@ -104,6 +123,14 @@ were visually inspected; physical cells verify $2,800 carried basis, $5,550
 ordinary taxable distributions, $9,250 taxable conversions and $555 early tax
 in the synthetic $16,000 two-payment conversion case. These are test inputs,
 not a taxpayer return or evidence of current IRS filing acceptance.
+
+The direct-transfer follow-up adds eleven source/graph cases and one bundle
+case. The affected 392-test suite passed; after adding birth-date reconciliation,
+the 16-test transfer/retirement-source selection and 137-test unit gate passed.
+Form 1040's rollover checkbox, gross and taxable amounts and Form 4852's
+separate taxable/recovered-basis amounts were rendered and visually inspected.
+The synthetic two-payment/three-destination example reports $16,000 rounded
+gross, $4,000 taxable, $2,000 recovered basis and no early-distribution tax.
 
 ## When a substitute is appropriate
 

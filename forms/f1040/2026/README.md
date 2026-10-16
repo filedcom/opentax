@@ -773,10 +773,13 @@ direct Roth conversions bind each substitute payment to the annual Form 8606
 account ledger, including actual withholding and dated nonconversion exceptions. Replaced originals
 are excluded; the retained substitute ledger is checked against executed sources.
 The return bundle prints each substitute with actual owner/address and complete
-explanations while preserving unrelated withheld 1099-R originals. State/local
+explanations while preserving unrelated withheld 1099-R originals. Plan direct
+rollovers now reconcile multiple payments and destination receipts, including
+mixed pretax non-Roth and Roth transfers, before the shared code G projection.
+After-tax non-Roth destinations need a separate basis integration. State/local
 withholding comes from the substitute ledger without invented issuer state IDs.
 The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md) records
-remaining HSA funding/plan rollover/special retirement cases, complex
+remaining HSA funding/non-Roth destination basis/special retirement cases, complex
 corrections and remaining MeF/acceptance work. These remain development drafts.
 
 ## Investment sources and NIIT
