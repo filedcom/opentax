@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import type { MefFormsPending } from "../../../../mef/types.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -28,7 +29,7 @@ function bundle(pending: Pending, filer = fixture.filer) {
     attachments: [],
   });
 }
-Deno.test("owned accounting SSTB payroll and filed SE reach Schedule A, fractional phase-in and full return", async () => {
+test("owned accounting SSTB payroll and filed SE reach Schedule A, fractional phase-in and full return", async () => {
   const p = prepared();
   assertEquals(p.schedule1.line3_schedule_c, 28431);
   assertEquals(p.schedule1.line15_se_deduction, 381);
@@ -58,7 +59,7 @@ Deno.test("owned accounting SSTB payroll and filed SE reach Schedule A, fraction
     true,
   );
 });
-Deno.test("SSTB native and PDF exports reject detached payroll, source classification, owner and filed amounts", async () => {
+test("SSTB native and PDF exports reject detached payroll, source classification, owner and filed amounts", async () => {
   const base = prepared();
   const mutations: ((p: Pending) => void)[] = [
     (p) => {
@@ -147,7 +148,7 @@ Deno.test("SSTB native and PDF exports reject detached payroll, source classific
   await assertRejects(() => buildPdfBytes(base, wrongFiler, ".pdf-cache"));
 });
 
-Deno.test("owner-only SSTB has a positive phase-in deduction with no employee wages", async () => {
+test("owner-only SSTB has a positive phase-in deduction with no employee wages", async () => {
   const noPayroll = pdfReviewFixtures.find((f) =>
     f.id === "single-form8995a-accounting-sstb-no-payroll"
   )!;
@@ -215,7 +216,7 @@ Deno.test("owner-only SSTB has a positive phase-in deduction with no employee wa
   }
 });
 
-Deno.test("joint primary-owner SSTB uses joint threshold, source SE and fractional applicability", async () => {
+test("joint primary-owner SSTB uses joint threshold, source SE and fractional applicability", async () => {
   const joint = pdfReviewFixtures.find((f) =>
     f.id === "joint-primary-form8995a-accounting-sstb-phasein"
   )!;
@@ -271,7 +272,7 @@ Deno.test("joint primary-owner SSTB uses joint threshold, source SE and fraction
   await assertRejects(() => buildPdfBytes(changed, joint.filer, ".pdf-cache"));
 });
 
-Deno.test("MFS Colorado primary SSTB actual source joins status, spouse deductions and full return", async () => {
+test("MFS Colorado primary SSTB actual source joins status, spouse deductions and full return", async () => {
   const mfs = pdfReviewFixtures.find((f) =>
     f.id === "mfs-primary-form8995a-accounting-sstb-phasein"
   )!;
@@ -386,7 +387,7 @@ Deno.test("MFS Colorado primary SSTB actual source joins status, spouse deductio
   await assertRejects(() => buildPdfBytes(p, wrongFiler, ".pdf-cache"));
 });
 
-Deno.test("public MFS SSTB input rejects an absent filing review or spouse-owned business", () => {
+test("public MFS SSTB input rejects an absent filing review or spouse-owned business", () => {
   const mfs = pdfReviewFixtures.find((f) =>
     f.id === "mfs-primary-form8995a-accounting-sstb-phasein"
   )!;
@@ -402,7 +403,7 @@ Deno.test("public MFS SSTB input rejects an absent filing review or spouse-owned
   }
 });
 
-Deno.test("reviewed ordinary noncommunity MFS states retain actual source and return amounts", async () => {
+test("reviewed ordinary noncommunity MFS states retain actual source and return amounts", async () => {
   for (const state of ["ny", "ak", "tn", "sd"]) {
     const f = pdfReviewFixtures.find((f) =>
       f.id === `mfs-${state}-primary-form8995a-accounting-sstb-phasein`
@@ -426,7 +427,7 @@ Deno.test("reviewed ordinary noncommunity MFS states retain actual source and re
   }
 });
 
-Deno.test("MFS domicile/property review rejects community states, elections and missing records independently of mail", async () => {
+test("MFS domicile/property review rejects community states, elections and missing records independently of mail", async () => {
   const f = pdfReviewFixtures.find((f) =>
     f.id === "mfs-ak-primary-form8995a-accounting-sstb-phasein"
   )!;

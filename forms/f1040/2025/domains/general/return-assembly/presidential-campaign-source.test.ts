@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { general } from "../../../../nodes/inputs/general/filing/general/index.ts";
 import { f1040 } from "../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
@@ -31,7 +32,7 @@ function filedElection(
   return { source, final: { ...final, filing_status: filingStatus } };
 }
 
-Deno.test("presidential campaign answers reach final Form 1040, MeF, and TY2025 PDF boxes", () => {
+test("presidential campaign answers reach final Form 1040, MeF, and TY2025 PDF boxes", () => {
   const { source, final } = filedElection("mfj", true, true);
   assertEquals(
     (final as Record<string, unknown>).presidential_campaign_fund_taxpayer,
@@ -70,7 +71,7 @@ Deno.test("presidential campaign answers reach final Form 1040, MeF, and TY2025 
   );
 });
 
-Deno.test("false presidential campaign answers leave both MeF indicators and PDF boxes clear", () => {
+test("false presidential campaign answers leave both MeF indicators and PDF boxes clear", () => {
   const { source, final } = filedElection("mfj", false, false);
   const xml = irs1040.build(final, { pending: { general: source } });
   assertEquals(xml.includes("<PECFPrimaryInd>"), false);
@@ -80,7 +81,7 @@ Deno.test("false presidential campaign answers leave both MeF indicators and PDF
   assertEquals(projected?.presidential_campaign_fund_spouse, false);
 });
 
-Deno.test("single filer can designate the taxpayer fund without a spouse mark", () => {
+test("single filer can designate the taxpayer fund without a spouse mark", () => {
   const { source, final } = filedElection("single", true, false);
   const xml = irs1040.build(final, { pending: { general: source } });
   assertStringIncludes(xml, "<PECFPrimaryInd>X</PECFPrimaryInd>");
@@ -90,7 +91,7 @@ Deno.test("single filer can designate the taxpayer fund without a spouse mark", 
   assertEquals(projected?.presidential_campaign_fund_spouse, false);
 });
 
-Deno.test("presidential campaign source tampering is rejected by native and PDF exports", () => {
+test("presidential campaign source tampering is rejected by native and PDF exports", () => {
   const { source, final } = filedElection("mfj", true, false);
   for (
     const altered of [
@@ -121,7 +122,7 @@ Deno.test("presidential campaign source tampering is rejected by native and PDF 
   );
 });
 
-Deno.test("spouse presidential campaign mark requires a joint return", () => {
+test("spouse presidential campaign mark requires a joint return", () => {
   assertThrows(
     () => filedElection("single", false, true),
     Error,

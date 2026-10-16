@@ -1,11 +1,14 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8962JointIncomeSources } from "./form8962_joint_income.fixture.ts";
-Deno.test("Owned joint income inventory reaches household MAGI, Medicare, native and printed return", async () => {
-  const out = await Deno.makeTempDir({
+test("Owned joint income inventory reaches household MAGI, Medicare, native and printed return", async () => {
+  const out = await sys.makeTempDir({
     prefix: "opentax-8962-joint-income-final-",
   });
   console.log("Joint income source archive:", out);
@@ -42,7 +45,7 @@ Deno.test("Owned joint income inventory reaches household MAGI, Medicare, native
         origins,
       ),
       dir = out + "/" + kind;
-    await Deno.mkdir(dir);
+    await fs.mkdir(dir);
     for (
       const [name, value] of Object.entries({
         "source.json": source,
@@ -52,18 +55,18 @@ Deno.test("Owned joint income inventory reaches household MAGI, Medicare, native
         "origins.json": origins,
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         dir + "/" + name,
         JSON.stringify(value, null, 2),
       );
     }
-    await Deno.writeFile(dir + "/return.pdf", pdf);
-    await Deno.writeTextFile(dir + "/return.xml", prepared.bundle.xml);
+    await fs.writeFile(dir + "/return.pdf", pdf);
+    await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",
       stderr: "piped",

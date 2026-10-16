@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { ExpenditureType, f59e } from "./index.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
@@ -34,7 +35,7 @@ function schedule(year = 2025, elected = false) {
   });
 }
 
-Deno.test("circulation amortizes all three tax years and stops after recovery", () => {
+test("circulation amortizes all three tax years and stops after recovery", () => {
   for (const year of [2025, 2024, 2023, 2022, 2021]) {
     const source = schedule(year), held = structuredClone(source);
     assertEquals(resolveCirculationDeductions(source, 2025), {
@@ -49,7 +50,7 @@ Deno.test("circulation amortizes all three tax years and stops after recovery", 
   }
 });
 
-Deno.test("circulation schedule reconciles source totals, opening basis and prior returns", () => {
+test("circulation schedule reconciles source totals, opening basis and prior returns", () => {
   const base = schedule(2023);
   for (
     const change of [
@@ -97,7 +98,7 @@ Deno.test("circulation schedule reconciles source totals, opening basis and prio
   assertThrows(() => resolveCirculationDeductions(schedule(), 2024));
 });
 
-Deno.test("circulation cent allocation conserves the cost through final recovery", () => {
+test("circulation cent allocation conserves the cost through final recovery", () => {
   const source = schedule(2023);
   source.original_amount = 100;
   source.remaining_unamortized = 33.34;
@@ -125,7 +126,7 @@ Deno.test("circulation cent allocation conserves the cost through final recovery
   });
 });
 
-Deno.test("circulation pools reject reuse of a prior-year invoice before aggregation", () => {
+test("circulation pools reject reuse of a prior-year invoice before aggregation", () => {
   const source = {
     ...schedule(2023),
     expenditure_type: ExpenditureType.Circulation,

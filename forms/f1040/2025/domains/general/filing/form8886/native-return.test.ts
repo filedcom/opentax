@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   documentId,
@@ -83,7 +84,7 @@ function allocation(fragments: readonly MefDocumentFragment[]) {
     form8886_additional_details: ids(Form8886PendingKey.AdditionalDetails),
   };
 }
-Deno.test("Form 8886 separates native roots into ReturnData slots and links whole-return IDs for repeated copies", () => {
+test("Form 8886 separates native roots into ReturnData slots and links whole-return IDs for repeated copies", () => {
   const prepared = fixture(),
     before = JSON.stringify(prepared),
     discovery = form8886NativeReturnFragments(prepared);
@@ -119,7 +120,7 @@ Deno.test("Form 8886 separates native roots into ReturnData slots and links whol
   assertEquals(JSON.stringify(prepared), before);
   assertEquals(Object.isFrozen(linked) && linked.every(Object.isFrozen), true);
 });
-Deno.test("Form 8886 native final linking rejects missing, duplicate or extra allocated IDs", () => {
+test("Form 8886 native final linking rejects missing, duplicate or extra allocated IDs", () => {
   const prepared = fixture(),
     ids = allocation(wholeReturn(form8886NativeReturnFragments(prepared)));
   assertThrows(
@@ -159,7 +160,7 @@ Deno.test("Form 8886 native final linking rejects missing, duplicate or extra al
     })
   );
 });
-Deno.test("Form 8886 whole-return verification rejects temporary or incorrectly allocated continuation IDs", () => {
+test("Form 8886 whole-return verification rejects temporary or incorrectly allocated continuation IDs", () => {
   const prepared = fixture(),
     discovery = form8886NativeReturnFragments(prepared);
   assertThrows(
@@ -178,7 +179,7 @@ Deno.test("Form 8886 whole-return verification rejects temporary or incorrectly 
     "has no document",
   );
 });
-Deno.test("Form 8886 native integration refuses root substitutions and unknown references", () => {
+test("Form 8886 native integration refuses root substitutions and unknown references", () => {
   const prepared = fixture(), packet = prepared.packets[0].packet;
   const substituted = {
     ...packet,
@@ -213,7 +214,7 @@ Deno.test("Form 8886 native integration refuses root substitutions and unknown r
     "unknown continuation",
   );
 });
-Deno.test("Form 8886 native integration rejects duplicated packet continuation identities", () => {
+test("Form 8886 native integration rejects duplicated packet continuation identities", () => {
   const prepared = fixture();
   assertThrows(
     () =>

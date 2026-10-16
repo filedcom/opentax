@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -19,7 +22,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 for (const stepFirst of [false, true]) {
-  Deno.test(`remarried custodial MFJ ${stepFirst ? "stepparent-first phaseout" : "custodian-first"} owns actual joint wages, education and reciprocal child tax packets`, async () => {
+  test(`remarried custodial MFJ ${stepFirst ? "stepparent-first phaseout" : "custodian-first"} owns actual joint wages, education and reciprocal child tax packets`, async () => {
     const f = remarriedFamily(stepFirst),
       parent = f.parents[0],
       p = parent.pending,
@@ -131,25 +134,25 @@ for (const stepFirst of [false, true]) {
           `<SSN>${stepFirst ? "999887777" : "111223333"}</SSN>`,
         );
       }
-      const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+      const tmp = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(tmp, b.bundle.xml);
-        const r = await new Deno.Command("xmllint", {
+        await fs.writeFile(tmp, b.bundle.xml);
+        const r = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, tmp],
           stderr: "piped",
           stdout: "piped",
         }).output();
         assertEquals(r.code, 0, new TextDecoder().decode(r.stderr));
       } finally {
-        await Deno.remove(tmp);
+        await sys.remove(tmp);
       }
       const pdf = await b.renderPdf(), doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), row.pages);
       assertEquals(doc.getForm().getFields().length, 0);
-      const file = await Deno.makeTempFile({ suffix: ".pdf" });
+      const file = await sys.makeTempFile({ suffix: ".pdf" });
       try {
-        await Deno.writeFile(file, pdf);
-        const r = await new Deno.Command("pdftotext", {
+        await fs.writeFile(file, pdf);
+        const r = await new sys.Command("pdftotext", {
           args: [file, "-"],
           stdout: "piped",
         }).output();
@@ -170,28 +173,28 @@ for (const stepFirst of [false, true]) {
           assertStringIncludes(text, "Sam Example");
         }
       } finally {
-        await Deno.remove(file);
+        await sys.remove(file);
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-remarried-mfj-parent-evidence",
           stem = `${
             stepFirst ? "step-first-phaseout" : "custodial-first"
           }-${row.stem}`;
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${stem}-source-input.json`,
           JSON.stringify({ inputs: row.inputs, filer: row.filer }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${stem}-full-return.xml`,
           b.bundle.xml,
         );
-        await Deno.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
       }
     }
   });
 }
-Deno.test("remarried joint child export rejects wrong tax parent, spouse ownership, custody and reciprocal tax sources", async () => {
+test("remarried joint child export rejects wrong tax parent, spouse ownership, custody and reciprocal tax sources", async () => {
   const f = remarriedFamily(true), c = f.children[0];
   const changes: Array<(p: any) => void> = [
     (p) => p.form8615.parent_ssn = "111223333",
@@ -250,7 +253,7 @@ Deno.test("remarried joint child export rejects wrong tax parent, spouse ownersh
     await assertRejects(() => f1040_2025.prepareReturn(p, c.childFiler));
   }
 });
-Deno.test("actual joint education export rejects spouse income detachment, wrong MAGI/phaseout and child credit ownership leaks", async () => {
+test("actual joint education export rejects spouse income detachment, wrong MAGI/phaseout and child credit ownership leaks", async () => {
   const f = remarriedFamily(true), r = f.parents[0];
   const changes: Array<(p: any) => void> = [
     (p) => p.w2.w2s[0].employee_ssn = "777889999",
@@ -275,7 +278,7 @@ Deno.test("actual joint education export rejects spouse income detachment, wrong
     assertThrows(() => form8863Pdf.instances!(p.f8863, r.filer, p));
   }
 });
-Deno.test("public remarried child source calculation rejects changed issued owner, filing identity and custody instead of accepting parent scalars", () => {
+test("public remarried child source calculation rejects changed issued owner, filing identity and custody instead of accepting parent scalars", () => {
   const f = remarriedFamily(true), c = f.children[0];
   for (
     const change of [

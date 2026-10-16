@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -84,7 +87,7 @@ const expected = {
   },
 };
 for (const kind of Object.keys(expected) as DepreciationCase[]) {
-  Deno.test(`2025 owned donated depreciation ${kind} source to full packet`, async () => {
+  test(`2025 owned donated depreciation ${kind} source to full packet`, async () => {
     const source = await reviewedDepreciationGift(kind), want = expected[kind];
     assertEquals({
       basis: source.calc.adjusted_basis,
@@ -174,7 +177,7 @@ for (const kind of Object.keys(expected) as DepreciationCase[]) {
     assertEquals(bundle.xml.includes("IRS4797"), false);
     assertEquals(bundle.xml.includes("IRS4562"), false);
     assertEquals(bundle.attachments.length, kind === "active1245A" ? 3 : 8);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -199,10 +202,10 @@ for (const kind of Object.keys(expected) as DepreciationCase[]) {
       origins,
     );
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-    const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+    const root = process.env.FORM8283_EVIDENCE_DIR;
     if (root) {
       const dir = `${root}/${kind}`;
-      await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+      await fs.mkdir(`${dir}/attachments`, { recursive: true });
       for (
         const [name, value] of Object.entries({
           source: { inputs: source.inputs, filer: source.filer },
@@ -212,15 +215,15 @@ for (const kind of Object.keys(expected) as DepreciationCase[]) {
           attachments: source.attachments.map(({ bytes, ...row }) => row),
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
       for (const attachment of source.attachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/attachments/${attachment.fileName}`,
           attachment.bytes,
         );
@@ -340,7 +343,7 @@ for (const kind of Object.keys(expected) as DepreciationCase[]) {
     }
   });
 }
-Deno.test("2025 donated depreciation source method/owner/basis/ordinary conflicts", () => {
+test("2025 donated depreciation source method/owner/basis/ordinary conflicts", () => {
   for (
     const mutate of [
       (s: any) => s.components[0].annual_records[2].depreciation_claimed = 0,
@@ -361,7 +364,7 @@ Deno.test("2025 donated depreciation source method/owner/basis/ordinary conflict
   assertThrows(() => calculateCharitableDepreciation(source));
 });
 
-Deno.test("2025 active owned depreciation and four sourced reductions bind actual QBI income cap", async () => {
+test("2025 active owned depreciation and four sourced reductions bind actual QBI income cap", async () => {
   const source = await reviewedDepreciationGift("active1245");
   const { reviewedSpecialSectionBInventory } = await import(
     "./form8283-special-section-b.fixture.ts"
@@ -404,7 +407,7 @@ Deno.test("2025 active owned depreciation and four sourced reductions bind actua
       attachments,
     });
   assertEquals((bundle.xml.match(/<IRS8283\b/g) ?? []).length, 5);
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -428,10 +431,10 @@ Deno.test("2025 active owned depreciation and four sourced reductions bind actua
     bundle,
     origins,
   );
-  const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+  const root = process.env.FORM8283_EVIDENCE_DIR;
   if (root) {
     const dir = `${root}/mixed-binding-QBI`;
-    await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+    await fs.mkdir(`${dir}/attachments`, { recursive: true });
     for (
       const [name, value] of Object.entries({
         source: { inputs, filer: source.filer },
@@ -440,15 +443,15 @@ Deno.test("2025 active owned depreciation and four sourced reductions bind actua
         attachments: attachments.map(({ bytes, ...row }) => row),
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${name}.json`,
         JSON.stringify(value, null, 2),
       );
     }
-    await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/return.pdf`, pdf);
+    await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/return.pdf`, pdf);
     for (const a of attachments) {
-      await Deno.writeFile(`${dir}/attachments/${a.fileName}`, a.bytes);
+      await fs.writeFile(`${dir}/attachments/${a.fileName}`, a.bytes);
     }
   }
   const detached = structuredClone(pending);

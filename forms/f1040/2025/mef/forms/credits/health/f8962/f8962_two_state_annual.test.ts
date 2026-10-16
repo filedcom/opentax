@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -96,7 +97,7 @@ const pending = {
   f1040: { line11_agi: 90_000, line31_additional_payments: 9_219 },
 };
 
-Deno.test("Form 8962 annual line 11 adds two different-state family benchmarks", () => {
+test("Form 8962 annual line 11 adds two different-state family benchmarks", () => {
   const source = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1095a,
@@ -114,7 +115,7 @@ Deno.test("Form 8962 annual line 11 adds two different-state family benchmarks",
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 annual two-state route rejects false state, source, and return", () => {
+test("Form 8962 annual two-state route rejects false state, source, and return", () => {
   assertThrows(
     () => form8962.build(fields, { filer, pending: {
       ...pending,

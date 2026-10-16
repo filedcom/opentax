@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Schedule Q joins reviewed sales and tested income groups", () => {
+test("Schedule Q joins reviewed sales and tested income groups", () => {
   const xml = form5471ScheduleQ.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -49,12 +51,7 @@ Deno.test("Schedule Q joins reviewed sales and tested income groups", () => {
     }), Error);
 });
 
-Deno.test({
-  name: "Schedule Q bounded native XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Schedule Q bounded native XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleQ.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -62,7 +59,7 @@ Deno.test({
       /^<IRS5471ScheduleQ/,
       '<IRS5471ScheduleQ xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleQTest1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -73,5 +70,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

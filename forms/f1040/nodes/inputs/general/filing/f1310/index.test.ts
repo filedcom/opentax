@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ClaimantType, f1310 } from "./index.ts";
 
@@ -9,7 +10,7 @@ function compute(input: Record<string, unknown>) {
 // 1. Schema Validation — required fields
 // =============================================================================
 
-Deno.test("f1310.inputSchema: missing deceased_name fails", () => {
+test("f1310.inputSchema: missing deceased_name fails", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_ssn: "123-45-6789",
     date_of_death: "2024-11-15",
@@ -19,7 +20,7 @@ Deno.test("f1310.inputSchema: missing deceased_name fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1310.inputSchema: missing deceased_ssn fails", () => {
+test("f1310.inputSchema: missing deceased_ssn fails", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     date_of_death: "2024-11-15",
@@ -29,7 +30,7 @@ Deno.test("f1310.inputSchema: missing deceased_ssn fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1310.inputSchema: missing date_of_death fails", () => {
+test("f1310.inputSchema: missing date_of_death fails", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -39,7 +40,7 @@ Deno.test("f1310.inputSchema: missing date_of_death fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1310.inputSchema: missing claimant_name fails", () => {
+test("f1310.inputSchema: missing claimant_name fails", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -49,7 +50,7 @@ Deno.test("f1310.inputSchema: missing claimant_name fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1310.inputSchema: invalid claimant_type fails", () => {
+test("f1310.inputSchema: invalid claimant_type fails", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -60,7 +61,7 @@ Deno.test("f1310.inputSchema: invalid claimant_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1310.inputSchema: court_certificate_attached and proof_of_death_attached are optional", () => {
+test("f1310.inputSchema: court_certificate_attached and proof_of_death_attached are optional", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -75,7 +76,7 @@ Deno.test("f1310.inputSchema: court_certificate_attached and proof_of_death_atta
 // 2. Schema Validation — claimant type routing
 // =============================================================================
 
-Deno.test("f1310.inputSchema: SpouseFilingJointly claimant type accepted", () => {
+test("f1310.inputSchema: SpouseFilingJointly claimant type accepted", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -89,7 +90,7 @@ Deno.test("f1310.inputSchema: SpouseFilingJointly claimant type accepted", () =>
   }
 });
 
-Deno.test("f1310.inputSchema: CourtAppointedRepresentative claimant type accepted with court_certificate_attached", () => {
+test("f1310.inputSchema: CourtAppointedRepresentative claimant type accepted with court_certificate_attached", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -105,7 +106,7 @@ Deno.test("f1310.inputSchema: CourtAppointedRepresentative claimant type accepte
   }
 });
 
-Deno.test("f1310.inputSchema: Other claimant type accepted with proof_of_death_attached", () => {
+test("f1310.inputSchema: Other claimant type accepted with proof_of_death_attached", () => {
   const parsed = f1310.inputSchema.safeParse({
     deceased_name: "Robert Smith",
     deceased_ssn: "123-45-6789",
@@ -125,7 +126,7 @@ Deno.test("f1310.inputSchema: Other claimant type accepted with proof_of_death_a
 // 3. Compute — administrative form produces no tax outputs
 // =============================================================================
 
-Deno.test("f1310.compute: produces no outputs for any valid claimant type", () => {
+test("f1310.compute: produces no outputs for any valid claimant type", () => {
   for (const claimantType of Object.values(ClaimantType)) {
     const result = compute({
       deceased_name: "Robert Smith",
@@ -142,7 +143,7 @@ Deno.test("f1310.compute: produces no outputs for any valid claimant type", () =
 // 4. Compute — throws on invalid or missing required fields
 // =============================================================================
 
-Deno.test("f1310.compute: throws on missing deceased_ssn", () => {
+test("f1310.compute: throws on missing deceased_ssn", () => {
   assertThrows(() =>
     compute({
       deceased_name: "Robert Smith",
@@ -152,7 +153,7 @@ Deno.test("f1310.compute: throws on missing deceased_ssn", () => {
     }), Error);
 });
 
-Deno.test("f1310.compute: throws on invalid claimant_type", () => {
+test("f1310.compute: throws on invalid claimant_type", () => {
   assertThrows(() =>
     compute({
       deceased_name: "Robert Smith",
@@ -163,6 +164,6 @@ Deno.test("f1310.compute: throws on invalid claimant_type", () => {
     }), Error);
 });
 
-Deno.test("f1310.compute: throws on missing required fields", () => {
+test("f1310.compute: throws on missing required fields", () => {
   assertThrows(() => compute({}), Error);
 });

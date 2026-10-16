@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { groupDividendFixture } from "./form8995a_group_dividend_fixture.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -10,7 +13,7 @@ import {
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 for (const c of groupLossCases) {
-  Deno.test(`Qualified dividends with QBI loss employer groups ${c.name}`, async () => {
+  test(`Qualified dividends with QBI loss employer groups ${c.name}`, async () => {
     const { input, filer, employers } = groupDividendFixture(c);
     // Independent MFJ ledger: qualified1500 within ordinary dividends3000;
     // qualified dividends and long gain1800 fall in15% band; phase-in56.5%.
@@ -87,15 +90,9 @@ for (const c of groupLossCases) {
       ),
     );
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_GROUP_DIVIDENDS_DIR",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_GROUP_DIVIDENDS_DIR")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.FORM8995A_GROUP_DIVIDENDS_DIR;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
       for (
         const [key, value] of Object.entries({
@@ -104,13 +101,13 @@ for (const c of groupLossCases) {
           pending: prepared.bundle.pending,
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${key}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      const xsd = await new Deno.Command("xmllint", {
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -123,10 +120,10 @@ for (const c of groupLossCases) {
         stderr: "piped",
         stdout: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -136,7 +133,7 @@ for (const c of groupLossCases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
@@ -226,12 +223,12 @@ for (const c of groupLossCases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }
 
-Deno.test("Loss employer dividend review cannot claim nonzero dividends without sources", () => {
+test("Loss employer dividend review cannot claim nonzero dividends without sources", () => {
   for (const c of groupLossCases) {
     const { input } = groupLossFixture(c);
     const employer = input.schedule_c.find((b: Row) =>

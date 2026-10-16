@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { join } from "@std/path";
 import { unzipSync } from "fflate";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
@@ -394,9 +396,9 @@ async function writeRecord(
   payloads: Readonly<Record<string, Uint8Array>>,
 ): Promise<void> {
   const groupPath = join(root, group);
-  await Deno.mkdir(groupPath, { recursive: true, mode: 0o700 });
+  await fs.mkdir(groupPath, { recursive: true, mode: 0o700 });
   const stagingPath = join(groupPath, `.staging-${crypto.randomUUID()}`);
-  await Deno.mkdir(stagingPath, { mode: 0o700 });
+  await fs.mkdir(stagingPath, { mode: 0o700 });
   try {
     for (const [name, bytes] of Object.entries(payloads)) {
       await writeSyncedFile(join(stagingPath, name), bytes);
@@ -405,9 +407,9 @@ async function writeRecord(
       join(stagingPath, "record.json"),
       encoder.encode(JSON.stringify(record, null, 2)),
     );
-    await Deno.rename(stagingPath, join(groupPath, key));
+    await fs.rename(stagingPath, join(groupPath, key));
   } catch (error) {
-    await Deno.remove(stagingPath, { recursive: true }).catch(() => {});
+    await sys.remove(stagingPath, { recursive: true }).catch(() => {});
     throw error;
   }
 }
@@ -453,10 +455,10 @@ export async function readA2aSendRecord(
   const key = await sha256(encoder.encode(messageId));
   const path = join(root, "requests", key);
   const record = requestRecordSchema.parse(
-    JSON.parse(await Deno.readTextFile(join(path, "record.json"))),
+    JSON.parse(await fs.readFile(join(path, "record.json"), "utf8")),
   );
-  const requestBytes = await Deno.readFile(join(path, "request.xml"));
-  const containerBytes = await Deno.readFile(join(path, "container.zip"));
+  const requestBytes = await sys.readBytes(join(path, "request.xml"));
+  const containerBytes = await sys.readBytes(join(path, "container.zip"));
   if (
     record.messageId !== messageId ||
     record.requestBodySha256 !== await sha256(requestBytes) ||
@@ -497,10 +499,10 @@ export async function readA2aArchivedSubmission(
     );
   }
   const key = await sha256(encoder.encode(sendMessageId));
-  const requestBytes = await Deno.readFile(
+  const requestBytes = await sys.readBytes(
     join(root, "requests", key, "request.xml"),
   );
-  const containerBytes = await Deno.readFile(
+  const containerBytes = await sys.readBytes(
     join(root, "requests", key, "container.zip"),
   );
   if (
@@ -632,9 +634,9 @@ export async function readA2aInboundPayload(
   const safeRecordId = z.string().uuid().parse(recordId);
   const path = join(root, "inbound", safeRecordId);
   const record = inboundRecordSchema.parse(
-    JSON.parse(await Deno.readTextFile(join(path, "record.json"))),
+    JSON.parse(await fs.readFile(join(path, "record.json"), "utf8")),
   );
-  const rawPayload = await Deno.readFile(join(path, "payload.bin"));
+  const rawPayload = await sys.readBytes(join(path, "payload.bin"));
   const send = await readA2aSendRecord(root, record.sendMessageId);
   if (
     record.recordId !== recordId ||

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
@@ -80,7 +81,7 @@ function filedReturn() {
   });
 }
 
-Deno.test("mixed-use new Form 8936 credit reaches Form 3800 line 1y, Schedule 3, Form 1040, and PDF", async () => {
+test("mixed-use new Form 8936 credit reaches Form 3800 line 1y, Schedule 3, Form 1040, and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -119,7 +120,7 @@ Deno.test("mixed-use new Form 8936 credit reaches Form 3800 line 1y, Schedule 3,
   );
 });
 
-Deno.test("new business Form 8936 printable copy rejects source, prepared row, and final-return changes", async () => {
+test("new business Form 8936 printable copy rejects source, prepared row, and final-return changes", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, filer);

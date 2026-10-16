@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -16,7 +19,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is optional in CI.
@@ -60,21 +63,21 @@ const details = {
 };
 
 async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const output = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const output = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 }
 
-Deno.test("Form 2441 aggregate-only credit cannot be e-filed", () => {
+test("Form 2441 aggregate-only credit cannot be e-filed", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -103,24 +106,14 @@ Deno.test("Form 2441 aggregate-only credit cannot be e-filed", () => {
   );
 });
 
-Deno.test({
-  name: "XSD: Form 2441 credit-only filing validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2441 credit-only filing validates", async () => {
   const xml = buildMefXml({
     form2441: { agi: 50_000, filing_details: details },
   }, filer);
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: Form 2441 employer-benefit filing validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2441 employer-benefit filing validates", async () => {
   const xml = buildMefXml({
     form2441: {
       agi: 50_000,
@@ -140,12 +133,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: Form 2441 filing details survive graph and match Schedule 3",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2441 filing details survive graph and match Schedule 3", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -181,12 +169,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: W-2 Box 10 benefits and filing details reconcile through graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: W-2 Box 10 benefits and filing details reconcile through graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

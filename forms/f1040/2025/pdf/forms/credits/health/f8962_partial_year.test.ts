@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form8962Pdf } from "./f8962.ts";
@@ -23,7 +24,7 @@ const rows = [
   },
 ];
 
-Deno.test("Form 8962 PDF leaves an uncovered month blank, including contribution", () => {
+test("Form 8962 PDF leaves an uncovered month blank, including contribution", () => {
   const projected =
     form8962Pdf.projectFields?.({ monthly_ptc_rows: rows }, {}) ?? {};
   assertEquals(projected.pdf_month_1_premium, undefined);
@@ -41,7 +42,7 @@ Deno.test("Form 8962 PDF leaves an uncovered month blank, including contribution
   );
 });
 
-Deno.test("Form 8962 PDF keeps credit months outside the specified SEHI period", () => {
+test("Form 8962 PDF keeps credit months outside the specified SEHI period", () => {
   const projected = form8962Pdf.projectFields?.({
     monthly_ptc_rows: [
       { ...rows[1], month_code: "JANUARY", allowed_credit: 67 },
@@ -63,7 +64,7 @@ Deno.test("Form 8962 PDF keeps credit months outside the specified SEHI period",
   assertEquals(projected.pdf_month_12_allowed_credit, "167");
 });
 
-Deno.test("Form 8962 PDF separated coverage months reconcile with MeF and leave gap blank", () => {
+test("Form 8962 PDF separated coverage months reconcile with MeF and leave gap blank", () => {
   const monthCodes = [
     "JANUARY",
     "FEBRUARY",

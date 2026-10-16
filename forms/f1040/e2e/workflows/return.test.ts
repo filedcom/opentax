@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 /**
  * E2E integration tests for complete F1040 return computation.
  *
@@ -60,7 +61,7 @@ function runReturn(inputs: Record<string, unknown>): ExecuteResult {
 //     line33_total_payments             = $11,000
 //     line35a_refund                    = $3,045
 
-Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, standard deduction, tax calculation to final refund", () => {
+test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, standard deduction, tax calculation to final refund", () => {
   const result = runReturn({
     general: {
       filing_status: FilingStatus.Single,
@@ -176,7 +177,7 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 //     line33_total_payments = $0          (no withholding)
 //     line37_amount_owed    = line24_total_tax  (owes full computed tax)
 
-Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deduction flow through pipeline to amount owed", () => {
+test("E2E Scenario 2: self-employed Schedule C — SE income and SE deduction flow through pipeline to amount owed", () => {
   const result = runReturn({
     general: {
       filing_status: FilingStatus.Single,
@@ -316,7 +317,7 @@ function singleGeneral() {
   };
 }
 
-Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reaches AGI (IRC §61(a)(1))", () => {
+test("E2E Scenario 3a: foreign employer compensation with no W-2 — reaches AGI (IRC §61(a)(1))", () => {
   const result = runReturn({
     general: singleGeneral(),
     fec: [fecItem(20_000)],
@@ -343,7 +344,7 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   );
 });
 
-Deno.test("E2E: clergy allowance without matched evidence stops the return", () => {
+test("E2E: clergy allowance without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
     clergy: [{
@@ -366,7 +367,7 @@ Deno.test("E2E: clergy allowance without matched evidence stops the return", () 
   );
 });
 
-Deno.test("E2E: ministerial loss without matched evidence stops the return", () => {
+test("E2E: ministerial loss without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
     clergy: [{
@@ -393,7 +394,7 @@ Deno.test("E2E: ministerial loss without matched evidence stops the return", () 
   );
 });
 
-Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
+test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [
@@ -441,7 +442,7 @@ Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines
   );
 });
 
-Deno.test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without node failures", () => {
+test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without node failures", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [{
@@ -474,7 +475,7 @@ Deno.test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without nod
   assertEquals(result.pending["f1040"]?.["line24_total_tax"], 1_559);
 });
 
-Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AGI", () => {
+test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AGI", () => {
   const result = runReturn({
     general: singleGeneral(),
     f1099div: [
@@ -511,7 +512,7 @@ Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AG
   assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
 });
 
-Deno.test("E2E Schedule A: computed context replaces duplicate direct inputs", () => {
+test("E2E Schedule A: computed context replaces duplicate direct inputs", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [{

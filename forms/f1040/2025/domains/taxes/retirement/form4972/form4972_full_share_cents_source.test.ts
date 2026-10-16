@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -10,9 +13,9 @@ import {
 import expected from "./form4972_full_share_cents.expected.json" with {
   type: "json",
 };
-Deno.test("full share cent-valued issued inventories match independent worksheets and full packets", async () => {
+test("full share cent-valued issued inventories match independent worksheets and full packets", async () => {
   const dir = ".state/research/2026-10-06-form4972-full-share-cents";
-  await Deno.mkdir(dir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
   for (const entry of fullShareCentCases) {
     const id = entry[0], input = fullShareCentInputs(entry);
     const result = f1040_2025.executeReturn(input);
@@ -58,13 +61,13 @@ Deno.test("full share cent-valued issued inventories match independent worksheet
       input.f1099r.length,
     );
     const stem = `${dir}/${id}`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${stem}.json`,
       JSON.stringify({ input, pending: p }, null, 2),
     );
-    await Deno.writeTextFile(`${stem}.xml`, prepared.bundle.xml);
-    await Deno.writeFile(`${stem}.pdf`, await prepared.renderPdf());
-    const x = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${stem}.xml`, prepared.bundle.xml);
+    await fs.writeFile(`${stem}.pdf`, await prepared.renderPdf());
+    const x = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -74,7 +77,7 @@ Deno.test("full share cent-valued issued inventories match independent worksheet
       stderr: "piped",
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", `${stem}.pdf`, `${stem}.txt`],
     }).output();
     assertEquals(text.code, 0);
@@ -96,7 +99,7 @@ Deno.test("full share cent-valued issued inventories match independent worksheet
     }
   }
 });
-Deno.test("full share cent-valued public sources reject subcent NUA and annuity amounts", () => {
+test("full share cent-valued public sources reject subcent NUA and annuity amounts", () => {
   for (
     const field of [
       "box2a_taxable_amount",

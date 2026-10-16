@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../../../intermediate/aggregation/taxes/other/schedule2/index.ts";
@@ -42,7 +43,7 @@ function source(overrides: Partial<F965Input> = {}) {
   });
 }
 
-Deno.test("Form 965-A uses cumulative payments and the actual TY2025 payment", () => {
+test("Form 965-A uses cumulative payments and the actual TY2025 payment", () => {
   const input = source();
   assertEquals(currentYear965Payment(input), 8_000);
   assertEquals(unpaidLiability(input, input.f965s[0]), 0);
@@ -56,7 +57,7 @@ Deno.test("Form 965-A uses cumulative payments and the actual TY2025 payment", (
   );
 });
 
-Deno.test("Form 965-A retains an unpaid liability without inventing a 2025 payment", () => {
+test("Form 965-A retains an unpaid liability without inventing a 2025 payment", () => {
   const input = source({
     f965s: [{
       ...source().f965s[0],
@@ -82,7 +83,7 @@ Deno.test("Form 965-A retains an unpaid liability without inventing a 2025 payme
   );
 });
 
-Deno.test("Form 965-A rejects unsourced payments and overpaid balances", () => {
+test("Form 965-A rejects unsourced payments and overpaid balances", () => {
   assertThrows(() =>
     source({
       f965s: [{
@@ -101,7 +102,7 @@ Deno.test("Form 965-A rejects unsourced payments and overpaid balances", () => {
   );
 });
 
-Deno.test("Form 965-A S corporation deferral reduces installment-eligible liability", () => {
+test("Form 965-A S corporation deferral reduces installment-eligible liability", () => {
   const original = source().f965s[0];
   if (original.entry_type !== "original") {
     throw new Error("Original Form 965 entry required");
@@ -143,7 +144,7 @@ Deno.test("Form 965-A S corporation deferral reduces installment-eligible liabil
   assertEquals(unpaidLiability(input, input.f965s[0]), 0);
 });
 
-Deno.test("Form 965-A netted adjustment and transfer require reconciling facts", () => {
+test("Form 965-A netted adjustment and transfer require reconciling facts", () => {
   const row = source().f965s[0];
   const transaction = {
     ...row,
@@ -178,7 +179,7 @@ Deno.test("Form 965-A netted adjustment and transfer require reconciling facts",
   );
 });
 
-Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => {
+test("Form 965-A multiple transferees must sum to Part IV transfer", () => {
   const annualRow = {
     election_or_transfer_year: 2018,
     source_document_reference: "2025 signed Form 965-D agreements",
@@ -244,7 +245,7 @@ Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => 
   );
 });
 
-Deno.test("Form 965-A Part IV transfer in has one Form 965-D counterparty and no beginning balance", () => {
+test("Form 965-A Part IV transfer in has one Form 965-D counterparty and no beginning balance", () => {
   const transferIn = {
     election_or_transfer_year: 2025,
     source_document_reference: "2025 signed transfer-in agreement",
@@ -283,7 +284,7 @@ Deno.test("Form 965-A Part IV transfer in has one Form 965-D counterparty and no
   );
 });
 
-Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E copy", () => {
+test("Form 965-A consent-triggered liability needs its signed Form 965-E copy", () => {
   const triggered = {
     entry_type: "triggered_s_corp" as const,
     source_document_reference: "2025 consent-triggering transaction",

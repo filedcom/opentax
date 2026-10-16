@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
@@ -29,7 +30,7 @@ function amount(copy: string, tag: string, value: string) {
   );
 }
 
-Deno.test("8801 prior copy joins exact 2024 forms to locally settled current credit without marking acceptance", async () => {
+test("8801 prior copy joins exact 2024 forms to locally settled current credit without marking acceptance", async () => {
   const f = await fixture();
   const p = await source();
   const r = await stageForm8801PriorBoundReturn(
@@ -61,7 +62,7 @@ Deno.test("8801 prior copy joins exact 2024 forms to locally settled current cre
   }
 });
 
-Deno.test("8801 prior copy reconciles every exclusion source line rather than only aggregate AMT", async () => {
+test("8801 prior copy reconciles every exclusion source line rather than only aggregate AMT", async () => {
   for (
     const [tag, original] of [
       ["AGIOrAGILessDeductionAmt", 100000],
@@ -86,7 +87,7 @@ Deno.test("8801 prior copy reconciles every exclusion source line rather than on
   }
 });
 
-Deno.test("8801 prior copy preserves signed amounts and converts refund magnitude to the printed negative", async () => {
+test("8801 prior copy preserves signed amounts and converts refund magnitude to the printed negative", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line1 = -2000;
   facts.prior_form6251.line2b = -250;
@@ -123,7 +124,7 @@ Deno.test("8801 prior copy preserves signed amounts and converts refund magnitud
   );
 });
 
-Deno.test("8801 prior copy rejects changed carry, missing positive source and conflicting document IDs", async () => {
+test("8801 prior copy rejects changed carry, missing positive source and conflicting document IDs", async () => {
   for (
     const copy of [
       amount(xml, "AMTCrCarryforwardToNextYearAmt", "1001"),
@@ -140,7 +141,7 @@ Deno.test("8801 prior copy rejects changed carry, missing positive source and co
   }
 });
 
-Deno.test("8801 prior copy binds actual header primary identity, status and complete period", async () => {
+test("8801 prior copy binds actual header primary identity, status and complete period", async () => {
   for (
     const copy of [
       xml.replace(">2024<", ">2025<"),
@@ -199,7 +200,7 @@ Deno.test("8801 prior copy binds actual header primary identity, status and comp
   }
 });
 
-Deno.test("8801 prior copy supports IRS prefixes and rejects namespace substitution and duplicate leaves", async () => {
+test("8801 prior copy supports IRS prefixes and rejects namespace substitution and duplicate leaves", async () => {
   const prefixed = xml.replace(
     'xmlns="http://www.irs.gov/efile"',
     'xmlns:r="http://www.irs.gov/efile"',
@@ -223,7 +224,7 @@ Deno.test("8801 prior copy supports IRS prefixes and rejects namespace substitut
   }
 });
 
-Deno.test("8801 prior copy rejects malformed or ambiguous amounts, wrong byte set and digest tampering", async () => {
+test("8801 prior copy rejects malformed or ambiguous amounts, wrong byte set and digest tampering", async () => {
   for (
     const value of [
       " 100000",
@@ -271,7 +272,7 @@ Deno.test("8801 prior copy rejects malformed or ambiguous amounts, wrong byte se
   );
 });
 
-Deno.test("8801 prior copy absent forms prove only zero claimed AMT and carry", async () => {
+test("8801 prior copy absent forms prove only zero claimed AMT and carry", async () => {
   const facts = packageFacts();
   for (const key of Object.keys(facts.prior_form6251)) {
     if (key !== "reference") (facts.prior_form6251 as any)[key] = 0;
@@ -299,7 +300,7 @@ Deno.test("8801 prior copy absent forms prove only zero claimed AMT and carry", 
   );
 });
 
-Deno.test("8801 prior-bound staging rejects caller acceptance flags and reused review references", async () => {
+test("8801 prior-bound staging rejects caller acceptance flags and reused review references", async () => {
   const f = await fixture();
   const p = await source();
   await assertRejects(() =>
@@ -319,7 +320,7 @@ Deno.test("8801 prior-bound staging rejects caller acceptance flags and reused r
   );
 });
 
-Deno.test("8801 reviewed no-Form-1116 election binds MTFTCE to retained Schedule 3 and recomputes current credit", async () => {
+test("8801 reviewed no-Form-1116 election binds MTFTCE to retained Schedule 3 and recomputes current credit", async () => {
   const facts = packageFacts();
   const review = {
     ...facts,
@@ -355,7 +356,7 @@ Deno.test("8801 reviewed no-Form-1116 election binds MTFTCE to retained Schedule
   ], [false, false, false]);
 });
 
-Deno.test("8801 elected MTFTCE rejects detached totals, missing Schedule 3 binding and retained Form 1116", async () => {
+test("8801 elected MTFTCE rejects detached totals, missing Schedule 3 binding and retained Form 1116", async () => {
   const facts = packageFacts();
   const review = {
     ...facts,
@@ -407,7 +408,7 @@ Deno.test("8801 elected MTFTCE rejects detached totals, missing Schedule 3 bindi
   );
 });
 
-Deno.test("8801 ordinary prior copy does not promote Schedule 3 foreign credit to general MTFTCE proof", async () => {
+test("8801 ordinary prior copy does not promote Schedule 3 foreign credit to general MTFTCE proof", async () => {
   const p = await source(
     xml.replace(
       "</ReturnData>",
@@ -444,7 +445,7 @@ Deno.test("8801 ordinary prior copy does not promote Schedule 3 foreign credit t
   );
 });
 
-Deno.test("8801 reviewed zero elected MTFTCE reconciles absent Schedule 3 only to zero", async () => {
+test("8801 reviewed zero elected MTFTCE reconciles absent Schedule 3 only to zero", async () => {
   const p = await source();
   const facts = packageFacts();
   const review = {
@@ -475,7 +476,7 @@ Deno.test("8801 reviewed zero elected MTFTCE reconciles absent Schedule 3 only t
   );
 });
 
-Deno.test("8801 prior-bound staging copies all review/prior facts before awaits", async () => {
+test("8801 prior-bound staging copies all review/prior facts before awaits", async () => {
   const f = await fixture();
   const p = await source();
   const promise = stageForm8801PriorBoundReturn(
@@ -508,7 +509,7 @@ function jointFacts() {
     prior_spouse_ssn: "444556666",
   };
 }
-Deno.test("8801 prior joint copy reconciles both distinct filer SSNs", async () => {
+test("8801 prior joint copy reconciles both distinct filer SSNs", async () => {
   const p = await source(jointCopy());
   const r = await inspectForm8801PriorReturnBytes(
     jointFacts(),
@@ -531,7 +532,7 @@ Deno.test("8801 prior joint copy reconciles both distinct filer SSNs", async () 
     false,
   );
 });
-Deno.test("8801 prior joint review rejects missing and same-taxpayer spouse identities", async () => {
+test("8801 prior joint review rejects missing and same-taxpayer spouse identities", async () => {
   const p = await source(jointCopy());
   const missing = {
     ...packageFacts(),
@@ -553,7 +554,7 @@ Deno.test("8801 prior joint review rejects missing and same-taxpayer spouse iden
     "must be distinct",
   );
 });
-Deno.test("8801 prior joint bytes reject missing, swapped, duplicate, nested and substituted spouse SSNs", async () => {
+test("8801 prior joint bytes reject missing, swapped, duplicate, nested and substituted spouse SSNs", async () => {
   for (
     const tag of [
       "",
@@ -583,7 +584,7 @@ Deno.test("8801 prior joint bytes reject missing, swapped, duplicate, nested and
     "primary owner",
   );
 });
-Deno.test("8801 prior-bound joint review preserves both source identities through local settlement", async () => {
+test("8801 prior-bound joint review preserves both source identities through local settlement", async () => {
   const f = await fixture(jointFacts());
   Object.assign(f.inputs.general, {
     filing_status: "mfj",

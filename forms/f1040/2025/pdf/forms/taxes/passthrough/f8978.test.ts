@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -80,7 +81,7 @@ function instance(
   return descriptor.instances?.({}, filer, allPending)?.[0];
 }
 
-Deno.test("Form 8978 PDF prints native parent and Schedule A lines with source identity", () => {
+test("Form 8978 PDF prints native parent and Schedule A lines with source identity", () => {
   const allPending = pending();
   const parent = instance(form8978Pdf, allPending);
   const scheduleA = instance(form8978ScheduleAPdf, allPending);
@@ -110,7 +111,7 @@ Deno.test("Form 8978 PDF prints native parent and Schedule A lines with source i
   );
 });
 
-Deno.test("Form 8978 PDF rejects changed native or final-return tax", () => {
+test("Form 8978 PDF rejects changed native or final-return tax", () => {
   const allPending = pending();
   allPending.f8978.line14 = 999;
   assertThrows(
@@ -127,7 +128,7 @@ Deno.test("Form 8978 PDF rejects changed native or final-return tax", () => {
   );
 });
 
-Deno.test("Form8978 PDF preserves extra year columns and complete seven-row overflow sheets", () => {
+test("Form8978 PDF preserves extra year columns and complete seven-row overflow sheets", () => {
   const f = filing();
   f.columns.push({ ...f.columns[0], tax_year_end: "2021-12-31" });
   const p = pending(f);
@@ -142,7 +143,7 @@ Deno.test("Form8978 PDF preserves extra year columns and complete seven-row over
   assertEquals(sheets[1].line2_0, 2000);
   assertEquals(sheets[0].line2_1, 2000);
 });
-Deno.test("Form8978 PDF requires actual tracking except explicit partner attributes", () => {
+test("Form8978 PDF requires actual tracking except explicit partner attributes", () => {
   const f = filing();
   f.columns[0].income_adjustments[0] = {
     description: "Partner-level adjustment",

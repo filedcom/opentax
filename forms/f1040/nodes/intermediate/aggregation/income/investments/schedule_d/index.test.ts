@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, schedule_d } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -51,7 +52,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("Schedule D files direct transaction and entered aggregate once on line 1a", () => {
+test("Schedule D files direct transaction and entered aggregate once on line 1a", () => {
   const result = compute({
     line_1a_proceeds: 1_000,
     line_1a_cost: 500,
@@ -64,7 +65,7 @@ Deno.test("Schedule D files direct transaction and entered aggregate once on lin
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 700);
 });
 
-Deno.test("Schedule D keeps amount-only adjusted sale off direct line 1a", () => {
+test("Schedule D keeps amount-only adjusted sale off direct line 1a", () => {
   const result = compute({
     transaction: mkTx({ adjustment_amount: 300, gain_loss: 500 }),
   });
@@ -74,7 +75,7 @@ Deno.test("Schedule D keeps amount-only adjusted sale off direct line 1a", () =>
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 500);
 });
 
-Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () => {
+test("multiple Form 6252 and 4797 line 11 sources sum before filing", () => {
   const result = compute({ line_11_form2439: [11_000, 10_000] });
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 21_000);
   assertEquals(
@@ -83,7 +84,7 @@ Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () =>
   );
 });
 
-Deno.test("Schedule D audits all capital sources for Form 6251 AMT-basis refigure", () => {
+test("Schedule D audits all capital sources for Form 6251 AMT-basis refigure", () => {
   const basisRow = mkLtTx({
     source_transaction_id: "broker-2025-1",
     proceeds: 75_000,
@@ -175,7 +176,7 @@ function computeWithTransactions(
 // 1. Input validation
 // ---------------------------------------------------------------------------
 
-Deno.test("schema: rejects invalid transaction part", () => {
+test("schema: rejects invalid transaction part", () => {
   assertThrows(
     () => compute({ transaction: mkTx({ part: "Z" }) }),
     Error,
@@ -184,7 +185,7 @@ Deno.test("schema: rejects invalid transaction part", () => {
   );
 });
 
-Deno.test("schema: rejects transaction missing gain_loss", () => {
+test("schema: rejects transaction missing gain_loss", () => {
   assertThrows(
     () => compute({ transaction: mkTx({ gain_loss: undefined }) }),
     Error,
@@ -193,7 +194,7 @@ Deno.test("schema: rejects transaction missing gain_loss", () => {
   );
 });
 
-Deno.test("schema: rejects transaction missing is_long_term", () => {
+test("schema: rejects transaction missing is_long_term", () => {
   assertThrows(
     () => compute({ transaction: mkTx({ is_long_term: undefined }) }),
     Error,
@@ -202,7 +203,7 @@ Deno.test("schema: rejects transaction missing is_long_term", () => {
   );
 });
 
-Deno.test("schema: rejects non-boolean is_long_term", () => {
+test("schema: rejects non-boolean is_long_term", () => {
   assertThrows(
     () => compute({ transaction: mkTx({ is_long_term: "true" }) }),
     Error,
@@ -211,7 +212,7 @@ Deno.test("schema: rejects non-boolean is_long_term", () => {
   );
 });
 
-Deno.test("schema: rejects negative line13_cap_gain_distrib", () => {
+test("schema: rejects negative line13_cap_gain_distrib", () => {
   assertThrows(
     () => compute({ line13_cap_gain_distrib: -1 }),
     Error,
@@ -220,7 +221,7 @@ Deno.test("schema: rejects negative line13_cap_gain_distrib", () => {
   );
 });
 
-Deno.test("schema: rejects negative cod_property_fmv", () => {
+test("schema: rejects negative cod_property_fmv", () => {
   assertThrows(
     () => compute({ cod_property_fmv: -100, cod_debt_cancelled: 0 }),
     Error,
@@ -229,7 +230,7 @@ Deno.test("schema: rejects negative cod_property_fmv", () => {
   );
 });
 
-Deno.test("schema: rejects invalid filing_status", () => {
+test("schema: rejects invalid filing_status", () => {
   assertThrows(
     () => compute({ transaction: mkTx(), filing_status: "INVALID" }),
     Error,
@@ -238,15 +239,15 @@ Deno.test("schema: rejects invalid filing_status", () => {
   );
 });
 
-Deno.test("schema: accepts valid single transaction", () => {
+test("schema: accepts valid single transaction", () => {
   compute({ transaction: mkTx() });
 });
 
-Deno.test("schema: accepts valid transaction array", () => {
+test("schema: accepts valid transaction array", () => {
   compute({ transaction: [mkTx(), mkLtTx()] });
 });
 
-Deno.test("schema: accepts filing_status MFS", () => {
+test("schema: accepts filing_status MFS", () => {
   compute({ transaction: mkTx(), filing_status: FilingStatus.MFS });
 });
 
@@ -254,12 +255,12 @@ Deno.test("schema: accepts filing_status MFS", () => {
 // 2. Early return — no capital activity
 // ---------------------------------------------------------------------------
 
-Deno.test("no inputs: emits nothing when no transactions or distributions", () => {
+test("no inputs: emits nothing when no transactions or distributions", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("no inputs: capital_loss_carryover alone emits nothing", () => {
+test("no inputs: capital_loss_carryover alone emits nothing", () => {
   const result = compute({ capital_loss_carryover: 2000 });
   assertEquals(result.outputs.length, 0);
 });
@@ -268,21 +269,21 @@ Deno.test("no inputs: capital_loss_carryover alone emits nothing", () => {
 // 3. Short-term gain/loss calculation (Line 7)
 // ---------------------------------------------------------------------------
 
-Deno.test("ST: single ST gain routes line7_capital_gain to f1040", () => {
+test("ST: single ST gain routes line7_capital_gain to f1040", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: 500, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
-Deno.test("ST: single ST loss within limit passes through unchanged", () => {
+test("ST: single ST loss within limit passes through unchanged", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -1000, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1000);
 });
 
-Deno.test("ST: two ST transactions summed correctly", () => {
+test("ST: two ST transactions summed correctly", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: 300, is_long_term: false }),
@@ -292,7 +293,7 @@ Deno.test("ST: two ST transactions summed correctly", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
-Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
+test("ST: mixed ST gain + ST loss nets correctly", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: 700, is_long_term: false }),
@@ -306,12 +307,12 @@ Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
 // 4. Long-term gain/loss calculation (Line 15)
 // ---------------------------------------------------------------------------
 
-Deno.test("LT: single LT transaction gain", () => {
+test("LT: single LT transaction gain", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
-Deno.test("LT: cap gain distribution alone routes correctly", () => {
+test("LT: cap gain distribution alone routes correctly", () => {
   const result = compute({ line13_cap_gain_distrib: 400 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7a_cap_gain_distrib, 400);
   assertEquals(
@@ -320,12 +321,12 @@ Deno.test("LT: cap gain distribution alone routes correctly", () => {
   );
 });
 
-Deno.test("LT: cap gain distrib absent contributes 0", () => {
+test("LT: cap gain distrib absent contributes 0", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 600 }) });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 600);
 });
 
-Deno.test("LT: Form 1099-C FMV and canceled debt cannot infer a disposition gain", () => {
+test("LT: Form 1099-C FMV and canceled debt cannot infer a disposition gain", () => {
   assertThrows(
     () => compute({ cod_property_fmv: 5000, cod_debt_cancelled: 3000 }),
     Error,
@@ -333,7 +334,7 @@ Deno.test("LT: Form 1099-C FMV and canceled debt cannot infer a disposition gain
   );
 });
 
-Deno.test("LT: equal FMV and canceled debt is still not evidence of zero gain", () => {
+test("LT: equal FMV and canceled debt is still not evidence of zero gain", () => {
   assertThrows(
     () => compute({ cod_property_fmv: 3000, cod_debt_cancelled: 3000 }),
     Error,
@@ -341,7 +342,7 @@ Deno.test("LT: equal FMV and canceled debt is still not evidence of zero gain", 
   );
 });
 
-Deno.test("LT: transaction and distribution sources remain additive", () => {
+test("LT: transaction and distribution sources remain additive", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 500 }),
     line13_cap_gain_distrib: 300,
@@ -349,7 +350,7 @@ Deno.test("LT: transaction and distribution sources remain additive", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 800);
 });
 
-Deno.test("LT: 1099-DIV box 2c stops until section 1202 eligibility and preference are sourced", () => {
+test("LT: 1099-DIV box 2c stops until section 1202 eligibility and preference are sourced", () => {
   assertThrows(
     () => compute({ line13_cap_gain_distrib: 500, box2c_qsbs: 200 }),
     Error,
@@ -361,7 +362,7 @@ Deno.test("LT: 1099-DIV box 2c stops until section 1202 eligibility and preferen
 // 5. Line 16 total combinations
 // ---------------------------------------------------------------------------
 
-Deno.test("total: ST gain + LT gain", () => {
+test("total: ST gain + LT gain", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: 200, is_long_term: false }),
@@ -371,7 +372,7 @@ Deno.test("total: ST gain + LT gain", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
-Deno.test("total: ST gain offsets LT loss — net positive", () => {
+test("total: ST gain offsets LT loss — net positive", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: 1500, is_long_term: false }),
@@ -381,7 +382,7 @@ Deno.test("total: ST gain offsets LT loss — net positive", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
-Deno.test("total: net zero emits line7_capital_gain = 0", () => {
+test("total: net zero emits line7_capital_gain = 0", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: 1000, is_long_term: false }),
@@ -395,35 +396,35 @@ Deno.test("total: net zero emits line7_capital_gain = 0", () => {
 // 6. Capital loss limitation (Line 21)
 // ---------------------------------------------------------------------------
 
-Deno.test("loss: below standard limit passes through ($2000 loss)", () => {
+test("loss: below standard limit passes through ($2000 loss)", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -2000, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -2000);
 });
 
-Deno.test("loss: exactly at standard limit ($3000 loss)", () => {
+test("loss: exactly at standard limit ($3000 loss)", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -3000, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
-Deno.test("loss: exceeds standard limit — capped at $3000", () => {
+test("loss: exceeds standard limit — capped at $3000", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -5000, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
-Deno.test("loss: large loss — capped at $3000 (non-MFS)", () => {
+test("loss: large loss — capped at $3000 (non-MFS)", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -10000, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
-Deno.test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
+test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -1000, is_long_term: false }),
     filing_status: FilingStatus.MFS,
@@ -431,7 +432,7 @@ Deno.test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1000);
 });
 
-Deno.test("loss: MFS at $1500 limit exactly", () => {
+test("loss: MFS at $1500 limit exactly", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -1500, is_long_term: false }),
     filing_status: FilingStatus.MFS,
@@ -439,7 +440,7 @@ Deno.test("loss: MFS at $1500 limit exactly", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1500);
 });
 
-Deno.test("loss: MFS exceeds $1500 — capped at $1500", () => {
+test("loss: MFS exceeds $1500 — capped at $1500", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -2000, is_long_term: false }),
     filing_status: FilingStatus.MFS,
@@ -451,7 +452,7 @@ Deno.test("loss: MFS exceeds $1500 — capped at $1500", () => {
 // 7. 28% Rate Gain Worksheet routing (Line 17 gate + Line 18)
 // ---------------------------------------------------------------------------
 
-Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C present", () => {
+test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C present", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
@@ -462,7 +463,7 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C pr
   );
 });
 
-Deno.test("28pct: code Y (QOF inclusion) does not trigger collectibles rate", () => {
+test("28pct: code Y (QOF inclusion) does not trigger collectibles rate", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 800, adjustment_codes: "Y" }),
   });
@@ -470,7 +471,7 @@ Deno.test("28pct: code Y (QOF inclusion) does not trigger collectibles rate", ()
   assertEquals(out, undefined);
 });
 
-Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
+test("28pct: code C embedded in multi-character adjustment_codes", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 500, adjustment_codes: "BCM" }),
   });
@@ -481,7 +482,7 @@ Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
   );
 });
 
-Deno.test("28pct: embedded code Q also stops before Schedule D tax calculation", () => {
+test("28pct: embedded code Q also stops before Schedule D tax calculation", () => {
   assertThrows(
     () =>
       compute({
@@ -492,7 +493,7 @@ Deno.test("28pct: embedded code Q also stops before Schedule D tax calculation",
   );
 });
 
-Deno.test("28pct: does NOT route when no special codes on LT transaction", () => {
+test("28pct: does NOT route when no special codes on LT transaction", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000 }),
   });
@@ -500,7 +501,7 @@ Deno.test("28pct: does NOT route when no special codes on LT transaction", () =>
   assertEquals(out, undefined);
 });
 
-Deno.test("28pct: does NOT route when line15=0 (line 17=No)", () => {
+test("28pct: does NOT route when line15=0 (line 17=No)", () => {
   // Only ST gain, no LT gain → line15 = 0, line17Yes = false
   const result = compute({
     transaction: [
@@ -512,7 +513,7 @@ Deno.test("28pct: does NOT route when line15=0 (line 17=No)", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("28pct: does NOT route when line16 is a loss (line 17=No)", () => {
+test("28pct: does NOT route when line16 is a loss (line 17=No)", () => {
   // LT has collectibles gain but total net is a loss → line17Yes = false
   const result = compute({
     transaction: [
@@ -524,7 +525,7 @@ Deno.test("28pct: does NOT route when line16 is a loss (line 17=No)", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () => {
+test("28pct: ST transaction with code C does NOT trigger 28% routing", () => {
   // Only LT triggers 28% rate; ST collectibles are handled differently
   const result = compute({
     transaction: mkTx({
@@ -542,7 +543,7 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // ---------------------------------------------------------------------------
 
 // Every activity case also self-emits one print-line output for the PDF builder.
-Deno.test("output count: gain routes preferential tax and NIIT", () => {
+test("output count: gain routes preferential tax and NIIT", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
   assertEquals(result.outputs.length, 7);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
@@ -556,14 +557,14 @@ Deno.test("output count: gain routes preferential tax and NIIT", () => {
   );
 });
 
-Deno.test("output count: gain + 28pct → exactly 8 outputs", () => {
+test("output count: gain + 28pct → exactly 8 outputs", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
   assertEquals(result.outputs.length, 8);
 });
 
-Deno.test("output count: pure loss retains the AMT audit and printable Schedule D", () => {
+test("output count: pure loss retains the AMT audit and printable Schedule D", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -5000, is_long_term: false }),
   });
@@ -576,14 +577,14 @@ Deno.test("output count: pure loss retains the AMT audit and printable Schedule 
 // 9. Executor accumulation edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("accumulation: single transaction object (not array) normalized correctly", () => {
+test("accumulation: single transaction object (not array) normalized correctly", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: 750, is_long_term: false }),
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 750);
 });
 
-Deno.test("accumulation: even one legacy COD property field fails explicitly", () => {
+test("accumulation: even one legacy COD property field fails explicitly", () => {
   assertThrows(
     () => compute({ cod_property_fmv: 4000 }),
     Error,
@@ -606,7 +607,7 @@ Deno.test("accumulation: even one legacy COD property field fails explicitly", (
   );
 });
 
-Deno.test("accumulation: legacy COD arrays fail instead of generating a synthetic gain", () => {
+test("accumulation: legacy COD arrays fail instead of generating a synthetic gain", () => {
   assertThrows(
     () =>
       compute({
@@ -622,7 +623,7 @@ Deno.test("accumulation: legacy COD arrays fail instead of generating a syntheti
 // 10. Smoke test — all major inputs combined
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: ST + LT + cap_gain_distrib + collectibles", () => {
+test("smoke: ST + LT + cap_gain_distrib + collectibles", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: -200, is_long_term: false }), // ST loss
@@ -662,44 +663,44 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + collectibles", () => {
 // Section 1 — Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("inputSchema: empty object is valid — all D2 fields are optional", () => {
+test("inputSchema: empty object is valid — all D2 fields are optional", () => {
   const parsed = schedule_d.inputSchema.safeParse({});
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: line_6_carryover must be non-negative", () => {
+test("inputSchema: line_6_carryover must be non-negative", () => {
   const parsed = schedule_d.inputSchema.safeParse({ line_6_carryover: -1 });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: line_14_carryover must be non-negative", () => {
+test("inputSchema: line_14_carryover must be non-negative", () => {
   const parsed = schedule_d.inputSchema.safeParse({ line_14_carryover: -500 });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: line_12_cap_gain_dist must be non-negative", () => {
+test("inputSchema: line_12_cap_gain_dist must be non-negative", () => {
   const parsed = schedule_d.inputSchema.safeParse({
     line_12_cap_gain_dist: -1,
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: line_6_carryover of 0 is valid", () => {
+test("inputSchema: line_6_carryover of 0 is valid", () => {
   const parsed = schedule_d.inputSchema.safeParse({ line_6_carryover: 0 });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: line_14_carryover of 0 is valid", () => {
+test("inputSchema: line_14_carryover of 0 is valid", () => {
   const parsed = schedule_d.inputSchema.safeParse({ line_14_carryover: 0 });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: line_12_cap_gain_dist of 0 is valid", () => {
+test("inputSchema: line_12_cap_gain_dist of 0 is valid", () => {
   const parsed = schedule_d.inputSchema.safeParse({ line_12_cap_gain_dist: 0 });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: proceeds and cost_basis on D2 screen can be any number (optional)", () => {
+test("inputSchema: proceeds and cost_basis on D2 screen can be any number (optional)", () => {
   const parsed = schedule_d.inputSchema.safeParse({
     line_1a_proceeds: 50_000,
     line_1a_cost: 40_000,
@@ -713,7 +714,7 @@ Deno.test("inputSchema: proceeds and cost_basis on D2 screen can be any number (
 // Section 2 — D2 Screen Field Routing (Per-box)
 // ---------------------------------------------------------------------------
 
-Deno.test("compute: line_1a net gain (ST) routes to f1040 line7_capital_gain", () => {
+test("compute: line_1a net gain (ST) routes to f1040 line7_capital_gain", () => {
   const result = computeD2({ line_1a_proceeds: 20_000, line_1a_cost: 15_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
@@ -721,62 +722,62 @@ Deno.test("compute: line_1a net gain (ST) routes to f1040 line7_capital_gain", (
   assertEquals(input.line7_capital_gain, 5_000);
 });
 
-Deno.test("compute: line_1a proceeds == cost → line7_capital_gain is 0", () => {
+test("compute: line_1a proceeds == cost → line7_capital_gain is 0", () => {
   const result = computeD2({ line_1a_proceeds: 10_000, line_1a_cost: 10_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
-Deno.test("compute: line_8a net gain (LT) routes to f1040 line7_capital_gain", () => {
+test("compute: line_8a net gain (LT) routes to f1040 line7_capital_gain", () => {
   const result = computeD2({ line_8a_proceeds: 50_000, line_8a_cost: 30_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 20_000);
 });
 
-Deno.test("compute: line_8a proceeds == cost → line7_capital_gain is 0", () => {
+test("compute: line_8a proceeds == cost → line7_capital_gain is 0", () => {
   const result = computeD2({ line_8a_proceeds: 5_000, line_8a_cost: 5_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
-Deno.test("compute: line_12_cap_gain_dist (always LT) included in net gain", () => {
+test("compute: line_12_cap_gain_dist (always LT) included in net gain", () => {
   const result = computeD2({ line_12_cap_gain_dist: 4_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7a_cap_gain_distrib, 4_000);
 });
 
-Deno.test("compute: line_12_cap_gain_dist = 0 → no capital activity, emits no outputs", () => {
+test("compute: line_12_cap_gain_dist = 0 → no capital activity, emits no outputs", () => {
   // schedule_d has an early-exit gate: zero activity means no outputs emitted
   const result = computeD2({ line_12_cap_gain_dist: 0 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("compute: line_11_form2439 (LT undistributed gains) included in LT net", () => {
+test("compute: line_11_form2439 (LT undistributed gains) included in LT net", () => {
   const result = computeD2({ line_11_form2439: 6_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
-Deno.test("compute: line_4_other_st (ST from other forms) included in ST net", () => {
+test("compute: line_4_other_st (ST from other forms) included in ST net", () => {
   const result = computeD2({ line_4_other_st: 3_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
-Deno.test("compute: line_5_k1_st (ST K-1) included in ST net", () => {
+test("compute: line_5_k1_st (ST K-1) included in ST net", () => {
   const result = computeD2({ line_5_k1_st: 2_500 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_500);
 });
 
-Deno.test("compute: mixed K-1 deposits sum signed Schedule D lines 5 and 12", () => {
+test("compute: mixed K-1 deposits sum signed Schedule D lines 5 and 12", () => {
   const result = computeD2({
     line_5_k1_st: [900, -700],
     line_12_k1_lt: [400, 100],
@@ -786,7 +787,7 @@ Deno.test("compute: mixed K-1 deposits sum signed Schedule D lines 5 and 12", ()
   assertEquals(findOutput(result, "schedule_d")?.fields.line_12_k1_lt, 500);
 });
 
-Deno.test("compute: offsetting trust K-1 short-term items still file Schedule D", () => {
+test("compute: offsetting trust K-1 short-term items still file Schedule D", () => {
   const result = computeD2({ line_5_k1_st: 0 });
   assertEquals(
     findOutput(result, "schedule_d")?.fields.print_line7_st_total,
@@ -794,7 +795,7 @@ Deno.test("compute: offsetting trust K-1 short-term items still file Schedule D"
   );
 });
 
-Deno.test("compute: final trust K-1 code D allows a loss and rejects positive special-rate worksheet exposure", () => {
+test("compute: final trust K-1 code D allows a loss and rejects positive special-rate worksheet exposure", () => {
   assertEquals(
     findOutput(
       computeD2({ line_12_k1_lt: -900, trust_k1_code_d_loss: 900 }),
@@ -809,14 +810,14 @@ Deno.test("compute: final trust K-1 code D allows a loss and rejects positive sp
   );
 });
 
-Deno.test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
+test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
   const result = computeD2({ line_12_k1_lt: 3_500 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_500);
 });
 
-Deno.test("compute: zero inputs → no capital activity, emits no outputs", () => {
+test("compute: zero inputs → no capital activity, emits no outputs", () => {
   // schedule_d has an early-exit gate; when no aggregate fields are non-zero and
   // no transactions are present, no output is emitted (unlike d_screen which always emitted)
   const result = computeD2({});
@@ -827,7 +828,7 @@ Deno.test("compute: zero inputs → no capital activity, emits no outputs", () =
 // Section 3 — Aggregation (multiple D2 lines combine correctly)
 // ---------------------------------------------------------------------------
 
-Deno.test("compute: ST and LT gains sum to combined net on line7", () => {
+test("compute: ST and LT gains sum to combined net on line7", () => {
   const result = computeD2({
     line_1a_proceeds: 20_000,
     line_1a_cost: 10_000, // ST +10000
@@ -839,7 +840,7 @@ Deno.test("compute: ST and LT gains sum to combined net on line7", () => {
   assertEquals(input.line7_capital_gain, 12_000);
 });
 
-Deno.test("compute: ST gain offset by LT loss → net positive", () => {
+test("compute: ST gain offset by LT loss → net positive", () => {
   const result = computeD2({
     line_1a_proceeds: 20_000,
     line_1a_cost: 10_000, // ST +10000
@@ -851,7 +852,7 @@ Deno.test("compute: ST gain offset by LT loss → net positive", () => {
   assertEquals(input.line7_capital_gain, 7_000);
 });
 
-Deno.test("compute: all D2 income sources sum correctly (ST + LT + K-1 + distributions + other)", () => {
+test("compute: all D2 income sources sum correctly (ST + LT + K-1 + distributions + other)", () => {
   const result = computeD2({
     line_1a_proceeds: 10_000,
     line_1a_cost: 8_000, // 1a gain: +2000
@@ -868,7 +869,7 @@ Deno.test("compute: all D2 income sources sum correctly (ST + LT + K-1 + distrib
   assertEquals(input.line7_capital_gain, 9_400);
 });
 
-Deno.test("compute: short-term loss carryover reduces ST net", () => {
+test("compute: short-term loss carryover reduces ST net", () => {
   const result = computeD2({
     line_1a_proceeds: 20_000,
     line_1a_cost: 15_000, // ST +5000
@@ -879,7 +880,7 @@ Deno.test("compute: short-term loss carryover reduces ST net", () => {
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
-Deno.test("compute: long-term loss carryover reduces LT net", () => {
+test("compute: long-term loss carryover reduces LT net", () => {
   const result = computeD2({
     line_8a_proceeds: 10_000,
     line_8a_cost: 5_000, // LT +5000
@@ -890,7 +891,7 @@ Deno.test("compute: long-term loss carryover reduces LT net", () => {
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
-Deno.test("compute: both carryovers reduce their respective nets independently", () => {
+test("compute: both carryovers reduce their respective nets independently", () => {
   const result = computeD2({
     line_1a_proceeds: 10_000,
     line_1a_cost: 5_000, // ST +5000
@@ -909,7 +910,7 @@ Deno.test("compute: both carryovers reduce their respective nets independently",
 // Section 4 — Thresholds: Capital Loss Limitation
 // ---------------------------------------------------------------------------
 
-Deno.test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no carryforward", () => {
+test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no carryforward", () => {
   const result = computeD2({
     line_1a_proceeds: 7_000,
     line_1a_cost: 9_500, // net = -2500
@@ -925,7 +926,7 @@ Deno.test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no c
   );
 });
 
-Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward", () => {
+test("threshold: loss exactly -$3,000 — fully deductible, no carryforward", () => {
   const result = computeD2({
     line_1a_proceeds: 7_000,
     line_1a_cost: 10_000, // net = -3000
@@ -946,7 +947,7 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
 // REMOVED: "threshold: very large loss -$50,000 → deductible -$3,000, carryforward = $47,000"
 
 // MFS filing status: $1,500 limit
-Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, no carryforward", () => {
+test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, no carryforward", () => {
   const result = schedule_d.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({
@@ -970,7 +971,7 @@ Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, n
 // REMOVED: "threshold (MFS): loss -$3,000 — capped at -$1,500, carryforward = $1,500"
 
 // LTCG 0% rate thresholds (these must be routed so the downstream worksheet can apply them)
-Deno.test("threshold: LTCG 0% rate upper bound (Single) — $48,350", () => {
+test("threshold: LTCG 0% rate upper bound (Single) — $48,350", () => {
   const result = computeD2({
     line_8a_proceeds: 48_350,
     line_8a_cost: 0,
@@ -980,7 +981,7 @@ Deno.test("threshold: LTCG 0% rate upper bound (Single) — $48,350", () => {
   assertEquals(input.line7_capital_gain, 48_350);
 });
 
-Deno.test("threshold: LTCG 15% rate upper bound (Single) — $533,400", () => {
+test("threshold: LTCG 15% rate upper bound (Single) — $533,400", () => {
   const result = computeD2({
     line_8a_proceeds: 533_400,
     line_8a_cost: 0,
@@ -990,7 +991,7 @@ Deno.test("threshold: LTCG 15% rate upper bound (Single) — $533,400", () => {
   assertEquals(input.line7_capital_gain, 533_400);
 });
 
-Deno.test("threshold: NIIT kicks in above $200,000 (Single) — gain still flows to f1040", () => {
+test("threshold: NIIT kicks in above $200,000 (Single) — gain still flows to f1040", () => {
   const result = computeD2({
     line_8a_proceeds: 200_001,
     line_8a_cost: 0,
@@ -1004,38 +1005,38 @@ Deno.test("threshold: NIIT kicks in above $200,000 (Single) — gain still flows
 // Section 5 — Hard Validation Rules (throws)
 // ---------------------------------------------------------------------------
 
-Deno.test("validation: line_6_carryover must not be negative — throws", () => {
+test("validation: line_6_carryover must not be negative — throws", () => {
   assertThrows(
     () => computeD2({ line_6_carryover: -1 }),
     Error,
   );
 });
 
-Deno.test("validation: line_14_carryover must not be negative — throws", () => {
+test("validation: line_14_carryover must not be negative — throws", () => {
   assertThrows(
     () => computeD2({ line_14_carryover: -100 }),
     Error,
   );
 });
 
-Deno.test("validation: line_12_cap_gain_dist must not be negative — throws", () => {
+test("validation: line_12_cap_gain_dist must not be negative — throws", () => {
   assertThrows(
     () => computeD2({ line_12_cap_gain_dist: -50 }),
     Error,
   );
 });
 
-Deno.test("validation: line_6_carryover = 0 does not throw (boundary pass)", () => {
+test("validation: line_6_carryover = 0 does not throw (boundary pass)", () => {
   const result = computeD2({ line_6_carryover: 0 });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("validation: line_14_carryover = 0 does not throw (boundary pass)", () => {
+test("validation: line_14_carryover = 0 does not throw (boundary pass)", () => {
   const result = computeD2({ line_14_carryover: 0 });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("validation: line_12_cap_gain_dist = 0 does not throw (boundary pass)", () => {
+test("validation: line_12_cap_gain_dist = 0 does not throw (boundary pass)", () => {
   const result = computeD2({ line_12_cap_gain_dist: 0 });
   assertEquals(Array.isArray(result.outputs), true);
 });
@@ -1045,7 +1046,7 @@ Deno.test("validation: line_12_cap_gain_dist = 0 does not throw (boundary pass)"
 // ---------------------------------------------------------------------------
 
 // Part A (ST, basis reported to IRS) → Schedule D Line 1b
-Deno.test("8949 part=A (ST basis reported): gain routes to f1040 as ST gain", () => {
+test("8949 part=A (ST basis reported): gain routes to f1040 as ST gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 2_000, cost_basis: 1_500 }),
   ]);
@@ -1053,7 +1054,7 @@ Deno.test("8949 part=A (ST basis reported): gain routes to f1040 as ST gain", ()
 });
 
 // Part B (ST, basis NOT reported) → Schedule D Line 2
-Deno.test("8949 part=B (ST basis not reported): gain routes to f1040 as ST gain", () => {
+test("8949 part=B (ST basis not reported): gain routes to f1040 as ST gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "B", proceeds: 3_000, cost_basis: 2_000 }),
   ]);
@@ -1063,7 +1064,7 @@ Deno.test("8949 part=B (ST basis not reported): gain routes to f1040 as ST gain"
 });
 
 // Part C (ST, no 1099-B) → Schedule D Line 3
-Deno.test("8949 part=C (ST no 1099-B): gain routes to f1040 as ST gain", () => {
+test("8949 part=C (ST no 1099-B): gain routes to f1040 as ST gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "C", proceeds: 4_000, cost_basis: 3_000 }),
   ]);
@@ -1073,7 +1074,7 @@ Deno.test("8949 part=C (ST no 1099-B): gain routes to f1040 as ST gain", () => {
 });
 
 // Part D (LT, basis reported) → Schedule D Line 8b
-Deno.test("8949 part=D (LT basis reported): gain routes to f1040 as LT gain", () => {
+test("8949 part=D (LT basis reported): gain routes to f1040 as LT gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "D", proceeds: 10_000, cost_basis: 6_000 }),
   ]);
@@ -1083,7 +1084,7 @@ Deno.test("8949 part=D (LT basis reported): gain routes to f1040 as LT gain", ()
 });
 
 // Part E (LT, basis NOT reported) → Schedule D Line 9
-Deno.test("8949 part=E (LT basis not reported): gain routes to f1040 as LT gain", () => {
+test("8949 part=E (LT basis not reported): gain routes to f1040 as LT gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "E", proceeds: 8_000, cost_basis: 5_000 }),
   ]);
@@ -1093,7 +1094,7 @@ Deno.test("8949 part=E (LT basis not reported): gain routes to f1040 as LT gain"
 });
 
 // Part F (LT, no 1099-B) → Schedule D Line 10
-Deno.test("8949 part=F (LT no 1099-B): gain routes to f1040 as LT gain", () => {
+test("8949 part=F (LT no 1099-B): gain routes to f1040 as LT gain", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "F", proceeds: 12_000, cost_basis: 9_000 }),
   ]);
@@ -1103,7 +1104,7 @@ Deno.test("8949 part=F (LT no 1099-B): gain routes to f1040 as LT gain", () => {
 });
 
 // Digital asset checkboxes: G → same as A (ST, basis reported)
-Deno.test("8949 part=G (ST digital asset, basis reported): routes same as Part A", () => {
+test("8949 part=G (ST digital asset, basis reported): routes same as Part A", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "G", proceeds: 5_000, cost_basis: 3_000 }),
   ]);
@@ -1113,7 +1114,7 @@ Deno.test("8949 part=G (ST digital asset, basis reported): routes same as Part A
 });
 
 // H → same as B (ST, basis not reported)
-Deno.test("8949 part=H (ST digital asset, basis not reported): routes same as Part B", () => {
+test("8949 part=H (ST digital asset, basis not reported): routes same as Part B", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "H", proceeds: 6_000, cost_basis: 4_000 }),
   ]);
@@ -1123,7 +1124,7 @@ Deno.test("8949 part=H (ST digital asset, basis not reported): routes same as Pa
 });
 
 // I → same as C (ST, no 1099-B or 1099-DA)
-Deno.test("8949 part=I (ST digital asset, no 1099-DA): routes same as Part C", () => {
+test("8949 part=I (ST digital asset, no 1099-DA): routes same as Part C", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "I", proceeds: 7_000, cost_basis: 5_000 }),
   ]);
@@ -1133,7 +1134,7 @@ Deno.test("8949 part=I (ST digital asset, no 1099-DA): routes same as Part C", (
 });
 
 // J → same as D (LT, basis reported)
-Deno.test("8949 part=J (LT digital asset, basis reported): routes same as Part D", () => {
+test("8949 part=J (LT digital asset, basis reported): routes same as Part D", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "J", proceeds: 15_000, cost_basis: 10_000 }),
   ]);
@@ -1143,7 +1144,7 @@ Deno.test("8949 part=J (LT digital asset, basis reported): routes same as Part D
 });
 
 // K → same as E (LT, basis not reported)
-Deno.test("8949 part=K (LT digital asset, basis not reported): routes same as Part E", () => {
+test("8949 part=K (LT digital asset, basis not reported): routes same as Part E", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "K", proceeds: 20_000, cost_basis: 14_000 }),
   ]);
@@ -1153,7 +1154,7 @@ Deno.test("8949 part=K (LT digital asset, basis not reported): routes same as Pa
 });
 
 // L → same as F (LT, no 1099-B or 1099-DA)
-Deno.test("8949 part=L (LT digital asset, no 1099-DA): routes same as Part F", () => {
+test("8949 part=L (LT digital asset, no 1099-DA): routes same as Part F", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "L", proceeds: 25_000, cost_basis: 18_000 }),
   ]);
@@ -1163,7 +1164,7 @@ Deno.test("8949 part=L (LT digital asset, no 1099-DA): routes same as Part F", (
 });
 
 // Zero gain transaction
-Deno.test("8949: zero gain transaction (proceeds == cost) → capital gain is 0", () => {
+test("8949: zero gain transaction (proceeds == cost) → capital gain is 0", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 5_000, cost_basis: 5_000 }),
   ]);
@@ -1176,7 +1177,7 @@ Deno.test("8949: zero gain transaction (proceeds == cost) → capital gain is 0"
 // Section 7 — Form 8949 Aggregation (multiple items, same call)
 // ---------------------------------------------------------------------------
 
-Deno.test("8949 aggregation: two Part A transactions sum their gains", () => {
+test("8949 aggregation: two Part A transactions sum their gains", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 10_000, cost_basis: 7_000 }), // +3000
     makeTransaction({ part: "A", proceeds: 5_000, cost_basis: 2_000 }), // +3000
@@ -1186,7 +1187,7 @@ Deno.test("8949 aggregation: two Part A transactions sum their gains", () => {
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
-Deno.test("8949 aggregation: mixed parts A and D aggregate to combined net", () => {
+test("8949 aggregation: mixed parts A and D aggregate to combined net", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 10_000, cost_basis: 8_000 }), // ST +2000
     makeTransaction({ part: "D", proceeds: 20_000, cost_basis: 15_000 }), // LT +5000
@@ -1196,7 +1197,7 @@ Deno.test("8949 aggregation: mixed parts A and D aggregate to combined net", () 
   assertEquals(input.line7_capital_gain, 7_000);
 });
 
-Deno.test("8949 aggregation: ST gain + LT loss from transactions → net on f1040", () => {
+test("8949 aggregation: ST gain + LT loss from transactions → net on f1040", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 10_000, cost_basis: 5_000 }), // ST +5000
     makeTransaction({ part: "D", proceeds: 3_000, cost_basis: 6_000 }), // LT -3000
@@ -1206,7 +1207,7 @@ Deno.test("8949 aggregation: ST gain + LT loss from transactions → net on f104
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
-Deno.test("8949 aggregation: adjustment_amount (col g) is included in col h computation", () => {
+test("8949 aggregation: adjustment_amount (col g) is included in col h computation", () => {
   // col_h = proceeds - cost + adjustment_amount
   // 5000 - 3000 + (-500) = 1500
   const result = computeWithTransactions([
@@ -1223,7 +1224,7 @@ Deno.test("8949 aggregation: adjustment_amount (col g) is included in col h comp
   assertEquals(input.line7_capital_gain, 1_500);
 });
 
-Deno.test("8949 aggregation: D2 fields and 8949 transactions combine into one total", () => {
+test("8949 aggregation: D2 fields and 8949 transactions combine into one total", () => {
   // D2 ST net: 10000 - 7000 = 3000
   // 8949 LT gain: 20000 - 15000 = 5000
   // Total: 8000
@@ -1241,7 +1242,7 @@ Deno.test("8949 aggregation: D2 fields and 8949 transactions combine into one to
 // ---------------------------------------------------------------------------
 
 // Code W (Wash sale) — disallowed loss added back (positive adjustment)
-Deno.test("adjustment code W (wash sale): disallowed loss positive in col(g) reduces net loss", () => {
+test("adjustment code W (wash sale): disallowed loss positive in col(g) reduces net loss", () => {
   // proceeds 3000, cost 5000 → raw loss -2000
   // col(g) = +2000 (disallowed wash sale loss)
   // col(h) = 3000 - 5000 + 2000 = 0 (loss fully disallowed)
@@ -1260,7 +1261,7 @@ Deno.test("adjustment code W (wash sale): disallowed loss positive in col(g) red
 });
 
 // Code H (Section 121 home sale exclusion) — excluded gain is negative adjustment
-Deno.test("adjustment code H (home exclusion): excluded gain reduces col(h)", () => {
+test("adjustment code H (home exclusion): excluded gain reduces col(h)", () => {
   // proceeds 400000, cost 100000 → raw gain 300000
   // col(g) = -250000 (excluded for single filer)
   // col(h) = 300000 - 250000 = 50000 taxable
@@ -1278,7 +1279,7 @@ Deno.test("adjustment code H (home exclusion): excluded gain reduces col(h)", ()
   assertEquals(input.line7_capital_gain, 50_000);
 });
 
-Deno.test("adjustment code H (home exclusion): full gain excluded → col(h) = 0", () => {
+test("adjustment code H (home exclusion): full gain excluded → col(h) = 0", () => {
   // proceeds 300000, cost 50000 → raw gain 250000
   // col(g) = -250000 (full exclusion for single)
   // col(h) = 0
@@ -1297,7 +1298,7 @@ Deno.test("adjustment code H (home exclusion): full gain excluded → col(h) = 0
 });
 
 // Code C (collectible) — triggers 28% rate gain worksheet (LT part only)
-Deno.test("adjustment code C (collectible, LT part E): triggers 28% rate gain worksheet output", () => {
+test("adjustment code C (collectible, LT part E): triggers 28% rate gain worksheet output", () => {
   const result = computeWithTransactions([
     makeTransaction({
       part: "E",
@@ -1316,7 +1317,7 @@ Deno.test("adjustment code C (collectible, LT part E): triggers 28% rate gain wo
 });
 
 // Code Q is section 1202 exclusion, not a QOF code.
-Deno.test("adjustment code Q cannot file without section 1202 Schedule D and AMT refigure", () => {
+test("adjustment code Q cannot file without section 1202 Schedule D and AMT refigure", () => {
   assertThrows(
     () =>
       computeWithTransactions([
@@ -1337,7 +1338,7 @@ Deno.test("adjustment code Q cannot file without section 1202 Schedule D and AMT
 // Section 9 — Line 17 Gate (LT gain preferential rate eligibility)
 // ---------------------------------------------------------------------------
 
-Deno.test("line 17 gate: both LT > 0 AND combined > 0 → qualifies for preferential LTCG rates", () => {
+test("line 17 gate: both LT > 0 AND combined > 0 → qualifies for preferential LTCG rates", () => {
   // LT net > 0 and combined net > 0
   const result = computeD2({
     line_8a_proceeds: 20_000,
@@ -1349,7 +1350,7 @@ Deno.test("line 17 gate: both LT > 0 AND combined > 0 → qualifies for preferen
   assertEquals(input.line7_capital_gain, 10_000);
 });
 
-Deno.test("line 17 gate: LT net is loss (< 0) → no preferential LTCG rates (ordinary rates only)", () => {
+test("line 17 gate: LT net is loss (< 0) → no preferential LTCG rates (ordinary rates only)", () => {
   // LT net negative → line 17 = No
   const result = computeD2({
     line_8a_proceeds: 5_000,
@@ -1360,7 +1361,7 @@ Deno.test("line 17 gate: LT net is loss (< 0) → no preferential LTCG rates (or
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
-Deno.test("line 17 gate: combined net is zero → skip to line 22 (no preferential rates)", () => {
+test("line 17 gate: combined net is zero → skip to line 22 (no preferential rates)", () => {
   const result = computeD2({
     line_1a_proceeds: 5_000,
     line_1a_cost: 5_000, // ST = 0
@@ -1376,7 +1377,7 @@ Deno.test("line 17 gate: combined net is zero → skip to line 22 (no preferenti
 // Section 10 — Worksheet Selection (Line 20 Gate)
 // ---------------------------------------------------------------------------
 
-Deno.test("line 20 = Yes: no 28% gain, no 1250 gain → LT gain routes to income_tax_calculation", () => {
+test("line 20 = Yes: no 28% gain, no 1250 gain → LT gain routes to income_tax_calculation", () => {
   // Pure LT gain, no special rate gains → downstream worksheet handles preferential rate
   const result = computeD2({
     line_8a_proceeds: 30_000,
@@ -1395,7 +1396,7 @@ Deno.test("line 20 = Yes: no 28% gain, no 1250 gain → LT gain routes to income
 // Section 11 — Capital Gain Distributions Special Rules
 // ---------------------------------------------------------------------------
 
-Deno.test("cap gain distributions always treated as LT — no ST treatment", () => {
+test("cap gain distributions always treated as LT — no ST treatment", () => {
   // Even though cap gain dist from funds might not have been held long, treated as LT
   const result = computeD2({ line_12_cap_gain_dist: 5_000 });
   const f1040 = findOutput(result, "f1040");
@@ -1409,7 +1410,7 @@ Deno.test("cap gain distributions always treated as LT — no ST treatment", () 
   );
 });
 
-Deno.test("cap gain distributions alone need neither Form 8949 nor Schedule D", () => {
+test("cap gain distributions alone need neither Form 8949 nor Schedule D", () => {
   // Verifies distributions work without any 8949 transactions
   const result = computeD2({ line_12_cap_gain_dist: 8_000 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line7a_cap_gain_distrib, 8_000);
@@ -1423,7 +1424,7 @@ Deno.test("cap gain distributions alone need neither Form 8949 nor Schedule D", 
 // Section 12 — Informational Fields (must NOT produce tax outputs)
 // ---------------------------------------------------------------------------
 
-Deno.test("description field in 8949 transaction does not affect computed gain", () => {
+test("description field in 8949 transaction does not affect computed gain", () => {
   const result1 = computeWithTransactions([
     makeTransaction({
       part: "A",
@@ -1445,7 +1446,7 @@ Deno.test("description field in 8949 transaction does not affect computed gain",
   assertEquals(input1.line7_capital_gain, input2.line7_capital_gain);
 });
 
-Deno.test("date_acquired and date_sold fields do not directly change computed gain amount", () => {
+test("date_acquired and date_sold fields do not directly change computed gain amount", () => {
   const result1 = computeWithTransactions([
     makeTransaction({
       part: "D",
@@ -1474,7 +1475,7 @@ Deno.test("date_acquired and date_sold fields do not directly change computed ga
 // ---------------------------------------------------------------------------
 
 // Edge case 1: Aggregate entry eligibility (lines 1a/8a)
-Deno.test("edge case: line_1a entries only when no adjustments needed (valid aggregate input)", () => {
+test("edge case: line_1a entries only when no adjustments needed (valid aggregate input)", () => {
   const result = computeD2({ line_1a_proceeds: 100_000, line_1a_cost: 80_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
@@ -1482,7 +1483,7 @@ Deno.test("edge case: line_1a entries only when no adjustments needed (valid agg
 });
 
 // Edge case 2: VARIOUS / INHERITED date_acquired
-Deno.test("edge case: date_acquired = VARIOUS accepted without throwing", () => {
+test("edge case: date_acquired = VARIOUS accepted without throwing", () => {
   const result = computeWithTransactions([
     makeTransaction({
       part: "D",
@@ -1497,7 +1498,7 @@ Deno.test("edge case: date_acquired = VARIOUS accepted without throwing", () => 
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
-Deno.test("edge case: date_acquired = INHERITED treated as LT gain always", () => {
+test("edge case: date_acquired = INHERITED treated as LT gain always", () => {
   // Inherited property is ALWAYS long-term regardless of actual holding period
   // Must accept "INHERITED" and not throw
   const result = computeWithTransactions([
@@ -1515,7 +1516,7 @@ Deno.test("edge case: date_acquired = INHERITED treated as LT gain always", () =
 });
 
 // Edge case 3: Wash sale window — code W
-Deno.test("edge case: wash sale (code W) — partial disallowance reduces loss", () => {
+test("edge case: wash sale (code W) — partial disallowance reduces loss", () => {
   // proceeds 2000, cost 5000 → raw loss -3000
   // wash disallowed 1500 (positive adj)
   // col(h) = 2000 - 5000 + 1500 = -1500
@@ -1534,7 +1535,7 @@ Deno.test("edge case: wash sale (code W) — partial disallowance reduces loss",
 });
 
 // Edge case 4: $0 proceeds (sale for nothing)
-Deno.test("edge case: $0 proceeds (security became worthless)", () => {
+test("edge case: $0 proceeds (security became worthless)", () => {
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 0, cost_basis: 10_000 }),
   ]);
@@ -1544,7 +1545,7 @@ Deno.test("edge case: $0 proceeds (security became worthless)", () => {
 });
 
 // Edge case 5: Character preservation for carryovers
-Deno.test("edge case: ST carryover preserves ST character — enters as line 6 (reduces ST net)", () => {
+test("edge case: ST carryover preserves ST character — enters as line 6 (reduces ST net)", () => {
   const result = computeD2({
     line_1a_proceeds: 5_000,
     line_1a_cost: 0, // ST +5000
@@ -1555,7 +1556,7 @@ Deno.test("edge case: ST carryover preserves ST character — enters as line 6 (
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
-Deno.test("edge case: LT carryover preserves LT character — enters as line 14 (reduces LT net)", () => {
+test("edge case: LT carryover preserves LT character — enters as line 14 (reduces LT net)", () => {
   const result = computeD2({
     line_8a_proceeds: 8_000,
     line_8a_cost: 0, // LT +8000
@@ -1567,7 +1568,7 @@ Deno.test("edge case: LT carryover preserves LT character — enters as line 14 
 });
 
 // Edge case 6: Large number of transactions (≥ 10)
-Deno.test("edge case: 10 Part A transactions each with $1,000 gain → total $10,000", () => {
+test("edge case: 10 Part A transactions each with $1,000 gain → total $10,000", () => {
   const transactions = Array.from({ length: 10 }, (_, i) =>
     makeTransaction({
       part: "A",
@@ -1582,7 +1583,7 @@ Deno.test("edge case: 10 Part A transactions each with $1,000 gain → total $10
 });
 
 // Edge case 7: Combined ST loss + LT gain where combined is net positive but individual is loss
-Deno.test("edge case: ST net loss + LT net gain → positive combined, full LT gain on f1040", () => {
+test("edge case: ST net loss + LT net gain → positive combined, full LT gain on f1040", () => {
   // ST net: -2000, LT net: +8000, combined: +6000
   const result = computeD2({
     line_1a_proceeds: 3_000,
@@ -1596,7 +1597,7 @@ Deno.test("edge case: ST net loss + LT net gain → positive combined, full LT g
 });
 
 // Edge case 8: Section 121 exclusion — MFJ $500,000 cap
-Deno.test("edge case: home exclusion (code H) for MFJ up to $500,000", () => {
+test("edge case: home exclusion (code H) for MFJ up to $500,000", () => {
   // proceeds 600000, cost 100000 → raw gain 500000
   // col(g) = -500000 (full MFJ exclusion)
   // col(h) = 0
@@ -1615,7 +1616,7 @@ Deno.test("edge case: home exclusion (code H) for MFJ up to $500,000", () => {
 });
 
 // Edge case 9: QOF code Y (deferred gain being recognized)
-Deno.test("edge case: adjustment code Y (QOF deferred gain recognized) — positive gain flows through", () => {
+test("edge case: adjustment code Y (QOF deferred gain recognized) — positive gain flows through", () => {
   const result = computeWithTransactions([
     makeTransaction({
       part: "D",
@@ -1629,7 +1630,7 @@ Deno.test("edge case: adjustment code Y (QOF deferred gain recognized) — posit
 });
 
 // Edge case 10: Code Z (deferred gain into QOF — negative adjustment reduces col h)
-Deno.test("edge case: adjustment code Z (QOF deferral) — negative adjustment reduces reported gain", () => {
+test("edge case: adjustment code Z (QOF deferral) — negative adjustment reduces reported gain", () => {
   // col(h) = 10000 - 5000 + (-3000) = 2000
   const result = computeWithTransactions([
     makeTransaction({
@@ -1644,7 +1645,7 @@ Deno.test("edge case: adjustment code Z (QOF deferral) — negative adjustment r
 });
 
 // Edge case 11: E-file rule — negative amounts not allowed on lines 1a/8a
-Deno.test("edge case: line_1a negative net does not cause invalid e-file (proceeds < cost allowed)", () => {
+test("edge case: line_1a negative net does not cause invalid e-file (proceeds < cost allowed)", () => {
   // The node must handle line_1a where proceeds < cost without crashing
   const result = computeD2({
     line_1a_proceeds: 5_000,
@@ -1654,7 +1655,7 @@ Deno.test("edge case: line_1a negative net does not cause invalid e-file (procee
 });
 
 // Edge case 12: line_11_form2439 negative (Form 4797/4684 loss)
-Deno.test("edge case: negative line_11_form2439 (LT loss from other forms) reduces LT net", () => {
+test("edge case: negative line_11_form2439 (LT loss from other forms) reduces LT net", () => {
   const result = computeD2({
     line_8a_proceeds: 10_000,
     line_8a_cost: 5_000, // LT +5000
@@ -1670,7 +1671,7 @@ Deno.test("edge case: negative line_11_form2439 (LT loss from other forms) reduc
 // Section 14 — Smoke Test: All Major Fields Populated
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → correct combined net", () => {
+test("smoke: all D2 fields + 8949 transactions from multiple parts → correct combined net", () => {
   // D2 fields:
   //   line_1a: 15000 - 10000 = +5000 ST
   //   line_8a: 30000 - 20000 = +10000 LT
@@ -1729,7 +1730,7 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
   );
 });
 
-Deno.test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", () => {
+test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", () => {
   // LT gain of $10,000 + Form 2439 collectibles $2,000 → rate_28 gets $2,000
   const result = compute({
     filing_status: "single",
@@ -1743,7 +1744,7 @@ Deno.test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", 
   );
 });
 
-Deno.test("28pct: collectibles_gain_form2439 combined with f8949 collectibles", () => {
+test("28pct: collectibles_gain_form2439 combined with f8949 collectibles", () => {
   // f8949 collectibles $1,000 + Form 2439 $500 → rate_28 gets $1,500
   const result = compute({
     filing_status: "single",
@@ -1760,7 +1761,7 @@ Deno.test("28pct: collectibles_gain_form2439 combined with f8949 collectibles", 
   );
 });
 
-Deno.test("smoke: large net loss with MFJ filing — $3,000 limit applies", () => {
+test("smoke: large net loss with MFJ filing — $3,000 limit applies", () => {
   const result = computeD2({
     line_1a_proceeds: 10_000,
     line_1a_cost: 25_000, // ST -15000
@@ -1774,7 +1775,7 @@ Deno.test("smoke: large net loss with MFJ filing — $3,000 limit applies", () =
   // Note: carryforward routing to schedule_d is removed; excess loss is not tracked here
 });
 
-Deno.test("Schedule D rounds adjusted 8949 columns before calculating gain", () => {
+test("Schedule D rounds adjusted 8949 columns before calculating gain", () => {
   const result = compute({
     transaction: mkLtTx({
       proceeds: 18612.61,
@@ -1787,7 +1788,7 @@ Deno.test("Schedule D rounds adjusted 8949 columns before calculating gain", () 
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 1871);
 });
 
-Deno.test("Schedule D combines all direct-sale sources before rounding columns", () => {
+test("Schedule D combines all direct-sale sources before rounding columns", () => {
   const result = compute({
     line_1a_proceeds: 100.4,
     line_1a_cost: 90.4,
@@ -1808,7 +1809,7 @@ Deno.test("Schedule D combines all direct-sale sources before rounding columns",
   assertEquals(printed?.print_line1a_gain, 30);
 });
 
-Deno.test("Schedule D combines distribution sources before rounding with and without sales", () => {
+test("Schedule D combines distribution sources before rounding with and without sales", () => {
   const distributions = {
     line13_cap_gain_distrib: 100.4,
     line13_form8814: 10.4,

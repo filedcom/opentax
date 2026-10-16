@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -11,7 +12,7 @@ import { FilingStatus } from "../../../../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest to Schedule 2 line 17p", () => {
+test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest to Schedule 2 line 17p", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -58,7 +59,7 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
   );
 });
 
-Deno.test("E2E: Form 8621 separates excess income from section 301 nonexcess dividends", () => {
+test("E2E: Form 8621 separates excess income from section 301 nonexcess dividends", () => {
   const result = execute(plan, registry, {
     schedule_b_part_iii: {
       foreign_accounts_question: false,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   firstYearPassiveSCorpLossStages,
@@ -12,7 +13,7 @@ for (
     [6000, 4000, 0, 2000],
   ]
 ) {
-  Deno.test(`Passive S-corporation loss applies cash basis ${cash} before at-risk and PAL`, () => {
+  test(`Passive S-corporation loss applies cash basis ${cash} before at-risk and PAL`, () => {
     const { source, k1 } = records(cash);
     const before = structuredClone(source);
     const stages = firstYearPassiveSCorpLossStages(source, k1);
@@ -30,7 +31,7 @@ for (
   });
 }
 
-Deno.test("Passive S-corporation records include the nonowner spouse even when the spouse owns no stock", () => {
+test("Passive S-corporation records include the nonowner spouse even when the spouse owns no stock", () => {
   const { source, k1 } = records();
   source.participation.spouse = {
     status: "married_same_spouse_all_year",
@@ -46,7 +47,7 @@ Deno.test("Passive S-corporation records include the nonowner spouse even when t
   assertThrows(() => firstYearPassiveSCorpLossStages(source, k1));
 });
 
-Deno.test("A spouse operating the activity cannot be represented as an independent nonowner operator", () => {
+test("A spouse operating the activity cannot be represented as an independent nonowner operator", () => {
   const { source, k1 } = records();
   source.participation.spouse = {
     status: "married_same_spouse_all_year",
@@ -56,7 +57,7 @@ Deno.test("A spouse operating the activity cannot be represented as an independe
   assertThrows(() => firstYearPassiveSCorpLossStages(source, k1));
 });
 
-Deno.test("Cash share-price multiplication cannot create an inexact basis amount", () => {
+test("Cash share-price multiplication cannot create an inexact basis amount", () => {
   const { source, k1 } = records();
   source.stock_subscription.shares_issued = Number.MAX_SAFE_INTEGER;
   source.stock_subscription.cash_price_per_share = 2;
@@ -174,7 +175,7 @@ const mutations: [string, (s: any, k: any) => void][] = [
   ["unreviewed extra source fields", (s) => s.basis_override = 100000],
 ];
 for (const [name, mutate] of mutations) {
-  Deno.test(`Passive S-corporation source rejects ${name}`, () => {
+  test(`Passive S-corporation source rejects ${name}`, () => {
     const { source, k1 } = records();
     mutate(source, k1);
     assertThrows(() => firstYearPassiveSCorpLossStages(source, k1));

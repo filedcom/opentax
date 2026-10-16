@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -29,15 +31,10 @@ const expectedTax: { [key: string]: number } = {
   "joint-medicare-partial-disability": 33486,
 };
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM8853_DISTRIBUTION_LTC_DIR");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM8853_DISTRIBUTION_LTC_DIR;
 }
 for (const entry of distributionLtcPackets) {
-  Deno.test(`Form8853 distribution/LTC complete packet: ${entry.id}`, async () => {
+  test(`Form8853 distribution/LTC complete packet: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -170,10 +167,10 @@ for (const entry of distributionLtcPackets) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -201,7 +198,7 @@ for (const entry of distributionLtcPackets) {
     }
   });
 }
-Deno.test("Distribution/LTC public sources require exclusive complete activity and separate medical costs", () => {
+test("Distribution/LTC public sources require exclusive complete activity and separate medical costs", () => {
   let rejected = 0;
   for (const original of distributionLtcPackets) {
     for (

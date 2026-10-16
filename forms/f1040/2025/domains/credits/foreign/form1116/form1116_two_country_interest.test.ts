@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -95,7 +96,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two countries' passive interest reconciles Form 1116 columns A/B, Schedule 3, Form 1040 and native sources", () => {
+test("two countries' passive interest reconciles Form 1116 columns A/B, Schedule 3, Form 1040 and native sources", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -139,7 +140,7 @@ Deno.test("two countries' passive interest reconciles Form 1116 columns A/B, Sch
   );
 });
 
-Deno.test("two-country passive interest rejects changed payer, country, review, tax and return at native/PDF export", () => {
+test("two-country passive interest rejects changed payer, country, review, tax and return at native/PDF export", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -217,7 +218,7 @@ Deno.test("two-country passive interest rejects changed payer, country, review, 
   );
 });
 
-Deno.test("two-country passive interest uses a filed 2024 vintage through both Form 1116 attachments", async () => {
+test("two-country passive interest uses a filed 2024 vintage through both Form 1116 attachments", async () => {
   const filedForm1040Id = "filed-2024-form1040-111223333";
   const filedScheduleBId = "filed-2024-passive-schedule-b-111223333";
   const carryoverSource = {
@@ -432,7 +433,7 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
   );
 });
 
-Deno.test("two_country_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+test("two_country_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
   await verifyPassive1116Packet(filedReturn().pending, "two_country_interest", {
     "interest": 50000,
     "dividends": 0,

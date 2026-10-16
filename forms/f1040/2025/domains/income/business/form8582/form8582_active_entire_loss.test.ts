@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -79,7 +80,7 @@ function filedReturn() {
   return result.pending;
 }
 
-Deno.test("first-year active rental entire loss stays on Schedule E and Form 4797 without Form 8582", () => {
+test("first-year active rental entire loss stays on Schedule E and Form 4797 without Form 8582", () => {
   const pending = filedReturn();
   assertEquals(pending.form8582, { filing_status: "single" });
   assertEquals(pending.schedule1?.line5_schedule_e, -5_000);
@@ -106,7 +107,7 @@ Deno.test("first-year active rental entire loss stays on Schedule E and Form 479
   );
 });
 
-Deno.test("active entire-loss export rejects MFS, changed acquisition, closing and final amount", () => {
+test("active entire-loss export rejects MFS, changed acquisition, closing and final amount", () => {
   const pending = filedReturn();
   const altered: Array<typeof pending> = [
     {

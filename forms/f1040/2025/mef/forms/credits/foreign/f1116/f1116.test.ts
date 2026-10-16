@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   ForeignTaxCreditMethod,
@@ -48,7 +49,7 @@ const fields = {
   us_tax_before_credits: 8_000,
 };
 
-Deno.test("Form 1116 MeF carries sourced Schedule K-3 reduction on line 12 and nets line 14", () => {
+test("Form 1116 MeF carries sourced Schedule K-3 reduction on line 12 and nets line 14", () => {
   const k3 = {
     partnership_ein: "123456789",
     k1_source_document_reference: "2025 partnership K-1",
@@ -202,7 +203,7 @@ Deno.test("Form 1116 MeF carries sourced Schedule K-3 reduction on line 12 and n
   );
 });
 
-Deno.test("Form 1116 MeF reconciles a sourced foreign-currency tax with USD category tax", () => {
+test("Form 1116 MeF reconciles a sourced foreign-currency tax with USD category tax", () => {
   const withCurrency = {
     ...fields,
     category_summaries: [{
@@ -243,7 +244,7 @@ Deno.test("Form 1116 MeF reconciles a sourced foreign-currency tax with USD cate
   );
 });
 
-Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linked explanation PDF", async () => {
+test("Form 1116 line 1b reconciles paid-tax currency and requires its linked explanation PDF", async () => {
   const alternative = {
     specific_compensation_description: "Consulting salary",
     alternative_allocation_basis: "Client project locations",
@@ -523,7 +524,7 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   );
 });
 
-Deno.test("Form 1116 MeF rejects a disclosed redetermination without authenticated affected-year records", () => {
+test("Form 1116 MeF rejects a disclosed redetermination without authenticated affected-year records", () => {
   assertThrows(
     () =>
       form1116.build({
@@ -534,7 +535,7 @@ Deno.test("Form 1116 MeF rejects a disclosed redetermination without authenticat
   );
 });
 
-Deno.test("Form 1116 MeF names a changed affected year before direct export", () => {
+test("Form 1116 MeF names a changed affected year before direct export", () => {
   const ledger = scheduleCLedger();
   assertThrows(
     () =>
@@ -552,7 +553,7 @@ Deno.test("Form 1116 MeF names a changed affected year before direct export", ()
   );
 });
 
-Deno.test("Form 1116 MeF cannot serialize a multi-category redetermination as its parent form", () => {
+test("Form 1116 MeF cannot serialize a multi-category redetermination as its parent form", () => {
   assertThrows(
     () =>
       form1116.build({
@@ -567,14 +568,14 @@ Deno.test("Form 1116 MeF cannot serialize a multi-category redetermination as it
   );
 });
 
-Deno.test("Form 1116 limitation inputs alone do not create a form", () => {
+test("Form 1116 limitation inputs alone do not create a form", () => {
   assertEquals(
     form1116.build({ total_income: 80_000, us_tax_before_credits: 8_000 }),
     [],
   );
 });
 
-Deno.test("Form 1116 refuses an aggregate foreign tax without source details", () => {
+test("Form 1116 refuses an aggregate foreign tax without source details", () => {
   assertThrows(
     () => form1116.build({ foreign_tax_paid: 500 }),
     Error,
@@ -582,7 +583,7 @@ Deno.test("Form 1116 refuses an aggregate foreign tax without source details", (
   );
 });
 
-Deno.test("Form 1116 uses the IRS passive category and actual limitation tags", () => {
+test("Form 1116 uses the IRS passive category and actual limitation tags", () => {
   const [xml] = form1116.build(fields);
   assertStringIncludes(
     xml,
@@ -608,7 +609,7 @@ Deno.test("Form 1116 uses the IRS passive category and actual limitation tags", 
   assertStringIncludes(xml, "<ForeignTaxCreditAmt>450</ForeignTaxCreditAmt>");
 });
 
-Deno.test("Form 1116 MeF line 18 carries the computed senior addback", () => {
+test("Form 1116 MeF line 18 carries the computed senior addback", () => {
   const calculated = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -643,7 +644,7 @@ Deno.test("Form 1116 MeF line 18 carries the computed senior addback", () => {
   );
 });
 
-Deno.test("Form 1116 MeF places documented vehicle interest on line 4b, not 3b", () => {
+test("Form 1116 MeF places documented vehicle interest on line 4b, not 3b", () => {
   const calculated = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -699,7 +700,7 @@ Deno.test("Form 1116 MeF places documented vehicle interest on line 4b, not 3b",
   assertEquals(xml.includes("<OtherDeductionsNotRelatedAmt>"), false);
 });
 
-Deno.test("Form 1116 source details must reconcile with category totals", () => {
+test("Form 1116 source details must reconcile with category totals", () => {
   assertThrows(
     () =>
       form1116.build({
@@ -711,7 +712,7 @@ Deno.test("Form 1116 source details must reconcile with category totals", () => 
   );
 });
 
-Deno.test("Form 1116 never emits unsupported direct expenses without their statement", () => {
+test("Form 1116 never emits unsupported direct expenses without their statement", () => {
   assertThrows(
     () =>
       form1116.build({
@@ -735,7 +736,7 @@ Deno.test("Form 1116 never emits unsupported direct expenses without their state
   );
 });
 
-Deno.test("Form 1116 line 3b uses a linked source-specific deductions statement", () => {
+test("Form 1116 line 3b uses a linked source-specific deductions statement", () => {
   const withOther = {
     ...fields,
     standard_or_itemized_deduction: 8_000,
@@ -762,7 +763,7 @@ Deno.test("Form 1116 line 3b uses a linked source-specific deductions statement"
   );
 });
 
-Deno.test("Form 1116 other-deductions statement omits return context without a credit claim", () => {
+test("Form 1116 other-deductions statement omits return context without a credit claim", () => {
   assertEquals(
     form1116OtherDeductionsStatement.build({}, {
       pending: { form_1116: { other_deductions: 5_652 } },
@@ -781,7 +782,7 @@ Deno.test("Form 1116 other-deductions statement omits return context without a c
   );
 });
 
-Deno.test("Form 1116 line 3b rejects a missing explanation or missing linked document", () => {
+test("Form 1116 line 3b rejects a missing explanation or missing linked document", () => {
   const withOther = {
     ...fields,
     standard_or_itemized_deduction: 8_000,

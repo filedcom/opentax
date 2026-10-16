@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { inputSchema, schedule_b_part_iii } from "./index.ts";
 
-Deno.test("Schedule B Part III input requires the separate FBAR decision", () => {
+test("Schedule B Part III input requires the separate FBAR decision", () => {
   assertEquals(
     inputSchema.safeParse({
       foreign_accounts_question: true,
@@ -38,7 +39,7 @@ Deno.test("Schedule B Part III input requires the separate FBAR decision", () =>
   );
 });
 
-Deno.test("Schedule B Part III input routes explicit answers without tax", () => {
+test("Schedule B Part III input routes explicit answers without tax", () => {
   const result = schedule_b_part_iii.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -57,7 +58,7 @@ Deno.test("Schedule B Part III input routes explicit answers without tax", () =>
   }]);
 });
 
-Deno.test("Schedule B Part III requires TY2025 IRS country codes", () => {
+test("Schedule B Part III requires TY2025 IRS country codes", () => {
   const base = {
     foreign_accounts_question: true,
     fincen_form114_required: true,

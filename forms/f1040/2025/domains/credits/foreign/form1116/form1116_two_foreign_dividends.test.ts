@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -104,7 +105,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two same-country ordinary foreign dividends reach Form 1116 native and PDF", () => {
+test("two same-country ordinary foreign dividends reach Form 1116 native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -128,7 +129,7 @@ Deno.test("two same-country ordinary foreign dividends reach Form 1116 native an
   );
 });
 
-Deno.test("two-dividend Form 1116 native and PDF reject source and return tampering", () => {
+test("two-dividend Form 1116 native and PDF reject source and return tampering", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -175,7 +176,7 @@ Deno.test("two-dividend Form 1116 native and PDF reject source and return tamper
   }
 });
 
-Deno.test("two_foreign_dividends complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+test("two_foreign_dividends complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
   await verifyPassive1116Packet(
     filedReturn().pending,
     "two_foreign_dividends",

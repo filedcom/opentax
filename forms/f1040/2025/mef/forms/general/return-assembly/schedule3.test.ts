@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule3 } from "./schedule3.ts";
 
@@ -32,11 +33,11 @@ function assertNotIncludes(actual: string, expected: string) {
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("empty object returns empty string", () => {
+test("empty object returns empty string", () => {
   assertEquals(schedule3.build({}), "");
 });
 
-Deno.test("finalized Schedule 3 rejects changed credit and payment subtotals", () => {
+test("finalized Schedule 3 rejects changed credit and payment subtotals", () => {
   assertThrows(
     () =>
       schedule3.build(
@@ -93,7 +94,7 @@ Deno.test("finalized Schedule 3 rejects changed credit and payment subtotals", (
   );
 });
 
-Deno.test("finalized Schedule 3 rejects unsourced premium, extension, and excess SS payments", () => {
+test("finalized Schedule 3 rejects unsourced premium, extension, and excess SS payments", () => {
   for (
     const line of [
       "line9_premium_tax_credit",
@@ -113,7 +114,7 @@ Deno.test("finalized Schedule 3 rejects unsourced premium, extension, and excess
   }
 });
 
-Deno.test("finalized Schedule 3 line 11 replays separate W-2 employers", () => {
+test("finalized Schedule 3 line 11 replays separate W-2 employers", () => {
   const w2 = {
     w2s: [
       {
@@ -175,7 +176,7 @@ Deno.test("finalized Schedule 3 line 11 replays separate W-2 employers", () => {
   );
 });
 
-Deno.test("finalized Schedule 3 rejects raw Form 4852 withholding as excess credit", () => {
+test("finalized Schedule 3 rejects raw Form 4852 withholding as excess credit", () => {
   const source = {
     f4852s: [
       {
@@ -212,7 +213,7 @@ Deno.test("finalized Schedule 3 rejects raw Form 4852 withholding as excess cred
   );
 });
 
-Deno.test("finalized Schedule 3 line 9 replays Form 8962 net credit", () => {
+test("finalized Schedule 3 line 9 replays Form 8962 net credit", () => {
   const pending = {
     f1040: { line31_additional_payments: 100 },
     form8962: { net_premium_tax_credit: 100 },
@@ -239,7 +240,7 @@ Deno.test("finalized Schedule 3 line 9 replays Form 8962 net credit", () => {
   );
 });
 
-Deno.test("finalized Schedule 3 line 10 replays reviewed extension payment", () => {
+test("finalized Schedule 3 line 10 replays reviewed extension payment", () => {
   const ext = {
     produce_4868: "X",
     line_7_amount_paying: 100,
@@ -275,7 +276,7 @@ Deno.test("finalized Schedule 3 line 10 replays reviewed extension payment", () 
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("all unknown keys returns empty string", () => {
+test("all unknown keys returns empty string", () => {
   assertEquals(schedule3.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
@@ -283,7 +284,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("line2_childcare_credit at zero is emitted", () => {
+test("line2_childcare_credit at zero is emitted", () => {
   const result = schedule3.build({ line2_childcare_credit: 0 });
   assertStringIncludes(
     result,
@@ -295,7 +296,7 @@ Deno.test("line2_childcare_credit at zero is emitted", () => {
 // Section 4: Per-field mapping (direct 1:1 mappings)
 // ---------------------------------------------------------------------------
 
-Deno.test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
+test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
   const result = schedule3.build({ line2_childcare_credit: 1200 });
   assertStringIncludes(
     result,
@@ -303,7 +304,7 @@ Deno.test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
   );
 });
 
-Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", () => {
+test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", () => {
   const source = {
     f2439s: [
       { box1a: 10_000, box2: 1_500 },
@@ -333,7 +334,7 @@ Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", (
   assertStringIncludes(xml, "<OtherPaymentsAmt>2250</OtherPaymentsAmt>");
 });
 
-Deno.test("Schedule 3 native rejects omitted Form 2439 box 2 credit", () => {
+test("Schedule 3 native rejects omitted Form 2439 box 2 credit", () => {
   assertThrows(
     () =>
       schedule3.build({}, {
@@ -344,7 +345,7 @@ Deno.test("Schedule 3 native rejects omitted Form 2439 box 2 credit", () => {
   );
 });
 
-Deno.test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
+test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
   const xml = schedule3.build(
     { line13a_total: 2_250 },
     {
@@ -368,12 +369,12 @@ Deno.test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
   );
 });
 
-Deno.test("line3_education_credit maps to EducationCreditAmt", () => {
+test("line3_education_credit maps to EducationCreditAmt", () => {
   const result = schedule3.build({ line3_education_credit: 2500 });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
 });
 
-Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt", () => {
+test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt", () => {
   const result = schedule3.build({
     line4_retirement_savings_credit: 400,
   });
@@ -383,7 +384,7 @@ Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt"
   );
 });
 
-Deno.test("Form 5695 credits retain separate Schedule 3 line 5a and 5b amounts", () => {
+test("Form 5695 credits retain separate Schedule 3 line 5a and 5b amounts", () => {
   const result = schedule3.build({
     line5a_residential_clean_energy: 300,
     line5b_energy_efficient_home: 1_200,
@@ -403,7 +404,7 @@ Deno.test("Form 5695 credits retain separate Schedule 3 line 5a and 5b amounts",
   );
 });
 
-Deno.test("line6c_adoption_credit maps to NonrefundableAdoptionCreditAmt", () => {
+test("line6c_adoption_credit maps to NonrefundableAdoptionCreditAmt", () => {
   const result = schedule3.build({ line6c_adoption_credit: 15950 });
   assertStringIncludes(
     result,
@@ -411,7 +412,7 @@ Deno.test("line6c_adoption_credit maps to NonrefundableAdoptionCreditAmt", () =>
   );
 });
 
-Deno.test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => {
+test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => {
   const result = schedule3.build(
     { line6j_alt_fuel_vehicle_refueling: 162 },
     { pending: { f8911: form8911Source } },
@@ -422,7 +423,7 @@ Deno.test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => 
   );
 });
 
-Deno.test("Schedule 3 line 6j rejects a bare or changed Form 8911 credit", () => {
+test("Schedule 3 line 6j rejects a bare or changed Form 8911 credit", () => {
   assertThrows(
     () => schedule3.build({ line6j_alt_fuel_vehicle_refueling: 162 }),
     Error,
@@ -444,7 +445,7 @@ Deno.test("Schedule 3 line 6j rejects a bare or changed Form 8911 credit", () =>
   );
 });
 
-Deno.test("Schedule 3 has distinct 2025 lines 6h and 6k", () => {
+test("Schedule 3 has distinct 2025 lines 6h and 6k", () => {
   const result = schedule3.build({
     line6h_dc_homebuyer_credit: 300,
     line6k_tax_credit_bonds: 450,
@@ -459,7 +460,7 @@ Deno.test("Schedule 3 has distinct 2025 lines 6h and 6k", () => {
   );
 });
 
-Deno.test("Schedule 3 line 12 rejects a bare Form 4136 credit", () => {
+test("Schedule 3 line 12 rejects a bare Form 4136 credit", () => {
   assertThrows(
     () => schedule3.build({ line12_fuel_tax_credit: 125 }),
     Error,
@@ -467,7 +468,7 @@ Deno.test("Schedule 3 line 12 rejects a bare Form 4136 credit", () => {
   );
 });
 
-Deno.test("Schedule 3 source-credit lines require their attached filing forms", () => {
+test("Schedule 3 source-credit lines require their attached filing forms", () => {
   for (
     const fields of [
       { line6a_total: 500 },
@@ -496,7 +497,7 @@ Deno.test("Schedule 3 source-credit lines require their attached filing forms", 
   );
 });
 
-Deno.test("Schedule 3 rejects elderly or disabled credit without native Schedule R", () => {
+test("Schedule 3 rejects elderly or disabled credit without native Schedule R", () => {
   assertThrows(
     () =>
       schedule3.build({ line6d_elderly_disabled_credit: 750 }, {
@@ -513,7 +514,7 @@ Deno.test("Schedule 3 rejects elderly or disabled credit without native Schedule
   );
 });
 
-Deno.test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML elements", () => {
+test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML elements", () => {
   const result = schedule3.build({
     line6a_total: 1_000,
     line6b_prior_year_min_tax_credit: 200,
@@ -538,7 +539,7 @@ Deno.test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML element
   }
 });
 
-Deno.test("line10_amount_paid_extension maps to RequestForExtensionAmt", () => {
+test("line10_amount_paid_extension maps to RequestForExtensionAmt", () => {
   const result = schedule3.build({ line10_amount_paid_extension: 3000 });
   assertStringIncludes(
     result,
@@ -546,7 +547,7 @@ Deno.test("line10_amount_paid_extension maps to RequestForExtensionAmt", () => {
   );
 });
 
-Deno.test("line11_excess_ss maps to ExcessSocSecAndTier1RRTATaxAmt", () => {
+test("line11_excess_ss maps to ExcessSocSecAndTier1RRTATaxAmt", () => {
   const result = schedule3.build({ line11_excess_ss: 5000 });
   assertStringIncludes(
     result,
@@ -558,7 +559,7 @@ Deno.test("line11_excess_ss maps to ExcessSocSecAndTier1RRTATaxAmt", () => {
 // Section 5: finalized line 1 amount
 // ---------------------------------------------------------------------------
 
-Deno.test("finalized Schedule 3 line 1 maps to ForeignTaxCreditAmt", () => {
+test("finalized Schedule 3 line 1 maps to ForeignTaxCreditAmt", () => {
   const result = schedule3.build({ line1_total: 1200 });
   assertStringIncludes(
     result,
@@ -566,11 +567,11 @@ Deno.test("finalized Schedule 3 line 1 maps to ForeignTaxCreditAmt", () => {
   );
 });
 
-Deno.test("raw foreign-tax sources cannot be exported as a finalized line", () => {
+test("raw foreign-tax sources cannot be exported as a finalized line", () => {
   assertEquals(schedule3.build({ line1_foreign_tax_credit: 1000 }), "");
 });
 
-Deno.test("both line1 fields absent: ForeignTaxCreditAmt not emitted", () => {
+test("both line1 fields absent: ForeignTaxCreditAmt not emitted", () => {
   const result = schedule3.build({ line2_childcare_credit: 500 });
   assertNotIncludes(result, "<ForeignTaxCreditAmt>");
 });
@@ -579,7 +580,7 @@ Deno.test("both line1 fields absent: ForeignTaxCreditAmt not emitted", () => {
 // Section 6: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("single known field emits only that element, absent fields omitted", () => {
+test("single known field emits only that element, absent fields omitted", () => {
   const result = schedule3.build({ line3_education_credit: 2500 });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
   assertNotIncludes(result, "<ForeignTaxCreditAmt>");
@@ -589,7 +590,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
   assertNotIncludes(result, "<ExcessSocSecAndTier1RRTATaxAmt>");
 });
 
-Deno.test("two fields present: only those two elements emitted", () => {
+test("two fields present: only those two elements emitted", () => {
   const result = schedule3.build({
     line2_childcare_credit: 1200,
     line11_excess_ss: 5000,
@@ -620,13 +621,13 @@ const allFields = {
   line11_excess_ss: 5000,
 };
 
-Deno.test("all present: output wrapped in IRS1040Schedule3 tag", () => {
+test("all present: output wrapped in IRS1040Schedule3 tag", () => {
   const result = schedule3.build(allFields);
   assertStringIncludes(result, "<IRS1040Schedule3>");
   assertStringIncludes(result, "</IRS1040Schedule3>");
 });
 
-Deno.test("all present: all expected elements emitted", () => {
+test("all present: all expected elements emitted", () => {
   const result = schedule3.build(allFields);
   assertStringIncludes(
     result,
@@ -655,7 +656,7 @@ Deno.test("all present: all expected elements emitted", () => {
   );
 });
 
-Deno.test("all present: ForeignTaxCreditAmt appears before CreditForChildAndDepdCareAmt (XSD order)", () => {
+test("all present: ForeignTaxCreditAmt appears before CreditForChildAndDepdCareAmt (XSD order)", () => {
   const result = schedule3.build(allFields);
   const foreignIdx = result.indexOf("<ForeignTaxCreditAmt>");
   const childcareIdx = result.indexOf("<CreditForChildAndDepdCareAmt>");
@@ -666,7 +667,7 @@ Deno.test("all present: ForeignTaxCreditAmt appears before CreditForChildAndDepd
   );
 });
 
-Deno.test("all present: CreditForChildAndDepdCareAmt before ExcessSocSecAndTier1RRTATaxAmt", () => {
+test("all present: CreditForChildAndDepdCareAmt before ExcessSocSecAndTier1RRTATaxAmt", () => {
   const result = schedule3.build(allFields);
   const childcareIdx = result.indexOf("<CreditForChildAndDepdCareAmt>");
   const excessSsIdx = result.indexOf("<ExcessSocSecAndTier1RRTATaxAmt>");
@@ -681,7 +682,7 @@ Deno.test("all present: CreditForChildAndDepdCareAmt before ExcessSocSecAndTier1
 // Section 8: Mixed known/unknown keys
 // ---------------------------------------------------------------------------
 
-Deno.test("known field emitted, unknown field dropped", () => {
+test("known field emitted, unknown field dropped", () => {
   const result = schedule3.build({
     line2_childcare_credit: 1200,
     junk: 999,
@@ -694,7 +695,7 @@ Deno.test("known field emitted, unknown field dropped", () => {
   assertNotIncludes(result, "999");
 });
 
-Deno.test("multiple known and unknown fields: only known emitted", () => {
+test("multiple known and unknown fields: only known emitted", () => {
   const result = schedule3.build({
     line3_education_credit: 2500,
     unknown_field_1: 500,

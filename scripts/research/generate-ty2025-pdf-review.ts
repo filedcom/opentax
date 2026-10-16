@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 /** Generate only synthetic filled PDFs for the held, single full validation batch. */
 import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
@@ -30,15 +32,15 @@ import {
 } from "./ty2025-pdf-review-private-files.ts";
 import { reviewScope } from "./ty2025-pdf-review-scope.ts";
 
-const [outputDir, xsdArg, selectionFile] = Deno.args;
-if (!outputDir || !xsdArg || Deno.args.length < 2 || Deno.args.length > 3) {
+const [outputDir, xsdArg, selectionFile] = process.argv.slice(2);
+if (!outputDir || !xsdArg || process.argv.slice(2).length < 2 || process.argv.slice(2).length > 3) {
   throw new Error(
     "Usage: deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/research/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd [/absolute/path/selection.json]",
   );
 }
 let selectedIds: string[] | undefined;
 if (selectionFile) {
-  const selection: unknown = JSON.parse(await Deno.readTextFile(selectionFile));
+  const selection: unknown = JSON.parse(await fs.readFile(selectionFile, "utf8"));
   const ids = selection !== null && typeof selection === "object" &&
       !Array.isArray(selection)
     ? (selection as Record<string, unknown>).includedFixtureIds
@@ -57,18 +59,18 @@ const scope = reviewScope(
 );
 const includedIds = new Set(scope.includedFixtureIds);
 const xsdPath = resolve(xsdArg);
-if (!(await Deno.stat(xsdPath)).isFile) {
+if (!(await sys.stat(xsdPath)).isFile) {
   throw new Error(`TY2025 XSD is not a file: ${xsdPath}`);
 }
-const xsdSha256 = await sha256Hex(await Deno.readFile(xsdPath));
+const xsdSha256 = await sha256Hex(await sys.readBytes(xsdPath));
 assertReviewSchemaDigest(xsdSha256);
 await assertReviewSchemaTree(xsdPath);
 
 async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
-  const xmlPath = await Deno.makeTempFile({ dir: outputDir, suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ dir: outputDir, suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml, { mode: 0o600 });
-    const result = await new Deno.Command("xmllint", {
+    await sys.writeText(xmlPath, xml, { mode: 0o600 });
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -81,7 +83,7 @@ async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
       );
     }
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 

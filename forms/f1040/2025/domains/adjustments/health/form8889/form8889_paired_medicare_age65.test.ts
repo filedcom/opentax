@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -132,7 +133,7 @@ function pairedMedicareAge65Case(medicareOwner: "T" | "S") {
 }
 
 for (const medicareOwner of ["T", "S"] as const) {
-  Deno.test(`paired ${medicareOwner} Medicare onset and age-65 distributions reach separate Forms 8889 and Form 1040`, () => {
+  test(`paired ${medicareOwner} Medicare onset and age-65 distributions reach separate Forms 8889 and Form 1040`, () => {
     const { source, forms, pending, medicareIndex } = pairedMedicareAge65Case(
       medicareOwner,
     );

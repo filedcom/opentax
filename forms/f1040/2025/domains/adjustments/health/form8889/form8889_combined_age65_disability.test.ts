@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -223,7 +224,7 @@ function filingCase(
   return { source, forms, pending };
 }
 
-Deno.test("one HSA owner combines age-65 and disability dated exceptions in MeF and PDF", () => {
+test("one HSA owner combines age-65 and disability dated exceptions in MeF and PDF", () => {
   const { forms, pending } = combinedCase();
   assertEquals(forms[0]?.print_line16_taxable, 1000);
   assertEquals(forms[0]?.print_line17b_penalty, 60);
@@ -246,7 +247,7 @@ Deno.test("one HSA owner combines age-65 and disability dated exceptions in MeF 
   assertEquals(pdf?.print_line17b_penalty, 60);
 });
 
-Deno.test("combined HSA exception rejects changed owner source, dates, 1099-SA and return totals", () => {
+test("combined HSA exception rejects changed owner source, dates, 1099-SA and return totals", () => {
   const { source, forms, pending } = combinedCase();
   assertThrows(
     () => form8889.build({ forms }, { filer }),
@@ -319,7 +320,7 @@ Deno.test("combined HSA exception rejects changed owner source, dates, 1099-SA a
   );
 });
 
-Deno.test("one HSA owner has disability before age 65 with code-3 sources through age 65", () => {
+test("one HSA owner has disability before age 65 with code-3 sources through age 65", () => {
   const { forms, pending } = disabilityFirstCase();
   assertEquals(forms[0]?.print_line16_taxable, 1000);
   assertEquals(forms[0]?.print_line17b_penalty, 60);
@@ -337,7 +338,7 @@ Deno.test("one HSA owner has disability before age 65 with code-3 sources throug
   assertEquals(pdf?.print_line17b_penalty, 60);
 });
 
-Deno.test("disability-before-age-65 allocation rejects interval and return tampering", () => {
+test("disability-before-age-65 allocation rejects interval and return tampering", () => {
   const { source, forms, pending } = disabilityFirstCase();
   assertThrows(
     () =>
@@ -388,7 +389,7 @@ Deno.test("disability-before-age-65 allocation rejects interval and return tampe
   );
 });
 
-Deno.test("combined age-65 and disability exception allocates one dated HSA rollover", () => {
+test("combined age-65 and disability exception allocates one dated HSA rollover", () => {
   const { forms, pending } = combinedRolloverCase();
   assertEquals(forms[0]?.print_line14b_excluded_distributions, 150);
   assertEquals(forms[0]?.print_line16_taxable, 850);
@@ -412,7 +413,7 @@ Deno.test("combined age-65 and disability exception allocates one dated HSA roll
   assertEquals(pdf?.print_line17b_penalty, 60);
 });
 
-Deno.test("combined exception rollover rejects changed source, allocation and return", () => {
+test("combined exception rollover rejects changed source, allocation and return", () => {
   const { source, forms, pending } = combinedRolloverCase();
   assertThrows(
     () =>
@@ -474,7 +475,7 @@ Deno.test("combined exception rollover rejects changed source, allocation and re
   );
 });
 
-Deno.test("disability-before-age-65 owner allocates one pre-disability HSA rollover", () => {
+test("disability-before-age-65 owner allocates one pre-disability HSA rollover", () => {
   const { forms, pending } = disabilityFirstRolloverCase();
   assertEquals(forms[0]?.print_line14b_excluded_distributions, 150);
   assertEquals(forms[0]?.print_line16_taxable, 850);
@@ -499,7 +500,7 @@ Deno.test("disability-before-age-65 owner allocates one pre-disability HSA rollo
   assertEquals(pdf?.print_line17b_penalty, 30);
 });
 
-Deno.test("disability-first rollover rejects changed date, allocation and Form 1040 tax", () => {
+test("disability-first rollover rejects changed date, allocation and Form 1040 tax", () => {
   const { source, forms, pending } = disabilityFirstRolloverCase();
   assertThrows(
     () =>

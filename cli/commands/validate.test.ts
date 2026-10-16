@@ -1,11 +1,13 @@
+import { test } from "bun:test";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { join } from "@std/path";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand } from "./return.ts";
 import { validateReturnCommand } from "./validate.ts";
 
-Deno.test("CLI validation scopes rules to the emitted Form 1040 and W-2", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("CLI validation scopes rules to the emitted Form 1040 and W-2", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturnCommand({ year: 2025, baseDir });
     const path = join(baseDir, returnId);
@@ -48,12 +50,12 @@ Deno.test("CLI validation scopes rules to the emitted Form 1040 and W-2", async 
     assertEquals(report.entries, []);
     assertEquals(JSON.parse(formatted), report);
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });
 
-Deno.test("CLI validation reports native assembly failure for an incomplete return", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("CLI validation reports native assembly failure for an incomplete return", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturnCommand({ year: 2025, baseDir });
     const { report } = await validateReturnCommand({ returnId, baseDir });
@@ -64,6 +66,6 @@ Deno.test("CLI validation reports native assembly failure for an incomplete retu
     );
     assertEquals(report.summary.rejected >= 1, true);
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { form8962 as mef8962 } from "../../../../../2025/mef/forms/credits/health/f8962/f8962.ts";
@@ -62,7 +63,7 @@ const pending = {
   f1040: { line11_agi: 75_300, line17_additional_taxes: 1_596 },
 };
 
-Deno.test("corrected 1095-A supersedes its retained original in Form 8962 node, MeF, and PDF", () => {
+test("corrected 1095-A supersedes its retained original in Form 8962 node, MeF, and PDF", () => {
   assertEquals(current1095AStatements([original, corrected]), [corrected]);
   const result = f1095a.compute({ taxYear: 2025, formType: "f1040" }, pending.f1095a);
   const output = result.outputs.find((item) => item.nodeType === "form8962");
@@ -75,7 +76,7 @@ Deno.test("corrected 1095-A supersedes its retained original in Form 8962 node, 
   assertEquals(pdf?.monthly_ptc_rows, fields.monthly_ptc_rows);
 });
 
-Deno.test("corrected 1095-A annual totals replace rather than add to original totals", () => {
+test("corrected 1095-A annual totals replace rather than add to original totals", () => {
   const result = f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
     f1095as: [
       { ...original, annual_premium: 4_800, annual_slcsp: 6_000, annual_aptc: 1_200 },
@@ -88,7 +89,7 @@ Deno.test("corrected 1095-A annual totals replace rather than add to original to
   assertEquals(output?.fields.annual_aptc, 2_400);
 });
 
-Deno.test("corrected 1095-A rejects ambiguous identity or multiple corrected versions", () => {
+test("corrected 1095-A rejects ambiguous identity or multiple corrected versions", () => {
   assertThrows(() => f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
     f1095as: [original, { ...corrected, corrected_box_checked: undefined }],
   }), Error, "repeats coverage");

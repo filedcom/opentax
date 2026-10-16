@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -56,7 +59,7 @@ const inputs = {
   },
 };
 
-Deno.test("reviewed nondependent HOH child reaches native Form 1040 and filled PDF", async () => {
+test("reviewed nondependent HOH child reaches native Form 1040 and filled PDF", async () => {
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -74,10 +77,10 @@ Deno.test("reviewed nondependent HOH child reaches native Form 1040 and filled P
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -87,13 +90,13 @@ Deno.test("reviewed nondependent HOH child reaches native Form 1040 and filled P
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await f1040_2025.buildPdfBytes(pending, filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -101,11 +104,11 @@ Deno.test("reviewed nondependent HOH child reaches native Form 1040 and filled P
     assertStringIncludes(printed, "Avery Child");
     assertEquals(printed.includes("Schedule EIC"), false);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 });
 
-Deno.test("both exporters reject a changed HOH child identity after source review", async () => {
+test("both exporters reject a changed HOH child identity after source review", async () => {
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -124,7 +127,7 @@ Deno.test("both exporters reject a changed HOH child identity after source revie
   );
 });
 
-Deno.test("both exporters reject a retained QSS child SSN that intake would block", async () => {
+test("both exporters reject a retained QSS child SSN that intake would block", async () => {
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -143,7 +146,7 @@ Deno.test("both exporters reject a retained QSS child SSN that intake would bloc
   );
 });
 
-Deno.test("HOH nondependent child rejects missing custody, home cost, and mismatched name", () => {
+test("HOH nondependent child rejects missing custody, home cost, and mismatched name", () => {
   const source = inputs.general;
   const variants = [
     {

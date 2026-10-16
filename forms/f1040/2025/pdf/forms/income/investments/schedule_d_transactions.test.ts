@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { scheduleDPdf } from "./schedule_d.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 
-Deno.test("Schedule D PDF finalized K-1 capital amounts cannot change or disappear", () => {
+test("Schedule D PDF finalized K-1 capital amounts cannot change or disappear", () => {
   const pending = {
     f1040: {},
     k1_partnership: {
@@ -29,7 +30,7 @@ Deno.test("Schedule D PDF finalized K-1 capital amounts cannot change or disappe
   }
 });
 
-Deno.test("PDF bundle rejects partnership K-1 capital when Schedule D is omitted", async () => {
+test("PDF bundle rejects partnership K-1 capital when Schedule D is omitted", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -47,7 +48,7 @@ Deno.test("PDF bundle rejects partnership K-1 capital when Schedule D is omitted
   );
 });
 
-Deno.test("Schedule D PDF groups computed Form 8949 sales by printed reporting row", () => {
+test("Schedule D PDF groups computed Form 8949 sales by printed reporting row", () => {
   const rows = [
     { part: "B", proceeds: 2_000, cost_basis: 1_000, gain_loss: 1_000 },
     { part: "H", proceeds: 3_000, cost_basis: 2_000, gain_loss: 1_000 },
@@ -75,7 +76,7 @@ Deno.test("Schedule D PDF groups computed Form 8949 sales by printed reporting r
   assertEquals(projected?.print_line8b_proceeds, 2_000);
 });
 
-Deno.test("Schedule D PDF rejects a sale with missing computed gain", () => {
+test("Schedule D PDF rejects a sale with missing computed gain", () => {
   assertThrows(
     () =>
       scheduleDPdf.projectFields?.({}, {

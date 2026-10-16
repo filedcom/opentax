@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { buildForm8886Documents } from "./document.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { form8995 as nativeQbi } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
@@ -215,7 +216,7 @@ async function disclosure(
     }],
   });
 }
-Deno.test("Form 8886 activity links retain all three K-1 families and owners through actual native Schedule E and 1040 joins", async () => {
+test("Form 8886 activity links retain all three K-1 families and owners through actual native Schedule E and 1040 joins", async () => {
   const result = execute();
   assertEquals(result.diagnostics, []);
   const source = {
@@ -253,7 +254,7 @@ Deno.test("Form 8886 activity links retain all three K-1 families and owners thr
   ]);
   assertEquals(JSON.stringify({ source, result }), before);
 });
-Deno.test("Form 8886 activity components preserve rental and trust business character without equating one component with net Schedule E", async () => {
+test("Form 8886 activity components preserve rental and trust business character without equating one component with net Schedule E", async () => {
   const result = execute();
   for (
     const [index, component, amount] of [
@@ -283,7 +284,7 @@ Deno.test("Form 8886 activity components preserve rental and trust business char
     );
   }
 });
-Deno.test("Form 8886 activity fingerprints reject changed source facts after a complete recalculation", async () => {
+test("Form 8886 activity fingerprints reject changed source facts after a complete recalculation", async () => {
   const source = await disclosure(sources[0]);
   const result = f1040_2025.executeReturn({
     general,
@@ -297,7 +298,7 @@ Deno.test("Form 8886 activity fingerprints reject changed source facts after a c
     "changed after disclosure review",
   );
 });
-Deno.test("Form 8886 activity proof rejects independent Schedule E, Schedule 1 and Form 1040 changes", async () => {
+test("Form 8886 activity proof rejects independent Schedule E, Schedule 1 and Form 1040 changes", async () => {
   const source = await disclosure(sources[2]), result = execute();
   for (
     const [key, field] of [["schedule1", "line5_schedule_e"], [
@@ -319,7 +320,7 @@ Deno.test("Form 8886 activity proof rejects independent Schedule E, Schedule 1 a
     Error,
   );
 });
-Deno.test("Form 8886 activity proof requires matching issuer, received copy, recipient and reviewed classification owner", async () => {
+test("Form 8886 activity proof requires matching issuer, received copy, recipient and reviewed classification owner", async () => {
   const source = await disclosure(sources[0]), result = execute();
   const owner = structuredClone(source);
   owner.disclosures[0].taxpayer_ssn = general.spouse_ssn;
@@ -349,7 +350,7 @@ Deno.test("Form 8886 activity proof requires matching issuer, received copy, rec
     "classification recipient",
   );
 });
-Deno.test("Form 8886 activity route keeps unsupported negative, zero and wrong-family component claims guarded", async () => {
+test("Form 8886 activity route keeps unsupported negative, zero and wrong-family component claims guarded", async () => {
   for (const amount of [-4000, 0]) {
     const row = {
       ...partnership,
@@ -403,7 +404,7 @@ const activityPortfolio = await disclosure(
   sources[0],
   K1ActivityComponent.OtherPortfolio,
 );
-Deno.test("Form 8886 activity source reconciliation snapshots callers before asynchronous hashes", async () => {
+test("Form 8886 activity source reconciliation snapshots callers before asynchronous hashes", async () => {
   const source = await disclosure(sources[0]),
     result = execute(),
     identity = structuredClone(filer);
@@ -426,7 +427,7 @@ Deno.test("Form 8886 activity source reconciliation snapshots callers before asy
     12000,
   );
 });
-Deno.test("Form 8886 S-corporation loss links preserve basis and passive allocations rather than equating issued loss with the deduction", async () => {
+test("Form 8886 S-corporation loss links preserve basis and passive allocations rather than equating issued loss with the deduction", async () => {
   for (
     const [income, owner] of [
       [0, undefined],
@@ -480,7 +481,7 @@ Deno.test("Form 8886 S-corporation loss links preserve basis and passive allocat
   }
 });
 
-Deno.test("Form 8886 trust link rejects an omitted native activity even when remaining Schedule E and 1040 totals agree", async () => {
+test("Form 8886 trust link rejects an omitted native activity even when remaining Schedule E and 1040 totals agree", async () => {
   const source = await disclosure(sources[2]);
   const complete = execute();
   const omitted = f1040_2025.executeReturn({
@@ -501,7 +502,7 @@ Deno.test("Form 8886 trust link rejects an omitted native activity even when rem
   );
 });
 
-Deno.test("Form 8886 activity links coexist with a sourced positive partnership QBI deduction without inventing an empty passive-source pool", async () => {
+test("Form 8886 activity links coexist with a sourced positive partnership QBI deduction without inventing an empty passive-source pool", async () => {
   const row = {
     ...partnership,
     box20z_qbi: 12000,
@@ -545,7 +546,7 @@ Deno.test("Form 8886 activity links coexist with a sourced positive partnership 
   );
 });
 
-Deno.test("Form 8886 mixed-owner activity links preserve combined positive K-1 QBI through export preparation and native Form 8995", async () => {
+test("Form 8886 mixed-owner activity links preserve combined positive K-1 QBI through export preparation and native Form 8995", async () => {
   const business = {
     ...partnership,
     box20z_qbi: 12000,
@@ -622,7 +623,7 @@ Deno.test("Form 8886 mixed-owner activity links preserve combined positive K-1 Q
   );
 });
 
-Deno.test("Form 8886 shared arrangement keeps primary and spouse activity receipts and native copies independently owned", async () => {
+test("Form 8886 shared arrangement keeps primary and spouse activity receipts and native copies independently owned", async () => {
   const primary = (await disclosure({
     kind: ReturnSourceKind.PartnershipK1Activity,
     row: partnership,

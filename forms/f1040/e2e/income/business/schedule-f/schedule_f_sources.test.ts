@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -86,7 +89,7 @@ function sourceInputs(line4a: number) {
   };
 }
 
-Deno.test("Schedule F sources reconcile through execution without double-counting", () => {
+test("Schedule F sources reconcile through execution without double-counting", () => {
   const result = execute(plan, registry, sourceInputs(4_100), ctx);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line6_schedule_f, 16_100);
@@ -106,7 +109,7 @@ Deno.test("Schedule F sources reconcile through execution without double-countin
   assertStringIncludes(returnXml, "<IRS1040ScheduleF documentId=");
 });
 
-Deno.test("issued 1099-G farm payments bind to the proprietor and retained source in both exports", async () => {
+test("issued 1099-G farm payments bind to the proprietor and retained source in both exports", async () => {
   const result = execute(plan, registry, sourceInputs(4_100), ctx);
   assertEquals(result.diagnostics, []);
   const pending = result.pending as MefFormsPending;
@@ -185,7 +188,7 @@ Deno.test("issued 1099-G farm payments bind to the proprietor and retained sourc
   );
 });
 
-Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF export", async () => {
+test("1099-NEC farm receipts replay retained payer copies in native and PDF export", async () => {
   const inputs = sourceInputs(4_100);
   const result = execute(plan, registry, {
     ...inputs,
@@ -211,11 +214,11 @@ Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsdPath);
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    await sys.stat(xsdPath);
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsdPath, xmlPath],
       }).output();
       assertEquals(
@@ -224,7 +227,7 @@ Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
   } catch (error) {
     throw error;
@@ -269,7 +272,7 @@ Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF
   );
 });
 
-Deno.test("issued 1099-MISC crop insurance binds to the Schedule F proprietor in both exports", async () => {
+test("issued 1099-MISC crop insurance binds to the Schedule F proprietor in both exports", async () => {
   const result = execute(plan, registry, sourceInputs(4_100), ctx);
   assertEquals(result.diagnostics, []);
   const pending = result.pending as MefFormsPending;
@@ -329,7 +332,7 @@ Deno.test("issued 1099-MISC crop insurance binds to the Schedule F proprietor in
   );
 });
 
-Deno.test("issued 1099-PATR farm distribution binds to its cooperative and proprietor", async () => {
+test("issued 1099-PATR farm distribution binds to its cooperative and proprietor", async () => {
   const inputs = sourceInputs(4_100);
   const result = execute(plan, registry, {
     ...inputs,
@@ -415,7 +418,7 @@ Deno.test("issued 1099-PATR farm distribution binds to its cooperative and propr
   );
 });
 
-Deno.test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F line 6a/6b and Form 1040", async () => {
+test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F line 6a/6b and Form 1040", async () => {
   const inputs = sourceInputs(600);
   const result = execute(plan, registry, {
     ...inputs,
@@ -468,18 +471,18 @@ Deno.test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  await Deno.stat(xsdPath);
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  await sys.stat(xsdPath);
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(result.pending as MefFormsPending, filer);
   assertEquals(pdf.subarray(0, 5), new TextEncoder().encode("%PDF-"));
@@ -526,7 +529,7 @@ Deno.test("reviewed current-year-taxable 1099-G crop disaster reaches Schedule F
   );
 });
 
-Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
+test("accrual Schedule F reconciles farm source forms to Part III", () => {
   const inputs = sourceInputs(4_100);
   const result = execute(plan, registry, {
     ...inputs,
@@ -573,7 +576,7 @@ Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
   );
 });
 
-Deno.test("Schedule F refuses an underreported farm source", () => {
+test("Schedule F refuses an underreported farm source", () => {
   const result = execute(plan, registry, sourceInputs(3_500), ctx);
   assertEquals(
     result.diagnostics.some((entry) =>
@@ -583,7 +586,7 @@ Deno.test("Schedule F refuses an underreported farm source", () => {
   );
 });
 
-Deno.test("CCC market gain follows the farm's loan election status", () => {
+test("CCC market gain follows the farm's loan election status", () => {
   const inputs = sourceInputs(4_100);
   const elected = execute(plan, registry, {
     ...inputs,
@@ -616,7 +619,7 @@ Deno.test("CCC market gain follows the farm's loan election status", () => {
   );
 });
 
-Deno.test("Schedule F refuses an unassigned source or duplicate farm identity", () => {
+test("Schedule F refuses an unassigned source or duplicate farm identity", () => {
   const unassigned = sourceInputs(4_100);
   const unassignedResult = execute(plan, registry, {
     ...unassigned,
@@ -642,7 +645,7 @@ Deno.test("Schedule F refuses an unassigned source or duplicate farm identity", 
   );
 });
 
-Deno.test("deferred 1099-MISC crop insurance reaches Schedule F line 6a and its linked statement", () => {
+test("deferred 1099-MISC crop insurance reaches Schedule F line 6a and its linked statement", () => {
   const inputs = sourceInputs(4_100);
   const result = execute(plan, registry, {
     ...inputs,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { filedForm461Schema } from "../../../../../nodes/intermediate/forms/income/business/form461/index.ts";
@@ -53,7 +54,7 @@ function preparedReturn() {
   });
 }
 
-Deno.test("signed Schedule C loss reaches Form 461, Schedule 1 addback, native, and PDF", () => {
+test("signed Schedule C loss reaches Form 461, Schedule 1 addback, native, and PDF", () => {
   const result = preparedReturn();
   assertEquals(
     result.diagnostics.map(({ nodeType, message }) => [nodeType, message]),
@@ -79,7 +80,7 @@ Deno.test("signed Schedule C loss reaches Form 461, Schedule 1 addback, native, 
   );
 });
 
-Deno.test("Form 461 full return rejects changed review, filed business line, and status", () => {
+test("Form 461 full return rejects changed review, filed business line, and status", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
   const changed = [
     {

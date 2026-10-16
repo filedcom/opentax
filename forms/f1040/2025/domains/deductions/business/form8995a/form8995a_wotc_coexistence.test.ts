@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -84,7 +87,7 @@ async function assertSchema(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const process = new Deno.Command("xmllint", {
+  const process = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -97,7 +100,7 @@ async function assertSchema(xml: string) {
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
 }
 
-Deno.test("Form 8995-A files full and tax-limited certified WOTC after wage, SE and QBI calculation", async () => {
+test("Form 8995-A files full and tax-limited certified WOTC after wage, SE and QBI calculation", async () => {
   for (
     const scenario of [
       {
@@ -192,19 +195,19 @@ Deno.test("Form 8995-A files full and tax-limited certified WOTC after wage, SE 
     await assertSchema(prepared.bundle.xml);
     const pdf = await prepared.renderPdf();
     assert(pdf.length > 0);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         `../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995a-wotc/${scenario.id}/`,
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-      await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+      await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
     }
   }
 });
 
-Deno.test("Form 3800 rounds the entered percentage line before WOTC tax-use allocation", async () => {
+test("Form 3800 rounds the entered percentage line before WOTC tax-use allocation", async () => {
   // Quarter-, half-, and three-quarter-dollar raw line 13 values must produce
   // whole-dollar later lines. Rounding only the raw final credit is wrong.
   for (
@@ -238,7 +241,7 @@ Deno.test("Form 3800 rounds the entered percentage line before WOTC tax-use allo
   }
 });
 
-Deno.test("Form 8995-A WOTC rejects altered employer, employee, wage, SE and return sources", () => {
+test("Form 8995-A WOTC rejects altered employer, employee, wage, SE and return sources", () => {
   const result = f1040_2025.executeReturn(inputsFor(80, 600_000));
   const pending = normalizeAllPending(result.pending);
   const mutations: ((copy: typeof pending) => void)[] = [

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
@@ -25,10 +28,10 @@ function source(farmIncome: boolean, rent: number, above = false) {
 }
 
 async function textOf(bytes: Uint8Array) {
-  const temp = await Deno.makeTempFile({ suffix: ".pdf" });
+  const temp = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(temp, bytes);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(temp, bytes);
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", temp, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -36,13 +39,13 @@ async function textOf(bytes: Uint8Array) {
     assertEquals(result.code, 0);
     return new TextDecoder().decode(result.stdout);
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
 }
 
-Deno.test("current loss return review prints finalized Schedule 1 and Form 1040 including both EIC limit sides", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("current loss return review prints finalized Schedule 1 and Form 1040 including both EIC limit sides", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -152,11 +155,11 @@ Deno.test("current loss return review prints finalized Schedule 1 and Form 1040 
         assertStringIncludes(text, String(c.line5));
       }
       if (output) {
-        await Deno.writeFile(`${output}/${c.id}-${key}.pdf`, pdf.bytes, {
+        await sys.writeBytes(`${output}/${c.id}-${key}.pdf`, pdf.bytes, {
           createNew: true,
           mode: 0o600,
         });
-        await Deno.writeTextFile(`${output}/${c.id}-${key}.txt`, text, {
+        await sys.writeText(`${output}/${c.id}-${key}.txt`, text, {
           createNew: true,
           mode: 0o600,
         });
@@ -164,7 +167,7 @@ Deno.test("current loss return review prints finalized Schedule 1 and Form 1040 
     }
     assertEquals(facts.pending, before);
     if (output) {
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-return-review.json`,
         JSON.stringify(
           {
@@ -184,7 +187,7 @@ Deno.test("current loss return review prints finalized Schedule 1 and Form 1040 
   }
 });
 
-Deno.test("current loss return review rejects detached source, changed Schedule 1, AGI, EIC and refund", async () => {
+test("current loss return review rejects detached source, changed Schedule 1, AGI, EIC and refund", async () => {
   const original = source(true, 2000).pending;
   for (
     const [index, mutate] of [

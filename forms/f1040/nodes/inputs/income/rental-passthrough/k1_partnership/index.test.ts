@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { k1Partnership } from "./index.ts";
 import {
@@ -25,7 +26,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("partnership K-1 box 11 code J keeps each reviewed recovery source", () => {
+test("partnership K-1 box 11 code J keeps each reviewed recovery source", () => {
   const item = (ein: string, amount: number) =>
     minimalItem({
       partnership_ein: ein,
@@ -73,7 +74,7 @@ Deno.test("partnership K-1 box 11 code J keeps each reviewed recovery source", (
   );
 });
 
-Deno.test("partnership K-1 box 11 code E keeps fully taxable COD sources", () => {
+test("partnership K-1 box 11 code E keeps fully taxable COD sources", () => {
   const item = (ein: string, amount: number) =>
     minimalItem({
       partnership_ein: ein,
@@ -116,7 +117,7 @@ Deno.test("partnership K-1 box 11 code E keeps fully taxable COD sources", () =>
   );
 });
 
-Deno.test("partnership K-1 box 11 code K keeps reviewed gambling winnings sources", () => {
+test("partnership K-1 box 11 code K keeps reviewed gambling winnings sources", () => {
   const item = (ein: string, winnings: number) =>
     minimalItem({
       partnership_ein: ein,
@@ -163,7 +164,7 @@ Deno.test("partnership K-1 box 11 code K keeps reviewed gambling winnings source
   }
 });
 
-Deno.test("partnership K-1 box 11 code S keeps short and long source rows", () => {
+test("partnership K-1 box 11 code S keeps short and long source rows", () => {
   const item = (ein: string, shortTerm: number, longTerm: number) =>
     minimalItem({
       partnership_ein: ein,
@@ -238,7 +239,7 @@ Deno.test("partnership K-1 box 11 code S keeps short and long source rows", () =
   }
 });
 
-Deno.test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", () => {
+test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", () => {
   const item = (ein: string, code: "L" | "R", amount: number) =>
     minimalItem({
       partnership_ein: ein,
@@ -297,7 +298,7 @@ Deno.test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", ()
   }
 });
 
-Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
+test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",
     k1_source_document_reference: "2025 K-1",
@@ -375,7 +376,7 @@ Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K
   );
 });
 
-Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
+test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
   const item = minimalItem({
     box5_interest: 200,
     box6a_ordinary_dividends: 300,
@@ -394,7 +395,7 @@ Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", (
   ]);
 });
 
-Deno.test("partnership K-1 box 20 code B routes only allowed investment depreciation to Form 4952", () => {
+test("partnership K-1 box 20 code B routes only allowed investment depreciation to Form 4952", () => {
   const codeB = {
     reported_amount: 600,
     allowed_deduction_amount: 600,
@@ -501,7 +502,7 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
   );
 });
 
-Deno.test("partnership K-1 box 13 code H routes separately stated investment interest", () => {
+test("partnership K-1 box 13 code H routes separately stated investment interest", () => {
   const item = minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 K-1 box 13 code H",
@@ -517,7 +518,7 @@ Deno.test("partnership K-1 box 13 code H routes separately stated investment int
   );
 });
 
-Deno.test("partnership K-1 box 20 code B rejects unsourced or disallowed expenses", () => {
+test("partnership K-1 box 20 code B rejects unsourced or disallowed expenses", () => {
   const expense = {
     reported_amount: 1_000,
     allowed_deduction_amount: 600,
@@ -551,7 +552,7 @@ Deno.test("partnership K-1 box 20 code B rejects unsourced or disallowed expense
   );
 });
 
-Deno.test("partnership K-1 box 15 code Z needs source identity and passive classification", () => {
+test("partnership K-1 box 15 code Z needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box15_code_z_orphan_drug_credit: 1_250 })])
   );
@@ -563,7 +564,7 @@ Deno.test("partnership K-1 box 15 code Z needs source identity and passive class
   })]);
 });
 
-Deno.test("partnership K-1 code Z reaches source-backed Form 3800", () => {
+test("partnership K-1 code Z reaches source-backed Form 3800", () => {
   const item = minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 partnership K-1",
@@ -608,7 +609,7 @@ Deno.test("partnership K-1 code Z reaches source-backed Form 3800", () => {
   );
 });
 
-Deno.test("partnership K-1 box 15 code AD reaches Form 3800 line 1i source", () => {
+test("partnership K-1 box 15 code AD reaches Form 3800 line 1i source", () => {
   assertThrows(() =>
     compute([minimalItem({
       box15_code_ad_new_markets_credit: 1_250,
@@ -648,7 +649,7 @@ Deno.test("partnership K-1 box 15 code AD reaches Form 3800 line 1i source", () 
   );
 });
 
-Deno.test("partnership K-1 box 15 code K needs source identity and passive classification", () => {
+test("partnership K-1 box 15 code K needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box15_code_k_disabled_access_credit: 500 })])
   );
@@ -676,7 +677,7 @@ Deno.test("partnership K-1 box 15 code K needs source identity and passive class
   );
 });
 
-Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", () => {
+test("nonpassive partnership K-1 code K reaches source-backed Form 3800", () => {
   const result = compute([minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 Partnership K-1",
@@ -695,7 +696,7 @@ Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", (
   assertEquals(findOutput(result, "form8582cr"), undefined);
 });
 
-Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
+test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({
       partnership_name: "Partner One",
@@ -741,7 +742,7 @@ Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
-Deno.test("empty array throws", () => {
+test("empty array throws", () => {
   assertThrows(
     () =>
       k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -751,7 +752,7 @@ Deno.test("empty array throws", () => {
   );
 });
 
-Deno.test("missing partnership_name throws", () => {
+test("missing partnership_name throws", () => {
   assertThrows(
     () =>
       k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -765,18 +766,18 @@ Deno.test("missing partnership_name throws", () => {
   );
 });
 
-Deno.test("negative box5_interest throws", () => {
+test("negative box5_interest throws", () => {
   assertThrows(() => compute([minimalItem({ box5_interest: -1 })]), Error);
 });
 
-Deno.test("negative box6a_ordinary_dividends throws", () => {
+test("negative box6a_ordinary_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box6a_ordinary_dividends: -5 })]),
     Error,
   );
 });
 
-Deno.test("negative box6b_qualified_dividends throws", () => {
+test("negative box6b_qualified_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box6b_qualified_dividends: -10 })]),
     Error,
@@ -785,49 +786,49 @@ Deno.test("negative box6b_qualified_dividends throws", () => {
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
 
-Deno.test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
+test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 8000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 8000);
 });
 
-Deno.test("negative box1 (loss) routes to schedule1", () => {
+test("negative box1 (loss) routes to schedule1", () => {
   const result = compute([minimalItem({ box1_ordinary_business: -3000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, -3000);
 });
 
-Deno.test("zero box1 does not route to schedule1", () => {
+test("zero box1 does not route to schedule1", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule1");
   assertEquals(out, undefined);
 });
 
-Deno.test("box2_rental_re routes to schedule1 line5_schedule_e", () => {
+test("box2_rental_re routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box2_rental_re: 2500 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 2500);
 });
 
-Deno.test("box3_other_rental routes to schedule1 line5_schedule_e", () => {
+test("box3_other_rental routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box3_other_rental: 1200 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 1200);
 });
 
-Deno.test("box4a_guaranteed_services routes to schedule1", () => {
+test("box4a_guaranteed_services routes to schedule1", () => {
   const result = compute([minimalItem({ box4a_guaranteed_services: 5000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 5000);
 });
 
-Deno.test("box4a_guaranteed_services routes to schedule_se net_profit_schedule_c", () => {
+test("box4a_guaranteed_services routes to schedule_se net_profit_schedule_c", () => {
   const result = compute([minimalItem({ box4a_guaranteed_services: 5000 })]);
   const out = findOutput(result, "schedule_se");
   assertEquals(out?.fields.net_profit_schedule_c, 5000);
 });
 
-Deno.test("box4b_guaranteed_capital routes to schedule1 but not schedule_se", () => {
+test("box4b_guaranteed_capital routes to schedule1 but not schedule_se", () => {
   const result = compute([minimalItem({ box4b_guaranteed_capital: 2000 })]);
   const sch1 = findOutput(result, "schedule1");
   assertEquals(sch1?.fields.line5_schedule_e, 2000);
@@ -835,7 +836,7 @@ Deno.test("box4b_guaranteed_capital routes to schedule1 but not schedule_se", ()
   assertEquals(schSe, undefined);
 });
 
-Deno.test("box 7 and box 13 code I reach one sourced Schedule E royalty row", () => {
+test("box 7 and box 13 code I reach one sourced Schedule E royalty row", () => {
   const result = compute([minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 K-1 source A",
@@ -893,25 +894,25 @@ Deno.test("box 7 and box 13 code I reach one sourced Schedule E royalty row", ()
   );
 });
 
-Deno.test("box5_interest routes to schedule_b taxable_interest_net", () => {
+test("box5_interest routes to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box5_interest: 350 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.taxable_interest_net, 350);
 });
 
-Deno.test("zero box5_interest does not route to schedule_b", () => {
+test("zero box5_interest does not route to schedule_b", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out, undefined);
 });
 
-Deno.test("box6a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
+test("box6a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
   const result = compute([minimalItem({ box6a_ordinary_dividends: 500 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.ordinaryDividends, 500);
 });
 
-Deno.test("box 6c dividend equivalents remain informational beside box 6a", () => {
+test("box 6c dividend equivalents remain informational beside box 6a", () => {
   const onlyEquivalent = compute([minimalItem({
     box6c_dividend_equivalents: 500,
   })]);
@@ -929,55 +930,55 @@ Deno.test("box 6c dividend equivalents remain informational beside box 6a", () =
   assertEquals(dividendRows[0].fields.ordinaryDividends, 100);
 });
 
-Deno.test("box6b_qualified_dividends routes to f1040 line3a", () => {
+test("box6b_qualified_dividends routes to f1040 line3a", () => {
   const result = compute([minimalItem({ box6b_qualified_dividends: 350 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line3a_qualified_dividends, 350);
 });
 
-Deno.test("zero box6b does not route to f1040", () => {
+test("zero box6b does not route to f1040", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "f1040");
   assertEquals(out, undefined);
 });
 
-Deno.test("box8_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
+test("box8_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
   const result = compute([minimalItem({ box8_net_st_cap_gain: 1000 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_5_k1_st, 1000);
 });
 
-Deno.test("negative box8 routes to schedule_d as loss", () => {
+test("negative box8 routes to schedule_d as loss", () => {
   const result = compute([minimalItem({ box8_net_st_cap_gain: -500 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_5_k1_st, -500);
 });
 
-Deno.test("box9a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
+test("box9a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
   const result = compute([minimalItem({ box9a_net_lt_cap_gain: 2500 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_12_k1_lt, 2500);
 });
 
-Deno.test("box14a_se_earnings routes to schedule_se net_profit_schedule_c", () => {
+test("box14a_se_earnings routes to schedule_se net_profit_schedule_c", () => {
   const result = compute([minimalItem({ box14a_se_earnings: 10000 })]);
   const out = findOutput(result, "schedule_se");
   assertEquals(out?.fields.net_profit_schedule_c, 10000);
 });
 
-Deno.test("zero box14a does not route to schedule_se (no other SE income)", () => {
+test("zero box14a does not route to schedule_se (no other SE income)", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 5000 })]);
   const out = findOutput(result, "schedule_se");
   assertEquals(out, undefined);
 });
 
-Deno.test("box20z_qbi routes to form8995 qbi", () => {
+test("box20z_qbi routes to form8995 qbi", () => {
   const result = compute([minimalItem({ box20z_qbi: 12000 })]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 12000);
 });
 
-Deno.test("box20_w2_wages routes to form8995 w2_wages", () => {
+test("box20_w2_wages routes to form8995 w2_wages", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 10000, box20_w2_wages: 6000 }),
   ]);
@@ -985,7 +986,7 @@ Deno.test("box20_w2_wages routes to form8995 w2_wages", () => {
   assertEquals(out?.fields.w2_wages, 6000);
 });
 
-Deno.test("box16_foreign_tax routes to form_1116", () => {
+test("box16_foreign_tax routes to form_1116", () => {
   const result = compute([
     minimalItem({
       box16_foreign_tax: 180,
@@ -1011,7 +1012,7 @@ Deno.test("box16_foreign_tax routes to form_1116", () => {
   assertEquals(taxItem.tax_credit_method, "paid");
 });
 
-Deno.test("zero box16_foreign_tax does not route to form_1116", () => {
+test("zero box16_foreign_tax does not route to form_1116", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form_1116");
   assertEquals(out, undefined);
@@ -1019,7 +1020,7 @@ Deno.test("zero box16_foreign_tax does not route to form_1116", () => {
 
 // ── 3. Aggregation across multiple K-1s ──────────────────────────────────────
 
-Deno.test("box1 sums across K-1s to schedule1", () => {
+test("box1 sums across K-1s to schedule1", () => {
   const result = compute([
     minimalItem({ box1_ordinary_business: 4000 }),
     minimalItem({ partnership_name: "Fund B", box1_ordinary_business: 3000 }),
@@ -1028,7 +1029,7 @@ Deno.test("box1 sums across K-1s to schedule1", () => {
   assertEquals(out?.fields.line5_schedule_e, 7000);
 });
 
-Deno.test("box6b sums across K-1s to f1040 line3a", () => {
+test("box6b sums across K-1s to f1040 line3a", () => {
   const result = compute([
     minimalItem({ box6b_qualified_dividends: 200 }),
     minimalItem({ partnership_name: "Fund B", box6b_qualified_dividends: 300 }),
@@ -1037,7 +1038,7 @@ Deno.test("box6b sums across K-1s to f1040 line3a", () => {
   assertEquals(out?.fields.line3a_qualified_dividends, 500);
 });
 
-Deno.test("box8 STCG sums across K-1s to schedule_d", () => {
+test("box8 STCG sums across K-1s to schedule_d", () => {
   const result = compute([
     minimalItem({ box8_net_st_cap_gain: 1000 }),
     minimalItem({ partnership_name: "Fund B", box8_net_st_cap_gain: 500 }),
@@ -1046,7 +1047,7 @@ Deno.test("box8 STCG sums across K-1s to schedule_d", () => {
   assertEquals(out?.fields.line_5_k1_st, 1500);
 });
 
-Deno.test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
+test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
   const result = compute([
     minimalItem({
       box1_ordinary_business: 2000,
@@ -1071,7 +1072,7 @@ Deno.test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
 
 // ── 5. QBI extended fields (K199 screen) ─────────────────────────────────────
 
-Deno.test("box20_sstb true is accepted and does not produce extra outputs", () => {
+test("box20_sstb true is accepted and does not produce extra outputs", () => {
   // SSTB indicator is informational in this node — Form 8995-A handles phaseout.
   // The field must be accepted by the schema without throwing.
   const result = compute([
@@ -1081,7 +1082,7 @@ Deno.test("box20_sstb true is accepted and does not produce extra outputs", () =
   assertEquals(out?.fields.qbi, 10000);
 });
 
-Deno.test("box20_sstb false is accepted", () => {
+test("box20_sstb false is accepted", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 5000, box20_sstb: false }),
   ]);
@@ -1089,7 +1090,7 @@ Deno.test("box20_sstb false is accepted", () => {
   assertEquals(out?.fields.qbi, 5000);
 });
 
-Deno.test("box20_aggregation_group is accepted and does not affect routing", () => {
+test("box20_aggregation_group is accepted and does not affect routing", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 8000, box20_aggregation_group: "GroupA" }),
   ]);
@@ -1099,47 +1100,47 @@ Deno.test("box20_aggregation_group is accepted and does not affect routing", () 
 
 // ── 6. Partner Basis Worksheet fields (K1P > "Basis Wkst" tab) ───────────────
 
-Deno.test("basis_beginning is accepted (informational; no routing output)", () => {
+test("basis_beginning is accepted (informational; no routing output)", () => {
   const result = compute([minimalItem({ basis_beginning: 50000 })]);
   // Basis fields are worksheet-only; they do not route to downstream nodes.
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_contributions is accepted", () => {
+test("basis_contributions is accepted", () => {
   const result = compute([minimalItem({ basis_contributions: 10000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_share_of_income is accepted", () => {
+test("basis_share_of_income is accepted", () => {
   const result = compute([minimalItem({ basis_share_of_income: 3000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_share_of_losses is accepted", () => {
+test("basis_share_of_losses is accepted", () => {
   const result = compute([minimalItem({ basis_share_of_losses: 2000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_distributions is accepted", () => {
+test("basis_distributions is accepted", () => {
   const result = compute([minimalItem({ basis_distributions: 5000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_liabilities_assumed is accepted", () => {
+test("basis_liabilities_assumed is accepted", () => {
   const result = compute([minimalItem({ basis_liabilities_assumed: 15000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("basis_liabilities_relieved is accepted", () => {
+test("basis_liabilities_relieved is accepted", () => {
   const result = compute([minimalItem({ basis_liabilities_relieved: 5000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("negative basis_beginning throws (nonnegative constraint)", () => {
+test("negative basis_beginning throws (nonnegative constraint)", () => {
   assertThrows(() => compute([minimalItem({ basis_beginning: -100 })]), Error);
 });
 
-Deno.test("basis worksheet fields alongside income produce correct income routing", () => {
+test("basis worksheet fields alongside income produce correct income routing", () => {
   // Basis fields are stored but do not affect routing of income boxes.
   const result = compute([
     minimalItem({
@@ -1155,27 +1156,27 @@ Deno.test("basis worksheet fields alongside income produce correct income routin
 
 // ── 7. Pre-2018 Basis Carryover fields (K1P> "Pre-2018 Basis" tab) ───────────
 
-Deno.test("pre2018_basis_ordinary_loss is accepted (informational; no routing output)", () => {
+test("pre2018_basis_ordinary_loss is accepted (informational; no routing output)", () => {
   const result = compute([minimalItem({ pre2018_basis_ordinary_loss: 4000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_basis_st_cap_loss is accepted", () => {
+test("pre2018_basis_st_cap_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_basis_st_cap_loss: 1500 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_basis_lt_cap_loss is accepted", () => {
+test("pre2018_basis_lt_cap_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_basis_lt_cap_loss: 2500 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_basis_other_loss is accepted", () => {
+test("pre2018_basis_other_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_basis_other_loss: 1000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("negative pre2018_basis_ordinary_loss throws (nonnegative constraint)", () => {
+test("negative pre2018_basis_ordinary_loss throws (nonnegative constraint)", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_basis_ordinary_loss: -500 })]),
     Error,
@@ -1184,34 +1185,34 @@ Deno.test("negative pre2018_basis_ordinary_loss throws (nonnegative constraint)"
 
 // ── 8. Pre-2018 At-Risk Carryover fields (K1P> "Pre-2018 At-Risk" tab) ───────
 
-Deno.test("pre2018_atrisk_ordinary_loss is accepted (informational; no routing output)", () => {
+test("pre2018_atrisk_ordinary_loss is accepted (informational; no routing output)", () => {
   const result = compute([minimalItem({ pre2018_atrisk_ordinary_loss: 6000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_atrisk_st_cap_loss is accepted", () => {
+test("pre2018_atrisk_st_cap_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_atrisk_st_cap_loss: 2000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_atrisk_lt_cap_loss is accepted", () => {
+test("pre2018_atrisk_lt_cap_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_atrisk_lt_cap_loss: 3000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("pre2018_atrisk_other_loss is accepted", () => {
+test("pre2018_atrisk_other_loss is accepted", () => {
   const result = compute([minimalItem({ pre2018_atrisk_other_loss: 1500 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("negative pre2018_atrisk_ordinary_loss throws (nonnegative constraint)", () => {
+test("negative pre2018_atrisk_ordinary_loss throws (nonnegative constraint)", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_atrisk_ordinary_loss: -100 })]),
     Error,
   );
 });
 
-Deno.test("pre-2018 carryover fields alongside QBI produce correct QBI routing", () => {
+test("pre-2018 carryover fields alongside QBI produce correct QBI routing", () => {
   const result = compute([
     minimalItem({
       box20z_qbi: 15000,
@@ -1225,19 +1226,19 @@ Deno.test("pre-2018 carryover fields alongside QBI produce correct QBI routing",
 
 // ── 9. Informational fields ───────────────────────────────────────────────────
 
-Deno.test("partnership_name alone produces no outputs", () => {
+test("partnership_name alone produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
 // ── 10. Edge cases ────────────────────────────────────────────────────────────
 
-Deno.test("all-zero K-1 produces no outputs", () => {
+test("all-zero K-1 produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
+test("STCG and LTCG produce single merged schedule_d output", () => {
   const result = compute([
     minimalItem({ box8_net_st_cap_gain: 800, box9a_net_lt_cap_gain: 1200 }),
   ]);
@@ -1249,7 +1250,7 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
 
 // ── 11. SE tax priority and multiple K-1 aggregation ─────────────────────────
 
-Deno.test("box14a takes priority over box4a for schedule_se when both present", () => {
+test("box14a takes priority over box4a for schedule_se when both present", () => {
   // Box 14a is the authoritative SE earnings figure; box4a fallback only when 14a absent
   const result = compute([
     minimalItem({ box4a_guaranteed_services: 5000, box14a_se_earnings: 12000 }),
@@ -1258,7 +1259,7 @@ Deno.test("box14a takes priority over box4a for schedule_se when both present", 
   assertEquals(out?.fields.net_profit_schedule_c, 12000);
 });
 
-Deno.test("box14a_se_earnings from two K-1s aggregates into one schedule_se output", () => {
+test("box14a_se_earnings from two K-1s aggregates into one schedule_se output", () => {
   // SE earnings are aggregated across K-1s to prevent array accumulation in schedule_se
   const result = compute([
     minimalItem({ box14a_se_earnings: 8000 }),
@@ -1269,7 +1270,7 @@ Deno.test("box14a_se_earnings from two K-1s aggregates into one schedule_se outp
   assertEquals(seOutputs[0].fields.net_profit_schedule_c, 14000);
 });
 
-Deno.test("box20z_qbi sums across K-1s to form8995 qbi", () => {
+test("box20z_qbi sums across K-1s to form8995 qbi", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 10000 }),
     minimalItem({ partnership_name: "Fund B", box20z_qbi: 5000 }),
@@ -1278,7 +1279,7 @@ Deno.test("box20z_qbi sums across K-1s to form8995 qbi", () => {
   assertEquals(out?.fields.qbi, 15000);
 });
 
-Deno.test("box20_w2_wages sums across K-1s to form8995 w2_wages", () => {
+test("box20_w2_wages sums across K-1s to form8995 w2_wages", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 8000, box20_w2_wages: 4000 }),
     minimalItem({
@@ -1291,7 +1292,7 @@ Deno.test("box20_w2_wages sums across K-1s to form8995 w2_wages", () => {
   assertEquals(out?.fields.w2_wages, 6000);
 });
 
-Deno.test("loss K-1 (box1 negative) does not suppress QBI from a second profitable K-1", () => {
+test("loss K-1 (box1 negative) does not suppress QBI from a second profitable K-1", () => {
   const result = compute([
     minimalItem({ box1_ordinary_business: -3000 }),
     minimalItem({ partnership_name: "Fund B", box20z_qbi: 7000 }),
@@ -1306,13 +1307,13 @@ Deno.test("loss K-1 (box1 negative) does not suppress QBI from a second profitab
 
 // ── 12. AGI aggregator routing ────────────────────────────────────────────────
 
-Deno.test("box1_ordinary_business routes to agi_aggregator line5_schedule_e", () => {
+test("box1_ordinary_business routes to agi_aggregator line5_schedule_e", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 8000 })]);
   const out = findOutput(result, "agi_aggregator");
   assertEquals(out?.fields.line5_schedule_e, 8000);
 });
 
-Deno.test("zero income does not route to agi_aggregator", () => {
+test("zero income does not route to agi_aggregator", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "agi_aggregator");
   assertEquals(out, undefined);
@@ -1320,7 +1321,7 @@ Deno.test("zero income does not route to agi_aggregator", () => {
 
 // ── 13. Smoke test ────────────────────────────────────────────────────────────
 
-Deno.test("smoke test — K-1 with all major boxes", () => {
+test("smoke test — K-1 with all major boxes", () => {
   const result = compute([
     minimalItem({
       box1_ordinary_business: 20000,

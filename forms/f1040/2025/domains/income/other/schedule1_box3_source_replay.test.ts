@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -64,7 +66,7 @@ function calculated() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two 1099-MISC line 8z descriptions and RTAA survive native statement", async () => {
+test("two 1099-MISC line 8z descriptions and RTAA survive native statement", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_rtaa, 400);
@@ -89,7 +91,7 @@ Deno.test("two 1099-MISC line 8z descriptions and RTAA survive native statement"
     extractFilerIdentity(general),
   );
   assertEquals(pdf.length > 0, true);
-  const extracted = new Deno.Command("pdftotext", {
+  const extracted = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -109,11 +111,11 @@ Deno.test("two 1099-MISC line 8z descriptions and RTAA survive native statement"
   assertStringIncludes(pdfText, "Research stipend");
   assertStringIncludes(pdfText, "RTAA payments 123456789");
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -126,7 +128,7 @@ Deno.test("two 1099-MISC line 8z descriptions and RTAA survive native statement"
   assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
 });
 
-Deno.test("final exports reject changed 1099-MISC line 8z description and amount", async () => {
+test("final exports reject changed 1099-MISC line 8z description and amount", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -177,7 +179,7 @@ Deno.test("final exports reject changed 1099-MISC line 8z description and amount
   }
 });
 
-Deno.test("final exports reject an unreviewed 1099-MISC box 3 exclusion", async () => {
+test("final exports reject an unreviewed 1099-MISC box 3 exclusion", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

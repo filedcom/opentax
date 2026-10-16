@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { scheduleEPdf } from "./schedule_e.ts";
 import { scheduleE } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
@@ -5,7 +6,7 @@ import { inputSchema as scheduleEInputSchema } from "../../../../../nodes/inputs
 import { fillFormPdf } from "../../../builder.ts";
 import { testFiler } from "../../../../mef/execution/test-filer.ts";
 
-Deno.test("Schedule E fills filer identity on the retained Part I or Part II page", async () => {
+test("Schedule E fills filer identity on the retained Part I or Part II page", async () => {
   const filer = {
     ...testFiler(),
     firstNameWithInitial: "Taxpayer",
@@ -22,7 +23,7 @@ Deno.test("Schedule E fills filer identity on the retained Part I or Part II pag
   }
 });
 
-Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
+test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",
@@ -51,7 +52,7 @@ Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
   assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
 });
 
-Deno.test("trust K-1 activity income prints Part III passive column", () => {
+test("trust K-1 activity income prints Part III passive column", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",
@@ -83,7 +84,7 @@ Deno.test("trust K-1 activity income prints Part III passive column", () => {
   assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
 });
 
-Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF", () => {
+test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF", () => {
   const k1 = {
     partnership_name: "Mineral Partnership",
     partnership_ein: "123456789",
@@ -190,7 +191,7 @@ const rental = {
   expense_other_lines: [{ description: "Bank fees", amount: 50 }],
 };
 
-Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a current deduction", () => {
+test("Schedule E PDF prints a Form 8582 suspended rental loss without a current deduction", () => {
   const item = {
     ...rental,
     activity_type: "B" as const,
@@ -245,7 +246,7 @@ Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a cur
   );
 });
 
-Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {
+test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {
   const raw = { schedule_es: [rental] };
   const projected = scheduleEPdf.projectFields?.(raw, {
     schedule_e: raw,
@@ -281,7 +282,7 @@ Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A
   );
 });
 
-Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals on the first copy", () => {
+test("Schedule E PDF adds a Part I copy for property four and keeps totals on the first copy", () => {
   const properties = Array.from({ length: 4 }, (_, index) => ({
     ...rental,
     activity_id: `rental-${index}`,
@@ -317,7 +318,7 @@ Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals 
   assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
 });
 
-Deno.test("Schedule E PDF repeats sourced Form 1099 answers on each property copy", () => {
+test("Schedule E PDF repeats sourced Form 1099 answers on each property copy", () => {
   // https://www.irs.gov/instructions/i1040se requires enough Schedule E
   // copies for every property and limits only lines 23a-26 to the first copy.
   const properties = Array.from({ length: 4 }, (_, index) => ({
@@ -354,7 +355,7 @@ Deno.test("Schedule E PDF repeats sourced Form 1099 answers on each property cop
   );
 });
 
-Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {
+test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {
   const properties = [{
     ...rental,
     activity_id: "first",
@@ -389,7 +390,7 @@ Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for a
   assertEquals(projected.line26, 25_050);
 });
 
-Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
+test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
   const sale = {
     activity_id: "rental-house",
     activity_name: "Rental house",
@@ -453,7 +454,7 @@ Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and n
   );
 });
 
-Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 mismatch", () => {
+test("Schedule E PDF fails closed on unprojected paths and Schedule 1 mismatch", () => {
   const raw = { schedule_es: [rental] };
   const linked = {
     schedule_e: raw,

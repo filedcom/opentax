@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
@@ -43,7 +44,7 @@ const parts = buildForm3800NonpassiveParts({
   transferStatementIdsByFileName: {},
 });
 
-Deno.test("Form 3800 printable header uses the filed filer and source-backed election", () => {
+test("Form 3800 printable header uses the filed filer and source-backed election", () => {
   const fields = projectForm3800HeaderFields(parts, testFiler());
   assertEquals(fields[form3800HeaderFields.filerName], "TAXPAYER TEST");
   assertEquals(fields[form3800HeaderFields.filerTin], "123456789");
@@ -68,7 +69,7 @@ Deno.test("Form 3800 printable header uses the filed filer and source-backed ele
   assertEquals(transferFields[form3800HeaderFields.transferStatementCount], 1);
 });
 
-Deno.test("Form 3800 printable header rejects missing filer, unbound transfer and unsourced carryforward checkbox", () => {
+test("Form 3800 printable header rejects missing filer, unbound transfer and unsourced carryforward checkbox", () => {
   assertThrows(
     () =>
       projectForm3800HeaderFields(parts, {
@@ -98,7 +99,7 @@ Deno.test("Form 3800 printable header rejects missing filer, unbound transfer an
   );
 });
 
-Deno.test("Form 3800 printable Parts I-II project source-backed line 38 to the exact PDF field", () => {
+test("Form 3800 printable Parts I-II project source-backed line 38 to the exact PDF field", () => {
   const fields = projectForm3800PartIAndIIFields(parts, 100);
   assertEquals(Object.keys(fields).length, 39);
   assertEquals(fields[form3800PartIAndIIFields.line1], 100);
@@ -106,7 +107,7 @@ Deno.test("Form 3800 printable Parts I-II project source-backed line 38 to the e
   assertEquals(fields[form3800PartIAndIIFields.line38], 100);
 });
 
-Deno.test("Form 3800 printable projection rejects Schedule 3 and source-use mismatches", () => {
+test("Form 3800 printable projection rejects Schedule 3 and source-use mismatches", () => {
   assertThrows(
     () => projectForm3800PartIAndIIFields(parts, 99),
     Error,
@@ -126,7 +127,7 @@ Deno.test("Form 3800 printable projection rejects Schedule 3 and source-use mism
   );
 });
 
-Deno.test("Form 3800 printable Part III projects source and subtotal columns from the native row", () => {
+test("Form 3800 printable Part III projects source and subtotal columns from the native row", () => {
   const fields = projectForm3800PartIIIFields(parts);
   const line1h = form3800PartIIIFields("1h");
   const subtotal = form3800PartIIIFields("2");
@@ -138,7 +139,7 @@ Deno.test("Form 3800 printable Part III projects source and subtotal columns fro
   assertEquals(fields[total.i], 100);
 });
 
-Deno.test("Form 3800 printable Part III rejects a missing source row", () => {
+test("Form 3800 printable Part III rejects a missing source row", () => {
   assertThrows(
     () => projectForm3800PartIIIFields({ ...parts, currentRows: [] }),
     Error,
@@ -165,7 +166,7 @@ const carryoverParts = {
   }],
 };
 
-Deno.test("Form 3800 printable Part IV retains source year, EIN, count, tax use and totals", () => {
+test("Form 3800 printable Part IV retains source year, EIN, count, tax use and totals", () => {
   const fields = projectForm3800PartIVFields(carryoverParts);
   const line = form3800PartIVFields("1h");
   const subtotal = form3800PartIVFields("6");
@@ -181,7 +182,7 @@ Deno.test("Form 3800 printable Part IV retains source year, EIN, count, tax use 
   assertEquals(fields[total.g], 180);
 });
 
-Deno.test("Form 3800 printable Part IV rejects lost provenance and impossible carryforward", () => {
+test("Form 3800 printable Part IV rejects lost provenance and impossible carryforward", () => {
   assertThrows(
     () =>
       projectForm3800PartIVFields({

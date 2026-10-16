@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
@@ -8,7 +9,7 @@ import {
 import { buildForm3800NonpassiveParts } from "../../../../mef/forms/credits/business/f3800/f3800_nonpassive.ts";
 import { form8994Pdf } from "./f8994.ts";
 
-Deno.test("Form 8994 PDF maps official yes boxes and the direct credit", () => {
+test("Form 8994 PDF maps official yes boxes and the direct credit", () => {
   const fields = Object.fromEntries(
     form8994Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -27,11 +28,11 @@ Deno.test("Form 8994 PDF maps official yes boxes and the direct credit", () => {
   assertEquals(projected?.line3, 1_250);
 });
 
-Deno.test("Form 8994 PDF skips unrelated returns", () => {
+test("Form 8994 PDF skips unrelated returns", () => {
   assertEquals(form8994Pdf.projectFields?.({}, {}), {});
 });
 
-Deno.test("Form 8994 PDF rejects a mismatched Schedule C wage reduction", () => {
+test("Form 8994 PDF rejects a mismatched Schedule C wage reduction", () => {
   const business = form8994MatchedPending.schedule_c.schedule_cs[0];
   assertThrows(
     () =>
@@ -49,7 +50,7 @@ Deno.test("Form 8994 PDF rejects a mismatched Schedule C wage reduction", () => 
   );
 });
 
-Deno.test("Form 8994 printable copy binds Form 3800 line 4j document and final credit", () => {
+test("Form 8994 printable copy binds Form 3800 line 4j document and final credit", () => {
   const pending = {
     ...form8994MatchedPending,
     f1040: {

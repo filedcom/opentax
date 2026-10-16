@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { PDFDocument } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
@@ -129,7 +132,7 @@ const pending: ExecuteResult["pending"] = {
   schedule_d: { transaction: filedRows.map((row) => ({ ...row })) },
 };
 
-Deno.test("staged IRS8997 projects all four ordered parts and derived totals", () => {
+test("staged IRS8997 projects all four ordered parts and derived totals", () => {
   const xml = buildStagedIRS8997(pending);
   assertStringIncludes(xml, "<IRS8997>");
   assertStringIncludes(xml, "<TotQOFInvstHoldBOYGrp>");
@@ -167,7 +170,7 @@ Deno.test("staged IRS8997 projects all four ordered parts and derived totals", (
   );
 });
 
-Deno.test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pages", () => {
+test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pages", () => {
   const instance = stagedForm8997Pdf.instances?.(
     { ...source },
     undefined,
@@ -184,7 +187,7 @@ Deno.test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pag
   assertEquals(stagedForm8997Pdf.fields.length, 141);
 });
 
-Deno.test("staged Form 8997 PDF rejects unsupported exception events", () => {
+test("staged Form 8997 PDF rejects unsupported exception events", () => {
   const overflowing = structuredClone(source);
   for (let index = 0; index < 5; index++) {
     overflowing.investment_lots[0].events.push({
@@ -209,7 +212,7 @@ Deno.test("staged Form 8997 PDF rejects unsupported exception events", () => {
   );
 });
 
-Deno.test("staged Form 8997 rejects a missing executor Schedule D transaction", () => {
+test("staged Form 8997 rejects a missing executor Schedule D transaction", () => {
   assertThrows(
     () => buildStagedIRS8997({ ...pending, schedule_d: {} }),
     Error,
@@ -217,7 +220,7 @@ Deno.test("staged Form 8997 rejects a missing executor Schedule D transaction", 
   );
 });
 
-Deno.test("staged Form 8997 rejects a Form 8949 arithmetic mismatch", () => {
+test("staged Form 8997 rejects a Form 8949 arithmetic mismatch", () => {
   const changed = structuredClone(pending) as Record<
     string,
     Record<string, unknown>
@@ -231,7 +234,7 @@ Deno.test("staged Form 8997 rejects a Form 8949 arithmetic mismatch", () => {
   );
 });
 
-Deno.test("staged Form 8997 rejects a matching but wrong-character code Z row", () => {
+test("staged Form 8997 rejects a matching but wrong-character code Z row", () => {
   const changed = structuredClone(pending) as Record<
     string,
     Record<string, unknown>
@@ -253,7 +256,7 @@ Deno.test("staged Form 8997 rejects a matching but wrong-character code Z row", 
   );
 });
 
-Deno.test("staged Form 8997 rejects an unlinked executor code Y row", () => {
+test("staged Form 8997 rejects an unlinked executor code Y row", () => {
   const extra = {
     ...filedRows[2],
     source_transaction_id: "unlinked-y",
@@ -325,7 +328,7 @@ const continuationFiler = {
   primarySSN: "111223333",
 } as FilerIdentity;
 
-Deno.test("staged Form 8997 retains every overflow row across all four parts and multiple pages", async () => {
+test("staged Form 8997 retains every overflow row across all four parts and multiple pages", async () => {
   const many = repeatedPending(17);
   const projected =
     stagedForm8997Pdf.instances!({}, continuationFiler, many)[0];
@@ -345,11 +348,11 @@ Deno.test("staged Form 8997 retains every overflow row across all four parts and
     many,
   );
   assertEquals(document.getPageCount(), 10);
-  const temp = await Deno.makeTempDir({ prefix: "form8997-continuation-" });
+  const temp = await sys.makeTempDir({ prefix: "form8997-continuation-" });
   try {
     const path = `${temp}/continuation.pdf`;
-    await Deno.writeFile(path, await document.save());
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -382,11 +385,11 @@ Deno.test("staged Form 8997 retains every overflow row across all four parts and
     assertStringIncludes(text, "continuation page 4 of 4");
     assertStringIncludes(text, "short-term 300,000 / long-term 560,000");
   } finally {
-    await Deno.remove(temp, { recursive: true });
+    await sys.remove(temp, { recursive: true });
   }
 });
 
-Deno.test("staged Form 8997 requires matching source projection and identity for overflow", async () => {
+test("staged Form 8997 requires matching source projection and identity for overflow", async () => {
   const many = repeatedPending(6);
   const projected =
     stagedForm8997Pdf.instances!({}, continuationFiler, many)[0];
@@ -428,7 +431,7 @@ Deno.test("staged Form 8997 requires matching source projection and identity for
   );
 });
 
-Deno.test("staged Form 8997 five-row boundary adds no continuation and zero line-1 totals", async () => {
+test("staged Form 8997 five-row boundary adds no continuation and zero line-1 totals", async () => {
   const five = repeatedPending(5);
   const holding = five.f8997 as unknown as Form8997Input;
   holding.investment_lots = holding.investment_lots.filter((lot) =>

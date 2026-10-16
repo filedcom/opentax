@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm5884,
@@ -16,7 +17,7 @@ import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f89
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("owned-farm-wotc-loss")
 );
-Deno.test("actual loss farm full reduction owner SE QBI carryforward and current-use amounts", () => {
+test("actual loss farm full reduction owner SE QBI carryforward and current-use amounts", () => {
   assertEquals(fixtures.length, 6);
   const expected = [
     [-10000, 30001, 1413, 3718, 0, 2400, 19595],
@@ -68,7 +69,7 @@ Deno.test("actual loss farm full reduction owner SE QBI carryforward and current
       );}
   }
 });
-Deno.test("loss farm public rejects wage-credit source omission and resolved-loss scope conflicts", async () => {
+test("loss farm public rejects wage-credit source omission and resolved-loss scope conflicts", async () => {
   const f = fixtures[0];
   for (
     const change of [
@@ -92,7 +93,7 @@ Deno.test("loss farm public rejects wage-credit source omission and resolved-los
     }
   }
 });
-Deno.test("loss netting companion and zero-deduction loss rows reject native PDF tampering", () => {
+test("loss netting companion and zero-deduction loss rows reject native PDF tampering", () => {
   for (const f of fixtures) {
     const original = normalizeAllPending(
       f1040_2025.executeReturn(f.inputs).pending,

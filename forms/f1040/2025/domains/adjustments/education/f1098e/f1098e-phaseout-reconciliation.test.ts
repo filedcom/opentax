@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -40,7 +41,7 @@ function withStudentInterest(
   return buildPending(result.pending);
 }
 
-Deno.test("single 1098-E phaseout reaches one Schedule 1 and Form 1040 amount in both exports", async () => {
+test("single 1098-E phaseout reaches one Schedule 1 and Form 1040 amount in both exports", async () => {
   const pending = withStudentInterest(single, [90_000]);
   assertEquals(pending.schedule1?.line21_student_loan_interest, 1_667);
   assertEquals(pending.schedule1?.line26_total_adjustments, 1_667);
@@ -77,7 +78,7 @@ Deno.test("single 1098-E phaseout reaches one Schedule 1 and Form 1040 amount in
   );
 });
 
-Deno.test("joint 1098-E uses the TY2025 $170,000 to $200,000 phaseout", () => {
+test("joint 1098-E uses the TY2025 $170,000 to $200,000 phaseout", () => {
   for (
     const [firstWages, expected] of [
       [128_000, 2_500],
@@ -95,7 +96,7 @@ Deno.test("joint 1098-E uses the TY2025 $170,000 to $200,000 phaseout", () => {
   }
 });
 
-Deno.test("positive 1098-E needs an issued lender and the filed borrower in both exports", async () => {
+test("positive 1098-E needs an issued lender and the filed borrower in both exports", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const issued = pending.f1098e!.f1098es![0];
   for (
@@ -122,7 +123,7 @@ Deno.test("positive 1098-E needs an issued lender and the filed borrower in both
   }
 });
 
-Deno.test("full-TIN 1098-E checks a supplied borrower name in both exports", async () => {
+test("full-TIN 1098-E checks a supplied borrower name in both exports", async () => {
   for (
     const [fixture, wages, borrowerTin, matchingName, wrongName] of [
       [single, [90_000], "111-22-3333", "Alex Example", "Other Example"],
@@ -171,7 +172,7 @@ Deno.test("full-TIN 1098-E checks a supplied borrower name in both exports", asy
   }
 });
 
-Deno.test("same-account 1098-E copies with different references reject both exports", async () => {
+test("same-account 1098-E copies with different references reject both exports", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const issued = {
     ...pending.f1098e!.f1098es![0],
@@ -195,7 +196,7 @@ Deno.test("same-account 1098-E copies with different references reject both expo
   );
 });
 
-Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", async () => {
+test("1098-E box 1 and retained AGI source cannot drift at final export", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const changed = {
     ...pending,
@@ -220,7 +221,7 @@ Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", a
   );
 });
 
-Deno.test("1098-E final export replays the phaseout from retained AGI inputs", async () => {
+test("1098-E final export replays the phaseout from retained AGI inputs", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const altered = {
     ...pending,
@@ -238,7 +239,7 @@ Deno.test("1098-E final export replays the phaseout from retained AGI inputs", a
   );
 });
 
-Deno.test("joint 1098-E accepts a reviewed masked spouse copy and rejects ambiguous ownership", async () => {
+test("joint 1098-E accepts a reviewed masked spouse copy and rejects ambiguous ownership", async () => {
   const masked = {
     box1_student_loan_interest: 2_500,
     lender_name: "Example Loan Servicer",
@@ -276,7 +277,7 @@ Deno.test("joint 1098-E accepts a reviewed masked spouse copy and rejects ambigu
   }
 });
 
-Deno.test("1098-E rejects one issued copy entered with both masked and full borrower TIN", async () => {
+test("1098-E rejects one issued copy entered with both masked and full borrower TIN", async () => {
   const masked = {
     box1_student_loan_interest: 1_250,
     lender_name: "Example Loan Servicer",
@@ -300,7 +301,7 @@ Deno.test("1098-E rejects one issued copy entered with both masked and full borr
   );
 });
 
-Deno.test("1098-E rejects same loan with masked and full owner under different references", async () => {
+test("1098-E rejects same loan with masked and full owner under different references", async () => {
   const masked = {
     box1_student_loan_interest: 1_250,
     lender_name: "Example Loan Servicer",
@@ -326,7 +327,7 @@ Deno.test("1098-E rejects same loan with masked and full owner under different r
   );
 });
 
-Deno.test("Form 2555 excluded wages stay in student-loan MAGI through both exports", async () => {
+test("Form 2555 excluded wages stay in student-loan MAGI through both exports", async () => {
   const domesticW2 = (single.inputs.w2 as Array<Record<string, unknown>>)[0];
   const foreign2555 = foreign.inputs.form2555 as Record<string, unknown>;
   const details = foreign2555.filing_details as Record<string, unknown>;
@@ -357,7 +358,7 @@ Deno.test("Form 2555 excluded wages stay in student-loan MAGI through both expor
   assert((await buildPdfBytes(pending, foreign.filer)).length > 100_000);
 });
 
-Deno.test("sub-$600 student-loan payment ledger reaches both exports without Form 1098-E", async () => {
+test("sub-$600 student-loan payment ledger reaches both exports without Form 1098-E", async () => {
   const ledger = {
     lender_name: "Example Loan Servicer",
     loan_account_number: "student-loan-1",
@@ -509,7 +510,7 @@ Deno.test("sub-$600 student-loan payment ledger reaches both exports without For
   );
 });
 
-Deno.test("separate 1098-E and sub-threshold lender ledgers combine once", async () => {
+test("separate 1098-E and sub-threshold lender ledgers combine once", async () => {
   const ledger = {
     lender_name: "Second Loan Servicer",
     loan_account_number: "second-loan-1",
@@ -553,7 +554,7 @@ Deno.test("separate 1098-E and sub-threshold lender ledgers combine once", async
   assert((await buildPdfBytes(pending, single.filer)).length > 100_000);
 });
 
-Deno.test("reviewed corrected 1098-E uses only the replacement amount", async () => {
+test("reviewed corrected 1098-E uses only the replacement amount", async () => {
   const corrected = {
     box1_student_loan_interest: 900,
     lender_name: "Example Loan Servicer",

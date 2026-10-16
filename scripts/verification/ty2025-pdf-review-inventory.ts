@@ -1,3 +1,4 @@
+import * as sys from "../support/sys.ts";
 import { join } from "@std/path";
 
 /** Require the generated review packet to contain exactly its declared artifacts. */
@@ -12,7 +13,7 @@ export async function assertReviewArtifactInventory(
     }
   }
   const foundFiles = new Set<string>();
-  for await (const entry of Deno.readDir(directory)) {
+  for await (const entry of sys.readDir(directory)) {
     if (entry.name === "irs-pdf-cache" && entry.isDirectory) continue;
     if (!expectedFiles.has(entry.name)) {
       throw new Error(`Unexpected review packet entry: ${entry.name}`);
@@ -28,7 +29,7 @@ export async function assertReviewArtifactInventory(
     if (!foundFiles.has(fileName)) {
       throw new Error(`Review packet artifact is missing: ${fileName}`);
     }
-    const info = await Deno.lstat(join(directory, fileName));
+    const info = await sys.lstat(join(directory, fileName));
     if (!info.isFile || info.isSymlink) {
       throw new Error(
         `Review packet artifact is not a regular file: ${fileName}`,

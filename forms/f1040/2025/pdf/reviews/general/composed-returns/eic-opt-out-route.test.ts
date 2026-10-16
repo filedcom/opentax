@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
-Deno.test("retained EIC opt-out reaches final Form 1040, native XML, and filled PDF", async () => {
+test("retained EIC opt-out reaches final Form 1040, native XML, and filled PDF", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-w2-eic-opt-out"
   )!;

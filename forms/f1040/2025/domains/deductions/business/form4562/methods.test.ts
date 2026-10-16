@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -13,7 +14,7 @@ import { DepreciationMethod } from "../../../../../nodes/intermediate/forms/dedu
 import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
 import { methodCases, methodElectionInput } from "./methods.fixture.ts";
 
-Deno.test("Reviewed MACRS methods join bonus, business credit, Schedule C, SE/QBI and native returns", async () => {
+test("Reviewed MACRS methods join bonus, business credit, Schedule C, SE/QBI and native returns", async () => {
   for (const scenario of methodCases) {
     const input = methodElectionInput(scenario);
     const before = JSON.stringify(input);
@@ -55,7 +56,7 @@ Deno.test("Reviewed MACRS methods join bonus, business credit, Schedule C, SE/QB
   }
 });
 
-Deno.test("MACRS method choices require real, authorized, timely and complete class review", () => {
+test("MACRS method choices require real, authorized, timely and complete class review", () => {
   const inventory =
     methodElectionInput(methodCases[3]).form4562.current_year_inventory;
   const review = inventory.method_election;
@@ -128,7 +129,7 @@ Deno.test("MACRS method choices require real, authorized, timely and complete cl
   );
 });
 
-Deno.test("Straight-line GDS covers all six classes and all mid-quarter fractions", () => {
+test("Straight-line GDS covers all six classes and all mid-quarter fractions", () => {
   const source =
     methodElectionInput(methodCases[1]).form4562.current_year_inventory;
   const { form8911_property_reference: _p, ...asset } = source.assets[0];
@@ -195,7 +196,7 @@ Deno.test("Straight-line GDS covers all six classes and all mid-quarter fraction
   }
 });
 
-Deno.test("Filed method and deduction tampering rejects before printable return preparation", async () => {
+test("Filed method and deduction tampering rejects before printable return preparation", async () => {
   const result = f1040_2025.executeReturn(methodElectionInput(methodCases[0]));
   assertEquals(result.diagnostics, []);
   const filed = filedCurrentYearSchema.parse(result.pending.form4562);

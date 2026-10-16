@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 // Black-box tests for the SSA node (SSA-1099 Social Security Benefit Statement).
 // Generated from research/context.md only — never read index.ts.
 // If a test fails, fix the implementation, not the test.
@@ -32,52 +33,52 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("ssa1099.inputSchema: rejects empty ssas array", () => {
+test("ssa1099.inputSchema: rejects empty ssas array", () => {
   const parsed = ssa1099.inputSchema.safeParse({ ssas: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("ssa1099.inputSchema: accepts minimal valid item", () => {
+test("ssa1099.inputSchema: accepts minimal valid item", () => {
   const parsed = ssa1099.inputSchema.safeParse({ ssas: [minimalItem()] });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("ssa1099.inputSchema: rejects negative box3_gross_benefits", () => {
+test("ssa1099.inputSchema: rejects negative box3_gross_benefits", () => {
   const parsed = ssa1099.inputSchema.safeParse({
     ssas: [minimalItem({ box3_gross_benefits: -1 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("ssa1099.inputSchema: rejects negative box4_repaid", () => {
+test("ssa1099.inputSchema: rejects negative box4_repaid", () => {
   const parsed = ssa1099.inputSchema.safeParse({
     ssas: [minimalItem({ box4_repaid: -100 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("ssa1099.inputSchema: rejects negative box6_federal_withheld", () => {
+test("ssa1099.inputSchema: rejects negative box6_federal_withheld", () => {
   const parsed = ssa1099.inputSchema.safeParse({
     ssas: [minimalItem({ box6_federal_withheld: -50 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("ssa1099.inputSchema: accepts item with only required fields", () => {
+test("ssa1099.inputSchema: accepts item with only required fields", () => {
   const parsed = ssa1099.inputSchema.safeParse({
     ssas: [{ payer_name: "SSA", box3_gross_benefits: 12000 }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("ssa1099.inputSchema: accepts item with box4_repaid omitted (treats as 0)", () => {
+test("ssa1099.inputSchema: accepts item with box4_repaid omitted (treats as 0)", () => {
   const parsed = ssa1099.inputSchema.safeParse({
     ssas: [minimalItem({ box3_gross_benefits: 10000 })],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("SSA and RRB benefit statements reject a repeated issued-copy reference", () => {
+test("SSA and RRB benefit statements reject a repeated issued-copy reference", () => {
   const first = minimalItem({
     box3_gross_benefits: 4_000,
     recipient_tin: "111223333",
@@ -113,7 +114,7 @@ Deno.test("SSA and RRB benefit statements reject a repeated issued-copy referenc
   ]);
 });
 
-Deno.test("ssa1099 rejects a box 5 that contradicts boxes 3 and 4", () => {
+test("ssa1099 rejects a box 5 that contradicts boxes 3 and 4", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -126,7 +127,7 @@ Deno.test("ssa1099 rejects a box 5 that contradicts boxes 3 and 4", () => {
   );
 });
 
-Deno.test("ssa1099 compares issued boxes at cent precision", () => {
+test("ssa1099 compares issued boxes at cent precision", () => {
   assertEquals(
     ssa1099.inputSchema.safeParse({
       ssas: [{
@@ -139,7 +140,7 @@ Deno.test("ssa1099 compares issued boxes at cent precision", () => {
   );
 });
 
-Deno.test("RRB-1099 box 5 offsets SSA-1099 box 5 and box 10 carries withholding", () => {
+test("RRB-1099 box 5 offsets SSA-1099 box 5 and box 10 carries withholding", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 5_000 }),
     minimalItem({
@@ -154,7 +155,7 @@ Deno.test("RRB-1099 box 5 offsets SSA-1099 box 5 and box 10 carries withholding"
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 100);
 });
 
-Deno.test("SSA and RRB issued withholding boxes cannot be exchanged", () => {
+test("SSA and RRB issued withholding boxes cannot be exchanged", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -178,19 +179,19 @@ Deno.test("SSA and RRB issued withholding boxes cannot be exchanged", () => {
 // 2. Per-Box Routing
 // =============================================================================
 
-Deno.test("ssa.compute: box3_gross_benefits routes net to f1040 line6a_ss_gross", () => {
+test("ssa.compute: box3_gross_benefits routes net to f1040 line6a_ss_gross", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 15000 })]);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 15000);
 });
 
-Deno.test("ssa.compute: box3=0 produces no f1040 output", () => {
+test("ssa.compute: box3=0 produces no f1040 output", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 0 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out, undefined);
 });
 
-Deno.test("ssa.compute: box4_repaid reduces line6a_ss_gross", () => {
+test("ssa.compute: box4_repaid reduces line6a_ss_gross", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000, box4_repaid: 2000 }),
   ]);
@@ -198,7 +199,7 @@ Deno.test("ssa.compute: box4_repaid reduces line6a_ss_gross", () => {
   assertEquals(input.line6a_ss_gross, 8000);
 });
 
-Deno.test("ssa.compute: box6_federal_withheld routes to f1040 line25b_withheld_1099", () => {
+test("ssa.compute: box6_federal_withheld routes to f1040 line25b_withheld_1099", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 12000, box6_federal_withheld: 1200 }),
   ]);
@@ -206,7 +207,7 @@ Deno.test("ssa.compute: box6_federal_withheld routes to f1040 line25b_withheld_1
   assertEquals(input.line25b_withheld_1099, 1200);
 });
 
-Deno.test("ssa.compute: box6_federal_withheld=0 does not add line25b to output", () => {
+test("ssa.compute: box6_federal_withheld=0 does not add line25b to output", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 12000, box6_federal_withheld: 0 }),
   ]);
@@ -214,7 +215,7 @@ Deno.test("ssa.compute: box6_federal_withheld=0 does not add line25b to output",
   assertEquals(f1040Fields?.line25b_withheld_1099, undefined);
 });
 
-Deno.test("ssa.compute: box3 and box6 on same item emit single f1040 output with both fields", () => {
+test("ssa.compute: box3 and box6 on same item emit single f1040 output with both fields", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 18000, box6_federal_withheld: 1800 }),
   ]);
@@ -229,7 +230,7 @@ Deno.test("ssa.compute: box3 and box6 on same item emit single f1040 output with
 // 3. Aggregation
 // =============================================================================
 
-Deno.test("ssa.compute: two items — line6a_ss_gross sums both nets", () => {
+test("ssa.compute: two items — line6a_ss_gross sums both nets", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000 }),
     minimalItem({ box3_gross_benefits: 5000 }),
@@ -238,7 +239,7 @@ Deno.test("ssa.compute: two items — line6a_ss_gross sums both nets", () => {
   assertEquals(input.line6a_ss_gross, 15000);
 });
 
-Deno.test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amounts", () => {
+test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amounts", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 8000, box6_federal_withheld: 800 }),
     minimalItem({ box3_gross_benefits: 6000, box6_federal_withheld: 400 }),
@@ -247,7 +248,7 @@ Deno.test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amoun
   assertEquals(input.line25b_withheld_1099, 1200);
 });
 
-Deno.test("ssa.compute: a negative statement offsets another statement before line6a", () => {
+test("ssa.compute: a negative statement offsets another statement before line6a", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 1000, box4_repaid: 2000 }), // net = 0 (clamped)
     minimalItem({ box3_gross_benefits: 5000 }), // net = 5000
@@ -256,7 +257,7 @@ Deno.test("ssa.compute: a negative statement offsets another statement before li
   assertEquals(input.line6a_ss_gross, 4000);
 });
 
-Deno.test("ssa.compute: two items — single merged f1040 output regardless of source", () => {
+test("ssa.compute: two items — single merged f1040 output regardless of source", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 7000, box6_federal_withheld: 700 }),
     minimalItem({ box3_gross_benefits: 3000, box6_federal_withheld: 300 }),
@@ -275,21 +276,21 @@ Deno.test("ssa.compute: two items — single merged f1040 output regardless of s
 // 5. Hard Validation Rules — throws
 // =============================================================================
 
-Deno.test("ssa.compute: throws on negative box3_gross_benefits", () => {
+test("ssa.compute: throws on negative box3_gross_benefits", () => {
   assertThrows(
     () => compute([minimalItem({ box3_gross_benefits: -1 })]),
     Error,
   );
 });
 
-Deno.test("ssa.compute: throws on negative box4_repaid", () => {
+test("ssa.compute: throws on negative box4_repaid", () => {
   assertThrows(
     () => compute([minimalItem({ box4_repaid: -100 })]),
     Error,
   );
 });
 
-Deno.test("ssa.compute: throws on negative box6_federal_withheld", () => {
+test("ssa.compute: throws on negative box6_federal_withheld", () => {
   assertThrows(
     () => compute([minimalItem({ box6_federal_withheld: -50 })]),
     Error,
@@ -297,12 +298,12 @@ Deno.test("ssa.compute: throws on negative box6_federal_withheld", () => {
 });
 
 // Boundary pass — zero values are valid
-Deno.test("ssa.compute: zero box3_gross_benefits produces no output", () => {
+test("ssa.compute: zero box3_gross_benefits produces no output", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("ssa.compute: zero box6_federal_withheld still routes line6a from gross", () => {
+test("ssa.compute: zero box6_federal_withheld still routes line6a from gross", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000, box6_federal_withheld: 0 }),
   ]);
@@ -321,7 +322,7 @@ Deno.test("ssa.compute: zero box6_federal_withheld still routes line6a from gros
 // 7. Informational Fields — must NOT produce additional tax outputs
 // =============================================================================
 
-Deno.test("ssa.compute: is_rrb flag does not change output compared to SSA-1099", () => {
+test("ssa.compute: is_rrb flag does not change output compared to SSA-1099", () => {
   const resultSsa = compute([minimalItem({ box3_gross_benefits: 12000 })]);
   const resultRrb = compute([
     minimalItem({ box3_gross_benefits: 12000, is_rrb: true }),
@@ -332,7 +333,7 @@ Deno.test("ssa.compute: is_rrb flag does not change output compared to SSA-1099"
   assertEquals(ssaInput.line6a_ss_gross, rrbInput.line6a_ss_gross);
 });
 
-Deno.test("ssa.compute: payer_name alone does not produce tax output", () => {
+test("ssa.compute: payer_name alone does not produce tax output", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -341,7 +342,7 @@ Deno.test("ssa.compute: payer_name alone does not produce tax output", () => {
 // 8. Edge Cases
 // =============================================================================
 
-Deno.test("ssa.compute: all items have net=0 — no f1040 output", () => {
+test("ssa.compute: all items have net=0 — no f1040 output", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 0 }),
     minimalItem({ box3_gross_benefits: 0 }),
@@ -350,7 +351,7 @@ Deno.test("ssa.compute: all items have net=0 — no f1040 output", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("ssa.compute: negative aggregate needs repayment review", () => {
+test("ssa.compute: negative aggregate needs repayment review", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -363,7 +364,7 @@ Deno.test("ssa.compute: negative aggregate needs repayment review", () => {
   );
 });
 
-Deno.test("ssa.compute: repayment on one item offsets the other item's net", () => {
+test("ssa.compute: repayment on one item offsets the other item's net", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 500, box4_repaid: 1000 }), // net = -500
     minimalItem({ box3_gross_benefits: 8000 }), // net = 8000
@@ -372,7 +373,7 @@ Deno.test("ssa.compute: repayment on one item offsets the other item's net", () 
   assertEquals(input.line6a_ss_gross, 7500);
 });
 
-Deno.test("ssa.compute: box3 and box6 on different items produce single merged f1040 output with both fields", () => {
+test("ssa.compute: box3 and box6 on different items produce single merged f1040 output with both fields", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000 }),
     minimalItem({ box3_gross_benefits: 0, box6_federal_withheld: 500 }),
@@ -384,7 +385,7 @@ Deno.test("ssa.compute: box3 and box6 on different items produce single merged f
   assertEquals(fields.line25b_withheld_1099, 500);
 });
 
-Deno.test("ssa.compute: RRB-1099 treated same as SSA-1099 for routing", () => {
+test("ssa.compute: RRB-1099 treated same as SSA-1099 for routing", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 20000, is_rrb: true }),
   ]);
@@ -396,7 +397,7 @@ Deno.test("ssa.compute: RRB-1099 treated same as SSA-1099 for routing", () => {
 // 9. Smoke Test — comprehensive scenario
 // =============================================================================
 
-Deno.test("ssa.compute: smoke test — taxpayer and spouse SSA-1099s with withholding", () => {
+test("ssa.compute: smoke test — taxpayer and spouse SSA-1099s with withholding", () => {
   // Taxpayer: received $18,000, repaid $500, withheld $1,800
   // Spouse: received $12,000, no repayment, withheld $600
   const result = compute([

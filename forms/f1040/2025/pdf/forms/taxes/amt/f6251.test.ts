@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form8992Filer } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
@@ -33,7 +34,7 @@ const seniorReturn = {
 };
 const seniorPending = { f1040: seniorReturn, schedule1a: seniorSource };
 
-Deno.test("Form 6251 PDF maps signed estate/trust adjustment to line 2j", () => {
+test("Form 6251 PDF maps signed estate/trust adjustment to line 2j", () => {
   assertEquals(
     form6251Pdf.fields.find((field) =>
       field.domainKey === "line2j_estates_and_trusts"
@@ -42,7 +43,7 @@ Deno.test("Form 6251 PDF maps signed estate/trust adjustment to line 2j", () => 
   );
 });
 
-Deno.test("Form 6251 PDF maps signed Form 8949 basis difference to line 2k", () => {
+test("Form 6251 PDF maps signed Form 8949 basis difference to line 2k", () => {
   assertEquals(
     form6251Pdf.fields.find((field) => field.domainKey === "line2k_disposition")
       ?.pdfField,
@@ -50,7 +51,7 @@ Deno.test("Form 6251 PDF maps signed Form 8949 basis difference to line 2k", () 
   );
 });
 
-Deno.test("Form 6251 PDF maps the positive refund to line 2b's parenthetical field", () => {
+test("Form 6251 PDF maps the positive refund to line 2b's parenthetical field", () => {
   assertEquals(
     form6251Pdf.fields.find((field) => field.domainKey === "line2b_tax_refund")
       ?.pdfField,
@@ -58,7 +59,7 @@ Deno.test("Form 6251 PDF maps the positive refund to line 2b's parenthetical fie
   );
 });
 
-Deno.test("Form 6251 PDF maps signed depletion to line 2d", () => {
+test("Form 6251 PDF maps signed depletion to line 2d", () => {
   assertEquals(
     form6251Pdf.fields.find((field) => field.domainKey === "line2d_depletion")
       ?.pdfField,
@@ -66,7 +67,7 @@ Deno.test("Form 6251 PDF maps signed depletion to line 2d", () => {
   );
 });
 
-Deno.test("Form 6251 PDF maps signed circulation costs to line 2o", () => {
+test("Form 6251 PDF maps signed circulation costs to line 2o", () => {
   assertEquals(
     form6251Pdf.fields.find((field) =>
       field.domainKey === "line2o_circulation_costs"
@@ -75,7 +76,7 @@ Deno.test("Form 6251 PDF maps signed circulation costs to line 2o", () => {
   );
 });
 
-Deno.test("Form 6251 PDF rejects mixed adjustments instead of labeling them line 3", () => {
+test("Form 6251 PDF rejects mixed adjustments instead of labeling them line 3", () => {
   assertEquals(
     form6251Pdf.fields.some((field) => field.domainKey === "other_adjustments"),
     false,
@@ -89,7 +90,7 @@ Deno.test("Form 6251 PDF rejects mixed adjustments instead of labeling them line
   }
 });
 
-Deno.test("Form 6251 PDF maps signed line 1b, Part II, Part III, and filer header to verified widgets", () => {
+test("Form 6251 PDF maps signed line 1b, Part II, Part III, and filer header to verified widgets", () => {
   const mapped = (key: string) =>
     form6251Pdf.fields.find((field) => field.domainKey === key)?.pdfField;
   assertEquals(
@@ -111,7 +112,7 @@ Deno.test("Form 6251 PDF maps signed line 1b, Part II, Part III, and filer heade
   );
 });
 
-Deno.test("Form 6251 PDF retains Part III exactly when a mapped Page 2 field prints", () => {
+test("Form 6251 PDF retains Part III exactly when a mapped Page 2 field prints", () => {
   const pageOne = { tentative_tax: 1_000, regular_tax: 0, line11_amt: 1_000 };
   assertEquals(form6251Pdf.pageIndices?.(pageOne), [0]);
   assertEquals(form6251Pdf.pageIndices?.({ ...pageOne, line12: 0 }), [0]);
@@ -127,7 +128,7 @@ Deno.test("Form 6251 PDF retains Part III exactly when a mapped Page 2 field pri
   }
 });
 
-Deno.test("Form 6251 filled PDF drops blank Part III and keeps populated Part III", async () => {
+test("Form 6251 filled PDF drops blank Part III and keeps populated Part III", async () => {
   const pageOne = { tentative_tax: 1_000, regular_tax: 0, line11_amt: 1_000 };
   for (
     const [projected, expectedPages] of [
@@ -155,7 +156,7 @@ Deno.test("Form 6251 filled PDF drops blank Part III and keeps populated Part II
   }
 });
 
-Deno.test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {
+test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {
   const projected = form6251Pdf.projectFields?.(
     { regular_tax_income: 86_000 },
     seniorPending,
@@ -174,7 +175,7 @@ Deno.test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {
   }
 });
 
-Deno.test("Form 6251 PDF rejects missing or contradictory Form 1040 line 1a source", () => {
+test("Form 6251 PDF rejects missing or contradictory Form 1040 line 1a source", () => {
   assertThrows(
     () => form6251Pdf.projectFields?.({ regular_tax_income: 86_000 }, {}),
     Error,
@@ -199,7 +200,7 @@ Deno.test("Form 6251 PDF rejects missing or contradictory Form 1040 line 1a sour
   );
 });
 
-Deno.test("Form 6251 PDF includes negative-adjustment who-must-file case", () => {
+test("Form 6251 PDF includes negative-adjustment who-must-file case", () => {
   assertEquals(
     form6251Pdf.includeWhen?.({
       tentative_tax: 0,
@@ -219,7 +220,7 @@ Deno.test("Form 6251 PDF includes negative-adjustment who-must-file case", () =>
   );
 });
 
-Deno.test("Form 6251 PDF keeps the domestic preferential zero-AMT filing case", () => {
+test("Form 6251 PDF keeps the domestic preferential zero-AMT filing case", () => {
   assertEquals(
     form6251Pdf.includeWhen?.({
       qualified_dividends: 1_000,
@@ -233,7 +234,7 @@ Deno.test("Form 6251 PDF keeps the domestic preferential zero-AMT filing case", 
   );
 });
 
-Deno.test("Form 6251 PDF rejects a contradictory line 9 when line 8 is blank", () => {
+test("Form 6251 PDF rejects a contradictory line 9 when line 8 is blank", () => {
   assertThrows(
     () =>
       form6251Pdf.projectFields?.({

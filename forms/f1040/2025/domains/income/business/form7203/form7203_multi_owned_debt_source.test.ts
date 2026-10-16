@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -11,7 +14,7 @@ import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f720
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of multiOwnedDebtCases) {
-  Deno.test(`MFJ multi-owned direct debt ${c.id}: independent basis, required copies, full XML/PDF`, async () => {
+  test(`MFJ multi-owned direct debt ${c.id}: independent basis, required copies, full XML/PDF`, async () => {
     const { inputs, filer } = multiOwnedDebtInputs(c),
       r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, []);
@@ -99,7 +102,7 @@ for (const c of multiOwnedDebtCases) {
       ),
       doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), c.pages);
-    const textCommand = new Deno.Command("pdftotext", {
+    const textCommand = new sys.Command("pdftotext", {
       args: ["-layout", "-", "-"],
       stdin: "piped",
       stdout: "piped",
@@ -127,7 +130,7 @@ for (const c of multiOwnedDebtCases) {
       origins.filter((o) => o.formKey === "form7203").map((o) => o.formCopy),
       inputs.k1_s_corp.flatMap((_: any, i: number) => [i + 1, i + 1]),
     );
-    const cmd = new Deno.Command("xmllint", {
+    const cmd = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -139,13 +142,9 @@ for (const c of multiOwnedDebtCases) {
     const checked = await cmd.output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_MULTI_DEBT_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_MULTI_DEBT_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [suffix, value] of Object.entries({
@@ -157,17 +156,17 @@ for (const c of multiOwnedDebtCases) {
           expected: c,
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${suffix}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
-Deno.test("Shared/multiple corporations reject incomplete books, owner manifest, allocation and notes", () => {
+test("Shared/multiple corporations reject incomplete books, owner manifest, allocation and notes", () => {
   const mutations: [string, (i: any) => void][] = [
     ["omit spouse source", (i) => i.k1_s_corp.pop()],
     [
@@ -263,7 +262,7 @@ Deno.test("Shared/multiple corporations reject incomplete books, owner manifest,
     assertEquals(rejected, true, kind + " other corporation");
   }
 });
-Deno.test("Shared/multiple owner native and PDF reject missing copies, pooled basis, detached owner/business/carry", async () => {
+test("Shared/multiple owner native and PDF reject missing copies, pooled basis, detached owner/business/carry", async () => {
   const { inputs, filer } = multiOwnedDebtInputs(multiOwnedDebtCases[5]),
     r = f1040_2025.executeReturn(inputs),
     base: any = buildPending(r.pending);

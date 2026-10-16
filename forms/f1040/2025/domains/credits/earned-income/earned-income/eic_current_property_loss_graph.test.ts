@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8582 } from "../../../../mef/forms/income/business/f8582/f8582.ts";
 import { form8582Pdf } from "../../../../pdf/forms/income/business/f8582.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
@@ -28,9 +30,9 @@ function lossInputs(farmIncome: boolean, nonpassive: boolean, above: boolean) {
   return inputs;
 }
 
-Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC and preserve loss character through source-reconciled registered exports", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("source-backed current ordinary sale losses reach finalized AGI/EIC and preserve loss character through source-reconciled registered exports", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
 
   for (
     const c of [
@@ -121,7 +123,7 @@ Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC an
       attachments: [],
     });
     if (output) {
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/graph-${Number(c.farmIncome)}-${Number(c.nonpassive)}-${
           Number(c.above)
         }.json`,
@@ -143,7 +145,7 @@ Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC an
   }
 });
 
-Deno.test("current sale loss requires its reconciled owned source rather than a negative manual sale", () => {
+test("current sale loss requires its reconciled owned source rather than a negative manual sale", () => {
   for (
     const mutate of [
       (i: any) =>

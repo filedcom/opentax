@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { testFiler } from "../../../../2025/mef/execution/test-filer.ts";
 import { inputSchema as form3115InputSchema } from "../../../../nodes/inputs/income/business/f3115/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../../nodes/inputs/income/business/schedule_c/model.ts";
 
-Deno.test("Form 3115 source reaches one Schedule C profit and both projections", () => {
+test("Form 3115 source reaches one Schedule C profit and both projections", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

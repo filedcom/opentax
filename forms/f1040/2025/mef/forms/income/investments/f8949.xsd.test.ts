@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -10,7 +13,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is optional in CI.
@@ -27,13 +30,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name:
-    "XSD: TY2025 Form 8949 keeps all twelve paper boxes in separate MeF groups",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: TY2025 Form 8949 keeps all twelve paper boxes in separate MeF groups", async () => {
   const parts = ["A", "B", "C", "G", "H", "I", "D", "E", "F", "J", "K", "L"];
   const transactions = parts.map((part, index) => ({
     part,
@@ -80,16 +77,16 @@ Deno.test({
     xml,
     "<DateAcquiredInheritedCd>INHERITED</DateAcquiredInheritedCd>",
   );
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

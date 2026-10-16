@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -72,7 +73,7 @@ function filing() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, native, and PDF", async () => {
+test("Form 6251 mining cost workpaper reaches AMT, Schedule 2, Form 1040, native, and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form6251!;

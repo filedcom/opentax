@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { atsSourceReconciliation } from "./ty2025-source-reconciliation.ts";
 import { buildAtsCheckLedger } from "./ty2025-check-ledger.ts";
 import { assertEquals, assertThrows } from "@std/assert";
@@ -11,7 +12,7 @@ import {
 } from "./ty2025-check-replay.ts";
 import { TY2025_ATS_CASES } from "./ty2025_cases.ts";
 
-Deno.test("ATS check replay never treats an absent amount as a calculated zero", () => {
+test("ATS check replay never treats an absent amount as a calculated zero", () => {
   const check = {
     path: "f1040.line24_total_tax",
     expected: 0,
@@ -33,7 +34,7 @@ Deno.test("ATS check replay never treats an absent amount as a calculated zero",
   );
 });
 
-Deno.test("ATS public-entry matrix retains missing prerequisites and printed conflicts across all eight scenarios", async () => {
+test("ATS public-entry matrix retains missing prerequisites and printed conflicts across all eight scenarios", async () => {
   const report = await replayAtsChecks();
   assertEquals(
     report.scenarios.map((s) => s.id),
@@ -288,7 +289,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   );
 });
 
-Deno.test("ATS reconciliation requires a reviewed scenario and protects retained notes from report mutation", () => {
+test("ATS reconciliation requires a reviewed scenario and protects retained notes from report mutation", () => {
   assertThrows(
     () => atsSourceReconciliation("1040-99"),
     Error,

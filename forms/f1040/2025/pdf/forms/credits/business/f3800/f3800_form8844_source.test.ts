@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -85,7 +86,7 @@ const ids = {
   form6251: ["IRS6251_1"],
 };
 
-Deno.test("Form 8844 uses Form 3800 Section B tax limit separately from ordinary credits", () => {
+test("Form 8844 uses Form 3800 Section B tax limit separately from ordinary credits", () => {
   const lines = calculateForm3800Nonpassive({
     filingStatus: FilingStatus.Single,
     regularTax: 6_000,
@@ -106,7 +107,7 @@ Deno.test("Form 8844 uses Form 3800 Section B tax limit separately from ordinary
   assertEquals(lines.line38, 1_500);
 });
 
-Deno.test("Form 8844 direct employer reaches Form 3800, Schedule 3 and Form 1040", () => {
+test("Form 8844 direct employer reaches Form 3800, Schedule 3 and Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -144,7 +145,7 @@ Deno.test("Form 8844 direct employer reaches Form 3800, Schedule 3 and Form 1040
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 2_000);
 });
 
-Deno.test("Form 8844 source binds native Form 3800 line 3 and filled PDF fields", () => {
+test("Form 8844 source binds native Form 3800 line 3 and filled PDF fields", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -173,7 +174,7 @@ Deno.test("Form 8844 source binds native Form 3800 line 3 and filled PDF fields"
   assertEquals(form8844Pdf.projectFields!(empowerment, pending).line2, 2_000);
 });
 
-Deno.test("Form 8844 printable copy binds Form 3800 line 3 document and final credit", () => {
+test("Form 8844 printable copy binds Form 3800 line 3 document and final credit", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -211,7 +212,7 @@ Deno.test("Form 8844 printable copy binds Form 3800 line 3 document and final cr
   );
 });
 
-Deno.test("Form 8844 export rejects changed payroll, tax use and final return", () => {
+test("Form 8844 export rejects changed payroll, tax use and final return", () => {
   assertThrows(
     () =>
       prepareForm3800DocumentParts(f3800, {

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -36,7 +39,7 @@ const source = {
   },
 };
 
-Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and Form 1040", async () => {
+test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and Form 1040", async () => {
   const result = execute(buildExecutionPlan(registry), registry, source, {
     taxYear: 2025,
     formType: "f1040",
@@ -80,8 +83,8 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
     origins,
   );
   const pageCount = (await PDFDocument.load(bytes)).getPageCount();
-  const reviewPath = Deno.env.get("SCHEDULE1A_2555_REVIEW_PDF");
-  if (reviewPath) await Deno.writeFile(reviewPath, bytes);
+  const reviewPath = process.env.SCHEDULE1A_2555_REVIEW_PDF;
+  if (reviewPath) await fs.writeFile(reviewPath, bytes);
   assertEquals(pageCount, origins.length);
   assertEquals(
     new Set(origins.map((page) => page.formKey)),
@@ -92,18 +95,18 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(schema);
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    await sys.stat(schema);
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   } catch (error) {
     throw error;
@@ -152,7 +155,7 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
   );
 });
 
-Deno.test("structured Form 2555 exclusion joins vehicle interest, senior deduction, native XML, and filled PDF", async () => {
+test("structured Form 2555 exclusion joins vehicle interest, senior deduction, native XML, and filled PDF", async () => {
   const combined = {
     ...structuredClone(source),
     schedule1a: {
@@ -202,10 +205,10 @@ Deno.test("structured Form 2555 exclusion joins vehicle interest, senior deducti
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
@@ -216,7 +219,7 @@ Deno.test("structured Form 2555 exclusion joins vehicle interest, senior deducti
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
   const pdf = schedule1aPdf.projectFields!(
     result.pending.schedule1a,
@@ -243,8 +246,8 @@ Deno.test("structured Form 2555 exclusion joins vehicle interest, senior deducti
     new Set(origins.map((page) => page.formKey)),
     new Set(["f1040", "schedule1", "schedule1a", "form2555"]),
   );
-  const reviewPath = Deno.env.get("SCHEDULE1A_2555_VEHICLE_REVIEW_PDF");
-  if (reviewPath) await Deno.writeFile(reviewPath, bytes);
+  const reviewPath = process.env.SCHEDULE1A_2555_VEHICLE_REVIEW_PDF;
+  if (reviewPath) await fs.writeFile(reviewPath, bytes);
   const changedSource = structuredClone(result.pending);
   (changedSource.form2555!.filing_details as { foreign_wages: number })
     .foreign_wages = 50_001;

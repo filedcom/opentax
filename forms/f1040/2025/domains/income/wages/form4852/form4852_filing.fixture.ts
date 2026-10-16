@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { qualifiedRothDocuments } from "../../../../../nodes/inputs/income/wages/f4852/qualified-roth.ts";
 import { iraRecharacterizationDocuments } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts";
 import { addForm4852IraMargin } from "./form4852_ira_margin.ts";
@@ -265,12 +267,12 @@ export async function officialForm4852EvidenceTemplate(
   name: string,
 ): Promise<Uint8Array> {
   const directory = ".state/research/form4852-source";
-  await Deno.mkdir(directory, { recursive: true });
+  await fs.mkdir(directory, { recursive: true });
   const path = `${directory}/${name}.pdf`;
   try {
-    return await Deno.readFile(path);
+    return await sys.readBytes(path);
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    if (!(sys.isNotFound(error))) throw error;
   }
   const response = await fetch(
     `https://www.irs.gov/pub/${name === "f8606-2024" ? "irs-prior" : "irs-pdf"}/${
@@ -281,6 +283,6 @@ export async function officialForm4852EvidenceTemplate(
     throw new Error(`Official source template unavailable: ${name}`);
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
-  await Deno.writeFile(path, bytes);
+  await fs.writeFile(path, bytes);
   return bytes;
 }

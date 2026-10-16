@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995a, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -13,7 +14,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("bounded source: one identified non-SSTB business retains its filing facts", () => {
+test("bounded source: one identified non-SSTB business retains its filing facts", () => {
   const details = {
     business_name: "Smith Design LLC",
     ein: "123456789",
@@ -52,7 +53,7 @@ Deno.test("bounded source: one identified non-SSTB business retains its filing f
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("Schedule C rejects current-year QBI loss before routing", () => {
+test("Schedule C rejects current-year QBI loss before routing", () => {
   assertThrows(
     () =>
       compute({
@@ -65,7 +66,7 @@ Deno.test("Schedule C rejects current-year QBI loss before routing", () => {
   );
 });
 
-Deno.test("validation: rejects negative w2_wages", () => {
+test("validation: rejects negative w2_wages", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.Single,
@@ -76,7 +77,7 @@ Deno.test("validation: rejects negative w2_wages", () => {
   );
 });
 
-Deno.test("validation: rejects positive qbi_loss_carryforward", () => {
+test("validation: rejects positive qbi_loss_carryforward", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.Single,
@@ -87,7 +88,7 @@ Deno.test("validation: rejects positive qbi_loss_carryforward", () => {
   );
 });
 
-Deno.test("validation: accepts all-absent inputs — no outputs", () => {
+test("validation: accepts all-absent inputs — no outputs", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -97,7 +98,7 @@ Deno.test("validation: accepts all-absent inputs — no outputs", () => {
 
 // ── Below-threshold: no wage limitation ──────────────────────────────────────
 
-Deno.test("below threshold: 20% × QBI, no wage limit (single < $197,300)", () => {
+test("below threshold: 20% × QBI, no wage limit (single < $197,300)", () => {
   // taxable_income = 100,000 (below $197,300 single threshold)
   // QBI = 50,000 → 20% = 10,000; income cap = 20% × 100,000 = 20,000
   // No wage limitation below threshold
@@ -111,7 +112,7 @@ Deno.test("below threshold: 20% × QBI, no wage limit (single < $197,300)", () =
   assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
-Deno.test("below threshold MFJ: no wage limit (MFJ < $394,600)", () => {
+test("below threshold MFJ: no wage limit (MFJ < $394,600)", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     taxable_income: 200_000,
@@ -125,7 +126,7 @@ Deno.test("below threshold MFJ: no wage limit (MFJ < $394,600)", () => {
 
 // ── W-2 wages limitation ─────────────────────────────────────────────────────
 
-Deno.test("W-2 limit: 50% of wages applies (above threshold, 50% wages < 20% QBI)", () => {
+test("W-2 limit: 50% of wages applies (above threshold, 50% wages < 20% QBI)", () => {
   // taxable_income = $250,000 single (above $197,300 → reduction_ratio = 1.0 → full limit)
   // QBI = 200,000 → 20% = 40,000
   // W-2 wages = 30,000 → 50% = 15,000; UBIA = 0 → limit = max(15,000, 7,500) = 15,000
@@ -141,7 +142,7 @@ Deno.test("W-2 limit: 50% of wages applies (above threshold, 50% wages < 20% QBI
   assertEquals(out?.fields.line13_qbi_deduction, 15_000);
 });
 
-Deno.test("W-2 limit: UBIA alternative applies (25% wages + 2.5% UBIA > 50% wages)", () => {
+test("W-2 limit: UBIA alternative applies (25% wages + 2.5% UBIA > 50% wages)", () => {
   // taxable_income = $300,000 single (above threshold → full limit)
   // QBI = 200,000 → 20% = 40,000
   // W-2 wages = 20,000 → 50% = 10,000; UBIA = 1,000,000 → 25%×20,000 + 2.5%×1,000,000 = 5,000 + 25,000 = 30,000
@@ -158,7 +159,7 @@ Deno.test("W-2 limit: UBIA alternative applies (25% wages + 2.5% UBIA > 50% wage
   assertEquals(out?.fields.line13_qbi_deduction, 30_000);
 });
 
-Deno.test("W-2 limit: zero wages, zero UBIA → deduction is zero above threshold", () => {
+test("W-2 limit: zero wages, zero UBIA → deduction is zero above threshold", () => {
   // Full wage limit applies, both zero → deduction = 0
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -172,7 +173,7 @@ Deno.test("W-2 limit: zero wages, zero UBIA → deduction is zero above threshol
 
 // ── Phase-in of limitation (partial) ─────────────────────────────────────────
 
-Deno.test("phase-in: 50% through range — partial wage limitation applied", () => {
+test("phase-in: 50% through range — partial wage limitation applied", () => {
   // Single threshold $197,300; TI = $222,300 → excess = $25,000 → ratio = 0.5
   // QBI = 200,000 → 20% = 40,000
   // W-2 wages = 30,000 → 50% = 15,000; UBIA = 0 → limit = 15,000
@@ -191,7 +192,7 @@ Deno.test("phase-in: 50% through range — partial wage limitation applied", () 
   assertEquals(out?.fields.line13_qbi_deduction, 27_500);
 });
 
-Deno.test("phase-in: exactly at threshold — no limitation, full 20%", () => {
+test("phase-in: exactly at threshold — no limitation, full 20%", () => {
   // TI = $197,300 exactly → reduction_ratio = 0 → no wage limitation
   // QBI = 100,000 → 20% = 20,000; income cap = 20% × 197,300 = 39,460 → not binding
   const result = compute({
@@ -204,7 +205,7 @@ Deno.test("phase-in: exactly at threshold — no limitation, full 20%", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 20_000);
 });
 
-Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", () => {
+test("phase-in: MFJ 50% through range ($444,600) — partial limitation", () => {
   // MFJ threshold $394,600; TI = $444,600 → excess = $50,000 → ratio = 0.5
   // QBI = 300,000 → 20% = 60,000
   // W-2 wages = 40,000 → 50% = 20,000; UBIA = 0 → limit = 20,000
@@ -223,7 +224,7 @@ Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", (
 
 // ── Required Schedule A ──────────────────────────────────────────────────────
 
-Deno.test("Schedule A rejects fully phased-out SSTB source", () => {
+test("Schedule A rejects fully phased-out SSTB source", () => {
   assertThrows(
     () =>
       compute({
@@ -238,7 +239,7 @@ Deno.test("Schedule A rejects fully phased-out SSTB source", () => {
   );
 });
 
-Deno.test("Schedule A rejects an SSTB within the phase-in range", () => {
+test("Schedule A rejects an SSTB within the phase-in range", () => {
   assertThrows(
     () =>
       compute({
@@ -253,7 +254,7 @@ Deno.test("Schedule A rejects an SSTB within the phase-in range", () => {
   );
 });
 
-Deno.test("Schedule A source cannot use Form 8995-A below threshold", () => {
+test("Schedule A source cannot use Form 8995-A below threshold", () => {
   assertThrows(
     () =>
       compute({
@@ -269,7 +270,7 @@ Deno.test("Schedule A source cannot use Form 8995-A below threshold", () => {
 
 // ── Mixed qualified businesses ───────────────────────────────────────────────
 
-Deno.test("Schedule A rejects a fully phased-out SSTB beside non-SSTB QBI", () => {
+test("Schedule A rejects a fully phased-out SSTB beside non-SSTB QBI", () => {
   assertThrows(
     () =>
       compute({
@@ -287,7 +288,7 @@ Deno.test("Schedule A rejects a fully phased-out SSTB beside non-SSTB QBI", () =
 
 // ── QBI loss carryforward ─────────────────────────────────────────────────────
 
-Deno.test("Schedule C rejects prior-year QBI loss before routing", () => {
+test("Schedule C rejects prior-year QBI loss before routing", () => {
   assertThrows(
     () =>
       compute({
@@ -302,7 +303,7 @@ Deno.test("Schedule C rejects prior-year QBI loss before routing", () => {
   );
 });
 
-Deno.test("Schedule C rejects excess prior loss even with zero deduction", () => {
+test("Schedule C rejects excess prior loss even with zero deduction", () => {
   assertThrows(
     () =>
       compute({
@@ -317,7 +318,7 @@ Deno.test("Schedule C rejects excess prior loss even with zero deduction", () =>
   );
 });
 
-Deno.test("Schedule B rejects an aggregation election before routing", () => {
+test("Schedule B rejects an aggregation election before routing", () => {
   assertThrows(
     () =>
       compute({
@@ -336,7 +337,7 @@ Deno.test("Schedule B rejects an aggregation election before routing", () => {
   );
 });
 
-Deno.test("Schedule D rejects an affirmative specified cooperative patron", () => {
+test("Schedule D rejects an affirmative specified cooperative patron", () => {
   assertThrows(
     () =>
       compute({
@@ -351,7 +352,7 @@ Deno.test("Schedule D rejects an affirmative specified cooperative patron", () =
   );
 });
 
-Deno.test("Schedule D patron source emits a paired companion and reduced Form 1040 amount", () => {
+test("Schedule D patron source emits a paired companion and reduced Form 1040 amount", () => {
   const base = {
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -396,7 +397,7 @@ Deno.test("Schedule D patron source emits a paired companion and reduced Form 10
   assertEquals(findOutput(result, "form8995a_schedule_d")?.fields, inputSchema.parse(base));
 });
 
-Deno.test("Schedule D rejects allocations beyond the identified business", () => {
+test("Schedule D rejects allocations beyond the identified business", () => {
   assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -433,7 +434,7 @@ Deno.test("Schedule D rejects allocations beyond the identified business", () =>
 
 // ── Taxable income overall cap ────────────────────────────────────────────────
 
-Deno.test("income cap: 20% × (TI - cap_gain) limits deduction", () => {
+test("income cap: 20% × (TI - cap_gain) limits deduction", () => {
   // TI = $300,000 (above threshold); cap_gain = $250,000
   // income_cap_base = 300,000 - 250,000 = 50,000; cap = 20% × 50,000 = 10,000
   // QBI = 200,000; wages = 100,000; 50% wages = 50,000; 20% QBI = 40,000
@@ -451,7 +452,7 @@ Deno.test("income cap: 20% × (TI - cap_gain) limits deduction", () => {
 
 // ── REIT dividends ────────────────────────────────────────────────────────────
 
-Deno.test("REIT: unreviewed dividends do not produce a deduction", () => {
+test("REIT: unreviewed dividends do not produce a deduction", () => {
   assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -459,7 +460,7 @@ Deno.test("REIT: unreviewed dividends do not produce a deduction", () => {
   }), Error, "matching reviewed 1099-DIV source");
 });
 
-Deno.test("REIT: loss carryforward still requires a reviewed dividend source", () => {
+test("REIT: loss carryforward still requires a reviewed dividend source", () => {
   assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -470,7 +471,7 @@ Deno.test("REIT: loss carryforward still requires a reviewed dividend source", (
 
 // ── Output routing ────────────────────────────────────────────────────────────
 
-Deno.test("routing: positive deduction → routes to f1040 with line13_qbi_deduction", () => {
+test("routing: positive deduction → routes to f1040 with line13_qbi_deduction", () => {
   // Below threshold → no wage limit; 20% × 50,000 = 10,000; income cap = 20% × 100,000 = 20,000
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -481,7 +482,7 @@ Deno.test("routing: positive deduction → routes to f1040 with line13_qbi_deduc
   assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
-Deno.test("routing: positive deduction → also routes to standard_deduction with qbi_deduction", () => {
+test("routing: positive deduction → also routes to standard_deduction with qbi_deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxable_income: 100_000,
@@ -491,7 +492,7 @@ Deno.test("routing: positive deduction → also routes to standard_deduction wit
   assertEquals(out?.fields.qbi_deduction, 10_000);
 });
 
-Deno.test("routing: both f1040 and standard_deduction outputs present when deduction > 0", () => {
+test("routing: both f1040 and standard_deduction outputs present when deduction > 0", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxable_income: 100_000,
@@ -500,7 +501,7 @@ Deno.test("routing: both f1040 and standard_deduction outputs present when deduc
   assertEquals(result.outputs.length, 3);
 });
 
-Deno.test("routing: no QBI activity — no outputs", () => {
+test("routing: no QBI activity — no outputs", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
@@ -510,7 +511,7 @@ Deno.test("routing: no QBI activity — no outputs", () => {
 
 // ── Mixed unsupported source ────────────────────────────────────────────────
 
-Deno.test("Schedule A rejects mixed SSTB before any deduction output", () => {
+test("Schedule A rejects mixed SSTB before any deduction output", () => {
   assertThrows(
     () =>
       compute({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { unzipSync, Zip, ZipPassThrough, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
@@ -15,7 +16,7 @@ import {
   zipDirectoryEntryCount,
 } from "./submission-archive.ts";
 
-Deno.test("ZIP entry check accepts a valid data descriptor with placeholder local CRC", async () => {
+test("ZIP entry check accepts a valid data descriptor with placeholder local CRC", async () => {
   const bytes = await new Promise<Uint8Array>((resolve, reject) => {
     const chunks: Uint8Array[] = [];
     const archive = new Zip((error, chunk, final) => {
@@ -81,7 +82,7 @@ Deno.test("ZIP entry check accepts a valid data descriptor with placeholder loca
   }
 });
 
-Deno.test("ZIP entry check rejects unindexed bytes between local entries and directory", () => {
+test("ZIP entry check rejects unindexed bytes between local entries and directory", () => {
   const original = zipSync({
     "fixture.txt": new TextEncoder().encode("declared payload"),
   });
@@ -138,7 +139,7 @@ function filer(): FilerIdentity {
   };
 }
 
-Deno.test("prepared ReturnData rejects a second IRS1040 document", () => {
+test("prepared ReturnData rejects a second IRS1040 document", () => {
   const bundle = {
     xml:
       `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><IRS1040 documentId="IRS10401"></IRS1040></ReturnData></Return>`,
@@ -171,7 +172,7 @@ async function makeSubmissionArchive(
   });
 }
 
-Deno.test("MeF submission refuses an unanswered digital-asset question", async () => {
+test("MeF submission refuses an unanswered digital-asset question", async () => {
   await assertRejects(
     () =>
       makeSubmissionArchive({}, {
@@ -185,7 +186,7 @@ Deno.test("MeF submission refuses an unanswered digital-asset question", async (
   );
 });
 
-Deno.test("MeF submission refuses a missing Form 1040 filing status", async () => {
+test("MeF submission refuses a missing Form 1040 filing status", async () => {
   await assertRejects(
     () =>
       makeSubmissionArchive({ f1040: { digital_assets: false } }, {
@@ -199,7 +200,7 @@ Deno.test("MeF submission refuses a missing Form 1040 filing status", async () =
   );
 });
 
-Deno.test("MeF submission requires reviewed full-year residency for the final filer", async () => {
+test("MeF submission requires reviewed full-year residency for the final filer", async () => {
   const identity = filer();
   const bundle = await buildMefBundle({
     f1040: { filing_status: "single", digital_assets: false },
@@ -262,7 +263,7 @@ Deno.test("MeF submission requires reviewed full-year residency for the final fi
   );
 });
 
-Deno.test("joint MeF submission requires a separately reviewed spouse classification", async () => {
+test("joint MeF submission requires a separately reviewed spouse classification", async () => {
   const identity: FilerIdentity = {
     ...filer(),
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -320,7 +321,7 @@ Deno.test("joint MeF submission requires a separately reviewed spouse classifica
   );
 });
 
-Deno.test("MeF submission preserves a digital-asset Yes answer", async () => {
+test("MeF submission preserves a digital-asset Yes answer", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: true },
   }, {
@@ -340,7 +341,7 @@ Deno.test("MeF submission preserves a digital-asset Yes answer", async () => {
   );
 });
 
-Deno.test("MeF submission ZIP contains manifest, declared return XML, and matching PDF", async () => {
+test("MeF submission ZIP contains manifest, declared return XML, and matching PDF", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const pdfBytes = await pdf.save();
@@ -427,7 +428,7 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   );
 });
 
-Deno.test("A2A packaging rejects reordered inner submission ZIP entries", async () => {
+test("A2A packaging rejects reordered inner submission ZIP entries", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const submission = await makeSubmissionArchive({
@@ -465,7 +466,7 @@ Deno.test("A2A packaging rejects reordered inner submission ZIP entries", async 
   );
 });
 
-Deno.test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipSync", async () => {
+test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipSync", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const submission = await makeSubmissionArchive({
@@ -512,7 +513,7 @@ Deno.test("A2A packaging rejects duplicate physical ZIP entries hidden by unzipS
   );
 });
 
-Deno.test("A2A packaging rejects a local ZIP name that differs from its central name", async () => {
+test("A2A packaging rejects a local ZIP name that differs from its central name", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const submission = await makeSubmissionArchive({
@@ -554,7 +555,7 @@ Deno.test("A2A packaging rejects a local ZIP name that differs from its central 
   );
 });
 
-Deno.test("A2A package rechecks the archived Form 1040 document inventory", async () => {
+test("A2A package rechecks the archived Form 1040 document inventory", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
   }, {
@@ -590,7 +591,7 @@ Deno.test("A2A package rechecks the archived Form 1040 document inventory", asyn
   );
 });
 
-Deno.test("A2A package rejects a processing date changed after archive preparation", async () => {
+test("A2A package rejects a processing date changed after archive preparation", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
   }, {
@@ -613,7 +614,7 @@ Deno.test("A2A package rejects a processing date changed after archive preparati
   );
 });
 
-Deno.test("A2A package replays source, XML, and PDF digests after joint archive changes", async () => {
+test("A2A package replays source, XML, and PDF digests after joint archive changes", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const submission = await makeSubmissionArchive({
@@ -695,7 +696,7 @@ Deno.test("A2A package replays source, XML, and PDF digests after joint archive 
   );
 });
 
-Deno.test("MeF archive and A2A package reject non-PDF attachment bytes even when rehashed", async () => {
+test("MeF archive and A2A package reject non-PDF attachment bytes even when rehashed", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const identity = filer();
@@ -747,7 +748,7 @@ Deno.test("MeF archive and A2A package reject non-PDF attachment bytes even when
   );
 });
 
-Deno.test("A2A package replays retained PDF descriptions against the native manifest", async () => {
+test("A2A package replays retained PDF descriptions against the native manifest", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const submission = await makeSubmissionArchive({
@@ -786,7 +787,7 @@ Deno.test("A2A package replays retained PDF descriptions against the native mani
   );
 });
 
-Deno.test("MeF submission rejects changes after bundle preparation", async () => {
+test("MeF submission rejects changes after bundle preparation", async () => {
   const identity = filer();
   const pdf = await PDFDocument.create();
   pdf.addPage();
@@ -846,7 +847,7 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
   );
 });
 
-Deno.test("MeF archive and A2A package reject a rehashed source that differs from native XML", async () => {
+test("MeF archive and A2A package reject a rehashed source that differs from native XML", async () => {
   const identity = filer();
   const original = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
@@ -887,7 +888,7 @@ Deno.test("MeF archive and A2A package reject a rehashed source that differs fro
   );
 });
 
-Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that differs from its manifest", async () => {
+test("MeF submission archive rejects a digest-consistent XML EFIN that differs from its manifest", async () => {
   const identity = filer();
   const bundle = await buildMefBundle({
     f1040: { filing_status: "single", digital_assets: false },
@@ -915,7 +916,7 @@ Deno.test("MeF submission archive rejects a digest-consistent XML EFIN that diff
   );
 });
 
-Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return", async () => {
+test("Form 3800 PDF and submission ZIP consume one prepared native return", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-general-business-credit"
   )!;
@@ -954,7 +955,7 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
   );
 });
 
-Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", async () => {
+test("MeF submission ZIP includes Form 5695's generated QMID statement", async () => {
   const identity = filer();
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
@@ -992,7 +993,7 @@ Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", as
   );
 });
 
-Deno.test("MeF submission ZIP includes Form 8824 gain statement linked from the form", async () => {
+test("MeF submission ZIP includes Form 8824 gain statement linked from the form", async () => {
   const submission = await makeSubmissionArchive({
     f1040: { filing_status: "single", digital_assets: false },
     form8824: {
@@ -1040,7 +1041,7 @@ Deno.test("MeF submission ZIP includes Form 8824 gain statement linked from the 
   );
 });
 
-Deno.test("A2A request entries match both ZIP attachments in order", async () => {
+test("A2A request entries match both ZIP attachments in order", async () => {
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
   const archives = await Promise.all(
     ids.map((id) =>
@@ -1069,7 +1070,7 @@ Deno.test("A2A request entries match both ZIP attachments in order", async () =>
   }
 });
 
-Deno.test("A2A request omits an absent electronic postmark per Publication 5830", async () => {
+test("A2A request omits an absent electronic postmark per Publication 5830", async () => {
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
   const archives = await Promise.all(ids.map((id) =>
     makeSubmissionArchive({
@@ -1107,7 +1108,7 @@ Deno.test("A2A request omits an absent electronic postmark per Publication 5830"
   }
 });
 
-Deno.test("A2A transmission rejects a submission ZIP changed after preparation", async () => {
+test("A2A transmission rejects a submission ZIP changed after preparation", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const submission = await makeSubmissionArchive({
@@ -1177,7 +1178,7 @@ Deno.test("A2A transmission rejects a submission ZIP changed after preparation",
   );
 });
 
-Deno.test("MeF submission ZIP rejects missing filing credentials and malformed IDs", async () => {
+test("MeF submission ZIP rejects missing filing credentials and malformed IDs", async () => {
   const valid = filer();
   await assertRejects(
     () =>
@@ -1214,7 +1215,7 @@ Deno.test("MeF submission ZIP rejects missing filing credentials and malformed I
   );
 });
 
-Deno.test("MeF A2A package rejects an empty or duplicate submission set", async () => {
+test("MeF A2A package rejects an empty or duplicate submission set", async () => {
   assertThrows(
     () => buildMefTransmissionPackage([]),
     Error,

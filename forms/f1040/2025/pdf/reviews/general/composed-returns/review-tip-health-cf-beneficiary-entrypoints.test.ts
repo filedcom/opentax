@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import metadata from "./review-tip-health-cf-beneficiary.metadata.json" with {
   type: "json",
@@ -11,7 +13,7 @@ for (
     "../../deductions/business/form8995-qualified-tips.fixture.ts",
   ]
 ) {
-  Deno.test(`review source entrypoint ${entry} initializes retained packet catalog`, async () => {
+  test(`review source entrypoint ${entry} initializes retained packet catalog`, async () => {
     const code = `await import(${
       JSON.stringify(new URL(entry, import.meta.url).href)
     });
@@ -22,7 +24,7 @@ for (
         if(pdfReviewFixtures.filter(f=>f.id===id).length!==1) throw Error('retained packet inventory '+id);
       }
       console.log('eighteen retained packets ready');`;
-    const result = await new Deno.Command(Deno.execPath(), {
+    const result = await new sys.Command(process.execPath, {
       args: ["eval", code],
       stdout: "piped",
       stderr: "piped",

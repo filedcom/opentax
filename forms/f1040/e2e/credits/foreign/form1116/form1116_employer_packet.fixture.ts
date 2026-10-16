@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -60,10 +62,10 @@ export async function verifyEmployerPacket(
   );
   assertEquals(origins.filter((p) => p.formKey === "form_1116").length, 3);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 7);
-  const textPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const textPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(textPath, pdf);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(textPath, pdf);
+    const result = await new sys.Command("pdftotext", {
       args: ["-f", "6", "-l", "6", textPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -90,15 +92,15 @@ export async function verifyEmployerPacket(
       ]
     ) assertStringIncludes(printed, expected);
   } finally {
-    await Deno.remove(textPath);
+    await sys.remove(textPath);
   }
-  const root = Deno.env.get("OPENTAX_FORM1116_EMPLOYER_PROOF_DIR");
+  const root = process.env.OPENTAX_FORM1116_EMPLOYER_PROOF_DIR;
   if (root) {
-    await Deno.mkdir(root, { recursive: true });
+    await fs.mkdir(root, { recursive: true });
     const id = `${employerCount}-employers`;
-    await Deno.writeFile(`${root}/${id}.pdf`, pdf);
-    await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${id}.pdf`, pdf);
+    await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${root}/${id}.json`,
       JSON.stringify(
         {
@@ -114,7 +116,7 @@ export async function verifyEmployerPacket(
         2,
       ),
     );
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/${id}-conversion.pdf`,
       prepared.bundle.attachments[0].bytes,
     );
@@ -227,10 +229,10 @@ export async function verifyEmployerPacket(
     await appendAlternativeCompensationStatement(document, fields, filer, all);
     assert(document.getPageCount() > 1);
     const bytes = await document.save();
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(path, bytes);
-      const result = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, bytes);
+      const result = await new sys.Command("pdftotext", {
         args: [path, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -247,8 +249,8 @@ export async function verifyEmployerPacket(
         document.getPageCount(),
       );
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
-    if (root) await Deno.writeFile(`${root}/statement-overflow.pdf`, bytes);
+    if (root) await fs.writeFile(`${root}/statement-overflow.pdf`, bytes);
   }
 }

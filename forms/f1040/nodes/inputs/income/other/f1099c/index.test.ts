@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099c } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -30,7 +31,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // ============================================================
 
-Deno.test("schema: negative box2_cod_amount fails", () => {
+test("schema: negative box2_cod_amount fails", () => {
   const parsed = f1099c.inputSchema.safeParse({
     f1099cs: [{ creditor_name: "A", box2_cod_amount: -100 }],
   });
@@ -41,7 +42,7 @@ Deno.test("schema: negative box2_cod_amount fails", () => {
 // 2. Per-Box Routing
 // ============================================================
 
-Deno.test("routing=taxable routes box2 to schedule1 line8c", () => {
+test("routing=taxable routes box2 to schedule1 line8c", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 5000, routing: "taxable" }),
   ]);
@@ -49,7 +50,7 @@ Deno.test("routing=taxable routes box2 to schedule1 line8c", () => {
   assertEquals(input.line8c_cod_income, 5000);
 });
 
-Deno.test("taxable 1099-C removes documented cash-method deductible box 3 interest", () => {
+test("taxable 1099-C removes documented cash-method deductible box 3 interest", () => {
   const result = compute([minimalItem({
     box2_cod_amount: 10_000,
     box3_interest: 1_500,
@@ -59,7 +60,7 @@ Deno.test("taxable 1099-C removes documented cash-method deductible box 3 intere
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8c_cod_income, 8_500);
 });
 
-Deno.test("non-QPRI excluded 1099-C interest remains closed pending separate allocation", () => {
+test("non-QPRI excluded 1099-C interest remains closed pending separate allocation", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -75,7 +76,7 @@ Deno.test("non-QPRI excluded 1099-C interest remains closed pending separate all
   );
 });
 
-Deno.test("routing=taxable: box2_cod_amount=0 does not route to schedule1", () => {
+test("routing=taxable: box2_cod_amount=0 does not route to schedule1", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 0, routing: "taxable" }),
   ]);
@@ -83,7 +84,7 @@ Deno.test("routing=taxable: box2_cod_amount=0 does not route to schedule1", () =
   assertEquals(out, undefined);
 });
 
-Deno.test("routing=excluded routes box2 to form982 line2", () => {
+test("routing=excluded routes box2 to form982 line2", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 25000, routing: "excluded" }),
   ]);
@@ -91,7 +92,7 @@ Deno.test("routing=excluded routes box2 to form982 line2", () => {
   assertEquals(input.line2_excluded_cod, 25000);
 });
 
-Deno.test("QPRI 1099-C carries its exclusion and residence facts to Form 982", () => {
+test("QPRI 1099-C carries its exclusion and residence facts to Form 982", () => {
   const result = compute([minimalItem({
     box2_cod_amount: 300_000,
     box1_date: "2025-06-15",
@@ -123,7 +124,7 @@ Deno.test("QPRI 1099-C carries its exclusion and residence facts to Form 982", (
   });
 });
 
-Deno.test("QPRI 1099-C rejects undivided discharged interest", () => {
+test("QPRI 1099-C rejects undivided discharged interest", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -141,7 +142,7 @@ Deno.test("QPRI 1099-C rejects undivided discharged interest", () => {
   );
 });
 
-Deno.test("1099-C rejects box 3 interest greater than box 2", () => {
+test("1099-C rejects box 3 interest greater than box 2", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -155,7 +156,7 @@ Deno.test("1099-C rejects box 3 interest greater than box 2", () => {
   );
 });
 
-Deno.test("QPRI 1099-C keeps taxable box 3 interest outside Form 982 principal", () => {
+test("QPRI 1099-C keeps taxable box 3 interest outside Form 982 principal", () => {
   const result = compute([minimalItem({
     box2_cod_amount: 30_000,
     box3_interest: 2_000,
@@ -170,7 +171,7 @@ Deno.test("QPRI 1099-C keeps taxable box 3 interest outside Form 982 principal",
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8c_cod_income, 2_000);
 });
 
-Deno.test("QPRI 1099-C cash-basis deductible interest is not Form 982 principal or COD income", () => {
+test("QPRI 1099-C cash-basis deductible interest is not Form 982 principal or COD income", () => {
   const result = compute([minimalItem({
     box2_cod_amount: 30_000,
     box3_interest: 2_000,
@@ -186,7 +187,7 @@ Deno.test("QPRI 1099-C cash-basis deductible interest is not Form 982 principal 
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("QPRI 1099-C requires documented tax treatment for reconciled box 3 interest", () => {
+test("QPRI 1099-C requires documented tax treatment for reconciled box 3 interest", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -202,7 +203,7 @@ Deno.test("QPRI 1099-C requires documented tax treatment for reconciled box 3 in
   );
 });
 
-Deno.test("QPRI 1099-C requires principal to reconcile with box 2", () => {
+test("QPRI 1099-C requires principal to reconcile with box 2", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -217,7 +218,7 @@ Deno.test("QPRI 1099-C requires principal to reconcile with box 2", () => {
   );
 });
 
-Deno.test("QPRI 1099-C does not infer discharge date from box 1", () => {
+test("QPRI 1099-C does not infer discharge date from box 1", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -232,7 +233,7 @@ Deno.test("QPRI 1099-C does not infer discharge date from box 1", () => {
   );
 });
 
-Deno.test("multiple excluded debts with detail cannot be silently merged", () => {
+test("multiple excluded debts with detail cannot be silently merged", () => {
   const qpri = minimalItem({
     box1_date: "2025-06-15",
     routing: "excluded",
@@ -259,7 +260,7 @@ Deno.test("multiple excluded debts with detail cannot be silently merged", () =>
   );
 });
 
-Deno.test("routing=excluded does not emit schedule1", () => {
+test("routing=excluded does not emit schedule1", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 8000, routing: "excluded" }),
   ]);
@@ -267,7 +268,7 @@ Deno.test("routing=excluded does not emit schedule1", () => {
   assertEquals(s1, undefined);
 });
 
-Deno.test("routing=taxable does not emit form982", () => {
+test("routing=taxable does not emit form982", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 1200, routing: "taxable" }),
   ]);
@@ -275,7 +276,7 @@ Deno.test("routing=taxable does not emit form982", () => {
   assertEquals(f982, undefined);
 });
 
-Deno.test("box7 FMV needs a property disposition answer", () => {
+test("box7 FMV needs a property disposition answer", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -287,7 +288,7 @@ Deno.test("box7 FMV needs a property disposition answer", () => {
   );
 });
 
-Deno.test("retained property with box7 FMV does not invent a capital gain", () => {
+test("retained property with box7 FMV does not invent a capital gain", () => {
   const result = compute([
     minimalItem({
       box2_cod_amount: 3000,
@@ -300,7 +301,7 @@ Deno.test("retained property with box7 FMV does not invent a capital gain", () =
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("transferred property stops pending a sourced disposition calculation", () => {
+test("transferred property stops pending a sourced disposition calculation", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -313,7 +314,7 @@ Deno.test("transferred property stops pending a sourced disposition calculation"
   );
 });
 
-Deno.test("excluded routing with a retained property does not invent a disposition", () => {
+test("excluded routing with a retained property does not invent a disposition", () => {
   const result = compute([
     minimalItem({
       box2_cod_amount: 50000,
@@ -327,7 +328,7 @@ Deno.test("excluded routing with a retained property does not invent a dispositi
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("empty array produces empty outputs", () => {
+test("empty array produces empty outputs", () => {
   const result = f1099c.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099cs: [],
   });
@@ -338,7 +339,7 @@ Deno.test("empty array produces empty outputs", () => {
 // 3. Aggregation — all items in one compute() call
 // ============================================================
 
-Deno.test("aggregation: multiple taxable items sum box2 on schedule1 line8c", () => {
+test("aggregation: multiple taxable items sum box2 on schedule1 line8c", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 3000, routing: "taxable" }),
     minimalItem({ box2_cod_amount: 4000, routing: "taxable" }),
@@ -347,7 +348,7 @@ Deno.test("aggregation: multiple taxable items sum box2 on schedule1 line8c", ()
   assertEquals(input.line8c_cod_income, 7000);
 });
 
-Deno.test("aggregation: multiple excluded items sum box2 on form982 line2", () => {
+test("aggregation: multiple excluded items sum box2 on form982 line2", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 10000, routing: "excluded" }),
     minimalItem({ box2_cod_amount: 15000, routing: "excluded" }),
@@ -356,7 +357,7 @@ Deno.test("aggregation: multiple excluded items sum box2 on form982 line2", () =
   assertEquals(input.line2_excluded_cod, 25000);
 });
 
-Deno.test("aggregation: mixed taxable and excluded items route separately with correct amounts", () => {
+test("aggregation: mixed taxable and excluded items route separately with correct amounts", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 5000, routing: "taxable" }),
     minimalItem({ box2_cod_amount: 8000, routing: "excluded" }),
@@ -367,7 +368,7 @@ Deno.test("aggregation: mixed taxable and excluded items route separately with c
   assertEquals(f982Input.line2_excluded_cod, 8000);
 });
 
-Deno.test("aggregation: three taxable items — total is sum of all three", () => {
+test("aggregation: three taxable items — total is sum of all three", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 1000, routing: "taxable" }),
     minimalItem({ box2_cod_amount: 2000, routing: "taxable" }),
@@ -377,7 +378,7 @@ Deno.test("aggregation: three taxable items — total is sum of all three", () =
   assertEquals(input.line8c_cod_income, 6000);
 });
 
-Deno.test("aggregation: multiple items one zero — only non-zero items contribute", () => {
+test("aggregation: multiple items one zero — only non-zero items contribute", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 0, routing: "taxable" }),
     minimalItem({ box2_cod_amount: 5000, routing: "taxable" }),
@@ -390,11 +391,11 @@ Deno.test("aggregation: multiple items one zero — only non-zero items contribu
 // 4. Hard Validation Rules
 // ============================================================
 
-Deno.test("validation: box2_cod_amount negative throws", () => {
+test("validation: box2_cod_amount negative throws", () => {
   assertThrows(() => compute([minimalItem({ box2_cod_amount: -1 })]));
 });
 
-Deno.test("validation: box7_fmv_property negative throws", () => {
+test("validation: box7_fmv_property negative throws", () => {
   assertThrows(() => compute([minimalItem({ box7_fmv_property: -1 })]));
 });
 
@@ -402,7 +403,7 @@ Deno.test("validation: box7_fmv_property negative throws", () => {
 // 5. Edge Cases
 // ============================================================
 
-Deno.test("edge: routing=excluded with box2=0 produces no form982 output", () => {
+test("edge: routing=excluded with box2=0 produces no form982 output", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 0, routing: "excluded" }),
   ]);
@@ -410,7 +411,7 @@ Deno.test("edge: routing=excluded with box2=0 produces no form982 output", () =>
   assertEquals(f982, undefined);
 });
 
-Deno.test("edge: excluded routing preserves exact decimal amounts", () => {
+test("edge: excluded routing preserves exact decimal amounts", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 12345.67, routing: "excluded" }),
   ]);
@@ -418,7 +419,7 @@ Deno.test("edge: excluded routing preserves exact decimal amounts", () => {
   assertEquals(input.line2_excluded_cod, 12345.67);
 });
 
-Deno.test("edge: large excluded amount ($750,000) routes full amount to form982", () => {
+test("edge: large excluded amount ($750,000) routes full amount to form982", () => {
   // The f1099c node passes the full box2 to form982; cap enforcement deferred to form982 node
   const result = compute([
     minimalItem({ box2_cod_amount: 750_000, routing: "excluded" }),
@@ -427,7 +428,7 @@ Deno.test("edge: large excluded amount ($750,000) routes full amount to form982"
   assertEquals(input.line2_excluded_cod, 750_000);
 });
 
-Deno.test("edge: mixed debts with one retained property keep only taxable COD", () => {
+test("edge: mixed debts with one retained property keep only taxable COD", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 3000, routing: "taxable" }),
     minimalItem({
@@ -446,7 +447,7 @@ Deno.test("edge: mixed debts with one retained property keep only taxable COD", 
 // 6. Smoke Tests
 // ============================================================
 
-Deno.test("smoke: taxable personal debt — routes to schedule1, not form982 or schedule_d", () => {
+test("smoke: taxable personal debt — routes to schedule1, not form982 or schedule_d", () => {
   const result = compute([
     minimalItem({
       creditor_name: "Capital One Bank",
@@ -461,7 +462,7 @@ Deno.test("smoke: taxable personal debt — routes to schedule1, not form982 or 
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("smoke: excluded retained-home debt with box7 does not enter Schedule D", () => {
+test("smoke: excluded retained-home debt with box7 does not enter Schedule D", () => {
   const result = compute([
     minimalItem({
       creditor_name: "Wells Fargo Mortgage",
@@ -478,7 +479,7 @@ Deno.test("smoke: excluded retained-home debt with box7 does not enter Schedule 
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("smoke: multiple 1099-Cs in same year, mixed routing — correct amounts on each form", () => {
+test("smoke: multiple 1099-Cs in same year, mixed routing — correct amounts on each form", () => {
   const result = compute([
     minimalItem({
       creditor_name: "Personal Lender",

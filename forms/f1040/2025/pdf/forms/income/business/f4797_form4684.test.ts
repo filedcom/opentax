@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { form4684Pdf } from "../../deductions/casualty/f4684.ts";
@@ -13,7 +14,7 @@ const pending = {
   schedule1: { line4_other_gains: -30_000 },
 };
 
-Deno.test("Form 4684 PDF puts the documented business loss in Section B", () => {
+test("Form 4684 PDF puts the documented business loss in Section B", () => {
   const fields = form4684Pdf.projectFields!(casualty, pending);
   assertEquals(fields.basis, 50_000);
   assertEquals(fields.fmv_before, 80_000);
@@ -27,11 +28,11 @@ Deno.test("Form 4684 PDF puts the documented business loss in Section B", () => 
   );
 });
 
-Deno.test("Form 4684 PDF remains absent for a return with only AGI context", () => {
+test("Form 4684 PDF remains absent for a return with only AGI context", () => {
   assertEquals(form4684Pdf.projectFields!({ agi: 50_000 }, {}), {});
 });
 
-Deno.test("Form 4684 PDF rejects a business loss with a changed Form 4797 join", () => {
+test("Form 4684 PDF rejects a business loss with a changed Form 4797 join", () => {
   assertThrows(
     () =>
       form4684Pdf.projectFields!(casualty, {
@@ -43,14 +44,14 @@ Deno.test("Form 4684 PDF rejects a business loss with a changed Form 4797 join",
   );
 });
 
-Deno.test("Form 4797 PDF prints the sourced Form 4684 loss on lines 14 and 17", () => {
+test("Form 4797 PDF prints the sourced Form 4684 loss on lines 14 and 17", () => {
   const fields = form4797Pdf.projectFields!(source, pending);
   assertEquals(fields.pdf_line14, -30_000);
   assertEquals(fields.pdf_line17, -30_000);
   assertEquals(form4797Pdf.pageIndices!(fields), [0]);
 });
 
-Deno.test("Form 4797 PDF rejects a casualty loss that differs from its source", () => {
+test("Form 4797 PDF rejects a casualty loss that differs from its source", () => {
   assertThrows(
     () =>
       form4797Pdf.projectFields!({ ordinary_gain_form4684: -29_000 }, pending),

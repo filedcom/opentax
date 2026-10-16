@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 // deno-lint-ignore-file no-explicit-any
 import {
   assertEquals,
@@ -45,7 +47,7 @@ const scenarios = [
   },
 ];
 for (const scenario of scenarios) {
-  Deno.test(`SHOP geographic ${scenario.name} retains periods, owners and complete export joins`, async () => {
+  test(`SHOP geographic ${scenario.name} retains periods, owners and complete export joins`, async () => {
     const inputs: any = JSON.parse(JSON.stringify(scenario.inputs()));
     // Fixture-only oracle metadata is not a public filing input.
     delete inputs.expected;
@@ -161,15 +163,15 @@ for (const scenario of scenarios) {
     }
     let evidence: string | undefined;
     try {
-      evidence = Deno.env.get("FORM8941_GEOGRAPHIC_ROUTES_EVIDENCE");
+      evidence = process.env.FORM8941_GEOGRAPHIC_ROUTES_EVIDENCE;
     } catch { /* Optional local evidence. */ }
     if (evidence) {
-      await Deno.mkdir(evidence, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(evidence, { recursive: true });
+      await fs.writeFile(
         `${evidence}/${scenario.name}.xml`,
         prepared.bundle.xml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${scenario.name}.json`,
         JSON.stringify(
           { inputs, filer, pending, lines, expectedCaps, projected },

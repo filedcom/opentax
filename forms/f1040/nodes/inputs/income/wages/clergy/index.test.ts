@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { clergy } from "./index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 
-Deno.test("clergy input keeps invalid money and empty claims out", () => {
+test("clergy input keeps invalid money and empty claims out", () => {
   assertEquals(clergy.inputSchema.safeParse({ clergys: [] }).success, false);
   for (
     const key of [
@@ -21,7 +22,7 @@ Deno.test("clergy input keeps invalid money and empty claims out", () => {
   }
 });
 
-Deno.test("clergy refuses wage and housing claims without source reconciliation", () => {
+test("clergy refuses wage and housing claims without source reconciliation", () => {
   for (
     const item of [
       { ministerial_wages: 50_000, is_ordained_minister: true },
@@ -53,7 +54,7 @@ Deno.test("clergy refuses wage and housing claims without source reconciliation"
   }
 });
 
-Deno.test("clergy does not turn an empty or nonordained record into a silent exclusion", () => {
+test("clergy does not turn an empty or nonordained record into a silent exclusion", () => {
   for (
     const item of [{}, {
       ministerial_wages: 50_000,

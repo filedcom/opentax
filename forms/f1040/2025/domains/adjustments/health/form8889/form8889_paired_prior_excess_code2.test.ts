@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
@@ -121,7 +122,7 @@ function priorAndCode2Case() {
   return { source, forms, pending };
 }
 
-Deno.test("paired 2024 HSA excess and other owner's 2025 code-2 return reach separate Forms 8889/5329 and final return", () => {
+test("paired 2024 HSA excess and other owner's 2025 code-2 return reach separate Forms 8889/5329 and final return", () => {
   const { forms, pending } = priorAndCode2Case();
   assertEquals(forms.map((form) => form.owner), ["primary", "spouse"]);
   assertEquals(forms[0]?.print_line13_deduction, 4_300);
@@ -148,7 +149,7 @@ Deno.test("paired 2024 HSA excess and other owner's 2025 code-2 return reach sep
   assertEquals(pending.f1040.line23_other_taxes, 42);
 });
 
-Deno.test("paired prior excess plus code-2 rejects changed source, owner, and final return", () => {
+test("paired prior excess plus code-2 rejects changed source, owner, and final return", () => {
   const { source, forms, pending } = priorAndCode2Case();
   const changedBox = {
     ...pending,

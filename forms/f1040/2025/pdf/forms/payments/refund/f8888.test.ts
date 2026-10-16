@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   AccountType as HeaderAccountType,
@@ -41,7 +42,7 @@ const pending = {
   f1040: { line34_overpayment: 1000, line35a_refund: 1000 },
 };
 
-Deno.test("Form 8888 PDF uses canonical Dec 2025 AcroForm fields only", () => {
+test("Form 8888 PDF uses canonical Dec 2025 AcroForm fields only", () => {
   const map = new Map(
     form8888Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -69,7 +70,7 @@ Deno.test("Form 8888 PDF uses canonical Dec 2025 AcroForm fields only", () => {
   );
 });
 
-Deno.test("Form 8888 PDF projects two accounts and exact refund total", () => {
+test("Form 8888 PDF projects two accounts and exact refund total", () => {
   const instances = form8888Pdf.instances?.(source, filer, pending) ?? [];
   assertEquals(instances.length, 1);
   assertEquals(instances[0].calendar_year, "25");
@@ -81,7 +82,7 @@ Deno.test("Form 8888 PDF projects two accounts and exact refund total", () => {
   assertEquals(instances[0].line5_total, 1000);
 });
 
-Deno.test("Form 8888 PDF rejects amount and single-account routing conflicts", () => {
+test("Form 8888 PDF rejects amount and single-account routing conflicts", () => {
   assertThrows(
     () =>
       form8888Pdf.instances?.(source, filer, {
@@ -109,7 +110,7 @@ Deno.test("Form 8888 PDF rejects amount and single-account routing conflicts", (
   );
 });
 
-Deno.test("Form 8888 PDF rejects a checksum-invalid routing number", () => {
+test("Form 8888 PDF rejects a checksum-invalid routing number", () => {
   assertThrows(
     () =>
       form8888Pdf.instances?.(
@@ -125,7 +126,7 @@ Deno.test("Form 8888 PDF rejects a checksum-invalid routing number", () => {
   );
 });
 
-Deno.test("Form 8888 PDF spouse-owned deposit requires a joint return", () => {
+test("Form 8888 PDF spouse-owned deposit requires a joint return", () => {
   const spouse = {
     ssn: "111223333",
     firstName: "John",

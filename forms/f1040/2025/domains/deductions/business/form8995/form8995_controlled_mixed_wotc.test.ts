@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -18,7 +20,7 @@ import { form5884Pdf } from "../../../../pdf/forms/credits/business/f5884.ts";
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("owned-controlled-mixed-cf-wotc")
 );
-Deno.test("actual controlled mixed C/F employers file separate owner SE/QBI and joint current credit in full XSD/PDF", async () => {
+test("actual controlled mixed C/F employers file separate owner SE/QBI and joint current credit in full XSD/PDF", async () => {
   assertEquals(fixtures.length, 4);
   const expected = [
     [90402, 4372, 17206, 2400, 56765],
@@ -97,7 +99,7 @@ Deno.test("actual controlled mixed C/F employers file separate owner SE/QBI and 
       prepared.bundle.xml.includes("DeductionDifferentiationStmt"),
       true,
     );
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -132,7 +134,7 @@ Deno.test("actual controlled mixed C/F employers file separate owner SE/QBI and 
     }
   }
 });
-Deno.test("mixed C/F actual ownership attribution payroll and issued-income conflicts fail public native and PDF", async () => {
+test("mixed C/F actual ownership attribution payroll and issued-income conflicts fail public native and PDF", async () => {
   const f = fixtures[1];
   for (
     const [mutationIndex, change] of [

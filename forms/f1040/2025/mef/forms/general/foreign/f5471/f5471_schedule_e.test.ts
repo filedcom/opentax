@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Category 5a Schedule E/E-1 joins direct tested tax to Schedule I-1", () => {
+test("Category 5a Schedule E/E-1 joins direct tested tax to Schedule I-1", () => {
   const xml = form5471ScheduleE.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -36,7 +38,7 @@ Deno.test("Category 5a Schedule E/E-1 joins direct tested tax to Schedule I-1", 
   assertEquals(xml.includes("Frm5471SchESubpartFIncomeGrp"), false);
 });
 
-Deno.test("Schedule E rejects tax currency and Schedule I-1 discrepancies", () => {
+test("Schedule E rejects tax currency and Schedule I-1 discrepancies", () => {
   const source = (schedule_e: unknown) => ({
     ...form8992Pending,
     f5471: { f5471s: [{ ...form8992Cfc, schedule_e }] },
@@ -53,12 +55,7 @@ Deno.test("Schedule E rejects tax currency and Schedule I-1 discrepancies", () =
     }), Error);
 });
 
-Deno.test({
-  name: "Category 5a Schedule E standalone XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Category 5a Schedule E standalone XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleE.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -66,7 +63,7 @@ Deno.test({
       /^<IRS5471ScheduleE/,
       '<IRS5471ScheduleE xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleETest1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -77,5 +74,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { w2ItemSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
@@ -50,7 +52,7 @@ const cases = [
 ] as const;
 
 for (const c of cases) {
-  Deno.test(`Form 1098 owned recoveries ${c.name} preserve income and verify every lender copy`, async () => {
+  test(`Form 1098 owned recoveries ${c.name} preserve income and verify every lender copy`, async () => {
     const owners = c.joint ? ["111-22-3333", "444-55-6666"] : ["111-22-3333"];
     const mortgages = await Promise.all(
       owners.map((tin, i) =>
@@ -179,10 +181,10 @@ for (const c of cases) {
         rejectionCount++;
       }
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir =
         `.state/research/form1098-owned-recoveries-2026-10-09/${c.name}`;
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       for (
         const [name, data] of [["source", inputs], ["pending", pending], [
           "origins",
@@ -195,19 +197,19 @@ for (const c of cases) {
           rejectionCount,
         }]] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
       for (let i = 0; i < mortgages.length; i++) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/source-${i}.pdf`,
           mortgages[i].issuer_copy.bytes,
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
   });
 }

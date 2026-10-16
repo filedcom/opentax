@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefBundle, buildMefXml } from "../../../builder.ts";
 import { buildPending } from "../../../execution/pending.ts";
@@ -15,7 +18,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -56,7 +59,7 @@ const input: Form8978Input = {
   }],
 };
 
-Deno.test("Form 8978 XML-only export rejects a missing tax-computation PDF", () => {
+test("Form 8978 XML-only export rejects a missing tax-computation PDF", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -76,12 +79,7 @@ Deno.test("Form 8978 XML-only export rejects a missing tax-computation PDF", () 
   );
 });
 
-Deno.test({
-  name: "XSD: negative Form 8978 credit links to Schedule 3 line 6l",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: negative Form 8978 credit links to Schedule 3 line 6l", async () => {
   const negativeInput: Form8978Input = {
     filings: [{
       ...input.filings[0],
@@ -131,27 +129,21 @@ Deno.test({
     'referenceDocumentName="IRS8978">500</TotRptgYrTxIncreaseDecreaseAmt>',
   );
   assertEquals(bundle.xml.includes("<IRS1040Schedule2 documentId="), false);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, bundle.xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: negative Form 8978 excess links Schedule 2 line 17z to its statement",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: negative Form 8978 excess links Schedule 2 line 17z to its statement", async () => {
   const negativeInput: Form8978Input = {
     filings: [{
       ...input.filings[0],
@@ -212,21 +204,21 @@ Deno.test({
   assertStringIncludes(bundle.xml, "<AnyOtherTaxesStatement documentId=");
   assertStringIncludes(bundle.xml, "<OtherTaxTxt>Form 8978 ADJ</OtherTaxTxt>");
   assertStringIncludes(bundle.xml, "<OtherTaxAmt>-100</OtherTaxAmt>");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, bundle.xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Form 8978 MeF export rejects calculated values that disagree with source facts", () => {
+test("Form 8978 MeF export rejects calculated values that disagree with source facts", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -244,7 +236,7 @@ Deno.test("Form 8978 MeF export rejects calculated values that disagree with sou
   );
 });
 
-Deno.test("Form 8978 nonarithmetic lines 5 and 11 keep their separate calculation PDF linked", async () => {
+test("Form 8978 nonarithmetic lines 5 and 11 keep their separate calculation PDF linked", async () => {
   const exceptional: Form8978Input = {
     filings: [{
       ...input.filings[0],
@@ -286,12 +278,7 @@ Deno.test("Form 8978 nonarithmetic lines 5 and 11 keep their separate calculatio
   assertEquals(bundle.attachments[0].fileName, "Form8978TaxCalculation1.pdf");
 });
 
-Deno.test({
-  name: "XSD: Form 8978 and Schedule A link to Form 1040 line 16",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8978 and Schedule A link to Form 1040 line 16", async () => {
   const bundle = await buildMefBundle({
     f1040: {
       filing_status: "single",
@@ -320,16 +307,16 @@ Deno.test({
     "<AttachmentLocationTxt>Form8978TaxCalculation1.pdf</AttachmentLocationTxt>",
   );
   assertStringIncludes(xml, "<TrackingNum>20240101-000001</TrackingNum>");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

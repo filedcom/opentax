@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertAbleEmploymentW2Sources } from "./form8880_able_sources.ts";
 import { z } from "zod";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
@@ -204,7 +206,7 @@ function account(
   };
 }
 for (const item of cases) {
-  Deno.test(`employed ABLE beneficiary ${item.name} reaches complete filing`, async () => {
+  test(`employed ABLE beneficiary ${item.name} reaches complete filing`, async () => {
     const w2 = [
       ...item.wages.map((amount, i) => wage(TS.T, amount, i > 0, item.joint)),
       ...(item.joint ? [wage(TS.S, 25000, false, true)] : []),
@@ -418,10 +420,10 @@ for (const item of cases) {
         await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
       }
     }
-    const dir = Deno.env.get("FORM8880_ABLE_EMPLOYMENT_EVIDENCE");
+    const dir = process.env.FORM8880_ABLE_EMPLOYMENT_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -429,18 +431,18 @@ for (const item of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }
 
-Deno.test("ABLE employment review rejects incomplete residence, wage and plan evidence", () => {
+test("ABLE employment review rejects incomplete residence, wage and plan evidence", () => {
   const base = account(TS.T, cases[0], [wage(TS.T, 25000, false, false)]);
   const employment = base.employed_beneficiary_review!;
   const review = {
@@ -534,7 +536,7 @@ Deno.test("ABLE employment review rejects incomplete residence, wage and plan ev
   }
 });
 
-Deno.test("ABLE increased limit distinguishes employer plans from IRA and defined-benefit evidence", () => {
+test("ABLE increased limit distinguishes employer plans from IRA and defined-benefit evidence", () => {
   const copy = wage(TS.T, 25000, false, false);
   const review = ableContributionReviewSchema.parse({
     tax_year: 2025,

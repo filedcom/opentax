@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -70,7 +71,7 @@ function filedReturn(sourceCopies = copies) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("three same-plan 1099-R copies produce one Form 4972 and one Form 1040 special tax", () => {
+test("three same-plan 1099-R copies produce one Form 4972 and one Form 1040 special tax", () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -94,7 +95,7 @@ Deno.test("three same-plan 1099-R copies produce one Form 4972 and one Form 1040
   assertEquals(pdf?.line30, forms[0].line30);
 });
 
-Deno.test("three-copy Form 4972 rejects a missing or changed source and final tax", () => {
+test("three-copy Form 4972 rejects a missing or changed source and final tax", () => {
   const pending = filedReturn().pending;
   const changed = [
     copies.slice(0, 2),

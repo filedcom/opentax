@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -95,7 +96,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two countries plus one Treasury payer reconcile Form 1116, worldwide denominator, native and PDF", () => {
+test("two countries plus one Treasury payer reconcile Form 1116, worldwide denominator, native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -143,7 +144,7 @@ Deno.test("two countries plus one Treasury payer reconcile Form 1116, worldwide 
   );
 });
 
-Deno.test("two-country Treasury route rejects changed domestic/foreign payer, review and return at native/PDF export", () => {
+test("two-country Treasury route rejects changed domestic/foreign payer, review and return at native/PDF export", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);

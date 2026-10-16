@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema as generalInputSchema } from "../../../../nodes/inputs/general/filing/general/index.ts";
 import { assertLine36EstimatedTaxSource } from "./line36-estimated-tax-source.ts";
@@ -22,7 +23,7 @@ const filed = {
   line38_underpayment_penalty: 250,
 };
 
-Deno.test("line 36 final export accepts only a reconciled filer-owned election", () => {
+test("line 36 final export accepts only a reconciled filer-owned election", () => {
   assertLine36EstimatedTaxSource(filed, { general });
   for (
     const changed of [

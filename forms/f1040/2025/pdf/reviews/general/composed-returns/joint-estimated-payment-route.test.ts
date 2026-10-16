@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
-Deno.test("agreed 2025 joint estimated payment reaches final return, native SSN, and filled PDF", async () => {
+test("agreed 2025 joint estimated payment reaches final return, native SSN, and filled PDF", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-divorced-agreed-joint-estimated-payment"
   )!;

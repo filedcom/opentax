@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import {
@@ -103,7 +106,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Form 8283 patent initial basis limit reaches Schedule A, Form 1040, native statement and PDF", () => {
+test("Form 8283 patent initial basis limit reaches Schedule A, Form 1040, native statement and PDF", () => {
   const pending = pendingReturn();
   assertEquals(
     (pending.schedule_a as Record<string, unknown>)
@@ -135,7 +138,7 @@ Deno.test("Form 8283 patent initial basis limit reaches Schedule A, Form 1040, n
   );
 });
 
-Deno.test("Form 8283 reports a purchased patent above $5,000 in Section A", async () => {
+test("Form 8283 reports a purchased patent above $5,000 in Section A", async () => {
   const largerPatent = {
     ...gift,
     fmv: 18_000,
@@ -208,9 +211,9 @@ Deno.test("Form 8283 reports a purchased patent above $5,000 in Section A", asyn
     "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
   );
   assertStringIncludes(bundle.xml, ">12000</FairMarketValueAmt>");
-  await Deno.stat(xsdPath);
-  if (await Deno.stat(xsdPath).then(() => true).catch(() => false)) {
-    const validation = await new Deno.Command("xmllint", {
+  await sys.stat(xsdPath);
+  if (await sys.stat(xsdPath).then(() => true).catch(() => false)) {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -230,15 +233,15 @@ Deno.test("Form 8283 reports a purchased patent above $5,000 in Section A", asyn
   );
   assertEquals((await PDFDocument.load(filled)).getPageCount() >= 4, true);
   const reviewDir = ".state/pdf-cache/review";
-  await Deno.mkdir(reviewDir, { recursive: true });
-  await Deno.writeFile(`${reviewDir}/form8283-high-value-patent.pdf`, filled);
-  await Deno.writeTextFile(
+  await fs.mkdir(reviewDir, { recursive: true });
+  await fs.writeFile(`${reviewDir}/form8283-high-value-patent.pdf`, filled);
+  await fs.writeFile(
     `${reviewDir}/form8283-high-value-patent.xml`,
     bundle.xml,
   );
 });
 
-Deno.test("Form 8283 patent rejects altered basis, rights, donee income and final return", () => {
+test("Form 8283 patent rejects altered basis, rights, donee income and final return", () => {
   for (
     const item of [
       { ...gift, deduction_claimed: 3_001 },

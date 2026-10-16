@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form8283 } from "../../../../../2025/mef/forms/deductions/charitable/f8283/f8283.ts";
@@ -28,7 +30,7 @@ const fixture = async () => {
     ),
   };
 };
-Deno.test("Prior producing6172024 actual annual account derives distinct regular/AMT carry without filing authority", async () => {
+test("Prior producing6172024 actual annual account derives distinct regular/AMT carry without filing authority", async () => {
   const { history, records } = await fixture();
   const r = await bindPriorMiningCharityHistory(history, records);
   assertEquals([
@@ -66,19 +68,19 @@ Deno.test("Prior producing6172024 actual annual account derives distinct regular
   assertThrows(() =>
     form8283Pdf.instances!(unavailableFilingSource, undefined, {})
   );
-  const dir = Deno.env.get("FORM8283_PRIOR_MINING_EVIDENCE_DIR");
+  const dir = process.env.FORM8283_PRIOR_MINING_EVIDENCE_DIR;
   if (dir) {
-    await Deno.mkdir(dir, { recursive: false });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: false });
+    await fs.writeFile(
       `${dir}/history.json`,
       JSON.stringify(history, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/prior-calculation.json`,
       JSON.stringify(r, null, 2),
     );
     for (const [name, bytes] of records) {
-      await Deno.writeFile(`${dir}/${name}`, bytes);
+      await fs.writeFile(`${dir}/${name}`, bytes);
     }
   }
 });
@@ -130,7 +132,7 @@ const cases = [
   },
 ] as const;
 for (const c of cases) {
-  Deno.test(`Prior mining charity source consumption ${c.name}`, async () => {
+  test(`Prior mining charity source consumption ${c.name}`, async () => {
     const { history, records } = await fixture();
     const current = currentMiningCarryFixture(
       c.wages,
@@ -160,17 +162,17 @@ for (const c of cases) {
       r.line3_charitable_contribution_adjustment,
     ], c.lines);
     assertEquals(r.filing_authority, "unverified_no_export");
-    const dir = Deno.env.get("FORM8283_PRIOR_MINING_EVIDENCE_DIR");
+    const dir = process.env.FORM8283_PRIOR_MINING_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/current-${c.wages}-${c.cash}-${c.stock}.json`,
         JSON.stringify({ current, calculation: r }, null, 2),
       );
     }
   });
 }
-Deno.test("Prior/current issued wage source cents retain raw evidence and settle filed AGI before limits", async () => {
+test("Prior/current issued wage source cents retain raw evidence and settle filed AGI before limits", async () => {
   const { history, records } = await fixture();
   Object.assign(history.issued_2024_w2[0], {
     box1_wages: 100000.5,
@@ -222,7 +224,7 @@ Deno.test("Prior/current issued wage source cents retain raw evidence and settle
   assertEquals(result.prior.history.issued_2024_w2[0].box1_wages, 100000.5);
 });
 
-Deno.test("Prior mining history retains canonical source financial fields and rejects rehashed/source/current conflicts", async () => {
+test("Prior mining history retains canonical source financial fields and rejects rehashed/source/current conflicts", async () => {
   const mutations: [string, (h: any) => void][] = [
     ["invented acceptance", (h) => h.accepted_status_reviewed = true],
     ["owner", (h) => h.owner_ssn = "222334444"],

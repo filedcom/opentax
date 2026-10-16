@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -71,7 +72,7 @@ function filing() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 6251 first-year long-term contract uses AMT percentage of completion", async () => {
+test("Form 6251 first-year long-term contract uses AMT percentage of completion", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form6251!;

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -41,7 +44,7 @@ for (
     "needy transfer",
   ] as const
 ) {
-  Deno.test(`Section B ${route} vehicle joins full return, attachments, XSD and PDF`, async () => {
+  test(`Section B ${route} vehicle joins full return, attachments, XSD and PDF`, async () => {
     const acknowledgment = await syntheticEvidence(
       `City Charity certified ${route} for 2018 Honda Civic`,
     );
@@ -239,27 +242,27 @@ for (
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-vehicle/",
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(
         `${directory}${route.replaceAll(" ", "-")}.pdf`,
         pdf,
       );
@@ -301,7 +304,7 @@ for (
     },
   ] as const
 ) {
-  Deno.test(`Section B purchased ${route.type} joins full return, signed form, XSD and PDF`, async () => {
+  test(`Section B purchased ${route.type} joins full return, signed form, XSD and PDF`, async () => {
     const artHigh = route.type === "art_at_least_20000";
     const claim = artHigh ? 25_000 : 12_000;
     const signature = await syntheticEvidence(
@@ -470,27 +473,27 @@ for (
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         `../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-${route.type}/`,
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(`${directory}filled-return.pdf`, pdf);
     }
   });
 }

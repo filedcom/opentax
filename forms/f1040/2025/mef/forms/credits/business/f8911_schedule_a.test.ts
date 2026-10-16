@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { SCENARIO_1040_13_FACTS } from "../../../../../e2e/ats/ty2025_cases.ts";
 import { buildMefXml } from "../../../builder.ts";
@@ -19,7 +20,7 @@ const input = {
   tentative_minimum_tax: facts.form8911.printedTentativeMinimumTax,
 };
 
-Deno.test("Schedule A (Form 8911) emits sourced Scenario 13 property details", () => {
+test("Schedule A (Form 8911) emits sourced Scenario 13 property details", () => {
   const xml = form8911ScheduleA.build(input);
   assertStringIncludes(xml, "<FacilityDesc>ELECTRIC CHARGER</FacilityDesc>");
   assertStringIncludes(xml, "<AddressLine1Txt>13 Elm Street</AddressLine1Txt>");
@@ -30,7 +31,7 @@ Deno.test("Schedule A (Form 8911) emits sourced Scenario 13 property details", (
   assertStringIncludes(xml, "<TotalPersonalUsePartOfCrAmt>300</TotalPersonalUsePartOfCrAmt>");
 });
 
-Deno.test("Form 8911 and its Schedule A are separate ordered MeF documents", () => {
+test("Form 8911 and its Schedule A are separate ordered MeF documents", () => {
   const xml = buildMefXml({ f8911: input }, testFiler());
   assertStringIncludes(xml, 'documentCnt="3"');
   const formIndex = xml.indexOf("<IRS8911 documentId=");
@@ -38,7 +39,7 @@ Deno.test("Form 8911 and its Schedule A are separate ordered MeF documents", () 
   assertEquals(formIndex >= 0 && formIndex < scheduleIndex, true);
 });
 
-Deno.test("Schedule A (Form 8911) omits no-credit input and requires property detail", () => {
+test("Schedule A (Form 8911) omits no-credit input and requires property detail", () => {
   assertEquals(form8911ScheduleA.build({}), "");
   assertEquals(form8911ScheduleA.build({ ...input, regular_tax_before_credits: 0 }), "");
   assertThrows(

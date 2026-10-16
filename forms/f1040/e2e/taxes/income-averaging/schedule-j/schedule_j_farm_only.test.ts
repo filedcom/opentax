@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -69,7 +70,7 @@ function inputs() {
   };
 }
 
-Deno.test("Schedule J farm-only route computes and files its own line 23", () => {
+test("Schedule J farm-only route computes and files its own line 23", () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs(), {
     taxYear: 2025,
     formType: "f1040",
@@ -92,7 +93,7 @@ Deno.test("Schedule J farm-only route computes and files its own line 23", () =>
   );
 });
 
-Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI as farm-only", () => {
+test("Schedule J rejects nonfarm income rather than treating offsetting AGI as farm-only", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...inputs(),
     f1099int: [{
@@ -111,7 +112,7 @@ Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI
   );
 });
 
-Deno.test("Schedule J names fishing Schedule C as a blocked attribution source", () => {
+test("Schedule J names fishing Schedule C as a blocked attribution source", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...inputs(),
     schedule_c: [{
@@ -157,7 +158,7 @@ function fishingInputs() {
   };
 }
 
-Deno.test("Schedule J one-source fishing election reaches Form 1040, native and PDF", () => {
+test("Schedule J one-source fishing election reaches Form 1040, native and PDF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -178,7 +179,7 @@ Deno.test("Schedule J one-source fishing election reaches Form 1040, native and 
   assertEquals(projected?.line23, lines.line23);
 });
 
-Deno.test("Schedule J fishing evidence cannot be swapped onto another business", () => {
+test("Schedule J fishing evidence cannot be swapped onto another business", () => {
   const input = fishingInputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
@@ -200,7 +201,7 @@ Deno.test("Schedule J fishing evidence cannot be swapped onto another business",
   );
 });
 
-Deno.test("Schedule J one-business fishing profit without catch evidence stays closed", () => {
+test("Schedule J one-business fishing profit without catch evidence stays closed", () => {
   const input = fishingInputs();
   const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
     input.schedule_c[0];
@@ -247,7 +248,7 @@ function twoFarmMixedInputs() {
   };
 }
 
-Deno.test("Schedule J combines two positive farm activities and one fishing business", () => {
+test("Schedule J combines two positive farm activities and one fishing business", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -269,7 +270,7 @@ Deno.test("Schedule J combines two positive farm activities and one fishing busi
   );
 });
 
-Deno.test("Schedule J mixed two-farm route rejects a loss hidden by the other farm", () => {
+test("Schedule J mixed two-farm route rejects a loss hidden by the other farm", () => {
   const input = twoFarmMixedInputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...input,
@@ -290,7 +291,7 @@ Deno.test("Schedule J mixed two-farm route rejects a loss hidden by the other fa
   );
 });
 
-Deno.test("Schedule J combines one farm and one sourced fishing business into Form 1040 and both filing outputs", () => {
+test("Schedule J combines one farm and one sourced fishing business into Form 1040 and both filing outputs", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -315,7 +316,7 @@ Deno.test("Schedule J combines one farm and one sourced fishing business into Fo
   );
 });
 
-Deno.test("Schedule J mixed election rejects an unclassified fishing source", () => {
+test("Schedule J mixed election rejects an unclassified fishing source", () => {
   const input = mixedInputs();
   const { schedule_j_fishing_evidence: _evidence, ...scheduleC } =
     input.schedule_c[0];
@@ -333,7 +334,7 @@ Deno.test("Schedule J mixed election rejects an unclassified fishing source", ()
   );
 });
 
-Deno.test("Schedule J mixed election rejects unrelated AGI", () => {
+test("Schedule J mixed election rejects unrelated AGI", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...mixedInputs(),
     f1099int: [{
@@ -353,7 +354,7 @@ Deno.test("Schedule J mixed election rejects unrelated AGI", () => {
   );
 });
 
-Deno.test("Schedule J mixed native and PDF exports reject a changed Form 1040 tax", () => {
+test("Schedule J mixed native and PDF exports reject a changed Form 1040 tax", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

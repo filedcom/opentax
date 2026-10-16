@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import type { NodeContext } from "../types/node-context.ts";
@@ -56,7 +57,7 @@ class TestStart extends TaxNode<typeof startSchema> {
   }
 }
 
-Deno.test("executor: computed fields replace matching direct-input fields", () => {
+test("executor: computed fields replace matching direct-input fields", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "producer", nodeType: "producer" },

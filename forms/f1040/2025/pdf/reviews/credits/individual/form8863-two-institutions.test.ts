@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { itemSchema } from "../../../../../nodes/inputs/credits/individual/f8863/index.ts";
@@ -46,7 +49,7 @@ const student = {
   llc_adjusted_expenses: 10_000,
 };
 
-Deno.test("two school American Opportunity expenses share the student cap", async () => {
+test("two school American Opportunity expenses share the student cap", async () => {
   const result = f1040_2025.executeReturn(
     pdfReviewFixtures.find((fixture) =>
       fixture.id === "single-form8863-two-school-aoc"
@@ -66,10 +69,10 @@ Deno.test("two school American Opportunity expenses share the student cap", asyn
   );
   const pdf = await prepared.renderPdf();
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -83,18 +86,18 @@ Deno.test("two school American Opportunity expenses share the student cap", asyn
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-form8863-two-schools-aoc-review";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/filled-return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
     }
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 });
 
-Deno.test("two school expense workpapers reach Form 8863, final tax, XSD and filled PDF", async () => {
+test("two school expense workpapers reach Form 8863, final tax, XSD and filled PDF", async () => {
   const result = f1040_2025.executeReturn(
     pdfReviewFixtures.find((fixture) =>
       fixture.id === "single-form8863-two-school-llc"
@@ -117,19 +120,19 @@ Deno.test("two school expense workpapers reach Form 8863, final tax, XSD and fil
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -139,22 +142,22 @@ Deno.test("two school expense workpapers reach Form 8863, final tax, XSD and fil
     assertStringIncludes(text, first.name);
     assertStringIncludes(text, second.name);
     assertStringIncludes(text, "10000");
-    if (Deno.args.includes("--write-review-artifacts")) {
-      await Deno.mkdir("/tmp/opentax-form8863-two-schools-review", {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
+      await fs.mkdir("/tmp/opentax-form8863-two-schools-review", {
         recursive: true,
       });
-      await Deno.writeFile(
+      await fs.writeFile(
         "/tmp/opentax-form8863-two-schools-review/filled-return.pdf",
         pdf,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         "/tmp/opentax-form8863-two-schools-review/return.xml",
         prepared.bundle.xml,
       );
     }
   } finally {
-    await Deno.remove(xmlPath);
-    await Deno.remove(pdfPath);
+    await sys.remove(xmlPath);
+    await sys.remove(pdfPath);
   }
 
   for (

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form5695 } from "./index.ts";
 
@@ -37,12 +38,12 @@ function energyCredit(fields: Record<string, unknown> | undefined): number {
 
 // ─── Smoke Tests ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke — empty input returns no outputs", () => {
+test("smoke — empty input returns no outputs", () => {
   const result = computeWithSufficientTax({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("positive Part I credit requires its tax-liability limit", () => {
+test("positive Part I credit requires its tax-liability limit", () => {
   assertThrows(
     () => compute({ solar_electric_cost: 10_000 }),
     Error,
@@ -50,7 +51,7 @@ Deno.test("positive Part I credit requires its tax-liability limit", () => {
   );
 });
 
-Deno.test("positive Part II credit requires its tax-liability limit", () => {
+test("positive Part II credit requires its tax-liability limit", () => {
   assertThrows(
     () => compute({ insulation_cost: 1_000 }),
     Error,
@@ -58,7 +59,7 @@ Deno.test("positive Part II credit requires its tax-liability limit", () => {
   );
 });
 
-Deno.test("Part I and Part II credits are separately limited by tax", () => {
+test("Part I and Part II credits are separately limited by tax", () => {
   const result = compute({
     solar_electric_cost: 10_000,
     insulation_cost: 1_000,
@@ -72,7 +73,7 @@ Deno.test("Part I and Part II credits are separately limited by tax", () => {
 
 // ─── Part I — Residential Clean Energy (30%, no annual cap) ──────────────────
 
-Deno.test("Part I — solar electric only: 30% credit", () => {
+test("Part I — solar electric only: 30% credit", () => {
   const result = computeWithSufficientTax({ solar_electric_cost: 20_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 6_000);
@@ -80,13 +81,13 @@ Deno.test("Part I — solar electric only: 30% credit", () => {
   assertEquals(s3?.fields.line5b_energy_efficient_home, undefined);
 });
 
-Deno.test("Part I — solar water heater: 30% credit", () => {
+test("Part I — solar water heater: 30% credit", () => {
   const result = computeWithSufficientTax({ solar_water_heater_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 1_500);
 });
 
-Deno.test("Part I — multiple items combined", () => {
+test("Part I — multiple items combined", () => {
   // Solar $10k + geothermal $15k + battery $8k = $33k × 30% = $9,900
   const result = computeWithSufficientTax({
     solar_electric_cost: 10_000,
@@ -98,7 +99,7 @@ Deno.test("Part I — multiple items combined", () => {
   assertEquals(energyCredit(s3?.fields), 9_900);
 });
 
-Deno.test("Part I — fuel cell cost without kW capacity is rejected", () => {
+test("Part I — fuel cell cost without kW capacity is rejected", () => {
   assertThrows(
     () => compute({ fuel_cell_cost: 10_000, ...fuelCellHome }),
     Error,
@@ -106,7 +107,7 @@ Deno.test("Part I — fuel cell cost without kW capacity is rejected", () => {
   );
 });
 
-Deno.test("Part I — fuel cell: $500/½-kW cap applied when kW capacity provided", () => {
+test("Part I — fuel cell: $500/½-kW cap applied when kW capacity provided", () => {
   // 2 kW capacity → cap = $2,000; $10,000 × 30% = $3,000 → capped at $2,000
   const result = computeWithSufficientTax({
     fuel_cell_cost: 10_000,
@@ -117,7 +118,7 @@ Deno.test("Part I — fuel cell: $500/½-kW cap applied when kW capacity provide
   assertEquals(energyCredit(s3?.fields), 2_000);
 });
 
-Deno.test("Part I — fuel cell: cap not binding when credit is below cap", () => {
+test("Part I — fuel cell: cap not binding when credit is below cap", () => {
   // 5 kW → cap = $5,000; $10,000 × 30% = $3,000 → $3,000 (below cap)
   const result = computeWithSufficientTax({
     fuel_cell_cost: 10_000,
@@ -128,7 +129,7 @@ Deno.test("Part I — fuel cell: cap not binding when credit is below cap", () =
   assertEquals(energyCredit(s3?.fields), 3_000);
 });
 
-Deno.test("Part I — battery storage: qualifies when kWh capacity ≥ 3 kWh", () => {
+test("Part I — battery storage: qualifies when kWh capacity ≥ 3 kWh", () => {
   const result = computeWithSufficientTax({
     battery_storage_cost: 5_000,
     battery_storage_kwh_capacity: 3,
@@ -137,7 +138,7 @@ Deno.test("Part I — battery storage: qualifies when kWh capacity ≥ 3 kWh", (
   assertEquals(energyCredit(s3?.fields), 1_500);
 });
 
-Deno.test("Part I — battery storage: excluded when kWh capacity < 3 kWh", () => {
+test("Part I — battery storage: excluded when kWh capacity < 3 kWh", () => {
   const result = computeWithSufficientTax({
     battery_storage_cost: 5_000,
     battery_storage_kwh_capacity: 2,
@@ -145,7 +146,7 @@ Deno.test("Part I — battery storage: excluded when kWh capacity < 3 kWh", () =
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
-Deno.test("Part I — battery storage without kWh capacity is rejected", () => {
+test("Part I — battery storage without kWh capacity is rejected", () => {
   assertThrows(
     () => compute({ battery_storage_cost: 5_000 }),
     Error,
@@ -153,7 +154,7 @@ Deno.test("Part I — battery storage without kWh capacity is rejected", () => {
   );
 });
 
-Deno.test("Part I — fuel cell capacity below 0.5 kW is rejected", () => {
+test("Part I — fuel cell capacity below 0.5 kW is rejected", () => {
   assertThrows(
     () =>
       computeWithSufficientTax({
@@ -166,7 +167,7 @@ Deno.test("Part I — fuel cell capacity below 0.5 kW is rejected", () => {
   );
 });
 
-Deno.test("Part I — fuel cell capacity must be in half-kW increments", () => {
+test("Part I — fuel cell capacity must be in half-kW increments", () => {
   assertThrows(
     () =>
       computeWithSufficientTax({
@@ -179,7 +180,7 @@ Deno.test("Part I — fuel cell capacity must be in half-kW increments", () => {
   );
 });
 
-Deno.test("Part I — fuel cell needs main-home facts and an occupancy answer", () => {
+test("Part I — fuel cell needs main-home facts and an occupancy answer", () => {
   assertThrows(
     () =>
       computeWithSufficientTax({
@@ -202,7 +203,7 @@ Deno.test("Part I — fuel cell needs main-home facts and an occupancy answer", 
   );
 });
 
-Deno.test("Part I — prior year carryforward added to credit", () => {
+test("Part I — prior year carryforward added to credit", () => {
   // $10,000 solar → $3,000 credit + $500 carryforward = $3,500
   const result = computeWithSufficientTax({
     solar_electric_cost: 10_000,
@@ -212,7 +213,7 @@ Deno.test("Part I — prior year carryforward added to credit", () => {
   assertEquals(energyCredit(s3?.fields), 3_500);
 });
 
-Deno.test("Part I joint fuel cell allocates cost and emits a statement", () => {
+test("Part I joint fuel cell allocates cost and emits a statement", () => {
   const result = computeWithSufficientTax({
     fuel_cell_cost: 12_000,
     fuel_cell_kw_capacity: 5,
@@ -236,7 +237,7 @@ Deno.test("Part I joint fuel cell allocates cost and emits a statement", () => {
   );
 });
 
-Deno.test("Part I joint fuel cell rejects missing or impossible payment shares", () => {
+test("Part I joint fuel cell rejects missing or impossible payment shares", () => {
   const claim = {
     fuel_cell_cost: 12_000,
     fuel_cell_kw_capacity: 5,
@@ -253,13 +254,13 @@ Deno.test("Part I joint fuel cell rejects missing or impossible payment shares",
   );
 });
 
-Deno.test("Part I — prior year carryforward alone (no current-year costs)", () => {
+test("Part I — prior year carryforward alone (no current-year costs)", () => {
   const result = computeWithSufficientTax({ prior_year_carryforward: 750 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 750);
 });
 
-Deno.test("Part I — no annual cap applies (large amount)", () => {
+test("Part I — no annual cap applies (large amount)", () => {
   // $200,000 solar installation → $60,000 credit (no cap)
   const result = computeWithSufficientTax({ solar_electric_cost: 200_000 });
   const s3 = findOutput(result, "schedule3");
@@ -268,7 +269,7 @@ Deno.test("Part I — no annual cap applies (large amount)", () => {
 
 // ─── Part II — Windows/Doors/Insulation ──────────────────────────────────────
 
-Deno.test("Part II — windows: $600 cap applies", () => {
+test("Part II — windows: $600 cap applies", () => {
   // $5,000 × 30% = $1,500, capped at $600
   const result = computeWithSufficientTax({ windows_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
@@ -277,7 +278,7 @@ Deno.test("Part II — windows: $600 cap applies", () => {
   assertEquals(s3?.fields.line5b_energy_efficient_home, 600);
 });
 
-Deno.test("Part II itemized Section A applies first-door cap before the total cap", () => {
+test("Part II itemized Section A applies first-door cap before the total cap", () => {
   const result = compute({
     part_ii_section_a: {
       main_home_in_us: true,
@@ -304,7 +305,7 @@ Deno.test("Part II itemized Section A applies first-door cap before the total ca
   assertEquals(s3?.fields.line5b_energy_efficient_home, 553);
 });
 
-Deno.test("Part II joint occupancy allocates property and annual limits from shared payments", () => {
+test("Part II joint occupancy allocates property and annual limits from shared payments", () => {
   const result = compute({
     part_ii_joint_occupancy: true,
     part_ii_section_a: {
@@ -353,7 +354,7 @@ Deno.test("Part II joint occupancy allocates property and annual limits from sha
   assertEquals(Array.isArray(statement?.statements), true);
 });
 
-Deno.test("Part II joint occupancy rejects missing and smaller all-occupant payments", () => {
+test("Part II joint occupancy rejects missing and smaller all-occupant payments", () => {
   const claim = {
     part_ii_joint_occupancy: true,
     part_ii_section_b: {
@@ -385,7 +386,7 @@ Deno.test("Part II joint occupancy rejects missing and smaller all-occupant paym
   );
 });
 
-Deno.test("Part II does not ignore joint totals without a joint-occupancy answer", () => {
+test("Part II does not ignore joint totals without a joint-occupancy answer", () => {
   assertThrows(() =>
     compute({
       part_ii_section_b: {
@@ -408,7 +409,7 @@ Deno.test("Part II does not ignore joint totals without a joint-occupancy answer
   );
 });
 
-Deno.test("Part II joint occupancy needs at least one genuinely shared payment", () => {
+test("Part II joint occupancy needs at least one genuinely shared payment", () => {
   assertThrows(() =>
     compute({
       part_ii_joint_occupancy: true,
@@ -432,7 +433,7 @@ Deno.test("Part II joint occupancy needs at least one genuinely shared payment",
   );
 });
 
-Deno.test("Part II joint occupancy allocates water heater and furnace limits separately", () => {
+test("Part II joint occupancy allocates water heater and furnace limits separately", () => {
   const result = compute({
     part_ii_joint_occupancy: true,
     part_ii_section_b: {
@@ -460,7 +461,7 @@ Deno.test("Part II joint occupancy allocates water heater and furnace limits sep
   assertEquals(energyCredit(findOutput(result, "schedule3")?.fields), 600);
 });
 
-Deno.test("Part II joint occupancy allocates the combined central AC limit across overflow units", () => {
+test("Part II joint occupancy allocates the combined central AC limit across overflow units", () => {
   const result = compute({
     part_ii_joint_occupancy: true,
     part_ii_section_b: {
@@ -500,7 +501,7 @@ Deno.test("Part II joint occupancy allocates the combined central AC limit acros
   );
 });
 
-Deno.test("Part II extra QMID units require a primary item", () => {
+test("Part II extra QMID units require a primary item", () => {
   assertThrows(
     () =>
       compute({
@@ -522,7 +523,7 @@ Deno.test("Part II extra QMID units require a primary item", () => {
   );
 });
 
-Deno.test("Part II joint occupancy allocates a home energy audit cap", () => {
+test("Part II joint occupancy allocates a home energy audit cap", () => {
   const result = compute({
     part_ii_joint_occupancy: true,
     part_ii_energy_audit: {
@@ -537,7 +538,7 @@ Deno.test("Part II joint occupancy allocates a home energy audit cap", () => {
   assertEquals(energyCredit(findOutput(result, "schedule3")?.fields), 75);
 });
 
-Deno.test("Part II joint occupancy allocates panelboard and heat pump independently", () => {
+test("Part II joint occupancy allocates panelboard and heat pump independently", () => {
   const result = compute({
     part_ii_joint_occupancy: true,
     part_ii_section_b: {
@@ -570,7 +571,7 @@ Deno.test("Part II joint occupancy allocates panelboard and heat pump independen
   assertEquals(energyCredit(findOutput(result, "schedule3")?.fields), 900);
 });
 
-Deno.test("Part II itemized Section A rejects ineligible and mixed flat claims", () => {
+test("Part II itemized Section A rejects ineligible and mixed flat claims", () => {
   const section = {
     main_home_in_us: true,
     original_user: true,
@@ -605,14 +606,14 @@ Deno.test("Part II itemized Section A rejects ineligible and mixed flat claims",
   );
 });
 
-Deno.test("Part II — windows: below cap", () => {
+test("Part II — windows: below cap", () => {
   // $1,000 × 30% = $300, below $600 cap
   const result = computeWithSufficientTax({ windows_cost: 1_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 300);
 });
 
-Deno.test("Part II — 2 exterior doors: $250 each, max $500", () => {
+test("Part II — 2 exterior doors: $250 each, max $500", () => {
   // 2 doors × $250/door = $500 max, $2,000 × 30% = $600 → capped at $500
   const result = computeWithSufficientTax({
     exterior_doors_cost: 2_000,
@@ -622,7 +623,7 @@ Deno.test("Part II — 2 exterior doors: $250 each, max $500", () => {
   assertEquals(energyCredit(s3?.fields), 500);
 });
 
-Deno.test("Part II — 1 exterior door: $250 cap", () => {
+test("Part II — 1 exterior door: $250 cap", () => {
   // 1 door × $250 = $250, $600 × 30% = $180 → $180 (below per-door limit)
   const result = computeWithSufficientTax({
     exterior_doors_cost: 600,
@@ -632,7 +633,7 @@ Deno.test("Part II — 1 exterior door: $250 cap", () => {
   assertEquals(energyCredit(s3?.fields), 180);
 });
 
-Deno.test("Part II — insulation: no sub-limit, counts toward $1,200 annual cap", () => {
+test("Part II — insulation: no sub-limit, counts toward $1,200 annual cap", () => {
   // $4,000 × 30% = $1,200, at annual cap
   const result = computeWithSufficientTax({ insulation_cost: 4_000 });
   const s3 = findOutput(result, "schedule3");
@@ -641,14 +642,14 @@ Deno.test("Part II — insulation: no sub-limit, counts toward $1,200 annual cap
 
 // ─── Part II — HVAC items (separate $600 caps each) ──────────────────────────
 
-Deno.test("Part II — central_ac_cost: $600 sub-limit", () => {
+test("Part II — central_ac_cost: $600 sub-limit", () => {
   // $5,000 × 30% = $1,500, capped at $600
   const result = computeWithSufficientTax({ central_ac_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 600);
 });
 
-Deno.test("Part II itemized Section B applies standard and heat-pump limits separately", () => {
+test("Part II itemized Section B applies standard and heat-pump limits separately", () => {
   const result = compute({
     part_ii_section_b: {
       home_in_us: true,
@@ -673,7 +674,7 @@ Deno.test("Part II itemized Section B applies standard and heat-pump limits sepa
   assertEquals(s3?.fields.line5b_energy_efficient_home, 3_000);
 });
 
-Deno.test("Part II itemized Section B rejects ineligible and mixed flat claims", () => {
+test("Part II itemized Section B rejects ineligible and mixed flat claims", () => {
   const section = {
     home_in_us: true,
     originally_placed_in_service: true,
@@ -706,7 +707,7 @@ Deno.test("Part II itemized Section B rejects ineligible and mixed flat claims",
   );
 });
 
-Deno.test("Part II panelboard and qualified audit use explicit eligibility facts", () => {
+test("Part II panelboard and qualified audit use explicit eligibility facts", () => {
   const section = {
     home_in_us: true,
     originally_placed_in_service: true,
@@ -774,7 +775,7 @@ Deno.test("Part II panelboard and qualified audit use explicit eligibility facts
   );
 });
 
-Deno.test("Part II qualified audit can stand alone without line 21 property answers", () => {
+test("Part II qualified audit can stand alone without line 21 property answers", () => {
   const result = compute({
     part_ii_energy_audit: {
       cost: 600,
@@ -790,26 +791,26 @@ Deno.test("Part II qualified audit can stand alone without line 21 property answ
   );
 });
 
-Deno.test("Part II — gas_water_heater_cost: $600 sub-limit", () => {
+test("Part II — gas_water_heater_cost: $600 sub-limit", () => {
   // $5,000 × 30% = $1,500, capped at $600
   const result = computeWithSufficientTax({ gas_water_heater_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 600);
 });
 
-Deno.test("Part II — furnace_boiler_cost: $600 sub-limit", () => {
+test("Part II — furnace_boiler_cost: $600 sub-limit", () => {
   const result = computeWithSufficientTax({ furnace_boiler_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 600);
 });
 
-Deno.test("Part II — panelboard_cost: $600 sub-limit", () => {
+test("Part II — panelboard_cost: $600 sub-limit", () => {
   const result = computeWithSufficientTax({ panelboard_cost: 5_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 600);
 });
 
-Deno.test("Part II — central AC + gas water heater: independent $600 caps", () => {
+test("Part II — central AC + gas water heater: independent $600 caps", () => {
   // central_ac $2,000 × 30% = $600 (capped) + gas water heater $1,000 × 30% = $300 → $900
   const result = computeWithSufficientTax({
     central_ac_cost: 2_000,
@@ -821,14 +822,14 @@ Deno.test("Part II — central AC + gas water heater: independent $600 caps", ()
 
 // ─── Part II — Heat pump + biomass ($2,000 combined cap) ─────────────────────
 
-Deno.test("Part II — heat pump: part of $2,000 combined cap", () => {
+test("Part II — heat pump: part of $2,000 combined cap", () => {
   // $10,000 × 30% = $3,000, capped at $2,000
   const result = computeWithSufficientTax({ heat_pump_cost: 10_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 2_000);
 });
 
-Deno.test("Part II — heat pump water heater: part of $2,000 combined cap", () => {
+test("Part II — heat pump water heater: part of $2,000 combined cap", () => {
   const result = computeWithSufficientTax({
     heat_pump_water_heater_cost: 8_000,
   });
@@ -836,14 +837,14 @@ Deno.test("Part II — heat pump water heater: part of $2,000 combined cap", () 
   assertEquals(energyCredit(s3?.fields), 2_000);
 });
 
-Deno.test("Part II — biomass: $2,000 separate cap (not counted toward $1,200)", () => {
+test("Part II — biomass: $2,000 separate cap (not counted toward $1,200)", () => {
   // $8,000 biomass × 30% = $2,400, capped at $2,000
   const result = computeWithSufficientTax({ biomass_cost: 8_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(energyCredit(s3?.fields), 2_000);
 });
 
-Deno.test("Part II — heat pump + biomass combined under $2,000 cap", () => {
+test("Part II — heat pump + biomass combined under $2,000 cap", () => {
   // heat_pump $4,000 + biomass $8,000 = $12,000 × 30% = $3,600 → capped at $2,000
   const result = computeWithSufficientTax({
     heat_pump_cost: 4_000,
@@ -853,7 +854,7 @@ Deno.test("Part II — heat pump + biomass combined under $2,000 cap", () => {
   assertEquals(energyCredit(s3?.fields), 2_000);
 });
 
-Deno.test("Part II — biomass + windows: biomass independent of $1,200 annual cap", () => {
+test("Part II — biomass + windows: biomass independent of $1,200 annual cap", () => {
   // Windows: $5,000 × 30% = $1,500, capped at $600
   // Biomass: $8,000 × 30% = $2,400, capped at $2,000
   // Total = $600 + $2,000 = $2,600
@@ -867,7 +868,7 @@ Deno.test("Part II — biomass + windows: biomass independent of $1,200 annual c
 
 // ─── Part II — Energy Audit ───────────────────────────────────────────────────
 
-Deno.test("Part II — energy audit: $150 cap", () => {
+test("Part II — energy audit: $150 cap", () => {
   // $1,000 × 30% = $300, capped at $150
   const result = computeWithSufficientTax({ energy_audit_cost: 1_000 });
   const s3 = findOutput(result, "schedule3");
@@ -876,7 +877,7 @@ Deno.test("Part II — energy audit: $150 cap", () => {
 
 // ─── Annual Cap Enforcement ───────────────────────────────────────────────────
 
-Deno.test("Part II — combined standard items exceed $1,200 annual cap", () => {
+test("Part II — combined standard items exceed $1,200 annual cap", () => {
   // Windows: $600 + central AC: $600 + audit: $150 = $1,350 → capped at $1,200
   const result = computeWithSufficientTax({
     windows_cost: 5_000, // → $600 (capped)
@@ -889,7 +890,7 @@ Deno.test("Part II — combined standard items exceed $1,200 annual cap", () => 
 
 // ─── Part I + Part II Combined ────────────────────────────────────────────────
 
-Deno.test("Part I + Part II combined — total of both", () => {
+test("Part I + Part II combined — total of both", () => {
   // Part I: solar $10,000 → $3,000
   // Part II: windows $5,000 → $600 (capped)
   // Total: $3,600
@@ -905,7 +906,7 @@ Deno.test("Part I + Part II combined — total of both", () => {
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes clean-energy credit to Schedule 3 line 5a", () => {
+test("output routes clean-energy credit to Schedule 3 line 5a", () => {
   const result = computeWithSufficientTax({ solar_electric_cost: 10_000 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(s3?.nodeType, "schedule3");

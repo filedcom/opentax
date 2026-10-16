@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -33,28 +36,28 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(schema);
+    await sys.stat(schema);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
+    if (sys.isNotFound(error)) {
       throw new Error(`Missing verification prerequisite: ${schema}`);
     }
     throw error;
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed activities", async () => {
+test("1099-MISC box 3 business and farm payments reach their own reviewed activities", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -136,10 +139,10 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
   const pdfBytes = await buildPdfBytes(result.pending, filer);
   const pdf = await PDFDocument.load(pdfBytes);
   assertEquals(pdf.getPageCount() >= 6, true);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdfBytes);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdfBytes);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -148,7 +151,7 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   for (const field of ["amount", "payer_tin"] as const) {
@@ -189,7 +192,7 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
   );
 });
 
-Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () => {
+test("1099-MISC box 3 farm recipient must belong to the filer", async () => {
   const pending = buildPending({
     schedule1: { line6_schedule_f: 500 },
     f1099m: {
@@ -235,7 +238,7 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
   );
 });
 
-Deno.test("1099-NEC farm recipient must match its named proprietor", async () => {
+test("1099-NEC farm recipient must match its named proprietor", async () => {
   const pending = buildPending({
     schedule1: { line6_schedule_f: 500 },
     f1099nec: {

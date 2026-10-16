@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { FormType } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -32,7 +33,7 @@ for (
     federal_withheld: 120,
   }]
 ) {
-  Deno.test(`Form 4852 ${source.form_type} source cannot leave without its filing route`, async () => {
+  test(`Form 4852 ${source.form_type} source cannot leave without its filing route`, async () => {
     const withSubstitute = { ...pending, f4852: { f4852s: [source] } };
     assertThrows(
       () => buildMefXml(withSubstitute, fixture.filer),

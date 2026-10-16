@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/general/filing/f9000/index.ts";
@@ -18,7 +19,7 @@ const request = {
   request_record_reference: "Taxpayer accessible notice request",
 };
 
-Deno.test("Form 9000 request reaches native return and one filled-PDF page", async () => {
+test("Form 9000 request reaches native return and one filled-PDF page", async () => {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     f9000: { requests: [request] },
@@ -54,7 +55,7 @@ Deno.test("Form 9000 request reaches native return and one filled-PDF page", asy
   }]);
 });
 
-Deno.test("Form 9000 supports distinct joint owners and rejects invalid requests", () => {
+test("Form 9000 supports distinct joint owners and rejects invalid requests", () => {
   const filer: FilerIdentity = {
     ...base.filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -99,7 +100,7 @@ Deno.test("Form 9000 supports distinct joint owners and rejects invalid requests
   );
 });
 
-Deno.test("joint Form 9000 fixture retains two native and two printable owner copies", async () => {
+test("joint Form 9000 fixture retains two native and two printable owner copies", async () => {
   const joint = pdfReviewFixtures.find((fixture) =>
     fixture.id === "joint-two-w2s-form9000"
   )!;

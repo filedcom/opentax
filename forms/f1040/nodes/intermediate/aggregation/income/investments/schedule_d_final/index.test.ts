@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   inputSchema as scheduleDInputSchema,
@@ -7,7 +8,7 @@ import { schedule_d_final } from "./index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 
-Deno.test("active-rental sale uses provisional and final Schedule D capital-loss caps", () => {
+test("active-rental sale uses provisional and final Schedule D capital-loss caps", () => {
   const provisionalInput = scheduleDInputSchema.parse({
     line_6_carryover: 10_000,
     line_11_form2439: 8_000,
@@ -41,7 +42,7 @@ Deno.test("active-rental sale uses provisional and final Schedule D capital-loss
   assertEquals(final.finalizations?.[0]?.fields.line_11_form2439, 5_000);
 });
 
-Deno.test("final Schedule D clears the gross source when Part I stays zero", () => {
+test("final Schedule D clears the gross source when Part I stays zero", () => {
   const final = schedule_d_final.compute(ctx, {
     provisional_input: scheduleDInputSchema.parse({
       pending_active_4797: true,

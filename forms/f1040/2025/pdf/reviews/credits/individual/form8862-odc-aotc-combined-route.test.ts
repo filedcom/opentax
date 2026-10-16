@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -121,7 +122,7 @@ function combinedInputs() {
   };
 }
 
-Deno.test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot authorize export", async () => {
+test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot authorize export", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -157,7 +158,7 @@ Deno.test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot
   );
 });
 
-Deno.test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form 8862 export", () => {
+test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form 8862 export", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -205,7 +206,7 @@ Deno.test("shared ODC/AOTC claimant rejects changed exact credit amounts at Form
   }
 });
 
-Deno.test("combined Form 8862 ODC/AOTC rejects altered notice and student source", () => {
+test("combined Form 8862 ODC/AOTC rejects altered notice and student source", () => {
   const wrongNotice = combinedInputs();
   wrongNotice.f8862.aotc_disallowance_notice_reference =
     "Different IRS AOTC notice";

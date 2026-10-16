@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { buildMefBundle } from "../builder.ts";
@@ -26,18 +29,13 @@ const filer: FilerIdentity = {
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // IRS schema bundle is local-only.
 }
 
-Deno.test({
-  name: "XSD: TY2025 IRS submission manifest validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: TY2025 IRS submission manifest validates", async () => {
   const bundle = await buildMefBundle({
     f1040: { filing_status: "single", digital_assets: false },
   }, { filer, attachments: [] });
@@ -56,10 +54,10 @@ Deno.test({
       },
     },
   });
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, submission.manifestXml);
-    const command = new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, submission.manifestXml);
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
@@ -67,6 +65,6 @@ Deno.test({
     const output = await command.output();
     assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -59,7 +60,7 @@ function compute(items: Item[]) {
   );
 }
 
-Deno.test("Form 2106 rejects old category-only and unallocated-reimbursement shapes", () => {
+test("Form 2106 rejects old category-only and unallocated-reimbursement shapes", () => {
   assertEquals(
     itemSchema.safeParse({ employee_type: EmployeeType.RESERVIST }).success,
     false,
@@ -73,7 +74,7 @@ Deno.test("Form 2106 rejects old category-only and unallocated-reimbursement sha
   );
 });
 
-Deno.test("Form 2106 fee-basis job calculates Part I line 4 and Schedule 1 only", () => {
+test("Form 2106 fee-basis job calculates Part I line 4 and Schedule 1 only", () => {
   const item = feeJob();
   assertEquals(calculateForm2106Lines(item).line10_deduction, 1_200);
   const result = compute([item]);
@@ -88,7 +89,7 @@ Deno.test("Form 2106 fee-basis job calculates Part I line 4 and Schedule 1 only"
   assertEquals(fieldsOf(result.outputs, scheduleA), undefined);
 });
 
-Deno.test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or AGI", () => {
+test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or AGI", () => {
   const item: Item = {
     ...feeJob(),
     qualification: {
@@ -108,7 +109,7 @@ Deno.test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or A
   assertEquals(fieldsOf(result.outputs, agi_aggregator), undefined);
 });
 
-Deno.test("Form 2106 mixed jobs keep Schedule A and Schedule 1 amounts separate", () => {
+test("Form 2106 mixed jobs keep Schedule A and Schedule 1 amounts separate", () => {
   const impairment: Item = {
     ...feeJob(),
     job: {
@@ -134,7 +135,7 @@ Deno.test("Form 2106 mixed jobs keep Schedule A and Schedule 1 amounts separate"
   );
 });
 
-Deno.test("Form 2106 requires distinct job records and consistent owner SSN", () => {
+test("Form 2106 requires distinct job records and consistent owner SSN", () => {
   const first = feeJob();
   assertEquals(
     f2106.inputSchema.safeParse({ f2106s: [first, first] }).success,
@@ -155,7 +156,7 @@ Deno.test("Form 2106 requires distinct job records and consistent owner SSN", ()
   );
 });
 
-Deno.test("Form 2106 reimbursement columns are applied before the 50% meals limit", () => {
+test("Form 2106 reimbursement columns are applied before the 50% meals limit", () => {
   const item: Item = {
     ...feeJob(),
     expenses: {
@@ -176,7 +177,7 @@ Deno.test("Form 2106 reimbursement columns are applied before the 50% meals limi
   assertEquals(lines.line10_deduction, 500);
 });
 
-Deno.test("Form 2106 excess nonmeal reimbursement refuses tax routing until W-2/1040 line 1a joins", () => {
+test("Form 2106 excess nonmeal reimbursement refuses tax routing until W-2/1040 line 1a joins", () => {
   const item: Item = {
     ...feeJob(),
     reimbursements: {
@@ -191,7 +192,7 @@ Deno.test("Form 2106 excess nonmeal reimbursement refuses tax routing until W-2/
   assertThrows(() => compute([item]), Error, "line 1a");
 });
 
-Deno.test("Form 2106 standard-mileage source calculates line 22 and rejects inconsistent Part II miles", () => {
+test("Form 2106 standard-mileage source calculates line 22 and rejects inconsistent Part II miles", () => {
   const vehicle: Item["vehicle"] = {
     method: VehicleMethod.STANDARD_MILEAGE,
     placed_in_service_date: "2025-02-01",
@@ -230,7 +231,7 @@ Deno.test("Form 2106 standard-mileage source calculates line 22 and rejects inco
   );
 });
 
-Deno.test("Form 2106 actual vehicle and unreviewed reservist branches fail closed", () => {
+test("Form 2106 actual vehicle and unreviewed reservist branches fail closed", () => {
   assertThrows(
     () =>
       calculateForm2106Lines({
@@ -272,7 +273,7 @@ Deno.test("Form 2106 actual vehicle and unreviewed reservist branches fail close
   );
 });
 
-Deno.test("Form 2106 impairment source refuses unrelated travel and meals", () => {
+test("Form 2106 impairment source refuses unrelated travel and meals", () => {
   const item = feeJob();
   assertEquals(
     itemSchema.safeParse({
@@ -292,7 +293,7 @@ Deno.test("Form 2106 impairment source refuses unrelated travel and meals", () =
   );
 });
 
-Deno.test("Form 2106 performing-artist source checks owner-wide qualification", () => {
+test("Form 2106 performing-artist source checks owner-wide qualification", () => {
   const item = feeJob();
   const artist: Item = {
     ...item,

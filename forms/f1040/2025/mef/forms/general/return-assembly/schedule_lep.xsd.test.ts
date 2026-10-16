@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { buildMefBundle, buildMefXml } from "../../../builder.ts";
@@ -9,7 +12,7 @@ const xsdPath = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(xsdPath);
+  sys.statSync(xsdPath);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -33,12 +36,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name: "TY2025 XSD: separate Schedule LEP taxpayer and spouse preferences",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("TY2025 XSD: separate Schedule LEP taxpayer and spouse preferences", async () => {
   const xml = buildMefXml({
     schedule_lep: {
       requests: [
@@ -57,21 +55,21 @@ Deno.test({
       ],
     },
   }, filer);
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test("Schedule LEP cancellation needs authenticated election evidence before final export", async () => {
+test("Schedule LEP cancellation needs authenticated election evidence before final export", async () => {
   const request = {
     person: "spouse" as const,
     language_preference_code: LanguagePreferenceCode.Cancel,

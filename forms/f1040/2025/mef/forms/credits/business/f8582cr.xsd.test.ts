@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import {
   PassiveCreditCategory,
@@ -13,18 +16,13 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test({
-  name: "XSD: Form 8582-CR Part I and active-rental Part II",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8582-CR Part I and active-rental Part II", async () => {
   const xml = form8582cr.build({
     credit_sources: [{
       activity_reference: "Rental house",
@@ -50,26 +48,21 @@ Deno.test({
     form8582_line9_special_allowance_used: 5_000,
     part_ii_tax_on_income_less_line14: 9_000,
   }).replace("<IRS8582CR>", '<IRS8582CR documentId="IRS8582CR0" xmlns="http://www.irs.gov/efile">');
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8582-CR rehabilitation and post-1989 housing limits",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8582-CR rehabilitation and post-1989 housing limits", async () => {
   const xml = form8582cr.build({
     credit_sources: [{
       activity_reference: "Rehabilitation building",
@@ -102,16 +95,16 @@ Deno.test({
     part_iii_tax_on_income_less_line26: 8_500,
     part_iv_tax_on_income_less_remaining_allowance: 7_000,
   }).replace("<IRS8582CR>", '<IRS8582CR documentId="IRS8582CR0" xmlns="http://www.irs.gov/efile">');
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

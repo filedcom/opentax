@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertCurrentYearSection481aMatches,
@@ -30,17 +31,17 @@ function adjustments(items: ReturnType<typeof item>[]) {
     .section481a_adjustments;
 }
 
-Deno.test("f3115 requires a nonempty method-change list and DCN", () => {
+test("f3115 requires a nonempty method-change list and DCN", () => {
   assertThrows(() => compute([]));
   assertThrows(() => compute([item({ designated_change_number: "" })]));
 });
 
-Deno.test("f3115 emits nothing without a current-year adjustment", () => {
+test("f3115 emits nothing without a current-year adjustment", () => {
   assertEquals(compute([item()]).outputs, []);
   assertEquals(compute([item({ section_481_adjustment: 0 })]).outputs, []);
 });
 
-Deno.test("f3115 positive adjustment uses ordinary four-year inclusion", () => {
+test("f3115 positive adjustment uses ordinary four-year inclusion", () => {
   assertEquals(adjustments([item({ section_481_adjustment: 12_000 })]), [{
     business_reference: "business-a",
     designated_change_number: "222",
@@ -69,7 +70,7 @@ Deno.test("f3115 positive adjustment uses ordinary four-year inclusion", () => {
   );
 });
 
-Deno.test("f3115 allocates whole-dollar installments and puts the remainder in year four", () => {
+test("f3115 allocates whole-dollar installments and puts the remainder in year four", () => {
   assertEquals(adjustments([item({ section_481_adjustment: 10_001 })]), [{
     business_reference: "business-a",
     designated_change_number: "222",
@@ -90,7 +91,7 @@ Deno.test("f3115 allocates whole-dollar installments and puts the remainder in y
   assertThrows(() => compute([item({ section_481_adjustment: 10_001.5 })]));
 });
 
-Deno.test("Form 3115 source reconciliation rejects a changed Schedule C installment", () => {
+test("Form 3115 source reconciliation rejects a changed Schedule C installment", () => {
   const source = { f3115s: [item({ section_481_adjustment: 12_000 })] };
   const matching = [{
     business_reference: "business-a",
@@ -110,7 +111,7 @@ Deno.test("Form 3115 source reconciliation rejects a changed Schedule C installm
   );
 });
 
-Deno.test("f3115 negative adjustment is a current-year business expense", () => {
+test("f3115 negative adjustment is a current-year business expense", () => {
   assertEquals(adjustments([item({ section_481_adjustment: -6_000 })]), [{
     business_reference: "business-a",
     designated_change_number: "222",
@@ -126,7 +127,7 @@ Deno.test("f3115 negative adjustment is a current-year business expense", () => 
   );
 });
 
-Deno.test("f3115 preserves per-business and per-change character", () => {
+test("f3115 preserves per-business and per-change character", () => {
   assertEquals(
     adjustments([
       item({ section_481_adjustment: 8_000 }),
@@ -153,7 +154,7 @@ Deno.test("f3115 preserves per-business and per-change character", () => {
   );
 });
 
-Deno.test("f3115 permits verified one-year positive election under $50,000", () => {
+test("f3115 permits verified one-year positive election under $50,000", () => {
   assertEquals(
     adjustments([item({
       section_481_adjustment: 49_999,
@@ -184,7 +185,7 @@ Deno.test("f3115 permits verified one-year positive election under $50,000", () 
   );
 });
 
-Deno.test("f3115 rejects nonzero unclassified and unsupported adjustments", () => {
+test("f3115 rejects nonzero unclassified and unsupported adjustments", () => {
   assertThrows(() =>
     compute([item({
       section_481_adjustment: 1_000,

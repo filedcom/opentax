@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/header.ts";
 import {
@@ -26,7 +27,7 @@ const filer: FilerIdentity = {
   },
 };
 
-Deno.test("line 1a rejects wages without an issued or substitute W-2", () => {
+test("line 1a rejects wages without an issued or substitute W-2", () => {
   assertLine1aWageSource({ f1040: { line1a_wages: 0 } });
   assertThrows(
     () => assertLine1aWageSource({ f1040: { line1a_wages: 1_200 } }),
@@ -44,7 +45,7 @@ Deno.test("line 1a rejects wages without an issued or substitute W-2", () => {
   );
 });
 
-Deno.test("line 25a replays substitute W-2 withholding and rejects an unsupported amount", () => {
+test("line 25a replays substitute W-2 withholding and rejects an unsupported amount", () => {
   const substitute = {
     f4852s: [{
       form_type: FormType.W2,
@@ -81,7 +82,7 @@ Deno.test("line 25a replays substitute W-2 withholding and rejects an unsupporte
   );
 });
 
-Deno.test("line 25a totals distinct issued and substitute W-2 withholding", () => {
+test("line 25a totals distinct issued and substitute W-2 withholding", () => {
   const pending = {
     w2: {
       w2s: [{
@@ -118,7 +119,7 @@ Deno.test("line 25a totals distinct issued and substitute W-2 withholding", () =
   );
 });
 
-Deno.test("W-2 withholding replays both identified joint owners into line 25a", () => {
+test("W-2 withholding replays both identified joint owners into line 25a", () => {
   const source = {
     w2: {
       w2s: [{
@@ -180,7 +181,7 @@ Deno.test("W-2 withholding replays both identified joint owners into line 25a", 
   );
 });
 
-Deno.test("positive W-2 box 2 withholding needs an identified employee on a single return", () => {
+test("positive W-2 box 2 withholding needs an identified employee on a single return", () => {
   const single = {
     ...filer,
     filingStatus: FilingStatus.Single,
@@ -216,7 +217,7 @@ Deno.test("positive W-2 box 2 withholding needs an identified employee on a sing
   }, single);
 });
 
-Deno.test("joint W-2 wages without withholding still need an identified employee", () => {
+test("joint W-2 wages without withholding still need an identified employee", () => {
   const source = {
     w2: {
       w2s: [{
@@ -254,7 +255,7 @@ Deno.test("joint W-2 wages without withholding still need an identified employee
   }, filer);
 });
 
-Deno.test("positive wages without withholding need an issued employee SSN on a single return", () => {
+test("positive wages without withholding need an issued employee SSN on a single return", () => {
   const single = {
     ...filer,
     filingStatus: FilingStatus.Single,
@@ -282,7 +283,7 @@ Deno.test("positive wages without withholding need an issued employee SSN on a s
   }, single);
 });
 
-Deno.test("Social Security and Medicare-only W-2 amounts need the filed employee owner", () => {
+test("Social Security and Medicare-only W-2 amounts need the filed employee owner", () => {
   const row = {
     employer_name: "Employer A",
     box1_wages: 0,
@@ -316,7 +317,7 @@ Deno.test("Social Security and Medicare-only W-2 amounts need the filed employee
   }, filer);
 });
 
-Deno.test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 25a", () => {
+test("W-2 Form 8958 taxpayer share, rather than full box 2, files on line 25a", () => {
   const allocation = {
     domicile_state: CommunityPropertyState.CA,
     federal_filing_status: NodeFilingStatus.MFS,

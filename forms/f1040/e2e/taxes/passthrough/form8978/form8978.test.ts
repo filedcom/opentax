@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { FilingStatus, TS } from "../../../../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("E2E: Form 8978 positive line 14 increases Form 1040 line 16", () => {
+test("E2E: Form 8978 positive line 14 increases Form 1040 line 16", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -50,7 +51,7 @@ Deno.test("E2E: Form 8978 positive line 14 increases Form 1040 line 16", () => {
   );
 });
 
-Deno.test("E2E: negative Form 8978 line 14 reaches capped Schedule 3 line 6l", () => {
+test("E2E: negative Form 8978 line 14 reaches capped Schedule 3 line 6l", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -101,7 +102,7 @@ Deno.test("E2E: negative Form 8978 line 14 reaches capped Schedule 3 line 6l", (
   assertEquals(result.pending.f1040?.line24_total_tax, 7_455);
 });
 
-Deno.test("E2E: negative Form 8978 excess offsets chapter 1 Schedule 2 tax", () => {
+test("E2E: negative Form 8978 excess offsets chapter 1 Schedule 2 tax", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

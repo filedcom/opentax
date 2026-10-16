@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -44,10 +47,10 @@ async function validateXml(xml: string) {
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, xmlPath],
       stderr: "piped",
     }).output();
@@ -57,7 +60,7 @@ async function validateXml(xml: string) {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
@@ -72,7 +75,7 @@ function file(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("one-policy APTC cents use rounded monthly Form 8962 entries", async () => {
+test("one-policy APTC cents use rounded monthly Form 8962 entries", async () => {
   const policy = {
     issuer_name: "Texas Marketplace",
     policy_number: "POLICY-APTC-CENTS",
@@ -138,7 +141,7 @@ Deno.test("one-policy APTC cents use rounded monthly Form 8962 entries", async (
   );
 });
 
-Deno.test("one-policy APTC cents round line 33 totals once for annual line 11", async () => {
+test("one-policy APTC cents round line 33 totals once for annual line 11", async () => {
   const policy = {
     issuer_name: "Texas Marketplace",
     policy_number: "POLICY-APTC-ANNUAL-CENTS",
@@ -173,7 +176,7 @@ Deno.test("one-policy APTC cents round line 33 totals once for annual line 11", 
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("corrected 1095-A cents supersede original monthly policy amounts", async () => {
+test("corrected 1095-A cents supersede original monthly policy amounts", async () => {
   const original = {
     issuer_name: "Texas Marketplace",
     policy_number: "POLICY-CORRECTED-CENTS",
@@ -222,7 +225,7 @@ Deno.test("corrected 1095-A cents supersede original monthly policy amounts", as
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("corrected 1095-A annual cents use corrected line 33 totals", async () => {
+test("corrected 1095-A annual cents use corrected line 33 totals", async () => {
   const original = {
     issuer_name: "Texas Marketplace",
     policy_number: "POLICY-CORRECTED-ANNUAL-CENTS",
@@ -263,7 +266,7 @@ Deno.test("corrected 1095-A annual cents use corrected line 33 totals", async ()
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("two successive Marketplace policies round each combined monthly line", async () => {
+test("two successive Marketplace policies round each combined monthly line", async () => {
   const firstSix = (amount: number) => [
     ...Array(6).fill(amount),
     ...Array(6).fill(0),
@@ -322,7 +325,7 @@ Deno.test("two successive Marketplace policies round each combined monthly line"
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("overlapping family policies combine cents across monthly, annual, and state routes", async () => {
+test("overlapping family policies combine cents across monthly, annual, and state routes", async () => {
   const sources = {
     general: {
       ...general,
@@ -488,7 +491,7 @@ Deno.test("overlapping family policies combine cents across monthly, annual, and
   assertEquals((await PDFDocument.load(twoStatePdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("rounded monthly APTC repayment reaches Schedule 2 and Form 1040", async () => {
+test("rounded monthly APTC repayment reaches Schedule 2 and Form 1040", async () => {
   const policy = {
     issuer_name: "Texas Marketplace",
     policy_number: "POLICY-APTC-REPAY-CENTS",
@@ -519,7 +522,7 @@ Deno.test("rounded monthly APTC repayment reaches Schedule 2 and Form 1040", asy
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("below-100% APTC-only repayment rounds each monthly advance", async () => {
+test("below-100% APTC-only repayment rounds each monthly advance", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       ...general,
@@ -567,7 +570,7 @@ Deno.test("below-100% APTC-only repayment rounds each monthly advance", async ()
   await validateXml(xml);
 });
 
-Deno.test("MFS APTC-only annual repayment rounds line 33 totals", async () => {
+test("MFS APTC-only annual repayment rounds line 33 totals", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       ...general,

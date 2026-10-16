@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { XMLParser } from "fast-xml-parser";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
@@ -56,7 +59,7 @@ function jointRecords(spouseOwned: boolean) {
 }
 
 for (const cash of [1000, 4000, 6000]) {
-  Deno.test(`Passive Form 7203 cash ${cash} projects original stock and basis-limited Part III consistently`, () => {
+  test(`Passive Form 7203 cash ${cash} projects original stock and basis-limited Part III consistently`, () => {
     const { source, k1 } = passiveSCorpLossRecords(cash);
     const projection = projectFirstYearPassiveSCorp7203(source, k1, filer);
     const p = projection.pdfFields;
@@ -113,7 +116,7 @@ for (const cash of [1000, 4000, 6000]) {
 }
 
 for (const spouseOwned of [false, true]) {
-  Deno.test(`Passive Form 7203 retains ${spouseOwned ? "spouse" : "primary"} ownership and the other spouse's participation record`, () => {
+  test(`Passive Form 7203 retains ${spouseOwned ? "spouse" : "primary"} ownership and the other spouse's participation record`, () => {
     const { source, k1 } = jointRecords(spouseOwned);
     const p = projectFirstYearPassiveSCorp7203(source, k1, joint).pdfFields;
     assertEquals(p.shareholder_ssn, spouseOwned ? "444556666" : "111223333");
@@ -130,7 +133,7 @@ for (const spouseOwned of [false, true]) {
   });
 }
 
-Deno.test("Passive Form 7203 rejects missing filer, wrong name, marital status, ownership and unsupported status", () => {
+test("Passive Form 7203 rejects missing filer, wrong name, marital status, ownership and unsupported status", () => {
   const { source, k1 } = passiveSCorpLossRecords();
   assertThrows(() => projectFirstYearPassiveSCorp7203(source, k1, undefined));
   assertThrows(() =>
@@ -161,7 +164,7 @@ Deno.test("Passive Form 7203 rejects missing filer, wrong name, marital status, 
   );
 });
 
-Deno.test("Passive Form 7203 projection replays bank/source joins and rejects illegal IRS names", () => {
+test("Passive Form 7203 projection replays bank/source joins and rejects illegal IRS names", () => {
   const { source, k1 } = passiveSCorpLossRecords();
   source.stock_subscription.cash_payment.shareholder_bank_debit += 1;
   assertThrows(() => buildFirstYearPassiveSCorp7203(source, k1, filer));
@@ -201,19 +204,19 @@ for (
     { id: "joint_spouse", records: () => jointRecords(true), filer: joint },
   ]
 ) {
-  Deno.test(`XSD: standalone passive Form 7203 ${c.id}`, async () => {
-    await Deno.stat(XSD_PATH); // Required evidence; missing schema fails rather than ignores this gate.
+  test(`XSD: standalone passive Form 7203 ${c.id}`, async () => {
+    await sys.stat(XSD_PATH); // Required evidence; missing schema fails rather than ignores this gate.
     const { source, k1 } = c.records();
     const xml = buildFirstYearPassiveSCorp7203(source, k1, c.filer).replace(
       "<IRS7203>",
       '<IRS7203 xmlns="http://www.irs.gov/efile" documentId="IRS7203-1">',
     );
-    const path = await Deno.makeTempFile({
+    const path = await sys.makeTempFile({
       prefix: `opentax-passive7203-${c.id}-`,
       suffix: ".xml",
     });
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",

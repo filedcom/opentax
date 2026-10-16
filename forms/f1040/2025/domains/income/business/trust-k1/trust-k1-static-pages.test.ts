@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDict, PDFDocument, PDFName, PDFString, rgb } from "pdf-lib";
 import {
@@ -8,9 +10,9 @@ import { extractTrustK1IssuedCopyFields } from "./trust-k1-issued-copy-fields.ts
 import { fieldName, filer, fixture } from "./trust-k1-issued-copy.fixture.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 
-Deno.test("trust K-1 static fingerprint is derived from the pinned official template and excludes editable values", async () => {
+test("trust K-1 static fingerprint is derived from the pinned official template and excludes editable values", async () => {
   const { source, documents } = await fixture();
-  const original = await Deno.readFile(".pdf-cache/form1041sk1-2025.pdf");
+  const original = await sys.readBytes(".pdf-cache/form1041sk1-2025.pdf");
   assertEquals(
     await sha256Hex(original),
     "d8d7b6eacabdf145474aee8385fcfeafe68bd2f69baaef52d9a8227ebcd45fc3",
@@ -112,13 +114,13 @@ for (
       )],
   ] as const
 ) {
-  Deno.test(`trust K-1 static-page verification rejects rehashed ${label}`, async () => {
+  test(`trust K-1 static-page verification rejects rehashed ${label}`, async () => {
     const { documents } = await fixture(change);
     await assertRejects(() => assertTrustK1StaticPages(documents[0].bytes));
   });
 }
 
-Deno.test("trust K-1 source extraction rejects an overlay even with matching visible field appearances and rehashed metadata", async () => {
+test("trust K-1 source extraction rejects an overlay even with matching visible field appearances and rehashed metadata", async () => {
   const { source, documents } = await fixture((pdf) =>
     pdf.getPage(0).drawRectangle({
       x: 350,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4797Pdf } from "./f4797.ts";
 
@@ -5,7 +6,7 @@ function field(key: string): string | undefined {
   return form4797Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
 }
 
-Deno.test("Form 4797 Part I uses the official 2025 line 4–9 fields", () => {
+test("Form 4797 Part I uses the official 2025 line 4–9 fields", () => {
   assertEquals(field("gain_form6252"), "topmostSubform[0].Page1[0].f1_35[0]");
   assertEquals(field("gain_form8824"), "topmostSubform[0].Page1[0].f1_36[0]");
   assertEquals(
@@ -25,7 +26,7 @@ Deno.test("Form 4797 Part I uses the official 2025 line 4–9 fields", () => {
   assertEquals(field("ordinary_gain"), "topmostSubform[0].Page1[0].f1_77[0]");
 });
 
-Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", () => {
+test("Form 4797 prints line 9 only when prior section 1231 losses apply", () => {
   const source = { section_1231_gain: 10_000, gain_form6252: 10_000 };
   const pending = {
     form6252: {
@@ -98,7 +99,7 @@ Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", (
   );
 });
 
-Deno.test("Form 4797 line 5 reconciles its section 1231 exchange source", () => {
+test("Form 4797 line 5 reconciles its section 1231 exchange source", () => {
   const fields = { section_1231_gain: 20_000, gain_form8824: 20_000 };
   const exchange = {
     relinquished_basis: 40_000,

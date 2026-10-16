@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
@@ -85,7 +88,7 @@ const tax = {
   specifiedCarryforward: 0,
 };
 
-Deno.test("Form 3800 nonpassive source builder exposes structured document parts", () => {
+test("Form 3800 nonpassive source builder exposes structured document parts", () => {
   const parts = buildForm3800NonpassiveParts({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
@@ -103,7 +106,7 @@ Deno.test("Form 3800 nonpassive source builder exposes structured document parts
   assertEquals(parts.lines.line38, 5_000);
 });
 
-Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () => {
+test("Form 3800 source parts retain facility metadata for a mixed row", () => {
   const parts = buildForm3800NonpassiveParts({
     tax,
     passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
@@ -124,7 +127,7 @@ Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () 
   assertEquals(parts.currentDetails.map((row) => row.line), ["1f", "4e"]);
 });
 
-Deno.test("Form 3800 retains one Form 8936 source detail for a later mixed line", () => {
+test("Form 3800 retains one Form 8936 source detail for a later mixed line", () => {
   const parts = buildForm3800NonpassiveParts({
     tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
     passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
@@ -152,7 +155,7 @@ Deno.test("Form 3800 retains one Form 8936 source detail for a later mixed line"
   );
 });
 
-Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to Part II", () => {
+test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to Part II", () => {
   const xml = buildFiledNonpassive({
     tax,
     facilities: [ordinary, specified],
@@ -184,7 +187,7 @@ Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to 
   assertStringIncludes(xml, "<TotGenBusCYCreditAmtGrp>");
 });
 
-Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () => {
+test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     disabledAccess: disabledAccess,
@@ -208,7 +211,7 @@ Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () =
   );
 });
 
-Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
+test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
     form8820: {
@@ -247,7 +250,7 @@ Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
   );
 });
 
-Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", () => {
+test("Form 3800 XML: Form 8874 line 1i links native source and tax use", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     form8874: {
@@ -290,7 +293,7 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
   );
 });
 
-Deno.test("Form 3800 XML: two trust Form 3468 Part V sources share line 1v and Part V", () => {
+test("Form 3800 XML: two trust Form 3468 Part V sources share line 1v and Part V", () => {
   const sources = [{
     credit: 15_000,
     ein: "123456789",
@@ -353,7 +356,7 @@ Deno.test("Form 3800 XML: two trust Form 3468 Part V sources share line 1v and P
   );
 });
 
-Deno.test("Form 3800 XML: Form 8874 pass-through-only credit needs no invented source form", () => {
+test("Form 3800 XML: Form 8874 pass-through-only credit needs no invented source form", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     form8874: {
@@ -374,7 +377,7 @@ Deno.test("Form 3800 XML: Form 8874 pass-through-only credit needs no invented s
   assertEquals(xml.includes('referenceDocumentName="IRS8874"'), false);
 });
 
-Deno.test("Form 3800 XML: mixed Form 8874 sources need explicit partial-limit use", () => {
+test("Form 3800 XML: mixed Form 8874 sources need explicit partial-limit use", () => {
   const base = {
     tax: { ...tax, standardCredit: 30_000, specifiedCredit: 0 },
     facilities: [],
@@ -404,7 +407,7 @@ Deno.test("Form 3800 XML: mixed Form 8874 sources need explicit partial-limit us
   );
 });
 
-Deno.test("Form 3800 XML: Form 8820 pass-through-only line 1h needs no Form 8820 document", () => {
+test("Form 3800 XML: Form 8820 pass-through-only line 1h needs no Form 8820 document", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
     form8820: {
@@ -425,7 +428,7 @@ Deno.test("Form 3800 XML: Form 8820 pass-through-only line 1h needs no Form 8820
   assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
 });
 
-Deno.test("Form 3800 XML: mixed Form 8820 sources retain Part V identity and allocations", () => {
+test("Form 3800 XML: mixed Form 8820 sources retain Part V identity and allocations", () => {
   const base = {
     tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
     form8820: {
@@ -474,7 +477,7 @@ Deno.test("Form 3800 XML: mixed Form 8820 sources retain Part V identity and all
   );
 });
 
-Deno.test("Form 3800 XML: Form 8936 new-vehicle business credit uses line 1y", () => {
+test("Form 3800 XML: Form 8936 new-vehicle business credit uses line 1y", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
     form8936: {
@@ -514,7 +517,7 @@ Deno.test("Form 3800 XML: Form 8936 new-vehicle business credit uses line 1y", (
   );
 });
 
-Deno.test("Form 3800 XML: Form 8936 commercial vehicle credit uses line 1aa", () => {
+test("Form 3800 XML: Form 8936 commercial vehicle credit uses line 1aa", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 7_500, specifiedCredit: 0 },
     form8936Commercial: {
@@ -554,7 +557,7 @@ Deno.test("Form 3800 XML: Form 8936 commercial vehicle credit uses line 1aa", ()
   );
 });
 
-Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8826 document", () => {
+test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8826 document", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
     disabledAccess: disabledAccessFromForm({
@@ -584,7 +587,7 @@ Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8
   );
 });
 
-Deno.test("Form 3800 XML: direct estate and trust disabled-access sources share one line 1e row", () => {
+test("Form 3800 XML: direct estate and trust disabled-access sources share one line 1e row", () => {
   const xml = buildFiledNonpassive({
     tax: {
       ...tax,
@@ -617,7 +620,7 @@ Deno.test("Form 3800 XML: direct estate and trust disabled-access sources share 
   assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
 });
 
-Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and applied credit", () => {
+test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and applied credit", () => {
   const source = {
     eligible_expenditures: 5_000,
     prior_year_gross_receipts: 500_000,
@@ -673,7 +676,7 @@ Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and
   );
 });
 
-Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V applied amounts", () => {
+test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V applied amounts", () => {
   const base = {
     tax: {
       ...tax,
@@ -765,7 +768,7 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
   );
 });
 
-Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after source rounding", () => {
+test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after source rounding", () => {
   const xml = buildFiledNonpassive({
     tax: {
       ...tax,
@@ -847,7 +850,7 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
   );
 });
 
-Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-through-only credit must omit it", () => {
+test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-through-only credit must omit it", () => {
   const base = {
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
     facilities: [],
@@ -890,7 +893,7 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
   );
 });
 
-Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limit", () => {
+test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limit", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 23_000 },
     disabledAccess: disabledAccess,
@@ -921,7 +924,7 @@ Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limi
   );
 });
 
-Deno.test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credit amount", () => {
+test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credit amount", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 37_750, specifiedCredit: 0 },
     form8820: {
@@ -951,7 +954,7 @@ Deno.test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credi
   );
 });
 
-Deno.test("Form 3800 XML: disabled-access source totals and applied credit reconcile", () => {
+test("Form 3800 XML: disabled-access source totals and applied credit reconcile", () => {
   const base = {
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     disabledAccess: disabledAccess,
@@ -980,13 +983,13 @@ Deno.test("Form 3800 XML: disabled-access source totals and applied credit recon
   );
 });
 
-Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source schema", async () => {
+test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source schema", async () => {
   const xsd = new URL(
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -1103,22 +1106,22 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
       "<IRS3800>",
       '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });
 
-Deno.test("Form 3800 XML: multiple facilities on one line have per-facility Part V rows", () => {
+test("Form 3800 XML: multiple facilities on one line have per-facility Part V rows", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 30_000, specifiedCredit: 0 },
     facilities: [
@@ -1141,7 +1144,7 @@ Deno.test("Form 3800 XML: multiple facilities on one line have per-facility Part
   );
 });
 
-Deno.test("Form 3800 XML: repeated facility values keep separate applied amounts and document IDs", () => {
+test("Form 3800 XML: repeated facility values keep separate applied amounts and document IDs", () => {
   const facility = { ...ordinary, credit_amount: 18_000 };
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 36_000, specifiedCredit: 0 },
@@ -1180,7 +1183,7 @@ Deno.test("Form 3800 XML: repeated facility values keep separate applied amounts
   );
 });
 
-Deno.test("Form 3800 XML: specified-credit facilities and transfers have Part V detail", () => {
+test("Form 3800 XML: specified-credit facilities and transfers have Part V detail", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 0, specifiedCredit: 19_000 },
     facilities: [specified, {
@@ -1205,7 +1208,7 @@ Deno.test("Form 3800 XML: specified-credit facilities and transfers have Part V 
   );
 });
 
-Deno.test("Form 3800 XML: rejects unmatched allocation and absent transfer statement", () => {
+test("Form 3800 XML: rejects unmatched allocation and absent transfer statement", () => {
   const base = {
     tax,
     facilities: [ordinary, specified],

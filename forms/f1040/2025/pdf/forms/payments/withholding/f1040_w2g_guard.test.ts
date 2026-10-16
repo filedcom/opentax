@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 
-Deno.test("Form 1040 PDF preserves sourced line 25c for W-2G attachment", () => {
+test("Form 1040 PDF preserves sourced line 25c for W-2G attachment", () => {
   const fields = { line25c_total: 250 };
   assertEquals(
     irs1040Pdf.projectFields?.(fields, {

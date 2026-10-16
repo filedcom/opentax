@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -50,7 +53,7 @@ function filedReturn() {
   return { result, filed, filer: extractFilerIdentity(general) };
 }
 
-Deno.test("MFS short-term loss-to-AMT-gain lot reaches Form 6251 and final return", async () => {
+test("MFS short-term loss-to-AMT-gain lot reaches Form 6251 and final return", async () => {
   const { result, filed, filer } = filedReturn();
   assertEquals(result.pending.f1040?.line7_capital_gain, -500);
   assertEquals(filed.line2k_disposition, 1_000);
@@ -71,7 +74,7 @@ Deno.test("MFS short-term loss-to-AMT-gain lot reaches Form 6251 and final retur
   );
 });
 
-Deno.test("MFS short-term crossover rejects changed source and filed totals", () => {
+test("MFS short-term crossover rejects changed source and filed totals", () => {
   const { result, filed, filer } = filedReturn();
   for (const pending of [
     { ...result.pending, f8949: { f8949s: [{ ...brokerLot, amt_cost_basis: 501 }] } },
@@ -84,27 +87,27 @@ Deno.test("MFS short-term crossover rejects changed source and filed totals", ()
   }
 });
 
-Deno.test("MFS short-term crossover validates prepared XML and filled Form 6251 PDF", async () => {
+test("MFS short-term crossover validates prepared XML and filled Form 6251 PDF", async () => {
   const { result, filer } = filedReturn();
   const prepared = await f1040_2025.prepareReturn(result.pending, filer);
-  const tempDir = await Deno.makeTempDir({ prefix: "opentax-6251-mfs-" });
+  const tempDir = await sys.makeTempDir({ prefix: "opentax-6251-mfs-" });
   try {
     const xmlPath = `${tempDir}/return.xml`;
     const pdfPath = `${tempDir}/return.pdf`;
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-    await Deno.writeFile(pdfPath, await prepared.renderPdf());
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
+    await fs.writeFile(pdfPath, await prepared.renderPdf());
     const schema = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
     assertStringIncludes(prepared.bundle.xml, "<SpouseSSN>444556666</SpouseSSN>");
-    const extraction = await new Deno.Command("pdftotext", {
+    const extraction = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -118,6 +121,6 @@ Deno.test("MFS short-term crossover validates prepared XML and filled Form 6251 
     assertEquals(/Disposition of property[^\n]*2k\s+1000/.test(form6251), true);
     assertEquals(/11\s+64822/.test(form6251), true);
   } finally {
-    await Deno.remove(tempDir, { recursive: true });
+    await sys.remove(tempDir, { recursive: true });
   }
 });

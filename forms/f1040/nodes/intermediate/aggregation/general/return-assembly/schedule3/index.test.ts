@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { schedule3 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
@@ -13,12 +14,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: empty input produces no output", () => {
+test("validation: empty input produces no output", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("validation: all-zero fields produce no output", () => {
+test("validation: all-zero fields produce no output", () => {
   const result = compute({
     line1_foreign_tax_credit: 0,
     line1_foreign_tax_1099: 0,
@@ -32,7 +33,7 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("Form 2439 box 2 reaches Schedule 3 lines 13a, 14, 15 and Form 1040 line 31 once", () => {
+test("Form 2439 box 2 reaches Schedule 3 lines 13a, 14, 15 and Form 1040 line 31 once", () => {
   const result = compute({ line13a_tax_paid_by_ric_or_reit: [1_500, 750] });
   assertEquals(findOutput(result, "schedule3")?.fields.line13a_total, 2_250);
   assertEquals(findOutput(result, "schedule3")?.fields.line14_total, 2_250);
@@ -43,7 +44,7 @@ Deno.test("Form 2439 box 2 reaches Schedule 3 lines 13a, 14, 15 and Form 1040 li
   );
 });
 
-Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available without gross credit", () => {
+test("Schedule 3: Form 3800 pending source keeps the schedule available without gross credit", () => {
   const result = compute({ form3800_source_credit_pending: true });
   assertEquals(result.outputs.length, 1);
   assertEquals(
@@ -73,7 +74,7 @@ Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available wit
   });
 });
 
-Deno.test("Schedule 3: Form 8912 pending source supplies the shared credit-limit snapshot", () => {
+test("Schedule 3: Form 8912 pending source supplies the shared credit-limit snapshot", () => {
   const result = compute({ form8912_source_credit_pending: true });
   assertEquals(result.outputs.length, 1);
   assertEquals(
@@ -82,7 +83,7 @@ Deno.test("Schedule 3: Form 8912 pending source supplies the shared credit-limit
   );
 });
 
-Deno.test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 1040", () => {
+test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 1040", () => {
   const result = compute({
     line1_foreign_tax_credit: 500,
     line6i_qualified_electric_vehicle_credit: 200,
@@ -99,7 +100,7 @@ Deno.test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 10
 
 // ── Part I — per-field routing ───────────────────────────────────────────────
 
-Deno.test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
+test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
   const result = compute({ line1_foreign_tax_credit: 400 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -111,7 +112,7 @@ Deno.test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("Schedule 3 deposits adoption-priority lines without another late credit", () => {
+test("Schedule 3 deposits adoption-priority lines without another late credit", () => {
   const result = compute({
     line1_foreign_tax_credit: 120,
     line5b_energy_efficient_home: 80,
@@ -124,7 +125,7 @@ Deno.test("Schedule 3 deposits adoption-priority lines without another late cred
   assertEquals(lines?.line7, 500);
 });
 
-Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
+test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
   const result = compute({ line1_foreign_tax_1099: 250 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -132,7 +133,7 @@ Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
   );
 });
 
-Deno.test("Schedule 3 line 1 is included once in nonrefundable credits", () => {
+test("Schedule 3 line 1 is included once in nonrefundable credits", () => {
   const result = compute({
     line1_foreign_tax_credit: 300,
     line1_foreign_tax_1099: [75, 45],
@@ -143,7 +144,7 @@ Deno.test("Schedule 3 line 1 is included once in nonrefundable credits", () => {
   );
 });
 
-Deno.test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
+test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
   const result = compute({ line6l_form8978_credit: 500 });
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
@@ -152,7 +153,7 @@ Deno.test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
   assertEquals(findOutput(result, "schedule3")?.fields.line8_total, 500);
 });
 
-Deno.test("Schedule 3 keeps DC homebuyer and bond credits out of line 6a", () => {
+test("Schedule 3 keeps DC homebuyer and bond credits out of line 6a", () => {
   const result = compute({
     line6h_dc_homebuyer_credit: 300,
     line6k_tax_credit_bonds: 450,
@@ -165,7 +166,7 @@ Deno.test("Schedule 3 keeps DC homebuyer and bond credits out of line 6a", () =>
   assertEquals(findOutput(result, "schedule3")?.fields.line6a_total, undefined);
 });
 
-Deno.test("Schedule 3 Form 4136 line 12 is a payment, not nonrefundable credit", () => {
+test("Schedule 3 Form 4136 line 12 is a payment, not nonrefundable credit", () => {
   const result = compute({ line12_fuel_tax_credit: 125 });
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line31_additional_payments,
@@ -178,7 +179,7 @@ Deno.test("Schedule 3 Form 4136 line 12 is a payment, not nonrefundable credit",
   assertEquals(findOutput(result, "schedule3")?.fields.line15_total, 125);
 });
 
-Deno.test("calc: line2_childcare_credit alone → f1040 line20", () => {
+test("calc: line2_childcare_credit alone → f1040 line20", () => {
   const result = compute({ line2_childcare_credit: 600 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -186,7 +187,7 @@ Deno.test("calc: line2_childcare_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line3_education_credit alone → f1040 line20", () => {
+test("calc: line3_education_credit alone → f1040 line20", () => {
   const result = compute({ line3_education_credit: 1500 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -194,7 +195,7 @@ Deno.test("calc: line3_education_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line4_retirement_savings_credit alone → f1040 line20", () => {
+test("calc: line4_retirement_savings_credit alone → f1040 line20", () => {
   const result = compute({ line4_retirement_savings_credit: 200 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -202,7 +203,7 @@ Deno.test("calc: line4_retirement_savings_credit alone → f1040 line20", () => 
   );
 });
 
-Deno.test("calc: Form 8911 Schedule 3 line 6j reaches Form 1040 line 20", () => {
+test("calc: Form 8911 Schedule 3 line 6j reaches Form 1040 line 20", () => {
   const result = compute({ line6j_alt_fuel_vehicle_refueling: 162 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -210,7 +211,7 @@ Deno.test("calc: Form 8911 Schedule 3 line 6j reaches Form 1040 line 20", () => 
   );
 });
 
-Deno.test("calc: line6c_adoption_credit alone → f1040 line20", () => {
+test("calc: line6c_adoption_credit alone → f1040 line20", () => {
   const result = compute({ line6c_adoption_credit: 5000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -220,7 +221,7 @@ Deno.test("calc: line6c_adoption_credit alone → f1040 line20", () => {
 
 // ── Part II — per-field routing ──────────────────────────────────────────────
 
-Deno.test("calc: line10_amount_paid_extension alone → f1040 line31", () => {
+test("calc: line10_amount_paid_extension alone → f1040 line31", () => {
   const result = compute({ line10_amount_paid_extension: 1200 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
@@ -228,7 +229,7 @@ Deno.test("calc: line10_amount_paid_extension alone → f1040 line31", () => {
   );
 });
 
-Deno.test("calc: line11_excess_ss alone → f1040 line31", () => {
+test("calc: line11_excess_ss alone → f1040 line31", () => {
   const result = compute({ line11_excess_ss: 340 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
@@ -238,7 +239,7 @@ Deno.test("calc: line11_excess_ss alone → f1040 line31", () => {
 
 // ── Part I aggregation ───────────────────────────────────────────────────────
 
-Deno.test("agg: line1 = line1_foreign_tax_credit + line1_foreign_tax_1099", () => {
+test("agg: line1 = line1_foreign_tax_credit + line1_foreign_tax_1099", () => {
   const result = compute({
     line1_foreign_tax_credit: 300,
     line1_foreign_tax_1099: 100,
@@ -249,7 +250,7 @@ Deno.test("agg: line1 = line1_foreign_tax_credit + line1_foreign_tax_1099", () =
   );
 });
 
-Deno.test("agg: partITotal sums all Part I credits", () => {
+test("agg: partITotal sums all Part I credits", () => {
   const result = compute({
     line1_foreign_tax_credit: 200, // line1a
     line1_foreign_tax_1099: 100, // line1b → line1 = 300
@@ -267,7 +268,7 @@ Deno.test("agg: partITotal sums all Part I credits", () => {
 
 // ── Part II aggregation ──────────────────────────────────────────────────────
 
-Deno.test("agg: partIITotal = line10 + line11", () => {
+test("agg: partIITotal = line10 + line11", () => {
   const result = compute({
     line10_amount_paid_extension: 1000,
     line11_excess_ss: 500,
@@ -280,7 +281,7 @@ Deno.test("agg: partIITotal = line10 + line11", () => {
 
 // ── Routing separation ───────────────────────────────────────────────────────
 
-Deno.test("routing: Part I → line20, Part II → line31, both present in same output", () => {
+test("routing: Part I → line20, Part II → line31, both present in same output", () => {
   const result = compute({
     line1_foreign_tax_credit: 400,
     line10_amount_paid_extension: 600,
@@ -296,7 +297,7 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
   assertEquals(result.outputs.length, 2);
 });
 
-Deno.test("routing: line20 and its credit detail emitted when Part II is zero", () => {
+test("routing: line20 and its credit detail emitted when Part II is zero", () => {
   const result = compute({ line1_foreign_tax_credit: 100 });
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
   assertEquals(keys, [
@@ -305,7 +306,7 @@ Deno.test("routing: line20 and its credit detail emitted when Part II is zero", 
   ]);
 });
 
-Deno.test("routing: line31 and empty credit detail emitted when Part I is zero", () => {
+test("routing: line31 and empty credit detail emitted when Part I is zero", () => {
   const result = compute({ line10_amount_paid_extension: 100 });
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
   assertEquals(keys, [
@@ -314,7 +315,7 @@ Deno.test("routing: line31 and empty credit detail emitted when Part I is zero",
   ]);
 });
 
-Deno.test("routing: exactly one f1040 output regardless of how many fields are set", () => {
+test("routing: exactly one f1040 output regardless of how many fields are set", () => {
   const result = compute({
     line1_foreign_tax_credit: 100,
     line2_childcare_credit: 200,
@@ -327,7 +328,7 @@ Deno.test("routing: exactly one f1040 output regardless of how many fields are s
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
 
-Deno.test("edge: only partial fields provided", () => {
+test("edge: only partial fields provided", () => {
   const result = compute({
     line3_education_credit: 1000,
     line11_excess_ss: 150,
@@ -342,7 +343,7 @@ Deno.test("edge: only partial fields provided", () => {
   );
 });
 
-Deno.test("edge: large values route correctly", () => {
+test("edge: large values route correctly", () => {
   const result = compute({
     line6a_general_business_credit: 10_000,
     line10_amount_paid_extension: 50_000,
@@ -359,7 +360,7 @@ Deno.test("edge: large values route correctly", () => {
 
 // ── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke: all fields populated — correct totals emitted to f1040", () => {
+test("smoke: all fields populated — correct totals emitted to f1040", () => {
   // Taxpayer with:
   // - Form 1116 FTC: $300 + de minimis 1099: $50 → line1 = $350
   // - Childcare credit: $600
@@ -394,7 +395,7 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
 
 // ── Previously untested Part I credits ───────────────────────────────────────
 
-Deno.test("calc: line5b energy efficient home alone → f1040 line20", () => {
+test("calc: line5b energy efficient home alone → f1040 line20", () => {
   const result = compute({ line5b_energy_efficient_home: 1_200 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -402,7 +403,7 @@ Deno.test("calc: line5b energy efficient home alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line6f_clean_vehicle_credit alone → f1040 line20", () => {
+test("calc: line6f_clean_vehicle_credit alone → f1040 line20", () => {
   const result = compute({ line6f_clean_vehicle_credit: 7_500 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -410,7 +411,7 @@ Deno.test("calc: line6f_clean_vehicle_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("Schedule 3 keeps new and previously owned clean vehicle credits on lines 6f and 6m", () => {
+test("Schedule 3 keeps new and previously owned clean vehicle credits on lines 6f and 6m", () => {
   const result = compute({
     line6f_clean_vehicle_credit: [3_750, 1_250],
     line6m_prev_owned_clean_vehicle_credit: [4_000, 1_000],
@@ -426,7 +427,7 @@ Deno.test("Schedule 3 keeps new and previously owned clean vehicle credits on li
   );
 });
 
-Deno.test("Schedule 3 sums GBC producers into a single line 6a", () => {
+test("Schedule 3 sums GBC producers into a single line 6a", () => {
   const result = compute({
     line6a_general_business_credit: [1_000, 2_000],
     line6a_low_income_housing_credit: 500,
@@ -435,7 +436,7 @@ Deno.test("Schedule 3 sums GBC producers into a single line 6a", () => {
   assertEquals(findOutput(result, "schedule3")?.fields.line7_total, 3_500);
 });
 
-Deno.test("calc: line6d_elderly_disabled_credit alone → f1040 line20", () => {
+test("calc: line6d_elderly_disabled_credit alone → f1040 line20", () => {
   const result = compute({ line6d_elderly_disabled_credit: 1_125 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -443,7 +444,7 @@ Deno.test("calc: line6d_elderly_disabled_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line6b_prior_year_min_tax_credit alone → f1040 line20", () => {
+test("calc: line6b_prior_year_min_tax_credit alone → f1040 line20", () => {
   const result = compute({ line6b_prior_year_min_tax_credit: 800 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -451,7 +452,7 @@ Deno.test("calc: line6b_prior_year_min_tax_credit alone → f1040 line20", () =>
   );
 });
 
-Deno.test("calc: line6g_mortgage_interest_credit alone → f1040 line20", () => {
+test("calc: line6g_mortgage_interest_credit alone → f1040 line20", () => {
   const result = compute({ line6g_mortgage_interest_credit: 2_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -459,7 +460,7 @@ Deno.test("calc: line6g_mortgage_interest_credit alone → f1040 line20", () => 
   );
 });
 
-Deno.test("calc: line6a_general_business_credit alone → f1040 line20", () => {
+test("calc: line6a_general_business_credit alone → f1040 line20", () => {
   const result = compute({ line6a_general_business_credit: 5_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -467,7 +468,7 @@ Deno.test("calc: line6a_general_business_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line6a_low_income_housing_credit alone → f1040 line20", () => {
+test("calc: line6a_low_income_housing_credit alone → f1040 line20", () => {
   const result = compute({ line6a_low_income_housing_credit: 3_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
@@ -477,7 +478,7 @@ Deno.test("calc: line6a_low_income_housing_credit alone → f1040 line20", () =>
 
 // ── Previously untested Part II payments ─────────────────────────────────────
 
-Deno.test("calc: line9_premium_tax_credit alone → f1040 line31", () => {
+test("calc: line9_premium_tax_credit alone → f1040 line31", () => {
   const result = compute({ line9_premium_tax_credit: 2_400 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
@@ -487,7 +488,7 @@ Deno.test("calc: line9_premium_tax_credit alone → f1040 line31", () => {
 
 // ── 3 credits sum correctly ───────────────────────────────────────────────────
 
-Deno.test("agg: 3 Part I credits each $500 → total $1,500 on line20", () => {
+test("agg: 3 Part I credits each $500 → total $1,500 on line20", () => {
   const result = compute({
     line2_childcare_credit: 500,
     line3_education_credit: 500,
@@ -499,7 +500,7 @@ Deno.test("agg: 3 Part I credits each $500 → total $1,500 on line20", () => {
   );
 });
 
-Deno.test("agg: partIITotal = line9 + line10 + line11", () => {
+test("agg: partIITotal = line9 + line10 + line11", () => {
   const result = compute({
     line9_premium_tax_credit: 2_400,
     line10_amount_paid_extension: 1_200,
@@ -511,7 +512,7 @@ Deno.test("agg: partIITotal = line9 + line10 + line11", () => {
   );
 });
 
-Deno.test("agg: clean vehicle + residential energy + mortgage interest credit sum correctly", () => {
+test("agg: clean vehicle + residential energy + mortgage interest credit sum correctly", () => {
   const result = compute({
     line6f_clean_vehicle_credit: 7_500,
     line5b_energy_efficient_home: 1_200,

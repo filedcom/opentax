@@ -1,3 +1,6 @@
+import * as fsSync from "node:fs";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +15,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Schedule R reports reviewed no-distribution CFC identity", () => {
+test("Schedule R reports reviewed no-distribution CFC identity", () => {
   const xml = form5471ScheduleR.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -51,12 +54,8 @@ Deno.test("Schedule R reports reviewed no-distribution CFC identity", () => {
     }), Error);
 });
 
-Deno.test({
-  name:
-    "TY2025 v5.4 Schedule R has no zero-only XML field outside a dated distribution row",
-  ignore: !schemaAvailable,
-  fn: () => {
-    const schema = Deno.readTextFileSync(xsd);
+test.skipIf(!schemaAvailable)("TY2025 v5.4 Schedule R has no zero-only XML field outside a dated distribution row", () => {
+    const schema = fsSync.readFileSync(xsd, "utf8");
     const distribution = schema.indexOf('name="DistributionsFromFrgnCorpGrp"');
     const rowType = schema.indexOf('name="DistributionsFromFrgnCorpGrpType"');
     assertEquals(distribution > 0, true);
@@ -77,15 +76,9 @@ Deno.test({
     ) {
       assertEquals(row.includes(`name="${field}"`), true);
     }
-  },
-});
+  });
 
-Deno.test({
-  name: "Schedule R no-distribution native XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Schedule R no-distribution native XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleR.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -93,7 +86,7 @@ Deno.test({
       /^<IRS5471ScheduleR/,
       '<IRS5471ScheduleR xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleRTest1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -104,5 +97,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

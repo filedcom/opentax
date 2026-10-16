@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -42,7 +45,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`QBI losses with employer WOTC and deductible SE tax ${c.id}`, async () => {
+  test(`QBI losses with employer WOTC and deductible SE tax ${c.id}`, async () => {
     const status = pdfReviewFixtures.find((f) => f.id === c.fixture)!;
     const filer = status.filer;
     const original = base.inputs.schedule_c as Row[];
@@ -271,15 +274,9 @@ for (const c of cases) {
     );
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
     const projection = form8995aPdf.projectFields!(pending.form8995a, pending);
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_LOSS_WOTC_DIR",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_LOSS_WOTC_DIR")
-      : undefined;
-    const dir = root ? `${root}/${c.id}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.FORM8995A_LOSS_WOTC_DIR;
+    const dir = root ? `${root}/${c.id}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
       for (
         const [name, value] of Object.entries({
@@ -289,13 +286,13 @@ for (const c of cases) {
           projection,
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -308,10 +305,10 @@ for (const c of cases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, check.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, check.stderr);
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -321,7 +318,7 @@ for (const c of cases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
@@ -400,7 +397,7 @@ for (const c of cases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }

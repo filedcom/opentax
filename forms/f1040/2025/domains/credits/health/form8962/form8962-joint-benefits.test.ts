@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import cases from "./form8962-joint-benefits.fixture.json" with {
   type: "json",
@@ -11,7 +12,7 @@ import { form8962Pdf } from "../../../../pdf/forms/credits/health/f8962.ts";
 import { assertForm8962JointIncomeReview } from "./form8962-joint-income.ts";
 
 for (const [id, c] of Object.entries(cases)) {
-  Deno.test(`Joint SSA/RRB source through Form 8962 and final return: ${id}`, async () => {
+  test(`Joint SSA/RRB source through Form 8962 and final return: ${id}`, async () => {
     const held = structuredClone(c.inputs);
     const result = f1040_2025.executeReturn(c.inputs);
     assertEquals(result.diagnostics, []);
@@ -39,7 +40,7 @@ for (const [id, c] of Object.entries(cases)) {
   });
 }
 
-Deno.test("Joint benefit native and PDF exports reject source and final MAGI conflicts", async () => {
+test("Joint benefit native and PDF exports reject source and final MAGI conflicts", async () => {
   const result = f1040_2025.executeReturn(cases.half.inputs);
   const pending = buildPending(result.pending);
   const filer = extractFilerIdentity(pending.f1040!)!;
@@ -75,7 +76,7 @@ Deno.test("Joint benefit native and PDF exports reject source and final MAGI con
   }
 });
 
-Deno.test("Joint benefit review binds recipients, copies, references and pooled taxability", () => {
+test("Joint benefit review binds recipients, copies, references and pooled taxability", () => {
   const source = cases.half.inputs;
   const result = f1040_2025.executeReturn(source);
   const pending = buildPending(result.pending);

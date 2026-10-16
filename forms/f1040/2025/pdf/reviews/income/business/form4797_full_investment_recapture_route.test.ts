@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -32,7 +33,7 @@ const sale = {
   depreciation_schedule_reference: "DEPR-2025-FULL",
 };
 
-Deno.test("one fully recaptured investment asset reaches Form 4797, Schedule 1, Form 1040, native and PDF without Form 8949", async () => {
+test("one fully recaptured investment asset reaches Form 4797, Schedule 1, Form 1040, native and PDF without Form 8949", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

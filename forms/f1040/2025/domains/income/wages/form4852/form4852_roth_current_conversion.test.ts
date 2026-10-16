@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8606 } from "../../../../mef/forms/income/retirement/f8606.ts";
 import { form8606Pdf } from "../../../../pdf/forms/income/retirement/f8606.ts";
 import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
@@ -19,8 +22,8 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { PDFDocument } from "pdf-lib";
 const root =
   ".state/research/form4852-roth-current-conversion-checkbox-corrected";
-Deno.test("actual current2025 conversion sources derive same owner8606 PartsII/III and5329/1040", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("actual current2025 conversion sources derive same owner8606 PartsII/III and5329/1040", async () => {
+  await fs.mkdir(root, { recursive: true });
   for (const [n, row] of rothCurrentConversionCases.entries()) {
     const source = await rothCurrentConversionReturnSource(row, 601 + n);
     const result = f1040_2025.executeReturn(source.inputs);
@@ -150,8 +153,8 @@ Deno.test("actual current2025 conversion sources derive same owner8606 PartsII/I
         true,
       );
     }
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -168,12 +171,12 @@ Deno.test("actual current2025 conversion sources derive same owner8606 PartsII/I
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${root}/${row.id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${row.id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify(
         { inputs: source.inputs, filer: source.filer, pending },
@@ -181,18 +184,18 @@ Deno.test("actual current2025 conversion sources derive same owner8606 PartsII/I
         2,
       ),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const documents = [];
     for (const [index, document] of source.retained.documents.entries()) {
       const path = `${row.id}-retained/document-${index + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, document.bytes);
+      await fs.writeFile(`${root}/${path}`, document.bytes);
       documents.push({
         document_reference: document.document_reference,
         path,
         sha256: createHash("sha256").update(document.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(documents, null, 2),
     );
@@ -262,7 +265,7 @@ Deno.test("actual current2025 conversion sources derive same owner8606 PartsII/I
   }
 });
 
-Deno.test("current conversion inventory and actual retained prior-basis/debit facts reject conflicting filing sources", async () => {
+test("current conversion inventory and actual retained prior-basis/debit facts reject conflicting filing sources", async () => {
   const source = await rothCurrentConversionReturnSource(
     rothCurrentConversionCases[1],
     901,

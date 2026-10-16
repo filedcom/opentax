@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
@@ -22,7 +25,7 @@ for (
     [1, false, false, true],
   ] as const
 ) {
-  Deno.test(`2025 donee disposition ${count} small${small} joint${joint} mixed${mixed}`, async () => {
+  test(`2025 donee disposition ${count} small${small} joint${joint} mixed${mixed}`, async () => {
     const source = await reviewedContributionYearDisposition(
       count,
       small,
@@ -79,7 +82,7 @@ for (
       bundle.attachments.length,
       8 * count + (mixed ? existing!.attachments.length : 0),
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -104,11 +107,11 @@ for (
       origins,
     );
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-    const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+    const root = process.env.FORM8283_EVIDENCE_DIR;
     if (root) {
       const dir =
         `${root}/disposition-${count}-small${small}-joint${joint}-mixed${mixed}`;
-      await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+      await fs.mkdir(`${dir}/attachments`, { recursive: true });
       for (
         const [name, data] of Object.entries({
           source: { inputs, filer: source.filer },
@@ -117,15 +120,15 @@ for (
           attachments: attachments.map(({ bytes, ...a }) => a),
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
       for (const attachment of attachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/attachments/${attachment.fileName}`,
           attachment.bytes,
         );
@@ -257,7 +260,7 @@ for (
   });
 }
 
-Deno.test("donee disposition basis claim below5000 uses SectionA with actual retained source", async () => {
+test("donee disposition basis claim below5000 uses SectionA with actual retained source", async () => {
   const source = await reviewedContributionYearDisposition(
     1,
     true,
@@ -284,7 +287,7 @@ Deno.test("donee disposition basis claim below5000 uses SectionA with actual ret
     (bundle.xml.match(/<FairMarketValueStatement\b/g) ?? []).length,
     1,
   );
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -308,10 +311,10 @@ Deno.test("donee disposition basis claim below5000 uses SectionA with actual ret
     bundle,
     origins,
   );
-  const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+  const root = process.env.FORM8283_EVIDENCE_DIR;
   if (root) {
     const dir = `${root}/disposition-sectionA`;
-    await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+    await fs.mkdir(`${dir}/attachments`, { recursive: true });
     for (
       const [name, data] of Object.entries({
         source: { inputs: source.inputs, filer: source.filer },
@@ -320,15 +323,15 @@ Deno.test("donee disposition basis claim below5000 uses SectionA with actual ret
         attachments: source.attachments.map(({ bytes, ...a }) => a),
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${name}.json`,
         JSON.stringify(data, null, 2),
       );
     }
-    await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/return.pdf`, pdf);
+    await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/return.pdf`, pdf);
     for (const attachment of source.attachments) {
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/attachments/${attachment.fileName}`,
         attachment.bytes,
       );
@@ -357,7 +360,7 @@ Deno.test("donee disposition basis claim below5000 uses SectionA with actual ret
   );
 });
 
-Deno.test("disposition reviewed source cannot export a standalone PDF without retained bytes", async () => {
+test("disposition reviewed source cannot export a standalone PDF without retained bytes", async () => {
   const source = await reviewedContributionYearDisposition(
     1,
     true,

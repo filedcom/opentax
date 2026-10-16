@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 import { buildMefXml } from "../../../builder.ts";
@@ -11,7 +14,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -66,21 +69,21 @@ const matchedContext = {
 };
 
 async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const output = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const output = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 }
 
-Deno.test("Schedule 8812 XML uses paper lines and direct 1040 credits", () => {
+test("Schedule 8812 XML uses paper lines and direct 1040 credits", () => {
   const xml = schedule8812.build(basicFields, matchedContext);
   assert(
     xml.includes(
@@ -98,7 +101,7 @@ Deno.test("Schedule 8812 XML uses paper lines and direct 1040 credits", () => {
   );
 });
 
-Deno.test("Schedule 8812 MeF rejects explicit AGI or tax limit that differs from return-derived sources", () => {
+test("Schedule 8812 MeF rejects explicit AGI or tax limit that differs from return-derived sources", () => {
   assertThrows(
     () =>
       schedule8812.build({
@@ -127,7 +130,7 @@ Deno.test("Schedule 8812 MeF rejects explicit AGI or tax limit that differs from
   );
 });
 
-Deno.test("Schedule 8812 MeF requires finalized return facts for a positive credit", () => {
+test("Schedule 8812 MeF requires finalized return facts for a positive credit", () => {
   assertThrows(
     () => schedule8812.build(basicFields),
     Error,
@@ -154,7 +157,7 @@ Deno.test("Schedule 8812 MeF requires finalized return facts for a positive cred
   );
 });
 
-Deno.test("Schedule 8812 MeF reconciles header, AGI, tax, and both credit lines", () => {
+test("Schedule 8812 MeF reconciles header, AGI, tax, and both credit lines", () => {
   assertThrows(
     () => schedule8812.build(basicFields, {
       ...matchedContext,
@@ -204,7 +207,7 @@ Deno.test("Schedule 8812 MeF reconciles header, AGI, tax, and both credit lines"
   );
 });
 
-Deno.test("Schedule 8812 XML accepts verified line 18a from the input item", () => {
+test("Schedule 8812 XML accepts verified line 18a from the input item", () => {
   const xml = schedule8812.build({
     ...basicFields,
     line18a_earned_income: undefined,
@@ -213,7 +216,7 @@ Deno.test("Schedule 8812 XML accepts verified line 18a from the input item", () 
   assert(xml.includes("<TotalEarnedIncomeAmt>10000</TotalEarnedIncomeAmt>"));
 });
 
-Deno.test("Schedule 8812 XML computes line 18a from the full worksheet", () => {
+test("Schedule 8812 XML computes line 18a from the full worksheet", () => {
   const xml = schedule8812.build({
     ...basicFields,
     line18a_earned_income: undefined,
@@ -231,7 +234,7 @@ Deno.test("Schedule 8812 XML computes line 18a from the full worksheet", () => {
   assert(xml.includes("<TotalEarnedIncomeAmt>10000</TotalEarnedIncomeAmt>"));
 });
 
-Deno.test("Schedule 8812 XML accepts credit-limit worksheet on input item", () => {
+test("Schedule 8812 XML accepts credit-limit worksheet on input item", () => {
   const xml = schedule8812.build({
     ...basicFields,
     credit_limit_worksheet: undefined,
@@ -243,7 +246,7 @@ Deno.test("Schedule 8812 XML accepts credit-limit worksheet on input item", () =
   assert(xml.includes("<CTCODCAmt>1000</CTCODCAmt>"));
 });
 
-Deno.test("Schedule 8812 XML rejects missing worksheet facts", () => {
+test("Schedule 8812 XML rejects missing worksheet facts", () => {
   assertThrows(
     () =>
       schedule8812.build({
@@ -277,12 +280,7 @@ Deno.test("Schedule 8812 XML rejects missing worksheet facts", () => {
   );
 });
 
-Deno.test({
-  name: "XSD: Schedule 8812 Part I, II-A and II-B validate in TY2025 return",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule 8812 Part I, II-A and II-B validate in TY2025 return", async () => {
   const xml = buildMefXml({
     f1040: {
       line11_agi: 50_000,

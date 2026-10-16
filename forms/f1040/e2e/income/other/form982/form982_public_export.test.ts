@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -112,10 +115,10 @@ const cases = [
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
-const evidenceDir = Deno.args.find((arg) => arg.startsWith("--evidence-dir="))
+const evidenceDir = process.argv.slice(2).find((arg) => arg.startsWith("--evidence-dir="))
   ?.slice("--evidence-dir=".length);
 for (const c of cases) {
-  Deno.test(`Form982 public QPRI native and PDF: ${c.id}`, async () => {
+  test(`Form982 public QPRI native and PDF: ${c.id}`, async () => {
     const general = {
       ...base.inputs.general as Record<string, unknown>,
       filing_status: c.status,
@@ -180,7 +183,7 @@ for (const c of cases) {
       result.pending,
     );
     const xml = buildMefXml(pending, filer);
-    const validator = new Deno.Command("xmllint", {
+    const validator = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -193,8 +196,8 @@ for (const c of cases) {
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     const pdf = await buildPdfBytes(pending, filer);
     if (evidenceDir) {
-      await Deno.mkdir(evidenceDir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(evidenceDir, { recursive: true });
+      await fs.writeFile(
         `${evidenceDir}/${c.id}.json`,
         JSON.stringify(
           { inputs, filer, pending: result.pending, expected: c, projected },
@@ -202,8 +205,8 @@ for (const c of cases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${evidenceDir}/${c.id}.xml`, xml);
-      await Deno.writeFile(`${evidenceDir}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${evidenceDir}/${c.id}.xml`, xml);
+      await fs.writeFile(`${evidenceDir}/${c.id}.pdf`, pdf);
     }
     const changed = {
       ...pending,
@@ -241,7 +244,7 @@ for (const c of cases) {
   });
 }
 
-Deno.test("Form982 other exclusions remain guarded at both final exporters", async () => {
+test("Form982 other exclusions remain guarded at both final exporters", async () => {
   for (
     const exclusion_type of [
       "bankruptcy",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import {
@@ -72,7 +73,7 @@ const wageStatement = {
 };
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 
-Deno.test("W-2 emits one community share to 1040 and AGI before aggregation", () => {
+test("W-2 emits one community share to 1040 and AGI before aggregation", () => {
   const result = w2.compute(ctx, {
     w2s: [wageStatement],
     f8958_allocation: allocation,
@@ -93,7 +94,7 @@ Deno.test("W-2 emits one community share to 1040 and AGI before aggregation", ()
   );
 });
 
-Deno.test("ordinary W-2 behavior remains the full Box 1/2 deposit", () => {
+test("ordinary W-2 behavior remains the full Box 1/2 deposit", () => {
   const result = w2.compute(ctx, { w2s: [wageStatement] });
   const f1040 = result.outputs.find((item) => item.nodeType === "f1040")
     ?.fields;
@@ -101,7 +102,7 @@ Deno.test("ordinary W-2 behavior remains the full Box 1/2 deposit", () => {
   assertEquals(f1040?.line25a_w2_withheld, 10_000);
 });
 
-Deno.test("community W-2 rejects unmatched or unsupported sources", () => {
+test("community W-2 rejects unmatched or unsupported sources", () => {
   for (
     const w2s of [
       [wageStatement, wageStatement],

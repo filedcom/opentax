@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { fillFormPdf } from "../../../builder.ts";
@@ -39,7 +42,7 @@ const source = {
   completed_form_review_reference: "reviewed:1",
 };
 
-Deno.test("retained Form 4852 projects each reviewed owner and payer onto the official fields", () => {
+test("retained Form 4852 projects each reviewed owner and payer onto the official fields", () => {
   const copies = form4852RetainedPdf.instances?.({
     f4852s: [source, {
       ...source,
@@ -71,7 +74,7 @@ Deno.test("retained Form 4852 projects each reviewed owner and payer onto the of
   );
 });
 
-Deno.test("retained Form 4852 refuses mismatched owner and incomplete evidence", () => {
+test("retained Form 4852 refuses mismatched owner and incomplete evidence", () => {
   const project = (entry: Record<string, unknown>, identity = filer) =>
     form4852RetainedPdf.instances?.({ f4852s: [entry] }, identity);
   assertThrows(
@@ -140,8 +143,8 @@ Deno.test("retained Form 4852 refuses mismatched owner and incomplete evidence",
   );
 });
 
-Deno.test("retained Form 4852 fills the official PDF's owner, wages, payer, and explanations", async () => {
-  const cacheDir = await Deno.makeTempDir();
+test("retained Form 4852 fills the official PDF's owner, wages, payer, and explanations", async () => {
+  const cacheDir = await sys.makeTempDir();
   try {
     const [fields] =
       form4852RetainedPdf.instances?.({ f4852s: [source] }, filer) ?? [];
@@ -153,8 +156,8 @@ Deno.test("retained Form 4852 fills the official PDF's owner, wages, payer, and 
     );
     if (!bytes) throw new Error("Expected filled Form 4852 PDF");
     const path = `${cacheDir}/form4852-filled.pdf`;
-    await Deno.writeFile(path, bytes);
-    const output = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes);
+    const output = await new sys.Command("pdftotext", {
       args: ["-f", "1", "-l", "1", "-layout", path, "-"],
     }).output();
     assertEquals(output.code, 0);
@@ -175,12 +178,12 @@ Deno.test("retained Form 4852 fills the official PDF's owner, wages, payer, and 
       }
     }
   } finally {
-    await Deno.remove(cacheDir, { recursive: true });
+    await sys.remove(cacheDir, { recursive: true });
   }
 });
 
-Deno.test("retained Form 4852 prints the 1099-R taxable amount without a second basis reduction", async () => {
-  const cacheDir = await Deno.makeTempDir();
+test("retained Form 4852 prints the 1099-R taxable amount without a second basis reduction", async () => {
+  const cacheDir = await sys.makeTempDir();
   try {
     const [fields] = form4852RetainedPdf.instances?.({
       f4852s: [{
@@ -205,8 +208,8 @@ Deno.test("retained Form 4852 prints the 1099-R taxable amount without a second 
     );
     if (!bytes) throw new Error("Expected filled Form 4852 PDF");
     const path = `${cacheDir}/form4852-pension.pdf`;
-    await Deno.writeFile(path, bytes);
-    const output = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes);
+    const output = await new sys.Command("pdftotext", {
       args: ["-f", "1", "-l", "1", "-layout", path, "-"],
     }).output();
     assertEquals(output.code, 0);
@@ -217,6 +220,6 @@ Deno.test("retained Form 4852 prints the 1099-R taxable amount without a second 
       }
     }
   } finally {
-    await Deno.remove(cacheDir, { recursive: true });
+    await sys.remove(cacheDir, { recursive: true });
   }
 });

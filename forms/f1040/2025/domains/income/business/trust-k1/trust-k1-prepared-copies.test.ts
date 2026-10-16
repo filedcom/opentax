@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -60,7 +61,7 @@ async function preparedFixture(change?: (pdf: PDFDocument) => void) {
   };
 }
 
-Deno.test("prepared trust K-1 copies bind the real finalized graph, reviewed native projection and exact source bytes without authorizing exports", async () => {
+test("prepared trust K-1 copies bind the real finalized graph, reviewed native projection and exact source bytes without authorizing exports", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const prepared = await PreparedTrustK1Copies.prepare(
     pending,
@@ -105,7 +106,7 @@ Deno.test("prepared trust K-1 copies bind the real finalized graph, reviewed nat
   );
 });
 
-Deno.test("prepared trust K-1 review pages fix verified appearances while retaining original source bytes and ownership manifest", async () => {
+test("prepared trust K-1 review pages fix verified appearances while retaining original source bytes and ownership manifest", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const prepared = await PreparedTrustK1Copies.prepare(
     pending,
@@ -131,7 +132,7 @@ Deno.test("prepared trust K-1 review pages fix verified appearances while retain
   assertEquals(review.filingReady, false);
 });
 
-Deno.test("prepared trust K-1 review pages retain a blank original glyph checkbox without inventing an Off appearance", async () => {
+test("prepared trust K-1 review pages retain a blank original glyph checkbox without inventing an Off appearance", async () => {
   const { pending, documents, transcriptions } = await preparedFixture((pdf) =>
     pdf.getForm().getCheckBox(fieldName("c1_1[0]")).uncheck()
   );
@@ -148,7 +149,7 @@ Deno.test("prepared trust K-1 review pages retain a blank original glyph checkbo
   assertEquals(pdf.getForm().getFields().length, 0);
 });
 
-Deno.test("prepared trust K-1 page projection rejects changed return totals before rendering", async () => {
+test("prepared trust K-1 page projection rejects changed return totals before rendering", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const prepared = await PreparedTrustK1Copies.prepare(
     pending,
@@ -164,7 +165,7 @@ Deno.test("prepared trust K-1 page projection rejects changed return totals befo
   );
 });
 
-Deno.test("prepared trust K-1 review pages keep independent joint-owner copies without AcroForm field collisions", async () => {
+test("prepared trust K-1 review pages keep independent joint-owner copies without AcroForm field collisions", async () => {
   const first = await preparedFixture();
   const { source, documents } = await fixture((pdf) => {
     const form = pdf.getForm();
@@ -247,7 +248,7 @@ Deno.test("prepared trust K-1 review pages keep independent joint-owner copies w
   ]);
 });
 
-Deno.test("prepared trust K-1 source/filer/recipient/byte snapshots survive caller mutations before asynchronous verification finishes", async () => {
+test("prepared trust K-1 source/filer/recipient/byte snapshots survive caller mutations before asynchronous verification finishes", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const current = structuredClone(pending),
     owner = { ...structuredClone(filer) },
@@ -309,7 +310,7 @@ for (
     ],
   ] as const
 ) {
-  Deno.test(`prepared trust K-1 rejects ${label} after preparation`, async () => {
+  test(`prepared trust K-1 rejects ${label} after preparation`, async () => {
     const { pending, documents, transcriptions } = await preparedFixture();
     const prepared = await PreparedTrustK1Copies.prepare(
       pending,
@@ -326,7 +327,7 @@ for (
   });
 }
 
-Deno.test("prepared trust K-1 copies reject incomplete finalized withholding, extra bytes and a different filer", async () => {
+test("prepared trust K-1 copies reject incomplete finalized withholding, extra bytes and a different filer", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const stale = structuredClone(pending);
   stale.f1040.line25c_total = 0;
@@ -352,7 +353,7 @@ Deno.test("prepared trust K-1 copies reject incomplete finalized withholding, ex
   );
 });
 
-Deno.test("prepared trust K-1 return binding preserves top-level Form8949 rows handled by the shared prepared-source contract", async () => {
+test("prepared trust K-1 return binding preserves top-level Form8949 rows handled by the shared prepared-source contract", async () => {
   const { pending, documents, transcriptions } = await preparedFixture();
   const withRows: Record<string, unknown> = {
     ...pending,

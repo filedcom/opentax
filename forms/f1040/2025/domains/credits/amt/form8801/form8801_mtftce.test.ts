@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm8801Mtftce,
@@ -58,7 +59,7 @@ const context = {
   lines: { 4: 120_000, 11: 8_918 },
 };
 
-Deno.test("MTFTCE ordinary category derives credit from exclusion income and calculated tax", () => {
+test("MTFTCE ordinary category derives credit from exclusion income and calculated tax", () => {
   const r = calculateForm8801Mtftce(fixture(), context);
   assertEquals(r.categories[0].lines, {
     9: 2000,
@@ -84,7 +85,7 @@ Deno.test("MTFTCE ordinary category derives credit from exclusion income and cal
     false,
   ]);
 });
-Deno.test("MTFTCE country columns allocate indirect deductions and combine net income", () => {
+test("MTFTCE country columns allocate indirect deductions and combine net income", () => {
   const f = fixture(), a = f.categories[0].part_i[0];
   Object.assign(a, {
     line1a_refigured_exclusion_income: 40000,
@@ -113,7 +114,7 @@ Deno.test("MTFTCE country columns allocate indirect deductions and combine net i
   assertEquals(r.categories[0].lines[17], 48000);
   assertEquals(r.categories[0].lines[21], 3567);
 });
-Deno.test("MTFTCE carry, reductions and boycott are distinct from limitation", () => {
+test("MTFTCE carry, reductions and boycott are distinct from limitation", () => {
   const f = fixture();
   f.categories[0].line10_mtftce_carry.push({
     item_id: "carry",
@@ -127,7 +128,7 @@ Deno.test("MTFTCE carry, reductions and boycott are distinct from limitation", (
   assertEquals(r.categories[0].line14_minus_line21_record, 670);
   assertEquals(r.form8801_line12, 2200);
 });
-Deno.test("MTFTCE multiple categories reconcile reclassification and cap aggregate credit", () => {
+test("MTFTCE multiple categories reconcile reclassification and cap aggregate credit", () => {
   const f = form8801MtftceSchema.parse(fixture());
   const first = f.categories[0];
   first.part_i![0].line1a_refigured_exclusion_income = 120000;
@@ -156,7 +157,7 @@ Deno.test("MTFTCE multiple categories reconcile reclassification and cap aggrega
     "reconcile across categories",
   );
 });
-Deno.test("MTFTCE nonpositive adjusted foreign income stops limitation and records unused tax", () => {
+test("MTFTCE nonpositive adjusted foreign income stops limitation and records unused tax", () => {
   for (const loss of [30000, 40000]) {
     const f = fixture();
     f.categories[0].line16_income_adjustments.amount = -loss;
@@ -167,7 +168,7 @@ Deno.test("MTFTCE nonpositive adjusted foreign income stops limitation and recor
     assertEquals(r.categories[0].line14_minus_line21_record, 2000);
   }
 });
-Deno.test("MTFTCE 951A rejects carry and 901j has no credit or tax limit", () => {
+test("MTFTCE 951A rejects carry and 901j has no credit or tax limit", () => {
   const f = form8801MtftceSchema.parse(fixture());
   f.categories[0].category = "section_951a";
   assertEquals(
@@ -192,7 +193,7 @@ Deno.test("MTFTCE 951A rejects carry and 901j has no credit or tax limit", () =>
     r.form8801_line12,
   ], [undefined, undefined, 0]);
 });
-Deno.test("MTFTCE treaty categories require distinct country records", () => {
+test("MTFTCE treaty categories require distinct country records", () => {
   const f = form8801MtftceSchema.parse(fixture());
   f.categories[0].category = "treaty";
   assertThrows(
@@ -214,7 +215,7 @@ Deno.test("MTFTCE treaty categories require distinct country records", () => {
     "Duplicate MTFTCE category",
   );
 });
-Deno.test("MTFTCE simplified election uses prior AMT line 17 and skips exclusion Part I", () => {
+test("MTFTCE simplified election uses prior AMT line 17 and skips exclusion Part I", () => {
   const f = form8801MtftceSchema.parse(fixture());
   f.simplified_limitation_election = true;
   assertThrows(
@@ -236,14 +237,14 @@ Deno.test("MTFTCE simplified election uses prior AMT line 17 and skips exclusion
     r.form8801_line12,
   ], [undefined, undefined, 892, 892]);
 });
-Deno.test("MTFTCE single-category limitation increase goes directly to line 33", () => {
+test("MTFTCE single-category limitation increase goes directly to line 33", () => {
   const f = fixture();
   f.categories[0].part_i[0].line1a_refigured_exclusion_income = 120000;
   f.categories[0].line9_regular_foreign_taxes.amount = 10000;
   f.categories[0].line22_limitation_increase.amount = 100;
   assertEquals(calculateForm8801Mtftce(f, context).form8801_line12, 9018);
 });
-Deno.test("MTFTCE preferential worldwide worksheet independently reduces all rate components", () => {
+test("MTFTCE preferential worldwide worksheet independently reduces all rate components", () => {
   const c = {
     ...context,
     lines: {
@@ -278,7 +279,7 @@ Deno.test("MTFTCE preferential worldwide worksheet independently reduces all rat
   });
   assertEquals(zero.worldwide_income, 248379);
 });
-Deno.test("MTFTCE preferential exception threshold depends on prior filing status", () => {
+test("MTFTCE preferential exception threshold depends on prior filing status", () => {
   const f = {
     ...fixture(),
     regular_tax_adjustment_exception: {
@@ -325,7 +326,7 @@ Deno.test("MTFTCE preferential exception threshold depends on prior filing statu
     "threshold",
   );
 });
-Deno.test("MTFTCE rejects mismatched owner, repeated source, impossible tax reduction and boycott", () => {
+test("MTFTCE rejects mismatched owner, repeated source, impossible tax reduction and boycott", () => {
   assertThrows(
     () =>
       calculateForm8801Mtftce(fixture(), {
@@ -357,7 +358,7 @@ Deno.test("MTFTCE rejects mismatched owner, repeated source, impossible tax redu
     "boycott reduction",
   );
 });
-Deno.test("Form 8801 general MTFTCE binds computed line 12 and rejects detached aggregate", () => {
+test("Form 8801 general MTFTCE binds computed line 12 and rejects detached aggregate", () => {
   const f = {
     ...packageFacts(),
     minimum_tax_foreign_credit_exclusion_workpaper: {
@@ -392,7 +393,7 @@ Deno.test("Form 8801 general MTFTCE binds computed line 12 and rejects detached 
   );
 });
 
-Deno.test("General MTFTCE canonical workpaper settles public Schedule 3 and Form 1040", async () => {
+test("General MTFTCE canonical workpaper settles public Schedule 3 and Form 1040", async () => {
   const { stageForm8801SettledReturn } = await import(
     "./form8801_settled_return.ts"
   );
@@ -473,7 +474,7 @@ const preferentialContext = {
     54: 60952,
   },
 };
-Deno.test("MTFTCE derives foreign dividend/distribution adjustments and retains 4952 election amounts", () => {
+test("MTFTCE derives foreign dividend/distribution adjustments and retains 4952 election amounts", () => {
   const r = calculateForm8801Mtftce(distributionFixture(), preferentialContext);
   const col = r.categories[0].part_i![0];
   // QD: 5,357 + 5,000 + 500. Distributions: 10,714 + 10,000 + 1,000.
@@ -485,7 +486,7 @@ Deno.test("MTFTCE derives foreign dividend/distribution adjustments and retains 
   ], [35571, 35571, true]);
   assertEquals(r.categories[0].lines[15], 35571);
 });
-Deno.test("MTFTCE distribution method retains all rate bands when adjustment trigger is absent", () => {
+test("MTFTCE distribution method retains all rate bands when adjustment trigger is absent", () => {
   for (
     const c of [context, {
       ...preferentialContext,
@@ -500,7 +501,7 @@ Deno.test("MTFTCE distribution method retains all rate bands when adjustment tri
     assertEquals(calculateForm8801Mtftce(f, c).categories[0].lines[15], 58500);
   }
 });
-Deno.test("MTFTCE qualified regular-tax exception skips foreign income and worldwide adjustments together", () => {
+test("MTFTCE qualified regular-tax exception skips foreign income and worldwide adjustments together", () => {
   const f = distributionFixture();
   f.regular_tax_adjustment_exception = {
     reference: "qualified-regular-exception",
@@ -514,7 +515,7 @@ Deno.test("MTFTCE qualified regular-tax exception skips foreign income and world
     r.worldwide_worksheet,
   ], [58500, 320000, undefined]);
 });
-Deno.test("MTFTCE distribution calculation rejects detached income, mixed methods and other capital gains", () => {
+test("MTFTCE distribution calculation rejects detached income, mixed methods and other capital gains", () => {
   const f = distributionFixture();
   f.categories[0].part_i![0].line1a_refigured_exclusion_income++;
   assertThrows(
@@ -538,7 +539,7 @@ Deno.test("MTFTCE distribution calculation rejects detached income, mixed method
     .other_capital_gains_or_losses = true;
   assertThrows(() => calculateForm8801Mtftce(raw, preferentialContext));
 });
-Deno.test("MTFTCE rate-band category rounding reconciles country columns without penny drift", () => {
+test("MTFTCE rate-band category rounding reconciles country columns without penny drift", () => {
   const f = distributionFixture(), a = f.categories[0].part_i![0];
   const zero = {
     reference: "none",
@@ -566,7 +567,7 @@ Deno.test("MTFTCE rate-band category rounding reconciles country columns without
   assertEquals(r.categories[0].part_i!.map((c) => c.line1a_calculated), [1, 0]);
   assertEquals(r.categories[0].lines[15], 1); // 2 * .5357 = 1.0714 rounds once to 1.
 });
-Deno.test("MTFTCE distribution review reaches canonical public return without claiming provenance", async () => {
+test("MTFTCE distribution review reaches canonical public return without claiming provenance", async () => {
   const { stageForm8801SettledReturn } = await import(
     "./form8801_settled_return.ts"
   );

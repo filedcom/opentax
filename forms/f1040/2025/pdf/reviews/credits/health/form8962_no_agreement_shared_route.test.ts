@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -43,7 +44,7 @@ const inputs = {
   f1095a: [{ ...policy, shared_policy_periods: [reviewedPeriod] }],
 };
 
-Deno.test("Situation 4 no-agreement enrollee ratio reaches final return, native, and PDF", async () => {
+test("Situation 4 no-agreement enrollee ratio reaches final return, native, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

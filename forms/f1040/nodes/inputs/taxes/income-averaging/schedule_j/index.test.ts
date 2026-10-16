@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import { schedule_j } from "./index.ts";
@@ -50,7 +51,7 @@ const base = {
   },
 } as const;
 
-Deno.test("Schedule J election routes filed base-year evidence but no asserted tax", () => {
+test("Schedule J election routes filed base-year evidence but no asserted tax", () => {
   const parsed = schedule_j.inputSchema.parse(base);
   const result = schedule_j.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -65,7 +66,7 @@ Deno.test("Schedule J election routes filed base-year evidence but no asserted t
   });
 });
 
-Deno.test("Schedule J rejects old asserted-tax and incomplete-source shapes", () => {
+test("Schedule J rejects old asserted-tax and incomplete-source shapes", () => {
   assertEquals(schedule_j.inputSchema.safeParse({
     ...base,
     schedule_j_tax: 5_000,

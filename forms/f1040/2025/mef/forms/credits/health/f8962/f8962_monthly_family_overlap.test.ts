@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -125,7 +126,7 @@ const pending = {
   f1040: { line11_agi: 90_000, line17_additional_taxes: 192 },
 };
 
-Deno.test("Form 8962 monthly same-state family overlap combines A/C once and B once through MeF and PDF", () => {
+test("Form 8962 monthly same-state family overlap combines A/C once and B once through MeF and PDF", () => {
   const source = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1095a,
@@ -154,7 +155,7 @@ Deno.test("Form 8962 monthly same-state family overlap combines A/C once and B o
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 two-person same-state policies at 200% FPL apply the single-filer cap", () => {
+test("Form 8962 two-person same-state policies at 200% FPL apply the single-filer cap", () => {
   const taxpayer = {
     ...taxpayerPolicy,
     monthly_slcsps: months.map((_, index) => index < 6 ? 700 : 600),
@@ -229,7 +230,7 @@ Deno.test("Form 8962 two-person same-state policies at 200% FPL apply the single
   );
 });
 
-Deno.test("Form 8962 monthly family overlap rejects missing enrollee ownership, divergent B and final return", () => {
+test("Form 8962 monthly family overlap rejects missing enrollee ownership, divergent B and final return", () => {
   assertThrows(
     () =>
       form8962.build(fields, {
@@ -303,7 +304,7 @@ Deno.test("Form 8962 monthly family overlap rejects missing enrollee ownership, 
   );
 });
 
-Deno.test("Form 8962 monthly different-state family overlap adds both Marketplace benchmarks", () => {
+test("Form 8962 monthly different-state family overlap adds both Marketplace benchmarks", () => {
   const outOfStatePolicy = {
     ...dependentPolicy,
     issuer_name: "Oklahoma Marketplace",

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { paired } from "./form8863-parent-child-scholarship.fixture.ts";
 import {
   assertEquals,
@@ -27,7 +30,7 @@ for (
     studentPaid: false,
   }, { issued: true, studentPaid: true }]
 ) {
-  Deno.test(`parent and dependent ${issued ? "issued-W2" : "line8r"} ${studentPaid ? "student-paid" : "parent-paid"} service/nonservice scholarships reconcile separate source-owned full returns`, async () => {
+  test(`parent and dependent ${issued ? "issued-W2" : "line8r"} ${studentPaid ? "student-paid" : "parent-paid"} service/nonservice scholarships reconcile separate source-owned full returns`, async () => {
     const p = paired(issued, studentPaid);
     assertEquals(
       p.student.education_expense_workpaper.payment_sources[0].payer_ssn,
@@ -89,42 +92,42 @@ for (
           }</GrantsOrScholarshipsAmt>`,
         );
       }
-      const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+      const tmp = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(tmp, packet.bundle.xml);
-        const checked = await new Deno.Command("xmllint", {
+        await fs.writeFile(tmp, packet.bundle.xml);
+        const checked = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, tmp],
           stdout: "piped",
           stderr: "piped",
         }).output();
         assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
       } finally {
-        await Deno.remove(tmp);
+        await sys.remove(tmp);
       }
       const pdf = await packet.renderPdf();
       const document = await PDFDocument.load(pdf);
       assertEquals(document.getForm().getFields().length, 0);
       assertEquals(document.getPageCount(), pages);
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-parent-child-scholarship-evidence";
         const stem = `${
           issued ? studentPaid ? "w2-student-paid" : "w2" : "line8r"
         }-${owner}`;
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${stem}-source-input.json`,
           JSON.stringify({ inputs, filer: identity }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${stem}-full-return.xml`,
           packet.bundle.xml,
         );
-        await Deno.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
       }
     }
   });
 }
-Deno.test("parent scholarship claim rejects detached child destination, aid/expense copies and duplicate credits in native/PDF/complete export", async () => {
+test("parent scholarship claim rejects detached child destination, aid/expense copies and duplicate credits in native/PDF/complete export", async () => {
   const source = paired(true);
   const result = f1040_2025.executeReturn(source.parent);
   assertEquals(result.diagnostics, []);
@@ -212,7 +215,7 @@ Deno.test("parent scholarship claim rejects detached child destination, aid/expe
     await assertRejects(() => f1040_2025.prepareReturn(bad, filer));
   }
 });
-Deno.test("dependent scholarship export rejects changed sources, omitted income, manual deduction and duplicate credit ownership", async () => {
+test("dependent scholarship export rejects changed sources, omitted income, manual deduction and duplicate credit ownership", async () => {
   for (const issued of [true, false]) {
     const source = paired(issued);
     const badInputs: any = structuredClone(source.child);

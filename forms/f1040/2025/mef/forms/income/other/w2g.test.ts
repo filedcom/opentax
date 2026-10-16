@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { assertPositiveW2GRecipient, w2g } from "./w2g.ts";
@@ -53,7 +54,7 @@ const context = {
   },
 };
 
-Deno.test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", () => {
+test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", () => {
   const noWithholding = { ...issued, box4_federal_withheld: 0 };
   assertPositiveW2GRecipient({ w2gs: [noWithholding] }, filer);
   assertThrows(
@@ -74,7 +75,7 @@ Deno.test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", 
   );
 });
 
-Deno.test("non-withheld winnings and withholding claims need a TY2025 source year", () => {
+test("non-withheld winnings and withholding claims need a TY2025 source year", () => {
   for (
     const row of [
       { ...issued, calendar_year: undefined, box4_federal_withheld: 0 },
@@ -97,7 +98,7 @@ Deno.test("non-withheld winnings and withholding claims need a TY2025 source yea
   );
 });
 
-Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
+test("withheld W-2G emits one native document in TY2025 order", () => {
   const xml = w2g.build({ w2gs: [issued, { box1_winnings: 0 }] }, context);
   assertEquals(xml.length, 1);
   const tags = [
@@ -136,7 +137,7 @@ Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
   );
 });
 
-Deno.test("nonstandard W-2G code N requires a reviewed matching payer copy", () => {
+test("nonstandard W-2G code N requires a reviewed matching payer copy", () => {
   const review = {
     kind: "typed" as const,
     source_document_reference: issued.source_document_reference,
@@ -188,7 +189,7 @@ Deno.test("nonstandard W-2G code N requires a reviewed matching payer copy", () 
   );
 });
 
-Deno.test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
+test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
   assertThrows(
     () => w2g.build({ w2gs: [issued, { ...issued }] }, context),
     Error,
@@ -196,7 +197,7 @@ Deno.test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
   );
 });
 
-Deno.test("withheld W-2G requires its exact submitted payer-issued PDF", () => {
+test("withheld W-2G requires its exact submitted payer-issued PDF", () => {
   assertThrows(
     () => w2g.build({ w2gs: [issued] }, { filer }),
     Error,
@@ -221,7 +222,7 @@ Deno.test("withheld W-2G requires its exact submitted payer-issued PDF", () => {
   );
 });
 
-Deno.test("withheld W-2G rejects incomplete issued form and winner mismatch", () => {
+test("withheld W-2G rejects incomplete issued form and winner mismatch", () => {
   assertThrows(
     () =>
       w2g.build(
@@ -255,7 +256,7 @@ Deno.test("withheld W-2G rejects incomplete issued form and winner mismatch", ()
   );
 });
 
-Deno.test("withheld W-2G accepts a matching joint-filing spouse but not a separate-filing spouse", () => {
+test("withheld W-2G accepts a matching joint-filing spouse but not a separate-filing spouse", () => {
   const jointFiler: FilerIdentity = {
     ...filer,
     filingStatus: FilingStatus.MarriedFilingJointly,

@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form6781Pdf } from "./f6781.ts";
 
-Deno.test("Form 6781 printable projection puts losses and gains in distinct columns", () => {
+test("Form 6781 printable projection puts losses and gains in distinct columns", () => {
   assertEquals(form6781Pdf.pageIndices?.({}), [0]);
   assertEquals(form6781Pdf.filerFields?.map((entry) => entry.pdfField), [
     "topmostSubform[0].Page1[0].f1_01[0]",
@@ -26,7 +27,7 @@ Deno.test("Form 6781 printable projection puts losses and gains in distinct colu
   ]);
 });
 
-Deno.test("Form 6781 keeps all account amounts in line 2 and prints overflow pages", async () => {
+test("Form 6781 keeps all account amounts in line 2 and prints overflow pages", async () => {
   const accounts = Array.from({ length: 33 }, (_, index) => ({
     account_identification: `Broker ${index + 1}`,
     gain_loss: index % 2 === 0 ? 100 : -25,

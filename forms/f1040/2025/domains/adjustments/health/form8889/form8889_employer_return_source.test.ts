@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
@@ -13,8 +16,8 @@ const hash = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 
 for (const owner of ["T", "S"] as const) {
-  Deno.test(`reviewed ${owner} employer correction and trustee-paid-employer source reaches net 8889 and full filing`, async () => {
-    await Deno.mkdir(root, { recursive: true });
+  test(`reviewed ${owner} employer correction and trustee-paid-employer source reaches net 8889 and full filing`, async () => {
+    await fs.mkdir(root, { recursive: true });
     const inputs = employerReturnedExcessSource(owner);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -35,8 +38,8 @@ for (const owner of ["T", "S"] as const) {
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
     assertEquals((prepared.bundle.xml.match(/<IRS8889 /g) ?? []).length, 2);
     assertEquals((prepared.bundle.xml.match(/<IRS5329 /g) ?? []).length, 0);
-    await Deno.writeTextFile(`${root}/${owner}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${owner}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -61,12 +64,12 @@ for (const owner of ["T", "S"] as const) {
       ["form8889", 1],
       ["form8889", 2],
     ]);
-    await Deno.writeFile(`${root}/${owner}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${owner}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${owner}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${owner}.source-pending.json`,
       JSON.stringify({ inputs, filer, pending }, null, 2),
     );
@@ -79,7 +82,7 @@ for (const owner of ["T", "S"] as const) {
       const bytes = Buffer.from((row as any).bytes_base64, "base64");
       assertEquals(hash(bytes), (row as any).sha256);
       const path = `${owner}-${kind}.bin`;
-      await Deno.writeFile(`${root}/${path}`, bytes);
+      await fs.writeFile(`${root}/${path}`, bytes);
       docs.push({
         kind,
         reference: (row as any).source_document_reference,
@@ -87,7 +90,7 @@ for (const owner of ["T", "S"] as const) {
         sha256: hash(bytes),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${owner}.documents.json`,
       JSON.stringify(docs, null, 2),
     );
@@ -102,7 +105,7 @@ for (const owner of ["T", "S"] as const) {
   });
 }
 
-Deno.test("employer-returned excess rejects absent, changed, misdirected and unlinked source records", async () => {
+test("employer-returned excess rejects absent, changed, misdirected and unlinked source records", async () => {
   const source = employerReturnedExcessSource("T");
   const initial = f1040_2025.executeReturn(source);
   const filer = extractFilerIdentity(initial.pending.f1040)!;

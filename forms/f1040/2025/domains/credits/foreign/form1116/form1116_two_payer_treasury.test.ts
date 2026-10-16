@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -84,7 +85,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("separate foreign and Treasury 1099-INT payers reconcile Form 1116, Form 1040, native and PDF", () => {
+test("separate foreign and Treasury 1099-INT payers reconcile Form 1116, Form 1040, native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -110,7 +111,7 @@ Deno.test("separate foreign and Treasury 1099-INT payers reconcile Form 1116, Fo
   );
 });
 
-Deno.test("two-payer Form 1116 rejects changed Treasury, source review, foreign tax and final return", () => {
+test("two-payer Form 1116 rejects changed Treasury, source review, foreign tax and final return", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);

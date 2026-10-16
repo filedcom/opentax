@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
@@ -22,7 +23,7 @@ function compute(input: Record<string, unknown>) {
   );
 }
 
-Deno.test("Form 4137 requires employer rows when W-2 has allocated tips", () => {
+test("Form 4137 requires employer rows when W-2 has allocated tips", () => {
   assertThrows(
     () =>
       compute({
@@ -36,7 +37,7 @@ Deno.test("Form 4137 requires employer rows when W-2 has allocated tips", () => 
   );
 });
 
-Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from rows", () => {
+test("Form 4137 calculates unreported income, SS tax and Medicare tax from rows", () => {
   const result = compute({
     forms: [{
       recipient: "taxpayer",
@@ -66,7 +67,7 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
   }]);
 });
 
-Deno.test("Form 4137 routes a qualifying employer's line 1 tips to Schedule 1-A", () => {
+test("Form 4137 routes a qualifying employer's line 1 tips to Schedule 1-A", () => {
   const result = compute({
     taxpayer_ssn: "111223333",
     forms: [{
@@ -92,7 +93,7 @@ Deno.test("Form 4137 routes a qualifying employer's line 1 tips to Schedule 1-A"
   }]);
 });
 
-Deno.test("Form 4137 accepts a reviewed occupation when the 2025 W-2 omits its code", () => {
+test("Form 4137 accepts a reviewed occupation when the 2025 W-2 omits its code", () => {
   const input = {
     taxpayer_ssn: "111223333",
     forms: [{
@@ -147,7 +148,7 @@ Deno.test("Form 4137 accepts a reviewed occupation when the 2025 W-2 omits its c
   );
 });
 
-Deno.test("Form 4137 does not claim Schedule 1-A for an unqualified or statutory W-2", () => {
+test("Form 4137 does not claim Schedule 1-A for an unqualified or statutory W-2", () => {
   for (
     const source of [
       { tipped_occupation_code: "999" },
@@ -174,7 +175,7 @@ Deno.test("Form 4137 does not claim Schedule 1-A for an unqualified or statutory
   }
 });
 
-Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {
+test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {
   const result = compute({
     forms: [{
       recipient: "taxpayer",
@@ -200,7 +201,7 @@ Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () =
   assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 2_967);
 });
 
-Deno.test("Form 4137 applies the $20 test separately by employer and month", () => {
+test("Form 4137 applies the $20 test separately by employer and month", () => {
   const [calculated] = calculateForm4137(
     inputSchema.parse({
       forms: [{
@@ -239,7 +240,7 @@ Deno.test("Form 4137 applies the $20 test separately by employer and month", () 
   assertEquals(calculated.medicareTips, 3_021);
 });
 
-Deno.test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
+test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
   const result = compute({
     forms: [{
       recipient: "taxpayer",
@@ -259,7 +260,7 @@ Deno.test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
   );
 });
 
-Deno.test("Form 4137 line 8 includes RRTA compensation up to the 2025 wage base", () => {
+test("Form 4137 line 8 includes RRTA compensation up to the 2025 wage base", () => {
   const [calculated] = calculateForm4137(
     inputSchema.parse({
       forms: [{ recipient: "taxpayer", employers: [employer] }],
@@ -288,7 +289,7 @@ Deno.test("Form 4137 line 8 includes RRTA compensation up to the 2025 wage base"
   assertEquals(calculated.totalTax, 44);
 });
 
-Deno.test("Form 4137 excludes RRTA-covered employer tips", () => {
+test("Form 4137 excludes RRTA-covered employer tips", () => {
   assertThrows(
     () =>
       compute({
@@ -306,7 +307,7 @@ Deno.test("Form 4137 excludes RRTA-covered employer tips", () => {
   );
 });
 
-Deno.test("Form 4137 government employee tips are Medicare-only", () => {
+test("Form 4137 government employee tips are Medicare-only", () => {
   const input = inputSchema.parse({
     forms: [{
       recipient: "taxpayer",
@@ -327,7 +328,7 @@ Deno.test("Form 4137 government employee tips are Medicare-only", () => {
   assertEquals(calculated.totalTax, 168);
 });
 
-Deno.test("Form 4137 keeps taxpayer and spouse computations separate", () => {
+test("Form 4137 keeps taxpayer and spouse computations separate", () => {
   const result = compute({
     taxpayer_ssn: "123-45-6789",
     spouse_ssn: "987-65-4321",
@@ -364,7 +365,7 @@ Deno.test("Form 4137 keeps taxpayer and spouse computations separate", () => {
   assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 4_000);
 });
 
-Deno.test("Form 4137 attributes W-2 wages by employee SSN, including an explicit taxpayer SSN", () => {
+test("Form 4137 attributes W-2 wages by employee SSN, including an explicit taxpayer SSN", () => {
   const calculated = calculateForm4137(
     inputSchema.parse({
       taxpayer_ssn: "123-45-6789",
@@ -407,7 +408,7 @@ Deno.test("Form 4137 attributes W-2 wages by employee SSN, including an explicit
   assertEquals(calculated.map((form) => form.totalTax), [230, 15]);
 });
 
-Deno.test("Form 4137 rejects unknown and unattributed joint-return W-2 identities", () => {
+test("Form 4137 rejects unknown and unattributed joint-return W-2 identities", () => {
   const source = {
     taxpayer_ssn: "123-45-6789",
     spouse_ssn: "987-65-4321",
@@ -437,7 +438,7 @@ Deno.test("Form 4137 rejects unknown and unattributed joint-return W-2 identitie
   );
 });
 
-Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", () => {
+test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", () => {
   assertThrows(
     () =>
       compute({
@@ -469,7 +470,7 @@ Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", (
   );
 });
 
-Deno.test("Form 4137 lower allocated tips require reconciled daily records", () => {
+test("Form 4137 lower allocated tips require reconciled daily records", () => {
   const raw = {
     forms: [{
       recipient: "taxpayer",
@@ -630,7 +631,7 @@ Deno.test("Form 4137 lower allocated tips require reconciled daily records", () 
   );
 });
 
-Deno.test("Form 4137 attributes December tips by timely or late January report", () => {
+test("Form 4137 attributes December tips by timely or late January report", () => {
   const daily = (
     date: string,
     cash_charge_tips_received: number,
@@ -711,7 +712,7 @@ Deno.test("Form 4137 attributes December tips by timely or late January report",
   );
 });
 
-Deno.test("Form 4137 matches each allocated-tip W-2 to one exact employer row", () => {
+test("Form 4137 matches each allocated-tip W-2 to one exact employer row", () => {
   const form = {
     recipient: "taxpayer",
     employers: [employer],
@@ -752,7 +753,7 @@ Deno.test("Form 4137 matches each allocated-tip W-2 to one exact employer row", 
   );
 });
 
-Deno.test("Form 4137 requires a filed W-2 match even without allocated tips", () => {
+test("Form 4137 requires a filed W-2 match even without allocated tips", () => {
   const form = {
     recipient: "taxpayer",
     employers: [employer],
@@ -796,7 +797,7 @@ Deno.test("Form 4137 requires a filed W-2 match even without allocated tips", ()
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 3_000);
 });
 
-Deno.test("Form 4137 compares allocated tips with the same employer, not a return total", () => {
+test("Form 4137 compares allocated tips with the same employer, not a return total", () => {
   assertThrows(
     () =>
       compute({
@@ -845,7 +846,7 @@ Deno.test("Form 4137 compares allocated tips with the same employer, not a retur
   assertEquals(appliedFor.totalTax, 77);
 });
 
-Deno.test("Form 4137 rejects impossible employer and below-$20 month facts", () => {
+test("Form 4137 rejects impossible employer and below-$20 month facts", () => {
   assertEquals(
     inputSchema.safeParse({
       forms: [{
@@ -925,7 +926,7 @@ Deno.test("Form 4137 rejects impossible employer and below-$20 month facts", () 
   );
 });
 
-Deno.test("Form 4137 with no tip activity has no outputs", () => {
+test("Form 4137 with no tip activity has no outputs", () => {
   assertEquals(compute({}).outputs, []);
   assertEquals(
     compute({ w2_tip_sources: [{ allocated_tips: 0 }] })

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import {
@@ -33,17 +35,17 @@ async function staged() {
   );
   return { f, p, r };
 }
-Deno.test("8801 carry record persists exact partial credit and source bindings across disk round trip", async () => {
+test("8801 carry record persists exact partial credit and source bindings across disk round trip", async () => {
   const { f, p, r } = await staged();
   assertEquals([
     r.record.credit_used,
     r.record.credit_carryforward,
     r.record.status,
   ], [1475, 3707, "local_unfiled"]);
-  const directory = await Deno.makeTempDir({ prefix: "opentax-8801-carry-" });
+  const directory = await sys.makeTempDir({ prefix: "opentax-8801-carry-" });
   try {
-    await Deno.writeFile(`${directory}/carry.json`, r.bytes, { mode: 0o600 });
-    const bytes = await Deno.readFile(`${directory}/carry.json`);
+    await sys.writeBytes(`${directory}/carry.json`, r.bytes, { mode: 0o600 });
+    const bytes = await sys.readBytes(`${directory}/carry.json`);
     const read = await reconcileForm8801CarryRecord(
       f.inputs,
       f.binding,
@@ -64,10 +66,10 @@ Deno.test("8801 carry record persists exact partial credit and source bindings a
       read.nextYearFilingImportAllowed,
     ], [true, false, false]);
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
 });
-Deno.test("8801 carry record rejects rehashed changed carry, identities, years and caller acceptance", async () => {
+test("8801 carry record rejects rehashed changed carry, identities, years and caller acceptance", async () => {
   const { f, p, r } = await staged();
   for (
     const changed of [
@@ -97,7 +99,7 @@ Deno.test("8801 carry record rejects rehashed changed carry, identities, years a
     );
   }
 });
-Deno.test("8801 carry record binds public source changes even when carry amount stays the same", async () => {
+test("8801 carry record binds public source changes even when carry amount stays the same", async () => {
   const { f, p, r } = await staged();
   f.inputs.w2[0].box2_fed_withheld++;
   await assertRejects(
@@ -115,7 +117,7 @@ Deno.test("8801 carry record binds public source changes even when carry amount 
     "differs from recomputed",
   );
 });
-Deno.test("8801 carry record preserves zero and nonpositive availability without inventing carry", async () => {
+test("8801 carry record preserves zero and nonpositive availability without inventing carry", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   const f = await fixture(facts), p = await prior();
@@ -142,7 +144,7 @@ Deno.test("8801 carry record preserves zero and nonpositive availability without
     r.record.credit_carryforward,
   ], [-2818, 0, 0]);
 });
-Deno.test("8801 carry record source references stay distinct and changed source bytes reject", async () => {
+test("8801 carry record source references stay distinct and changed source bytes reject", async () => {
   const { f, p, r } = await staged();
   await assertRejects(
     () =>
@@ -174,7 +176,7 @@ Deno.test("8801 carry record source references stay distinct and changed source 
     "differ from SHA-256",
   );
 });
-Deno.test("8801 carry-record verification owns all public facts and source bytes before await", async () => {
+test("8801 carry-record verification owns all public facts and source bytes before await", async () => {
   const { f, p, r } = await staged();
   const computation = reconcileForm8801CarryRecord(
     f.inputs,
@@ -194,7 +196,7 @@ Deno.test("8801 carry-record verification owns all public facts and source bytes
   assertEquals(read.record.credit_carryforward, 3707);
 });
 
-Deno.test("8801 carry record keeps the prior MTFTCE workpaper year distinct from current credit carry", async () => {
+test("8801 carry record keeps the prior MTFTCE workpaper year distinct from current credit carry", async () => {
   const facts = {
     ...packageFacts(),
     minimum_tax_foreign_credit_exclusion_workpaper: {

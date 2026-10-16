@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -13,7 +14,7 @@ import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
 import { registry } from "../../../registry.ts";
 import { assertTaxExemptInterestSource } from "./tax-exempt-interest-reconciliation.ts";
 
-Deno.test("1099-DIV box 12 reaches Form 1040 and retained tax-exempt income", async () => {
+test("1099-DIV box 12 reaches Form 1040 and retained tax-exempt income", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;
@@ -71,7 +72,7 @@ Deno.test("1099-DIV box 12 reaches Form 1040 and retained tax-exempt income", as
   );
 });
 
-Deno.test("nominee and premium adjustments replay across issued exempt-interest copies", () => {
+test("nominee and premium adjustments replay across issued exempt-interest copies", () => {
   const pending = {
     f1099div: {
       f1099divs: [{
@@ -108,7 +109,7 @@ Deno.test("nominee and premium adjustments replay across issued exempt-interest 
   );
 });
 
-Deno.test("exempt-interest dividends enter Social Security provisional income", () => {
+test("exempt-interest dividends enter Social Security provisional income", () => {
   const base = {
     general: {
       filing_status: "single",

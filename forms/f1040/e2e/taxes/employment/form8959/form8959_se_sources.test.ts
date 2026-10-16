@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../2025/index.ts";
 import { buildMefXml } from "../../../../2025/mef/builder.ts";
@@ -18,7 +20,7 @@ const cases = [
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of cases) {
-  Deno.test(`Form8959 retained Schedule SE public replay: ${c.id}`, async () => {
+  test(`Form8959 retained Schedule SE public replay: ${c.id}`, async () => {
     const fixture = pdfReviewFixtures.find((item) => item.id === c.id)!;
     const result = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(result.diagnostics, []);
@@ -29,7 +31,7 @@ for (const c of cases) {
     assertEquals(medicare.line18_total_tax ?? 0, c.tax);
     const xml = buildMefXml(pending, fixture.filer);
     assertEquals(xml.includes("<IRS8959"), c.tax > 0);
-    const validator = new Deno.Command("xmllint", {
+    const validator = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",

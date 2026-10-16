@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
@@ -6,7 +7,7 @@ import { registry } from "../../registry.ts";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { buildPending } from "../execution/pending.ts";
 
-Deno.test("invalid reviewed address cannot enter native return or prepared bundle", async () => {
+test("invalid reviewed address cannot enter native return or prepared bundle", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -32,7 +33,7 @@ Deno.test("invalid reviewed address cannot enter native return or prepared bundl
   );
 });
 
-Deno.test("raw root returnVersion cannot inject XML or enter a prepared bundle", async () => {
+test("raw root returnVersion cannot inject XML or enter a prepared bundle", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

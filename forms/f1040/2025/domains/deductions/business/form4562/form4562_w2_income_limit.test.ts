@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as InputFilingStatus } from "../../../../../nodes/types.ts";
@@ -87,7 +88,7 @@ function filedReturn() {
   });
 }
 
-Deno.test("Form 4562 includes one sourced employee W-2 in line 11 and joins Schedule C, Form 1040, native and PDF", async () => {
+test("Form 4562 includes one sourced employee W-2 in line 11 and joins Schedule C, Form 1040, native and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -118,7 +119,7 @@ Deno.test("Form 4562 includes one sourced employee W-2 in line 11 and joins Sche
   await prepared.renderPdf();
 });
 
-Deno.test("Form 4562 W-2 income limit rejects wage, taxpayer, and Schedule C tampering", () => {
+test("Form 4562 W-2 income limit rejects wage, taxpayer, and Schedule C tampering", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const filed = filedForm4562Schema.parse(pending.form4562);
   assertThrows(() =>

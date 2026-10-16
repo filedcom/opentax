@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   calculateForm8396,
@@ -40,7 +41,7 @@ function parsed() {
   return form8396SourceSchema.parse(source);
 }
 
-Deno.test("Form 8396 limits a high-rate current credit and keeps the three vintages", () => {
+test("Form 8396 limits a high-rate current credit and keeps the three vintages", () => {
   const lines = calculateForm8396(parsed(), 1_500);
   assertEquals(lines.line3, 2_000);
   assertEquals([lines.line4, lines.line5, lines.line6], [100, 300, 400]);
@@ -57,7 +58,7 @@ Deno.test("Form 8396 limits a high-rate current credit and keeps the three vinta
   });
 });
 
-Deno.test("Form 8396 does not apply the high-rate cap at exactly 20 percent", () => {
+test("Form 8396 does not apply the high-rate cap at exactly 20 percent", () => {
   assertEquals(
     calculateForm8396Line3(form8396SourceSchema.parse({
       ...source,
@@ -67,7 +68,7 @@ Deno.test("Form 8396 does not apply the high-rate cap at exactly 20 percent", ()
   );
 });
 
-Deno.test("Form 8396 allocates interest when the certified loan is smaller", () => {
+test("Form 8396 allocates interest when the certified loan is smaller", () => {
   const allocated = form8396SourceSchema.parse({
     ...source,
     interest_evidence: {
@@ -83,7 +84,7 @@ Deno.test("Form 8396 allocates interest when the certified loan is smaller", () 
   assertEquals(calculateForm8396Line3(allocated), 1_200);
 });
 
-Deno.test("Form 8396 carryforward-only claim has no current-year interest", () => {
+test("Form 8396 carryforward-only claim has no current-year interest", () => {
   const carryOnly = form8396SourceSchema.parse({
     ...source,
     current_year_claim: false,
@@ -93,7 +94,7 @@ Deno.test("Form 8396 carryforward-only claim has no current-year interest", () =
   assertEquals([lines.line1, lines.line3, lines.line9], [0, 0, 200]);
 });
 
-Deno.test("Form 8396 prorates a high-rate cap for a nonspouse co-owner", () => {
+test("Form 8396 prorates a high-rate cap for a nonspouse co-owner", () => {
   assertEquals(
     calculateForm8396Line3(form8396SourceSchema.parse({
       ...source,
@@ -104,7 +105,7 @@ Deno.test("Form 8396 prorates a high-rate cap for a nonspouse co-owner", () => {
   );
 });
 
-Deno.test("Form 8396 current credit is used before 2022, 2023, and 2024 carryforwards", () => {
+test("Form 8396 current credit is used before 2022, 2023, and 2024 carryforwards", () => {
   const lines = calculateForm8396(parsed(), 2_200);
   assertEquals(lines.line9, 2_200);
   assertEquals(lines.carryforwardTo2026, {
@@ -119,7 +120,7 @@ Deno.test("Form 8396 current credit is used before 2022, 2023, and 2024 carryfor
   });
 });
 
-Deno.test("Form 8396 source routes its line 3 reduction and defers line 9 tax use", () => {
+test("Form 8396 source routes its line 3 reduction and defers line 9 tax use", () => {
   const result = form8396.compute(
     { taxYear: 2025, formType: "f1040" },
     parsed(),
@@ -147,7 +148,7 @@ Deno.test("Form 8396 source routes its line 3 reduction and defers line 9 tax us
   );
 });
 
-Deno.test("Form 8396 rejects unsupported or incomplete MCC claims", () => {
+test("Form 8396 rejects unsupported or incomplete MCC claims", () => {
   for (
     const invalid of [
       { ...source, mcc_rate: 0.05 },

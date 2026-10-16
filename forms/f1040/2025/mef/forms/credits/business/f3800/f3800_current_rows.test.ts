@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   buildForm3800CurrentCreditRowXml,
@@ -5,7 +8,7 @@ import {
   largestForm3800CurrentEntity,
 } from "./f3800_current_rows.ts";
 
-Deno.test("Form 3800 column c combines the same entity across source sets", () => {
+test("Form 3800 column c combines the same entity across source sets", () => {
   assertEquals(
     largestForm3800CurrentEntity([
       { entity: { ein: "123456789" }, credit: 60 },
@@ -25,7 +28,7 @@ Deno.test("Form 3800 column c combines the same entity across source sets", () =
   );
 });
 
-Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on one line", () => {
+test("Form 3800 current-year rows combine passive and nonpassive credit on one line", () => {
   assertEquals(
     combineForm3800CurrentCreditAmounts(
       [
@@ -89,7 +92,7 @@ Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on 
   );
 });
 
-Deno.test("Form 3800 line 1e caps the combined passive and nonpassive access credit", () => {
+test("Form 3800 line 1e caps the combined passive and nonpassive access credit", () => {
   const amounts = combineForm3800CurrentCreditAmounts(
     [{
       line: "1e",
@@ -114,7 +117,7 @@ Deno.test("Form 3800 line 1e caps the combined passive and nonpassive access cre
   );
 });
 
-Deno.test("Form 3800 current-year rows reject duplicate and unreconciled source amounts", () => {
+test("Form 3800 current-year rows reject duplicate and unreconciled source amounts", () => {
   assertThrows(
     () =>
       combineForm3800CurrentCreditAmounts([
@@ -160,7 +163,7 @@ Deno.test("Form 3800 current-year rows reject duplicate and unreconciled source 
   );
 });
 
-Deno.test("Form 3800 current-year rows keep gross credit separate from a transfer-out", () => {
+test("Form 3800 current-year rows keep gross credit separate from a transfer-out", () => {
   assertEquals(
     combineForm3800CurrentCreditAmounts(
       [{
@@ -199,7 +202,7 @@ Deno.test("Form 3800 current-year rows keep gross credit separate from a transfe
   );
 });
 
-Deno.test("Form 3800 current-year rows reconcile cent-precision Form 8826 with whole-dollar passive credit", () => {
+test("Form 3800 current-year rows reconcile cent-precision Form 8826 with whole-dollar passive credit", () => {
   const [row] = combineForm3800CurrentCreditAmounts(
     [{
       line: "1e",
@@ -238,7 +241,7 @@ Deno.test("Form 3800 current-year rows reconcile cent-precision Form 8826 with w
   );
 });
 
-Deno.test("Form 3800 current-year XML keeps shared passive, nonpassive, and transfer columns on one row", () => {
+test("Form 3800 current-year XML keeps shared passive, nonpassive, and transfer columns on one row", () => {
   const [row] = combineForm3800CurrentCreditAmounts(
     [{
       line: "1f",
@@ -294,13 +297,13 @@ Deno.test("Form 3800 current-year XML keeps shared passive, nonpassive, and tran
   );
 });
 
-Deno.test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", async () => {
+test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", async () => {
   const xsd = new URL(
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -325,19 +328,19 @@ Deno.test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", asy
     referenceDocumentId: "IRS8835-1",
     referenceDocumentName: "IRS8835",
   });
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       `<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">${body}</IRS3800>`,
     );
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -18,15 +20,10 @@ import { TS } from "../../../../../nodes/types.ts";
 import { distributionPackets } from "./form8915f_inventory.fixture.ts";
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM8915F_INVENTORY_DIR");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM8915F_INVENTORY_DIR;
 }
 for (const entry of distributionPackets) {
-  Deno.test(`Form 8915-F owned inventory complete return: ${entry.id}`, async () => {
+  test(`Form 8915-F owned inventory complete return: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending), e = entry.expected;
@@ -186,16 +183,16 @@ for (const entry of distributionPackets) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, xml);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, xml);
       for (const attachment of prepared.bundle.attachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${root}/${entry.id}-${attachment.fileName}`,
           attachment.bytes,
         );
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -292,13 +289,13 @@ const publicMutations: Array<[string, (i: Inputs) => void]> = [
   }],
 ];
 for (const [name, mutate] of publicMutations) {
-  Deno.test(`Form 8915-F inventory rejects ${name}`, () => {
+  test(`Form 8915-F inventory rejects ${name}`, () => {
     const inputs = structuredClone(distributionPackets[2].inputs);
     mutate(inputs);
     assertThrows(() => f1040_2025.executeReturn(inputs));
   });
 }
-Deno.test("Form 8915-F grouped calculation is independent of issued-source order", () => {
+test("Form 8915-F grouped calculation is independent of issued-source order", () => {
   const entry = distributionPackets[7];
   const original = f1040_2025.executeReturn(entry.inputs);
   const reversed = f1040_2025.executeReturn({
@@ -308,7 +305,7 @@ Deno.test("Form 8915-F grouped calculation is independent of issued-source order
   });
   assertEquals(reversed.pending.f1040, original.pending.f1040);
 });
-Deno.test("Form 8915-F repayments reject duplicate transactions and inconsistent filing dates", () => {
+test("Form 8915-F repayments reject duplicate transactions and inconsistent filing dates", () => {
   const items = structuredClone(distributionPackets[7].inputs.f8915f);
   const first = items[0].repayment, second = items[1].repayment;
   if (first.kind !== "timely" || second.kind !== "timely") {
@@ -321,7 +318,7 @@ Deno.test("Form 8915-F repayments reject duplicate transactions and inconsistent
   assertThrows(() => inputSchema.parse({ f8915fs: items }));
 });
 
-Deno.test("Form 8915-F ordinary inventories reject duplicate account copies", () => {
+test("Form 8915-F ordinary inventories reject duplicate account copies", () => {
   const inputs = structuredClone(distributionPackets[9].inputs);
   inputs.f1099r[3].account_number = inputs.f1099r[2].account_number;
   assertThrows(
@@ -330,7 +327,7 @@ Deno.test("Form 8915-F ordinary inventories reject duplicate account copies", ()
     "distinct issued",
   );
 });
-Deno.test("Form 8915-F joint repayments require one return filing date", () => {
+test("Form 8915-F joint repayments require one return filing date", () => {
   const inputs = structuredClone(distributionPackets[7].inputs);
   const spouse = inputs.f8915f[3].repayment;
   if (spouse.kind !== "timely") throw new Error("fixture repayment missing");

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateAmtForm4952, calculateForm4952, form4952 } from "./index.ts";
 import { form4952 as mef4952 } from "../../../../../../2025/mef/forms/deductions/investments/f4952/f4952.ts";
@@ -69,14 +70,14 @@ function reviewedPriorCarryforward(line7: number, amtLine7 = line7) {
   };
 }
 
-Deno.test("Form 4952 has no attachment without interest expense", () => {
+test("Form 4952 has no attachment without interest expense", () => {
   assertEquals(
     compute({ other_investment_property_gross_income: 5_000 }).outputs,
     [],
   );
 });
 
-Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
+test("Form 4952 computes all lines, deduction, and carryforward", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 7_000,
     prior_year_carryforward: 1_000,
@@ -127,7 +128,7 @@ Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 3_200);
 });
 
-Deno.test("Form 8814 child amounts stay separate from parent line 4 source facts", () => {
+test("Form 8814 child amounts stay separate from parent line 4 source facts", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 2_000,
     other_investment_property_gross_income: 700,
@@ -145,7 +146,7 @@ Deno.test("Form 8814 child amounts stay separate from parent line 4 source facts
   assertEquals(lines.line8, 1_100);
 });
 
-Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 sources", () => {
+test("Form 4952 combines explicit other income with multiple affirmed 1099 sources", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 2_000,
     other_investment_property_gross_income: 100,
@@ -166,7 +167,7 @@ Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 
   assertEquals(lines.line8, 1_680);
 });
 
-Deno.test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
+test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 900,
     investment_interest_expense_excludes_royalty_attributable_interest: true,
@@ -202,7 +203,7 @@ Deno.test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
   );
 });
 
-Deno.test("Form 4952 keeps K-1 royalties distinct from 1099-MISC royalties", () => {
+test("Form 4952 keeps K-1 royalties distinct from 1099-MISC royalties", () => {
   const lines = calculateForm4952({
     source_k1_royalties: 1_000,
     source_1099_royalties: 200,
@@ -222,7 +223,7 @@ Deno.test("Form 4952 keeps K-1 royalties distinct from 1099-MISC royalties", () 
   );
 });
 
-Deno.test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", () => {
+test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 2_000,
     other_investment_property_gross_income: 3_000,
@@ -245,7 +246,7 @@ Deno.test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", (
   );
 });
 
-Deno.test("Form 4952 includes sourced K-1 code H interest once on line 1", () => {
+test("Form 4952 includes sourced K-1 code H interest once on line 1", () => {
   const sourced = calculateForm4952({
     source_k1_investment_interest: [300, 450],
     other_investment_property_gross_income: 500,
@@ -273,7 +274,7 @@ Deno.test("Form 4952 includes sourced K-1 code H interest once on line 1", () =>
   );
 });
 
-Deno.test("Form 4952 carries forward interest when net investment income is zero", () => {
+test("Form 4952 carries forward interest when net investment income is zero", () => {
   const result = compute({
     investment_interest_expense: 5_000,
     amt_refigure: sameAmtFacts(),
@@ -283,7 +284,7 @@ Deno.test("Form 4952 carries forward interest when net investment income is zero
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 5_000);
 });
 
-Deno.test("Form 4952 requires and calculates a separate AMT interest refigure", () => {
+test("Form 4952 requires and calculates a separate AMT interest refigure", () => {
   assertThrows(
     () => compute({ investment_interest_expense: 1_000 }),
     Error,
@@ -323,7 +324,7 @@ Deno.test("Form 4952 requires and calculates a separate AMT interest refigure", 
   );
 });
 
-Deno.test("AMT Form 4952 caps line 4g by refigured eligible investment income", () => {
+test("AMT Form 4952 caps line 4g by refigured eligible investment income", () => {
   const amt = calculateAmtForm4952({
     investment_interest_expense: 100,
     other_investment_property_gross_income: 1_000,
@@ -339,7 +340,7 @@ Deno.test("AMT Form 4952 caps line 4g by refigured eligible investment income", 
   assertEquals(amt.electedCapitalGain, 0);
 });
 
-Deno.test("AMT-only private-activity-bond interest reaches Form 6251 without a regular Form 4952", () => {
+test("AMT-only private-activity-bond interest reaches Form 6251 without a regular Form 4952", () => {
   const result = compute({
     source_private_activity_bond_interest: 500,
     amt_refigure: {
@@ -360,7 +361,7 @@ Deno.test("AMT-only private-activity-bond interest reaches Form 6251 without a r
   );
 });
 
-Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () => {
+test("Form 4952 validates qualified dividends and line 4g attribution", () => {
   assertThrows(
     () =>
       calculateForm4952({
@@ -443,7 +444,7 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   );
 });
 
-Deno.test("Form 4952 rejects unsourced investment income at export", () => {
+test("Form 4952 rejects unsourced investment income at export", () => {
   assertThrows(
     () => mef4952.build({ line2: 100, line8: 1_900 }),
     Error,

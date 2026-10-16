@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertEicSource } from "./eic-source.ts";
 
-Deno.test("export rejects a positive EIC attached to a filed Form 2555", () => {
+test("export rejects a positive EIC attached to a filed Form 2555", () => {
   assertThrows(
     () =>
       assertEicSource("single", 500, true, {
@@ -17,7 +18,7 @@ Deno.test("export rejects a positive EIC attached to a filed Form 2555", () => {
   );
 });
 
-Deno.test("export rejects a positive EIC without its matching calculation", () => {
+test("export rejects a positive EIC without its matching calculation", () => {
   assertThrows(
     () => assertEicSource("single", 500, true, {}),
     Error,
@@ -25,7 +26,7 @@ Deno.test("export rejects a positive EIC without its matching calculation", () =
   );
 });
 
-Deno.test("export rejects a positive EIC without reviewed prior history", () => {
+test("export rejects a positive EIC without reviewed prior history", () => {
   assertThrows(
     () =>
       assertEicSource("single", 500, true, {
@@ -41,7 +42,7 @@ Deno.test("export rejects a positive EIC without reviewed prior history", () => 
   );
 });
 
-Deno.test("export rejects EIC when K-1 Form 4797 line 10 passive character is unknown", () => {
+test("export rejects EIC when K-1 Form 4797 line 10 passive character is unknown", () => {
   for (const amount of [12_000, -500]) {
     assertThrows(
       () =>
@@ -70,7 +71,7 @@ Deno.test("export rejects EIC when K-1 Form 4797 line 10 passive character is un
   }
 });
 
-Deno.test("export rejects passive K-1 Form 4797 line 10 without finalized loss facts", () => {
+test("export rejects passive K-1 Form 4797 line 10 without finalized loss facts", () => {
   for (const gainLoss of [500, -500]) {
     assertThrows(
       () =>
@@ -111,7 +112,7 @@ Deno.test("export rejects passive K-1 Form 4797 line 10 without finalized loss f
   }
 });
 
-Deno.test("export rejects a positive EIC with a matching over-limit Worksheet 1 total", () => {
+test("export rejects a positive EIC with a matching over-limit Worksheet 1 total", () => {
   assertThrows(
     () =>
       assertEicSource("single", 500, true, {

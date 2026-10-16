@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form965a } from "./f965a.ts";
 import { form965aNetAdjustmentTransferStatement } from "./f965a_net_adjustment_transfer_statement.ts";
@@ -32,7 +33,7 @@ const input = {
   transfer_agreements: [],
 };
 
-Deno.test("Form 965-A emits cumulative Part I/II and reporting-year payment", () => {
+test("Form 965-A emits cumulative Part I/II and reporting-year payment", () => {
   const xml = form965a.build(input, {
     pending: { schedule2: { line20_965_tax_installment: 8_000 } },
   });
@@ -51,7 +52,7 @@ Deno.test("Form 965-A emits cumulative Part I/II and reporting-year payment", ()
   );
 });
 
-Deno.test("Form 965-A refuses a Schedule 2 payment mismatch", () => {
+test("Form 965-A refuses a Schedule 2 payment mismatch", () => {
   assertThrows(
     () =>
       form965a.build(input, {
@@ -62,7 +63,7 @@ Deno.test("Form 965-A refuses a Schedule 2 payment mismatch", () => {
   );
 });
 
-Deno.test("Form 965-A links native netted-transfer and multiple-transferee statements", () => {
+test("Form 965-A links native netted-transfer and multiple-transferee statements", () => {
   const withStatements = {
     ...input,
     f965s: [{
@@ -178,7 +179,7 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
   );
 });
 
-Deno.test("Form 965-A rejects an omitted signed agreement from the MeF bundle", () => {
+test("Form 965-A rejects an omitted signed agreement from the MeF bundle", () => {
   const source = {
     ...input,
     f965s: [{
@@ -213,7 +214,7 @@ Deno.test("Form 965-A rejects an omitted signed agreement from the MeF bundle", 
   );
 });
 
-Deno.test("Form 965-A transfer-in omits Part IV beginning balance", () => {
+test("Form 965-A transfer-in omits Part IV beginning balance", () => {
   const transferIn = {
     ...input,
     s_corp_deferred_rows: [{

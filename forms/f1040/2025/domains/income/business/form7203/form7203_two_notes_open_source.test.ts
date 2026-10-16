@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -23,7 +26,7 @@ const reductions: Record<string, number[]> = {
   spouse_net_advance: [833, 417, 1250],
 };
 for (const c of [...twoNotesOpenCases, twoNotesFamilyCase]) {
-  Deno.test(`two formal plus open ${c.id}: public/native/fullXSD/PDF`, async () => {
+  test(`two formal plus open ${c.id}: public/native/fullXSD/PDF`, async () => {
     const jointFamily = c.id === "independent_owners",
       { inputs, filer } = jointFamily
         ? twoNotesFamilyInputs()
@@ -162,7 +165,7 @@ for (const c of [...twoNotesOpenCases, twoNotesFamilyCase]) {
       xml,
       `<TotQlfyBusLossCarryforwardAmt>${c.allowed}</TotQlfyBusLossCarryforwardAmt>`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -189,13 +192,9 @@ for (const c of [...twoNotesOpenCases, twoNotesFamilyCase]) {
       c.id === "independent_owners" ? [1, 1, 2, 2] : [1, 1],
     );
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_TWO_NOTES_OPEN_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_TWO_NOTES_OPEN_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [ext, value] of Object.entries({
@@ -215,18 +214,18 @@ for (const c of [...twoNotesOpenCases, twoNotesFamilyCase]) {
           },
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${ext}`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
 
-Deno.test("two written notes and open account reject incomplete/cross-owned/duplicate repayment sources", () => {
+test("two written notes and open account reject incomplete/cross-owned/duplicate repayment sources", () => {
   const mutate: [string, (n: any) => void][] = [
     [
       "missing second note",
@@ -316,7 +315,7 @@ Deno.test("two written notes and open account reject incomplete/cross-owned/dupl
     );
   }
 });
-Deno.test("three debt columns reject native/directPDF final source/owner/tax/QBI/copy conflicts", async () => {
+test("three debt columns reject native/directPDF final source/owner/tax/QBI/copy conflicts", async () => {
   const { inputs, filer } = twoNotesFamilyInputs(),
     r = f1040_2025.executeReturn(inputs as any);
   assertEquals(r.diagnostics, []);

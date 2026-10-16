@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   CoverageType,
@@ -67,7 +68,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("paired other-coverage loss retains one owner's HSA excess and prints both 8889 copies", () => {
+test("paired other-coverage loss retains one owner's HSA excess and prints both 8889 copies", () => {
   const pending = preparedReturn().pending;
   const forms = pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],
@@ -109,7 +110,7 @@ Deno.test("paired other-coverage loss retains one owner's HSA excess and prints 
   );
 });
 
-Deno.test("paired other-coverage excess rejects onset, owner Form 5329, and final tax tampering", () => {
+test("paired other-coverage excess rejects onset, owner Form 5329, and final tax tampering", () => {
   const pending = preparedReturn().pending;
   const forms = pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],

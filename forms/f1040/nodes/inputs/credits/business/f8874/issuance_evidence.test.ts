@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema } from "./index.ts";
 import {
@@ -49,7 +50,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 8874-A issuance matches direct investor and 2025 year-three credit", () => {
+test("Form 8874-A issuance matches direct investor and 2025 year-three credit", () => {
   const result = reconcileForm8874AIssuance(notice, pending);
   assertEquals(result.creditYear, 3);
   assertEquals(result.credit, 500);
@@ -59,7 +60,7 @@ Deno.test("Form 8874-A issuance matches direct investor and 2025 year-three cred
   );
 });
 
-Deno.test("Form 8874-A rejects unsigned, late and inconsistent annual schedules", () => {
+test("Form 8874-A rejects unsigned, late and inconsistent annual schedules", () => {
   for (
     const changed of [
       { cde_official_signed_notice_confirmed: false },
@@ -75,7 +76,7 @@ Deno.test("Form 8874-A rejects unsigned, late and inconsistent annual schedules"
   }
 });
 
-Deno.test("Form 8874-A rejects investor, CDE, investment and year-three tampering", () => {
+test("Form 8874-A rejects investor, CDE, investment and year-three tampering", () => {
   for (
     const changed of [
       { investor_tin: "222334444" },

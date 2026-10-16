@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { compareAtsNativeValues } from "./ty2025-native-value-coverage.ts";
 
@@ -12,7 +13,7 @@ const packet = (contents: string) =>
 const check = (xml: string | null) =>
   compareAtsNativeValues(xml, targets).rows[0];
 
-Deno.test("ATS native values distinguish a blocked packet, absent field and transmitted zero", () => {
+test("ATS native values distinguish a blocked packet, absent field and transmitted zero", () => {
   assertEquals(check(null).result, "not-evaluated");
   assertEquals(check(packet("<IRSW2/>")).result, "missing-document");
   assertEquals(check(packet("<IRS1040/>")).result, "missing-field");
@@ -24,7 +25,7 @@ Deno.test("ATS native values distinguish a blocked packet, absent field and tran
   assertEquals([changed.result, changed.actual], ["different", 1]);
 });
 
-Deno.test("ATS native values reject malformed, duplicate and nested substitute fields", () => {
+test("ATS native values reject malformed, duplicate and nested substitute fields", () => {
   assertEquals(check("<Return>").result, "invalid-xml");
   assertEquals(check(packet("<IRS1040/><IRS1040/>")).result, "ambiguous");
   assertEquals(
@@ -53,7 +54,7 @@ Deno.test("ATS native values reject malformed, duplicate and nested substitute f
   );
 });
 
-Deno.test("ATS native numeric fields reject nonintegers and unsafe values", () => {
+test("ATS native numeric fields reject nonintegers and unsafe values", () => {
   for (
     const value of [
       "",
@@ -76,7 +77,7 @@ Deno.test("ATS native numeric fields reject nonintegers and unsafe values", () =
   );
 });
 
-Deno.test("ATS native values report unsupported targets without conflating deduction lines", () => {
+test("ATS native values report unsupported targets without conflating deduction lines", () => {
   const coverage = compareAtsNativeValues(
     packet(
       "<IRS1040><TotalItemizedOrStandardDedAmt>31500</TotalItemizedOrStandardDedAmt></IRS1040>",
@@ -97,7 +98,7 @@ Deno.test("ATS native values report unsupported targets without conflating deduc
   ]);
 });
 
-Deno.test("ATS explicit yes/no answers preserve false and reject invalid boolean encodings", () => {
+test("ATS explicit yes/no answers preserve false and reject invalid boolean encodings", () => {
   const target = {
     ...targets[0],
     path: "f1040.digital_assets",
@@ -135,7 +136,7 @@ Deno.test("ATS explicit yes/no answers preserve false and reject invalid boolean
   );
 });
 
-Deno.test("ATS checkbox checks keep primary blindness and pension rollover separate from spouse and IRA", () => {
+test("ATS checkbox checks keep primary blindness and pension rollover separate from spouse and IRA", () => {
   const cases = [
     ["f1040.taxpayer_blind", "PrimaryBlindInd", "SpouseBlindInd"],
     [
@@ -164,7 +165,7 @@ Deno.test("ATS checkbox checks keep primary blindness and pension rollover separ
   }
 });
 
-Deno.test("ATS schedules observe signed direct amounts and reject duplicate schedule copies", () => {
+test("ATS schedules observe signed direct amounts and reject duplicate schedule copies", () => {
   const target = {
     ...targets[0],
     path: "schedule1.line3_schedule_c",
@@ -196,7 +197,7 @@ Deno.test("ATS schedules observe signed direct amounts and reject duplicate sche
   );
 });
 
-Deno.test("ATS totals observe transmitted totals independently of component fields", () => {
+test("ATS totals observe transmitted totals independently of component fields", () => {
   const selected = [
     ["line1z_total_wages", 100, "WagesSalariesAndTipsAmt"],
     ["line14_deductions_qbi_total", 30, "TotalDeductionsAmt"],

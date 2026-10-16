@@ -1,11 +1,14 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { fillFormPdf } from "../../../builder.ts";
 import { form8911ScheduleAPdf } from "./f8911_schedule_a.ts";
 
-Deno.test("Schedule A 8911 fills the pinned December 2025 template and rejects cache drift", async () => {
-  const cache = await Deno.makeTempDir();
-  const template = await Deno.readFile(
+test("Schedule A 8911 fills the pinned December 2025 template and rejects cache drift", async () => {
+  const cache = await sys.makeTempDir();
+  const template = await sys.readBytes(
     new URL("./fixtures/f8911sa-2025.pdf", import.meta.url),
   );
   const slug = form8911ScheduleAPdf.pdfUrl.replace(/[^a-zA-Z0-9]/g, "_")
@@ -29,7 +32,7 @@ Deno.test("Schedule A 8911 fills the pinned December 2025 template and rejects c
     line21: 300,
   };
   try {
-    await Deno.writeFile(path, template);
+    await fs.writeFile(path, template);
     const filled = await fillFormPdf(
       form8911ScheduleAPdf,
       fields,
@@ -39,13 +42,13 @@ Deno.test("Schedule A 8911 fills the pinned December 2025 template and rejects c
     const pdf = await PDFDocument.load(filled!);
     assertEquals(pdf.getPageCount(), 1);
     assertEquals(pdf.getForm().getFields().length, 0);
-    await Deno.writeFile(path, new Uint8Array([...template, 10]));
+    await fs.writeFile(path, new Uint8Array([...template, 10]));
     await assertRejects(
       () => fillFormPdf(form8911ScheduleAPdf, fields, undefined, cache),
       Error,
       "template digest mismatch",
     );
   } finally {
-    await Deno.remove(cache, { recursive: true });
+    await sys.remove(cache, { recursive: true });
   }
 });

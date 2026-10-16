@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { inputSchema as form8283InputSchema } from "../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
@@ -35,7 +36,7 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   );
 }
 
-Deno.test("Section B unrelated-use camera equipment joins source, Schedule A, native MeF, and PDF", async () => {
+test("Section B unrelated-use camera equipment joins source, Schedule A, native MeF, and PDF", async () => {
   const files = await Promise.all([
     evidence("purchased vintage camera equipment, 2023-01-15, basis $12000"),
     evidence(

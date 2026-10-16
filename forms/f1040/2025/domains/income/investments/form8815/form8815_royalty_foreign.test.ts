@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { z } from "zod";
 import {
@@ -79,7 +81,7 @@ const cases = [
   },
 ];
 for (const entry of cases) {
-  Deno.test(`Sourced foreign exclusion with bond/royalty refiguring: ${entry.id}`, async () => {
+  test(`Sourced foreign exclusion with bond/royalty refiguring: ${entry.id}`, async () => {
     const base = royaltyBondInputs({
       ...royaltyBondCases[0],
       ...entry,
@@ -210,12 +212,12 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_FOREIGN_ROYALTY_PROOF_DIR");
+    const root = process.env.OPENTAX_FOREIGN_ROYALTY_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -29,7 +30,7 @@ function pdfContext(pending: ReturnType<typeof buildPending>) {
   };
 }
 
-Deno.test("Schedule H remarriage joins split service time, wages, married ownership and final tax", async () => {
+test("Schedule H remarriage joins split service time, wages, married ownership and final tax", async () => {
   for (const c of parentRemarriageCases) {
     const input = parentRemarriageInput(c), before = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
@@ -76,7 +77,7 @@ Deno.test("Schedule H remarriage joins split service time, wages, married owners
   }
 });
 
-Deno.test("Schedule H remarriage rejects conflicting event, service, source and year-end facts", async () => {
+test("Schedule H remarriage rejects conflicting event, service, source and year-end facts", async () => {
   const input = parentRemarriageInput(parentRemarriageCases[0]);
   const result = f1040_2025.executeReturn(input),
     pending = buildPending(result.pending);

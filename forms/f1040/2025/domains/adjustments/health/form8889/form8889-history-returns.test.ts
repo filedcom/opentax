@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertAlmostEquals,
@@ -24,7 +25,7 @@ import { inputSchema as hsaSchema } from "../../../../../nodes/intermediate/form
 // Independent expected amounts use the retained source/month worksheet replay
 // and the official 2025 tax table, documented in the prior-funding gap.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`HSA history reaches complete owner forms and final refund: ${id}`, async () => {
+  test(`HSA history reaches complete owner forms and final refund: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input), e = expected[id];
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -94,7 +95,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("HSA history rejects inconsistent prior sources, owner copies and return totals", async () => {
+test("HSA history rejects inconsistent prior sources, owner copies and return totals", async () => {
   let count = 0, pdfCount = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

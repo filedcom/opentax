@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertNotEquals } from "@std/assert";
 import { preparedSourceSha256 } from "./prepared-source.ts";
 
-Deno.test("prepared source hash binds canonical Form 8949 sale rows", async () => {
+test("prepared source hash binds canonical Form 8949 sale rows", async () => {
   const source = {
     form8949: [{ part: "E", proceeds: 5_000, gain_loss: 3_000 }],
   };

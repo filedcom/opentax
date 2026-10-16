@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -66,7 +67,7 @@ const inputs = {
   f1095a: policies,
 };
 
-Deno.test("one-person June policy transition combines A/C once and SLCSP once through Form 1040, MeF, and PDF", async () => {
+test("one-person June policy transition combines A/C once and SLCSP once through Form 1040, MeF, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
     taxYear: 2025,
     formType: "f1040",

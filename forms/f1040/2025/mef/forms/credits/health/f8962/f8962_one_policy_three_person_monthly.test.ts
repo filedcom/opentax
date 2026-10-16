@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import {
@@ -134,7 +135,7 @@ function monthlyFamily() {
   return { fields, pending, policy, net };
 }
 
-Deno.test("Form 8962 one-policy three-person partial year reaches monthly MeF, Schedule 3, Form 1040, and PDF", () => {
+test("Form 8962 one-policy three-person partial year reaches monthly MeF, Schedule 3, Form 1040, and PDF", () => {
   const { fields, pending, net } = monthlyFamily();
   assertEquals(fields.household_income, 51_640);
   assertEquals(fields.federal_poverty_pct, 200);
@@ -157,7 +158,7 @@ Deno.test("Form 8962 one-policy three-person partial year reaches monthly MeF, S
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 one-policy three-person monthly route rejects altered dependent, policy, or return facts", () => {
+test("Form 8962 one-policy three-person monthly route rejects altered dependent, policy, or return facts", () => {
   const { fields, pending, policy } = monthlyFamily();
   const otherFamily = {
     ...pending,

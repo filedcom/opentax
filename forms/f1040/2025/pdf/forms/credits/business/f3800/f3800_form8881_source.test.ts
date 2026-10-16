@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -79,7 +80,7 @@ const pending = {
 };
 const ids = { f8881: ["IRS8881_1"], form6251: ["IRS6251_1"], f8835: [] };
 
-Deno.test("Form 8881 startup and enrollment credit reaches Form 3800, Schedule 3 and Form 1040", () => {
+test("Form 8881 startup and enrollment credit reaches Form 3800, Schedule 3 and Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -116,7 +117,7 @@ Deno.test("Form 8881 startup and enrollment credit reaches Form 3800, Schedule 3
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 1_250);
 });
 
-Deno.test("Form 8881 Part I and II bind separate native and printable Form 3800 rows", () => {
+test("Form 8881 Part I and II bind separate native and printable Form 3800 rows", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -145,7 +146,7 @@ Deno.test("Form 8881 Part I and II bind separate native and printable Form 3800 
   ]);
 });
 
-Deno.test("Form 3800 PDF rejects a second Form 8881 part claiming another document ID", () => {
+test("Form 3800 PDF rejects a second Form 8881 part claiming another document ID", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -175,7 +176,7 @@ Deno.test("Form 3800 PDF rejects a second Form 8881 part claiming another docume
   );
 });
 
-Deno.test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
+test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
   const military = {
     ...source,
     military_spouses: {
@@ -229,7 +230,7 @@ Deno.test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
   ]);
 });
 
-Deno.test("Form 8881 child PDF rejects changed source, prepared part links, and final credit", () => {
+test("Form 8881 child PDF rejects changed source, prepared part links, and final credit", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -283,7 +284,7 @@ Deno.test("Form 8881 child PDF rejects changed source, prepared part links, and 
   );
 });
 
-Deno.test("Form 8881 contribution phaseout retains its zero-credit source projection", () => {
+test("Form 8881 contribution phaseout retains its zero-credit source projection", () => {
   const zeroSource = {
     schedule_c_business_reference: source.schedule_c_business_reference,
     plan_type: source.plan_type,
@@ -333,7 +334,7 @@ Deno.test("Form 8881 contribution phaseout retains its zero-credit source projec
   );
 });
 
-Deno.test("Form 8881 export rejects altered source, document link and prepared row", () => {
+test("Form 8881 export rejects altered source, document link and prepared row", () => {
   assertThrows(
     () =>
       prepareForm3800DocumentParts(f3800, {

@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../../nodes/inputs/taxes/credit-recapture/f4255/index.ts";
 import { form4255Row } from "../../../../domains/taxes/credit-recapture/form4255/form4255.fixture.ts";
 import { form4255 } from "./f4255.ts";
 
-Deno.test("Form 4255 stages a source-bound positive row but closes native export", () => {
+test("Form 4255 stages a source-bound positive row but closes native export", () => {
   assertEquals(inputSchema.safeParse({ rows: [form4255Row] }).success, true);
   assertThrows(
     () => form4255.build({ rows: [form4255Row] }),
@@ -12,7 +13,7 @@ Deno.test("Form 4255 stages a source-bound positive row but closes native export
   );
 });
 
-Deno.test("Form 4255 rejects EP notice or prior-return changes before native export", () => {
+test("Form 4255 rejects EP notice or prior-return changes before native export", () => {
   assertThrows(
     () =>
       form4255.build({

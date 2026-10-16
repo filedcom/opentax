@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import {
   form8582crMixedK1SourceInputs,
@@ -445,7 +446,7 @@ function filedSelfAndK1Return(
   return result;
 }
 
-Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
+test("S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedSCorpReturn();
   const pending = normalizeForm8582CRTestPending(result.pending);
   assertEquals(pending.schedule3.line6a_total, 500);
@@ -470,7 +471,7 @@ Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Fo
   );
 });
 
-Deno.test("S corporation K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
+test("S corporation K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
   const pending = normalizeForm8582CRTestPending(filedSCorpReturn().pending);
   const row = (pending.k1_s_corp.k1_s_corps as Record<string, unknown>[])[0];
   for (
@@ -496,7 +497,7 @@ Deno.test("S corporation K-1 code AD passive credit rejects changed issuer, amou
   }
 });
 
-Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
+test("partnership K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedPartnershipReturn();
   const pending = normalizeForm8582CRTestPending(result.pending);
   assertEquals(pending.schedule3.line6a_total, 500);
@@ -529,7 +530,7 @@ Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form
   );
 });
 
-Deno.test("partnership K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
+test("partnership K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient", () => {
   const pending = normalizeForm8582CRTestPending(
     filedPartnershipReturn().pending,
   );
@@ -558,7 +559,7 @@ Deno.test("partnership K-1 code AD passive credit rejects changed issuer, amount
   }
 });
 
-Deno.test("partnership and S corporation code AD credits share one passive tax limit with distinct Worksheet 9 and Part V rows", async () => {
+test("partnership and S corporation code AD credits share one passive tax limit with distinct Worksheet 9 and Part V rows", async () => {
   const result = filedMixedK1Return();
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -697,7 +698,7 @@ Deno.test("partnership and S corporation code AD credits share one passive tax l
   );
 });
 
-Deno.test("three partnership and one S corporation passive code AD credits keep four source-specific Worksheet 9 and Part V rows", async () => {
+test("three partnership and one S corporation passive code AD credits keep four source-specific Worksheet 9 and Part V rows", async () => {
   const result = filedMixedK1Return([1_500, 500]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -831,7 +832,7 @@ Deno.test("three partnership and one S corporation passive code AD credits keep 
   );
 });
 
-Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject an unmatched additional source", async () => {
+test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject an unmatched additional source", async () => {
   const result = filedMixedK1Return(Array(13).fill(500));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -879,7 +880,7 @@ Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and
   );
 });
 
-Deno.test("self-earned and K-1 credits calculate together, then unauthenticated direct Form 8874 export is blocked", async () => {
+test("self-earned and K-1 credits calculate together, then unauthenticated direct Form 8874 export is blocked", async () => {
   const result = filedSelfAndK1Return();
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -918,7 +919,7 @@ Deno.test("self-earned and K-1 credits calculate together, then unauthenticated 
   );
 });
 
-Deno.test("two self-earned investments and three K-1s retain source identities while direct export is blocked", async () => {
+test("two self-earned investments and three K-1s retain source identities while direct export is blocked", async () => {
   const result = filedSelfAndK1Return([10_000], [800]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -936,7 +937,7 @@ Deno.test("two self-earned investments and three K-1s retain source identities w
   );
 });
 
-Deno.test("current-year passive New Markets credit and rental income reconcile Form 8582-CR line 6, Form 3800, Form 1040, native and PDF", () => {
+test("current-year passive New Markets credit and rental income reconcile Form 8582-CR line 6, Form 3800, Form 1040, native and PDF", () => {
   const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   assertEquals(pending.f1040.line8_additional_income, passiveIncome);
   assertEquals(pending.f1040.line16_income_tax, taxAll);
@@ -960,7 +961,7 @@ Deno.test("current-year passive New Markets credit and rental income reconcile F
   ));
 });
 
-Deno.test("passive and nonpassive Form 8874 investments calculate line 1i before direct export is blocked", async () => {
+test("passive and nonpassive Form 8874 investments calculate line 1i before direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 5_000);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const passive = form8582crInputSchema.parse(pending.form8582cr);
@@ -984,7 +985,7 @@ Deno.test("passive and nonpassive Form 8874 investments calculate line 1i before
   );
 });
 
-Deno.test("partial passive Form 8874 allowance retains its 2025 remainder while direct export is blocked", async () => {
+test("partial passive Form 8874 allowance retains its 2025 remainder while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 5_000);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
@@ -1020,7 +1021,7 @@ Deno.test("partial passive Form 8874 allowance retains its 2025 remainder while 
   );
 });
 
-Deno.test("two passive Form 8874 activities calculate separate Worksheet 9 balances while direct export is blocked", async () => {
+test("two passive Form 8874 activities calculate separate Worksheet 9 balances while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 0, [100_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const lines = calculateForm8582CR(pending.form8582cr);
@@ -1058,7 +1059,7 @@ Deno.test("two passive Form 8874 activities calculate separate Worksheet 9 balan
   );
 });
 
-Deno.test("three passive Form 8874 credits allocate line 6 by source while direct export is blocked", async () => {
+test("three passive Form 8874 credits allocate line 6 by source while direct export is blocked", async () => {
   const result = filedReturn(100_000, [], 0, [50_000, 50_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1090,7 +1091,7 @@ Deno.test("three passive Form 8874 credits allocate line 6 by source while direc
   );
 });
 
-Deno.test("seven passive Form 8874 activities calculate investment overflow while direct export is blocked", async () => {
+test("seven passive Form 8874 activities calculate investment overflow while direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 0, Array(6).fill(10_000));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1111,7 +1112,7 @@ Deno.test("seven passive Form 8874 activities calculate investment overflow whil
   );
 });
 
-Deno.test("fifteen passive Form 8874 activities calculate while direct export is blocked", async () => {
+test("fifteen passive Form 8874 activities calculate while direct export is blocked", async () => {
   const result = filedReturn(10_000, [], 0, Array(14).fill(10_000));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1132,7 +1133,7 @@ Deno.test("fifteen passive Form 8874 activities calculate while direct export is
   );
 });
 
-Deno.test("one sourced 1099-INT joins passive rental line 6 while direct Form 8874 export is blocked", async () => {
+test("one sourced 1099-INT joins passive rental line 6 while direct Form 8874 export is blocked", async () => {
   const result = filedReturn(10_000, [1_000]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
@@ -1167,7 +1168,7 @@ Deno.test("one sourced 1099-INT joins passive rental line 6 while direct Form 88
   );
 });
 
-Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed interest, and tax", () => {
+test("Form 8582-CR interest branch rejects altered issuer box, filed interest, and tax", () => {
   const pending = normalizeForm8582CRTestPending(
     filedReturn(10_000, [1_000]).pending,
   );
@@ -1202,7 +1203,7 @@ Deno.test("Form 8582-CR interest branch rejects altered issuer box, filed intere
   }
 });
 
-Deno.test("two distinct 1099-INT payers sum into passive rental line 6 while direct export is blocked", async () => {
+test("two distinct 1099-INT payers sum into passive rental line 6 while direct export is blocked", async () => {
   const result = filedReturn(10_000, [600, 400]);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const expectedAllTax = ordinaryTax2025(taxable + 1_000, FilingStatus.Single);
@@ -1236,7 +1237,7 @@ Deno.test("two distinct 1099-INT payers sum into passive rental line 6 while dir
   );
 });
 
-Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return drift", () => {
+test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return drift", () => {
   const pending = normalizeForm8582CRTestPending(
     filedReturn(10_000, [600, 400]).pending,
   );
@@ -1276,7 +1277,7 @@ Deno.test("Form 8582-CR rejects two-payer amount, copy, payer, and filed-return 
   }
 });
 
-Deno.test("two 1099-INT copies retain separate accounts while direct Form 8874 export is blocked", async () => {
+test("two 1099-INT copies retain separate accounts while direct Form 8874 export is blocked", async () => {
   const result = filedReturn(10_000, [600, 400], 0, [], true);
   const pending = normalizeForm8582CRTestPending(result.pending);
   const rows = pending.f1099int.f1099ints as Record<string, unknown>[];
@@ -1317,7 +1318,7 @@ Deno.test("two 1099-INT copies retain separate accounts while direct Form 8874 e
   );
 });
 
-Deno.test("same-payer 1099-INT line 6 rejects duplicate account, copy review, amount, and final return drift", () => {
+test("same-payer 1099-INT line 6 rejects duplicate account, copy review, amount, and final return drift", () => {
   const pending = normalizeForm8582CRTestPending(
     filedReturn(10_000, [600, 400], 0, [], true).pending,
   );
@@ -1366,7 +1367,7 @@ Deno.test("same-payer 1099-INT line 6 rejects duplicate account, copy review, am
   }
 });
 
-Deno.test("Form 8582-CR native and PDF reject changed rental, credit, tax and filed-return joins", () => {
+test("Form 8582-CR native and PDF reject changed rental, credit, tax and filed-return joins", () => {
   const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   const cases = [
     {
@@ -1422,7 +1423,7 @@ Deno.test("Form 8582-CR native and PDF reject changed rental, credit, tax and fi
   );
 });
 
-Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinary route", () => {
+test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinary route", () => {
   const pending = normalizeForm8582CRTestPending(filedReturn().pending);
   const source = (pending.form8582cr.credit_sources as Record<
     string,
@@ -1457,7 +1458,7 @@ Deno.test("prior-only 2024 credit cannot activate the 2025 native or PDF ordinar
   );
 });
 
-Deno.test("current-year excess credit retains an activity/year Worksheet 9 balance while native and PDF print the limited amount", () => {
+test("current-year excess credit retains an activity/year Worksheet 9 balance while native and PDF print the limited amount", () => {
   const pending = normalizeForm8582CRTestPending(filedReturn(100_000).pending);
   const lines = calculateForm8582CR(pending.form8582cr);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -1477,7 +1478,7 @@ Deno.test("current-year excess credit retains an activity/year Worksheet 9 balan
   assertEquals(pdf.line37, ledger.allowed_credit);
 });
 
-Deno.test("unverified direct Form 8874 blocks the otherwise calculated passive Form 8582-CR return", async () => {
+test("unverified direct Form 8874 blocks the otherwise calculated passive Form 8582-CR return", async () => {
   const result = filedReturn();
   await assertRejects(
     () =>

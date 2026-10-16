@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { schedule3Pdf } from "../../general/return-assembly/schedule3.ts";
@@ -26,7 +27,7 @@ const pending = {
   },
 };
 
-Deno.test("Schedule R PDF maps the sourced single age-65 credit to 2025 widgets", () => {
+test("Schedule R PDF maps the sourced single age-65 credit to 2025 widgets", () => {
   const fields = scheduleRPdf.projectFields?.(source, pending) ?? {};
   assertEquals(fields.box1, "yes");
   assertEquals(fields.line10, 5_000);
@@ -49,7 +50,7 @@ Deno.test("Schedule R PDF maps the sourced single age-65 credit to 2025 widgets"
   );
 });
 
-Deno.test("Schedule R PDF rejects a credit that differs from the finalized return", () => {
+test("Schedule R PDF rejects a credit that differs from the finalized return", () => {
   assertThrows(
     () =>
       scheduleRPdf.projectFields?.(source, {
@@ -62,7 +63,7 @@ Deno.test("Schedule R PDF rejects a credit that differs from the finalized retur
   assertEquals(scheduleRPdf.projectFields?.({}, pending), {});
 });
 
-Deno.test("Schedule R PDF prints the joint-spouse and MFS age-only boxes", () => {
+test("Schedule R PDF prints the joint-spouse and MFS age-only boxes", () => {
   const joint = {
     schedule_r: {
       ...source,
@@ -112,7 +113,7 @@ Deno.test("Schedule R PDF prints the joint-spouse and MFS age-only boxes", () =>
   assertEquals(mfs?.line15, 5_000);
 });
 
-Deno.test("Schedule R PDF prints box 6, line 11, and prior-year disability statement", () => {
+test("Schedule R PDF prints box 6, line 11, and prior-year disability statement", () => {
   const joint = {
     schedule_r: {
       filing_status: FilingStatus.MFJ,

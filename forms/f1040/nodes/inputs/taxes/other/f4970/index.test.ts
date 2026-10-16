@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f4970 } from "./index.ts";
 
@@ -19,19 +20,19 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 
 // ── Input validation ──────────────────────────────────────────────────────────
 
-Deno.test("f4970: throws when f4970s array is empty", () => {
+test("f4970: throws when f4970s array is empty", () => {
   assertThrows(() => compute([]), Error);
 });
 
-Deno.test("f4970: throws when trust_name is empty", () => {
+test("f4970: throws when trust_name is empty", () => {
   assertThrows(() => compute([minimalItem({ trust_name: "" })]), Error);
 });
 
-Deno.test("f4970: throws when trust_ein is empty", () => {
+test("f4970: throws when trust_ein is empty", () => {
   assertThrows(() => compute([minimalItem({ trust_ein: "" })]), Error);
 });
 
-Deno.test("f4970: throws when distribution_amount is negative", () => {
+test("f4970: throws when distribution_amount is negative", () => {
   assertThrows(
     () => compute([minimalItem({ distribution_amount: -1 })]),
     Error,
@@ -40,27 +41,27 @@ Deno.test("f4970: throws when distribution_amount is negative", () => {
 
 // ── No active distribution ───────────────────────────────────────────────────
 
-Deno.test("f4970: empty source does not add tax", () => {
+test("f4970: empty source does not add tax", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f4970: zero asserted tax does not add tax", () => {
+test("f4970: zero asserted tax does not add tax", () => {
   const result = compute([minimalItem({ tax_deemed_distributed: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
 // ── Active source must not silently route to the wrong return line ──────────
 
-Deno.test("f4970: positive asserted tax fails before Schedule 2 line 17l support", () => {
+test("f4970: positive asserted tax fails before Schedule 2 line 17l support", () => {
   assertThrows(() => compute([minimalItem({ tax_deemed_distributed: 2500 })]));
 });
 
-Deno.test("f4970: positive distribution cannot disappear when asserted tax is absent", () => {
+test("f4970: positive distribution cannot disappear when asserted tax is absent", () => {
   assertThrows(() => compute([minimalItem({ distribution_amount: 10000 })]));
 });
 
-Deno.test("f4970: multiple trust distributions fail before native attachment support", () => {
+test("f4970: multiple trust distributions fail before native attachment support", () => {
   assertThrows(() =>
     compute([
       minimalItem({
@@ -79,7 +80,7 @@ Deno.test("f4970: multiple trust distributions fail before native attachment sup
 
 // ── Optional fields ────────────────────────────────────────────────────────────
 
-Deno.test("f4970: positive throwback year fails without the full calculation", () => {
+test("f4970: positive throwback year fails without the full calculation", () => {
   assertThrows(() =>
     compute([minimalItem({
       throwback_years: [
@@ -92,7 +93,7 @@ Deno.test("f4970: positive throwback year fails without the full calculation", (
 
 // ── Smoke test ────────────────────────────────────────────────────────────────
 
-Deno.test("f4970: populated trust distribution does not export an unsupported form", () => {
+test("f4970: populated trust distribution does not export an unsupported form", () => {
   assertThrows(() =>
     compute([minimalItem({
       trust_name: "Jones Irrevocable Trust",

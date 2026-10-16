@@ -1,4 +1,6 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
+#!/usr/bin/env bun
+import * as fs from "node:fs/promises";
+import * as sys from "../scripts/support/sys.ts";
 /**
  * Run all benchmark cases and generate output.json for each.
  * Run: deno run --allow-read --allow-write --allow-run benchmark/run_all.ts
@@ -34,10 +36,10 @@ let pass = 0, fail = 0;
 for (const name of names) {
   const caseDir = name;
   const inputFile = join(caseDir, "input.json");
-  await Deno.stat(inputFile);
+  await sys.stat(inputFile);
 
   const caseData = benchmarkInputSchema.parse(
-    JSON.parse(await Deno.readTextFile(inputFile)),
+    JSON.parse(await fs.readFile(inputFile, "utf8")),
   );
   console.log(`Running: ${name}`);
   console.log(`  Scenario: ${caseData.scenario ?? ""}`);
@@ -70,7 +72,7 @@ for (const name of names) {
 
     const result = await tax("return", "get", "--returnId", rid, "--json");
     benchmarkReturnSchema.parse(JSON.parse(result));
-    await Deno.writeTextFile(join(caseDir, "output.json"), result);
+    await fs.writeFile(join(caseDir, "output.json"), result);
     console.log(`  Saved: output.json`);
     pass++;
   } catch (err) {
@@ -83,4 +85,4 @@ for (const name of names) {
 console.log("==================================");
 console.log(`Results: ${pass} passed, ${fail} failed`);
 
-Deno.exit(benchmarkExitCode(pass + fail, fail));
+process.exit(benchmarkExitCode(pass + fail, fail));

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PassiveCreditSourceOrigin } from "../../../../intermediate/forms/credits/business/form8582cr/source.ts";
 import {
@@ -45,7 +46,7 @@ const vintage: Form3800CarryoverVintage = {
   },
 };
 
-Deno.test("Form 3800 carryover ledger reconciles source vintage and keeps recapture out of usable credit", () => {
+test("Form 3800 carryover ledger reconciles source vintage and keeps recapture out of usable credit", () => {
   const [result] = reconcileForm3800CarryoverLedger([vintage]);
   assertEquals(result.sourceKey, "2022-qei-1");
   assertEquals(result.creditType, "New markets credit");
@@ -59,7 +60,7 @@ Deno.test("Form 3800 carryover ledger reconciles source vintage and keeps recapt
   assertEquals(result.statementFacts.priorAdjustments.length, 1);
 });
 
-Deno.test("Form 3800 carryover ledger preserves cent-precision balances", () => {
+test("Form 3800 carryover ledger preserves cent-precision balances", () => {
   const [result] = reconcileForm3800CarryoverLedger([{
     ...vintage,
     credit_generated_as_filed: 5_000.25,
@@ -69,7 +70,7 @@ Deno.test("Form 3800 carryover ledger preserves cent-precision balances", () => 
   assertEquals(result.availableAfterAdjustment, 500.15);
 });
 
-Deno.test("Form 3800 carryover ledger rejects changed balance, unsupported carryback year, and excess recapture", () => {
+test("Form 3800 carryover ledger rejects changed balance, unsupported carryback year, and excess recapture", () => {
   for (
     const changed of [
       { ...vintage, balance_carried_to_2025: 1_501 },
@@ -93,7 +94,7 @@ Deno.test("Form 3800 carryover ledger rejects changed balance, unsupported carry
   }
 });
 
-Deno.test("Form 3800 carryover ledger rejects missing extended carryback evidence and duplicate source", () => {
+test("Form 3800 carryover ledger rejects missing extended carryback evidence and duplicate source", () => {
   assertThrows(() =>
     reconcileForm3800CarryoverLedger([{
       ...vintage,
@@ -103,7 +104,7 @@ Deno.test("Form 3800 carryover ledger rejects missing extended carryback evidenc
   assertThrows(() => reconcileForm3800CarryoverLedger([vintage, vintage]));
 });
 
-Deno.test("Form 3800 carryover ledger rejects an invented or mismatched tax year end", () => {
+test("Form 3800 carryover ledger rejects an invented or mismatched tax year end", () => {
   assertThrows(
     () =>
       reconcileForm3800CarryoverLedger([{

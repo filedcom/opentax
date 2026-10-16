@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertAlmostEquals,
   assertEquals,
@@ -33,7 +35,7 @@ const fixtures = ["full", "partial", "zero"].map((kind) =>
     f.id === `single-form8994-direct-employer-${kind}`
   )!
 );
-Deno.test("Form8994 reviewed public employer sources preserve full wage reduction under full, partial and zero tax use", async () => {
+test("Form8994 reviewed public employer sources preserve full wage reduction under full, partial and zero tax use", async () => {
   const expected = [[51250, 3621, 47629, 6376, 25503, 1250, 8817], [
     26250,
     1855,
@@ -80,7 +82,7 @@ Deno.test("Form8994 reviewed public employer sources preserve full wage reductio
     );
   }
 });
-Deno.test("Form8994 actual native/PDF source packet rejects detached employer, wage, tax and reviewed bytes", async () => {
+test("Form8994 actual native/PDF source packet rejects detached employer, wage, tax and reviewed bytes", async () => {
   const f = fixtures[1];
   const base = prepared(f);
   const valid = await bundle(base, f);
@@ -179,7 +181,7 @@ Deno.test("Form8994 actual native/PDF source packet rejects detached employer, w
   );
 });
 
-Deno.test("Form8994 partial-use public receipts retain cents through filed SE/QBI/native equations", async () => {
+test("Form8994 partial-use public receipts retain cents through filed SE/QBI/native equations", async () => {
   for (const cents of [0.49, 0.50]) {
     const inputs = structuredClone(fixtures[1].inputs);
     (inputs.schedule_c as Record<string, unknown>[])[0].line_1_gross_receipts =
@@ -201,7 +203,7 @@ Deno.test("Form8994 partial-use public receipts retain cents through filed SE/QB
         24395 + Math.round(cents)
       }</AdjustedGrossIncomeAmt>`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

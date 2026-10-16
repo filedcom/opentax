@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { review2024BusinessLoss } from "./reviewed_2024_business_loss.ts";
 
@@ -64,7 +65,7 @@ const source = {
   },
 };
 
-Deno.test("reviewed filed 2024 nonfarm Schedule C loss replays Form 172 Part I", () => {
+test("reviewed filed 2024 nonfarm Schedule C loss replays Form 172 Part I", () => {
   assertEquals(review2024BusinessLoss(source), {
     lossYear: 2024,
     ownerSsn: "111223333",
@@ -72,7 +73,7 @@ Deno.test("reviewed filed 2024 nonfarm Schedule C loss replays Form 172 Part I",
   });
 });
 
-Deno.test("2024 Form 172 business-loss review rejects source, owner and arithmetic tampering", () => {
+test("2024 Form 172 business-loss review rejects source, owner and arithmetic tampering", () => {
   const changed = [
     {
       ...source,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -116,7 +117,7 @@ function wageDependentPolicy(
 }
 
 for (const aptc of [600, 4_800] as const) {
-  Deno.test(`Form 8962 wage-only dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
+  test(`Form 8962 wage-only dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = wageDependentPolicy(aptc);
     assertEquals(fields.dependents_modified_agi, 16_000);
     assertEquals(fields.household_income, 86_000);
@@ -154,7 +155,7 @@ const twoEmployerDependent = {
   },
 };
 
-Deno.test("Form 8962 sums two dependent W-2 employers into sourced household MAGI and annual MeF/PDF", () => {
+test("Form 8962 sums two dependent W-2 employers into sourced household MAGI and annual MeF/PDF", () => {
   const { fields, pending } = wageDependentPolicy(600, twoEmployerDependent);
   assertEquals(fields.dependents_modified_agi, 16_000);
   assertEquals(fields.household_income, 86_000);
@@ -168,7 +169,7 @@ Deno.test("Form 8962 sums two dependent W-2 employers into sourced household MAG
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 two-W-2 dependent rejects amount, identity, duplicate source, and threshold tampering", () => {
+test("Form 8962 two-W-2 dependent rejects amount, identity, duplicate source, and threshold tampering", () => {
   const { fields, pending } = wageDependentPolicy(600, twoEmployerDependent);
   const wages = twoEmployerDependent.ptc_tax_return.wage_forms_w2;
   const changed = (replacement: typeof wages) => ({
@@ -244,7 +245,7 @@ Deno.test("Form 8962 two-W-2 dependent rejects amount, identity, duplicate sourc
   );
 });
 
-Deno.test("Form 8962 wage-only dependent rejects changed W-2, refund-only wages, and return credit", () => {
+test("Form 8962 wage-only dependent rejects changed W-2, refund-only wages, and return credit", () => {
   const { fields, pending } = wageDependentPolicy(600);
   assertThrows(() =>
     form8962.build(fields, {

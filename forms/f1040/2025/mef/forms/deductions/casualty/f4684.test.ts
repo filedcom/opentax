@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
@@ -16,11 +17,11 @@ const casualty = {
   business_casualty_description: "Storm damaged workshop equipment",
 };
 
-Deno.test("Form 4684: empty input emits no document", () => {
+test("Form 4684: empty input emits no document", () => {
   assertEquals(form4684.build({}), "");
 });
 
-Deno.test("Form 4684: long-term business property reconciles Section B", () => {
+test("Form 4684: long-term business property reconciles Section B", () => {
   const xml = form4684.build(casualty);
   assertStringIncludes(
     xml,
@@ -44,7 +45,7 @@ Deno.test("Form 4684: long-term business property reconciles Section B", () => {
   );
 });
 
-Deno.test("Form 4684: filing needs property and casualty identity", () => {
+test("Form 4684: filing needs property and casualty identity", () => {
   assertThrows(
     () =>
       form4684.build({ ...casualty, business_property_description: undefined }),
@@ -59,7 +60,7 @@ Deno.test("Form 4684: filing needs property and casualty identity", () => {
   );
 });
 
-Deno.test("Form 4684: holding period is checked from actual dates", () => {
+test("Form 4684: holding period is checked from actual dates", () => {
   assertThrows(
     () => form4684.build({ ...casualty, business_acquired_date: "2024-07-01" }),
     Error,
@@ -77,7 +78,7 @@ Deno.test("Form 4684: holding period is checked from actual dates", () => {
   );
 });
 
-Deno.test("Form 4684: personal and short-term cases stay explicit", () => {
+test("Form 4684: personal and short-term cases stay explicit", () => {
   assertThrows(
     () =>
       form4684.build({
@@ -96,7 +97,7 @@ Deno.test("Form 4684: personal and short-term cases stay explicit", () => {
   );
 });
 
-Deno.test("Form 4684: linked Form 4797 must report the same loss", () => {
+test("Form 4684: linked Form 4797 must report the same loss", () => {
   assertThrows(
     () => buildMefXml({ form4684: casualty }, testFiler()),
     Error,

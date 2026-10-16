@@ -1,8 +1,11 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertMatch } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
-Deno.test("zero taxable income and tax after credits print as required on the filled Form 1040", async () => {
+test("zero taxable income and tax after credits print as required on the filled Form 1040", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-w2-refund"
   )!;
@@ -28,10 +31,10 @@ Deno.test("zero taxable income and tax after credits print as required on the fi
   assertEquals(result.pending.f1040.line22_tax_after_credits, 0);
   const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
   const pdf = await prepared.renderPdf();
-  const file = await Deno.makeTempFile({ suffix: ".pdf" });
+  const file = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(file, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(file, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", file, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -40,20 +43,20 @@ Deno.test("zero taxable income and tax after credits print as required on the fi
     const text = new TextDecoder().decode(extracted.stdout);
     assertMatch(text, /This is your taxable income[^\n]*15\s+0\s*\n/);
     assertMatch(text, /Subtract line 21 from line 18[^\n]*22\s+0\s*\n/);
-    if (Deno.args.includes("--write-review-artifacts")) {
-      await Deno.mkdir("/tmp/opentax-form1040-zero-lines-review", {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
+      await fs.mkdir("/tmp/opentax-form1040-zero-lines-review", {
         recursive: true,
       });
-      await Deno.writeFile(
+      await fs.writeFile(
         "/tmp/opentax-form1040-zero-lines-review/filled-return.pdf",
         pdf,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         "/tmp/opentax-form1040-zero-lines-review/return.xml",
         prepared.bundle.xml,
       );
     }
   } finally {
-    await Deno.remove(file);
+    await sys.remove(file);
   }
 });

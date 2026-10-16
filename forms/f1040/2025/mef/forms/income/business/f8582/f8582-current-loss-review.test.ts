@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { passivePropertyInputs } from "../../../../../domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
@@ -31,13 +34,13 @@ function currentLoss(
   return { inputs: i, pending: normalizeAllPending(r.pending) };
 }
 
-Deno.test("source-bound current ordinary loss review projects Parts V VII VIII IX and validates standalone IRS8582", async () => {
+test("source-bound current ordinary loss review projects Parts V VII VIII IX and validates standalone IRS8582", async () => {
   const schema = new URL(
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8582/IRS8582.xsd",
     import.meta.url,
   ).pathname;
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -116,27 +119,27 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
       "<IRS8582>",
       '<IRS8582 documentId="IRS8582CurrentLoss" xmlns="http://www.irs.gov/efile">',
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, temp],
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     assertEquals(
       form8582.build(source.pending.form8582, { pending: source.pending }),
       review.xml,
     );
     if (output) {
-      await Deno.writeTextFile(`${output}/${c.id}.xml`, xml, {
+      await sys.writeText(`${output}/${c.id}.xml`, xml, {
         createNew: true,
         mode: 0o600,
       });
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-native.json`,
         JSON.stringify({ ...source, review }, null, 2),
         { createNew: true, mode: 0o600 },
@@ -145,7 +148,7 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
   }
 });
 
-Deno.test("current native loss review rejects detached source owners, inventory and finalized amounts", () => {
+test("current native loss review rejects detached source owners, inventory and finalized amounts", () => {
   const original = currentLoss().pending;
   reviewCurrentPropertyLoss8582(original);
   for (

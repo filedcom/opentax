@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
@@ -59,7 +62,7 @@ const currentPartnership: Form3800PassiveTaxUseVintage = {
   originatingTaxYear: 2025,
 };
 
-Deno.test("Form 3800 passive current-year XML keeps Part III and V source amounts", () => {
+test("Form 3800 passive current-year XML keeps Part III and V source amounts", () => {
   const xml = buildForm3800PassiveRowXml([
     currentOwn,
     currentPartnership,
@@ -130,7 +133,7 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
   );
 });
 
-Deno.test("Form 3800 retains single passive current-year source detail for a mixed line", () => {
+test("Form 3800 retains single passive current-year source detail for a mixed line", () => {
   const xml = buildForm3800PassiveRowXml([currentOwn], {});
   assertEquals(xml.partIII[0].metadata.sourceCount, 1);
   assertEquals(xml.partV.length, 1);
@@ -140,7 +143,7 @@ Deno.test("Form 3800 retains single passive current-year source detail for a mix
   );
 });
 
-Deno.test("Form 3800 passive self-earned New Markets row links its IRS8874 source", () => {
+test("Form 3800 passive self-earned New Markets row links its IRS8874 source", () => {
   const ownMarkets = {
     ...currentOwn,
     sourceKey: "own-markets-2025",
@@ -181,7 +184,7 @@ Deno.test("Form 3800 passive self-earned New Markets row links its IRS8874 sourc
   );
 });
 
-Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail", () => {
+test("Form 3800 passive carryover XML keeps summary and source-year detail", () => {
   const xml = buildForm3800PassiveRowXml([own, partnership], {});
   assertEquals(xml.partIV.length, 1);
   assertEquals(xml.partIV[0].line, "1h");
@@ -272,7 +275,7 @@ Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail"
   );
 });
 
-Deno.test("Form 3800 passive carryover XML preserves explicit missing-EIN reason", () => {
+test("Form 3800 passive carryover XML preserves explicit missing-EIN reason", () => {
   const source: Form3800PassiveTaxUseVintage = {
     ...partnership,
     sourceOrigin: {
@@ -289,7 +292,7 @@ Deno.test("Form 3800 passive carryover XML preserves explicit missing-EIN reason
   );
 });
 
-Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () => {
+test("Form 3800 passive summary EIN uses the entity's combined years", () => {
   const oldest: Form3800PassiveTaxUseVintage = {
     ...partnership,
     sourceKey: "partnership-2022",
@@ -343,7 +346,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
   );
 });
 
-Deno.test("Form 3800 passive carryover XML rejects unreconciled tax use", () => {
+test("Form 3800 passive carryover XML rejects unreconciled tax use", () => {
   assertThrows(
     () => buildForm3800PassiveRowXml([{ ...own, unusedAfterTaxLimit: 1 }], {}),
     Error,
@@ -356,7 +359,7 @@ Deno.test("Form 3800 passive carryover XML rejects unreconciled tax use", () => 
   );
 });
 
-Deno.test("Form 3800 passive detail builders retain all source rows beyond one PDF page", () => {
+test("Form 3800 passive detail builders retain all source rows beyond one PDF page", () => {
   const current = Array.from({ length: 16 }, (_, index) => ({
     ...currentOwn,
     sourceKey: `current-${index + 1}`,
@@ -377,13 +380,13 @@ Deno.test("Form 3800 passive detail builders retain all source rows beyond one P
   assertEquals(rows.partVI[35].source.sourceKey, "carryover-36");
 });
 
-Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD", async () => {
+test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD", async () => {
   const xsd = new URL(
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -404,16 +407,16 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
     }${
       fragments.partVI.map(form3800PassiveCarryoverDetailXml).join("")
     }</IRS3800>`;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

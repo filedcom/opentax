@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { buildForm8911CreditXml, form8911 } from "./f8911.ts";
 import { projectForm8911CreditAmounts } from "../../../../pdf/forms/credits/business/f8911.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
@@ -37,7 +38,7 @@ export const mixedBusinessProperty: F8911Property = {
   },
 };
 
-Deno.test("Form 8911 property output retains mixed-use percentages and section 179 only in business cost", () => {
+test("Form 8911 property output retains mixed-use percentages and section 179 only in business cost", () => {
   const before = JSON.stringify(mixedBusinessProperty);
   const xml = buildForm8911PropertyXml(mixedBusinessProperty);
   for (
@@ -70,7 +71,7 @@ Deno.test("Form 8911 property output retains mixed-use percentages and section 1
   assertEquals(JSON.stringify(mixedBusinessProperty), before);
 });
 
-Deno.test("Form 8911 property output caps business credit and obeys the full-business stop instruction", () => {
+test("Form 8911 property output caps business credit and obeys the full-business stop instruction", () => {
   const property = {
     ...mixedBusinessProperty,
     cost: 4_000_000,
@@ -90,7 +91,7 @@ Deno.test("Form 8911 property output caps business credit and obeys the full-bus
   );
 });
 
-Deno.test("Form 8911 property output distinguishes increased rates, personal-only skips and non-home stops", () => {
+test("Form 8911 property output distinguishes increased rates, personal-only skips and non-home stops", () => {
   for (const rate_basis of ["pwa", "construction_before_2023_01_29"] as const) {
     const property = {
       ...mixedBusinessProperty,
@@ -131,7 +132,7 @@ Deno.test("Form 8911 property output distinguishes increased rates, personal-onl
   );
 });
 
-Deno.test("Form 8911 property rendering rejects unsupported ratio precision without opening business filing", () => {
+test("Form 8911 property rendering rejects unsupported ratio precision without opening business filing", () => {
   const property = { ...mixedBusinessProperty, business_use_pct: 0.333333 };
   assertThrows(() => buildForm8911PropertyXml(property), Error, "five-decimal");
   assertThrows(
@@ -153,7 +154,7 @@ Deno.test("Form 8911 property rendering rejects unsupported ratio precision with
   );
 });
 
-Deno.test("Form 8911 parent keeps business credit separate from the personal tax limit", () => {
+test("Form 8911 parent keeps business credit separate from the personal tax limit", () => {
   const input = {
     ...mixedBusinessProperty,
     regular_tax_before_credits: 100,
@@ -184,7 +185,7 @@ Deno.test("Form 8911 parent keeps business credit separate from the personal tax
   assertThrows(() => form8911.build(input), Error, "Form 3800 path");
 });
 
-Deno.test("Form 8911 parent sums unrounded business property credits and omits personal-only tax operands", () => {
+test("Form 8911 parent sums unrounded business property credits and omits personal-only tax operands", () => {
   const property = {
     ...mixedBusinessProperty,
     cost: 1006.25,
@@ -225,7 +226,7 @@ Deno.test("Form 8911 parent sums unrounded business property credits and omits p
   );
 });
 
-Deno.test("Form 8911 parent retains business credit but stops the personal worksheet at either zero limit", () => {
+test("Form 8911 parent retains business credit but stops the personal worksheet at either zero limit", () => {
   for (const tentative_minimum_tax of [0, 100]) {
     const input = {
       ...mixedBusinessProperty,

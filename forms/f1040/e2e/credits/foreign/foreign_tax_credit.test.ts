@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 /**
  * E2E — Form 1116 §904 limitation and the general-category wage path.
  *
@@ -63,7 +64,7 @@ function w2Item(wages: number, withheld: number) {
 // line 19 = 1,000 / 101,000; line 21 = 13,675 × that ≈ $135.40
 // line 24 = min($500 paid, $135 whole-dollar limit) = $135
 
-Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not taken whole", () => {
+test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not taken whole", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],
@@ -127,7 +128,7 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   );
 });
 
-Deno.test("Form 1116: public 2024 Schedule B input uses only available 2025 passive limitation", () => {
+test("Form 1116: public 2024 Schedule B input uses only available 2025 passive limitation", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],
@@ -179,7 +180,7 @@ Deno.test("Form 1116: public 2024 Schedule B input uses only available 2025 pass
 // passive income reported on a payee statement, so wage tax files Form 1116 at
 // any amount.
 
-Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general category", () => {
+test("Form 1116: foreign tax on foreign-employer wages routes as general category", () => {
   const result = runReturn({
     general: singleGeneral(),
     fec: [{
@@ -214,7 +215,7 @@ Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general ca
   );
 });
 
-Deno.test("Form 1116: passive and general income remain separate through the full return", () => {
+test("Form 1116: passive and general income remain separate through the full return", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],
@@ -250,7 +251,7 @@ Deno.test("Form 1116: passive and general income remain separate through the ful
   );
 });
 
-Deno.test("Form 1116: K-1 foreign tax requires and preserves its income category", () => {
+test("Form 1116: K-1 foreign tax requires and preserves its income category", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],

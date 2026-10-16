@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -81,7 +82,7 @@ async function caseForReview() {
   return { review, attachment };
 }
 
-Deno.test("vehicle sale acknowledgment review binds exact PDF bytes to VIN, donee and proceeds", async () => {
+test("vehicle sale acknowledgment review binds exact PDF bytes to VIN, donee and proceeds", async () => {
   const { review, attachment } = await caseForReview();
   await verifyVehicleSaleAcknowledgmentEvidence(
     item,
@@ -91,7 +92,7 @@ Deno.test("vehicle sale acknowledgment review binds exact PDF bytes to VIN, done
   );
 });
 
-Deno.test("vehicle sale acknowledgment review accepts Section A identifier lengths", async () => {
+test("vehicle sale acknowledgment review accepts Section A identifier lengths", async () => {
   const { review, attachment } = await caseForReview();
   for (const vehicle_vin of ["123456789012", "1234567890123456789"]) {
     await verifyVehicleSaleAcknowledgmentEvidence(
@@ -111,7 +112,7 @@ Deno.test("vehicle sale acknowledgment review accepts Section A identifier lengt
   );
 });
 
-Deno.test("vehicle sale acknowledgment review rejects unreadable PDF bytes", async () => {
+test("vehicle sale acknowledgment review rejects unreadable PDF bytes", async () => {
   const { review, attachment } = await caseForReview();
   const emptyBytes = new TextEncoder().encode("not a PDF");
   const digest = new Uint8Array(
@@ -134,7 +135,7 @@ Deno.test("vehicle sale acknowledgment review rejects unreadable PDF bytes", asy
   );
 });
 
-Deno.test("vehicle sale acknowledgment prerequisite rejects bytes, amount, owner, and document drift", async () => {
+test("vehicle sale acknowledgment prerequisite rejects bytes, amount, owner, and document drift", async () => {
   const { review, attachment } = await caseForReview();
   const changedDocument = await PDFDocument.create();
   changedDocument.addPage([300, 300]);

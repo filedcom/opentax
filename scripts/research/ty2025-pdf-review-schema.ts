@@ -1,3 +1,4 @@
+import * as sys from "../support/sys.ts";
 import { basename, dirname, join } from "@std/path";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
@@ -27,7 +28,7 @@ export function assertReviewSchemaTreeDigest(actualDigest: string): void {
 export async function schemaTreeDigest(root: string): Promise<string> {
   const files: string[] = [];
   async function visit(parts: string[]): Promise<void> {
-    for await (const entry of Deno.readDir(join(root, ...parts))) {
+    for await (const entry of sys.readDir(join(root, ...parts))) {
       const child = [...parts, entry.name];
       if (entry.isSymlink) {
         throw new Error(
@@ -46,7 +47,7 @@ export async function schemaTreeDigest(root: string): Promise<string> {
   const records: string[] = [];
   for (const name of files) {
     const digest = await sha256Hex(
-      await Deno.readFile(join(root, ...name.split("/"))),
+      await sys.readBytes(join(root, ...name.split("/"))),
     );
     records.push(`${name}\0${digest}\n`);
   }

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
@@ -10,8 +13,8 @@ import { simpleConversionReturnSource } from "./form8606_simple_conversion.fixtu
 const root = ".state/research/simple-roth-clock-oct6";
 const digest = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
-Deno.test("actual distinct SIMPLE employer first deposit and annual regular IRA sources reach current Form8606, 1040, native and retained Form4852 PDF", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("actual distinct SIMPLE employer first deposit and annual regular IRA sources reach current Form8606, 1040, native and retained Form4852 PDF", async () => {
+  await fs.mkdir(root, { recursive: true });
   const source = await simpleConversionReturnSource(1667);
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);
@@ -52,8 +55,8 @@ Deno.test("actual distinct SIMPLE employer first deposit and annual regular IRA 
     ),
     true,
   );
-  await Deno.writeTextFile(`${root}/simple-current.xml`, prepared.bundle.xml);
-  const xsd = await new Deno.Command("xmllint", {
+  await fs.writeFile(`${root}/simple-current.xml`, prepared.bundle.xml);
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -70,12 +73,12 @@ Deno.test("actual distinct SIMPLE employer first deposit and annual regular IRA 
     prepared.bundle,
     origins,
   );
-  await Deno.writeFile(`${root}/simple-current.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${root}/simple-current.pdf`, pdf);
+  await fs.writeFile(
     `${root}/simple-current.origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${root}/simple-current.source-pending.json`,
     JSON.stringify(
       { inputs: source.inputs, filer: source.filer, pending },
@@ -83,18 +86,18 @@ Deno.test("actual distinct SIMPLE employer first deposit and annual regular IRA 
       2,
     ),
   );
-  await Deno.mkdir(`${root}/simple-current-retained`, { recursive: true });
+  await fs.mkdir(`${root}/simple-current-retained`, { recursive: true });
   const docs = [];
   for (const [j, d] of source.retained.documents.entries()) {
     const path = `simple-current-retained/document-${j + 1}.bin`;
-    await Deno.writeFile(`${root}/${path}`, d.bytes);
+    await fs.writeFile(`${root}/${path}`, d.bytes);
     docs.push({
       document_reference: d.document_reference,
       path,
       sha256: digest(d.bytes),
     });
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${root}/simple-current.documents.json`,
     JSON.stringify(docs, null, 2),
   );
@@ -106,7 +109,7 @@ Deno.test("actual distinct SIMPLE employer first deposit and annual regular IRA 
     }),
   );
 });
-Deno.test("SIMPLE first-employer-deposit clock, owner, plan, account and substitute classification reject conflicts", async () => {
+test("SIMPLE first-employer-deposit clock, owner, plan, account and substitute classification reject conflicts", async () => {
   const source = await simpleConversionReturnSource(1669);
   const origin = (r: any) => r.current_conversion.inventory.simple_origins[0];
   const issued = (r: any) =>

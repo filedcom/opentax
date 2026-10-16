@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { form8960 } from "./f8960.ts";
 
@@ -13,7 +14,7 @@ function assertNotIncludes(actual: string, expected: string) {
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("empty object returns empty string", () => {
+test("empty object returns empty string", () => {
   assertEquals(form8960.build({}), "");
 });
 
@@ -21,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("all unknown keys returns empty string", () => {
+test("all unknown keys returns empty string", () => {
   assertEquals(form8960.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
@@ -29,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("line1_taxable_interest at zero is emitted", () => {
+test("line1_taxable_interest at zero is emitted", () => {
   const result = form8960.build({ line1_taxable_interest: 0 });
   assertStringIncludes(result, "<TaxableInterestAmt>0</TaxableInterestAmt>");
 });
@@ -38,12 +39,12 @@ Deno.test("line1_taxable_interest at zero is emitted", () => {
 // Section 4: Per-field mapping
 // ---------------------------------------------------------------------------
 
-Deno.test("line1_taxable_interest maps to TaxableInterestAmt", () => {
+test("line1_taxable_interest maps to TaxableInterestAmt", () => {
   const result = form8960.build({ line1_taxable_interest: 3500 });
   assertStringIncludes(result, "<TaxableInterestAmt>3500</TaxableInterestAmt>");
 });
 
-Deno.test("line2_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
+test("line2_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
   const result = form8960.build({ line2_ordinary_dividends: 1200 });
   assertStringIncludes(
     result,
@@ -51,7 +52,7 @@ Deno.test("line2_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
   );
 });
 
-Deno.test("line3_annuities maps to AnnuitesFromNonQlfPlansAmt", () => {
+test("line3_annuities maps to AnnuitesFromNonQlfPlansAmt", () => {
   const result = form8960.build({ line3_annuities: 4000 });
   assertStringIncludes(
     result,
@@ -59,7 +60,7 @@ Deno.test("line3_annuities maps to AnnuitesFromNonQlfPlansAmt", () => {
   );
 });
 
-Deno.test("line4a_passive_income maps to NetRentalIncomeOrLossAmt", () => {
+test("line4a_passive_income maps to NetRentalIncomeOrLossAmt", () => {
   const result = form8960.build({ line4a_passive_income: 8000 });
   assertStringIncludes(
     result,
@@ -67,7 +68,7 @@ Deno.test("line4a_passive_income maps to NetRentalIncomeOrLossAmt", () => {
   );
 });
 
-Deno.test("line4b_rental_net maps to AdjNetIncmOrLossNonSect1411Amt", () => {
+test("line4b_rental_net maps to AdjNetIncmOrLossNonSect1411Amt", () => {
   const result = form8960.build({ line4b_rental_net: -2000 });
   assertStringIncludes(
     result,
@@ -75,7 +76,7 @@ Deno.test("line4b_rental_net maps to AdjNetIncmOrLossNonSect1411Amt", () => {
   );
 });
 
-Deno.test("line5a_net_gain maps to PropertyDisposGainOrLossAmt", () => {
+test("line5a_net_gain maps to PropertyDisposGainOrLossAmt", () => {
   const result = form8960.build({ line5a_net_gain: 15000 });
   assertStringIncludes(
     result,
@@ -83,7 +84,7 @@ Deno.test("line5a_net_gain maps to PropertyDisposGainOrLossAmt", () => {
   );
 });
 
-Deno.test(
+test(
   "line5b_net_gain_adjustment maps to NonNIITPropDisposGainOrLossAmt",
   () => {
     const result = form8960.build({ line5b_net_gain_adjustment: -5000 });
@@ -94,7 +95,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "line7_other_modifications maps to OtherInvestmentIncomeOrLossAmt",
   () => {
     const result = form8960.build({ line7_other_modifications: 500 });
@@ -105,7 +106,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "line9a_investment_interest_expense maps to InvestmentInterestAmt",
   () => {
     const result = form8960.build({ line9a_investment_interest_expense: 1200 });
@@ -116,7 +117,7 @@ Deno.test(
   },
 );
 
-Deno.test("line9b_state_local_tax maps to StateLocalForeignIncomeTaxAmt", () => {
+test("line9b_state_local_tax maps to StateLocalForeignIncomeTaxAmt", () => {
   const result = form8960.build({ line9b_state_local_tax: 800 });
   assertStringIncludes(
     result,
@@ -124,7 +125,7 @@ Deno.test("line9b_state_local_tax maps to StateLocalForeignIncomeTaxAmt", () => 
   );
 });
 
-Deno.test(
+test(
   "line10_additional_modifications maps to AdditionalModificationAmt",
   () => {
     const result = form8960.build({ line10_additional_modifications: 300 });
@@ -152,13 +153,13 @@ const computedLineTags = [
 ] as const;
 
 for (const [field, tag] of computedLineTags) {
-  Deno.test(`${field} maps to ${tag}`, () => {
+  test(`${field} maps to ${tag}`, () => {
     const result = form8960.build({ [field]: 125 });
     assertStringIncludes(result, `<${tag}>125</${tag}>`);
   });
 }
 
-Deno.test("computed line fields retain TY2025 schema sequence", () => {
+test("computed line fields retain TY2025 schema sequence", () => {
   const result = form8960.build({
     line4a_passive_income: 2000,
     line4b_rental_net: -500,
@@ -210,7 +211,7 @@ Deno.test("computed line fields retain TY2025 schema sequence", () => {
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("single known field emits only that element, absent fields omitted", () => {
+test("single known field emits only that element, absent fields omitted", () => {
   const result = form8960.build({ line1_taxable_interest: 3500 });
   assertStringIncludes(result, "<TaxableInterestAmt>3500</TaxableInterestAmt>");
   assertNotIncludes(result, "<OrdinaryDividendsAmt>");
@@ -218,7 +219,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
   assertNotIncludes(result, "<InvestmentInterestAmt>");
 });
 
-Deno.test("two fields present: only those two elements emitted", () => {
+test("two fields present: only those two elements emitted", () => {
   const result = form8960.build({
     line1_taxable_interest: 2000,
     line9b_state_local_tax: 600,
@@ -250,13 +251,13 @@ const allFields = {
   line10_additional_modifications: 1100,
 };
 
-Deno.test("all 11 fields present: output wrapped in IRS8960 tag", () => {
+test("all 11 fields present: output wrapped in IRS8960 tag", () => {
   const result = form8960.build(allFields);
   assertStringIncludes(result, "<IRS8960>");
   assertStringIncludes(result, "</IRS8960>");
 });
 
-Deno.test("all 11 fields present: all elements emitted", () => {
+test("all 11 fields present: all elements emitted", () => {
   const result = form8960.build(allFields);
   assertStringIncludes(result, "<TaxableInterestAmt>100</TaxableInterestAmt>");
   assertStringIncludes(
@@ -305,7 +306,7 @@ Deno.test("all 11 fields present: all elements emitted", () => {
 // Section 7: Non-number fields (filing_status, magi) are ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("filing_status and magi are silently ignored", () => {
+test("filing_status and magi are silently ignored", () => {
   const result = form8960.build({
     filing_status: "MFJ",
     magi: 300000,

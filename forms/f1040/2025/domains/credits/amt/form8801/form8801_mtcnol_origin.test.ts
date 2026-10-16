@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm8801MtcnolOrigin,
@@ -51,7 +52,7 @@ const row = (item_id: string, business: boolean, amount: number) => ({
   business,
   amount,
 });
-Deno.test("MTCNOL origin computes the loss from separately reviewed exclusion-only items", () => {
+test("MTCNOL origin computes the loss from separately reviewed exclusion-only items", () => {
   const r = calculateForm8801MtcnolOrigin(origin());
   assertEquals([
     r.lines[1],
@@ -68,7 +69,7 @@ Deno.test("MTCNOL origin computes the loss from separately reviewed exclusion-on
     r.filingReady,
   ], [true, false, false, false]);
 });
-Deno.test("MTCNOL origin applies nonbusiness deductions only up to exclusion-only nonbusiness income", () => {
+test("MTCNOL origin applies nonbusiness deductions only up to exclusion-only nonbusiness income", () => {
   const f = origin();
   f.noncapital_income.push(row("nonbusiness-income", false, 3000));
   f.noncapital_deductions[0].amount = 70000;
@@ -84,7 +85,7 @@ Deno.test("MTCNOL origin applies nonbusiness deductions only up to exclusion-onl
     r.origin_nol,
   ], [-77000, 20000, 3000, 3000, 17000, -60000, 60000]);
 });
-Deno.test("MTCNOL origin removes nonbusiness net capital loss and respects the prior MFS capital deduction", () => {
+test("MTCNOL origin removes nonbusiness net capital loss and respects the prior MFS capital deduction", () => {
   const f = form8801MtcnolOriginSchema.parse(origin());
   f.capital_losses.push(row("capital-loss", false, 5000));
   let r = calculateForm8801MtcnolOrigin(f);
@@ -107,7 +108,7 @@ Deno.test("MTCNOL origin removes nonbusiness net capital loss and respects the p
     r.origin_nol,
   ], [-51500, 1500, 3500, 1500, 50000]);
 });
-Deno.test("MTCNOL origin modifies business capital loss against nonbusiness capital-gain surplus", () => {
+test("MTCNOL origin modifies business capital loss against nonbusiness capital-gain surplus", () => {
   const f = origin();
   f.capital_gains.push(row("nonbusiness-gain", false, 10000));
   f.capital_losses.push(row("business-loss", true, 7000));
@@ -125,7 +126,7 @@ Deno.test("MTCNOL origin modifies business capital loss against nonbusiness capi
   assertEquals(r.lines[16], undefined);
   assertEquals(r.lines[17], undefined);
 });
-Deno.test("MTCNOL origin no-loss stop never manufactures a carry from positive income", () => {
+test("MTCNOL origin no-loss stop never manufactures a carry from positive income", () => {
   const f = origin();
   f.noncapital_deductions[0].amount = 9000;
   assertEquals([
@@ -133,7 +134,7 @@ Deno.test("MTCNOL origin no-loss stop never manufactures a carry from positive i
     calculateForm8801MtcnolOrigin(f).origin_nol,
   ], [0, 0]);
 });
-Deno.test("MTCNOL origin rejects duplicate sources, a regular basis and unreviewed adjustments", () => {
+test("MTCNOL origin rejects duplicate sources, a regular basis and unreviewed adjustments", () => {
   const f = origin();
   f.noncapital_deductions.push({ ...f.noncapital_income[0] });
   assertThrows(
@@ -182,7 +183,7 @@ function history() {
     }],
   };
 }
-Deno.test("MTCNOL origin refigure binds vintage owner, year and declared amount", () => {
+test("MTCNOL origin refigure binds vintage owner, year and declared amount", () => {
   const h = history(),
     context = { taxpayer_ssn: "111223333", prior_filing_status: "single" };
   const r = calculateForm8801Mtcnol(h, context);
@@ -211,7 +212,7 @@ Deno.test("MTCNOL origin refigure binds vintage owner, year and declared amount"
     "owner/year differs",
   );
 });
-Deno.test("MTCNOL mixed computed and reviewed origins retain partial arithmetic provenance", () => {
+test("MTCNOL mixed computed and reviewed origins retain partial arithmetic provenance", () => {
   const h = form8801MtcnolSchema.parse(history());
   h.vintages.push({
     ...structuredClone(h.vintages[0]),
@@ -234,7 +235,7 @@ Deno.test("MTCNOL mixed computed and reviewed origins retain partial arithmetic 
     [true, false],
   );
 });
-Deno.test("MTCNOL computed origin reaches canonical current tax and rejects changed origin facts", async () => {
+test("MTCNOL computed origin reaches canonical current tax and rejects changed origin facts", async () => {
   const h = history();
   const facts = {
     ...packageFacts(),

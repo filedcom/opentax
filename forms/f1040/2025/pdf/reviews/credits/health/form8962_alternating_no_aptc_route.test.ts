@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -29,7 +30,7 @@ function calculate(inputs: Record<string, unknown>) {
   return buildPending(result.pending);
 }
 
-Deno.test("three no-APTC policies alternate A-B-A-C through Form 1040, MeF and PDF projection", async () => {
+test("three no-APTC policies alternate A-B-A-C through Form 1040, MeF and PDF projection", async () => {
   const pending = calculate(fixture.inputs);
   assertEquals(pending.form8962?.total_premium_tax_credit, 7_800);
   assertEquals(pending.schedule3?.line9_premium_tax_credit, 7_800);
@@ -82,7 +83,7 @@ Deno.test("three no-APTC policies alternate A-B-A-C through Form 1040, MeF and P
     }), Error);
 });
 
-Deno.test("protected partial payment on a returning policy month reduces only that month's credit", async () => {
+test("protected partial payment on a returning policy month reduces only that month's credit", async () => {
   const inputs = structuredClone(fixture.inputs);
   const policies = inputs.f1095a as Array<{
     no_aptc_monthly_evidence: Array<{

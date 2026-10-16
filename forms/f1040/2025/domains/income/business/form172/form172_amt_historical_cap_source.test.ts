@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { form172AmtLegacyTentativeLines } from "./form172_amt_annual_limit.ts";
 import {
@@ -188,7 +189,7 @@ async function source() {
   const documents = [{ reference: workpaper.reference, bytes }];
   return { workpaper, binding, documents };
 }
-Deno.test("Historical AMT source recomputes retained cap without promoting carry or election proof", async () => {
+test("Historical AMT source recomputes retained cap without promoting carry or election proof", async () => {
   const f = await source();
   const r = await stageForm172HistoricalAmtCapSource(f.binding, f.documents);
   assertEquals(r.aggregateHistoricalCap, 100);
@@ -209,7 +210,7 @@ Deno.test("Historical AMT source recomputes retained cap without promoting carry
     ]
   ) assertEquals(flag, false);
 });
-Deno.test("Historical AMT source rejects changed bytes and missing duplicate extra packages", async () => {
+test("Historical AMT source rejects changed bytes and missing duplicate extra packages", async () => {
   const f = await source();
   const changed = new Uint8Array(f.documents[0].bytes);
   changed[10] ^= 1;
@@ -224,7 +225,7 @@ Deno.test("Historical AMT source rejects changed bytes and missing duplicate ext
     );
   }
 });
-Deno.test("Historical AMT source rejects bound owner spouse year reference and asserted results", async () => {
+test("Historical AMT source rejects bound owner spouse year reference and asserted results", async () => {
   const f = await source();
   for (
     const patch of [
@@ -243,7 +244,7 @@ Deno.test("Historical AMT source rejects bound owner spouse year reference and a
     );
   }
 });
-Deno.test("Historical AMT source recomputes origin and category after replacement digest", async () => {
+test("Historical AMT source recomputes origin and category after replacement digest", async () => {
   const f = await source();
   f.workpaper.losses[0].amt_origin.reviewed_amt.amti_before_atnold = -83001;
   let bytes = new TextEncoder().encode(JSON.stringify(f.workpaper));
@@ -261,7 +262,7 @@ Deno.test("Historical AMT source recomputes origin and category after replacemen
     stageForm172HistoricalAmtCapSource(g.binding, g.documents)
   );
 });
-Deno.test("Historical AMT source rejects noncanonical duplicate keys BOM and invalid UTF8", async () => {
+test("Historical AMT source rejects noncanonical duplicate keys BOM and invalid UTF8", async () => {
   const f = await source();
   const text = new TextDecoder().decode(f.documents[0].bytes);
   for (
@@ -289,7 +290,7 @@ Deno.test("Historical AMT source rejects noncanonical duplicate keys BOM and inv
     );
   }
 });
-Deno.test("Historical AMT source owns binding and source arrays before first digest await", async () => {
+test("Historical AMT source owns binding and source arrays before first digest await", async () => {
   const f = await source();
   const originalSha = f.binding.workpaper.sha256;
   const promise = stageForm172HistoricalAmtCapSource(f.binding, f.documents);
@@ -306,7 +307,7 @@ Deno.test("Historical AMT source owns binding and source arrays before first dig
   assertEquals(r.taxpayerSsn, "111223333");
 });
 
-Deno.test("Historical AMT byte-bound allocation recomputes chronology without promoting legal availability", async () => {
+test("Historical AMT byte-bound allocation recomputes chronology without promoting legal availability", async () => {
   const f = await source();
   const r = await stageForm172HistoricalAmtDeductionAllocationSource(
     f.binding,
@@ -350,7 +351,7 @@ Deno.test("Historical AMT byte-bound allocation recomputes chronology without pr
     [[2008, 100], [2009, 0]],
   );
 });
-Deno.test("Historical AMT allocation source rejects altered bytes inventory and owner year joins", async () => {
+test("Historical AMT allocation source rejects altered bytes inventory and owner year joins", async () => {
   const f = await source();
   const altered = new Uint8Array(f.documents[0].bytes);
   altered[10] ^= 1;
@@ -395,7 +396,7 @@ Deno.test("Historical AMT allocation source rejects altered bytes inventory and 
     }, [{ reference: f.workpaper.reference, bytes }])
   );
 });
-Deno.test("Historical AMT allocation source recomputes origins even after a matching replacement hash", async () => {
+test("Historical AMT allocation source recomputes origins even after a matching replacement hash", async () => {
   const f = await source();
   f.workpaper.losses[0].amt_origin.reviewed_amt.amti_before_atnold = -83001;
   let bytes = new TextEncoder().encode(JSON.stringify(f.workpaper));
@@ -417,7 +418,7 @@ Deno.test("Historical AMT allocation source recomputes origins even after a matc
     }, [{ reference: g.workpaper.reference, bytes }])
   );
 });
-Deno.test("Historical AMT allocation owns caller binding and bytes before awaiting the digest", async () => {
+test("Historical AMT allocation owns caller binding and bytes before awaiting the digest", async () => {
   const f = await source();
   const originalSha = f.binding.workpaper.sha256;
   const promise = stageForm172HistoricalAmtDeductionAllocationSource(
@@ -487,7 +488,7 @@ async function modifiedSource() {
     documents: [{ reference: cap.reference, bytes }],
   };
 }
-Deno.test("Historical modified AMTI retained bytes preserve arithmetic without admitting carry", async () => {
+test("Historical modified AMTI retained bytes preserve arithmetic without admitting carry", async () => {
   const f = await modifiedSource();
   const r = await stageForm172HistoricalAmtModifiedIncomeSource(
     f.binding,
@@ -502,7 +503,7 @@ Deno.test("Historical modified AMTI retained bytes preserve arithmetic without a
   assertEquals(r.packetAdmissionVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical modified AMTI source rejects changed bytes and rehash cannot hide stale operands", async () => {
+test("Historical modified AMTI source rejects changed bytes and rehash cannot hide stale operands", async () => {
   const f = await modifiedSource();
   f.documents[0].bytes[0] ^= 1;
   await assertRejects(() =>
@@ -527,7 +528,7 @@ Deno.test("Historical modified AMTI source rejects changed bytes and rehash cann
     "match annual year",
   );
 });
-Deno.test("Historical modified AMTI source owns bound owners and bytes before first await", async () => {
+test("Historical modified AMTI source owns bound owners and bytes before first await", async () => {
   const f = await modifiedSource();
   const digest = f.binding.workpaper.sha256;
   const promise = stageForm172HistoricalAmtModifiedIncomeSource(
@@ -589,7 +590,7 @@ async function vintageSource() {
     documents: [{ reference: cap.reference, bytes }],
   };
 }
-Deno.test("Historical AMT vintage source binds complete origins and each independent refigure context", async () => {
+test("Historical AMT vintage source binds complete origins and each independent refigure context", async () => {
   const f = await vintageSource();
   const r = await stageForm172HistoricalAmtVintageModifiedIncomeSource(
     f.binding,
@@ -613,7 +614,7 @@ Deno.test("Historical AMT vintage source binds complete origins and each indepen
   assertEquals(r.packetAdmissionVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT vintage source rejects altered bytes and rehashed context inconsistencies", async () => {
+test("Historical AMT vintage source rejects altered bytes and rehashed context inconsistencies", async () => {
   const f = await vintageSource();
   f.documents[0].bytes[0] ^= 1;
   await assertRejects(() =>
@@ -663,7 +664,7 @@ Deno.test("Historical AMT vintage source rejects altered bytes and rehashed cont
     ])
   );
 });
-Deno.test("Historical AMT vintage source owns caller binding and package bytes before first await", async () => {
+test("Historical AMT vintage source owns caller binding and package bytes before first await", async () => {
   const f = await vintageSource();
   const digest = f.binding.workpaper.sha256;
   const promise = stageForm172HistoricalAmtVintageModifiedIncomeSource(
@@ -686,7 +687,7 @@ Deno.test("Historical AMT vintage source owns caller binding and package bytes b
   );
 });
 
-Deno.test("Historical AMT absorption source recomputes remaining balances without accepting carry", async () => {
+test("Historical AMT absorption source recomputes remaining balances without accepting carry", async () => {
   const f = await vintageSource();
   const r = await stageForm172HistoricalAmtAbsorptionSource(
     f.binding,
@@ -706,7 +707,7 @@ Deno.test("Historical AMT absorption source recomputes remaining balances withou
   assertEquals(r.packetAdmissionVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT absorption source rejects substituting consumption for earlier actual deduction", async () => {
+test("Historical AMT absorption source rejects substituting consumption for earlier actual deduction", async () => {
   const f = await vintageSource();
   f.workpaper.vintage_reviews.vintages[1].earlier_nol_deductions[0].amount =
     200;

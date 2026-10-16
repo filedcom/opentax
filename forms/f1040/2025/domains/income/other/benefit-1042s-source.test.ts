@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../nodes/inputs/income/retirement/benefit_1042s/index.ts";
 import { f1040_2025 } from "../../../index.ts";
@@ -28,7 +29,7 @@ const copies = [
   },
 ];
 
-Deno.test("SSA/RRB-1042-S copies stay separate from ordinary benefit income and withholding", async () => {
+test("SSA/RRB-1042-S copies stay separate from ordinary benefit income and withholding", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   const source = { copies };
@@ -49,7 +50,7 @@ Deno.test("SSA/RRB-1042-S copies stay separate from ordinary benefit income and 
   );
 });
 
-Deno.test("SSA/RRB-1042-S intake needs distinct issued copies and valid recipients", () => {
+test("SSA/RRB-1042-S intake needs distinct issued copies and valid recipients", () => {
   assertEquals(inputSchema.safeParse({ copies }).success, true);
   assertEquals(
     inputSchema.safeParse({
@@ -68,7 +69,7 @@ Deno.test("SSA/RRB-1042-S intake needs distinct issued copies and valid recipien
   );
 });
 
-Deno.test("malformed retained SSA/RRB-1042-S source cannot disappear", async () => {
+test("malformed retained SSA/RRB-1042-S source cannot disappear", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   const pending = {

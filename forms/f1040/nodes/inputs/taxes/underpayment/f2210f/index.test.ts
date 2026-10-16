@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f2210f } from "./index.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
@@ -55,7 +56,7 @@ function source() {
   });
 }
 
-Deno.test("Form 2210-F box B public source reaches finalized Form 1040 line 38", () => {
+test("Form 2210-F box B public source reaches finalized Form 1040 line 38", () => {
   const routed = f2210f.compute({} as never, { source: source() });
   const routedSource =
     (routed.outputs[0].fields as { f2210f_box_b_source: unknown })
@@ -76,7 +77,7 @@ Deno.test("Form 2210-F box B public source reaches finalized Form 1040 line 38",
   );
 });
 
-Deno.test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and both documents", () => {
+test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and both documents", () => {
   const facts = form2210FBoxBInputSchema.parse({
     ...source(),
     current_included_schedule2_taxes: 1_500,
@@ -138,7 +139,7 @@ Deno.test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and bo
   );
 });
 
-Deno.test("Form 2210-F rejects mismatched final tax, unsupported payments, and competing Form 2210", () => {
+test("Form 2210-F rejects mismatched final tax, unsupported payments, and competing Form 2210", () => {
   const base = {
     filing_status: FilingStatus.MFJ,
     line16_income_tax: 15_000,

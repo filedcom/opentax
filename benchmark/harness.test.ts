@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import {
@@ -14,12 +17,12 @@ import {
 
 async function caseDirectory(root: string, name: string) {
   const directory = join(root, name);
-  await Deno.mkdir(directory, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(directory, { recursive: true });
+  await fs.writeFile(
     join(directory, "input.json"),
     JSON.stringify({ year: 2025, forms: [{ node_type: "start", data: {} }] }),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     join(directory, "correct.json"),
     JSON.stringify({
       correct: {
@@ -32,25 +35,25 @@ async function caseDirectory(root: string, name: string) {
   return directory;
 }
 
-Deno.test("benchmark recursively discovers form/year cases and rejects incomplete or empty inventories", async () => {
-  const root = await Deno.makeTempDir();
+test("benchmark recursively discovers form/year cases and rejects incomplete or empty inventories", async () => {
+  const root = await sys.makeTempDir();
   const one = await caseDirectory(root, "f1040/2025/01");
   const two = await caseDirectory(root, "f1040/2025/02");
   assertEquals(await discoverBenchmarkCases(root), [one, two]);
-  await Deno.mkdir(join(root, "f1040/2025/03"));
+  await fs.mkdir(join(root, "f1040/2025/03"));
   await assertRejects(
     () => discoverBenchmarkCases(root),
     Error,
     "Incomplete benchmark",
   );
   await assertRejects(async () =>
-    discoverBenchmarkCases(await Deno.makeTempDir())
+    discoverBenchmarkCases(await sys.makeTempDir())
   );
 });
 
-Deno.test("benchmark rejects missing expected results, nonfinite ground truth and zero-case success", async () => {
-  const root = await Deno.makeTempDir();
-  await Deno.writeTextFile(
+test("benchmark rejects missing expected results, nonfinite ground truth and zero-case success", async () => {
+  const root = await sys.makeTempDir();
+  await fs.writeFile(
     join(root, "input.json"),
     JSON.stringify({ year: 2025, forms: [{ node_type: "start", data: {} }] }),
   );
@@ -67,8 +70,8 @@ Deno.test("benchmark rejects missing expected results, nonfinite ground truth an
   assertEquals(benchmarkExitCode(3, 0), 0);
 });
 
-Deno.test("benchmark refuses valid-looking stdout from failed child process", async () => {
-  const result = await new Deno.Command("deno", {
+test("benchmark refuses valid-looking stdout from failed child process", async () => {
+  const result = await new sys.Command("deno", {
     args: [
       "eval",
       'console.log("{\\"returnId\\":\\"pretend\\"}"); Deno.exit(7);',
@@ -83,7 +86,7 @@ Deno.test("benchmark refuses valid-looking stdout from failed child process", as
   );
 });
 
-Deno.test("benchmark rejects successful but missing malformed or string-valued CLI output", () => {
+test("benchmark rejects successful but missing malformed or string-valued CLI output", () => {
   const valid = {
     returnId: "case",
     year: 2025,
@@ -120,11 +123,11 @@ Deno.test("benchmark rejects successful but missing malformed or string-valued C
   }
 });
 
-Deno.test("benchmark accepts computed zero-tax output from the actual CLI return command", async () => {
+test("benchmark accepts computed zero-tax output from the actual CLI return command", async () => {
   const { createReturnCommand, getReturnCommand } = await import(
     "../cli/commands/return.ts"
   );
-  const directory = await Deno.makeTempDir();
+  const directory = await sys.makeTempDir();
   try {
     const created = await createReturnCommand({
       year: 2025,
@@ -139,7 +142,7 @@ Deno.test("benchmark accepts computed zero-tax output from the actual CLI return
     assertEquals(parsed.summary.line35a_refund, undefined);
     assertEquals(parsed.summary.line37_amount_owed, undefined);
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
 });
 
@@ -150,12 +153,12 @@ async function caseWith(
   expectedExtra: Record<string, unknown> = {},
 ) {
   const directory = join(root, name);
-  await Deno.mkdir(directory, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(directory, { recursive: true });
+  await fs.writeFile(
     join(directory, "input.json"),
     JSON.stringify({ year: 2025, forms }),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     join(directory, "correct.json"),
     JSON.stringify({
       ...expectedExtra,
@@ -171,24 +174,24 @@ async function caseWith(
 
 const start = { node_type: "start", data: {} };
 
-Deno.test("discovery reads the product from <form>/<year>/<case> and requires the year to match", async () => {
+test("discovery reads the product from <form>/<year>/<case> and requires the year to match", async () => {
   assertEquals(caseProduct("/x/benchmark/cases/f1040/2025/01-minimal"), {
     form: "f1040",
     year: 2025,
   });
   assertEquals(caseProduct("/x/cases/01-minimal"), undefined);
-  const root = await Deno.makeTempDir();
+  const root = await sys.makeTempDir();
   await caseWith(root, "f1040/2026/01", [start]);
   await assertRejects(
     () => discoverBenchmarkCases(root),
     Error,
     "matching year",
   );
-  await caseWith(await Deno.makeTempDir(), "f1041/2025/01", [start]);
+  await caseWith(await sys.makeTempDir(), "f1041/2025/01", [start]);
 });
 
-Deno.test("discovery rejects the recorded case-authoring mistakes with the field named", async () => {
-  const bare = await Deno.makeTempDir();
+test("discovery rejects the recorded case-authoring mistakes with the field named", async () => {
+  const bare = await sys.makeTempDir();
   await caseWith(bare, "f1040/2025/01", [start, {
     node_type: "sep_retirement",
     data: [{ contribution: 1000 }],
@@ -199,7 +202,7 @@ Deno.test("discovery rejects the recorded case-authoring mistakes with the field
     "input.json: forms.1.data: Expected object, received array",
   );
 
-  const wrapped = await Deno.makeTempDir();
+  const wrapped = await sys.makeTempDir();
   await caseWith(wrapped, "f1040/2025/01", [start, {
     node_type: "sep_retirement",
     data: { sep_retirement: [{ contribution: 1000 }] },
@@ -210,7 +213,7 @@ Deno.test("discovery rejects the recorded case-authoring mistakes with the field
     "sep_retirement: Validation error: Unrecognized field: sep_retirement",
   );
 
-  const renamed = await Deno.makeTempDir();
+  const renamed = await sys.makeTempDir();
   await caseWith(renamed, "f1040/2025/01", [start, {
     node_type: "f1099int",
     data: { box1_interest: 250 },
@@ -221,7 +224,7 @@ Deno.test("discovery rejects the recorded case-authoring mistakes with the field
     "f1099int: Validation error: Unrecognized field: box1_interest",
   );
 
-  const missing = await Deno.makeTempDir();
+  const missing = await sys.makeTempDir();
   await caseWith(missing, "f1040/2025/01", [start, {
     node_type: "f1099r",
     data: { box1_gross_distribution: 5000 },
@@ -232,7 +235,7 @@ Deno.test("discovery rejects the recorded case-authoring mistakes with the field
     "payer_ein: Required",
   );
 
-  const unknown = await Deno.makeTempDir();
+  const unknown = await sys.makeTempDir();
   await caseWith(unknown, "f1040/2025/01", [start, {
     node_type: "alimony_paid",
     data: {},
@@ -244,8 +247,8 @@ Deno.test("discovery rejects the recorded case-authoring mistakes with the field
   );
 });
 
-Deno.test("discovery rejects an expected file whose source is the engine, and accepts an IRS citation", async () => {
-  const engine = await Deno.makeTempDir();
+test("discovery rejects an expected file whose source is the engine, and accepts an IRS citation", async () => {
+  const engine = await sys.makeTempDir();
   await caseWith(engine, "f1040/2025/01", [start], {
     source: "engine-computed from output.json after the fix",
   });
@@ -254,14 +257,14 @@ Deno.test("discovery rejects an expected file whose source is the engine, and ac
     Error,
     "cites the engine",
   );
-  const blank = await Deno.makeTempDir();
+  const blank = await sys.makeTempDir();
   await caseWith(blank, "f1040/2025/01", [start], { source: " " });
   await assertRejects(
     () => discoverBenchmarkCases(blank),
     Error,
     "non-empty citation",
   );
-  const cited = await Deno.makeTempDir();
+  const cited = await sys.makeTempDir();
   const directory = await caseWith(cited, "f1040/2025/01", [start], {
     source:
       "IRS Pub 17 TY2025, Chapter 8, p. 68. All values IRS-stated, none computed by agent.",
@@ -269,8 +272,8 @@ Deno.test("discovery rejects an expected file whose source is the engine, and ac
   assertEquals(await discoverBenchmarkCases(cited), [directory]);
 });
 
-Deno.test("discovery reports every invalid case in one error, not just the first", async () => {
-  const root = await Deno.makeTempDir();
+test("discovery reports every invalid case in one error, not just the first", async () => {
+  const root = await sys.makeTempDir();
   await caseWith(root, "f1040/2025/01", [start, {
     node_type: "f1099int",
     data: { box1_interest: 1 },
@@ -283,8 +286,8 @@ Deno.test("discovery reports every invalid case in one error, not just the first
   assertEquals(error.message.includes("non-empty citation"), true);
 });
 
-Deno.test("known-invalid cases are allowed by the baseline until it expires, and a stale entry is reported", async () => {
-  const root = await Deno.makeTempDir();
+test("known-invalid cases are allowed by the baseline until it expires, and a stale entry is reported", async () => {
+  const root = await sys.makeTempDir();
   await caseWith(root, "f1040/2025/01", [start, {
     node_type: "f1099int",
     data: { box1_interest: 1 },

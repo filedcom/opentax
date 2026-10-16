@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
@@ -29,7 +32,7 @@ const vintage: Form3800CarryoverVintage = {
   original_reported_balance_carried_to_2025: 2_000,
 };
 
-Deno.test("Form 3800 carryover statement renders complete vintages over multiple pages", async () => {
+test("Form 3800 carryover statement renders complete vintages over multiple pages", async () => {
   const document = await PDFDocument.create();
   await appendForm3800CarryoverStatement(
     document,
@@ -43,7 +46,7 @@ Deno.test("Form 3800 carryover statement renders complete vintages over multiple
   assertEquals((await document.save()).length > 0, true);
 });
 
-Deno.test("Form 3800 carryover history prints pass-through source identity", async () => {
+test("Form 3800 carryover history prints pass-through source identity", async () => {
   const document = await PDFDocument.create();
   await appendForm3800CarryoverStatement(document, [{
     ...vintage,
@@ -53,10 +56,10 @@ Deno.test("Form 3800 carryover history prints pass-through source identity", asy
       ein: "123456789",
     },
   }], pdfReviewFixtures[0].filer);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, await document.save());
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const result = await new sys.Command("pdftotext", {
       args: [path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -66,11 +69,11 @@ Deno.test("Form 3800 carryover history prints pass-through source identity", asy
     assertEquals(printed.includes("2022 partnership K-1 code AD"), true);
     assertEquals(printed.includes("123456789"), true);
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Form 3800 carryover statement rejects missing filer and unproved revised research details", async () => {
+test("Form 3800 carryover statement rejects missing filer and unproved revised research details", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () => appendForm3800CarryoverStatement(document, [vintage], undefined),

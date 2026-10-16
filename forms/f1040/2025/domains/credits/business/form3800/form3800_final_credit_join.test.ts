@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm3800FinalCreditJoin } from "./form3800_final_credit_join.ts";
 
@@ -6,11 +7,11 @@ const pending = {
   f1040: { line20_nonrefundable_credits: 650 },
 };
 
-Deno.test("Form 3800 final tax join permits other Schedule 3 credits without duplicating line 6a", () => {
+test("Form 3800 final tax join permits other Schedule 3 credits without duplicating line 6a", () => {
   assertForm3800FinalCreditJoin(600, pending);
 });
 
-Deno.test("Form 3800 final tax join rejects changed line 6a, line 8, or Form 1040 line 20", () => {
+test("Form 3800 final tax join rejects changed line 6a, line 8, or Form 1040 line 20", () => {
   assertThrows(
     () => assertForm3800FinalCreditJoin(601, pending),
     Error,
@@ -41,7 +42,7 @@ Deno.test("Form 3800 final tax join rejects changed line 6a, line 8, or Form 104
     }), Error);
 });
 
-Deno.test("unused Form 3800 credit accepts omitted or explicit zero final-use lines", () => {
+test("unused Form 3800 credit accepts omitted or explicit zero final-use lines", () => {
   assertForm3800FinalCreditJoin(0, { f1040: {} });
   assertForm3800FinalCreditJoin(0, {
     schedule3: { line6a_total: 0, line8_total: 0 },
@@ -49,7 +50,7 @@ Deno.test("unused Form 3800 credit accepts omitted or explicit zero final-use li
   });
 });
 
-Deno.test("unused Form 3800 credit rejects nonzero final-use lines", () => {
+test("unused Form 3800 credit rejects nonzero final-use lines", () => {
   for (
     const changed of [
       { schedule3: { line6a_total: 1 }, f1040: {} },
@@ -65,7 +66,7 @@ Deno.test("unused Form 3800 credit rejects nonzero final-use lines", () => {
   }
 });
 
-Deno.test("used Form 3800 credit still needs each explicit final-use line", () => {
+test("used Form 3800 credit still needs each explicit final-use line", () => {
   for (
     const changed of [
       {

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -27,7 +30,7 @@ const xsdPath = new URL(
   import.meta.url,
 ).pathname;
 
-Deno.test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native XML, and the filled PDF", async () => {
+test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native XML, and the filled PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -49,10 +52,10 @@ Deno.test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native
     xml,
     "<TotalAlimonyReceivedAmt>4800</TotalAlimonyReceivedAmt>",
   );
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -63,7 +66,7 @@ Deno.test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const projected = schedule1Pdf.instances?.(
     pending.schedule1!,
@@ -78,10 +81,10 @@ Deno.test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native
     ".pdf-cache",
     result.pending,
   );
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, bytes!);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, bytes!);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -91,11 +94,11 @@ Deno.test("one retained pre-2019 agreement reaches Schedule 1, Form 1040, native
     assertStringIncludes(text, "4800");
     assertStringIncludes(text, "06/2017");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 });
 
-Deno.test("two taxable agreements print the highest-income date and retain the other on a PDF statement and native groups", async () => {
+test("two taxable agreements print the highest-income date and retain the other on a PDF statement and native groups", async () => {
   const other = {
     ...source,
     amount: 2_400,
@@ -127,10 +130,10 @@ Deno.test("two taxable agreements print the highest-income date and retain the o
     xml,
     "<TotalAlimonyReceivedAmt>7200</TotalAlimonyReceivedAmt>",
   );
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -141,13 +144,13 @@ Deno.test("two taxable agreements print the highest-income date and retain the o
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdfBytes = await buildPdfBytes(result.pending, base.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdfBytes);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdfBytes);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -160,11 +163,11 @@ Deno.test("two taxable agreements print the highest-income date and retain the o
     assertStringIncludes(text, "03/2015");
     assertStringIncludes(text, "2400");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 });
 
-Deno.test("alimony source rejects missing date and post-2018 modification ambiguity", () => {
+test("alimony source rejects missing date and post-2018 modification ambiguity", () => {
   const run = (rows: Record<string, unknown>[]) =>
     execute(
       buildExecutionPlan(registry),
@@ -193,7 +196,7 @@ Deno.test("alimony source rejects missing date and post-2018 modification ambigu
   assertEquals(later.pending.schedule1?.line2a_alimony_received, undefined);
 });
 
-Deno.test("Schedule 1 native and PDF reject an alimony amount changed after source calculation", () => {
+test("Schedule 1 native and PDF reject an alimony amount changed after source calculation", () => {
   const all = {
     alimony_received: { alimony_receiveds: [source] },
     schedule1: { line2a_alimony_received: 4_799 },
@@ -210,7 +213,7 @@ Deno.test("Schedule 1 native and PDF reject an alimony amount changed after sour
   );
 });
 
-Deno.test("Schedule 1 alimony rejects another recipient and conflicting agreement evidence", () => {
+test("Schedule 1 alimony rejects another recipient and conflicting agreement evidence", () => {
   const anotherRecipient = {
     ...source,
     recipient_ssn: "999-88-7777",
@@ -257,7 +260,7 @@ Deno.test("Schedule 1 alimony rejects another recipient and conflicting agreemen
   );
 });
 
-Deno.test("joint Schedule 1 alimony accepts an identified spouse recipient", () => {
+test("joint Schedule 1 alimony accepts an identified spouse recipient", () => {
   const jointFiler = {
     ...base.filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -286,7 +289,7 @@ Deno.test("joint Schedule 1 alimony accepts an identified spouse recipient", () 
   assertEquals(printed?.print_line2b_alimony_agreement_month, "06/2017");
 });
 
-Deno.test("alimony groups repeated payments once and rejects ambiguous or overflowing agreement sets", () => {
+test("alimony groups repeated payments once and rejects ambiguous or overflowing agreement sets", () => {
   const sameAgreement = taxableAlimonyReceived({
     alimony_receiveds: [source, { ...source, amount: 1_200 }],
   });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -30,7 +31,7 @@ const source = {
   }],
 };
 
-Deno.test("directly operated foreign branch remains a retained graph source", () => {
+test("directly operated foreign branch remains a retained graph source", () => {
   assertEquals(inputSchema.parse(source), source);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
@@ -46,7 +47,7 @@ Deno.test("directly operated foreign branch remains a retained graph source", ()
   );
 });
 
-Deno.test("native and PDF final exports reject a retained individual Form 8858 filing source", async () => {
+test("native and PDF final exports reject a retained individual Form 8858 filing source", async () => {
   const filer = extractFilerIdentity(general);
   for (
     const activity of [

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as NodeStatus } from "../../../../../nodes/types.ts";
@@ -60,7 +61,7 @@ function fixture(
   };
 }
 
-Deno.test("Form 8959 accepts only a complete calculated print record", () => {
+test("Form 8959 accepts only a complete calculated print record", () => {
   assertEquals(form8959.build([]), "");
   assertEquals(
     form8959.build({
@@ -106,7 +107,7 @@ Deno.test("Form 8959 accepts only a complete calculated print record", () => {
   );
 });
 
-Deno.test("Form 8959 source-only omission checks original W-2 and substitute triggers", () => {
+test("Form 8959 source-only omission checks original W-2 and substitute triggers", () => {
   const w2 = {
     w2s: [{
       box1_wages: 210_000,
@@ -171,7 +172,7 @@ Deno.test("Form 8959 source-only omission checks original W-2 and substitute tri
   );
 });
 
-Deno.test("Form 8959 emits exact Part I, II, III, IV and V print lines", () => {
+test("Form 8959 emits exact Part I, II, III, IV and V print lines", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     w2_medicare_wages: 210_000,
     unreported_tips: 4_000,
@@ -253,7 +254,7 @@ Deno.test("Form 8959 emits exact Part I, II, III, IV and V print lines", () => {
   );
 });
 
-Deno.test("Form 8959 files a zero-tax joint return for a single W-2 trigger", () => {
+test("Form 8959 files a zero-tax joint return for a single W-2 trigger", () => {
   const { fields, context } = fixture(NodeStatus.MFJ, {
     w2_medicare_wages: 220_000,
     w2_single_over_withholding_threshold: true,
@@ -268,7 +269,7 @@ Deno.test("Form 8959 files a zero-tax joint return for a single W-2 trigger", ()
   assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
 });
 
-Deno.test("Form 8959 files additional withholding with zero tax", () => {
+test("Form 8959 files additional withholding with zero tax", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     w2_medicare_wages: 150_000,
     w2_medicare_withheld: 2_200,
@@ -282,7 +283,7 @@ Deno.test("Form 8959 files additional withholding with zero tax", () => {
   );
 });
 
-Deno.test("Form 8959 rounds aggregate source cents once before native projection", () => {
+test("Form 8959 rounds aggregate source cents once before native projection", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     w2_medicare_wages: 367_934.84,
     w2_medicare_withheld: 6_846.47,
@@ -296,7 +297,7 @@ Deno.test("Form 8959 rounds aggregate source cents once before native projection
   assertEquals(xml.includes("367934.84"), false);
 });
 
-Deno.test("Form 8959 rejects changed print lines and return joins", () => {
+test("Form 8959 rejects changed print lines and return joins", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     w2_medicare_wages: 250_000,
     w2_medicare_withheld: 4_075,
@@ -356,7 +357,7 @@ Deno.test("Form 8959 rejects changed print lines and return joins", () => {
   );
 });
 
-Deno.test("Form 8959 rejects changed upstream source deposits", () => {
+test("Form 8959 rejects changed upstream source deposits", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     w2_medicare_wages: 160_000,
     f4852_medicare_wages: 20_000,
@@ -413,7 +414,7 @@ Deno.test("Form 8959 rejects changed upstream source deposits", () => {
   );
 });
 
-Deno.test("Form 8959 rejects substitute and household source-record drift", () => {
+test("Form 8959 rejects substitute and household source-record drift", () => {
   const { fields, context } = fixture(NodeStatus.Single, {
     f4852_medicare_wages: 210_000,
     household_medicare_wages: 10_000,
@@ -472,7 +473,7 @@ Deno.test("Form 8959 rejects substitute and household source-record drift", () =
   );
 });
 
-Deno.test("Form8959 replays both owners' Medicare tips after below-20 exclusions", () => {
+test("Form8959 replays both owners' Medicare tips after below-20 exclusions", () => {
   const form4137 = {
     taxpayer_ssn: "123456789",
     spouse_ssn: "987654321",
@@ -603,7 +604,7 @@ Deno.test("Form8959 replays both owners' Medicare tips after below-20 exclusions
   );
 });
 
-Deno.test("Form8959 replays both owners' Form8919 wages without the Social Security cap", () => {
+test("Form8959 replays both owners' Form8919 wages without the Social Security cap", () => {
   const firm = {
     name: "Employer",
     tin_type: "ein",
@@ -685,7 +686,7 @@ Deno.test("Form8959 replays both owners' Form8919 wages without the Social Secur
   );
 });
 
-Deno.test("Form8959 replays Schedule SE scalar, farm-optional and both-owner deposits", () => {
+test("Form8959 replays Schedule SE scalar, farm-optional and both-owner deposits", () => {
   const cases = [
     {
       status: NodeStatus.Single,

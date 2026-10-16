@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 /**
  * Structural tests for every PDF form descriptor in ALL_PDF_FORMS.
  *
@@ -61,12 +62,12 @@ const ARCHIVED_REVISIONS: Readonly<Record<string, number>> = {
 for (const descriptor of ALL_PDF_FORMS) {
   const label = descriptor.pendingKey;
 
-  Deno.test(`${label}: pendingKey is a non-empty string`, () => {
+  test(`${label}: pendingKey is a non-empty string`, () => {
     assertEquals(typeof descriptor.pendingKey, "string");
     assertEquals(descriptor.pendingKey.length > 0, true);
   });
 
-  Deno.test(`${label}: pdfUrl uses the applicable IRS revision`, () => {
+  test(`${label}: pdfUrl uses the applicable IRS revision`, () => {
     const currentOnly: Readonly<Record<string, string>> = {
       f5471_schedule_j: "f5471sj",
       f5471_schedule_p: "f5471sp",
@@ -107,7 +108,7 @@ for (const descriptor of ALL_PDF_FORMS) {
     );
   });
 
-  Deno.test(`${label}: has fields or rows or rejects positive input`, () => {
+  test(`${label}: has fields or rows or rejects positive input`, () => {
     const hasFields = descriptor.fields.length > 0;
     const hasRows = descriptor.rows !== undefined &&
       descriptor.rows.rowFields.length > 0;
@@ -133,7 +134,7 @@ for (const descriptor of ALL_PDF_FORMS) {
     );
   });
 
-  Deno.test(`${label}: all field entries have valid kind`, () => {
+  test(`${label}: all field entries have valid kind`, () => {
     for (
       const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
     ) {
@@ -155,7 +156,7 @@ for (const descriptor of ALL_PDF_FORMS) {
     }
   });
 
-  Deno.test(`${label}: mapped field paths are fully qualified AcroForm paths`, () => {
+  test(`${label}: mapped field paths are fully qualified AcroForm paths`, () => {
     for (
       const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
     ) {
@@ -174,7 +175,7 @@ for (const descriptor of ALL_PDF_FORMS) {
     }
   });
 
-  Deno.test(`${label}: no exact duplicate field mappings`, () => {
+  test(`${label}: no exact duplicate field mappings`, () => {
     const seen = new Set<string>();
     for (const entry of descriptor.fields) {
       const mapping = `${entry.kind}:${entry.domainKey}:${entry.pdfField}`;
@@ -188,7 +189,7 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   if (descriptor.rows) {
-    Deno.test(`${label}: row pdfFieldPattern contains {row} placeholder`, () => {
+    test(`${label}: row pdfFieldPattern contains {row} placeholder`, () => {
       for (const rf of descriptor.rows!.rowFields) {
         assertEquals(
           rf.pdfFieldPattern.includes("{row}"),
@@ -239,14 +240,7 @@ function assertMappedField(
 for (const descriptor of ALL_PDF_FORMS) {
   const label = descriptor.pendingKey;
 
-  Deno.test(
-    {
-      name:
-        `${label}: all mapped fields have correct names, types and widgets in real IRS PDF`,
-      sanitizeResources: false,
-      sanitizeOps: false,
-    },
-    async () => {
+  test(`${label}: all mapped fields have correct names, types and widgets in real IRS PDF`, async () => {
       const realFields = await getRealFields(descriptor.pdfUrl);
       for (
         const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
@@ -279,14 +273,13 @@ for (const descriptor of ALL_PDF_FORMS) {
           }
         }
       }
-    },
-  );
+    });
 }
 
 // Form 1116's pending slot also collects the §904 limitation inputs, which are
 // deposited on every return. presenceKey keeps the form off returns with no
 // foreign tax.
-Deno.test("form_1116: gated on a foreign tax figure via presenceKey", () => {
+test("form_1116: gated on a foreign tax figure via presenceKey", () => {
   const f1116 = ALL_PDF_FORMS.find((d) => d.pendingKey === "form_1116");
   assertEquals(f1116?.presenceKey, "foreign_tax_paid");
 });

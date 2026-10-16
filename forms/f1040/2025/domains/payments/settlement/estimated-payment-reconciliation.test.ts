@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -50,7 +51,7 @@ const source = {
 const pending = { f1040es: source };
 const filed = { taxpayer_ssn: "111223333", line26_estimated_tax: 1_000 };
 
-Deno.test("2025 agreed joint estimated payment prints former spouse SSN on native and PDF line 26", () => {
+test("2025 agreed joint estimated payment prints former spouse SSN on native and PDF line 26", () => {
   const jointFiled = {
     filing_status: "single",
     taxpayer_ssn: "111223333",
@@ -91,7 +92,7 @@ Deno.test("2025 agreed joint estimated payment prints former spouse SSN on nativ
   }
 });
 
-Deno.test("signed MFS joint payment uses current spouse identity without former-spouse line 26 mark", () => {
+test("signed MFS joint payment uses current spouse identity without former-spouse line 26 mark", () => {
   const mfsFiled = {
     filing_status: "mfs",
     taxpayer_ssn: "111223333",
@@ -135,7 +136,7 @@ Deno.test("signed MFS joint payment uses current spouse identity without former-
   }
 });
 
-Deno.test("2025 sourced quarterly payments reach filed line 26", () => {
+test("2025 sourced quarterly payments reach filed line 26", () => {
   assertEquals(estimatedPaymentTotal(source), 1_000);
   assertStringIncludes(
     irs1040.build(filed, { pending }),
@@ -147,7 +148,7 @@ Deno.test("2025 sourced quarterly payments reach filed line 26", () => {
   );
 });
 
-Deno.test("signed joint allocations reject a payment designated for another tax year", () => {
+test("signed joint allocations reject a payment designated for another tax year", () => {
   const changed = {
     ...agreedJointPayment,
     joint_estimated_payment_allocation: {
@@ -179,7 +180,7 @@ Deno.test("signed joint allocations reject a payment designated for another tax 
   );
 });
 
-Deno.test("prior-year applied credit stays guarded without accepted filing and account evidence", () => {
+test("prior-year applied credit stays guarded without accepted filing and account evidence", () => {
   const attached = {
     f1040es: { ...source, applied_from_prior_year: 250 },
   };
@@ -199,7 +200,7 @@ Deno.test("prior-year applied credit stays guarded without accepted filing and a
   }
 });
 
-Deno.test("both Form 1040 exports reject unsourced or changed estimated payments", () => {
+test("both Form 1040 exports reject unsourced or changed estimated payments", () => {
   for (
     const [changed, attached, reason] of [
       [filed, {}, "needs its 1040-ES payment source"],
@@ -223,7 +224,7 @@ Deno.test("both Form 1040 exports reject unsourced or changed estimated payments
   }
 });
 
-Deno.test("line 26 requires distinct filer-owned quarter payment records", () => {
+test("line 26 requires distinct filer-owned quarter payment records", () => {
   const owned = {
     filing_status: "single",
     taxpayer_ssn: "111223333",

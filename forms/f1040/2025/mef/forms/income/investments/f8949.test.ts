@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8949 } from "./f8949.ts";
 
@@ -13,11 +14,11 @@ function assertNotIncludes(actual: string, expected: string) {
 // Section 1: Empty transactions returns ""
 // ---------------------------------------------------------------------------
 
-Deno.test("empty transactions array returns empty string", () => {
+test("empty transactions array returns empty string", () => {
   assertEquals(form8949.build([]), "");
 });
 
-Deno.test("various acquired dates use the TY2025 Form 8949 code element", () => {
+test("various acquired dates use the TY2025 Form 8949 code element", () => {
   const xml = form8949.build([{
     part: "A",
     description: "Broker statement lots",
@@ -35,7 +36,7 @@ Deno.test("various acquired dates use the TY2025 Form 8949 code element", () => 
   assertNotIncludes(xml, "<AcquiredDt>");
 });
 
-Deno.test("inherited acquisition uses the Form 8949 code only in Part II", () => {
+test("inherited acquisition uses the Form 8949 code only in Part II", () => {
   const sale = {
     part: "D",
     description: "Inherited shares",
@@ -57,7 +58,7 @@ Deno.test("inherited acquisition uses the Form 8949 code only in Part II", () =>
   );
 });
 
-Deno.test("native Form 8949 rejects a gain that does not include column (g)", () => {
+test("native Form 8949 rejects a gain that does not include column (g)", () => {
   assertThrows(() => form8949.build([{
     part: "A",
     description: "Market discount bond",
@@ -72,7 +73,7 @@ Deno.test("native Form 8949 rejects a gain that does not include column (g)", ()
   }]), Error, "does not reconcile to proceeds, basis, and column (g)");
 });
 
-Deno.test("direct Form 8949 XML rejects section 1202 markers instead of bypassing AMT", () => {
+test("direct Form 8949 XML rejects section 1202 markers instead of bypassing AMT", () => {
   const ordinary = {
     part: "D",
     description: "QSB stock",
@@ -113,7 +114,7 @@ Deno.test("direct Form 8949 XML rejects section 1202 markers instead of bypassin
 // Section 2: Single Box A short-term transaction — full XML structure
 // ---------------------------------------------------------------------------
 
-Deno.test("single Box A transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
+test("single Box A transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
   const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
@@ -128,7 +129,7 @@ Deno.test("single Box A transaction: wrapped in ShortTermCapitalGainAndLossGrp",
   assertStringIncludes(result, "</ShortTermCapitalGainAndLossGrp>");
 });
 
-Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
+test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
   const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
@@ -145,7 +146,7 @@ Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbo
   );
 });
 
-Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all fields", () => {
+test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all fields", () => {
   const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
@@ -174,7 +175,7 @@ Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all f
   assertStringIncludes(result, "<GainOrLossAmt>2000</GainOrLossAmt>");
 });
 
-Deno.test("single Box A transaction: emits totals", () => {
+test("single Box A transaction: emits totals", () => {
   const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
@@ -196,7 +197,7 @@ Deno.test("single Box A transaction: emits totals", () => {
   assertStringIncludes(result, "<TotalGainOrLossAmt>2000</TotalGainOrLossAmt>");
 });
 
-Deno.test("single Box A transaction: result wrapped in IRS8949", () => {
+test("single Box A transaction: result wrapped in IRS8949", () => {
   const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
@@ -215,7 +216,7 @@ Deno.test("single Box A transaction: result wrapped in IRS8949", () => {
 // Section 3: Single Box D long-term transaction
 // ---------------------------------------------------------------------------
 
-Deno.test("single Box D transaction: wrapped in LongTermCapitalGainAndLossGrp", () => {
+test("single Box D transaction: wrapped in LongTermCapitalGainAndLossGrp", () => {
   const result = form8949.build([{
     part: "D",
     description: "200 sh ABC Fund",
@@ -231,7 +232,7 @@ Deno.test("single Box D transaction: wrapped in LongTermCapitalGainAndLossGrp", 
   assertNotIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
 });
 
-Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
+test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
   const result = form8949.build([{
     part: "D",
     description: "200 sh ABC Fund",
@@ -252,7 +253,7 @@ Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbo
 // Section 4: Box B (basis not reported) — correct checkbox indicator
 // ---------------------------------------------------------------------------
 
-Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", () => {
+test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", () => {
   const result = form8949.build([{
     part: "B",
     description: "50 sh DEF Corp",
@@ -271,7 +272,7 @@ Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", ()
   assertNotIncludes(result, "<TransactionsNotRptedOn1099BInd>");
 });
 
-Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
+test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
   const result = form8949.build([{
     part: "B",
     description: "50 sh DEF Corp",
@@ -289,7 +290,7 @@ Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => 
 // Section 5: Box C (no 1099-B) — correct checkbox indicator
 // ---------------------------------------------------------------------------
 
-Deno.test("Box C transaction: emits NonDATransNotRptOn1099BOrDAInd checkbox", () => {
+test("Box C transaction: emits NonDATransNotRptOn1099BOrDAInd checkbox", () => {
   const result = form8949.build([{
     part: "C",
     description: "Coin XYZ",
@@ -312,7 +313,7 @@ Deno.test("Box C transaction: emits NonDATransNotRptOn1099BOrDAInd checkbox", ()
 // Section 6: Transaction with adjustments — codes and amounts emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", () => {
+test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", () => {
   const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
@@ -331,7 +332,7 @@ Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", (
   );
 });
 
-Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt", () => {
+test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt", () => {
   const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
@@ -350,7 +351,7 @@ Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt",
   );
 });
 
-Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted in totals", () => {
+test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted in totals", () => {
   const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
@@ -369,7 +370,7 @@ Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted i
   );
 });
 
-Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted", () => {
+test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted", () => {
   const result = form8949.build([{
     part: "A",
     description: "Simple stock",
@@ -389,7 +390,7 @@ Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted
 // Section 7: Two transactions in same category — totals summed
 // ---------------------------------------------------------------------------
 
-Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLossGrp", () => {
+test("two Box A transactions: both appear in same ShortTermCapitalGainAndLossGrp", () => {
   const result = form8949.build([
     {
       part: "A",
@@ -421,7 +422,7 @@ Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLo
   assertStringIncludes(result, "<PropertyDesc>Stock 2</PropertyDesc>");
 });
 
-Deno.test("two Box A transactions: totals are summed", () => {
+test("two Box A transactions: totals are summed", () => {
   const result = form8949.build([
     {
       part: "A",
@@ -459,7 +460,7 @@ Deno.test("two Box A transactions: totals are summed", () => {
 // Section 8: Mixed short-term and long-term — both groups present
 // ---------------------------------------------------------------------------
 
-Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted", () => {
+test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted", () => {
   const result = form8949.build([
     {
       part: "A",
@@ -490,7 +491,7 @@ Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted",
 // Section 9: Digital-asset boxes retain their separate groups
 // ---------------------------------------------------------------------------
 
-Deno.test("Part G transaction: uses the 1099-DA basis-reported checkbox", () => {
+test("Part G transaction: uses the 1099-DA basis-reported checkbox", () => {
   const result = form8949.build([{
     part: "G",
     description: "Digital asset G",
@@ -509,7 +510,7 @@ Deno.test("Part G transaction: uses the 1099-DA basis-reported checkbox", () => 
   assertNotIncludes(result, "<LongTermCapitalGainAndLossGrp>");
 });
 
-Deno.test("Part G and Part A transactions stay in separate short-term groups", () => {
+test("Part G and Part A transactions stay in separate short-term groups", () => {
   const result = form8949.build([
     {
       part: "A",
@@ -540,7 +541,7 @@ Deno.test("Part G and Part A transactions stay in separate short-term groups", (
   assertStringIncludes(result, "<PropertyDesc>Digital G</PropertyDesc>");
 });
 
-Deno.test("Part J transaction: uses the long-term 1099-DA basis-reported checkbox", () => {
+test("Part J transaction: uses the long-term 1099-DA basis-reported checkbox", () => {
   const result = form8949.build([{
     part: "J",
     description: "Digital asset J",
@@ -563,7 +564,7 @@ Deno.test("Part J transaction: uses the long-term 1099-DA basis-reported checkbo
 // Section 10: All 6 categories — 6 groups emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("all 6 categories produce 6 groups (3 short, 3 long)", () => {
+test("all 6 categories produce 6 groups (3 short, 3 long)", () => {
   const transactions = [
     {
       part: "A",
@@ -635,7 +636,7 @@ Deno.test("all 6 categories produce 6 groups (3 short, 3 long)", () => {
   assertEquals(ltGroups, 3);
 });
 
-Deno.test("all 6 categories: each category has its correct checkbox indicator", () => {
+test("all 6 categories: each category has its correct checkbox indicator", () => {
   const transactions = [
     {
       part: "A",
@@ -713,7 +714,7 @@ Deno.test("all 6 categories: each category has its correct checkbox indicator", 
   assertEquals(no1099b, 2);
 });
 
-Deno.test("short-term groups emitted before long-term groups in XSD order", () => {
+test("short-term groups emitted before long-term groups in XSD order", () => {
   const transactions = [
     {
       part: "D",
@@ -742,7 +743,7 @@ Deno.test("short-term groups emitted before long-term groups in XSD order", () =
   assertEquals(stIdx < ltIdx, true);
 });
 
-Deno.test("all twelve TY2025 Form 8949 boxes retain their own MeF checkbox", () => {
+test("all twelve TY2025 Form 8949 boxes retain their own MeF checkbox", () => {
   const boxes = [
     ["A", "TransRptOn1099BThatShowBssInd"],
     ["B", "TransRptOn1099BNotShowBasisInd"],
@@ -793,7 +794,7 @@ Deno.test("all twelve TY2025 Form 8949 boxes retain their own MeF checkbox", () 
   assertNotIncludes(xml, "TransactionsNotRptedOn1099BInd");
 });
 
-Deno.test("Form 8949 MeF rejects unknown boxes and inconsistent term flags", () => {
+test("Form 8949 MeF rejects unknown boxes and inconsistent term flags", () => {
   const transaction = {
     part: "C",
     description: "Stock",

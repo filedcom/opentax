@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -155,7 +156,7 @@ function openLoopLivestockFacility(): F8835Item {
   };
 }
 
-Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, return, native and PDF", async () => {
+test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, return, native and PDF", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-geothermal-general-business-credit"
   )!;
@@ -255,7 +256,7 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
   );
 });
 
-Deno.test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and the finalized return", async () => {
+test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and the finalized return", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-geothermal-general-business-credit"
   )!;
@@ -341,7 +342,7 @@ Deno.test("agricultural livestock waste Form 8835 line 1f reaches Form 3800 and 
   assert((await prepared.renderPdf()).length > 0);
 });
 
-Deno.test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 3800", () => {
+test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 3800", () => {
   const source = pending(solarFacility());
   const fields = projected(source);
   assertEquals(fields?.facility_type, "Solar");
@@ -377,7 +378,7 @@ Deno.test("Form 8835 PDF prints sourced solar on line 1d and reconciles Form 380
   assertThrows(() => projected(mismatchedSource), Error, "matching kWh");
 });
 
-Deno.test("Form 8835 PDF prints sourced closed-loop biomass on line 1b", () => {
+test("Form 8835 PDF prints sourced closed-loop biomass on line 1b", () => {
   const fields = projected(pending(closedLoopFacility()));
   assertEquals(fields?.facility_type, "Closed-loop biomass");
   assertEquals(fields?.ac_other, true);
@@ -505,7 +506,7 @@ function projectedAll(allPending: Record<string, Record<string, unknown>>) {
   ) ?? [];
 }
 
-Deno.test("Form 8835 PDF prints one fully used geothermal facility across all three pages", () => {
+test("Form 8835 PDF prints one fully used geothermal facility across all three pages", () => {
   const fields = projected(pending());
   assertEquals(fields?.filer_name, "Alex Producer");
   assertEquals(fields?.facility_type, "Geothermal");
@@ -539,7 +540,7 @@ Deno.test("Form 8835 PDF prints one fully used geothermal facility across all th
   );
 });
 
-Deno.test("Form 8835 PDF rejects source-only and overstated final credit", () => {
+test("Form 8835 PDF rejects source-only and overstated final credit", () => {
   assertThrows(
     () => form8835Pdf.instances?.({}, filer, pending()),
     Error,
@@ -557,7 +558,7 @@ Deno.test("Form 8835 PDF rejects source-only and overstated final credit", () =>
   );
 });
 
-Deno.test("Form 8835 PDF rejects a changed prepared line 4e tax use", () => {
+test("Form 8835 PDF rejects a changed prepared line 4e tax use", () => {
   const source = pending();
   const prepared = preparedParts(source);
   assertThrows(
@@ -574,7 +575,7 @@ Deno.test("Form 8835 PDF rejects a changed prepared line 4e tax use", () => {
   );
 });
 
-Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a mismatched second credit", () => {
+test("Form 8835 PDF prints two distinct facility copies and rejects a mismatched second credit", () => {
   const second = {
     ...facility(),
     facility_description: "Second geothermal production site",
@@ -605,7 +606,7 @@ Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a misma
   );
 });
 
-Deno.test("Form 8835 PDF binds each facility to its reserved native document ID", () => {
+test("Form 8835 PDF binds each facility to its reserved native document ID", () => {
   const second = {
     ...facility(),
     facility_description: "Second geothermal production site",
@@ -658,7 +659,7 @@ Deno.test("Form 8835 PDF binds each facility to its reserved native document ID"
   );
 });
 
-Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy on line 1c", () => {
+test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy on line 1c", () => {
   const wind = {
     ...facility(),
     energy_type: EnergyType.Wind,
@@ -693,7 +694,7 @@ Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy o
   );
 });
 
-Deno.test("Form 8835 PDF stops for unreviewed bonus, duplicate facilities, and zero credit", () => {
+test("Form 8835 PDF stops for unreviewed bonus, duplicate facilities, and zero credit", () => {
   assertThrows(
     () => projected(pending({ ...facility(), domestic_content_bonus: true })),
     Error,
@@ -766,7 +767,7 @@ function nonownerLivestockLessee(): F8835Item {
   };
 }
 
-Deno.test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, PDF, and Form 1040", async () => {
+test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, PDF, and Form 1040", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-geothermal-general-business-credit"
   )!;
@@ -843,7 +844,7 @@ Deno.test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, 
   );
 });
 
-Deno.test("non-owner open-loop biomass lessee joins Form 8835 owner, Form 3800, native, and PDF", async () => {
+test("non-owner open-loop biomass lessee joins Form 8835 owner, Form 3800, native, and PDF", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-geothermal-general-business-credit"
   )!;

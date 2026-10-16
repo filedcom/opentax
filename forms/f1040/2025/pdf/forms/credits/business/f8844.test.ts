@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8844Pdf } from "./f8844.ts";
 
@@ -44,7 +45,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 8844 PDF uses the official fillable line widgets", () => {
+test("Form 8844 PDF uses the official fillable line widgets", () => {
   assertEquals(
     Object.fromEntries(
       form8844Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
@@ -62,7 +63,7 @@ Deno.test("Form 8844 PDF uses the official fillable line widgets", () => {
   assertEquals(fields.line4, 2_000);
 });
 
-Deno.test("Form 8844 PDF rejects a changed payroll source", () => {
+test("Form 8844 PDF rejects a changed payroll source", () => {
   assertThrows(() =>
     form8844Pdf.projectFields!(source, {
       ...pending,

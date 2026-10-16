@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -95,7 +98,7 @@ function returnCase(changedElection = election, changedSource = source) {
   return { pending: result.pending, filer: extractFilerIdentity(general) };
 }
 
-Deno.test("partial beneficiary combines NUA, death, estate tax, and annuity", async () => {
+test("partial beneficiary combines NUA, death, estate tax, and annuity", async () => {
   const { pending, filer } = returnCase();
   const form = (pending.form4972?.forms as Record<string, unknown>[])[0];
   assertEquals(form.line6_nua_capital_gain, 800);
@@ -175,10 +178,10 @@ Deno.test("partial beneficiary combines NUA, death, estate tax, and annuity", as
   const document = await PDFDocument.load(pdf);
   assertEquals(document.getPageCount(), 3);
   assertEquals(document.getForm().getFields().length, 0); // Filing packet is flattened.
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -196,26 +199,20 @@ Deno.test("partial beneficiary combines NUA, death, estate tax, and annuity", as
     }
     assertEquals(/2\s+✔\s+4972[\s\S]*?16\s+2745/.test(text), true);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
-  const evidencePermission = await Deno.permissions.query({
-    name: "env",
-    variable: "FORM4972_EVIDENCE_DIR",
-  });
-  const evidenceDir = evidencePermission.state === "granted"
-    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
-    : undefined;
+  const evidenceDir = process.env.FORM4972_EVIDENCE_DIR;
   if (evidenceDir) {
-    await Deno.mkdir(evidenceDir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(evidenceDir, { recursive: true });
+    await fs.writeFile(
       `${evidenceDir}/full-return.xml`,
       prepared.bundle.xml,
     );
-    await Deno.writeFile(`${evidenceDir}/filled-return.pdf`, pdf);
+    await fs.writeFile(`${evidenceDir}/filled-return.pdf`, pdf);
   }
 });
 
-Deno.test("annuity beneficiary route rejects allocation, issued-copy, and tax changes", () => {
+test("annuity beneficiary route rejects allocation, issued-copy, and tax changes", () => {
   const { pending, filer } = returnCase();
   assertThrows(() =>
     returnCase({
@@ -301,7 +298,7 @@ Deno.test("annuity beneficiary route rejects allocation, issued-copy, and tax ch
   }
 });
 
-Deno.test("beneficiary annuity rejects missing source share and lost elections", () => {
+test("beneficiary annuity rejects missing source share and lost elections", () => {
   for (
     const [sourceChanges, electionChanges] of [
       [{ box8_pct_total: undefined }, {}],
@@ -322,7 +319,7 @@ Deno.test("beneficiary annuity rejects missing source share and lost elections",
   }
 });
 
-Deno.test("beneficiary annuity preserves box 8 cents and rounds filed lines", async () => {
+test("beneficiary annuity preserves box 8 cents and rounds filed lines", async () => {
   const centsSource = { ...source, box8_other: 3_000.13 };
   const { pending, filer } = returnCase(election, centsSource);
   const form = (pending.form4972!.forms as Record<string, unknown>[])[0];
@@ -373,19 +370,13 @@ Deno.test("beneficiary annuity preserves box 8 cents and rounds filed lines", as
   if (xsdAvailable) await validateXml(prepared.bundle.xml);
   const pdf = await prepared.renderPdf();
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
-  const evidencePermission = await Deno.permissions.query({
-    name: "env",
-    variable: "FORM4972_EVIDENCE_DIR",
-  });
-  const evidenceDir = evidencePermission.state === "granted"
-    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
-    : undefined;
+  const evidenceDir = process.env.FORM4972_EVIDENCE_DIR;
   if (evidenceDir) {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${evidenceDir}/cents-full-return.xml`,
       prepared.bundle.xml,
     );
-    await Deno.writeFile(`${evidenceDir}/cents-filled-return.pdf`, pdf);
+    await fs.writeFile(`${evidenceDir}/cents-filled-return.pdf`, pdf);
   }
 });
 
@@ -395,23 +386,20 @@ const xsd = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(xsd);
+  sys.statSync(xsd);
   xsdAvailable = true;
 } catch { /* Local IRS bundle. */ }
-Deno.test({
-  name: "XSD: sourced beneficiary NUA/death/estate/annuity full return",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: sourced beneficiary NUA/death/estate/annuity full return", async () => {
   const { pending, filer } = returnCase();
   const prepared = await f1040_2025.prepareReturn(pending, filer);
   await validateXml(prepared.bundle.xml);
 });
 
 async function validateXml(xml: string) {
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -422,11 +410,11 @@ async function validateXml(xml: string) {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("beneficiary annuity ten-year-only option retains source capital gain without Part II", async () => {
+test("beneficiary annuity ten-year-only option retains source capital gain without Part II", async () => {
   const { pending, filer } = returnCase({
     ...election,
     elect_capital_gain: false,
@@ -476,8 +464,8 @@ Deno.test("beneficiary annuity ten-year-only option retains source capital gain 
   assertEquals(printed.line6, undefined);
   const prepared = await f1040_2025.prepareReturn(pending, filer);
   const dir = ".state/research/2026-10-06-form4972-shared-participant-single";
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     dir + "/single-part3.json",
     JSON.stringify(
       { source, election: { ...election, elect_capital_gain: false }, pending },
@@ -485,15 +473,15 @@ Deno.test("beneficiary annuity ten-year-only option retains source capital gain 
       2,
     ),
   );
-  await Deno.writeTextFile(dir + "/single-part3.xml", prepared.bundle.xml);
+  await fs.writeFile(dir + "/single-part3.xml", prepared.bundle.xml);
   const pdf = await prepared.renderPdf();
-  await Deno.writeFile(dir + "/single-part3.pdf", pdf);
+  await fs.writeFile(dir + "/single-part3.pdf", pdf);
   const document = await PDFDocument.load(pdf);
   assertEquals(document.getPageCount(), 3);
   assertEquals(document.getForm().getFields().length, 0);
   const xsd =
     ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-  const validated = await new Deno.Command("xmllint", {
+  const validated = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, dir + "/single-part3.xml"],
     stderr: "piped",
   }).output();

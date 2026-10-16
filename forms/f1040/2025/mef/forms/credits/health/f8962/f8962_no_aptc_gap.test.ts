@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../../nodes/types.ts";
@@ -68,7 +69,7 @@ const pending = {
   f1040: { line11_agi: 75_300, line31_additional_payments: 1_704 },
 };
 
-Deno.test("Form 8962 positive no-APTC claim cannot rely on blank reported SLCSP", () => {
+test("Form 8962 positive no-APTC claim cannot rely on blank reported SLCSP", () => {
   assertThrows(
     () => form8962.build(fields, { filer, pending }),
     Error,
@@ -76,7 +77,7 @@ Deno.test("Form 8962 positive no-APTC claim cannot rely on blank reported SLCSP"
   );
 });
 
-Deno.test("Form 8962 positive no-APTC claim blocks corrections without payment evidence", () => {
+test("Form 8962 positive no-APTC claim blocks corrections without payment evidence", () => {
   const corrections = applicableSlcsps.map((corrected_slcsp, index) => ({
     month: index + 1,
     basis: "no_aptc" as const,

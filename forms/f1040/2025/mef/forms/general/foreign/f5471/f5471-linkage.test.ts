@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import {
@@ -58,7 +61,7 @@ function linked(sourceContext = context): MefDocumentFragment[] {
   }, ...fragments.slice(1)];
 }
 
-Deno.test("Actual Category4/5a source parent links each required owned schedule without zero distribution", () => {
+test("Actual Category4/5a source parent links each required owned schedule without zero distribution", () => {
   const fragments = linked();
   validateDocumentReferences(fragments);
   const root = fragments[0].xml;
@@ -82,7 +85,7 @@ Deno.test("Actual Category4/5a source parent links each required owned schedule 
   );
 });
 
-Deno.test("Actual EIN-only corporation source preserves identity throughout parent and eight linked schedules", () => {
+test("Actual EIN-only corporation source preserves identity throughout parent and eight linked schedules", () => {
   const cfc = {
     ...form8992Pending.f5471.f5471s[0],
     foreign_corp_reference_id: undefined,
@@ -107,7 +110,7 @@ Deno.test("Actual EIN-only corporation source preserves identity throughout pare
   }
 });
 
-Deno.test("Form5471 final linkage rejects missing, duplicate, swapped and detached inventory IDs", () => {
+test("Form5471 final linkage rejects missing, duplicate, swapped and detached inventory IDs", () => {
   const base = inventories();
   assertThrows(() => form5471.build({}, { ...context, phase: "final" }), Error);
   for (const [key, tag] of form5471RequiredScheduleKeys) {
@@ -155,7 +158,7 @@ Deno.test("Form5471 final linkage rejects missing, duplicate, swapped and detach
   );
 });
 
-Deno.test("Final native integrity rejects parent reference and per-schedule source-owner/corporation mutations", () => {
+test("Final native integrity rejects parent reference and per-schedule source-owner/corporation mutations", () => {
   const base = linked();
   const mutate = (index: number, transform: (xml: string) => string) =>
     base.map((f, i) => i === index ? { ...f, xml: transform(f.xml) } : f);
@@ -211,12 +214,7 @@ Deno.test("Final native integrity rejects parent reference and per-schedule sour
   }
 });
 
-Deno.test({
-  name:
-    "Linked actual Category4/5a parent satisfies canonical v5.4 XSD fixed reference names",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test("Linked actual Category4/5a parent satisfies canonical v5.4 XSD fixed reference names", async () => {
     const xsd = new URL(
       "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS5471/IRS5471.xsd",
       import.meta.url,
@@ -226,7 +224,7 @@ Deno.test({
       /^<IRS5471/,
       '<IRS5471 xmlns="http://www.irs.gov/efile" documentId="IRS54710"',
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -237,22 +235,21 @@ Deno.test({
     await writer.close();
     const result = await child.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-    const dir = Deno.env.get("FORM5471_LINKAGE_EVIDENCE_DIR");
+    const dir = process.env.FORM5471_LINKAGE_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify(form8992Pending, null, 2) + "\n",
       );
-      await Deno.writeTextFile(`${dir}/linked-parent.xml`, xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${dir}/linked-parent.xml`, xml);
+      await fs.writeFile(
         `${dir}/linked-fragments.json`,
         JSON.stringify(fragments, null, 2) + "\n",
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/document-inventory.json`,
         JSON.stringify(inventories(), null, 2) + "\n",
       );
     }
-  },
-});
+  });

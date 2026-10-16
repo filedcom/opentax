@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -62,7 +65,7 @@ const pending = {
   },
 };
 
-Deno.test("bounded Form 8915-F projects the 2025 source into official form fields", async () => {
+test("bounded Form 8915-F projects the 2025 source into official form fields", async () => {
   const fields =
     form8915FPdf.instances!({ f8915fs: [item] }, filer, pending)[0];
   assertEquals(fields.owner_name, "Alex Example");
@@ -74,11 +77,11 @@ Deno.test("bounded Form 8915-F projects the 2025 source into official form field
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(templatePath);
+    await sys.stat(templatePath);
   } catch {
     throw new Error(`Missing verification prerequisite: ${templatePath}`);
   }
-  const document = await PDFDocument.load(await Deno.readFile(templatePath));
+  const document = await PDFDocument.load(await sys.readBytes(templatePath));
   const form = document.getForm();
   for (const entry of form8915FPdf.fields) {
     const value = fields[entry.domainKey];
@@ -103,10 +106,10 @@ Deno.test("bounded Form 8915-F projects the 2025 source into official form field
       .isChecked(),
     true,
   );
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, bytes);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes);
+    const result = await new sys.Command("pdftotext", {
       args: [path, "-"],
       stdout: "piped",
     }).output();
@@ -115,11 +118,11 @@ Deno.test("bounded Form 8915-F projects the 2025 source into official form field
     assertStringIncludes(text, "DR-4871-TX");
     assertStringIncludes(text, "20000");
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("bounded Form 8915-F PDF rejects a changed Form 1040 amount", () => {
+test("bounded Form 8915-F PDF rejects a changed Form 1040 amount", () => {
   assertThrows(
     () =>
       form8915FPdf.instances!({ f8915fs: [item] }, filer, {
@@ -131,7 +134,7 @@ Deno.test("bounded Form 8915-F PDF rejects a changed Form 1040 amount", () => {
   );
 });
 
-Deno.test("Form 8915-F PDF maps plan repayment to line 14", () => {
+test("Form 8915-F PDF maps plan repayment to line 14", () => {
   const repaid = itemSchema.parse({
     ...item,
     full_inclusion_elected: false,
@@ -167,7 +170,7 @@ Deno.test("Form 8915-F PDF maps plan repayment to line 14", () => {
   );
 });
 
-Deno.test("Form 8915-F PDF leaves the full-inclusion election clear for a three-year spread", () => {
+test("Form 8915-F PDF leaves the full-inclusion election clear for a three-year spread", () => {
   const spread = { ...item, full_inclusion_elected: false };
   const fields = form8915FPdf.instances!({ f8915fs: [spread] }, filer, {
     ...pending,
@@ -184,7 +187,7 @@ Deno.test("Form 8915-F PDF leaves the full-inclusion election clear for a three-
   assertEquals(fields.line15, 6_667);
 });
 
-Deno.test("Form 8915-F PDF maps a traditional IRA to Part I and Part III", () => {
+test("Form 8915-F PDF maps a traditional IRA to Part I and Part III", () => {
   const ira = {
     ...item,
     retirement_source_kind: "traditional_ira" as const,
@@ -212,7 +215,7 @@ Deno.test("Form 8915-F PDF maps a traditional IRA to Part I and Part III", () =>
   assertEquals(fields.line8_no, true);
 });
 
-Deno.test("Form 8915-F PDF separates an ordinary plan distribution on Part I", () => {
+test("Form 8915-F PDF separates an ordinary plan distribution on Part I", () => {
   const reviewed = {
     ...item,
     full_inclusion_elected: false,

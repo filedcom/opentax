@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { FilingStatus, TS } from "../../../../../nodes/types.ts";
 import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
@@ -39,7 +41,7 @@ const cases = [
   },
 ];
 for (const item of cases) {
-  Deno.test(`IRA contribution ${item.name} joins deduction basis and saver credit`, async () => {
+  test(`IRA contribution ${item.name} joins deduction basis and saver credit`, async () => {
     const general = {
       filing_status: item.status,
       taxpayer_first_name: "Alex",
@@ -155,19 +157,19 @@ for (const item of cases) {
         Error,
         reason,
       );
-      const dir = Deno.env.get("FORM8880_IRA_EVIDENCE");
+      const dir = process.env.FORM8880_IRA_EVIDENCE;
       if (dir) {
         const output = `${dir}/${item.name}`;
-        await Deno.mkdir(output, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(output, { recursive: true });
+        await fs.writeFile(
           `${output}/source.json`,
           JSON.stringify(inputs, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/pending.json`,
           JSON.stringify(result.pending, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/blocked.json`,
           JSON.stringify(
             { reason, nativeRejected: true, fullPdfRejected: true },
@@ -241,10 +243,10 @@ for (const item of cases) {
       outcomes.map(({ native, fullPdf }) => [native, fullPdf]),
       Array.from({ length: 4 }, () => ["accepted", "accepted"]),
     );
-    const dir = Deno.env.get("FORM8880_IRA_EVIDENCE");
+    const dir = process.env.FORM8880_IRA_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -253,13 +255,13 @@ for (const item of cases) {
           ["mutations", outcomes],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }

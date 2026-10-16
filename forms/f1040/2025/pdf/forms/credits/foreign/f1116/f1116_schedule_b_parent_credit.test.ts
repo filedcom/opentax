@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
@@ -18,7 +19,7 @@ function requiredNumber(value: unknown): number {
   return value;
 }
 
-Deno.test("Form 1116 Schedule B PDF ties one-category credit to parent and final return", () => {
+test("Form 1116 Schedule B PDF ties one-category credit to parent and final return", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-foreign-interest-current-excess"
   );

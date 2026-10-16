@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -30,7 +31,7 @@ const seller = {
   amount: 900,
 };
 
-Deno.test("Schedule B seller statement includes buyer details even for one row", async () => {
+test("Schedule B seller statement includes buyer details even for one row", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBSellerFinancedStatement(document, {
     seller_financed_rows: [seller],
@@ -42,7 +43,7 @@ Deno.test("Schedule B seller statement includes buyer details even for one row",
   );
 });
 
-Deno.test("Schedule B seller statement paginates after eight buyers", async () => {
+test("Schedule B seller statement paginates after eight buyers", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBSellerFinancedStatement(document, {
     seller_financed_rows: Array.from({ length: 9 }, (_, index) => ({
@@ -53,7 +54,7 @@ Deno.test("Schedule B seller statement paginates after eight buyers", async () =
   assertEquals(document.getPageCount(), 2);
 });
 
-Deno.test("Schedule B seller statement includes a foreign buyer address", async () => {
+test("Schedule B seller statement includes a foreign buyer address", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBSellerFinancedStatement(document, {
     seller_financed_rows: [{
@@ -73,7 +74,7 @@ Deno.test("Schedule B seller statement includes a foreign buyer address", async 
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Schedule B seller statement rejects missing buyer SSN", async () => {
+test("Schedule B seller statement rejects missing buyer SSN", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>

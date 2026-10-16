@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { classifyFixtureExpectations } from "./run_benchmark.ts";
 
-Deno.test("malformed unmapped oracles cannot masquerade as metadata", () => {
+test("malformed unmapped oracles cannot masquerade as metadata", () => {
   for (const value of [null, "100", [], {}]) {
     assertThrows(() =>
       classifyFixtureExpectations({
@@ -11,7 +12,7 @@ Deno.test("malformed unmapped oracles cannot masquerade as metadata", () => {
   }
 });
 
-Deno.test("fixture metadata is distinct from summary lines and intermediate oracles", () => {
+test("fixture metadata is distinct from summary lines and intermediate oracles", () => {
   const result = classifyFixtureExpectations({
     year: 2025,
     case: "synthetic",
@@ -26,7 +27,7 @@ Deno.test("fixture metadata is distinct from summary lines and intermediate orac
   assertEquals(result.metadata, ["year", "case", "inputs"]);
 });
 
-Deno.test("flat fixture metadata is excluded but unknown numeric oracles remain unsupported", () => {
+test("flat fixture metadata is excluded but unknown numeric oracles remain unsupported", () => {
   const result = classifyFixtureExpectations({
     year: 2025,
     line33_total_payments: 200,
@@ -41,7 +42,7 @@ Deno.test("flat fixture metadata is excluded but unknown numeric oracles remain 
   assertEquals(result.metadata, ["year"]);
 });
 
-Deno.test("a field named like a filed line needs an explicit supported contract", () => {
+test("a field named like a filed line needs an explicit supported contract", () => {
   const result = classifyFixtureExpectations({
     correct: { line999_unknown: 1 },
   });
@@ -49,7 +50,7 @@ Deno.test("a field named like a filed line needs an explicit supported contract"
   assertEquals(result.unsupportedChecks.length, 1);
 });
 
-Deno.test("intermediate values are not inferred from similarly named filed lines", () => {
+test("intermediate values are not inferred from similarly named filed lines", () => {
   const result = classifyFixtureExpectations({
     correct: { income_tax: 10, line24_total_tax: 20 },
   });

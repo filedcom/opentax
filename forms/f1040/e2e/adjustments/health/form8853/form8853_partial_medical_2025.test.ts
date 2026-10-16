@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -40,7 +43,7 @@ const inputs = {
   form8853: source,
 };
 
-Deno.test("2025 single taxpayer normal Archer distribution with partial medical use reaches 1040, native XSD, and filled PDF", async () => {
+test("2025 single taxpayer normal Archer distribution with partial medical use reaches 1040, native XSD, and filled PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
     taxYear: 2025,
     formType: "f1040",
@@ -70,11 +73,11 @@ Deno.test("2025 single taxpayer normal Archer distribution with partial medical 
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -83,8 +86,8 @@ Deno.test("2025 single taxpayer normal Archer distribution with partial medical 
       0,
       new TextDecoder().decode(validation.stderr),
     );
-    await Deno.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
-    const text = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -109,8 +112,8 @@ Deno.test("2025 single taxpayer normal Archer distribution with partial medical 
     }
     assertStringIncludes(printed, "111223333");
   } finally {
-    await Deno.remove(xmlPath);
-    await Deno.remove(pdfPath);
+    await sys.remove(xmlPath);
+    await sys.remove(pdfPath);
   }
   for (
     const pending of [{}, {

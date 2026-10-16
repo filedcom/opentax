@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   ATS_RETIREMENT_TARGETS,
@@ -18,7 +19,7 @@ const wrap = (s: string) => `<Return><ReturnData>${s}</ReturnData></Return>`;
 const observe = (s: string) =>
   compareAtsRetirementValues(wrap(s), ATS_RETIREMENT_TARGETS["1040-08"]).rows;
 
-Deno.test("ATS 1099-R observer binds same-EIN payer copies without deriving IRA marks from distribution codes", () => {
+test("ATS 1099-R observer binds same-EIN payer copies without deriving IRA marks from distribution codes", () => {
   assertEquals(
     observe(liberty + jubilee).map((r) => r.result),
     Array(20).fill("match"),
@@ -48,7 +49,7 @@ Deno.test("ATS 1099-R observer binds same-EIN payer copies without deriving IRA 
   );
 });
 
-Deno.test("ATS 1099-R explicit zero targets remain missing when XML omits their elements", () => {
+test("ATS 1099-R explicit zero targets remain missing when XML omits their elements", () => {
   const missing = observe(
     liberty.replace("<TaxableAmt>0</TaxableAmt>", "").replace(
       "<FederalIncomeTaxWithheldAmt>0</FederalIncomeTaxWithheldAmt>",
@@ -75,7 +76,7 @@ Deno.test("ATS 1099-R explicit zero targets remain missing when XML omits their 
   );
 });
 
-Deno.test("ATS 1099-R changes to recipient, code and all four printed indicators are independent discrepancies", () => {
+test("ATS 1099-R changes to recipient, code and all four printed indicators are independent discrepancies", () => {
   const changed = observe(
     liberty.replace(">400001039<", ">400001057<").replace(
       ">Q</F1099RDistributionCd>",
@@ -105,7 +106,7 @@ Deno.test("ATS 1099-R changes to recipient, code and all four printed indicators
   }
 });
 
-Deno.test("ATS 1099-R missing, ambiguous and unavailable copies cannot pass through another payer", () => {
+test("ATS 1099-R missing, ambiguous and unavailable copies cannot pass through another payer", () => {
   assertEquals(
     observe(jubilee).filter((r) => r.sourcePage === 4).map((r) => r.result),
     Array(10).fill("missing-copy"),
@@ -123,7 +124,7 @@ Deno.test("ATS 1099-R missing, ambiguous and unavailable copies cannot pass thro
   );
 });
 
-Deno.test("ATS 1099-R code observer retains complete source codes and rejects duplicate or malformed elements", () => {
+test("ATS 1099-R code observer retains complete source codes and rejects duplicate or malformed elements", () => {
   for (const code of ["QG", "GQ", "q"]) {
     const rows = observe(
       liberty.replace(

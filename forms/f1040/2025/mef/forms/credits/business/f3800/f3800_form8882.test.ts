@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8882PreparedFixture } from "../f8882.fixture.ts";
 import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
@@ -33,7 +34,7 @@ function filed() {
   };
 }
 
-Deno.test("Form 8882 line 7 joins Form 3800 line 1k and final Schedule 3", () => {
+test("Form 8882 line 7 joins Form 3800 line 1k and final Schedule 3", () => {
   const { source, pending, documentIdsByPendingKey } = filed();
   const context = { pending, documentIdsByPendingKey };
   const prepared = prepareForm3800DocumentParts(pending.f3800, context);
@@ -64,7 +65,7 @@ Deno.test("Form 8882 line 7 joins Form 3800 line 1k and final Schedule 3", () =>
   assertEquals(pdf[form3800PartIIIFields("1k").i], 11_000);
 });
 
-Deno.test("Form 8882 line 1k rejects altered amount, business, deduction, and document", () => {
+test("Form 8882 line 1k rejects altered amount, business, deduction, and document", () => {
   const { pending, documentIdsByPendingKey } = filed();
   const context = { pending, documentIdsByPendingKey };
   assertThrows(() =>

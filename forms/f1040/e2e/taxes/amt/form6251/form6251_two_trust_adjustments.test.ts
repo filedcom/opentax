@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -71,7 +72,7 @@ function filing() {
   return { fields, pending: result.pending };
 }
 
-Deno.test("two signed trust K-1 adjustments reach 6251, Schedule 2, 1040, native and PDF", async () => {
+test("two signed trust K-1 adjustments reach 6251, Schedule 2, 1040, native and PDF", async () => {
   const { fields, pending } = filing();
   assertEquals(fields.line2j_estates_and_trusts, 190_000);
   assert(typeof fields.line11_amt === "number" && fields.line11_amt > 0);
@@ -95,7 +96,7 @@ Deno.test("two signed trust K-1 adjustments reach 6251, Schedule 2, 1040, native
   );
 });
 
-Deno.test("two trust adjustments reject changed owner, source, and return tax", () => {
+test("two trust adjustments reject changed owner, source, and return tax", () => {
   const { fields, pending } = filing();
   for (
     const tampered of [

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import {
@@ -52,7 +53,7 @@ const xSource: WorksheetXSource = {
   filing_status: FilingStatus.Single,
 };
 
-Deno.test("Pub 974 Worksheet W links specified premium and APTC to policy months", () => {
+test("Pub 974 Worksheet W links specified premium and APTC to policy months", () => {
   const w = calculateWorksheetW(wSource);
   assertEquals(w.line1_specified_premiums, 12_000);
   assertEquals(w.line2_attributable_aptc, 6_000);
@@ -64,7 +65,7 @@ Deno.test("Pub 974 Worksheet W links specified premium and APTC to policy months
   assertEquals(w.line19_remaining_limit_for_worksheet_x, 18_000);
 });
 
-Deno.test("Pub 974 Worksheet X computes the provisional 200%-300% tier", () => {
+test("Pub 974 Worksheet X computes the provisional 200%-300% tier", () => {
   const x = calculateWorksheetX(xSource, calculateWorksheetW(wSource));
   assertEquals(x.line8_taxpayer_modified_agi, 38_000);
   assertEquals(x.line14_household_income, 38_000);
@@ -74,7 +75,7 @@ Deno.test("Pub 974 Worksheet X computes the provisional 200%-300% tier", () => {
   assertEquals(x.line31_max_total_deduction, 7_975);
 });
 
-Deno.test("Pub 974 Worksheet X uses paid APTC at 400% FPL or higher", () => {
+test("Pub 974 Worksheet X uses paid APTC at 400% FPL or higher", () => {
   const x = calculateWorksheetX(
     { ...xSource, form1040_line9_total_income: 100_000 },
     calculateWorksheetW(wSource),
@@ -84,7 +85,7 @@ Deno.test("Pub 974 Worksheet X uses paid APTC at 400% FPL or higher", () => {
   assertEquals(x.line31_max_total_deduction, 13_000);
 });
 
-Deno.test("Pub 974 Worksheet W S corporation path uses Medicare wages", () => {
+test("Pub 974 Worksheet W S corporation path uses Medicare wages", () => {
   const w = calculateWorksheetW({
     ...wSource,
     business: {
@@ -99,7 +100,7 @@ Deno.test("Pub 974 Worksheet W S corporation path uses Medicare wages", () => {
   assertEquals(w.line19_remaining_limit_for_worksheet_x, 0);
 });
 
-Deno.test("Pub 974 W/X reject duplicate policy months and unsupported APTC facts", () => {
+test("Pub 974 W/X reject duplicate policy months and unsupported APTC facts", () => {
   assertThrows(
     () =>
       calculateWorksheetW({
@@ -136,7 +137,7 @@ Deno.test("Pub 974 W/X reject duplicate policy months and unsupported APTC facts
   );
 });
 
-Deno.test("Pub 974 Steps 1-6 converge on reconciled full-year policy rows", () => {
+test("Pub 974 Steps 1-6 converge on reconciled full-year policy rows", () => {
   const result = calculatePub974SingleBusinessIterative({
     worksheet_w: {
       ...wSource,
@@ -179,7 +180,7 @@ Deno.test("Pub 974 Steps 1-6 converge on reconciled full-year policy rows", () =
   assert(result.schedule1_line17_deduction + ptc <= 12_000);
 });
 
-Deno.test("Pub 974 single-business route rejects non-reconciled policy months", () => {
+test("Pub 974 single-business route rejects non-reconciled policy months", () => {
   assertThrows(
     () =>
       calculatePub974SingleBusinessIterative({
@@ -215,7 +216,7 @@ Deno.test("Pub 974 single-business route rejects non-reconciled policy months", 
   );
 });
 
-Deno.test("Pub 974 partial-year iteration rejects a persistent dollar oscillation", () => {
+test("Pub 974 partial-year iteration rejects a persistent dollar oscillation", () => {
   assertThrows(
     () =>
       calculatePub974SingleBusinessIterative({
@@ -257,7 +258,7 @@ Deno.test("Pub 974 partial-year iteration rejects a persistent dollar oscillatio
   );
 });
 
-Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source months", () => {
+test("Pub 974 partial-year route rejects uncovered and duplicate source months", () => {
   const base = {
     worksheet_w: {
       ...wSource,
@@ -322,7 +323,7 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
   );
 });
 
-Deno.test("Pub 974 mixed coverage rejects a persistent dollar oscillation", () => {
+test("Pub 974 mixed coverage rejects a persistent dollar oscillation", () => {
   assertThrows(
     () =>
       calculatePub974SingleBusinessIterative({
@@ -364,7 +365,7 @@ Deno.test("Pub 974 mixed coverage rejects a persistent dollar oscillation", () =
   );
 });
 
-Deno.test("Pub 974 attribution uses monthly column (e) when amounts vary", () => {
+test("Pub 974 attribution uses monthly column (e) when amounts vary", () => {
   const rows = Array.from({ length: 12 }, (_, index) => ({
     month_code: String(index + 1),
     allowed_credit: index < 6 ? 100 : 200,

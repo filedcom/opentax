@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8949Pdf } from "./f8949.ts";
 
@@ -12,7 +13,7 @@ const ordinary = {
   is_long_term: true,
 };
 
-Deno.test("Form 8949 PDF rejects section 1202 from canonical and raw sources", () => {
+test("Form 8949 PDF rejects section 1202 from canonical and raw sources", () => {
   for (const marked of [
     { ...ordinary, adjustment_codes: "Q", adjustment_amount: -4_000 },
     { ...ordinary, qsbs_code: "Q1" },
@@ -38,7 +39,7 @@ Deno.test("Form 8949 PDF rejects section 1202 from canonical and raw sources", (
   }
 });
 
-Deno.test("Form 8949 PDF rejects raw row shapes that bypass canonical calculation", () => {
+test("Form 8949 PDF rejects raw row shapes that bypass canonical calculation", () => {
   assertThrows(
     () => form8949Pdf.projectFields?.({}, {
       f8949: { f8949s: [ordinary] },

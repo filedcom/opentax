@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -28,7 +31,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule 3 line 6g rejects bare mortgage interest credit", async () => {
+test("Schedule 3 line 6g rejects bare mortgage interest credit", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,
@@ -55,7 +58,7 @@ Deno.test("Schedule 3 line 6g rejects bare mortgage interest credit", async () =
   }
 });
 
-Deno.test("Schedule 3 line 6g replays a retained Form 8396 carryforward", async () => {
+test("Schedule 3 line 6g replays a retained Form 8396 carryforward", async () => {
   const source = form8396SourceSchema.parse({
     certificate_issuer_name: "Austin Housing Finance Corporation",
     certificate_number: "MCC-2022-104",
@@ -97,17 +100,17 @@ Deno.test("Schedule 3 line 6g replays a retained Form 8396 carryforward", async 
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, native.xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, native.xml);
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   assert((await buildPdfBytes(pending, filer)).length > 0);
   const changed = {

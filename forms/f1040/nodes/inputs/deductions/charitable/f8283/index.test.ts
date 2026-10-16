@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   f8283,
@@ -19,12 +20,12 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8283.inputSchema: empty input (no items) passes validation", () => {
+test("f8283.inputSchema: empty input (no items) passes validation", () => {
   const parsed = f8283.inputSchema.safeParse({});
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8283.inputSchema: empty arrays pass validation", () => {
+test("f8283.inputSchema: empty arrays pass validation", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [],
     section_b_items: [],
@@ -32,21 +33,21 @@ Deno.test("f8283.inputSchema: empty arrays pass validation", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8283.inputSchema: negative section A fmv fails", () => {
+test("f8283.inputSchema: negative section A fmv fails", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [{ fmv: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.inputSchema: negative section B fmv fails", () => {
+test("f8283.inputSchema: negative section B fmv fails", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_b_items: [{ fmv: -500 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.inputSchema: Section B requires a claimed amount not above appraised FMV", () => {
+test("f8283.inputSchema: Section B requires a claimed amount not above appraised FMV", () => {
   assertEquals(
     f8283.inputSchema.safeParse({ section_b_items: [{ fmv: 6000 }] }).success,
     false,
@@ -59,14 +60,14 @@ Deno.test("f8283.inputSchema: Section B requires a claimed amount not above appr
   );
 });
 
-Deno.test("f8283.inputSchema: negative cost_or_adjusted_basis fails", () => {
+test("f8283.inputSchema: negative cost_or_adjusted_basis fails", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [{ cost_or_adjusted_basis: -200 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.inputSchema: valid FMVMethod passes", () => {
+test("f8283.inputSchema: valid FMVMethod passes", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [{
       fmv: 300,
@@ -78,14 +79,14 @@ Deno.test("f8283.inputSchema: valid FMVMethod passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8283.inputSchema: invalid FMVMethod fails", () => {
+test("f8283.inputSchema: invalid FMVMethod fails", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [{ fmv_method: "INVALID_METHOD" }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.inputSchema: positive gift cannot omit AGI-limit classification", () => {
+test("f8283.inputSchema: positive gift cannot omit AGI-limit classification", () => {
   assertEquals(
     f8283.inputSchema.safeParse({ section_a_items: [{ fmv: 250 }] }).success,
     false,
@@ -98,7 +99,7 @@ Deno.test("f8283.inputSchema: positive gift cannot omit AGI-limit classification
   );
 });
 
-Deno.test("f8283.inputSchema: capital-gain 50% election needs reduced basis", () => {
+test("f8283.inputSchema: capital-gain 50% election needs reduced basis", () => {
   assertEquals(
     f8283.inputSchema.safeParse({
       section_a_items: [{
@@ -118,7 +119,7 @@ Deno.test("f8283.inputSchema: capital-gain 50% election needs reduced basis", ()
 // 2. Per-Section Routing
 // =============================================================================
 
-Deno.test("f8283.compute: section A item routes categorized source to Schedule A", () => {
+test("f8283.compute: section A item routes categorized source to Schedule A", () => {
   const result = compute({
     section_a_items: [{
       fmv: 300,
@@ -141,7 +142,7 @@ Deno.test("f8283.compute: section A item routes categorized source to Schedule A
   );
 });
 
-Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher FMV", () => {
+test("f8283.compute: Section A routes the claimed deduction, not the higher FMV", () => {
   const result = compute({
     section_a_items: [
       {
@@ -193,7 +194,7 @@ Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher
   );
 });
 
-Deno.test("f8283.compute: Section A rejects claimed amounts without FMV or above FMV", () => {
+test("f8283.compute: Section A rejects claimed amounts without FMV or above FMV", () => {
   assertThrows(
     () => compute({ section_a_items: [{ deduction_claimed: 200 }] }),
     Error,
@@ -209,7 +210,7 @@ Deno.test("f8283.compute: Section A rejects claimed amounts without FMV or above
   );
 });
 
-Deno.test("f8283.compute: section B item routes claimed deduction to schedule_a line 12", () => {
+test("f8283.compute: section B item routes claimed deduction to schedule_a line 12", () => {
   const result = compute({
     section_b_items: [{
       fmv: 7000,
@@ -233,17 +234,17 @@ Deno.test("f8283.compute: section B item routes claimed deduction to schedule_a 
   );
 });
 
-Deno.test("f8283.compute: zero fmv — no schedule_a output", () => {
+test("f8283.compute: zero fmv — no schedule_a output", () => {
   const result = compute({ section_a_items: [{ fmv: 0 }] });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8283.compute: no items — no outputs", () => {
+test("f8283.compute: no items — no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8283.compute: empty arrays — no outputs", () => {
+test("f8283.compute: empty arrays — no outputs", () => {
   const result = compute({ section_a_items: [], section_b_items: [] });
   assertEquals(result.outputs.length, 0);
 });
@@ -252,7 +253,7 @@ Deno.test("f8283.compute: empty arrays — no outputs", () => {
 // 3. Claimed deduction is distinct from appraised FMV and cost basis
 // =============================================================================
 
-Deno.test("f8283.compute: capital gain property is not automatically capped at basis", () => {
+test("f8283.compute: capital gain property is not automatically capped at basis", () => {
   const result = compute({
     section_b_items: [{
       fmv: 10000,
@@ -266,7 +267,7 @@ Deno.test("f8283.compute: capital gain property is not automatically capped at b
   assertEquals(fields.noncash_contribution_items?.[0]?.amount, 10000);
 });
 
-Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
+test("f8283.compute: a stated reduction is honored when below FMV", () => {
   const result = compute({
     section_a_items: [{
       fmv: 3000,
@@ -284,7 +285,7 @@ Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
   assertEquals(fields.noncash_contribution_items?.[0]?.amount, 2500);
 });
 
-Deno.test("f8283.compute: a voluntary underclaim cannot masquerade as a required FMV reduction", () => {
+test("f8283.compute: a voluntary underclaim cannot masquerade as a required FMV reduction", () => {
   const item = {
     fmv: 3_000,
     deduction_claimed: 2_500,
@@ -328,7 +329,7 @@ Deno.test("f8283.compute: a voluntary underclaim cannot masquerade as a required
   );
 });
 
-Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv", () => {
+test("f8283.compute: section B NOT capital gain property — uses full fmv", () => {
   const result = compute({
     section_b_items: [{
       fmv: 10000,
@@ -346,7 +347,7 @@ Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv"
 // 4. Aggregation
 // =============================================================================
 
-Deno.test("f8283.inputSchema: cross-donee similar books above $5,000 cannot remain in Section A", () => {
+test("f8283.inputSchema: cross-donee similar books above $5,000 cannot remain in Section A", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [
       {
@@ -378,7 +379,7 @@ Deno.test("f8283.inputSchema: cross-donee similar books above $5,000 cannot rema
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.inputSchema: same cross-donee books qualify for separate Section B items", () => {
+test("f8283.inputSchema: same cross-donee books qualify for separate Section B items", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_b_items: [
       {
@@ -410,7 +411,7 @@ Deno.test("f8283.inputSchema: same cross-donee books qualify for separate Sectio
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8283.inputSchema: multiple positive gifts require explicit similar-property categories", () => {
+test("f8283.inputSchema: multiple positive gifts require explicit similar-property categories", () => {
   const parsed = f8283.inputSchema.safeParse({
     section_a_items: [
       {
@@ -428,7 +429,7 @@ Deno.test("f8283.inputSchema: multiple positive gifts require explicit similar-p
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
+test("f8283.compute: multiple section A items — fmv summed", () => {
   const result = compute({
     section_a_items: [
       {
@@ -460,7 +461,7 @@ Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
   );
 });
 
-Deno.test("f8283.compute: section A + section B items combined", () => {
+test("f8283.compute: section A + section B items combined", () => {
   const result = compute({
     section_a_items: [{
       fmv: 1000,
@@ -485,7 +486,7 @@ Deno.test("f8283.compute: section A + section B items combined", () => {
   );
 });
 
-Deno.test("f8283.compute: capital gain 50% election routes property facts for return-wide reconciliation", () => {
+test("f8283.compute: capital gain 50% election routes property facts for return-wide reconciliation", () => {
   const result = compute({
     section_a_items: [
       {
@@ -518,7 +519,7 @@ Deno.test("f8283.compute: capital gain 50% election routes property facts for re
   assertEquals(schedule_a.inputSchema.safeParse(fields).success, false);
 });
 
-Deno.test("f8283.compute: two elected capital gifts retain distinct IDs and still need the carryover ledger", () => {
+test("f8283.compute: two elected capital gifts retain distinct IDs and still need the carryover ledger", () => {
   const gift = {
     date_acquired: "2022-02-01",
     date_contributed: "2025-06-01",
@@ -544,7 +545,7 @@ Deno.test("f8283.compute: two elected capital gifts retain distinct IDs and stil
   assertEquals(schedule_a.inputSchema.safeParse(fields).success, false);
 });
 
-Deno.test("f8283.inputSchema: Section B election is limited to purchased unimproved investment land", () => {
+test("f8283.inputSchema: Section B election is limited to purchased unimproved investment land", () => {
   const land = {
     property_type: SectionBPropertyType.OtherRealEstate,
     investment_land_unimproved_confirmed: true as const,
@@ -589,7 +590,7 @@ Deno.test("f8283.inputSchema: Section B election is limited to purchased unimpro
   }
 });
 
-Deno.test("f8283.inputSchema: purchased short-term Section B equipment needs reviewed basis, appraisal, signed form and statement", () => {
+test("f8283.inputSchema: purchased short-term Section B equipment needs reviewed basis, appraisal, signed form and statement", () => {
   const gift = {
     property_type: SectionBPropertyType.Equipment,
     date_acquired: "2025-01-15",
@@ -756,14 +757,14 @@ Deno.test("f8283.inputSchema: purchased short-term Section B equipment needs rev
 // 5. Informational Fields — must NOT produce tax outputs
 // =============================================================================
 
-Deno.test("f8283.compute: only property description — no outputs", () => {
+test("f8283.compute: only property description — no outputs", () => {
   const result = compute({
     section_a_items: [{ property_description: "Used clothing" }],
   });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8283.compute: only date fields — no outputs", () => {
+test("f8283.compute: only date fields — no outputs", () => {
   const result = compute({
     section_a_items: [{
       date_acquired: "2020-01-15",
@@ -773,12 +774,12 @@ Deno.test("f8283.compute: only date fields — no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8283.compute: vehicle flag only — no outputs without fmv", () => {
+test("f8283.compute: vehicle flag only — no outputs without fmv", () => {
   const result = compute({ section_a_items: [{ is_vehicle: true }] });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () => {
+test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () => {
   const item = {
     property_description: "2020 sedan",
     is_vehicle: true,
@@ -862,7 +863,7 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
   );
 });
 
-Deno.test("f8283.compute: needy-transfer certificate requires timely exclusive acknowledgment and source-backed reduction", () => {
+test("f8283.compute: needy-transfer certificate requires timely exclusive acknowledgment and source-backed reduction", () => {
   const needy = {
     property_description: "2020 Honda Civic, good condition, 60,000 miles",
     is_vehicle: true,
@@ -945,7 +946,7 @@ Deno.test("f8283.compute: needy-transfer certificate requires timely exclusive a
   );
 });
 
-Deno.test("f8283.compute: significant-use certificate permits Section A FMV but requires box 5a facts", () => {
+test("f8283.compute: significant-use certificate permits Section A FMV but requires box 5a facts", () => {
   const item = {
     property_description: "2019 van, good condition, 70,000 miles",
     is_vehicle: true,
@@ -1040,7 +1041,7 @@ Deno.test("f8283.compute: significant-use certificate permits Section A FMV but 
   );
 });
 
-Deno.test("f8283.compute: material-improvement certificate requires major value-adding work without donor payment", () => {
+test("f8283.compute: material-improvement certificate requires major value-adding work without donor payment", () => {
   const item = {
     property_description: "2018 sedan, fair condition, 90,000 miles",
     is_vehicle: true,
@@ -1096,7 +1097,7 @@ Deno.test("f8283.compute: material-improvement certificate requires major value-
   );
 });
 
-Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with signed appraisal facts", () => {
+test("f8283.compute: Section B exception vehicle routes claimed amount with signed appraisal facts", () => {
   const item = {
     property_description: "2018 Honda Civic, fair condition, 90,000 miles",
     property_type: SectionBPropertyType.Vehicle,
@@ -1214,7 +1215,7 @@ Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with
   );
 });
 
-Deno.test("f8283.compute: high-value Section B appraisal gate keeps special routes explicit", () => {
+test("f8283.compute: high-value Section B appraisal gate keeps special routes explicit", () => {
   assertThrows(
     () =>
       compute({
@@ -1249,11 +1250,11 @@ Deno.test("f8283.compute: high-value Section B appraisal gate keeps special rout
 // 6. Hard Validation
 // =============================================================================
 
-Deno.test("f8283.compute: throws on negative fmv in section A", () => {
+test("f8283.compute: throws on negative fmv in section A", () => {
   assertThrows(() => compute({ section_a_items: [{ fmv: -100 }] }), Error);
 });
 
-Deno.test("f8283.compute: throws on negative fmv in section B", () => {
+test("f8283.compute: throws on negative fmv in section B", () => {
   assertThrows(() => compute({ section_b_items: [{ fmv: -500 }] }), Error);
 });
 
@@ -1261,7 +1262,7 @@ Deno.test("f8283.compute: throws on negative fmv in section B", () => {
 // 7. Edge Cases
 // =============================================================================
 
-Deno.test("f8283.compute: Section A capital gain with no basis uses full FMV", () => {
+test("f8283.compute: Section A capital gain with no basis uses full FMV", () => {
   const result = compute({
     section_a_items: [{
       fmv: 5000,
@@ -1274,7 +1275,7 @@ Deno.test("f8283.compute: Section A capital gain with no basis uses full FMV", (
   assertEquals(fields.noncash_contribution_items?.[0]?.amount, 5000);
 });
 
-Deno.test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
+test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
   const result = compute({
     section_a_items: [{
       fmv: 4000,
@@ -1292,7 +1293,7 @@ Deno.test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("f8283.compute: smoke test — section A and section B items combined", () => {
+test("f8283.compute: smoke test — section A and section B items combined", () => {
   const result = compute({
     section_a_items: [
       {

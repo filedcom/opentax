@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form3800HeaderFields,
@@ -8,7 +9,7 @@ import {
   form3800PartVIFields,
 } from "./f3800_fields.ts";
 
-Deno.test("Form 3800 field map preserves header and all 38 numbered first-section lines", () => {
+test("Form 3800 field map preserves header and all 38 numbered first-section lines", () => {
   assertEquals(
     form3800HeaderFields.transferStatementCount,
     "topmostSubform[0].Page1[0].f1_3[0]",
@@ -28,7 +29,7 @@ Deno.test("Form 3800 field map preserves header and all 38 numbered first-sectio
   assertEquals(Object.keys(form3800PartIAndIIFields).length, 39);
 });
 
-Deno.test("Form 3800 field map reaches credit rows on each Part III and IV page", () => {
+test("Form 3800 field map reaches credit rows on each Part III and IV page", () => {
   assertEquals(
     form3800PartIIIFields("1e").e,
     "topmostSubform[0].Page3[0].Pg3Table[0].Line1e[0].f3_45[0]",
@@ -52,7 +53,7 @@ Deno.test("Form 3800 field map reaches credit rows on each Part III and IV page"
   assertThrows(() => form3800PartIIIFields("2j"), Error, "not on this part");
 });
 
-Deno.test("Form 3800 field map reaches both halves of Part V and the last Part VI row", () => {
+test("Form 3800 field map reaches both halves of Part V and the last Part VI row", () => {
   assertEquals(
     form3800PartVFields(1).a,
     "topmostSubform[0].Page8[0].Pg8Table_1[0].Line1[0].f8_1[0]",

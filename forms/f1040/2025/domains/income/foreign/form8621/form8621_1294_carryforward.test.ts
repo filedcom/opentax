@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -37,7 +39,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`Election B retains only actual adoption carryforward: ${row.id}`, async () => {
+  test(`Election B retains only actual adoption carryforward: ${row.id}`, async () => {
     const base = structuredClone(
       row.id === "adoption" ? adoption.inputs : education.inputs,
     ) as Record<string, unknown>;
@@ -117,16 +119,16 @@ for (
       Error,
       "differs from full source",
     );
-    const out = Deno.env.get("FORM8621_CARRY_EVIDENCE_DIR");
+    const out = process.env.FORM8621_CARRY_EVIDENCE_DIR;
     if (out) {
       const dir = `${out}/${row.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify({ input, pending, shadow }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, packet.bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, packet.bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
     for (
       const changed of [

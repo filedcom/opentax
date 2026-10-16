@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   personal_property_rental,
@@ -17,7 +18,7 @@ const rental = {
   expenses_not_claimed_elsewhere: true,
 };
 
-Deno.test("personal-property rental routes reviewed income and expense once", () => {
+test("personal-property rental routes reviewed income and expense once", () => {
   const source = { personal_property_rentals: [rental] };
   assertEquals(personalPropertyRentalTotals(source), {
     income: 9_000,

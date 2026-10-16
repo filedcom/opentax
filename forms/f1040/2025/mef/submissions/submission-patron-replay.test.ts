@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
 import { XMLParser } from "fast-xml-parser";
@@ -41,15 +43,9 @@ function remap<T>(value: T, primary: string, spouse: string): T {
   });
 }
 
-Deno.test("Patron saved returns preserve all 58 source packets in mixed submission archives", async () => {
-  const permission = await Deno.permissions.query({
-    name: "env",
-    variable: "PATRON_SUBMISSION_EVIDENCE",
-  });
-  const evidence = permission.state === "granted"
-    ? Deno.env.get("PATRON_SUBMISSION_EVIDENCE")
-    : undefined;
-  if (evidence) await Deno.mkdir(evidence, { recursive: true });
+test("Patron saved returns preserve all 58 source packets in mixed submission archives", async () => {
+  const evidence = process.env.PATRON_SUBMISSION_EVIDENCE;
+  if (evidence) await fs.mkdir(evidence, { recursive: true });
   const kinds = [
     "farm",
     "c-health",
@@ -369,13 +365,13 @@ Deno.test("Patron saved returns preserve all 58 source packets in mixed submissi
       sourceRejected++;
     }
     if (evidence) {
-      await Deno.writeFile(`${evidence}/${c.name}.zip`, archive.bytes);
-      await Deno.writeTextFile(`${evidence}/${c.name}.xml`, archive.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${evidence}/${c.name}.zip`, archive.bytes);
+      await fs.writeFile(`${evidence}/${c.name}.xml`, archive.bundle.xml);
+      await fs.writeFile(
         `${evidence}/${c.name}-manifest.xml`,
         archive.manifestXml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${c.name}.json`,
         JSON.stringify(
           {
@@ -427,11 +423,11 @@ Deno.test("Patron saved returns preserve all 58 source packets in mixed submissi
       );
     }
     if (evidence) {
-      await Deno.writeFile(
+      await fs.writeFile(
         `${evidence}/${label}.zip`,
         transmission.containerZipBytes,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${label}.xml`,
         transmission.sendSubmissionsRequestXml,
       );
@@ -498,7 +494,7 @@ Deno.test("Patron saved returns preserve all 58 source packets in mixed submissi
   assertEquals(sourceRejected, 969);
   assertEquals(archiveRejected, 421);
   if (evidence) {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${evidence}/checks.json`,
       JSON.stringify(
         {

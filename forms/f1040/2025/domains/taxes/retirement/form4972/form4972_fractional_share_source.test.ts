@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -14,8 +17,8 @@ import expected from "../../../../pdf/reviews/taxes/retirement/form4972/review-4
 const dir = ".state/research/2026-10-06-form4972-fractional-share";
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-Deno.test("fractional beneficiary cents retain full issued sources and independently calculated IRS worksheets in complete XML/PDF", async () => {
-  await Deno.mkdir(dir, { recursive: true });
+test("fractional beneficiary cents retain full issued sources and independently calculated IRS worksheets in complete XML/PDF", async () => {
+  await fs.mkdir(dir, { recursive: true });
   for (const spec of fractionalBeneficiaryCases) {
     const input = fractionalBeneficiaryInputs(spec);
     const result = f1040_2025.executeReturn(input);
@@ -90,22 +93,22 @@ Deno.test("fractional beneficiary cents retain full issued sources and independe
       );
     }
     const path = `${dir}/${spec.id}`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${path}.json`,
       JSON.stringify({ input, pending }, null, 2),
     );
-    await Deno.writeTextFile(`${path}.xml`, xml);
+    await fs.writeFile(`${path}.xml`, xml);
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(`${path}.pdf`, pdf);
+    await fs.writeFile(`${path}.pdf`, pdf);
     const doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), 3);
     assertEquals(doc.getForm().getFields().length, 0);
-    const schema = await new Deno.Command("xmllint", {
+    const schema = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, `${path}.xml`],
       stderr: "piped",
     }).output();
     assertEquals(schema.code, 0, new TextDecoder().decode(schema.stderr));
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", `${path}.pdf`, `${path}.txt`],
       stderr: "piped",
     }).output();
@@ -113,7 +116,7 @@ Deno.test("fractional beneficiary cents retain full issued sources and independe
   }
 });
 
-Deno.test("fractional source exports reject detached issued boxes, source owner, allocation cents, percentages and filed worksheet tax", async () => {
+test("fractional source exports reject detached issued boxes, source owner, allocation cents, percentages and filed worksheet tax", async () => {
   for (const id of ["two-death-estate-nua-annuity", "single-all-33333"]) {
     const spec = fractionalBeneficiaryCases.find((c) => c.id === id)!;
     const input = fractionalBeneficiaryInputs(spec);

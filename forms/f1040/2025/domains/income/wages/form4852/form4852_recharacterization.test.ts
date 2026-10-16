@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
@@ -38,7 +41,7 @@ const wages = (spouse = false, amount = 75000) => ({
   box5_medicare_wages: amount,
   box6_medicare_withheld: Math.round(amount * .0145 * 100) / 100,
 });
-Deno.test("2025 retained annual recharacterization records derive N gross, owner contribution limits and native/print statements across accounts and spouses", async () => {
+test("2025 retained annual recharacterization records derive N gross, owner contribution limits and native/print statements across accounts and spouses", async () => {
   const cases = [
     {
       id: "single-loss-cents",
@@ -72,7 +75,7 @@ Deno.test("2025 retained annual recharacterization records derive N gross, owner
       total: 9546,
     },
   ];
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   const manifest = [];
   for (const row of cases) {
     for (
@@ -163,9 +166,9 @@ Deno.test("2025 retained annual recharacterization records derive N gross, owner
     );
     assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
     const path = `${root}/${row.id}`;
-    await Deno.mkdir(path, { recursive: true });
-    await Deno.writeTextFile(`${path}/return.xml`, prepared.bundle.xml);
-    const x = await new Deno.Command("xmllint", {
+    await fs.mkdir(path, { recursive: true });
+    await fs.writeFile(`${path}/return.xml`, prepared.bundle.xml);
+    const x = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, `${path}/return.xml`],
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
@@ -177,12 +180,12 @@ Deno.test("2025 retained annual recharacterization records derive N gross, owner
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${path}/return.pdf`, bytes);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${path}/return.pdf`, bytes);
+    await fs.writeFile(
       `${path}/source.json`,
       JSON.stringify({ inputs, filer }, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${path}/pending.json`,
       JSON.stringify(prepared.bundle.pending, null, 2),
     );
@@ -191,7 +194,7 @@ Deno.test("2025 retained annual recharacterization records derive N gross, owner
       const file = `retained-${documents.length}.${
         d.bytes[0] === 37 ? "pdf" : "json"
       }`;
-      await Deno.writeFile(`${path}/${file}`, d.bytes);
+      await fs.writeFile(`${path}/${file}`, d.bytes);
       documents.push({
         reference: d.document_reference,
         file,
@@ -287,7 +290,7 @@ Deno.test("2025 retained annual recharacterization records derive N gross, owner
       })
     );
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${root}/held-manifest.json`,
     JSON.stringify(manifest, null, 2),
   );

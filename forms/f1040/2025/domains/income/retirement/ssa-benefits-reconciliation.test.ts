@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/header.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
@@ -45,7 +46,7 @@ const ssa1099 = {
   ],
 };
 
-Deno.test("SSA-1099 signed box 5 offsets another statement in final line 6a replay", () => {
+test("SSA-1099 signed box 5 offsets another statement in final line 6a replay", () => {
   assertSocialSecurityBenefitSource({
     ssa1099,
     f1040: filed(4_000),
@@ -61,7 +62,7 @@ Deno.test("SSA-1099 signed box 5 offsets another statement in final line 6a repl
   );
 });
 
-Deno.test("line 6b taxable benefits need retained line 6a and matching AGI", async () => {
+test("line 6b taxable benefits need retained line 6a and matching AGI", async () => {
   const unsupported = { f1040: { ...filed(0), line6b_ss_taxable: 1 } };
   const message = "line 6b and AGI taxable benefits must fit retained line 6a";
   assertThrows(
@@ -100,7 +101,7 @@ Deno.test("line 6b taxable benefits need retained line 6a and matching AGI", asy
   }
 });
 
-Deno.test("benefit statement owner requires issued-copy identity for each positive SSA or RRB row", () => {
+test("benefit statement owner requires issued-copy identity for each positive SSA or RRB row", () => {
   assertBenefitStatementOwner({ ssa1099 }, filer);
   const wrong = {
     ssas: [{
@@ -144,7 +145,7 @@ Deno.test("benefit statement owner requires issued-copy identity for each positi
   });
 });
 
-Deno.test("native and PDF export reject a benefit statement owned by another person", async () => {
+test("native and PDF export reject a benefit statement owned by another person", async () => {
   const pending = {
     ssa1099: {
       ssas: [{
@@ -164,7 +165,7 @@ Deno.test("native and PDF export reject a benefit statement owned by another per
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("native and PDF export reject a repeated SSA issued copy despite reference casing", async () => {
+test("native and PDF export reject a repeated SSA issued copy despite reference casing", async () => {
   const row = {
     box3_gross_benefits: 4_000,
     recipient_tin: filer.primarySSN,
@@ -194,7 +195,7 @@ Deno.test("native and PDF export reject a repeated SSA issued copy despite refer
   await buildPdfBytes(distinct, filer);
 });
 
-Deno.test("native and PDF export reject inflated SSA line 6a", async () => {
+test("native and PDF export reject inflated SSA line 6a", async () => {
   const pending = {
     ssa1099,
     f1040: filed(5_000),
@@ -209,7 +210,7 @@ Deno.test("native and PDF export reject inflated SSA line 6a", async () => {
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("SSA-1099 contradictory box 5 rejects final native and PDF export", async () => {
+test("SSA-1099 contradictory box 5 rejects final native and PDF export", async () => {
   const pending = {
     ssa1099: {
       ssas: [{
@@ -229,7 +230,7 @@ Deno.test("SSA-1099 contradictory box 5 rejects final native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("SSA line 6a counts issued SSA/RRB box 5 once alongside lump-sum review", () => {
+test("SSA line 6a counts issued SSA/RRB box 5 once alongside lump-sum review", () => {
   const pending = {
     ssa1099: {
       ssas: [
@@ -249,7 +250,7 @@ Deno.test("SSA line 6a counts issued SSA/RRB box 5 once alongside lump-sum revie
   assertEquals(pending.f1040.line6a_ss_gross, 7_000);
 });
 
-Deno.test("lump-sum worksheet cannot supply or inflate line 6a without issued box 5", async () => {
+test("lump-sum worksheet cannot supply or inflate line 6a without issued box 5", async () => {
   const worksheet = {
     lump_sum_sss: [{
       total_ss_benefits_this_year: 5_000,
@@ -303,7 +304,7 @@ Deno.test("lump-sum worksheet cannot supply or inflate line 6a without issued bo
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("two lump-sum worksheets each reconcile the annual issued box 5 total", async () => {
+test("two lump-sum worksheets each reconcile the annual issued box 5 total", async () => {
   const issued = {
     ssas: [{
       box3_gross_benefits: 5_000,
@@ -345,7 +346,7 @@ Deno.test("two lump-sum worksheets each reconcile the annual issued box 5 total"
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("negative SSA box 5 offsets positive RRB-1099 box 5", () => {
+test("negative SSA box 5 offsets positive RRB-1099 box 5", () => {
   assertSocialSecurityBenefitSource({
     ssa1099: {
       ssas: [
@@ -361,7 +362,7 @@ Deno.test("negative SSA box 5 offsets positive RRB-1099 box 5", () => {
   });
 });
 
-Deno.test("RRB-1099 box 10 withholding replays at native and PDF export", async () => {
+test("RRB-1099 box 10 withholding replays at native and PDF export", async () => {
   const source = {
     ssas: [{
       is_rrb: true,
@@ -402,7 +403,7 @@ Deno.test("RRB-1099 box 10 withholding replays at native and PDF export", async 
   );
 });
 
-Deno.test("SSA repayment and RRB-1099 benefits reach full-graph line 6a and taxability", () => {
+test("SSA repayment and RRB-1099 benefits reach full-graph line 6a and taxability", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

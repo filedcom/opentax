@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -15,7 +16,7 @@ const firm = {
   wages: 1_000,
 };
 
-Deno.test("Form 8919 PDF uses the 2025 firm rows and numbered line fields", () => {
+test("Form 8919 PDF uses the 2025 firm rows and numbered line fields", () => {
   const names = Object.fromEntries(
     form8919Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -37,7 +38,7 @@ Deno.test("Form 8919 PDF uses the 2025 firm rows and numbered line fields", () =
   assertEquals(form8919Pdf.pageIndices?.({}), [0]);
 });
 
-Deno.test("Form 8919 PDF converts firm dates and unknown TINs for print", () => {
+test("Form 8919 PDF converts firm dates and unknown TINs for print", () => {
   const [copy] = form8919Pdf.instances?.({
     taxpayer_ssn: "123-45-6789",
     forms: [{
@@ -61,7 +62,7 @@ Deno.test("Form 8919 PDF converts firm dates and unknown TINs for print", () => 
   assertEquals(copy.line8, 0);
 });
 
-Deno.test("Form 8919 PDF uses additional form copies only for rows after five", () => {
+test("Form 8919 PDF uses additional form copies only for rows after five", () => {
   const employers = Array.from({ length: 6 }, (_, index) => ({
     ...firm,
     name: `Firm ${index + 1}`,
@@ -79,7 +80,7 @@ Deno.test("Form 8919 PDF uses additional form copies only for rows after five", 
   assertEquals(copies[1].line13, undefined);
 });
 
-Deno.test("Form 8919 PDF keeps taxpayer and spouse copies separate", () => {
+test("Form 8919 PDF keeps taxpayer and spouse copies separate", () => {
   const copies = form8919Pdf.instances?.({
     taxpayer_ssn: "123-45-6789",
     spouse_ssn: "987-65-4321",
@@ -93,7 +94,7 @@ Deno.test("Form 8919 PDF keeps taxpayer and spouse copies separate", () => {
   assertEquals(copies[1].firm_1_name, "Spouse Firm");
 });
 
-Deno.test("Form 8919 PDF requires spouse identity for a spouse copy", async () => {
+test("Form 8919 PDF requires spouse identity for a spouse copy", async () => {
   const [copy] = form8919Pdf.instances?.({
     spouse_ssn: "987-65-4321",
     forms: [{ recipient: "spouse", employers: [firm] }],
@@ -119,7 +120,7 @@ Deno.test("Form 8919 PDF requires spouse identity for a spouse copy", async () =
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Form 8919 PDF rejects duplicate recipient forms", () => {
+test("Form 8919 PDF rejects duplicate recipient forms", () => {
   const form = { recipient: "taxpayer", employers: [firm] };
   assertThrows(() =>
     form8919Pdf.instances?.({

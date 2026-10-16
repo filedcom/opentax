@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -94,7 +95,7 @@ function filing() {
   return { fields, pending: result.pending };
 }
 
-Deno.test("two first-year contracts reach Form 6251 line 2p, Schedule 2, Form 1040, native and PDF", async () => {
+test("two first-year contracts reach Form 6251 line 2p, Schedule 2, Form 1040, native and PDF", async () => {
   const { fields, pending } = filing();
   assertEquals(pending.schedule1?.line3_schedule_c, 0);
   assertEquals(fields.line2p_long_term_contracts, 230_000);
@@ -119,7 +120,7 @@ Deno.test("two first-year contracts reach Form 6251 line 2p, Schedule 2, Form 10
   );
 });
 
-Deno.test("two contracts reject duplicate identity, changed costs, receipts and final tax", () => {
+test("two contracts reject duplicate identity, changed costs, receipts and final tax", () => {
   const { fields, pending } = filing();
   for (
     const changed of [

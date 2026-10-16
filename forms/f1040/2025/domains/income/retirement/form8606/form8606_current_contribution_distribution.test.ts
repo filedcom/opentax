@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -118,7 +119,7 @@ function filedReturn(receivedOn = "2026-02-15") {
   return result;
 }
 
-Deno.test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 and does not offset a 2025 distribution", async () => {
+test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 and does not offset a 2025 distribution", async () => {
   const result = filedReturn();
   const pending = normalizeForm8606TestPending(result.pending);
   const filer = extractFilerIdentity(general);
@@ -154,7 +155,7 @@ Deno.test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 
   );
 });
 
-Deno.test("2025 IRA contribution received in 2025 contributes to the distribution basis and leaves line 4 zero", () => {
+test("2025 IRA contribution received in 2025 contributes to the distribution basis and leaves line 4 zero", () => {
   const pending = normalizeForm8606TestPending(
     filedReturn("2025-12-15").pending,
   );
@@ -171,7 +172,7 @@ Deno.test("2025 IRA contribution received in 2025 contributes to the distributio
   );
 });
 
-Deno.test("Form 8606 contribution and distribution reject changed receipt, Form 5498, worksheet, line 4 and owner", () => {
+test("Form 8606 contribution and distribution reject changed receipt, Form 5498, worksheet, line 4 and owner", () => {
   const pending = normalizeForm8606TestPending(filedReturn().pending);
   const filer = extractFilerIdentity(general);
   const source = pending.form8606

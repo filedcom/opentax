@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertCurrentOrphanAllocationSource,
@@ -40,7 +41,7 @@ const review = {
     },
   ],
 };
-Deno.test("Form 3800 source review maps reordered credit use and checks finalized limit", () => {
+test("Form 3800 source review maps reordered credit use and checks finalized limit", () => {
   assertEquals(
     reconcileCurrentOrphanAllocation(review, [source, other], {
       primarySSN: "111-22-3333",
@@ -57,7 +58,7 @@ Deno.test("Form 3800 source review maps reordered credit use and checks finalize
   );
   assertCurrentOrphanAllocationSource(review, structuredClone(review));
 });
-Deno.test("Form 3800 source review rejects incomplete, contradictory, or unsupported allocations", () => {
+test("Form 3800 source review rejects incomplete, contradictory, or unsupported allocations", () => {
   const failures = [
     () => reconcileCurrentOrphanAllocation(review, [source]),
     () => reconcileCurrentOrphanAllocation(review, [source, source]),

@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form5471ScheduleQPdf } from "./f5471_schedule_q.ts";
 
-Deno.test("Schedule Q PDF maps general sales, tested, and total rows", () => {
+test("Schedule Q PDF maps general sales, tested, and total rows", () => {
   const [fields] = form5471ScheduleQPdf.instances?.(
     {},
     form8992Filer,

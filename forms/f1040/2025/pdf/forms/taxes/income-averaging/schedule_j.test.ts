@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ALL_PDF_FORMS } from "../../index.ts";
 import { scheduleJPdf } from "./schedule_j.ts";
@@ -9,7 +10,7 @@ const pending = {
   f1040: { line15_taxable_income: 1, line16_income_tax: 25 },
 };
 
-Deno.test("2025 Schedule J PDF maps every numbered line to its IRS widget", () => {
+test("2025 Schedule J PDF maps every numbered line to its IRS widget", () => {
   assertEquals(scheduleJPdf.fields.length, 25);
   assertEquals(
     scheduleJPdf.fields[0].pdfField,
@@ -38,7 +39,7 @@ Deno.test("2025 Schedule J PDF maps every numbered line to its IRS widget", () =
   );
 });
 
-Deno.test("2025 Schedule J PDF only projects the complete calculated lines", () => {
+test("2025 Schedule J PDF only projects the complete calculated lines", () => {
   const sourceOnly = {
     elected_farm_income: 9_000,
     prior_year_taxable_income_py1: 40_000,
@@ -73,7 +74,7 @@ Deno.test("2025 Schedule J PDF only projects the complete calculated lines", () 
   );
 });
 
-Deno.test("2025 Schedule J PDF joins its line 23 to Form 1040 with Form 4972 tax", () => {
+test("2025 Schedule J PDF joins its line 23 to Form 1040 with Form 4972 tax", () => {
   const joint = {
     f1040: { ...pending.f1040, line16_income_tax: 525, form4972_tax: 500 },
     form4972: { elections: [{}] },

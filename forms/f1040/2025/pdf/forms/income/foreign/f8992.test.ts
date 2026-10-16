@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form8992Pdf } from "./f8992.ts";
 import { form8992ScheduleAPdf } from "./f8992_schedule_a.ts";
 
-Deno.test("Form 8992 PDF projects Part I, Part II, and shareholder identity", () => {
+test("Form 8992 PDF projects Part I, Part II, and shareholder identity", () => {
   const [fields] =
     form8992Pdf.instances?.({}, form8992Filer, form8992Pending) ?? [];
   assertEquals(fields?.part_i_line3, 50_000);
@@ -17,7 +18,7 @@ Deno.test("Form 8992 PDF projects Part I, Part II, and shareholder identity", ()
   );
 });
 
-Deno.test("Schedule A PDF projects CFC row and totals, retaining only form page", () => {
+test("Schedule A PDF projects CFC row and totals, retaining only form page", () => {
   const [fields] =
     form8992ScheduleAPdf.instances?.({}, form8992Filer, form8992Pending) ?? [];
   assertEquals(fields?.cfc_identifier, "FC001");

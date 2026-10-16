@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm6251TrustSource } from "./form6251_trust_source.ts";
 
@@ -11,7 +12,7 @@ const copy = {
   box12_codes_g_through_i_absent: true,
 };
 
-Deno.test("Form 6251 line 2j replays identified trust K-1 code A copies", () => {
+test("Form 6251 line 2j replays identified trust K-1 code A copies", () => {
   const fields = { line2j_estates_and_trusts: -800, line11_amt: 100 };
   const pending = {
     k1_trust: { k1_trusts: [copy] },

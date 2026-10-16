@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
@@ -14,7 +17,7 @@ import {
 type Row = Record<string, any>;
 
 for (const c of aggregationPhaseInCases) {
-  Deno.test(`aggregation phase-in ${c.name}: filed limits, owner sources, XML and PDF`, async () => {
+  test(`aggregation phase-in ${c.name}: filed limits, owner sources, XML and PDF`, async () => {
     const { input, filer } = aggregationPhaseInFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -90,17 +93,11 @@ for (const c of aggregationPhaseInCases) {
         QBIAfterPhaseInReductionAmt: c.qbi,
       })
     ) assert(xml.includes(`<${tag}>${value}</${tag}>`), tag);
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "AGGREGATION_PHASEIN_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("AGGREGATION_PHASEIN_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.AGGREGATION_PHASEIN_EVIDENCE;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/source.json`,
         JSON.stringify(
           { input, filer, pending: prepared.bundle.pending },
@@ -108,13 +105,13 @@ for (const c of aggregationPhaseInCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, xml);
-      await Deno.writeFile(
+      await fs.writeFile(`${dir}/return.xml`, xml);
+      await fs.writeFile(
         `${dir}/annual-disclosure.pdf`,
         prepared.bundle.attachments[0].bytes,
       );
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -124,11 +121,11 @@ for (const c of aggregationPhaseInCases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      const xsd = await new Deno.Command("xmllint", {
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -141,7 +138,7 @@ for (const c of aggregationPhaseInCases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       for (
         const kind of [
@@ -186,12 +183,12 @@ for (const c of aggregationPhaseInCases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }
 
-Deno.test("aggregation skips Part III when sourced property makes the wage/property limit nonbinding", async () => {
+test("aggregation skips Part III when sourced property makes the wage/property limit nonbinding", async () => {
   for (const c of aggregationPhaseInCases) {
     const { input, filer } = aggregationPhaseInFixture(c);
     for (let i = 0; i < c.count; i++) {

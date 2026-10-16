@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../index.ts";
@@ -12,9 +15,9 @@ const single = pdfReviewFixtures.find((f) => f.id === "single-schedule-c")!;
 const joint = pdfReviewFixtures.find((f) =>
   f.id === "joint-form8995a-patron-farm"
 )!;
-Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through source, QBI, native and flattened full PDF", async () => {
+test("actual owned C/F losses retain signed whole-dollar boundaries through source, QBI, native and flattened full PDF", async () => {
   const root = ".state/research/2026-10-06-owned-cf-signed-dollars";
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   for (const row of ownedCfFiledCases) {
     const inputs = ownedCfFiledInputs(single, joint, row);
     const result = f1040_2025.executeReturn(inputs);
@@ -87,7 +90,7 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
         farmLoss ? "NetFarmProfitLossAmt" : "BusinessIncomeLossAmt"
       }>${row.loss}</`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -107,17 +110,17 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
     const doc = await PDFDocument.load(pdf);
     assertEquals(doc.getForm().getFields().length, 0);
     const path = `${root}/${row.id}`;
-    await Deno.writeTextFile(`${path}.json`, JSON.stringify(inputs, null, 2));
-    await Deno.writeTextFile(`${path}.xml`, xml);
-    await Deno.writeFile(`${path}.pdf`, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(`${path}.json`, JSON.stringify(inputs, null, 2));
+    await fs.writeFile(`${path}.xml`, xml);
+    await fs.writeFile(`${path}.pdf`, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", `${path}.pdf`, "-"],
       stdout: "piped",
     }).output();
     assertEquals(extracted.code, 0);
     const text = new TextDecoder().decode(extracted.stdout);
     assertStringIncludes(text, String(row.loss));
-    await Deno.writeTextFile(`${path}.txt`, text);
+    await fs.writeFile(`${path}.txt`, text);
     console.log(
       JSON.stringify({
         id: row.id,
@@ -129,7 +132,7 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
   }
 });
 
-Deno.test("owned filed C/F cent boundary rejects stale source, income and owner-QBI exports", async () => {
+test("owned filed C/F cent boundary rejects stale source, income and owner-QBI exports", async () => {
   const row = ownedCfFiledCases.find((row) => row.id === "farm-loss-50")!;
   const result = f1040_2025.executeReturn(
     ownedCfFiledInputs(single, joint, row),

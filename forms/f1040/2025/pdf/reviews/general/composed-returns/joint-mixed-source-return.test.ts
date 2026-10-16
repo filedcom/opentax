@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -20,7 +23,7 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "joint-two-w2s"
 )!;
 
-Deno.test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and filled PDF", async () => {
+test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and filled PDF", async () => {
   const filer = {
     ...base.filer,
     softwareId: "12345678",
@@ -170,7 +173,7 @@ Deno.test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and
   );
 });
 
-Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Schedule 1, withholding, MeF, and PDF", async () => {
+test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Schedule 1, withholding, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -221,18 +224,18 @@ Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Sch
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsdPath);
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    await sys.stat(xsdPath);
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsdPath, xmlPath],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
   } catch (error) {
     throw error;
@@ -243,10 +246,10 @@ Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Sch
     ".pdf-cache",
     bundle,
   );
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, filled);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, filled);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -256,7 +259,7 @@ Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Sch
     assertStringIncludes(printed, "6400");
     assertStringIncludes(printed, "400");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const pendingRecord = pending as unknown as Record<string, unknown>;
@@ -285,7 +288,7 @@ Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Sch
   );
 });
 
-Deno.test("1099-K personal and 1099-B broker sales retain three sale instances through PDF and submission ZIP", async () => {
+test("1099-K personal and 1099-B broker sales retain three sale instances through PDF and submission ZIP", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-k-personal-gain-loss"
   )!;
@@ -381,7 +384,7 @@ Deno.test("1099-K personal and 1099-B broker sales retain three sale instances t
   );
 });
 
-Deno.test("two Schedule C businesses retain separate native and printable instances in the submission archive", async () => {
+test("two Schedule C businesses retain separate native and printable instances in the submission archive", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-form8995a-two-business-loss-netting"
   )!;

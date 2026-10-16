@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   buildCurrentYearCarryforwardLedger,
@@ -20,7 +21,7 @@ const source = {
   form3800_credit_line: "1i" as const,
 };
 
-Deno.test("Form 8582-CR current-year ledger retains activity, route, and 2025 unallowed credit", () => {
+test("Form 8582-CR current-year ledger retains activity, route, and 2025 unallowed credit", () => {
   const ledger = buildCurrentYearCarryforwardLedger({
     credit_sources: [source],
     regular_tax_all_income: 10_000,
@@ -48,7 +49,7 @@ Deno.test("Form 8582-CR current-year ledger retains activity, route, and 2025 un
   );
 });
 
-Deno.test("Form 8582-CR current-year ledger rejects unverified prior vintage", () => {
+test("Form 8582-CR current-year ledger rejects unverified prior vintage", () => {
   assertThrows(
     () =>
       buildCurrentYearCarryforwardLedger({
@@ -68,7 +69,7 @@ Deno.test("Form 8582-CR current-year ledger rejects unverified prior vintage", (
   );
 });
 
-Deno.test("Form 8582-CR 2026 opening replays filed 2025 Worksheet 9 source and credit", () => {
+test("Form 8582-CR 2026 opening replays filed 2025 Worksheet 9 source and credit", () => {
   const original = {
     credit_sources: [source],
     regular_tax_all_income: 10_000,
@@ -124,7 +125,7 @@ Deno.test("Form 8582-CR 2026 opening replays filed 2025 Worksheet 9 source and c
   reject(opening, filed, { ...original, regular_tax_without_passive: 9_400 });
 });
 
-Deno.test("Form 8582-CR line 6 rejects an inverted or fractional tax pair", () => {
+test("Form 8582-CR line 6 rejects an inverted or fractional tax pair", () => {
   assertThrows(
     () =>
       buildCurrentYearCarryforwardLedger({

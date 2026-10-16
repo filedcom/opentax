@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { createHash } from "node:crypto";
 import { Buffer } from "node:buffer";
@@ -11,8 +14,8 @@ const root = ".state/research/hsa-code2-source-oct6";
 const hash = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 for (const owner of ["T", "S"] as const) {
-  Deno.test(`reviewed ${owner} employer owner-paid code-2 actual W-2/trustee/payment source reaches 1040, two8889, XSD and PDF`, async () => {
-    await Deno.mkdir(root, { recursive: true });
+  test(`reviewed ${owner} employer owner-paid code-2 actual W-2/trustee/payment source reaches 1040, two8889, XSD and PDF`, async () => {
+    await fs.mkdir(root, { recursive: true });
     const inputs = employerCode2ReturnSource(owner);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -36,8 +39,8 @@ for (const owner of ["T", "S"] as const) {
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
     assertEquals((prepared.bundle.xml.match(/<IRS8889 /g) ?? []).length, 2);
     assertEquals((prepared.bundle.xml.match(/<IRS5329 /g) ?? []).length, 0);
-    await Deno.writeTextFile(`${root}/${owner}.xml`, prepared.bundle.xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${owner}.xml`, prepared.bundle.xml);
+    const validated = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -63,12 +66,12 @@ for (const owner of ["T", "S"] as const) {
       ["form8889", 1],
       ["form8889", 2],
     ]);
-    await Deno.writeFile(`${root}/${owner}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${owner}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${owner}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${owner}.source-pending.json`,
       JSON.stringify({ inputs, filer, pending }, null, 2),
     );
@@ -78,7 +81,7 @@ for (const owner of ["T", "S"] as const) {
       const bytes = Buffer.from((row as any).bytes_base64, "base64");
       assertEquals(hash(bytes), (row as any).sha256);
       const path = `${owner}-${kind}.bin`;
-      await Deno.writeFile(`${root}/${path}`, bytes);
+      await fs.writeFile(`${root}/${path}`, bytes);
       docs.push({
         kind,
         reference: (row as any).source_document_reference,
@@ -86,7 +89,7 @@ for (const owner of ["T", "S"] as const) {
         sha256: hash(bytes),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${owner}.documents.json`,
       JSON.stringify(docs, null, 2),
     );
@@ -100,7 +103,7 @@ for (const owner of ["T", "S"] as const) {
     );
   });
 }
-Deno.test("retained employer code-2 W-2, trustee and timely owner payment conflicts reject final filing", async () => {
+test("retained employer code-2 W-2, trustee and timely owner payment conflicts reject final filing", async () => {
   const source = employerCode2ReturnSource("T");
   const base = f1040_2025.executeReturn(source);
   const filer = extractFilerIdentity(base.pending.f1040)!;

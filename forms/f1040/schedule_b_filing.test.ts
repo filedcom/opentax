@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { scheduleBFilingRequired } from "./schedule_b_filing.ts";
 import type { ScheduleBFilingFacts } from "./schedule_b_filing.ts";
@@ -16,7 +17,7 @@ const none: ScheduleBFilingFacts = {
   foreignTrust: false,
 };
 
-Deno.test("Schedule B uses separate strict $1,500 income thresholds", () => {
+test("Schedule B uses separate strict $1,500 income thresholds", () => {
   assertEquals(
     scheduleBFilingRequired({
       ...none,
@@ -35,7 +36,7 @@ Deno.test("Schedule B uses separate strict $1,500 income thresholds", () => {
   );
 });
 
-Deno.test("Schedule B special filing triggers apply below the income thresholds", () => {
+test("Schedule B special filing triggers apply below the income thresholds", () => {
   const triggers: Partial<ScheduleBFilingFacts>[] = [
     { sellerFinancedInterest: true },
     { nomineeInterest: 1 },

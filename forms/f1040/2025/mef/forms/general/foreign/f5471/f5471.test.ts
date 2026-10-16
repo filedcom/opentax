@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Category 4/5a Form 5471 parent joins A, B, C, F, G, and I", () => {
+test("Category 4/5a Form 5471 parent joins A, B, C, F, G, and I", () => {
   const xml = form5471.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -71,7 +73,7 @@ Deno.test("Category 4/5a Form 5471 parent joins A, B, C, F, G, and I", () => {
   assertEquals(xml.includes("TransitionRuleDividend"), false);
 });
 
-Deno.test("Form 5471 parent rejects unreviewed stock events and Schedule I facts", () => {
+test("Form 5471 parent rejects unreviewed stock events and Schedule I facts", () => {
   const source = (cfc: unknown) => ({
     ...form8992Pending,
     f5471: { f5471s: [cfc] },
@@ -153,12 +155,7 @@ Deno.test("Form 5471 parent rejects unreviewed stock events and Schedule I facts
     }), Error);
 });
 
-Deno.test({
-  name: "Category 5a Form 5471 partial parent XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Category 5a Form 5471 partial parent XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -166,7 +163,7 @@ Deno.test({
       /^<IRS5471/,
       '<IRS5471 xmlns="http://www.irs.gov/efile" documentId="IRS5471Test1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -177,5 +174,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

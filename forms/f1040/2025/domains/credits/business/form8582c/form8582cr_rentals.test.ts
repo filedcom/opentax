@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects } from "@std/assert";
 import {
@@ -12,7 +14,7 @@ import { inputSchema as form8582crInputSchema } from "../../../../../nodes/inter
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
 
 for (const c of passiveRentalCases) {
-  Deno.test(`Complete passive rental income inventory: ${c.rentals} rentals, ${c.count} credits`, async () => {
+  test(`Complete passive rental income inventory: ${c.rentals} rentals, ${c.count} credits`, async () => {
     const { id, input, expected } = passiveRentalFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -103,11 +105,11 @@ for (const c of passiveRentalCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8582CR_RENTALS_EVIDENCE");
+      root = process.env.FORM8582CR_RENTALS_EVIDENCE;
     } catch { /* Optional local evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -123,8 +125,8 @@ for (const c of passiveRentalCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
   });
 }

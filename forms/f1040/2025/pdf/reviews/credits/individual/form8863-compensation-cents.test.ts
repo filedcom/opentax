@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   serviceBusinessCases,
@@ -147,7 +149,7 @@ function centsSource(
   };
 }
 
-Deno.test("education compensation validates exact cents and sums before filing rounding", () => {
+test("education compensation validates exact cents and sums before filing rounding", () => {
   for (const bad of [-1, 0.001, Infinity, NaN, Number.MAX_SAFE_INTEGER]) {
     assertThrows(() => educationMoney.parse(bad));
   }
@@ -183,7 +185,7 @@ for (const payroll of [false, true]) {
     const name = `${payroll ? "w2" : "line8r"}-${cents}-${
       two ? "two-grants" : below ? "below" : "half"
     }`;
-    Deno.test(`education compensation cents ${name} reconciles full return`, async () => {
+    test(`education compensation cents ${name} reconciles full return`, async () => {
       const s = centsSource(payroll, cents, below, two);
       assertEquals(claimantRefundRestriction(s.review, "single"), below);
       const result = f1040_2025.executeReturn(s.inputs);
@@ -254,10 +256,10 @@ for (const payroll of [false, true]) {
         );
         await assertRejects(() => buildPdfBytes(changed, filer, ".pdf-cache"));
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir =
           `.state/research/form8863-compensation-cents-2026-10-09/${name}`;
-        await Deno.mkdir(dir, { recursive: true });
+        await fs.mkdir(dir, { recursive: true });
         for (
           const [name, data] of [
             ["source", s.inputs],
@@ -266,13 +268,13 @@ for (const payroll of [false, true]) {
             ["origins", origins],
           ] as const
         ) {
-          await Deno.writeTextFile(
+          await fs.writeFile(
             `${dir}/${name}.json`,
             JSON.stringify(data, null, 2),
           );
         }
-        await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-        await Deno.writeFile(`${dir}/return.pdf`, pdf);
+        await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+        await fs.writeFile(`${dir}/return.pdf`, pdf);
       }
     });
   }

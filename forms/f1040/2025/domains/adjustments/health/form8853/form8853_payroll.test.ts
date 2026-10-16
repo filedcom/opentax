@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { archerContributionLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
 import { w2 } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
@@ -64,12 +66,7 @@ function payrollInput(kind: string) {
   return input;
 }
 function evidenceRoot() {
-  try {
-    return Deno.env.get("ARCHER_PAYROLL_EVIDENCE");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.ARCHER_PAYROLL_EVIDENCE;
 }
 const cases = [
   {
@@ -110,7 +107,7 @@ const cases = [
   },
 ];
 for (const entry of cases) {
-  Deno.test(`Archer multiple payroll complete return: ${entry.id}`, async () => {
+  test(`Archer multiple payroll complete return: ${entry.id}`, async () => {
     const input = payrollInput(entry.id);
     const executed = f1040_2025.executeReturn(input);
     assertEquals(executed.diagnostics, []);
@@ -208,10 +205,10 @@ for (const entry of cases) {
     );
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -229,7 +226,7 @@ for (const entry of cases) {
     }
   });
 }
-Deno.test("Archer payroll inventory rejects repeated records and preserves aggregate cent rounding", () => {
+test("Archer payroll inventory rejects repeated records and preserves aggregate cent rounding", () => {
   const source = payrollInput("pay-cap").form8853.archer_contribution_ledger;
   assertEquals(archerCompensationSources(source).length, 2);
   assertEquals(calculateArcherContributions(source).line4, 1501);

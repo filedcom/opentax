@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import {
   assertForm8880EligibleTotals,
@@ -11,7 +12,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 
-Deno.test("Form 8880 tax limit uses 1040 line 18 less only the specified Schedule 3 credits", () => {
+test("Form 8880 tax limit uses 1040 line 18 less only the specified Schedule 3 credits", () => {
   const pending = {
     f1040: { line18_total_tax_before_credits: 2_000 },
     schedule3: {
@@ -37,7 +38,7 @@ Deno.test("Form 8880 tax limit uses 1040 line 18 less only the specified Schedul
   );
 });
 
-Deno.test("Form 8880 positive credit needs finalized line 18", () => {
+test("Form 8880 positive credit needs finalized line 18", () => {
   assertThrows(
     () =>
       assertForm8880TaxLimit(800, 800, {
@@ -48,7 +49,7 @@ Deno.test("Form 8880 positive credit needs finalized line 18", () => {
   );
 });
 
-Deno.test("Form 8880 line 7 cannot claim an unassigned contributor amount", () => {
+test("Form 8880 line 7 cannot claim an unassigned contributor amount", () => {
   assertForm8880EligibleTotals(1_000, 500, 1_500);
   assertThrows(
     () => assertForm8880EligibleTotals(0, 0, 1_500),
@@ -57,7 +58,7 @@ Deno.test("Form 8880 line 7 cannot claim an unassigned contributor amount", () =
   );
 });
 
-Deno.test("Form 8880 filed foreign AGI addback matches Form 2555 and Schedule 1", () => {
+test("Form 8880 filed foreign AGI addback matches Form 2555 and Schedule 1", () => {
   const foreignAddress = {
     line1: "1 Main Street",
     city: "Toronto",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -70,7 +71,7 @@ const form8862 = {
   },
 };
 const context = { taxYear: 2025, formType: "f1040" };
-Deno.test("prior EIC disallowance calculates the credit but stops unauthenticated Form 8862 export", () => {
+test("prior EIC disallowance calculates the credit but stops unauthenticated Form 8862 export", () => {
   const withoutForm = execute(plan, registry, {
     general,
     w2: [w2],

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
@@ -48,7 +50,7 @@ const cases = [
   },
 ];
 for (const item of cases) {
-  Deno.test(`W-2 plan source ${item.name} reconciles complete return`, async () => {
+  test(`W-2 plan source ${item.name} reconciles complete return`, async () => {
     const general = generalSchema.parse({
       filing_status: item.joint ? FilingStatus.MFJ : FilingStatus.Single,
       taxpayer_first_name: "Alex",
@@ -173,10 +175,10 @@ for (const item of cases) {
         await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
       }
     }
-    const dir = Deno.env.get("FORM8880_PLAN_EVIDENCE");
+    const dir = process.env.FORM8880_PLAN_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -184,13 +186,13 @@ for (const item of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }

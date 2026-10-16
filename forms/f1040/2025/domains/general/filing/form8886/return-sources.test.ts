@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -77,7 +80,7 @@ const broker = {
   cost_basis: 2100000,
 };
 
-Deno.test("Form 8886 native assembly rejects caller-supplied packet records even with plausible hashes", async () => {
+test("Form 8886 native assembly rejects caller-supplied packet records even with plausible hashes", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   await assertRejects(
     () =>
@@ -97,7 +100,7 @@ Deno.test("Form 8886 native assembly rejects caller-supplied packet records even
   );
 });
 
-Deno.test("Form 8886 return packet preparation checks the actual source join and owner before rendering", async () => {
+test("Form 8886 return packet preparation checks the actual source join and owner before rendering", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   const source = { disclosures: [await linkedDisclosure()] };
   await assertRejects(
@@ -173,7 +176,7 @@ async function linkedDisclosure(row = broker, taxpayer = row.recipient_ssn) {
   };
 }
 
-Deno.test("Form 8886 capital link joins a reviewed source to the actual return without confusing gross loss with the limited deduction", async () => {
+test("Form 8886 capital link joins a reviewed source to the actual return without confusing gross loss with the limited deduction", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   assertEquals(result.diagnostics, []);
   const source = { disclosures: [await linkedDisclosure()] };
@@ -188,7 +191,7 @@ Deno.test("Form 8886 capital link joins a reviewed source to the actual return w
   assertEquals(Object.isFrozen(rows) && Object.isFrozen(rows[0]), true);
 });
 
-Deno.test("Form 8886 rejects orphaned source links, diagnostic returns and a changed reviewed source even after recalculation", async () => {
+test("Form 8886 rejects orphaned source links, diagnostic returns and a changed reviewed source even after recalculation", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   const disclosure = await linkedDisclosure();
   await assertRejects(
@@ -244,7 +247,7 @@ Deno.test("Form 8886 rejects orphaned source links, diagnostic returns and a cha
   );
 });
 
-Deno.test("Form 8886 capital link requires the same recipient as its disclosure, including an independently owned spouse source", async () => {
+test("Form 8886 capital link requires the same recipient as its disclosure, including an independently owned spouse source", async () => {
   const spouseRow = { ...broker, recipient_ssn: general.spouse_ssn };
   const result = f1040_2025.executeReturn({ general, f1099b: [spouseRow] });
   const disclosure = await linkedDisclosure(spouseRow);
@@ -277,7 +280,7 @@ Deno.test("Form 8886 capital link requires the same recipient as its disclosure,
   );
 });
 
-Deno.test("Form 8886 current-year source proof also rejects missing calculated rows and a changed Form 1040 join", async () => {
+test("Form 8886 current-year source proof also rejects missing calculated rows and a changed Form 1040 join", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   const source = { disclosures: [await linkedDisclosure()] };
   await assertRejects(() =>
@@ -312,7 +315,7 @@ Deno.test("Form 8886 current-year source proof also rejects missing calculated r
   );
 });
 
-Deno.test("Form 8886 direct-sale link retains nonbroker source identity and refuses an unidentified recipient", async () => {
+test("Form 8886 direct-sale link retains nonbroker source identity and refuses an unidentified recipient", async () => {
   const direct = {
     recipient_ssn: general.taxpayer_ssn,
     source_document_reference: "reviewed sale contract",
@@ -353,7 +356,7 @@ Deno.test("Form 8886 direct-sale link retains nonbroker source identity and refu
   );
 });
 
-Deno.test("Form 8886 capital proof binds the actual calculated return identity, not only the entered sale recipient", async () => {
+test("Form 8886 capital proof binds the actual calculated return identity, not only the entered sale recipient", async () => {
   const row = { ...broker, recipient_ssn: "999887777" };
   const result = f1040_2025.executeReturn({ general, f1099b: [row] });
   assertEquals(result.diagnostics, []);
@@ -370,7 +373,7 @@ Deno.test("Form 8886 capital proof binds the actual calculated return identity, 
   );
 });
 
-Deno.test("Form 8886 reconciliation snapshots source, filer and calculated return before asynchronous fingerprinting", async () => {
+test("Form 8886 reconciliation snapshots source, filer and calculated return before asynchronous fingerprinting", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
   const disclosure = await linkedDisclosure();
   const source = { disclosures: [disclosure] };
@@ -390,7 +393,7 @@ Deno.test("Form 8886 reconciliation snapshots source, filer and calculated retur
   assertEquals(rows[0].gross_loss_before_limits, 2000000);
 });
 
-Deno.test("Form 8886 capital adapter cannot relabel a prior-year or impossible-date sale as a current-year source", async () => {
+test("Form 8886 capital adapter cannot relabel a prior-year or impossible-date sale as a current-year source", async () => {
   for (const date_sold of ["2024-06-01", "2025-02-30"]) {
     const row = { ...broker, date_sold };
     const result = f1040_2025.executeReturn({ general, f1099b: [row] });
@@ -403,7 +406,7 @@ Deno.test("Form 8886 capital adapter cannot relabel a prior-year or impossible-d
   }
 });
 
-Deno.test("Form 8886 foreign packet address is derived from the retained return and reconciled to its native header", async () => {
+test("Form 8886 foreign packet address is derived from the retained return and reconciled to its native header", async () => {
   const foreignGeneral = {
     ...general,
     address_line1: "1 Example Street",
@@ -494,8 +497,8 @@ Deno.test("Form 8886 foreign packet address is derived from the retained return 
   );
 });
 
-Deno.test("Form 8886 authentic return packets retain their preparation snapshot and reject stale disclosure, return and filer inputs", async () => {
-  const template = await Deno.readFile(
+test("Form 8886 authentic return packets retain their preparation snapshot and reject stale disclosure, return and filer inputs", async () => {
+  const template = await sys.readBytes(
     new URL("./fixtures/f8886-2019.pdf", import.meta.url),
   );
   const result = f1040_2025.executeReturn({ general, f1099b: [broker] });
@@ -578,7 +581,7 @@ Deno.test("Form 8886 authentic return packets retain their preparation snapshot 
   assertEquals(prepared.packets[0].packet.getPdf()[0], 37);
 });
 
-Deno.test("Form 8886 whole-return finalization binds both owners and continuation types without changing reviewed PDF bytes", async () => {
+test("Form 8886 whole-return finalization binds both owners and continuation types without changing reviewed PDF bytes", async () => {
   const spouseBroker = {
     ...broker,
     recipient_ssn: general.spouse_ssn,
@@ -613,7 +616,7 @@ Deno.test("Form 8886 whole-return finalization binds both owners and continuatio
       })),
     })),
   };
-  const template = await Deno.readFile(
+  const template = await sys.readBytes(
     new URL("./fixtures/f8886-2019.pdf", import.meta.url),
   );
   const prepared = await prepareForm8886ReturnPackets(
@@ -766,7 +769,7 @@ Deno.test("Form 8886 whole-return finalization binds both owners and continuatio
   );
 });
 
-Deno.test("Form 8886 real MeF bundle binds source, global continuations, printable copies and replay", async () => {
+test("Form 8886 real MeF bundle binds source, global continuations, printable copies and replay", async () => {
   const { buildMefBundle, assertPreparedBundleProjection } = await import(
     "../../../../mef/builder.ts"
   );
@@ -813,7 +816,7 @@ Deno.test("Form 8886 real MeF bundle binds source, global continuations, printab
     softwareId: "12345678",
     originator: { efin: "123456", originatorType: "ERO" },
   };
-  const template = await Deno.readFile(
+  const template = await sys.readBytes(
     new URL("./fixtures/f8886-2019.pdf", import.meta.url),
   );
   const prepared = await prepareForm8886ReturnPackets(
@@ -919,17 +922,17 @@ Deno.test("Form 8886 real MeF bundle binds source, global continuations, printab
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema.pathname, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
   await assertRejects(
     () =>
@@ -983,7 +986,7 @@ Deno.test("Form 8886 real MeF bundle binds source, global continuations, printab
   assertEquals(snapshotted.xml, bundle.xml);
 });
 
-Deno.test("Form 8886 public intake replays ordinary return inputs before native, PDF and OTSA preparation", async () => {
+test("Form 8886 public intake replays ordinary return inputs before native, PDF and OTSA preparation", async () => {
   const { normalizeAllPending } = await import(
     "../../../../return-processing/pending.ts"
   );
@@ -1095,7 +1098,7 @@ Deno.test("Form 8886 public intake replays ordinary return inputs before native,
   );
 });
 
-Deno.test("Form 8886 public large-loss route covers every owned broker and direct sale through full XSD and PDF", async () => {
+test("Form 8886 public large-loss route covers every owned broker and direct sale through full XSD and PDF", async () => {
   const { extractFilerIdentity } = await import("../../../../../mef/filer.ts");
   const { normalizeAllPending } = await import(
     "../../../../return-processing/pending.ts"
@@ -1165,21 +1168,21 @@ Deno.test("Form 8886 public large-loss route covers every owned broker and direc
   }
   const pdfBytes = await preparedReturn.renderPdf();
   assertEquals((await PDFDocument.load(pdfBytes)).getPageCount() >= 8, true);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
+    await fs.writeFile(path, bundle.xml);
     const schema = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     );
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema.pathname, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
   // The same authentic packet cannot cover a new source with the same loss.
   const changed = structuredClone(pending);

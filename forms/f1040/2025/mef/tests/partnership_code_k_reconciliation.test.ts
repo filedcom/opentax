@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -34,7 +35,7 @@ async function rejectsBoth(
   );
 }
 
-Deno.test("partnership code K export rejects a changed source", async () => {
+test("partnership code K export rejects a changed source", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -46,7 +47,7 @@ Deno.test("partnership code K export rejects a changed source", async () => {
   await rejectsBoth(pending, "do not match the issued K-1 facts");
 });
 
-Deno.test("partnership code K export rejects another recipient", async () => {
+test("partnership code K export rejects another recipient", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -62,7 +63,7 @@ Deno.test("partnership code K export rejects another recipient", async () => {
   await rejectsBoth(pending, "recipient is not the filer");
 });
 
-Deno.test("partnership code K export rejects a changed W-2G amount", async () => {
+test("partnership code K export rejects a changed W-2G amount", async () => {
   const pending = prepared();
   const source = pending.w2g as { w2gs: Array<Record<string, unknown>> };
   source.w2gs[0] = { ...source.w2gs[0], box1_winnings: 201 };
@@ -72,7 +73,7 @@ Deno.test("partnership code K export rejects a changed W-2G amount", async () =>
   );
 });
 
-Deno.test("partnership code K export rejects a changed line 8b", async () => {
+test("partnership code K export rejects a changed line 8b", async () => {
   const pending = prepared();
   (pending.schedule1 as Record<string, unknown>).line8b_gambling_winnings =
     1_201;

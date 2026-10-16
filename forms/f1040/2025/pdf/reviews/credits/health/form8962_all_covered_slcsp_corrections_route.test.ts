@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -15,7 +16,7 @@ const bothPoliciesFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-alternating-policies-both-slcsp-corrected"
 )!;
 
-Deno.test("all covered middle-policy SLCSP months reconcile through Form 8962, Schedule 2, Form 1040, MeF, and PDF", async () => {
+test("all covered middle-policy SLCSP months reconcile through Form 8962, Schedule 2, Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -56,7 +57,7 @@ Deno.test("all covered middle-policy SLCSP months reconcile through Form 8962, S
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 });
 
-Deno.test("independent SLCSP corrections on both alternating policies reconcile through the full return, MeF, and PDF", async () => {
+test("independent SLCSP corrections on both alternating policies reconcile through the full return, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

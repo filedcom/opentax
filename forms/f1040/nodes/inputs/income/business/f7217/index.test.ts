@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { SCENARIO_1040_12_FACTS } from "../../../../../e2e/ats/ty2025_cases.ts";
 import { form7217NonliquidatingDecrease } from "../../../../../2025/domains/income/business/form7217/form7217_732c_decrease.fixture.ts";
@@ -27,7 +28,7 @@ const item = {
   })),
 };
 
-Deno.test("Form 7217 rejects the Scenario 12 Part I and Part II source discrepancy", () => {
+test("Form 7217 rejects the Scenario 12 Part I and Part II source discrepancy", () => {
   const amounts = computeForm7217Amounts(item);
   assertEquals(amounts.totalPartnershipBasis, 32_507);
   assertEquals(amounts.cashAndSecurities, 4_000);
@@ -88,7 +89,7 @@ const capitalGainItem = {
   },
 };
 
-Deno.test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8949", () => {
+test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8949", () => {
   const result = f7217.compute({ taxYear: 2025, formType: "f1040" }, {
     form7217s: [capitalGainItem],
   });
@@ -127,7 +128,7 @@ Deno.test("Form 7217 routes reconciled long-term section 731 cash gain to Form 8
   );
 });
 
-Deno.test("Form 7217 section 731 gain rejects K-1 and outside-basis mismatches", () => {
+test("Form 7217 section 731 gain rejects K-1 and outside-basis mismatches", () => {
   for (
     const section_731_capital_gain_source of [
       {
@@ -214,7 +215,7 @@ Deno.test("Form 7217 section 731 gain rejects K-1 and outside-basis mismatches",
   }
 });
 
-Deno.test("Form 7217 accepts a complete one-date Part I/II basis reconciliation", () => {
+test("Form 7217 accepts a complete one-date Part I/II basis reconciliation", () => {
   assertEquals(
     f7217.compute({ taxYear: 2025, formType: "f1040" }, {
       form7217s: [fileableItem],
@@ -261,7 +262,7 @@ const liquidatingAllocation = {
   ],
 };
 
-Deno.test("Form 7217 section 732(c) liquidating basis increase follows class, appreciation, and FMV", () => {
+test("Form 7217 section 732(c) liquidating basis increase follows class, appreciation, and FMV", () => {
   const result = f7217.compute({ taxYear: 2025, formType: "f1040" }, {
     form7217s: [liquidatingAllocation],
   });
@@ -304,7 +305,7 @@ Deno.test("Form 7217 section 732(c) liquidating basis increase follows class, ap
   );
 });
 
-Deno.test("Form 7217 section 732(c) nonliquidating decrease preserves inventory, then uses depreciation and remaining basis", () => {
+test("Form 7217 section 732(c) nonliquidating decrease preserves inventory, then uses depreciation and remaining basis", () => {
   const source = form7217NonliquidatingDecrease;
   assertEquals(computeForm7217Amounts(source).basisAllocatedToProperty, 400);
   assertEquals(
@@ -352,7 +353,7 @@ Deno.test("Form 7217 section 732(c) nonliquidating decrease preserves inventory,
   }
 });
 
-Deno.test("Form 7217 section 732(c) liquidation protects inventory before other property", () => {
+test("Form 7217 section 732(c) liquidation protects inventory before other property", () => {
   const source = {
     ...form7217NonliquidatingDecrease,
     complete_liquidation: true,
@@ -398,7 +399,7 @@ Deno.test("Form 7217 section 732(c) liquidation protects inventory before other 
   );
 });
 
-Deno.test("Form 7217 rejects duplicate partnership/date forms and unequal Part II basis", () => {
+test("Form 7217 rejects duplicate partnership/date forms and unequal Part II basis", () => {
   assertThrows(
     () =>
       f7217.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -423,7 +424,7 @@ Deno.test("Form 7217 rejects duplicate partnership/date forms and unequal Part I
   );
 });
 
-Deno.test("Form 7217 reconciles section 731(c) securities on line 5b to Part II FMV", () => {
+test("Form 7217 reconciles section 731(c) securities on line 5b to Part II FMV", () => {
   const securities = {
     ...fileableItem,
     marketable_securities_fmv: 2_000,
@@ -487,7 +488,7 @@ Deno.test("Form 7217 reconciles section 731(c) securities on line 5b to Part II 
   );
 });
 
-Deno.test("Form 7217 requires real 2025 dates and explicit Part I answers", () => {
+test("Form 7217 requires real 2025 dates and explicit Part I answers", () => {
   for (const distribution_date of ["2025-02-29", "2024-12-31"]) {
     assertThrows(
       () =>
@@ -519,7 +520,7 @@ Deno.test("Form 7217 requires real 2025 dates and explicit Part I answers", () =
   );
 });
 
-Deno.test("Form 7217 refuses to drop recognized gain without a tax route", () => {
+test("Form 7217 refuses to drop recognized gain without a tax route", () => {
   assertThrows(
     () =>
       f7217.compute({ taxYear: 2025, formType: "f1040" }, {

@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
 import { form4797 } from "./f4797.ts";
 import { form8949 } from "../investments/f8949.ts";
 
-Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form 8949 row", () => {
+test("Form 4797 investment recapture links Part III to the excess-gain Form 8949 row", () => {
   const fields = {
     investment_1245_dispositions: [{
       property_id: "investment-1245-1",
@@ -88,13 +89,13 @@ Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form
   );
 });
 
-Deno.test("Form 4797: no gain or loss does not emit a document", () => {
+test("Form 4797: no gain or loss does not emit a document", () => {
   assertEquals(form4797.build({}), "");
   assertEquals(form4797.build({ section_1231_gain: 0 }), "");
   assertEquals(form4797.build({ junk: 999 }), "");
 });
 
-Deno.test("Form 4797: prior passive losses use finalized Form 8582 Part IX amounts", () => {
+test("Form 4797: prior passive losses use finalized Form 8582 Part IX amounts", () => {
   const f8582 = {
     activities: [
       {
@@ -161,7 +162,7 @@ Deno.test("Form 4797: prior passive losses use finalized Form 8582 Part IX amoun
   );
 });
 
-Deno.test("Form 4797: section 1231 gain uses Part I line 7", () => {
+test("Form 4797: section 1231 gain uses Part I line 7", () => {
   const xml = form4797.build({ section_1231_gain: 20_000 });
   assertStringIncludes(
     xml,
@@ -171,7 +172,7 @@ Deno.test("Form 4797: section 1231 gain uses Part I line 7", () => {
   assertEquals(xml.includes("<TotalGainLossAmt>"), false);
 });
 
-Deno.test("Form 4797: linked passive property sale rows populate native Parts I and II", () => {
+test("Form 4797: linked passive property sale rows populate native Parts I and II", () => {
   const rows = [
     {
       activity_id: "id-Land rental",
@@ -252,7 +253,7 @@ Deno.test("Form 4797: linked passive property sale rows populate native Parts I 
   );
 });
 
-Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts", () => {
+test("Form 4797: retained sale and prior PAL reconcile in both native parts", () => {
   const sales = [
     {
       activity_id: "id-Land rental",
@@ -347,7 +348,7 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
   );
 });
 
-Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () => {
+test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () => {
   const sale = {
     activity_id: "id-Rental house",
     activity_name: "Rental house",
@@ -422,7 +423,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
   );
 });
 
-Deno.test("Form 4797: Form 6252 section 1231 gain appears on line 4 and line 7", () => {
+test("Form 4797: Form 6252 section 1231 gain appears on line 4 and line 7", () => {
   const xml = form4797.build({
     section_1231_gain: 8_000,
     gain_form6252: 8_000,
@@ -442,7 +443,7 @@ Deno.test("Form 4797: Form 6252 section 1231 gain appears on line 4 and line 7",
   );
 });
 
-Deno.test("Form 4797: Form 8824 section 1231 gain appears on line 5 and line 7", () => {
+test("Form 4797: Form 8824 section 1231 gain appears on line 5 and line 7", () => {
   const xml = form4797.build({
     section_1231_gain: 8_000,
     gain_form8824: 8_000,
@@ -454,7 +455,7 @@ Deno.test("Form 4797: Form 8824 section 1231 gain appears on line 5 and line 7",
   );
 });
 
-Deno.test("Form 4797: partnership and S-corp K-1 amounts retain line 2 source rows", () => {
+test("Form 4797: partnership and S-corp K-1 amounts retain line 2 source rows", () => {
   const xml = form4797.build({
     section_1231_gain: 7_000,
     k1_1231_rows: [
@@ -493,7 +494,7 @@ Deno.test("Form 4797: partnership and S-corp K-1 amounts retain line 2 source ro
   );
 });
 
-Deno.test("Form 4797: prior section 1231 loss recaptures only the smaller gain", () => {
+test("Form 4797: prior section 1231 loss recaptures only the smaller gain", () => {
   const xml = form4797.build({
     section_1231_gain: 20_000,
     nonrecaptured_1231_loss: 5_000,
@@ -514,7 +515,7 @@ Deno.test("Form 4797: prior section 1231 loss recaptures only the smaller gain",
   assertStringIncludes(xml, "<OtherGainLossAmt>5000</OtherGainLossAmt>");
 });
 
-Deno.test("Form 4797: prior loss exceeding current gain recaptures all current gain", () => {
+test("Form 4797: prior loss exceeding current gain recaptures all current gain", () => {
   const xml = form4797.build({
     section_1231_gain: 3_000,
     nonrecaptured_1231_loss: 8_000,
@@ -527,7 +528,7 @@ Deno.test("Form 4797: prior loss exceeding current gain recaptures all current g
   assertStringIncludes(xml, "<OtherGainLossAmt>3000</OtherGainLossAmt>");
 });
 
-Deno.test("Form 4797: section 1231 loss flows through Part II lines 11, 17, and 18b", () => {
+test("Form 4797: section 1231 loss flows through Part II lines 11, 17, and 18b", () => {
   const xml = form4797.build({ section_1231_gain: -4_000 });
   assertStringIncludes(
     xml,
@@ -541,7 +542,7 @@ Deno.test("Form 4797: section 1231 loss flows through Part II lines 11, 17, and 
   assertStringIncludes(xml, "<OtherGainLossAmt>-4000</OtherGainLossAmt>");
 });
 
-Deno.test("Form 4797: Form 4684 business loss reaches line 14 and Schedule 1 total", () => {
+test("Form 4797: Form 4684 business loss reaches line 14 and Schedule 1 total", () => {
   const xml = form4797.build({ ordinary_gain_form4684: -20_000 });
   assertStringIncludes(
     xml,
@@ -555,7 +556,7 @@ Deno.test("Form 4797: Form 4684 business loss reaches line 14 and Schedule 1 tot
   assertEquals(xml.includes("<TotalPropertyGainLossAmt>"), false);
 });
 
-Deno.test("Form 4797: source amounts reconcile even when the ordinary total is zero", () => {
+test("Form 4797: source amounts reconcile even when the ordinary total is zero", () => {
   const xml = form4797.build({
     section_1231_gain: -4_000,
     ordinary_gain_form4684: 4_000,
@@ -571,7 +572,7 @@ Deno.test("Form 4797: source amounts reconcile even when the ordinary total is z
   );
 });
 
-Deno.test("Form 4797: line 8 requires a current positive section 1231 gain", () => {
+test("Form 4797: line 8 requires a current positive section 1231 gain", () => {
   assertThrows(
     () => form4797.build({ nonrecaptured_1231_loss: 5_000 }),
     Error,
@@ -588,7 +589,7 @@ Deno.test("Form 4797: line 8 requires a current positive section 1231 gain", () 
   );
 });
 
-Deno.test("Form 4797: ordinary and recapture aggregates need source detail", () => {
+test("Form 4797: ordinary and recapture aggregates need source detail", () => {
   assertThrows(
     () => form4797.build({ ordinary_gain: 8_000 }),
     Error,
@@ -616,7 +617,7 @@ Deno.test("Form 4797: ordinary and recapture aggregates need source detail", () 
   );
 });
 
-Deno.test("Form 4797: amounts must be whole dollars", () => {
+test("Form 4797: amounts must be whole dollars", () => {
   assertThrows(
     () => form4797.build({ section_1231_gain: 1.5 }),
     Error,

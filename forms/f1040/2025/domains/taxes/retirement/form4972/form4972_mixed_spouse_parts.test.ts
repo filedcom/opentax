@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -76,7 +77,7 @@ function mixedReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4972 separate spouse Part II and Part III elections join one Form 1040", () => {
+test("Form 4972 separate spouse Part II and Part III elections join one Form 1040", () => {
   const result = mixedReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -115,7 +116,7 @@ Deno.test("Form 4972 separate spouse Part II and Part III elections join one For
   assertEquals(pdf?.[1].line30, forms[1].line30);
 });
 
-Deno.test("mixed spouse elections reject source, ordinary-income, and tax tampering", () => {
+test("mixed spouse elections reject source, ordinary-income, and tax tampering", () => {
   const pending = mixedReturn().pending;
   assertThrows(() =>
     mef.build(pending.form4972!, {

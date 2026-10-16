@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -40,7 +41,7 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   );
 }
 
-Deno.test("two separately signed reduced Section B equipment gifts reach Schedule A, Form 1040, native attachments, and PDF", async () => {
+test("two separately signed reduced Section B equipment gifts reach Schedule A, Form 1040, native attachments, and PDF", async () => {
   const address = {
     line1: "1 Main St",
     city: "Austin",

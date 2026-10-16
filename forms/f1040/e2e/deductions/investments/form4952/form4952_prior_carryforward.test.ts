@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -125,7 +126,7 @@ function filing(source = prior) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4952 stages reviewed 2024 line 7 through the 2025 loan, Schedule A, and Form 1040 while filing stays closed", () => {
+test("Form 4952 stages reviewed 2024 line 7 through the 2025 loan, Schedule A, and Form 1040 while filing stays closed", () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line1, 20_000);
@@ -189,7 +190,7 @@ Deno.test("Form 4952 stages reviewed 2024 line 7 through the 2025 loan, Schedule
   );
 });
 
-Deno.test("Form 4952 binds exact prior filed copies and rejects changed bytes, owner, and carryforward amounts", async () => {
+test("Form 4952 binds exact prior filed copies and rejects changed bytes, owner, and carryforward amounts", async () => {
   const filedReturnBytes = new TextEncoder().encode(
     "%PDF-1.7 filed 2024 Form 1040 and Schedule A",
   );
@@ -283,7 +284,7 @@ Deno.test("Form 4952 binds exact prior filed copies and rejects changed bytes, o
   );
 });
 
-Deno.test("Form 4952 rejects altered prior line 7, filer, and retained source", () => {
+test("Form 4952 rejects altered prior line 7, filer, and retained source", () => {
   const badPrior = filing({
     ...prior,
     filed_2024_form4952: { ...prior.filed_2024_form4952, line7: 3_999 },

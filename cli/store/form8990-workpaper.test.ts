@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import {
@@ -83,8 +86,8 @@ async function makeBoundedReturn(baseDir: string) {
   return { returnId, returnPath, scheduleCId: scheduleC.id };
 }
 
-Deno.test("Form 8990 calculated workpaper is saved in its return and rechecked", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("Form 8990 calculated workpaper is saved in its return and rechecked", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId, returnPath } = await makeBoundedReturn(baseDir);
     const saved = await persistCalculatedForm8990Workpaper(baseDir, returnId);
@@ -94,7 +97,7 @@ Deno.test("Form 8990 calculated workpaper is saved in its return and rechecked",
     assertEquals(saved.workpaper.targetTaxYear, 2026);
     assertEquals(saved.workpaper.targetLine2, saved.form8990Line31);
     const raw = JSON.parse(
-      await Deno.readTextFile(join(returnPath, "return.json")),
+      await fs.readFile(join(returnPath, "return.json"), "utf8"),
     );
     assertEquals(raw.form8990CalculatedWorkpaper, saved);
     assertEquals(
@@ -102,19 +105,19 @@ Deno.test("Form 8990 calculated workpaper is saved in its return and rechecked",
       saved,
     );
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });
 
-Deno.test("Form 8990 saved workpaper rejects a changed source and tampered balance", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("Form 8990 saved workpaper rejects a changed source and tampered balance", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId, returnPath } = await makeBoundedReturn(baseDir);
     await persistCalculatedForm8990Workpaper(baseDir, returnId);
     const filePath = join(returnPath, "return.json");
-    const raw = JSON.parse(await Deno.readTextFile(filePath));
+    const raw = JSON.parse(await fs.readFile(filePath, "utf8"));
     raw.form8990CalculatedWorkpaper.form8990Line31++;
-    await Deno.writeTextFile(filePath, JSON.stringify(raw));
+    await fs.writeFile(filePath, JSON.stringify(raw));
     await assertRejects(
       () => readCalculatedForm8990Workpaper(baseDir, returnId),
       Error,
@@ -123,19 +126,19 @@ Deno.test("Form 8990 saved workpaper rejects a changed source and tampered balan
     raw.form8990CalculatedWorkpaper.form8990Line31--;
     raw.inputs.form8990[0].fields.receipts[0].source_reference =
       "different-sale";
-    await Deno.writeTextFile(filePath, JSON.stringify(raw));
+    await fs.writeFile(filePath, JSON.stringify(raw));
     await assertRejects(
       () => readCalculatedForm8990Workpaper(baseDir, returnId),
       Error,
       "saved workpaper differs",
     );
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });
 
-Deno.test("Form 8990 calculated workpaper is cleared by every input mutation", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("Form 8990 calculated workpaper is cleared by every input mutation", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     for (const mutation of ["append", "update", "delete"] as const) {
       const { returnId, returnPath, scheduleCId } = await makeBoundedReturn(
@@ -151,7 +154,7 @@ Deno.test("Form 8990 calculated workpaper is cleared by every input mutation", a
         await deleteInput(returnPath, scheduleCId);
       }
       const raw = JSON.parse(
-        await Deno.readTextFile(join(returnPath, "return.json")),
+        await fs.readFile(join(returnPath, "return.json"), "utf8"),
       );
       assertEquals("form8990CalculatedWorkpaper" in raw, false);
       await assertRejects(
@@ -159,12 +162,12 @@ Deno.test("Form 8990 calculated workpaper is cleared by every input mutation", a
       );
     }
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });
 
-Deno.test("Form 8990 workpaper cannot be saved without bounded source", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("Form 8990 workpaper cannot be saved without bounded source", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturn(2025, baseDir);
     await assertRejects(
@@ -173,6 +176,6 @@ Deno.test("Form 8990 workpaper cannot be saved without bounded source", async ()
       "needs source records",
     );
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });

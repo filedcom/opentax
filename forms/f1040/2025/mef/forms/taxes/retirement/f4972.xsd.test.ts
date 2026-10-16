@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -11,7 +14,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -63,12 +66,7 @@ function collection(form: Record<string, unknown>) {
   };
 }
 
-Deno.test({
-  name: "XSD: 2025 Form 4972 tax links to Form 1040 line 16",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 Form 4972 tax links to Form 1040 line 16", async () => {
   const xml = buildMefXml({
     f1099r: {
       f1099rs: [{
@@ -123,27 +121,21 @@ Deno.test({
     xml,
     "<LumpSumDistributionTaxAmt>14710</LumpSumDistributionTaxAmt>",
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: 2025 Form 4972 elected NUA amounts occupy the line 6 and 8 attributes",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 Form 4972 elected NUA amounts occupy the line 6 and 8 attributes", async () => {
   const xml = buildMefXml({
     f1099r: {
       f1099rs: [{
@@ -195,26 +187,21 @@ Deno.test({
   }, filer);
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
   assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="14000"');
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: 2025 Form 4972 Part-II-only NUA keeps Part III absent",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 Form 4972 Part-II-only NUA keeps Part III absent", async () => {
   const xml = buildMefXml({
     f1099r: {
       f1099rs: [{
@@ -258,16 +245,16 @@ Deno.test({
   }, filer);
   assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
   assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt"), false);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

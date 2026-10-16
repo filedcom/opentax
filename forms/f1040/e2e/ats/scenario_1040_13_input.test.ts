@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertNotEquals,
@@ -17,7 +18,7 @@ import {
   SCENARIO_1040_13_RECONCILIATION,
 } from "./scenario_1040_13_input.ts";
 
-Deno.test("ATS 1040 Scenario 13 maps every printed source form into one input", () => {
+test("ATS 1040 Scenario 13 maps every printed source form into one input", () => {
   const input = scenario104013Input();
   const facts = SCENARIO_1040_13_FACTS;
   const general = input.general as Record<string, unknown>;
@@ -45,7 +46,7 @@ Deno.test("ATS 1040 Scenario 13 maps every printed source form into one input", 
   assertEquals(facts.form8911.printedTentativeMinimumTax, 0);
 });
 
-Deno.test("ATS 1040 Scenario 13 preserves the printed return and identifies its $1,500 deduction conflict", () => {
+test("ATS 1040 Scenario 13 preserves the printed return and identifies its $1,500 deduction conflict", () => {
   const { printed, current2025 } = SCENARIO_1040_13_RECONCILIATION;
   assertEquals(printed.form1040Pages, [2, 3]);
   assertEquals(printed.form8911Page, 7);
@@ -84,7 +85,7 @@ Deno.test("ATS 1040 Scenario 13 preserves the printed return and identifies its 
   assertEquals(printed.allowedRefuelingCredit === printed.regularTax, true);
 });
 
-Deno.test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law Form 8911 credit", () => {
+test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law Form 8911 credit", () => {
   const result = f1040_2025.executeReturn(scenario104013Input());
   const form = result.pending.f1040;
   assertEquals(form?.line1a_wages, 31_620);
@@ -110,7 +111,7 @@ Deno.test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law 
   );
 });
 
-Deno.test("ATS 1040 Scenario 13 PDF parent and property reject the printed tax limit on the public current-year return", () => {
+test("ATS 1040 Scenario 13 PDF parent and property reject the printed tax limit on the public current-year return", () => {
   const input = scenario104013Input();
   const result = f1040_2025.executeReturn(input);
   const filer = extractFilerIdentity(result.pending.f1040)!;
@@ -133,7 +134,7 @@ Deno.test("ATS 1040 Scenario 13 PDF parent and property reject the printed tax l
   }
 });
 
-Deno.test("ATS Scenario 13 current-law reconstruction joins all six native documents without replacing printed answers", async () => {
+test("ATS Scenario 13 current-law reconstruction joins all six native documents without replacing printed answers", async () => {
   const input = scenario104013CurrentLawInput();
   const before = JSON.stringify(input);
   const result = f1040_2025.executeReturn(input);

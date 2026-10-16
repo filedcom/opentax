@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8611 } from "./f8611.ts";
 
@@ -28,7 +29,7 @@ const owner = {
   },
 };
 
-Deno.test("Form 8611 emits one source-backed document per building", () => {
+test("Form 8611 emits one source-backed document per building", () => {
   const xml = form8611.build({
     f8611s: [owner, {
       ...owner,
@@ -46,7 +47,7 @@ Deno.test("Form 8611 emits one source-backed document per building", () => {
   assertStringIncludes(xml[0], "<RecaptureTaxAmt>9090</RecaptureTaxAmt>");
 });
 
-Deno.test("Form 8611 reconciles line 14 totals with Schedule 2 line 16", () => {
+test("Form 8611 reconciles line 14 totals with Schedule 2 line 16", () => {
   const input = { f8611s: [owner] };
   assertEquals(
     form8611.build(input, {
@@ -64,7 +65,7 @@ Deno.test("Form 8611 reconciles line 14 totals with Schedule 2 line 16", () => {
   );
 });
 
-Deno.test("Form 8611 native rejects two documents for one building BIN", () => {
+test("Form 8611 native rejects two documents for one building BIN", () => {
   assertThrows(
     () =>
       form8611.build({

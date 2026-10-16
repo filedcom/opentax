@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -68,7 +69,7 @@ function filedReturn() {
   return normalizeForm8606TestPending(result.pending);
 }
 
-Deno.test("spouse-owned prior-basis IRA distribution has one owner through Form 1040, native Form 8606, and PDF", () => {
+test("spouse-owned prior-basis IRA distribution has one owner through Form 1040, native Form 8606, and PDF", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assertEquals(pending.f1040.line4a_ira_gross, 20_000);
@@ -93,7 +94,7 @@ Deno.test("spouse-owned prior-basis IRA distribution has one owner through Form 
   assertEquals(pdf.print_line15c_taxable, 16_000);
 });
 
-Deno.test("spouse-owned Form 8606 rejects owner and return tampering", () => {
+test("spouse-owned Form 8606 rejects owner and return tampering", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assert(filer?.spouse);

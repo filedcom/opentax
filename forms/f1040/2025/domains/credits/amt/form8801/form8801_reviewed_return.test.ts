@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { stageForm8801ReviewedReturnCalculation } from "./form8801_reviewed_return.ts";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import { f8801 } from "../../../../../nodes/inputs/credits/amt/f8801/index.ts";
 
-Deno.test("Form 8801 reviewed bytes join to computed public tax and zero-AMT line 9", async () => {
+test("Form 8801 reviewed bytes join to computed public tax and zero-AMT line 9", async () => {
   const f = await fixture();
   const r = await stageForm8801ReviewedReturnCalculation(
     f.inputs,
@@ -37,7 +38,7 @@ Deno.test("Form 8801 reviewed bytes join to computed public tax and zero-AMT lin
   ], [false, false, false, false]);
 });
 
-Deno.test("Form 8801 public wages change recomputes capacity without caller override", async () => {
+test("Form 8801 public wages change recomputes capacity without caller override", async () => {
   const f = await fixture();
   const before = await stageForm8801ReviewedReturnCalculation(
     f.inputs,
@@ -57,7 +58,7 @@ Deno.test("Form 8801 public wages change recomputes capacity without caller over
   assertEquals(before.lines[25], 5_182);
 });
 
-Deno.test("Form 8801 review staging rejects detached current tax and existing claims", async () => {
+test("Form 8801 review staging rejects detached current tax and existing claims", async () => {
   const f = await fixture();
   for (
     const extra of [
@@ -85,7 +86,7 @@ Deno.test("Form 8801 review staging rejects detached current tax and existing cl
   );
 });
 
-Deno.test("Form 8801 capacity-only public request cannot carry preview overrides", () => {
+test("Form 8801 capacity-only public request cannot carry preview overrides", () => {
   assertEquals(
     f8801.inputSchema.safeParse({ compute_credit_capacity: true }).success,
     true,
@@ -103,7 +104,7 @@ Deno.test("Form 8801 capacity-only public request cannot carry preview overrides
   }
 });
 
-Deno.test("Form 8801 capacity joins multiple payer current foreign credits to line 20", async () => {
+test("Form 8801 capacity joins multiple payer current foreign credits to line 20", async () => {
   const f = await fixture();
   f.inputs.schedule_b_part_iii = {
     foreign_accounts_question: false,
@@ -144,7 +145,7 @@ Deno.test("Form 8801 capacity joins multiple payer current foreign credits to li
   assertEquals(r.lines[22], 20_142);
 });
 
-Deno.test("Form 8801 capacity preserves incomplete excess foreign-tax source rejection", async () => {
+test("Form 8801 capacity preserves incomplete excess foreign-tax source rejection", async () => {
   const f = await fixture();
   f.inputs.f1099int = [50, 75].map((tax, i) => ({
     payer_name: `Bank ${i}`,
@@ -163,7 +164,7 @@ Deno.test("Form 8801 capacity preserves incomplete excess foreign-tax source rej
   );
 });
 
-Deno.test("Form 8801 review package rejects missing/changed/duplicate/unexpected bytes", async () => {
+test("Form 8801 review package rejects missing/changed/duplicate/unexpected bytes", async () => {
   const f = await fixture();
   await assertRejects(() =>
     stageForm8801ReviewedReturnCalculation(f.inputs, f.binding, [])
@@ -190,7 +191,7 @@ Deno.test("Form 8801 review package rejects missing/changed/duplicate/unexpected
   );
 });
 
-Deno.test("Form 8801 coherent package changes still reject foreign owner/year and current-line overrides", async () => {
+test("Form 8801 coherent package changes still reject foreign owner/year and current-line overrides", async () => {
   for (
     const facts of [{ ...packageFacts(), taxpayer_ssn: "999887777" }, {
       ...packageFacts(),
@@ -204,7 +205,7 @@ Deno.test("Form 8801 coherent package changes still reject foreign owner/year an
   }
 });
 
-Deno.test("Form 8801 canonical review JSON rejects duplicate keys", async () => {
+test("Form 8801 canonical review JSON rejects duplicate keys", async () => {
   const f = await fixture();
   const text = JSON.stringify(packageFacts()).replace(
     '"tax_year":2025',
@@ -217,7 +218,7 @@ Deno.test("Form 8801 canonical review JSON rejects duplicate keys", async () => 
   );
 });
 
-Deno.test("Form 8801 canonical review encoding rejects BOM and invalid UTF-8", async () => {
+test("Form 8801 canonical review encoding rejects BOM and invalid UTF-8", async () => {
   for (const prefix of [[0xef, 0xbb, 0xbf], [0xff]]) {
     const f = await fixture();
     const bytes = new Uint8Array(prefix.length + f.documents[0].bytes.length);
@@ -231,7 +232,7 @@ Deno.test("Form 8801 canonical review encoding rejects BOM and invalid UTF-8", a
   }
 });
 
-Deno.test("Form 8801 source/inputs/binding are copied before digest await", async () => {
+test("Form 8801 source/inputs/binding are copied before digest await", async () => {
   const f = await fixture();
   const promise = stageForm8801ReviewedReturnCalculation(
     f.inputs,

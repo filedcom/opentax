@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8978_reporting_year } from "./index.ts";
 
@@ -7,7 +8,7 @@ function compute(input: Parameters<typeof form8978_reporting_year.compute>[1]) {
   return form8978_reporting_year.compute(ctx, input);
 }
 
-Deno.test("Form 8978 negative route caps Schedule 3 line 6l at line 18", () => {
+test("Form 8978 negative route caps Schedule 3 line 6l at line 18", () => {
   const result = compute({
     regular_tax: 1_000,
     schedule2_part1_tax: 100,
@@ -27,7 +28,7 @@ Deno.test("Form 8978 negative route caps Schedule 3 line 6l at line 18", () => {
   );
 });
 
-Deno.test("Form 8978 negative route offsets only eligible Chapter 1 Part II tax", () => {
+test("Form 8978 negative route offsets only eligible Chapter 1 Part II tax", () => {
   const result = compute({
     regular_tax: 1_000,
     schedule2_part2_tax: 400,
@@ -48,7 +49,7 @@ Deno.test("Form 8978 negative route offsets only eligible Chapter 1 Part II tax"
   );
 });
 
-Deno.test("Form 8978 negative route does not offset non-Chapter-1 Part II tax", () => {
+test("Form 8978 negative route does not offset non-Chapter-1 Part II tax", () => {
   const result = compute({
     regular_tax: 1_000,
     schedule2_part2_tax: 300,
@@ -68,7 +69,7 @@ Deno.test("Form 8978 negative route does not offset non-Chapter-1 Part II tax", 
   );
 });
 
-Deno.test("Form 8978 negative route rejects unclassified taxes before an offset", () => {
+test("Form 8978 negative route rejects unclassified taxes before an offset", () => {
   assertThrows(
     () =>
       compute({
@@ -82,7 +83,7 @@ Deno.test("Form 8978 negative route rejects unclassified taxes before an offset"
   );
 });
 
-Deno.test("Form 8978 can use known chapter 1 tax despite unrelated unclassified tax", () => {
+test("Form 8978 can use known chapter 1 tax despite unrelated unclassified tax", () => {
   const result = compute({
     regular_tax: 0,
     schedule2_part2_tax: 300,

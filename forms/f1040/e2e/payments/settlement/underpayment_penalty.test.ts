@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -7,7 +8,7 @@ import { FilingStatus } from "../../../nodes/types.ts";
 const ctx = { taxYear: 2025, formType: "f1040" };
 const plan = buildExecutionPlan(registry);
 
-Deno.test("Form 2210: computes the regular-method penalty and adds it to amount owed", () => {
+test("Form 2210: computes the regular-method penalty and adds it to amount owed", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -36,7 +37,7 @@ Deno.test("Form 2210: computes the regular-method penalty and adds it to amount 
   assertEquals(form1040.line37_amount_owed, 38_603);
 });
 
-Deno.test("Form 2210: explicit penalty is reported and added to amount owed", () => {
+test("Form 2210: explicit penalty is reported and added to amount owed", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

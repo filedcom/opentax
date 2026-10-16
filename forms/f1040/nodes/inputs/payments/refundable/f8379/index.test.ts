@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8379 } from "./index.ts";
 
@@ -9,19 +10,19 @@ function compute(input: Parameters<typeof f8379.compute>[1]) {
 // Schema Validation
 // =============================================================================
 
-Deno.test("f8379.inputSchema: rejects negative injured_spouse_wages", () => {
+test("f8379.inputSchema: rejects negative injured_spouse_wages", () => {
   assertEquals(f8379.inputSchema.safeParse({ injured_spouse_wages: -1 }).success, false);
 });
 
-Deno.test("f8379.inputSchema: injured_spouse_se_income may be negative (loss)", () => {
+test("f8379.inputSchema: injured_spouse_se_income may be negative (loss)", () => {
   assertEquals(f8379.inputSchema.safeParse({ injured_spouse_se_income: -5000 }).success, true);
 });
 
-Deno.test("f8379.inputSchema: rejects invalid debt_type", () => {
+test("f8379.inputSchema: rejects invalid debt_type", () => {
   assertEquals(f8379.inputSchema.safeParse({ debt_type: "mortgage" }).success, false);
 });
 
-Deno.test("f8379.inputSchema: all valid debt_type values accepted", () => {
+test("f8379.inputSchema: all valid debt_type values accepted", () => {
   const types = ["child_support", "federal_tax", "state_tax", "student_loan", "unemployment", "other"] as const;
   for (const t of types) {
     assertEquals(f8379.inputSchema.safeParse({ debt_type: t }).success, true, `debt_type "${t}" should be valid`);
@@ -32,7 +33,7 @@ Deno.test("f8379.inputSchema: all valid debt_type values accepted", () => {
 // Hard Validation
 // =============================================================================
 
-Deno.test("f8379.compute: throws on negative withholding", () => {
+test("f8379.compute: throws on negative withholding", () => {
   assertThrows(
     () => compute({ injured_spouse_withholding: -100 }),
     Error,
@@ -43,11 +44,11 @@ Deno.test("f8379.compute: throws on negative withholding", () => {
 // Allocation/Disclosure Form — always produces no tax outputs
 // =============================================================================
 
-Deno.test("f8379.compute: empty input produces no outputs", () => {
+test("f8379.compute: empty input produces no outputs", () => {
   assertEquals(compute({}).outputs, []);
 });
 
-Deno.test("f8379.compute: wages + withholding + EIC — no tax outputs (allocation form only)", () => {
+test("f8379.compute: wages + withholding + EIC — no tax outputs (allocation form only)", () => {
   assertEquals(
     compute({
       injured_spouse_wages: 50000,
@@ -58,7 +59,7 @@ Deno.test("f8379.compute: wages + withholding + EIC — no tax outputs (allocati
   );
 });
 
-Deno.test("f8379.compute: SE income loss does not trigger any output", () => {
+test("f8379.compute: SE income loss does not trigger any output", () => {
   assertEquals(
     compute({
       injured_spouse_wages: 40000,
@@ -70,7 +71,7 @@ Deno.test("f8379.compute: SE income loss does not trigger any output", () => {
   );
 });
 
-Deno.test("f8379.compute: itemized deductions flag — no tax outputs", () => {
+test("f8379.compute: itemized deductions flag — no tax outputs", () => {
   assertEquals(
     compute({
       injured_spouse_wages: 60000,
@@ -81,7 +82,7 @@ Deno.test("f8379.compute: itemized deductions flag — no tax outputs", () => {
   );
 });
 
-Deno.test("f8379.compute: estimated tax payments allocated — no tax outputs", () => {
+test("f8379.compute: estimated tax payments allocated — no tax outputs", () => {
   assertEquals(
     compute({
       injured_spouse_wages: 45000,
@@ -97,7 +98,7 @@ Deno.test("f8379.compute: estimated tax payments allocated — no tax outputs", 
 // Smoke Test — all fields populated
 // =============================================================================
 
-Deno.test("f8379.compute: smoke — full allocation scenario produces no outputs", () => {
+test("f8379.compute: smoke — full allocation scenario produces no outputs", () => {
   const result = compute({
     injured_spouse_ssn: "123-45-6789",
     injured_spouse_name: "Jane Doe",

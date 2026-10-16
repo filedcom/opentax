@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { reconcileForm8911BusinessSources } from "../../../../mef/forms/credits/business/f8911_source.ts";
 import { inputSchema as form8911InputSchema } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
@@ -31,7 +32,7 @@ function creditInput(credit_amount: number, passive = false) {
   };
 }
 
-Deno.test("Form 8911 business credit calculation reaches the finalized Form 3800 tax limit", () => {
+test("Form 8911 business credit calculation reaches the finalized Form 3800 tax limit", () => {
   for (
     const [credit, allowed, tax, refund] of [[600, 600, 3275, 3725], [
       6000,
@@ -53,7 +54,7 @@ Deno.test("Form 8911 business credit calculation reaches the finalized Form 3800
   }
 });
 
-Deno.test("Form 8911 staged business credit cannot export without property-source reconciliation", () => {
+test("Form 8911 staged business credit cannot export without property-source reconciliation", () => {
   const { pending } = f1040_2025.executeReturn(creditInput(600));
   assertThrows(
     () => form3800.build(pending.f3800, { pending, filer: fixture.filer }),
@@ -67,7 +68,7 @@ Deno.test("Form 8911 staged business credit cannot export without property-sourc
   );
 });
 
-Deno.test("Form 8911 staged business credit rejects passive amounts without source allocation", () => {
+test("Form 8911 staged business credit rejects passive amounts without source allocation", () => {
   const result = f1040_2025.executeReturn(creditInput(600, true));
   assertStringIncludes(
     JSON.stringify(result.diagnostics),
@@ -84,7 +85,7 @@ Deno.test("Form 8911 staged business credit rejects passive amounts without sour
   );
 });
 
-Deno.test("Form 8911 public mixed-use calculation separates business and personal credit limits", () => {
+test("Form 8911 public mixed-use calculation separates business and personal credit limits", () => {
   const input = creditInput(600);
   const result = f1040_2025.executeReturn({
     ...input,
@@ -108,7 +109,7 @@ Deno.test("Form 8911 public mixed-use calculation separates business and persona
   assertEquals(result.pending.f1040.line24_total_tax, 2695);
 });
 
-Deno.test("Form 8911 public increased-rate calculation preserves its stated basis and section 179", () => {
+test("Form 8911 public increased-rate calculation preserves its stated basis and section 179", () => {
   const input = creditInput(600);
   for (const rate_basis of ["pwa", "construction_before_2023_01_29"] as const) {
     const result = f1040_2025.executeReturn({
@@ -144,7 +145,7 @@ Deno.test("Form 8911 public increased-rate calculation preserves its stated basi
   );
 });
 
-Deno.test("Form 8911 business source joins reject owner, activity, reference and credit conflicts", () => {
+test("Form 8911 business source joins reject owner, activity, reference and credit conflicts", () => {
   const { pending } = f1040_2025.executeReturn(creditInput(600));
   const business = {
     line_a_principal_business: "Equipment services",

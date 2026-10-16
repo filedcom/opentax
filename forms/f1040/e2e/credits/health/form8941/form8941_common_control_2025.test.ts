@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -28,12 +31,7 @@ const xsd = new URL(
 ).pathname;
 const plan = buildExecutionPlan(registry);
 
-Deno.test({
-  name:
-    "TY2025 Form8941 one proprietor, two actual controlled businesses: source through 1040, full XSD and IRS PDF",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 Form8941 one proprietor, two actual controlled businesses: source through 1040, full XSD and IRS PDF", async () => {
     const { expected, ...input } = form8941CommonControlInputs();
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -83,35 +81,34 @@ Deno.test({
     assertEquals((bundle.xml.match(/<IRS8941 /g) ?? []).length, 1);
     assertEquals((bundle.xml.match(/<IRS1040ScheduleC /g) ?? []).length, 2);
     assertStringIncludes(bundle.xml, "<SmllEmplrHIPIndivEmpldForCrCnt>11");
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const prefix = `${dir}same-owner-two-businesses`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       prefix + ".json",
       JSON.stringify({ input, expected, pending: result.pending }, null, 2),
     );
-    await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-    const valid = await new Deno.Command("xmllint", {
+    await fs.writeFile(prefix + ".xml", bundle.xml);
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, prefix + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       prefix + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-    const extracted = await new Deno.Command("pdftotext", {
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", prefix + ".pdf", "-"],
       stdout: "piped",
     }).output();
     assertEquals(extracted.code, 0);
     const packet = new TextDecoder().decode(extracted.stdout);
-    await Deno.writeTextFile(prefix + ".txt", packet);
+    await fs.writeFile(prefix + ".txt", packet);
     assertStringIncludes(packet, "Jane Second Retail Shop");
     assertStringIncludes(packet, "24017");
     assertStringIncludes(packet, "24921");
     assertStringIncludes(packet, "16862");
-  },
-});
+  });
 
 type Mutation = readonly [string, (source: any) => void];
 const mutations: readonly Mutation[] = [
@@ -172,12 +169,7 @@ const mutations: readonly Mutation[] = [
   }],
 ];
 
-Deno.test({
-  name:
-    "TY2025 Form8941 common-control source and direct native/PDF conflicts reject",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 Form8941 common-control source and direct native/PDF conflicts reject", async () => {
     const { expected: _expected, ...input } = form8941CommonControlInputs();
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -237,5 +229,4 @@ Deno.test({
         pending: badWages,
       })
     );
-  },
-});
+  });

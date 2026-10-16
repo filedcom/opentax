@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, ira_deduction_worksheet } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -14,7 +15,7 @@ function compute(input: Record<string, unknown>) {
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke: zero contribution → no outputs", () => {
+test("smoke: zero contribution → no outputs", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 50_000,
@@ -24,12 +25,12 @@ Deno.test("smoke: zero contribution → no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("W-2 retirement-plan coverage alone does not calculate an IRA deduction", () => {
+test("W-2 retirement-plan coverage alone does not calculate an IRA deduction", () => {
   const result = compute({ covered_by_retirement_plan: true });
   assertEquals(result.outputs, []);
 });
 
-Deno.test("positive IRA contribution still requires filing status, MAGI, and coverage", () => {
+test("positive IRA contribution still requires filing status, MAGI, and coverage", () => {
   assertThrows(
     () =>
       compute({ ira_contribution: 1_000, covered_by_retirement_plan: true }),
@@ -38,7 +39,7 @@ Deno.test("positive IRA contribution still requires filing status, MAGI, and cov
   );
 });
 
-Deno.test("W-2 coverage overrides a conflicting manually entered participant flag", () => {
+test("W-2 coverage overrides a conflicting manually entered participant flag", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 100_000,
@@ -55,7 +56,7 @@ Deno.test("W-2 coverage overrides a conflicting manually entered participant fla
 
 // ─── Not active participant (fully deductible) ────────────────────────────────
 
-Deno.test("not active participant: single → full deduction", () => {
+test("not active participant: single → full deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 120_000,
@@ -68,7 +69,7 @@ Deno.test("not active participant: single → full deduction", () => {
   );
 });
 
-Deno.test("not active participant: MFJ spouse not participant → full deduction", () => {
+test("not active participant: MFJ spouse not participant → full deduction", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 200_000,
@@ -84,7 +85,7 @@ Deno.test("not active participant: MFJ spouse not participant → full deduction
 
 // ─── Active participant — below phase-out (full deduction) ────────────────────
 
-Deno.test("active participant: single below phase-out → full deduction", () => {
+test("active participant: single below phase-out → full deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 78_000, // below $79,000 lower bound
@@ -97,7 +98,7 @@ Deno.test("active participant: single below phase-out → full deduction", () =>
   );
 });
 
-Deno.test("active participant: MFJ below phase-out → full deduction", () => {
+test("active participant: MFJ below phase-out → full deduction", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 125_000, // below $126,000 lower bound
@@ -112,7 +113,7 @@ Deno.test("active participant: MFJ below phase-out → full deduction", () => {
 
 // ─── Active participant — in phase-out (partial deduction) ───────────────────
 
-Deno.test("active participant: single in phase-out → partial deduction", () => {
+test("active participant: single in phase-out → partial deduction", () => {
   // MAGI $84,000, range $79k–$89k → ratio = 5000/10000 = 0.5
   // Reduced limit = 7000 × 0.5 = 3500 → round up to $3500 (already multiple of $10)
   // Deductible = min(7000, 3500) = 3500
@@ -128,7 +129,7 @@ Deno.test("active participant: single in phase-out → partial deduction", () =>
   );
 });
 
-Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
+test("active participant: MFJ in phase-out → partial deduction", () => {
   // MAGI $136,000, range $126k–$146k → ratio = 10000/20000 = 0.5
   // Reduced limit = 7000 × 0.5 = 3500
   const result = compute({
@@ -143,7 +144,7 @@ Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
   );
 });
 
-Deno.test("active participant: HOH in phase-out → partial deduction", () => {
+test("active participant: HOH in phase-out → partial deduction", () => {
   // HOH uses same range as Single ($79k–$89k)
   // MAGI $84,000, ratio 0.5 → 7000 × 0.5 = 3500
   const result = compute({
@@ -160,7 +161,7 @@ Deno.test("active participant: HOH in phase-out → partial deduction", () => {
 
 // ─── Active participant — above phase-out (no deduction) ─────────────────────
 
-Deno.test("active participant: single above phase-out → no deduction, form8606 basis tracked", () => {
+test("active participant: single above phase-out → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 90_000, // at or above $89,000 upper bound
@@ -174,7 +175,7 @@ Deno.test("active participant: single above phase-out → no deduction, form8606
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("active participant: MFJ above phase-out → no deduction, form8606 basis tracked", () => {
+test("active participant: MFJ above phase-out → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 150_000, // above $146,000
@@ -190,7 +191,7 @@ Deno.test("active participant: MFJ above phase-out → no deduction, form8606 ba
 
 // ─── Non-covered MFJ spouse phase-out ─────────────────────────────────────────
 
-Deno.test("non-covered MFJ spouse: below non-covered range → full deduction", () => {
+test("non-covered MFJ spouse: below non-covered range → full deduction", () => {
   // Taxpayer NOT active, spouse IS. MAGI $230,000 < $236,000 lower
   const result = compute({
     filing_status: FilingStatus.MFJ,
@@ -205,7 +206,7 @@ Deno.test("non-covered MFJ spouse: below non-covered range → full deduction", 
   );
 });
 
-Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", () => {
+test("non-covered MFJ spouse: in non-covered range → partial deduction", () => {
   // MAGI $241,000, range $236k–$246k → ratio = 5000/10000 = 0.5
   // Reduced limit = 7000 × 0.5 = 3500
   const result = compute({
@@ -221,7 +222,7 @@ Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", 
   );
 });
 
-Deno.test("non-covered MFJ spouse: above non-covered range → no deduction, form8606 basis tracked", () => {
+test("non-covered MFJ spouse: above non-covered range → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 246_001,
@@ -238,7 +239,7 @@ Deno.test("non-covered MFJ spouse: above non-covered range → no deduction, for
 
 // ─── Age 50+ catch-up contribution limit ─────────────────────────────────────
 
-Deno.test("age 50+: contribution limit is $8,000", () => {
+test("age 50+: contribution limit is $8,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 50_000,
@@ -252,7 +253,7 @@ Deno.test("age 50+: contribution limit is $8,000", () => {
   );
 });
 
-Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
+test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 50_000,
@@ -268,7 +269,7 @@ Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
 
 // ─── Contribution cap (under 50) ─────────────────────────────────────────────
 
-Deno.test("contribution exceeds $7,000 limit → capped at $7,000", () => {
+test("contribution exceeds $7,000 limit → capped at $7,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 50_000,
@@ -283,7 +284,7 @@ Deno.test("contribution exceeds $7,000 limit → capped at $7,000", () => {
 
 // ─── Phase-out rounding rules ─────────────────────────────────────────────────
 
-Deno.test("phase-out: reduced amount rounds up to nearest $10", () => {
+test("phase-out: reduced amount rounds up to nearest $10", () => {
   // MAGI $80,000, range $79k–$89k → ratio = 1000/10000 = 0.1
   // Reduced limit = 7000 × (1 - 0.1) = 6300 → already multiple of $10
   const result = compute({
@@ -298,7 +299,7 @@ Deno.test("phase-out: reduced amount rounds up to nearest $10", () => {
   );
 });
 
-Deno.test("phase-out: minimum $200 deduction floor applies", () => {
+test("phase-out: minimum $200 deduction floor applies", () => {
   // MAGI $88,500, range $79k–$89k → ratio = 9500/10000 = 0.95
   // Reduced limit = 7000 × 0.05 = 350 → rounded to $350
   // But wait — let's use $88,800: ratio = 9800/10000 = 0.98
@@ -314,7 +315,7 @@ Deno.test("phase-out: minimum $200 deduction floor applies", () => {
 
 // ─── MFS active participant ────────────────────────────────────────────────────
 
-Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5,000", () => {
+test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5,000", () => {
   // ratio = 5000/10000 = 0.5 → reduced = 7000 × 0.5 = 3500
   const result = compute({
     filing_status: FilingStatus.MFS,
@@ -328,7 +329,7 @@ Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5
   );
 });
 
-Deno.test("MFS active participant: above $10,000 MAGI → no deduction, form8606 basis tracked", () => {
+test("MFS active participant: above $10,000 MAGI → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     magi: 10_001,
@@ -344,7 +345,7 @@ Deno.test("MFS active participant: above $10,000 MAGI → no deduction, form8606
 
 // ─── Schema validation ─────────────────────────────────────────────────────────
 
-Deno.test("schema: rejects negative ira_contribution", () => {
+test("schema: rejects negative ira_contribution", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.Single,
@@ -355,7 +356,7 @@ Deno.test("schema: rejects negative ira_contribution", () => {
   );
 });
 
-Deno.test("schema: rejects negative magi", () => {
+test("schema: rejects negative magi", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.Single,

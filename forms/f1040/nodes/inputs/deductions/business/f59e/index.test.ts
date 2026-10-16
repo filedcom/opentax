@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ExpenditureType, f59e } from "./index.ts";
 
@@ -19,44 +20,44 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("f59e.inputSchema: valid minimal item passes", () => {
+test("f59e.inputSchema: valid minimal item passes", () => {
   assertEquals(f59e.inputSchema.safeParse({ f59es: [minimalItem()] }).success, true);
 });
 
-Deno.test("f59e.inputSchema: empty array fails", () => {
+test("f59e.inputSchema: empty array fails", () => {
   assertEquals(f59e.inputSchema.safeParse({ f59es: [] }).success, false);
 });
 
-Deno.test("f59e.inputSchema: negative remaining_unamortized fails", () => {
+test("f59e.inputSchema: negative remaining_unamortized fails", () => {
   assertEquals(f59e.inputSchema.safeParse({ f59es: [minimalItem({ remaining_unamortized: -1 })] }).success, false);
 });
 
-Deno.test("f59e.inputSchema: negative original_amount fails", () => {
+test("f59e.inputSchema: negative original_amount fails", () => {
   assertEquals(f59e.inputSchema.safeParse({ f59es: [minimalItem({ original_amount: -1 })] }).success, false);
 });
 
-Deno.test("f59e.inputSchema: invalid expenditure_type fails", () => {
+test("f59e.inputSchema: invalid expenditure_type fails", () => {
   assertEquals(f59e.inputSchema.safeParse({ f59es: [minimalItem({ expenditure_type: "unknown" })] }).success, false);
 });
 
-Deno.test("f59e.inputSchema: all expenditure types pass", () => {
+test("f59e.inputSchema: all expenditure types pass", () => {
   for (const t of Object.values(ExpenditureType)) {
     assertEquals(f59e.inputSchema.safeParse({ f59es: [minimalItem({ expenditure_type: t })] }).success, true);
   }
 });
 
-Deno.test("f59e.compute: routes remaining_unamortized to form6251.other_adjustments", () => {
+test("f59e.compute: routes remaining_unamortized to form6251.other_adjustments", () => {
   const result = compute([minimalItem({ remaining_unamortized: 10000 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out!.fields.other_adjustments, 10000);
 });
 
-Deno.test("f59e.compute: zero remaining_unamortized produces no output", () => {
+test("f59e.compute: zero remaining_unamortized produces no output", () => {
   const result = compute([minimalItem({ remaining_unamortized: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f59e.compute: multiple items — sums remaining_unamortized", () => {
+test("f59e.compute: multiple items — sums remaining_unamortized", () => {
   const result = compute([
     minimalItem({ remaining_unamortized: 5000 }),
     minimalItem({ expenditure_type: ExpenditureType.Mining, remaining_unamortized: 3000 }),
@@ -65,19 +66,19 @@ Deno.test("f59e.compute: multiple items — sums remaining_unamortized", () => {
   assertEquals(out!.fields.other_adjustments, 8000);
 });
 
-Deno.test("f59e.compute: mining expenditure routes correctly", () => {
+test("f59e.compute: mining expenditure routes correctly", () => {
   const result = compute([minimalItem({ expenditure_type: ExpenditureType.Mining, remaining_unamortized: 7500 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out!.fields.other_adjustments, 7500);
 });
 
-Deno.test("f59e.compute: intangible drilling routes correctly", () => {
+test("f59e.compute: intangible drilling routes correctly", () => {
   const result = compute([minimalItem({ expenditure_type: ExpenditureType.IntangibleDrilling, remaining_unamortized: 20000 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out!.fields.other_adjustments, 20000);
 });
 
-Deno.test("f59e.compute: circulation costs use current-year deduction difference, not unamortized balance", () => {
+test("f59e.compute: circulation costs use current-year deduction difference, not unamortized balance", () => {
   const result = compute([
     minimalItem({
       expenditure_type: ExpenditureType.Circulation,
@@ -94,7 +95,7 @@ Deno.test("f59e.compute: circulation costs use current-year deduction difference
   });
 });
 
-Deno.test("f59e.compute: circulation amortization can create a negative line 2o", () => {
+test("f59e.compute: circulation amortization can create a negative line 2o", () => {
   const result = compute([
     minimalItem({
       expenditure_type: ExpenditureType.Circulation,
@@ -109,7 +110,7 @@ Deno.test("f59e.compute: circulation amortization can create a negative line 2o"
   assertEquals(findOutput(result, "form6251")?.fields.line2o_circulation_costs, -2_000);
 });
 
-Deno.test("f59e.compute: circulation route requires deduction and election facts", () => {
+test("f59e.compute: circulation route requires deduction and election facts", () => {
   assertThrows(
     () => compute([minimalItem({ expenditure_type: ExpenditureType.Circulation })]),
     Error,
@@ -129,7 +130,7 @@ Deno.test("f59e.compute: circulation route requires deduction and election facts
   );
 });
 
-Deno.test("f59e.compute: circulation route rejects an unreviewed or loss-bearing pool", () => {
+test("f59e.compute: circulation route rejects an unreviewed or loss-bearing pool", () => {
   const reviewed = {
     expenditure_type: ExpenditureType.Circulation,
     regular_tax_deduction: 9_000,
@@ -153,7 +154,7 @@ Deno.test("f59e.compute: circulation route rejects an unreviewed or loss-bearing
   );
 });
 
-Deno.test("f59e.compute: elected three-year write-off has no circulation adjustment", () => {
+test("f59e.compute: elected three-year write-off has no circulation adjustment", () => {
   const result = compute([minimalItem({
     expenditure_type: ExpenditureType.Circulation,
     regular_tax_deduction: 3_000,
@@ -165,7 +166,7 @@ Deno.test("f59e.compute: elected three-year write-off has no circulation adjustm
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f59e.compute: offsetting circulation pools need distinct reviewed references", () => {
+test("f59e.compute: offsetting circulation pools need distinct reviewed references", () => {
   const common = {
     expenditure_type: ExpenditureType.Circulation,
     regular_three_year_writeoff_elected: false,
@@ -182,7 +183,7 @@ Deno.test("f59e.compute: offsetting circulation pools need distinct reviewed ref
   );
 });
 
-Deno.test("f59e.compute: unsupported non-circulation items remain separate from line 2o", () => {
+test("f59e.compute: unsupported non-circulation items remain separate from line 2o", () => {
   const result = compute([
     minimalItem({ expenditure_type: ExpenditureType.ResearchExperimental, remaining_unamortized: 10000 }),
     minimalItem({

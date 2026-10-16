@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { auto_expense, AutoMethod, AutoPurpose } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -32,7 +33,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Validation
 // =============================================================================
 
-Deno.test("auto_expense.inputSchema: valid standard mileage item passes", () => {
+test("auto_expense.inputSchema: valid standard mileage item passes", () => {
   const parsed = auto_expense.inputSchema.safeParse({
     auto_expenses: [{
       vehicle_description: "2022 Toyota Camry",
@@ -46,33 +47,33 @@ Deno.test("auto_expense.inputSchema: valid standard mileage item passes", () => 
   assertEquals(parsed.success, true);
 });
 
-Deno.test("auto_expense.inputSchema: empty array fails (min 1)", () => {
+test("auto_expense.inputSchema: empty array fails (min 1)", () => {
   const parsed = auto_expense.inputSchema.safeParse({ auto_expenses: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("auto_expense.inputSchema: negative business_miles fails", () => {
+test("auto_expense.inputSchema: negative business_miles fails", () => {
   const parsed = auto_expense.inputSchema.safeParse({
     auto_expenses: [{ ...minimalItem(), business_miles: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("auto_expense.inputSchema: negative total_miles fails", () => {
+test("auto_expense.inputSchema: negative total_miles fails", () => {
   const parsed = auto_expense.inputSchema.safeParse({
     auto_expenses: [{ ...minimalItem(), total_miles: -1 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("auto_expense.inputSchema: invalid method fails", () => {
+test("auto_expense.inputSchema: invalid method fails", () => {
   const parsed = auto_expense.inputSchema.safeParse({
     auto_expenses: [{ ...minimalItem(), method: "invalid" }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("auto_expense.inputSchema: invalid purpose fails", () => {
+test("auto_expense.inputSchema: invalid purpose fails", () => {
   const parsed = auto_expense.inputSchema.safeParse({
     auto_expenses: [{ ...minimalItem(), purpose: "INVALID" }],
   });
@@ -83,7 +84,7 @@ Deno.test("auto_expense.inputSchema: invalid purpose fails", () => {
 // 2. Standard mileage calculation (70 cents/mile)
 // =============================================================================
 
-Deno.test("auto_expense.compute: standard mileage — 10,000 business miles = $7,000", () => {
+test("auto_expense.compute: standard mileage — 10,000 business miles = $7,000", () => {
   const result = compute([
     minimalItem({
       business_miles: 10000,
@@ -95,7 +96,7 @@ Deno.test("auto_expense.compute: standard mileage — 10,000 business miles = $7
   assertEquals(fields.line_9_car_truck_expenses, 7000);
 });
 
-Deno.test("auto_expense.compute: standard mileage — 1,000 business miles = $700", () => {
+test("auto_expense.compute: standard mileage — 1,000 business miles = $700", () => {
   const result = compute([
     minimalItem({
       business_miles: 1000,
@@ -107,7 +108,7 @@ Deno.test("auto_expense.compute: standard mileage — 1,000 business miles = $70
   assertEquals(fields.line_9_car_truck_expenses, 700);
 });
 
-Deno.test("auto_expense.compute: standard mileage — zero business miles = no output", () => {
+test("auto_expense.compute: standard mileage — zero business miles = no output", () => {
   const result = compute([
     minimalItem({
       business_miles: 0,
@@ -122,7 +123,7 @@ Deno.test("auto_expense.compute: standard mileage — zero business miles = no o
 // 3. Actual expense method calculation
 // =============================================================================
 
-Deno.test("auto_expense.compute: actual method — 50% business use on $10,000 actual = $5,000", () => {
+test("auto_expense.compute: actual method — 50% business use on $10,000 actual = $5,000", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
@@ -141,7 +142,7 @@ Deno.test("auto_expense.compute: actual method — 50% business use on $10,000 a
   assertEquals(fields.line_9_car_truck_expenses, 5000);
 });
 
-Deno.test("auto_expense.compute: actual method — 100% business use", () => {
+test("auto_expense.compute: actual method — 100% business use", () => {
   const result = compute([minimalItem({
     business_miles: 10000,
     total_miles: 10000,
@@ -152,7 +153,7 @@ Deno.test("auto_expense.compute: actual method — 100% business use", () => {
   assertEquals(fields.line_9_car_truck_expenses, 2500);
 });
 
-Deno.test("auto_expense.compute: actual method with no actual_expenses — no output", () => {
+test("auto_expense.compute: actual method with no actual_expenses — no output", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
@@ -165,7 +166,7 @@ Deno.test("auto_expense.compute: actual method with no actual_expenses — no ou
 // 4. Purpose routing
 // =============================================================================
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c with correct deduction", () => {
+test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
@@ -181,7 +182,7 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c with co
   assertEquals(findOutput(result, "schedule_f"), undefined);
 });
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_E routes to schedule_e with correct deduction", () => {
+test("auto_expense.compute: purpose SCHEDULE_E routes to schedule_e with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
@@ -192,7 +193,7 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_E routes to schedule_e with co
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with correct deduction", () => {
+test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
@@ -209,7 +210,7 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with co
 // 5. Aggregation — multiple vehicles, same purpose
 // =============================================================================
 
-Deno.test("auto_expense.compute: two SCHEDULE_C vehicles — deductions summed into one output", () => {
+test("auto_expense.compute: two SCHEDULE_C vehicles — deductions summed into one output", () => {
   const result = compute([
     minimalItem({
       business_miles: 10000,
@@ -233,7 +234,7 @@ Deno.test("auto_expense.compute: two SCHEDULE_C vehicles — deductions summed i
   assertEquals(schedCOutputs.length, 1);
 });
 
-Deno.test("auto_expense.compute: mixed purposes — separate outputs for each", () => {
+test("auto_expense.compute: mixed purposes — separate outputs for each", () => {
   const result = compute([
     minimalItem({
       business_miles: 10000,
@@ -259,7 +260,7 @@ Deno.test("auto_expense.compute: mixed purposes — separate outputs for each", 
 // 6. Hard validation
 // =============================================================================
 
-Deno.test("auto_expense.compute: throws when business_miles > total_miles", () => {
+test("auto_expense.compute: throws when business_miles > total_miles", () => {
   assertThrows(
     () =>
       compute([
@@ -273,7 +274,7 @@ Deno.test("auto_expense.compute: throws when business_miles > total_miles", () =
   );
 });
 
-Deno.test("auto_expense.compute: throws when total_miles = 0 (with actual method)", () => {
+test("auto_expense.compute: throws when total_miles = 0 (with actual method)", () => {
   assertThrows(
     () =>
       compute([
@@ -288,7 +289,7 @@ Deno.test("auto_expense.compute: throws when total_miles = 0 (with actual method
   );
 });
 
-Deno.test("auto_expense.compute: business_miles = total_miles does not throw", () => {
+test("auto_expense.compute: business_miles = total_miles does not throw", () => {
   const result = compute([
     minimalItem({
       business_miles: 5000,
@@ -303,7 +304,7 @@ Deno.test("auto_expense.compute: business_miles = total_miles does not throw", (
 // 7. Edge cases
 // =============================================================================
 
-Deno.test("auto_expense.compute: standard method — exact mileage calculation at 70 cents", () => {
+test("auto_expense.compute: standard method — exact mileage calculation at 70 cents", () => {
   const result = compute([
     minimalItem({
       business_miles: 100,
@@ -315,7 +316,7 @@ Deno.test("auto_expense.compute: standard method — exact mileage calculation a
   assertEquals(fields.line_9_car_truck_expenses, 70);
 });
 
-Deno.test("auto_expense.compute: actual method — partial business use rounds correctly", () => {
+test("auto_expense.compute: actual method — partial business use rounds correctly", () => {
   // 3000/7000 = ~42.86%; 4200 total × 0.4286 ≈ 1800
   const result = compute([minimalItem({
     business_miles: 3000,
@@ -333,7 +334,7 @@ Deno.test("auto_expense.compute: actual method — partial business use rounds c
 // 8. Smoke test
 // =============================================================================
 
-Deno.test("auto_expense.compute: smoke test — two vehicles mixed methods and purposes", () => {
+test("auto_expense.compute: smoke test — two vehicles mixed methods and purposes", () => {
   const result = compute([
     minimalItem({
       vehicle_description: "2023 Ford F-150",

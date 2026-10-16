@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 // Synthetic joint returns retain the original issuer's complete statement bytes.
 export const jointRpeCases = [
   {
@@ -45,11 +46,11 @@ export const jointRpeCases = [
 ] as const;
 export async function jointRpeFixture(c: typeof jointRpeCases[number]) {
   const input = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         `./form8995a-rpe-${c.count}-business-source.json`,
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   const primary = c.owner === "T";

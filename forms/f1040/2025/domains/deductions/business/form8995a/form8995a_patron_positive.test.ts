@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -42,7 +44,7 @@ async function assertSchema(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const process = new Deno.Command("xmllint", {
+  const process = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -54,7 +56,7 @@ async function assertSchema(xml: string) {
   const result = await process.output();
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
 }
-Deno.test("public patron farm, owned C health and capped cooperative pass-through file full XSD and PDF", async () => {
+test("public patron farm, owned C health and capped cooperative pass-through file full XSD and PDF", async () => {
   for (const kind of ["farm", "c-health", "income-cap"]) {
     const { fixture, pending } = prepared(kind);
     const input = inputSchema.parse(pending.form8995a);
@@ -125,7 +127,7 @@ Deno.test("public patron farm, owned C health and capped cooperative pass-throug
     );
   }
 });
-Deno.test("patron native and PDF reject detached issued copies, wage books, notices, adjustments and final joins", async () => {
+test("patron native and PDF reject detached issued copies, wage books, notices, adjustments and final joins", async () => {
   for (const kind of ["farm", "c-health"]) {
     const { fixture, pending: base } = prepared(kind);
     const paths = [

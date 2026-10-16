@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateQualifiedTipsSchedule1A,
@@ -16,7 +19,7 @@ import {
 import { schedule1a } from "./schedule1a.ts";
 import { schedule1aPdf } from "../../../../../pdf/forms/deductions/additional/schedule1a/schedule1a.ts";
 
-Deno.test("Schedule 1-A omits context-only input before validating fractional return AGI", () => {
+test("Schedule 1-A omits context-only input before validating fractional return AGI", () => {
   assertEquals(
     schedule1a.build(
       { filing_status: FilingStatus.Single, magi: 74_348.18 },
@@ -26,7 +29,7 @@ Deno.test("Schedule 1-A omits context-only input before validating fractional re
   );
 });
 
-Deno.test("Schedule 1-A does not silently omit a positive senior source without Part I review", () => {
+test("Schedule 1-A does not silently omit a positive senior source without Part I review", () => {
   const claim = {
     filing_status: FilingStatus.Single,
     magi: 60_000,
@@ -174,7 +177,7 @@ const singleOvertime1040 = {
   taxpayer_tin_issued_by_due_date: true,
 };
 
-Deno.test("Schedule 1-A employer statement overtime reconciles to W-2 and finalized Form 1040", () => {
+test("Schedule 1-A employer statement overtime reconciles to W-2 and finalized Form 1040", () => {
   const statement = {
     tax_year: 2025 as const,
     employee_ssn: "111223333",
@@ -248,7 +251,7 @@ Deno.test("Schedule 1-A employer statement overtime reconciles to W-2 and finali
   );
 });
 
-Deno.test("Schedule 1-A replays aggregate overtime payroll source at native and PDF export", () => {
+test("Schedule 1-A replays aggregate overtime payroll source at native and PDF export", () => {
   const aggregate = {
     tax_year: 2025 as const,
     employee_ssn: "111223333",
@@ -338,7 +341,7 @@ Deno.test("Schedule 1-A replays aggregate overtime payroll source at native and 
   );
 });
 
-Deno.test("Schedule 1-A replays double-time excess pay at native and PDF export", () => {
+test("Schedule 1-A replays double-time excess pay at native and PDF export", () => {
   const doubleTime = {
     tax_year: 2025 as const,
     employee_ssn: "111223333",
@@ -442,7 +445,7 @@ const singleVehicle = {
   vehicle_loans: [vehicleLoan],
 };
 
-Deno.test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () => {
+test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () => {
   const lines = calculateVehicleInterestSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleVehicle,
@@ -468,7 +471,7 @@ Deno.test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () 
   );
 });
 
-Deno.test("Schedule 1-A refinanced loan keeps one VIN and its qualified interest", () => {
+test("Schedule 1-A refinanced loan keeps one VIN and its qualified interest", () => {
   const refinanced = {
     ...singleVehicle,
     vehicle_loans: [{
@@ -499,7 +502,7 @@ Deno.test("Schedule 1-A refinanced loan keeps one VIN and its qualified interest
   assertEquals(xml.match(/<QlfyPassengerVehicleLoanIntGrp>/g)?.length, 1);
 });
 
-Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseout", () => {
+test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseout", () => {
   assertThrows(
     () =>
       schedule1a.build({
@@ -573,7 +576,7 @@ Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseou
   );
 });
 
-Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles", () => {
+test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles", () => {
   const lines = calculateW2OvertimeSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleOvertime,
@@ -640,7 +643,7 @@ Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles"
   );
 });
 
-Deno.test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-thousand phaseout", () => {
+test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-thousand phaseout", () => {
   const jointOvertime = {
     ...singleOvertime,
     filing_status: FilingStatus.MFJ,
@@ -692,7 +695,7 @@ Deno.test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-th
   );
 });
 
-Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate employer", () => {
+test("Schedule 1-A W-2 overtime enforces source ownership and duplicate employer", () => {
   assertThrows(
     () =>
       schedule1a.build({
@@ -721,7 +724,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
   );
 });
 
-Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
+test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
   const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleTips,
@@ -747,7 +750,7 @@ Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconc
   assertEquals(xml.includes("EnhancedSeniorDeductionAmt"), false);
 });
 
-Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employer", () => {
+test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employer", () => {
   const report = {
     employee_ssn: "111223333",
     employer_ein: "123456789",
@@ -872,7 +875,7 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
   );
 });
 
-Deno.test("Schedule 1-A W-2 box 14 tips reconcile to the reviewed employer entry", () => {
+test("Schedule 1-A W-2 box 14 tips reconcile to the reviewed employer entry", () => {
   const review = {
     box14_description: "Employer reported tips",
     occupation_code: "102",
@@ -938,7 +941,7 @@ Deno.test("Schedule 1-A W-2 box 14 tips reconcile to the reviewed employer entry
   );
 });
 
-Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects competing reports", () => {
+test("Schedule 1-A employer statement replaces W-2 box 7 and rejects competing reports", () => {
   const statement = {
     employee_ssn: "111223333",
     employer_ein: "123456789",
@@ -1029,7 +1032,7 @@ Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects compet
   );
 });
 
-Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
+test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
   const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -1048,7 +1051,7 @@ Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phas
   assertEquals(lines.line13_tips, 24_900);
 });
 
-Deno.test("Schedule 1-A combines two identified W-2 tip employers on line 4c", () => {
+test("Schedule 1-A combines two identified W-2 tip employers on line 4c", () => {
   const second = {
     ...singleTips.qualified_employee_tips[0],
     employer_ein: "987654321",
@@ -1112,7 +1115,7 @@ Deno.test("Schedule 1-A combines two identified W-2 tip employers on line 4c", (
   );
 });
 
-Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evidence", () => {
+test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evidence", () => {
   const pending = { f1040: singleTips1040, w2: singleTipsW2 };
   assertThrows(
     () =>
@@ -1163,7 +1166,7 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
   );
 });
 
-Deno.test("Schedule 1-A uses the greater of W-2 and Form 4137 tips for one employer", () => {
+test("Schedule 1-A uses the greater of W-2 and Form 4137 tips for one employer", () => {
   const input = {
     ...singleTips,
     qualified_form4137_tips: [{
@@ -1232,7 +1235,7 @@ Deno.test("Schedule 1-A uses the greater of W-2 and Form 4137 tips for one emplo
   );
 });
 
-Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double counting", () => {
+test("Schedule 1-A combines Form 4137 and W-2 employers without double counting", () => {
   const input = {
     ...singleTips,
     qualified_employee_tips: [
@@ -1307,7 +1310,7 @@ Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double coun
   );
 });
 
-Deno.test("Schedule 1-A native and PDF require every qualifying Form 4137 employer", () => {
+test("Schedule 1-A native and PDF require every qualifying Form 4137 employer", () => {
   const secondW2 = {
     ...singleTipsW2.w2s[0],
     employer_ein: "987654321",
@@ -1420,7 +1423,7 @@ const filer: FilerIdentity = {
   },
 };
 
-Deno.test("Schedule 1-A senior-only source calculates each spouse and line 38", () => {
+test("Schedule 1-A senior-only source calculates each spouse and line 38", () => {
   const lines: SeniorOnlyLines = calculateSeniorOnlySchedule1A(
     { taxYear: 2025, formType: "f1040" },
     joint,
@@ -1458,7 +1461,7 @@ Deno.test("Schedule 1-A senior-only source calculates each spouse and line 38", 
   assertEquals(xml.includes("QualifiedTipsDeductionAmt"), false);
 });
 
-Deno.test("Schedule 1-A senior-only source supports one qualifying joint spouse", () => {
+test("Schedule 1-A senior-only source supports one qualifying joint spouse", () => {
   const lines = calculateSeniorOnlySchedule1A(
     { taxYear: 2025, formType: "f1040" },
     { ...joint, spouse_age_65_or_older: false },
@@ -1468,7 +1471,7 @@ Deno.test("Schedule 1-A senior-only source supports one qualifying joint spouse"
   assertEquals(lines.line38_total, 5_400);
 });
 
-Deno.test("Schedule 1-A senior-only document accompanies reconciled Form 1040 line 13b", () => {
+test("Schedule 1-A senior-only document accompanies reconciled Form 1040 line 13b", () => {
   const xml = buildMefXml({ f1040: joint1040, schedule1a: joint }, filer);
   assertStringIncludes(xml, '<IRS1040Schedule1A documentId="');
   assertStringIncludes(
@@ -1482,7 +1485,7 @@ Deno.test("Schedule 1-A senior-only document accompanies reconciled Form 1040 li
   );
 });
 
-Deno.test("Schedule 1-A emits all four deductions in schema order with one total", async () => {
+test("Schedule 1-A emits all four deductions in schema order with one total", async () => {
   const mixed = {
     ...joint,
     qualified_employee_tips: singleTips.qualified_employee_tips,
@@ -1521,17 +1524,17 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
     import.meta.url,
   );
   try {
-    await Deno.stat(xsd);
-    const xmlFile = await Deno.makeTempFile({ suffix: ".xml" });
+    await sys.stat(xsd);
+    const xmlFile = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         xmlFile,
         xml.replace(
           "<IRS1040Schedule1A>",
           '<IRS1040Schedule1A xmlns="http://www.irs.gov/efile" documentId="SCHEDULE1A1">',
         ),
       );
-      const checked = await new Deno.Command("xmllint", {
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd.pathname, xmlFile],
         stdout: "piped",
         stderr: "piped",
@@ -1542,7 +1545,7 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
         new TextDecoder().decode(checked.stderr),
       );
     } finally {
-      await Deno.remove(xmlFile);
+      await sys.remove(xmlFile);
     }
   } catch (error) {
     throw error;
@@ -1557,7 +1560,7 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
   );
 });
 
-Deno.test("Schedule 1-A integration rejects incomplete and mismatched line 13b", () => {
+test("Schedule 1-A integration rejects incomplete and mismatched line 13b", () => {
   assertThrows(
     () => buildMefXml({ f1040: joint1040 }, filer),
     Error,
@@ -1588,7 +1591,7 @@ Deno.test("Schedule 1-A integration rejects incomplete and mismatched line 13b",
   );
 });
 
-Deno.test("Schedule 1-A senior MeF rejects missing review and mismatched return", () => {
+test("Schedule 1-A senior MeF rejects missing review and mismatched return", () => {
   assertEquals(
     seniorZeroExclusionsReviewSchema.safeParse({
       ...review,

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8582Pdf } from "../../../../pdf/forms/income/business/f8582.ts";
 import { form7203StockLoss } from "../../../../mef/forms/income/business/f7203_stock_loss.ts";
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";
@@ -24,7 +27,7 @@ for (
     { cash: 4000, income: 3000, allowed: 3000 },
   ]
 ) {
-  Deno.test(`Passive source copies ${c.cash}/${c.income} replay allowed loss into native Form8582 and native/print ScheduleE`, () => {
+  test(`Passive source copies ${c.cash}/${c.income} replay allowed loss into native Form8582 and native/print ScheduleE`, () => {
     const r = f1040_2025.executeReturn(
       passiveSCorpLossReturnInputs(c.cash, c.income),
     );
@@ -113,7 +116,7 @@ for (
     ["1040 taxable income", (p: any) => p.f1040.line15_taxable_income++],
   ] as const
 ) {
-  Deno.test(`Passive native/print source copies reject mutated ${label}`, () => {
+  test(`Passive native/print source copies reject mutated ${label}`, () => {
     const p = f1040_2025.executeReturn(passiveSCorpLossReturnInputs(1000, 3000))
       .pending;
     mutate(p);
@@ -132,7 +135,7 @@ for (
 
 const base =
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/";
-Deno.test("XSD: registered passive source Form7203, Form8995, Form8582 and ScheduleE components", async () => {
+test("XSD: registered passive source Form7203, Form8995, Form8582 and ScheduleE components", async () => {
   const p =
     f1040_2025.executeReturn(passiveSCorpLossReturnInputs(4000, 3000)).pending;
   const filer = extractFilerIdentity(p.f1040)!;
@@ -161,19 +164,19 @@ Deno.test("XSD: registered passive source Form7203, Form8995, Form8582 and Sched
     ]
   ) {
     const xsd = new URL(base + relative, import.meta.url).pathname;
-    await Deno.stat(xsd);
-    const path = await Deno.makeTempFile({
+    await sys.stat(xsd);
+    const path = await sys.makeTempFile({
       prefix: `opentax-passive-${tag}-`,
       suffix: ".xml",
     });
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       xml.replace(
         `<${tag}>`,
         `<${tag} xmlns="http://www.irs.gov/efile" documentId="${tag}-1">`,
       ),
     );
-    const v = await new Deno.Command("xmllint", {
+    const v = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
@@ -183,7 +186,7 @@ Deno.test("XSD: registered passive source Form7203, Form8995, Form8582 and Sched
   }
 });
 
-Deno.test("Passive registered basis and QBI descriptors reject divergent raw copies and wrong filer", () => {
+test("Passive registered basis and QBI descriptors reject divergent raw copies and wrong filer", () => {
   const p =
     f1040_2025.executeReturn(passiveSCorpLossReturnInputs(1000, 3000)).pending;
   const filer = extractFilerIdentity(p.f1040)!;
@@ -201,7 +204,7 @@ Deno.test("Passive registered basis and QBI descriptors reject divergent raw cop
 });
 
 for (const spouseOwned of [false, true]) {
-  Deno.test(`Passive joint ${spouseOwned ? "spouse" : "primary"} print source keeps shareholder identity and shared joint headers`, () => {
+  test(`Passive joint ${spouseOwned ? "spouse" : "primary"} print source keeps shareholder identity and shared joint headers`, () => {
     const p =
       f1040_2025.executeReturn(passiveSCorpJointLossReturnInputs(spouseOwned))
         .pending;

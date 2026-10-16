@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
@@ -10,7 +11,7 @@ const complete = {
   digital_assets: false,
 };
 
-Deno.test("prepared Form 1040 rejects missing filing and identity answers before XML", async () => {
+test("prepared Form 1040 rejects missing filing and identity answers before XML", async () => {
   await assertRejects(
     () =>
       f1040_2025.prepareReturn({
@@ -46,7 +47,7 @@ Deno.test("prepared Form 1040 rejects missing filing and identity answers before
   );
 });
 
-Deno.test("prepared Form 1040 rejects an explicitly dual-status return", async () => {
+test("prepared Form 1040 rejects an explicitly dual-status return", async () => {
   await assertRejects(
     () =>
       f1040_2025.prepareReturn({

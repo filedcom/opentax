@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import {
   form172NativePartILineMap,
@@ -10,7 +13,7 @@ const schema = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  Deno.statSync(schema);
+  sys.statSync(schema);
   schemaAvailable = true;
 } catch { /* Private IRS bundle. */ }
 
@@ -77,33 +80,29 @@ async function bound(v = facts(), text = JSON.stringify(v)) {
   };
 }
 async function validate(xml: string) {
-  const dir = await Deno.makeTempDir({ prefix: "172-native-" });
+  const dir = await sys.makeTempDir({ prefix: "172-native-" });
   try {
     const file = `${dir}/document.xml`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       file,
       xml.replace(
         "<IRS172>",
         '<IRS172 xmlns="http://www.irs.gov/efile" documentId="Staged172">',
       ),
     );
-    const r = await new Deno.Command("xmllint", {
+    const r = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, file],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(r.code, 0, new TextDecoder().decode(r.stderr));
   } finally {
-    await Deno.remove(dir, { recursive: true });
+    await sys.remove(dir, { recursive: true });
   }
 }
 
-Deno.test({
-  name:
-    "Form 172 native Part I map matches all 24 IRS schema lines in exact order",
-  ignore: !schemaAvailable,
-}, async () => {
-  const xsd = await Deno.readTextFile(schema);
+test.skipIf(!schemaAvailable)("Form 172 native Part I map matches all 24 IRS schema lines in exact order", async () => {
+  const xsd = await fs.readFile(schema, "utf8");
   const partI = xsd.slice(
     xsd.indexOf('<xsd:complexType name="IRS172Type">'),
     xsd.indexOf("<!-- =============== Part II"),
@@ -117,11 +116,7 @@ Deno.test({
   assertEquals<unknown>(form172NativePartILineMap, rows);
 });
 
-Deno.test({
-  name:
-    "Form 172 native ordinary loss retains negative NOL and required skipped-line zero",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("Form 172 native ordinary loss retains negative NOL and required skipped-line zero", async () => {
   const f = await bound();
   const r = await stageForm172LossYearNativeDocument(f.binding, f.documents);
   assertStringIncludes(r.native_xml!, "<IncomeAmt>-65750</IncomeAmt>");
@@ -149,11 +144,7 @@ for (
     1500,
   ]] as const
 ) {
-  Deno.test({
-    name:
-      `Form 172 native ${status} capital-loss limit reconciles to original loss`,
-    ignore: !schemaAvailable,
-  }, async () => {
+  test.skipIf(!schemaAvailable)(`Form 172 native ${status} capital-loss limit reconciles to original loss`, async () => {
     const v = facts();
     v.filing_status = status;
     v.reviewed_form1040.filing_status = status;
@@ -170,11 +161,7 @@ for (
   });
 }
 
-Deno.test({
-  name:
-    "Form 172 native section 1202 restoration includes positive capital difference",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("Form 172 native section 1202 restoration includes positive capital difference", async () => {
   const v = facts();
   v.capital_gains.push({
     ...item("qsbs", 1000, false),
@@ -200,11 +187,7 @@ Deno.test({
   await validate(r.native_xml!);
 });
 
-Deno.test({
-  name:
-    "Form 172 native joint and prior NOL review retains only computed origin loss",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("Form 172 native joint and prior NOL review retains only computed origin loss", async () => {
   const v = facts();
   v.filing_status = "married_filing_jointly";
   v.spouse_ssn = "999887777";
@@ -239,7 +222,7 @@ Deno.test({
   );
 });
 
-Deno.test("Form 172 native non-loss stops and historic workpapers cannot use the TY2025 projection", async () => {
+test("Form 172 native non-loss stops and historic workpapers cannot use the TY2025 projection", async () => {
   const v = facts();
   v.noncapital_income[0].amount = 80_000;
   v.reviewed_form1040.line11_agi = 20_000;
@@ -261,7 +244,7 @@ Deno.test("Form 172 native non-loss stops and historic workpapers cannot use the
   );
 });
 
-Deno.test("Form 172 native rejects modified, detached, duplicate and noncanonical review records", async () => {
+test("Form 172 native rejects modified, detached, duplicate and noncanonical review records", async () => {
   const v = facts(), f = await bound(v);
   await assertRejects(() =>
     stageForm172LossYearNativeDocument(
@@ -311,7 +294,7 @@ Deno.test("Form 172 native rejects modified, detached, duplicate and noncanonica
   );
 });
 
-Deno.test("Form 172 native owns binding and review bytes before asynchronous verification", async () => {
+test("Form 172 native owns binding and review bytes before asynchronous verification", async () => {
   const f = await bound();
   const pending = stageForm172LossYearNativeDocument(f.binding, f.documents);
   f.binding.taxpayer_ssn = "999887777";

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
 import { XMLParser } from "fast-xml-parser";
@@ -25,15 +27,9 @@ function remap<T>(value: T, primary: string, spouse: string): T {
   });
 }
 
-Deno.test("joint source replay preserves owner copies and inline statements in a mixed submission batch", async () => {
-  const permission = await Deno.permissions.query({
-    name: "env",
-    variable: "JOINT_SUBMISSION_EVIDENCE",
-  });
-  const evidence = permission.state === "granted"
-    ? Deno.env.get("JOINT_SUBMISSION_EVIDENCE")
-    : undefined;
-  if (evidence) await Deno.mkdir(evidence, { recursive: true });
+test("joint source replay preserves owner copies and inline statements in a mixed submission batch", async () => {
+  const evidence = process.env.JOINT_SUBMISSION_EVIDENCE;
+  if (evidence) await fs.mkdir(evidence, { recursive: true });
   const processingDate = new Date("2026-10-12T08:00:00Z");
   const archives: MefSubmissionArchive[] = [];
   const totals = [141959, 141910, 141862, 98002];
@@ -111,13 +107,13 @@ Deno.test("joint source replay preserves owner copies and inline statements in a
     });
     archives.push(archive);
     if (evidence) {
-      await Deno.writeFile(`${evidence}/${i}.zip`, archive.bytes);
-      await Deno.writeTextFile(`${evidence}/${i}.xml`, archive.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${evidence}/${i}.zip`, archive.bytes);
+      await fs.writeFile(`${evidence}/${i}.xml`, archive.bundle.xml);
+      await fs.writeFile(
         `${evidence}/${i}-manifest.xml`,
         archive.manifestXml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${i}.json`,
         JSON.stringify(
           {
@@ -172,11 +168,11 @@ Deno.test("joint source replay preserves owner copies and inline statements in a
       }
     }
     if (evidence) {
-      await Deno.writeFile(
+      await fs.writeFile(
         `${evidence}/${label}.zip`,
         transmission.containerZipBytes,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${label}.xml`,
         transmission.sendSubmissionsRequestXml,
       );
@@ -259,7 +255,7 @@ Deno.test("joint source replay preserves owner copies and inline statements in a
   rejected++;
   assertEquals(rejected, 43);
   if (evidence) {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${evidence}/checks.json`,
       JSON.stringify(
         {

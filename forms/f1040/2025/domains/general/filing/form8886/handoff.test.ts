@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { DesignationCategory, otsaDeadline, OtsaTiming } from "./handoff.ts";
 
@@ -6,7 +7,7 @@ const timing = {
   return_due_date: "2026-04-15",
   event_source_reference: "Reviewed return deadline record",
 };
-Deno.test("OTSA late K-1 relief has a strict ten-day boundary and retains the extended return deadline", () => {
+test("OTSA late K-1 relief has a strict ten-day boundary and retains the extended return deadline", () => {
   assertEquals(
     otsaDeadline({
       ...timing,
@@ -33,7 +34,7 @@ Deno.test("OTSA late K-1 relief has a strict ten-day boundary and retains the ex
     })
   );
 });
-Deno.test("OTSA designation timing distinguishes legacy listed transactions from the ninety-day rule", () => {
+test("OTSA designation timing distinguishes legacy listed transactions from the ninety-day rule", () => {
   const designation = {
     ...timing,
     kind: OtsaTiming.LaterDesignation,
@@ -63,7 +64,7 @@ Deno.test("OTSA designation timing distinguishes legacy listed transactions from
     })
   );
 });
-Deno.test("OTSA published guidance cannot be replaced with an inferred or impossible calendar deadline", () => {
+test("OTSA published guidance cannot be replaced with an inferred or impossible calendar deadline", () => {
   assertEquals(
     otsaDeadline({
       ...timing,

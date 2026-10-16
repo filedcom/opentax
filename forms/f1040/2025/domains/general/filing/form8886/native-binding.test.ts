@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { bindForm8886PacketToNativeDocuments } from "./handoff.ts";
 import { buildForm8886Documents } from "./document.ts";
@@ -52,7 +53,7 @@ function fixture() {
   return { original, final };
 }
 
-Deno.test("Form 8886 finalization refuses a structurally copied or fabricated preparation packet", async () => {
+test("Form 8886 finalization refuses a structurally copied or fabricated preparation packet", async () => {
   const { original, final } = fixture();
   const fabricated = {
     documents: original,
@@ -74,7 +75,7 @@ Deno.test("Form 8886 finalization refuses a structurally copied or fabricated pr
     "authentic prepared packet",
   );
 });
-Deno.test("Form 8886 final native binding permits only allocated IDs and retains every exact disclosure byte", () => {
+test("Form 8886 final native binding permits only allocated IDs and retains every exact disclosure byte", () => {
   const { original, final } = fixture(),
     before = JSON.stringify({ original, final }),
     bound = validateForm8886NativeBinding(original, final);
@@ -105,7 +106,7 @@ Deno.test("Form 8886 final native binding permits only allocated IDs and retains
     false,
   );
 });
-Deno.test("Form 8886 final binding rejects changed text, amounts and continuation associations", () => {
+test("Form 8886 final binding rejects changed text, amounts and continuation associations", () => {
   const { original, final } = fixture();
   for (
     const formXml of [
@@ -148,7 +149,7 @@ Deno.test("Form 8886 final binding rejects changed text, amounts and continuatio
     "differs from the prepared source",
   );
 });
-Deno.test("Form 8886 final binding rejects missing documents and contradictory or duplicate root IDs", () => {
+test("Form 8886 final binding rejects missing documents and contradictory or duplicate root IDs", () => {
   const { original, final } = fixture();
   assertThrows(
     () =>
@@ -209,7 +210,7 @@ Deno.test("Form 8886 final binding rejects missing documents and contradictory o
     "exactly one document ID",
   );
 });
-Deno.test("Form 8886 final binding handles a disclosure with no continuations without inventing documents", () => {
+test("Form 8886 final binding handles a disclosure with no continuations without inventing documents", () => {
   const original = buildForm8886Documents(disclosureFixture, "111223333", 1, 1);
   const final = {
     formXml: original.formXml.replace(

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -65,7 +67,7 @@ function filing() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two taxable grant copies retain payer rows through 1040, native statement, and PDF", async () => {
+test("two taxable grant copies retain payer rows through 1040, native statement, and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_taxable_grants, 1_000);
@@ -84,7 +86,7 @@ Deno.test("two taxable grant copies retain payer rows through 1040, native state
   assertEquals(projected.line8z_other, 1_000);
   assertEquals(projected.line8z_description, "SEE STATEMENT");
   const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
-  const extracted = new Deno.Command("pdftotext", {
+  const extracted = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -102,11 +104,11 @@ Deno.test("two taxable grant copies retain payer rows through 1040, native state
   assertStringIncludes(statement, "Alex Example");
   assertEquals(statement.includes("EXAMPLE ALEX"), false);
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -119,7 +121,7 @@ Deno.test("two taxable grant copies retain payer rows through 1040, native state
   assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
 });
 
-Deno.test("changed taxable grant rows, copies, or totals reject in both exports", async () => {
+test("changed taxable grant rows, copies, or totals reject in both exports", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

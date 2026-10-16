@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8962 as form8962Mef } from "../../../../../../2025/mef/forms/credits/health/f8962/f8962.ts";
 import { form8962Pdf } from "../../../../../../2025/pdf/forms/credits/health/f8962.ts";
@@ -62,7 +63,7 @@ function annual(
   });
 }
 
-Deno.test("Form 8962 has no output without marketplace premiums or APTC", () => {
+test("Form 8962 has no output without marketplace premiums or APTC", () => {
   assertEquals(compute({}).outputs, []);
   assertEquals(
     compute({ household_size: 2, taxpayer_modified_agi: 30_000 }).outputs,
@@ -70,7 +71,7 @@ Deno.test("Form 8962 has no output without marketplace premiums or APTC", () => 
   );
 });
 
-Deno.test("Form 8962 clears an all-zero 1095-A instead of exporting raw source fields", () => {
+test("Form 8962 clears an all-zero 1095-A instead of exporting raw source fields", () => {
   const result = compute({
     annual_premium: 0,
     annual_slcsp: 0,
@@ -98,7 +99,7 @@ const marriagePolicy = {
   monthly_aptcs: Array(12).fill(1_000),
 };
 
-Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit", () => {
+test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     household_size: 2,
@@ -147,7 +148,7 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
   assertEquals(pdf?.pdf_marriage_primary_end_month, "06");
 });
 
-Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an enrollment gap", () => {
+test("Pub 974 marriage worksheet keeps line 12-23 contribution through an enrollment gap", () => {
   const premiums = [800, 0, 800, ...Array(9).fill(0)];
   const slcsps = [1_000, 0, 1_000, ...Array(9).fill(0)];
   const aptcs = [1_000, 0, 1_000, ...Array(9).fill(0)];
@@ -209,7 +210,7 @@ Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an e
   assertEquals(form?.excess_advance_premium, 400);
 });
 
-Deno.test("marriage alternative requires MFJ and reconciled pre-marriage worksheets", () => {
+test("marriage alternative requires MFJ and reconciled pre-marriage worksheets", () => {
   const base = {
     household_size: 2,
     taxpayer_modified_agi: 80_000,
@@ -240,7 +241,7 @@ Deno.test("marriage alternative requires MFJ and reconciled pre-marriage workshe
   );
 });
 
-Deno.test("marriage Worksheets II and IV add two separate pre-marriage families", () => {
+test("marriage Worksheets II and IV add two separate pre-marriage families", () => {
   const group = {
     family_size: 1,
     policy_numbers: ["PRIMARY-1095A"],
@@ -293,7 +294,7 @@ Deno.test("marriage Worksheets II and IV add two separate pre-marriage families"
   });
 });
 
-Deno.test("marriage alternative is not elected without excess APTC", () => {
+test("marriage alternative is not elected without excess APTC", () => {
   assertThrows(
     () =>
       compute({
@@ -315,7 +316,7 @@ Deno.test("marriage alternative is not elected without excess APTC", () => {
   );
 });
 
-Deno.test("marriage alternative rejects unsourced and mismatched policy identities", () => {
+test("marriage alternative rejects unsourced and mismatched policy identities", () => {
   const base = {
     filing_status: FilingStatus.MFJ,
     household_size: 2,
@@ -376,7 +377,7 @@ Deno.test("marriage alternative rejects unsourced and mismatched policy identiti
   );
 });
 
-Deno.test("annual totals alone do not establish Form 8962 line 11 eligibility", () => {
+test("annual totals alone do not establish Form 8962 line 11 eligibility", () => {
   assertThrows(
     () =>
       compute({
@@ -390,7 +391,7 @@ Deno.test("annual totals alone do not establish Form 8962 line 11 eligibility", 
   );
 });
 
-Deno.test("Form 8962 separates taxpayer and dependent MAGI before line 3", () => {
+test("Form 8962 separates taxpayer and dependent MAGI before line 3", () => {
   const result = annual(30_000, 6_000, 7_200, 0, {
     household_size: 2,
     dependents_modified_agi: 12_500,
@@ -401,7 +402,7 @@ Deno.test("Form 8962 separates taxpayer and dependent MAGI before line 3", () =>
   assertEquals(form?.household_income, 42_500);
 });
 
-Deno.test("Form 8962 adds elected Form 8814 dependent amount once by SSN", () => {
+test("Form 8962 adds elected Form 8814 dependent amount once by SSN", () => {
   const result = annual(30_000, 6_000, 7_200, 0, {
     household_size: 2,
     form8814_expected_ssns: ["123456789"],
@@ -412,7 +413,7 @@ Deno.test("Form 8962 adds elected Form 8814 dependent amount once by SSN", () =>
   assertEquals(form?.household_income, 33_600);
 });
 
-Deno.test("Form 8962 rejects a dependent Form 8814 without the matching election", () => {
+test("Form 8962 rejects a dependent Form 8814 without the matching election", () => {
   assertThrows(
     () =>
       annual(30_000, 6_000, 7_200, 0, {
@@ -425,7 +426,7 @@ Deno.test("Form 8962 rejects a dependent Form 8814 without the matching election
   );
 });
 
-Deno.test("Form 8962 refuses unverified dependent filing facts", () => {
+test("Form 8962 refuses unverified dependent filing facts", () => {
   assertThrows(
     () =>
       annual(30_000, 6_000, 7_200, 0, {
@@ -436,7 +437,7 @@ Deno.test("Form 8962 refuses unverified dependent filing facts", () => {
   );
 });
 
-Deno.test("2025 Table 2: 150% FPL has a zero applicable figure", () => {
+test("2025 Table 2: 150% FPL has a zero applicable figure", () => {
   const result = annual(22_590, 6_000, 6_000);
   assertEquals(fields(result, "form8962")?.federal_poverty_pct, 150);
   assertEquals(fields(result, "form8962")?.applicable_figure, 0);
@@ -444,7 +445,7 @@ Deno.test("2025 Table 2: 150% FPL has a zero applicable figure", () => {
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 6_000);
 });
 
-Deno.test("2025 Table 2: 200%, 250%, and 300% FPL use 2%, 4%, and 6%", () => {
+test("2025 Table 2: 200%, 250%, and 300% FPL use 2%, 4%, and 6%", () => {
   const cases = [
     {
       income: 30_120,
@@ -483,7 +484,7 @@ Deno.test("2025 Table 2: 200%, 250%, and 300% FPL use 2%, 4%, and 6%", () => {
   }
 });
 
-Deno.test("2025 Table 2: 301% and 399% FPL use four-decimal table figures", () => {
+test("2025 Table 2: 301% and 399% FPL use four-decimal table figures", () => {
   const at301 = annual(45_331, 7_000, 7_000);
   const at399 = annual(60_090, 7_000, 7_000);
   assertEquals(fields(at301, "form8962")?.federal_poverty_pct, 301);
@@ -492,7 +493,7 @@ Deno.test("2025 Table 2: 301% and 399% FPL use four-decimal table figures", () =
   assertEquals(fields(at399, "form8962")?.applicable_figure, 0.0848);
 });
 
-Deno.test("2025 Table 2: above 400% FPL uses 401 on line 5 and 8.5%", () => {
+test("2025 Table 2: above 400% FPL uses 401 on line 5 and 8.5%", () => {
   const result = annual(75_300, 8_000, 8_000);
   assertEquals(fields(result, "form8962")?.federal_poverty_pct, 401);
   assertEquals(fields(result, "form8962")?.applicable_figure, 0.085);
@@ -503,14 +504,14 @@ Deno.test("2025 Table 2: above 400% FPL uses 401 on line 5 and 8.5%", () => {
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 1_599);
 });
 
-Deno.test("line 11e is capped by actual premium after computing max assistance", () => {
+test("line 11e is capped by actual premium after computing max assistance", () => {
   const result = annual(22_590, 1_000, 6_000);
   assertEquals(fields(result, "form8962")?.annual_max_ptc, 6_000);
   assertEquals(fields(result, "form8962")?.annual_ptc_allowed, 1_000);
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 1_000);
 });
 
-Deno.test("line 26 net PTC reconciles to Schedule 3", () => {
+test("line 26 net PTC reconciles to Schedule 3", () => {
   const result = annual(40_880, 5_500, 6_000, 1_000, { household_size: 2 });
   assertEquals(fields(result, "form8962")?.annual_applicable_contribution, 818);
   assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 5_182);
@@ -519,7 +520,7 @@ Deno.test("line 26 net PTC reconciles to Schedule 3", () => {
   assertEquals(fields(result, "schedule2"), undefined);
 });
 
-Deno.test("line 29 excess APTC reconciles to Schedule 2 line 1a", () => {
+test("line 29 excess APTC reconciles to Schedule 2 line 1a", () => {
   const result = annual(75_300, 6_500, 7_000, 5_000);
   assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 599);
   assertEquals(fields(result, "form8962")?.excess_advance_payment, 4_401);
@@ -533,7 +534,7 @@ Deno.test("line 29 excess APTC reconciles to Schedule 2 line 1a", () => {
   assertEquals(fields(result, "schedule3"), undefined);
 });
 
-Deno.test("2025 Table 5 single repayment limits are 375, 975, and 1625", () => {
+test("2025 Table 5 single repayment limits are 375, 975, and 1625", () => {
   const cases = [
     { income: 22_590, cap: 375 },
     { income: 37_650, cap: 975 },
@@ -549,7 +550,7 @@ Deno.test("2025 Table 5 single repayment limits are 375, 975, and 1625", () => {
   }
 });
 
-Deno.test("2025 Table 5 other-filing-status caps are 750, 1950, and 3250", () => {
+test("2025 Table 5 other-filing-status caps are 750, 1950, and 3250", () => {
   const cases = [
     { income: 22_590, cap: 750 },
     { income: 37_650, cap: 1_950 },
@@ -567,7 +568,7 @@ Deno.test("2025 Table 5 other-filing-status caps are 750, 1950, and 3250", () =>
   }
 });
 
-Deno.test("below 100% FPL needs exception facts with or without APTC", () => {
+test("below 100% FPL needs exception facts with or without APTC", () => {
   for (const aptc of [0, 1_200]) {
     assertThrows(
       () => annual(10_000, 3_000, 4_000, aptc),
@@ -577,7 +578,7 @@ Deno.test("below 100% FPL needs exception facts with or without APTC", () => {
   }
 });
 
-Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contribution", () => {
+test("below 100% FPL Marketplace-estimate eligibility uses zero contribution", () => {
   const eligibility = {
     basis: "marketplace_estimate",
     no_one_can_claim_taxpayer: true,
@@ -603,7 +604,7 @@ Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contributio
   );
 });
 
-Deno.test("below 100% FPL lawful-presence eligibility does not require APTC", () => {
+test("below 100% FPL lawful-presence eligibility does not require APTC", () => {
   const result = annual(10_000, 3_000, 4_000, 0, {
     below_100_fpl_status: {
       basis: "lawfully_present",
@@ -618,7 +619,7 @@ Deno.test("below 100% FPL lawful-presence eligibility does not require APTC", ()
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 3_000);
 });
 
-Deno.test("below 100% FPL route refuses incomplete eligibility facts", () => {
+test("below 100% FPL route refuses incomplete eligibility facts", () => {
   assertThrows(
     () =>
       annual(10_000, 3_000, 4_000, 1_200, {
@@ -635,7 +636,7 @@ Deno.test("below 100% FPL route refuses incomplete eligibility facts", () => {
   );
 });
 
-Deno.test("below 100% FPL non-applicable taxpayer repays APTC up to Table 5 cap", () => {
+test("below 100% FPL non-applicable taxpayer repays APTC up to Table 5 cap", () => {
   const status = nonApplicableBelowFpl;
   const result = annual(10_000, 3_000, 4_000, 3_000, {
     below_100_fpl_status: status,
@@ -658,7 +659,7 @@ Deno.test("below 100% FPL non-applicable taxpayer repays APTC up to Table 5 cap"
   assertEquals(noFiling.outputs.length, 1);
 });
 
-Deno.test("below 100% FPL repayment-only monthly rows contain APTC only", () => {
+test("below 100% FPL repayment-only monthly rows contain APTC only", () => {
   const result = compute({
     household_size: 1,
     taxpayer_modified_agi: 10_000,
@@ -674,7 +675,7 @@ Deno.test("below 100% FPL repayment-only monthly rows contain APTC only", () => 
   assertEquals(form?.annual_aptc, undefined);
 });
 
-Deno.test("below 100% FPL APTC-only annual route needs line 11 coverage proof", () => {
+test("below 100% FPL APTC-only annual route needs line 11 coverage proof", () => {
   assertThrows(
     () =>
       compute({
@@ -688,7 +689,7 @@ Deno.test("below 100% FPL APTC-only annual route needs line 11 coverage proof", 
   );
 });
 
-Deno.test("below 100% FPL repayment route requires reviewed exceptions", () => {
+test("below 100% FPL repayment route requires reviewed exceptions", () => {
   assertThrows(
     () =>
       annual(10_000, 3_000, 4_000, 1_000, {
@@ -710,7 +711,7 @@ Deno.test("below 100% FPL repayment route requires reviewed exceptions", () => {
   );
 });
 
-Deno.test("Alaska and Hawaii use their 2024 poverty tables for TY2025", () => {
+test("Alaska and Hawaii use their 2024 poverty tables for TY2025", () => {
   const alaska = annual(30_000, 6_000, 6_000, 0, { fpl_region: "alaska" });
   const hawaii = annual(30_000, 6_000, 6_000, 0, { fpl_region: "hawaii" });
   assertEquals(fields(alaska, "form8962")?.federal_poverty_line, 18_810);
@@ -719,7 +720,7 @@ Deno.test("Alaska and Hawaii use their 2024 poverty tables for TY2025", () => {
   assertEquals(fields(hawaii, "form8962")?.federal_poverty_pct, 173);
 });
 
-Deno.test("monthly calculation reports twelve rows and reconciles its line 24", () => {
+test("monthly calculation reports twelve rows and reconciles its line 24", () => {
   const result = compute({
     household_size: 2,
     taxpayer_modified_agi: 40_880,
@@ -735,7 +736,7 @@ Deno.test("monthly calculation reports twelve rows and reconciles its line 24", 
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_800);
 });
 
-Deno.test("annual QSEHRA is refused until monthly affordability can be checked", () => {
+test("annual QSEHRA is refused until monthly affordability can be checked", () => {
   assertThrows(
     () =>
       annual(22_590, 6_000, 6_000, 0, {
@@ -746,7 +747,7 @@ Deno.test("annual QSEHRA is refused until monthly affordability can be checked",
   );
 });
 
-Deno.test("marketplace credit cannot be computed without household facts", () => {
+test("marketplace credit cannot be computed without household facts", () => {
   assertThrows(
     () =>
       form8962.compute(context, { annual_premium: 5_000, annual_slcsp: 5_000 }),
@@ -755,7 +756,7 @@ Deno.test("marketplace credit cannot be computed without household facts", () =>
   );
 });
 
-Deno.test("monthly calculation refuses incomplete 1095-A columns", () => {
+test("monthly calculation refuses incomplete 1095-A columns", () => {
   assertThrows(
     () =>
       compute({
@@ -768,7 +769,7 @@ Deno.test("monthly calculation refuses incomplete 1095-A columns", () => {
   );
 });
 
-Deno.test("monthly QSEHRA is refused until monthly affordability can be checked", () => {
+test("monthly QSEHRA is refused until monthly affordability can be checked", () => {
   assertThrows(
     () =>
       compute({
@@ -784,7 +785,7 @@ Deno.test("monthly QSEHRA is refused until monthly affordability can be checked"
   );
 });
 
-Deno.test("QSEHRA monthly Worksheet N/Q uses self-only affordability and the actual benefit", () => {
+test("QSEHRA monthly Worksheet N/Q uses self-only affordability and the actual benefit", () => {
   const qsehraMonths = Array(12).fill(null);
   qsehraMonths[0] = {
     self_only_slcsp: 500,
@@ -816,7 +817,7 @@ Deno.test("QSEHRA monthly Worksheet N/Q uses self-only affordability and the act
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_200);
 });
 
-Deno.test("QSEHRA monthly benefits must match the reported annual permitted benefit", () => {
+test("QSEHRA monthly benefits must match the reported annual permitted benefit", () => {
   const qsehraMonths = Array(12).fill(null);
   qsehraMonths[0] = {
     self_only_slcsp: 500,
@@ -839,7 +840,7 @@ Deno.test("QSEHRA monthly benefits must match the reported annual permitted bene
   );
 });
 
-Deno.test("QSEHRA employer facts must reconcile with W-2 code FF", () => {
+test("QSEHRA employer facts must reconcile with W-2 code FF", () => {
   assertThrows(
     () =>
       compute({
@@ -856,7 +857,7 @@ Deno.test("QSEHRA employer facts must reconcile with W-2 code FF", () => {
   );
 });
 
-Deno.test("annual line 11 QSEHRA omits Form 8962 when every month is affordable and APTC is zero", () => {
+test("annual line 11 QSEHRA omits Form 8962 when every month is affordable and APTC is zero", () => {
   const facts = Array(12).fill({
     self_only_slcsp: 350,
     self_only_permitted_benefit: 100,
@@ -871,7 +872,7 @@ Deno.test("annual line 11 QSEHRA omits Form 8962 when every month is affordable 
   assertEquals(result.outputs.length, 1);
 });
 
-Deno.test("annual line 11 QSEHRA keeps APTC repayment when every month is affordable", () => {
+test("annual line 11 QSEHRA keeps APTC repayment when every month is affordable", () => {
   const facts = Array(12).fill({
     self_only_slcsp: 350,
     self_only_permitted_benefit: 100,
@@ -889,7 +890,7 @@ Deno.test("annual line 11 QSEHRA keeps APTC repayment when every month is afford
   assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 975);
 });
 
-Deno.test("annual line 11 QSEHRA preserves the non-QSEHRA months", () => {
+test("annual line 11 QSEHRA preserves the non-QSEHRA months", () => {
   const facts = Array.from({ length: 12 }, (_, index) =>
     index < 6
       ? {
@@ -908,7 +909,7 @@ Deno.test("annual line 11 QSEHRA preserves the non-QSEHRA months", () => {
   assertEquals(form?.total_premium_tax_credit, 3_000);
 });
 
-Deno.test("annual line 11 QSEHRA reduces an unaffordable full-year benefit", () => {
+test("annual line 11 QSEHRA reduces an unaffordable full-year benefit", () => {
   const facts = Array(12).fill({
     self_only_slcsp: 500,
     self_only_permitted_benefit: 100,
@@ -922,7 +923,7 @@ Deno.test("annual line 11 QSEHRA reduces an unaffordable full-year benefit", () 
   assertEquals(fields(result, "form8962")?.annual_ptc_allowed, 4_800);
 });
 
-Deno.test("QSEHRA and the same 1095-A columns support annual line 11 or monthly lines 12-23", () => {
+test("QSEHRA and the same 1095-A columns support annual line 11 or monthly lines 12-23", () => {
   const qsehraMonths = Array.from({ length: 12 }, (_, index) =>
     index < 6
       ? {
@@ -966,7 +967,7 @@ Deno.test("QSEHRA and the same 1095-A columns support annual line 11 or monthly 
   assertEquals(monthlyForm?.qsehra_ind, true);
 });
 
-Deno.test("QSEHRA annual Worksheet Q Part III handles affordable and unaffordable months", () => {
+test("QSEHRA annual Worksheet Q Part III handles affordable and unaffordable months", () => {
   const facts = Array.from({ length: 12 }, (_, index) =>
     index < 3
       ? {
@@ -993,7 +994,7 @@ Deno.test("QSEHRA annual Worksheet Q Part III handles affordable and unaffordabl
   assertEquals(form?.qsehra_ind, true);
 });
 
-Deno.test("combined annual and monthly 1095-A columns must reconcile before QSEHRA calculation", () => {
+test("combined annual and monthly 1095-A columns must reconcile before QSEHRA calculation", () => {
   assertThrows(
     () =>
       compute({
@@ -1010,7 +1011,7 @@ Deno.test("combined annual and monthly 1095-A columns must reconcile before QSEH
   );
 });
 
-Deno.test("QSEHRA cannot use annual line 11 when Marketplace premium changes during the year", () => {
+test("QSEHRA cannot use annual line 11 when Marketplace premium changes during the year", () => {
   const facts = Array.from({ length: 12 }, (_, index) =>
     index < 6
       ? {
@@ -1046,7 +1047,7 @@ Deno.test("QSEHRA cannot use annual line 11 when Marketplace premium changes dur
   assertEquals(monthlyForm?.total_premium_tax_credit, 5_592);
 });
 
-Deno.test("Form 8962 line 11 also refuses changing SLCSP or part-year Marketplace coverage", () => {
+test("Form 8962 line 11 also refuses changing SLCSP or part-year Marketplace coverage", () => {
   for (
     const [premiums, slcsps] of [
       [Array(12).fill(500), [...Array(6).fill(600), ...Array(6).fill(650)]],
@@ -1069,7 +1070,7 @@ Deno.test("Form 8962 line 11 also refuses changing SLCSP or part-year Marketplac
   }
 });
 
-Deno.test("MFS cannot claim PTC without verified exception and allocation facts", () => {
+test("MFS cannot claim PTC without verified exception and allocation facts", () => {
   assertThrows(
     () =>
       annual(22_590, 4_000, 4_000, 0, {
@@ -1088,7 +1089,7 @@ Deno.test("MFS cannot claim PTC without verified exception and allocation facts"
   );
 });
 
-Deno.test("MFS without exception files APTC-only repayment subject to Table 5", () => {
+test("MFS without exception files APTC-only repayment subject to Table 5", () => {
   const result = annual(30_000, 4_000, 4_000, 5_000, {
     filing_status: FilingStatus.MFS,
     mfs_ptc_status: mfsNoException,
@@ -1122,7 +1123,7 @@ Deno.test("MFS without exception files APTC-only repayment subject to Table 5", 
   );
 });
 
-Deno.test("MFS APTC-only repayment has no Table 5 cap at 400% FPL", () => {
+test("MFS APTC-only repayment has no Table 5 cap at 400% FPL", () => {
   const result = annual(70_000, 4_000, 4_000, 5_000, {
     filing_status: FilingStatus.MFS,
     mfs_ptc_status: mfsNoException,
@@ -1136,7 +1137,7 @@ Deno.test("MFS APTC-only repayment has no Table 5 cap at 400% FPL", () => {
   );
 });
 
-Deno.test("MFS without exception reports monthly APTC without PTC columns", () => {
+test("MFS without exception reports monthly APTC without PTC columns", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     household_size: 1,
@@ -1152,7 +1153,7 @@ Deno.test("MFS without exception reports monthly APTC without PTC columns", () =
   assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 750);
 });
 
-Deno.test("MFS shared policy without exception reports Part IV and half APTC", () => {
+test("MFS shared policy without exception reports Part IV and half APTC", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     household_size: 1,
@@ -1183,7 +1184,7 @@ Deno.test("MFS shared policy without exception reports Part IV and half APTC", (
   );
 });
 
-Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => {
+test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => {
   const status = {
     basis: "domestic_abuse",
     living_apart_at_filing: true,
@@ -1223,7 +1224,7 @@ Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => 
   assertEquals(fields(abandonment, "form8962")?.mfs_exception_ind, true);
 });
 
-Deno.test("MFS shared-policy exception uses separately determined family SLCSP", () => {
+test("MFS shared-policy exception uses separately determined family SLCSP", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     household_size: 1,
@@ -1252,7 +1253,7 @@ Deno.test("MFS shared-policy exception uses separately determined family SLCSP",
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 2_400);
 });
 
-Deno.test("divorce allocation can report all three agreed percentages", () => {
+test("divorce allocation can report all three agreed percentages", () => {
   const allocation = {
     basis: "divorce_agreed",
     policy_number: "DIV-POLICY-1",
@@ -1277,7 +1278,7 @@ Deno.test("divorce allocation can report all three agreed percentages", () => {
   assertEquals(fields(result, "form8962")?.total_advance_ptc, 536);
 });
 
-Deno.test("zero-percent shared allocation still produces Form 8962 Part IV", () => {
+test("zero-percent shared allocation still produces Form 8962 Part IV", () => {
   const allocation = {
     basis: "other_agreed",
     policy_number: "OTHER-POLICY-1",

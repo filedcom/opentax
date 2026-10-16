@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -6,7 +7,7 @@ import {
 } from "../../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form5471Pdf } from "./f5471.ts";
 
-Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
+test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
   const [fields] = form5471Pdf.instances?.(
     {},
     form8992Filer,

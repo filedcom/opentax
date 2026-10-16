@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form4797 } from "../../../../mef/forms/income/business/f4797.ts";
@@ -47,7 +48,7 @@ const rows = [
   },
 ] as const;
 
-Deno.test("Form 4797 K-1 Part I fields match the 2025 line 2 widgets", () => {
+test("Form 4797 K-1 Part I fields match the 2025 line 2 widgets", () => {
   const field = (key: string) =>
     form4797Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
   assertEquals(
@@ -68,7 +69,7 @@ Deno.test("Form 4797 K-1 Part I fields match the 2025 line 2 widgets", () => {
   );
 });
 
-Deno.test("Form 4797 K-1 line 2 reconciles source, negative row and aggregate", () => {
+test("Form 4797 K-1 line 2 reconciles source, negative row and aggregate", () => {
   const fields = { section_1231_gain: 7_000, k1_1231_rows: rows };
   const projected = form4797Pdf.projectFields?.(fields, sources);
   assertEquals(projected?.pdf_k1_line2_1_description, "K-1 1120-S 987654321");
@@ -94,7 +95,7 @@ Deno.test("Form 4797 K-1 line 2 reconciles source, negative row and aggregate", 
   );
 });
 
-Deno.test("Form 4797 K-1 line 2 rejects a changed issuer or recipient", async () => {
+test("Form 4797 K-1 line 2 rejects a changed issuer or recipient", async () => {
   const fields = { section_1231_gain: 7_000, k1_1231_rows: rows };
   assertThrows(
     () =>
@@ -132,7 +133,7 @@ Deno.test("Form 4797 K-1 line 2 rejects a changed issuer or recipient", async ()
   );
 });
 
-Deno.test("Form 4797 K-1 section 1231 loss reaches printed ordinary lines", () => {
+test("Form 4797 K-1 section 1231 loss reaches printed ordinary lines", () => {
   const source = {
     ...sources,
     k1_partnership: {
@@ -154,7 +155,7 @@ Deno.test("Form 4797 K-1 section 1231 loss reaches printed ordinary lines", () =
   assertEquals(projected?.ordinary_gain, -4_000);
 });
 
-Deno.test("Form 4797 K-1 line 2 enforces final filer ownership", async () => {
+test("Form 4797 K-1 line 2 enforces final filer ownership", async () => {
   const row = { ...rows[1], recipient_tin: "999999999" };
   const source = {
     k1_partnership: {
@@ -184,7 +185,7 @@ Deno.test("Form 4797 K-1 line 2 enforces final filer ownership", async () => {
   );
 });
 
-Deno.test("Form 4797 line 2 continuation paginates many K-1 source rows", async () => {
+test("Form 4797 line 2 continuation paginates many K-1 source rows", async () => {
   const partners = Array.from({ length: 50 }, (_, index) => ({
     partnership_name: `Partner ${index + 1}`,
     partnership_ein: String(123456780 + index),

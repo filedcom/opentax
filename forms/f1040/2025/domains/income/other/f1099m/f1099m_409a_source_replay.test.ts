@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -58,7 +61,7 @@ function filing() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("1099-MISC box 15 taxes reviewed box 3 income once through 1040, native and PDF", async () => {
+test("1099-MISC box 15 taxes reviewed box 3 income once through 1040, native and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_nqdc, undefined);
@@ -74,7 +77,7 @@ Deno.test("1099-MISC box 15 taxes reviewed box 3 income once through 1040, nativ
     "<IncmNonqlfyDefrdCompPlanAmt>207</IncmNonqlfyDefrdCompPlanAmt>",
   );
   const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", native);
-  const extracted = new Deno.Command("pdftotext", {
+  const extracted = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -87,7 +90,7 @@ Deno.test("1099-MISC box 15 taxes reviewed box 3 income once through 1040, nativ
   assertStringIncludes(text, "Section 409A deferred compensation");
 });
 
-Deno.test("409A direct Schedule 1 deposit or changed interest rejects in both exports", async () => {
+test("409A direct Schedule 1 deposit or changed interest rejects in both exports", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -127,17 +130,17 @@ async function assertTy2025Xsd(xml: string): Promise<void> {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
@@ -194,7 +197,7 @@ function external409aFiling(form: "w2" | "1099nec") {
 }
 
 for (const form of ["w2", "1099nec"] as const) {
-  Deno.test(`1099-MISC box 15 uses identified ${form} income once in native and PDF`, async () => {
+  test(`1099-MISC box 15 uses identified ${form} income once in native and PDF`, async () => {
     const result = external409aFiling(form);
     assertEquals(result.diagnostics, []);
     assertEquals(result.pending.schedule2?.line17h_nqdc_tax, 207);
@@ -213,7 +216,7 @@ for (const form of ["w2", "1099nec"] as const) {
     );
     const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", native);
     assert(pdf.length > 0);
-    const extracted = new Deno.Command("pdftotext", {
+    const extracted = new sys.Command("pdftotext", {
       args: ["-", "-"],
       stdin: "piped",
       stdout: "piped",
@@ -226,7 +229,7 @@ for (const form of ["w2", "1099nec"] as const) {
     assertStringIncludes(text, "207");
   });
 
-  Deno.test(`1099-MISC box 15 ${form} source and review drift rejects both exports`, async () => {
+  test(`1099-MISC box 15 ${form} source and review drift rejects both exports`, async () => {
     const result = external409aFiling(form);
     assertEquals(result.diagnostics, []);
     const pending = buildPending(result.pending);
@@ -276,7 +279,7 @@ for (const form of ["w2", "1099nec"] as const) {
   });
 }
 
-Deno.test("1099-MISC box 15 cannot repeat a W-2 code Z tax base", async () => {
+test("1099-MISC box 15 cannot repeat a W-2 code Z tax base", async () => {
   const result = external409aFiling("w2");
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -303,7 +306,7 @@ Deno.test("1099-MISC box 15 cannot repeat a W-2 code Z tax base", async () => {
   );
 });
 
-Deno.test("two 1099-MISC box 15 rows cannot exceed the same 1099-NEC inclusion", () => {
+test("two 1099-MISC box 15 rows cannot exceed the same 1099-NEC inclusion", () => {
   const result = external409aFiling("1099nec");
   assertEquals(result.diagnostics, []);
   const pending = structuredClone(buildPending(result.pending));

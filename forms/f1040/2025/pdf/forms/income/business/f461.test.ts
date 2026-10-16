@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/types.ts";
 import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
@@ -47,7 +48,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 461 PDF maps the canonical 2025 header and all active line widgets", () => {
+test("Form 461 PDF maps the canonical 2025 header and all active line widgets", () => {
   assertAttachmentCoverage(pending, "pdf");
   assertEquals(form461Pdf.instances?.(filed, filer, pending), [filed]);
   const mapped = Object.fromEntries(
@@ -74,14 +75,14 @@ Deno.test("Form 461 PDF maps the canonical 2025 header and all active line widge
   assertEquals(form461Pdf.pageIndices?.(filed), [0]);
 });
 
-Deno.test("Form 461 PDF omits context-only pending fields", () => {
+test("Form 461 PDF omits context-only pending fields", () => {
   assertEquals(
     form461Pdf.instances?.({ filing_status: "single" }, filer, pending),
     [],
   );
 });
 
-Deno.test("Form 461 PDF refuses a filed-return mismatch or missing identity", () => {
+test("Form 461 PDF refuses a filed-return mismatch or missing identity", () => {
   assertThrows(
     () =>
       form461Pdf.instances?.(filed, filer, {
@@ -98,7 +99,7 @@ Deno.test("Form 461 PDF refuses a filed-return mismatch or missing identity", ()
   );
 });
 
-Deno.test("Form 461 PDF refuses a missing or altered signed C/F source review", () => {
+test("Form 461 PDF refuses a missing or altered signed C/F source review", () => {
   assertThrows(() =>
     form461Pdf.instances?.(filed, filer, { ...pending, general: {} })
   );

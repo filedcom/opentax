@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -67,7 +68,7 @@ function scheduleA(allPending: Record<string, Record<string, unknown>>) {
   return form8911ScheduleAPdf.instances?.({}, filer, allPending)?.[0];
 }
 
-Deno.test("Form 8911 PDF pairs one sourced personal property with Schedule A", () => {
+test("Form 8911 PDF pairs one sourced personal property with Schedule A", () => {
   const allPending = pending();
   const main = parent(allPending);
   const property = scheduleA(allPending);
@@ -99,7 +100,7 @@ Deno.test("Form 8911 PDF pairs one sourced personal property with Schedule A", (
   assertEquals(ALL_PDF_FORMS.includes(form8911ScheduleAPdf), true);
 });
 
-Deno.test("Form 8911 PDF rejects an old-law source amount or mismatched filed credit", () => {
+test("Form 8911 PDF rejects an old-law source amount or mismatched filed credit", () => {
   const stale = pending({ ...source(), regular_tax_before_credits: 162 });
   assertThrows(
     () => parent(stale),
@@ -122,7 +123,7 @@ Deno.test("Form 8911 PDF rejects an old-law source amount or mismatched filed cr
   );
 });
 
-Deno.test("Form 8911 PDF stops for business use, wider credits, and retains source cents for credit rounding", () => {
+test("Form 8911 PDF stops for business use, wider credits, and retains source cents for credit rounding", () => {
   assertThrows(
     () => parent(pending({ ...source(), business_use_pct: 0.1 })),
     Error,
@@ -136,7 +137,7 @@ Deno.test("Form 8911 PDF stops for business use, wider credits, and retains sour
   assertEquals(parent(pending({ ...source(), cost: 1_001 }))?.line4, 300);
 });
 
-Deno.test("Form 8911 PDF emits neither page when no positive native credit exists", () => {
+test("Form 8911 PDF emits neither page when no positive native credit exists", () => {
   const noCredit = pending({ ...source(), regular_tax_before_credits: 0 });
   assertEquals(parent(noCredit), undefined);
   assertEquals(scheduleA(noCredit), undefined);

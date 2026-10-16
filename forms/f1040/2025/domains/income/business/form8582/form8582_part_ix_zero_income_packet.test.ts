@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -75,7 +76,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("Form 8582 Part IX carries three reporting characters through the return and PDF", () => {
+test("Form 8582 Part IX carries three reporting characters through the return and PDF", () => {
   const result = preparedReturn();
   assertEquals(result.pending.form8582.prior_unallowed, 10_000);
   assertEquals(result.pending.form8582.current_income ?? 0, 0);
@@ -150,7 +151,7 @@ Deno.test("Form 8582 Part IX carries three reporting characters through the retu
   }
 });
 
-Deno.test("Form 8582 Part IX packet rejects changed character, final return, and next-year row", () => {
+test("Form 8582 Part IX packet rejects changed character, final return, and next-year row", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
   for (
     const changed of [{

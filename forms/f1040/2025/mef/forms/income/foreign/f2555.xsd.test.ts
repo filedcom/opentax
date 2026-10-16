@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -20,7 +23,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The local IRS schema bundle is optional in CI.
@@ -119,21 +122,21 @@ const filer: FilerIdentity = {
 };
 
 async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const output = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const output = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 }
 
-Deno.test("Form 2555 derives qualifying days from the 12-month period", () => {
+test("Form 2555 derives qualifying days from the 12-month period", () => {
   const fullYear = calculatePhysicalPresence2555(filingDetails, 2025);
   assertEquals(fullYear.qualifyingDays, 365);
   assertEquals(fullYear.line42, 100_000);
@@ -157,7 +160,7 @@ Deno.test("Form 2555 derives qualifying days from the 12-month period", () => {
   );
 });
 
-Deno.test("Form 2555 employee housing follows Parts VI, VII, and VIII in order", () => {
+test("Form 2555 employee housing follows Parts VI, VII, and VIII in order", () => {
   const lines = calculatePhysicalPresence2555(employeeHousingDetails, 2025);
   assertEquals(lines.line28, 30_000);
   assertEquals(lines.line29b, 39_000);
@@ -175,7 +178,7 @@ Deno.test("Form 2555 employee housing follows Parts VI, VII, and VIII in order",
   assertEquals(lines.line45, 139_200);
 });
 
-Deno.test("Form 2555 housing refuses an expense outside qualifying days", () => {
+test("Form 2555 housing refuses an expense outside qualifying days", () => {
   assertThrows(
     () =>
       calculatePhysicalPresence2555({
@@ -193,7 +196,7 @@ Deno.test("Form 2555 housing refuses an expense outside qualifying days", () => 
   );
 });
 
-Deno.test("Form 2555 housing requires its structured expense source", () => {
+test("Form 2555 housing requires its structured expense source", () => {
   assertThrows(
     () =>
       calculatePhysicalPresence2555({
@@ -205,7 +208,7 @@ Deno.test("Form 2555 housing requires its structured expense source", () => {
   );
 });
 
-Deno.test("Form 2555 rejects a listed Toronto location under the standard-limit route", () => {
+test("Form 2555 rejects a listed Toronto location under the standard-limit route", () => {
   assertThrows(
     () =>
       calculatePhysicalPresence2555({
@@ -222,7 +225,7 @@ Deno.test("Form 2555 rejects a listed Toronto location under the standard-limit 
   );
 });
 
-Deno.test("Form 2555 Notice 2025-16 table is complete and explicit", () => {
+test("Form 2555 Notice 2025-16 table is complete and explicit", () => {
   assertEquals(NOTICE_2025_16_ROWS.length, 136);
   assertEquals(
     new Set(
@@ -267,7 +270,7 @@ Deno.test("Form 2555 Notice 2025-16 table is complete and explicit", () => {
   });
 });
 
-Deno.test("Form 2555 requires exact reviewed adjusted-location matching", () => {
+test("Form 2555 requires exact reviewed adjusted-location matching", () => {
   const toronto = {
     kind: "notice_table" as const,
     location: "Toronto",
@@ -301,7 +304,7 @@ Deno.test("Form 2555 requires exact reviewed adjusted-location matching", () => 
   );
 });
 
-Deno.test("Form 2555 Notice 'other cities' categories are selected, never guessed", () => {
+test("Form 2555 Notice 'other cities' categories are selected, never guessed", () => {
   const colombiaOther = {
     kind: "notice_table" as const,
     location: "All cities other than Bogota",
@@ -347,13 +350,7 @@ Deno.test("Form 2555 Notice 'other cities' categories are selected, never guesse
   );
 });
 
-Deno.test({
-  name:
-    "XSD: Form 2555 Toronto adjusted housing limit reaches native line 29a/29b",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2555 Toronto adjusted housing limit reaches native line 29a/29b", async () => {
   const torontoHousing: PhysicalPresenceFiling = {
     ...employeeHousingDetails,
     foreign_address: address,
@@ -400,7 +397,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test("Form 2555 aggregate facts cannot create invalid MeF XML", () => {
+test("Form 2555 aggregate facts cannot create invalid MeF XML", () => {
   assertThrows(
     () => buildMefXml({ form2555: { foreign_wages: 50_000 } }, filer),
     Error,
@@ -408,7 +405,7 @@ Deno.test("Form 2555 aggregate facts cannot create invalid MeF XML", () => {
   );
 });
 
-Deno.test("Form 2555 rejects wage and exclusion mismatches across documents", () => {
+test("Form 2555 rejects wage and exclusion mismatches across documents", () => {
   const wageMismatch = {
     f1040: { line1h_other_earned: 90_000 },
     agi_aggregator: { line1h_other_earned: 90_000 },
@@ -438,12 +435,7 @@ Deno.test("Form 2555 rejects wage and exclusion mismatches across documents", ()
   );
 });
 
-Deno.test({
-  name: "XSD: Form 2555 physical presence and FEIE reconcile through graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2555 physical presence and FEIE reconcile through graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -482,12 +474,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: Form 2555 part-year FEIE uses only 2025 qualifying days",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2555 part-year FEIE uses only 2025 qualifying days", async () => {
   const partYear = {
     ...filingDetails,
     tax_home_established_date: "2024-06-01",
@@ -523,13 +510,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name:
-    "XSD: Form 2555 employee housing excludes the housing amount before FEIE and reconciles to Schedule 1",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2555 employee housing excludes the housing amount before FEIE and reconciles to Schedule 1", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

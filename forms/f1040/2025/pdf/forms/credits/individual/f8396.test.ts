@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { buildPdfBytes } from "../../../builder.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { form8396Pdf } from "./f8396.ts";
 
-Deno.test("2025 Form 8396 PDF maps only the filed credit page", () => {
+test("2025 Form 8396 PDF maps only the filed credit page", () => {
   const byKey = Object.fromEntries(
     form8396Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -48,7 +49,7 @@ Deno.test("2025 Form 8396 PDF maps only the filed credit page", () => {
   );
 });
 
-Deno.test("2025 Form 8396 prepared review packet retains one filed page", async () => {
+test("2025 Form 8396 prepared review packet retains one filed page", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-form8396-certified-loan-interest-credit"
   );
@@ -81,7 +82,7 @@ Deno.test("2025 Form 8396 prepared review packet retains one filed page", async 
   assertEquals(pending.form8396?.line9, 1_200);
 });
 
-Deno.test("2025 Form 8396 PDF prints the certificate rate as a percentage", () => {
+test("2025 Form 8396 PDF prints the certificate rate as a percentage", () => {
   const projected = form8396Pdf.projectFields?.({
     qualified_home_address_if_different: {
       line1: "123 Main St",
@@ -111,7 +112,7 @@ Deno.test("2025 Form 8396 PDF prints the certificate rate as a percentage", () =
   assertEquals(projected?.line9, 900);
 });
 
-Deno.test("2025 Form 8396 PDF refuses an unfinished tax-limit calculation", () => {
+test("2025 Form 8396 PDF refuses an unfinished tax-limit calculation", () => {
   assertThrows(
     () =>
       form8396Pdf.projectFields?.({
@@ -123,7 +124,7 @@ Deno.test("2025 Form 8396 PDF refuses an unfinished tax-limit calculation", () =
   );
 });
 
-Deno.test("2025 Form 8396 PDF rejects a credit that differs from its worksheet", () => {
+test("2025 Form 8396 PDF rejects a credit that differs from its worksheet", () => {
   assertThrows(
     () =>
       form8396Pdf.projectFields?.({

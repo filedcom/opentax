@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   EmployeeType,
@@ -76,7 +78,7 @@ const artistCases = [
 ] as const;
 
 for (const c of artistCases) {
-  Deno.test(`Form 2106 artist ${c.name} reconciles owner-wide qualification and complete return`, async () => {
+  test(`Form 2106 artist ${c.name} reconciles owner-wide qualification and complete return`, async () => {
     const original = fixture(cases[4]);
     const sourceJobs = c.wages.map((w, i) => {
       const owner = c.name === "joint-two-artists" && i >= 2
@@ -271,9 +273,9 @@ for (const c of artistCases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = `.state/research/form2106-artists-2026-10-09/${c.name}`;
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       for (
         const [name, data] of [
           ["source", source],
@@ -282,13 +284,13 @@ for (const c of artistCases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
   });
 }

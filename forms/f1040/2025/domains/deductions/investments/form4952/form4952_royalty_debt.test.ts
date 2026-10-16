@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { scheduleE } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { inputSchema as scheduleESchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
@@ -50,7 +52,7 @@ const cases = [
   },
 ];
 for (const entry of cases) {
-  Deno.test(`Sourced royalty debt through Schedule E and Form 4952: ${entry.id}`, async () => {
+  test(`Sourced royalty debt through Schedule E and Form 4952: ${entry.id}`, async () => {
     const inputs = royaltyDebtInputs(entry.paid, entry.interest);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -85,12 +87,12 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_ROYALTY_DEBT_PROOF_DIR");
+    const root = process.env.OPENTAX_ROYALTY_DEBT_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -200,7 +202,7 @@ for (const entry of cases) {
   });
 }
 
-Deno.test("Royalty debt public preparation rejects contradictory source records", async () => {
+test("Royalty debt public preparation rejects contradictory source records", async () => {
   const base = royaltyDebtInputs(3500);
   const form = base.form4952;
   const trace = form.royalty_debt_trace;

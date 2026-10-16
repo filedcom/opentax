@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import type { MefFormsPending } from "../../../../mef/types.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -21,7 +22,7 @@ function prepared() {
     Record<string, unknown>
   >;
 }
-Deno.test("sourced aggregation reaches filed SE adjustments, wage limit and full native packet", async () => {
+test("sourced aggregation reaches filed SE adjustments, wage limit and full native packet", async () => {
   const pending = prepared();
   assertEquals(pending.schedule1.line3_schedule_c, 180000);
   assertEquals(pending.schedule1.line15_se_deduction, 2411);
@@ -54,7 +55,7 @@ Deno.test("sourced aggregation reaches filed SE adjustments, wage limit and full
   );
   assertEquals(bytes.length > 1000, true);
 });
-Deno.test("aggregation native and PDF exports reject detached members, owner, adjustment and companion", async () => {
+test("aggregation native and PDF exports reject detached members, owner, adjustment and companion", async () => {
   const base = prepared();
   const variants = [
     { ...base, form8995a_schedule_b: undefined },

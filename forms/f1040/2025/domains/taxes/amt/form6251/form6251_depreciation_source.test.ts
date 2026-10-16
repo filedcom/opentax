@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm6251DepreciationSource } from "./form6251_depreciation_source.ts";
 
@@ -14,7 +15,7 @@ const property = {
   reviewed_workpaper_reference: "2025 asset schedule",
 };
 
-Deno.test("Form 6251 line 2l rechecks property-level signed depreciation", () => {
+test("Form 6251 line 2l rechecks property-level signed depreciation", () => {
   const fields = {
     depreciation_adjustment: 1_000,
     line2l_depreciation_workpaper: { properties: [property] },

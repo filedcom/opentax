@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { form8862OverflowRows, form8862Pdf } from "./f8862.ts";
@@ -43,7 +44,7 @@ const noticeReviews = {
   },
 };
 
-Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", () => {
+test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", () => {
   const map = new Map(
     form8862Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -71,7 +72,7 @@ Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", (
   );
 });
 
-Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
+test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
   const source = {
     claim_eitc: true,
     ...priorEicEvidence,
@@ -115,7 +116,7 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
   );
 });
 
-Deno.test("Form 8862 retains numbered continuation rows without exporting CTC", () => {
+test("Form 8862 retains numbered continuation rows without exporting CTC", () => {
   const ctc = {
     claim_ctc: true,
     ctc_disallowed_year: 2023,
@@ -136,7 +137,7 @@ Deno.test("Form 8862 retains numbered continuation rows without exporting CTC", 
   }]);
 });
 
-Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
+test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
   const rows = form8862OverflowRows({
     other_dependents: Array.from({ length: 5 }, (_, i) => ({
       first_name: `Other${i}`,
@@ -161,7 +162,7 @@ Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
   }]);
 });
 
-Deno.test("Form 8862 PDF rejects a claim missing from the finalized return", () => {
+test("Form 8862 PDF rejects a claim missing from the finalized return", () => {
   assertThrows(
     () =>
       form8862Pdf.instances?.(
@@ -178,7 +179,7 @@ Deno.test("Form 8862 PDF rejects a claim missing from the finalized return", () 
   );
 });
 
-Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
+test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
   const aotc = {
     claim_aotc: true,
     aotc_disallowed_year: 2023,

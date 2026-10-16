@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateLikeKindExchange,
@@ -27,7 +28,7 @@ const exchange = {
   received_fmv: 200_000,
 } satisfies Form8824Input;
 
-Deno.test("Form 8824 generated gain statement replays exact bytes after time passes", async () => {
+test("Form 8824 generated gain statement replays exact bytes after time passes", async () => {
   const source = {
     ...exchange,
     received_fmv: 150_000,
@@ -53,7 +54,7 @@ Deno.test("Form 8824 generated gain statement replays exact bytes after time pas
   assertEquals(second?.bytes, first?.bytes);
 });
 
-Deno.test("Form 8824 uses IRS Part III line names and order", () => {
+test("Form 8824 uses IRS Part III line names and order", () => {
   const xml = form8824.build(exchange);
   assertStringIncludes(
     xml,
@@ -75,7 +76,7 @@ Deno.test("Form 8824 uses IRS Part III line names and order", () => {
   );
 });
 
-Deno.test("Form 8824 nets liabilities and cash paid before calculating boot", () => {
+test("Form 8824 nets liabilities and cash paid before calculating boot", () => {
   const lines = calculateLikeKindExchange({
     relinquished_basis: 175_000,
     received_fmv: 220_000,
@@ -90,7 +91,7 @@ Deno.test("Form 8824 nets liabilities and cash paid before calculating boot", ()
   assertEquals(lines.line25, 175_000);
 });
 
-Deno.test("Form 8824 puts unused exchange expenses on line 18", () => {
+test("Form 8824 puts unused exchange expenses on line 18", () => {
   const lines = calculateLikeKindExchange({
     relinquished_basis: 100_000,
     received_fmv: 200_000,
@@ -102,7 +103,7 @@ Deno.test("Form 8824 puts unused exchange expenses on line 18", () => {
   assertEquals(lines.line25, 105_000);
 });
 
-Deno.test("Form 8824 rejects incomplete exchange metadata", () => {
+test("Form 8824 rejects incomplete exchange metadata", () => {
   assertThrows(
     () => form8824.build({ received_fmv: 200_000 }),
     Error,
@@ -110,7 +111,7 @@ Deno.test("Form 8824 rejects incomplete exchange metadata", () => {
   );
 });
 
-Deno.test("Form 8824 does not file boot without required gain statement", () => {
+test("Form 8824 does not file boot without required gain statement", () => {
   assertThrows(
     () => form8824.build({ ...exchange, cash_received: 5_000 }),
     Error,
@@ -118,7 +119,7 @@ Deno.test("Form 8824 does not file boot without required gain statement", () => 
   );
 });
 
-Deno.test("Form 8824 statement route omits lines 12-18 and links its document", () => {
+test("Form 8824 statement route omits lines 12-18 and links its document", () => {
   const xml = form8824.build({
     ...exchange,
     received_fmv: 150_000,
@@ -145,7 +146,7 @@ Deno.test("Form 8824 statement route omits lines 12-18 and links its document", 
   assertStringIncludes(xml, "<RecognizedGainAmt>50000</RecognizedGainAmt>");
 });
 
-Deno.test("Form 8824 recognized gain requires its destination source", () => {
+test("Form 8824 recognized gain requires its destination source", () => {
   const context = {
     binaryAttachmentFileNames: ["Form8824RealizedRecognizedGainStatement.pdf"],
     pending: {},
@@ -174,7 +175,7 @@ Deno.test("Form 8824 recognized gain requires its destination source", () => {
   );
 });
 
-Deno.test("Form 8824 enforces deferred exchange identification and receipt deadlines", () => {
+test("Form 8824 enforces deferred exchange identification and receipt deadlines", () => {
   assertThrows(
     () =>
       form8824.build({

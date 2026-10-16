@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -105,9 +108,9 @@ function source(kind: "adult" | "working-minor" | "student") {
   });
 }
 
-Deno.test("Schedule H complete multiworker payroll joins per-worker FICA and aggregate FUTA quarters to full return", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+test("Schedule H complete multiworker payroll joins per-worker FICA and aggregate FUTA quarters to full return", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   for (const kind of ["adult", "working-minor", "student"] as const) {
     const payroll = source(kind);
     const total = kind === "adult" ? 478 : kind === "working-minor" ? 524 : 40;
@@ -135,17 +138,17 @@ Deno.test("Schedule H complete multiworker payroll joins per-worker FICA and agg
       bundle,
       origins,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     assertEquals(origins.filter((x) => x.formKey === "schedule_h").length, 1);
     const changed = structuredClone(payroll);
@@ -190,8 +193,8 @@ Deno.test("Schedule H complete multiworker payroll joins per-worker FICA and agg
       await assertRejects(builder);
     }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${kind}.json`,
         JSON.stringify(
           {
@@ -206,13 +209,13 @@ Deno.test("Schedule H complete multiworker payroll joins per-worker FICA and agg
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${kind}.xml`, bundle.xml);
-      await Deno.writeFile(`${root}/${kind}.pdf`, pdf);
+      await fs.writeFile(`${root}/${kind}.xml`, bundle.xml);
+      await fs.writeFile(`${root}/${kind}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H multiworker payroll rejects aggregate qualifying quarters and last-worker conflicts", () => {
+test("Schedule H multiworker payroll rejects aggregate qualifying quarters and last-worker conflicts", () => {
   const valid = source("adult");
   const altered = () => structuredClone(valid);
   const quarter = altered();
@@ -265,7 +268,7 @@ Deno.test("Schedule H multiworker payroll rejects aggregate qualifying quarters 
   );
 });
 
-Deno.test("Schedule H preserves source cash cents and computes tax from filed wage and withholding operands", async () => {
+test("Schedule H preserves source cash cents and computes tax from filed wage and withholding operands", async () => {
   const payroll = source("adult");
   const employee = payroll.fica_only_payroll!.employee_wages[0];
   payroll.ss_wages =

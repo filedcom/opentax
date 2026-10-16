@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
 import {
   calculateOwnerForms,
@@ -15,8 +18,8 @@ import {
 } from "./form4852_roth_conversion.fixture.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 const root = ".state/research/form4852-roth-conversion-checkbox-corrected";
-Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year recapture through owner8606/5329 and1040", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("actual prior filed Roth conversions reconcile FIFO and five-year recapture through owner8606/5329 and1040", async () => {
+  await fs.mkdir(root, { recursive: true });
   for (const [n, row] of rothConversionCases.entries()) {
     const source = await rothConversionReturnSource(row, 301 + n);
     const result = f1040_2025.executeReturn(source.inputs);
@@ -57,8 +60,8 @@ Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year reca
       row.joint ? 5 : 3,
     );
     assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -75,12 +78,12 @@ Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year reca
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${root}/${row.id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${row.id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify(
         { inputs: source.inputs, filer: source.filer, pending },
@@ -88,18 +91,18 @@ Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year reca
         2,
       ),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const documents = [];
     for (const [index, document] of source.retained.documents.entries()) {
       const path = `${row.id}-retained/document-${index + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, document.bytes);
+      await fs.writeFile(`${root}/${path}`, document.bytes);
       documents.push({
         document_reference: document.document_reference,
         path,
         sha256: createHash("sha256").update(document.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(documents, null, 2),
     );
@@ -143,7 +146,7 @@ Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year reca
   }
 });
 
-Deno.test("Roth conversion FIFO rejects changed historical source facts and retained prior8606 bytes", async () => {
+test("Roth conversion FIFO rejects changed historical source facts and retained prior8606 bytes", async () => {
   const source = await rothConversionReturnSource(rothConversionCases[0], 501);
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);

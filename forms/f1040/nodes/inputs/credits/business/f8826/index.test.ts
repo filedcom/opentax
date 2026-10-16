@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -40,7 +41,7 @@ function form3800Credit(
 
 // ── Schema Validation ─────────────────────────────────────────────────────────
 
-Deno.test("schema_rejects_negative_expenditures", () => {
+test("schema_rejects_negative_expenditures", () => {
   const result = f8826.inputSchema.safeParse({
     eligible_expenditures: -100,
     ...eligibleFacts,
@@ -48,7 +49,7 @@ Deno.test("schema_rejects_negative_expenditures", () => {
   assertEquals(result.success, false);
 });
 
-Deno.test("schema rejects sub-cent source amounts and calculation rounds a half-cent credit", () => {
+test("schema rejects sub-cent source amounts and calculation rounds a half-cent credit", () => {
   assertEquals(
     f8826.inputSchema.safeParse({
       eligible_expenditures: 250.001,
@@ -79,7 +80,7 @@ Deno.test("schema rejects sub-cent source amounts and calculation rounds a half-
   );
 });
 
-Deno.test("schema_accepts_valid_input", () => {
+test("schema_accepts_valid_input", () => {
   const result = f8826.inputSchema.safeParse({
     eligible_expenditures: 5000,
     ...eligibleFacts,
@@ -87,7 +88,7 @@ Deno.test("schema_accepts_valid_input", () => {
   assertEquals(result.success, true);
 });
 
-Deno.test("schema_requires_prior_year_receipts_and_full-time headcount", () => {
+test("schema_requires_prior_year_receipts_and_full-time headcount", () => {
   assertEquals(
     f8826.inputSchema.safeParse({ eligible_expenditures: 5_000 }).success,
     false,
@@ -109,7 +110,7 @@ Deno.test("schema_requires_prior_year_receipts_and_full-time headcount", () => {
   );
 });
 
-Deno.test("pass-through-only credit does not require the recipient's self-earned eligibility facts", () => {
+test("pass-through-only credit does not require the recipient's self-earned eligibility facts", () => {
   const input = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,
@@ -152,7 +153,7 @@ Deno.test("pass-through-only credit does not require the recipient's self-earned
   );
 });
 
-Deno.test("pass-through credit keeps entity identity and rejects duplicates", () => {
+test("pass-through credit keeps entity identity and rejects duplicates", () => {
   const source = {
     entity_type: "partnership" as const,
     entity_ein: "123456789",
@@ -187,7 +188,7 @@ Deno.test("pass-through credit keeps entity identity and rejects duplicates", ()
   );
 });
 
-Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", () => {
+test("combined $5,000 cap allocates all source credits pro rata to cents", () => {
   const input = {
     eligible_expenditures: 2_250,
     ...eligibleFacts,
@@ -264,25 +265,25 @@ Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", 
 
 // ── Zero / No Output Cases ────────────────────────────────────────────────────
 
-Deno.test("zero_expenditures_produces_no_output", () => {
+test("zero_expenditures_produces_no_output", () => {
   const result = compute({ eligible_expenditures: 0, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("expenditures_at_250_floor_produces_no_output", () => {
+test("expenditures_at_250_floor_produces_no_output", () => {
   // $250 − $250 = $0 creditable → no output
   const result = compute({ eligible_expenditures: 250, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("expenditures_below_250_produces_no_output", () => {
+test("expenditures_below_250_produces_no_output", () => {
   const result = compute({ eligible_expenditures: 100, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
 // ── Eligibility Gates ─────────────────────────────────────────────────────────
 
-Deno.test("over_1M_receipts_AND_over_30_full_time_employees_produces_no_output", () => {
+test("over_1M_receipts_AND_over_30_full_time_employees_produces_no_output", () => {
   // Both conditions fail → not eligible
   const result = compute({
     eligible_expenditures: 5000,
@@ -293,7 +294,7 @@ Deno.test("over_1M_receipts_AND_over_30_full_time_employees_produces_no_output",
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("over_1M_receipts_but_under_30_full_time_employees_is_eligible", () => {
+test("over_1M_receipts_but_under_30_full_time_employees_is_eligible", () => {
   // Headcount ≤30 qualifies even if receipts > $1M.
   const result = compute({
     eligible_expenditures: 5000,
@@ -304,7 +305,7 @@ Deno.test("over_1M_receipts_but_under_30_full_time_employees_is_eligible", () =>
   assertEquals(form3800Credit(result), 2375);
 });
 
-Deno.test("under_1M_receipts_but_over_30_full_time_employees_is_eligible", () => {
+test("under_1M_receipts_but_over_30_full_time_employees_is_eligible", () => {
   // Receipts ≤$1M qualifies even if headcount >30.
   const result = compute({
     eligible_expenditures: 5000,
@@ -315,7 +316,7 @@ Deno.test("under_1M_receipts_but_over_30_full_time_employees_is_eligible", () =>
   assertEquals(form3800Credit(result), 2375);
 });
 
-Deno.test("exactly_1M_receipts_is_eligible", () => {
+test("exactly_1M_receipts_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({
     eligible_expenditures: 5000,
@@ -326,7 +327,7 @@ Deno.test("exactly_1M_receipts_is_eligible", () => {
   assertEquals(form3800Credit(result), 2375);
 });
 
-Deno.test("exactly_30_full_time_employees_is_eligible", () => {
+test("exactly_30_full_time_employees_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({
     eligible_expenditures: 5000,
@@ -339,31 +340,31 @@ Deno.test("exactly_30_full_time_employees_is_eligible", () => {
 
 // ── Credit Calculation ────────────────────────────────────────────────────────
 
-Deno.test("basic_credit_50pct_of_expenditures_minus_250", () => {
+test("basic_credit_50pct_of_expenditures_minus_250", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   assertEquals(form3800Credit(result), 2375);
 });
 
-Deno.test("expenditures_just_above_250_floor", () => {
+test("expenditures_just_above_250_floor", () => {
   // ($251 − $250) × 50% = $0.50
   const result = compute({ eligible_expenditures: 251, ...eligibleFacts });
   assertEquals(form3800Credit(result), 0.5);
 });
 
-Deno.test("max_credit_at_10250_expenditures", () => {
+test("max_credit_at_10250_expenditures", () => {
   // ($10,250 − $250) × 50% = $5,000
   const result = compute({ eligible_expenditures: 10250, ...eligibleFacts });
   assertEquals(form3800Credit(result), 5000);
 });
 
-Deno.test("expenditures_above_10250_still_capped_at_5000", () => {
+test("expenditures_above_10250_still_capped_at_5000", () => {
   // $20,000 expenditures → cap at $10,250 → ($10,250 − $250) × 50% = $5,000
   const result = compute({ eligible_expenditures: 20000, ...eligibleFacts });
   assertEquals(form3800Credit(result), 5000);
 });
 
-Deno.test("first-year business with zero prior-year receipts and employees qualifies", () => {
+test("first-year business with zero prior-year receipts and employees qualifies", () => {
   const result = compute({
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 0,
@@ -375,7 +376,7 @@ Deno.test("first-year business with zero prior-year receipts and employees quali
 
 // ── Routing ───────────────────────────────────────────────────────────────────
 
-Deno.test("routes_source_credit_to_Form_3800_without_claiming_Schedule_3", () => {
+test("routes_source_credit_to_Form_3800_without_claiming_Schedule_3", () => {
   const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   assertEquals(result.outputs[0]?.nodeType, "disabled_access_limit");
   assertEquals(findForm3800(result)?.fields.f8826_credit_entries, [{
@@ -385,7 +386,7 @@ Deno.test("routes_source_credit_to_Form_3800_without_claiming_Schedule_3", () =>
   }]);
 });
 
-Deno.test("passive credit stops before the Form 3800 source route", () => {
+test("passive credit stops before the Form 3800 source route", () => {
   assertEquals(
     f8826.inputSchema.safeParse({
       eligible_expenditures: 5_000,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -18,7 +19,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-ira-rollover"
 )!;
 
-Deno.test("IRA rollover eligibility review is required again at native and PDF export", async () => {
+test("IRA rollover eligibility review is required again at native and PDF export", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -139,7 +140,7 @@ Deno.test("IRA rollover eligibility review is required again at native and PDF e
   );
 });
 
-Deno.test("IRA code G payer box 2a conflict is rejected before native and PDF export", async () => {
+test("IRA code G payer box 2a conflict is rejected before native and PDF export", async () => {
   const direct = pdfReviewFixtures.find((item) =>
     item.id === "single-ira-qualified-plan-rollover"
   )!;

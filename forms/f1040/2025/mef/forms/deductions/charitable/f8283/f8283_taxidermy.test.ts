@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import {
@@ -83,7 +84,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Form 8283 taxidermy basis limit reaches Schedule A, Form 1040, native statement and PDF", () => {
+test("Form 8283 taxidermy basis limit reaches Schedule A, Form 1040, native statement and PDF", () => {
   const pending = pendingReturn();
   assertEquals(
     (pending.schedule_a as Record<string, unknown>)
@@ -115,7 +116,7 @@ Deno.test("Form 8283 taxidermy basis limit reaches Schedule A, Form 1040, native
   );
 });
 
-Deno.test("Form 8283 taxidermy rejects altered cost, property and final return", () => {
+test("Form 8283 taxidermy rejects altered cost, property and final return", () => {
   for (
     const item of [
       { ...gift, deduction_claimed: 3_001 },

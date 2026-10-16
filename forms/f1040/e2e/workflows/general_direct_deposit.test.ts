@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -37,7 +38,7 @@ const wageSource = [{
   box12_entries: [],
 }];
 
-Deno.test("general direct deposit survives the full graph and CLI filer extraction", () => {
+test("general direct deposit survives the full graph and CLI filer extraction", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -120,7 +121,7 @@ Deno.test("general direct deposit survives the full graph and CLI filer extracti
   }
 });
 
-Deno.test("direct-deposit source syntax follows Form 1040 lines 35b and 35d", () => {
+test("direct-deposit source syntax follows Form 1040 lines 35b and 35d", () => {
   assertEquals(
     generalInputSchema.safeParse({
       ...general,

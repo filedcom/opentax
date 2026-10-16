@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -27,7 +30,7 @@ const general = {
   address_zip: "78701",
 };
 
-Deno.test("unemployment line 7 needs a retained payer source at final export", async () => {
+test("unemployment line 7 needs a retained payer source at final export", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;
@@ -62,7 +65,7 @@ Deno.test("unemployment line 7 needs a retained payer source at final export", a
   );
 });
 
-Deno.test("1099-G unemployment replay retains cents allowed by its source schema", () => {
+test("1099-G unemployment replay retains cents allowed by its source schema", () => {
   const pending = {
     f1099g: {
       f1099gs: [{
@@ -88,7 +91,7 @@ Deno.test("1099-G unemployment replay retains cents allowed by its source schema
   );
 });
 
-Deno.test("1099-G unemployment cents reconcile before whole-dollar native export", () => {
+test("1099-G unemployment cents reconcile before whole-dollar native export", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     f1099g: [{
@@ -110,7 +113,7 @@ Deno.test("1099-G unemployment cents reconcile before whole-dollar native export
   );
 });
 
-Deno.test("two 1099-G unemployment copies and repayments reach native and PDF return", async () => {
+test("two 1099-G unemployment copies and repayments reach native and PDF return", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     f1099g: [{
@@ -141,25 +144,25 @@ Deno.test("two 1099-G unemployment copies and repayments reach native and PDF re
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsdPath);
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    await sys.stat(xsdPath);
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsdPath, xmlPath],
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
   } catch (error) {
     throw error;
   }
   const pdf = await buildPdfBytes(pending, filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -167,7 +170,7 @@ Deno.test("two 1099-G unemployment copies and repayments reach native and PDF re
     assertStringIncludes(printed, "6300");
     assertStringIncludes(printed, "700");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const changedSchedule = {

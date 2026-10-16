@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f3903 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -15,32 +16,32 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f3903.inputSchema: valid minimal item passes", () => {
+test("f3903.inputSchema: valid minimal item passes", () => {
   const parsed = f3903.inputSchema.safeParse({ f3903s: [{}] });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f3903.inputSchema: empty array fails (min 1)", () => {
+test("f3903.inputSchema: empty array fails (min 1)", () => {
   const parsed = f3903.inputSchema.safeParse({ f3903s: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3903.inputSchema: negative transportation_storage fails", () => {
+test("f3903.inputSchema: negative transportation_storage fails", () => {
   const parsed = f3903.inputSchema.safeParse({ f3903s: [{ transportation_storage: -100 }] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3903.inputSchema: negative travel_expenses fails", () => {
+test("f3903.inputSchema: negative travel_expenses fails", () => {
   const parsed = f3903.inputSchema.safeParse({ f3903s: [{ travel_expenses: -50 }] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3903.inputSchema: negative employer_reimbursements fails", () => {
+test("f3903.inputSchema: negative employer_reimbursements fails", () => {
   const parsed = f3903.inputSchema.safeParse({ f3903s: [{ employer_reimbursements: -200 }] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3903.inputSchema: valid full item passes", () => {
+test("f3903.inputSchema: valid full item passes", () => {
   const parsed = f3903.inputSchema.safeParse({
     f3903s: [{
       transportation_storage: 2000,
@@ -57,7 +58,7 @@ Deno.test("f3903.inputSchema: valid full item passes", () => {
 // 2. Per-Field Routing
 // =============================================================================
 
-Deno.test("f3903.compute: military move routes net deduction to schedule1 line14_moving_expenses", () => {
+test("f3903.compute: military move routes net deduction to schedule1 line14_moving_expenses", () => {
   const result = compute([minimalItem({
     transportation_storage: 2000,
     travel_expenses: 500,
@@ -67,7 +68,7 @@ Deno.test("f3903.compute: military move routes net deduction to schedule1 line14
   assertEquals(fields.line14_moving_expenses, 2500);
 });
 
-Deno.test("f3903.compute: non-military move — no output (TCJA suspension)", () => {
+test("f3903.compute: non-military move — no output (TCJA suspension)", () => {
   const result = compute([minimalItem({
     transportation_storage: 3000,
     travel_expenses: 800,
@@ -76,7 +77,7 @@ Deno.test("f3903.compute: non-military move — no output (TCJA suspension)", ()
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f3903.compute: active_duty_military omitted — no output", () => {
+test("f3903.compute: active_duty_military omitted — no output", () => {
   const result = compute([minimalItem({
     transportation_storage: 1500,
     travel_expenses: 400,
@@ -84,7 +85,7 @@ Deno.test("f3903.compute: active_duty_military omitted — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f3903.compute: empty item — no output", () => {
+test("f3903.compute: empty item — no output", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
@@ -93,7 +94,7 @@ Deno.test("f3903.compute: empty item — no output", () => {
 // 3. Net Deduction (Expenses - Reimbursements)
 // =============================================================================
 
-Deno.test("f3903.compute: reimbursements reduce deduction", () => {
+test("f3903.compute: reimbursements reduce deduction", () => {
   // $3000 expenses - $1000 reimbursed = $2000 net
   const result = compute([minimalItem({
     transportation_storage: 2000,
@@ -105,7 +106,7 @@ Deno.test("f3903.compute: reimbursements reduce deduction", () => {
   assertEquals(fields.line14_moving_expenses, 2000);
 });
 
-Deno.test("f3903.compute: reimbursements equal expenses — no deduction", () => {
+test("f3903.compute: reimbursements equal expenses — no deduction", () => {
   const result = compute([minimalItem({
     transportation_storage: 1500,
     travel_expenses: 500,
@@ -115,7 +116,7 @@ Deno.test("f3903.compute: reimbursements equal expenses — no deduction", () =>
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f3903.compute: reimbursements exceed expenses — no deduction (floors at 0)", () => {
+test("f3903.compute: reimbursements exceed expenses — no deduction (floors at 0)", () => {
   const result = compute([minimalItem({
     transportation_storage: 1000,
     employer_reimbursements: 2000,
@@ -124,7 +125,7 @@ Deno.test("f3903.compute: reimbursements exceed expenses — no deduction (floor
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f3903.compute: total_expenses overrides sum of lines 1+2", () => {
+test("f3903.compute: total_expenses overrides sum of lines 1+2", () => {
   // Explicit total provided — should use total_expenses not transportation + travel
   const result = compute([minimalItem({
     total_expenses: 4000,
@@ -139,7 +140,7 @@ Deno.test("f3903.compute: total_expenses overrides sum of lines 1+2", () => {
 // 4. Aggregation — Multiple Moves
 // =============================================================================
 
-Deno.test("f3903.compute: multiple military moves — deductions summed", () => {
+test("f3903.compute: multiple military moves — deductions summed", () => {
   const result = compute([
     minimalItem({ transportation_storage: 1500, active_duty_military: true }),
     minimalItem({ transportation_storage: 2500, active_duty_military: true }),
@@ -148,7 +149,7 @@ Deno.test("f3903.compute: multiple military moves — deductions summed", () => 
   assertEquals(fields.line14_moving_expenses, 4000);
 });
 
-Deno.test("f3903.compute: mixed military and non-military — only military routes", () => {
+test("f3903.compute: mixed military and non-military — only military routes", () => {
   const result = compute([
     minimalItem({ transportation_storage: 1000, active_duty_military: true }),
     minimalItem({ transportation_storage: 5000, active_duty_military: false }),
@@ -157,7 +158,7 @@ Deno.test("f3903.compute: mixed military and non-military — only military rout
   assertEquals(fields.line14_moving_expenses, 1000);
 });
 
-Deno.test("f3903.compute: multiple military moves with reimbursements — each netted then summed", () => {
+test("f3903.compute: multiple military moves with reimbursements — each netted then summed", () => {
   const result = compute([
     minimalItem({ transportation_storage: 3000, employer_reimbursements: 1000, active_duty_military: true }),
     minimalItem({ transportation_storage: 2000, employer_reimbursements: 500, active_duty_military: true }),
@@ -171,7 +172,7 @@ Deno.test("f3903.compute: multiple military moves with reimbursements — each n
 // 5. Informational Fields — no outputs
 // =============================================================================
 
-Deno.test("f3903.compute: move_description only — no outputs", () => {
+test("f3903.compute: move_description only — no outputs", () => {
   const result = compute([minimalItem({ move_description: "PCS" })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -180,15 +181,15 @@ Deno.test("f3903.compute: move_description only — no outputs", () => {
 // 6. Hard Validation
 // =============================================================================
 
-Deno.test("f3903.compute: throws on negative transportation_storage", () => {
+test("f3903.compute: throws on negative transportation_storage", () => {
   assertThrows(() => compute([minimalItem({ transportation_storage: -100 })]), Error);
 });
 
-Deno.test("f3903.compute: throws on negative employer_reimbursements", () => {
+test("f3903.compute: throws on negative employer_reimbursements", () => {
   assertThrows(() => compute([minimalItem({ employer_reimbursements: -200 })]), Error);
 });
 
-Deno.test("f3903.compute: zero expenses do not throw", () => {
+test("f3903.compute: zero expenses do not throw", () => {
   const result = compute([minimalItem({ transportation_storage: 0, active_duty_military: true })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -197,13 +198,13 @@ Deno.test("f3903.compute: zero expenses do not throw", () => {
 // 7. Edge Cases
 // =============================================================================
 
-Deno.test("f3903.compute: only travel expenses (no storage) — routes correctly", () => {
+test("f3903.compute: only travel expenses (no storage) — routes correctly", () => {
   const result = compute([minimalItem({ travel_expenses: 800, active_duty_military: true })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line14_moving_expenses, 800);
 });
 
-Deno.test("f3903.compute: only storage (no travel) — routes correctly", () => {
+test("f3903.compute: only storage (no travel) — routes correctly", () => {
   const result = compute([minimalItem({ transportation_storage: 3000, active_duty_military: true })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line14_moving_expenses, 3000);
@@ -213,7 +214,7 @@ Deno.test("f3903.compute: only storage (no travel) — routes correctly", () => 
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("f3903.compute: smoke test — multiple moves, mixed military/civilian", () => {
+test("f3903.compute: smoke test — multiple moves, mixed military/civilian", () => {
   const result = compute([
     minimalItem({
       transportation_storage: 5000,

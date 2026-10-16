@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule1 } from "../../../general/return-assembly/schedule1/schedule1.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
@@ -8,7 +9,7 @@ const sourced = {
   line9_total_other_income: 300,
 };
 
-Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
+test("TY2025 Schedule 1 line 8z links its type statement", () => {
   const statement = schedule1OtherIncomeStatement.build({}, {
     pending: { schedule1: sourced },
   });
@@ -32,7 +33,7 @@ Deno.test("TY2025 Schedule 1 line 8z links its type statement", () => {
   );
 });
 
-Deno.test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
+test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
   assertThrows(
     () => schedule1.build({ line8z_other: 25 }),
     Error,
@@ -54,7 +55,7 @@ Deno.test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
   assertEquals(schedule1OtherIncomeStatement.build({}, { pending: {} }), "");
 });
 
-Deno.test("TY2025 Schedule 1 rejects bare disallowed business interest income", () => {
+test("TY2025 Schedule 1 rejects bare disallowed business interest income", () => {
   const fields = { biz_interest_disallowed_add_back: 300 };
   assertThrows(
     () =>
@@ -71,7 +72,7 @@ Deno.test("TY2025 Schedule 1 rejects bare disallowed business interest income", 
   );
 });
 
-Deno.test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", () => {
+test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", () => {
   const fields = {
     line8z_substitute_payments: 750,
     f1099m_box8_substitute_sources: [
@@ -115,7 +116,7 @@ Deno.test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", 
   );
 });
 
-Deno.test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z", () => {
+test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z", () => {
   const fields = {
     line8z_form8621_qef: 2_000,
     line8z_form8621_mtm: -500,
@@ -137,7 +138,7 @@ Deno.test("TY2025 Form 8621 income types remain separate on Schedule 1 line 8z",
   assertStringIncludes(xml, ">1800</OtherIncomeTotalAmt>");
 });
 
-Deno.test("TY2025 nonbusiness Form 1099-NEC uses line 8j and rejects the old 8z scalar", () => {
+test("TY2025 nonbusiness Form 1099-NEC uses line 8j and rejects the old 8z scalar", () => {
   assertThrows(
     () => schedule1.build({ line8z_f1099nec_nonbusiness: 2_000 }),
     Error,
@@ -159,7 +160,7 @@ Deno.test("TY2025 nonbusiness Form 1099-NEC uses line 8j and rejects the old 8z 
   );
 });
 
-Deno.test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 8z row", () => {
+test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 8z row", () => {
   const fields = { line8z_f1098_interest_recovery: 1_200 };
   const statement = schedule1OtherIncomeStatement.build({}, {
     pending: { schedule1: fields },
@@ -168,7 +169,7 @@ Deno.test("TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 
   assertStringIncludes(statement, "<OtherIncomeAmt>1200</OtherIncomeAmt>");
 });
 
-Deno.test("TY2025 S corporation K-1 tax-benefit recovery has a typed line 8z row", () => {
+test("TY2025 S corporation K-1 tax-benefit recovery has a typed line 8z row", () => {
   const fields = {
     line8z_k1_s_corp_tax_benefit_recovery: 400,
     k1_s_corp_box10_code_j_sources: [{

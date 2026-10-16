@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertExists,
@@ -118,7 +121,7 @@ export const cases = [
   ["spouse-personal", spouse, 0, 2000, 0, 0],
 ] as const;
 for (const [name, source, employer, deduction, income, tax] of cases) {
-  Deno.test(`Archer ${name}: public source→worksheet→Schedule1/5329/2/1040→full XSD/PDF`, async () => {
+  test(`Archer ${name}: public source→worksheet→Schedule1/5329/2/1040→full XSD/PDF`, async () => {
     const result = run(source, employer);
     assertEquals(result.diagnostics, []);
     assertEquals(result.pending.form8853?.archer_contribution_ledger, source);
@@ -193,9 +196,9 @@ for (const [name, source, employer, deduction, income, tax] of cases) {
       "../../../../../../.state/research/2026-10-06-form8853-contributions/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(dir + name + ".xml", xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(dir + name + ".xml", xml);
+    await fs.writeFile(
       dir + name + ".json",
       JSON.stringify({ source, lines, pending: result.pending }, null, 2),
     );
@@ -203,16 +206,16 @@ for (const [name, source, employer, deduction, income, tax] of cases) {
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const valid = await new Deno.Command("xmllint", {
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + name + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       dir + name + ".pdf",
       await buildPdfBytes(result.pending, filer),
     );
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", dir + name + ".pdf", "-"],
       stdout: "piped",
     }).output();
@@ -250,7 +253,7 @@ for (const [name, source, employer, deduction, income, tax] of cases) {
     }
   });
 }
-Deno.test("Archer contribution actual export rejects wrong owner, compensation/codeR/HSA conflicts and filed tampering", async () => {
+test("Archer contribution actual export rejects wrong owner, compensation/codeR/HSA conflicts and filed tampering", async () => {
   const result = run(employerExcess, 3500),
     filer = extractFilerIdentity(result.pending.f1040)!;
   // These invalid facts enter through the public return input and fail calculation;
@@ -282,7 +285,7 @@ Deno.test("Archer contribution actual export rejects wrong owner, compensation/c
       true,
       `${kind}: ${JSON.stringify(invalid.diagnostics)}`,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       new URL(
         `../../../.state/research/2026-10-06-form8853-contributions/public-negative-${kind}.json`,
         import.meta.url,

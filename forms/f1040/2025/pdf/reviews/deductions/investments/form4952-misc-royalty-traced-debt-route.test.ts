@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -95,7 +96,7 @@ async function filing() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("traced taxable-securities loan and separate royalty reach Form 4952, Schedule E/A, Form 1040, native and PDF", async () => {
+test("traced taxable-securities loan and separate royalty reach Form 4952, Schedule E/A, Form 1040, native and PDF", async () => {
   const result = await filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_e.royalty_income, 800);

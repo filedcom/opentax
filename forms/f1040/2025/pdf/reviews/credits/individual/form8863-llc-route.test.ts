@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -74,7 +75,7 @@ function lifetimeLearningReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("sourced LLC tuition, required materials, and scholarship reconcile to Schedule 3, native MeF, and PDF", async () => {
+test("sourced LLC tuition, required materials, and scholarship reconcile to Schedule 3, native MeF, and PDF", async () => {
   const result = lifetimeLearningReturn();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040.line18_total_tax_before_credits, 7_955);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -12,7 +13,7 @@ const rollover = pdfReviewFixtures.find((row) =>
   row.id === "single-ira-rollover"
 )!;
 
-Deno.test("issued IRA rollover source fixes Form 1040 lines 4a and 4b in both exports", async () => {
+test("issued IRA rollover source fixes Form 1040 lines 4a and 4b in both exports", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -58,7 +59,7 @@ Deno.test("issued IRA rollover source fixes Form 1040 lines 4a and 4b in both ex
   );
 });
 
-Deno.test("fully taxable sourced IRA may omit Form 1040 line 4a", async () => {
+test("fully taxable sourced IRA may omit Form 1040 line 4a", async () => {
   const original = f1099rInputSchema.parse({ f1099rs: rollover.inputs.f1099r })
     .f1099rs[0]!;
   const result = execute(

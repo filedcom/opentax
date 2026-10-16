@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildForm8582Ledger, readForm8582Ledger } from "./ledger.ts";
 import { reconcileForm8582NextYearOpening } from "./next_year_import.ts";
@@ -34,7 +35,7 @@ const retainedSaleSource = {
   }],
 };
 
-Deno.test("Form 8582 entire-sale overall-gain ledger retains fully released prior operating balances", () => {
+test("Form 8582 entire-sale overall-gain ledger retains fully released prior operating balances", () => {
   for (const active of [false, true]) {
     const source = {
       ...retainedSaleSource,
@@ -120,7 +121,7 @@ Deno.test("Form 8582 entire-sale overall-gain ledger retains fully released prio
   }
 });
 
-Deno.test("Form 8582 retained-sale ledger keeps operating loss separate from either sale character", () => {
+test("Form 8582 retained-sale ledger keeps operating loss separate from either sale character", () => {
   for (const part of ["I", "II"] as const) {
     const source = {
       ...retainedSaleSource,
@@ -177,7 +178,7 @@ Deno.test("Form 8582 retained-sale ledger keeps operating loss separate from eit
   }
 });
 
-Deno.test("Form 8582 retained active-rental ledger includes sale income before special allowance", () => {
+test("Form 8582 retained active-rental ledger includes sale income before special allowance", () => {
   const source = {
     ...retainedSaleSource,
     activities: [{
@@ -241,7 +242,7 @@ Deno.test("Form 8582 retained active-rental ledger includes sale income before s
   }
 });
 
-Deno.test("Form 8582 retained-sale ledger rejects unreviewed disposition and source changes", () => {
+test("Form 8582 retained-sale ledger rejects unreviewed disposition and source changes", () => {
   const sale = retainedSaleSource.current_4797_sale_gains[0];
   for (
     const changed of [
@@ -325,7 +326,7 @@ const source = {
   has_other_passive: true,
 };
 
-Deno.test("Form 8582 filed ledger preserves Part VIII character and balances", () => {
+test("Form 8582 filed ledger preserves Part VIII character and balances", () => {
   const ledger = buildForm8582Ledger(source, "Accepted 2025 return ID");
   assertEquals(ledger.tax_year, 2025);
   assertEquals(ledger.ending_unallowed_loss, 2_000);
@@ -372,7 +373,7 @@ const activeRentalSource = {
   modified_agi: 120_000,
 };
 
-Deno.test("Form 8582 ledger records sourced single active rental special allowance", () => {
+test("Form 8582 ledger records sourced single active rental special allowance", () => {
   const ledger = buildForm8582Ledger(
     activeRentalSource,
     "Accepted 2025 active-rental return",
@@ -397,7 +398,7 @@ Deno.test("Form 8582 ledger records sourced single active rental special allowan
   );
 });
 
-Deno.test("Form 8582 2026 opening matches the 2025 accepted-reference ledger by activity and form", () => {
+test("Form 8582 2026 opening matches the 2025 accepted-reference ledger by activity and form", () => {
   const accepted = "Accepted 2025 active-rental return";
   const ledger = buildForm8582Ledger(activeRentalSource, accepted);
   const opening = {
@@ -500,7 +501,7 @@ Deno.test("Form 8582 2026 opening matches the 2025 accepted-reference ledger by 
   );
 });
 
-Deno.test("Form 8582 ledger retains filed active-rental opening loss and 2025 suspension", () => {
+test("Form 8582 ledger retains filed active-rental opening loss and 2025 suspension", () => {
   const prior = {
     tax_year: 2024 as const,
     activity_id: "active-rental-2025",
@@ -564,7 +565,7 @@ Deno.test("Form 8582 ledger retains filed active-rental opening loss and 2025 su
   );
 });
 
-Deno.test("Form 8582 ledger allocates two filed active-rental PALs by activity", () => {
+test("Form 8582 ledger allocates two filed active-rental PALs by activity", () => {
   const first = {
     ...activeRentalSource.activities[0],
     current_net: -20_000,
@@ -657,7 +658,7 @@ Deno.test("Form 8582 ledger allocates two filed active-rental PALs by activity",
   );
 });
 
-Deno.test("Form 8582 ledger apportions one special allowance across two active rentals", () => {
+test("Form 8582 ledger apportions one special allowance across two active rentals", () => {
   const multiRentalSource = {
     ...activeRentalSource,
     activities: [{
@@ -706,7 +707,7 @@ Deno.test("Form 8582 ledger apportions one special allowance across two active r
   );
 });
 
-Deno.test("Form 8582 multi-rental ledger requires every property to be eligible", () => {
+test("Form 8582 multi-rental ledger requires every property to be eligible", () => {
   const secondRental = {
     ...activeRentalSource.activities[0],
     activity_id: "active-rental-b",
@@ -754,7 +755,7 @@ Deno.test("Form 8582 multi-rental ledger requires every property to be eligible"
   }
 });
 
-Deno.test("Form 8582 MFS lived-apart rental ledger uses the $12,500 allowance and $50k-$75k phaseout", () => {
+test("Form 8582 MFS lived-apart rental ledger uses the $12,500 allowance and $50k-$75k phaseout", () => {
   const mfsLivedApartSource = {
     months: Array.from({ length: 12 }, (_, index) => ({
       month: index + 1,
@@ -800,7 +801,7 @@ Deno.test("Form 8582 MFS lived-apart rental ledger uses the $12,500 allowance an
   }
 });
 
-Deno.test("Form 8582 active-rental ledger rejects missing allowance evidence", () => {
+test("Form 8582 active-rental ledger rejects missing allowance evidence", () => {
   for (
     const changed of [
       { ...activeRentalSource, active_participation: false },
@@ -838,7 +839,7 @@ Deno.test("Form 8582 active-rental ledger rejects missing allowance evidence", (
   }
 });
 
-Deno.test("Form 8582 ledger rejects altered stored balances and missing filing reference", () => {
+test("Form 8582 ledger rejects altered stored balances and missing filing reference", () => {
   const ledger = buildForm8582Ledger(source, "Accepted 2025 return ID");
   assertThrows(
     () =>
@@ -865,7 +866,7 @@ Deno.test("Form 8582 ledger rejects altered stored balances and missing filing r
   );
 });
 
-Deno.test("Form 8582 ledger rejects coherent edits, changed source and filing identity", () => {
+test("Form 8582 ledger rejects coherent edits, changed source and filing identity", () => {
   const ledger = buildForm8582Ledger(source, "Accepted 2025 return ID");
   const changedOpening = {
     ...ledger,
@@ -973,7 +974,7 @@ const operatingSource = {
   has_other_passive: true,
 };
 
-Deno.test("Form 8582 filed ledger allocates operating PAL across Schedule E and Form 4835 activities", () => {
+test("Form 8582 filed ledger allocates operating PAL across Schedule E and Form 4835 activities", () => {
   const ledger = buildForm8582Ledger(
     operatingSource,
     "Accepted 2025 operating return",
@@ -1010,7 +1011,7 @@ Deno.test("Form 8582 filed ledger allocates operating PAL across Schedule E and 
   );
 });
 
-Deno.test("Form 8582 operating ledger rejects changed income source, duplicate activity and sale", () => {
+test("Form 8582 operating ledger rejects changed income source, duplicate activity and sale", () => {
   const ledger = buildForm8582Ledger(
     operatingSource,
     "Accepted 2025 operating return",

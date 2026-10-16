@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -5,7 +7,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form4952ScheduleJChildInputs } from "./form4952_schedulej_child.fixture.ts";
 
-Deno.test("owner-paid Form 4952 election flows through Schedule J, Form 6251, native and PDF", async () => {
+test("owner-paid Form 4952 election flows through Schedule J, Form 6251, native and PDF", async () => {
   const input = form4952ScheduleJChildInputs();
   const actual = f1040_2025.executeReturn(input);
   assertEquals(actual.diagnostics, []);
@@ -51,22 +53,22 @@ Deno.test("owner-paid Form 4952 election flows through Schedule J, Form 6251, na
     prepared.bundle,
     origins,
   );
-  const root = Deno.args[0] ??
+  const root = process.argv.slice(2)[0] ??
     ".state/research/form4952-schedulej-child-source";
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(`${root}/source.json`, JSON.stringify(input, null, 2)),
-    Deno.writeTextFile(`${root}/pending.json`, JSON.stringify(p, null, 2)),
-    Deno.writeTextFile(
+    fs.writeFile(`${root}/source.json`, JSON.stringify(input, null, 2)),
+    fs.writeFile(`${root}/pending.json`, JSON.stringify(p, null, 2)),
+    fs.writeFile(
       `${root}/carry.json`,
       JSON.stringify(actual.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${root}/origins.json`,
       JSON.stringify(origins, null, 2),
     ),
-    Deno.writeTextFile(`${root}/return.xml`, prepared.bundle.xml),
-    Deno.writeFile(`${root}/return.pdf`, pdf),
+    fs.writeFile(`${root}/return.xml`, prepared.bundle.xml),
+    fs.writeFile(`${root}/return.pdf`, pdf),
   ]);
 
   for (

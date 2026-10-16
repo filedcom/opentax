@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   solarBondCases,
   solarBondFixture,
@@ -13,7 +15,7 @@ import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 
 for (const c of solarBondCases) {
-  Deno.test(`Form 8835 financed solar source-to-return: ${c.id}`, async () => {
+  test(`Form 8835 financed solar source-to-return: ${c.id}`, async () => {
     const { input, attachments, expected } = await solarBondFixture(c);
     const { credits, produced, used, tax } = expected;
     const execution = f1040_2025.executeReturn(input);
@@ -145,13 +147,13 @@ for (const c of solarBondCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_SOLAR_BOND_EVIDENCE_DIR");
+      root = process.env.FORM8835_SOLAR_BOND_EVIDENCE_DIR;
     } catch { /* private evidence optional */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -168,7 +170,7 @@ for (const c of solarBondCases) {
         ),
       );
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
     }
   });

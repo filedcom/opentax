@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -17,7 +20,7 @@ import {
 } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 for (const kind of ["ordinary", "birth", "death"] as const) {
   for (const claimEic of [true, false]) {
-    Deno.test(`HOH reviewed named child complete native ${kind}/${claimEic ? "EIC" : "opt-out"}`, async () => {
+    test(`HOH reviewed named child complete native ${kind}/${claimEic ? "EIC" : "opt-out"}`, async () => {
       const result = f1040_2025.executeReturn(
         hohReviewedResidencyInputs(kind, claimEic),
       );
@@ -50,17 +53,17 @@ for (const kind of ["ordinary", "birth", "death"] as const) {
         "<QualifyingHOHSSN>444556666</QualifyingHOHSSN>",
       );
       assertEquals(xml.includes("<IRS1040ScheduleEIC"), claimEic);
-      const path = await Deno.makeTempFile({
+      const path = await sys.makeTempFile({
         prefix: "opentax-hoh-residency-",
         suffix: ".xml",
       });
-      await Deno.writeTextFile(path, xml);
+      await fs.writeFile(path, xml);
       console.log(`HOH_RESIDENCY_XML ${path}`);
       const schema = new URL(
         "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         import.meta.url,
       ).pathname;
-      const validated = await new Deno.Command("xmllint", {
+      const validated = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
         stderr: "piped",
       }).output();
@@ -91,7 +94,7 @@ for (const kind of ["ordinary", "birth", "death"] as const) {
       }
     });
   }
-  Deno.test(`HOH ${kind} source rejects missing review, wrong name and inadequate home costs`, () => {
+  test(`HOH ${kind} source rejects missing review, wrong name and inadequate home costs`, () => {
     const inputs = hohReviewedResidencyInputs(kind);
     for (const mutation of ["review", "name", "cost"] as const) {
       const g = structuredClone(inputs.general) as any;

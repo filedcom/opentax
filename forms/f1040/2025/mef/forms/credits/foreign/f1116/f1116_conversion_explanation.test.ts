@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import type { CategorySummary } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import { buildConversionExplanation } from "./f1116_conversion_explanation.ts";
 
-Deno.test("Form 1116 conversion explanation replays exact bytes after time passes", async () => {
+test("Form 1116 conversion explanation replays exact bytes after time passes", async () => {
   const summary = {
     items: [{
       alternative_compensation_sourcing: {

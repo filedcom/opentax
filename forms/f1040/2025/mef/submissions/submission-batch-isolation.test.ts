@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
 import { f1040_2025 } from "../../index.ts";
@@ -9,18 +11,18 @@ import {
   type MefSubmissionArchive,
 } from "./submission-archive.ts";
 
-Deno.test("complete return batch isolates same-name generated statements by filer and submission", async () => {
+test("complete return batch isolates same-name generated statements by filer and submission", async () => {
   const base = pdfReviewFixtures.find((f) =>
     f.id === "single-form5695-door-and-air-conditioner"
   )!;
   const archives: MefSubmissionArchive[] = [];
   let evidence: string | undefined;
   try {
-    evidence = Deno.env.get("SUBMISSION_BATCH_EVIDENCE");
+    evidence = process.env.SUBMISSION_BATCH_EVIDENCE;
   } catch {
     /* Evidence retention is optional under restricted test permissions. */
   }
-  if (evidence) await Deno.mkdir(evidence, { recursive: true });
+  if (evidence) await fs.mkdir(evidence, { recursive: true });
   const processingDate = new Date("2026-10-10T08:00:00Z");
   const ids = [
     "1234562026283batch01",
@@ -68,13 +70,13 @@ Deno.test("complete return batch isolates same-name generated statements by file
     });
     archives.push(archive);
     if (evidence) {
-      await Deno.writeFile(`${evidence}/${index}.zip`, archive.bytes);
-      await Deno.writeTextFile(`${evidence}/${index}.xml`, archive.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${evidence}/${index}.zip`, archive.bytes);
+      await fs.writeFile(`${evidence}/${index}.xml`, archive.bundle.xml);
+      await fs.writeFile(
         `${evidence}/${index}-manifest.xml`,
         archive.manifestXml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${index}.json`,
         JSON.stringify(
           { inputs, filer, pending: archive.bundle.pending },
@@ -94,11 +96,11 @@ Deno.test("complete return batch isolates same-name generated statements by file
     );
     if (evidence) {
       const prefix = order === archives ? "forward" : "reverse";
-      await Deno.writeFile(
+      await fs.writeFile(
         `${evidence}/${prefix}.zip`,
         transmission.containerZipBytes,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${prefix}.xml`,
         transmission.sendSubmissionsRequestXml,
       );

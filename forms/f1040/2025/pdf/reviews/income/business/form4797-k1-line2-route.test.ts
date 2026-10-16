@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -60,31 +63,31 @@ async function verifyReturn(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), expectedPages);
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       `../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-${id}/`,
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
   }
 }
 
-Deno.test("partnership and S corporation K-1 section 1231 rows reach filled Form 4797", async () => {
+test("partnership and S corporation K-1 section 1231 rows reach filled Form 4797", async () => {
   await verifyReturn(
     "form4797-two-k1-line2",
     [{
@@ -106,7 +109,7 @@ Deno.test("partnership and S corporation K-1 section 1231 rows reach filled Form
   );
 });
 
-Deno.test("six K-1 section 1231 rows print with a reconciled line 2 continuation", async () => {
+test("six K-1 section 1231 rows print with a reconciled line 2 continuation", async () => {
   const amounts = [10_000, 2_000, -1_000, 3_000, -2_000, 4_000];
   const partnerships = amounts.map((amount, index) => ({
     partnership_name: `Partner ${index + 1}`,
@@ -124,7 +127,7 @@ Deno.test("six K-1 section 1231 rows print with a reconciled line 2 continuation
   );
 });
 
-Deno.test("a net K-1 section 1231 loss reaches the ordinary Form 1040 path", async () => {
+test("a net K-1 section 1231 loss reaches the ordinary Form 1040 path", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -156,7 +159,7 @@ Deno.test("a net K-1 section 1231 loss reaches the ordinary Form 1040 path", asy
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
 });
 
-Deno.test("K-1 and installment gains share Form 4797 Part I and a filled packet", async () => {
+test("K-1 and installment gains share Form 4797 Part I and a filled packet", async () => {
   await verifyReturn(
     "form4797-k1-installment-part1",
     [{

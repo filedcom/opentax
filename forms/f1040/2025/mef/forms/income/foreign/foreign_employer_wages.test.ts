@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -64,7 +67,7 @@ function filing(items: readonly Record<string, unknown>[] = [first, second]) {
   return buildPending(result.pending);
 }
 
-Deno.test("two complete FEC employer sources create two records and one linked wages schedule", () => {
+test("two complete FEC employer sources create two records and one linked wages schedule", () => {
   const pending = filing();
   assertEquals(pending.f1040?.line1h_other_earned, 3_000);
   const xml = buildMefXml(pending, base.filer);
@@ -93,7 +96,7 @@ Deno.test("two complete FEC employer sources create two records and one linked w
   );
 });
 
-Deno.test("two FEC employer sources keep owner and document identity through native and PDF export", async () => {
+test("two FEC employer sources keep owner and document identity through native and PDF export", async () => {
   const pending = filing();
   const xml = buildMefXml(pending, base.filer);
   assertEquals((xml.match(/<FECRecord documentId=/g) ?? []).length, 2);
@@ -103,17 +106,17 @@ Deno.test("two FEC employer sources keep owner and document identity through nat
   ).pathname;
   let hasXsd = true;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    if (!(sys.isNotFound(error))) throw error;
     hasXsd = false;
   }
   assertEquals(hasXsd, true, "Missing verification prerequisite: complete local XSD");
   if (hasXsd) {
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stderr: "piped",
       }).output();
@@ -123,15 +126,15 @@ Deno.test("two FEC employer sources keep owner and document identity through nat
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
   const pdf = await buildPdfBytes(pending, base.filer);
   assertEquals(pdf.byteLength > 0, true);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -139,7 +142,7 @@ Deno.test("two FEC employer sources keep owner and document identity through nat
     assertStringIncludes(printed, "FEC");
     assertEquals(/3,?000/.test(printed), true);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const sources = pending.fec!.fecs;
@@ -162,7 +165,7 @@ Deno.test("two FEC employer sources keep owner and document identity through nat
   }
 });
 
-Deno.test("an identified joint spouse can own a separate FEC record", () => {
+test("an identified joint spouse can own a separate FEC record", () => {
   const pending = filing();
   const spouse = {
     ...base.filer,
@@ -192,7 +195,7 @@ Deno.test("an identified joint spouse can own a separate FEC record", () => {
   assertStringIncludes(records[1], "<EmployeeNm>Sam Example</EmployeeNm>");
 });
 
-Deno.test("standalone FEC native filing rejects missing facts, changed totals and mixed Form 2555 wages", () => {
+test("standalone FEC native filing rejects missing facts, changed totals and mixed Form 2555 wages", () => {
   const pending = filing();
   const pendingRecord = pending as unknown as Record<string, unknown>;
   const context = { filer: base.filer, pending: pendingRecord };

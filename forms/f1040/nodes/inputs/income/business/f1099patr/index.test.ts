@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099patr } from "./index.ts";
 
@@ -42,7 +43,7 @@ function personal(amount: number) {
   };
 }
 
-Deno.test("1099-PATR requires explicit treatment for a positive distribution", () => {
+test("1099-PATR requires explicit treatment for a positive distribution", () => {
   assertThrows(() => compute([{ box1_patronage_dividends: 300 }]));
   assertThrows(() =>
     compute([{
@@ -58,7 +59,7 @@ Deno.test("1099-PATR requires explicit treatment for a positive distribution", (
   );
 });
 
-Deno.test("1099-PATR farm source carries gross and verified taxable amounts to Schedule F", () => {
+test("1099-PATR farm source carries gross and verified taxable amounts to Schedule F", () => {
   const result = compute([{
     ...issued("issued-patr-1"),
     box1_patronage_dividends: 500,
@@ -83,7 +84,7 @@ Deno.test("1099-PATR farm source carries gross and verified taxable amounts to S
   );
 });
 
-Deno.test("1099-PATR positive farm distribution needs issued payer and recipient", () => {
+test("1099-PATR positive farm distribution needs issued payer and recipient", () => {
   const source = {
     ...issued("issued-patr-farm"),
     box1_patronage_dividends: 300,
@@ -107,7 +108,7 @@ Deno.test("1099-PATR positive farm distribution needs issued payer and recipient
   }
 });
 
-Deno.test("1099-PATR preserves separate farm identities and taxable shares", () => {
+test("1099-PATR preserves separate farm identities and taxable shares", () => {
   const result = compute([{
     ...issued("issued-patr-A"),
     box1_patronage_dividends: 300,
@@ -138,7 +139,7 @@ Deno.test("1099-PATR preserves separate farm identities and taxable shares", () 
   }]);
 });
 
-Deno.test("1099-PATR rejects farm taxable share above gross or contradictory nonbusiness flag", () => {
+test("1099-PATR rejects farm taxable share above gross or contradictory nonbusiness flag", () => {
   assertThrows(() =>
     compute([{
       box1_patronage_dividends: 300,
@@ -160,7 +161,7 @@ Deno.test("1099-PATR rejects farm taxable share above gross or contradictory non
   );
 });
 
-Deno.test("1099-PATR records a personal basis reduction and emits no taxable income", () => {
+test("1099-PATR records a personal basis reduction and emits no taxable income", () => {
   const result = compute([{
     box1_patronage_dividends: 300,
     distribution_treatment: personal(300),
@@ -168,7 +169,7 @@ Deno.test("1099-PATR records a personal basis reduction and emits no taxable inc
   assertEquals(result.outputs, []);
 });
 
-Deno.test("1099-PATR personal treatment rejects unreferenced or unmatched basis and nonpatronage boxes", () => {
+test("1099-PATR personal treatment rejects unreferenced or unmatched basis and nonpatronage boxes", () => {
   assertThrows(() =>
     compute([{
       box1_patronage_dividends: 300,
@@ -196,7 +197,7 @@ Deno.test("1099-PATR personal treatment rejects unreferenced or unmatched basis 
   );
 });
 
-Deno.test("1099-PATR withholding aggregates independently of distribution treatment", () => {
+test("1099-PATR withholding aggregates independently of distribution treatment", () => {
   const result = compute([{
     ...issued("issued-patr-withheld"),
     box1_patronage_dividends: 300,
@@ -210,7 +211,7 @@ Deno.test("1099-PATR withholding aggregates independently of distribution treatm
   assertEquals(field(result, "f1040", "line25b_withheld_1099"), 50);
 });
 
-Deno.test("1099-PATR rejects repeated identified payer accounts before income or withholding sums", () => {
+test("1099-PATR rejects repeated identified payer accounts before income or withholding sums", () => {
   const issued = {
     payer_name: "Farm Cooperative",
     payer_tin: "12-3456789",
@@ -239,7 +240,7 @@ Deno.test("1099-PATR rejects repeated identified payer accounts before income or
   assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 40);
 });
 
-Deno.test("1099-PATR rejects ambiguous positive cooperative copies", () => {
+test("1099-PATR rejects ambiguous positive cooperative copies", () => {
   const issued = {
     payer_name: "Farm Cooperative",
     payer_tin: "12-3456789",
@@ -275,7 +276,7 @@ Deno.test("1099-PATR rejects ambiguous positive cooperative copies", () => {
   assertEquals(field(distinct, "f1040", "line25b_withheld_1099"), 50);
 });
 
-Deno.test("1099-PATR cannot reuse one issued-copy reference across cooperatives", () => {
+test("1099-PATR cannot reuse one issued-copy reference across cooperatives", () => {
   const first = {
     ...issued("one-patr-copy"),
     box4_federal_withheld: 20,
@@ -293,7 +294,7 @@ Deno.test("1099-PATR cannot reuse one issued-copy reference across cooperatives"
   );
 });
 
-Deno.test("1099-PATR retains specified-cooperative QBI source only for business facts", () => {
+test("1099-PATR retains specified-cooperative QBI source only for business facts", () => {
   const business = {
     box7_qualified_payments: 100,
     box13_specified_cooperative: true,
@@ -315,7 +316,7 @@ Deno.test("1099-PATR retains specified-cooperative QBI source only for business 
   );
 });
 
-Deno.test("1099-PATR specified-cooperative payments and passed deduction agree with boxes 7 and 13", () => {
+test("1099-PATR specified-cooperative payments and passed deduction agree with boxes 7 and 13", () => {
   const cooperative = {
     box7_qualified_payments: 1_000,
     box6_section199ag_deduction: 90,
@@ -344,7 +345,7 @@ Deno.test("1099-PATR specified-cooperative payments and passed deduction agree w
   );
 });
 
-Deno.test("1099-PATR empty informational item does not produce tax output", () => {
+test("1099-PATR empty informational item does not produce tax output", () => {
   assertEquals(
     compute([{
       box6_section199ag_deduction: 0,

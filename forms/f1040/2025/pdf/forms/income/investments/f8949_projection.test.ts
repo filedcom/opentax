@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8949Pdf } from "./f8949.ts";
 
@@ -26,7 +27,7 @@ const longTerm = {
   is_long_term: true,
 };
 
-Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate checked pages", () => {
+test("Form 8949 PDF projects canonical Part I and Part II into separate checked pages", () => {
   const instances = form8949Pdf.instances?.({
     transaction: [shortTerm, longTerm],
   }) ?? [];
@@ -66,14 +67,14 @@ Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate che
   );
 });
 
-Deno.test("Form 8949 PDF prints various acquired dates", () => {
+test("Form 8949 PDF prints various acquired dates", () => {
   const instances = form8949Pdf.instances?.({
     transaction: { ...shortTerm, date_acquired: "VARIOUS" },
   }) ?? [];
   assertEquals(instances[0]?.pdf_page1_row1_date_acquired, "VARIOUS");
 });
 
-Deno.test("Form 8949 PDF prints inherited acquisition only in Part II", () => {
+test("Form 8949 PDF prints inherited acquisition only in Part II", () => {
   const sale = { ...longTerm, date_acquired: "INHERITED" };
   const instances = form8949Pdf.instances?.({ transaction: sale }) ?? [];
   assertEquals(instances[0]?.pdf_page2_row1_date_acquired, "INHERITED");
@@ -87,7 +88,7 @@ Deno.test("Form 8949 PDF prints inherited acquisition only in Part II", () => {
   );
 });
 
-Deno.test("Form 8949 PDF requires canonical sale rows for every source category", () => {
+test("Form 8949 PDF requires canonical sale rows for every source category", () => {
   assertThrows(
     () =>
       form8949Pdf.projectFields?.({}, {
@@ -114,7 +115,7 @@ Deno.test("Form 8949 PDF requires canonical sale rows for every source category"
   );
 });
 
-Deno.test("unadjusted direct broker sale needs its exact computed Schedule D row", () => {
+test("unadjusted direct broker sale needs its exact computed Schedule D row", () => {
   const source = {
     part: "A",
     description: "Broker sale",
@@ -140,7 +141,7 @@ Deno.test("unadjusted direct broker sale needs its exact computed Schedule D row
   );
 });
 
-Deno.test("Form 8949 PDF splits a reporting category after eleven rows", () => {
+test("Form 8949 PDF splits a reporting category after eleven rows", () => {
   const rows = Array.from({ length: 12 }, (_, index) => ({
     ...shortTerm,
     description: `Short sale ${index + 1}`,
@@ -160,7 +161,7 @@ Deno.test("Form 8949 PDF splits a reporting category after eleven rows", () => {
   assertEquals(instances[1]?.pdf_page1_row2_description, undefined);
 });
 
-Deno.test("Form 8949 PDF leaves dates and basis blank for linked Form 4797 excess gain", () => {
+test("Form 8949 PDF leaves dates and basis blank for linked Form 4797 excess gain", () => {
   const row = {
     part: "F",
     description: "From Form 4797",
@@ -204,7 +205,7 @@ Deno.test("Form 8949 PDF leaves dates and basis blank for linked Form 4797 exces
   assertEquals(instances[0].pdf_page2_row1_proceeds, "3000");
 });
 
-Deno.test("Form 8949 PDF stops mismatched holding period and unsupported dates", () => {
+test("Form 8949 PDF stops mismatched holding period and unsupported dates", () => {
   assertThrows(
     () =>
       form8949Pdf.instances?.({

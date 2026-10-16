@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -47,7 +48,7 @@ const source: NewMarketsRecaptureInput = withReviewedForm8874RecaptureEvidence({
   }],
 }, "Test Taxpayer");
 
-Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit", () => {
+test("New Markets recapture uses allowed-credit decrease, not notice credit", () => {
   const result = calculateNewMarketsRecapture({
     ...source,
     prior_years: [...source.prior_years],
@@ -82,7 +83,7 @@ Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit
   assertEquals(result.schedule2Line17a, 2_000 + expectedInterest);
 });
 
-Deno.test("New Markets recapture excludes unused credit from tax and interest", () => {
+test("New Markets recapture excludes unused credit from tax and interest", () => {
   const result = calculateNewMarketsRecapture({
     ...source,
     prior_years: [{
@@ -94,7 +95,7 @@ Deno.test("New Markets recapture excludes unused credit from tax and interest", 
   assertEquals(result.carryforwardAdjustments[0].removedFromQeiLedger, 3_000);
 });
 
-Deno.test("New Markets carryover records a sourced one-year carryback", () => {
+test("New Markets carryover records a sourced one-year carryback", () => {
   const result = calculateNewMarketsRecapture({
     ...source,
     prior_years: [{
@@ -120,7 +121,7 @@ Deno.test("New Markets carryover records a sourced one-year carryback", () => {
   }]);
 });
 
-Deno.test("New Markets recapture compounds through rate changes and leap year", () => {
+test("New Markets recapture compounds through rate changes and leap year", () => {
   const priorYear = {
     ...source.prior_years[0],
     tax_year: 2022,
@@ -150,7 +151,7 @@ Deno.test("New Markets recapture compounds through rate changes and leap year", 
   assertEquals(result.interest, expectedInterest);
 });
 
-Deno.test("New Markets substantially-all recapture requires cure review", () => {
+test("New Markets substantially-all recapture requires cure review", () => {
   const failure = withReviewedForm8874RecaptureEvidence({
     ...source,
     recapture_event: "substantially_all_requirement_failed" as const,
@@ -182,7 +183,7 @@ Deno.test("New Markets substantially-all recapture requires cure review", () => 
   );
 });
 
-Deno.test("New Markets recapture routes the computed total to Schedule 2", () => {
+test("New Markets recapture routes the computed total to Schedule 2", () => {
   const input = { ...source, prior_years: [...source.prior_years] };
   const result = f8874_recapture.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -196,7 +197,7 @@ Deno.test("New Markets recapture routes the computed total to Schedule 2", () =>
   );
 });
 
-Deno.test("New Markets recapture does not count one notice twice", () => {
+test("New Markets recapture does not count one notice twice", () => {
   assertEquals(
     f8874_recapture.inputSchema.safeParse({
       recaptures: [source, source],
@@ -205,7 +206,7 @@ Deno.test("New Markets recapture does not count one notice twice", () => {
   );
 });
 
-Deno.test("New Markets recapture totals separate investments once", () => {
+test("New Markets recapture totals separate investments once", () => {
   const first = { ...source, prior_years: [...source.prior_years] };
   const second = withReviewedForm8874RecaptureEvidence({
     ...source,
@@ -228,7 +229,7 @@ Deno.test("New Markets recapture totals separate investments once", () => {
   );
 });
 
-Deno.test("New Markets recapture reaches a filed 1040 without Form 8874", () => {
+test("New Markets recapture reaches a filed 1040 without Form 8874", () => {
   const general = {
     filing_status: FilingStatus.Single,
     digital_assets: false,
@@ -272,7 +273,7 @@ Deno.test("New Markets recapture reaches a filed 1040 without Form 8874", () => 
   assertEquals(xml.includes("<OtherCreditsCd>NMCR</OtherCreditsCd>"), true);
 });
 
-Deno.test("New Markets recapture requires a statutory event and prior-year proof", () => {
+test("New Markets recapture requires a statutory event and prior-year proof", () => {
   for (
     const invalid of [
       { ...source, recapture_event: "investment_sold" },

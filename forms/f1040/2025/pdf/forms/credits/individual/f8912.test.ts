@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { BondType } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
 import { form8912Pdf } from "./f8912.ts";
 import { fillFormPdf } from "../../../builder.ts";
 import { testFiler } from "../../../../mef/execution/test-filer.ts";
 
-Deno.test("Form 8912 fills filer identity on each selected page", async () => {
+test("Form 8912 fills filer identity on each selected page", async () => {
   for (
     const fields of [
       { pdf_page_kind: "main", line1: 100 },
@@ -82,7 +83,7 @@ const pending = {
   schedule3: { line6k_tax_credit_bonds: 300, line8_total: 300 },
 };
 
-Deno.test("Form 8912 PDF maps every printed Part I/II line to the IRS widget", () => {
+test("Form 8912 PDF maps every printed Part I/II line to the IRS widget", () => {
   const names = Object.fromEntries(
     form8912Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -101,7 +102,7 @@ Deno.test("Form 8912 PDF maps every printed Part I/II line to the IRS widget", (
   );
 });
 
-Deno.test("Form 8912 PDF projects finalized credit and splits distinct IRS pages", () => {
+test("Form 8912 PDF projects finalized credit and splits distinct IRS pages", () => {
   const projected = form8912Pdf.projectFields?.({
     f8912s: [source],
     allowed_credit: 300,
@@ -123,7 +124,7 @@ Deno.test("Form 8912 PDF projects finalized credit and splits distinct IRS pages
   assertEquals(pages[2].line20, 175);
 });
 
-Deno.test("Form 8912 PDF repeats only Part III for reported rows over 20", () => {
+test("Form 8912 PDF repeats only Part III for reported rows over 20", () => {
   const bonds = Array.from({ length: 21 }, (_, index) => ({
     ...reported,
     unique_identifier: `BOND${index}`,
@@ -147,7 +148,7 @@ Deno.test("Form 8912 PDF repeats only Part III for reported rows over 20", () =>
   assertEquals(pages[2].part_iii_1_unique_identifier, "BOND20");
 });
 
-Deno.test("Form 8912 PDF keeps each unreported bond on its own Part IV", () => {
+test("Form 8912 PDF keeps each unreported bond on its own Part IV", () => {
   const pages = form8912Pdf.instances?.({
     f8912s: [{
       reported_bonds: [],
@@ -178,7 +179,7 @@ Deno.test("Form 8912 PDF keeps each unreported bond on its own Part IV", () => {
   assertEquals(pages[2].line20, 175);
 });
 
-Deno.test("Form 8912 PDF rejects a credit that differs from finalized Schedule 3", () => {
+test("Form 8912 PDF rejects a credit that differs from finalized Schedule 3", () => {
   assertThrows(
     () =>
       form8912Pdf.projectFields?.({

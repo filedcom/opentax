@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -62,7 +63,7 @@ const hsa = {
   exception_qualified_taxable_amount: 0,
 };
 
-Deno.test("two distinct 1099-SA copies and medical receipts reconcile Form 8889 through Form 1040, native and PDF", async () => {
+test("two distinct 1099-SA copies and medical receipts reconcile Form 8889 through Form 1040, native and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -182,7 +183,7 @@ Deno.test("two distinct 1099-SA copies and medical receipts reconcile Form 8889 
   }
 });
 
-Deno.test("primary HSA owner pays one claimed dependent's medical receipt through native and PDF", async () => {
+test("primary HSA owner pays one claimed dependent's medical receipt through native and PDF", async () => {
   const child = {
     first_name: "Avery",
     last_name: "Example",

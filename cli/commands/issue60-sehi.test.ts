@@ -1,10 +1,12 @@
+import { test } from "bun:test";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { schedule_se } from "../../forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { formAddCommand } from "./form.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 
-Deno.test("CLI accepts spouse-owned Medicare premiums through Form 7206 and computes Schedule 1 line 17", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("CLI accepts spouse-owned Medicare premiums through Form 7206 and computes Schedule 1 line 17", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturnCommand({ year: 2025, baseDir });
     const add = (nodeType: string, data: Record<string, unknown>) =>
@@ -91,6 +93,6 @@ Deno.test("CLI accepts spouse-owned Medicare premiums through Form 7206 and comp
     assertEquals(result.forms.includes("form7206"), true);
     assertEquals(result.lines.line10_adjustments, seDeduction + 2_220);
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -12,7 +13,7 @@ import { calculateBonusInventory } from "../../../../../nodes/intermediate/forms
 import { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
 export { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
 
-Deno.test("Form 8911 inventory groups depreciation per activity and limits only the current credit", async () => {
+test("Form 8911 inventory groups depreciation per activity and limits only the current credit", async () => {
   for (
     const [separate, costs, allowed] of [
       [false, [10000, 20000], 1800],
@@ -54,7 +55,7 @@ Deno.test("Form 8911 inventory groups depreciation per activity and limits only 
   }
 });
 
-Deno.test("Form 4562 inventory rejects duplicate identities and incomplete eligibility", () => {
+test("Form 4562 inventory rejects duplicate identities and incomplete eligibility", () => {
   const inventory = bonusInventoryInput().form4562.bonus_inventory;
   for (
     const patch of [
@@ -83,7 +84,7 @@ Deno.test("Form 4562 inventory rejects duplicate identities and incomplete eligi
   );
 });
 
-Deno.test("Form 8911 inventory rejects missing, swapped and unrepresented property and business sources", async () => {
+test("Form 8911 inventory rejects missing, swapped and unrepresented property and business sources", async () => {
   const input = bonusInventoryInput(true);
   const first = input.form4562.bonus_inventory.assets[0];
   const second = input.form4562.bonus_inventory.assets[1];
@@ -128,7 +129,7 @@ Deno.test("Form 8911 inventory rejects missing, swapped and unrepresented proper
   }
 });
 
-Deno.test("Form 4562 inventory includes ordinary equipment without duplicating charger credits", async () => {
+test("Form 4562 inventory includes ordinary equipment without duplicating charger credits", async () => {
   const input = bonusInventoryInput();
   const { form8911_property_reference: _link, ...ordinary } =
     input.form4562.bonus_inventory.assets[1];
@@ -180,7 +181,7 @@ Deno.test("Form 4562 inventory includes ordinary equipment without duplicating c
   );
 });
 
-Deno.test("Form 4562 inventory PDF copies retain the asset proprietor without W-2 evidence", () => {
+test("Form 4562 inventory PDF copies retain the asset proprietor without W-2 evidence", () => {
   const filed = calculateBonusInventory(
     bonusInventoryInput(true).form4562.bonus_inventory,
   );

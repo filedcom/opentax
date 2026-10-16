@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -81,7 +82,7 @@ function jointReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("one spouse's NUA capital election and both ten-year elections remain separate", () => {
+test("one spouse's NUA capital election and both ten-year elections remain separate", () => {
   const result = jointReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -117,7 +118,7 @@ Deno.test("one spouse's NUA capital election and both ten-year elections remain 
   );
 });
 
-Deno.test("spouse NUA capital route rejects changed gain, plan, printed capital, and combined tax", () => {
+test("spouse NUA capital route rejects changed gain, plan, printed capital, and combined tax", () => {
   const pending = jointReturn().pending;
   const forms = pending.form4972?.forms as Record<string, unknown>[];
   const changed = [{

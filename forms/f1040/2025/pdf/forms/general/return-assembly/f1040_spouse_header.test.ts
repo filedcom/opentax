@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -5,7 +8,7 @@ import { general } from "../../../../../nodes/inputs/general/filing/general/inde
 import { fillFormPdf } from "../../../builder.ts";
 import { irs1040Pdf } from "./f1040.ts";
 
-Deno.test("official 2025 Form 1040 prints retained joint spouse middle initial", async () => {
+test("official 2025 Form 1040 prints retained joint spouse middle initial", async () => {
   const source = {
     taxpayer_ssn: "123456789",
     taxpayer_first_name: "Alex",
@@ -31,7 +34,7 @@ Deno.test("official 2025 Form 1040 prints retained joint spouse middle initial",
   assertEquals(filer?.spouse?.middleInitial, "B");
   const projected = irs1040Pdf.instances?.({}, filer)?.[0];
   assertEquals(projected?.print_spouse_first_name_with_initial, "Sam B");
-  const temp = await Deno.makeTempDir();
+  const temp = await sys.makeTempDir();
   try {
     const bytes = await fillFormPdf(
       irs1040Pdf,
@@ -41,8 +44,8 @@ Deno.test("official 2025 Form 1040 prints retained joint spouse middle initial",
     );
     if (!bytes) throw new Error("Form 1040 was not rendered");
     const path = join(temp, "form1040-spouse.pdf");
-    await Deno.writeFile(path, bytes);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes);
+    const result = await new sys.Command("pdftotext", {
       args: ["-f", "1", "-l", "1", "-layout", path, "-"],
     }).output();
     if (!result.success) throw new Error("pdftotext failed for Form 1040");
@@ -62,8 +65,8 @@ Deno.test("official 2025 Form 1040 prints retained joint spouse middle initial",
     );
     if (!mfsBytes) throw new Error("MFS Form 1040 was not rendered");
     const mfsPath = join(temp, "form1040-mfs-spouse.pdf");
-    await Deno.writeFile(mfsPath, mfsBytes);
-    const mfsResult = await new Deno.Command("pdftotext", {
+    await fs.writeFile(mfsPath, mfsBytes);
+    const mfsResult = await new sys.Command("pdftotext", {
       args: ["-f", "1", "-l", "1", "-layout", mfsPath, "-"],
     }).output();
     if (!mfsResult.success) throw new Error("pdftotext failed for MFS 1040");
@@ -72,6 +75,6 @@ Deno.test("official 2025 Form 1040 prints retained joint spouse middle initial",
       "Sam B Sample",
     );
   } finally {
-    await Deno.remove(temp, { recursive: true });
+    await sys.remove(temp, { recursive: true });
   }
 });

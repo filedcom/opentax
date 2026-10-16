@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 /** Structure contract: where tax nodes live, and that every node is registered and reachable. */
 import { dirname, fromFileUrl, join, toFileUrl } from "@std/path";
 import { z } from "zod";
@@ -103,7 +105,7 @@ export function nodeCandidates(paths: readonly string[]): string[] {
 export async function nodeFiles(root: string): Promise<string[]> {
   const found: string[] = [];
   for (const path of nodeCandidates(await repositoryFiles(root))) {
-    if (isNodeSource(await Deno.readTextFile(join(root, path)))) {
+    if (isNodeSource(await fs.readFile(join(root, path), "utf8"))) {
       found.push(path);
     }
   }
@@ -276,10 +278,10 @@ async function importedNodes(
 export async function readBaseline(root: string): Promise<Baseline> {
   try {
     return baselineSchema.parse(
-      JSON.parse(await Deno.readTextFile(join(root, BASELINE_PATH))),
+      JSON.parse(await fs.readFile(join(root, BASELINE_PATH), "utf8")),
     );
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return [];
+    if (sys.isNotFound(error)) return [];
     throw error;
   }
 }
@@ -329,9 +331,9 @@ if (import.meta.main) {
   const { catalog } = await import("../../catalog.ts");
   const report = await structureReport(root, Object.values(catalog));
   console.log(
-    Deno.args.includes("--json")
+    process.argv.slice(2).includes("--json")
       ? JSON.stringify(report)
       : formatReport(report),
   );
-  Deno.exit(report.problems.length === 0 ? 0 : 1);
+  process.exit(report.problems.length === 0 ? 0 : 1);
 }

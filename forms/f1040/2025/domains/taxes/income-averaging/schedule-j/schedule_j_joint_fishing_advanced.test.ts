@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 // deno-lint-ignore-file no-explicit-any
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -9,9 +12,9 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
 
-const evidenceDir = Deno.env.get("SCHEDULE_J_JOINT_ADVANCED_EVIDENCE_DIR") ??
+const evidenceDir = process.env.SCHEDULE_J_JOINT_ADVANCED_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-advanced-oct6/packets";
-const xsd = Deno.env.get("SCHEDULE_J_JOINT_XSD_PATH") ??
+const xsd = process.env.SCHEDULE_J_JOINT_XSD_PATH ??
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 async function packet(id: string, input: Record<string, unknown>) {
@@ -29,18 +32,18 @@ async function packet(id: string, input: Record<string, unknown>) {
     origins,
   );
   const dir = `${evidenceDir}/${id}`;
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const validation = await new Deno.Command("xmllint", {
+  const validation = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, `${dir}/return.xml`],
     stderr: "piped",
   }).output();
@@ -49,7 +52,7 @@ async function packet(id: string, input: Record<string, unknown>) {
   return { result, pending, origins, xml: prepared.bundle.xml };
 }
 
-Deno.test("joint C/F above MFJ QBI threshold files two owner-specific 8995-A phase-in rows", async () => {
+test("joint C/F above MFJ QBI threshold files two owner-specific 8995-A phase-in rows", async () => {
   for (const fishingOwner of ["S", "T"] as const) {
     const input = scheduleJJointFishingAdvancedInputs(fishingOwner);
     const noJInput = structuredClone(input) as any;
@@ -90,7 +93,7 @@ Deno.test("joint C/F above MFJ QBI threshold files two owner-specific 8995-A pha
   }
 });
 
-Deno.test("advanced joint owner source and final filed 8995-A conflicts are rejected", async () => {
+test("advanced joint owner source and final filed 8995-A conflicts are rejected", async () => {
   const good: any = scheduleJJointFishingAdvancedInputs();
   const swapped = structuredClone(good);
   swapped.schedule_c[0].proprietor_recipient = "T";

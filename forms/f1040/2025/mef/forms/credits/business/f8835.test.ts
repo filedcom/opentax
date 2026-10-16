@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { form8835 } from "./f8835.ts";
@@ -87,7 +88,7 @@ const openLoopSource = {
   unrelated_buyer_verified: true as const,
 };
 
-Deno.test("Form 8835: sourced solar maps to native line 1d and DC capacity", () => {
+test("Form 8835: sourced solar maps to native line 1d and DC capacity", () => {
   const xml = form8835.build({ f8835s: [solar] })[0];
   assertStringIncludes(
     xml,
@@ -118,7 +119,7 @@ Deno.test("Form 8835: sourced solar maps to native line 1d and DC capacity", () 
   );
 });
 
-Deno.test("Form 8835: sourced closed-loop biomass maps to native line 1b", () => {
+test("Form 8835: sourced closed-loop biomass maps to native line 1b", () => {
   const xml = form8835.build({ f8835s: [closedLoop] })[0];
   assertStringIncludes(
     xml,
@@ -144,7 +145,7 @@ Deno.test("Form 8835: sourced closed-loop biomass maps to native line 1b", () =>
   );
 });
 
-Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields", () => {
+test("Form 8835: one MeF document per facility with 2025 Part I/II fields", () => {
   const documents = form8835.build({
     f8835s: [facility, {
       ...facility,
@@ -185,7 +186,7 @@ Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields",
   );
 });
 
-Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled", () => {
+test("Form 8835: increased-credit and domestic-content PDFs must be bundled", () => {
   const increased = {
     ...facility,
     increased_credit_reason: "prevailing_wage_and_apprenticeship" as const,
@@ -222,7 +223,7 @@ Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled
   );
 });
 
-Deno.test("Form 8835: PWA increase requires its separate Form 7220 PDF", () => {
+test("Form 8835: PWA increase requires its separate Form 7220 PDF", () => {
   const item = {
     ...facility,
     increased_credit_reason: "prevailing_wage_and_apprenticeship" as const,
@@ -237,7 +238,7 @@ Deno.test("Form 8835: PWA increase requires its separate Form 7220 PDF", () => {
   );
 });
 
-Deno.test("Form 8835: incomplete facility identity and unsupported fiscal period stop export", () => {
+test("Form 8835: incomplete facility identity and unsupported fiscal period stop export", () => {
   assertThrows(() =>
     form8835.build({
       f8835s: [{ ...facility, facility_us_address: undefined }],

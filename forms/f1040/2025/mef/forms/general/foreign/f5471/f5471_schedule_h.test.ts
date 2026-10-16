@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // The research schema bundle is optional in other workspaces.
 }
 
-Deno.test("Category 5a Schedule H prints reviewed book E&P and general allocation", () => {
+test("Category 5a Schedule H prints reviewed book E&P and general allocation", () => {
   const xml = form5471ScheduleH.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -42,7 +44,7 @@ Deno.test("Category 5a Schedule H prints reviewed book E&P and general allocatio
   assertEquals(xml.includes("OtherAdjustmentsNetAddnAmt"), false);
 });
 
-Deno.test("Schedule H refuses a nonzero unsupported adjustment and changed USD E&P", () => {
+test("Schedule H refuses a nonzero unsupported adjustment and changed USD E&P", () => {
   const source = (schedule_h: unknown) => ({
     ...form8992Pending,
     f5471: { f5471s: [{ ...form8992Cfc, schedule_h }] },
@@ -65,12 +67,7 @@ Deno.test("Schedule H refuses a nonzero unsupported adjustment and changed USD E
     }), Error);
 });
 
-Deno.test({
-  name: "Category 5a Schedule H standalone XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Category 5a Schedule H standalone XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleH.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -78,7 +75,7 @@ Deno.test({
       /^<IRS5471ScheduleH/,
       '<IRS5471ScheduleH xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleHTest1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -89,5 +86,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8859 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -16,12 +17,12 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8859.inputSchema: empty array fails (min 1)", () => {
+test("f8859.inputSchema: empty array fails (min 1)", () => {
   const parsed = f8859.inputSchema.safeParse({ f8859s: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8859.inputSchema: negative carryforward_amount fails", () => {
+test("f8859.inputSchema: negative carryforward_amount fails", () => {
   const parsed = f8859.inputSchema.safeParse({
     f8859s: [{ carryforward_amount: -100 }],
   });
@@ -32,7 +33,7 @@ Deno.test("f8859.inputSchema: negative carryforward_amount fails", () => {
 // 2. Source routing without prematurely claiming the credit
 // =============================================================================
 
-Deno.test("f8859.compute: carries source to Form 1040 finalization", () => {
+test("f8859.compute: carries source to Form 1040 finalization", () => {
   const result = compute([minimalItem({ carryforward_amount: 2500 })]);
   assertEquals(
     fieldsOf(result.outputs, schedule3)?.form8859_source_credit_pending,
@@ -48,12 +49,12 @@ Deno.test("f8859.compute: carries source to Form 1040 finalization", () => {
   );
 });
 
-Deno.test("f8859.compute: zero carryforward — no output", () => {
+test("f8859.compute: zero carryforward — no output", () => {
   const result = compute([minimalItem({ carryforward_amount: 0 })]);
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8859.compute: absent carryforward — no output", () => {
+test("f8859.compute: absent carryforward — no output", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs, []);
 });
@@ -62,7 +63,7 @@ Deno.test("f8859.compute: absent carryforward — no output", () => {
 // 3. Aggregation — Multiple Items
 // =============================================================================
 
-Deno.test("f8859.compute: multiple carryforward items summed before limit", () => {
+test("f8859.compute: multiple carryforward items summed before limit", () => {
   const result = compute([
     minimalItem({ carryforward_amount: 1000 }),
     minimalItem({ carryforward_amount: 1500 }),
@@ -73,7 +74,7 @@ Deno.test("f8859.compute: multiple carryforward items summed before limit", () =
   );
 });
 
-Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () => {
+test("f8859.compute: one zero + one nonzero — only nonzero credited", () => {
   const result = compute([
     minimalItem({ carryforward_amount: 0 }),
     minimalItem({ carryforward_amount: 800 }),
@@ -88,7 +89,7 @@ Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () 
 // 4. Hard Validation
 // =============================================================================
 
-Deno.test("f8859.compute: throws on negative carryforward_amount", () => {
+test("f8859.compute: throws on negative carryforward_amount", () => {
   assertThrows(
     () => compute([minimalItem({ carryforward_amount: -100 })]),
     Error,
@@ -99,7 +100,7 @@ Deno.test("f8859.compute: throws on negative carryforward_amount", () => {
 // 5. Smoke Test
 // =============================================================================
 
-Deno.test("f8859.compute: source needs final tax before Schedule 3 credit", () => {
+test("f8859.compute: source needs final tax before Schedule 3 credit", () => {
   const result = compute([minimalItem({ carryforward_amount: 3000 })]);
   assertEquals(
     fieldsOf(result.outputs, f1040)?.form8859_source_carryforward,

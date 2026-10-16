@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8941AveragePremiums } from "./average-premiums.ts";
 import { form8941DirectFixture } from "./fixture.ts";
 import { calculateForm8941 } from "./index.ts";
 import table from "./average-premiums-2025.json" with { type: "json" };
 
-Deno.test("2025 SHOP table preserves county-specific and statewide premium pairs", () => {
+test("2025 SHOP table preserves county-specific and statewide premium pairs", () => {
   assertEquals(Object.keys(table).length, 51);
   assertEquals(
     Object.values(table).reduce((n, rows) => n + Object.keys(rows).length, 0),
@@ -40,7 +41,7 @@ Deno.test("2025 SHOP table preserves county-specific and statewide premium pairs
   }
 });
 
-Deno.test("every eligible IRS table row reaches the owned employee-only premium cap", () => {
+test("every eligible IRS table row reaches the owned employee-only premium cap", () => {
   let count = 0;
   for (const [state, counties] of Object.entries(table)) {
     if (state === "HI") continue;
@@ -72,7 +73,7 @@ Deno.test("every eligible IRS table row reaches the owned employee-only premium 
   assertEquals(count, 3090);
 });
 
-Deno.test("SHOP table review rejects another county's values and Hawaii at calculation entry", () => {
+test("SHOP table review rejects another county's values and Hawaii at calculation entry", () => {
   for (const [state, county] of [["NY", "Bronx"], ["HI", "All"]]) {
     const source = form8941DirectFixture();
     source.shop_review.irs_table_state = state;

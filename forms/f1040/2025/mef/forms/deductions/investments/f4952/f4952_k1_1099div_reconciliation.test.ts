@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099div } from "../../../../../../nodes/inputs/income/investments/f1099div/index.ts";
 import { f1099oid } from "../../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
@@ -54,7 +55,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 limits K-1 code H expense using 1099-DIV ordinary less qualified dividends", () => {
+test("Form 4952 limits K-1 code H expense using 1099-DIV ordinary less qualified dividends", () => {
   const fromDividend = f1099div.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1099div,
@@ -84,7 +85,7 @@ Deno.test("Form 4952 limits K-1 code H expense using 1099-DIV ordinary less qual
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 combines K-1 code H, taxable OID, and ordinary less qualified dividends", () => {
+test("Form 4952 combines K-1 code H, taxable OID, and ordinary less qualified dividends", () => {
   const oidPayer = {
     payer_name: "Taxable OID Bond",
     box1_oid: 200,
@@ -156,7 +157,7 @@ Deno.test("Form 4952 combines K-1 code H, taxable OID, and ordinary less qualifi
   );
 });
 
-Deno.test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflicting facts", () => {
+test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflicting facts", () => {
   assertThrows(
     () => build(fields),
     Error,
@@ -211,7 +212,7 @@ Deno.test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflictin
   );
 });
 
-Deno.test("Form 4952 mixed K-1/1099-DIV route matches multiple sources without payer order", () => {
+test("Form 4952 mixed K-1/1099-DIV route matches multiple sources without payer order", () => {
   const secondPayer = {
     ...payer,
     payerName: "Second Investment Fund",

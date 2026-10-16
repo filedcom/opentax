@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form2441 } from "./f2441.ts";
 import type { Form2441FilingDetails } from "../../../../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
@@ -30,12 +31,12 @@ const filingDetails: Form2441FilingDetails = {
   tax_liability_limit: 500,
 };
 
-Deno.test("Form 2441 absent with no filing facts", () => {
+test("Form 2441 absent with no filing facts", () => {
   assertEquals(form2441.build({}), "");
   assertEquals(form2441.build({ dep_care_benefits: 0 }), "");
 });
 
-Deno.test("Form 2441 rejects W-2 benefits without Part I and II facts", () => {
+test("Form 2441 rejects W-2 benefits without Part I and II facts", () => {
   assertThrows(
     () => form2441.build({ dep_care_benefits: 5000 }),
     Error,
@@ -43,7 +44,7 @@ Deno.test("Form 2441 rejects W-2 benefits without Part I and II facts", () => {
   );
 });
 
-Deno.test("Form 2441 emits provider, person, credit limit and capped credit", () => {
+test("Form 2441 emits provider, person, credit limit and capped credit", () => {
   const xml = form2441.build({ filing_details: filingDetails, agi: 50_000 });
   assertStringIncludes(xml, "<CareProviderGrp>");
   assertStringIncludes(
@@ -72,7 +73,7 @@ Deno.test("Form 2441 emits provider, person, credit limit and capped credit", ()
   );
 });
 
-Deno.test("Form 2441 reconciles excluded benefits before calculating credit", () => {
+test("Form 2441 reconciles excluded benefits before calculating credit", () => {
   const xml = form2441.build({
     agi: 50_000,
     dep_care_benefits: 5000,
@@ -102,7 +103,7 @@ Deno.test("Form 2441 reconciles excluded benefits before calculating credit", ()
   );
 });
 
-Deno.test("Form 2441 rejects credit expenses counted again as excluded benefits", () => {
+test("Form 2441 rejects credit expenses counted again as excluded benefits", () => {
   assertThrows(
     () =>
       form2441.build({
@@ -119,7 +120,7 @@ Deno.test("Form 2441 rejects credit expenses counted again as excluded benefits"
   );
 });
 
-Deno.test("Form 2441 requires the plan cap for employer benefits", () => {
+test("Form 2441 requires the plan cap for employer benefits", () => {
   assertThrows(
     () =>
       form2441.build({
@@ -135,7 +136,7 @@ Deno.test("Form 2441 requires the plan cap for employer benefits", () => {
   );
 });
 
-Deno.test("Form 2441 rejects more than three providers without the required statement", () => {
+test("Form 2441 rejects more than three providers without the required statement", () => {
   assertThrows(
     () =>
       form2441.build({
@@ -153,7 +154,7 @@ Deno.test("Form 2441 rejects more than three providers without the required stat
   );
 });
 
-Deno.test("Form 2441 MFS exclusion does not create an ineligible credit", () => {
+test("Form 2441 MFS exclusion does not create an ineligible credit", () => {
   const xml = form2441.build({
     agi: 50_000,
     dep_care_benefits: 1000,
@@ -178,7 +179,7 @@ Deno.test("Form 2441 MFS exclusion does not create an ineligible credit", () => 
   );
 });
 
-Deno.test("Form 2441 refuses a Schedule 3 credit that disagrees with its own line 11", () => {
+test("Form 2441 refuses a Schedule 3 credit that disagrees with its own line 11", () => {
   assertThrows(
     () =>
       form2441.build(
@@ -190,7 +191,7 @@ Deno.test("Form 2441 refuses a Schedule 3 credit that disagrees with its own lin
   );
 });
 
-Deno.test("Form 2441 refuses taxable benefits that disagree with Form 1040", () => {
+test("Form 2441 refuses taxable benefits that disagree with Form 1040", () => {
   assertThrows(
     () =>
       form2441.build(

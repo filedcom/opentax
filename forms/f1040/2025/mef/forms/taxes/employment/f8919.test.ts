@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { testFiler } from "../../../execution/test-filer.ts";
 import { form8919 } from "./f8919.ts";
@@ -58,11 +59,11 @@ const pendingNec = {
   },
 };
 
-Deno.test("Form 8919 emits no document without firms", () => {
+test("Form 8919 emits no document without firms", () => {
   assertEquals(form8919.build({}, { filer: testFiler() }), []);
 });
 
-Deno.test("Form 8919 emits firm detail and calculated 2025 line tags in XSD order", () => {
+test("Form 8919 emits firm detail and calculated 2025 line tags in XSD order", () => {
   const [xml] = form8919.build(base, {
     filer: testFiler(),
     pending: pendingNec,
@@ -97,7 +98,7 @@ Deno.test("Form 8919 emits firm detail and calculated 2025 line tags in XSD orde
   );
 });
 
-Deno.test("Form 8919 MeF rejects missing or changed filed 1099-NEC", () => {
+test("Form 8919 MeF rejects missing or changed filed 1099-NEC", () => {
   assertThrows(() => form8919.build(base, { filer: testFiler() }));
   assertThrows(() =>
     form8919.build(base, {
@@ -115,7 +116,7 @@ Deno.test("Form 8919 MeF rejects missing or changed filed 1099-NEC", () => {
   );
 });
 
-Deno.test("Form 8919 MeF rejects line 8 W-2 source drift", () => {
+test("Form 8919 MeF rejects line 8 W-2 source drift", () => {
   assertThrows(() =>
     form8919.build(base, {
       filer: testFiler(),
@@ -132,7 +133,7 @@ Deno.test("Form 8919 MeF rejects line 8 W-2 source drift", () => {
   );
 });
 
-Deno.test("Form 8919 MeF reconciles 1099-MISC and 1099-NEC from one firm", () => {
+test("Form 8919 MeF reconciles 1099-MISC and 1099-NEC from one firm", () => {
   const mixed = {
     ...base,
     forms: [{
@@ -172,7 +173,7 @@ Deno.test("Form 8919 MeF reconciles 1099-MISC and 1099-NEC from one firm", () =>
   );
 });
 
-Deno.test("Form 8919 MeF rejects a recipient SSN different from return header", () => {
+test("Form 8919 MeF rejects a recipient SSN different from return header", () => {
   assertThrows(() =>
     form8919.build({ ...base, taxpayer_ssn: "999-99-9999" }, {
       filer: testFiler(),
@@ -181,7 +182,7 @@ Deno.test("Form 8919 MeF rejects a recipient SSN different from return header", 
   );
 });
 
-Deno.test("Form 8919 emits one document for each spouse", () => {
+test("Form 8919 emits one document for each spouse", () => {
   const forms = [
     {
       ...base.forms[0],

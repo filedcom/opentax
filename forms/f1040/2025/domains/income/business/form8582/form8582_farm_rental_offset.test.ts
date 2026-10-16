@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   farmRentalW2,
   verifyFarmRentalPacket,
@@ -61,7 +62,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("one farm passive loss offsets one rental profit through Form 8582 and final return", async () => {
+test("one farm passive loss offsets one rental profit through Form 8582 and final return", async () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 3_000);
   assertEquals(result.pending.form8582.current_loss, 5_000);
@@ -106,7 +107,7 @@ Deno.test("one farm passive loss offsets one rental profit through Form 8582 and
   ]);
 });
 
-Deno.test("farm/rental Form 8582 offset rejects changed source and finalized return", () => {
+test("farm/rental Form 8582 offset rejects changed source and finalized return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const changed = (overrides: Record<string, Record<string, unknown>>) => ({
     ...pending,

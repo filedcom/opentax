@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { Form3800CarryoverRow } from "./f3800_passive_rows.ts";
 import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
@@ -48,7 +49,7 @@ const specified: Form3800CarryoverRow = {
   },
 };
 
-Deno.test("Form 3800 Part IV orders carryover rows and derives lines 5-7", () => {
+test("Form 3800 Part IV orders carryover rows and derives lines 5-7", () => {
   const rows = buildForm3800PartIVXml([specified, empowerment, standard]);
   assertEquals(rows.map((row) => row.match(/^<[^\s/>]+/)?.[0]), [
     "<Frm8820CYCyovCrGrp",
@@ -76,7 +77,7 @@ Deno.test("Form 3800 Part IV orders carryover rows and derives lines 5-7", () =>
   );
 });
 
-Deno.test("Form 3800 Part IV rejects duplicate and unreconciled carryovers", () => {
+test("Form 3800 Part IV rejects duplicate and unreconciled carryovers", () => {
   assertEquals(buildForm3800PartIVXml([]), []);
   assertThrows(
     () => buildForm3800PartIVXml([standard, { ...standard }]),
@@ -112,7 +113,7 @@ Deno.test("Form 3800 Part IV rejects duplicate and unreconciled carryovers", () 
   );
 });
 
-Deno.test("Form 3800 Part IV keeps a signed carryover adjustment in column h", () => {
+test("Form 3800 Part IV keeps a signed carryover adjustment in column h", () => {
   const rows = buildForm3800PartIVXml([{
     ...standard,
     amount: {

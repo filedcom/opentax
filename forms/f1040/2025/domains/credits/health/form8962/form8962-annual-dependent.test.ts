@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import fixtures from "./form8962-annual-dependent.fixture.json" with {
   type: "json",
@@ -17,7 +18,7 @@ import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits
 // Expected amounts come from the independent source/Decimal and IRS Tax Table
 // replay documented in the dependent MAGI gap, not the return under test.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`Annual dependent-income public return reconciles source and final tax: ${id}`, async () => {
+  test(`Annual dependent-income public return reconciles source and final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -65,7 +66,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("Annual dependent-income checks retain 56 native and 40 PDF rejections", async () => {
+test("Annual dependent-income checks retain 56 native and 40 PDF rejections", async () => {
   let nativeVariants = 0, pdfVariants = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

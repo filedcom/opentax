@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -203,7 +204,7 @@ async function statementReviewedSource(
   return reviewed;
 }
 
-Deno.test("Form 8908 Form 7220 PDF matches reviewed home, employer, wage and required marks", async () => {
+test("Form 8908 Form 7220 PDF matches reviewed home, employer, wage and required marks", async () => {
   const bytes = await completedPdf();
   await assertForm8908Form7220PdfContents(
     await reviewedSource(bytes),
@@ -212,7 +213,7 @@ Deno.test("Form 8908 Form 7220 PDF matches reviewed home, employer, wage and req
   );
 });
 
-Deno.test("Form 8908 Form 7220 PDF rejects mismatched home, employer, wage and mark", async () => {
+test("Form 8908 Form 7220 PDF rejects mismatched home, employer, wage and mark", async () => {
   const page1 = "topmostSubform[0].Page1[0].";
   const wage = "topmostSubform[0].Page2[0].Table_PartII[0].Line1[0].";
   const alteredFields: Record<string, string>[] = [
@@ -236,7 +237,7 @@ Deno.test("Form 8908 Form 7220 PDF rejects mismatched home, employer, wage and m
   }
 });
 
-Deno.test("Form 8908 Form 7220 PDF rejects bytes outside the reviewed digest", async () => {
+test("Form 8908 Form 7220 PDF rejects bytes outside the reviewed digest", async () => {
   const bytes = await completedPdf();
   await assertRejects(
     () => assertForm8908Form7220PdfContents(source(), "SALE-1", bytes),
@@ -245,7 +246,7 @@ Deno.test("Form 8908 Form 7220 PDF rejects bytes outside the reviewed digest", a
   );
 });
 
-Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an unbound signed statement", async () => {
+test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an unbound signed statement", async () => {
   const bytes = await completedPdf();
   const statementBytes = await completedStatementPdf();
   const reviewed = await statementReviewedSource(bytes, statementBytes);
@@ -293,7 +294,7 @@ Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an 
   );
 });
 
-Deno.test("Form 8908 signed statement PDF rejects changed home, signer date, and declaration", async () => {
+test("Form 8908 signed statement PDF rejects changed home, signer date, and declaration", async () => {
   const formBytes = await completedPdf();
   const alteredFields: Record<string, string>[] = [
     { HomeStreet: "9 Other Street" },

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { dependentFilingSchema } from "../../nodes/inputs/general/filing/general/index.ts";
 import { irs1040 } from "../../2025/mef/forms/general/return-assembly/f1040.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
@@ -14,7 +15,7 @@ import {
 } from "./scenario_1040_05_input.ts";
 import { SCENARIO_1040_05_FACTS } from "./ty2025_cases.ts";
 
-Deno.test("ATS 1040 Scenario 5 issued wages reach calculation, native W-2 and partial PDF", async () => {
+test("ATS 1040 Scenario 5 issued wages reach calculation, native W-2 and partial PDF", async () => {
   const result = f1040_2025.executeReturn(scenario104005PartialInput());
   assertEquals(result.diagnostics, []);
   const form = result.pending.f1040;
@@ -66,7 +67,7 @@ Deno.test("ATS 1040 Scenario 5 issued wages reach calculation, native W-2 and pa
   assertEquals((await PDFDocument.load(pdf!)).getPageCount(), 2);
 });
 
-Deno.test("ATS 1040 Scenario 5 wage fixture retains printed identity without inventing credit or refund targets", () => {
+test("ATS 1040 Scenario 5 wage fixture retains printed identity without inventing credit or refund targets", () => {
   const input = scenario104005PartialInput();
   assertEquals(input.general.taxpayer_blind, true);
   assertEquals(input.general.filing_status, "hoh");
@@ -82,7 +83,7 @@ Deno.test("ATS 1040 Scenario 5 wage fixture retains printed identity without inv
   assertEquals(SCENARIO_1040_05_RECONCILIATION.missing.length, 5);
 });
 
-Deno.test("ATS 1040 Scenario 5 opt-out cannot coexist with a positive ACTC in native or PDF output", () => {
+test("ATS 1040 Scenario 5 opt-out cannot coexist with a positive ACTC in native or PDF output", () => {
   const input = scenario104005PartialInput();
   assertEquals(input.f8812, [{ do_not_claim_actc: true }]);
   const result = f1040_2025.executeReturn(input);
@@ -104,7 +105,7 @@ Deno.test("ATS 1040 Scenario 5 opt-out cannot coexist with a positive ACTC in na
   );
 });
 
-Deno.test("ATS 1040 Scenario 5 household identities survive without inferred credit eligibility", () => {
+test("ATS 1040 Scenario 5 household identities survive without inferred credit eligibility", () => {
   const input = scenario104005HouseholdInput();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -85,7 +86,7 @@ function shortTermCase() {
   return { filed, pending, schedule2Amount };
 }
 
-Deno.test("short-term regular gain becomes fully deductible AMT loss after audited offsets", () => {
+test("short-term regular gain becomes fully deductible AMT loss after audited offsets", () => {
   const { filed, pending, schedule2Amount } = shortTermCase();
   assertEquals(filed.net_capital_gain, 0);
   assertEquals(filed.line2k_disposition, -2_600);
@@ -103,7 +104,7 @@ Deno.test("short-term regular gain becomes fully deductible AMT loss after audit
   );
 });
 
-Deno.test("short-term gain-to-AMT-loss route rejects basis, return, and incomplete audit", () => {
+test("short-term gain-to-AMT-loss route rejects basis, return, and incomplete audit", () => {
   const { filed, pending } = shortTermCase();
   assertThrows(
     () =>

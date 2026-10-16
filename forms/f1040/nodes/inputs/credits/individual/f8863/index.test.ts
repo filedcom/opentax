@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import { FilingStatus } from "../../../../types.ts";
@@ -132,7 +133,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("positive Form 8863 calculation needs sourced education expenses", () => {
+test("positive Form 8863 calculation needs sourced education expenses", () => {
   assertThrows(
     () => compute([minimalAocItem({
       aoc_adjusted_expenses: 4_000,
@@ -154,7 +155,7 @@ Deno.test("positive Form 8863 calculation needs sourced education expenses", () 
   );
 });
 
-Deno.test("Form 8863 cannot claim the same education source for two students", () => {
+test("Form 8863 cannot claim the same education source for two students", () => {
   const first = minimalAocItem({
     student_name: "First Student",
     student_ssn: "111-22-3333",
@@ -195,28 +196,28 @@ Deno.test("Form 8863 cannot claim the same education source for two students", (
 // 1. Input Schema Validation
 // ============================================================
 
-Deno.test("schema_empty_array: f8863s array must have at least 1 item", () => {
+test("schema_empty_array: f8863s array must have at least 1 item", () => {
   assertThrows(
     () => f8863.compute({ taxYear: 2025, formType: "f1040" }, { f8863s: [] }),
     Error,
   );
 });
 
-Deno.test("schema_requires_credit_type: item without credit_type is rejected", () => {
+test("schema_requires_credit_type: item without credit_type is rejected", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [{ student_name: "Alice", aoc_adjusted_expenses: 1000 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schema_requires_student_name: item without student_name is rejected", () => {
+test("schema_requires_student_name: item without student_name is rejected", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [{ credit_type: "aoc", aoc_adjusted_expenses: 1000 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schema_aoc_expenses_nonnegative: negative aoc_adjusted_expenses is rejected", () => {
+test("schema_aoc_expenses_nonnegative: negative aoc_adjusted_expenses is rejected", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [{
       credit_type: "aoc",
@@ -227,7 +228,7 @@ Deno.test("schema_aoc_expenses_nonnegative: negative aoc_adjusted_expenses is re
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schema_llc_expenses_nonnegative: negative llc_adjusted_expenses is rejected", () => {
+test("schema_llc_expenses_nonnegative: negative llc_adjusted_expenses is rejected", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [{
       credit_type: "llc",
@@ -238,14 +239,14 @@ Deno.test("schema_llc_expenses_nonnegative: negative llc_adjusted_expenses is re
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schema_valid_minimal_aoc: minimal AOC item passes schema validation", () => {
+test("schema_valid_minimal_aoc: minimal AOC item passes schema validation", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [minimalAocItem()],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("schema_valid_minimal_llc: minimal LLC item passes schema validation", () => {
+test("schema_valid_minimal_llc: minimal LLC item passes schema validation", () => {
   const parsed = f8863.inputSchema.safeParse({
     f8863s: [minimalLlcItem()],
   });
@@ -256,12 +257,12 @@ Deno.test("schema_valid_minimal_llc: minimal LLC item passes schema validation",
 // 2. Per-Box Routing — AOC path
 // ============================================================
 
-Deno.test("aoc_zero_expenses_no_output: AOC student with zero expenses produces no outputs", () => {
+test("aoc_zero_expenses_no_output: AOC student with zero expenses produces no outputs", () => {
   const result = compute([minimalAocItem({ aoc_adjusted_expenses: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("aoc_routes_refundable_to_f1040: AOC with expenses routes refundable portion to f1040", () => {
+test("aoc_routes_refundable_to_f1040: AOC with expenses routes refundable portion to f1040", () => {
   // $4,000 expenses → $2,500 tentative → refundable 40% = $1,000
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
@@ -275,7 +276,7 @@ Deno.test("aoc_routes_refundable_to_f1040: AOC with expenses routes refundable p
   );
 });
 
-Deno.test("aoc_routes_nonrefundable_to_schedule3: AOC with expenses routes nonrefundable portion to schedule3", () => {
+test("aoc_routes_nonrefundable_to_schedule3: AOC with expenses routes nonrefundable portion to schedule3", () => {
   // $4,000 expenses → $2,500 tentative → nonrefundable 60% = $1,500
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
@@ -289,7 +290,7 @@ Deno.test("aoc_routes_nonrefundable_to_schedule3: AOC with expenses routes nonre
   );
 });
 
-Deno.test("aoc_max_credit_2500: full $4,000 expenses produce $2,500 tentative credit split 40/60", () => {
+test("aoc_max_credit_2500: full $4,000 expenses produce $2,500 tentative credit split 40/60", () => {
   // Line 27=$4k → Line 28=$2k → Line 29=$500 → Line 30=$2,500
   // Refundable = 40% × $2,500 = $1,000; nonrefundable = 60% × $2,500 = $1,500
   const result = compute([
@@ -305,7 +306,7 @@ Deno.test("aoc_max_credit_2500: full $4,000 expenses produce $2,500 tentative cr
   assertEquals(Math.round(nonrefundable), 1500);
 });
 
-Deno.test("aoc_partial_credit_first_tier_only: $1,500 expenses produce $1,500 total credit", () => {
+test("aoc_partial_credit_first_tier_only: $1,500 expenses produce $1,500 total credit", () => {
   // Line 27=$1,500, Line 28=$0, Line 29=$0, Line 30=$1,500
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 1500, filer_magi: 0 }),
@@ -322,7 +323,7 @@ Deno.test("aoc_partial_credit_first_tier_only: $1,500 expenses produce $1,500 to
   assertEquals(Math.round(nonrefundable * 100) / 100, 900);
 });
 
-Deno.test("aoc_partial_credit_both_tiers: $2,500 expenses produce $2,125 total credit", () => {
+test("aoc_partial_credit_both_tiers: $2,500 expenses produce $2,125 total credit", () => {
   // Line 27=$2,500, Line 28=$500, Line 29=$125, Line 30=$2,125
   // Refundable = 40% × $2,125 = $850; nonrefundable = 60% × $2,125 = $1,275
   const result = compute([
@@ -338,7 +339,7 @@ Deno.test("aoc_partial_credit_both_tiers: $2,500 expenses produce $2,125 total c
   assertEquals(Math.round(nonrefundable * 100) / 100, 1275);
 });
 
-Deno.test("aoc_expense_cap_at_4000: $5,000 expenses produce same result as $4,000 (cap enforced)", () => {
+test("aoc_expense_cap_at_4000: $5,000 expenses produce same result as $4,000 (cap enforced)", () => {
   const result5k = compute([
     minimalAocItem({ aoc_adjusted_expenses: 5000, filer_magi: 0 }),
   ]);
@@ -358,12 +359,12 @@ Deno.test("aoc_expense_cap_at_4000: $5,000 expenses produce same result as $4,00
 // 3. Per-Box Routing — LLC path
 // ============================================================
 
-Deno.test("llc_zero_expenses_no_output: LLC student with zero expenses produces no outputs", () => {
+test("llc_zero_expenses_no_output: LLC student with zero expenses produces no outputs", () => {
   const result = compute([minimalLlcItem({ llc_adjusted_expenses: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("llc_routes_to_schedule3: LLC with expenses routes to schedule3 line3_education_credit", () => {
+test("llc_routes_to_schedule3: LLC with expenses routes to schedule3 line3_education_credit", () => {
   // $5,000 expenses → 20% × $5,000 = $1,000 credit
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 5000, filer_magi: 0 }),
@@ -377,14 +378,14 @@ Deno.test("llc_routes_to_schedule3: LLC with expenses routes to schedule3 line3_
   );
 });
 
-Deno.test("llc_does_not_route_to_f1040_refundable: LLC credit never produces refundable output on f1040", () => {
+test("llc_does_not_route_to_f1040_refundable: LLC credit never produces refundable output on f1040", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 10000, filer_magi: 0 }),
   ]);
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("llc_max_credit_2000: $10k expenses produce $2,000 credit (20% × $10k)", () => {
+test("llc_max_credit_2000: $10k expenses produce $2,000 credit (20% × $10k)", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 10000, filer_magi: 0 }),
   ]);
@@ -397,7 +398,7 @@ Deno.test("llc_max_credit_2000: $10k expenses produce $2,000 credit (20% × $10k
   );
 });
 
-Deno.test("llc_5k_expenses_credit_1000: $5,000 expenses produce $1,000 credit (20% × $5k)", () => {
+test("llc_5k_expenses_credit_1000: $5,000 expenses produce $1,000 credit (20% × $5k)", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 5000, filer_magi: 0 }),
   ]);
@@ -414,7 +415,7 @@ Deno.test("llc_5k_expenses_credit_1000: $5,000 expenses produce $1,000 credit (2
 // 4. Aggregation — multi-student
 // ============================================================
 
-Deno.test("aoc_aggregates_across_students: two AOC students sum their credits", () => {
+test("aoc_aggregates_across_students: two AOC students sum their credits", () => {
   // Each student: $4,000 expenses → $2,500 → total $5,000 tentative
   // Refundable per student = $1,000 → total $2,000
   const result = compute([
@@ -438,7 +439,7 @@ Deno.test("aoc_aggregates_across_students: two AOC students sum their credits", 
   );
 });
 
-Deno.test("llc_aggregates_across_students_below_cap: two students × $4k = $8k → $1,600 credit", () => {
+test("llc_aggregates_across_students_below_cap: two students × $4k = $8k → $1,600 credit", () => {
   const result = compute([
     minimalLlcItem({
       student_name: "Alice",
@@ -460,7 +461,7 @@ Deno.test("llc_aggregates_across_students_below_cap: two students × $4k = $8k �
   );
 });
 
-Deno.test("llc_aggregate_capped_at_10k_expenses: two students × $8k → capped at $10k → $2,000 credit", () => {
+test("llc_aggregate_capped_at_10k_expenses: two students × $8k → capped at $10k → $2,000 credit", () => {
   const result = compute([
     minimalLlcItem({
       student_name: "Alice",
@@ -482,7 +483,7 @@ Deno.test("llc_aggregate_capped_at_10k_expenses: two students × $8k → capped 
   );
 });
 
-Deno.test("aoc_and_llc_same_return_different_students: both credits appear on same return", () => {
+test("aoc_and_llc_same_return_different_students: both credits appear on same return", () => {
   const result = compute([
     minimalAocItem({
       student_name: "Alice",
@@ -517,7 +518,7 @@ Deno.test("aoc_and_llc_same_return_different_students: both credits appear on sa
 // 5. Thresholds — AOC MAGI phase-out (single/HOH/QSS: $80k–$90k)
 // ============================================================
 
-Deno.test("aoc_magi_zero_full_credit: MAGI $0 single yields full $1,000 refundable AOC", () => {
+test("aoc_magi_zero_full_credit: MAGI $0 single yields full $1,000 refundable AOC", () => {
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
   ]);
@@ -530,7 +531,7 @@ Deno.test("aoc_magi_zero_full_credit: MAGI $0 single yields full $1,000 refundab
   );
 });
 
-Deno.test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields full credit (phase-out not started)", () => {
+test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields full credit (phase-out not started)", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -547,7 +548,7 @@ Deno.test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields f
   );
 });
 
-Deno.test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit ($500 refundable)", () => {
+test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit ($500 refundable)", () => {
   // fraction = (85000 − 80000) / 10000 = 0.5 → allowed = $2,500 × 0.5 = $1,250
   // refundable = 40% × $1,250 = $500; nonrefundable = 60% × $1,250 = $750
   const result = compute([
@@ -573,7 +574,7 @@ Deno.test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit 
   );
 });
 
-Deno.test("aoc_magi_at_ceiling_single_90k: MAGI $90k single yields zero credit", () => {
+test("aoc_magi_at_ceiling_single_90k: MAGI $90k single yields zero credit", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -584,7 +585,7 @@ Deno.test("aoc_magi_at_ceiling_single_90k: MAGI $90k single yields zero credit",
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("aoc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zero credit", () => {
+test("aoc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zero credit", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -595,7 +596,7 @@ Deno.test("aoc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zer
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("aoc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full credit", () => {
+test("aoc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full credit", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -612,7 +613,7 @@ Deno.test("aoc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
   );
 });
 
-Deno.test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($500 refundable)", () => {
+test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($500 refundable)", () => {
   // fraction = (170000 − 160000) / 20000 = 0.5 → allowed = $1,250 → refundable = $500; nonrefundable = $750
   const result = compute([
     minimalAocItem({
@@ -637,7 +638,7 @@ Deno.test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($50
   );
 });
 
-Deno.test("aoc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero credit", () => {
+test("aoc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero credit", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -652,7 +653,7 @@ Deno.test("aoc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero credit", () 
 // 6. Thresholds — LLC MAGI phase-out (same thresholds as AOC)
 // ============================================================
 
-Deno.test("llc_magi_zero_full_credit: MAGI $0 single yields full $2,000 LLC credit", () => {
+test("llc_magi_zero_full_credit: MAGI $0 single yields full $2,000 LLC credit", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 10000, filer_magi: 0 }),
   ]);
@@ -665,7 +666,7 @@ Deno.test("llc_magi_zero_full_credit: MAGI $0 single yields full $2,000 LLC cred
   );
 });
 
-Deno.test("llc_magi_at_lower_bound_single_80k: MAGI $80k single yields full $2,000 LLC credit", () => {
+test("llc_magi_at_lower_bound_single_80k: MAGI $80k single yields full $2,000 LLC credit", () => {
   const result = compute([
     minimalLlcItem({
       llc_adjusted_expenses: 10000,
@@ -682,7 +683,7 @@ Deno.test("llc_magi_at_lower_bound_single_80k: MAGI $80k single yields full $2,0
   );
 });
 
-Deno.test("llc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% LLC credit ($1,000)", () => {
+test("llc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% LLC credit ($1,000)", () => {
   // fraction = 0.5 → $2,000 × 0.5 = $1,000
   const result = compute([
     minimalLlcItem({
@@ -700,7 +701,7 @@ Deno.test("llc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% LLC cre
   );
 });
 
-Deno.test("llc_magi_at_ceiling_single_90k: MAGI $90k single yields zero LLC credit", () => {
+test("llc_magi_at_ceiling_single_90k: MAGI $90k single yields zero LLC credit", () => {
   const result = compute([
     minimalLlcItem({
       llc_adjusted_expenses: 10000,
@@ -711,7 +712,7 @@ Deno.test("llc_magi_at_ceiling_single_90k: MAGI $90k single yields zero LLC cred
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("llc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zero LLC credit", () => {
+test("llc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zero LLC credit", () => {
   const result = compute([
     minimalLlcItem({
       llc_adjusted_expenses: 10000,
@@ -722,7 +723,7 @@ Deno.test("llc_magi_above_ceiling_single_95k: MAGI above $90k ceiling yields zer
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("llc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero LLC credit", () => {
+test("llc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero LLC credit", () => {
   const result = compute([
     minimalLlcItem({
       llc_adjusted_expenses: 10000,
@@ -733,7 +734,7 @@ Deno.test("llc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero LLC credit",
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full $2,000 LLC credit", () => {
+test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full $2,000 LLC credit", () => {
   // $160k = phase-out start for MFJ → fraction = 0 → full credit
   // $10,000 expenses → LLC credit = min($10,000, $10,000) × 20% = $2,000
   const result = compute([
@@ -750,7 +751,7 @@ Deno.test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
   );
 });
 
-Deno.test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC credit (50% phase-out)", () => {
+test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC credit (50% phase-out)", () => {
   // fraction = (170000 − 160000) / 20000 = 0.500 → allowed = $2,000 × (1 − 0.500) = $1,000
   const result = compute([
     minimalLlcItem({
@@ -770,7 +771,7 @@ Deno.test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC cred
 // 7. AOC Eligibility Gates (Lines 23–26)
 // ============================================================
 
-Deno.test("aoc_gate_prior_4_years_blocks_aoc_refundable: aoc_claimed_4_prior_years=true → no f1040 output", () => {
+test("aoc_gate_prior_4_years_blocks_aoc_refundable: aoc_claimed_4_prior_years=true → no f1040 output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -781,7 +782,7 @@ Deno.test("aoc_gate_prior_4_years_blocks_aoc_refundable: aoc_claimed_4_prior_yea
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("aoc_gate_not_half_time_blocks_aoc_refundable: enrolled_half_time=false → no f1040 output", () => {
+test("aoc_gate_not_half_time_blocks_aoc_refundable: enrolled_half_time=false → no f1040 output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -792,7 +793,7 @@ Deno.test("aoc_gate_not_half_time_blocks_aoc_refundable: enrolled_half_time=fals
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("aoc_gate_completed_4_years_blocks_aoc_refundable: completed_4_years_postsec=true → no f1040 output", () => {
+test("aoc_gate_completed_4_years_blocks_aoc_refundable: completed_4_years_postsec=true → no f1040 output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -803,7 +804,7 @@ Deno.test("aoc_gate_completed_4_years_blocks_aoc_refundable: completed_4_years_p
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("aoc_gate_felony_blocks_aoc_refundable: felony_drug_conviction=true → no f1040 output", () => {
+test("aoc_gate_felony_blocks_aoc_refundable: felony_drug_conviction=true → no f1040 output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -814,7 +815,7 @@ Deno.test("aoc_gate_felony_blocks_aoc_refundable: felony_drug_conviction=true �
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct → f1040 refundable $1,000", () => {
+test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct → f1040 refundable $1,000", () => {
   const result = compute([
     minimalAocItem({
       aoc_claimed_4_prior_years: false,
@@ -834,7 +835,7 @@ Deno.test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct �
   );
 });
 
-Deno.test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but LLC path still produces credit", () => {
+test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but LLC path still produces credit", () => {
   // Felony blocks AOC; LLC expenses on same item still produce a credit via llc path
   // $5,000 LLC expenses → 20% × $5,000 = $1,000 credit; no f1040 refundable output
   const result = compute([
@@ -860,7 +861,7 @@ Deno.test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but 
 // 8. Kiddie Rule — AOC fully nonrefundable
 // ============================================================
 
-Deno.test("kiddie_rule_true_aoc_fully_nonrefundable: entire AOC goes to schedule3, no f1040 output", () => {
+test("kiddie_rule_true_aoc_fully_nonrefundable: entire AOC goes to schedule3, no f1040 output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -880,7 +881,7 @@ Deno.test("kiddie_rule_true_aoc_fully_nonrefundable: entire AOC goes to schedule
   );
 });
 
-Deno.test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_aoc=false → normal 40/60 split", () => {
+test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_aoc=false → normal 40/60 split", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -904,7 +905,7 @@ Deno.test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_
   );
 });
 
-Deno.test("return-level under-24 answer cannot conflict between AOC students", () => {
+test("return-level under-24 answer cannot conflict between AOC students", () => {
   assertThrows(
     () =>
       compute([
@@ -940,7 +941,7 @@ Deno.test("return-level under-24 answer cannot conflict between AOC students", (
   );
 });
 
-Deno.test("same student SSN cannot claim AOC and LLC on one return", () => {
+test("same student SSN cannot claim AOC and LLC on one return", () => {
   assertThrows(
     () =>
       compute([
@@ -964,7 +965,7 @@ Deno.test("same student SSN cannot claim AOC and LLC on one return", () => {
 // 9. MFS Filing Status — Both Credits Disallowed
 // ============================================================
 
-Deno.test("mfs_aoc_no_output: married filing separately produces no AOC output", () => {
+test("mfs_aoc_no_output: married filing separately produces no AOC output", () => {
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -975,7 +976,7 @@ Deno.test("mfs_aoc_no_output: married filing separately produces no AOC output",
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("mfs_llc_no_output: married filing separately produces no LLC output", () => {
+test("mfs_llc_no_output: married filing separately produces no LLC output", () => {
   const result = compute([
     minimalLlcItem({
       llc_adjusted_expenses: 10000,
@@ -990,7 +991,7 @@ Deno.test("mfs_llc_no_output: married filing separately produces no LLC output",
 // 10. LLC Expense Cap ($10,000 per return)
 // ============================================================
 
-Deno.test("llc_expense_cap_single_student_15k: $15k expenses capped at $10k → $2,000 credit", () => {
+test("llc_expense_cap_single_student_15k: $15k expenses capped at $10k → $2,000 credit", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 15000, filer_magi: 0 }),
   ]);
@@ -1003,7 +1004,7 @@ Deno.test("llc_expense_cap_single_student_15k: $15k expenses capped at $10k → 
   );
 });
 
-Deno.test("llc_expense_exactly_at_cap_10k: $10k produces max $2,000 credit", () => {
+test("llc_expense_exactly_at_cap_10k: $10k produces max $2,000 credit", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 10000, filer_magi: 0 }),
   ]);
@@ -1016,7 +1017,7 @@ Deno.test("llc_expense_exactly_at_cap_10k: $10k produces max $2,000 credit", () 
   );
 });
 
-Deno.test("llc_expense_below_cap_5k: $5k produces $1,000 credit (no cap triggered)", () => {
+test("llc_expense_below_cap_5k: $5k produces $1,000 credit (no cap triggered)", () => {
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 5000, filer_magi: 0 }),
   ]);
@@ -1033,7 +1034,7 @@ Deno.test("llc_expense_below_cap_5k: $5k produces $1,000 credit (no cap triggere
 // 11. Informational Fields — must NOT add extra outputs
 // ============================================================
 
-Deno.test("institution_a_fields_informational: institution name/address/EIN fields do not alter output count", () => {
+test("institution_a_fields_informational: institution name/address/EIN fields do not alter output count", () => {
   const withInstitution = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -1054,7 +1055,7 @@ Deno.test("institution_a_fields_informational: institution name/address/EIN fiel
   );
 });
 
-Deno.test("student_ssn_informational: student_ssn does not alter output count", () => {
+test("student_ssn_informational: student_ssn does not alter output count", () => {
   const withSsn = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -1068,7 +1069,7 @@ Deno.test("student_ssn_informational: student_ssn does not alter output count", 
   assertEquals(withSsn.outputs.length, withoutSsn.outputs.length);
 });
 
-Deno.test("institution_b_fields_informational: second institution fields do not alter output count", () => {
+test("institution_b_fields_informational: second institution fields do not alter output count", () => {
   const withB = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -1089,7 +1090,7 @@ Deno.test("institution_b_fields_informational: second institution fields do not 
 // 12. Edge Cases
 // ============================================================
 
-Deno.test("edge_hoh_uses_single_thresholds: HOH at $90k ceiling yields zero credit", () => {
+test("edge_hoh_uses_single_thresholds: HOH at $90k ceiling yields zero credit", () => {
   // HOH uses the $80k–$90k range (same as single)
   const result = compute([
     minimalAocItem({
@@ -1101,7 +1102,7 @@ Deno.test("edge_hoh_uses_single_thresholds: HOH at $90k ceiling yields zero cred
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("edge_hoh_below_ceiling_86k_has_credit: HOH at $86k yields partial credit", () => {
+test("edge_hoh_below_ceiling_86k_has_credit: HOH at $86k yields partial credit", () => {
   // fraction = (86000 − 80000) / 10000 = 0.6 → allowed = $2,500 × 0.4 = $1,000
   // refundable = 40% × $1,000 = $400; nonrefundable = 60% × $1,000 = $600
   const result = compute([
@@ -1127,7 +1128,7 @@ Deno.test("edge_hoh_below_ceiling_86k_has_credit: HOH at $86k yields partial cre
   );
 });
 
-Deno.test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students → $2,000 refundable total", () => {
+test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students → $2,000 refundable total", () => {
   const result = compute([
     minimalAocItem({
       student_name: "Alice",
@@ -1156,7 +1157,7 @@ Deno.test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students 
   );
 });
 
-Deno.test("edge_aoc_ineligible_student_llc_expenses_routes_llc_credit: AOC-ineligible student with LLC expenses routes LLC credit", () => {
+test("edge_aoc_ineligible_student_llc_expenses_routes_llc_credit: AOC-ineligible student with LLC expenses routes LLC credit", () => {
   // aoc_claimed_4_prior_years=true blocks AOC; LLC expenses still produce $1,000 credit
   const result = compute([
     minimalAocItem({
@@ -1177,7 +1178,7 @@ Deno.test("edge_aoc_ineligible_student_llc_expenses_routes_llc_credit: AOC-ineli
   );
 });
 
-Deno.test("edge_phase_out_fraction_3_decimal_places: non-round MAGI fraction computes correct credit", () => {
+test("edge_phase_out_fraction_3_decimal_places: non-round MAGI fraction computes correct credit", () => {
   // MAGI $87,333 → fraction = (87333-80000)/10000 = 0.7333 → rounds to 0.733
   // allowed = $2,500 × (1 - 0.733) = $2,500 × 0.267 = $667.50
   // refundable = 40% × $667.50 = $267; nonrefundable = 60% × $667.50 = $400.50
@@ -1204,7 +1205,7 @@ Deno.test("edge_phase_out_fraction_3_decimal_places: non-round MAGI fraction com
   );
 });
 
-Deno.test("edge_kiddie_rule_with_phase_out: kiddie rule + partial phase-out both applied correctly", () => {
+test("edge_kiddie_rule_with_phase_out: kiddie rule + partial phase-out both applied correctly", () => {
   // Kiddie rule + MAGI $85k (fraction 0.5) → allowed = $2,500 × 0.5 = $1,250 → all nonrefundable
   const result = compute([
     minimalAocItem({
@@ -1229,7 +1230,7 @@ Deno.test("edge_kiddie_rule_with_phase_out: kiddie rule + partial phase-out both
 // 13. Smoke Test — Comprehensive scenario
 // ============================================================
 
-Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI $85k, partial phase-out", () => {
+test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI $85k, partial phase-out", () => {
   // Single filer, MAGI = $85,000 → phase-out fraction = 0.5
   // AOC student: $4,000 expenses → tentative $2,500 → allowed $1,250
   //   refundable = 40% × $1,250 = $500 → f1040
@@ -1284,7 +1285,7 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
   assertEquals(sch3Values, [1750]);
 });
 
-Deno.test("Form 8863 line 19 is capped by tax after specified prior credits", () => {
+test("Form 8863 line 19 is capped by tax after specified prior credits", () => {
   const result = computeWithTaxCapacity(
     [
       minimalAocItem({ aoc_adjusted_expenses: 4_000 }),
@@ -1305,7 +1306,7 @@ Deno.test("Form 8863 line 19 is capped by tax after specified prior credits", ()
   );
 });
 
-Deno.test("Form 8863 does not invent tax capacity when the worksheet is missing", () => {
+test("Form 8863 does not invent tax capacity when the worksheet is missing", () => {
   assertThrows(
     () =>
       f8863.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -1329,7 +1330,7 @@ Deno.test("Form 8863 does not invent tax capacity when the worksheet is missing"
   );
 });
 
-Deno.test("Form 8863 rejects missing or conflicting return-level facts", () => {
+test("Form 8863 rejects missing or conflicting return-level facts", () => {
   assertThrows(
     () =>
       compute([minimalAocItem({
@@ -1350,7 +1351,7 @@ Deno.test("Form 8863 rejects missing or conflicting return-level facts", () => {
   );
 });
 
-Deno.test("Form 8863 filing details require one structured institution address", () => {
+test("Form 8863 filing details require one structured institution address", () => {
   const valid = minimalAocItem({
     filing_details: {
       first_name: "Test",
@@ -1388,7 +1389,7 @@ Deno.test("Form 8863 filing details require one structured institution address",
   );
 });
 
-Deno.test("Form 8863 AOC Part III lines 27 through 30 follow both tiers", () => {
+test("Form 8863 AOC Part III lines 27 through 30 follow both tiers", () => {
   assertEquals(calculateAocStudentLines(1_500), {
     line27: 1_500,
     line28: 0,
@@ -1404,7 +1405,7 @@ Deno.test("Form 8863 AOC Part III lines 27 through 30 follow both tiers", () => 
   assertEquals(calculateAocStudentLines(5_000).line30, 2_500);
 });
 
-Deno.test("Form 8863 rounds the allowable phase-out ratio, not its complement", () => {
+test("Form 8863 rounds the allowable phase-out ratio, not its complement", () => {
   assertEquals(
     calculateForm8863AllowableRatio(
       88_335,
@@ -1418,7 +1419,7 @@ Deno.test("Form 8863 rounds the allowable phase-out ratio, not its complement", 
   );
 });
 
-Deno.test("Form 8863 parts I and II agree with capped return outputs", () => {
+test("Form 8863 parts I and II agree with capped return outputs", () => {
   const lines = calculateForm8863Lines({
     f8863s: [
       minimalAocItem({ aoc_adjusted_expenses: 4_000, filer_magi: 85_000 }),

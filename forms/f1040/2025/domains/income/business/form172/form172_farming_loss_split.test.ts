@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172FarmingLossSplit } from "./form172_farming_loss_split.ts";
 function origin() {
@@ -90,7 +91,7 @@ function review(year = 2019, origin_reference = "origin-2019") {
     loss_limitations_refigured_for_farming_subset: true,
   };
 }
-Deno.test("Form 172 farming split recomputes two portions from identified original items", () => {
+test("Form 172 farming split recomputes two portions from identified original items", () => {
   const o = origin();
   o.noncapital_deductions[0].amount = 60000;
   o.noncapital_deductions.push({
@@ -123,7 +124,7 @@ Deno.test("Form 172 farming split recomputes two portions from identified origin
   assertEquals(r.portionCarryHistoriesReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 farm-only loss is capped by full origin after other-business income", () => {
+test("Form 172 farm-only loss is capped by full origin after other-business income", () => {
   const o = origin();
   o.noncapital_income.push({
     item_id: "other-income",
@@ -148,7 +149,7 @@ Deno.test("Form 172 farm-only loss is capped by full origin after other-business
   assertEquals(r.farmingLoss, 70000);
   assertEquals(r.nonfarmingLoss, 0);
 });
-Deno.test("Form 172 positive farm activity leaves nonfarm loss in remaining portion", () => {
+test("Form 172 positive farm activity leaves nonfarm loss in remaining portion", () => {
   const o = origin();
   o.noncapital_deductions[0].amount = 5000;
   o.noncapital_deductions.push({
@@ -173,14 +174,14 @@ Deno.test("Form 172 positive farm activity leaves nonfarm loss in remaining port
   assertEquals(r.farmingOnlyNol, 0);
   assertEquals(r.nonfarmingLoss, 95000);
 });
-Deno.test("Form 172 historic farming subset excludes DPAD and exemptions from new loss", () => {
+test("Form 172 historic farming subset excludes DPAD and exemptions from new loss", () => {
   const o = legacy();
   const r = calculateForm172FarmingLossSplit(o, review(2017, o.reference));
   assertEquals(r.originYear, 2017);
   assertEquals(r.farmingOnlyNol, 100000);
   assertEquals(r.farmingLoss, 100000);
 });
-Deno.test("Form 172 farm capital-loss deduction cannot create extra farming loss", () => {
+test("Form 172 farm capital-loss deduction cannot create extra farming loss", () => {
   const o = origin();
   o.capital_losses.push(
     {
@@ -198,7 +199,7 @@ Deno.test("Form 172 farm capital-loss deduction cannot create extra farming loss
   assertEquals(r.originLoss, 100000);
   assertEquals(r.farmingOnlyNol, 100000);
 });
-Deno.test("Form 172 farming split rejects invented duplicate nonbusiness or old-NOL selections", () => {
+test("Form 172 farming split rejects invented duplicate nonbusiness or old-NOL selections", () => {
   const o = origin();
   for (
     const ids of [["invented"], ["receipts", "receipts"], ["standard"], [
@@ -216,7 +217,7 @@ Deno.test("Form 172 farming split rejects invented duplicate nonbusiness or old-
     calculateForm172FarmingLossSplit(o, { ...review(), farming_loss: 50000 })
   );
 });
-Deno.test("Form 172 farming split rejects mismatched identity unreconciled origin and missing reviews", () => {
+test("Form 172 farming split rejects mismatched identity unreconciled origin and missing reviews", () => {
   const o = origin();
   for (
     const patch of [

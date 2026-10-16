@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { eitcPdf } from "./eitc.ts";
 
@@ -12,7 +13,7 @@ const child = {
   months_lived_with_you_in_us: 12,
 };
 
-Deno.test("Schedule EIC PDF maps child rows, not income into line 6 months", () => {
+test("Schedule EIC PDF maps child rows, not income into line 6 months", () => {
   const mapped = new Map(
     eitcPdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -45,7 +46,7 @@ Deno.test("Schedule EIC PDF maps child rows, not income into line 6 months", () 
   );
 });
 
-Deno.test("Schedule EIC PDF projects qualifying-child identity and residency", () => {
+test("Schedule EIC PDF projects qualifying-child identity and residency", () => {
   const projected = eitcPdf.projectFields?.({
     credit_amount: 3_000,
     qualifying_children: 1,
@@ -62,7 +63,7 @@ Deno.test("Schedule EIC PDF projects qualifying-child identity and residency", (
   assertEquals(projected.child1_student, undefined);
 });
 
-Deno.test("Schedule EIC PDF needs explicit adult child line 4 answers", () => {
+test("Schedule EIC PDF needs explicit adult child line 4 answers", () => {
   const older = { ...child, dob: "2005-06-15" };
   assertThrows(
     () =>
@@ -85,7 +86,7 @@ Deno.test("Schedule EIC PDF needs explicit adult child line 4 answers", () => {
   assertEquals(projected.child1_disabled, true);
 });
 
-Deno.test("Schedule EIC PDF cannot print a child credit without child details", () => {
+test("Schedule EIC PDF cannot print a child credit without child details", () => {
   assertThrows(
     () =>
       eitcPdf.projectFields?.({

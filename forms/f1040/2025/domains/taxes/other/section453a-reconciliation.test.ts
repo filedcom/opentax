@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
 import { twoObligation453aFixture } from "../../../../nodes/inputs/taxes/interest/f453a_interest/fixture.ts";
@@ -25,7 +28,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("section 453A workpaper routes through Schedule 2 and Form 1040 line 23", () => {
+test("section 453A workpaper routes through Schedule 2 and Form 1040 line 23", () => {
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: "single",
@@ -46,7 +49,7 @@ Deno.test("section 453A workpaper routes through Schedule 2 and Form 1040 line 2
   assertEquals(schedule2Part2Total(result.pending.schedule2), line15);
 });
 
-Deno.test("section 453A line 15 prints separately in native and PDF Schedule 2", () => {
+test("section 453A line 15 prints separately in native and PDF Schedule 2", () => {
   const fields = { line15_section453a_interest: line15 };
   const xml = nativeSchedule2.build(fields, { pending, filer });
   assertStringIncludes(
@@ -66,7 +69,7 @@ Deno.test("section 453A line 15 prints separately in native and PDF Schedule 2",
   );
 });
 
-Deno.test("section 453A amount renders on the filled Schedule 2 PDF", async () => {
+test("section 453A amount renders on the filled Schedule 2 PDF", async () => {
   const projected = schedule2Pdf.projectFields!(
     { line15_section453a_interest: line15 },
     pending,
@@ -79,20 +82,20 @@ Deno.test("section 453A amount renders on the filled Schedule 2 PDF", async () =
     pending,
   );
   assertEquals(bytes !== undefined, true);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, bytes!);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes!);
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
     }).output();
     assertEquals(result.code, 0);
     assertStringIncludes(new TextDecoder().decode(result.stdout), "11317");
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("section 453A rejects bare or changed line 15 amounts at both exports", () => {
+test("section 453A rejects bare or changed line 15 amounts at both exports", () => {
   for (
     const [fields, source] of [
       [{ line15_section453a_interest: line15 }, {}],

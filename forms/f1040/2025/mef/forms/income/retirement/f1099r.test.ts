@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -49,7 +50,7 @@ function items() {
   }));
 }
 
-Deno.test("Scenario 8 builds two source-faithful 1099-R MeF documents", () => {
+test("Scenario 8 builds two source-faithful 1099-R MeF documents", () => {
   const xml = f1099r.build({ f1099rs: items() }, { filer });
   assertEquals(xml.length, 2);
   assertStringIncludes(
@@ -84,7 +85,7 @@ Deno.test("Scenario 8 builds two source-faithful 1099-R MeF documents", () => {
   }
 });
 
-Deno.test("altered 1099-R uses nonstandard code N with a retained payer copy", () => {
+test("altered 1099-R uses nonstandard code N with a retained payer copy", () => {
   const source = {
     ...items()[0],
     altered_or_handwritten: true,
@@ -112,7 +113,7 @@ Deno.test("altered 1099-R uses nonstandard code N with a retained payer copy", (
   );
 });
 
-Deno.test("reviewed typed 1099-R emits code N only for its matching payer copy", () => {
+test("reviewed typed 1099-R emits code N only for its matching payer copy", () => {
   const source = {
     ...items()[0],
     source_document_reference: "2025 typed pension copy",
@@ -147,7 +148,7 @@ Deno.test("reviewed typed 1099-R emits code N only for its matching payer copy",
   );
 });
 
-Deno.test("1099-R MeF export rejects incomplete source addresses", () => {
+test("1099-R MeF export rejects incomplete source addresses", () => {
   const [first] = items();
   assertThrows(
     () =>
@@ -159,7 +160,7 @@ Deno.test("1099-R MeF export rejects incomplete source addresses", () => {
   );
 });
 
-Deno.test("1099-R box 9a percentage is exported as the XSD ratio", () => {
+test("1099-R box 9a percentage is exported as the XSD ratio", () => {
   const [first] = items();
   const [xml] = f1099r.build({ f1099rs: [{ ...first, box9a_pct_total: 25 }] }, {
     filer,
@@ -170,7 +171,7 @@ Deno.test("1099-R box 9a percentage is exported as the XSD ratio", () => {
   );
 });
 
-Deno.test("1099-R native export rejects an exact repeated identified source copy", () => {
+test("1099-R native export rejects an exact repeated identified source copy", () => {
   const [source] = items();
   const copy = {
     ...source,
@@ -195,7 +196,7 @@ Deno.test("1099-R native export rejects an exact repeated identified source copy
   );
 });
 
-Deno.test("one identified 1099-R copy cannot replay changed withholding in either exporter", async () => {
+test("one identified 1099-R copy cannot replay changed withholding in either exporter", async () => {
   const [source] = items();
   const copy = {
     ...source,
@@ -228,7 +229,7 @@ Deno.test("one identified 1099-R copy cannot replay changed withholding in eithe
   );
 });
 
-Deno.test("1099-R for a spouse does not use the taxpayer's SSN", () => {
+test("1099-R for a spouse does not use the taxpayer's SSN", () => {
   const [first] = items();
   assertThrows(
     () => f1099r.build({ f1099rs: [{ ...first, ts: TS.S }] }, { filer }),
@@ -268,7 +269,7 @@ Deno.test("1099-R for a spouse does not use the taxpayer's SSN", () => {
   );
 });
 
-Deno.test("1099-R wrong recipient cannot enter either full-return exporter", async () => {
+test("1099-R wrong recipient cannot enter either full-return exporter", async () => {
   const [first] = items();
   const pending = {
     f1099r: {
@@ -287,7 +288,7 @@ Deno.test("1099-R wrong recipient cannot enter either full-return exporter", asy
   );
 });
 
-Deno.test("positive 1099-R without an issued recipient cannot enter either exporter", async () => {
+test("positive 1099-R without an issued recipient cannot enter either exporter", async () => {
   const [first] = items();
   const missingRecipient = { ...first, recipient_ssn: undefined };
   const pending = { f1099r: { f1099rs: [missingRecipient] } };
@@ -303,7 +304,7 @@ Deno.test("positive 1099-R without an issued recipient cannot enter either expor
   );
 });
 
-Deno.test("withholding-only 1099-R still needs its issued recipient", async () => {
+test("withholding-only 1099-R still needs its issued recipient", async () => {
   const [first] = items();
   const pending = {
     f1099r: {
@@ -328,7 +329,7 @@ Deno.test("withholding-only 1099-R still needs its issued recipient", async () =
   );
 });
 
-Deno.test("zero 1099-R source may remain without recipient income or withholding", () => {
+test("zero 1099-R source may remain without recipient income or withholding", () => {
   const [first] = items();
   const documents = f1099r.build({
     f1099rs: [{
@@ -342,7 +343,7 @@ Deno.test("zero 1099-R source may remain without recipient income or withholding
   assertEquals(documents.length, 1);
 });
 
-Deno.test("1099-R export requires a recipient name", () => {
+test("1099-R export requires a recipient name", () => {
   const [first] = items();
   assertThrows(
     () =>

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   farmRentalW2,
   verifyFarmRentalPacket,
@@ -62,7 +63,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("Form 4835 profit allows one passive rental loss with a retained activity PAL", async () => {
+test("Form 4835 profit allows one passive rental loss with a retained activity PAL", async () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 3_000);
   assertEquals(result.pending.form8582.current_loss, 5_000);
@@ -114,7 +115,7 @@ Deno.test("Form 4835 profit allows one passive rental loss with a retained activ
   ]);
 });
 
-Deno.test("Form 8582 farm-profit/rental-loss native and PDF reject changed sources and return", () => {
+test("Form 8582 farm-profit/rental-loss native and PDF reject changed sources and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const altered: Array<typeof pending> = [
     {

@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 
-Deno.test("2025 Form 1040 PDF prints the reviewed MFS lived-apart mark on line 6d", () => {
+test("2025 Form 1040 PDF prints the reviewed MFS lived-apart mark on line 6d", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "print_mfs_lived_apart_entire_year"
   );

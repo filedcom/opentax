@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form8834 } from "./f8834.ts";
 
@@ -18,7 +19,7 @@ const fields = {
   line7_allowed_credit: 450,
 };
 
-Deno.test("Form 8834 XML emits its nine source-backed and limited lines", () => {
+test("Form 8834 XML emits its nine source-backed and limited lines", () => {
   const xml = form8834.build(fields, {
     pending: { schedule3: { line6i_qualified_electric_vehicle_credit: 450 } },
   });
@@ -37,7 +38,7 @@ Deno.test("Form 8834 XML emits its nine source-backed and limited lines", () => 
   );
 });
 
-Deno.test("Form 8834 XML rejects source, limit, or Schedule 3 mismatch", () => {
+test("Form 8834 XML rejects source, limit, or Schedule 3 mismatch", () => {
   assertThrows(
     () =>
       form8834.build({ ...fields, line1_source_credit: 500 }, {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -12,7 +13,7 @@ import {
 import { bonusFilerFixture } from "./form8911_bonus_fixture.ts";
 import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction-review.ts";
 
-Deno.test("Construction-exception credits reconcile rate, cap, bonus basis, SE and QBI in full returns", async () => {
+test("Construction-exception credits reconcile rate, cap, bonus basis, SE and QBI in full returns", async () => {
   for (
     const [cost, credit, allowed, physicalWork] of [
       [10000, 3000, 3000, true],
@@ -54,7 +55,7 @@ Deno.test("Construction-exception credits reconcile rate, cap, bonus basis, SE a
   }
 });
 
-Deno.test("Construction exception rejects missing or conflicting reviewed facts before filing", async () => {
+test("Construction exception rejects missing or conflicting reviewed facts before filing", async () => {
   const input = constructionCreditInput();
   const property = input.f8911.properties[0];
   const review = property.business_source.construction_review;
@@ -108,7 +109,7 @@ Deno.test("Construction exception rejects missing or conflicting reviewed facts 
   );
 });
 
-Deno.test("Construction projects reconcile shared and mixed-rate property inventories", async () => {
+test("Construction projects reconcile shared and mixed-rate property inventories", async () => {
   for (const mixed of [false, true]) {
     const r = f1040_2025.executeReturn(constructionInventoryInput(mixed));
     assertEquals(r.diagnostics, []);

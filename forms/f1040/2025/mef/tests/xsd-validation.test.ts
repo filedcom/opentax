@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { w2gPayerCopyFixture } from "../../domains/income/other/w2g_payer_copy.fixture.ts";
 /**
  * XSD Validation Tests — validates generated MeF XML against the IRS
@@ -72,7 +75,7 @@ const XSD_PATH = new URL(
 // Skip XSD tests when the IRS schema files are not present locally.
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // .research/docs not checked in; skip on machines without the IRS schema bundle
@@ -100,12 +103,7 @@ const nonApplicableBelowFpl = {
   no_alternative_marriage_calculation: true,
 } as const;
 
-Deno.test({
-  name: "XSD/PDF: digital Form 8949 disposition requires Form 1040 Yes",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD/PDF: digital Form 8949 disposition requires Form 1040 Yes", async () => {
   const general = {
     filing_status: FilingStatus.Single,
     taxpayer_first_name: "Alex",
@@ -159,13 +157,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD/PDF: reviewed digital-assets No projects from retained general answer",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD/PDF: reviewed digital-assets No projects from retained general answer", async () => {
   const general = {
     filing_status: FilingStatus.Single,
     taxpayer_first_name: "Alex",
@@ -227,12 +219,7 @@ function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
   );
 }
 
-Deno.test({
-  name: "XSD: Form 1040 line 12a MFJ spouse dependent with refund-only source",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1040 line 12a MFJ spouse dependent with refund-only source", async () => {
   const general = {
     filing_status: FilingStatus.MFJ,
     taxpayer_first_name: "Alex",
@@ -283,7 +270,7 @@ Deno.test({
   await validateXsd(xml, "TY2025 Form 1040 line 12a MFJ spouse dependent");
 });
 
-Deno.test("TY2025 Schedule 2 rejects bare mortgage-credit recapture", () => {
+test("TY2025 Schedule 2 rejects bare mortgage-credit recapture", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -297,13 +284,7 @@ Deno.test("TY2025 Schedule 2 rejects bare mortgage-credit recapture", () => {
   );
 });
 
-Deno.test({
-  name:
-    "XSD: section 453A obligation workpaper reaches Schedule 2 line 15 and Form 1040 line 23",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: section 453A obligation workpaper reaches Schedule 2 line 15 and Form 1040 line 23", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 11_317 },
     schedule2: { line15_section453a_interest: 11_317 },
@@ -318,12 +299,7 @@ Deno.test({
   await validateXsd(xml, "TY2025 section 453A Schedule 2 line 15");
 });
 
-Deno.test({
-  name: "XSD: Form 1040 line 27c retained EIC opt-out",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1040 line 27c retained EIC opt-out", async () => {
   const xml = buildMefXml({
     general: { ...singleGeneral(), do_not_claim_eic: true },
     f1040: {
@@ -338,12 +314,7 @@ Deno.test({
   await validateXsd(xml, "TY2025 Form 1040 line 27c EIC opt-out");
 });
 
-Deno.test({
-  name: "XSD: Form 1040 line 26 divorced spouse SSN on agreed joint payment",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1040 line 26 divorced spouse SSN on agreed joint payment", async () => {
   const general = singleGeneral();
   const xml = buildMefXml({
     general,
@@ -359,12 +330,7 @@ Deno.test({
   await validateXsd(xml, "TY2025 Form 1040 agreed joint estimated payment");
 });
 
-Deno.test({
-  name: "XSD: New Markets recapture source reaches Schedule 2 NMCR",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: New Markets recapture source reaches Schedule 2 NMCR", async () => {
   const source = {
     recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
@@ -409,12 +375,7 @@ Deno.test({
   await validateXsd(xml, "TY2025 Schedule 2 NMCR");
 });
 
-Deno.test({
-  name: "XSD: Form 8611 building recapture links to Schedule 2 line 16",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8611 building recapture links to Schedule 2 line 16", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 9_090 },
     schedule2: { line16_lihtc_recapture: 9_090 },
@@ -455,7 +416,7 @@ Deno.test({
   await validateXsd(xml, "Form 8611 building recapture and Schedule 2");
 });
 
-Deno.test("Form 8611 source reaches Schedule 2, Form 1040, and its MeF attachment", () => {
+test("Form 8611 source reaches Schedule 2, Form 1040, and its MeF attachment", () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -537,7 +498,7 @@ const f965Source = {
   transfer_agreements: [],
 };
 
-Deno.test("section 965 payment reaches Schedule 2 but not Form 1040 line 23", () => {
+test("section 965 payment reaches Schedule 2 but not Form 1040 line 23", () => {
   const result = runReturn({
     general: singleGeneral(),
     f965: f965Source,
@@ -555,12 +516,7 @@ Deno.test("section 965 payment reaches Schedule 2 but not Form 1040 line 23", ()
   );
 });
 
-Deno.test({
-  name: "XSD: Form 965-A cumulative payment record and Schedule 2 line 20",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 965-A cumulative payment record and Schedule 2 line 20", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 0 },
     schedule2: { line20_965_tax_installment: 8_000 },
@@ -571,12 +527,7 @@ Deno.test({
   await validateXsd(xml, "Form 965-A cumulative payment record");
 });
 
-Deno.test({
-  name: "XSD: Form 965-A netted transfer and multiple transferee statements",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 965-A netted transfer and multiple transferee statements", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const pdfBytes = await pdf.save();
@@ -712,12 +663,7 @@ Deno.test({
   await validateXsd(xml, "Form 965-A linked native transfer statements");
 });
 
-Deno.test({
-  name: "XSD: Form 8912 allowed credit links to Schedule 3 line 6k",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8912 allowed credit links to Schedule 3 line 6k", async () => {
   const xml = buildMefXml({
     f1040: {
       line16_income_tax: 1_000,
@@ -759,12 +705,7 @@ Deno.test({
   await validateXsd(xml, "Form 8912 Schedule 3 line 6k");
 });
 
-Deno.test({
-  name: "XSD: Form 8859 allowed carryforward links to Schedule 3 line 6h",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8859 allowed carryforward links to Schedule 3 line 6h", async () => {
   const xml = buildMefXml({
     f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 830 },
     schedule3: {
@@ -785,12 +726,7 @@ Deno.test({
   await validateXsd(xml, "Form 8859 Schedule 3 line 6h");
 });
 
-Deno.test({
-  name: "XSD: Form 8396 credit limit and Schedule A interest reduction",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8396 credit limit and Schedule A interest reduction", async () => {
   const source = form8396SourceSchema.parse({
     qualified_home_address_if_different: {
       line1: "123 Main St",
@@ -870,7 +806,7 @@ Deno.test({
   await validateXsd(xml, "Form 8396 with Schedule A interest reduction");
 });
 
-Deno.test("Form 8396 allocates a smaller certified loan through the full return graph", () => {
+test("Form 8396 allocates a smaller certified loan through the full return graph", () => {
   const source = form8396SourceSchema.parse({
     certificate_issuer_name: "Austin Housing Finance Corporation",
     certificate_number: "MCC-2025-101",
@@ -913,12 +849,7 @@ Deno.test("Form 8396 allocates a smaller certified loan through the full return 
   );
 });
 
-Deno.test({
-  name: "XSD: Form 8834 passive credit links to Schedule 3 line 6i",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8834 passive credit links to Schedule 3 line 6i", async () => {
   const xml = buildMefXml({
     f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 450 },
     schedule3: {
@@ -948,12 +879,7 @@ Deno.test({
   await validateXsd(xml, "Form 8834 Schedule 3 line 6i");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 cents reach rounded Schedule 3 and Form 1040 lines",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 cents reach rounded Schedule 3 and Form 1040 lines", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -1036,13 +962,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 Schedule 3 line 12");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 vendor diesel sale and government-buyer statement validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 vendor diesel sale and government-buyer statement validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 36 },
     schedule3: { line12_fuel_tax_credit: 36.45, line15_total: 36.45 },
@@ -1088,13 +1008,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 government diesel sales");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 diesel-water emulsion use, bus, and export groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 diesel-water emulsion use, bus, and export groups validate", async () => {
   const claims = [
     { line: "14a", type_of_use: "02", qualified_quantity: 100 },
     { line: "14a", type_of_use: "05", qualified_quantity: 100 },
@@ -1137,12 +1051,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 diesel-water emulsion");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 registered vendor line 6b bus sales validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 registered vendor line 6b bus sales validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 170 },
     schedule3: { line12_fuel_tax_credit: 170, line15_total: 170 },
@@ -1190,13 +1099,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 registered vendor line 6b");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 registered kerosene vendor lines 7a through 7c validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 registered kerosene vendor lines 7a through 7c validate", async () => {
   const base = {
     unit: "gallons",
     qualified_quantity: 100,
@@ -1308,12 +1211,7 @@ Deno.test({
   }
 });
 
-Deno.test({
-  name: "XSD: Form 4136 commercial aviation vendor lines 8a and 8b validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 commercial aviation vendor lines 8a and 8b validate", async () => {
   const claims = [
     { line: "8a", excise_tax_rate_per_gallon: 0.219 },
     { line: "8b", excise_tax_rate_per_gallon: 0.244 },
@@ -1366,12 +1264,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 aviation vendor lines 8a and 8b");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 nonexempt noncommercial aviation line 8c validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 nonexempt noncommercial aviation line 8c validates", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 3 },
     schedule3: { line12_fuel_tax_credit: 2.5, line15_total: 2.5 },
@@ -1420,12 +1313,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 aviation vendor line 8c");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 noncommercial aviation lines 8d through 8f validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 noncommercial aviation lines 8d through 8f validate", async () => {
   const claims = [
     { line: "8d", type_of_use: "09", taxRate: 0.244 },
     { line: "8e", type_of_use: "10", taxRate: 0.219 },
@@ -1493,12 +1381,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 aviation vendor lines 8d-8f");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 government aviation line 8e type 14 validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 government aviation line 8e type 14 validates", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 218 },
     schedule3: { line12_fuel_tax_credit: 218, line15_total: 218 },
@@ -1555,13 +1438,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 government aviation line 8e type 14");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 registered card issuer lines 13a-13c and high-rate statement validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 registered card issuer lines 13a-13c and high-rate statement validate", async () => {
   const claims = ["13a", "13b", "13c"].map((line, index) => ({
     line,
     unit: "gallons",
@@ -1622,13 +1499,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 card issuer lines 13a-13c");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate", async () => {
   const claims = [
     { line: "16a", exported_fuel_kind: "dyed_diesel" },
     { line: "16a", exported_fuel_kind: "gasoline_blendstock" },
@@ -1670,12 +1541,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 exported dyed fuel");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 registered blender line 15a and certification validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 registered blender line 15a and certification validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 46 },
     schedule3: { line12_fuel_tax_credit: 46, line15_total: 46 },
@@ -1715,12 +1581,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 registered blender line 15a");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 all non-bus line 11 fuel groups validate", async () => {
   const lines = [
     "11a",
     "11b",
@@ -1770,12 +1631,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 line 11 alternative fuels");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 other-use and exported gasoline validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 other-use and exported gasoline validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 37 },
     schedule3: { line12_fuel_tax_credit: 36.7, line15_total: 36.7 },
@@ -1821,12 +1677,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 other-use and exported gasoline");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 home kerosene exception has no business fields",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 home kerosene exception has no business fields", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 24 },
     schedule3: { line12_fuel_tax_credit: 24.3, line15_total: 24.3 },
@@ -1854,13 +1705,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 home kerosene exception");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 4136 aviation gasoline commercial, export, and LUST groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 aviation gasoline commercial, export, and LUST groups validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 345 },
     schedule3: { line12_fuel_tax_credit: 345, line15_total: 345 },
@@ -1913,12 +1758,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 aviation gasoline fixed-use lines");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 diesel train, bus, and export groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 diesel train, bus, and export groups validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 66 },
     schedule3: { line12_fuel_tax_credit: 65.7, line15_total: 65.7 },
@@ -1975,12 +1815,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 diesel train, bus, and export lines");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 kerosene bus, export, and reduced-tax groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 kerosene bus, export, and reduced-tax groups validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 68 },
     schedule3: { line12_fuel_tax_credit: 67.5, line15_total: 67.5 },
@@ -2028,12 +1863,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 kerosene lines 4c through 4f");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 aviation kerosene commercial and LUST groups validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 aviation kerosene commercial and LUST groups validate", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 376 },
     schedule3: { line12_fuel_tax_credit: 376, line15_total: 376 },
@@ -2074,12 +1904,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 aviation kerosene lines 5a, 5b, and 5e");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 line 11 reduced-rate bus group validates", async () => {
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 11 },
     schedule3: {
@@ -2114,12 +1939,7 @@ Deno.test({
   await validateXsd(xml, "Form 4136 line 11 bus use");
 });
 
-Deno.test({
-  name: "XSD: Form 4136 multiple activities link two Schedule A PDFs",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4136 multiple activities link two Schedule A PDFs", async () => {
   const business = {
     qualifying_business_activity: true,
     claimant_is_ultimate_purchaser: true,
@@ -2170,12 +1990,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: filed passive-only Form 8582-CR credit reaches Form 3800",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: filed passive-only Form 8582-CR credit reaches Form 3800", async () => {
   const source = {
     activity_reference: "Clinical partnership",
     source_form: "Form 8820",
@@ -2290,12 +2105,7 @@ function sourcedForm8826ScheduleC(amountAfterCredit: number) {
   };
 }
 
-Deno.test({
-  name: "XSD: passive carryover and current Form 8826 share Form 3800 tax use",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: passive carryover and current Form 8826 share Form 3800 tax use", async () => {
   const source = {
     activity_reference: "Clinical partnership",
     source_form: "Form 8820",
@@ -2374,12 +2184,7 @@ Deno.test({
   await validateXsd(xml, "passive carryover and current Form 8826");
 });
 
-Deno.test({
-  name: "XSD: passive and nonpassive Form 8826 sources share Part III line 1e",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: passive and nonpassive Form 8826 sources share Part III line 1e", async () => {
   const source = {
     activity_reference: "Access partnership",
     source_form: "Form 8826",
@@ -2456,13 +2261,7 @@ Deno.test({
   await validateXsd(xml, "mixed Form 8826 credit on Part III line 1e");
 });
 
-Deno.test({
-  name:
-    "XSD: trust K-1 code ZZ disabled-access statement reaches passive line 1e",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: trust K-1 code ZZ disabled-access statement reaches passive line 1e", async () => {
   const source = {
     activity_reference: "Access trust",
     source_form: "Form 8826",
@@ -2532,13 +2331,7 @@ Deno.test({
   await validateXsd(xml, "trust disabled-access K-1 code ZZ");
 });
 
-Deno.test({
-  name:
-    "XSD: direct trust disabled-access code ZZ files Form 3800 without Form 8826",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: direct trust disabled-access code ZZ files Form 3800 without Form 8826", async () => {
   const xml = buildMefXml(
     {
       f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 500 },
@@ -2587,12 +2380,7 @@ Deno.test({
   await validateXsd(xml, "direct trust disabled-access K-1 code ZZ");
 });
 
-Deno.test({
-  name: "XSD: direct partnership code K files Form 3800 without Form 8826",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: direct partnership code K files Form 3800 without Form 8826", async () => {
   const reference = "2025 Access partnership K-1";
   const xml = buildMefXml(
     {
@@ -2638,7 +2426,7 @@ Deno.test({
   await validateXsd(xml, "direct partnership disabled-access K-1 code K");
 });
 
-Deno.test("nonpassive partnership and S-corporation code K route through a normal return", () => {
+test("nonpassive partnership and S-corporation code K route through a normal return", () => {
   const result = runReturn({
     general: singleGeneral(),
     k1_partnership: [{
@@ -2682,7 +2470,7 @@ Deno.test("nonpassive partnership and S-corporation code K route through a norma
   );
 });
 
-Deno.test("MeF rejects estate K-1 code M on Form 3800 orphan-drug line", () => {
+test("MeF rejects estate K-1 code M on Form 3800 orphan-drug line", () => {
   assertThrows(
     () =>
       buildMefXml(
@@ -2723,13 +2511,7 @@ Deno.test("MeF rejects estate K-1 code M on Form 3800 orphan-drug line", () => {
   );
 });
 
-Deno.test({
-  name:
-    "XSD: partnership and S-corporation orphan-drug K-1 credits share line 1h",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: partnership and S-corporation orphan-drug K-1 credits share line 1h", async () => {
   const xml = buildMefXml(
     {
       f1040: { line16_income_tax: 2_000, line20_nonrefundable_credits: 1_500 },
@@ -2810,7 +2592,7 @@ Deno.test({
   );
 });
 
-Deno.test("passive orphan-drug K-1 without Form 8582-CR facts reports a diagnostic", () => {
+test("passive orphan-drug K-1 without Form 8582-CR facts reports a diagnostic", () => {
   const result = runReturn({
     general: singleGeneral(),
     k1_partnership: [{
@@ -2827,7 +2609,7 @@ Deno.test("passive orphan-drug K-1 without Form 8582-CR facts reports a diagnost
   );
 });
 
-Deno.test("passive disabled-access K-1 without Form 8582-CR facts reports a diagnostic", () => {
+test("passive disabled-access K-1 without Form 8582-CR facts reports a diagnostic", () => {
   const result = runReturn({
     general: singleGeneral(),
     k1_partnership: [{
@@ -2846,13 +2628,7 @@ Deno.test("passive disabled-access K-1 without Form 8582-CR facts reports a diag
   );
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8582-CR start input carries passive disabled-access K-1 through the return",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8582-CR start input carries passive disabled-access K-1 through the return", async () => {
   const general = singleGeneral();
   const reference = "2025 access partnership K-1";
   const result = runReturn({
@@ -2902,13 +2678,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: mixed passive and nonpassive disabled-access K-1 sources share one cap",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: mixed passive and nonpassive disabled-access K-1 sources share one cap", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -2973,13 +2743,7 @@ Deno.test({
   await validateXsd(xml, "mixed disabled-access K-1 sources");
 });
 
-Deno.test({
-  name:
-    "XSD: passive Form 8826 pass-through and its K-1 enter the shared cap once",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: passive Form 8826 pass-through and its K-1 enter the shared cap once", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -3040,13 +2804,7 @@ Deno.test({
   await validateXsd(xml, "passive Form 8826 pass-through shared cap");
 });
 
-Deno.test({
-  name:
-    "XSD: passive self-earned Form 8826 and nonpassive K-1 share the disabled-access cap",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: passive self-earned Form 8826 and nonpassive K-1 share the disabled-access cap", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -3104,13 +2862,7 @@ Deno.test({
   await validateXsd(xml, "passive self-earned Form 8826 mixed cap");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return", async () => {
   const general = singleGeneral();
   const reference = "2025 clinical partnership K-1";
   const result = runReturn({
@@ -3157,13 +2909,7 @@ Deno.test({
   await validateXsd(xml, "Form 8582-CR passive K-1 normal return path");
 });
 
-Deno.test({
-  name:
-    "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826", async () => {
   const xml = buildMefXml(
     {
       f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 1_250 },
@@ -3227,13 +2973,7 @@ Deno.test({
   await validateXsd(xml, "K-1 code K Form 3800 without IRS8826");
 });
 
-Deno.test({
-  name:
-    "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3", async () => {
   const facility = {
     energy_type: EnergyType.Wind,
     subject_to_passive_activity_limit: false,
@@ -3296,12 +3036,7 @@ Deno.test({
   await validateXsd(xml, "linked Form 8835 and Form 3800");
 });
 
-Deno.test({
-  name: "XSD: Form 5884 work opportunity credit links to Form 3800 line 4b",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5884 work opportunity credit links to Form 3800 line 4b", async () => {
   const xml = buildMefXml({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 2_400 },
     schedule3: { line6a_total: 2_400, line7_total: 2_400, line8_total: 2_400 },
@@ -3383,12 +3118,7 @@ Deno.test({
   await validateXsd(xml, "linked Form 5884 and Form 3800");
 });
 
-Deno.test({
-  name: "XSD: controlled-group Form 5884 links both share statements",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: controlled-group Form 5884 links both share statements", async () => {
   const employee = {
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
@@ -3497,13 +3227,7 @@ Deno.test({
   await validateXsd(xml, "controlled-group Form 5884 share statements");
 });
 
-Deno.test({
-  name:
-    "XSD: pass-through-only work opportunity credit omits recipient IRS5884",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: pass-through-only work opportunity credit omits recipient IRS5884", async () => {
   const xml = buildMefXml({
     f1040: { line16_income_tax: 40_000, line20_nonrefundable_credits: 1_250 },
     schedule3: { line6a_total: 1_250, line7_total: 1_250, line8_total: 1_250 },
@@ -3548,12 +3272,7 @@ Deno.test({
   await validateXsd(xml, "pass-through-only Form 5884 credit on Form 3800");
 });
 
-Deno.test({
-  name: "XSD: partly limited mixed Form 5884 sources use Form 3800 Part V",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: partly limited mixed Form 5884 sources use Form 3800 Part V", async () => {
   const xml = buildMefXml({
     f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 1_000 },
     schedule3: { line6a_total: 1_000, line7_total: 1_000, line8_total: 1_000 },
@@ -3639,12 +3358,7 @@ Deno.test({
   await validateXsd(xml, "mixed Form 5884 sources on Form 3800 Part V");
 });
 
-Deno.test({
-  name: "XSD: 2025 Schedule 2 line 1a Form 8962 repayment precedes line 2 AMT",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 Schedule 2 line 1a Form 8962 repayment precedes line 2 AMT", async () => {
   const xml = buildMefXml({
     f1040: { line17_additional_taxes: 6_200 },
     schedule2: {
@@ -3663,13 +3377,7 @@ Deno.test({
   await validateXsd(xml, "2025 Schedule 2 PTC repayment and AMT");
 });
 
-Deno.test({
-  name:
-    "XSD: 1095-A excess advance credit reaches Form 8962, Schedule 2 line 1a, and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 1095-A excess advance credit reaches Form 8962, Schedule 2 line 1a, and Form 1040", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -3702,7 +3410,7 @@ Deno.test({
   await validateXsd(xml, "1095-A Form 8962 repayment");
 });
 
-Deno.test("annual-only 1095-A totals cannot claim Form 8962 line 11", () => {
+test("annual-only 1095-A totals cannot claim Form 8962 line 11", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(30_120, 3_000)],
@@ -3723,13 +3431,7 @@ Deno.test("annual-only 1095-A totals cannot claim Form 8962 line 11", () => {
   );
 });
 
-Deno.test({
-  name:
-    "XSD: monthly 1095-A without APTC reaches Form 8962 monthly rows and Schedule 3",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: monthly 1095-A without APTC reaches Form 8962 monthly rows and Schedule 3", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -3770,13 +3472,7 @@ Deno.test({
   await validateXsd(xml, "monthly 1095-A without APTC");
 });
 
-Deno.test({
-  name:
-    "XSD: below-100%-FPL Marketplace exception reaches Form 8962 and Schedule 3",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: below-100%-FPL Marketplace exception reaches Form 8962 and Schedule 3", async () => {
   const general = {
     ...singleGeneral(),
     ptc_below_100_fpl_status: {
@@ -3823,13 +3519,7 @@ Deno.test({
   await validateXsd(xml, "below-100%-FPL Marketplace exception");
 });
 
-Deno.test({
-  name:
-    "XSD: below-100%-FPL non-applicable taxpayer files APTC-only annual group",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: below-100%-FPL non-applicable taxpayer files APTC-only annual group", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -3877,13 +3567,7 @@ Deno.test({
   await validateXsd(xml, "below-100%-FPL APTC-only annual repayment");
 });
 
-Deno.test({
-  name:
-    "XSD: below-100%-FPL non-applicable taxpayer files APTC-only monthly rows",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: below-100%-FPL non-applicable taxpayer files APTC-only monthly rows", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -3918,12 +3602,7 @@ Deno.test({
   await validateXsd(xml, "below-100%-FPL APTC-only monthly repayment");
 });
 
-Deno.test({
-  name: "XSD: MFS without exception files family-only APTC repayment",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: MFS without exception files family-only APTC repayment", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFS,
@@ -3981,12 +3660,7 @@ Deno.test({
   await validateXsd(xml, "MFS APTC-only repayment without exception");
 });
 
-Deno.test({
-  name: "XSD: MFS abuse exception marks Form 8962 line A and claims PTC",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: MFS abuse exception marks Form 8962 line A and claims PTC", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFS,
@@ -4033,13 +3707,7 @@ Deno.test({
   await validateXsd(xml, "MFS Form 8962 abuse exception");
 });
 
-Deno.test({
-  name:
-    "XSD: shared MFS policy without exception allocates only APTC in Part IV",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: shared MFS policy without exception allocates only APTC in Part IV", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFS,
@@ -4121,13 +3789,7 @@ Deno.test({
   await validateXsd(xml, "shared MFS APTC-only allocation");
 });
 
-Deno.test({
-  name:
-    "XSD: shared MFS exception allocates premium and APTC but not family SLCSP",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: shared MFS exception allocates premium and APTC but not family SLCSP", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFS,
@@ -4202,13 +3864,7 @@ Deno.test({
   await validateXsd(xml, "shared MFS exception allocation");
 });
 
-Deno.test({
-  name:
-    "XSD: divorced taxpayers' agreed allocation fills all Part IV percentages",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: divorced taxpayers' agreed allocation fills all Part IV percentages", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -4275,12 +3931,7 @@ Deno.test({
   await validateXsd(xml, "divorce agreed policy allocation");
 });
 
-Deno.test({
-  name: "XSD: no-APTC shared policy allocates only premium in Part IV",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: no-APTC shared policy allocates only premium in Part IV", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -4354,12 +4005,7 @@ Deno.test({
   await validateXsd(xml, "no-APTC shared policy allocation");
 });
 
-Deno.test({
-  name: "XSD: one Marketplace policy emits two nonoverlapping Part IV periods",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: one Marketplace policy emits two nonoverlapping Part IV periods", async () => {
   const general = singleGeneral();
   const period = {
     basis: "other_agreed",
@@ -4430,12 +4076,7 @@ Deno.test({
   await validateXsd(xml, "two shared-policy periods");
 });
 
-Deno.test({
-  name: "XSD: one policy has shared months followed by family-only months",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: one policy has shared months followed by family-only months", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -4486,12 +4127,7 @@ Deno.test({
   await validateXsd(xml, "shared then family-only policy months");
 });
 
-Deno.test({
-  name: "XSD: five Part IV allocations use repeated MeF groups and line 34 No",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: five Part IV allocations use repeated MeF groups and line 34 No", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -4541,12 +4177,7 @@ Deno.test({
   await validateXsd(xml, "five Part IV allocation groups");
 });
 
-Deno.test({
-  name: "XSD: two same-state Marketplace policies use one SLCSP benchmark",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two same-state Marketplace policies use one SLCSP benchmark", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -4622,12 +4253,7 @@ Deno.test({
   await validateXsd(xml, "two same-state policies with one SLCSP");
 });
 
-Deno.test({
-  name: "XSD: two unchanged full-year policies use annual Form 8962 line 11",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two unchanged full-year policies use annual Form 8962 line 11", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -4701,13 +4327,7 @@ Deno.test({
   await validateXsd(xml, "two unchanged full-year policies on line 11");
 });
 
-Deno.test({
-  name:
-    "XSD: 1099-INT tax-exempt interest enters Form 8962 modified AGI but not 1040 AGI",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 1099-INT tax-exempt interest enters Form 8962 modified AGI but not 1040 AGI", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -4768,13 +4388,7 @@ Deno.test({
   await validateXsd(xml, "1099-INT tax-exempt interest and Form 8962 MAGI");
 });
 
-Deno.test({
-  name:
-    "XSD: required-filing dependent MAGI enters Form 8962 line 2b and line 3",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: required-filing dependent MAGI enters Form 8962 line 2b and line 3", async () => {
   const general = {
     ...singleGeneral(),
     taxpayer_can_be_claimed_as_dependent: false,
@@ -4872,12 +4486,7 @@ Deno.test({
   await validateXsd(xml, "Form 8962 dependent modified AGI");
 });
 
-Deno.test({
-  name: "XSD: Form 4137 employer tips and calculated taxes",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4137 employer tips and calculated taxes", async () => {
   const general = { ...singleGeneral(), digital_assets: false };
   const agi_aggregator = {
     line1a_wages: 30_000,
@@ -4936,12 +4545,7 @@ Deno.test({
   await validateXsd(xml, "Form 4137 employer tips");
 });
 
-Deno.test({
-  name: "XSD: Form 4137 line 6 feeds Form 8959 line 2 and Schedule 2",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4137 line 6 feeds Form 8959 line 2 and Schedule 2", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -4994,13 +4598,7 @@ Deno.test({
   await validateXsd(xml, "Form 4137 to Form 8959 and Schedule 2");
 });
 
-Deno.test({
-  name:
-    "XSD: joint return retains Form 8959 for one W-2 over $200,000 with zero tax",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: joint return retains Form 8959 for one W-2 over $200,000 with zero tax", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFJ,
@@ -5039,12 +4637,7 @@ Deno.test({
   await validateXsd(xml, "joint Form 8959 with zero additional tax");
 });
 
-Deno.test({
-  name: "XSD: qualifying surviving spouse uses Form 8959 $200,000 threshold",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: qualifying surviving spouse uses Form 8959 $200,000 threshold", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.QSS,
@@ -5082,12 +4675,7 @@ Deno.test({
   await validateXsd(xml, "qualifying surviving spouse Form 8959");
 });
 
-Deno.test({
-  name: "XSD: joint return retains Form 8959 for one RRTA W-2 over $200,000",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: joint return retains Form 8959 for one RRTA W-2 over $200,000", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFJ,
@@ -5128,12 +4716,7 @@ Deno.test({
   await validateXsd(xml, "joint RRTA Form 8959 with zero additional tax");
 });
 
-Deno.test({
-  name: "XSD: Form CT-2 quarterly compensation and tax paid reach Form 8959",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form CT-2 quarterly compensation and tax paid reach Form 8959", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5203,12 +4786,7 @@ Deno.test({
   await validateXsd(xml, "Form CT-2 to Form 8959");
 });
 
-Deno.test({
-  name: "XSD: RRTA W-2 box 14 feeds Form 4137 line 8 and Form 8959 Part III",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: RRTA W-2 box 14 feeds Form 4137 line 8 and Form 8959 Part III", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5284,13 +4862,7 @@ Deno.test({
   await validateXsd(xml, "RRTA Form 4137 and Form 8959 source chain");
 });
 
-Deno.test({
-  name:
-    "XSD: joint return has distinct taxpayer and spouse Form 4137 documents",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: joint return has distinct taxpayer and spouse Form 4137 documents", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFJ,
@@ -5385,13 +4957,7 @@ Deno.test({
   await validateXsd(xml, "joint taxpayer and spouse Forms 4137");
 });
 
-Deno.test({
-  name:
-    "XSD: Schedule F and Form 4835 elections link distinct CCC and crop statements",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule F and Form 4835 elections link distinct CCC and crop statements", async () => {
   const xml = buildMefXml({
     f4835: {
       f4835s: [{
@@ -5449,13 +5015,7 @@ Deno.test({
   await validateXsd(xml, "Schedule F and Form 4835 farm elections");
 });
 
-Deno.test({
-  name:
-    "XSD: two cash-method Schedule F farms preserve detailed income and expenses",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two cash-method Schedule F farms preserve detailed income and expenses", async () => {
   const xml = buildMefXml({
     schedule1: { line6_schedule_f: 27_500 },
     schedule_f: {
@@ -5498,12 +5058,7 @@ Deno.test({
   await validateXsd(xml, "two Schedule F cash-method farms");
 });
 
-Deno.test({
-  name: "XSD: accrual Schedule F Part III and CCC election statement",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: accrual Schedule F Part III and CCC election statement", async () => {
   const xml = buildMefXml({
     schedule1: { line6_schedule_f: 23_000 },
     schedule_f: {
@@ -5552,12 +5107,7 @@ const businessCasualty = {
   business_casualty_description: "Storm damaged workshop equipment",
 };
 
-Deno.test({
-  name: "XSD: Form 6252 installment sale reaches Schedule D through the graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 6252 installment sale reaches Schedule D through the graph", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5591,12 +5141,7 @@ Deno.test({
   await validateXsd(xml, "Form 6252 and linked Schedule D installment gain");
 });
 
-Deno.test({
-  name: "XSD: Form 6252 business installment gain reaches Form 4797 line 4",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 6252 business installment gain reaches Form 4797 line 4", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5632,12 +5177,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: three installment sales retain separate Form 6252 documents",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: three installment sales retain separate Form 6252 documents", async () => {
   const general = singleGeneral();
   const common = {
     date_acquired: "2020-01-01",
@@ -5691,13 +5231,7 @@ Deno.test({
   await validateXsd(xml, "three Form 6252 installment sales and destinations");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 6252 business gain and K-1 section 1231 gain combine on Form 4797",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 6252 business gain and K-1 section 1231 gain combine on Form 4797", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5741,13 +5275,7 @@ Deno.test({
   await validateXsd(xml, "Form 6252 and K-1 combined section 1231 gain");
 });
 
-Deno.test({
-  name:
-    "XSD: partnership and S-corp section 1231 gains retain Form 4797 line 2 rows",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: partnership and S-corp section 1231 gains retain Form 4797 line 2 rows", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5784,12 +5312,7 @@ Deno.test({
   await validateXsd(xml, "Form 4797 K-1 partnership and S-corp source rows");
 });
 
-Deno.test({
-  name: "XSD: Form 4684 long-term business casualty links Form 4797 line 14",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4684 long-term business casualty links Form 4797 line 14", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5820,12 +5343,7 @@ Deno.test({
   await validateXsd(xml, "Form 4684 and linked Form 4797 business casualty");
 });
 
-Deno.test({
-  name: "XSD: Form 4797 section 1231 gain and prior-loss recapture validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4797 section 1231 gain and prior-loss recapture validate", async () => {
   const xml = buildMefXml({
     form4797: { section_1231_gain: 20_000, nonrecaptured_1231_loss: 5_000 },
   }, extractFilerIdentity(singleGeneral()));
@@ -5838,12 +5356,7 @@ Deno.test({
   await validateXsd(xml, "Form 4797 section 1231 prior-loss recapture");
 });
 
-Deno.test({
-  name: "XSD: Form 4797 section 1231 ordinary loss validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4797 section 1231 ordinary loss validates", async () => {
   const xml = buildMefXml(
     { form4797: { section_1231_gain: -4_000 } },
     extractFilerIdentity(singleGeneral()),
@@ -5853,12 +5366,7 @@ Deno.test({
   await validateXsd(xml, "Form 4797 section 1231 ordinary loss");
 });
 
-Deno.test({
-  name: "XSD: Form 4684 business loss enters Form 4797 line 14",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4684 business loss enters Form 4797 line 14", async () => {
   const xml = buildMefXml({
     form4684: { ...businessCasualty, business_fmv_after: 60_000 },
     form4797: { ordinary_gain_form4684: -20_000 },
@@ -5891,13 +5399,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: K-1 section 1231 gain reconciles Form 4797 with Schedule D and AGI",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: K-1 section 1231 gain reconciles Form 4797 with Schedule D and AGI", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5926,12 +5428,7 @@ Deno.test({
   await validateXsd(xml, "K-1 section 1231 Form 4797 execution path");
 });
 
-Deno.test({
-  name: "XSD: K-1 section 1231 loss reaches Form 4797 and Schedule 1",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: K-1 section 1231 loss reaches Form 4797 and Schedule 1", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -5961,13 +5458,7 @@ Deno.test({
   await validateXsd(xml, "K-1 section 1231 loss execution path");
 });
 
-Deno.test({
-  name:
-    "XSD: Schedule 1 combines Schedule E and allowed passive loss on line 5",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule 1 combines Schedule E and allowed passive loss on line 5", async () => {
   const xml = buildMefXml({
     schedule1: {
       line4_other_gains: 1_000,
@@ -5982,12 +5473,7 @@ Deno.test({
   await validateXsd(xml, "Schedule 1 line 5");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 with Schedule E farm reconciliation validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 with Schedule E farm reconciliation validates", async () => {
   const xml = buildMefXml({
     schedule_e: { farm_rental_net: 11300, farm_rental_gross: 12100 },
     f4835: {
@@ -6010,12 +5496,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 and Schedule E");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 input reaches Schedule E and MeF through execution",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 input reaches Schedule E and MeF through execution", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6042,12 +5523,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 execution path");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 CCC loan election and detail statement validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 CCC loan election and detail statement validate", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6086,12 +5562,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 CCC loan election");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 crop insurance deferral statement validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 crop insurance deferral statement validates", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6147,12 +5618,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 crop insurance deferral");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 farm loss is allowed only against passive farm income",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 farm loss is allowed only against passive farm income", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6195,12 +5661,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 passive loss offset");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 passive farm loss is suspended without passive income",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 passive farm loss is suspended without passive income", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6229,12 +5690,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 suspended passive loss");
 });
 
-Deno.test({
-  name: "XSD: active Form 4835 farm rental loss uses the special allowance",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: active Form 4835 farm rental loss uses the special allowance", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6267,12 +5723,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 active rental loss");
 });
 
-Deno.test({
-  name: "XSD: Schedule E passive income releases Form 4835 farm loss",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule E passive income releases Form 4835 farm loss", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6319,12 +5770,7 @@ Deno.test({
   await validateXsd(xml, "Schedule E income and Form 4835 loss");
 });
 
-Deno.test({
-  name: "XSD: Form 4835 at-risk limit precedes its passive-loss allocation",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 4835 at-risk limit precedes its passive-loss allocation", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6378,12 +5824,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 at-risk and passive loss");
 });
 
-Deno.test({
-  name: "XSD: zero amount at risk suspends the farm loss before Form 8582",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: zero amount at risk suspends the farm loss before Form 8582", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6419,12 +5860,7 @@ Deno.test({
   await validateXsd(xml, "Form 4835 fully at-risk-suspended loss");
 });
 
-Deno.test({
-  name: "XSD: separate farms retain separate Form 6198 computations",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: separate farms retain separate Form 6198 computations", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6476,12 +5912,7 @@ Deno.test({
   await validateXsd(xml, "separate Form 4835 at-risk farm computations");
 });
 
-Deno.test({
-  name:
-    "prior farm passive loss needs authenticated 2024 activity ledger before MeF export",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("prior farm passive loss needs authenticated 2024 activity ledger before MeF export", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6512,12 +5943,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "unreleased prior farm PAL stays carried and needs authenticated 2024 ledger to export",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("unreleased prior farm PAL stays carried and needs authenticated 2024 ledger to export", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6542,12 +5968,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "prior farm PAL and at-risk loss retain limits before authenticated 2024 export",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("prior farm PAL and at-risk loss retain limits before authenticated 2024 export", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6585,12 +6006,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "active farm prior PAL special allowance needs authenticated 2024 ledger to export",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("active farm prior PAL special allowance needs authenticated 2024 ledger to export", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6616,12 +6032,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: Schedule E rental and royalty properties survive execution",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule E rental and royalty properties survive execution", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6677,12 +6088,7 @@ Deno.test({
   await validateXsd(xml, "Schedule E rental and royalty properties");
 });
 
-Deno.test({
-  name: "XSD: trust K-1 box 5 reaches Schedule E Part III and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: trust K-1 box 5 reaches Schedule E Part III and Form 1040", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6710,12 +6116,7 @@ Deno.test({
   await validateXsd(xml, "trust K-1 box 5 Schedule E Part III");
 });
 
-Deno.test({
-  name: "XSD: trust K-1 boxes 6 through 8 reach Schedule E passive income",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: trust K-1 boxes 6 through 8 reach Schedule E passive income", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6764,12 +6165,7 @@ Deno.test({
   await validateXsd(xml, "trust K-1 boxes 6-8 Schedule E passive income");
 });
 
-Deno.test({
-  name: "XSD: Schedule E nonpassive rental loss validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule E nonpassive rental loss validates", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6811,13 +6207,7 @@ Deno.test({
   await validateXsd(xml, "Schedule E nonpassive rental loss");
 });
 
-Deno.test({
-  name:
-    "XSD: fully allowed active rental loss links Schedule E, Form 8582 and Schedule 1",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: fully allowed active rental loss links Schedule E, Form 8582 and Schedule 1", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6858,13 +6248,7 @@ Deno.test({
   await validateXsd(xml, "active rental Form 8582 and Schedule E");
 });
 
-Deno.test({
-  name:
-    "XSD: two fully allowed rental losses retain separate Form 8582 worksheet rows",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two fully allowed rental losses retain separate Form 8582 worksheet rows", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -6911,13 +6295,7 @@ Deno.test({
   await validateXsd(xml, "two active rentals Form 8582");
 });
 
-Deno.test({
-  name:
-    "XSD: phased-out rental loss reports only the allowed amount on Schedule E",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: phased-out rental loss reports only the allowed amount on Schedule E", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -6965,12 +6343,7 @@ Deno.test({
   await validateXsd(xml, "phased-out active rental Form 8582");
 });
 
-Deno.test({
-  name: "XSD: rental loss with no special allowance is suspended in full",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: rental loss with no special allowance is suspended in full", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7011,13 +6384,7 @@ Deno.test({
   await validateXsd(xml, "fully suspended active rental Form 8582");
 });
 
-Deno.test({
-  name:
-    "XSD: two rental losses split the special allowance and suspended carryforward",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two rental losses split the special allowance and suspended carryforward", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -7077,12 +6444,7 @@ Deno.test({
   await validateXsd(xml, "two partially allowed active rentals Form 8582");
 });
 
-Deno.test({
-  name:
-    "prior active rental operating loss reaches Form 8582 and Schedule E requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("prior active rental operating loss reaches Form 8582 and Schedule E requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7119,12 +6481,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "prior-only active rental loss is phased out and carried forward requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("prior-only active rental loss is phased out and carried forward requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7162,12 +6519,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "current rental profit offsets prior loss before the special allowance requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("current rental profit offsets prior loss before the special allowance requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7205,13 +6557,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: profitable rental releases another rental's loss before phase-out",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: profitable rental releases another rental's loss before phase-out", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -7279,12 +6625,7 @@ Deno.test({
   await validateXsd(xml, "two active rentals with profit and loss");
 });
 
-Deno.test({
-  name:
-    "rental overall gain releases prior loss without Part II requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("rental overall gain releases prior loss without Part II requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7320,12 +6661,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: other passive rental loss is suspended without special allowance",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: other passive rental loss is suspended without special allowance", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7370,13 +6706,7 @@ Deno.test({
   await validateXsd(xml, "other passive rental suspended loss");
 });
 
-Deno.test({
-  name:
-    "XSD: mixed active and other passive rentals allocate only active special allowance",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: mixed active and other passive rentals allocate only active special allowance", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -7440,13 +6770,7 @@ Deno.test({
   await validateXsd(xml, "mixed active and other passive rental losses");
 });
 
-Deno.test({
-  name:
-    "XSD: mixed passive income and phased allowance share remaining suspended losses",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: mixed passive income and phased allowance share remaining suspended losses", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -7519,12 +6843,7 @@ Deno.test({
   await validateXsd(xml, "mixed passive income and phased allowance");
 });
 
-Deno.test({
-  name:
-    "other passive profit releases current and prior rental losses requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("other passive profit releases current and prior rental losses requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const base = {
     tsj: "T",
@@ -7573,12 +6892,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "other passive overall gain releases prior loss without allocation requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("other passive overall gain releases prior loss without allocation requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7613,12 +6927,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "entire other-passive Part II sale with overall gain uses Form 8582 Part V requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("entire other-passive Part II sale with overall gain uses Form 8582 Part V requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const sale = {
     activity_id: "fixture-Entire gain rental",
@@ -7672,13 +6981,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: first-year entire passive sale with overall gain has no prior PAL",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: first-year entire passive sale with overall gain has no prior PAL", async () => {
   const general = singleGeneral();
   const sale = {
     activity_id: "fixture-first-year-gain",
@@ -7743,12 +7046,7 @@ Deno.test({
   await validateXsd(xml, "first-year entire passive disposition");
 });
 
-Deno.test({
-  name:
-    "prior rental loss without past active participation stays in Part V requires authenticated 2024 ledger",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("prior rental loss without past active participation stays in Part V requires authenticated 2024 ledger", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7786,12 +7084,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: return-level PDF BinaryAttachment validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: return-level PDF BinaryAttachment validates", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const bundle = await buildMefBundle({}, {
@@ -7806,12 +7099,7 @@ Deno.test({
   await validateXsd(bundle.xml, "PDF BinaryAttachment");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 door and window overflow includes its QMID PDF",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 door and window overflow includes its QMID PDF", async () => {
   const general = singleGeneral();
   const filer = extractFilerIdentity(general);
   const result = runReturn({
@@ -7861,12 +7149,7 @@ Deno.test({
   await validateXsd(bundle.xml, "Form 5695 QMID overflow bundle");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 Section B overflow includes its QMID PDF",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 Section B overflow includes its QMID PDF", async () => {
   const general = singleGeneral();
   const filer = extractFilerIdentity(general);
   const result = runReturn({
@@ -7909,13 +7192,7 @@ Deno.test({
   await validateXsd(bundle.xml, "Form 5695 Section B QMID overflow bundle");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 5695 joint Section B overflow links PDF and allocation statement",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 joint Section B overflow links PDF and allocation statement", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -7960,12 +7237,7 @@ Deno.test({
   await validateXsd(bundle.xml, "Form 5695 joint Section B overflow bundle");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 joint-occupancy supporting document validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 joint-occupancy supporting document validates", async () => {
   const xml = buildMefXml({
     form5695: {
       fuel_cell_cost: 12_000,
@@ -8004,13 +7276,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 joint occupancy statement");
 });
 
-Deno.test({
-  name:
-    "XSD: joint fuel cell routes from f5695 input through linked MeF documents",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: joint fuel cell routes from f5695 input through linked MeF documents", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8046,12 +7312,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 joint fuel cell input to MeF");
 });
 
-Deno.test({
-  name: "XSD: Part II joint occupancy routes shared property and annual limits",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Part II joint occupancy routes shared property and annual limits", async () => {
   const general = singleGeneral();
   const home = {
     line1: "1 Test Way",
@@ -8119,12 +7380,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 Part II joint occupancy");
 });
 
-Deno.test({
-  name: "XSD: one joint statement supports both Form 5695 credit parts",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: one joint statement supports both Form 5695 credit parts", async () => {
   const general = singleGeneral();
   const home = {
     line1: "1 Test Way",
@@ -8176,12 +7432,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 both joint-occupancy parts");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 Part I clean-energy claim validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 Part I clean-energy claim validates", async () => {
   const xml = buildMefXml({
     form5695: {
       part_i_home_address: {
@@ -8201,12 +7452,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 Part I");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 fuel-cell half-kW claim validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 fuel-cell half-kW claim validates", async () => {
   const xml = buildMefXml({
     form5695: {
       fuel_cell_cost: 3_000,
@@ -8226,12 +7472,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 fuel-cell");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 itemized Part II Section A validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 itemized Part II Section A validates", async () => {
   const xml = buildMefXml({
     form5695: {
       part_ii_section_a: {
@@ -8262,12 +7503,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 Part II Section A");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 itemized Section A survives input to MeF execution",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 itemized Section A survives input to MeF execution", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8302,12 +7538,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 Section A executor path");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 itemized Section B validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 itemized Section B validates", async () => {
   const xml = buildMefXml({
     form5695: {
       part_ii_section_b: {
@@ -8336,12 +7567,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 Part II Section B");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 combined Sections A and B survive execution",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 combined Sections A and B survive execution", async () => {
   const general = singleGeneral();
   const home = {
     line1: "1 Test Way",
@@ -8388,12 +7614,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 combined Sections A and B");
 });
 
-Deno.test({
-  name: "XSD: Form 5695 panelboard and audit survive execution",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 panelboard and audit survive execution", async () => {
   const home = {
     line1: "1 Test Way",
     city: "Austin",
@@ -8439,13 +7660,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 panelboard and audit");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 5695 audit-only claim validates without Section B property answers",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5695 audit-only claim validates without Section B property answers", async () => {
   const xml = buildMefXml({
     form5695: {
       part_ii_energy_audit: {
@@ -8465,13 +7680,7 @@ Deno.test({
   await validateXsd(xml, "Form 5695 audit only");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 7217 section 731 cash gain reconciles through Form 8949, Schedule D, and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 7217 section 731 cash gain reconciles through Form 8949, Schedule D, and Form 1040", async () => {
   const general = singleGeneral();
   const ssn = general.taxpayer_ssn;
   const distributionDate = "2025-03-01";
@@ -8544,13 +7753,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: Form 7217 liquidating section 732(c) basis allocation reaches a full return",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 7217 liquidating section 732(c) basis allocation reaches a full return", async () => {
   const general = singleGeneral();
   const distributedProperties = [
     {
@@ -8632,13 +7835,7 @@ function runReturn(inputs: Record<string, unknown>) {
   return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test({
-  name:
-    "XSD: partnership entity Schedule D source reaches individual Schedule D and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: partnership entity Schedule D source reaches individual Schedule D and Form 1040", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8680,12 +7877,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: partnership Form 8825 rental share reaches individual Schedule E",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: partnership Form 8825 rental share reaches individual Schedule E", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8736,12 +7928,7 @@ function singleGeneral() {
   };
 }
 
-Deno.test({
-  name: "XSD: identified Form 3921 ISO source reaches Form 6251 and Schedule 2",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: identified Form 3921 ISO source reaches Form 6251 and Schedule 2", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8784,13 +7971,7 @@ Deno.test({
   await validateXsd(xml, "identified ISO Form 3921 full return");
 });
 
-Deno.test({
-  name:
-    "Form 4952 prior carryforward stops export without authenticated accepted filing bytes",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("Form 4952 prior carryforward stops export without authenticated accepted filing bytes", async () => {
   const result = runReturn(form6251Form4952Fixture());
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form6251?.line2c_investment_interest, -1_000);
@@ -8807,13 +7988,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: prior ISO basis sale and retained current ISO reach Form 6251 and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: prior ISO basis sale and retained current ISO reach Form 6251 and Form 1040", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8842,12 +8017,7 @@ Deno.test({
   await validateXsd(xml, "prior ISO basis sale with current ISO exercise");
 });
 
-Deno.test({
-  name: "XSD: withheld W-2G source reaches 1040 and native payer copy",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: withheld W-2G source reaches 1040 and native payer copy", async () => {
   const general = singleGeneral();
   const issuedFacts = {
     calendar_year: 2025,
@@ -8919,12 +8089,7 @@ Deno.test({
   await validateXsd(xml, "withheld W-2G full return");
 });
 
-Deno.test({
-  name: "XSD: 1099-NEC box 3 adds excise without duplicating box 1 income",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 1099-NEC box 3 adds excise without duplicating box 1 income", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -8959,12 +8124,7 @@ Deno.test({
   await validateXsd(xml, "1099-NEC golden parachute full return");
 });
 
-Deno.test({
-  name: "XSD: identified Form 1098 box 6 points reach Schedule A line 8a",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: identified Form 1098 box 6 points reach Schedule A line 8a", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9002,12 +8162,7 @@ Deno.test({
   await validateXsd(xml, "Form 1098 box 6 purchase points full return");
 });
 
-Deno.test({
-  name: "XSD: Form 1098 construction-refinance points amortize on Schedule A",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1098 construction-refinance points amortize on Schedule A", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9057,13 +8212,7 @@ Deno.test({
   await validateXsd(xml, "Form 1098 construction-refinance points full return");
 });
 
-Deno.test({
-  name:
-    "XSD: ordinary refinance points not reported in box 6 reach Schedule A line 8c",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ordinary refinance points not reported in box 6 reach Schedule A line 8c", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9122,13 +8271,7 @@ Deno.test({
   await validateXsd(xml, "ordinary refinance points full return");
 });
 
-Deno.test({
-  name:
-    "XSD: early full payoff deducts remaining ordinary refinance points on Schedule A line 8c",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: early full payoff deducts remaining ordinary refinance points on Schedule A line 8c", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9189,13 +8332,7 @@ Deno.test({
   await validateXsd(xml, "early payoff refinance points full return");
 });
 
-Deno.test({
-  name:
-    "XSD: mixed qualified-debt and home-improvement refinance points reach Schedule A line 8c",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: mixed qualified-debt and home-improvement refinance points reach Schedule A line 8c", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9258,13 +8395,7 @@ Deno.test({
   await validateXsd(xml, "improved-home refinance points full return");
 });
 
-Deno.test({
-  name:
-    "XSD: 2024 refinance ledger amortizes unreported points on 2025 Schedule A line 8c",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2024 refinance ledger amortizes unreported points on 2025 Schedule A line 8c", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9328,13 +8459,7 @@ Deno.test({
   await validateXsd(xml, "2024 refinance points on 2025 full return");
 });
 
-Deno.test({
-  name:
-    "XSD: 2023 refinance ledger carries two filed years into 2025 Schedule A",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2023 refinance ledger carries two filed years into 2025 Schedule A", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9407,13 +8532,7 @@ Deno.test({
   await validateXsd(xml, "2023 refinance points on 2025 full return");
 });
 
-Deno.test({
-  name:
-    "XSD: 2025 purchase points and an existing mortgage reach Schedule A and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 purchase points and an existing mortgage reach Schedule A and Form 1040", async () => {
   const general = singleGeneral();
   const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
   const issuedCopies = await Promise.all(
@@ -9439,12 +8558,7 @@ Deno.test({
   await validateXsd(xml, "purchase points plus existing mortgage full return");
 });
 
-Deno.test({
-  name: "XSD: over-limit purchase points share the two-loan Pub. 936 ratio",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: over-limit purchase points share the two-loan Pub. 936 ratio", async () => {
   const general = singleGeneral();
   const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
   const sources = fixture.f1098.map((item, index) =>
@@ -9504,12 +8618,7 @@ Deno.test({
   assertEquals(wrongPoints.diagnostics.length > 0, true);
 });
 
-Deno.test({
-  name: "XSD: two post-2017 Form 1098 loans share one mortgage interest limit",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two post-2017 Form 1098 loans share one mortgage interest limit", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9579,12 +8688,7 @@ Deno.test({
   await validateXsd(xml, "two-loan mortgage-limit full return");
 });
 
-Deno.test({
-  name: "XSD: MFS two-loan interest uses the $375,000 mortgage limit",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: MFS two-loan interest uses the $375,000 mortgage limit", async () => {
   const general = {
     ...singleGeneral(),
     filing_status: FilingStatus.MFS,
@@ -9675,13 +8779,7 @@ Deno.test({
   assertEquals(missingPaymentEvidence.diagnostics.length > 0, true);
 });
 
-Deno.test({
-  name:
-    "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9744,13 +8842,7 @@ Deno.test({
   await validateXsd(xml, "Form 8919 1099-NEC wage routing");
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8919 reason H combines same-firm 1099-MISC and 1099-NEC wages",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8919 reason H combines same-firm 1099-MISC and 1099-NEC wages", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,
@@ -9811,9 +8903,7 @@ Deno.test({
   await validateXsd(xml, "Form 8919 mixed 1099-MISC and 1099-NEC wages");
 });
 
-Deno.test({
-  name: "ATS Scenario 1 Schedule H source slice needs employee payroll",
-}, () => {
+test("ATS Scenario 1 Schedule H source slice needs employee payroll", () => {
   const source = SCENARIO_1040_01_FACTS.scheduleH;
   assertThrows(
     () =>
@@ -9842,12 +8932,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: Schedule H single-state FUTA Section A validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule H single-state FUTA Section A validates", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 1_572 },
     schedule2: { line9_household_employment: 1_572 },
@@ -9892,12 +8977,7 @@ Deno.test({
   await validateXsd(xml, "Schedule H Section A");
 });
 
-Deno.test({
-  name: "XSD: Schedule H withholding-only branch validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule H withholding-only branch validates", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 100 },
     schedule2: { line9_household_employment: 100 },
@@ -9945,12 +9025,7 @@ Deno.test({
   await validateXsd(xml, "Schedule H withholding-only");
 });
 
-Deno.test({
-  name: "XSD: Schedule H Section B with a credit reduction state validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule H Section B with a credit reduction state validates", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 126 },
     schedule2: { line9_household_employment: 126 },
@@ -9998,12 +9073,7 @@ Deno.test({
   await validateXsd(xml, "Schedule H Section B");
 });
 
-Deno.test({
-  name: "XSD: Schedule H Section A with a zero experience rate validates",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule H Section A with a zero experience rate validates", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 42 },
     schedule2: { line9_household_employment: 42 },
@@ -10047,12 +9117,7 @@ Deno.test({
   await validateXsd(xml, "Schedule H Section A zero rate");
 });
 
-Deno.test({
-  name: "XSD: Schedule H Additional Medicare Tax lines validate",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule H Additional Medicare Tax lines validate", async () => {
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 28_438 },
     schedule2: { line9_household_employment: 28_438 },
@@ -10124,10 +9189,10 @@ function w2Item(wages: number, withheld: number) {
  * Asserts exit code 0 — any schema violation surfaces as a test failure.
  */
 async function validateXsd(xml: string, label: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
-  await Deno.writeTextFile(tmpPath, xml);
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
+  await fs.writeFile(tmpPath, xml);
 
-  const cmd = new Deno.Command("xmllint", {
+  const cmd = new sys.Command("xmllint", {
     args: ["--noout", "--schema", XSD_PATH, tmpPath],
     stdout: "piped",
     stderr: "piped",
@@ -10135,7 +9200,7 @@ async function validateXsd(xml: string, label: string): Promise<void> {
   const output = await cmd.output();
 
   const stderr = new TextDecoder().decode(output.stderr);
-  await Deno.remove(tmpPath);
+  await sys.remove(tmpPath);
 
   assertEquals(
     output.code,
@@ -10146,14 +9211,7 @@ async function validateXsd(xml: string, label: string): Promise<void> {
 
 // ── Scenario 1: Single W-2 $75K ─────────────────────────────────────────────
 
-Deno.test(
-  {
-    name: "XSD: ATS Scenario 2 Form 8283 Section A donation validates",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS Scenario 2 Form 8283 Section A donation validates", async () => {
     const donation = SCENARIO_1040_02_FACTS.form8283;
     const xml = buildMefXml({
       f8283: {
@@ -10170,18 +9228,9 @@ Deno.test(
     }, extractFilerIdentity(singleGeneral()));
     assertStringIncludes(xml, "<FairMarketValueAmt>700</FairMarketValueAmt>");
     await validateXsd(xml, "ATS Scenario 2 Form 8283");
-  },
-);
+  });
 
-Deno.test(
-  {
-    name:
-      "XSD: ATS Scenario 13 Form 8911, its Schedule A, and Schedule 3 line 6j validate",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS Scenario 13 Form 8911, its Schedule A, and Schedule 3 line 6j validate", async () => {
     const facts = SCENARIO_1040_13_FACTS;
     const xml = buildMefXml({
       schedule3: {
@@ -10209,17 +9258,9 @@ Deno.test(
     );
     assertStringIncludes(xml, "<IRS8911ScheduleA documentId=");
     await validateXsd(xml, "ATS Scenario 13 Form 8911");
-  },
-);
+  });
 
-Deno.test(
-  {
-    name: "XSD: Single W-2 $75K validates against Return1040.xsd",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: Single W-2 $75K validates against Return1040.xsd", async () => {
     const result = runReturn({
       general: singleGeneral(),
       w2: [w2Item(75_000, 11_000)],
@@ -10229,16 +9270,9 @@ Deno.test(
       extractFilerIdentity(singleGeneral()),
     );
     await validateXsd(xml, "Single W-2 $75K");
-  },
-);
+  });
 
-Deno.test({
-  name:
-    "XSD: two employer W-2 excess Social Security reaches Schedule 3 and Form 1040",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two employer W-2 excess Social Security reaches Schedule 3 and Form 1040", async () => {
   const general = singleGeneral();
   const first = {
     ...w2Item(100_000, 0),
@@ -10266,13 +9300,7 @@ Deno.test({
 
 // ── Scenario 2: Self-employed Schedule C $80K ───────────────────────────────
 
-Deno.test({
-  name:
-    "XSD: separate Schedule C at-risk losses produce separate Form 6198 documents",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: separate Schedule C at-risk losses produce separate Form 6198 documents", async () => {
   const general = singleGeneral();
   const base = {
     line_a_principal_business: "Consulting",
@@ -10338,14 +9366,7 @@ Deno.test({
   await validateXsd(xml, "separate Schedule C at-risk businesses");
 });
 
-Deno.test(
-  {
-    name: "XSD: Self-employed Schedule C $80K validates against Return1040.xsd",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: Self-employed Schedule C $80K validates against Return1040.xsd", async () => {
     const result = runReturn({
       general: {
         ...singleGeneral(),
@@ -10382,19 +9403,11 @@ Deno.test(
       "<TotalGrossReceiptsAmt>80000</TotalGrossReceiptsAmt>",
     );
     await validateXsd(xml, "Self-employed Schedule C $80K");
-  },
-);
+  });
 
 // ── Scenario 3: Itemized deductions Schedule A ($200K income, $33K deductions)
 
-Deno.test(
-  {
-    name: "XSD: Schedule C inventory and itemized other expense validate",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule C inventory and itemized other expense validate", async () => {
     const result = runReturn({
       general: {
         ...singleGeneral(),
@@ -10434,18 +9447,9 @@ Deno.test(
       "<OtherExpenseDetail><Desc>Postage</Desc><Amt>100</Amt></OtherExpenseDetail>",
     );
     await validateXsd(xml, "Schedule C inventory and other expense");
-  },
-);
+  });
 
-Deno.test(
-  {
-    name:
-      "XSD: Itemized deductions Schedule A validates against Return1040.xsd",
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ignore: !xsdAvailable,
-  },
-  async () => {
+test.skipIf(!xsdAvailable)("XSD: Itemized deductions Schedule A validates against Return1040.xsd", async () => {
     const result = runReturn({
       general: singleGeneral(),
       w2: [w2Item(200_000, 40_000)],
@@ -10472,12 +9476,11 @@ Deno.test(
       extractFilerIdentity(singleGeneral()),
     );
     await validateXsd(xml, "Itemized deductions Schedule A");
-  },
-);
+  });
 
 // ── returnVersion check ──────────────────────────────────────────────────────
 
-Deno.test("XSD: returnVersion matches 2025v5.4", async () => {
+test("XSD: returnVersion matches 2025v5.4", async () => {
   const general = singleGeneral();
   const result = runReturn({
     general,

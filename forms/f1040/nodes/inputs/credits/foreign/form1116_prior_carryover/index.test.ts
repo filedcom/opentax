@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   IncomeCategory,
@@ -74,7 +75,7 @@ const originated2015 = {
   ],
 };
 
-Deno.test("Form 1116 prior-year source retains a 2020-origin credit", () => {
+test("Form 1116 prior-year source retains a 2020-origin credit", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2020] },
@@ -101,7 +102,7 @@ Deno.test("Form 1116 prior-year source retains a 2020-origin credit", () => {
   );
 });
 
-Deno.test("Form 1116 prior-year source retains a 2019-origin credit", () => {
+test("Form 1116 prior-year source retains a 2019-origin credit", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2019] },
@@ -112,7 +113,7 @@ Deno.test("Form 1116 prior-year source retains a 2019-origin credit", () => {
   assertEquals(emitted[0].vintages[0].vintage_tax_year, 2019);
 });
 
-Deno.test("Form 1116 prior-year source retains a 2018-origin credit", () => {
+test("Form 1116 prior-year source retains a 2018-origin credit", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2018] },
@@ -123,7 +124,7 @@ Deno.test("Form 1116 prior-year source retains a 2018-origin credit", () => {
   assertEquals(emitted[0].vintages[0].vintage_tax_year, 2018);
 });
 
-Deno.test("Form 1116 prior-year source retains passive 2017 origin and rejects unsourced general allocation", () => {
+test("Form 1116 prior-year source retains passive 2017 origin and rejects unsourced general allocation", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2017] },
@@ -142,7 +143,7 @@ Deno.test("Form 1116 prior-year source retains passive 2017 origin and rejects u
   );
 });
 
-Deno.test("Form 1116 prior-year source retains passive 2016 origin and rejects unsourced general allocation", () => {
+test("Form 1116 prior-year source retains passive 2016 origin and rejects unsourced general allocation", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2016] },
@@ -161,7 +162,7 @@ Deno.test("Form 1116 prior-year source retains passive 2016 origin and rejects u
   );
 });
 
-Deno.test("Form 1116 prior-year source retains passive 2015 origin and rejects unsourced general allocation", () => {
+test("Form 1116 prior-year source retains passive 2015 origin and rejects unsourced general allocation", () => {
   const result = form1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2015] },

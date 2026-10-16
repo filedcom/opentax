@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -67,7 +69,7 @@ function filing(f1099g: Record<string, unknown>[] = issued) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native statement and PDF", async () => {
+test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native statement and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_rtaa, 1_000);
@@ -95,7 +97,7 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
     ],
   );
   const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
-  const extraction = new Deno.Command("pdftotext", {
+  const extraction = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -110,11 +112,11 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
   assertStringIncludes(text, "RTAA payments 123456789");
   assertStringIncludes(text, "RTAA payments 987654321");
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -127,7 +129,7 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
 });
 
-Deno.test("RTAA export rejects changed rows, source copies, line total and recipient", async () => {
+test("RTAA export rejects changed rows, source copies, line total and recipient", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

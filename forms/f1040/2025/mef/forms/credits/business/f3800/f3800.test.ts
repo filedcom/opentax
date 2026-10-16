@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { TargetGroup } from "../../../../../../nodes/inputs/credits/business/f5884/index.ts";
@@ -12,7 +13,7 @@ import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediat
 import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 
-Deno.test("Form 3800 rejects carryforward export until source rows and history evidence are linked", () => {
+test("Form 3800 rejects carryforward export until source rows and history evidence are linked", () => {
   assertThrows(
     () =>
       form3800.build({
@@ -69,7 +70,7 @@ Deno.test("Form 3800 rejects carryforward export until source rows and history e
   );
 });
 
-Deno.test("Form 3800 files a source-backed passive-only current-year credit", () => {
+test("Form 3800 files a source-backed passive-only current-year credit", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
@@ -265,7 +266,7 @@ function filedPending(
   };
 }
 
-Deno.test("Form 3800 applies a passive carryover before a Form 8826 current credit", () => {
+test("Form 3800 applies a passive carryover before a Form 8826 current credit", () => {
   const passive = sourceAllocationSchema.parse({
     activity_reference: "Clinical partnership",
     source_form: "Form 8820",
@@ -334,7 +335,7 @@ Deno.test("Form 3800 applies a passive carryover before a Form 8826 current cred
   );
 });
 
-Deno.test("Form 3800 merges passive and nonpassive Form 8826 on one current-year line", () => {
+test("Form 3800 merges passive and nonpassive Form 8826 on one current-year line", () => {
   const passive = sourceAllocationSchema.parse({
     activity_reference: "Access partnership",
     source_form: "Form 8826",
@@ -402,7 +403,7 @@ Deno.test("Form 3800 merges passive and nonpassive Form 8826 on one current-year
   assertStringIncludes(xml, "<Frm8826CYAggrgtAmtGrp");
 });
 
-Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gross credit", () => {
+test("Form 3800 descriptor stays empty without credit and rejects legacy gross credit", () => {
   assertEquals(form3800.build({}), "");
   assertEquals(
     prepareForm3800DocumentParts({}, { documentIdsByPendingKey: {} }),
@@ -416,7 +417,7 @@ Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gr
   );
 });
 
-Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
+test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
   const source = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -483,7 +484,7 @@ Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
   );
 });
 
-Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
+test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
   const source = {
     investments: [withReviewedForm8874A(
       {
@@ -538,7 +539,7 @@ Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
   );
 });
 
-Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () => {
+test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Community venture",
     source_form: "Form 8874",
@@ -664,7 +665,7 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
   assertStringIncludes(mixedXml, 'referenceDocumentId="IRS8874_1"');
 });
 
-Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () => {
+test("Form 3800 files partnership code AD directly without an IRS8874", () => {
   const businessTax = { ...tax, standardCredit: 1_250 };
   const source = {
     partnership_name: "Community partnership",
@@ -712,7 +713,7 @@ Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () 
   );
 });
 
-Deno.test("Form 3800 reconciles estate/trust code ZZ New Markets statement", () => {
+test("Form 3800 reconciles estate/trust code ZZ New Markets statement", () => {
   const businessTax = { ...tax, standardCredit: 1_250 };
   const source = {
     estate_trust_name: "Community trust",
@@ -763,7 +764,7 @@ Deno.test("Form 3800 reconciles estate/trust code ZZ New Markets statement", () 
   );
 });
 
-Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820", () => {
+test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820", () => {
   const source = {
     f8820s: [],
     pass_through_credits: [{
@@ -797,7 +798,7 @@ Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820"
   assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
 });
 
-Deno.test("Form 3800 rejects estate and trust code M on orphan-drug line 1h", () => {
+test("Form 3800 rejects estate and trust code M on orphan-drug line 1h", () => {
   for (const source_type of ["estate", "trust"] as const) {
     const businessTax = { ...tax, standardCredit: 1_250 };
     assertThrows(
@@ -822,7 +823,7 @@ Deno.test("Form 3800 rejects estate and trust code M on orphan-drug line 1h", ()
   }
 });
 
-Deno.test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V line 1v and final tax", () => {
+test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V line 1v and final tax", () => {
   const statement = {
     source_document_reference: "k1-trust-2025",
     statement_reference: "trust-solar-stmt",
@@ -946,7 +947,7 @@ Deno.test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V lin
   );
 });
 
-Deno.test("Form 3800 reconciles partnership and S-corporation code Z on line 1h", () => {
+test("Form 3800 reconciles partnership and S-corporation code Z on line 1h", () => {
   for (const source_type of ["partnership", "s_corporation"] as const) {
     const businessTax = { ...tax, standardCredit: 1_250 };
     const entry = {
@@ -1007,7 +1008,7 @@ Deno.test("Form 3800 reconciles partnership and S-corporation code Z on line 1h"
   }
 });
 
-Deno.test("Form 3800 rejects estate code M even alongside own Form 8820", () => {
+test("Form 3800 rejects estate code M even alongside own Form 8820", () => {
   const ownForm = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -1054,7 +1055,7 @@ Deno.test("Form 3800 rejects estate code M even alongside own Form 8820", () => 
   );
 });
 
-Deno.test("Form 3800 requires each mixed Form 8820 source allocation under a shared limit", () => {
+test("Form 3800 requires each mixed Form 8820 source allocation under a shared limit", () => {
   const source = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -1109,7 +1110,7 @@ Deno.test("Form 3800 requires each mixed Form 8820 source allocation under a sha
   assertStringIncludes(xml, 'lineNumberTxt="Part III Line 1h"');
 });
 
-Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
+test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
   const vehicle = {
     vin: "1HGCM82633A004352",
     vehicle_year: 2025,
@@ -1178,7 +1179,7 @@ Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
   );
 });
 
-Deno.test("Form 3800 links qualified commercial clean vehicle credit to line 1aa", () => {
+test("Form 3800 links qualified commercial clean vehicle credit to line 1aa", () => {
   const vehicle = {
     vin: "1HGCM82633A004352",
     vehicle_year: 2025,
@@ -1254,7 +1255,7 @@ Deno.test("Form 3800 links qualified commercial clean vehicle credit to line 1aa
   );
 });
 
-Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", () => {
+test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", () => {
   const source = {
     subject_to_passive_activity_limit: false,
     f5884s: [{
@@ -1348,7 +1349,7 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
   );
 });
 
-Deno.test("Form 3800 reports pass-through-only Form 5884 credit without a recipient Form 5884", () => {
+test("Form 3800 reports pass-through-only Form 5884 credit without a recipient Form 5884", () => {
   const source = {
     subject_to_passive_activity_limit: false,
     f5884s: [],
@@ -1385,7 +1386,7 @@ Deno.test("Form 3800 reports pass-through-only Form 5884 credit without a recipi
   assertEquals(xml.includes('referenceDocumentName="IRS5884"'), false);
 });
 
-Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are partly limited", () => {
+test("Form 3800 requires a Part V split when mixed Form 5884 sources are partly limited", () => {
   const source = {
     subject_to_passive_activity_limit: false,
     f5884s: [{
@@ -1470,7 +1471,7 @@ Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are pa
   );
 });
 
-Deno.test("Form 3800 descriptor links self-earned Form 8826 and finalized Part II", () => {
+test("Form 3800 descriptor links self-earned Form 8826 and finalized Part II", () => {
   const fields = {
     f8826_credit_entries: [{
       source_type: "self" as const,
@@ -1546,7 +1547,7 @@ Deno.test("Form 3800 descriptor links self-earned Form 8826 and finalized Part I
   );
 });
 
-Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source", () => {
+test("Form 3800 descriptor preserves a pass-through-only Form 8826 source", () => {
   const source = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,
@@ -1621,7 +1622,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
   );
 });
 
-Deno.test("Form 3800 files direct estate/trust disabled-access code ZZ without Form 8826", () => {
+test("Form 3800 files direct estate/trust disabled-access code ZZ without Form 8826", () => {
   for (const source_type of ["estate", "trust"] as const) {
     const taxContext = { ...tax, standardCredit: 1_250 };
     const entry = {
@@ -1699,7 +1700,7 @@ Deno.test("Form 3800 files direct estate/trust disabled-access code ZZ without F
   }
 });
 
-Deno.test("Form 3800 files direct partnership and S-corporation code K without Form 8826", () => {
+test("Form 3800 files direct partnership and S-corporation code K without Form 8826", () => {
   for (const source_type of ["partnership", "s_corporation"] as const) {
     const taxContext = { ...tax, standardCredit: 1_250 };
     const entry = {
@@ -1784,7 +1785,7 @@ Deno.test("Form 3800 files direct partnership and S-corporation code K without F
   }
 });
 
-Deno.test("Form 3800 caps two direct code K pass-through credits at line 1e's $5,000 limit", () => {
+test("Form 3800 caps two direct code K pass-through credits at line 1e's $5,000 limit", () => {
   const taxContext = { ...tax, standardCredit: 5_000 };
   const xml = form3800.build({
     f8826_credit_entries: [{
@@ -1833,7 +1834,7 @@ Deno.test("Form 3800 caps two direct code K pass-through credits at line 1e's $5
   assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
 });
 
-Deno.test("Form 3800 combines self-earned and trust disabled-access credits on one line 1e", () => {
+test("Form 3800 combines self-earned and trust disabled-access credits on one line 1e", () => {
   const own = { ...selfEarned, eligible_expenditures: 5_000 };
   const taxContext = { ...tax, standardCredit: 3_375 };
   const trust = {
@@ -1950,7 +1951,7 @@ Deno.test("Form 3800 combines self-earned and trust disabled-access credits on o
   assertEquals([...limitedXml.matchAll(/<Frm8826CYAggrgtAmtGrp/g)].length, 2);
 });
 
-Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources are partly limited", () => {
+test("Form 3800 descriptor requires chosen Part V use when two K-1 sources are partly limited", () => {
   const source = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,
@@ -2026,7 +2027,7 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
   );
 });
 
-Deno.test("Form 3800 descriptor links a specified Form 8835 facility", () => {
+test("Form 3800 descriptor links a specified Form 8835 facility", () => {
   const fields = {
     f8835_credit_entries: [specifiedEntry()],
     tax_context: {
@@ -2074,7 +2075,7 @@ Deno.test("Form 3800 descriptor links a specified Form 8835 facility", () => {
   );
 });
 
-Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited same-line facilities", () => {
+test("Form 3800 descriptor needs explicit Part V use for partly limited same-line facilities", () => {
   const fields = {
     f8835_credit_entries: [specifiedEntry(), specifiedEntry()],
     tax_context: {
@@ -2137,7 +2138,7 @@ Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited sam
   );
 });
 
-Deno.test("Form 3800 descriptor requires a bundled transfer-election statement", () => {
+test("Form 3800 descriptor requires a bundled transfer-election statement", () => {
   const statement = "Transfer election.pdf";
   const fields = {
     f8835_credit_entries: [specifiedEntry({

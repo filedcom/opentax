@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
@@ -30,7 +31,7 @@ const row = {
   cost_basis: 800,
 };
 
-Deno.test("1099-B broker sale needs payer identity at final export", () => {
+test("1099-B broker sale needs payer identity at final export", () => {
   const missing = { ...row, payer_tin: undefined };
   const message = "1099-B filing needs broker TIN or issued-copy reference";
   assertThrows(
@@ -45,7 +46,7 @@ Deno.test("1099-B broker sale needs payer identity at final export", () => {
   }, filer);
 });
 
-Deno.test("1099-B recipient belongs to taxpayer or joint spouse", () => {
+test("1099-B recipient belongs to taxpayer or joint spouse", () => {
   assert1099BRecipientOwner({ f1099bs: [row] }, filer);
   assert1099BRecipientOwner({
     f1099bs: [{ ...row, recipient_ssn: "222334444" }],
@@ -61,7 +62,7 @@ Deno.test("1099-B recipient belongs to taxpayer or joint spouse", () => {
   });
 });
 
-Deno.test("1099-B wrong recipient blocks native and PDF final return", async () => {
+test("1099-B wrong recipient blocks native and PDF final return", async () => {
   const pending = {
     f1099b: { f1099bs: [{ ...row, recipient_ssn: "999887777" }] },
   };
@@ -77,7 +78,7 @@ Deno.test("1099-B wrong recipient blocks native and PDF final return", async () 
   );
 });
 
-Deno.test("1099-B missing issued recipient blocks native and PDF filing", async () => {
+test("1099-B missing issued recipient blocks native and PDF filing", async () => {
   const pending = {
     f1099b: { f1099bs: [{ ...row, recipient_ssn: undefined }] },
   };

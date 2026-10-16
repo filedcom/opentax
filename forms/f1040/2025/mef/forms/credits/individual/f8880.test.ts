@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8880 } from "./f8880.ts";
 import type { Fields } from "./f8880.ts";
@@ -48,11 +49,11 @@ const calculated: Fields & {
   print_line12_credit: 800,
 };
 
-Deno.test("Form 8880 absent source emits no document", () => {
+test("Form 8880 absent source emits no document", () => {
   assertEquals(form8880.build({}), "");
 });
 
-Deno.test("Form 8880 positive serializer requires finalized return context", () => {
+test("Form 8880 positive serializer requires finalized return context", () => {
   assertThrows(
     () => form8880.build(calculated),
     Error,
@@ -60,7 +61,7 @@ Deno.test("Form 8880 positive serializer requires finalized return context", () 
   );
 });
 
-Deno.test("Form 8880 positive serializer needs matching contribution sources", () => {
+test("Form 8880 positive serializer needs matching contribution sources", () => {
   assertThrows(
     () =>
       form8880.build({
@@ -73,7 +74,7 @@ Deno.test("Form 8880 positive serializer needs matching contribution sources", (
   );
 });
 
-Deno.test("Form 8880 canonical calculated lines map to TY2025 MeF line tags", () => {
+test("Form 8880 canonical calculated lines map to TY2025 MeF line tags", () => {
   const fields = {
     ...calculated,
     taxpayer_dob: "1980-01-01",
@@ -144,7 +145,7 @@ Deno.test("Form 8880 canonical calculated lines map to TY2025 MeF line tags", ()
   );
 });
 
-Deno.test("Form 8880 native filing rejects inflated eligible contribution lines", () => {
+test("Form 8880 native filing rejects inflated eligible contribution lines", () => {
   assertThrows(
     () =>
       form8880.build({
@@ -169,7 +170,7 @@ Deno.test("Form 8880 native filing rejects inflated eligible contribution lines"
   );
 });
 
-Deno.test("Form 8880 rejects old manual keys and incomplete calculated lines", () => {
+test("Form 8880 rejects old manual keys and incomplete calculated lines", () => {
   assertThrows(
     () => form8880.build({ contributions_taxpayer: 2_000 } as Partial<Fields>),
     Error,
@@ -192,7 +193,7 @@ Deno.test("Form 8880 rejects old manual keys and incomplete calculated lines", (
   );
 });
 
-Deno.test("Form 8880 source-only contribution cannot disappear in MeF assembly", () => {
+test("Form 8880 source-only contribution cannot disappear in MeF assembly", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -217,7 +218,7 @@ for (
     { name: "zero tax capacity", agi: 20_000, capacity: 0 },
   ]
 ) {
-  Deno.test(`Form 8880 reviewed ${scenario.name} emits no native claim`, () => {
+  test(`Form 8880 reviewed ${scenario.name} emits no native claim`, () => {
     const source = {
       ira_contributions_taxpayer: 2_000,
       filing_status: FilingStatus.Single,
@@ -236,7 +237,7 @@ for (
   });
 }
 
-Deno.test("Form 8880 rejects an unsourced or conflicting zero-credit marker", () => {
+test("Form 8880 rejects an unsourced or conflicting zero-credit marker", () => {
   assertThrows(
     () => form8880.build({ calculated_zero_credit: true }),
     Error,
@@ -254,7 +255,7 @@ Deno.test("Form 8880 rejects an unsourced or conflicting zero-credit marker", ()
   );
 });
 
-Deno.test("Form 8880 rejects a rounded or absent rate", () => {
+test("Form 8880 rejects a rounded or absent rate", () => {
   assertThrows(
     () => form8880.build({ ...calculated, print_line9_rate: "1" }),
     Error,
@@ -267,7 +268,7 @@ Deno.test("Form 8880 rejects a rounded or absent rate", () => {
   );
 });
 
-Deno.test("Form 8880 spouse source requires complete spouse native lines", () => {
+test("Form 8880 spouse source requires complete spouse native lines", () => {
   assertThrows(
     () =>
       form8880.build({
@@ -280,7 +281,7 @@ Deno.test("Form 8880 spouse source requires complete spouse native lines", () =>
   );
 });
 
-Deno.test("Form 8880 calculated node output survives the full MeF assembly", () => {
+test("Form 8880 calculated node output survives the full MeF assembly", () => {
   const source = {
     ira_contributions_taxpayer: 1_000,
     elective_deferrals_taxpayer: 1_000,
@@ -315,7 +316,7 @@ Deno.test("Form 8880 calculated node output survives the full MeF assembly", () 
   );
 });
 
-Deno.test("Form 8880 reviewed joint 2025 distribution prints in both columns", () => {
+test("Form 8880 reviewed joint 2025 distribution prints in both columns", () => {
   const source = {
     ira_contributions_taxpayer: 2_000,
     agi: 40_000,
@@ -364,7 +365,7 @@ Deno.test("Form 8880 reviewed joint 2025 distribution prints in both columns", (
   );
 });
 
-Deno.test("Form 8880 MeF assembly rejects an invented credit-limit line", () => {
+test("Form 8880 MeF assembly rejects an invented credit-limit line", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -385,7 +386,7 @@ Deno.test("Form 8880 MeF assembly rejects an invented credit-limit line", () => 
   );
 });
 
-Deno.test("Form 8880 MeF rejects an unfiled foreign AGI addback", () => {
+test("Form 8880 MeF rejects an unfiled foreign AGI addback", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -409,7 +410,7 @@ Deno.test("Form 8880 MeF rejects an unfiled foreign AGI addback", () => {
   );
 });
 
-Deno.test("Form 8880 MeF reconciles a nonjoint 2023 spouse distribution", () => {
+test("Form 8880 MeF reconciles a nonjoint 2023 spouse distribution", () => {
   const source = {
     ira_contributions_taxpayer: 2_000,
     ira_contributions_spouse: 2_000,
@@ -464,7 +465,7 @@ Deno.test("Form 8880 MeF reconciles a nonjoint 2023 spouse distribution", () => 
   );
 });
 
-Deno.test("Form 8880 MeF assembly rejects positive credit without contributor eligibility", () => {
+test("Form 8880 MeF assembly rejects positive credit without contributor eligibility", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -480,7 +481,7 @@ Deno.test("Form 8880 MeF assembly rejects positive credit without contributor el
   );
 });
 
-Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership", () => {
+test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership", () => {
   const source = {
     taxpayer_ssn: "123456789",
     spouse_ssn: "987-65-4321",
@@ -633,7 +634,7 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
   );
 });
 
-Deno.test("Form 8880 native line 2 excludes the employer portion of reviewed code G", () => {
+test("Form 8880 native line 2 excludes the employer portion of reviewed code G", () => {
   const source = {
     taxpayer_ssn: "123456789",
     w2_deferral_entries: [{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule_r } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -19,7 +20,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("schedule_r.inputSchema: valid single/age 65+ passes", () => {
+test("schedule_r.inputSchema: valid single/age 65+ passes", () => {
   const parsed = schedule_r.inputSchema.safeParse({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
@@ -27,7 +28,7 @@ Deno.test("schedule_r.inputSchema: valid single/age 65+ passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("schedule_r.inputSchema: negative agi fails", () => {
+test("schedule_r.inputSchema: negative agi fails", () => {
   const parsed = schedule_r.inputSchema.safeParse({
     filing_status: FilingStatus.Single,
     agi: -1,
@@ -35,7 +36,7 @@ Deno.test("schedule_r.inputSchema: negative agi fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schedule_r.inputSchema: negative nontaxable_ssa fails", () => {
+test("schedule_r.inputSchema: negative nontaxable_ssa fails", () => {
   const parsed = schedule_r.inputSchema.safeParse({
     filing_status: FilingStatus.Single,
     nontaxable_ssa: -500,
@@ -43,7 +44,7 @@ Deno.test("schedule_r.inputSchema: negative nontaxable_ssa fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schedule_r.inputSchema: negative disability_income fails", () => {
+test("schedule_r.inputSchema: negative disability_income fails", () => {
   const parsed = schedule_r.inputSchema.safeParse({
     filing_status: FilingStatus.Single,
     taxpayer_disability_income: -100,
@@ -51,7 +52,7 @@ Deno.test("schedule_r.inputSchema: negative disability_income fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("schedule_r.inputSchema: invalid filing_status fails", () => {
+test("schedule_r.inputSchema: invalid filing_status fails", () => {
   const parsed = schedule_r.inputSchema.safeParse({
     filing_status: "invalid_status",
   });
@@ -62,12 +63,12 @@ Deno.test("schedule_r.inputSchema: invalid filing_status fails", () => {
 // 2. Qualifying Determination
 // =============================================================================
 
-Deno.test("schedule_r.compute: no qualifying condition — no output", () => {
+test("schedule_r.compute: no qualifying condition — no output", () => {
   const result = compute({ filing_status: FilingStatus.Single });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("schedule_r.compute: single age 65+ qualifies — credit = 5000 * 15% = 750", () => {
+test("schedule_r.compute: single age 65+ qualifies — credit = 5000 * 15% = 750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
@@ -76,7 +77,7 @@ Deno.test("schedule_r.compute: single age 65+ qualifies — credit = 5000 * 15% 
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: single disabled qualifies — disability income $5000 not capped, credit = 750", () => {
+test("schedule_r.compute: single disabled qualifies — disability income $5000 not capped, credit = 750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_disabled: true,
@@ -86,14 +87,14 @@ Deno.test("schedule_r.compute: single disabled qualifies — disability income $
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: MFJ neither spouse qualifies — no output", () => {
+test("schedule_r.compute: MFJ neither spouse qualifies — no output", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
   });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750", () => {
+test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     taxpayer_age_65_or_older: true,
@@ -103,7 +104,7 @@ Deno.test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750"
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: qualifying surviving spouse uses box 1 base and AGI threshold", () => {
+test("schedule_r.compute: qualifying surviving spouse uses box 1 base and AGI threshold", () => {
   const result = compute({
     filing_status: FilingStatus.QSS,
     taxpayer_age_65_or_older: true,
@@ -115,7 +116,7 @@ Deno.test("schedule_r.compute: qualifying surviving spouse uses box 1 base and A
   );
 });
 
-Deno.test("schedule_r.compute: MFJ both spouses 65+ — produces output with $7500 base", () => {
+test("schedule_r.compute: MFJ both spouses 65+ — produces output with $7500 base", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     taxpayer_age_65_or_older: true,
@@ -131,7 +132,7 @@ Deno.test("schedule_r.compute: MFJ both spouses 65+ — produces output with $75
 // 3. Base Amount by Filing Status
 // =============================================================================
 
-Deno.test("schedule_r.compute: single 65+ zero AGI — credit = 5000 * 15% = 750", () => {
+test("schedule_r.compute: single 65+ zero AGI — credit = 5000 * 15% = 750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
@@ -141,7 +142,7 @@ Deno.test("schedule_r.compute: single 65+ zero AGI — credit = 5000 * 15% = 750
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: MFS disabled zero AGI — whole-dollar credit = 563", () => {
+test("schedule_r.compute: MFS disabled zero AGI — whole-dollar credit = 563", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     taxpayer_disabled: true,
@@ -156,7 +157,7 @@ Deno.test("schedule_r.compute: MFS disabled zero AGI — whole-dollar credit = 5
 // 4. AGI Phaseout
 // =============================================================================
 
-Deno.test("schedule_r.compute: single 65+ AGI below threshold — full amount", () => {
+test("schedule_r.compute: single 65+ AGI below threshold — full amount", () => {
   // Single threshold $7,500. AGI $7,000. No reduction.
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -167,7 +168,7 @@ Deno.test("schedule_r.compute: single 65+ AGI below threshold — full amount", 
   assertEquals(fields.line6d_elderly_disabled_credit, 750); // 5000 * 15%
 });
 
-Deno.test("schedule_r.compute: single 65+ AGI at threshold $7500 — no reduction", () => {
+test("schedule_r.compute: single 65+ AGI at threshold $7500 — no reduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
@@ -177,7 +178,7 @@ Deno.test("schedule_r.compute: single 65+ AGI at threshold $7500 — no reductio
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: single 65+ AGI $9500 — AGI exceeds threshold by $2000, reduction $1000, amount = 4000", () => {
+test("schedule_r.compute: single 65+ AGI $9500 — AGI exceeds threshold by $2000, reduction $1000, amount = 4000", () => {
   // $9500 - $7500 = $2000 excess; $2000 * 0.5 = $1000 reduction; $5000 - $1000 = $4000 * 15% = $600
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -188,7 +189,7 @@ Deno.test("schedule_r.compute: single 65+ AGI $9500 — AGI exceeds threshold by
   assertEquals(fields.line6d_elderly_disabled_credit, 600);
 });
 
-Deno.test("schedule_r.compute: single 65+ AGI $17500 — AGI exceeds threshold by $10000, reduction $5000, credit = 0", () => {
+test("schedule_r.compute: single 65+ AGI $17500 — AGI exceeds threshold by $10000, reduction $5000, credit = 0", () => {
   // $17500 - $7500 = $10000 excess; $10000 * 0.5 = $5000 reduction; $5000 - $5000 = $0
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -198,7 +199,7 @@ Deno.test("schedule_r.compute: single 65+ AGI $17500 — AGI exceeds threshold b
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("schedule_r.compute: MFJ one 65+ AGI $12000 — reduction $1000, amount = $4000 * 15%", () => {
+test("schedule_r.compute: MFJ one 65+ AGI $12000 — reduction $1000, amount = $4000 * 15%", () => {
   // MFJ threshold $10000. $12000 - $10000 = $2000 excess; * 0.5 = $1000 reduction; $5000 - $1000 = $4000
   const result = compute({
     filing_status: FilingStatus.MFJ,
@@ -213,7 +214,7 @@ Deno.test("schedule_r.compute: MFJ one 65+ AGI $12000 — reduction $1000, amoun
 // 5. Nontaxable Benefits Reduction
 // =============================================================================
 
-Deno.test("schedule_r.compute: nontaxable SSA reduces initial amount", () => {
+test("schedule_r.compute: nontaxable SSA reduces initial amount", () => {
   // Single 65+: $5000 - $1000 SSA = $4000; no AGI excess; $4000 * 15% = $600
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -225,7 +226,7 @@ Deno.test("schedule_r.compute: nontaxable SSA reduces initial amount", () => {
   assertEquals(fields.line6d_elderly_disabled_credit, 600);
 });
 
-Deno.test("schedule_r.compute: nontaxable_va reduces initial amount", () => {
+test("schedule_r.compute: nontaxable_va reduces initial amount", () => {
   // Single 65+: $5000 - $2000 VA = $3000; $3000 * 15% = $450
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -237,7 +238,7 @@ Deno.test("schedule_r.compute: nontaxable_va reduces initial amount", () => {
   assertEquals(fields.line6d_elderly_disabled_credit, 450);
 });
 
-Deno.test("schedule_r.compute: nontaxable benefits exceed initial amount — no credit", () => {
+test("schedule_r.compute: nontaxable benefits exceed initial amount — no credit", () => {
   // Single 65+: $5000 - $6000 SSA = $0
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -252,7 +253,7 @@ Deno.test("schedule_r.compute: nontaxable benefits exceed initial amount — no 
 // 6. Disability Income Cap (Part II of Schedule R)
 // =============================================================================
 
-Deno.test("schedule_r.compute: disabled under 65 — initial amount capped by disability income", () => {
+test("schedule_r.compute: disabled under 65 — initial amount capped by disability income", () => {
   // Single disabled: base $5000, disability income $3000 → capped at $3000; $3000 * 15% = $450
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -264,7 +265,7 @@ Deno.test("schedule_r.compute: disabled under 65 — initial amount capped by di
   assertEquals(fields.line6d_elderly_disabled_credit, 450);
 });
 
-Deno.test("schedule_r.compute: disabled under 65 — disability income exceeds base, no cap", () => {
+test("schedule_r.compute: disabled under 65 — disability income exceeds base, no cap", () => {
   // disability income $6000 > base $5000 → not capped
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -276,7 +277,7 @@ Deno.test("schedule_r.compute: disabled under 65 — disability income exceeds b
   assertEquals(fields.line6d_elderly_disabled_credit, 750); // 5000 * 15%
 });
 
-Deno.test("schedule_r.compute: age 65+ with disability income — no cap applied (age 65+ not disability-capped)", () => {
+test("schedule_r.compute: age 65+ with disability income — no cap applied (age 65+ not disability-capped)", () => {
   // Age 65+ is NOT subject to disability income cap — uses full $5000 base
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -289,7 +290,7 @@ Deno.test("schedule_r.compute: age 65+ with disability income — no cap applied
   assertEquals(fields.line6d_elderly_disabled_credit, 750); // 5000 * 15%
 });
 
-Deno.test("schedule_r.compute: box 6 keeps the older spouse's $5,000 before disability cap", () => {
+test("schedule_r.compute: box 6 keeps the older spouse's $5,000 before disability cap", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     taxpayer_age_65_or_older: true,
@@ -303,7 +304,7 @@ Deno.test("schedule_r.compute: box 6 keeps the older spouse's $5,000 before disa
   );
 });
 
-Deno.test("schedule_r.compute: reviewed disability evidence reaches the Form 1040 credit guard", () => {
+test("schedule_r.compute: reviewed disability evidence reaches the Form 1040 credit guard", () => {
   const source = {
     filing_status: FilingStatus.Single,
     taxpayer_disabled: true,
@@ -331,7 +332,7 @@ Deno.test("schedule_r.compute: reviewed disability evidence reaches the Form 104
   });
 });
 
-Deno.test("schedule_r.inputSchema: disability review needs duration and signed statement", () => {
+test("schedule_r.inputSchema: disability review needs duration and signed statement", () => {
   const evidence = {
     retired_on_permanent_total_disability: true,
     below_mandatory_retirement_age_on_january_1: true,
@@ -356,7 +357,7 @@ Deno.test("schedule_r.inputSchema: disability review needs duration and signed s
 // 7. Zero Credit Edge Cases
 // =============================================================================
 
-Deno.test("schedule_r.compute: credit of exactly zero — no output", () => {
+test("schedule_r.compute: credit of exactly zero — no output", () => {
   // Single 65+, AGI $17500 → $5000 - $5000 phaseout = $0
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -370,7 +371,7 @@ Deno.test("schedule_r.compute: credit of exactly zero — no output", () => {
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("schedule_r.compute: smoke test — MFJ both 65+ with SSA and AGI phaseout", () => {
+test("schedule_r.compute: smoke test — MFJ both 65+ with SSA and AGI phaseout", () => {
   // MFJ both 65+: base $7500
   // SSA: -$2000 → $5500
   // AGI: $12000 - $10000 threshold = $2000 excess → -$1000 → $4500

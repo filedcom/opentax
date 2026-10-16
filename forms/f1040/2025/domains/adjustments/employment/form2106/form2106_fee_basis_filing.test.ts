@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EmployeeType, VehicleMethod } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -68,7 +69,7 @@ function filedReturn() {
   return normalizeAllPending(result.pending);
 }
 
-Deno.test("one sourced fee-basis job reaches Schedule 1 and attached MeF/PDF Form 2106", () => {
+test("one sourced fee-basis job reaches Schedule 1 and attached MeF/PDF Form 2106", () => {
   const pending = filedReturn();
   assertEquals(pending.schedule1.line12_business_expenses, 1_200);
   assertEquals(pending.f1040.line10_adjustments, 1_200);
@@ -87,7 +88,7 @@ Deno.test("one sourced fee-basis job reaches Schedule 1 and attached MeF/PDF For
   assertEquals(pdf[0].employee_name, "Casey Rivera");
 });
 
-Deno.test("fee-basis filing rejects changed W-2, job, and finalized totals", () => {
+test("fee-basis filing rejects changed W-2, job, and finalized totals", () => {
   const pending = filedReturn();
   const changed: Record<string, Record<string, unknown>>[] = [{
     ...pending,

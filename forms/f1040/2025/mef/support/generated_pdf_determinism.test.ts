@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { FilingStatus } from "../types.ts";
 import { Form8978Source } from "../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
 import { buildForm8978Statements } from "../forms/taxes/passthrough/f8978_statement.ts";
 import { buildAdditionalQmidAttachment } from "../forms/credits/individual/f5695_qmid_attachment.ts";
 
-Deno.test("generated Form 8978 and QMID attachment bytes are stable across builds", async () => {
+test("generated Form 8978 and QMID attachment bytes are stable across builds", async () => {
   const filer = {
     primarySSN: "123456789",
     fullName: "Alex Taxpayer",

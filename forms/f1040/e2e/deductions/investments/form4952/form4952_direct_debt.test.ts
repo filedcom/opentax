@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -267,7 +268,7 @@ function filing(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4952 traced qualified-dividend election joins Schedule D tax, native, and PDF", async () => {
+test("Form 4952 traced qualified-dividend election joins Schedule D tax, native, and PDF", async () => {
   const elected = filing("qualified_dividend", false, 1_000);
   assertEquals(elected.diagnostics, []);
   const fields = elected.pending.form4952!;
@@ -368,7 +369,7 @@ Deno.test("Form 4952 traced qualified-dividend election joins Schedule D tax, na
   );
 });
 
-Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF", () => {
+test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF", () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line1, 20_000);
@@ -395,7 +396,7 @@ Deno.test("Form 4952 direct loan reaches Schedule A, Form 1040, native, and PDF"
   );
 });
 
-Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 investment income", () => {
+test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 investment income", () => {
   const result = filing("treasury_oid");
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -469,7 +470,7 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
   );
 });
 
-Deno.test("Form 4952 traced loan joins two distinct taxable OID payers through the final native and PDF return", async () => {
+test("Form 4952 traced loan joins two distinct taxable OID payers through the final native and PDF return", async () => {
   const result = filing("two_oid");
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -540,7 +541,7 @@ Deno.test("Form 4952 traced loan joins two distinct taxable OID payers through t
     }, result.pending), Error);
 });
 
-Deno.test("Form 4952 traced loan joins distinct Treasury, OID, and ordinary dividend payers through final native and PDF return", async () => {
+test("Form 4952 traced loan joins distinct Treasury, OID, and ordinary dividend payers through final native and PDF return", async () => {
   const result = filing("treasury_oid_dividend");
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -617,7 +618,7 @@ Deno.test("Form 4952 traced loan joins distinct Treasury, OID, and ordinary divi
     }, result.pending), Error);
 });
 
-Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and Form 1040 with final owner checks", async () => {
+test("MFJ spouse-owned direct investment loan reaches joint Schedule A and Form 1040 with final owner checks", async () => {
   const result = filing("interest", true);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line1, 20_000);
@@ -724,7 +725,7 @@ Deno.test("MFJ spouse-owned direct investment loan reaches joint Schedule A and 
   );
 });
 
-Deno.test("Form 4952 traced loan with one ordinary dividend payer reaches native and PDF", () => {
+test("Form 4952 traced loan with one ordinary dividend payer reaches native and PDF", () => {
   const result = filing("dividend");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -754,7 +755,7 @@ Deno.test("Form 4952 traced loan with one ordinary dividend payer reaches native
   );
 });
 
-Deno.test("Form 4952 traced loan excludes one payer's qualified dividends and carries the disallowed interest forward", async () => {
+test("Form 4952 traced loan excludes one payer's qualified dividends and carries the disallowed interest forward", async () => {
   const result = filing("qualified_dividend");
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -868,7 +869,7 @@ Deno.test("Form 4952 traced loan excludes one payer's qualified dividends and ca
   assertThrows(() => form4952Pdf.projectFields!(fields, changedLoan), Error);
 });
 
-Deno.test("Form 4952 traced loan with one taxable OID payer reaches native and PDF", () => {
+test("Form 4952 traced loan with one taxable OID payer reaches native and PDF", () => {
   const result = filing("oid");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -898,7 +899,7 @@ Deno.test("Form 4952 traced loan with one taxable OID payer reaches native and P
   );
 });
 
-Deno.test("Form 4952 traced loan with interest and ordinary dividend payers reaches final return, native, and PDF", () => {
+test("Form 4952 traced loan with interest and ordinary dividend payers reaches final return, native, and PDF", () => {
   const result = filing("interest_dividend");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -940,7 +941,7 @@ Deno.test("Form 4952 traced loan with interest and ordinary dividend payers reac
   assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
 });
 
-Deno.test("Form 4952 traced loan with OID and ordinary dividend payers reaches final return, native, and PDF", () => {
+test("Form 4952 traced loan with OID and ordinary dividend payers reaches final return, native, and PDF", () => {
   const result = filing("oid_dividend");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -966,7 +967,7 @@ Deno.test("Form 4952 traced loan with OID and ordinary dividend payers reaches f
     }), Error);
 });
 
-Deno.test("Form 4952 traced loan with two interest payers and one dividend payer reaches filing outputs", () => {
+test("Form 4952 traced loan with two interest payers and one dividend payer reaches filing outputs", () => {
   const result = filing("two_interest_dividend");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -1010,7 +1011,7 @@ Deno.test("Form 4952 traced loan with two interest payers and one dividend payer
   assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
 });
 
-Deno.test("Form 4952 traced loan joins two interest and two dividend payers with one qualified amount", async () => {
+test("Form 4952 traced loan joins two interest and two dividend payers with one qualified amount", async () => {
   const result = filing("two_interest_two_dividends");
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -1100,7 +1101,7 @@ Deno.test("Form 4952 traced loan joins two interest and two dividend payers with
   }
 });
 
-Deno.test("Form 4952 traced loan with two distinct interest payers reaches native and PDF", () => {
+test("Form 4952 traced loan with two distinct interest payers reaches native and PDF", () => {
   const result = filing("two_interest");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 60_000);
@@ -1148,7 +1149,7 @@ Deno.test("Form 4952 traced loan with two distinct interest payers reaches nativ
   }
 });
 
-Deno.test("Form 4952 traced loan with one interest payer and two dividend payers reaches filing outputs", () => {
+test("Form 4952 traced loan with one interest payer and two dividend payers reaches filing outputs", () => {
   const result = filing("interest_two_dividends");
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4952?.line4a, 100_000);
@@ -1192,7 +1193,7 @@ Deno.test("Form 4952 traced loan with one interest payer and two dividend payers
   );
 });
 
-Deno.test("Form 4952 direct loan rejects payment, loan, and owner tampering at export", () => {
+test("Form 4952 direct loan rejects payment, loan, and owner tampering at export", () => {
   const result = filing();
   const fields = result.pending.form4952!;
   const changed = {
@@ -1242,7 +1243,7 @@ Deno.test("Form 4952 direct loan rejects payment, loan, and owner tampering at e
   );
 });
 
-Deno.test("Form 4952 elects qualified dividends from one of two distinct payers", () => {
+test("Form 4952 elects qualified dividends from one of two distinct payers", () => {
   const result = filing("two_qualified_dividends", false, 2_000);
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;
@@ -1268,7 +1269,7 @@ Deno.test("Form 4952 elects qualified dividends from one of two distinct payers"
   );
 });
 
-Deno.test("two-payer Form 4952 election rejects duplicate copy, altered qualified amount, and tax", () => {
+test("two-payer Form 4952 election rejects duplicate copy, altered qualified amount, and tax", () => {
   const result = filing("two_qualified_dividends", false, 2_000);
   assertEquals(result.diagnostics, []);
   const fields = result.pending.form4952!;

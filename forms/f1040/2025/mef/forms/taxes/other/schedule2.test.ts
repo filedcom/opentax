@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../../../nodes/inputs/credits/business/f8874/recapture_node.ts";
 import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
@@ -46,11 +47,11 @@ function assertNotIncludes(actual: string, expected: string) {
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("empty object returns empty string", () => {
+test("empty object returns empty string", () => {
   assertEquals(schedule2.build({}), "");
 });
 
-Deno.test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
+test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
   assertThrows(
     () => schedule2.build({ line10_homebuyer_credit_repayment: 500 }),
     Error,
@@ -58,7 +59,7 @@ Deno.test("2025 native Schedule 2 rejects reserved line 10 repayment", () => {
   );
 });
 
-Deno.test("2025 native Schedule 2 rejects unsourced dealer installment interest", () => {
+test("2025 native Schedule 2 rejects unsourced dealer installment interest", () => {
   assertThrows(
     () => schedule2.build({ line14_section453l_interest: 120 }),
     Error,
@@ -66,7 +67,7 @@ Deno.test("2025 native Schedule 2 rejects unsourced dealer installment interest"
   );
 });
 
-Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
+test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
   const source = {
     rows: [{
       source_document_reference: "2024 Form 3800 and recapture workpaper",
@@ -136,7 +137,7 @@ Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => 
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("all unknown keys returns empty string", () => {
+test("all unknown keys returns empty string", () => {
   assertEquals(schedule2.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
@@ -144,7 +145,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("line2_amt at zero is emitted", () => {
+test("line2_amt at zero is emitted", () => {
   const result = schedule2.build({ line2_amt: 0 });
   assertStringIncludes(
     result,
@@ -156,7 +157,7 @@ Deno.test("line2_amt at zero is emitted", () => {
 // Section 4: Per-field mapping — direct 1:1 fields
 // ---------------------------------------------------------------------------
 
-Deno.test("line2_amt maps to AlternativeMinimumTaxAmt", () => {
+test("line2_amt maps to AlternativeMinimumTaxAmt", () => {
   const result = schedule2.build({ line2_amt: 5000 });
   assertStringIncludes(
     result,
@@ -164,7 +165,7 @@ Deno.test("line2_amt maps to AlternativeMinimumTaxAmt", () => {
   );
 });
 
-Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD order", () => {
+test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD order", () => {
   const result = schedule2.build({
     line1a_excess_advance_premium: 1_200,
     line2_amt: 5_000,
@@ -177,7 +178,7 @@ Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD ord
   assertEquals(result.indexOf(repayment) < result.indexOf(amt), true);
 });
 
-Deno.test("2025 Schedule 2 carries Part I totals through lines 1z and 3", () => {
+test("2025 Schedule 2 carries Part I totals through lines 1z and 3", () => {
   const result = schedule2.build({
     line1a_excess_advance_premium: 1_200,
     line2_amt: 5_000,
@@ -199,7 +200,7 @@ Deno.test("2025 Schedule 2 carries Part I totals through lines 1z and 3", () => 
   );
 });
 
-Deno.test("dealer-transfer repayments reference the parent Form 8936, not its Schedule A", () => {
+test("dealer-transfer repayments reference the parent Form 8936, not its Schedule A", () => {
   const xml = schedule2.build({
     line1b_new_clean_vehicle_repayment: 7_500,
     line1c_prev_owned_clean_vehicle_repayment: 4_000,
@@ -216,7 +217,7 @@ Deno.test("dealer-transfer repayments reference the parent Form 8936, not its Sc
   );
 });
 
-Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
+test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
   const result = schedule2.build({ line4_se_tax: 14100 });
   assertStringIncludes(
     result,
@@ -224,7 +225,7 @@ Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
   );
 });
 
-Deno.test("Form 8889 testing-period tax reaches Schedule 2 line 17d, 18, and 21", () => {
+test("Form 8889 testing-period tax reaches Schedule 2 line 17d, 18, and 21", () => {
   const xml = schedule2.build({
     line17c_hsa_penalty: 120,
     line17d_hsa_eligibility_tax: 50,
@@ -244,7 +245,7 @@ Deno.test("Form 8889 testing-period tax reaches Schedule 2 line 17d, 18, and 21"
   assertStringIncludes(xml, "<TotalOtherTaxesAmt>170</TotalOtherTaxesAmt>");
 });
 
-Deno.test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () => {
+test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () => {
   const result = schedule2.build({ line5_unreported_tip_tax: 300 });
   assertStringIncludes(
     result,
@@ -252,7 +253,7 @@ Deno.test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () =
   );
 });
 
-Deno.test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
+test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
   const result = schedule2.build({ line6_uncollected_8919: 1200 });
   assertStringIncludes(
     result,
@@ -260,12 +261,12 @@ Deno.test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
   );
 });
 
-Deno.test("line8_form5329_tax maps to TaxOnIRAsAmt", () => {
+test("line8_form5329_tax maps to TaxOnIRAsAmt", () => {
   const result = schedule2.build({ line8_form5329_tax: 600 });
   assertStringIncludes(result, "<TaxOnIRAsAmt>600</TaxOnIRAsAmt>");
 });
 
-Deno.test("line9_household_employment maps to HouseholdEmploymentTaxAmt", () => {
+test("line9_household_employment maps to HouseholdEmploymentTaxAmt", () => {
   const result = schedule2.build({ line9_household_employment: 474 });
   assertStringIncludes(
     result,
@@ -273,12 +274,12 @@ Deno.test("line9_household_employment maps to HouseholdEmploymentTaxAmt", () => 
   );
 });
 
-Deno.test("line11_additional_medicare maps to TotalAMRRTTaxAmt", () => {
+test("line11_additional_medicare maps to TotalAMRRTTaxAmt", () => {
   const result = schedule2.build({ line11_additional_medicare: 900 });
   assertStringIncludes(result, "<TotalAMRRTTaxAmt>900</TotalAMRRTTaxAmt>");
 });
 
-Deno.test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
+test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
   const result = schedule2.build({ line12_niit: 3800 });
   assertStringIncludes(
     result,
@@ -286,7 +287,7 @@ Deno.test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
   );
 });
 
-Deno.test("line17c_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
+test("line17c_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
   const result = schedule2.build({ line17c_hsa_penalty: 400 });
   assertStringIncludes(
     result,
@@ -294,7 +295,7 @@ Deno.test("line17c_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
   );
 });
 
-Deno.test("Schedule 2 section 965 payment requires Form 965-A in a full bundle", () => {
+test("Schedule 2 section 965 payment requires Form 965-A in a full bundle", () => {
   assertThrows(
     () =>
       schedule2.build(
@@ -313,7 +314,7 @@ Deno.test("Schedule 2 section 965 payment requires Form 965-A in a full bundle",
   );
 });
 
-Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
+test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
   const result = schedule2.build({
     line16_lihtc_recapture: 750,
     line17b_mortgage_subsidy_recapture: 1_000,
@@ -342,7 +343,7 @@ Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
   );
 });
 
-Deno.test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 credit-line source", () => {
+test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 credit-line source", () => {
   assertThrows(
     () => schedule2.build({ line17a_investment_credit_recapture: 2_500 }),
     Error,
@@ -350,7 +351,7 @@ Deno.test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 cr
   );
 });
 
-Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
+test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   const source = {
     recaptures: [withReviewedForm8874RecaptureEvidence({
       notice_reference: "2025 CDE notice",
@@ -426,7 +427,7 @@ Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   );
 });
 
-Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21", () => {
+test("section 965 installment stays on Schedule 2 line 20, outside line 21", () => {
   const result = schedule2.build({ line20_965_tax_installment: 8_000 });
   assertStringIncludes(
     result,
@@ -435,7 +436,7 @@ Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21"
   assertEquals(result.includes("<TotalOtherTaxesAmt>"), false);
 });
 
-Deno.test("2025 Schedule 2 line 7, 18, and 21 reconcile to supported tax sources", () => {
+test("2025 Schedule 2 line 7, 18, and 21 reconcile to supported tax sources", () => {
   const result = schedule2.build({
     line4_se_tax: 1_000,
     line5_unreported_tip_tax: 100,
@@ -463,7 +464,7 @@ Deno.test("2025 Schedule 2 line 7, 18, and 21 reconcile to supported tax sources
   );
 });
 
-Deno.test("negative Form 8978 adjustment reduces lines 17z, 18, and 21 together", () => {
+test("negative Form 8978 adjustment reduces lines 17z, 18, and 21 together", () => {
   const result = schedule2.build({ line17c_hsa_penalty: 400 }, {
     pending: {
       form8978_reporting_year: {
@@ -483,7 +484,7 @@ Deno.test("negative Form 8978 adjustment reduces lines 17z, 18, and 21 together"
   assertStringIncludes(result, "<TotalOtherTaxesAmt>150</TotalOtherTaxesAmt>");
 });
 
-Deno.test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be represented", () => {
+test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be represented", () => {
   assertThrows(
     () =>
       schedule2.build({ line8_form5329_tax: 100 }, {
@@ -499,7 +500,7 @@ Deno.test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be
   );
 });
 
-Deno.test("source-free mapped Schedule 2 fields survive the schema-order builder", () => {
+test("source-free mapped Schedule 2 fields survive the schema-order builder", () => {
   // Form 4255 and section 453A amounts need their own source rows.
   const mappings = FIELD_MAP.filter(([key]) =>
     key !== "line1d_form4255_net_epe" &&
@@ -513,7 +514,7 @@ Deno.test("source-free mapped Schedule 2 fields survive the schema-order builder
   }
 });
 
-Deno.test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
+test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
   const result = schedule2.build({ line17e_archer_msa_tax: 200 });
   assertStringIncludes(
     result,
@@ -521,7 +522,7 @@ Deno.test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
   );
 });
 
-Deno.test(
+test(
   "line17f_medicare_advantage_msa_tax maps to MedicareMSAAddnlDistriTaxAmt",
   () => {
     const result = schedule2.build({
@@ -538,7 +539,7 @@ Deno.test(
 // Section 5: Aggregated field tests
 // ---------------------------------------------------------------------------
 
-Deno.test(
+test(
   "uncollected_fica(500) + uncollected_fica_gtl(300) emits UncollSSMedcrRRTAGrpInsTxAmt=800",
   () => {
     const result = schedule2.build({
@@ -552,7 +553,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "uncollected_fica(500) alone emits UncollSSMedcrRRTAGrpInsTxAmt=500",
   () => {
     const result = schedule2.build({ uncollected_fica: 500 });
@@ -563,7 +564,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "uncollected_fica_gtl(300) alone emits UncollSSMedcrRRTAGrpInsTxAmt=300",
   () => {
     const result = schedule2.build({ uncollected_fica_gtl: 300 });
@@ -574,7 +575,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "section409a_excise(1000) + line17h_nqdc_tax(500) emits IncmNonqlfyDefrdCompPlanAmt=1500",
   () => {
     const result = schedule2.build({
@@ -588,7 +589,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "section409a_excise(1000) alone emits IncmNonqlfyDefrdCompPlanAmt=1000",
   () => {
     const result = schedule2.build({ section409a_excise: 1000 });
@@ -599,7 +600,7 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "golden_parachute_excise(2000) + line17k_golden_parachute_excise(3000) emits ExcessParachutePaymentAmt=5000",
   () => {
     const result = schedule2.build({
@@ -613,7 +614,7 @@ Deno.test(
   },
 );
 
-Deno.test("1099-NEC box 3 Schedule 2 tax rejects absent, changed, and wrong-recipient source", () => {
+test("1099-NEC box 3 Schedule 2 tax rejects absent, changed, and wrong-recipient source", () => {
   assertThrows(
     () => schedule2.build({ line17k_golden_parachute_excise: 3_000 }),
     Error,
@@ -641,7 +642,7 @@ Deno.test("1099-NEC box 3 Schedule 2 tax rejects absent, changed, and wrong-reci
   );
 });
 
-Deno.test(
+test(
   "golden_parachute_excise(2000) alone emits ExcessParachutePaymentAmt=2000",
   () => {
     const result = schedule2.build({ golden_parachute_excise: 2000 });
@@ -656,7 +657,7 @@ Deno.test(
 // Section 6: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("single known field emits only that element, absent fields omitted", () => {
+test("single known field emits only that element, absent fields omitted", () => {
   const result = schedule2.build({ line4_se_tax: 14100 });
   assertStringIncludes(
     result,
@@ -667,7 +668,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
   assertNotIncludes(result, "<IndivNetInvstIncomeTaxAmt>");
 });
 
-Deno.test("two fields present: only those two elements emitted", () => {
+test("two fields present: only those two elements emitted", () => {
   const result = schedule2.build({
     line2_amt: 3000,
     line12_niit: 1900,
@@ -707,13 +708,13 @@ const allFields = {
   line17f_medicare_advantage_msa_tax: 1600,
 };
 
-Deno.test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
+test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
   const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(result, "<IRS1040Schedule2>");
   assertStringIncludes(result, "</IRS1040Schedule2>");
 });
 
-Deno.test("all fields present: all direct-mapped elements emitted", () => {
+test("all fields present: all direct-mapped elements emitted", () => {
   const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(
     result,
@@ -752,7 +753,7 @@ Deno.test("all fields present: all direct-mapped elements emitted", () => {
   assertEquals(result.includes("PartialTaxOnAccumDistriAmt"), false);
 });
 
-Deno.test("all fields present: aggregated elements summed correctly", () => {
+test("all fields present: aggregated elements summed correctly", () => {
   const result = schedule2.build(allFields, necContext(6_500));
   // uncollected_fica(800) + uncollected_fica_gtl(900) = 1700
   assertStringIncludes(
@@ -775,7 +776,7 @@ Deno.test("all fields present: aggregated elements summed correctly", () => {
 // Section 8: Mixed known/unknown keys
 // ---------------------------------------------------------------------------
 
-Deno.test("known field emitted, unknown field dropped", () => {
+test("known field emitted, unknown field dropped", () => {
   const result = schedule2.build({ line4_se_tax: 14100, junk: 999 });
   assertStringIncludes(
     result,
@@ -785,7 +786,7 @@ Deno.test("known field emitted, unknown field dropped", () => {
   assertNotIncludes(result, "999");
 });
 
-Deno.test("multiple known and unknown fields: only known emitted", () => {
+test("multiple known and unknown fields: only known emitted", () => {
   const result = schedule2.build({
     line2_amt: 2500,
     unknown_field_1: 500,

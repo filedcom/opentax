@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -11,7 +12,7 @@ type Row = Record<string, any>;
 
 for (const [offset, expected] of [[-1, 931], [0, 932], [1, 932]]) {
   for (const route of ["wages", "independent-se"] as const) {
-    Deno.test(`Patron ${route} Medicare exact-half boundary ${offset}`, async () => {
+    test(`Patron ${route} Medicare exact-half boundary ${offset}`, async () => {
       const input = route === "wages"
         ? patronWageFixture({ status: "mfs", kind: "farm", name: "mfs-farm" })
         : independentPatronFixture("below").inputs;

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -13,12 +16,7 @@ import { scheduleH } from "../../../../mef/forms/taxes/household-employment/sche
 
 const base = pdfReviewFixtures.find((x) => x.id === "single-w2-refund")!;
 const optionalEnv = (name: string): string | undefined => {
-  try {
-    return Deno.env.get(name);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env[name];
 };
 const xsd = optionalEnv("SCHEDULE_H_TURN21_XSD_PATH") ?? new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -185,7 +183,7 @@ function priorOnlySource() {
   return raw;
 }
 
-Deno.test("Schedule H turning-21 payroll distinguishes two periods paid one day and one period paid on two days", async () => {
+test("Schedule H turning-21 payroll distinguishes two periods paid one day and one period paid on two days", async () => {
   const distinct: any = source(false);
   const distinctRows = distinct.federal_unemployment.employee_wages[1]
     .age_21_transition_review.wage_payments;
@@ -236,28 +234,28 @@ Deno.test("Schedule H turning-21 payroll distinguishes two periods paid one day 
     const origins: any[] = [];
     const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle, origins);
     assertEquals(origins.length, 6);
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp], stdout: "piped", stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
-    } finally { await Deno.remove(temp); }
+    } finally { await sys.remove(temp); }
     const dir = optionalEnv("SCHEDULE_H_TURN21_EVIDENCE_DIR");
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(`${dir}/${id}.json`, JSON.stringify({
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/${id}.json`, JSON.stringify({
         inputs, pending, preparedPending: bundle.pending,
         carryforwards: result.carryforwards, filer, origins,
       }, null, 2));
-      await Deno.writeTextFile(`${dir}/${id}.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
+      await fs.writeFile(`${dir}/${id}.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/${id}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H child turning 21 uses service dates, paid quarters and full return filing", async () => {
+test("Schedule H child turning 21 uses service dates, paid quarters and full return filing", async () => {
   const dir = optionalEnv("SCHEDULE_H_TURN21_EVIDENCE_DIR");
   for (
     const [id, raw, expected] of [
@@ -299,21 +297,21 @@ Deno.test("Schedule H child turning 21 uses service dates, paid quarters and ful
       bundle,
       origins,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${id}.json`,
         JSON.stringify(
           {
@@ -328,8 +326,8 @@ Deno.test("Schedule H child turning 21 uses service dates, paid quarters and ful
           2,
         ),
       );
-      await Deno.writeTextFile(`${dir}/${id}.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
+      await fs.writeFile(`${dir}/${id}.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/${id}.pdf`, pdf);
     }
     const changed: any = structuredClone(schedule);
     changed.federal_unemployment.employee_wages[1].age_21_transition_review
@@ -345,7 +343,7 @@ Deno.test("Schedule H child turning 21 uses service dates, paid quarters and ful
   }
 });
 
-Deno.test("Schedule H turning-21 source rejects age, service, wage, quarter and W-2 conflicts", () => {
+test("Schedule H turning-21 source rejects age, service, wage, quarter and W-2 conflicts", () => {
   const wrong = (edit: (s: any) => void) => {
     const raw: any = source();
     edit(raw);

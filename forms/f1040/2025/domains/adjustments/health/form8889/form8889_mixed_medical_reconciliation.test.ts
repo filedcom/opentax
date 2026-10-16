@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -72,7 +73,7 @@ function mixedCase() {
   return { source, forms, pending };
 }
 
-Deno.test("single primary HSA contribution and partly medical distribution replays to native and PDF", () => {
+test("single primary HSA contribution and partly medical distribution replays to native and PDF", () => {
   const { forms, pending } = mixedCase();
   assertEquals(forms[0]?.print_line13_deduction, 2_000);
   assertEquals(forms[0]?.print_line15_qualified, 600);
@@ -96,7 +97,7 @@ Deno.test("single primary HSA contribution and partly medical distribution repla
   assertEquals(printed?.print_line16_taxable, 400);
 });
 
-Deno.test("single primary mixed HSA source, printed lines, and return tamper reject", () => {
+test("single primary mixed HSA source, printed lines, and return tamper reject", () => {
   const { forms, pending } = mixedCase();
   const altered = [
     {

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../scripts/support/sys.ts";
 /**
  * XSD Validation Tests — verifies generated MeF XML conforms to IRS 2025v5.4 schemas.
  *
@@ -44,7 +47,7 @@ const XSD_RETURN1040 = new URL(
 // Skip XSD tests when the IRS schema files are not present locally.
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_RETURN1040);
+  sys.statSync(XSD_RETURN1040);
   xsdAvailable = true;
 } catch {
   // .research/docs not checked in; skip on machines without the IRS schema bundle
@@ -92,10 +95,10 @@ async function validateXml(
   xml: string,
   schema = XSD_RETURN1040,
 ): Promise<{ success: boolean; stderr: string }> {
-  const tmpFile = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpFile = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpFile, xml);
-    const cmd = new Deno.Command("xmllint", {
+    await fs.writeFile(tmpFile, xml);
+    const cmd = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, tmpFile],
       stderr: "piped",
       stdout: "null",
@@ -106,7 +109,7 @@ async function validateXml(
       stderr: new TextDecoder().decode(stderr).trim(),
     };
   } finally {
-    await Deno.remove(tmpFile).catch(() => {});
+    await sys.remove(tmpFile).catch(() => {});
   }
 }
 
@@ -186,10 +189,7 @@ function w2Item(wages: number, withheld: number) {
 
 // ── XSD Validation Tests ─────────────────────────────────────────────────────
 
-Deno.test({
-  name: "XSD: Single W-2 $75K — conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Single W-2 $75K — conforms to Return1040.xsd", async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(75_000, 11_000)],
@@ -199,10 +199,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: the digital-asset Yes answer survives the full return graph",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: the digital-asset Yes answer survives the full return graph", async () => {
   const result = runReturn({
     general: { ...singleGeneral(), digital_assets: true },
     w2: [w2Item(75_000, 11_000)],
@@ -217,11 +214,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: household wages and Schedule 1 income reach Form 1040 lines 1b, 1z, and 8",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: household wages and Schedule 1 income reach Form 1040 lines 1b, 1z, and 8", async () => {
   const result = runReturn({
     general: singleGeneral(),
     household_wages: [{ wages_received: 2_000 }],
@@ -251,10 +244,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: age and blindness answers reach Form 1040 line 12d",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: age and blindness answers reach Form 1040 line 12d", async () => {
   const result = runReturn({
     general: {
       ...singleGeneral(),
@@ -285,9 +275,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
-}, () => {
+test("ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll", () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
     general: {
@@ -317,10 +305,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "XSD: ATS 1040 Scenario 4 W-2 slice conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 4 W-2 slice conforms to Return1040.xsd", async () => {
   const facts = SCENARIO_1040_04_FACTS;
   const result = runReturn({
     general: {
@@ -362,11 +347,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: ATS 1040 Scenario 5 identity, dependents, and W-2 slice conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 5 identity, dependents, and W-2 slice conforms to Return1040.xsd", async () => {
   const facts = SCENARIO_1040_05_FACTS;
   const result = runReturn({
     general: {
@@ -444,11 +425,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: qualifying relatives retain grandparent and in-law relationship codes",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: qualifying relatives retain grandparent and in-law relationship codes", async () => {
   const result = runReturn({
     general: {
       ...singleGeneral(),
@@ -501,11 +478,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: ATS 1040 Scenario 2 W-2, Schedule C, and Form 8283 slice conforms to v5.4",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 2 W-2, Schedule C, and Form 8283 slice conforms to v5.4", async () => {
   const facts = SCENARIO_1040_02_FACTS;
   const result = runReturn({
     general: {
@@ -630,11 +603,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: ATS 1040 Scenario 12 W-2, Schedule C, and Form 7217 slice conforms to v5.4",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 12 W-2, Schedule C, and Form 7217 slice conforms to v5.4", async () => {
   const facts = SCENARIO_1040_12_FACTS;
   const result = runReturn({
     general: {
@@ -732,11 +701,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: ATS 1040 Scenario 13 W-2 slice conforms to configured v5.4 schema",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 13 W-2 slice conforms to configured v5.4 schema", async () => {
   const facts = SCENARIO_1040_13_FACTS;
   const result = runReturn({
     general: {
@@ -780,10 +745,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: ATS 1040 Scenario 8 1099-R statements conform to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 8 1099-R statements conform to Return1040.xsd", async () => {
   const input = scenario104008Input();
   input.f1099r = (input.f1099r as Record<string, unknown>[]).map((form) => ({
     ...form,
@@ -862,10 +824,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: MFJ dual W-2s $150K — conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: MFJ dual W-2s $150K — conforms to Return1040.xsd", async () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [
@@ -882,11 +841,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -898,11 +853,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: Single itemized deductions Schedule A $33K — conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Single itemized deductions Schedule A $33K — conforms to Return1040.xsd", async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(200_000, 40_000)],
@@ -930,10 +881,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: Single AMT via PAB interest $100K — conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Single AMT via PAB interest $100K — conforms to Return1040.xsd", async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 18_000)],
@@ -951,11 +899,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name:
-    "XSD: HOH EITC and W-2 source slice with 2 children conforms to Return1040.xsd",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: HOH EITC and W-2 source slice with 2 children conforms to Return1040.xsd", async () => {
   const result = runReturn({
     general: {
       ...hohGeneral(),
@@ -1013,10 +957,7 @@ Deno.test({
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test({
-  name: "XSD: childless EITC does not emit Schedule EIC",
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: childless EITC does not emit Schedule EIC", async () => {
   const result = runReturn({
     general: {
       ...singleGeneral(),

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
@@ -12,7 +13,7 @@ import { FilingStatus } from "../../../../../types.ts";
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 const TAXPAYER_SSN = "111223333";
 
-Deno.test("schedule1a: NEC trade tips stop at one business profit after SE deduction", () => {
+test("schedule1a: NEC trade tips stop at one business profit after SE deduction", () => {
   const source = {
     filing_status: FilingStatus.Single,
     taxpayer_ssn: TAXPAYER_SSN,
@@ -167,7 +168,7 @@ function deduction(
     ?.line13b_additional_deductions;
 }
 
-Deno.test("schedule1a: unsupported direct overtime totals are rejected at public input", () => {
+test("schedule1a: unsupported direct overtime totals are rejected at public input", () => {
   assertEquals(
     claimInputSchema.safeParse({
       taxpayer_qualified_overtime_compensation: 5_000,
@@ -176,7 +177,7 @@ Deno.test("schedule1a: unsupported direct overtime totals are rejected at public
   );
 });
 
-Deno.test("schedule1a: senior source creates a graph claim before filing review", () => {
+test("schedule1a: senior source creates a graph claim before filing review", () => {
   assertEquals(
     deduction({
       taxpayer_age_65_or_older: true,
@@ -189,7 +190,7 @@ Deno.test("schedule1a: senior source creates a graph claim before filing review"
   );
 });
 
-Deno.test("schedule1a: deducts qualified employee tips", () => {
+test("schedule1a: deducts qualified employee tips", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000),
@@ -202,7 +203,7 @@ Deno.test("schedule1a: deducts qualified employee tips", () => {
   );
 });
 
-Deno.test("schedule1a: caps qualified tips at $25,000", () => {
+test("schedule1a: caps qualified tips at $25,000", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(40_000),
@@ -215,7 +216,7 @@ Deno.test("schedule1a: caps qualified tips at $25,000", () => {
   );
 });
 
-Deno.test("schedule1a: phases out $100 per full $1,000 over threshold", () => {
+test("schedule1a: phases out $100 per full $1,000 over threshold", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000),
@@ -238,7 +239,7 @@ Deno.test("schedule1a: phases out $100 per full $1,000 over threshold", () => {
   );
 });
 
-Deno.test("schedule1a: uses $300,000 phaseout threshold for joint returns", () => {
+test("schedule1a: uses $300,000 phaseout threshold for joint returns", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(25_000),
@@ -251,7 +252,7 @@ Deno.test("schedule1a: uses $300,000 phaseout threshold for joint returns", () =
   );
 });
 
-Deno.test("schedule1a: married filing separately is ineligible", () => {
+test("schedule1a: married filing separately is ineligible", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000),
@@ -264,7 +265,7 @@ Deno.test("schedule1a: married filing separately is ineligible", () => {
   );
 });
 
-Deno.test("schedule1a: valid SSN is required", () => {
+test("schedule1a: valid SSN is required", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000),
@@ -277,7 +278,7 @@ Deno.test("schedule1a: valid SSN is required", () => {
   );
 });
 
-Deno.test("schedule1a: joint tips belong to the spouse with the valid SSN", () => {
+test("schedule1a: joint tips belong to the spouse with the valid SSN", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: [
@@ -295,7 +296,7 @@ Deno.test("schedule1a: joint tips belong to the spouse with the valid SSN", () =
   );
 });
 
-Deno.test("schedule1a: tips from an unmatched employee SSN are not deducted", () => {
+test("schedule1a: tips from an unmatched employee SSN are not deducted", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000, "999887777"),
@@ -308,7 +309,7 @@ Deno.test("schedule1a: tips from an unmatched employee SSN are not deducted", ()
   );
 });
 
-Deno.test("schedule1a: incomplete eligibility context emits no deduction", () => {
+test("schedule1a: incomplete eligibility context emits no deduction", () => {
   assertEquals(deduction({ qualified_employee_tips: tips(5_000) }), undefined);
   assertEquals(
     deduction({
@@ -321,7 +322,7 @@ Deno.test("schedule1a: incomplete eligibility context emits no deduction", () =>
   );
 });
 
-Deno.test("schedule1a: phaseout never produces a negative deduction", () => {
+test("schedule1a: phaseout never produces a negative deduction", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(5_000),
@@ -334,7 +335,7 @@ Deno.test("schedule1a: phaseout never produces a negative deduction", () => {
   );
 });
 
-Deno.test("schedule1a: caps qualified overtime and applies the whole-$1,000 phaseout", () => {
+test("schedule1a: caps qualified overtime and applies the whole-$1,000 phaseout", () => {
   assertEquals(
     deduction({
       qualified_w2_overtime: overtime(20_000),
@@ -347,7 +348,7 @@ Deno.test("schedule1a: caps qualified overtime and applies the whole-$1,000 phas
   );
 });
 
-Deno.test("schedule1a: joint overtime includes only spouses with valid SSNs", () => {
+test("schedule1a: joint overtime includes only spouses with valid SSNs", () => {
   assertEquals(
     deduction({
       qualified_w2_overtime: [
@@ -365,7 +366,7 @@ Deno.test("schedule1a: joint overtime includes only spouses with valid SSNs", ()
   );
 });
 
-Deno.test("schedule1a: married filing separately cannot deduct overtime", () => {
+test("schedule1a: married filing separately cannot deduct overtime", () => {
   assertEquals(
     deduction({
       qualified_w2_overtime: overtime(5_000),
@@ -378,7 +379,7 @@ Deno.test("schedule1a: married filing separately cannot deduct overtime", () => 
   );
 });
 
-Deno.test("schedule1a: reviewed vehicle interest allows MFS", () => {
+test("schedule1a: reviewed vehicle interest allows MFS", () => {
   assertEquals(
     deduction({
       vehicle_loans: [vehicleLoan(4_000)],
@@ -390,7 +391,7 @@ Deno.test("schedule1a: reviewed vehicle interest allows MFS", () => {
   );
 });
 
-Deno.test("schedule1a: bounded same-vehicle refinance retains eligible interest", () => {
+test("schedule1a: bounded same-vehicle refinance retains eligible interest", () => {
   const refinance = {
     refinanced_date: "2025-07-01",
     lender_name: "Second Credit Union",
@@ -436,7 +437,7 @@ Deno.test("schedule1a: bounded same-vehicle refinance retains eligible interest"
   }
 });
 
-Deno.test("schedule1a: passes computed line 30 vehicle interest separately", () => {
+test("schedule1a: passes computed line 30 vehicle interest separately", () => {
   const result = schedule1a.compute(ctx, {
     vehicle_loans: [vehicleLoan(4_000)],
     taxpayer_ssn: TAXPAYER_SSN,
@@ -450,7 +451,7 @@ Deno.test("schedule1a: passes computed line 30 vehicle interest separately", () 
   );
 });
 
-Deno.test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => {
+test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => {
   assertEquals(
     deduction({
       vehicle_loans: [vehicleLoan(10_000)],
@@ -462,7 +463,7 @@ Deno.test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => 
   );
 });
 
-Deno.test("schedule1a: rejects invalid VINs and interest deducted elsewhere", () => {
+test("schedule1a: rejects invalid VINs and interest deducted elsewhere", () => {
   assertEquals(
     schedule1a.inputSchema.safeParse({
       vehicle_loans: [vehicleLoan(1_000, "not-a-vin")],
@@ -514,7 +515,7 @@ Deno.test("schedule1a: rejects invalid VINs and interest deducted elsewhere", ()
   );
 });
 
-Deno.test("schedule1a: senior deduction is $6,000 per eligible joint filer", () => {
+test("schedule1a: senior deduction is $6,000 per eligible joint filer", () => {
   assertEquals(
     deduction({
       taxpayer_age_65_or_older: true,
@@ -528,7 +529,7 @@ Deno.test("schedule1a: senior deduction is $6,000 per eligible joint filer", () 
   );
 });
 
-Deno.test("schedule1a: routes the enhanced senior amount separately for AMT", () => {
+test("schedule1a: routes the enhanced senior amount separately for AMT", () => {
   const result = schedule1a.compute(ctx, {
     taxpayer_age_65_or_older: true,
     taxpayer_has_valid_ssn: true,
@@ -546,7 +547,7 @@ Deno.test("schedule1a: routes the enhanced senior amount separately for AMT", ()
   );
 });
 
-Deno.test("schedule1a: senior phaseout is calculated per eligible person", () => {
+test("schedule1a: senior phaseout is calculated per eligible person", () => {
   assertEquals(
     deduction({
       taxpayer_age_65_or_older: true,
@@ -560,7 +561,7 @@ Deno.test("schedule1a: senior phaseout is calculated per eligible person", () =>
   );
 });
 
-Deno.test("schedule1a: senior phaseout rounds the printed 6 percent amount once", () => {
+test("schedule1a: senior phaseout rounds the printed 6 percent amount once", () => {
   assertEquals(
     deduction({
       taxpayer_age_65_or_older: true,
@@ -572,7 +573,7 @@ Deno.test("schedule1a: senior phaseout rounds the printed 6 percent amount once"
   );
 });
 
-Deno.test("schedule1a: senior deduction requires a valid SSN and a joint return when married", () => {
+test("schedule1a: senior deduction requires a valid SSN and a joint return when married", () => {
   assertEquals(
     deduction({
       taxpayer_age_65_or_older: true,
@@ -593,7 +594,7 @@ Deno.test("schedule1a: senior deduction requires a valid SSN and a joint return 
   );
 });
 
-Deno.test("schedule1a: total combines tips, overtime, vehicle interest, and senior deduction", () => {
+test("schedule1a: total combines tips, overtime, vehicle interest, and senior deduction", () => {
   assertEquals(
     deduction({
       qualified_employee_tips: tips(2_000),

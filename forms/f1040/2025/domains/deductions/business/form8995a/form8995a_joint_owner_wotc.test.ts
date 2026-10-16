@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -13,7 +15,7 @@ const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("joint-spouse-wotc-") ||
   f.id.startsWith("joint-both-owner-wotc-")
 );
-Deno.test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and native/PDF/XSD", async () => {
+test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and native/PDF/XSD", async () => {
   for (const fixture of fixtures) {
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
@@ -85,7 +87,7 @@ Deno.test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -100,7 +102,7 @@ Deno.test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and
   }
 });
 
-Deno.test("both-owner WOTC preserves independent wage caps, full reductions and limited joint use", () => {
+test("both-owner WOTC preserves independent wage caps, full reductions and limited joint use", () => {
   const cases = fixtures.filter((f) =>
     f.id.startsWith("joint-both-owner") && !f.id.endsWith("one-phasein")
   );
@@ -130,7 +132,7 @@ Deno.test("both-owner WOTC preserves independent wage caps, full reductions and 
     if (!partial) assertEquals(calc.parent.phaseIn, .69551);
   }
 });
-Deno.test("spouse/both-owner WOTC native and PDF reject employer owner certification payroll and final-return conflicts", () => {
+test("spouse/both-owner WOTC native and PDF reject employer owner certification payroll and final-return conflicts", () => {
   for (
     const fixture of [
       fixtures[0],
@@ -192,7 +194,7 @@ Deno.test("spouse/both-owner WOTC native and PDF reject employer owner certifica
     }
   }
 });
-Deno.test("both-owner public source blocks conflicting proprietor and missing other-business review", () => {
+test("both-owner public source blocks conflicting proprietor and missing other-business review", () => {
   for (
     const mutate of [
       (p: any) => p.schedule_c[1].proprietor_recipient = "T",
@@ -221,7 +223,7 @@ Deno.test("both-owner public source blocks conflicting proprietor and missing ot
   }
 });
 
-Deno.test("owned WOTC PartIII follows the spouse row when only that wage limit binds", () => {
+test("owned WOTC PartIII follows the spouse row when only that wage limit binds", () => {
   const f = fixtures.find((f) => f.id.endsWith("one-phasein"))!,
     p = normalizeAllPending(f1040_2025.executeReturn(f.inputs).pending),
     calc = calculateOwnedWotcBusinesses(inputSchema.parse(p.form8995a)),

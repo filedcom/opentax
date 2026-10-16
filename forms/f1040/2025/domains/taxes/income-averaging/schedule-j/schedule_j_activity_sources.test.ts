@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   scheduleJFishingScheduleCSource,
@@ -19,7 +20,7 @@ const fishingEvidence = {
   scientific_research_vessel: false as const,
 };
 
-Deno.test("Schedule J fishing source recomputes Schedule C activity net", () => {
+test("Schedule J fishing source recomputes Schedule C activity net", () => {
   assertEquals(scheduleJFishingScheduleCSource(fishing, fishingEvidence), {
     form: "schedule_c",
     activity_reference: "fishing-a",
@@ -27,21 +28,21 @@ Deno.test("Schedule J fishing source recomputes Schedule C activity net", () => 
   });
 });
 
-Deno.test("Schedule J does not classify non-fishing Schedule C by free text", () => {
+test("Schedule J does not classify non-fishing Schedule C by free text", () => {
   assertThrows(() => scheduleJFishingScheduleCSource({
     ...fishing,
     line_b_business_code: "114210",
   }, fishingEvidence), Error, "business code 114110");
 });
 
-Deno.test("Schedule J fishing source includes a sourced Schedule C loss", () => {
+test("Schedule J fishing source includes a sourced Schedule C loss", () => {
   assertEquals(scheduleJFishingScheduleCSource({
     ...fishing,
     line_1_gross_receipts: 5_000,
   }, fishingEvidence).at_risk_net, -15_000);
 });
 
-Deno.test("Schedule J fishing source requires catch commerce records", () => {
+test("Schedule J fishing source requires catch commerce records", () => {
   assertThrows(() => scheduleJFishingScheduleCSource(fishing, {
     ...fishingEvidence,
     catch_sales_record_reference: "",
@@ -60,7 +61,7 @@ const farmRentalEvidence = {
   agreement_predates_tenant_activity_verified: true as const,
 };
 
-Deno.test("Schedule J Form 4835 source recomputes farm rental net", () => {
+test("Schedule J Form 4835 source recomputes farm rental net", () => {
   assertEquals(scheduleJFarmRental4835Source(farmRental, farmRentalEvidence), {
     form: "form_4835",
     activity_reference: "rental-a",
@@ -68,7 +69,7 @@ Deno.test("Schedule J Form 4835 source recomputes farm rental net", () => {
   });
 });
 
-Deno.test("Schedule J Form 4835 source stops at passive-loss allocation", () => {
+test("Schedule J Form 4835 source stops at passive-loss allocation", () => {
   assertThrows(() => scheduleJFarmRental4835Source({
     ...farmRental,
     livestock_crop_income: 2_000,
@@ -80,7 +81,7 @@ Deno.test("Schedule J Form 4835 source stops at passive-loss allocation", () => 
   }, farmRentalEvidence), Error, "prior passive loss needs Form 8582 allocation");
 });
 
-Deno.test("Schedule J Form 4835 source requires a qualifying production-share lease", () => {
+test("Schedule J Form 4835 source requires a qualifying production-share lease", () => {
   assertThrows(() => scheduleJFarmRental4835Source(farmRental, {
     ...farmRentalEvidence,
     written_lease_reference: "",

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -29,7 +32,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`Form 8835 reviewed increased credit complete return: ${c.id}`, async () => {
+  test(`Form 8835 reviewed increased credit complete return: ${c.id}`, async () => {
     const fixture = await increasedFixture(c.count, c.kwh, c.capacity, c.wind);
     const { input, attachments, expected } = fixture;
     const execution = f1040_2025.executeReturn(input);
@@ -189,37 +192,33 @@ for (const c of cases) {
         key,
       );
     }
-    const tmp = await Deno.makeTempFile({ suffix: ".xml" });
-    await Deno.writeTextFile(tmp, prepared.bundle.xml);
+    const tmp = await sys.makeTempFile({ suffix: ".xml" });
+    await fs.writeFile(tmp, prepared.bundle.xml);
     try {
       const xsd =
         ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-      const checked = await new Deno.Command("xmllint", {
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, tmp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(tmp);
+      await sys.remove(tmp);
     }
     let root: string | undefined;
-    try {
-      root = Deno.env.get("FORM8835_INCREASE_EVIDENCE");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    root = process.env.FORM8835_INCREASE_EVIDENCE;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
       for (let i = 0; i < attachments.length; i++) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${root}/${c.id}-statement-${i + 1}.pdf`,
           attachments[i].bytes,
         );
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {

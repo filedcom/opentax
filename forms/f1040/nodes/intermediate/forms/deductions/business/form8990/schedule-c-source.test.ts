@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { scheduleC } from "../../../../../inputs/income/business/schedule_c/index.ts";
 import { publicInputSchema } from "./index.ts";
@@ -16,7 +17,7 @@ const business = {
   line_16b_interest_other: 6_000,
 };
 
-Deno.test("2025 Form 8990 stages interest from one identified Schedule C before profit", () => {
+test("2025 Form 8990 stages interest from one identified Schedule C before profit", () => {
   assertEquals(stageScheduleCInterest({ schedule_cs: [business] }), {
     businessReference: "C-1",
     line16aMortgageInterest: 2_000,
@@ -28,7 +29,7 @@ Deno.test("2025 Form 8990 stages interest from one identified Schedule C before 
   });
 });
 
-Deno.test("2025 Form 8990 tentative Schedule C profit reuses sourced wage-credit rules", () => {
+test("2025 Form 8990 tentative Schedule C profit reuses sourced wage-credit rules", () => {
   const staged = stageScheduleCInterest({
     schedule_cs: [{ ...business, line_26_wages: 10_000 }],
     wotc_wage_reductions: [{ business_reference: "C-1", credit_amount: 500 }],
@@ -36,7 +37,7 @@ Deno.test("2025 Form 8990 tentative Schedule C profit reuses sourced wage-credit
   assertEquals(staged.tentativeScheduleCAtRiskNetWithFullInterest, 174_000);
 });
 
-Deno.test("2025 Form 8990 source stage rejects unlinked, unidentified, and multi-business interest", () => {
+test("2025 Form 8990 source stage rejects unlinked, unidentified, and multi-business interest", () => {
   assertThrows(
     () =>
       stageScheduleCInterest({
@@ -76,7 +77,7 @@ Deno.test("2025 Form 8990 source stage rejects unlinked, unidentified, and multi
   );
 });
 
-Deno.test("2025 Form 8990 staged Schedule C interest does not activate asserted ATI filing", () => {
+test("2025 Form 8990 staged Schedule C interest does not activate asserted ATI filing", () => {
   const staged = stageScheduleCInterest({ schedule_cs: [business] });
   assertThrows(
     () =>

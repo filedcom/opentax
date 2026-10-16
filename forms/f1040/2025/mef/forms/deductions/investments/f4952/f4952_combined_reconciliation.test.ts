@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099int } from "../../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { f1099div } from "../../../../../../nodes/inputs/income/investments/f1099div/index.ts";
@@ -48,7 +49,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 reconciles one investment 1099-INT and one 1099-DIV through MeF and PDF", () => {
+test("Form 4952 reconciles one investment 1099-INT and one 1099-DIV through MeF and PDF", () => {
   const intOutput = f1099int.compute(
     { taxYear: 2025, formType: "f1040" },
     { f1099ints: [interest] },
@@ -93,7 +94,7 @@ Deno.test("Form 4952 reconciles one investment 1099-INT and one 1099-DIV through
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 reconciles domestic Treasury box 3 with ordinary dividends", () => {
+test("Form 4952 reconciles domestic Treasury box 3 with ordinary dividends", () => {
   for (
     const treasury of [
       { ...interest, box1: 0, box3: 500 },
@@ -166,7 +167,7 @@ Deno.test("Form 4952 reconciles domestic Treasury box 3 with ordinary dividends"
   }
 });
 
-Deno.test("Form 4952 combined interest and dividend route excludes qualified box 1b without a line 4g election", () => {
+test("Form 4952 combined interest and dividend route excludes qualified box 1b without a line 4g election", () => {
   const qualifiedDividend = { ...dividend, box1b: 100 };
   const source = f1099div.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -234,7 +235,7 @@ Deno.test("Form 4952 combined interest and dividend route excludes qualified box
   );
 });
 
-Deno.test("Form 4952 combined route rejects missing and conflicting finalized sources", () => {
+test("Form 4952 combined route rejects missing and conflicting finalized sources", () => {
   assertThrows(
     () => form4952.build(fields),
     Error,
@@ -264,7 +265,7 @@ Deno.test("Form 4952 combined route rejects missing and conflicting finalized so
   );
 });
 
-Deno.test("Form 4952 combined route rejects foreign, qualified, and extra-payer branches", () => {
+test("Form 4952 combined route rejects foreign, qualified, and extra-payer branches", () => {
   assertThrows(
     () =>
       form4952.build(fields, {
@@ -309,7 +310,7 @@ Deno.test("Form 4952 combined route rejects foreign, qualified, and extra-payer 
   );
 });
 
-Deno.test("Form 4952 sums several identified interest and dividend payers through MeF and PDF", () => {
+test("Form 4952 sums several identified interest and dividend payers through MeF and PDF", () => {
   const interestSources = [
     interest,
     { ...interest, payer_name: "Second Bank", box1: 250 },

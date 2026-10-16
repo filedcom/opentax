@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8949 } from "./f8949.ts";
 
@@ -15,7 +16,7 @@ const codeZ = {
   is_long_term: false,
 };
 
-Deno.test("Form 8949 native code Z emits EIN and omits blank sale columns", () => {
+test("Form 8949 native code Z emits EIN and omits blank sale columns", () => {
   const xml = form8949.build([codeZ]);
   assertStringIncludes(xml, "<EIN>123456789</EIN>");
   assertStringIncludes(xml, "<AcquiredDt>2025-03-20</AcquiredDt>");
@@ -32,7 +33,7 @@ Deno.test("Form 8949 native code Z emits EIN and omits blank sale columns", () =
   }
 });
 
-Deno.test("Form 8949 native code Z rejects a sale row disguised as a deferral", () => {
+test("Form 8949 native code Z rejects a sale row disguised as a deferral", () => {
   assertThrows(
     () => form8949.build([{ ...codeZ, date_sold: "2025-03-20" }]),
     Error,

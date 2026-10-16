@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -14,7 +15,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-five-sequential-corrected-slcsp-policies"
 )!;
 
-Deno.test("five independently corrected sequential policies reconcile through Form 1040, MeF, and PDF", async () => {
+test("five independently corrected sequential policies reconcile through Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

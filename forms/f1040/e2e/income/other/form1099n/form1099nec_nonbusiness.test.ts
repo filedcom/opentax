@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -31,28 +34,28 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(schema);
+    await sys.stat(schema);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
+    if (sys.isNotFound(error)) {
       throw new Error(`Missing verification prerequisite: ${schema}`);
     }
     throw error;
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("two 1099-NEC nonbusiness payments reach Schedule 1 line 8j and Form 1040", async () => {
+test("two 1099-NEC nonbusiness payments reach Schedule 1 line 8j and Form 1040", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -107,7 +110,7 @@ Deno.test("two 1099-NEC nonbusiness payments reach Schedule 1 line 8j and Form 1
   assertEquals(pdf.getPageCount() >= 4, true);
 });
 
-Deno.test("1099-NEC nonbusiness recipient must belong to the filer", async () => {
+test("1099-NEC nonbusiness recipient must belong to the filer", async () => {
   const pending = buildPending({
     schedule1: {
       line9_total_other_income: 500,

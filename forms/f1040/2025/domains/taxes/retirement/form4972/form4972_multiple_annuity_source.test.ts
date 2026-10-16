@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -15,7 +18,7 @@ const expectedTax: Record<number, number> = {
   5: 8510,
   7: 12760,
 };
-Deno.test("complete same-plan cash NUA and annuity sources reconcile independent owner taxes", async () => {
+test("complete same-plan cash NUA and annuity sources reconcile independent owner taxes", async () => {
   for (
     const [n, spouse, nua] of [
       [3, 0, 1],
@@ -63,15 +66,15 @@ Deno.test("complete same-plan cash NUA and annuity sources reconcile independent
       counts.length,
     );
     const dir = ".state/research/2026-10-06-form4972-multiple-annuity-source";
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const id = `primary-${n}-spouse-${spouse}-nua-${nua}`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify({ input, pending: p }, null, 2),
     );
-    await Deno.writeTextFile(`${dir}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeFile(`${dir}/${id}.pdf`, await prepared.renderPdf());
-    const x = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${dir}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(`${dir}/${id}.pdf`, await prepared.renderPdf());
+    const x = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

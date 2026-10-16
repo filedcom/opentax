@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../index.ts";
@@ -56,7 +58,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`ordinary ${c.label} state refund retains complete source computation and correct filing`, async () => {
+  test(`ordinary ${c.label} state refund retains complete source computation and correct filing`, async () => {
     const inputs = c.inputs(),
       copies = inputs.f1099g.length,
       result = f1040_2025.executeReturn(inputs);
@@ -92,7 +94,7 @@ for (const c of cases) {
       }
     }
     const prepared = await f1040_2025.prepareReturn(p, filer);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

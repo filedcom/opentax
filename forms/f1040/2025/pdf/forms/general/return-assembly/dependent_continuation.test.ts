@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
-Deno.test("Form 1040 dependent continuation paginates every extra row", async () => {
+test("Form 1040 dependent continuation paginates every extra row", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-five-dependent-continuation"
   );

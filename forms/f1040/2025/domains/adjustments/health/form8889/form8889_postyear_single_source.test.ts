@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
@@ -39,8 +42,8 @@ for (
     true,
   ]] as const
 ) {
-  Deno.test(`reviewed sole ${id} 2026 owner-paid employer excess affects 2025 income and avoids excise without 2025 distribution`, async () => {
-    await Deno.mkdir(root, { recursive: true });
+  test(`reviewed sole ${id} 2026 owner-paid employer excess affects 2025 income and avoids excise without 2025 distribution`, async () => {
+    await fs.mkdir(root, { recursive: true });
     const inputs = soleSource(owner, single);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -63,8 +66,8 @@ for (
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
     assertEquals((prepared.bundle.xml.match(/<IRS8889 /g) ?? []).length, 1);
     assertEquals((prepared.bundle.xml.match(/<IRS5329 /g) ?? []).length, 0);
-    await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -89,12 +92,12 @@ for (
       ["schedule1", 1],
       ["form8889", 1],
     ]);
-    await Deno.writeFile(`${root}/${id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${id}.source-pending.json`,
       JSON.stringify({ inputs, filer, pending }, null, 2),
     );
@@ -107,7 +110,7 @@ for (
       const bytes = Buffer.from((row as any).bytes_base64, "base64");
       assertEquals(hash(bytes), (row as any).sha256);
       const path = `${id}-${kind}.bin`;
-      await Deno.writeFile(`${root}/${path}`, bytes);
+      await fs.writeFile(`${root}/${path}`, bytes);
       docs.push({
         kind,
         reference: (row as any).source_document_reference,
@@ -115,7 +118,7 @@ for (
         sha256: hash(bytes),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${id}.documents.json`,
       JSON.stringify(docs, null, 2),
     );
@@ -130,7 +133,7 @@ for (
   });
 }
 
-Deno.test("sole postyear source rejects owner, date, absent records, copy and finalized income conflicts in native and PDF", async () => {
+test("sole postyear source rejects owner, date, absent records, copy and finalized income conflicts in native and PDF", async () => {
   for (const owner of ["T", "S"] as const) {
     const source = soleSource(owner);
     const initial = f1040_2025.executeReturn(source);

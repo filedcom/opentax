@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertGreater,
@@ -13,7 +16,7 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 
-Deno.test("Schedule C 1099-NEC receipt replays its payer copy in native and PDF export", async () => {
+test("Schedule C 1099-NEC receipt replays its payer copy in native and PDF export", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-1099nec-trade-business-tips-schedule1a"
   );
@@ -30,10 +33,10 @@ Deno.test("Schedule C 1099-NEC receipt replays its payer copy in native and PDF 
   assertStringIncludes(xml, "<IRS1040ScheduleC ");
   const pdf = await buildPdfBytes(pending, fixture.filer);
   assertGreater(pdf.byteLength, 0);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -41,7 +44,7 @@ Deno.test("Schedule C 1099-NEC receipt replays its payer copy in native and PDF 
     assertStringIncludes(printed, "Example Event Service");
     assertStringIncludes(printed, "18000");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const scheduleC = pending.schedule_c as Record<string, unknown>;

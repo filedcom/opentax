@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculatePropertyCredit } from "./property-credit.ts";
 
-Deno.test("Form 8911 mixed-use arithmetic separates section 179 and the two caps", () => {
+test("Form 8911 mixed-use arithmetic separates section 179 and the two caps", () => {
   const source = {
     cost: 10000,
     business_use_pct: 0.4,
@@ -29,7 +30,7 @@ Deno.test("Form 8911 mixed-use arithmetic separates section 179 and the two caps
   });
 });
 
-Deno.test("Form 8911 property business caps apply at both statutory rates", () => {
+test("Form 8911 property business caps apply at both statutory rates", () => {
   assertEquals(
     calculatePropertyCredit({ cost: 2000000, business_use_pct: 1 })
       .businessCredit,
@@ -64,7 +65,7 @@ Deno.test("Form 8911 property business caps apply at both statutory rates", () =
   );
 });
 
-Deno.test("Form 8911 property calculation preserves cents before aggregate filing rounding", () => {
+test("Form 8911 property calculation preserves cents before aggregate filing rounding", () => {
   const personal = calculatePropertyCredit({ cost: 1001.49 });
   assertEquals(personal.personalCredit, 300.447);
   assertEquals(personal.businessCredit, 0);

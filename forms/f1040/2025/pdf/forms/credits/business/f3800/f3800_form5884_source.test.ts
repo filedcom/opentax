@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -75,7 +76,7 @@ const pending = {
   schedule3: { line6a_total: 2_400, line7_total: 2_400, line8_total: 2_400 },
 };
 
-Deno.test("one Form 5884 payroll source calculates through Form 3800, Schedule 3, and Form 1040", () => {
+test("one Form 5884 payroll source calculates through Form 3800, Schedule 3, and Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -117,7 +118,7 @@ Deno.test("one Form 5884 payroll source calculates through Form 3800, Schedule 3
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 2_400);
 });
 
-Deno.test("one self-earned Form 5884 line 4b source binds Form 3800 native parts and nine-page PDF", () => {
+test("one self-earned Form 5884 line 4b source binds Form 3800 native parts and nine-page PDF", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: {
@@ -193,7 +194,7 @@ Deno.test("one self-earned Form 5884 line 4b source binds Form 3800 native parts
   );
 });
 
-Deno.test("Form 5884 printable copy binds its direct source and final Form 1040 credit", () => {
+test("Form 5884 printable copy binds its direct source and final Form 1040 credit", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: {

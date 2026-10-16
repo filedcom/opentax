@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { F6252Item } from "../../../../../nodes/intermediate/forms/income/investments/form6252/index.ts";
 import { buildMefXml } from "../../../builder.ts";
@@ -34,11 +35,11 @@ const filed2024 = {
   line26_gain: 48_000,
 };
 
-Deno.test("Form 6252 emits no document for absent data", () => {
+test("Form 6252 emits no document for absent data", () => {
   assertEquals(buildMefXml({}, testFiler()).includes("<IRS6252"), false);
 });
 
-Deno.test("Form 6252 reports debt over basis as year-of-sale payment", () => {
+test("Form 6252 reports debt over basis as year-of-sale payment", () => {
   const xml = buildSale(sale);
   assertStringIncludes(
     xml,
@@ -60,7 +61,7 @@ Deno.test("Form 6252 reports debt over basis as year-of-sale payment", () => {
   );
 });
 
-Deno.test("Form 6252 prior-year sale does not repeat the debt-over-basis payment", () => {
+test("Form 6252 prior-year sale does not repeat the debt-over-basis payment", () => {
   const xml = buildSale({
     ...sale,
     date_sold: "2024-03-01",
@@ -81,7 +82,7 @@ Deno.test("Form 6252 prior-year sale does not repeat the debt-over-basis payment
   );
 });
 
-Deno.test("Form 6252 retains a prior-year obligation paid in full during 2025", () => {
+test("Form 6252 retains a prior-year obligation paid in full during 2025", () => {
   const xml = buildSale({
     ...sale,
     date_sold: "2024-03-01",
@@ -104,7 +105,7 @@ Deno.test("Form 6252 retains a prior-year obligation paid in full during 2025", 
   );
 });
 
-Deno.test("Form 6252 rejects a changed 2024 filed ratio or payment history", () => {
+test("Form 6252 rejects a changed 2024 filed ratio or payment history", () => {
   const later = {
     ...sale,
     date_sold: "2024-03-01",
@@ -137,7 +138,7 @@ Deno.test("Form 6252 rejects a changed 2024 filed ratio or payment history", () 
   );
 });
 
-Deno.test("Form 6252 rejects incomplete or unsupported sale data", () => {
+test("Form 6252 rejects incomplete or unsupported sale data", () => {
   assertThrows(
     () => buildSale({ ...sale, property_description: undefined }),
     Error,
@@ -214,7 +215,7 @@ Deno.test("Form 6252 rejects incomplete or unsupported sale data", () => {
   );
 });
 
-Deno.test("Form 6252 requires its destination gain in a complete return", () => {
+test("Form 6252 requires its destination gain in a complete return", () => {
   assertThrows(
     () => buildMefXml({ form6252: { f6252s: [sale] } }, testFiler()),
     Error,
@@ -230,7 +231,7 @@ Deno.test("Form 6252 requires its destination gain in a complete return", () => 
   );
 });
 
-Deno.test("Form 6252 reconciles two source sales to one Schedule D gain", () => {
+test("Form 6252 reconciles two source sales to one Schedule D gain", () => {
   const secondSale = {
     ...sale,
     property_description: "Second vacant lot",

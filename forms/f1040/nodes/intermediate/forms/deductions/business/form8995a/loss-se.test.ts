@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { itemSchema } from "../../../../../inputs/income/business/schedule_c/model.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -20,7 +21,7 @@ const item = (reference: string, gross: number, share: number) =>
       reviewed_on: "2026-02-01",
     },
   });
-Deno.test("Loss SE cent residual follows stable references across source order", () => {
+test("Loss SE cent residual follows stable references across source order", () => {
   const rows = [item("b", 1, .33), item("a", 1, .34), item("c", 1, .33)];
   assertEquals(
     reviewedLossSeAllocations(rows, FilingStatus.Single, { deduction: 1 }),
@@ -35,7 +36,7 @@ Deno.test("Loss SE cent residual follows stable references across source order",
     [.34, .33, .33],
   );
 });
-Deno.test("Loss SE zero gross gets no share and positive deduction requires gross income", () => {
+test("Loss SE zero gross gets no share and positive deduction requires gross income", () => {
   assertEquals(
     reviewedLossSeAllocations(
       [item("a", 0, 0), item("b", 10, 1)],
@@ -61,7 +62,7 @@ Deno.test("Loss SE zero gross gets no share and positive deduction requires gros
     "exact cents",
   );
 });
-Deno.test("Loss SE excludes exempt trades and unreconciled owner sources", () => {
+test("Loss SE excludes exempt trades and unreconciled owner sources", () => {
   for (const field of ["statutory_employee", "paper_route", "exempt_notary"]) {
     const row = item("a", 10, 1);
     Reflect.set(row, field, true);

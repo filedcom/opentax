@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { z } from "zod";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { jointDistributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/calculation.ts";
@@ -196,7 +198,7 @@ function wage(subject: TS, item: typeof cases[number]) {
   };
 }
 for (const item of cases) {
-  Deno.test(`joint saver inventory ${item.name} reconciles both owners and complete exports`, async () => {
+  test(`joint saver inventory ${item.name} reconciles both owners and complete exports`, async () => {
     const review = ledger(item);
     const inputs = {
       general: { ...general, form8880_joint_distribution_review: review },
@@ -297,10 +299,10 @@ for (const item of cases) {
         buildPdfBytes(altered, filer, ".pdf-cache", bundle)
       );
     }
-    const dir = Deno.env.get("FORM8880_JOINT_EVIDENCE");
+    const dir = process.env.FORM8880_JOINT_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -318,17 +320,17 @@ for (const item of cases) {
           }],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }
-Deno.test("joint reviewed inventory rejects unclassified copies and incorrect included amounts", () => {
+test("joint reviewed inventory rejects unclassified copies and incorrect included amounts", () => {
   const source = ledger(cases[0]);
   for (
     const entries of [

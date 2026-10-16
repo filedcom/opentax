@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8332 } from "./index.ts";
 
@@ -9,7 +10,7 @@ function compute(input: Record<string, unknown>) {
 // 1. Schema Validation
 // =============================================================================
 
-Deno.test("f8332.inputSchema: valid release for specific years passes", () => {
+test("f8332.inputSchema: valid release for specific years passes", () => {
   const parsed = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -19,7 +20,7 @@ Deno.test("f8332.inputSchema: valid release for specific years passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8332.inputSchema: valid release for all_future years passes", () => {
+test("f8332.inputSchema: valid release for all_future years passes", () => {
   const parsed = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -29,7 +30,7 @@ Deno.test("f8332.inputSchema: valid release for all_future years passes", () => 
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8332.inputSchema: empty children array fails", () => {
+test("f8332.inputSchema: empty children array fails", () => {
   const parsed = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -39,7 +40,7 @@ Deno.test("f8332.inputSchema: empty children array fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8332.inputSchema: missing custodial_parent_name fails", () => {
+test("f8332.inputSchema: missing custodial_parent_name fails", () => {
   const parsed = f8332.inputSchema.safeParse({
     noncustodial_parent_name: "John Doe",
     children: [{ name: "Child One" }],
@@ -48,7 +49,7 @@ Deno.test("f8332.inputSchema: missing custodial_parent_name fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8332.inputSchema: missing noncustodial_parent_name fails", () => {
+test("f8332.inputSchema: missing noncustodial_parent_name fails", () => {
   const parsed = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     children: [{ name: "Child One" }],
@@ -57,7 +58,7 @@ Deno.test("f8332.inputSchema: missing noncustodial_parent_name fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8332.inputSchema: is_revocation field is optional", () => {
+test("f8332.inputSchema: is_revocation field is optional", () => {
   const withRevocation = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -76,7 +77,7 @@ Deno.test("f8332.inputSchema: is_revocation field is optional", () => {
   assertEquals(withoutRevocation.success, true);
 });
 
-Deno.test("f8332.inputSchema: multiple children passes", () => {
+test("f8332.inputSchema: multiple children passes", () => {
   const parsed = f8332.inputSchema.safeParse({
     custodial_parent_name: "Jane Doe",
     custodial_parent_ssn: "400-50-6000",
@@ -95,7 +96,7 @@ Deno.test("f8332.inputSchema: multiple children passes", () => {
 // 2. Compute — No Tax Outputs
 // =============================================================================
 
-Deno.test("f8332.compute: valid release returns no outputs", () => {
+test("f8332.compute: valid release returns no outputs", () => {
   const result = compute({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -105,7 +106,7 @@ Deno.test("f8332.compute: valid release returns no outputs", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8332.compute: all_future release returns no outputs", () => {
+test("f8332.compute: all_future release returns no outputs", () => {
   const result = compute({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -115,7 +116,7 @@ Deno.test("f8332.compute: all_future release returns no outputs", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8332.compute: revocation returns no outputs", () => {
+test("f8332.compute: revocation returns no outputs", () => {
   const result = compute({
     custodial_parent_name: "Jane Doe",
     noncustodial_parent_name: "John Doe",
@@ -130,7 +131,7 @@ Deno.test("f8332.compute: revocation returns no outputs", () => {
 // 3. Hard Validation
 // =============================================================================
 
-Deno.test("f8332.compute: throws on empty children", () => {
+test("f8332.compute: throws on empty children", () => {
   assertThrows(() =>
     compute({
       custodial_parent_name: "Jane Doe",
@@ -140,6 +141,6 @@ Deno.test("f8332.compute: throws on empty children", () => {
     }), Error);
 });
 
-Deno.test("f8332.compute: throws on missing required fields", () => {
+test("f8332.compute: throws on missing required fields", () => {
   assertThrows(() => compute({ children: [{ name: "Child One" }], tax_years_released: [2024] }), Error);
 });

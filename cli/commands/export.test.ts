@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertMatch,
@@ -37,8 +40,8 @@ function w2Data(box1Wages: number, box2FedWithheld: number) {
   };
 }
 
-Deno.test("exportMefCommand blocks empty finalized return with --force", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand blocks empty finalized return with --force", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -46,12 +49,12 @@ Deno.test("exportMefCommand blocks empty finalized return with --force", async (
       ExportExecutionError,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -89,12 +92,12 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async
     assertStringIncludes(xml, "<WagesAmt>85000</WagesAmt>");
     assertMatch(xml, /85000/);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 8959", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("plain W-2 MeF validation does not report missing 1040 totals or Form 8959", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -147,12 +150,12 @@ Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 
     assertEquals(xml.includes("<IRS8880 "), false);
     assertEquals(xml.includes("<IRS8959 "), false);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand rejects an empty draft without fabricating XML", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand rejects an empty draft without fabricating XML", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -167,12 +170,12 @@ Deno.test("exportMefCommand rejects an empty draft without fabricating XML", asy
       "needs the identified taxpayer's SSN",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand blocks calculation diagnostics before reject rules", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand blocks calculation diagnostics before reject rules", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -180,12 +183,12 @@ Deno.test("exportMefCommand blocks calculation diagnostics before reject rules",
       ExportExecutionError,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand blocks finalized export on any executor diagnostic, even with --force", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand blocks finalized export on any executor diagnostic, even with --force", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -201,12 +204,12 @@ Deno.test("exportMefCommand blocks finalized export on any executor diagnostic, 
       "Finalized export blocked by",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand blocks missing filing status diagnostics instead of whitelisting them", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand blocks missing filing status diagnostics instead of whitelisting them", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -219,18 +222,18 @@ Deno.test("exportMefCommand blocks missing filing status diagnostics instead of 
       "Finalized export blocked by",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportPdfCommand blocks executor diagnostics before writing or overwriting PDF", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportPdfCommand blocks executor diagnostics before writing or overwriting PDF", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
     const outputPath = `${tmpDir}/export.pdf`;
     const original = new TextEncoder().encode("keep me");
-    await Deno.writeFile(outputPath, original);
+    await fs.writeFile(outputPath, original);
 
     await appendInput(returnPath, "w2", {
       box1_wages: "not-a-number",
@@ -247,7 +250,7 @@ Deno.test("exportPdfCommand blocks executor diagnostics before writing or overwr
         }),
       ExportExecutionError,
     );
-    assertEquals(await Deno.readFile(outputPath), original);
+    assertEquals(await sys.readBytes(outputPath), original);
 
     const unwrittenPath = `${tmpDir}/should-not-exist.pdf`;
     await assertRejects(
@@ -262,12 +265,12 @@ Deno.test("exportPdfCommand blocks executor diagnostics before writing or overwr
     );
     assertEquals(await exists(unwrittenPath), false);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand preserves business-rule force override after clean calculation", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand preserves business-rule force override after clean calculation", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -299,18 +302,18 @@ Deno.test("exportMefCommand preserves business-rule force override after clean c
     assertStringIncludes(xml, "<IRS1040");
     assertMatch(xml, /85000/);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("exportMefCommand nonexistent returnId throws", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("exportMefCommand nonexistent returnId throws", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await assertRejects(
       () => exportMefCommand({ returnId: "nonexistent-id", baseDir: tmpDir }),
       Error,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });

@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { schedule1Pdf } from "../../../general/return-assembly/schedule1/schedule1.ts";
 
-Deno.test("Schedule 1 PDF maps the Form 7203-adjusted loss to printed line 5", () => {
+test("Schedule 1 PDF maps the Form 7203-adjusted loss to printed line 5", () => {
   const line5 = schedule1Pdf.fields.find((entry) =>
     entry.domainKey === "line5_schedule_e"
   );

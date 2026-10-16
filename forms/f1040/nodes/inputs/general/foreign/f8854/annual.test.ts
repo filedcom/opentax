@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   buildForm8854Annual,
@@ -117,7 +118,7 @@ function source1042s(
   };
 }
 
-Deno.test("annual Form 8854 certifies no distributions from a remaining eligible item", () => {
+test("annual Form 8854 certifies no distributions from a remaining eligible item", () => {
   const parsed = annualInputSchema.parse(annualInput());
   const xml = buildForm8854Annual(parsed);
   const statements = buildForm8854AnnualNativeStatements(parsed);
@@ -142,7 +143,7 @@ Deno.test("annual Form 8854 certifies no distributions from a remaining eligible
   assertEquals(xml.includes("InitialExptrtStmtSpcfdYrInd"), false);
 });
 
-Deno.test("annual Form 8854 binds every current obligation to the prior filed inventory", () => {
+test("annual Form 8854 binds every current obligation to the prior filed inventory", () => {
   const stock = {
     item_id: "stock",
     description: "Stock holding",
@@ -188,7 +189,7 @@ Deno.test("annual Form 8854 binds every current obligation to the prior filed in
   );
 });
 
-Deno.test("annual Form 8854 emits separate eligible-item and trust waiver statements", () => {
+test("annual Form 8854 emits separate eligible-item and trust waiver statements", () => {
   const parsed = annualInputSchema.parse(annualInput({
     nongrantor_trust_interests: [{
       item_id: "trust",
@@ -227,7 +228,7 @@ Deno.test("annual Form 8854 emits separate eligible-item and trust waiver statem
   );
 });
 
-Deno.test("annual Form 8854 no-activity certification reaches the filing graph", () => {
+test("annual Form 8854 no-activity certification reaches the filing graph", () => {
   assertEquals(
     f8854Annual.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -267,7 +268,7 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
   );
 });
 
-Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions", () => {
+test("annual Form 8854 lists prior deferred property and 2025 distributions", () => {
   const parsed = annualInputSchema.parse(annualInput({
     tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [
@@ -336,7 +337,7 @@ Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions
   assertEquals((xml.match(/<NongrantorTrustDistriDtl>/g) ?? []).length, 1);
 });
 
-Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and payment facts", () => {
+test("annual Form 8854 disposition matches one filed Form 8949 sale and payment facts", () => {
   const parsed = annualInputSchema.parse(annualInput({
     deferred_properties: [{
       item_id: "stock",
@@ -435,7 +436,7 @@ Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and pay
   );
 });
 
-Deno.test("annual Form 8854 rejects missing obligations and unsupported years", () => {
+test("annual Form 8854 rejects missing obligations and unsupported years", () => {
   for (
     const missingConfirmation of [
       "tax_status_2025",
@@ -483,7 +484,7 @@ Deno.test("annual Form 8854 rejects missing obligations and unsupported years", 
   );
 });
 
-Deno.test("annual Form 8854 enforces source and three-row distribution limits", () => {
+test("annual Form 8854 enforces source and three-row distribution limits", () => {
   const centsInput = annualInputSchema.parse(annualInput({
     tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 801, 240)],
@@ -590,7 +591,7 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
   );
 });
 
-Deno.test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () => {
+test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () => {
   const first = {
     ...distribution(),
     gross_distribution_amount: 500,

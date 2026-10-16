@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -21,7 +23,7 @@ const cases = [
 ] as const;
 
 for (const entry of cases) {
-  Deno.test(`Schedule J nonfarm wages with owned fishing/farming: ${entry.id}`, async () => {
+  test(`Schedule J nonfarm wages with owned fishing/farming: ${entry.id}`, async () => {
     const { input: base } = fishingExpenseInput(entry.kind);
     const wageFixture = scheduleJNonfarmW2Inputs();
     const wageSource =
@@ -75,10 +77,10 @@ for (const entry of cases) {
     );
     const filer = extractFilerIdentity(pending.f1040);
     assertExists(filer);
-    const root = Deno.env.get("OPENTAX_SCHEDULE_J_WAGES_PROOF_DIR");
+    const root = process.env.OPENTAX_SCHEDULE_J_WAGES_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -140,9 +142,9 @@ for (const entry of cases) {
       origins,
     );
     if (root) {
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

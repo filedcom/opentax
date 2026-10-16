@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form461 } from "./f461.ts";
 import { filedForm461Schema } from "../../../../../nodes/intermediate/forms/income/business/form461/index.ts";
@@ -30,11 +31,11 @@ const general = {
   },
 };
 
-Deno.test("Form 461 is absent when no business-loss source was filed", () => {
+test("Form 461 is absent when no business-loss source was filed", () => {
   assertEquals(form461.build([]), "");
 });
 
-Deno.test("Form 461 MeF serializes all filed lines in TY2025 native order", () => {
+test("Form 461 MeF serializes all filed lines in TY2025 native order", () => {
   const xml = form461.build(filed, {
     pending: {
       general,
@@ -74,7 +75,7 @@ Deno.test("Form 461 MeF serializes all filed lines in TY2025 native order", () =
   );
 });
 
-Deno.test("Form 461 MeF rejects a Schedule 1 reconciliation mismatch", () => {
+test("Form 461 MeF rejects a Schedule 1 reconciliation mismatch", () => {
   assertThrows(() =>
     form461.build(filed, {
       pending: {
@@ -103,7 +104,7 @@ Deno.test("Form 461 MeF rejects a Schedule 1 reconciliation mismatch", () => {
   );
 });
 
-Deno.test("Form 461 MeF rejects missing or changed signed C/F source review", () => {
+test("Form 461 MeF rejects missing or changed signed C/F source review", () => {
   const schedule1 = {
     line3_schedule_c: -200_000,
     line6_schedule_f: -200_000,
@@ -128,7 +129,7 @@ Deno.test("Form 461 MeF rejects missing or changed signed C/F source review", ()
   );
 });
 
-Deno.test("Form 461 MeF rejects unclassified capital, other gain, and rental lines", () => {
+test("Form 461 MeF rejects unclassified capital, other gain, and rental lines", () => {
   const schedule1 = {
     line3_schedule_c: -200_000,
     line6_schedule_f: -200_000,
@@ -174,7 +175,7 @@ Deno.test("Form 461 MeF rejects unclassified capital, other gain, and rental lin
   }
 });
 
-Deno.test("Form 461 MeF rejects unclassified source forms and missing filed return", () => {
+test("Form 461 MeF rejects unclassified source forms and missing filed return", () => {
   const schedule1 = {
     line3_schedule_c: -200_000,
     line6_schedule_f: -200_000,
@@ -200,7 +201,7 @@ Deno.test("Form 461 MeF rejects unclassified source forms and missing filed retu
   }
 });
 
-Deno.test("Form 461 MeF rejects an inconsistent threshold or calculated line", () => {
+test("Form 461 MeF rejects an inconsistent threshold or calculated line", () => {
   assertThrows(() =>
     form461.build(filed, {
       pending: {
@@ -222,7 +223,7 @@ Deno.test("Form 461 MeF rejects an inconsistent threshold or calculated line", (
   );
 });
 
-Deno.test("Form 461 MeF rejects legacy excess-only payload", () => {
+test("Form 461 MeF rejects legacy excess-only payload", () => {
   assertThrows(() =>
     filedForm461Schema.parse({ excess_business_loss: 87_000 })
   );

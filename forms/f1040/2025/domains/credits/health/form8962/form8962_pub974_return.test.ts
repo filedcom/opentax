@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as MeFilingStatus } from "../../../../../mef/header.ts";
 import { TS } from "../../../../../nodes/types.ts";
@@ -181,7 +182,7 @@ function filing(monthlySlcsp = 1_200) {
   return { fields, pending, deduction };
 }
 
-Deno.test("Publication 974 deduction and PTC order reaches Form 8962, Schedule 1, Form 1040, native and PDF", () => {
+test("Publication 974 deduction and PTC order reaches Form 8962, Schedule 1, Form 1040, native and PDF", () => {
   const { fields, pending, deduction } = filing();
   assertEquals(typeof deduction, "number");
   assertEquals(fields.pub974_reconciliation !== undefined, true);
@@ -195,7 +196,7 @@ Deno.test("Publication 974 deduction and PTC order reaches Form 8962, Schedule 1
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Publication 974 export rejects tampered deduction, AGI and PTC ordering", () => {
+test("Publication 974 export rejects tampered deduction, AGI and PTC ordering", () => {
   const { fields, pending } = filing();
   for (
     const altered of [
@@ -233,7 +234,7 @@ Deno.test("Publication 974 export rejects tampered deduction, AGI and PTC orderi
   }
 });
 
-Deno.test("Publication 974 Worksheet X repayment limit reaches Form 8962 line 28", () => {
+test("Publication 974 Worksheet X repayment limit reaches Form 8962 line 28", () => {
   const { fields, pending } = filing(600);
   assertEquals((fields.excess_advance_payment as number) > 0, true);
   const source = fields.pub974_reconciliation as Record<string, unknown>;

@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { form8615Pdf } from "./f8615.ts";
 import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 
-Deno.test("2025 Form 8615 PDF maps parent identity and all numbered lines", () => {
+test("2025 Form 8615 PDF maps parent identity and all numbered lines", () => {
   const byKey = new Map(
     form8615Pdf.fields.filter((field) => field.kind === "text").map((
       field,
@@ -26,7 +27,7 @@ Deno.test("2025 Form 8615 PDF maps parent identity and all numbered lines", () =
   );
 });
 
-Deno.test("2025 Form 1040 PDF checks the primary dependent box", () => {
+test("2025 Form 1040 PDF checks the primary dependent box", () => {
   assertEquals(
     irs1040Pdf.fields.find((field) =>
       field.domainKey === "taxpayer_can_be_claimed_as_dependent"
@@ -35,7 +36,7 @@ Deno.test("2025 Form 1040 PDF checks the primary dependent box", () => {
   );
 });
 
-Deno.test("Form 8615 PDF preserves the actual allocation ratio as fractional digits after its printed decimal point", () => {
+test("Form 8615 PDF preserves the actual allocation ratio as fractional digits after its printed decimal point", () => {
   assertEquals(
     form8615Pdf.instances!({ line12b_allocation_ratio: .431 })[0]
       .line12b_allocation_ratio,

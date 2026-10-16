@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -48,7 +49,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Form 8621 Part V explanation matches source-derived native and printable statement", async () => {
+test("Form 8621 Part V explanation matches source-derived native and printable statement", async () => {
   const explanation = explainForm8621ExcessStatement(line);
   assertStringIncludes(explanation, "1.2 USD per EUR");
   assertStringIncludes(explanation, "Issuer spot quote 2025-12-31");
@@ -66,7 +67,7 @@ Deno.test("Form 8621 Part V explanation matches source-derived native and printa
   assertEquals((await pdf.save()).byteLength > 0, true);
 });
 
-Deno.test("Form 8621 Part V PDF refuses changed calculated years or missing filer identity", async () => {
+test("Form 8621 Part V PDF refuses changed calculated years or missing filer identity", async () => {
   const changed = {
     ...line,
     excessEvents: [{

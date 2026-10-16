@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { createHash } from "node:crypto";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects } from "@std/assert";
@@ -9,8 +12,8 @@ import {
 } from "./form4852_roth_inventory.fixture.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 const root = ".state/research/form4852-roth-inventory-checkbox-corrected";
-Deno.test("complete source-owned Roth current inventories aggregate basis once and file separate owner8606/5329 copies", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("complete source-owned Roth current inventories aggregate basis once and file separate owner8606/5329 copies", async () => {
+  await fs.mkdir(root, { recursive: true });
   for (const [n, row] of rothInventoryCases.entries()) {
     const source = await rothInventoryReturnSource(row, 301 + n);
     const result = f1040_2025.executeReturn(source.inputs);
@@ -44,8 +47,8 @@ Deno.test("complete source-owned Roth current inventories aggregate basis once a
       row.joint ? 5 : 3,
     );
     assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -62,12 +65,12 @@ Deno.test("complete source-owned Roth current inventories aggregate basis once a
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${root}/${row.id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${row.id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify(
         { inputs: source.inputs, filer: source.filer, pending },
@@ -75,18 +78,18 @@ Deno.test("complete source-owned Roth current inventories aggregate basis once a
         2,
       ),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const documents = [];
     for (const [index, document] of source.retained.documents.entries()) {
       const path = `${row.id}-retained/document-${index + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, document.bytes);
+      await fs.writeFile(`${root}/${path}`, document.bytes);
       documents.push({
         document_reference: document.document_reference,
         path,
         sha256: createHash("sha256").update(document.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(documents, null, 2),
     );
@@ -127,7 +130,7 @@ Deno.test("complete source-owned Roth current inventories aggregate basis once a
   }
 });
 
-Deno.test("complete Roth current source rejects missing copies, repeated lineage, conflicting owner history and undisclosed other IRA activity", async () => {
+test("complete Roth current source rejects missing copies, repeated lineage, conflicting owner history and undisclosed other IRA activity", async () => {
   const source = await rothInventoryReturnSource(rothInventoryCases[1], 401);
   for (
     const mutate of [
@@ -171,7 +174,7 @@ Deno.test("complete Roth current source rejects missing copies, repeated lineage
   }
 });
 
-Deno.test("complete Roth inventories require actual retained owner/account/payment bytes even after hashes are updated", async () => {
+test("complete Roth inventories require actual retained owner/account/payment bytes even after hashes are updated", async () => {
   const source = await rothInventoryReturnSource(rothInventoryCases[1], 451);
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);

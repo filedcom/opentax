@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -39,27 +42,27 @@ async function validateNative(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/EstateTrustIncomeTax/1041/IRS1041ScheduleK1/IRS1041ScheduleK1.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       xml.replace(
         "<IRS1041ScheduleK1>",
         '<IRS1041ScheduleK1 xmlns="http://www.irs.gov/efile" documentId="K1Review1">',
       ),
     );
-    const result = await new Deno.Command("xmllint", {
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("trust K-1 native review projects all scalar and coded rows in IRS sequence and validates standalone XSD", async () => {
+test("trust K-1 native review projects all scalar and coded rows in IRS sequence and validates standalone XSD", async () => {
   const values: Record<string, string> = {};
   for (let n = 12; n <= 22; n++) values[`f1_${n}[0]`] = String(100 + n);
   values["f1_19[0]"] = "(123.50)";
@@ -142,7 +145,7 @@ Deno.test("trust K-1 native review projects all scalar and coded rows in IRS seq
   await validateNative(xml);
 });
 
-Deno.test("trust K-1 native review preserves foreign recipient address separately from the current return", async () => {
+test("trust K-1 native review preserves foreign recipient address separately from the current return", async () => {
   const { source, documents } = await fixture(
     changedFields({
       "f1_11[0]": "Test Taxpayer, 8 Test Road, London SW1A 1AA United Kingdom",
@@ -168,7 +171,7 @@ Deno.test("trust K-1 native review preserves foreign recipient address separatel
   await validateNative(copy.nativeXml);
 });
 
-Deno.test("trust K-1 native review joins the spouse-owned copy to its own beneficiary", async () => {
+test("trust K-1 native review joins the spouse-owned copy to its own beneficiary", async () => {
   const { source, documents } = await fixture(changedFields({
     "f1_10[0]": "444-55-6666",
     "f1_11[0]": "Sam Taxpayer, 1 Test Way, Austin TX 78701",
@@ -201,7 +204,7 @@ Deno.test("trust K-1 native review joins the spouse-owned copy to its own benefi
   );
 });
 
-Deno.test("trust K-1 native review rejects reuse of one PDF as two claimed source documents", async () => {
+test("trust K-1 native review rejects reuse of one PDF as two claimed source documents", async () => {
   const { source, documents } = await fixture();
   source.k1_trusts.push({
     ...source.k1_trusts[0],
@@ -218,7 +221,7 @@ Deno.test("trust K-1 native review rejects reuse of one PDF as two claimed sourc
   );
 });
 
-Deno.test("trust K-1 native review retains owner suffix, care-of and second address line", async () => {
+test("trust K-1 native review retains owner suffix, care-of and second address line", async () => {
   const { source, documents } = await fixture(changedFields({
     "f1_11[0]":
       "Test Taxpayer Jr\n% Jane Taxpayer\n1 Test Way\nApt 1\nAustin TX 78701",
@@ -261,7 +264,7 @@ for (
     ["conflicting resident marks", {}, ["c1_4[0]", "c1_4[1]"]],
   ] as const
 ) {
-  Deno.test(`trust K-1 native review rejects ${label}`, async () => {
+  test(`trust K-1 native review rejects ${label}`, async () => {
     const { source, documents } = await fixture(changedFields(values, flags));
     await assertRejects(() =>
       reviewTrustK1NativeCopies(source, filer, documents, [recipient])
@@ -269,7 +272,7 @@ for (
   });
 }
 
-Deno.test("trust K-1 native beneficiary transcription requires exact printed recipient and distinct copy reference", async () => {
+test("trust K-1 native beneficiary transcription requires exact printed recipient and distinct copy reference", async () => {
   const { source, documents } = await fixture();
   for (
     const transcriptions of [

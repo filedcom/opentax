@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { TS } from "../../../../../nodes/types.ts";
@@ -51,7 +52,7 @@ function partialRecipientCase(capitalGain = 0) {
   return { fields, pending };
 }
 
-Deno.test("Form 4972 MeF links partial-recipient line 29 to MRD", () => {
+test("Form 4972 MeF links partial-recipient line 29 to MRD", () => {
   const { fields, pending } = partialRecipientCase();
   const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
@@ -68,7 +69,7 @@ Deno.test("Form 4972 MeF links partial-recipient line 29 to MRD", () => {
   );
 });
 
-Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18", () => {
+test("Form 4972 MeF binds partial beneficiary estate allocation to line 18", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -155,7 +156,7 @@ Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18"
   );
 });
 
-Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a partial beneficiary", () => {
+test("Form 4972 MeF prints sourced full death-benefit exclusion for a partial beneficiary", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -257,7 +258,7 @@ Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a parti
   );
 });
 
-Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III death-benefit allocation", () => {
+test("Form 4972 MeF reconciles a partial beneficiary's Part II and III death-benefit allocation", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -354,7 +355,7 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
   );
 });
 
-Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benefit and ordinary pension", () => {
+test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benefit and ordinary pension", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -432,7 +433,7 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
   );
 });
 
-Deno.test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => {
+test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => {
   const { fields, pending } = partialRecipientCase(4_000);
   const xml = buildIRS4972(fields, { filer, pending });
   assertStringIncludes(
@@ -466,7 +467,7 @@ Deno.test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => 
   );
 });
 
-Deno.test("Form 4972 MeF keeps a partial-share Part-II-only election on the recipient's return", () => {
+test("Form 4972 MeF keeps a partial-share Part-II-only election on the recipient's return", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -529,7 +530,7 @@ Deno.test("Form 4972 MeF keeps a partial-share Part-II-only election on the reci
   );
 });
 
-Deno.test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => {
+test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => {
   const { fields: noAnnuity, pending } = partialRecipientCase();
   const source = {
     ...noAnnuity,
@@ -573,7 +574,7 @@ Deno.test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => 
   );
 });
 
-Deno.test("Form 4972 MeF rejects a mismatched box 9a share or return tax", () => {
+test("Form 4972 MeF rejects a mismatched box 9a share or return tax", () => {
   const { fields, pending } = partialRecipientCase();
   assertThrows(
     () =>
@@ -717,7 +718,7 @@ const electedNuaFields = {
   line30: 20_000,
 };
 
-Deno.test("Form 4972 rejects source facts without calculated form lines", () => {
+test("Form 4972 rejects source facts without calculated form lines", () => {
   assertThrows(
     () => buildIRS4972({ lump_sum_amount: 100_000 }),
     Error,
@@ -726,7 +727,7 @@ Deno.test("Form 4972 rejects source facts without calculated form lines", () => 
   assertEquals(buildIRS4972({}), "");
 });
 
-Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names", () => {
+test("Form 4972 emits recipient identity and the 2025 Part II element names", () => {
   const { fields, pending } = fullShareCase(TS.T, 100_000, 10_000, false);
   const xml = buildIRS4972(
     fields,
@@ -745,7 +746,7 @@ Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names
   assertEquals(xml.includes("<LumpSumDistriAmt>"), false);
 });
 
-Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
+test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
   const { fields, pending } = fullShareCase(TS.S, 90_000, 0, true);
   const xml = buildIRS4972(
     fields,
@@ -763,7 +764,7 @@ Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
   );
 });
 
-Deno.test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate", () => {
+test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate", () => {
   const { fields, pending } = fullShareCase(TS.T, 10_000, 0, true, true);
   const xml = buildIRS4972(
     fields,
@@ -776,7 +777,7 @@ Deno.test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate
   );
 });
 
-Deno.test("Form 4972 full-share ordinary election needs elected source, computed lines, and Form 1040 tax", () => {
+test("Form 4972 full-share ordinary election needs elected source, computed lines, and Form 1040 tax", () => {
   const { fields, pending } = fullShareCase(TS.T, 30_000, 5_000, true);
   assertStringIncludes(
     buildIRS4972(fields, { filer, pending }),
@@ -823,7 +824,7 @@ Deno.test("Form 4972 full-share ordinary election needs elected source, computed
   );
 });
 
-Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election", () => {
+test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -901,7 +902,7 @@ Deno.test("Form 4972 MeF reconciles a beneficiary's Part-II-only estate election
   );
 });
 
-Deno.test("Form 4972 writes elected NUA amounts on lines 6 and 8", () => {
+test("Form 4972 writes elected NUA amounts on lines 6 and 8", () => {
   const xml = buildIRS4972(
     electedNuaFields,
     { filer, pending: { f1099r: electedNua1099r } },
@@ -916,7 +917,7 @@ Deno.test("Form 4972 writes elected NUA amounts on lines 6 and 8", () => {
   );
 });
 
-Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, and estate tax", () => {
+test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, and estate tax", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -994,7 +995,7 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
   );
 });
 
-Deno.test("Form 4972 MeF keeps full-share Part-II NUA estate deduction off Form 4972 line 18", () => {
+test("Form 4972 MeF keeps full-share Part-II NUA estate deduction off Form 4972 line 18", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -1033,7 +1034,7 @@ Deno.test("Form 4972 MeF keeps full-share Part-II NUA estate deduction off Form 
   );
 });
 
-Deno.test("Form 4972 Part-II-only NUA links its capital note and ordinary pension income", () => {
+test("Form 4972 Part-II-only NUA links its capital note and ordinary pension income", () => {
   const fields = {
     ...electedNuaFields,
     elect_10yr_averaging: false,
@@ -1082,7 +1083,7 @@ Deno.test("Form 4972 Part-II-only NUA links its capital note and ordinary pensio
   );
 });
 
-Deno.test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () => {
+test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -1136,7 +1137,7 @@ Deno.test("Form 4972 MeF emits partial-share Part-II-only NUA without MRD", () =
   );
 });
 
-Deno.test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
+test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -1184,7 +1185,7 @@ Deno.test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
   );
 });
 
-Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () => {
+test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () => {
   const source = {
     ...qualified,
     recipient: TS.T,
@@ -1226,7 +1227,7 @@ Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () =
   );
 });
 
-Deno.test("Form 4972 refuses NUA without a matching source Form 1099-R", () => {
+test("Form 4972 refuses NUA without a matching source Form 1099-R", () => {
   assertThrows(
     () => buildIRS4972(electedNuaFields, { filer }),
     Error,
@@ -1247,7 +1248,7 @@ Deno.test("Form 4972 refuses NUA without a matching source Form 1099-R", () => {
   );
 });
 
-Deno.test("Form 4972 refuses a mismatched NUA worksheet or partial recipient share", () => {
+test("Form 4972 refuses a mismatched NUA worksheet or partial recipient share", () => {
   assertThrows(
     () =>
       buildIRS4972({ ...electedNuaFields, line8_nua_included: 13_000 }, {
@@ -1272,7 +1273,7 @@ Deno.test("Form 4972 refuses a mismatched NUA worksheet or partial recipient sha
   );
 });
 
-Deno.test("Form 4972 rejects NUA attributes without their form lines", () => {
+test("Form 4972 rejects NUA attributes without their form lines", () => {
   assertThrows(
     () =>
       buildIRS4972(
@@ -1284,7 +1285,7 @@ Deno.test("Form 4972 rejects NUA attributes without their form lines", () => {
   );
 });
 
-Deno.test("Form 4972 refuses to guess which recipient owns the distribution", () => {
+test("Form 4972 refuses to guess which recipient owns the distribution", () => {
   assertThrows(
     () => buildIRS4972({ ...qualified, line7: 2_000 }, { filer }),
     Error,

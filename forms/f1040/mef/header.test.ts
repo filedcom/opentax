@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildReturnHeader, FilingStatus } from "./header.ts";
 import type { FilerIdentity } from "./header.ts";
@@ -21,12 +22,12 @@ function sampleFiler(): FilerIdentity {
 // Section 1: Always-present elements
 // ---------------------------------------------------------------------------
 
-Deno.test("always emits ReturnType 1040", () => {
+test("always emits ReturnType 1040", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
-Deno.test("always emits TaxPeriodBeginDate", () => {
+test("always emits TaxPeriodBeginDate", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(
     result,
@@ -34,17 +35,17 @@ Deno.test("always emits TaxPeriodBeginDate", () => {
   );
 });
 
-Deno.test("always emits TaxPeriodEndDate", () => {
+test("always emits TaxPeriodEndDate", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
-Deno.test("always emits ReturnType 1040 even when filer is provided", () => {
+test("always emits ReturnType 1040 even when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
-Deno.test("always emits TaxPeriodBeginDate when filer is provided", () => {
+test("always emits TaxPeriodBeginDate when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(
     result,
@@ -52,12 +53,12 @@ Deno.test("always emits TaxPeriodBeginDate when filer is provided", () => {
   );
 });
 
-Deno.test("always emits TaxPeriodEndDate when filer is provided", () => {
+test("always emits TaxPeriodEndDate when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
-Deno.test("return value is a string", () => {
+test("return value is a string", () => {
   assertEquals(typeof buildReturnHeader(sampleFiler()), "string");
 });
 
@@ -65,7 +66,7 @@ Deno.test("return value is a string", () => {
 // Section 2: Missing filer
 // ---------------------------------------------------------------------------
 
-Deno.test("missing filer is rejected instead of filled with placeholder identity", () => {
+test("missing filer is rejected instead of filled with placeholder identity", () => {
   assertThrows(
     () => buildReturnHeader(undefined),
     Error,
@@ -73,7 +74,7 @@ Deno.test("missing filer is rejected instead of filled with placeholder identity
   );
 });
 
-Deno.test("header rejects placeholder SSN and incomplete filer details", () => {
+test("header rejects placeholder SSN and incomplete filer details", () => {
   assertThrows(
     () => buildReturnHeader({ ...sampleFiler(), primarySSN: "000000000" }),
     Error,
@@ -99,12 +100,12 @@ Deno.test("header rejects placeholder SSN and incomplete filer details", () => {
 // Section 3: Filer present — SSN
 // ---------------------------------------------------------------------------
 
-Deno.test("filer SSN is output without dashes", () => {
+test("filer SSN is output without dashes", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<PrimarySSN>123456789</PrimarySSN>");
 });
 
-Deno.test("filer SSN is raw digits — no reformatting with dashes", () => {
+test("filer SSN is raw digits — no reformatting with dashes", () => {
   const result = buildReturnHeader(sampleFiler());
   assertEquals(result.includes("123-45-6789"), false);
 });
@@ -113,7 +114,7 @@ Deno.test("filer SSN is raw digits — no reformatting with dashes", () => {
 // Section 4: Filer present — name fields
 // ---------------------------------------------------------------------------
 
-Deno.test("filer NameLine1Txt is emitted", () => {
+test("filer NameLine1Txt is emitted", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(
     result,
@@ -121,7 +122,7 @@ Deno.test("filer NameLine1Txt is emitted", () => {
   );
 });
 
-Deno.test("filer PrimaryNameControlTxt is emitted", () => {
+test("filer PrimaryNameControlTxt is emitted", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(
     result,
@@ -133,17 +134,17 @@ Deno.test("filer PrimaryNameControlTxt is emitted", () => {
 // Section 5: Filer present — address
 // ---------------------------------------------------------------------------
 
-Deno.test("filer USAddress block is present", () => {
+test("filer USAddress block is present", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<USAddress>");
 });
 
-Deno.test("filer USAddress block is closed", () => {
+test("filer USAddress block is closed", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "</USAddress>");
 });
 
-Deno.test("filer AddressLine1Txt is emitted", () => {
+test("filer AddressLine1Txt is emitted", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(
     result,
@@ -151,22 +152,22 @@ Deno.test("filer AddressLine1Txt is emitted", () => {
   );
 });
 
-Deno.test("filer CityNm is emitted", () => {
+test("filer CityNm is emitted", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<CityNm>SPRINGFIELD</CityNm>");
 });
 
-Deno.test("filer StateAbbreviationCd is emitted", () => {
+test("filer StateAbbreviationCd is emitted", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<StateAbbreviationCd>IL</StateAbbreviationCd>");
 });
 
-Deno.test("filer ZIPCd is emitted for 5-digit zip", () => {
+test("filer ZIPCd is emitted for 5-digit zip", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<ZIPCd>62701</ZIPCd>");
 });
 
-Deno.test("filer ZIPCd is emitted for 9-digit zip with dash", () => {
+test("filer ZIPCd is emitted for 9-digit zip with dash", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     address: { ...sampleFiler().address, zip: "94105-1234" },
@@ -183,7 +184,7 @@ Deno.test("filer ZIPCd is emitted for 9-digit zip with dash", () => {
 // block contains: PrimarySSN, NameLine1Txt, PrimaryNameControlTxt, USAddress.
 // These tests verify FilingStatusCd is absent from the header output.
 
-Deno.test("FilingStatus.Single: FilingStatusCd is NOT in the header (belongs in return body)", () => {
+test("FilingStatus.Single: FilingStatusCd is NOT in the header (belongs in return body)", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     filingStatus: FilingStatus.Single,
@@ -192,7 +193,7 @@ Deno.test("FilingStatus.Single: FilingStatusCd is NOT in the header (belongs in 
   assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.MarriedFilingJointly: FilingStatusCd is NOT in the header", () => {
+test("FilingStatus.MarriedFilingJointly: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -201,7 +202,7 @@ Deno.test("FilingStatus.MarriedFilingJointly: FilingStatusCd is NOT in the heade
   assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.MarriedFilingSeparately: FilingStatusCd is NOT in the header", () => {
+test("FilingStatus.MarriedFilingSeparately: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     filingStatus: FilingStatus.MarriedFilingSeparately,
@@ -210,7 +211,7 @@ Deno.test("FilingStatus.MarriedFilingSeparately: FilingStatusCd is NOT in the he
   assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.HeadOfHousehold: FilingStatusCd is NOT in the header", () => {
+test("FilingStatus.HeadOfHousehold: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     filingStatus: FilingStatus.HeadOfHousehold,
@@ -219,7 +220,7 @@ Deno.test("FilingStatus.HeadOfHousehold: FilingStatusCd is NOT in the header", (
   assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.QualifyingSurvivingSpouse: FilingStatusCd is NOT in the header", () => {
+test("FilingStatus.QualifyingSurvivingSpouse: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     filingStatus: FilingStatus.QualifyingSurvivingSpouse,
@@ -232,7 +233,7 @@ Deno.test("FilingStatus.QualifyingSurvivingSpouse: FilingStatusCd is NOT in the 
 // Section 7: XML escaping
 // ---------------------------------------------------------------------------
 
-Deno.test("name with ampersand is XML-escaped in NameLine1Txt", () => {
+test("name with ampersand is XML-escaped in NameLine1Txt", () => {
   const filer: FilerIdentity = { ...sampleFiler(), nameLine1: "JONES & SON" };
   const result = buildReturnHeader(filer);
   assertStringIncludes(
@@ -241,13 +242,13 @@ Deno.test("name with ampersand is XML-escaped in NameLine1Txt", () => {
   );
 });
 
-Deno.test("name with ampersand: raw unescaped value is not present", () => {
+test("name with ampersand: raw unescaped value is not present", () => {
   const filer: FilerIdentity = { ...sampleFiler(), nameLine1: "JONES & SON" };
   const result = buildReturnHeader(filer);
   assertEquals(result.includes("JONES & SON"), false);
 });
 
-Deno.test("address line with less-than is XML-escaped in AddressLine1Txt", () => {
+test("address line with less-than is XML-escaped in AddressLine1Txt", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     address: { ...sampleFiler().address, line1: "123 <MAIN> ST" },
@@ -259,7 +260,7 @@ Deno.test("address line with less-than is XML-escaped in AddressLine1Txt", () =>
   );
 });
 
-Deno.test("address line with less-than: raw unescaped tag is not present as text", () => {
+test("address line with less-than: raw unescaped tag is not present as text", () => {
   const filer: FilerIdentity = {
     ...sampleFiler(),
     address: { ...sampleFiler().address, line1: "123 <MAIN> ST" },
@@ -272,28 +273,28 @@ Deno.test("address line with less-than: raw unescaped tag is not present as text
 // Section 8: Output structure
 // ---------------------------------------------------------------------------
 
-Deno.test("output is wrapped in opening ReturnHeader element with binaryAttachmentCnt attribute", () => {
+test("output is wrapped in opening ReturnHeader element with binaryAttachmentCnt attribute", () => {
   // ReturnHeader1040x.xsd requires binaryAttachmentCnt attribute (value 0 for no binary attachments)
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
 });
 
-Deno.test("output closes ReturnHeader element", () => {
+test("output closes ReturnHeader element", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "</ReturnHeader>");
 });
 
-Deno.test("filer Filer block is present when filer provided", () => {
+test("filer Filer block is present when filer provided", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<Filer>");
 });
 
-Deno.test("filer Filer block is closed when filer provided", () => {
+test("filer Filer block is closed when filer provided", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "</Filer>");
 });
 
-Deno.test("output with filer still wrapped in ReturnHeader with binaryAttachmentCnt attribute", () => {
+test("output with filer still wrapped in ReturnHeader with binaryAttachmentCnt attribute", () => {
   const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
   assertStringIncludes(result, "</ReturnHeader>");

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { independentHealthFamily } from "../../../../pdf/reviews/adjustments/health/form7206-independent-owner.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -22,7 +24,7 @@ const expected = [
   [15600, 995328.86, 119066, 183719, 85590],
   [9600, 463252.37, 21189, 4800, 109884],
 ];
-Deno.test("independent actual two-farm health full limited excluded phase and current-use packets validate full XSD and PDF", async () => {
+test("independent actual two-farm health full limited excluded phase and current-use packets validate full XSD and PDF", async () => {
   assertEquals(fixtures.length, 7);
   for (const [index, fixture] of fixtures.entries()) {
     const r = f1040_2025.executeReturn(fixture.inputs),
@@ -89,7 +91,7 @@ Deno.test("independent actual two-farm health full limited excluded phase and cu
       }),
     );
     const prepared = await f1040_2025.prepareReturn(r.pending, fixture.filer);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -112,7 +114,7 @@ Deno.test("independent actual two-farm health full limited excluded phase and cu
     assertEquals((await prepared.renderPdf()).length > 0, true);
   }
 });
-Deno.test("mixed two-farm health rejects actual owner issuer month business payroll and prepared source conflicts", async () => {
+test("mixed two-farm health rejects actual owner issuer month business payroll and prepared source conflicts", async () => {
   const fixture = fixtures[0];
   for (
     const mutate of [
@@ -199,7 +201,7 @@ Deno.test("mixed two-farm health rejects actual owner issuer month business payr
   }
 });
 
-Deno.test("two-farm health rejects fabricated absent business kinds and loss-owner capacity", async () => {
+test("two-farm health rejects fabricated absent business kinds and loss-owner capacity", async () => {
   const fixture = fixtures[6];
   const original = normalizeAllPending(
     f1040_2025.executeReturn(fixture.inputs).pending,

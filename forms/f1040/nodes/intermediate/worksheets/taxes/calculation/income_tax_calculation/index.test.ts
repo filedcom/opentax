@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertAlmostEquals, assertEquals } from "@std/assert";
 import { assertThrows } from "@std/assert";
 import { income_tax_calculation, inputSchema } from "./index.ts";
@@ -37,11 +38,11 @@ function f6251Fields(result: ReturnType<typeof compute>) {
 
 // ─── Smoke Tests ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke — missing required fields throws", () => {
+test("smoke — missing required fields throws", () => {
   assertThrows(() => inputSchema.parse({}));
 });
 
-Deno.test("zero taxable income still sends Form 6251 its AMT base", () => {
+test("zero taxable income still sends Form 6251 its AMT base", () => {
   const result = compute({
     taxable_income: 0,
     filing_status: FilingStatus.Single,
@@ -56,7 +57,7 @@ Deno.test("zero taxable income still sends Form 6251 its AMT base", () => {
   );
 });
 
-Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income", () => {
+test("Form 8814 tax remains on line 16 even with zero parent taxable income", () => {
   const result = compute({
     taxable_income: 0,
     filing_status: FilingStatus.Single,
@@ -66,7 +67,7 @@ Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income
   assertEquals(f6251Fields(result)?.regular_tax, 135);
 });
 
-Deno.test("Schedule J changes Form 1040 tax while Form 6251 receives the no-election refigure", () => {
+test("Schedule J changes Form 1040 tax while Form 6251 receives the no-election refigure", () => {
   const ordinary = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -84,7 +85,7 @@ Deno.test("Schedule J changes Form 1040 tax while Form 6251 receives the no-elec
   );
 });
 
-Deno.test("Schedule J and Form 4972 keep separate line 16 and AMT refigure taxes", () => {
+test("Schedule J and Form 4972 keep separate line 16 and AMT refigure taxes", () => {
   const ordinary = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -109,7 +110,7 @@ Deno.test("Schedule J and Form 4972 keep separate line 16 and AMT refigure taxes
   );
 });
 
-Deno.test("Schedule J election cannot silently become ordinary tax or include line-16 add-ons", () => {
+test("Schedule J election cannot silently become ordinary tax or include line-16 add-ons", () => {
   assertThrows(
     () =>
       compute({
@@ -146,7 +147,7 @@ Deno.test("Schedule J election cannot silently become ordinary tax or include li
 
 // ─── 2025 Tax Table and Tax Computation Worksheet ────────────────────────────
 
-Deno.test("Single — $50,000 uses the Tax Table's $50,000–$50,050 row", () => {
+test("Single — $50,000 uses the Tax Table's $50,000–$50,050 row", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -158,7 +159,7 @@ Deno.test("Single — $50,000 uses the Tax Table's $50,000–$50,050 row", () =>
   );
 });
 
-Deno.test("MFJ — $100,000 taxable income (22% bracket)", () => {
+test("MFJ — $100,000 taxable income (22% bracket)", () => {
   // Tax = $11,157 + ($100,000 − $96,950) × 22% = $11,157 + $671 = $11,828
   const result = compute({
     taxable_income: 100_000,
@@ -171,7 +172,7 @@ Deno.test("MFJ — $100,000 taxable income (22% bracket)", () => {
   );
 });
 
-Deno.test("MFS — $50,000 uses the same table cell as Single", () => {
+test("MFS — $50,000 uses the same table cell as Single", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.MFS,
@@ -183,7 +184,7 @@ Deno.test("MFS — $50,000 uses the same table cell as Single", () => {
   );
 });
 
-Deno.test("HOH — $70,000 uses the Tax Table's $70,000–$70,050 row", () => {
+test("HOH — $70,000 uses the Tax Table's $70,000–$70,050 row", () => {
   const result = compute({
     taxable_income: 70_000,
     filing_status: FilingStatus.HOH,
@@ -195,7 +196,7 @@ Deno.test("HOH — $70,000 uses the Tax Table's $70,000–$70,050 row", () => {
   );
 });
 
-Deno.test("QSS — $100,000 uses MFJ brackets", () => {
+test("QSS — $100,000 uses MFJ brackets", () => {
   // QSS = MFJ brackets → same as MFJ at $100,000 = $11,828
   const result = compute({
     taxable_income: 100_000,
@@ -210,7 +211,7 @@ Deno.test("QSS — $100,000 uses MFJ brackets", () => {
 
 // ─── Bracket Boundaries ───────────────────────────────────────────────────────
 
-Deno.test("Single — $11,925 uses the $11,900–$11,950 Tax Table row", () => {
+test("Single — $11,925 uses the $11,900–$11,950 Tax Table row", () => {
   const result = compute({
     taxable_income: 11_925,
     filing_status: FilingStatus.Single,
@@ -222,7 +223,7 @@ Deno.test("Single — $11,925 uses the $11,900–$11,950 Tax Table row", () => {
   );
 });
 
-Deno.test("Single — $11,926 stays in the same Tax Table row", () => {
+test("Single — $11,926 stays in the same Tax Table row", () => {
   const result = compute({
     taxable_income: 11_926,
     filing_status: FilingStatus.Single,
@@ -236,7 +237,7 @@ Deno.test("Single — $11,926 stays in the same Tax Table row", () => {
 
 // ─── High Income ──────────────────────────────────────────────────────────────
 
-Deno.test("Single — $700,000 (37% bracket)", () => {
+test("Single — $700,000 (37% bracket)", () => {
   // Tax = $188,769.75 + ($700,000 − $626,350) × 37%
   // = $188,769.75 + $27,250.50 = $216,020.25
   const result = compute({
@@ -250,7 +251,7 @@ Deno.test("Single — $700,000 (37% bracket)", () => {
   );
 });
 
-Deno.test("MFS — $400,000 (37% bracket, MFS-specific split at $375,800)", () => {
+test("MFS — $400,000 (37% bracket, MFS-specific split at $375,800)", () => {
   // Tax = $101,077.25 + ($400,000 − $375,800) × 37%
   // = $101,077.25 + $8,954 = $110,031.25
   const result = compute({
@@ -264,7 +265,7 @@ Deno.test("MFS — $400,000 (37% bracket, MFS-specific split at $375,800)", () =
   );
 });
 
-Deno.test("HOH — $650,000 (37% bracket)", () => {
+test("HOH — $650,000 (37% bracket)", () => {
   // Tax = $187,031.50 + ($650,000 − $626,350) × 37%
   // = $187,031.50 + $8,750.50 = $195,782.00
   const result = compute({
@@ -280,7 +281,7 @@ Deno.test("HOH — $650,000 (37% bracket)", () => {
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("routes line16_income_tax to f1040", () => {
+test("routes line16_income_tax to f1040", () => {
   // $50k Single → $5,920 in the TY2025 Tax Table.
   const result = compute({
     taxable_income: 50_000,
@@ -291,7 +292,7 @@ Deno.test("routes line16_income_tax to f1040", () => {
   assertEquals(Math.round(fields!.line16_income_tax as number), 5_920);
 });
 
-Deno.test("routes regular_tax, regular_tax_income, filing_status to form6251", () => {
+test("routes regular_tax, regular_tax_income, filing_status to form6251", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -302,7 +303,7 @@ Deno.test("routes regular_tax, regular_tax_income, filing_status to form6251", (
   assertEquals(fields.filing_status, FilingStatus.Single);
 });
 
-Deno.test("tax amounts agree between f1040 and form6251 outputs", () => {
+test("tax amounts agree between f1040 and form6251 outputs", () => {
   const result = compute({
     taxable_income: 100_000,
     filing_status: FilingStatus.MFJ,
@@ -315,7 +316,7 @@ Deno.test("tax amounts agree between f1040 and form6251 outputs", () => {
 
 // ─── Small Income ─────────────────────────────────────────────────────────────
 
-Deno.test("$1 taxable income uses the Tax Table's $0–$5 row", () => {
+test("$1 taxable income uses the Tax Table's $0–$5 row", () => {
   const result = compute({
     taxable_income: 1,
     filing_status: FilingStatus.Single,
@@ -327,7 +328,7 @@ Deno.test("$1 taxable income uses the Tax Table's $0–$5 row", () => {
   );
 });
 
-Deno.test("Tax Table range endpoints and qualifying surviving spouse column", () => {
+test("Tax Table range endpoints and qualifying surviving spouse column", () => {
   for (
     const [income, expected] of [
       [4, 0],
@@ -348,7 +349,7 @@ Deno.test("Tax Table range endpoints and qualifying surviving spouse column", ()
 
 // ─── Unknown Tax Year ─────────────────────────────────────────────────────────
 
-Deno.test("unknown tax year throws with year in message", () => {
+test("unknown tax year throws with year in message", () => {
   assertThrows(
     () =>
       income_tax_calculation.compute(
@@ -368,7 +369,7 @@ Deno.test("unknown tax year throws with year in message", () => {
 // ─── QDCGT Worksheet — preferential rates ────────────────────────────────────
 // Rev. Proc. 2024-40, §3.02; IRC §1(h)
 
-Deno.test("QDCGT: qualified dividends entirely in 0% bracket (Single, low income)", () => {
+test("QDCGT: qualified dividends entirely in 0% bracket (Single, low income)", () => {
   // AGI below zero_ceiling ($48,350): all qual divs taxed at 0%
   // taxable_income = $40,000, qual_div = $5,000
   // ordinary = $35,000; in_zero = min($40k, $48,350) - $35k = $5k; pref_tax = 0
@@ -385,7 +386,7 @@ Deno.test("QDCGT: qualified dividends entirely in 0% bracket (Single, low income
   );
 });
 
-Deno.test("QDCGT: qualified dividends in 15% bracket (Single, mid income)", () => {
+test("QDCGT: qualified dividends in 15% bracket (Single, mid income)", () => {
   // taxable_income = $100,000, qual_div = $10,000
   // ordinary = $90,000; in_zero = max(0, $48,350 - $90,000) = 0; all $10k in 15%
   // pref_tax = $10,000 × 15% = $1,500
@@ -402,7 +403,7 @@ Deno.test("QDCGT: qualified dividends in 15% bracket (Single, mid income)", () =
   );
 });
 
-Deno.test("QDCGT: ordinary line 5 uses the table even when line 1 exceeds $100,000", () => {
+test("QDCGT: ordinary line 5 uses the table even when line 1 exceeds $100,000", () => {
   const result = compute({
     taxable_income: 120_000,
     filing_status: FilingStatus.MFJ,
@@ -413,7 +414,7 @@ Deno.test("QDCGT: ordinary line 5 uses the table even when line 1 exceeds $100,0
   assertEquals(f1040Fields(result)?.line16_income_tax, 13_821);
 });
 
-Deno.test("QDCGT: LTCG split across 15% and 20% brackets (Single, high income)", () => {
+test("QDCGT: LTCG split across 15% and 20% brackets (Single, high income)", () => {
   // taxable_income = $600,000, net_capital_gain = $100,000
   // ordinary = $500,000; in_zero = 0
   // avail_fifteen = $533,400 - max($500,000, $48,350) = $33,400
@@ -433,7 +434,7 @@ Deno.test("QDCGT: LTCG split across 15% and 20% brackets (Single, high income)",
   );
 });
 
-Deno.test("QDCGT: MFJ qualified dividends in 0% bracket", () => {
+test("QDCGT: MFJ qualified dividends in 0% bracket", () => {
   // MFJ zero_ceiling = $96,700; taxable_income = $80,000, qual_div = $5,000
   // ordinary = $75,000; in_zero = min($80k, $96,700) - $75k = $5k; all in 0%
   // pref_tax = 0
@@ -450,7 +451,7 @@ Deno.test("QDCGT: MFJ qualified dividends in 0% bracket", () => {
   );
 });
 
-Deno.test("QDCGT: no qualified dividends or gain uses the Tax Table", () => {
+test("QDCGT: no qualified dividends or gain uses the Tax Table", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -462,7 +463,7 @@ Deno.test("QDCGT: no qualified dividends or gain uses the Tax Table", () => {
   );
 });
 
-Deno.test("QDCGT: zero qualified dividends — no QDCGT applied", () => {
+test("QDCGT: zero qualified dividends — no QDCGT applied", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
@@ -475,7 +476,7 @@ Deno.test("QDCGT: zero qualified dividends — no QDCGT applied", () => {
   );
 });
 
-Deno.test("QDCGT: QDCGT tax is always ≤ regular bracket tax (invariant)", () => {
+test("QDCGT: QDCGT tax is always ≤ regular bracket tax (invariant)", () => {
   // For any combination of qual div + LTCG, the QDCGT worksheet should never
   // produce MORE tax than the regular brackets.
   const cases = [
@@ -505,7 +506,7 @@ Deno.test("QDCGT: QDCGT tax is always ≤ regular bracket tax (invariant)", () =
   }
 });
 
-Deno.test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
+test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
   const result = compute({
     taxable_income: 100_000,
     filing_status: FilingStatus.Single,
@@ -517,7 +518,7 @@ Deno.test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
   assertEquals(f6251Tax, f1040Tax);
 });
 
-Deno.test("Schedule D worksheet: 25% and 28% gains use line 21 ordinary-rate cap", () => {
+test("Schedule D worksheet: 25% and 28% gains use line 21 ordinary-rate cap", () => {
   const result = compute({
     taxable_income: 200_000,
     filing_status: FilingStatus.Single,
@@ -534,7 +535,7 @@ Deno.test("Schedule D worksheet: 25% and 28% gains use line 21 ordinary-rate cap
   assertEquals(f6251Fields(result)?.rate_28_gain, 5_000);
 });
 
-Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rates", () => {
+test("Form 4952 election taxes elected qualified dividends at ordinary rates", () => {
   const source = {
     taxable_income: 40_000,
     filing_status: FilingStatus.Single,
@@ -558,7 +559,7 @@ Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rate
   assertEquals(f1040Fields(elected)?.line16_income_tax, 4_565);
 });
 
-Deno.test("Form 2555 plain stacking uses Tax Table cells and explicit worksheet line 2b", () => {
+test("Form 2555 plain stacking uses Tax Table cells and explicit worksheet line 2b", () => {
   const plain = compute({
     taxable_income: 1,
     filing_status: FilingStatus.Single,
@@ -590,7 +591,7 @@ Deno.test("Form 2555 plain stacking uses Tax Table cells and explicit worksheet 
   );
 });
 
-Deno.test("Form 2555 qualified-dividend stacking removes capital-gain excess in IRS worksheet order", () => {
+test("Form 2555 qualified-dividend stacking removes capital-gain excess in IRS worksheet order", () => {
   const result = compute({
     taxable_income: 4_000,
     filing_status: FilingStatus.Single,
@@ -611,7 +612,7 @@ Deno.test("Form 2555 qualified-dividend stacking removes capital-gain excess in 
   );
 });
 
-Deno.test("Form 2555 Schedule D special-rate route remains closed until its separate refigure is supported", () => {
+test("Form 2555 Schedule D special-rate route remains closed until its separate refigure is supported", () => {
   assertThrows(
     () =>
       compute({
@@ -627,7 +628,7 @@ Deno.test("Form 2555 Schedule D special-rate route remains closed until its sepa
   );
 });
 
-Deno.test("Form 2555 Schedule D special-rate tax uses the stacked worksheet when there is no capital gain excess", () => {
+test("Form 2555 Schedule D special-rate tax uses the stacked worksheet when there is no capital gain excess", () => {
   const result = compute({
     taxable_income: 200_000,
     filing_status: FilingStatus.Single,
@@ -653,7 +654,7 @@ Deno.test("Form 2555 Schedule D special-rate tax uses the stacked worksheet when
   );
 });
 
-Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but changes its rate", () => {
+test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but changes its rate", () => {
   const source = {
     taxable_income: 100_000,
     filing_status: FilingStatus.Single,
@@ -676,7 +677,7 @@ Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but ch
   assertEquals(f6251Fields(elected)?.form4952_amt_elected_capital_gain, 2_000);
 });
 
-Deno.test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero", () => {
+test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero", () => {
   const result = compute({
     taxable_income: 0,
     form6251_line1b: -12_000,
@@ -686,7 +687,7 @@ Deno.test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero
   assertEquals(f6251Fields(result)?.regular_tax, 0);
 });
 
-Deno.test("QDCGT: qualified dividends exceeding taxable income capped at taxable income", () => {
+test("QDCGT: qualified dividends exceeding taxable income capped at taxable income", () => {
   // If somehow qual_div > taxable_income, pref_income is capped
   const result = compute({
     taxable_income: 5_000,
@@ -698,7 +699,7 @@ Deno.test("QDCGT: qualified dividends exceeding taxable income capped at taxable
   assertAlmostEquals(f1040Fields(result)?.line16_income_tax as number, 0, 1);
 });
 
-Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
+test("QDCGT: HOH filing status uses HOH thresholds", () => {
   // HOH zero_ceiling = $64,750; taxable_income = $60,000, qual_div = $3,000
   // ordinary = $57,000; in_zero = min($60k, $64,750) - $57k = $3k; all in 0%
   // pref_tax = 0
@@ -720,7 +721,7 @@ Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
 // Schedule 2 (Form 1040), line 1z." Line 16 is figured here, so the FTC
 // limitation base is routed from here.
 
-Deno.test("form_1116: line 16 routes as us_tax_before_credits", () => {
+test("form_1116: line 16 routes as us_tax_before_credits", () => {
   // $85,250 Single uses the Tax Table's $85,250–$85,300 row.
   const result = compute({
     taxable_income: 85_250,
@@ -732,7 +733,7 @@ Deno.test("form_1116: line 16 routes as us_tax_before_credits", () => {
   );
 });
 
-Deno.test("form_1116: zero taxable income routes a zero limitation base", () => {
+test("form_1116: zero taxable income routes a zero limitation base", () => {
   // No US tax → line 21 is zero → no credit, the taxes carry over instead.
   const result = compute({
     taxable_income: 0,

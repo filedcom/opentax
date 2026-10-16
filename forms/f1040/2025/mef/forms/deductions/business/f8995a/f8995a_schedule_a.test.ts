@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -47,7 +48,7 @@ const context = {
   },
 };
 
-Deno.test("Form 8995-A Schedule A: source, parent, and 1040 reconcile at 50% SSTB phase-in", () => {
+test("Form 8995-A Schedule A: source, parent, and 1040 reconcile at 50% SSTB phase-in", () => {
   const result = node.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse(input),
@@ -65,7 +66,7 @@ Deno.test("Form 8995-A Schedule A: source, parent, and 1040 reconcile at 50% SST
   assertStringIncludes(parentXml, "<QualifiedBusinessIncomeDedAmt>6250</QualifiedBusinessIncomeDedAmt>");
 });
 
-Deno.test("Form 8995-A Schedule A: missing or altered companion and 1040 mismatch reject", () => {
+test("Form 8995-A Schedule A: missing or altered companion and 1040 mismatch reject", () => {
   assertThrows(() => parent.build(input, {
     ...context, pending: { ...context.pending, form8995a_schedule_a: undefined },
   }), Error, "companion is missing");
@@ -75,7 +76,7 @@ Deno.test("Form 8995-A Schedule A: missing or altered companion and 1040 mismatc
   }), Error, "Form 1040 line 13");
 });
 
-Deno.test("Form 8995-A Schedule A: thresholds, extra business, unsourced amounts reject", () => {
+test("Form 8995-A Schedule A: thresholds, extra business, unsourced amounts reject", () => {
   assertThrows(() => parent.build({ ...input, taxable_income: 247_300 }, context), Error, "phase-in range");
   assertThrows(() => parent.build({ ...input, sstb_qbi: 99_999 }, context), Error, "only business");
   assertThrows(() => parent.build({ ...input, qbi: 100 }, context), Error, "only business");
@@ -87,11 +88,11 @@ Deno.test("Form 8995-A Schedule A: thresholds, extra business, unsourced amounts
   }, context), Error, "only business");
 });
 
-Deno.test("Form 8995-A Schedule A: absent pending emits no document", () => {
+test("Form 8995-A Schedule A: absent pending emits no document", () => {
   assertEquals(form8995aScheduleA.build([]), "");
 });
 
-Deno.test("Form 8995-A Schedule A: joint filer uses the 2025 joint phase-in and matches return header", () => {
+test("Form 8995-A Schedule A: joint filer uses the 2025 joint phase-in and matches return header", () => {
   const joint = {
     ...input,
     filing_status: NodeFilingStatus.MFJ,
@@ -136,7 +137,7 @@ Deno.test("Form 8995-A Schedule A: joint filer uses the 2025 joint phase-in and 
   );
 });
 
-Deno.test("Form 8995-A Schedule A: head of household uses the other-return phase-in", () => {
+test("Form 8995-A Schedule A: head of household uses the other-return phase-in", () => {
   const household = { ...input, filing_status: NodeFilingStatus.HOH };
   const householdContext = {
     filer: { ...filer, filingStatus: HeaderFilingStatus.HeadOfHousehold },
@@ -175,7 +176,7 @@ Deno.test("Form 8995-A Schedule A: head of household uses the other-return phase
   );
 });
 
-Deno.test("Form 8995-A Schedule A: qualifying surviving spouse uses the nonjoint phase-in", () => {
+test("Form 8995-A Schedule A: qualifying surviving spouse uses the nonjoint phase-in", () => {
   const survivor = { ...input, filing_status: NodeFilingStatus.QSS };
   const survivorContext = {
     filer: { ...filer, filingStatus: HeaderFilingStatus.QualifyingSurvivingSpouse },
@@ -218,7 +219,7 @@ Deno.test("Form 8995-A Schedule A: qualifying surviving spouse uses the nonjoint
   );
 });
 
-Deno.test("Form 8995-A Schedule A: MFS taxpayer-owned SSTB uses the nonjoint phase-in", () => {
+test("Form 8995-A Schedule A: MFS taxpayer-owned SSTB uses the nonjoint phase-in", () => {
   const separate = {
     ...input,
     filing_status: NodeFilingStatus.MFS,

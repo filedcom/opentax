@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8941, f8941 } from "./index.ts";
 import { form8941DirectFixture } from "./fixture.ts";
 import { f3800 } from "../../business/f3800/index.ts";
 
-Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {
+test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {
   const lines = calculateForm8941(form8941DirectFixture());
   assertEquals(lines.line1, 5);
   assertEquals(lines.line2, 5);
@@ -18,7 +19,7 @@ Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages a
   assertEquals(lines.line16, 11_698);
 });
 
-Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
+test("Form 8941 applies both printed FTE and wage phaseouts", () => {
   const source = form8941DirectFixture(11, 34_000);
   const lines = calculateForm8941(source);
   assertEquals(lines.line2, 11);
@@ -28,7 +29,7 @@ Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
   }
 });
 
-Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history and old override shape", () => {
+test("Form 8941 rejects altered SHOP contributions, rating area, history and old override shape", () => {
   const premium = form8941DirectFixture();
   premium.employees[0].employer_premium_paid = 6000;
   assertThrows(
@@ -66,7 +67,7 @@ Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history an
   );
 });
 
-Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premiums", () => {
+test("Form 8941 review binds the IRS table, monthly coverage and paid premiums", () => {
   const table = form8941DirectFixture();
   table.shop_review.irs_table_employee_only_average_premium = 10_000;
   assertThrows(() => calculateForm8941(table), Error, "not supported");
@@ -116,7 +117,7 @@ Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premi
   );
 });
 
-Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
+test("Form 8941 sends only its bounded direct source to Form 3800", () => {
   const result = f8941.compute(
     { taxYear: 2025, formType: "f1040" },
     form8941DirectFixture(),
@@ -139,7 +140,7 @@ Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
   );
 });
 
-Deno.test("Form8941 part-year enrollment prorates average premiums, not annual payroll hours", async () => {
+test("Form8941 part-year enrollment prorates average premiums, not annual payroll hours", async () => {
   const { form8941PartYearSource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
   );
@@ -167,7 +168,7 @@ Deno.test("Form8941 part-year enrollment prorates average premiums, not annual p
   );
   assertEquals(individuallyRounded, 13258);
 });
-Deno.test("Form8941 part-year rejects missing/extra months and inconsistent dated paid evidence", async () => {
+test("Form8941 part-year rejects missing/extra months and inconsistent dated paid evidence", async () => {
   const { form8941PartYearSource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
   );
@@ -215,7 +216,7 @@ Deno.test("Form8941 part-year rejects missing/extra months and inconsistent date
         .employer_payment_reference;
   assertThrows(() => calculateForm8941(reused), Error, "payment is reused");
 });
-Deno.test("Form8941 actual annual wages trigger the wage ceiling despite short enrollment", async () => {
+test("Form8941 actual annual wages trigger the wage ceiling despite short enrollment", async () => {
   const { form8941PartYearSource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
   );
@@ -228,7 +229,7 @@ Deno.test("Form8941 actual annual wages trigger the wage ceiling despite short e
   assertThrows(() => calculateForm8941(source), Error, "wage ceiling");
 });
 
-Deno.test("Form8941 sourced Albany family and mixed tier premiums use their own table columns", async () => {
+test("Form8941 sourced Albany family and mixed tier premiums use their own table columns", async () => {
   const { form8941FamilySource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
   );
@@ -250,7 +251,7 @@ Deno.test("Form8941 sourced Albany family and mixed tier premiums use their own 
   assertEquals(months.line5, 27162);
   assertEquals(months.line16, 13581);
 });
-Deno.test("Form8941 family rejects mismatched tier table and dependent enrollment allocations", async () => {
+test("Form8941 family rejects mismatched tier table and dependent enrollment allocations", async () => {
   const { form8941FamilySource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
   );
@@ -268,7 +269,7 @@ Deno.test("Form8941 family rejects mismatched tier table and dependent enrollmen
     .dependent_ssn = reused.employees[0].covered_dependents[0].dependent_ssn;
   assertThrows(() => calculateForm8941(reused), Error, "source is reused");
 });
-Deno.test("Form8941 composite tier billing reconciles equal tier/month premiums and uniform employer share", async () => {
+test("Form8941 composite tier billing reconciles equal tier/month premiums and uniform employer share", async () => {
   const { form8941FamilySource } = await import(
     "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
   );

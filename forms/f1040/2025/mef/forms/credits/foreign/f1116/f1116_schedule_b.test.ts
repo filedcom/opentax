@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   categorySummarySchema,
@@ -55,7 +56,7 @@ function calculated() {
   });
 }
 
-Deno.test("Form 1116 Schedule B carries current excess after a sourced zero carryback", () => {
+test("Form 1116 Schedule B carries current excess after a sourced zero carryback", () => {
   const outputs = calculated().outputs;
   const scheduleB = scheduleBFieldsSchema.parse(
     outputs.find((item) => item.nodeType === "form1116_schedule_b")?.fields,
@@ -68,7 +69,7 @@ Deno.test("Form 1116 Schedule B carries current excess after a sourced zero carr
   assertEquals(form !== undefined, true);
 });
 
-Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 excess without consuming prior tax", () => {
+test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 excess without consuming prior tax", () => {
   const priorSource = {
     income_category: IncomeCategory.Passive,
     vintages: [{
@@ -183,7 +184,7 @@ Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 exces
   );
 });
 
-Deno.test("Form 1116 Schedule B serializer uses native TY2025 line 6 and 8 groups", () => {
+test("Form 1116 Schedule B serializer uses native TY2025 line 6 and 8 groups", () => {
   const fields = {
     case: "current_year_excess" as const,
     category: IncomeCategory.Passive,
@@ -206,7 +207,7 @@ Deno.test("Form 1116 Schedule B serializer uses native TY2025 line 6 and 8 group
   assertEquals(xml.includes("ActlTentAmtCarriedBackPrTYGrp"), false);
 });
 
-Deno.test("Form 1116 refuses an excess-tax XML document without matching Schedule B", () => {
+test("Form 1116 refuses an excess-tax XML document without matching Schedule B", () => {
   const summary = {
     category: IncomeCategory.Passive,
     items: [{
@@ -256,7 +257,7 @@ Deno.test("Form 1116 refuses an excess-tax XML document without matching Schedul
   assertStringIncludes(xml, "<ForeignTaxCreditAmt>450</ForeignTaxCreditAmt>");
 });
 
-Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1, 3, 4, and 8", () => {
+test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1, 3, 4, and 8", () => {
   const source = {
     income_category: IncomeCategory.Passive,
     vintages: [{
@@ -357,7 +358,7 @@ Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1
   );
 });
 
-Deno.test("Form 1116 Schedule B places a sourced 2023 vintage in the second-preceding column", () => {
+test("Form 1116 Schedule B places a sourced 2023 vintage in the second-preceding column", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.General,
@@ -401,7 +402,7 @@ Deno.test("Form 1116 Schedule B places a sourced 2023 vintage in the second-prec
   assertEquals(xml.includes("FirstPrecedingTYAmt"), false);
 });
 
-Deno.test("Form 1116 Schedule B allocates two vintages oldest-first in native column order", () => {
+test("Form 1116 Schedule B allocates two vintages oldest-first in native column order", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.Passive,
@@ -443,7 +444,7 @@ Deno.test("Form 1116 Schedule B allocates two vintages oldest-first in native co
   );
 });
 
-Deno.test("Form 1116 Schedule B carries 2022 through the third-preceding column", () => {
+test("Form 1116 Schedule B carries 2022 through the third-preceding column", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.Passive,
@@ -488,7 +489,7 @@ Deno.test("Form 1116 Schedule B carries 2022 through the third-preceding column"
   );
 });
 
-Deno.test("Form 1116 Schedule B carries four reviewed vintages from 2021 oldest first", () => {
+test("Form 1116 Schedule B carries four reviewed vintages from 2021 oldest first", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.Passive,
@@ -537,7 +538,7 @@ Deno.test("Form 1116 Schedule B carries four reviewed vintages from 2021 oldest 
   );
 });
 
-Deno.test("Form 1116 Schedule B carries an originated-2020 credit into the fifth-preceding column", () => {
+test("Form 1116 Schedule B carries an originated-2020 credit into the fifth-preceding column", () => {
   const source = {
     income_category: IncomeCategory.Passive,
     vintages: [
@@ -625,7 +626,7 @@ Deno.test("Form 1116 Schedule B carries an originated-2020 credit into the fifth
   );
 });
 
-Deno.test("Form 1116 Schedule B carries 2019 and 2020 origins through sixth/fifth columns oldest first", () => {
+test("Form 1116 Schedule B carries 2019 and 2020 origins through sixth/fifth columns oldest first", () => {
   const source = {
     income_category: IncomeCategory.Passive,
     vintages: [
@@ -667,7 +668,7 @@ Deno.test("Form 1116 Schedule B carries 2019 and 2020 origins through sixth/fift
   );
 });
 
-Deno.test("Form 1116 Schedule B carries a 2018 origin through the seventh-preceding column", () => {
+test("Form 1116 Schedule B carries a 2018 origin through the seventh-preceding column", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.General,
@@ -712,7 +713,7 @@ Deno.test("Form 1116 Schedule B carries a 2018 origin through the seventh-preced
   );
 });
 
-Deno.test("Form 1116 Schedule B carries passive 2017 origin through the eighth-preceding column", () => {
+test("Form 1116 Schedule B carries passive 2017 origin through the eighth-preceding column", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.Passive,
@@ -761,7 +762,7 @@ Deno.test("Form 1116 Schedule B carries passive 2017 origin through the eighth-p
   );
 });
 
-Deno.test("Form 1116 Schedule B carries passive 2016 origin through the ninth-preceding column", () => {
+test("Form 1116 Schedule B carries passive 2016 origin through the ninth-preceding column", () => {
   const xml = form1116ScheduleB.build({
     case: "prior_year_use",
     category: IncomeCategory.Passive,
@@ -806,7 +807,7 @@ Deno.test("Form 1116 Schedule B carries passive 2016 origin through the ninth-pr
   );
 });
 
-Deno.test("Form 1116 Schedule B expires unused 2015 passive tax on line 5 and excludes it from line 8", () => {
+test("Form 1116 Schedule B expires unused 2015 passive tax on line 5 and excludes it from line 8", () => {
   const source = {
     income_category: IncomeCategory.Passive,
     vintages: [
@@ -865,7 +866,7 @@ Deno.test("Form 1116 Schedule B expires unused 2015 passive tax on line 5 and ex
   );
 });
 
-Deno.test("Form 1116 Schedule B expires 2015 balance even when 2025 creates new excess", () => {
+test("Form 1116 Schedule B expires 2015 balance even when 2025 creates new excess", () => {
   const xml = form1116ScheduleB.build({
     case: "combined_current_excess_prior_balance",
     category: IncomeCategory.Passive,

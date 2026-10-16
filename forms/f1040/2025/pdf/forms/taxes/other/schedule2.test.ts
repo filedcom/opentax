@@ -1,14 +1,15 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule2Pdf } from "./schedule2.ts";
 
-Deno.test("Schedule 2 PDF includes filer identity on page 1", () => {
+test("Schedule 2 PDF includes filer identity on page 1", () => {
   assertEquals(schedule2Pdf.filerFields?.map((entry) => entry.domainKey), [
     "nameShownOnForm1040",
     "primarySSN",
   ]);
 });
 
-Deno.test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
+test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
   assertThrows(
     () =>
       schedule2Pdf.projectFields?.({
@@ -19,7 +20,7 @@ Deno.test("2025 PDF Schedule 2 rejects reserved line 10 repayment", () => {
   );
 });
 
-Deno.test("2025 PDF Schedule 2 rejects unsourced dealer installment interest", () => {
+test("2025 PDF Schedule 2 rejects unsourced dealer installment interest", () => {
   assertThrows(
     () =>
       schedule2Pdf.projectFields?.({ line14_section453l_interest: 120 }, {}),
@@ -28,7 +29,7 @@ Deno.test("2025 PDF Schedule 2 rejects unsourced dealer installment interest", (
   );
 });
 
-Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
+test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
   const source = {
     rows: [{
       source_document_reference: "2024 Form 3800 and recapture workpaper",
@@ -87,7 +88,7 @@ Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkb
   );
 });
 
-Deno.test("2025 Schedule 2 PDF rejects generic 3468 recapture", () => {
+test("2025 Schedule 2 PDF rejects generic 3468 recapture", () => {
   const byKey = new Map(schedule2Pdf.fields.map((field) => [
     field.domainKey,
     field.pdfField,
@@ -120,7 +121,7 @@ Deno.test("2025 Schedule 2 PDF rejects generic 3468 recapture", () => {
   );
 });
 
-Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () => {
+test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () => {
   const byKey = new Map(schedule2Pdf.fields.map((field) => [
     field.domainKey,
     field.pdfField,
@@ -169,7 +170,7 @@ Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () 
   );
 });
 
-Deno.test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on their own lines", () => {
+test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on their own lines", () => {
   const projected = schedule2Pdf.projectFields?.({
     uncollected_fica: 120,
     uncollected_fica_gtl: 80,
@@ -200,7 +201,7 @@ Deno.test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on t
   assertEquals(projected?.line21_total, 1_600);
 });
 
-Deno.test("Schedule 2 PDF prints Form 4137 tax through lines 7 and 21", () => {
+test("Schedule 2 PDF prints Form 4137 tax through lines 7 and 21", () => {
   const projected = schedule2Pdf.projectFields?.({
     line5_unreported_tip_tax: 115,
   }, {});
@@ -209,7 +210,7 @@ Deno.test("Schedule 2 PDF prints Form 4137 tax through lines 7 and 21", () => {
   assertEquals(projected?.line21_total, 115);
 });
 
-Deno.test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => {
+test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => {
   assertThrows(
     () =>
       schedule2Pdf.projectFields?.(

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import {
@@ -31,7 +32,7 @@ for (
     [100000, 34294, 0, 16427, 104182],
   ]
 ) {
-  Deno.test(`Form 8801 current PAB ${pab} reconciles AMT, credit, balance and retained carry`, async () => {
+  test(`Form 8801 current PAB ${pab} reconciles AMT, credit, balance and retained carry`, async () => {
     const facts = packageFacts();
     facts.prior_credit_carryforward.amount = 100000;
     const f = await fixture(facts);

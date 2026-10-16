@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
@@ -90,7 +91,7 @@ function filedReturn() {
   });
 }
 
-Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040 and nine-page PDF", async () => {
+test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040 and nine-page PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -129,7 +130,7 @@ Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040
   );
 });
 
-Deno.test("commercial Form 8936 printable copy rejects changed parent document and final credit", async () => {
+test("commercial Form 8936 printable copy rejects changed parent document and final credit", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
@@ -168,7 +169,7 @@ Deno.test("commercial Form 8936 printable copy rejects changed parent document a
   );
 });
 
-Deno.test("commercial vehicle source, prepared row and Form 1040 tampering stop Form 3800 PDF", async () => {
+test("commercial vehicle source, prepared row and Form 1040 tampering stop Form 3800 PDF", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);

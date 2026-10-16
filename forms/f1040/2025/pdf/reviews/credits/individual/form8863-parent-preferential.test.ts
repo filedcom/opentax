@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -52,7 +55,7 @@ function worksheet(ti: number, mfs: boolean) {
   ];
 }
 for (const mfs of [false, true]) {
-  Deno.test(`issued selected-parent preferential ${mfs ? "MFS" : "MFJ"} full family source/XSD/PDF`, async () => {
+  test(`issued selected-parent preferential ${mfs ? "MFS" : "MFJ"} full family source/XSD/PDF`, async () => {
     const f = preferentialFamily(mfs),
       selected = f.parents[mfs ? 1 : 0],
       p = selected.pending;
@@ -183,34 +186,34 @@ for (const mfs of [false, true]) {
         assertStringIncludes(b.bundle.xml, "Pat Domestic Equity Fund");
         assertStringIncludes(b.bundle.xml, "Owned Domestic Growth Fund");
       }
-      const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+      const tmp = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(tmp, b.bundle.xml);
-        const q = await new Deno.Command("xmllint", {
+        await fs.writeFile(tmp, b.bundle.xml);
+        const q = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, tmp],
           stdout: "piped",
           stderr: "piped",
         }).output();
         assertEquals(q.code, 0, new TextDecoder().decode(q.stderr));
       } finally {
-        await Deno.remove(tmp);
+        await sys.remove(tmp);
       }
       const pdf = await b.renderPdf(), doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), r.pages);
       assertEquals(doc.getForm().getFields().length, 0);
-      if (Deno.args.includes("--write-review-artifacts")) {
-        await Deno.mkdir(evidence, { recursive: true });
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
+        await fs.mkdir(evidence, { recursive: true });
         const stem = `${mfs ? "MFS" : "MFJ"}-${r.stem}`;
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${evidence}/${stem}-source-input.json`,
           JSON.stringify({ inputs: r.inputs, filer: r.filer }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${evidence}/${stem}-full-return.xml`,
           b.bundle.xml,
         );
-        await Deno.writeFile(`${evidence}/${stem}-filled-return.pdf`, pdf);
-        await Deno.writeTextFile(
+        await fs.writeFile(`${evidence}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(
           `${evidence}/${mfs ? "MFS" : "MFJ"}-independent-worksheets.json`,
           JSON.stringify(
             {
@@ -228,7 +231,7 @@ for (const mfs of [false, true]) {
   });
 }
 for (const mfs of [false, true]) {
-  Deno.test(`preferential ${mfs ? "MFS" : "MFJ"} child source, method and reciprocal export tampering rejects`, async () => {
+  test(`preferential ${mfs ? "MFS" : "MFJ"} child source, method and reciprocal export tampering rejects`, async () => {
     const c = preferentialFamily(mfs).children[0];
     const record = (p: any) =>
       p.general.dependent_education_income_review.kiddie_tax_review
@@ -315,7 +318,7 @@ for (const mfs of [false, true]) {
     }
   });
 }
-Deno.test("actual preferential parent exports reject detached portfolio source, MAGI/credit and income joins", async () => {
+test("actual preferential parent exports reject detached portfolio source, MAGI/credit and income joins", async () => {
   for (const mfs of [false, true]) {
     const f = preferentialFamily(mfs), r = f.parents[mfs ? 1 : 0];
     for (

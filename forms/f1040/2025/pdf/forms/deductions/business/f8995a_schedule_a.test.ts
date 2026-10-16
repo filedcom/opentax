@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995aPdf } from "./f8995a.ts";
 import { form8995aScheduleAPdf } from "./f8995a_schedule_a.ts";
@@ -39,7 +40,7 @@ function mapped(
   return descriptor.fields.find((field) => field.domainKey === key)?.pdfField;
 }
 
-Deno.test("Form 8995-A Schedule A PDF maps SSTB source and parent phase-in column A", () => {
+test("Form 8995-A Schedule A PDF maps SSTB source and parent phase-in column A", () => {
   const schedule = form8995aScheduleAPdf.projectFields?.(sstb, pending);
   const parent = form8995aPdf.projectFields?.(sstb, pending);
   assertEquals(schedule?.line2, 100_000);
@@ -68,7 +69,7 @@ Deno.test("Form 8995-A Schedule A PDF maps SSTB source and parent phase-in colum
   );
 });
 
-Deno.test("Form 8995-A Schedule A PDF rejects missing companion, altered source, or 1040 mismatch", () => {
+test("Form 8995-A Schedule A PDF rejects missing companion, altered source, or 1040 mismatch", () => {
   assertThrows(
     () =>
       form8995aPdf.projectFields?.(
@@ -102,7 +103,7 @@ Deno.test("Form 8995-A Schedule A PDF rejects missing companion, altered source,
   );
 });
 
-Deno.test("Form 8995-A Schedule A PDF maps the joint threshold and range", () => {
+test("Form 8995-A Schedule A PDF maps the joint threshold and range", () => {
   const joint = {
     ...sstb,
     filing_status: "mfj",
@@ -123,7 +124,7 @@ Deno.test("Form 8995-A Schedule A PDF maps the joint threshold and range", () =>
   assertEquals(parent?.line39, 6_250);
 });
 
-Deno.test("Form 8995-A Schedule A PDF maps head-of-household phase-in", () => {
+test("Form 8995-A Schedule A PDF maps head-of-household phase-in", () => {
   const household = { ...sstb, filing_status: "hoh" };
   const householdPending = {
     form8995a: household,
@@ -143,7 +144,7 @@ Deno.test("Form 8995-A Schedule A PDF maps head-of-household phase-in", () => {
   assertEquals(parent?.line39, 6_250);
 });
 
-Deno.test("Form 8995-A Schedule A PDF binds surviving-spouse phase-in to final filer", () => {
+test("Form 8995-A Schedule A PDF binds surviving-spouse phase-in to final filer", () => {
   const survivor = { ...sstb, filing_status: "qss" };
   const survivorPending = {
     form8995a: survivor,
@@ -193,7 +194,7 @@ Deno.test("Form 8995-A Schedule A PDF binds surviving-spouse phase-in to final f
   );
 });
 
-Deno.test("Form 8995-A Schedule A PDF MFS owner and final filer reconcile", () => {
+test("Form 8995-A Schedule A PDF MFS owner and final filer reconcile", () => {
   const separate = {
     ...sstb,
     filing_status: "mfs",

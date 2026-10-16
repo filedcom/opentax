@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import {
@@ -19,7 +20,7 @@ const qualifiedDividends = (
   electedFarmNetCapitalGain: 0,
 });
 
-Deno.test("Schedule J base-year qualified-dividend worksheets use year-specific 0% ceilings and rates", () => {
+test("Schedule J base-year qualified-dividend worksheets use year-specific 0% ceilings and rates", () => {
   assertEquals(
     calculateScheduleJBaseYearPreferentialTax(qualifiedDividends(2022)),
     5_843,
@@ -34,7 +35,7 @@ Deno.test("Schedule J base-year qualified-dividend worksheets use year-specific 
   );
 });
 
-Deno.test("Schedule J QDCG worksheet taxes Form 4952 elected dividends at ordinary rates", () => {
+test("Schedule J QDCG worksheet taxes Form 4952 elected dividends at ordinary rates", () => {
   assertEquals(
     calculateScheduleJBaseYearPreferentialTax({
       ...qualifiedDividends(2024),
@@ -44,7 +45,7 @@ Deno.test("Schedule J QDCG worksheet taxes Form 4952 elected dividends at ordina
   );
 });
 
-Deno.test("Schedule J base-year QDCG cannot silently absorb elected capital gain or Form 2555", () => {
+test("Schedule J base-year QDCG cannot silently absorb elected capital gain or Form 2555", () => {
   assertThrows(
     () =>
       calculateScheduleJBaseYearPreferentialTax(
@@ -86,14 +87,14 @@ const scheduleD2024: ScheduleJBaseYearPreferentialFacts = {
   allocatedElectedUnrecaptured1250Gain: 0,
 };
 
-Deno.test("2024 Schedule D worksheet computes section 1250 gain and ordinary tax", () => {
+test("2024 Schedule D worksheet computes section 1250 gain and ordinary tax", () => {
   assertEquals(
     calculateScheduleJBaseYearPreferentialTax(scheduleD2024),
     16_353,
   );
 });
 
-Deno.test("2024 Schedule D worksheet allocates elected gain onto the prior-year gain lines", () => {
+test("2024 Schedule D worksheet allocates elected gain onto the prior-year gain lines", () => {
   assertEquals(
     calculateScheduleJBaseYearPreferentialTax({
       ...scheduleD2024,
@@ -107,7 +108,7 @@ Deno.test("2024 Schedule D worksheet allocates elected gain onto the prior-year 
   );
 });
 
-Deno.test("2022 and 2023 Schedule D routes close on conflicting official worksheet line references", () => {
+test("2022 and 2023 Schedule D routes close on conflicting official worksheet line references", () => {
   for (const year of [2022, 2023] as const) {
     assertThrows(
       () =>

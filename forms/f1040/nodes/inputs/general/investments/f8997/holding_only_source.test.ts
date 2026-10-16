@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../2025/index.ts";
 import { buildPending } from "../../../../../2025/mef/execution/pending.ts";
@@ -54,7 +55,7 @@ const input = {
   no_form1099b_for_disposition: false,
 } as const;
 
-Deno.test("Form 8997 staged holding-only review binds one lot to distinct prior and issuer files", async () => {
+test("Form 8997 staged holding-only review binds one lot to distinct prior and issuer files", async () => {
   const review = {
     prior_form8997_pdf: {
       source_document_reference: "2024-filed-8997",
@@ -174,7 +175,7 @@ Deno.test("Form 8997 staged holding-only review binds one lot to distinct prior 
   );
 });
 
-Deno.test("Form 8997 holdings preserve the complete reporting return but cannot bypass annual attachments", async () => {
+test("Form 8997 holdings preserve the complete reporting return but cannot bypass annual attachments", async () => {
   const general = {
     filing_status: "single",
     taxpayer_first_name: "Alex",

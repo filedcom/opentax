@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -61,7 +64,7 @@ const w2 = {
   box6_medicare_withheld: 217.5,
 };
 
-Deno.test("joint resident election gives EIC only with reviewed facts and matching signed statement PDF", async () => {
+test("joint resident election gives EIC only with reviewed facts and matching signed statement PDF", async () => {
   const statement = await PDFDocument.create();
   statement.addPage();
   const bytes = await statement.save();
@@ -113,10 +116,10 @@ Deno.test("joint resident election gives EIC only with reviewed facts and matchi
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -126,7 +129,7 @@ Deno.test("joint resident election gives EIC only with reviewed facts and matchi
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdfFields = irs1040Pdf.projectFields?.(
     result.pending.f1040,
@@ -145,10 +148,10 @@ Deno.test("joint resident election gives EIC only with reviewed facts and matchi
     filledPdf?.slice(0, 5).every((b, i) => b === [37, 80, 68, 70, 45][i]),
     true,
   );
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, filledPdf!);
-    const renderedText = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, filledPdf!);
+    const renderedText = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
     }).output();
@@ -158,7 +161,7 @@ Deno.test("joint resident election gives EIC only with reviewed facts and matchi
       "Sam Example",
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   await assertRejects(
@@ -182,7 +185,7 @@ Deno.test("joint resident election gives EIC only with reviewed facts and matchi
   );
 });
 
-Deno.test("continuing joint resident election prints the Form 1040 mark without a new statement", () => {
+test("continuing joint resident election prints the Form 1040 mark without a new statement", () => {
   const result = execute(plan, registry, {
     general: {
       ...general,

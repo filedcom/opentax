@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { PDFDocument } from "pdf-lib";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -65,7 +68,7 @@ export function pairedInputs(
     form4972: { elections: [t.form4972.elections[0], e] },
   };
 }
-Deno.test("independent spouse beneficiary source inventories calculate their separate elections once", () => {
+test("independent spouse beneficiary source inventories calculate their separate elections once", () => {
   const input = pairedInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -90,7 +93,7 @@ Deno.test("independent spouse beneficiary source inventories calculate their sep
   assertThrows(() => form4972Pdf.instances!(changed.form4972!, filer, changed));
 });
 
-Deno.test("all reviewed fractional source families retain each spouse's independent worksheet tax", async () => {
+test("all reviewed fractional source families retain each spouse's independent worksheet tax", async () => {
   const { default: expected } = await import(
     "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-fractional.expected.json",
     { with: { type: "json" } }
@@ -117,11 +120,11 @@ Deno.test("all reviewed fractional source families retain each spouse's independ
   }
 });
 
-Deno.test("paired beneficiary public returns preserve both native copies and complete four-page PDFs", async () => {
+test("paired beneficiary public returns preserve both native copies and complete four-page PDFs", async () => {
   const dir = ".state/research/2026-10-06-form4972-paired-beneficiaries";
   const xsd =
     ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-  await Deno.mkdir(dir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
   for (const [index, first] of fractionalBeneficiaryCases.entries()) {
     const second =
       fractionalBeneficiaryCases[fractionalBeneficiaryCases.length - 1 - index];
@@ -136,22 +139,22 @@ Deno.test("paired beneficiary public returns preserve both native copies and com
     assertEquals((xml.match(/<IRS4972\b/g) ?? []).length, 2);
     assertEquals((xml.match(/<IRS1099R\b/g) ?? []).length, input.f1099r.length);
     const path = `${dir}/${first.id}-paired`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${path}.json`,
       JSON.stringify({ input, pending: result.pending }, null, 2),
     );
-    await Deno.writeTextFile(`${path}.xml`, xml);
+    await fs.writeFile(`${path}.xml`, xml);
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(`${path}.pdf`, pdf);
+    await fs.writeFile(`${path}.pdf`, pdf);
     const document = await PDFDocument.load(pdf);
     assertEquals(document.getPageCount(), 4);
     assertEquals(document.getForm().getFields().length, 0);
-    const schema = await new Deno.Command("xmllint", {
+    const schema = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, `${path}.xml`],
       stderr: "piped",
     }).output();
     assertEquals(schema.code, 0, new TextDecoder().decode(schema.stderr));
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", `${path}.pdf`, `${path}.txt`],
       stderr: "piped",
     }).output();
@@ -159,7 +162,7 @@ Deno.test("paired beneficiary public returns preserve both native copies and com
   }
 });
 
-Deno.test("paired beneficiary final projections reject contradictory source and election inventories", () => {
+test("paired beneficiary final projections reject contradictory source and election inventories", () => {
   const input = pairedInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);

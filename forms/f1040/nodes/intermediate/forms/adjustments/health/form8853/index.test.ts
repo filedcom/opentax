@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8853, MsaOwner } from "./index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
@@ -14,7 +15,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Section A Part I: Archer MSA Deduction ──────────────────────────────────
 
-Deno.test("archer_msa_deduction_taxpayer_contrib: deduction = min(contributions, limitation, compensation)", () => {
+test("archer_msa_deduction_taxpayer_contrib: deduction = min(contributions, limitation, compensation)", () => {
   const result = compute({
     taxpayer_archer_msa_contributions: 2_000,
     line3_limitation_amount: 2_795,
@@ -26,7 +27,7 @@ Deno.test("archer_msa_deduction_taxpayer_contrib: deduction = min(contributions,
   );
 });
 
-Deno.test("archer_msa_deduction_limited_by_limitation: line 3 caps the deduction", () => {
+test("archer_msa_deduction_limited_by_limitation: line 3 caps the deduction", () => {
   const result = compute({
     taxpayer_archer_msa_contributions: 3_000,
     line3_limitation_amount: 2_000,
@@ -38,7 +39,7 @@ Deno.test("archer_msa_deduction_limited_by_limitation: line 3 caps the deduction
   );
 });
 
-Deno.test("archer_msa_deduction_limited_by_compensation: compensation caps the deduction", () => {
+test("archer_msa_deduction_limited_by_compensation: compensation caps the deduction", () => {
   const result = compute({
     taxpayer_archer_msa_contributions: 3_000,
     line3_limitation_amount: 3_000,
@@ -50,7 +51,7 @@ Deno.test("archer_msa_deduction_limited_by_compensation: compensation caps the d
   );
 });
 
-Deno.test("archer_msa_deduction_employer_prevents_deduction: employer contributions block taxpayer deduction", () => {
+test("archer_msa_deduction_employer_prevents_deduction: employer contributions block taxpayer deduction", () => {
   // If employer made contributions, taxpayer cannot deduct (per instructions)
   // employer_archer_msa present means no deduction allowed for taxpayer contributions
   const result = compute({
@@ -66,7 +67,7 @@ Deno.test("archer_msa_deduction_employer_prevents_deduction: employer contributi
   );
 });
 
-Deno.test("archer_msa_deduction_zero_when_no_contributions: no output when nothing contributed", () => {
+test("archer_msa_deduction_zero_when_no_contributions: no output when nothing contributed", () => {
   const result = compute({});
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
@@ -74,7 +75,7 @@ Deno.test("archer_msa_deduction_zero_when_no_contributions: no output when nothi
 
 // ─── Section A Part II: Archer MSA Distributions ─────────────────────────────
 
-Deno.test("archer_msa_taxable_distribution: non-medical distribution is taxable", () => {
+test("archer_msa_taxable_distribution: non-medical distribution is taxable", () => {
   const result = compute({
     archer_msa_distributions: 5_000,
     archer_msa_rollover: 0,
@@ -87,7 +88,7 @@ Deno.test("archer_msa_taxable_distribution: non-medical distribution is taxable"
   );
 });
 
-Deno.test("archer_msa_20pct_tax_on_taxable_distribution: 20% additional tax routes to schedule2", () => {
+test("archer_msa_20pct_tax_on_taxable_distribution: 20% additional tax routes to schedule2", () => {
   const result = compute({
     archer_msa_distributions: 5_000,
     archer_msa_qualified_expenses: 2_000,
@@ -100,7 +101,7 @@ Deno.test("archer_msa_20pct_tax_on_taxable_distribution: 20% additional tax rout
   );
 });
 
-Deno.test("archer_msa_exception needs distribution-level source rather than blanket waiver", () => {
+test("archer_msa_exception needs distribution-level source rather than blanket waiver", () => {
   assertThrows(
     () =>
       compute({
@@ -113,7 +114,7 @@ Deno.test("archer_msa_exception needs distribution-level source rather than blan
   );
 });
 
-Deno.test("archer_msa_qualified_distribution_excluded: medical expenses eliminate taxable amount", () => {
+test("archer_msa_qualified_distribution_excluded: medical expenses eliminate taxable amount", () => {
   const result = compute({
     archer_msa_distributions: 3_000,
     archer_msa_qualified_expenses: 3_000,
@@ -128,7 +129,7 @@ Deno.test("archer_msa_qualified_distribution_excluded: medical expenses eliminat
   );
 });
 
-Deno.test("archer_msa_filing: fully qualified source still retains Form 8853 pending record", () => {
+test("archer_msa_filing: fully qualified source still retains Form 8853 pending record", () => {
   const result = compute({
     archer_msa_distributions: 3_000,
     archer_msa_rollover: 0,
@@ -154,7 +155,7 @@ Deno.test("archer_msa_filing: fully qualified source still retains Form 8853 pen
   );
 });
 
-Deno.test("archer_msa_rollover_excluded_from_taxable: rollovers reduce gross distributions", () => {
+test("archer_msa_rollover_excluded_from_taxable: rollovers reduce gross distributions", () => {
   const result = compute({
     archer_msa_distributions: 5_000,
     archer_msa_rollover: 2_000,
@@ -169,7 +170,7 @@ Deno.test("archer_msa_rollover_excluded_from_taxable: rollovers reduce gross dis
 
 // ─── Section B: Medicare Advantage MSA Distributions ─────────────────────────
 
-Deno.test("medicare_advantage_msa_taxable_distribution: non-medical distribution is taxable", () => {
+test("medicare_advantage_msa_taxable_distribution: non-medical distribution is taxable", () => {
   const result = compute({
     medicare_advantage_distributions: 4_000,
     medicare_advantage_qualified_expenses: 1_000,
@@ -181,7 +182,7 @@ Deno.test("medicare_advantage_msa_taxable_distribution: non-medical distribution
   );
 });
 
-Deno.test("medicare_advantage_msa_50pct_tax: 50% penalty routes to schedule2 line 17f", () => {
+test("medicare_advantage_msa_50pct_tax: 50% penalty routes to schedule2 line 17f", () => {
   const result = compute({
     medicare_advantage_distributions: 4_000,
     medicare_advantage_qualified_expenses: 1_000,
@@ -194,7 +195,7 @@ Deno.test("medicare_advantage_msa_50pct_tax: 50% penalty routes to schedule2 lin
   );
 });
 
-Deno.test("medicare_advantage exception needs sourced distribution-level ledger", () => {
+test("medicare_advantage exception needs sourced distribution-level ledger", () => {
   assertThrows(
     () =>
       compute({
@@ -207,7 +208,7 @@ Deno.test("medicare_advantage exception needs sourced distribution-level ledger"
   );
 });
 
-Deno.test("medicare_advantage_msa_fully_qualified: no taxable amount when all medical", () => {
+test("medicare_advantage_msa_fully_qualified: no taxable amount when all medical", () => {
   const result = compute({
     medicare_advantage_distributions: 2_500,
     medicare_advantage_qualified_expenses: 2_500,
@@ -220,7 +221,7 @@ Deno.test("medicare_advantage_msa_fully_qualified: no taxable amount when all me
 
 // ─── Section C: Long-Term Care Insurance Contracts ───────────────────────────
 
-Deno.test("ltc_taxable_payments_per_diem_exceeds_limit: excess over $420/day is taxable", () => {
+test("ltc_taxable_payments_per_diem_exceeds_limit: excess over $420/day is taxable", () => {
   // $500/day × 365 days = $182,500 paid; $420 × 365 = $153,300 limit; no reimbursements
   // taxable = 182500 - 153300 = 29200
   const result = compute({
@@ -236,7 +237,7 @@ Deno.test("ltc_taxable_payments_per_diem_exceeds_limit: excess over $420/day is 
   );
 });
 
-Deno.test("ltc_fully_excluded_when_actual_costs_exceed_per_diem: actual costs used as exclusion", () => {
+test("ltc_fully_excluded_when_actual_costs_exceed_per_diem: actual costs used as exclusion", () => {
   // $420/day × 10 days = $4,200 per diem limit; actual costs = $5,000 > $4,200
   // exclusion = max(4200, 5000) = 5000; payments = 4500; taxable = 4500 - 5000 = 0
   const result = compute({
@@ -252,7 +253,7 @@ Deno.test("ltc_fully_excluded_when_actual_costs_exceed_per_diem: actual costs us
   );
 });
 
-Deno.test("ltc_reimbursements_reduce_exclusion: reimbursements reduce the per diem limitation", () => {
+test("ltc_reimbursements_reduce_exclusion: reimbursements reduce the per diem limitation", () => {
   // $420 × 10 days = $4,200 per diem limit; reimbursements = $3,000
   // per diem limitation = 4200 - 3000 = 1200; payments = 3000; taxable = 3000 - 1200 = 1800
   const result = compute({
@@ -268,7 +269,7 @@ Deno.test("ltc_reimbursements_reduce_exclusion: reimbursements reduce the per di
   );
 });
 
-Deno.test("ltc_accelerated_death_benefits_included: ADB payments included in line 20", () => {
+test("ltc_accelerated_death_benefits_included: ADB payments included in line 20", () => {
   // line 18 = 5000, line 19 = 3000; line 20 = 8000
   // per diem limit = 420 × 30 = 12600; actual_costs = 0; exclusion = 12600
   // taxable = max(0, 8000 - 12600) = 0
@@ -287,7 +288,7 @@ Deno.test("ltc_accelerated_death_benefits_included: ADB payments included in lin
 
 // ─── Combined Routing ─────────────────────────────────────────────────────────
 
-Deno.test("combined_all_sections: all three sections produce correct combined output", () => {
+test("combined_all_sections: all three sections produce correct combined output", () => {
   const result = compute({
     // Section A deduction
     taxpayer_archer_msa_contributions: 1_000,
@@ -324,50 +325,50 @@ Deno.test("combined_all_sections: all three sections produce correct combined ou
 
 // ─── Smoke Test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke_empty_input: no outputs for completely empty input", () => {
+test("smoke_empty_input: no outputs for completely empty input", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("smoke_nodeType: form8853 has correct nodeType", () => {
+test("smoke_nodeType: form8853 has correct nodeType", () => {
   assertEquals(form8853.nodeType, "form8853");
 });
 
 // ─── Input Validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: negative employer_archer_msa throws", () => {
+test("validation: negative employer_archer_msa throws", () => {
   assertThrows(() => compute({ employer_archer_msa: -1 }));
 });
 
-Deno.test("validation: negative taxpayer_archer_msa_contributions throws", () => {
+test("validation: negative taxpayer_archer_msa_contributions throws", () => {
   assertThrows(() => compute({ taxpayer_archer_msa_contributions: -100 }));
 });
 
-Deno.test("validation: negative line3_limitation_amount throws", () => {
+test("validation: negative line3_limitation_amount throws", () => {
   assertThrows(() => compute({ line3_limitation_amount: -500 }));
 });
 
-Deno.test("validation: negative archer_msa_distributions throws", () => {
+test("validation: negative archer_msa_distributions throws", () => {
   assertThrows(() => compute({ archer_msa_distributions: -1_000 }));
 });
 
-Deno.test("validation: negative archer_msa_qualified_expenses throws", () => {
+test("validation: negative archer_msa_qualified_expenses throws", () => {
   assertThrows(() => compute({ archer_msa_qualified_expenses: -200 }));
 });
 
-Deno.test("validation: negative medicare_advantage_distributions throws", () => {
+test("validation: negative medicare_advantage_distributions throws", () => {
   assertThrows(() => compute({ medicare_advantage_distributions: -500 }));
 });
 
-Deno.test("validation: negative ltc_gross_payments throws", () => {
+test("validation: negative ltc_gross_payments throws", () => {
   assertThrows(() => compute({ ltc_gross_payments: -1_000 }));
 });
 
-Deno.test("validation: negative ltc_period_days throws", () => {
+test("validation: negative ltc_period_days throws", () => {
   assertThrows(() => compute({ ltc_period_days: -1 }));
 });
 
-Deno.test("positive Archer deduction cannot replace missing actual compensation with infinity", () => {
+test("positive Archer deduction cannot replace missing actual compensation with infinity", () => {
   assertThrows(
     () =>
       compute({
@@ -379,7 +380,7 @@ Deno.test("positive Archer deduction cannot replace missing actual compensation 
   );
 });
 
-Deno.test("Archer compensation and monthly limitation cannot be explicitly infinite", () => {
+test("Archer compensation and monthly limitation cannot be explicitly infinite", () => {
   assertThrows(() =>
     compute({
       taxpayer_archer_msa_contributions: 2000,

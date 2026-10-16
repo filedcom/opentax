@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8606, type inputSchema, IraOwner } from "./index.ts";
 import type { z } from "zod";
@@ -15,7 +16,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("form8606: sourced taxpayer no-activity basis reaches native print record", () => {
+test("form8606: sourced taxpayer no-activity basis reaches native print record", () => {
   const result = compute({
     nondeductible_contributions: 6_000,
     prior_basis: 5_000,
@@ -46,7 +47,7 @@ Deno.test("form8606: sourced taxpayer no-activity basis reaches native print rec
 // 1. Schema validation
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: invalid input (negative year_end_ira_value) throws", () => {
+test("form8606: invalid input (negative year_end_ira_value) throws", () => {
   assertThrows(() =>
     compute({
       nondeductible_contributions: 0,
@@ -55,7 +56,7 @@ Deno.test("form8606: invalid input (negative year_end_ira_value) throws", () => 
   );
 });
 
-Deno.test("form8606: invalid input (negative nondeductible_contributions) throws", () => {
+test("form8606: invalid input (negative nondeductible_contributions) throws", () => {
   assertThrows(() =>
     compute({
       nondeductible_contributions: -100,
@@ -68,7 +69,7 @@ Deno.test("form8606: invalid input (negative nondeductible_contributions) throws
 // 2. No basis, no contributions — all traditional distributions fully taxable
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: all deductible IRA — full distribution taxable (Part I)", () => {
+test("form8606: all deductible IRA — full distribution taxable (Part I)", () => {
   // No nondeductible contributions, no prior basis, no Roth
   // traditional_distributions routes to line4b_ira_taxable in full
   const result = compute({
@@ -86,7 +87,7 @@ Deno.test("form8606: all deductible IRA — full distribution taxable (Part I)",
 // 3. Nondeductible basis — pro-rata exclusion applies (Part I)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: nondeductible basis with distribution — pro-rata exclusion", () => {
+test("form8606: nondeductible basis with distribution — pro-rata exclusion", () => {
   // prior_basis = $6,000, no new contributions
   // year_end_value = $44,000, distribution = $10,000
   // denominator = 44,000 + 10,000 = 54,000
@@ -113,7 +114,7 @@ Deno.test("form8606: nondeductible basis with distribution — pro-rata exclusio
 // 4. Full basis recovery — zero taxable when basis covers all distributions
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: full basis recovery — zero taxable distributions", () => {
+test("form8606: full basis recovery — zero taxable distributions", () => {
   // basis = $10,000, distribution = $10,000, year_end_value = $0
   // denominator = 0 + 10,000 = 10,000
   // nontaxable_ratio = 10,000 / 10,000 = 1.0 → nontaxable = 10,000
@@ -135,7 +136,7 @@ Deno.test("form8606: full basis recovery — zero taxable distributions", () => 
 // 5. Roth conversion with basis — partial exclusion (Part II)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: Roth conversion with basis — taxable portion computed", () => {
+test("form8606: Roth conversion with basis — taxable portion computed", () => {
   // prior_basis = $3,000, no distributions, conversion = $10,000
   // year_end_value = $20,000
   // denominator = 20,000 + 0 + 10,000 = 30,000
@@ -157,7 +158,7 @@ Deno.test("form8606: Roth conversion with basis — taxable portion computed", (
 // 6. Roth conversion — no basis — fully taxable
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: Roth conversion, no basis — fully taxable", () => {
+test("form8606: Roth conversion, no basis — fully taxable", () => {
   const result = compute({
     nondeductible_contributions: 0,
     prior_basis: 0,
@@ -173,7 +174,7 @@ Deno.test("form8606: Roth conversion, no basis — fully taxable", () => {
 // 7. Roth distribution — within basis — zero taxable (Part III)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: Roth distribution within contribution basis — zero taxable", () => {
+test("form8606: Roth distribution within contribution basis — zero taxable", () => {
   // Roth basis = $20,000 in contributions, distribution = $10,000
   // taxable = max(0, 10,000 - 20,000) = 0
   const result = compute({
@@ -193,7 +194,7 @@ Deno.test("form8606: Roth distribution within contribution basis — zero taxabl
 // 8. Roth distribution — exceeds basis — partially taxable (Part III)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: Roth distribution exceeds basis — earnings taxable", () => {
+test("form8606: Roth distribution exceeds basis — earnings taxable", () => {
   // Roth basis (contributions) = $5,000, distribution = $8,000
   // taxable = 8,000 - 5,000 = 3,000
   const result = compute({
@@ -212,7 +213,7 @@ Deno.test("form8606: Roth distribution exceeds basis — earnings taxable", () =
 // 9. Zero distributions — no output (no f1040 routing)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: zero distributions with basis — no f1040 output", () => {
+test("form8606: zero distributions with basis — no f1040 output", () => {
   // Has basis from prior contributions, but no distributions this year
   const result = compute({
     nondeductible_contributions: 7_000,
@@ -229,7 +230,7 @@ Deno.test("form8606: zero distributions with basis — no f1040 output", () => {
 // 10. Combined: traditional + Roth conversion in same year (Part I + II)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: traditional distribution + Roth conversion combined taxable", () => {
+test("form8606: traditional distribution + Roth conversion combined taxable", () => {
   // basis = 4,000; year_end = 16,000; distributions = 2,000; conversion = 2,000
   // denominator = 16,000 + 2,000 + 2,000 = 20,000
   // nontaxable_ratio = 4,000 / 20,000 = 0.2
@@ -255,7 +256,7 @@ Deno.test("form8606: traditional distribution + Roth conversion combined taxable
 // 11. Output routing smoke test — only routes to f1040
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: only produces f1040 output (correct nodeType routing)", () => {
+test("form8606: only produces f1040 output (correct nodeType routing)", () => {
   const result = compute({
     nondeductible_contributions: 0,
     prior_basis: 0,
@@ -272,7 +273,7 @@ Deno.test("form8606: only produces f1040 output (correct nodeType routing)", () 
 // 12. New nondeductible contributions this year — added to basis for ratio
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: new nondeductible contributions increase total basis for ratio", () => {
+test("form8606: new nondeductible contributions increase total basis for ratio", () => {
   // nondeductible = 7,000 this year; prior_basis = 0
   // distribution = 5,000; year_end = 30,000
   // total_basis = 7,000
@@ -295,7 +296,7 @@ Deno.test("form8606: new nondeductible contributions increase total basis for ra
 // 13. Part III — Roth IRA distribution with conversion basis
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: roth_basis_conversions reduces taxable Roth distribution", () => {
+test("form8606: roth_basis_conversions reduces taxable Roth distribution", () => {
   // Roth distribution $10,000; basis_conversions $4,000; basis_contributions $2,000
   // total Roth basis = 4,000 + 2,000 = 6,000
   // taxable = max(0, 10,000 - 6,000) = 4,000
@@ -311,7 +312,7 @@ Deno.test("form8606: roth_basis_conversions reduces taxable Roth distribution", 
   assertEquals(f1040?.fields?.line4b_ira_taxable, 4_000);
 });
 
-Deno.test("form8606: roth_basis_conversions alone covers full Roth distribution — no taxable amount", () => {
+test("form8606: roth_basis_conversions alone covers full Roth distribution — no taxable amount", () => {
   // Roth distribution $5,000; basis_conversions $6,000 → taxable = max(0, 5,000-6,000) = 0
   const result = compute({
     nondeductible_contributions: 0,
@@ -324,7 +325,7 @@ Deno.test("form8606: roth_basis_conversions alone covers full Roth distribution 
   assertEquals(f1040, undefined);
 });
 
-Deno.test("form8606: roth_distribution with no basis is fully taxable (Part III)", () => {
+test("form8606: roth_distribution with no basis is fully taxable (Part III)", () => {
   // Distribution $8,000; no contributions basis, no conversions basis → fully taxable
   const result = compute({
     nondeductible_contributions: 0,
@@ -340,7 +341,7 @@ Deno.test("form8606: roth_distribution with no basis is fully taxable (Part III)
 // 14. Combined Part I (traditional) + Part III (Roth) in same year
 // ---------------------------------------------------------------------------
 
-Deno.test("form8606: combined traditional distribution and Roth distribution both taxable", () => {
+test("form8606: combined traditional distribution and Roth distribution both taxable", () => {
   // Part I: prior_basis=0, no contributions, year_end=0, traditional_dist=3,000 → taxable 3,000
   // Part III: roth_distribution=2,000, no basis → taxable 2,000
   // Total line4b = 5,000
@@ -355,7 +356,7 @@ Deno.test("form8606: combined traditional distribution and Roth distribution bot
   assertEquals(f1040?.fields?.line4b_ira_taxable, 5_000);
 });
 
-Deno.test("form8606: zero-denominator with positive basis and Roth distribution — no divide-by-zero", () => {
+test("form8606: zero-denominator with positive basis and Roth distribution — no divide-by-zero", () => {
   // year_end_ira_value=0, traditional_distributions=0, roth_conversion=0
   // denominator = 0 → nontaxable = 0 (guarded), traditional portion = 0
   // roth_distribution = 3,000, basis_contributions = 1,000 → taxable = 2,000

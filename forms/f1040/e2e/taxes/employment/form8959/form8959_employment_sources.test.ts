@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -49,7 +52,7 @@ const cases = [
 ] as const;
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-const evidenceDir = Deno.args.find((arg) => arg.startsWith("--evidence-dir="))
+const evidenceDir = process.argv.slice(2).find((arg) => arg.startsWith("--evidence-dir="))
   ?.slice("--evidence-dir=".length);
 const owners = [
   { recipient: "taxpayer", ssn: "111223333", name: "Cafe", ein: "123456789" },
@@ -96,7 +99,7 @@ const filer = {
   originator: { efin: "123456", originatorType: "ERO" as const },
 };
 for (const c of cases) {
-  Deno.test(`Form8959 complete joint employment sources: ${c.id}`, async () => {
+  test(`Form8959 complete joint employment sources: ${c.id}`, async () => {
     const w2 = owners.map((owner) => ({
       employer_name: owner.name,
       employer_ein: owner.ein,
@@ -207,7 +210,7 @@ for (const c of cases) {
         }
       }
     }
-    const validator = new Deno.Command("xmllint", {
+    const validator = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -220,8 +223,8 @@ for (const c of cases) {
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     const pdf = await buildPdfBytes(pending, filer);
     if (evidenceDir) {
-      await Deno.mkdir(evidenceDir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(evidenceDir, { recursive: true });
+      await fs.writeFile(
         `${evidenceDir}/${c.id}.json`,
         JSON.stringify(
           { inputs, filer, expected: c, pending: result.pending },
@@ -229,8 +232,8 @@ for (const c of cases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${evidenceDir}/${c.id}.xml`, xml);
-      await Deno.writeFile(`${evidenceDir}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${evidenceDir}/${c.id}.xml`, xml);
+      await fs.writeFile(`${evidenceDir}/${c.id}.pdf`, pdf);
     }
     for (const key of ["unreported_tips", "wages_8919"] as const) {
       if (

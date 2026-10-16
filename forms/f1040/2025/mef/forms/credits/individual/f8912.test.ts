@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { BondType } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
 import { buildForm8912Document, form8912 } from "./f8912.ts";
@@ -73,7 +76,7 @@ const linked = {
   },
 };
 
-Deno.test("Form 8912 registered descriptor reconciles source, tax limit, and Schedule 3", () => {
+test("Form 8912 registered descriptor reconciles source, tax limit, and Schedule 3", () => {
   const xml = form8912.build({
     f8912s: [source],
     allowed_credit: 300,
@@ -120,7 +123,7 @@ Deno.test("Form 8912 registered descriptor reconciles source, tax limit, and Sch
   );
 });
 
-Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", () => {
+test("Form 8912 MeF draft keeps source rows and allowed credit distinct", () => {
   const xml = buildForm8912Document({ f8912s: [source] }, finalized);
   assertStringIncludes(
     xml,
@@ -148,7 +151,7 @@ Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", (
   );
 });
 
-Deno.test("Form 8912 MeF draft combines separate input items into one Part I and II", () => {
+test("Form 8912 MeF draft combines separate input items into one Part I and II", () => {
   const second = {
     reported_bonds: [{
       ...source.reported_bonds[0],
@@ -176,7 +179,7 @@ Deno.test("Form 8912 MeF draft combines separate input items into one Part I and
   assertEquals(xml.split("<BondInformation>").length - 1, 2);
 });
 
-Deno.test("Form 8912 MeF draft rejects a Schedule 3 line 6k mismatch", () => {
+test("Form 8912 MeF draft rejects a Schedule 3 line 6k mismatch", () => {
   assertThrows(
     () =>
       buildForm8912Document({ f8912s: [source] }, {
@@ -189,7 +192,7 @@ Deno.test("Form 8912 MeF draft rejects a Schedule 3 line 6k mismatch", () => {
   );
 });
 
-Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
+test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
   const twoRows = {
     ...source,
     unreported_bonds: [{
@@ -220,7 +223,7 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
   );
 });
 
-Deno.test("Form 8912 MeF draft limits line 12 after prior credits", () => {
+test("Form 8912 MeF draft limits line 12 after prior credits", () => {
   const xml = buildForm8912Document({ f8912s: [source] }, {
     ...finalized,
     form1040Line16: 250,
@@ -237,7 +240,7 @@ Deno.test("Form 8912 MeF draft limits line 12 after prior credits", () => {
   );
 });
 
-Deno.test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () => {
+test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () => {
   assertThrows(
     () =>
       buildForm8912Document({ f8912s: [source] }, {
@@ -250,7 +253,7 @@ Deno.test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () =
   );
 });
 
-Deno.test("Form 8912 MeF draft rejects purchase interest larger than its bond credit", () => {
+test("Form 8912 MeF draft rejects purchase interest larger than its bond credit", () => {
   assertThrows(
     () =>
       buildForm8912Document({
@@ -267,13 +270,13 @@ Deno.test("Form 8912 MeF draft rejects purchase interest larger than its bond cr
   );
 });
 
-Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
+test("Form 8912 MeF draft validates its IRS source schema", async () => {
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/PartnershipIncome/Common/IRS8912/IRS8912.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -281,16 +284,16 @@ Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
     "<IRS8912>",
     '<IRS8912 xmlns="http://www.irs.gov/efile" documentId="Form8912">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

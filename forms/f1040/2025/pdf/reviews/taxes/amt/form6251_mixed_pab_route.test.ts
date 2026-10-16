@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -55,7 +56,7 @@ const oidPayer = {
   pab_review_reference: "2025-OID-BOND-EXPENSE-REVIEW",
 };
 
-Deno.test("distinct issued INT and OID private-activity-bond sources reconcile Form 6251 and the final return", async () => {
+test("distinct issued INT and OID private-activity-bond sources reconcile Form 6251 and the final return", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -150,7 +151,7 @@ Deno.test("distinct issued INT and OID private-activity-bond sources reconcile F
   }
 });
 
-Deno.test("same-issuer INT stated interest and OID with reviewed allocable deductions enter line 2g once", async () => {
+test("same-issuer INT stated interest and OID with reviewed allocable deductions enter line 2g once", async () => {
   const sameIssuerInt = {
     ...interestPayer,
     payer_name: "Private Bond Combined Issuer",

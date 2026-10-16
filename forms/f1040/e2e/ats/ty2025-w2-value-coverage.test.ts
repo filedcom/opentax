@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   ATS_W2_TARGETS,
@@ -21,7 +22,7 @@ const wrap = (content: string) =>
 const observe = (content: string) =>
   compareAtsW2Values(wrap(content), ATS_W2_TARGETS["1040-01"]).rows;
 
-Deno.test("ATS W-2 observer distinguishes same-EIN employers independent of order and XML namespace prefixes", () => {
+test("ATS W-2 observer distinguishes same-EIN employers independent of order and XML namespace prefixes", () => {
   assertEquals(
     observe(green + cr).map((r) => r.result),
     Array(20).fill("match"),
@@ -38,7 +39,7 @@ Deno.test("ATS W-2 observer distinguishes same-EIN employers independent of orde
   assertEquals(observe(green + cr)[1].actual, "000000007");
 });
 
-Deno.test("ATS W-2 observer detects recipient swaps and amount swaps even when return totals are unchanged", () => {
+test("ATS W-2 observer detects recipient swaps and amount swaps even when return totals are unchanged", () => {
   const swapped = observe(
     green.replace(">22970</WagesAmt>", ">19500</WagesAmt>") +
       cr.replace(">19500</WagesAmt>", ">22970</WagesAmt>"),
@@ -59,7 +60,7 @@ Deno.test("ATS W-2 observer detects recipient swaps and amount swaps even when r
   );
 });
 
-Deno.test("ATS W-2 observer never borrows missing fields from another copy, totals, or duplicate documents", () => {
+test("ATS W-2 observer never borrows missing fields from another copy, totals, or duplicate documents", () => {
   const missing = observe(
     green.replace("<WithholdingAmt>1073</WithholdingAmt>", "") + cr +
       "<IRS1040><WithholdingAmt>1073</WithholdingAmt></IRS1040>",
@@ -89,7 +90,7 @@ Deno.test("ATS W-2 observer never borrows missing fields from another copy, tota
   );
 });
 
-Deno.test("ATS W-2 observer preserves invalid values and unavailable preparation instead of manufacturing matches", () => {
+test("ATS W-2 observer preserves invalid values and unavailable preparation instead of manufacturing matches", () => {
   for (const bad of ["", "22970.0", "NaN", "9007199254740992"]) {
     const rows = observe(
       green.replace(">22970</WagesAmt>", `>${bad}</WagesAmt>`) + cr,
@@ -119,7 +120,7 @@ Deno.test("ATS W-2 observer preserves invalid values and unavailable preparation
   }
 });
 
-Deno.test("ATS W-2 checked indicators require X; absent unmarked boxes differ from missing copies", () => {
+test("ATS W-2 checked indicators require X; absent unmarked boxes differ from missing copies", () => {
   const target = ATS_W2_TARGETS["1040-01"].map((t, i) =>
     i === 0
       ? {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form4136Pdf } from "./f4136.ts";
@@ -37,7 +38,7 @@ const activityContext = {
   primary_activity_has_most_credit: true,
 };
 
-Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
+test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
   const names = Object.fromEntries(
     form4136Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -208,7 +209,7 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
   );
 });
 
-Deno.test("Form 4136 PDF projects commercial aviation vendor lines 8a and 8b", () => {
+test("Form 4136 PDF projects commercial aviation vendor lines 8a and 8b", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -256,7 +257,7 @@ Deno.test("Form 4136 PDF projects commercial aviation vendor lines 8a and 8b", (
   assertEquals(result?.line8b_credit_dollars, "200");
 });
 
-Deno.test("Form 4136 PDF projects Certificate Q vendor line 8c", () => {
+test("Form 4136 PDF projects Certificate Q vendor line 8c", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -300,7 +301,7 @@ Deno.test("Form 4136 PDF projects Certificate Q vendor line 8c", () => {
   assertEquals(result?.line8c_credit_dollars, "25");
 });
 
-Deno.test("Form 4136 PDF projects noncommercial aviation lines 8d through 8f with multi-use detail", () => {
+test("Form 4136 PDF projects noncommercial aviation lines 8d through 8f with multi-use detail", () => {
   const routes = [
     { line: "8d", use: "09", rate: 0.244, reference: "AV-09" },
     { line: "8d", use: "10", rate: 0.244, reference: "AV-10" },
@@ -368,7 +369,7 @@ Deno.test("Form 4136 PDF projects noncommercial aviation lines 8d through 8f wit
   assertEquals(result?.line8f_credit_dollars, "1");
 });
 
-Deno.test("Form 4136 PDF projects registered card issuer line 13c taxed at $.244", () => {
+test("Form 4136 PDF projects registered card issuer line 13c taxed at $.244", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -420,7 +421,7 @@ Deno.test("Form 4136 PDF projects registered card issuer line 13c taxed at $.244
   assertEquals(result?.line13c_credit_dollars, "243");
 });
 
-Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {
+test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -468,7 +469,7 @@ Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", a
   assertEquals(document.getPageCount(), 5);
 });
 
-Deno.test("Form 4136 PDF projects kerosene bus line 7c", () => {
+test("Form 4136 PDF projects kerosene bus line 7c", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -513,7 +514,7 @@ Deno.test("Form 4136 PDF projects kerosene bus line 7c", () => {
   assertEquals(result?.line7c_credit_cents, "00");
 });
 
-Deno.test("Form 4136 PDF projects registered vendor bus line 6b", () => {
+test("Form 4136 PDF projects registered vendor bus line 6b", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -557,7 +558,7 @@ Deno.test("Form 4136 PDF projects registered vendor bus line 6b", () => {
   assertEquals(result?.line6b_credit_dollars, "170");
 });
 
-Deno.test("Form 4136 PDF projects blender line 15a and appends certification", async () => {
+test("Form 4136 PDF projects blender line 15a and appends certification", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -599,7 +600,7 @@ Deno.test("Form 4136 PDF projects blender line 15a and appends certification", a
   assertEquals(document.getPageCount(), 5);
 });
 
-Deno.test("Form 4136 PDF projects emulsion bus and export rows", async () => {
+test("Form 4136 PDF projects emulsion bus and export rows", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -638,7 +639,7 @@ Deno.test("Form 4136 PDF projects emulsion bus and export rows", async () => {
   assertEquals(document.getPageCount(), 4);
 });
 
-Deno.test("Form 4136 PDF aggregates exporter fuel kinds with a detail page", async () => {
+test("Form 4136 PDF aggregates exporter fuel kinds with a detail page", async () => {
   const exporter = {
     ...activityContext,
     business: {
@@ -679,7 +680,7 @@ Deno.test("Form 4136 PDF aggregates exporter fuel kinds with a detail page", asy
   assertEquals(document.getPageCount(), 5);
 });
 
-Deno.test("Form 4136 PDF includes vendor line 6a and government-buyer detail", async () => {
+test("Form 4136 PDF includes vendor line 6a and government-buyer detail", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business: {
@@ -727,7 +728,7 @@ Deno.test("Form 4136 PDF includes vendor line 6a and government-buyer detail", a
   assertEquals(document.getPageCount(), 5);
 });
 
-Deno.test("Form 4136 PDF separates aviation kerosene commercial and LUST rows", () => {
+test("Form 4136 PDF separates aviation kerosene commercial and LUST rows", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -751,7 +752,7 @@ Deno.test("Form 4136 PDF separates aviation kerosene commercial and LUST rows", 
   assertEquals(result?.line17_total_dollars, "376");
 });
 
-Deno.test("Form 4136 PDF separates kerosene bus, export, and reduced-tax rows", () => {
+test("Form 4136 PDF separates kerosene bus, export, and reduced-tax rows", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -778,7 +779,7 @@ Deno.test("Form 4136 PDF separates kerosene bus, export, and reduced-tax rows", 
   assertEquals(result?.line17_total_cents, "50");
 });
 
-Deno.test("Form 4136 PDF separates diesel train, bus, and export rows", () => {
+test("Form 4136 PDF separates diesel train, bus, and export rows", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -798,7 +799,7 @@ Deno.test("Form 4136 PDF separates diesel train, bus, and export rows", () => {
   assertEquals(result?.line17_total_cents, "70");
 });
 
-Deno.test("Form 4136 PDF projects all aviation-gasoline fixed-use lines", () => {
+test("Form 4136 PDF projects all aviation-gasoline fixed-use lines", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -817,7 +818,7 @@ Deno.test("Form 4136 PDF projects all aviation-gasoline fixed-use lines", () => 
   assertEquals(result?.line17_total_dollars, "345");
 });
 
-Deno.test("Form 4136 PDF separates other-use and exported gasoline", () => {
+test("Form 4136 PDF separates other-use and exported gasoline", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -848,7 +849,7 @@ Deno.test("Form 4136 PDF separates other-use and exported gasoline", () => {
   assertEquals(result?.line1d_credit_cents, "40");
 });
 
-Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", () => {
+test("Form 4136 PDF projects gallons and split dollars/cents from source", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -880,7 +881,7 @@ Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", 
   assertEquals(result?.line17_total_cents, "60");
 });
 
-Deno.test("Form 4136 PDF carries multiple uses on a separate statement", async () => {
+test("Form 4136 PDF carries multiple uses on a separate statement", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -910,7 +911,7 @@ Deno.test("Form 4136 PDF carries multiple uses on a separate statement", async (
   assertEquals(doc.getPageCount(), 1);
 });
 
-Deno.test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
+test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
   assertThrows(
     () =>
       form4136Pdf.projectFields?.({
@@ -929,7 +930,7 @@ Deno.test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
   );
 });
 
-Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
+test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -947,7 +948,7 @@ Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
   assertEquals(result?.line11g_credit_cents, "30");
 });
 
-Deno.test("Form 4136 PDF projects reduced-rate bus claims", async () => {
+test("Form 4136 PDF projects reduced-rate bus claims", async () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -970,7 +971,7 @@ Deno.test("Form 4136 PDF projects reduced-rate bus claims", async () => {
   assertEquals(doc.getPageCount(), 3);
 });
 
-Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement", () => {
+test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement", () => {
   const result = form4136Pdf.projectFields?.({
     ...activityContext,
     business,
@@ -999,7 +1000,7 @@ Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement
   assertEquals(result?.line11a_credit_cents, "20");
 });
 
-Deno.test("Form 4136 PDF skips business lines for home-use kerosene", () => {
+test("Form 4136 PDF skips business lines for home-use kerosene", () => {
   const result = form4136Pdf.projectFields?.({
     claimant_context: "home_kerosene",
     claimant_is_ultimate_purchaser: true,

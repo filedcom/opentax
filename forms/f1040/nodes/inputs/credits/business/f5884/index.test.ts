@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm5884,
@@ -85,7 +86,7 @@ function findForm3800(result: ReturnType<typeof compute>) {
 
 // ── Schema Validation ────────────────────────────────────────────────────────
 
-Deno.test("schema_rejects_no_employer_or_pass_through_source", () => {
+test("schema_rejects_no_employer_or_pass_through_source", () => {
   assertThrows(
     () =>
       f5884.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -96,7 +97,7 @@ Deno.test("schema_rejects_no_employer_or_pass_through_source", () => {
   );
 });
 
-Deno.test("schema_rejects_negative_wages", () => {
+test("schema_rejects_negative_wages", () => {
   const result = f5884.inputSchema.safeParse({
     f5884s: [minimalItem({
       wage_records: [wageRecord(-100)],
@@ -107,7 +108,7 @@ Deno.test("schema_rejects_negative_wages", () => {
   assertEquals(result.success, false);
 });
 
-Deno.test("schema_accepts_valid_item", () => {
+test("schema_accepts_valid_item", () => {
   const result = f5884.inputSchema.safeParse({
     f5884s: [
       minimalItem({
@@ -121,7 +122,7 @@ Deno.test("schema_accepts_valid_item", () => {
   assertEquals(result.success, true);
 });
 
-Deno.test("certification by the first workday requires actual receipt by hire", () => {
+test("certification by the first workday requires actual receipt by hire", () => {
   const valid = minimalItem();
   assertEquals(itemSchema.safeParse(valid).success, true);
   assertEquals(
@@ -138,7 +139,7 @@ Deno.test("certification by the first workday requires actual receipt by hire", 
   );
 });
 
-Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline", () => {
+test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline", () => {
   const certification = {
     path: "form8850_prescreen" as const,
     swa_certification_reference: "SWA-002",
@@ -165,7 +166,7 @@ Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline
   assertEquals(parse({ certification_received_on: "2025-02-11" }), false);
 });
 
-Deno.test("revoked certification excludes wages after notice", () => {
+test("revoked certification excludes wages after notice", () => {
   const valid = minimalItem({
     wage_records: wageRecords(6_000),
     hours_worked: 400,
@@ -246,7 +247,7 @@ Deno.test("revoked certification excludes wages after notice", () => {
   );
 });
 
-Deno.test("successor credit keeps predecessor wage cap and combined hours", () => {
+test("successor credit keeps predecessor wage cap and combined hours", () => {
   const successor = {
     predecessor_ein: "123456789",
     predecessor_first_workday_on: "2025-01-01",
@@ -420,7 +421,7 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
   );
 });
 
-Deno.test("successor long-term family assistance shares the second-year cap", () => {
+test("successor long-term family assistance shares the second-year cap", () => {
   const item = minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
     hired_on: "2025-03-01",
@@ -470,7 +471,7 @@ Deno.test("successor long-term family assistance shares the second-year cap", ()
   );
 });
 
-Deno.test("payroll rows determine service year and 2025 wage recognition", () => {
+test("payroll rows determine service year and 2025 wage recognition", () => {
   const valid = minimalItem({
     hired_on: "2024-07-01",
     certification: {
@@ -539,7 +540,7 @@ Deno.test("payroll rows determine service year and 2025 wage recognition", () =>
   );
 });
 
-Deno.test("controlled group allocates line 2 by qualified wages", () => {
+test("controlled group allocates line 2 by qualified wages", () => {
   const first = minimalItem({
     employee_reference: "GROUP-1",
     employer_ein: "123456789",
@@ -657,7 +658,7 @@ Deno.test("controlled group allocates line 2 by qualified wages", () => {
   );
 });
 
-Deno.test("controlled-group whole-dollar remainder is assigned once", () => {
+test("controlled-group whole-dollar remainder is assigned once", () => {
   const eins = ["111111111", "222222222", "333333333"];
   const input = {
     f5884s: eins.map((ein, index) =>
@@ -694,7 +695,7 @@ Deno.test("controlled-group whole-dollar remainder is assigned once", () => {
   assertEquals(lines.line2, 1);
 });
 
-Deno.test("Form 5884 line 2 reduces only its linked employer wages", () => {
+test("Form 5884 line 2 reduces only its linked employer wages", () => {
   const first = minimalItem({
     employee_reference: "C-1",
     wage_records: wageRecords(6_000),
@@ -782,7 +783,7 @@ Deno.test("Form 5884 line 2 reduces only its linked employer wages", () => {
   );
 });
 
-Deno.test("one employee can split credited wages between business destinations", () => {
+test("one employee can split credited wages between business destinations", () => {
   const item = minimalItem({
     wage_records: [
       wageRecord(3_000, "2025-02-01", "2025-02-15", "2025-02-15"),
@@ -825,7 +826,7 @@ Deno.test("one employee can split credited wages between business destinations",
   );
 });
 
-Deno.test("LTFA wage destinations retain separate first- and second-year rates", () => {
+test("LTFA wage destinations retain separate first- and second-year rates", () => {
   const item = minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
     hired_on: "2024-07-01",
@@ -869,21 +870,21 @@ Deno.test("LTFA wage destinations retain separate first- and second-year rates",
 
 // ── Zero Output Cases ─────────────────────────────────────────────────────────
 
-Deno.test("zero_wages_produces_no_output", () => {
+test("zero_wages_produces_no_output", () => {
   const result = compute([
     minimalItem({ wage_records: wageRecords(0), hours_worked: 400 }),
   ]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("under_120_hours_produces_no_output", () => {
+test("under_120_hours_produces_no_output", () => {
   const result = compute([
     minimalItem({ wage_records: wageRecords(6000), hours_worked: 119 }),
   ]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("exactly_0_hours_produces_no_output", () => {
+test("exactly_0_hours_produces_no_output", () => {
   const result = compute([
     minimalItem({ wage_records: wageRecords(5000), hours_worked: 0 }),
   ]);
@@ -892,7 +893,7 @@ Deno.test("exactly_0_hours_produces_no_output", () => {
 
 // ── Standard Credit Rates ─────────────────────────────────────────────────────
 
-Deno.test("120_to_399_hours_yields_25pct_rate", () => {
+test("120_to_399_hours_yields_25pct_rate", () => {
   // $6,000 × 25% = $1,500
   const result = compute([
     minimalItem({ wage_records: wageRecords(6000), hours_worked: 200 }),
@@ -901,7 +902,7 @@ Deno.test("120_to_399_hours_yields_25pct_rate", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 1500);
 });
 
-Deno.test("400_plus_hours_yields_40pct_rate", () => {
+test("400_plus_hours_yields_40pct_rate", () => {
   // $6,000 × 40% = $2,400
   const result = compute([
     minimalItem({ wage_records: wageRecords(6000), hours_worked: 400 }),
@@ -910,7 +911,7 @@ Deno.test("400_plus_hours_yields_40pct_rate", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 2400);
 });
 
-Deno.test("exactly_120_hours_yields_25pct_rate", () => {
+test("exactly_120_hours_yields_25pct_rate", () => {
   // $3,000 × 25% = $750
   const result = compute([
     minimalItem({ wage_records: wageRecords(3000), hours_worked: 120 }),
@@ -921,7 +922,7 @@ Deno.test("exactly_120_hours_yields_25pct_rate", () => {
 
 // ── Wage Cap ──────────────────────────────────────────────────────────────────
 
-Deno.test("wages_capped_at_6000_for_standard_groups", () => {
+test("wages_capped_at_6000_for_standard_groups", () => {
   // $10,000 wages, 400+ hours → capped at $6,000 × 40% = $2,400
   const result = compute([
     minimalItem({ wage_records: wageRecords(10000), hours_worked: 400 }),
@@ -930,7 +931,7 @@ Deno.test("wages_capped_at_6000_for_standard_groups", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 2400);
 });
 
-Deno.test("summer_youth_capped_at_3000", () => {
+test("summer_youth_capped_at_3000", () => {
   // $5,000 wages, 400 hours, summer youth → capped at $3,000 × 40% = $1,200
   const result = compute([minimalItem({
     target_group: TargetGroup.SummerYouth,
@@ -944,7 +945,7 @@ Deno.test("summer_youth_capped_at_3000", () => {
 
 // ── Long-Term Family Assistance (Group 9) ────────────────────────────────────
 
-Deno.test("ltfa_uses_first_and_second_year_wages", () => {
+test("ltfa_uses_first_and_second_year_wages", () => {
   // First year: $10,000 × 40% = $4,000; Second year: $10,000 × 50% = $5,000 → total $9,000
   const result = compute([minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
@@ -966,7 +967,7 @@ Deno.test("ltfa_uses_first_and_second_year_wages", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 9000);
 });
 
-Deno.test("ltfa_first_year_only_no_second_year", () => {
+test("ltfa_first_year_only_no_second_year", () => {
   // $8,000 × 40% = $3,200
   const result = compute([minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
@@ -977,7 +978,7 @@ Deno.test("ltfa_first_year_only_no_second_year", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 3200);
 });
 
-Deno.test("ltfa_requires_at_least_120_hours", () => {
+test("ltfa_requires_at_least_120_hours", () => {
   const belowMinimum = compute([minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
     wage_records: wageRecords(5000),
@@ -995,7 +996,7 @@ Deno.test("ltfa_requires_at_least_120_hours", () => {
   );
 });
 
-Deno.test("ltfa_wage_cap_10000_per_tier", () => {
+test("ltfa_wage_cap_10000_per_tier", () => {
   // $15,000 first-year → capped at $10,000 × 40% = $4,000
   const result = compute([minimalItem({
     target_group: TargetGroup.LongTermFamilyAssistance,
@@ -1019,7 +1020,7 @@ Deno.test("ltfa_wage_cap_10000_per_tier", () => {
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
 
-Deno.test("multiple_employees_aggregate", () => {
+test("multiple_employees_aggregate", () => {
   // Employee A: $6,000 × 40% = $2,400; Employee B: $4,000 × 40% = $1,600 → $4,000
   const result = compute([
     minimalItem({ wage_records: wageRecords(6000), hours_worked: 400 }),
@@ -1034,7 +1035,7 @@ Deno.test("multiple_employees_aggregate", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 4000);
 });
 
-Deno.test("routes_to_form3800", () => {
+test("routes_to_form3800", () => {
   const result = compute([
     minimalItem({ wage_records: wageRecords(6000), hours_worked: 400 }),
   ]);
@@ -1043,7 +1044,7 @@ Deno.test("routes_to_form3800", () => {
 
 // ── Veteran Subcategories ─────────────────────────────────────────────────────
 
-Deno.test("disabled_veteran_cap_12000", () => {
+test("disabled_veteran_cap_12000", () => {
   // $15,000 × 40% → capped at $12,000 × 40% = $4,800
   const result = compute([minimalItem({
     target_group: TargetGroup.VeteranFoodStamp,
@@ -1055,7 +1056,7 @@ Deno.test("disabled_veteran_cap_12000", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 4800);
 });
 
-Deno.test("disabled_veteran_long_term_cap_14000", () => {
+test("disabled_veteran_long_term_cap_14000", () => {
   // $20,000 × 40% → capped at $14,000 × 40% = $5,600
   const result = compute([minimalItem({
     target_group: TargetGroup.VeteranFoodStamp,
@@ -1067,7 +1068,7 @@ Deno.test("disabled_veteran_long_term_cap_14000", () => {
   assertEquals(out?.fields.f5884_credit?.credit_amount, 5600);
 });
 
-Deno.test("disabled_long_term_unemployed_veteran_cap_24000", () => {
+test("disabled_long_term_unemployed_veteran_cap_24000", () => {
   const result = compute([minimalItem({
     target_group: TargetGroup.VeteranFoodStamp,
     wage_records: wageRecords(30_000),
@@ -1080,7 +1081,7 @@ Deno.test("disabled_long_term_unemployed_veteran_cap_24000", () => {
   );
 });
 
-Deno.test("work opportunity credit requires certified, distinct, qualified employees", () => {
+test("work opportunity credit requires certified, distinct, qualified employees", () => {
   const valid = minimalItem({
     wage_records: wageRecords(6_000),
     hours_worked: 400,
@@ -1141,7 +1142,7 @@ Deno.test("work opportunity credit requires certified, distinct, qualified emplo
   );
 });
 
-Deno.test("Form 5884 separates pass-through-only and mixed source credits", () => {
+test("Form 5884 separates pass-through-only and mixed source credits", () => {
   const partnership = {
     source_type: "partnership" as const,
     entity_ein: "123456789",

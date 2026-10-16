@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 
-Deno.test("Form 1040 PDF rejects positive line 13b without a reconciled Schedule 1-A page", () => {
+test("Form 1040 PDF rejects positive line 13b without a reconciled Schedule 1-A page", () => {
   assertThrows(
     () =>
       irs1040Pdf.projectFields?.({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -165,7 +166,7 @@ function household(annualAptc: 600 | 4_800) {
 }
 
 for (const aptc of [600, 4_800] as const) {
-  Deno.test(`Form 8962 two sourced dependents reconcile one annual family policy at APTC ${aptc}`, () => {
+  test(`Form 8962 two sourced dependents reconcile one annual family policy at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = household(aptc);
     assertEquals(fields.dependents_modified_agi, 17_300);
     assertEquals(fields.household_income, 117_300);
@@ -182,7 +183,7 @@ for (const aptc of [600, 4_800] as const) {
   });
 }
 
-Deno.test("Form 8962 two-dependent family rejects changed source, identity, policy, and final return", () => {
+test("Form 8962 two-dependent family rejects changed source, identity, policy, and final return", () => {
   const { fields, pending } = household(600);
   const changedInterest = (source: typeof interest.ptc_tax_return) => ({
     ...pending,
@@ -291,7 +292,7 @@ Deno.test("Form 8962 two-dependent family rejects changed source, identity, poli
   );
 });
 
-Deno.test("Form 8962 does not count one claimed SSN twice in dependent MAGI", () => {
+test("Form 8962 does not count one claimed SSN twice in dependent MAGI", () => {
   const duplicate = {
     ...interest,
     ssn: mixed.ssn,

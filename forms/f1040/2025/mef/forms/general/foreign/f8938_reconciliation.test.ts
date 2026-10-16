@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -86,14 +87,14 @@ function prepared5471(): MefBuildContext {
   };
 }
 
-Deno.test("staged Form 8938 matches finalized interest/dividend rows and prepared PFIC document", () => {
+test("staged Form 8938 matches finalized interest/dividend rows and prepared PFIC document", () => {
   const source = form8938Fixture();
   const context = prepared();
   assertForm8938ReturnReconciliation(source, context);
   assertStringIncludes(form8938.build(source, context), "<IRS8938>");
 });
 
-Deno.test("staged Form 8938 rejects changed finalized line, payer, and return status", () => {
+test("staged Form 8938 rejects changed finalized line, payer, and return status", () => {
   const source = form8938Fixture();
   const base = prepared();
   assertThrows(() =>
@@ -132,7 +133,7 @@ Deno.test("staged Form 8938 rejects changed finalized line, payer, and return st
   );
 });
 
-Deno.test("staged Form 8938 rejects reviewed evidence for another return owner", () => {
+test("staged Form 8938 rejects reviewed evidence for another return owner", () => {
   const source = form8938Fixture();
   const base = prepared();
   assertThrows(() =>
@@ -158,7 +159,7 @@ Deno.test("staged Form 8938 rejects reviewed evidence for another return owner",
   );
 });
 
-Deno.test("staged Form 8938 spouse asset needs the spouse on the finalized return", () => {
+test("staged Form 8938 spouse asset needs the spouse on the finalized return", () => {
   const source = form8938Fixture();
   const joint = {
     ...source,
@@ -197,7 +198,7 @@ Deno.test("staged Form 8938 spouse asset needs the spouse on the finalized retur
   );
 });
 
-Deno.test("staged Form 8938 rejects missing or mismatched Part IV prepared document", () => {
+test("staged Form 8938 rejects missing or mismatched Part IV prepared document", () => {
   const source = form8938Fixture();
   const base = prepared();
   assertThrows(() =>
@@ -237,7 +238,7 @@ Deno.test("staged Form 8938 rejects missing or mismatched Part IV prepared docum
   );
 });
 
-Deno.test("staged Form 8938 joins a Part IV CFC to prepared Form 5471 and its shareholder", () => {
+test("staged Form 8938 joins a Part IV CFC to prepared Form 5471 and its shareholder", () => {
   const source = with5471();
   const context = prepared5471();
   assertForm8938ReturnReconciliation(source, context);
@@ -247,7 +248,7 @@ Deno.test("staged Form 8938 joins a Part IV CFC to prepared Form 5471 and its sh
   );
 });
 
-Deno.test("staged Form 8938 rejects changed CFC owner, issuer, address, or document ID", () => {
+test("staged Form 8938 rejects changed CFC owner, issuer, address, or document ID", () => {
   const source = with5471();
   const context = prepared5471();
   for (
@@ -285,7 +286,7 @@ Deno.test("staged Form 8938 rejects changed CFC owner, issuer, address, or docum
   );
 });
 
-Deno.test("staged Form 8938 fails closed on unsupported Part III and Part IV joins", () => {
+test("staged Form 8938 fails closed on unsupported Part III and Part IV joins", () => {
   const source = form8938Fixture();
   const base = prepared();
   assertThrows(() =>

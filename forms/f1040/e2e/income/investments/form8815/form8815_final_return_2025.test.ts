@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -92,7 +93,7 @@ const sources = {
   },
 };
 
-Deno.test("Form 8815 bond exclusion reconciles from source through return, native MeF, and PDF", async () => {
+test("Form 8815 bond exclusion reconciles from source through return, native MeF, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, sources, {
     taxYear: 2025,
     formType: "f1040",

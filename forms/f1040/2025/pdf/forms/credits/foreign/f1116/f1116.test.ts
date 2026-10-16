@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form1116Pdf } from "./f1116.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
@@ -20,7 +21,7 @@ import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../../registry.ts";
 import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
 
-Deno.test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced interest return", () => {
+test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced interest return", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-foreign-interest-current-excess"
   );
@@ -52,7 +53,7 @@ Deno.test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced intere
   );
 });
 
-Deno.test("Form 1116 PDF rejects disclosed redetermination without authenticated affected-year records", () => {
+test("Form 1116 PDF rejects disclosed redetermination without authenticated affected-year records", () => {
   assertThrows(
     () =>
       form1116Pdf.projectFields?.({
@@ -63,7 +64,7 @@ Deno.test("Form 1116 PDF rejects disclosed redetermination without authenticated
   );
 });
 
-Deno.test("Form 1116 PDF names a changed affected year before projection", () => {
+test("Form 1116 PDF names a changed affected year before projection", () => {
   const ledger = scheduleCLedger();
   assertThrows(
     () =>
@@ -81,7 +82,7 @@ Deno.test("Form 1116 PDF names a changed affected year before projection", () =>
   );
 });
 
-Deno.test("Form 1116 PDF cannot omit an unpaid-accrual event on a zero-credit return", () => {
+test("Form 1116 PDF cannot omit an unpaid-accrual event on a zero-credit return", () => {
   assertThrows(
     () =>
       form1116Pdf.projectFields?.({
@@ -96,21 +97,21 @@ Deno.test("Form 1116 PDF cannot omit an unpaid-accrual event on a zero-credit re
   );
 });
 
-Deno.test("Form 1116 PDF maps worldwide taxable income to 2025 line 18", () => {
+test("Form 1116 PDF maps worldwide taxable income to 2025 line 18", () => {
   const entry = form1116Pdf.fields.find((field) =>
     field.domainKey === "total_income"
   );
   assertEquals(entry?.pdfField, "topmostSubform[0].Page2[0].f2_10[0]");
 });
 
-Deno.test("Form 1116 PDF maps U.S. tax before credits to 2025 line 20", () => {
+test("Form 1116 PDF maps U.S. tax before credits to 2025 line 20", () => {
   const entry = form1116Pdf.fields.find((field) =>
     field.domainKey === "us_tax_before_credits"
   );
   assertEquals(entry?.pdfField, "topmostSubform[0].Page2[0].f2_12[0]");
 });
 
-Deno.test("Form 1116 PDF maps alternative compensation source to line 1b", () => {
+test("Form 1116 PDF maps alternative compensation source to line 1b", () => {
   const entry = form1116Pdf.fields.find((field) =>
     field.domainKey === "alternative_compensation_source"
   );
@@ -120,7 +121,7 @@ Deno.test("Form 1116 PDF maps alternative compensation source to line 1b", () =>
   );
 });
 
-Deno.test("Form 1116 PDF line 1b requires the same identified compensation source", () => {
+test("Form 1116 PDF line 1b requires the same identified compensation source", () => {
   const alternative = {
     specific_compensation_description: "Salary",
     alternative_allocation_basis: "Client locations",
@@ -212,7 +213,7 @@ Deno.test("Form 1116 PDF line 1b requires the same identified compensation sourc
   );
 });
 
-Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
+test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   const usTax = ordinaryTax2025(284_250, FilingStatus.Single);
   const alternative = {
     specific_compensation_description: "Salary",
@@ -372,7 +373,7 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   );
 });
 
-Deno.test("Form 1116 PDF fails closed for active category summaries even with zero tax", () => {
+test("Form 1116 PDF fails closed for active category summaries even with zero tax", () => {
   const result = form1116.compute({ taxYear: 2025, formType: "f1040" }, {
     foreign_tax_items: [{
       foreign_tax_paid: 0,
@@ -396,7 +397,7 @@ Deno.test("Form 1116 PDF fails closed for active category summaries even with ze
   );
 });
 
-Deno.test("Form 1116 PDF fails closed for a positive tax without category summaries", () => {
+test("Form 1116 PDF fails closed for a positive tax without category summaries", () => {
   const active = { foreign_tax_paid: 500 };
   assertThrows(
     () => form1116Pdf.projectFields?.(active, {}),
@@ -411,7 +412,7 @@ Deno.test("Form 1116 PDF fails closed for a positive tax without category summar
   assertEquals(form1116Pdf.projectFields?.({}, {}), {});
 });
 
-Deno.test("Form 1116 PDF does not include inactive limitation-only context", () => {
+test("Form 1116 PDF does not include inactive limitation-only context", () => {
   const inactive = {
     foreign_tax_paid: 0,
     total_income: 40_000,
@@ -495,7 +496,7 @@ function reviewedSingleSource() {
   return { fields, pending };
 }
 
-Deno.test("Form 1116 PDF keeps a K-3 line 12 reduction outside the one-interest route", () => {
+test("Form 1116 PDF keeps a K-3 line 12 reduction outside the one-interest route", () => {
   const { fields, pending } = reviewedSingleSource();
   const summary = (fields.category_summaries as Array<{
     items: Array<Record<string, unknown>>;
@@ -526,7 +527,7 @@ Deno.test("Form 1116 PDF keeps a K-3 line 12 reduction outside the one-interest 
   );
 });
 
-Deno.test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () => {
+test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () => {
   const k3 = {
     partnership_ein: "123456789",
     k1_source_document_reference: "2025 partnership K-1",
@@ -660,7 +661,7 @@ Deno.test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () 
   );
 });
 
-Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction", () => {
+test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction", () => {
   const k3 = {
     corporation_ein: "123456789",
     k1_source_document_reference: "2025 S-corp K-1",
@@ -781,7 +782,7 @@ Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction"
   );
 });
 
-Deno.test("Form 1116 PDF projects a complete one-country paid passive category", () => {
+test("Form 1116 PDF projects a complete one-country paid passive category", () => {
   const { fields, pending } = reviewedSingleSource();
   const projected = form1116Pdf.projectFields?.(fields, pending) ?? {};
   assertEquals(projected.pdf_country_a, "Germany");
@@ -878,7 +879,7 @@ Deno.test("Form 1116 PDF projects a complete one-country paid passive category",
   );
 });
 
-Deno.test("Form 1116 PDF prints a reviewed one-source current-year excess with Schedule B", () => {
+test("Form 1116 PDF prints a reviewed one-source current-year excess with Schedule B", () => {
   const priorReview = {
     income_category: IncomeCategory.Passive,
     prior_year_form1116_line23_limit: 70,
@@ -1004,7 +1005,7 @@ Deno.test("Form 1116 PDF prints a reviewed one-source current-year excess with S
   );
 });
 
-Deno.test("Form 1116 PDF projects one identified 1099-INT tax in U.S. dollars", () => {
+test("Form 1116 PDF projects one identified 1099-INT tax in U.S. dollars", () => {
   const { fields, pending } = reviewedSingleSource();
   const summary = (fields.category_summaries as Record<string, unknown>[])[0];
   const item = (summary.items as Record<string, unknown>[])[0];
@@ -1055,7 +1056,7 @@ Deno.test("Form 1116 PDF projects one identified 1099-INT tax in U.S. dollars", 
   );
 });
 
-Deno.test("Form 1116 PDF rejects tampered conversion, missing review, and omitted credit line", () => {
+test("Form 1116 PDF rejects tampered conversion, missing review, and omitted credit line", () => {
   const { fields, pending } = reviewedSingleSource();
   const summary = (fields.category_summaries as Record<string, unknown>[])[0];
   const item = (summary.items as Record<string, unknown>[])[0];
@@ -1139,7 +1140,7 @@ Deno.test("Form 1116 PDF rejects tampered conversion, missing review, and omitte
   );
 });
 
-Deno.test("Form 1116 PDF keeps a fully identified 1099-INT passive category closed", () => {
+test("Form 1116 PDF keeps a fully identified 1099-INT passive category closed", () => {
   const result = form1116.compute({ taxYear: 2025, formType: "f1040" }, {
     foreign_tax_items: [{
       foreign_tax_paid: 50,
@@ -1162,7 +1163,7 @@ Deno.test("Form 1116 PDF keeps a fully identified 1099-INT passive category clos
   );
 });
 
-Deno.test("Form 1116 PDF keeps a dated non-1099 category closed without foreign-currency tax", () => {
+test("Form 1116 PDF keeps a dated non-1099 category closed without foreign-currency tax", () => {
   const result = form1116.compute({ taxYear: 2025, formType: "f1040" }, {
     foreign_tax_items: [{
       foreign_tax_paid: 50,
@@ -1185,7 +1186,7 @@ Deno.test("Form 1116 PDF keeps a dated non-1099 category closed without foreign-
   );
 });
 
-Deno.test("Form 1116 PDF line 18 source is the computed senior-adjusted amount", () => {
+test("Form 1116 PDF line 18 source is the computed senior-adjusted amount", () => {
   const result = form1116.compute({ taxYear: 2025, formType: "f1040" }, {
     foreign_tax_items: [{
       foreign_tax_paid: 500,

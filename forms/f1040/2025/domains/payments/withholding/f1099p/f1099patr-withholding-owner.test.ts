@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
@@ -26,7 +27,7 @@ const row = {
   box4_federal_withheld: 40,
 };
 
-Deno.test("1099-PATR box 4 recipient may be taxpayer or joint spouse", () => {
+test("1099-PATR box 4 recipient may be taxpayer or joint spouse", () => {
   assertPatrWithholdingRecipient({ f1099patrs: [row] }, filer);
   assertPatrWithholdingRecipient({
     f1099patrs: [{ ...row, recipient_tin: "222334444" }],
@@ -45,7 +46,7 @@ Deno.test("1099-PATR box 4 recipient may be taxpayer or joint spouse", () => {
   }, filer);
 });
 
-Deno.test("1099-PATR box 4 without a filed recipient rejects in both exports", async () => {
+test("1099-PATR box 4 without a filed recipient rejects in both exports", async () => {
   for (const recipient_tin of [undefined, "999887777"]) {
     const pending = {
       f1099patr: { f1099patrs: [{ ...row, recipient_tin }] },
@@ -63,7 +64,7 @@ Deno.test("1099-PATR box 4 without a filed recipient rejects in both exports", a
   }
 });
 
-Deno.test("1099-PATR repeated issued account rejects direct native and PDF export", async () => {
+test("1099-PATR repeated issued account rejects direct native and PDF export", async () => {
   const issued = {
     ...row,
     account_number: "P-1",
@@ -92,7 +93,7 @@ Deno.test("1099-PATR repeated issued account rejects direct native and PDF expor
   );
 });
 
-Deno.test("ambiguous cooperative withholding copies reject in native and PDF export", async () => {
+test("ambiguous cooperative withholding copies reject in native and PDF export", async () => {
   const pending = {
     f1099patr: {
       f1099patrs: [row, { ...row, box4_federal_withheld: 30 }],

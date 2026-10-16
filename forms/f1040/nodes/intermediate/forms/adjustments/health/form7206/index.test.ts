@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { withHealthPolicyRecords } from "./policy-records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TS } from "../../../../../types.ts";
@@ -60,14 +61,14 @@ const scheduleC = {
   }],
 };
 
-Deno.test("2025 Form 7206 identified-plan source is a registered filing input", () => {
+test("2025 Form 7206 identified-plan source is a registered filing input", () => {
   assertEquals(
     inputNodes.some((entry) => entry.node.nodeType === "form7206"),
     true,
   );
 });
 
-Deno.test("2025 Form 7206 receives calculated Schedule C, SE, and retirement facts", () => {
+test("2025 Form 7206 receives calculated Schedule C, SE, and retirement facts", () => {
   const c = scheduleCNode.compute(
     { taxYear: 2025, formType: "f1040" },
     scheduleC,
@@ -109,7 +110,7 @@ Deno.test("2025 Form 7206 receives calculated Schedule C, SE, and retirement fac
   );
 });
 
-Deno.test("2025 Form 7206 computes the single Schedule C plan's lines 1-14", () => {
+test("2025 Form 7206 computes the single Schedule C plan's lines 1-14", () => {
   assertEquals(calculateSingleScheduleCForm7206(source), {
     line1: 12_000,
     line2: 0,
@@ -127,7 +128,7 @@ Deno.test("2025 Form 7206 computes the single Schedule C plan's lines 1-14", () 
   });
 });
 
-Deno.test("2025 Form 7206 derives eligible premiums month by month", () => {
+test("2025 Form 7206 derives eligible premiums month by month", () => {
   const months = source.premium_months.map((month, index) =>
     index === 0
       ? { ...month, eligible_for_subsidized_employer_plan: true }
@@ -149,7 +150,7 @@ Deno.test("2025 Form 7206 derives eligible premiums month by month", () => {
   assertEquals(lines.line14, 10_800);
 });
 
-Deno.test("2025 Form 7206 premium evidence rejects gaps and unsupported months", () => {
+test("2025 Form 7206 premium evidence rejects gaps and unsupported months", () => {
   assertEquals(
     singleScheduleCPlanSchema.safeParse({
       ...source,
@@ -232,7 +233,7 @@ Deno.test("2025 Form 7206 premium evidence rejects gaps and unsupported months",
   );
 });
 
-Deno.test("2025 Form 7206 helper caps the deduction at earned income", () => {
+test("2025 Form 7206 helper caps the deduction at earned income", () => {
   const lines = calculateSingleScheduleCForm7206({
     ...source,
     premium_months: source.premium_months.map((month) => ({
@@ -243,7 +244,7 @@ Deno.test("2025 Form 7206 helper caps the deduction at earned income", () => {
   assertEquals(lines.line14, 45_000);
 });
 
-Deno.test("2025 Form 7206 does not trust asserted premium eligibility or spouse ownership", () => {
+test("2025 Form 7206 does not trust asserted premium eligibility or spouse ownership", () => {
   assertThrows(
     () =>
       form7206.compute(
@@ -269,7 +270,7 @@ Deno.test("2025 Form 7206 does not trust asserted premium eligibility or spouse 
   );
 });
 
-Deno.test("2025 Form 7206 rejects unsupported or unsourced plans", () => {
+test("2025 Form 7206 rejects unsupported or unsourced plans", () => {
   assertThrows(
     () =>
       inputSchema.parse({
@@ -357,7 +358,7 @@ const filingPending = {
   f1040: { line10_adjustments: scheduleSEOutput + 12_000 },
 };
 
-Deno.test("2025 Form 7206 accepts a source-reconciled one-plan return", () => {
+test("2025 Form 7206 accepts a source-reconciled one-plan return", () => {
   const result = form7206.compute({ taxYear: 2025, formType: "f1040" }, {
     single_schedule_c_plan: filingSource,
     schedule_c_source: {
@@ -419,7 +420,7 @@ Deno.test("2025 Form 7206 accepts a source-reconciled one-plan return", () => {
   );
 });
 
-Deno.test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", () => {
+test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", () => {
   assertThrows(
     () =>
       form7206.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -533,7 +534,7 @@ Deno.test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", 
   );
 });
 
-Deno.test("Publication 974 Marketplace deduction uses the identified Schedule C and Schedule SE values", () => {
+test("Publication 974 Marketplace deduction uses the identified Schedule C and Schedule SE values", () => {
   const pub974 = {
     worksheet_w: {
       specified_policy_months: Array.from({ length: 12 }, (_, index) => ({

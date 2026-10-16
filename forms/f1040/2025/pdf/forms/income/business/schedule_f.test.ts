@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -31,7 +32,7 @@ const farm = {
   line16_feed: 500,
 };
 
-Deno.test("Schedule F PDF prints the spouse proprietor and income on the correct IRS lines", async () => {
+test("Schedule F PDF prints the spouse proprietor and income on the correct IRS lines", async () => {
   const [fields] = scheduleFPdf.instances!({ schedule_fs: [farm] }, jointFiler);
   const bytes = await fillFormPdf(
     scheduleFPdf,
@@ -57,7 +58,7 @@ Deno.test("Schedule F PDF prints the spouse proprietor and income on the correct
   assertEquals(field("line34_net_profit"), `${prefix}f1_60[0]`);
 });
 
-Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
+test("Schedule F PDF rejects an unnamed joint proprietor", () => {
   assertThrows(
     () =>
       scheduleFPdf.instances!({
@@ -68,7 +69,7 @@ Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
   );
 });
 
-Deno.test("Schedule F PDF requires line F and conditional line G answers", async () => {
+test("Schedule F PDF requires line F and conditional line G answers", async () => {
   assertThrows(
     () =>
       scheduleFPdf.instances!({
@@ -117,7 +118,7 @@ Deno.test("Schedule F PDF requires line F and conditional line G answers", async
   assertEquals(filled.getPageCount(), 2);
 });
 
-Deno.test("Schedule F PDF needs a visible line 32 expense description", () => {
+test("Schedule F PDF needs a visible line 32 expense description", () => {
   assertThrows(() =>
     scheduleFPdf.instances!({
       schedule_fs: [{
@@ -128,7 +129,7 @@ Deno.test("Schedule F PDF needs a visible line 32 expense description", () => {
   );
 });
 
-Deno.test("Schedule F PDF requires a line 36 answer for a farm loss", () => {
+test("Schedule F PDF requires a line 36 answer for a farm loss", () => {
   assertThrows(
     () =>
       scheduleFPdf.instances!({
@@ -144,7 +145,7 @@ Deno.test("Schedule F PDF requires a line 36 answer for a farm loss", () => {
   );
 });
 
-Deno.test("Schedule F accrual PDF prints Part III income and inventory on page 2", async () => {
+test("Schedule F accrual PDF prints Part III income and inventory on page 2", async () => {
   const accrualFarm = {
     ...farm,
     accounting_method: "accrual" as const,
@@ -186,7 +187,7 @@ Deno.test("Schedule F accrual PDF prints Part III income and inventory on page 2
   );
 });
 
-Deno.test("Schedule F PDF prints labor reduced by its linked Form 5884 allocation", async () => {
+test("Schedule F PDF prints labor reduced by its linked Form 5884 allocation", async () => {
   const wageSource = {
     subject_to_passive_activity_limit: false,
     f5884s: [{
@@ -257,7 +258,7 @@ Deno.test("Schedule F PDF prints labor reduced by its linked Form 5884 allocatio
   );
 });
 
-Deno.test("Schedule F PDF carries excess line 32 expenses on a described continuation", async () => {
+test("Schedule F PDF carries excess line 32 expenses on a described continuation", async () => {
   const other = Array.from({ length: 8 }, (_, index) => ({
     description: `FARM EXPENSE ${index + 1}`,
     amount: (index + 1) * 10,

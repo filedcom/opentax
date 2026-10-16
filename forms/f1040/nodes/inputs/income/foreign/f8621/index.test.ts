@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
@@ -49,7 +50,7 @@ function compute(items: F8621Item[]) {
   });
 }
 
-Deno.test("Form 8621 validates one holding per item and rejects the old flat amount", () => {
+test("Form 8621 validates one holding per item and rejects the old flat amount", () => {
   assertEquals(
     f8621.inputSchema.safeParse({ f8621s: [minimalItem()] }).success,
     true,
@@ -81,7 +82,7 @@ Deno.test("Form 8621 validates one holding per item and rejects the old flat amo
   );
 });
 
-Deno.test("Form 8621 MTM sold block is separate from year-end stock and ordinary loss is capped", () => {
+test("Form 8621 MTM sold block is separate from year-end stock and ordinary loss is capped", () => {
   const sold = {
     transaction_id: "sale-1",
     disposition_date: "2025-07-15",
@@ -136,7 +137,7 @@ Deno.test("Form 8621 MTM sold block is separate from year-end stock and ordinary
   );
 });
 
-Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Schedule 2 line 17p", () => {
+test("Form 8621 Part V puts prior-year tax on line 16 and interest on Schedule 2 line 17p", () => {
   const result = compute([minimalItem({ excess_events: [excessEvent()] })]);
   assertEquals(
     fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax,
@@ -164,7 +165,7 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
   );
 });
 
-Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => {
+test("Form 8621 routes taxable nonexcess distribution to dividends", () => {
   const event = excessEvent();
   if (event.kind !== ExcessEventKind.Distribution) {
     throw new Error("distribution fixture required");
@@ -199,7 +200,7 @@ Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => 
   );
 });
 
-Deno.test("Form 8621 combines separate holdings without losing their filed documents", () => {
+test("Form 8621 combines separate holdings without losing their filed documents", () => {
   const result = compute([
     minimalItem({
       company_name: "Fund A",
@@ -229,7 +230,7 @@ Deno.test("Form 8621 combines separate holdings without losing their filed docum
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 2);
 });
 
-Deno.test("Form 8621 rejects duplicate PFIC identifiers in separate filings", () => {
+test("Form 8621 rejects duplicate PFIC identifiers in separate filings", () => {
   assertThrows(
     () =>
       compute([
@@ -241,7 +242,7 @@ Deno.test("Form 8621 rejects duplicate PFIC identifiers in separate filings", ()
   );
 });
 
-Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respective lines", () => {
+test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respective lines", () => {
   const result = compute([
     minimalItem({
       company_name: "PFIC A",
@@ -285,7 +286,7 @@ Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respectiv
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 3);
 });
 
-Deno.test("Form 8621 QEF ordinary income and net long-term gain use different return lines", () => {
+test("Form 8621 QEF ordinary income and net long-term gain use different return lines", () => {
   const result = compute([minimalItem({
     regime: PficRegime.QEF,
     qef_ordinary_income: 5_000,
@@ -295,7 +296,7 @@ Deno.test("Form 8621 QEF ordinary income and net long-term gain use different re
   assertEquals(fieldsOf(result.outputs, schedule_d)?.line_11_qef_lt, 2_000);
 });
 
-Deno.test("Form 8621 QEF requires both pro rata income facts, including explicit zero", () => {
+test("Form 8621 QEF requires both pro rata income facts, including explicit zero", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -317,7 +318,7 @@ Deno.test("Form 8621 QEF requires both pro rata income facts, including explicit
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion", () => {
+test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion", () => {
   const result = compute([minimalItem({
     regime: PficRegime.QEF,
     qef_ordinary_income: 5_000,
@@ -340,7 +341,7 @@ Deno.test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion",
   );
 });
 
-Deno.test("Form 8621 mark-to-market gain comes from value less basis", () => {
+test("Form 8621 mark-to-market gain comes from value less basis", () => {
   const result = compute([minimalItem({
     regime: PficRegime.MTM,
     fmv_at_year_end: 15_000,
@@ -349,7 +350,7 @@ Deno.test("Form 8621 mark-to-market gain comes from value less basis", () => {
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_form8621_mtm, 5_000);
 });
 
-Deno.test("Form 8621 mark-to-market loss is limited to unreversed inclusions", () => {
+test("Form 8621 mark-to-market loss is limited to unreversed inclusions", () => {
   const result = compute([minimalItem({
     regime: PficRegime.MTM,
     fmv_at_year_end: 7_000,
@@ -377,7 +378,7 @@ Deno.test("Form 8621 mark-to-market loss is limited to unreversed inclusions", (
   );
 });
 
-Deno.test("Form 8621 rejects Part V events on a different regime", () => {
+test("Form 8621 rejects Part V events on a different regime", () => {
   assertThrows(
     () =>
       compute([minimalItem({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
@@ -43,7 +44,7 @@ const w2 = {
 const fields = { line1h_other_earned: 3_500 };
 const pending = { w2, agi_aggregator: { line1h_other_earned: [3_500] } };
 
-Deno.test("Form 1040 native line 1h retains the reviewed W-2 code D excess", () => {
+test("Form 1040 native line 1h retains the reviewed W-2 code D excess", () => {
   const xml = irs1040.build(fields, { pending, filer });
   assertStringIncludes(
     xml,
@@ -51,7 +52,7 @@ Deno.test("Form 1040 native line 1h retains the reviewed W-2 code D excess", () 
   );
 });
 
-Deno.test("Form 1040 native line 1h rejects an unsourced positive amount", () => {
+test("Form 1040 native line 1h rejects an unsourced positive amount", () => {
   assertThrows(
     () => irs1040.build({ line1h_other_earned: 500 }),
     Error,
@@ -59,7 +60,7 @@ Deno.test("Form 1040 native line 1h rejects an unsourced positive amount", () =>
   );
 });
 
-Deno.test("Form 1040 native line 1h rejects changed excess, wrong owner, and mixed source", () => {
+test("Form 1040 native line 1h rejects changed excess, wrong owner, and mixed source", () => {
   assertThrows(
     () => irs1040.build({ line1h_other_earned: 3_501 }, { pending, filer }),
     Error,

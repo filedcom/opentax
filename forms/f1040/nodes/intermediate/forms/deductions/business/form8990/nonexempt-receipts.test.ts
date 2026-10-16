@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { proveNonexemptPriorReceipts } from "./nonexempt-receipts.ts";
 import { stageProvisionalScheduleCInterest } from "./two-stage.ts";
@@ -26,7 +27,7 @@ const filed = [2022, 2023, 2024].map((taxYear) => ({
   filed_line3_net_receipts: 32_000_000,
 }));
 
-Deno.test("2025 Form 8990 prior filed Schedule C receipts establish a lower bound above threshold", () => {
+test("2025 Form 8990 prior filed Schedule C receipts establish a lower bound above threshold", () => {
   const proof = proveNonexemptPriorReceipts(provisional, filed, "123456789");
   assertEquals(
     proof.averagePriorThreeYearScheduleCNetReceiptsLowerBound,
@@ -38,7 +39,7 @@ Deno.test("2025 Form 8990 prior filed Schedule C receipts establish a lower boun
   );
 });
 
-Deno.test("2025 Form 8990 prior receipts reject incomplete or below-threshold sources", () => {
+test("2025 Form 8990 prior receipts reject incomplete or below-threshold sources", () => {
   assertThrows(
     () => proveNonexemptPriorReceipts(provisional, filed.slice(0, 2), "123456789"),
     Error,
@@ -72,7 +73,7 @@ Deno.test("2025 Form 8990 prior receipts reject incomplete or below-threshold so
   );
 });
 
-Deno.test("2025 Form 8990 rejects gross line 1 above threshold when line 2 lowers net receipts", () => {
+test("2025 Form 8990 rejects gross line 1 above threshold when line 2 lowers net receipts", () => {
   assertThrows(
     () =>
       proveNonexemptPriorReceipts(
@@ -90,7 +91,7 @@ Deno.test("2025 Form 8990 rejects gross line 1 above threshold when line 2 lower
   );
 });
 
-Deno.test("2025 Form 8990 requires reconciled filed lines and full prior tax years", () => {
+test("2025 Form 8990 requires reconciled filed lines and full prior tax years", () => {
   assertThrows(
     () =>
       proveNonexemptPriorReceipts(
@@ -119,7 +120,7 @@ Deno.test("2025 Form 8990 requires reconciled filed lines and full prior tax yea
   );
 });
 
-Deno.test("2025 Form 8990 prior filed Schedule C source must name the current taxpayer", () => {
+test("2025 Form 8990 prior filed Schedule C source must name the current taxpayer", () => {
   assertThrows(
     () => proveNonexemptPriorReceipts(provisional, filed, "987654321"),
     Error,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -11,7 +12,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-form6781-two-section1256-accounts"
 )!;
 
-Deno.test("Form 6781 PDF uses only broker rows bound to its prepared MeF source", async () => {
+test("Form 6781 PDF uses only broker rows bound to its prepared MeF source", async () => {
   const inputs = {
     ...fixture.inputs,
     w2: (fixture.inputs.w2 as Record<string, unknown>[]).map((wage) => ({

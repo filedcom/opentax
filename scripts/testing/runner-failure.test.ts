@@ -1,12 +1,15 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 import { z } from "zod";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { dirname, fromFileUrl, join } from "@std/path";
 
-Deno.test("runner retains terminal failure when a tracked runtime file is missing before discovery", async () => {
-  const root = await Deno.makeTempDir();
+test("runner retains terminal failure when a tracked runtime file is missing before discovery", async () => {
+  const root = await sys.makeTempDir();
   const source = dirname(fromFileUrl(import.meta.url));
   const tooling = join(root, "scripts/testing");
-  await Deno.mkdir(tooling, { recursive: true });
+  await fs.mkdir(tooling, { recursive: true });
   for (
     const name of [
       "./run.ts",
@@ -17,27 +20,27 @@ Deno.test("runner retains terminal failure when a tracked runtime file is missin
       "./skip-policy.json",
     ]
   ) {
-    await Deno.copyFile(join(source, name), join(tooling, name));
+    await fs.copyFile(join(source, name), join(tooling, name));
   }
-  await Deno.copyFile(join(source, "../../deno.json"), join(root, "deno.json"));
-  await Deno.copyFile(join(source, "../../deno.lock"), join(root, "deno.lock"));
-  await Deno.writeTextFile(join(root, ".gitignore"), ".state/research/\n");
-  await Deno.writeTextFile(
+  await fs.copyFile(join(source, "../../deno.json"), join(root, "deno.json"));
+  await fs.copyFile(join(source, "../../deno.lock"), join(root, "deno.lock"));
+  await fs.writeFile(join(root, ".gitignore"), ".state/research/\n");
+  await fs.writeFile(
     join(root, "missing.ts"),
     "export const original = true;\n",
   );
-  const initialized = await new Deno.Command("git", {
+  const initialized = await new sys.Command("git", {
     args: ["init", "-q"],
     cwd: root,
   }).output();
   assertEquals(initialized.code, 0);
-  const staged = await new Deno.Command("git", {
+  const staged = await new sys.Command("git", {
     args: ["add", "missing.ts"],
     cwd: root,
   }).output();
   assertEquals(staged.code, 0);
-  await Deno.remove(join(root, "missing.ts"));
-  const result = await new Deno.Command("deno", {
+  await sys.remove(join(root, "missing.ts"));
+  const result = await new sys.Command("deno", {
     args: [
       "run",
       "--allow-read",
@@ -53,7 +56,7 @@ Deno.test("runner retains terminal failure when a tracked runtime file is missin
   assertEquals(result.code, 1);
   const runs = [];
   for await (
-    const entry of Deno.readDir(join(root, ".state/research/testing"))
+    const entry of sys.readDir(join(root, ".state/research/testing"))
   ) if (entry.isDirectory) runs.push(entry.name);
   assertEquals(runs.length, 1);
   const evidence = join(root, ".state/research/testing", runs[0]);
@@ -61,18 +64,18 @@ Deno.test("runner retains terminal failure when a tracked runtime file is missin
     code: z.literal(1),
     mode: z.literal("preflight"),
     error: z.string(),
-  }).parse(JSON.parse(await Deno.readTextFile(join(evidence, "failure.json"))));
+  }).parse(JSON.parse(await fs.readFile(join(evidence, "failure.json"), "utf8")));
   const final = z.object({ code: z.literal(1), endedAt: z.string().min(1) })
     .parse(
-      JSON.parse(await Deno.readTextFile(join(evidence, "final-status.json"))),
+      JSON.parse(await fs.readFile(join(evidence, "final-status.json"), "utf8")),
     );
   assertStringIncludes(failure.error, "missing.ts");
   assertEquals(final.code, 1);
-  await Deno.writeFile(join(evidence, "runner.stdout.log"), result.stdout, {
+  await sys.writeBytes(join(evidence, "runner.stdout.log"), result.stdout, {
     createNew: true,
     mode: 0o600,
   });
-  await Deno.writeFile(join(evidence, "runner.stderr.log"), result.stderr, {
+  await sys.writeBytes(join(evidence, "runner.stderr.log"), result.stderr, {
     createNew: true,
     mode: 0o600,
   });

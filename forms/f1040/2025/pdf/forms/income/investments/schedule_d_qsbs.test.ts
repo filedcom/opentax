@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { scheduleDPdf } from "./schedule_d.ts";
 
-Deno.test("Schedule D PDF does not omit unsupported section 1202 source facts", () => {
+test("Schedule D PDF does not omit unsupported section 1202 source facts", () => {
   assertThrows(
     () => scheduleDPdf.projectFields?.({ box2c_qsbs: 500 }, {}),
     Error,

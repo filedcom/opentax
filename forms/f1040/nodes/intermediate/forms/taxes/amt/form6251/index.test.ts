@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
@@ -209,7 +210,7 @@ const amtBasisCapitalAudit = {
   has_other_capital_activity: false,
 };
 
-Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part III", () => {
+test("form6251: identified Form 8949 basis gain refigures line 2k and Part III", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     regular_tax_income: 200_000,
@@ -235,7 +236,7 @@ Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part 
   assertEquals(filed?.fields.line27, 150_000);
 });
 
-Deno.test("form6251: audited long-term basis gain and 1099-DIV qualified dividends share Part III", () => {
+test("form6251: audited long-term basis gain and 1099-DIV qualified dividends share Part III", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     regular_tax_income: 200_000,
@@ -276,7 +277,7 @@ Deno.test("form6251: audited long-term basis gain and 1099-DIV qualified dividen
   );
 });
 
-Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedule D reconciliation", () => {
+test("form6251: Form 8949 AMT basis requires intact rows and regular Schedule D reconciliation", () => {
   const base = {
     filing_status: FilingStatus.Single,
     regular_tax_income: 200_000,
@@ -335,7 +336,7 @@ Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedu
   );
 });
 
-Deno.test("form6251: identified short-term AMT basis gain changes line 2k without Part III", () => {
+test("form6251: identified short-term AMT basis gain changes line 2k without Part III", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -368,7 +369,7 @@ Deno.test("form6251: identified short-term AMT basis gain changes line 2k withou
   assertEquals(filed?.fields.line15, undefined);
 });
 
-Deno.test("form6251: audited short-term basis loss below both deduction limits reaches line 2k", () => {
+test("form6251: audited short-term basis loss below both deduction limits reaches line 2k", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -416,7 +417,7 @@ Deno.test("form6251: audited short-term basis loss below both deduction limits r
   );
 });
 
-Deno.test("form6251: audited short- and long-term losses within both deduction limits reach line 2k", () => {
+test("form6251: audited short- and long-term losses within both deduction limits reach line 2k", () => {
   const input = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -518,7 +519,7 @@ Deno.test("form6251: audited short- and long-term losses within both deduction l
   );
 });
 
-Deno.test("form6251: audited long-term basis loss below both deduction limits reaches line 2k", () => {
+test("form6251: audited long-term basis loss below both deduction limits reaches line 2k", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -563,7 +564,7 @@ Deno.test("form6251: audited long-term basis loss below both deduction limits re
   );
 });
 
-Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
+test("form6251: long-term AMT loss limit and mixed terms stop", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -660,7 +661,7 @@ Deno.test("form6251: long-term AMT loss limit and mixed terms stop", () => {
   );
 });
 
-Deno.test("form6251: short-term AMT losses crossing either Schedule D limit stop", () => {
+test("form6251: short-term AMT losses crossing either Schedule D limit stop", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -723,7 +724,7 @@ Deno.test("form6251: short-term AMT losses crossing either Schedule D limit stop
   );
 });
 
-Deno.test("form6251: a positive short-term AMT basis adjustment does not create preferential capital gain", () => {
+test("form6251: a positive short-term AMT basis adjustment does not create preferential capital gain", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -756,7 +757,7 @@ Deno.test("form6251: a positive short-term AMT basis adjustment does not create 
   assertEquals(filed?.fields.line15, undefined);
 });
 
-Deno.test("form6251: audited short-term AMT basis and qualified dividends use Part III without capital gain", () => {
+test("form6251: audited short-term AMT basis and qualified dividends use Part III without capital gain", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -816,7 +817,7 @@ Deno.test("form6251: audited short-term AMT basis and qualified dividends use Pa
   );
 });
 
-Deno.test("form6251: audited mixed Form 8949 basis gains keep short-term gain out of Part III", () => {
+test("form6251: audited mixed Form 8949 basis gains keep short-term gain out of Part III", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -884,7 +885,7 @@ Deno.test("form6251: audited mixed Form 8949 basis gains keep short-term gain ou
   );
 });
 
-Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part III", () => {
+test("form6251: audited short-term losses offset long-term AMT gain in Part III", () => {
   const input = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -984,7 +985,7 @@ Deno.test("form6251: audited short-term losses offset long-term AMT gain in Part
   );
 });
 
-Deno.test("form6251: audited long-term losses offset short-term gain without Part III", () => {
+test("form6251: audited long-term losses offset short-term gain without Part III", () => {
   const input = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1055,7 +1056,7 @@ Deno.test("form6251: audited long-term losses offset short-term gain without Par
   );
 });
 
-Deno.test("form6251: short-term AMT basis rejects unaudited capital activity and Form 4952", () => {
+test("form6251: short-term AMT basis rejects unaudited capital activity and Form 4952", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1136,7 +1137,7 @@ Deno.test("form6251: short-term AMT basis rejects unaudited capital activity and
   );
 });
 
-Deno.test("form6251: trust K-1 code A sums on line 2j and AMTI", () => {
+test("form6251: trust K-1 code A sums on line 2j and AMTI", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1148,7 +1149,7 @@ Deno.test("form6251: trust K-1 code A sums on line 2j and AMTI", () => {
   assertEquals(filed?.fields.amti, 202_200);
 });
 
-Deno.test("form6251: negative trust K-1 code A can require a zero-AMT filing", () => {
+test("form6251: negative trust K-1 code A can require a zero-AMT filing", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1162,7 +1163,7 @@ Deno.test("form6251: negative trust K-1 code A can require a zero-AMT filing", (
   assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
 });
 
-Deno.test("form6251: negative trust K-1 code A with qualified dividends refigures the filing test", () => {
+test("form6251: negative trust K-1 code A with qualified dividends refigures the filing test", () => {
   const base = {
     filing_status: "single" as const,
     regular_tax_income: 100_000,
@@ -1215,7 +1216,7 @@ Deno.test("form6251: negative trust K-1 code A with qualified dividends refigure
 
 // ─── No AMT owed (AMT < regular tax) ─────────────────────────────────────────
 
-Deno.test("form6251: no output when AMT is less than regular tax", () => {
+test("form6251: no output when AMT is less than regular tax", () => {
   // Single filer, modest AMTI — regular tax exceeds tentative minimum tax
   // AMTI = $80,000; exemption = $88,100 → AMTI fully exempt → line6 = $0
   // TMT = $0 → AMT = max(0, 0 − regular_tax) = 0
@@ -1227,7 +1228,7 @@ Deno.test("form6251: no output when AMT is less than regular tax", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form6251: direct ATNOLD stops without regular and AMT NOL source refigures", () => {
+test("form6251: direct ATNOLD stops without regular and AMT NOL source refigures", () => {
   for (const adjustment of [1_000, -1_000, -180_000]) {
     assertThrows(
       () =>
@@ -1243,7 +1244,7 @@ Deno.test("form6251: direct ATNOLD stops without regular and AMT NOL source refi
   }
 });
 
-Deno.test("form6251: taxable state income-tax refund reduces line 4 through line 2b", () => {
+test("form6251: taxable state income-tax refund reduces line 4 through line 2b", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1258,7 +1259,7 @@ Deno.test("form6251: taxable state income-tax refund reduces line 4 through line
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 18_834);
 });
 
-Deno.test("form6251: Schedule C AMT depletion difference enters line 2d and AMTI", () => {
+test("form6251: Schedule C AMT depletion difference enters line 2d and AMTI", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1278,7 +1279,7 @@ Deno.test("form6251: Schedule C AMT depletion difference enters line 2d and AMTI
   assertEquals(xml.includes("<DepletionAmt>400</DepletionAmt>"), true);
 });
 
-Deno.test("form6251: circulation cost difference enters line 2o and AMTI", () => {
+test("form6251: circulation cost difference enters line 2o and AMTI", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1294,7 +1295,7 @@ Deno.test("form6251: circulation cost difference enters line 2o and AMTI", () =>
   );
 });
 
-Deno.test("form6251: negative circulation adjustment can require zero-AMT filing", () => {
+test("form6251: negative circulation adjustment can require zero-AMT filing", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1307,7 +1308,7 @@ Deno.test("form6251: negative circulation adjustment can require zero-AMT filing
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: negative line 2d can require a filed zero-AMT form", () => {
+test("form6251: negative line 2d can require a filed zero-AMT form", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1321,7 +1322,7 @@ Deno.test("form6251: negative line 2d can require a filed zero-AMT form", () => 
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: line 2b refund alone does not activate the lines 2c-through-3 filing test", () => {
+test("form6251: line 2b refund alone does not activate the lines 2c-through-3 filing test", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1338,7 +1339,7 @@ Deno.test("form6251: line 2b refund alone does not activate the lines 2c-through
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {
+test("form6251: Form 8911 claim files the form with zero AMT", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 80_000,
@@ -1356,7 +1357,7 @@ Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {
   );
 });
 
-Deno.test("form6251: Form 3800 source receives zero-TMT evidence and files the form", () => {
+test("form6251: Form 3800 source receives zero-TMT evidence and files the form", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 80_000,
@@ -1373,7 +1374,7 @@ Deno.test("form6251: Form 3800 source receives zero-TMT evidence and files the f
   assertEquals(filed?.fields.must_file_for_credit, true);
 });
 
-Deno.test("form6251: Form 8912 receives zero-AMT evidence without sharing Form 8911's signal", () => {
+test("form6251: Form 8912 receives zero-AMT evidence without sharing Form 8911's signal", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 80_000,
@@ -1392,7 +1393,7 @@ Deno.test("form6251: Form 8912 receives zero-AMT evidence without sharing Form 8
   );
 });
 
-Deno.test("form6251: no output when tentative minimum tax equals regular tax", () => {
+test("form6251: no output when tentative minimum tax equals regular tax", () => {
   // Single: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = floor($111,900 × 0.26) = $29,094; regular_tax = $29,094
   const result = compute({
@@ -1403,7 +1404,7 @@ Deno.test("form6251: no output when tentative minimum tax equals regular tax", (
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form6251: negative line 2c files when removing it would make line 7 exceed line 10", () => {
+test("form6251: negative line 2c files when removing it would make line 7 exceed line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1419,7 +1420,7 @@ Deno.test("form6251: negative line 2c files when removing it would make line 7 e
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: negative line 2c does not file when counterfactual line 7 stays below line 10", () => {
+test("form6251: negative line 2c does not file when counterfactual line 7 stays below line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1430,7 +1431,7 @@ Deno.test("form6251: negative line 2c does not file when counterfactual line 7 s
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form6251: domestic qualified dividends use the Part III negative-adjustment counterfactual", () => {
+test("form6251: domestic qualified dividends use the Part III negative-adjustment counterfactual", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1447,7 +1448,7 @@ Deno.test("form6251: domestic qualified dividends use the Part III negative-adju
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: domestic preferential counterfactual does not file below line 10", () => {
+test("form6251: domestic preferential counterfactual does not file below line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1460,7 +1461,7 @@ Deno.test("form6251: domestic preferential counterfactual does not file below li
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form6251: negative circulation costs with qualified dividends retain the zero-AMT form", () => {
+test("form6251: negative circulation costs with qualified dividends retain the zero-AMT form", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1490,7 +1491,7 @@ Deno.test("form6251: negative circulation costs with qualified dividends retain 
   assertEquals(form6251Pdf.includeWhen?.(pdf ?? {}), true);
 });
 
-Deno.test("form6251: circulation-cost preferential counterfactual respects line 10 and source bounds", () => {
+test("form6251: circulation-cost preferential counterfactual respects line 10 and source bounds", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1516,7 +1517,7 @@ Deno.test("form6251: circulation-cost preferential counterfactual respects line 
   );
 });
 
-Deno.test("form6251: domestic preferential counterfactual still blocks unmodeled capital-gain excess", () => {
+test("form6251: domestic preferential counterfactual still blocks unmodeled capital-gain excess", () => {
   assertThrows(
     () =>
       compute({
@@ -1533,7 +1534,7 @@ Deno.test("form6251: domestic preferential counterfactual still blocks unmodeled
   );
 });
 
-Deno.test("form6251: domestic preferential counterfactual does not absorb another AMT adjustment", () => {
+test("form6251: domestic preferential counterfactual does not absorb another AMT adjustment", () => {
   assertThrows(
     () =>
       compute({
@@ -1566,7 +1567,7 @@ Deno.test("form6251: domestic preferential counterfactual does not absorb anothe
   );
 });
 
-Deno.test("form6251: negative line 2c files under the ordinary Form 2555 counterfactual", () => {
+test("form6251: negative line 2c files under the ordinary Form 2555 counterfactual", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1583,7 +1584,7 @@ Deno.test("form6251: negative line 2c files under the ordinary Form 2555 counter
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: Form 2555 qualified dividends refigure negative-adjustment filing line 7", () => {
+test("form6251: Form 2555 qualified dividends refigure negative-adjustment filing line 7", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1602,7 +1603,7 @@ Deno.test("form6251: Form 2555 qualified dividends refigure negative-adjustment 
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
-Deno.test("form6251: Form 2555 preferential counterfactual does not file below line 10", () => {
+test("form6251: Form 2555 preferential counterfactual does not file below line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1617,7 +1618,7 @@ Deno.test("form6251: Form 2555 preferential counterfactual does not file below l
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form6251: Form 2555 preferential counterfactual needs taxable-income source", () => {
+test("form6251: Form 2555 preferential counterfactual needs taxable-income source", () => {
   assertThrows(
     () =>
       compute({
@@ -1635,7 +1636,7 @@ Deno.test("form6251: Form 2555 preferential counterfactual needs taxable-income 
   );
 });
 
-Deno.test("form6251: Form 2555 preferential counterfactual needs worksheet line 2b", () => {
+test("form6251: Form 2555 preferential counterfactual needs worksheet line 2b", () => {
   assertThrows(
     () =>
       compute({
@@ -1653,7 +1654,7 @@ Deno.test("form6251: Form 2555 preferential counterfactual needs worksheet line 
   );
 });
 
-Deno.test("form6251: Form 2555 special-rate gain counterfactual remains blocked", () => {
+test("form6251: Form 2555 special-rate gain counterfactual remains blocked", () => {
   assertThrows(
     () =>
       compute({
@@ -1673,7 +1674,7 @@ Deno.test("form6251: Form 2555 special-rate gain counterfactual remains blocked"
   );
 });
 
-Deno.test("form6251: ordinary Form 2555 counterfactual does not file below line 10", () => {
+test("form6251: ordinary Form 2555 counterfactual does not file below line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1686,7 +1687,7 @@ Deno.test("form6251: ordinary Form 2555 counterfactual does not file below line 
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form6251: Form 2555 counterfactual refigures the 26-to-28-percent boundary", () => {
+test("form6251: Form 2555 counterfactual refigures the 26-to-28-percent boundary", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 100_000,
@@ -1701,7 +1702,7 @@ Deno.test("form6251: Form 2555 counterfactual refigures the 26-to-28-percent bou
   assertEquals(filed?.fields.tentative_tax, 0);
 });
 
-Deno.test("form6251: ordinary Form 2555 counterfactual needs sourced disallowed deductions", () => {
+test("form6251: ordinary Form 2555 counterfactual needs sourced disallowed deductions", () => {
   assertThrows(
     () =>
       compute({
@@ -1717,7 +1718,7 @@ Deno.test("form6251: ordinary Form 2555 counterfactual needs sourced disallowed 
   );
 });
 
-Deno.test("form6251: mixed other adjustments cannot silently bypass the negative-adjustment filing test", () => {
+test("form6251: mixed other adjustments cannot silently bypass the negative-adjustment filing test", () => {
   assertThrows(
     () =>
       compute({
@@ -1731,7 +1732,7 @@ Deno.test("form6251: mixed other adjustments cannot silently bypass the negative
   );
 });
 
-Deno.test("form6251: a filing trigger does not make mixed adjustments safe to print on line 3", () => {
+test("form6251: a filing trigger does not make mixed adjustments safe to print on line 3", () => {
   for (const adjustment of [-20_000, 20_000]) {
     assertThrows(
       () =>
@@ -1750,7 +1751,7 @@ Deno.test("form6251: a filing trigger does not make mixed adjustments safe to pr
 
 // ─── AMT owed calculation ─────────────────────────────────────────────────────
 
-Deno.test("form6251: AMT owed routes to schedule2 line2_amt", () => {
+test("form6251: AMT owed routes to schedule2 line2_amt", () => {
   // Single: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = floor($111,900 × 0.26) = $29,094; regular_tax = $15,000
   // AMT = $29,094 − $15,000 = $14,094
@@ -1762,7 +1763,7 @@ Deno.test("form6251: AMT owed routes to schedule2 line2_amt", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
-Deno.test("form6251: line 10 combines Form 4972, Schedule 2 line 1z, and Schedule 3 line 1", () => {
+test("form6251: line 10 combines Form 4972, Schedule 2 line 1z, and Schedule 3 line 1", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1776,7 +1777,7 @@ Deno.test("form6251: line 10 combines Form 4972, Schedule 2 line 1z, and Schedul
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_194);
 });
 
-Deno.test("form6251: line 10 subtracts a negative Form 8978 line 14", () => {
+test("form6251: line 10 subtracts a negative Form 8978 line 14", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1788,7 +1789,7 @@ Deno.test("form6251: line 10 subtracts a negative Form 8978 line 14", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 14_594);
 });
 
-Deno.test("form6251: AMT owed with ISO adjustment", () => {
+test("form6251: AMT owed with ISO adjustment", () => {
   // Single: regular income $150,000, ISO adjustment $100,000
   // AMTI = $250,000; exemption = $88,100; line6 = $161,900
   // TMT = floor($161,900 × 0.26) = $42,094; regular_tax = $25,000
@@ -1802,7 +1803,7 @@ Deno.test("form6251: AMT owed with ISO adjustment", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 17_094);
 });
 
-Deno.test("form6251: Part III zero-rate gain uses regular-tax worksheet line 5", () => {
+test("form6251: Part III zero-rate gain uses regular-tax worksheet line 5", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 20_000,
@@ -1822,7 +1823,7 @@ Deno.test("form6251: Part III zero-rate gain uses regular-tax worksheet line 5",
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 21_494);
 });
 
-Deno.test("form6251: Part III Schedule D branch handles 25% and 28% gain", () => {
+test("form6251: Part III Schedule D branch handles 25% and 28% gain", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1844,7 +1845,7 @@ Deno.test("form6251: Part III Schedule D branch handles 25% and 28% gain", () =>
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_034);
 });
 
-Deno.test("form6251: Form 4952 election reduces preferential income in Part III", () => {
+test("form6251: Form 4952 election reduces preferential income in Part III", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1861,7 +1862,7 @@ Deno.test("form6251: Form 4952 election reduces preferential income in Part III"
   assertEquals(filed?.fields.line27, 175_000);
 });
 
-Deno.test("form6251: AMT Form 4952 election must fit the stated preferential-income pools", () => {
+test("form6251: AMT Form 4952 election must fit the stated preferential-income pools", () => {
   const base = {
     filing_status: "single" as const,
     regular_tax_income: 200_000,
@@ -1915,7 +1916,7 @@ Deno.test("form6251: AMT Form 4952 election must fit the stated preferential-inc
   );
 });
 
-Deno.test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", () => {
+test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", () => {
   const itemized = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1949,7 +1950,7 @@ Deno.test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", ()
   assertEquals(standardForm?.fields.line2c_investment_interest, undefined);
 });
 
-Deno.test("form6251: private-activity-bond interest from 1099-INT and 1099-DIV adds on line 2g", () => {
+test("form6251: private-activity-bond interest from 1099-INT and 1099-DIV adds on line 2g", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -1962,7 +1963,7 @@ Deno.test("form6251: private-activity-bond interest from 1099-INT and 1099-DIV a
   assertEquals(filed?.fields.amti, 200_500);
 });
 
-Deno.test("form6251: Form 2555 worksheet requires an explicit line 2b fact", () => {
+test("form6251: Form 2555 worksheet requires an explicit line 2b fact", () => {
   assertThrows(
     () =>
       compute({
@@ -1977,7 +1978,7 @@ Deno.test("form6251: Form 2555 worksheet requires an explicit line 2b fact", () 
   );
 });
 
-Deno.test("form6251: Form 2555 stacks ordinary income across the AMT 26% bracket", () => {
+test("form6251: Form 2555 stacks ordinary income across the AMT 26% bracket", () => {
   // Line 6 = $300,000 - $88,100 = $211,900.
   // Worksheet 2c = $100,000; line 3 = $311,900.
   // Worksheet 4 = $82,550; line 5 = $26,000; line 7 = $56,550.
@@ -1993,7 +1994,7 @@ Deno.test("form6251: Form 2555 stacks ordinary income across the AMT 26% bracket
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 16_550);
 });
 
-Deno.test("form6251: Form 2555 worksheet subtracts denied deductions before stacking", () => {
+test("form6251: Form 2555 worksheet subtracts denied deductions before stacking", () => {
   // Worksheet line 2c = $100,000 - $40,000 = $60,000.
   // Tax on $271,900 is $71,350; tax on $60,000 is $15,600.
   const result = compute({
@@ -2008,7 +2009,7 @@ Deno.test("form6251: Form 2555 worksheet subtracts denied deductions before stac
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_750);
 });
 
-Deno.test("form6251: Form 2555 line 2b source reaches the AMT worksheet", () => {
+test("form6251: Form 2555 line 2b source reaches the AMT worksheet", () => {
   const ctx = { taxYear: 2025, formType: "f1040" } as const;
   const source = form2555.compute(ctx, {
     filing_details: {
@@ -2075,7 +2076,7 @@ Deno.test("form6251: Form 2555 line 2b source reaches the AMT worksheet", () => 
   );
 });
 
-Deno.test("form6251: Form 2555 worksheet uses the halved MFS bracket", () => {
+test("form6251: Form 2555 worksheet uses the halved MFS bracket", () => {
   const result = compute({
     filing_status: "mfs",
     regular_tax_income: 300_000,
@@ -2088,7 +2089,7 @@ Deno.test("form6251: Form 2555 worksheet uses the halved MFS bracket", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 24_429);
 });
 
-Deno.test("form6251: zero line 6 skips the Form 2555 worksheet", () => {
+test("form6251: zero line 6 skips the Form 2555 worksheet", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 80_000,
@@ -2101,7 +2102,7 @@ Deno.test("form6251: zero line 6 skips the Form 2555 worksheet", () => {
   assertEquals(filed?.fields.line11_amt, 0);
 });
 
-Deno.test("form6251: Form 2555 qualified dividends stack Part III before subtracting excluded-income tax", () => {
+test("form6251: Form 2555 qualified dividends stack Part III before subtracting excluded-income tax", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 300_000,
@@ -2123,7 +2124,7 @@ Deno.test("form6251: Form 2555 qualified dividends stack Part III before subtrac
   );
 });
 
-Deno.test("form6251: Form 2555 AMT gain excess changes Part III preference but not regular-tax lines 20 and 27", () => {
+test("form6251: Form 2555 AMT gain excess changes Part III preference but not regular-tax lines 20 and 27", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 500,
@@ -2146,7 +2147,7 @@ Deno.test("form6251: Form 2555 AMT gain excess changes Part III preference but n
   assertEquals(filed?.fields.line27, 100_000);
 });
 
-Deno.test("form6251: Form 2555 Schedule D special-rate gain without capital gain excess uses Part III", () => {
+test("form6251: Form 2555 Schedule D special-rate gain without capital gain excess uses Part III", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 300_000,
@@ -2171,7 +2172,7 @@ Deno.test("form6251: Form 2555 Schedule D special-rate gain without capital gain
   );
 });
 
-Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Part III, native XML, and PDF fields", () => {
+test("form6251: sourced Form 2555 and matching Form 4952 election reach Part III, native XML, and PDF fields", () => {
   const ctx = { taxYear: 2025, formType: "f1040" } as const;
   const exclusion = form2555.compute(ctx, {
     filing_details: {
@@ -2271,7 +2272,7 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
   );
 });
 
-Deno.test("form6251: Form 2555 and Form 4952 still reject different elections or capital-gain excess", () => {
+test("form6251: Form 2555 and Form 4952 still reject different elections or capital-gain excess", () => {
   const base = {
     filing_status: "single",
     regular_tax_income: 300_000,
@@ -2302,7 +2303,7 @@ Deno.test("form6251: Form 2555 and Form 4952 still reject different elections or
   );
 });
 
-Deno.test("form6251: Form 2555 Schedule D special-rate gain still needs its Part III refigure", () => {
+test("form6251: Form 2555 Schedule D special-rate gain still needs its Part III refigure", () => {
   assertThrows(
     () =>
       compute({
@@ -2320,7 +2321,7 @@ Deno.test("form6251: Form 2555 Schedule D special-rate gain still needs its Part
   );
 });
 
-Deno.test("form6251: AMT owed with depreciation adjustment", () => {
+test("form6251: AMT owed with depreciation adjustment", () => {
   // Single: regular income $200,000, depreciation adjustment $50,000
   // AMTI = $250,000; exemption = $88,100; line6 = $161,900
   // TMT = floor($161,900 × 0.26) = $42,094; regular_tax = $30,000
@@ -2348,7 +2349,7 @@ Deno.test("form6251: AMT owed with depreciation adjustment", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 12_094);
 });
 
-Deno.test("form6251: line 2l needs distinct reviewed post-1998 property deductions", () => {
+test("form6251: line 2l needs distinct reviewed post-1998 property deductions", () => {
   const property = {
     property_id: "machine-1",
     placed_in_service_year: 2021,
@@ -2414,7 +2415,7 @@ Deno.test("form6251: line 2l needs distinct reviewed post-1998 property deductio
 
 // ─── Exemption phase-out ──────────────────────────────────────────────────────
 
-Deno.test("form6251: exemption phases out for high-AMTI single filer", () => {
+test("form6251: exemption phases out for high-AMTI single filer", () => {
   // Single: AMTI = $700,000
   // Phase-out start = $626,350; excess = $73,650
   // Worksheet reduction retains $18,412.50 through subtraction.
@@ -2429,7 +2430,7 @@ Deno.test("form6251: exemption phases out for high-AMTI single filer", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 71_705);
 });
 
-Deno.test("form6251: settle filed exemption after raw quarter-dollar worksheet subtraction", () => {
+test("form6251: settle filed exemption after raw quarter-dollar worksheet subtraction", () => {
   // i6251 worksheet5 multiplies25%; worksheet6 subtracts before filed line5.
   for (
     const [amti, exemption, tentative] of [[700000, 69688, 171705], [
@@ -2454,7 +2455,7 @@ Deno.test("form6251: settle filed exemption after raw quarter-dollar worksheet s
   }
 });
 
-Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out threshold", () => {
+test("form6251: exemption is zero when AMTI exceeds complete phase-out threshold", () => {
   // Single: zero-exemption threshold = $626,350 + 4 × $88,100 = $978,750
   // AMTI = $1,000,000 → exemption = $0 → line6 = $1,000,000
   // TMT = floor($1,000,000 × 0.28 − $4,782) = floor($275,218) = $275,218
@@ -2469,7 +2470,7 @@ Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out thre
 
 // ─── 26% bracket vs 28% bracket ──────────────────────────────────────────────
 
-Deno.test("form6251: 26% rate applies when taxable excess is at or below $239,100 (single)", () => {
+test("form6251: 26% rate applies when taxable excess is at or below $239,100 (single)", () => {
   // Single: AMTI = $300,000; exemption = $88,100; line6 = $211,900
   // $211,900 ≤ $239,100 → TMT = floor($211,900 × 0.26) = $55,094
   // regular_tax = $40,000 → AMT = $15,094
@@ -2481,7 +2482,7 @@ Deno.test("form6251: 26% rate applies when taxable excess is at or below $239,10
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 15_094);
 });
 
-Deno.test("form6251: 28% rate applies when taxable excess exceeds $239,100 (single)", () => {
+test("form6251: 28% rate applies when taxable excess exceeds $239,100 (single)", () => {
   // Single: AMTI = $400,000; exemption = $88,100; line6 = $311,900
   // $311,900 > $239,100 → TMT = floor($311,900 × 0.28 − $4,782)
   //   = floor($87,332 − $4,782) = floor($82,550) = $82,550
@@ -2496,7 +2497,7 @@ Deno.test("form6251: 28% rate applies when taxable excess exceeds $239,100 (sing
 
 // ─── Filing status differences ────────────────────────────────────────────────
 
-Deno.test("form6251: MFJ exemption $137,000 (vs single $88,100)", () => {
+test("form6251: MFJ exemption $137,000 (vs single $88,100)", () => {
   // MFJ: AMTI = $300,000; exemption = $137,000; line6 = $163,000
   // TMT = floor($163,000 × 0.26) = $42,380; regular_tax = $30,000
   // AMT = $12,380
@@ -2508,7 +2509,7 @@ Deno.test("form6251: MFJ exemption $137,000 (vs single $88,100)", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 12_380);
 });
 
-Deno.test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100)", () => {
+test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100)", () => {
   // MFS: AMTI = $300,000; exemption = $68,500; line6 = $231,500
   // $231,500 > $119,550 → TMT = floor($231,500 × 0.28 − $2,391)
   //   = floor($64,820 − $2,391) = floor($62,429) = $62,429
@@ -2521,7 +2522,7 @@ Deno.test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_429);
 });
 
-Deno.test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () => {
+test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () => {
   const result = compute({
     filing_status: "mfs",
     regular_tax_income: 920_350,
@@ -2541,7 +2542,7 @@ Deno.test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () 
   );
 });
 
-Deno.test("form6251: MFS line 4 addition stops at $68,500", () => {
+test("form6251: MFS line 4 addition stops at $68,500", () => {
   const result = compute({
     filing_status: "mfs",
     regular_tax_income: 1_174_350,
@@ -2552,7 +2553,7 @@ Deno.test("form6251: MFS line 4 addition stops at $68,500", () => {
   assertEquals(filed?.fields.tentative_tax, 345_607);
 });
 
-Deno.test("form6251: MFS line 4 addition does not apply at threshold or to single filers", () => {
+test("form6251: MFS line 4 addition does not apply at threshold or to single filers", () => {
   const atThreshold = compute({
     filing_status: "mfs",
     regular_tax_income: 900_350,
@@ -2574,7 +2575,7 @@ Deno.test("form6251: MFS line 4 addition does not apply at threshold or to singl
   );
 });
 
-Deno.test("form6251: HOH uses same exemption as single ($88,100)", () => {
+test("form6251: HOH uses same exemption as single ($88,100)", () => {
   // HOH: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = floor($111,900 × 0.26) = $29,094; regular_tax = $15,000
   // AMT = $14,094
@@ -2586,7 +2587,7 @@ Deno.test("form6251: HOH uses same exemption as single ($88,100)", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
-Deno.test("form6251: QSS uses MFJ exemption amounts ($137,000)", () => {
+test("form6251: QSS uses MFJ exemption amounts ($137,000)", () => {
   // QSS: AMTI = $300,000; exemption = $137,000; line6 = $163,000
   // TMT = floor($163,000 × 0.26) = $42,380; regular_tax = $30,000
   // AMT = $12,380
@@ -2600,7 +2601,7 @@ Deno.test("form6251: QSS uses MFJ exemption amounts ($137,000)", () => {
 
 // ─── AMTFTC reduces AMT ───────────────────────────────────────────────────────
 
-Deno.test("form6251: AMTFTC reduces tentative minimum tax", () => {
+test("form6251: AMTFTC reduces tentative minimum tax", () => {
   // Single: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = $29,094; amtftc = $5,000
   // Line 9 = $29,094 − $5,000 = $24,094; regular_tax = $10,000
@@ -2614,7 +2615,7 @@ Deno.test("form6251: AMTFTC reduces tentative minimum tax", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
-Deno.test("form6251: files when line 7 exceeds line 10 despite zero AMT after AMTFTC", () => {
+test("form6251: files when line 7 exceeds line 10 despite zero AMT after AMTFTC", () => {
   // Single: line 7 = $29,094 > line 10 = $10,000; AMTFTC makes line 11 zero.
   const result = compute({
     filing_status: "single",
@@ -2636,7 +2637,7 @@ Deno.test("form6251: files when line 7 exceeds line 10 despite zero AMT after AM
   );
 });
 
-Deno.test("form6251: AMTFTC does not require filing when line 7 does not exceed line 10", () => {
+test("form6251: AMTFTC does not require filing when line 7 does not exceed line 10", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -2646,7 +2647,7 @@ Deno.test("form6251: AMTFTC does not require filing when line 7 does not exceed 
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form6251: required zero-AMT form leaves line 8 blank when line 10 reaches line 7", () => {
+test("form6251: required zero-AMT form leaves line 8 blank when line 10 reaches line 7", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -2669,7 +2670,7 @@ Deno.test("form6251: required zero-AMT form leaves line 8 blank when line 10 rea
 
 // ─── Other adjustment fields ──────────────────────────────────────────────────
 
-Deno.test("form6251: private activity bond interest increases AMTI", () => {
+test("form6251: private activity bond interest increases AMTI", () => {
   // Single: regular income $200,000, PAB interest $20,000
   // AMTI = $220,000; exemption = $88,100; line6 = $131,900
   // TMT = floor($131,900 × 0.26) = $34,294; regular_tax = $15,000
@@ -2683,7 +2684,7 @@ Deno.test("form6251: private activity bond interest increases AMTI", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
 });
 
-Deno.test("form6251: sourced ISO adjustment is included in AMTI", () => {
+test("form6251: sourced ISO adjustment is included in AMTI", () => {
   // Single: regular income $200,000, ISO adjustment $30,000
   // AMTI = $230,000; exemption = $88,100; line6 = $141,900
   // TMT = floor($141,900 × 0.26) = $36,894; regular_tax = $20,000
@@ -2699,7 +2700,7 @@ Deno.test("form6251: sourced ISO adjustment is included in AMTI", () => {
 
 // ─── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("form6251: throws on invalid filing_status", () => {
+test("form6251: throws on invalid filing_status", () => {
   assertThrows(() => {
     compute({
       filing_status: "invalid",
@@ -2709,7 +2710,7 @@ Deno.test("form6251: throws on invalid filing_status", () => {
   });
 });
 
-Deno.test("form6251: signed line 1b can be negative", () => {
+test("form6251: signed line 1b can be negative", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: -1,
@@ -2718,7 +2719,7 @@ Deno.test("form6251: signed line 1b can be negative", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form6251: throws on negative regular_tax", () => {
+test("form6251: throws on negative regular_tax", () => {
   assertThrows(() => {
     compute({
       filing_status: "single",
@@ -2730,7 +2731,7 @@ Deno.test("form6251: throws on negative regular_tax", () => {
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("form6251: either PAB source channel contributes to line 2g", () => {
+test("form6251: either PAB source channel contributes to line 2g", () => {
   const via_primary = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -2749,7 +2750,7 @@ Deno.test("form6251: either PAB source channel contributes to line 2g", () => {
   );
 });
 
-Deno.test("form6251: distinct PAB source channels add on line 2g", () => {
+test("form6251: distinct PAB source channels add on line 2g", () => {
   // 1099-DIV and 1099-INT/OID amounts are separate source channels.
   const result = compute({
     filing_status: "single",
@@ -2763,7 +2764,7 @@ Deno.test("form6251: distinct PAB source channels add on line 2g", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 20_594);
 });
 
-Deno.test("form6251: multiple 1099 and child PAB deposits accumulate on line 2g", () => {
+test("form6251: multiple 1099 and child PAB deposits accumulate on line 2g", () => {
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -2776,7 +2777,7 @@ Deno.test("form6251: multiple 1099 and child PAB deposits accumulate on line 2g"
   assertEquals(filed?.fields.amti, 200_375);
 });
 
-Deno.test("form6251: routes AMT to Schedule 2 and its filed form", () => {
+test("form6251: routes AMT to Schedule 2 and its filed form", () => {
   // Single: AMTI = $250,000; exemption = $88,100; line6 = $161,900
   // TMT = $42,094; regular_tax = $20,000; AMT = $22,094
   const result = compute({

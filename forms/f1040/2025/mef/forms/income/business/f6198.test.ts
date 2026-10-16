@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6198 } from "./f6198.ts";
 
@@ -7,7 +8,7 @@ const risk = (opening: number) => ({
   line9_decreases_and_exclusions: 0,
 });
 
-Deno.test("Form 6198 uses one computation for each Schedule C or F activity", () => {
+test("Form 6198 uses one computation for each Schedule C or F activity", () => {
   const xml = form6198.build({}, {
     pending: {
       schedule_c: {
@@ -50,7 +51,7 @@ Deno.test("Form 6198 uses one computation for each Schedule C or F activity", ()
   assertStringIncludes(xml[1], "<DeductibleLossAmt>-900</DeductibleLossAmt>");
 });
 
-Deno.test("Form 6198 refuses untraceable aggregate fields", () => {
+test("Form 6198 refuses untraceable aggregate fields", () => {
   assertThrows(
     () => form6198.build({ schedule_c_loss: -100 }),
     Error,

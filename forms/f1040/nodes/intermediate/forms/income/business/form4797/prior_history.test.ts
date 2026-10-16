@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateSection1231History,
@@ -5,7 +6,7 @@ import {
 } from "./prior_history.ts";
 import { irsSection1231History } from "./prior_history.fixture.ts";
 
-Deno.test("Form 4797 IRS line 8 example consumes 2020 before 2021", () => {
+test("Form 4797 IRS line 8 example consumes 2020 before 2021", () => {
   const before = structuredClone(irsSection1231History);
   const result = calculateSection1231History(irsSection1231History, 2000);
   assertEquals(result.current.opening_nonrecaptured_loss, 7000);
@@ -28,7 +29,7 @@ for (
     [-3000, -3000, 0, 9000, 1000],
   ]
 ) {
-  Deno.test(`Form 4797 prior-loss character and 2026 expiry: net ${net}`, () => {
+  test(`Form 4797 prior-loss character and 2026 expiry: net ${net}`, () => {
     const result = calculateSection1231History({
       ...irsSection1231History,
       ...(net < 0
@@ -47,7 +48,7 @@ for (
   });
 }
 
-Deno.test("Form 4797 pre-2020 losses consume old gains before newer losses and then expire", () => {
+test("Form 4797 pre-2020 losses consume old gains before newer losses and then expire", () => {
   const history = structuredClone(irsSection1231History);
   history.opening_2020_losses = [
     { loss_year: 2019, remaining_loss: 5000 },
@@ -72,7 +73,7 @@ Deno.test("Form 4797 pre-2020 losses consume old gains before newer losses and t
   }]);
 });
 
-Deno.test("Form 4797 loss history uses the prior loss actually taken into account", () => {
+test("Form 4797 loss history uses the prior loss actually taken into account", () => {
   const history = structuredClone(irsSection1231History);
   history.filed_years[0].section1231_loss_taken_into_account = 2000;
   history.filed_years[4].filed_line8_nonrecaptured_loss = 8000;
@@ -84,7 +85,7 @@ Deno.test("Form 4797 loss history uses the prior loss actually taken into accoun
   }]);
 });
 
-Deno.test("Form 4797 current loss vintage retains only the amount taken into account", () => {
+test("Form 4797 current loss vintage retains only the amount taken into account", () => {
   const result = calculateSection1231History({
     ...irsSection1231History,
     current_year_loss_taken_into_account: 1000,
@@ -97,7 +98,7 @@ Deno.test("Form 4797 current loss vintage retains only the amount taken into acc
   }, { loss_year: 2025, remaining_loss: 1000 }]);
 });
 
-Deno.test("Form 4797 loss history requires a reviewed current deduction within the net loss", () => {
+test("Form 4797 loss history requires a reviewed current deduction within the net loss", () => {
   assertThrows(
     () => calculateSection1231History(irsSection1231History, -3000),
     Error,
@@ -187,7 +188,7 @@ const invalid: Array<[string, (history: Section1231PriorHistory) => void]> = [
   }],
 ];
 for (const [name, change] of invalid) {
-  Deno.test(`Form 4797 prior-loss history rejects ${name}`, () => {
+  test(`Form 4797 prior-loss history rejects ${name}`, () => {
     const history = structuredClone(irsSection1231History);
     change(history);
     assertThrows(() => calculateSection1231History(history, 2000));

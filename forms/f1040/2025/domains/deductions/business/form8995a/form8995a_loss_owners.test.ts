@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -61,7 +64,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`Form8995A current loss owners ${c.id} reconcile QBI sources and complete exports`, async () => {
+  test(`Form8995A current loss owners ${c.id} reconcile QBI sources and complete exports`, async () => {
     const statusFixture = pdfReviewFixtures.find((f) => f.id === c.fixture)!;
     const filer = statusFixture.filer;
     const original = base.inputs.schedule_c as Record<string, unknown>[];
@@ -176,15 +179,9 @@ for (const c of cases) {
         `<BusinessNameLine1Txt>${row.line_c_business_name}</BusinessNameLine1Txt>`,
       );
     }
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_OWNERS_DIR",
-    });
-    const retained = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_OWNERS_DIR")
-      : undefined;
-    const dir = retained ? `${retained}/${c.id}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const retained = process.env.FORM8995A_OWNERS_DIR;
+    const dir = retained ? `${retained}/${c.id}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
       for (
         const [name, value] of Object.entries({
@@ -200,13 +197,13 @@ for (const c of cases) {
           },
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      const xsd = await new Deno.Command("xmllint", {
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -219,10 +216,10 @@ for (const c of cases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -232,7 +229,7 @@ for (const c of cases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
@@ -293,11 +290,11 @@ for (const c of cases) {
         await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
       }
     } finally {
-      if (!retained) await Deno.remove(dir, { recursive: true });
+      if (!retained) await sys.remove(dir, { recursive: true });
     }
   });
 }
-Deno.test("ordinary loss phase-in uses joint thresholds only for MFJ", () => {
+test("ordinary loss phase-in uses joint thresholds only for MFJ", () => {
   for (
     const status of [FilingStatus.Single, FilingStatus.HOH, FilingStatus.QSS]
   ) {

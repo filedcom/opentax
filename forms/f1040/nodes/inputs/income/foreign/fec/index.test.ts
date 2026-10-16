@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fec } from "./index.ts";
 import { ForeignTaxCreditMethod } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
@@ -52,7 +53,7 @@ const paidTaxCurrency = {
   source_document_reference: "2025 German wage-tax receipt",
 };
 
-Deno.test("fec: alternative employee compensation sourcing follows the general-category Form 1116 item", () => {
+test("fec: alternative employee compensation sourcing follows the general-category Form 1116 item", () => {
   const result = compute([minimalItem({
     compensation_usd: 300_000,
     compensation_owner_ssn: "111-22-3333",
@@ -79,7 +80,7 @@ Deno.test("fec: alternative employee compensation sourcing follows the general-c
   );
 });
 
-Deno.test("fec: ordinary salary comparison requires a matching workday ledger", () => {
+test("fec: ordinary salary comparison requires a matching workday ledger", () => {
   const item = minimalItem({
     compensation_usd: 300_000,
     compensation_owner_ssn: "111-22-3333",
@@ -136,7 +137,7 @@ Deno.test("fec: ordinary salary comparison requires a matching workday ledger", 
   );
 });
 
-Deno.test("fec: one alternative compensation item needs an identified employee and matching wage document", () => {
+test("fec: one alternative compensation item needs an identified employee and matching wage document", () => {
   const item = minimalItem({
     compensation_usd: 300_000,
     compensation_owner_ssn: "111-22-3333",
@@ -165,7 +166,7 @@ Deno.test("fec: one alternative compensation item needs an identified employee a
   }
 });
 
-Deno.test("fec: same employee's second foreign-employer wage proves the line 1b worldwide threshold", () => {
+test("fec: same employee's second foreign-employer wage proves the line 1b worldwide threshold", () => {
   const primary = minimalItem({
     compensation_usd: 200_000,
     compensation_owner_ssn: "111-22-3333",
@@ -218,7 +219,7 @@ Deno.test("fec: same employee's second foreign-employer wage proves the line 1b 
   );
 });
 
-Deno.test("fec: four or five distinct owner-matched wage records prove the alternative-basis threshold", () => {
+test("fec: four or five distinct owner-matched wage records prove the alternative-basis threshold", () => {
   const primary = minimalItem({
     compensation_usd: 200_000,
     compensation_owner_ssn: "111-22-3333",
@@ -278,7 +279,7 @@ Deno.test("fec: four or five distinct owner-matched wage records prove the alter
   );
 });
 
-Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or wages", () => {
+test("fec: alternative sourcing cannot silently omit its Form 1116 tax or wages", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -364,12 +365,12 @@ Deno.test("fec: alternative sourcing cannot silently omit its Form 1116 tax or w
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("fec.inputSchema: empty array fails (min 1)", () => {
+test("fec.inputSchema: empty array fails (min 1)", () => {
   const parsed = fec.inputSchema.safeParse({ fecs: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("fec.inputSchema: negative compensation_usd fails", () => {
+test("fec.inputSchema: negative compensation_usd fails", () => {
   const parsed = fec.inputSchema.safeParse({
     fecs: [minimalItem({ compensation_usd: -100 })],
   });
@@ -380,17 +381,17 @@ Deno.test("fec.inputSchema: negative compensation_usd fails", () => {
 // 2. Per-Field Routing
 // =============================================================================
 
-Deno.test("fec.compute: compensation_usd routes to f1040 line1h_other_earned with exact value", () => {
+test("fec.compute: compensation_usd routes to f1040 line1h_other_earned with exact value", () => {
   const result = compute([minimalItem({ compensation_usd: 75000 })]);
   assertEquals(result.outputs[0].fields.line1h_other_earned, 75000);
 });
 
-Deno.test("fec.compute: compensation_usd = 0 → no output", () => {
+test("fec.compute: compensation_usd = 0 → no output", () => {
   const result = compute([minimalItem({ compensation_usd: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("fec.compute: compensation_amount > 0 but compensation_usd = 0 → no output (USD is authoritative)", () => {
+test("fec.compute: compensation_amount > 0 but compensation_usd = 0 → no output (USD is authoritative)", () => {
   // Could happen with treaty exemption; USD is what matters for tax routing
   const result = compute([
     minimalItem({ compensation_amount: 100000, compensation_usd: 0 }),
@@ -398,7 +399,7 @@ Deno.test("fec.compute: compensation_amount > 0 but compensation_usd = 0 → no 
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("fec.compute: informational fields do not affect line1h_other_earned amount", () => {
+test("fec.compute: informational fields do not affect line1h_other_earned amount", () => {
   // same compensation_usd, different employer/country/currency/description
   const result1 = compute([minimalItem({
     foreign_employer_name: "Corp A",
@@ -422,7 +423,7 @@ Deno.test("fec.compute: informational fields do not affect line1h_other_earned a
 // 3. Aggregation — Multiple Employers
 // =============================================================================
 
-Deno.test("fec.compute: two employers — compensation_usd summed into single f1040 output", () => {
+test("fec.compute: two employers — compensation_usd summed into single f1040 output", () => {
   const result = compute([
     minimalItem({ compensation_usd: 45000, country_code: "DE" }),
     minimalItem({ compensation_usd: 30000, country_code: "FR" }),
@@ -432,7 +433,7 @@ Deno.test("fec.compute: two employers — compensation_usd summed into single f1
   assertEquals(result.outputs[0].fields.line1h_other_earned, 75000);
 });
 
-Deno.test("fec.compute: three employers — all compensation_usd summed correctly", () => {
+test("fec.compute: three employers — all compensation_usd summed correctly", () => {
   const result = compute([
     minimalItem({ compensation_usd: 20000, foreign_employer_name: "Corp A" }),
     minimalItem({ compensation_usd: 35000, foreign_employer_name: "Corp B" }),
@@ -441,7 +442,7 @@ Deno.test("fec.compute: three employers — all compensation_usd summed correctl
   assertEquals(result.outputs[0].fields.line1h_other_earned, 70000);
 });
 
-Deno.test("fec.compute: one item zero USD, one positive — only positive counted", () => {
+test("fec.compute: one item zero USD, one positive — only positive counted", () => {
   const result = compute([
     minimalItem({ compensation_usd: 0 }),
     minimalItem({ compensation_usd: 40000 }),
@@ -449,7 +450,7 @@ Deno.test("fec.compute: one item zero USD, one positive — only positive counte
   assertEquals(result.outputs[0].fields.line1h_other_earned, 40000);
 });
 
-Deno.test("fec.compute: all items zero compensation_usd → no output", () => {
+test("fec.compute: all items zero compensation_usd → no output", () => {
   const result = compute([
     minimalItem({ compensation_usd: 0 }),
     minimalItem({ compensation_usd: 0 }),
@@ -461,7 +462,7 @@ Deno.test("fec.compute: all items zero compensation_usd → no output", () => {
 // 4. Currency Conversion Precision
 // =============================================================================
 
-Deno.test("fec.compute: EUR compensation — converted USD value used exactly (80000 EUR → 87500 USD)", () => {
+test("fec.compute: EUR compensation — converted USD value used exactly (80000 EUR → 87500 USD)", () => {
   const result = compute([minimalItem({
     compensation_amount: 80000,
     currency: "EUR",
@@ -470,7 +471,7 @@ Deno.test("fec.compute: EUR compensation — converted USD value used exactly (8
   assertEquals(result.outputs[0].fields.line1h_other_earned, 87500);
 });
 
-Deno.test("fec.compute: JPY compensation — large foreign amount converts to small USD value", () => {
+test("fec.compute: JPY compensation — large foreign amount converts to small USD value", () => {
   // 5,000,000 JPY at ~0.0066 = 33000 USD
   const result = compute([minimalItem({
     compensation_amount: 5_000_000,
@@ -484,14 +485,14 @@ Deno.test("fec.compute: JPY compensation — large foreign amount converts to sm
 // 5. Hard Validation
 // =============================================================================
 
-Deno.test("fec.compute: throws on negative compensation_usd", () => {
+test("fec.compute: throws on negative compensation_usd", () => {
   assertThrows(
     () => compute([minimalItem({ compensation_usd: -1000 })]),
     Error,
   );
 });
 
-Deno.test("fec.compute: throws on negative compensation_amount", () => {
+test("fec.compute: throws on negative compensation_amount", () => {
   assertThrows(
     () => compute([minimalItem({ compensation_amount: -500 })]),
     Error,
@@ -502,7 +503,7 @@ Deno.test("fec.compute: throws on negative compensation_amount", () => {
 // 6. Smoke Test
 // =============================================================================
 
-Deno.test("fec.compute: smoke test — three foreign employers, total USD wages correct", () => {
+test("fec.compute: smoke test — three foreign employers, total USD wages correct", () => {
   const result = compute([
     minimalItem({
       foreign_employer_name: "Siemens AG",
@@ -539,13 +540,13 @@ Deno.test("fec.compute: smoke test — three foreign employers, total USD wages 
 // 7. AGI Routing
 // =============================================================================
 
-Deno.test("fec.compute: compensation_usd also routes to agi_aggregator line1h_other_earned", () => {
+test("fec.compute: compensation_usd also routes to agi_aggregator line1h_other_earned", () => {
   const result = compute([minimalItem({ compensation_usd: 20000 })]);
   const agg = result.outputs.find((o) => o.nodeType === "agi_aggregator");
   assertEquals(agg?.fields.line1h_other_earned, 20000);
 });
 
-Deno.test("fec.compute: f1040 and agi_aggregator receive the same total", () => {
+test("fec.compute: f1040 and agi_aggregator receive the same total", () => {
   const result = compute([
     minimalItem({ compensation_usd: 45000, country_code: "DE" }),
     minimalItem({ compensation_usd: 30000, country_code: "FR" }),
@@ -556,7 +557,7 @@ Deno.test("fec.compute: f1040 and agi_aggregator receive the same total", () => 
   assertEquals(agg?.fields.line1h_other_earned, 75000);
 });
 
-Deno.test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () => {
+test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () => {
   const result = compute([minimalItem({ compensation_usd: 0 })]);
   assertEquals(
     result.outputs.find((o) => o.nodeType === "agi_aggregator"),
@@ -572,7 +573,7 @@ Deno.test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () =
 // passive income shown on a payee statement, so wage tax files Form 1116 at any
 // amount.
 
-Deno.test("fec.compute: foreign_tax_paid_usd routes to form_1116 as general category", () => {
+test("fec.compute: foreign_tax_paid_usd routes to form_1116 as general category", () => {
   const result = compute([
     minimalItem({
       compensation_usd: 80000,
@@ -588,7 +589,7 @@ Deno.test("fec.compute: foreign_tax_paid_usd routes to form_1116 as general cate
   assertEquals(item.income_category, "general");
 });
 
-Deno.test("fec.compute: no foreign_tax_paid_usd → no form_1116 output", () => {
+test("fec.compute: no foreign_tax_paid_usd → no form_1116 output", () => {
   const result = compute([minimalItem({ compensation_usd: 80000 })]);
   assertEquals(
     result.outputs.find((o) => o.nodeType === "form_1116"),
@@ -596,7 +597,7 @@ Deno.test("fec.compute: no foreign_tax_paid_usd → no form_1116 output", () => 
   );
 });
 
-Deno.test("fec.compute: a foreign employer alone does not make wages foreign source", () => {
+test("fec.compute: a foreign employer alone does not make wages foreign source", () => {
   const result = compute([minimalItem({
     compensation_usd: 80_000,
     foreign_tax_paid_usd: 9_000,
@@ -607,7 +608,7 @@ Deno.test("fec.compute: a foreign employer alone does not make wages foreign sou
   );
 });
 
-Deno.test("fec.compute: excluded foreign wages reduce the eligible foreign tax", () => {
+test("fec.compute: excluded foreign wages reduce the eligible foreign tax", () => {
   const result = compute([minimalItem({
     compensation_usd: 80_000,
     foreign_service_compensation_usd: 80_000,
@@ -621,7 +622,7 @@ Deno.test("fec.compute: excluded foreign wages reduce the eligible foreign tax",
   assertEquals(item.excluded_income, 20_000);
 });
 
-Deno.test("fec.compute: wage tax below the $300 de minimis still files form_1116", () => {
+test("fec.compute: wage tax below the $300 de minimis still files form_1116", () => {
   const result = compute([
     minimalItem({
       compensation_usd: 20000,
@@ -637,7 +638,7 @@ Deno.test("fec.compute: wage tax below the $300 de minimis still files form_1116
   );
 });
 
-Deno.test("fec.compute: two employers — only the taxed employer's pay is foreign source income", () => {
+test("fec.compute: two employers — only the taxed employer's pay is foreign source income", () => {
   const result = compute([
     minimalItem({
       compensation_usd: 45000,

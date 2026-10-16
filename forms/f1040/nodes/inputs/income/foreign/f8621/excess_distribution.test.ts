@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateExcessEvents,
@@ -22,7 +23,7 @@ const distribution = {
   taxable_nonexcess_dividend_usd: 0,
 };
 
-Deno.test("Form 8621 compounds published section 6621 rates over dated periods", () => {
+test("Form 8621 compounds published section 6621 rates over dated periods", () => {
   const netTax = 1_000;
   // 2024 return due 2025-04-15; 2025 return due 2026-04-15.
   // 351 days at 7% and 14 days at 6%, each with a 365-day divisor.
@@ -42,7 +43,7 @@ Deno.test("Form 8621 compounds published section 6621 rates over dated periods",
   assertEquals(calculateSection1291Interest(2023, netTax), expected2023);
 });
 
-Deno.test("Form 8621 rejects supplied interest and unverified prior-year periods", () => {
+test("Form 8621 rejects supplied interest and unverified prior-year periods", () => {
   assertThrows(
     () =>
       calculateExcessEvents({
@@ -68,7 +69,7 @@ Deno.test("Form 8621 rejects supplied interest and unverified prior-year periods
   );
 });
 
-Deno.test("Form 8621 interest starts on statutory April 15 despite section 7503", () => {
+test("Form 8621 interest starts on statutory April 15 despite section 7503", () => {
   const netTax = 1_000;
   // TY2021 filing was timely through April 18, 2022, but section 7503
   // does not move the April 15 statutory date used for interest.
@@ -85,7 +86,7 @@ Deno.test("Form 8621 interest starts on statutory April 15 despite section 7503"
   assertEquals(calculateSection1291Interest(2021, netTax), expected);
 });
 
-Deno.test("Form 8621 uses the published historical quarterly rates back to 1987", () => {
+test("Form 8621 uses the published historical quarterly rates back to 1987", () => {
   const from1987 = calculateSection1291Interest(1987, 1_000);
   const from1988 = calculateSection1291Interest(1988, 1_000);
   const from2008 = calculateSection1291Interest(2008, 1_000);
@@ -100,7 +101,7 @@ Deno.test("Form 8621 uses the published historical quarterly rates back to 1987"
   );
 });
 
-Deno.test("Form 8621 derives excess and allocates it by actual days including leap day", () => {
+test("Form 8621 derives excess and allocates it by actual days including leap day", () => {
   const [result] = calculateExcessEvents(distribution);
   assertEquals(result.amount_usd, 10_000);
   assertEquals(
@@ -128,7 +129,7 @@ Deno.test("Form 8621 derives excess and allocates it by actual days including le
   );
 });
 
-Deno.test("Form 8621 calculates each prior PFIC year's interest separately", () => {
+test("Form 8621 calculates each prior PFIC year's interest separately", () => {
   const [result] = calculateExcessEvents({
     ...distribution,
     holding_period_start: "2023-01-01",
@@ -158,7 +159,7 @@ Deno.test("Form 8621 calculates each prior PFIC year's interest separately", () 
   );
 });
 
-Deno.test("Form 8621 applies 125% of prior average per share", () => {
+test("Form 8621 applies 125% of prior average per share", () => {
   const [result] = calculateExcessEvents({
     ...distribution,
     prior_year_distributions: [{ tax_year: 2024, amount_usd: 4_000 }],
@@ -177,7 +178,7 @@ Deno.test("Form 8621 applies 125% of prior average per share", () => {
   assertEquals(result.nonexcess_distribution, 5_000);
 });
 
-Deno.test("Form 8621 apportions annual excess among actual distribution dates", () => {
+test("Form 8621 apportions annual excess among actual distribution dates", () => {
   const results = calculateExcessEvents({
     ...distribution,
     prior_year_distributions: [{ tax_year: 2024, amount_usd: 4_000 }],
@@ -206,7 +207,7 @@ Deno.test("Form 8621 apportions annual excess among actual distribution dates", 
   assertEquals(results[1].allocations[1].holding_days, 365);
 });
 
-Deno.test("Form 8621 determines same-currency excess before converting each distribution at its spot rate", () => {
+test("Form 8621 determines same-currency excess before converting each distribution at its spot rate", () => {
   const results = calculateExcessEvents({
     kind: ExcessEventKind.Distribution,
     holding_period_start: "2024-01-01",
@@ -252,7 +253,7 @@ Deno.test("Form 8621 determines same-currency excess before converting each dist
   ]);
 });
 
-Deno.test("Form 8621 rejects a foreign taxable dividend above the translated nonexcess amount", () => {
+test("Form 8621 rejects a foreign taxable dividend above the translated nonexcess amount", () => {
   assertThrows(
     () =>
       calculateExcessEvents({
@@ -276,7 +277,7 @@ Deno.test("Form 8621 rejects a foreign taxable dividend above the translated non
   );
 });
 
-Deno.test("Form 8621 has no excess distribution in the first holding year", () => {
+test("Form 8621 has no excess distribution in the first holding year", () => {
   const [result] = calculateExcessEvents({
     ...distribution,
     holding_period_start: "2025-01-01",
@@ -294,7 +295,7 @@ Deno.test("Form 8621 has no excess distribution in the first holding year", () =
   assertEquals(result.allocations, []);
 });
 
-Deno.test("Form 8621 keeps pre-PFIC years in current ordinary income", () => {
+test("Form 8621 keeps pre-PFIC years in current ordinary income", () => {
   const [result] = calculateExcessEvents({
     ...distribution,
     first_pfic_tax_year: 2025,
@@ -308,7 +309,7 @@ Deno.test("Form 8621 keeps pre-PFIC years in current ordinary income", () => {
   assertEquals(result.line16e_additional_tax, 0);
 });
 
-Deno.test("Form 8621 rejects incomplete history and excess section 301 dividends", () => {
+test("Form 8621 rejects incomplete history and excess section 301 dividends", () => {
   assertThrows(
     () =>
       calculateExcessEvents({ ...distribution, prior_year_distributions: [] }),
@@ -340,7 +341,7 @@ Deno.test("Form 8621 rejects incomplete history and excess section 301 dividends
   );
 });
 
-Deno.test("Form 8621 disposition needs section 1248 attribution for foreign tax credit", () => {
+test("Form 8621 disposition needs section 1248 attribution for foreign tax credit", () => {
   assertThrows(
     () =>
       calculateExcessEvents({
@@ -359,7 +360,7 @@ Deno.test("Form 8621 disposition needs section 1248 attribution for foreign tax 
   );
 });
 
-Deno.test("Form 8621 translates foreign net proceeds before subtracting USD adjusted basis", () => {
+test("Form 8621 translates foreign net proceeds before subtracting USD adjusted basis", () => {
   const [result] = calculateExcessEvents({
     kind: ExcessEventKind.Disposition,
     currency_code: "EUR",
@@ -377,7 +378,7 @@ Deno.test("Form 8621 translates foreign net proceeds before subtracting USD adju
   assertEquals(result.line16c_prior_year_tax_before_credit, 1_853);
 });
 
-Deno.test("Form 8621 does not route a translated foreign disposition loss as section 1291 gain", () => {
+test("Form 8621 does not route a translated foreign disposition loss as section 1291 gain", () => {
   assertThrows(
     () =>
       calculateExcessEvents({

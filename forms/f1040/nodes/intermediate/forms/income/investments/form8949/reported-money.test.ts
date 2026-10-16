@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { reportedCapitalSale } from "./reported-money.ts";
 
-Deno.test("8949 adjusted columns round signed cents before subtraction", () => {
+test("8949 adjusted columns round signed cents before subtraction", () => {
   const row = reportedCapitalSale({
     part: "A",
     proceeds: 2.50,
@@ -15,7 +16,7 @@ Deno.test("8949 adjusted columns round signed cents before subtraction", () => {
   assertEquals(row.gain_loss, 1);
 });
 
-Deno.test("unadjusted covered sources retain cents for Schedule D aggregation", () => {
+test("unadjusted covered sources retain cents for Schedule D aggregation", () => {
   const source = {
     part: "D",
     proceeds: 100.4,

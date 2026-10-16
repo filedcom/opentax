@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { scheduleAPdf } from "./schedule_a.ts";
@@ -15,7 +18,7 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { scheduleALine16EstateStatement } from "../../../../mef/forms/deductions/itemized/schedule_a_line16_estate_statement.ts";
 
-Deno.test("Schedule A PDF line 8a requires a retained Form 1098", () => {
+test("Schedule A PDF line 8a requires a retained Form 1098", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -35,7 +38,7 @@ Deno.test("Schedule A PDF line 8a requires a retained Form 1098", () => {
   );
 });
 
-Deno.test("Schedule A PDF line 8a equals retained Form 1098 box 1 interest", () => {
+test("Schedule A PDF line 8a equals retained Form 1098 box 1 interest", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -89,10 +92,10 @@ async function assertScheduleAXsd(xml: string): Promise<void> {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -103,11 +106,11 @@ async function assertScheduleAXsd(xml: string): Promise<void> {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and PDF", async () => {
+test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and PDF", async () => {
   const filer = {
     primarySSN: "123456789",
     fullName: "Alex Taxpayer",
@@ -212,10 +215,10 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
     pending,
   );
   assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, filled!);
-    const rendered = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, filled!);
+    const rendered = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -228,7 +231,7 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
   assertThrows(
     () =>
@@ -262,7 +265,7 @@ Deno.test("Schedule A line 16 estate-tax deduction reconciles to Form 4972 and P
   );
 });
 
-Deno.test("Schedule A line 8b seller details reach native statement and PDF", async () => {
+test("Schedule A line 8b seller details reach native statement and PDF", async () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -359,7 +362,7 @@ Deno.test("Schedule A line 8b seller details reach native statement and PDF", as
   );
 });
 
-Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement and PDF", async () => {
+test("Schedule A line 6 reviewed tax types reconcile to native statement and PDF", async () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -466,7 +469,7 @@ Deno.test("Schedule A line 6 reviewed tax types reconcile to native statement an
   );
 });
 
-Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF line 8", async () => {
+test("Schedule A reviewed nonqualifying mortgage use checks native and PDF line 8", async () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -537,7 +540,7 @@ Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF 
   assertEquals((await PDFDocument.load(pdf!)).getPageCount(), 1);
 });
 
-Deno.test("Schedule A election below standard reaches line 12e, native form, and PDF line 18", async () => {
+test("Schedule A election below standard reaches line 12e, native form, and PDF line 18", async () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -641,7 +644,7 @@ Deno.test("Schedule A election below standard reaches line 12e, native form, and
   assertEquals((await PDFDocument.load(zeroFilled!)).getPageCount(), 1);
 });
 
-Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage interest", async () => {
+test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage interest", async () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -715,7 +718,7 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
   const document = await PDFDocument.load(filled!);
   assertEquals(document.getPageCount(), 1);
   const official = await PDFDocument.load(
-    await Deno.readFile(
+    await sys.readBytes(
       ".pdf-cache/https_www_irs_gov_pub_irs_prior_f1040sa_2025_pdf.pdf",
     ),
   );
@@ -757,7 +760,7 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
   );
 });
 
-Deno.test("Schedule A PDF replays purchase points and the second mortgage", () => {
+test("Schedule A PDF replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {
     f1098s: fixture.f1098.map((item) => ({
@@ -821,7 +824,7 @@ Deno.test("Schedule A PDF replays purchase points and the second mortgage", () =
   );
 });
 
-Deno.test("Schedule A PDF replays the capped two-loan points and interest total", () => {
+test("Schedule A PDF replays the capped two-loan points and interest total", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const review = fixture.f1098_purchase_points_cross_loan_review;
   review.purchase_points_cross_loan_review.existing_loan.maximum_2025_balance =
@@ -898,7 +901,7 @@ Deno.test("Schedule A PDF replays the capped two-loan points and interest total"
   );
 });
 
-Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed amount", () => {
+test("Schedule A PDF box 6 points reject a wrong recipient or missing filed amount", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "Test Taxpayer",
@@ -969,7 +972,7 @@ Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed
   );
 });
 
-Deno.test("Schedule A PDF rejects a finalized capital-gain election without reconciled Form 8283 source", () => {
+test("Schedule A PDF rejects a finalized capital-gain election without reconciled Form 8283 source", () => {
   assertThrows(
     () =>
       scheduleAPdf.includeWhen?.({
@@ -989,7 +992,7 @@ Deno.test("Schedule A PDF rejects a finalized capital-gain election without reco
   );
 });
 
-Deno.test("Schedule A PDF prints the ordinary gift on the official line 12 widget", () => {
+test("Schedule A PDF prints the ordinary gift on the official line 12 widget", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-ordinary-noncash-gift"
   )!;
@@ -1022,7 +1025,7 @@ Deno.test("Schedule A PDF prints the ordinary gift on the official line 12 widge
   );
 });
 
-Deno.test("Schedule A PDF marks the canonical line 5a election for sourced sales tax", async () => {
+test("Schedule A PDF marks the canonical line 5a election for sourced sales tax", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-ordinary-noncash-gift"
   )!;
@@ -1058,7 +1061,7 @@ Deno.test("Schedule A PDF marks the canonical line 5a election for sourced sales
     "form1[0].Page1[0].c1_1[0]",
   );
   const source = await PDFDocument.load(
-    await Deno.readFile(
+    await sys.readBytes(
       ".pdf-cache/https_www_irs_gov_pub_irs_prior_f1040sa_2025_pdf.pdf",
     ),
     { ignoreEncryption: true },

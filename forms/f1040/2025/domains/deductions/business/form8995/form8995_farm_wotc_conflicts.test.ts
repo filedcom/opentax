@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -14,7 +15,7 @@ import { inputSchema as aSchema } from "../../../../../nodes/intermediate/forms/
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("owned-farm-wotc") && !f.id.startsWith("owned-farm-wotc-loss")
 );
-Deno.test("public reviewed farm WOTC rejects source owner worker payroll income and method conflicts", async () => {
+test("public reviewed farm WOTC rejects source owner worker payroll income and method conflicts", async () => {
   const fixture = fixtures.find((f) => f.id.endsWith("spouse-phase"))!;
   const mutations = [
     (i: any) =>
@@ -73,7 +74,7 @@ Deno.test("public reviewed farm WOTC rejects source owner worker payroll income 
     );
   }
 });
-Deno.test("below and advanced farm WOTC direct native PDF reject retained source and final joins", () => {
+test("below and advanced farm WOTC direct native PDF reject retained source and final joins", () => {
   for (
     const fixture of [
       fixtures.find((f) => f.id.endsWith("single-below"))!,
@@ -182,7 +183,7 @@ Deno.test("below and advanced farm WOTC direct native PDF reject retained source
     }
   }
 });
-Deno.test("farm WOTC retained raw cents wage caps and full determined reduction survive zero and limited use", () => {
+test("farm WOTC retained raw cents wage caps and full determined reduction survive zero and limited use", () => {
   for (const fixture of fixtures) {
     const p = normalizeAllPending(
       f1040_2025.executeReturn(fixture.inputs).pending,
@@ -227,7 +228,7 @@ Deno.test("farm WOTC retained raw cents wage caps and full determined reduction 
   }
 });
 
-Deno.test("sourced Single farm retains its zero Form8995 taxable-income limitation", () => {
+test("sourced Single farm retains its zero Form8995 taxable-income limitation", () => {
   const fixture = fixtures.find((f) => f.id.includes("zero-use"))!;
   const p = normalizeAllPending(
     f1040_2025.executeReturn(fixture.inputs).pending,

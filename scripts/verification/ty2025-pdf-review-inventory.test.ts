@@ -1,9 +1,12 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 import { assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 
-Deno.test("review packet inventory rejects unlisted and missing artifacts", async () => {
-  const directory = await Deno.makeTempDir();
+test("review packet inventory rejects unlisted and missing artifacts", async () => {
+  const directory = await sys.makeTempDir();
   try {
     for (
       const name of [
@@ -13,32 +16,32 @@ Deno.test("review packet inventory rejects unlisted and missing artifacts", asyn
         "case-one.json",
       ]
     ) {
-      await Deno.writeTextFile(join(directory, name), "synthetic");
+      await fs.writeFile(join(directory, name), "synthetic");
     }
-    await Deno.mkdir(join(directory, "irs-pdf-cache"));
+    await fs.mkdir(join(directory, "irs-pdf-cache"));
     await assertReviewArtifactInventory(directory, ["case-one"]);
 
-    await Deno.writeTextFile(join(directory, "unlisted.pdf"), "synthetic");
+    await fs.writeFile(join(directory, "unlisted.pdf"), "synthetic");
     await assertRejects(
       () => assertReviewArtifactInventory(directory, ["case-one"]),
       Error,
       "Unexpected review packet entry: unlisted.pdf",
     );
-    await Deno.remove(join(directory, "unlisted.pdf"));
+    await sys.remove(join(directory, "unlisted.pdf"));
 
-    await Deno.remove(join(directory, "case-one.xml"));
+    await sys.remove(join(directory, "case-one.xml"));
     await assertRejects(
       () => assertReviewArtifactInventory(directory, ["case-one"]),
       Error,
       "Review packet artifact is missing: case-one.xml",
     );
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
 });
 
-Deno.test("review packet inventory rejects directory and symlink artifacts", async () => {
-  const directory = await Deno.makeTempDir();
+test("review packet inventory rejects directory and symlink artifacts", async () => {
+  const directory = await sys.makeTempDir();
   try {
     for (
       const name of [
@@ -48,17 +51,17 @@ Deno.test("review packet inventory rejects directory and symlink artifacts", asy
         "case-one.json",
       ]
     ) {
-      await Deno.writeTextFile(join(directory, name), "synthetic");
+      await fs.writeFile(join(directory, name), "synthetic");
     }
-    await Deno.remove(join(directory, "case-one.pdf"));
-    await Deno.mkdir(join(directory, "case-one.pdf"));
+    await sys.remove(join(directory, "case-one.pdf"));
+    await fs.mkdir(join(directory, "case-one.pdf"));
     await assertRejects(
       () => assertReviewArtifactInventory(directory, ["case-one"]),
       Error,
       "Review packet artifact is not a regular file: case-one.pdf",
     );
-    await Deno.remove(join(directory, "case-one.pdf"));
-    await Deno.symlink(
+    await sys.remove(join(directory, "case-one.pdf"));
+    await fs.symlink(
       join(directory, "case-one.xml"),
       join(directory, "case-one.pdf"),
     );
@@ -68,6 +71,6 @@ Deno.test("review packet inventory rejects directory and symlink artifacts", asy
       "Review packet artifact is not a regular file: case-one.pdf",
     );
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
 });

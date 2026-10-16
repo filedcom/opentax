@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -16,7 +18,7 @@ import { form5884Pdf } from "../../../../pdf/forms/credits/business/f5884.ts";
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("owned-two-farm-wotc")
 );
-Deno.test("two actual independent farm employers file separate owner SE/QBI and joint current credit in full XSD/PDF", async () => {
+test("two actual independent farm employers file separate owner SE/QBI and joint current credit in full XSD/PDF", async () => {
   assertEquals(fixtures.length, 4);
   const expected = [
     [92802, 4473, 17666, 4800, 55028],
@@ -79,7 +81,7 @@ Deno.test("two actual independent farm employers file separate owner SE/QBI and 
       }),
     );
     const prepared = await f1040_2025.prepareReturn(r.pending, f.filer);
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -98,7 +100,7 @@ Deno.test("two actual independent farm employers file separate owner SE/QBI and 
     assertEquals((await prepared.renderPdf()).length > 0, true);
   }
 });
-Deno.test("two farm actual ownership attribution payroll and issued-income conflicts fail public native and PDF", async () => {
+test("two farm actual ownership attribution payroll and issued-income conflicts fail public native and PDF", async () => {
   const f = fixtures[1];
   for (
     const [mutationIndex, change] of [
@@ -182,7 +184,7 @@ Deno.test("two farm actual ownership attribution payroll and issued-income confl
     }
   }
 });
-Deno.test("actual MFJ external W2 excess Social Security is per owner and multiple employers", async () => {
+test("actual MFJ external W2 excess Social Security is per owner and multiple employers", async () => {
   const f = fixtures[0], inputs: any = structuredClone(f.inputs);
   inputs.w2.push({
     ...inputs.w2[0],

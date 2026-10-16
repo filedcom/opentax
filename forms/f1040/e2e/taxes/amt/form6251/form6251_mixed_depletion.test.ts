@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -81,7 +82,7 @@ function filing() {
   return { fields, pending: result.pending };
 }
 
-Deno.test("mixed property depletion reaches 6251, Schedule 2, 1040, MeF and PDF", async () => {
+test("mixed property depletion reaches 6251, Schedule 2, 1040, MeF and PDF", async () => {
   const { fields, pending } = filing();
   assertEquals(pending.schedule1?.line3_schedule_c, 0);
   assertEquals(fields.line2d_depletion, 150_000);
@@ -103,7 +104,7 @@ Deno.test("mixed property depletion reaches 6251, Schedule 2, 1040, MeF and PDF"
   assertStringIncludes(bundle.xml, "<DepletionAmt>150000</DepletionAmt>");
 });
 
-Deno.test("mixed depletion rejects changed property and final-return facts", () => {
+test("mixed depletion rejects changed property and final-return facts", () => {
   const { fields, pending } = filing();
   const changedProperty = {
     ...pending,

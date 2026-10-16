@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f9465 } from "./index.ts";
 
@@ -33,11 +34,11 @@ function compute(input: Record<string, unknown>) {
   );
 }
 
-Deno.test("Form 9465 bounded attached request has no tax or payment outputs", () => {
+test("Form 9465 bounded attached request has no tax or payment outputs", () => {
   assertEquals(compute(request).outputs, []);
 });
 
-Deno.test("Form 9465 rejects legacy partial and unsupported filing modes", () => {
+test("Form 9465 rejects legacy partial and unsupported filing modes", () => {
   for (
     const input of [
       {},
@@ -50,7 +51,7 @@ Deno.test("Form 9465 rejects legacy partial and unsupported filing modes", () =>
   }
 });
 
-Deno.test("Form 9465 rejects unsourced and inconsistent attached terms", () => {
+test("Form 9465 rejects unsourced and inconsistent attached terms", () => {
   for (
     const input of [
       { ...request, final_1040_line37_amount_owed: 0 },

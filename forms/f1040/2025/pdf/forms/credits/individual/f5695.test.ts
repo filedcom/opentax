@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { form5695Pdf } from "./f5695.ts";
@@ -10,7 +11,7 @@ const pending = {
   schedule3: { line5b_energy_efficient_home: 750 },
 };
 
-Deno.test("Form 5695 PDF prints the door and central-air source on Parts II A/B", () => {
+test("Form 5695 PDF prints the door and central-air source on Parts II A/B", () => {
   const fields = form5695Pdf.projectFields!(source, pending);
   assertEquals(form5695Pdf.includeWhen!(fields, pending), true);
   assertEquals(form5695Pdf.pageIndices!(fields), [1, 2, 3]);
@@ -26,7 +27,7 @@ Deno.test("Form 5695 PDF prints the door and central-air source on Parts II A/B"
   );
 });
 
-Deno.test("Form 5695 PDF holds other property and mismatched credit", () => {
+test("Form 5695 PDF holds other property and mismatched credit", () => {
   const extra = { ...source, energy_audit_cost: 100 };
   assertThrows(
     () => form5695Pdf.projectFields!(extra, { ...pending, f5695: extra }),

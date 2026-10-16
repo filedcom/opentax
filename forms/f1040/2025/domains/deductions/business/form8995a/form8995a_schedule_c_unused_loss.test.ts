@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
@@ -77,7 +78,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("Form 8995-A Schedule C carries unused current QBI loss with zero deduction", () => {
+test("Form 8995-A Schedule C carries unused current QBI loss with zero deduction", () => {
   const result = preparedReturn();
   assertEquals(result.pending.f1040.line13_qbi_deduction, 0);
   assertEquals(result.pending.schedule1.line3_schedule_c, -200);
@@ -105,7 +106,7 @@ Deno.test("Form 8995-A Schedule C carries unused current QBI loss with zero dedu
   assertEquals(schedulePdf.line6, 200);
 });
 
-Deno.test("unused Schedule C loss packet rejects changed source, companion, and final deduction", () => {
+test("unused Schedule C loss packet rejects changed source, companion, and final deduction", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
   const altered: Record<string, Record<string, unknown>>[] = [{
     ...pending,

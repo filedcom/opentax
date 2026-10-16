@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
@@ -127,7 +128,7 @@ function pairedAge65Case() {
   return { source, forms, pending, context };
 }
 
-Deno.test("paired Form 8889 exports the leap-day age-65 exception in MeF and PDF", () => {
+test("paired Form 8889 exports the leap-day age-65 exception in MeF and PDF", () => {
   const { forms, pending, context } = pairedAge65Case();
   assertEquals(forms[0]?.print_line16_taxable, 700);
   assertEquals(forms[0]?.print_line17a_exception, true);
@@ -152,7 +153,7 @@ Deno.test("paired Form 8889 exports the leap-day age-65 exception in MeF and PDF
   assertEquals(pdf?.[1]?.print_line17b_penalty, 80);
 });
 
-Deno.test("paired owners reconcile age-65 and disability exceptions through both Forms 8889 and Form 1040", () => {
+test("paired owners reconcile age-65 and disability exceptions through both Forms 8889 and Form 1040", () => {
   const { source } = pairedAge65Case();
   const mixed = inputSchema.parse({
     ...source,
@@ -267,7 +268,7 @@ Deno.test("paired owners reconcile age-65 and disability exceptions through both
   );
 });
 
-Deno.test("paired age-65 and disability exceptions include one sourced disability-owner rollover", () => {
+test("paired age-65 and disability exceptions include one sourced disability-owner rollover", () => {
   const { source } = pairedAge65Case();
   const mixed = inputSchema.parse({
     ...source,
@@ -400,7 +401,7 @@ Deno.test("paired age-65 and disability exceptions include one sourced disabilit
   );
 });
 
-Deno.test("paired age-65 and disability exceptions include one sourced age-owner rollover", () => {
+test("paired age-65 and disability exceptions include one sourced age-owner rollover", () => {
   const { source } = pairedAge65Case();
   const mixed = inputSchema.parse({
     ...source,
@@ -539,7 +540,7 @@ Deno.test("paired age-65 and disability exceptions include one sourced age-owner
   );
 });
 
-Deno.test("paired age-65 and disability owners each reconcile a sourced rollover", () => {
+test("paired age-65 and disability owners each reconcile a sourced rollover", () => {
   const { source } = pairedAge65Case();
   const primaryRollover = {
     amount: 100,
@@ -697,7 +698,7 @@ Deno.test("paired age-65 and disability owners each reconcile a sourced rollover
   );
 });
 
-Deno.test("paired age-65 evidence and return totals fail closed when altered", () => {
+test("paired age-65 evidence and return totals fail closed when altered", () => {
   const { source, forms, pending, context } = pairedAge65Case();
   const wrongFormReference = {
     ...source,

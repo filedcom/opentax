@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
@@ -28,7 +29,7 @@ for (
     [302.50, 303, 61],
   ] as const
 ) {
-  Deno.test(`Form 8995 rounds sourced Schedule C $${rawQbi} only at whole-dollar lines`, () => {
+  test(`Form 8995 rounds sourced Schedule C $${rawQbi} only at whole-dollar lines`, () => {
     const source = { ...sourceBusiness, line_1_gross_receipts: rawQbi };
     const result = form8995Node.compute({ taxYear: 2025, formType: "f1040" }, {
       qbi_from_schedule_c: rawQbi,
@@ -59,7 +60,7 @@ for (
   });
 }
 
-Deno.test("Schedule C cents survive the source graph and reconcile to both Form 8995 exports", () => {
+test("Schedule C cents survive the source graph and reconcile to both Form 8995 exports", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );

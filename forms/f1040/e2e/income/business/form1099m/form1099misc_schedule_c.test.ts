@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -32,17 +35,17 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(schema);
+    await sys.stat(schema);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
+    if (sys.isNotFound(error)) {
       throw new Error(`Missing verification prerequisite: ${schema}`);
     }
     throw error;
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
@@ -53,11 +56,11 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
       new TextDecoder().decode(result.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("1099-MISC box 10 client funds do not inflate Form 1040 income", async () => {
+test("1099-MISC box 10 client funds do not inflate Form 1040 income", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -117,7 +120,7 @@ Deno.test("1099-MISC box 10 client funds do not inflate Form 1040 income", async
   assertEquals(pdf.getPageCount() >= 4, true);
 });
 
-Deno.test("1099-MISC box 10 rejects a recipient who differs from the Schedule C proprietor", async () => {
+test("1099-MISC box 10 rejects a recipient who differs from the Schedule C proprietor", async () => {
   const pending = buildPending({
     schedule1: { line3_schedule_c: 5_000 },
     schedule_c: {
@@ -151,7 +154,7 @@ Deno.test("1099-MISC box 10 rejects a recipient who differs from the Schedule C 
   );
 });
 
-Deno.test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1040", async () => {
+test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1040", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -210,10 +213,10 @@ Deno.test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1
   const pdf = await PDFDocument.load(pdfBytes);
   assertEquals(pdf.getPageCount() >= 4, true);
 
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdfBytes);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdfBytes);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -221,7 +224,7 @@ Deno.test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1
     assertEquals(printed.includes("MEDICAL SERVICES"), true);
     assertEquals(printed.includes("5000"), true);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const misc = form1099mInputSchema.parse(result.pending.f1099m);
@@ -259,7 +262,7 @@ Deno.test("two 1099-MISC medical receipts reconcile to one Schedule C and Form 1
   );
 });
 
-Deno.test("1099-MISC receipt source and old top-level totals cannot bypass Schedule C export", async () => {
+test("1099-MISC receipt source and old top-level totals cannot bypass Schedule C export", async () => {
   const business = {
     business_reference: "clinic",
     proprietor_recipient: "T",

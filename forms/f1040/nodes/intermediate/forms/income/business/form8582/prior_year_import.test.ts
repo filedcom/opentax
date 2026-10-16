@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { reconcileFiled2024Form8582Record } from "./prior_year_import.ts";
 
@@ -42,11 +43,11 @@ const input = {
   has_other_passive: true,
 };
 
-Deno.test("Form 8582 2024 Part IX import reconciles ID, filed total, and character", () => {
+test("Form 8582 2024 Part IX import reconciles ID, filed total, and character", () => {
   assertEquals(reconcileFiled2024Form8582Record(filed, input), filed);
 });
 
-Deno.test("Form 8582 2024 import rejects changed ID, source, total, and character", () => {
+test("Form 8582 2024 import rejects changed ID, source, total, and character", () => {
   for (
     const altered of [
       {
@@ -77,7 +78,7 @@ Deno.test("Form 8582 2024 import rejects changed ID, source, total, and characte
   }
 });
 
-Deno.test("Form 8582 2024 import rejects duplicate, omitted, or extra activities", () => {
+test("Form 8582 2024 import rejects duplicate, omitted, or extra activities", () => {
   assertThrows(() =>
     reconcileFiled2024Form8582Record({
       ...filed,
@@ -105,7 +106,7 @@ Deno.test("Form 8582 2024 import rejects duplicate, omitted, or extra activities
   );
 });
 
-Deno.test("Form 8582 2024 Part VIII operating character must match the 2025 form", () => {
+test("Form 8582 2024 Part VIII operating character must match the 2025 form", () => {
   const operatingInput = {
     ...input,
     activities: [{
@@ -143,7 +144,7 @@ Deno.test("Form 8582 2024 Part VIII operating character must match the 2025 form
   );
 });
 
-Deno.test("Form 8582 2024 Part VIII Form 4797 character is retained exactly", () => {
+test("Form 8582 2024 Part VIII Form 4797 character is retained exactly", () => {
   const partVIIIInput = {
     ...input,
     activities: [{

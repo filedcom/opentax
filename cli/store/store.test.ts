@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertMatch,
@@ -16,18 +19,18 @@ import type { InputsJson, NodeInputEntry } from "./types.ts";
 
 // ---- nextId (pure, no I/O) ----
 
-Deno.test("nextId: empty list returns w2_01", () => {
+test("nextId: empty list returns w2_01", () => {
   assertEquals(nextId([], "w2"), "w2_01");
 });
 
-Deno.test("nextId: one existing w2 entry returns w2_02", () => {
+test("nextId: one existing w2 entry returns w2_02", () => {
   const entries: NodeInputEntry[] = [
     { id: "w2_01", fields: { box1: 85000 } },
   ];
   assertEquals(nextId(entries, "w2"), "w2_02");
 });
 
-Deno.test("nextId: two existing w2 entries returns w2_03", () => {
+test("nextId: two existing w2 entries returns w2_03", () => {
   const entries: NodeInputEntry[] = [
     { id: "w2_01", fields: { box1: 85000 } },
     { id: "w2_02", fields: { box1: 45000 } },
@@ -35,11 +38,11 @@ Deno.test("nextId: two existing w2 entries returns w2_03", () => {
   assertEquals(nextId(entries, "w2"), "w2_03");
 });
 
-Deno.test("nextId: nodeType with no existing entries returns nodeType_01", () => {
+test("nextId: nodeType with no existing entries returns nodeType_01", () => {
   assertEquals(nextId([], "1099int"), "1099int_01");
 });
 
-Deno.test("buildEngineInputs rejects repeated singleton and overlapping start claims", () => {
+test("buildEngineInputs rejects repeated singleton and overlapping start claims", () => {
   assertThrows(
     () =>
       buildEngineInputs({
@@ -87,12 +90,12 @@ Deno.test("buildEngineInputs rejects repeated singleton and overlapping start cl
 
 // ---- createReturn ----
 
-Deno.test("createReturn: writes a single return.json with meta and inputs keys", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("createReturn: writes a single return.json with meta and inputs keys", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnId, returnPath } = await createReturn(2025, tmpDir);
 
   const returnJson = JSON.parse(
-    await Deno.readTextFile(`${returnPath}/return.json`),
+    await fs.readFile(`${returnPath}/return.json`, "utf8"),
   );
 
   assertEquals(typeof returnJson.meta, "object");
@@ -107,24 +110,24 @@ Deno.test("createReturn: writes a single return.json with meta and inputs keys",
   assertEquals(Object.keys(returnJson.inputs).length, 0);
 });
 
-Deno.test("createReturn: does NOT create separate meta.json or inputs.json", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("createReturn: does NOT create separate meta.json or inputs.json", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
-  await assertRejects(() => Deno.stat(`${returnPath}/meta.json`));
-  await assertRejects(() => Deno.stat(`${returnPath}/inputs.json`));
+  await assertRejects(() => sys.stat(`${returnPath}/meta.json`));
+  await assertRejects(() => sys.stat(`${returnPath}/inputs.json`));
 });
 
-Deno.test("createReturn: returnPath is baseDir/returnId", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("createReturn: returnPath is baseDir/returnId", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnId, returnPath } = await createReturn(2025, tmpDir);
   assertEquals(returnPath, `${tmpDir}/${returnId}`);
 });
 
 // ---- loadMeta ----
 
-Deno.test("loadMeta: returns MetaJson from return.json", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("loadMeta: returns MetaJson from return.json", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnId, returnPath } = await createReturn(2025, tmpDir);
   const meta = await loadMeta(returnPath);
 
@@ -133,7 +136,7 @@ Deno.test("loadMeta: returns MetaJson from return.json", async () => {
   assertEquals(typeof meta.createdAt, "string");
 });
 
-Deno.test("loadMeta: throws descriptive error for nonexistent path", async () => {
+test("loadMeta: throws descriptive error for nonexistent path", async () => {
   await assertRejects(
     () => loadMeta("/nonexistent/path/that/does/not/exist"),
     Error,
@@ -143,8 +146,8 @@ Deno.test("loadMeta: throws descriptive error for nonexistent path", async () =>
 
 // ---- loadInputs ----
 
-Deno.test("loadInputs: returns empty object for fresh return", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("loadInputs: returns empty object for fresh return", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
   const inputs = await loadInputs(returnPath);
 
@@ -153,7 +156,7 @@ Deno.test("loadInputs: returns empty object for fresh return", async () => {
   assertEquals(Object.keys(inputs).length, 0);
 });
 
-Deno.test("loadInputs: throws descriptive error for nonexistent path", async () => {
+test("loadInputs: throws descriptive error for nonexistent path", async () => {
   await assertRejects(
     () => loadInputs("/nonexistent/path/that/does/not/exist"),
     Error,
@@ -163,8 +166,8 @@ Deno.test("loadInputs: throws descriptive error for nonexistent path", async () 
 
 // ---- appendInput ----
 
-Deno.test("appendInput: first w2 creates w2 bucket with one entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("appendInput: first w2 creates w2 bucket with one entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
   const { id } = await appendInput(returnPath, "w2", { box1: 85000 });
@@ -176,8 +179,8 @@ Deno.test("appendInput: first w2 creates w2 bucket with one entry", async () => 
   assertEquals(inputs["w2"][0].fields["box1"], 85000);
 });
 
-Deno.test("appendInput: second w2 appends to existing w2 bucket", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("appendInput: second w2 appends to existing w2 bucket", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
   const { id: id1 } = await appendInput(returnPath, "w2", { box1: 85000 });
@@ -189,8 +192,8 @@ Deno.test("appendInput: second w2 appends to existing w2 bucket", async () => {
   assertEquals(inputs["w2"][1].id, id2);
 });
 
-Deno.test("appendInput: different nodeTypes go into separate buckets", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("appendInput: different nodeTypes go into separate buckets", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
   await appendInput(returnPath, "w2", { box1: 85000 });
@@ -207,8 +210,8 @@ Deno.test("appendInput: different nodeTypes go into separate buckets", async () 
   assertEquals(Object.keys(inputs).length, 3);
 });
 
-Deno.test("appendInput: meta is preserved unchanged after appending inputs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("appendInput: meta is preserved unchanged after appending inputs", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnId, returnPath } = await createReturn(2025, tmpDir);
 
   await appendInput(returnPath, "w2", { box1: 85000 });
@@ -218,8 +221,8 @@ Deno.test("appendInput: meta is preserved unchanged after appending inputs", asy
   assertEquals(meta.year, 2025);
 });
 
-Deno.test("appendInput: entries use 'fields' key not 'data'", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("appendInput: entries use 'fields' key not 'data'", async () => {
+  const tmpDir = await sys.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
   await appendInput(returnPath, "w2", { box1: 85000 });

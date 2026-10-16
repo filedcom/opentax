@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { computeAccrualIncome, inputSchema, schedule_f } from "./index.ts";
 
@@ -29,14 +30,14 @@ function minimalItem(
 
 // ── Smoke test ────────────────────────────────────────────────────────────────
 
-Deno.test("schedule_f: smoke test — empty farms array returns no outputs", () => {
+test("schedule_f: smoke test — empty farms array returns no outputs", () => {
   const result = compute({ schedule_fs: [] });
   assertEquals(result.outputs.length, 0);
 });
 
 // ── Zero income + zero expenses ───────────────────────────────────────────────
 
-Deno.test("schedule_f: zero income and expenses — no outputs", () => {
+test("schedule_f: zero income and expenses — no outputs", () => {
   const result = compute({
     schedule_fs: [minimalItem()],
   });
@@ -45,7 +46,7 @@ Deno.test("schedule_f: zero income and expenses — no outputs", () => {
 
 // ── Net profit routes to schedule1 and schedule_se ───────────────────────────
 
-Deno.test("schedule_f: net profit routes to schedule1 line6", () => {
+test("schedule_f: net profit routes to schedule1 line6", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -58,7 +59,7 @@ Deno.test("schedule_f: net profit routes to schedule1 line6", () => {
   assertEquals(s1?.fields.line6_schedule_f, 40_000);
 });
 
-Deno.test("Schedule F reduces gross labor hired by linked Form 5884 line 2", () => {
+test("Schedule F reduces gross labor hired by linked Form 5884 line 2", () => {
   const farm = minimalItem({
     farm_id: "FARM-1",
     line1_sales_livestock_resale: 50_000,
@@ -87,7 +88,7 @@ Deno.test("Schedule F reduces gross labor hired by linked Form 5884 line 2", () 
   );
 });
 
-Deno.test("schedule_f: net profit >= $400 routes to schedule_se", () => {
+test("schedule_f: net profit >= $400 routes to schedule_se", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -102,7 +103,7 @@ Deno.test("schedule_f: net profit >= $400 routes to schedule_se", () => {
 
 // ── Net profit routes to form8995 (QBI) ──────────────────────────────────────
 
-Deno.test("schedule_f: net profit > 0 routes to form8995 as QBI", () => {
+test("schedule_f: net profit > 0 routes to form8995 as QBI", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -117,7 +118,7 @@ Deno.test("schedule_f: net profit > 0 routes to form8995 as QBI", () => {
 
 // ── Net loss routes to schedule1 but not schedule_se ─────────────────────────
 
-Deno.test("schedule_f: net loss routes to schedule1 (negative line6) but not schedule_se", () => {
+test("schedule_f: net loss routes to schedule1 (negative line6) but not schedule_se", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -134,7 +135,7 @@ Deno.test("schedule_f: net loss routes to schedule1 (negative line6) but not sch
 
 // ── Small profit below SE threshold ($400) ───────────────────────────────────
 
-Deno.test("schedule_f: profit below $400 SE threshold — no schedule_se output", () => {
+test("schedule_f: profit below $400 SE threshold — no schedule_se output", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -147,7 +148,7 @@ Deno.test("schedule_f: profit below $400 SE threshold — no schedule_se output"
   assertEquals(se, undefined);
 });
 
-Deno.test("schedule_f: elected farm optional method routes gross income below the ordinary $400 threshold", () => {
+test("schedule_f: elected farm optional method routes gross income below the ordinary $400 threshold", () => {
   const result = compute({
     farm_optional_method_elected: true,
     schedule_fs: [minimalItem({
@@ -165,7 +166,7 @@ Deno.test("schedule_f: elected farm optional method routes gross income below th
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 300);
 });
 
-Deno.test("schedule_f: elected farm optional method routes a farm loss without ordinary SE line 1a", () => {
+test("schedule_f: elected farm optional method routes a farm loss without ordinary SE line 1a", () => {
   const result = compute({
     farm_optional_method_elected: true,
     schedule_fs: [minimalItem({
@@ -182,7 +183,7 @@ Deno.test("schedule_f: elected farm optional method routes a farm loss without o
   });
 });
 
-Deno.test("schedule_f: one farm optional election aggregates multiple Schedule F line 9 and line 34 amounts", () => {
+test("schedule_f: one farm optional election aggregates multiple Schedule F line 9 and line 34 amounts", () => {
   const result = compute({
     farm_optional_method_elected: true,
     schedule_fs: [
@@ -203,7 +204,7 @@ Deno.test("schedule_f: one farm optional election aggregates multiple Schedule F
   );
 });
 
-Deno.test("schedule_f: farm optional eligibility receives line 34 before Form 6198 loss limitation", () => {
+test("schedule_f: farm optional eligibility receives line 34 before Form 6198 loss limitation", () => {
   const result = compute({
     farm_optional_method_elected: true,
     schedule_fs: [minimalItem({
@@ -229,7 +230,7 @@ Deno.test("schedule_f: farm optional eligibility receives line 34 before Form 61
 
 // ── Material participation = false → form8582 ─────────────────────────────────
 
-Deno.test("schedule_f: non-material participation routes to form8582", () => {
+test("schedule_f: non-material participation routes to form8582", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -245,7 +246,7 @@ Deno.test("schedule_f: non-material participation routes to form8582", () => {
 
 // ── At-risk box 36b + loss ────────────────────────────────────────────────────
 
-Deno.test("schedule_f: at-risk loss is limited before Schedule 1", () => {
+test("schedule_f: at-risk loss is limited before Schedule 1", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -265,7 +266,7 @@ Deno.test("schedule_f: at-risk loss is limited before Schedule 1", () => {
   assertEquals(findOutput(result, "form6198"), undefined);
 });
 
-Deno.test("schedule_f: zero at-risk amount still carries the full farm loss", () => {
+test("schedule_f: zero at-risk amount still carries the full farm loss", () => {
   const result = compute({
     schedule_fs: [minimalItem({
       line16_feed: 1000,
@@ -281,7 +282,7 @@ Deno.test("schedule_f: zero at-risk amount still carries the full farm loss", ()
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 0);
 });
 
-Deno.test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", () => {
+test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -297,7 +298,7 @@ Deno.test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", ()
 
 // ── Farm income aggregation across multiple farms ────────────────────────────
 
-Deno.test("schedule_f: aggregates net profit across multiple farms to single schedule1 output", () => {
+test("schedule_f: aggregates net profit across multiple farms to single schedule1 output", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -316,7 +317,7 @@ Deno.test("schedule_f: aggregates net profit across multiple farms to single sch
 
 // ── Conservation expense limit (25% of gross) ────────────────────────────────
 
-Deno.test("schedule_f: conservation expense is limited to 25% of gross farm income", () => {
+test("schedule_f: conservation expense is limited to 25% of gross farm income", () => {
   // Gross = 20,000; 25% limit = 5,000; actual conservation = 8,000 → capped at 5,000
   // net = 20,000 − 5,000 = 15,000
   const result = compute({
@@ -333,7 +334,7 @@ Deno.test("schedule_f: conservation expense is limited to 25% of gross farm inco
 
 // ── CCC loan / cooperative distribution income ────────────────────────────────
 
-Deno.test("schedule_f: cooperative distributions and CCC loans are included in gross income", () => {
+test("schedule_f: cooperative distributions and CCC loans are included in gross income", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -352,7 +353,7 @@ Deno.test("schedule_f: cooperative distributions and CCC loans are included in g
   assertEquals(s1?.fields.line6_schedule_f, 10_000);
 });
 
-Deno.test("Schedule F reconciles 1099-PATR gross and taxable cash lines without adding income twice", () => {
+test("Schedule F reconciles 1099-PATR gross and taxable cash lines without adding income twice", () => {
   const result = compute({
     schedule_fs: [minimalItem({
       farm_id: "FARM-1",
@@ -369,7 +370,7 @@ Deno.test("Schedule F reconciles 1099-PATR gross and taxable cash lines without 
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 700);
 });
 
-Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or accrual line 43", () => {
+test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or accrual line 43", () => {
   const source = {
     farm_id: "FARM-1",
     kind: "1099m_box3_other_income" as const,
@@ -430,7 +431,7 @@ Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or a
   );
 });
 
-Deno.test("Schedule F rejects an omitted 1099-PATR gross or taxable cash line", () => {
+test("Schedule F rejects an omitted 1099-PATR gross or taxable cash line", () => {
   const source = {
     farm_id: "FARM-1",
     kind: "1099patr_cooperative",
@@ -459,7 +460,7 @@ Deno.test("Schedule F rejects an omitted 1099-PATR gross or taxable cash line", 
   );
 });
 
-Deno.test("Schedule F reconciles 1099-PATR with accrual lines 38a and 38b", () => {
+test("Schedule F reconciles 1099-PATR with accrual lines 38a and 38b", () => {
   const result = compute({
     schedule_fs: [minimalItem({
       farm_id: "FARM-1",
@@ -485,7 +486,7 @@ Deno.test("Schedule F reconciles 1099-PATR with accrual lines 38a and 38b", () =
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 700);
 });
 
-Deno.test("Schedule F rejects 1099-PATR without verified taxable amount or a matching farm", () => {
+test("Schedule F rejects 1099-PATR without verified taxable amount or a matching farm", () => {
   assertThrows(() =>
     compute({
       schedule_fs: [minimalItem({ farm_id: "FARM-1" })],
@@ -509,7 +510,7 @@ Deno.test("Schedule F rejects 1099-PATR without verified taxable amount or a mat
   );
 });
 
-Deno.test("schedule_f: raised-product sales and line 5c taxable CCC amount enter gross income", () => {
+test("schedule_f: raised-product sales and line 5c taxable CCC amount enter gross income", () => {
   const result = compute({
     schedule_fs: [minimalItem({
       line2_sales_products_raised: 7_000,
@@ -520,7 +521,7 @@ Deno.test("schedule_f: raised-product sales and line 5c taxable CCC amount enter
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 8_500);
 });
 
-Deno.test("schedule_f: accrual farm is not calculated using cash-method lines", () => {
+test("schedule_f: accrual farm is not calculated using cash-method lines", () => {
   assertThrows(
     () =>
       compute({ schedule_fs: [minimalItem({ accounting_method: "accrual" })] }),
@@ -529,7 +530,7 @@ Deno.test("schedule_f: accrual farm is not calculated using cash-method lines", 
   );
 });
 
-Deno.test("schedule_f: accrual Part III flows through inventory, expenses, and Schedule 1", () => {
+test("schedule_f: accrual Part III flows through inventory, expenses, and Schedule 1", () => {
   const result = compute({
     schedule_fs: [{
       line_a_principal_crop_activity: "GRAIN FARMING",
@@ -553,7 +554,7 @@ Deno.test("schedule_f: accrual Part III flows through inventory, expenses, and S
   );
 });
 
-Deno.test("schedule_f: inventory valuation method determines line 49 sign", () => {
+test("schedule_f: inventory valuation method determines line 49 sign", () => {
   const base = {
     line_a_principal_crop_activity: "GRAIN FARMING",
     line_b_agricultural_activity_code: "111100",
@@ -606,7 +607,7 @@ Deno.test("schedule_f: inventory valuation method determines line 49 sign", () =
 
 // ── Livestock resale — net (line 1 − line 2) ─────────────────────────────────
 
-Deno.test("schedule_f: line 1b cost basis of livestock resale is subtracted from line 1a sales", () => {
+test("schedule_f: line 1b cost basis of livestock resale is subtracted from line 1a sales", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -622,7 +623,7 @@ Deno.test("schedule_f: line 1b cost basis of livestock resale is subtracted from
 
 // ── Excess business loss (Form 461) ──────────────────────────────────────────
 
-Deno.test("schedule_f: signed loss routes to Form 461 before return-wide threshold", () => {
+test("schedule_f: signed loss routes to Form 461 before return-wide threshold", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -636,7 +637,7 @@ Deno.test("schedule_f: signed loss routes to Form 461 before return-wide thresho
   assertEquals(ebl?.fields.line6_schedule_f, -400_000);
 });
 
-Deno.test("schedule_f: smaller loss still routes to Form 461 for aggregation", () => {
+test("schedule_f: smaller loss still routes to Form 461 for aggregation", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -650,7 +651,7 @@ Deno.test("schedule_f: smaller loss still routes to Form 461 for aggregation", (
   assertEquals(ebl?.fields.line6_schedule_f, -100_000);
 });
 
-Deno.test("schedule_f: unresolved passive loss is flagged for Form 461", () => {
+test("schedule_f: unresolved passive loss is flagged for Form 461", () => {
   const result = compute({
     schedule_fs: [minimalItem({
       line1_sales_livestock_resale: 0,
@@ -666,7 +667,7 @@ Deno.test("schedule_f: unresolved passive loss is flagged for Form 461", () => {
 
 // ── Output routing completeness ───────────────────────────────────────────────
 
-Deno.test("schedule_f: profit farm has schedule1, schedule_se, form8995 outputs", () => {
+test("schedule_f: profit farm has schedule1, schedule_se, form8995 outputs", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -683,7 +684,7 @@ Deno.test("schedule_f: profit farm has schedule1, schedule_se, form8995 outputs"
 
 // ── Input validation ──────────────────────────────────────────────────────────
 
-Deno.test("schedule_f: invalid accounting_method throws", () => {
+test("schedule_f: invalid accounting_method throws", () => {
   assertThrows(() =>
     compute({
       schedule_fs: [
@@ -693,7 +694,7 @@ Deno.test("schedule_f: invalid accounting_method throws", () => {
   );
 });
 
-Deno.test("schedule_f: negative expense throws", () => {
+test("schedule_f: negative expense throws", () => {
   assertThrows(() =>
     compute({
       schedule_fs: [

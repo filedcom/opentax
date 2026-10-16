@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -81,14 +82,14 @@ const review = {
   }],
 };
 
-Deno.test("Form 8839 reviewed one-child evidence reconciles to existing Part II source", () => {
+test("Form 8839 reviewed one-child evidence reconciles to existing Part II source", () => {
   assertReviewedDomestic8839Source(input, review);
   const prepared = prepareForm8839Credit(input);
   assertEquals(prepared.perChild[0]?.line5, 12_000);
   assertEquals(prepared.perChild[0]?.line6, 12_000);
 });
 
-Deno.test("Form 8839 reviewed source rejects changed decree or payment details", () => {
+test("Form 8839 reviewed source rejects changed decree or payment details", () => {
   assertThrows(
     () =>
       assertReviewedDomestic8839Source(input, {
@@ -121,7 +122,7 @@ Deno.test("Form 8839 reviewed source rejects changed decree or payment details",
   );
 });
 
-Deno.test("Form 8839 reviewed birth record binds identity and age to the child ledger", () => {
+test("Form 8839 reviewed birth record binds identity and age to the child ledger", () => {
   assertReviewedDomestic8839Source(input, review);
   assertThrows(
     () =>
@@ -155,7 +156,7 @@ Deno.test("Form 8839 reviewed birth record binds identity and age to the child l
   );
 });
 
-Deno.test("Form 8839 reviewed source rejects excluded claims and missing evidence", () => {
+test("Form 8839 reviewed source rejects excluded claims and missing evidence", () => {
   assertThrows(() =>
     assertReviewedDomestic8839Source(
       { ...input, adoption_benefits: 1_000 },
@@ -197,7 +198,7 @@ Deno.test("Form 8839 reviewed source rejects excluded claims and missing evidenc
   );
 });
 
-Deno.test("Form 8839 reviewed metadata alone does not open the base node", () => {
+test("Form 8839 reviewed metadata alone does not open the base node", () => {
   assertReviewedDomestic8839Source(input, review);
   assertThrows(
     () =>
@@ -210,7 +211,7 @@ Deno.test("Form 8839 reviewed metadata alone does not open the base node", () =>
   );
 });
 
-Deno.test("Form 8839 reviewed decree, payment and reimbursement bytes settle one staged credit", async () => {
+test("Form 8839 reviewed decree, payment and reimbursement bytes settle one staged credit", async () => {
   const bytes = {
     decree: new TextEncoder().encode("synthetic decree Ada 2025-07-15 TX"),
     birth: new TextEncoder().encode("synthetic birth record Ada 2020-02-01"),

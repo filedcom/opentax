@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099div } from "../../../../../../nodes/inputs/income/investments/f1099div/index.ts";
 import {
@@ -39,7 +40,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 sources a single investment-property ordinary dividend through MeF and PDF", () => {
+test("Form 4952 sources a single investment-property ordinary dividend through MeF and PDF", () => {
   assertEquals(form4952Pdf.pageIndices?.({}), [0]);
   assertEquals(
     form4952Pdf.filerFields?.map((entry) => entry.domainKey),
@@ -88,7 +89,7 @@ Deno.test("Form 4952 sources a single investment-property ordinary dividend thro
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 reconciles qualified 1099-DIV income without a line 4g election", () => {
+test("Form 4952 reconciles qualified 1099-DIV income without a line 4g election", () => {
   const qualifiedDividend = { ...dividend, box1b: 100 };
   const qualifiedInputs = {
     ...inputs,
@@ -161,7 +162,7 @@ Deno.test("Form 4952 reconciles qualified 1099-DIV income without a line 4g elec
   );
 });
 
-Deno.test("Form 4952 dividend route rejects missing or conflicting source and return facts", () => {
+test("Form 4952 dividend route rejects missing or conflicting source and return facts", () => {
   const unsourced = { ...fields, source_1099_dividends: undefined };
   assertThrows(
     () => form4952.build(unsourced, { pending }),
@@ -219,7 +220,7 @@ Deno.test("Form 4952 dividend route rejects missing or conflicting source and re
   );
 });
 
-Deno.test("Form 4952 dividend route rejects unmatched qualified dividends and payer totals", () => {
+test("Form 4952 dividend route rejects unmatched qualified dividends and payer totals", () => {
   const extraK1 = {
     ...inputs,
     source_k1_interest: 50,
@@ -256,7 +257,7 @@ Deno.test("Form 4952 dividend route rejects unmatched qualified dividends and pa
   );
 });
 
-Deno.test("Form 4952 reconciles multiple ordinary investment-dividend payers", () => {
+test("Form 4952 reconciles multiple ordinary investment-dividend payers", () => {
   const sources = [
     dividend,
     { ...dividend, payerName: "Second Fund", box1a: 250 },
@@ -312,7 +313,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-dividend payers", (
   );
 });
 
-Deno.test("Form 4952 dividend route rejects unreconciled foreign-tax allocation in MeF and PDF", () => {
+test("Form 4952 dividend route rejects unreconciled foreign-tax allocation in MeF and PDF", () => {
   assertThrows(
     () =>
       form4952.build(fields, {

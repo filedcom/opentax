@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -6,16 +8,11 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { distributionPackets } from "./form7217_continuations.fixture.ts";
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM7217_CONTINUATIONS_DIR");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM7217_CONTINUATIONS_DIR;
 }
 
 for (const entry of distributionPackets) {
-  Deno.test(`Form 7217 complete property inventory: ${entry.id}`, async () => {
+  test(`Form 7217 complete property inventory: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -33,7 +30,7 @@ for (const entry of distributionPackets) {
     );
     const origins: PdfPageOrigin[] = [];
     const root = evidenceRoot();
-    if (root) await Deno.mkdir(root, { recursive: true });
+    if (root) await fs.mkdir(root, { recursive: true });
     let pdfError: string | undefined;
     let freshPdfError: string | undefined;
     if (entry.gain > 0) {
@@ -76,11 +73,11 @@ for (const entry of distributionPackets) {
             0,
           ),
       );
-      if (root) await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      if (root) await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
     }
     if (root) {
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

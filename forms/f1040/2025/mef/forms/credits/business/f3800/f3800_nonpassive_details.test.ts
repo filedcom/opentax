@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form3800NonpassiveCurrentDetailXml } from "./f3800_nonpassive_details.ts";
 
-Deno.test("Form 3800 typed nonpassive detail preserves pass-through identity and tax use", () => {
+test("Form 3800 typed nonpassive detail preserves pass-through identity and tax use", () => {
   const xml = form3800NonpassiveCurrentDetailXml({
     line: "1i",
     credit: 300,
@@ -27,7 +28,7 @@ Deno.test("Form 3800 typed nonpassive detail preserves pass-through identity and
   assertStringIncludes(xml, 'lineNumberTxt="Part III Line 1i"');
 });
 
-Deno.test("Form 3800 typed facility detail preserves transfer and source document", () => {
+test("Form 3800 typed facility detail preserves transfer and source document", () => {
   const xml = form3800NonpassiveCurrentDetailXml({
     line: "4e",
     credit: 20_000,
@@ -55,7 +56,7 @@ Deno.test("Form 3800 typed facility detail preserves transfer and source documen
   assertStringIncludes(xml, 'referenceDocumentName="IRS8835 BinaryAttachment"');
 });
 
-Deno.test("Form 3800 typed detail rejects impossible source and transfer combinations", () => {
+test("Form 3800 typed detail rejects impossible source and transfer combinations", () => {
   assertThrows(
     () =>
       form3800NonpassiveCurrentDetailXml({

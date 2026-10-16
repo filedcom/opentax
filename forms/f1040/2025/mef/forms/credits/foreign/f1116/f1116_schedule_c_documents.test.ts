@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test-fixture.ts";
@@ -236,7 +237,7 @@ async function intake(): Promise<ScheduleCDocumentIntake> {
   };
 }
 
-Deno.test("Schedule C intake binds eight reviewed PDF byte streams and flags amended 2024 return", async () => {
+test("Schedule C intake binds eight reviewed PDF byte streams and flags amended 2024 return", async () => {
   const input = await intake();
   const reviewed = await reviewScheduleCDocuments(input);
   assertEquals(reviewed.documents.length, 8);
@@ -282,7 +283,7 @@ Deno.test("Schedule C intake binds eight reviewed PDF byte streams and flags ame
   );
 });
 
-Deno.test("Schedule C intake rejects a prepared 1040-X whose printed tax or identity differs", async () => {
+test("Schedule C intake rejects a prepared 1040-X whose printed tax or identity differs", async () => {
   for (
     const [changedFields, expected] of [
       [{ "f1_41[0]": "-19" }, "line7_nonrefundable_credits column_b"],
@@ -312,7 +313,7 @@ Deno.test("Schedule C intake rejects a prepared 1040-X whose printed tax or iden
   }
 });
 
-Deno.test("Schedule C intake binds filed documents to the current filer and foreign records to that taxpayer", async () => {
+test("Schedule C intake binds filed documents to the current filer and foreign records to that taxpayer", async () => {
   const input = await intake();
   await assertRejects(
     () => reviewWithFiler(input, "111223333"),
@@ -334,7 +335,7 @@ Deno.test("Schedule C intake binds filed documents to the current filer and fore
   );
 });
 
-Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF", async () => {
+test("Schedule C intake binds each of two payors to a distinct reviewed PDF", async () => {
   const input = await intake();
   const secondPayor = {
     ...input.ledger.payor_events[0],
@@ -457,7 +458,7 @@ Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF
   );
 });
 
-Deno.test("Schedule C intake rejects a missing or changed prepared affected-year Form 1040-X", async () => {
+test("Schedule C intake rejects a missing or changed prepared affected-year Form 1040-X", async () => {
   const input = await intake();
   await assertRejects(
     () => reviewScheduleCDocuments({ ...input, prepared_amendment: undefined }),
@@ -506,7 +507,7 @@ Deno.test("Schedule C intake rejects a missing or changed prepared affected-year
   );
 });
 
-Deno.test("Schedule C intake rejects an affected-year recalculation PDF with the wrong reference", async () => {
+test("Schedule C intake rejects an affected-year recalculation PDF with the wrong reference", async () => {
   const input = await intake();
   await assertRejects(
     () =>
@@ -523,7 +524,7 @@ Deno.test("Schedule C intake rejects an affected-year recalculation PDF with the
   );
 });
 
-Deno.test("Schedule C intake requires an affected-year recalculation PDF", async () => {
+test("Schedule C intake requires an affected-year recalculation PDF", async () => {
   const input = await intake();
   await assertRejects(
     () =>
@@ -536,7 +537,7 @@ Deno.test("Schedule C intake requires an affected-year recalculation PDF", async
   );
 });
 
-Deno.test("Schedule C intake rejects bytes changed after tax review", async () => {
+test("Schedule C intake rejects bytes changed after tax review", async () => {
   const input = await intake();
   const documents = input.documents.map((document) =>
     document.role === ScheduleCDocumentRole.ForeignRedetermination
@@ -550,7 +551,7 @@ Deno.test("Schedule C intake rejects bytes changed after tax review", async () =
   );
 });
 
-Deno.test("Schedule C intake rejects a filed PDF reference that disagrees with extracted lines", async () => {
+test("Schedule C intake rejects a filed PDF reference that disagrees with extracted lines", async () => {
   const input = await intake();
   await assertRejects(
     () =>

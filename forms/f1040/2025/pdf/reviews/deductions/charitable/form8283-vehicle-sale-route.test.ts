@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -82,21 +85,21 @@ async function assertLocalXsd(xml: string): Promise<void> {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and filled PDF", async () => {
+test("sold Section A vehicle joins graph, acknowledgment, native XML and filled PDF", async () => {
   const acknowledgmentBytes = await syntheticDoneeAcknowledgment();
   const pdfSha256 = Array.from(
     new Uint8Array(
@@ -203,7 +206,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
   );
 });
 
-Deno.test("unreduced needy-transfer vehicle joins certification, native XML and filled PDF", async () => {
+test("unreduced needy-transfer vehicle joins certification, native XML and filled PDF", async () => {
   const acknowledgmentBytes = await syntheticDoneeAcknowledgment([
     "Synthetic donee written acknowledgment - test fixture only",
     "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",
@@ -362,7 +365,7 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
   );
 });
 
-Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF through final native and PDF return", async () => {
+test("Section A significant-use vehicle joins reviewed box 5a/5c PDF through final native and PDF return", async () => {
   const acknowledgmentBytes = await syntheticDoneeAcknowledgment([
     "Synthetic donee written acknowledgment - test fixture only",
     "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",
@@ -504,7 +507,7 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
   );
 });
 
-Deno.test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF through final return", async () => {
+test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF through final return", async () => {
   const acknowledgmentBytes = await syntheticDoneeAcknowledgment([
     "Synthetic donee written acknowledgment - test fixture only",
     "City Charity, 1 Main St, Austin, TX 78701, EIN 98-7654321",

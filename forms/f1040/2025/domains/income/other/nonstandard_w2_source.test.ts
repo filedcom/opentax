@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -16,7 +19,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-w2-refund"
 )!;
 
-Deno.test("handwritten W-2 source reaches a TY2025 nonstandard IRSW2 document", async () => {
+test("handwritten W-2 source reaches a TY2025 nonstandard IRSW2 document", async () => {
   const [original] = fixture.inputs.w2 as Record<string, unknown>[];
   const reference = "2025 handwritten W-2 source copy";
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -42,10 +45,10 @@ Deno.test("handwritten W-2 source reaches a TY2025 nonstandard IRSW2 document", 
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -55,13 +58,13 @@ Deno.test("handwritten W-2 source reaches a TY2025 nonstandard IRSW2 document", 
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, fixture.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -70,7 +73,7 @@ Deno.test("handwritten W-2 source reaches a TY2025 nonstandard IRSW2 document", 
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
   const changed = structuredClone(pending);
   const copy = (changed.w2 as unknown as {

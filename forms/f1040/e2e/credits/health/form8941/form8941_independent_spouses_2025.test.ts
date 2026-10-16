@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -30,12 +33,7 @@ const xsd = new URL(
 ).pathname;
 const plan = buildExecutionPlan(registry);
 
-Deno.test({
-  name:
-    "2025 independent MFJ spouse SHOP employers file two sourced 8941s and one section 38 credit",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 independent MFJ spouse SHOP employers file two sourced 8941s and one section 38 credit", async () => {
     const { expected, ...input } = form8941IndependentSpouseInputs();
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -97,24 +95,23 @@ Deno.test({
       bundle.xml,
       `<SSN>${input.f8941.independent_members[1].owner_ssn}</SSN>`,
     );
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const prefix = dir + "two-independent-spouse-employers";
-    await Deno.writeTextFile(
+    await fs.writeFile(
       prefix + ".json",
       JSON.stringify({ input, expected, pending: result.pending }, null, 2),
     );
-    await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(prefix + ".xml", bundle.xml);
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, prefix + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       prefix + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-  },
-});
+  });
 
 type Mutation = readonly [string, (source: any) => void];
 const mutations: readonly Mutation[] = [
@@ -161,12 +158,7 @@ const mutations: readonly Mutation[] = [
   }],
 ];
 
-Deno.test({
-  name:
-    "2025 spouse Form 8941 full current tax use retains two native and PDF sources",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 spouse Form 8941 full current tax use retains two native and PDF sources", async () => {
     const { expected, ...input } = form8941IndependentSpouseInputs(300000);
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -198,27 +190,21 @@ Deno.test({
       1;
     assertThrows(() => reconcileForm8941ScheduleC(passiveBoundary, filer));
     assertEquals((bundle.xml.match(/<IRS8941 /g) ?? []).length, 2);
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const prefix = dir + "two-independent-spouse-employers-full-use";
-    await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(prefix + ".xml", bundle.xml);
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, prefix + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       prefix + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-  },
-});
+  });
 
-Deno.test({
-  name:
-    "2025 spouse attribution, passive gross, SHOP, payroll and direct document conflicts reject",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 spouse attribution, passive gross, SHOP, payroll and direct document conflicts reject", async () => {
     const { expected: _expected, ...input } = form8941IndependentSpouseInputs();
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -291,5 +277,4 @@ Deno.test({
         name,
       );
     }
-  },
-});
+  });

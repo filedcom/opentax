@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -65,7 +66,7 @@ function filedCase(filingStatus: "single" | "mfs" = "single") {
   return { filed, pending };
 }
 
-Deno.test("one short-term regular loss becomes AMT gain after a sourced basis refigure", () => {
+test("one short-term regular loss becomes AMT gain after a sourced basis refigure", () => {
   const { filed, pending } = filedCase();
   assertEquals(filed.line2k_disposition, 1_000);
   assertEquals(filed.net_capital_gain, 0);
@@ -81,7 +82,7 @@ Deno.test("one short-term regular loss becomes AMT gain after a sourced basis re
   );
 });
 
-Deno.test("MFS short-term regular loss becomes AMT gain within its $1,500 limit", () => {
+test("MFS short-term regular loss becomes AMT gain within its $1,500 limit", () => {
   const { filed, pending } = filedCase("mfs");
   assertEquals(filed.line2k_disposition, 1_000);
   assertEquals(filed.filing_status, "mfs");
@@ -105,7 +106,7 @@ Deno.test("MFS short-term regular loss becomes AMT gain within its $1,500 limit"
   }
 });
 
-Deno.test("short-term loss-to-AMT-gain rejects changed Form 8949 basis, printed line, and final return", () => {
+test("short-term loss-to-AMT-gain rejects changed Form 8949 basis, printed line, and final return", () => {
   const { filed, pending } = filedCase();
   const altered = [
     {

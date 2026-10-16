@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import type { replayAtsChecks } from "./ty2025-check-replay.ts";
 
 type Replay = Awaited<ReturnType<typeof replayAtsChecks>>;
@@ -183,6 +184,6 @@ if (import.meta.main) {
   const { replayAtsChecks } = await import("./ty2025-check-replay.ts");
   const ledger = buildAtsCheckLedger(await replayAtsChecks());
   const json = JSON.stringify(ledger, null, 2) + "\n";
-  if (Deno.args[0]) await Deno.writeTextFile(Deno.args[0], json);
+  if (process.argv.slice(2)[0]) await fs.writeFile(process.argv.slice(2)[0], json);
   else console.log(json);
 }

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 /**
  * E2E — IRC §469 passive activity loss limit on rental real estate.
  *
@@ -87,7 +88,7 @@ function rental(rentIncome: number, repairs: number) {
   };
 }
 
-Deno.test("first-year passive rental entire gain reaches Form 8582 Part V and Form 1040", () => {
+test("first-year passive rental entire gain reaches Form 8582 Part V and Form 1040", () => {
   const sale = {
     activity_id: "active-first-year-sale",
     activity_name: "First-year passive rental",
@@ -183,7 +184,7 @@ Deno.test("first-year passive rental entire gain reaches Form 8582 Part V and Fo
 // Modified AGI is $200,000, which is above the $150,000 cutoff, so the whole
 // $20,000 is suspended and AGI stays at $200,000.
 
-Deno.test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI unchanged", () => {
+test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI unchanged", () => {
   const result = runReturn({
     general: mfjGeneral(),
     schedule_b_part_iii: {
@@ -209,7 +210,7 @@ Deno.test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI un
 // Modified AGI $90,000 is below $100,000, so $25,000 is allowed and $15,000 is
 // suspended. AGI = 90,000 − 25,000.
 
-Deno.test("§469: MAGI $90,000 — $25,000 allowed, $15,000 suspended", () => {
+test("§469: MAGI $90,000 — $25,000 allowed, $15,000 suspended", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(90_000)],
@@ -225,7 +226,7 @@ Deno.test("§469: MAGI $90,000 — $25,000 allowed, $15,000 suspended", () => {
 // Single, $120,000 wages, rental rent $10,000 less repairs $40,000 = $30,000 loss.
 // Allowance = 25,000 − 0.50 × (120,000 − 100,000) = $15,000.
 
-Deno.test("§469: MAGI $120,000 — allowance phased down to $15,000", () => {
+test("§469: MAGI $120,000 — allowance phased down to $15,000", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(120_000)],
@@ -242,7 +243,7 @@ Deno.test("§469: MAGI $120,000 — allowance phased down to $15,000", () => {
 
 // ── Loss smaller than the allowance is deductible in full ──────────────────
 
-Deno.test("§469: MAGI $80,000 — $10,000 loss fully deductible, nothing suspended", () => {
+test("§469: MAGI $80,000 — $10,000 loss fully deductible, nothing suspended", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(80_000)],
@@ -255,7 +256,7 @@ Deno.test("§469: MAGI $80,000 — $10,000 loss fully deductible, nothing suspen
 
 // ── Rental with net income is untouched by §469 ────────────────────────────
 
-Deno.test("§469: rental net income is not limited", () => {
+test("§469: rental net income is not limited", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(80_000)],
@@ -266,7 +267,7 @@ Deno.test("§469: rental net income is not limited", () => {
   assertEquals(suspendedPal(result), 0, "no suspended loss");
 });
 
-Deno.test("§469: passive income releases part of a rental loss above the allowance cutoff", () => {
+test("§469: passive income releases part of a rental loss above the allowance cutoff", () => {
   const result = runReturn({
     general: singleGeneral(),
     schedule_b_part_iii: {

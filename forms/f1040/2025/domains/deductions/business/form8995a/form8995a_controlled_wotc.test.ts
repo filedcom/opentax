@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -16,7 +18,7 @@ const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("joint-controlled-wotc-")
 );
 
-Deno.test("actual joint common-control sources cap shared people once and reconcile filed group/QBI/current tax use", async () => {
+test("actual joint common-control sources cap shared people once and reconcile filed group/QBI/current tax use", async () => {
   for (const fixture of fixtures) {
     const result = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(result.diagnostics, []);
@@ -94,7 +96,7 @@ Deno.test("actual joint common-control sources cap shared people once and reconc
       prepared.bundle.xml,
       "filed member EINs 123456789, 987654321",
     );
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -117,7 +119,7 @@ Deno.test("actual joint common-control sources cap shared people once and reconc
   }
 });
 
-Deno.test("group shared person identity retains distinct employer certificates/payroll and rejects contradictory public sources", () => {
+test("group shared person identity retains distinct employer certificates/payroll and rejects contradictory public sources", () => {
   const fixture = fixtures.find((f) =>
     f.id.endsWith("phasein") && !f.id.includes("fractional")
   )!;
@@ -166,7 +168,7 @@ Deno.test("group shared person identity retains distinct employer certificates/p
   }
 });
 
-Deno.test("group native and PDF joins reject filed member, payroll, reductions, owner, current-credit and parent tampering", () => {
+test("group native and PDF joins reject filed member, payroll, reductions, owner, current-credit and parent tampering", () => {
   const fixture = fixtures[0],
     p = normalizeAllPending(f1040_2025.executeReturn(fixture.inputs).pending);
   const mutations: ((p: any) => void)[] = [
@@ -199,7 +201,7 @@ Deno.test("group native and PDF joins reject filed member, payroll, reductions, 
   }
 });
 
-Deno.test("shared group hours determine minimum and rate once, while employer source copies remain distinct", () => {
+test("shared group hours determine minimum and rate once, while employer source copies remain distinct", () => {
   const fixture = fixtures[0];
   for (
     const [hours, credit] of [[[60, 60], 1500], [[100, 300], 2400], [

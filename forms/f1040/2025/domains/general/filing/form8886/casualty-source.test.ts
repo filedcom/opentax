@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -118,7 +119,7 @@ async function source(row = casualty, taxpayer = row.business_recipient_ssn) {
     }],
   };
 }
-Deno.test("Form 8886 casualty joins the actual loss after insurance through Form 4797, Schedule 1 and Form 1040", async () => {
+test("Form 8886 casualty joins the actual loss after insurance through Form 4797, Schedule 1 and Form 1040", async () => {
   const result = execute();
   assertEquals(result.diagnostics, []);
   const disclosure = await source(),
@@ -136,7 +137,7 @@ Deno.test("Form 8886 casualty joins the actual loss after insurance through Form
   assertEquals(JSON.stringify({ result, disclosure }), before);
   assertEquals(Object.isFrozen(rows) && Object.isFrozen(rows[0]), true);
 });
-Deno.test("Form 8886 casualty source fingerprint ignores computed AGI context but retains insurance and workpaper facts", async () => {
+test("Form 8886 casualty source fingerprint ignores computed AGI context but retains insurance and workpaper facts", async () => {
   const contextualRow = { ...casualty, agi: 12345 };
   const hash = await returnSourceSha256({
     kind: ReturnSourceKind.BusinessCasualty,
@@ -159,7 +160,7 @@ Deno.test("Form 8886 casualty source fingerprint ignores computed AGI context bu
     "changed after disclosure review",
   );
 });
-Deno.test("Form 8886 casualty source requires its own recipient and reviewed source association", async () => {
+test("Form 8886 casualty source requires its own recipient and reviewed source association", async () => {
   const result = execute(), disclosure = await source();
   await assertRejects(
     () =>
@@ -203,7 +204,7 @@ Deno.test("Form 8886 casualty source requires its own recipient and reviewed sou
     general.spouse_ssn,
   );
 });
-Deno.test("Form 8886 casualty proof rejects independently changed Form 4797, Schedule 1 and Form 1040 joins", async () => {
+test("Form 8886 casualty proof rejects independently changed Form 4797, Schedule 1 and Form 1040 joins", async () => {
   const result = execute(), disclosure = await source();
   for (
     const [key, field] of [
@@ -227,7 +228,7 @@ Deno.test("Form 8886 casualty proof rejects independently changed Form 4797, Sch
     Error,
   );
 });
-Deno.test("Form 8886 casualty adapter preserves current native property/date/holding-period guards", async () => {
+test("Form 8886 casualty adapter preserves current native property/date/holding-period guards", async () => {
   for (
     const changed of [
       { ...casualty, business_casualty_date: "2024-06-15" },
@@ -246,7 +247,7 @@ Deno.test("Form 8886 casualty adapter preserves current native property/date/hol
   }
 });
 
-Deno.test("Form 8886 current-source proof handles simultaneous casualty and broker disclosures without netting their source losses", async () => {
+test("Form 8886 current-source proof handles simultaneous casualty and broker disclosures without netting their source losses", async () => {
   const broker = {
     recipient_ssn: general.taxpayer_ssn,
     payer_tin: "333445555",
@@ -298,7 +299,7 @@ Deno.test("Form 8886 current-source proof handles simultaneous casualty and brok
   assertEquals(result.pending.f1040.line8_additional_income, -2000000);
 });
 
-Deno.test("Form 8886 casualty reconciliation snapshots the caller before asynchronous source hashing", async () => {
+test("Form 8886 casualty reconciliation snapshots the caller before asynchronous source hashing", async () => {
   const disclosure = await source(),
     result = execute(),
     identity = structuredClone(filer);
@@ -316,7 +317,7 @@ Deno.test("Form 8886 casualty reconciliation snapshots the caller before asynchr
   assertEquals(rows[0].taxpayer_ssn, general.taxpayer_ssn);
 });
 
-Deno.test("Form 8886 casualty link cannot use a zero-loss property record as a current deduction source", async () => {
+test("Form 8886 casualty link cannot use a zero-loss property record as a current deduction source", async () => {
   const zero = {
     ...casualty,
     business_fmv_before: 0,

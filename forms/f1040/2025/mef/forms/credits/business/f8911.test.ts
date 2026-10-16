@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { SCENARIO_1040_13_FACTS } from "../../../../../e2e/ats/ty2025_cases.ts";
 import { FuelType } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
@@ -19,7 +20,7 @@ const input = {
   tentative_minimum_tax: source.form8911.printedTentativeMinimumTax,
 };
 
-Deno.test("Form 8911 serializes the sourced tentative and allowed Scenario 13 credit", () => {
+test("Form 8911 serializes the sourced tentative and allowed Scenario 13 credit", () => {
   const xml = form8911.build(input);
   assertStringIncludes(
     xml,
@@ -43,7 +44,7 @@ Deno.test("Form 8911 serializes the sourced tentative and allowed Scenario 13 cr
   );
 });
 
-Deno.test("Form 8911 omits a no-credit document and rejects business use", () => {
+test("Form 8911 omits a no-credit document and rejects business use", () => {
   assertEquals(form8911.build({}), "");
   assertEquals(form8911.build({ ...input, cost: 0 }), "");
   assertEquals(form8911.build({ ...input, regular_tax_before_credits: 0 }), "");

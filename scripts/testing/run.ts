@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 /** Exact-discovery verification; full runs require exclusive ownership and no skips. */
 import { dirname, fromFileUrl, join } from "@std/path";
 import {
@@ -17,13 +19,13 @@ import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
 import { TEST_PERMISSIONS } from "./permissions.ts";
 
 const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
-const mode = Deno.args[0] ?? "full";
+const mode = process.argv.slice(2)[0] ?? "full";
 if (!["full", "unit", "harness", "preflight"].includes(mode)) {
   throw new Error(`Unknown test mode: ${mode}`);
 }
 const directory = join(root, ".state/research/testing");
-await Deno.mkdir(directory, { recursive: true, mode: 0o700 });
-const evidence = await Deno.makeTempDir({ dir: directory, prefix: `${mode}-` });
+await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+const evidence = await sys.makeTempDir({ dir: directory, prefix: `${mode}-` });
 const lockPath = join(directory, "full.lock");
 let lockOwned = false;
 let code = 1;
@@ -32,7 +34,7 @@ let before: Awaited<ReturnType<typeof runtimeSnapshot>> = {};
 
 async function requiredTools() {
   for (const tool of ["xmllint", "pdftotext", "pdftoppm"]) {
-    const result = await new Deno.Command(tool, {
+    const result = await new sys.Command(tool, {
       args: [tool === "xmllint" ? "--version" : "-v"],
       stdout: "piped",
       stderr: "piped",
@@ -45,7 +47,7 @@ async function requiredTools() {
     root,
     ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   );
-  if (!(await Deno.stat(xsd)).isFile) {
+  if (!(await sys.stat(xsd)).isFile) {
     throw new Error(`Required full-run Return1040 XSD missing: ${xsd}`);
   }
   return xsd;
@@ -53,13 +55,13 @@ async function requiredTools() {
 
 try {
   before = await runtimeSnapshot(root);
-  await Deno.writeTextFile(
+  await sys.writeText(
     join(evidence, "runtime-before.json"),
     JSON.stringify(before, null, 2),
     { createNew: true, mode: 0o600 },
   );
   if (mode === "full") {
-    await acquireFullRunLock(lockPath, { pid: Deno.pid, evidence, startedAt });
+    await acquireFullRunLock(lockPath, { pid: process.pid, evidence, startedAt });
     lockOwned = true;
   }
   const all = await testInventory(root);
@@ -76,7 +78,7 @@ try {
     )
     : all;
   assertTestInventory(selected, selected);
-  await Deno.writeTextFile(
+  await sys.writeText(
     join(evidence, "discovery.json"),
     JSON.stringify(
       {
@@ -92,7 +94,7 @@ try {
   );
   const conditionalModules = [];
   for (const path of all) {
-    const source = await Deno.readTextFile(join(root, path));
+    const source = await fs.readFile(join(root, path), "utf8");
     if (/\bignore\s*:/.test(source)) conditionalModules.push(path);
   }
   const envFlag = TEST_PERMISSIONS.find((flag) =>
@@ -101,10 +103,10 @@ try {
   const externalInputs =
     (envFlag?.slice("--allow-env=".length).split(",") ?? []).map((name) => ({
       name,
-      provided: Boolean(Deno.env.get(name)),
+      provided: Boolean(process.env[name]),
     }));
   const requiredXsd = mode === "full" ? await requiredTools() : null;
-  await Deno.writeTextFile(
+  await sys.writeText(
     join(evidence, "requirements.json"),
     JSON.stringify(
       {
@@ -125,7 +127,7 @@ try {
   const graphModules = await graphPreflight(root, evidence);
   if (mode === "preflight") {
     assertRuntimeUnchanged(before, await runtimeSnapshot(root));
-    await Deno.writeTextFile(
+    await sys.writeText(
       join(evidence, "terminal.json"),
       JSON.stringify({
         kind: "preflight",
@@ -142,7 +144,7 @@ try {
     code = 0;
   } else {
     const junitPath = join(evidence, "junit.xml");
-    const child = new Deno.Command("deno", {
+    const child = new sys.Command("deno", {
       args: [
         "test",
         ...TEST_PERMISSIONS,
@@ -170,7 +172,7 @@ try {
     ]);
     const status = await child.status;
     await outputs;
-    await Deno.writeTextFile(
+    await sys.writeText(
       join(evidence, "child-status.json"),
       JSON.stringify({
         code: status.code,
@@ -180,7 +182,7 @@ try {
       { createNew: true, mode: 0o600 },
     );
     const after = await runtimeSnapshot(root);
-    await Deno.writeTextFile(
+    await sys.writeText(
       join(evidence, "runtime-after.json"),
       JSON.stringify(after, null, 2),
       { createNew: true, mode: 0o600 },
@@ -190,14 +192,14 @@ try {
       selected,
       (await testInventory(root)).filter((path) => selected.includes(path)),
     );
-    const summary = junitSummary(await Deno.readTextFile(junitPath));
+    const summary = junitSummary(await fs.readFile(junitPath, "utf8"));
     assertTestInventory(selected, summary.modules);
     if (summary.ignored !== summary.ignoredTests.length) {
       throw new Error("Ignored JUnit cases do not match disabled count");
     }
     const skipPolicy = skipPolicySchema.parse(
       JSON.parse(
-        await Deno.readTextFile(new URL("./skip-policy.json", import.meta.url)),
+        await fs.readFile(new URL("./skip-policy.json", import.meta.url), "utf8"),
       ),
     );
     const ignoredRequirements = classifiedIgnoredTests(
@@ -217,8 +219,8 @@ try {
     if (summary.failures !== 0) {
       code = 1;
     }
-    await Deno.chmod(junitPath, 0o600);
-    await Deno.writeTextFile(
+    await fs.chmod(junitPath, 0o600);
+    await sys.writeText(
       join(evidence, "terminal.json"),
       JSON.stringify(
         {
@@ -243,7 +245,7 @@ try {
     );
   }
 } catch (error) {
-  await Deno.writeTextFile(
+  await sys.writeText(
     join(evidence, "failure.json"),
     JSON.stringify({
       startedAt,
@@ -259,13 +261,13 @@ try {
   if (lockOwned) {
     try {
       await releaseFullRunLock(lockPath, {
-        pid: Deno.pid,
+        pid: process.pid,
         evidence,
         startedAt,
       });
     } catch (error) {
       code = 1;
-      await Deno.writeTextFile(
+      await sys.writeText(
         join(evidence, "lock-release-failure.json"),
         JSON.stringify({
           code,
@@ -277,10 +279,10 @@ try {
     }
   }
 }
-await Deno.writeTextFile(
+await sys.writeText(
   join(evidence, "final-status.json"),
   JSON.stringify({ code, endedAt: new Date().toISOString() }),
   { createNew: true, mode: 0o600 },
 );
 console.log(`Verification evidence: ${evidence}`);
-Deno.exit(code);
+process.exit(code);

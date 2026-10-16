@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { k1SCorpNode } from "../../../../../inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { reconcileNewFormalNotes } from "./debt-note.ts";
@@ -67,7 +69,7 @@ export const oneNoteK1 = {
   form7203_debt_evidence: oneNote,
 };
 
-Deno.test("Form 7203 one formal note candidate reconciles source identities and bounded loss", () => {
+test("Form 7203 one formal note candidate reconciles source identities and bounded loss", () => {
   const result = reconcileNewFormalNotes(oneNote, oneNoteK1);
   assertEquals(result.stockSupportedLoss, 500);
   assertEquals(result.debtSupportedLossCandidate, 2_000);
@@ -88,7 +90,7 @@ Deno.test("Form 7203 one formal note candidate reconciles source identities and 
   );
 });
 
-Deno.test("Form 7203 two-note second principal repayment replays into return, native and PDF", () => {
+test("Form 7203 two-note second principal repayment replays into return, native and PDF", () => {
   const secondNote = {
     formal_note_id: "note-2025-02",
     signed_note_document_reference: "signed note PDF 2025-02",
@@ -240,7 +242,7 @@ Deno.test("Form 7203 two-note second principal repayment replays into return, na
   );
 });
 
-Deno.test("Form 7203 one-note K-1 posts the bounded debt-basis loss allowance", () => {
+test("Form 7203 one-note K-1 posts the bounded debt-basis loss allowance", () => {
   const parsed = k1SCorpNode.inputSchema.parse({ k1_s_corps: [oneNoteK1] });
   const result = k1SCorpNode.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -262,7 +264,7 @@ Deno.test("Form 7203 one-note K-1 posts the bounded debt-basis loss allowance", 
   );
 });
 
-Deno.test("Form 7203 native and PDF print one formal note and Part III debt allowance", () => {
+test("Form 7203 native and PDF print one formal note and Part III debt allowance", () => {
   const filer = {
     primarySSN: "123456789",
     nameLine1: "Alex Taxpayer",
@@ -338,7 +340,7 @@ Deno.test("Form 7203 native and PDF print one formal note and Part III debt allo
   );
 });
 
-Deno.test("Form 7203 sourced principal repayment reduces debt basis before the current loss", () => {
+test("Form 7203 sourced principal repayment reduces debt basis before the current loss", () => {
   const repaidNote = {
     ...oneNote,
     no_2025_repayments_confirmed: false,
@@ -455,7 +457,7 @@ Deno.test("Form 7203 sourced principal repayment reduces debt basis before the c
   );
 });
 
-Deno.test("Form 7203 two sourced formal notes allocate Part II loss in separate columns", () => {
+test("Form 7203 two sourced formal notes allocate Part II loss in separate columns", () => {
   const twoNotes = {
     ...oneNote,
     second_formal_note: {
@@ -631,7 +633,7 @@ Deno.test("Form 7203 two sourced formal notes allocate Part II loss in separate 
   assertEquals(partialPdf?.line31_debt2, 500);
 });
 
-Deno.test("Form 7203 two formal notes reconcile one identified principal repayment and post-repayment loss allocation", () => {
+test("Form 7203 two formal notes reconcile one identified principal repayment and post-repayment loss allocation", () => {
   const repaidTwoNotes = {
     ...oneNote,
     current_box1_ordinary_loss: 2_500,
@@ -777,7 +779,7 @@ Deno.test("Form 7203 two formal notes reconcile one identified principal repayme
   );
 });
 
-Deno.test("Form 7203 two formal notes replay each identified repayment through the return and both debt columns", () => {
+test("Form 7203 two formal notes replay each identified repayment through the return and both debt columns", () => {
   const notes = {
     ...oneNote,
     current_box1_ordinary_loss: 2_000,
@@ -960,7 +962,7 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
   );
 });
 
-Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remains closed for filing", async () => {
+test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remains closed for filing", async () => {
   const submissionId = "1234567890123abcdef0";
   const ns = 'xmlns="http://www.irs.gov/efile"';
   const formBody =
@@ -1379,9 +1381,9 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
   );
   assertThrows(() => buildReviewedStockLoss7203(fields, { filer, pending }));
   assertThrows(() => form7203StockLossPdf.instances?.(fields, filer, pending));
-  const evidenceFlag = Deno.args.indexOf("--write-prior7203-evidence");
+  const evidenceFlag = process.argv.slice(2).indexOf("--write-prior7203-evidence");
   const evidenceRoot = evidenceFlag >= 0
-    ? Deno.args[evidenceFlag + 1]
+    ? process.argv.slice(2)[evidenceFlag + 1]
     : undefined;
   if (evidenceRoot) {
     for (
@@ -1407,7 +1409,7 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
       ] as const
     ) {
       const directory = `${evidenceRoot}/${id}`;
-      await Deno.mkdir(directory, { recursive: true });
+      await fs.mkdir(directory, { recursive: true });
       const documents = [];
       for (const [index, document] of actualRecords.entries()) {
         const filename = `document-${index}.bin`;

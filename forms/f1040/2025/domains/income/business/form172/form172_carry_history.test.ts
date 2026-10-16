@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172CarryHistory } from "./form172_carry_history.ts";
 
@@ -107,7 +108,7 @@ function origin2024() {
   o.noncapital_deductions[1].amount = 14600;
   return o;
 }
-Deno.test("Form 172 history derives each opening from all waived carryforward years", () => {
+test("Form 172 history derives each opening from all waived carryforward years", () => {
   const r = calculateForm172CarryHistory(origin(), history());
   assertEquals(r.expectedYears, [2020, 2021, 2022, 2023, 2024]);
   assertEquals(r.annualResults.map((a) => a.openingLoss), [
@@ -129,7 +130,7 @@ Deno.test("Form 172 history derives each opening from all waived carryforward ye
   assertEquals(r.completeCarryHistoryVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 history orders five carryback years before forward years", () => {
+test("Form 172 history orders five carryback years before forward years", () => {
   const years = [2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022, 2023, 2024];
   const h = {
     ...history(),
@@ -147,7 +148,7 @@ Deno.test("Form 172 history orders five carryback years before forward years", (
   assertEquals(r.annualResults[0].absorbed, 23950);
   assertEquals(r.openingLoss, 76050);
 });
-Deno.test("Form 172 history requires whole farming review for two-year carryback", () => {
+test("Form 172 history requires whole farming review for two-year carryback", () => {
   const h = {
     reference: "history",
     opening_tax_year: 2025,
@@ -168,7 +169,7 @@ Deno.test("Form 172 history requires whole farming review for two-year carryback
     calculateForm172CarryHistory(origin2024(), { ...h, carry_policy: missing })
   );
 });
-Deno.test("Form 172 history permits no application years only for current opening", () => {
+test("Form 172 history permits no application years only for current opening", () => {
   for (
     const carry_policy of [history().carry_policy, {
       kind: "reviewed_no_carryback",
@@ -195,7 +196,7 @@ Deno.test("Form 172 history permits no application years only for current openin
     })
   );
 });
-Deno.test("Form 172 history requires remaining zero-balance years after exhaustion", () => {
+test("Form 172 history requires remaining zero-balance years after exhaustion", () => {
   const h = history();
   h.annual_reviews = h.annual_reviews.map((v) =>
     annual(v.tax_year, v.tax_year === 2020 ? 100000 : 0)
@@ -210,7 +211,7 @@ Deno.test("Form 172 history requires remaining zero-balance years after exhausti
     })
   );
 });
-Deno.test("Form 172 history rejects skipped duplicate reordered or foreign-owner annual records", () => {
+test("Form 172 history rejects skipped duplicate reordered or foreign-owner annual records", () => {
   const h = history();
   for (
     const rows of [h.annual_reviews.slice(1), [
@@ -242,7 +243,7 @@ Deno.test("Form 172 history rejects skipped duplicate reordered or foreign-owner
     );
   }
 });
-Deno.test("Form 172 history rejects asserted balances and incomplete policy declarations", () => {
+test("Form 172 history rejects asserted balances and incomplete policy declarations", () => {
   const h = history();
   assertThrows(() =>
     calculateForm172CarryHistory(origin(), { ...h, opening_loss: 1 })

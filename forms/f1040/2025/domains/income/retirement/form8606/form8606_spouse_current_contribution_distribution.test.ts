@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -123,7 +124,7 @@ for (
     ["2025-12-15", 0, 15_340, 2_340],
   ] as const
 ) {
-  Deno.test(`spouse-owned IRA contribution received ${receiptDate} reconciles Part I, joint Form 1040, native and PDF`, () => {
+  test(`spouse-owned IRA contribution received ${receiptDate} reconciles Part I, joint Form 1040, native and PDF`, () => {
     const pending = filedReturn(receiptDate);
     const filer = extractFilerIdentity(general);
     const fields = pending.form8606;
@@ -160,7 +161,7 @@ for (
   });
 }
 
-Deno.test("spouse-owned current contribution rejects changed owner, receipt, 5498, prior basis, year-end, 1099-R, worksheet and return", () => {
+test("spouse-owned current contribution rejects changed owner, receipt, 5498, prior basis, year-end, 1099-R, worksheet and return", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assert(filer?.spouse);

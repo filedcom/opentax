@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertRejects,
@@ -22,7 +24,7 @@ import {
 import { domesticManufacturedCosts } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
 
 for (const c of domesticCases) {
-  Deno.test(`Form 8835 reviewed domestic content complete return: ${c.id}`, async () => {
+  test(`Form 8835 reviewed domestic content complete return: ${c.id}`, async () => {
     const { input, attachments, expected } = await domesticFixture(c);
     const execution = f1040_2025.executeReturn(input);
     assertEquals(execution.diagnostics, []);
@@ -232,16 +234,16 @@ for (const c of domesticCases) {
     );
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_DOMESTIC_EVIDENCE_DIR");
+      root = process.env.FORM8835_DOMESTIC_EVIDENCE_DIR;
     } catch { /* Full runner does not export private evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -262,7 +264,7 @@ for (const c of domesticCases) {
   });
 }
 
-Deno.test("Form 8835 actual costs: IRS example, product labor and exact 40-percent boundary", async () => {
+test("Form 8835 actual costs: IRS example, product labor and exact 40-percent boundary", async () => {
   const exact = await domesticFixture(domesticCases[0]);
   const item = inputSchema.parse({ f8835s: exact.input.f8835 }).f8835s[0];
   assertEquals(domesticManufacturedCosts(item.domestic_content_source!), {

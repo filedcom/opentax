@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // The research schema bundle is optional in other workspaces.
 }
 
-Deno.test("Category 5a Schedule I-1 reconciles functional and USD columns", () => {
+test("Category 5a Schedule I-1 reconciles functional and USD columns", () => {
   const xml = form5471ScheduleI1.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -46,7 +48,7 @@ Deno.test("Category 5a Schedule I-1 reconciles functional and USD columns", () =
   );
 });
 
-Deno.test("Schedule I-1 rejects mismatched reviewed worksheet and shareholder", () => {
+test("Schedule I-1 rejects mismatched reviewed worksheet and shareholder", () => {
   assertThrows(() =>
     form5471ScheduleI1.build({}, {
       filer: form8992Filer,
@@ -74,12 +76,7 @@ Deno.test("Schedule I-1 rejects mismatched reviewed worksheet and shareholder", 
   );
 });
 
-Deno.test({
-  name: "Category 5a Schedule I-1 standalone XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Category 5a Schedule I-1 standalone XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleI1.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -87,7 +84,7 @@ Deno.test({
       /^<IRS5471ScheduleI1/,
       '<IRS5471ScheduleI1 xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleI1Test1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -98,5 +95,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import {
@@ -20,7 +21,7 @@ import {
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
 
-Deno.test("Form 3800 source-use rows retain each nonpassive form and cent amount", () => {
+test("Form 3800 source-use rows retain each nonpassive form and cent amount", () => {
   assertEquals(
     form3800NonpassiveCreditUseRows({
       form8826Credit: 100.25,
@@ -87,7 +88,7 @@ Deno.test("Form 3800 source-use rows retain each nonpassive form and cent amount
   );
 });
 
-Deno.test("Form 3800 retains the Form 8874 line 1i source before tax allocation", () => {
+test("Form 3800 retains the Form 8874 line 1i source before tax allocation", () => {
   assertEquals(
     form3800NonpassiveCreditUseRows({
       form8874Credit: 50_000,
@@ -103,7 +104,7 @@ Deno.test("Form 3800 retains the Form 8874 line 1i source before tax allocation"
 });
 import { sourceAllocationSchema } from "../../../../intermediate/forms/credits/business/form8582cr/source.ts";
 
-Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
+test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
   const source = (
     activity: string,
     amount: number,
@@ -143,7 +144,7 @@ Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33
   });
 });
 
-Deno.test("Form 3800: passive line classification rejects nonbusiness and overallowed sources", () => {
+test("Form 3800: passive line classification rejects nonbusiness and overallowed sources", () => {
   assertThrows(
     () =>
       classifyForm3800PassiveCredits([{
@@ -176,7 +177,7 @@ Deno.test("Form 3800: passive line classification rejects nonbusiness and overal
   );
 });
 
-Deno.test("Form 3800: line 2 includes prior passive credit before limitation", () => {
+test("Form 3800: line 2 includes prior passive credit before limitation", () => {
   const pac = calculateForm8582CR(form8582crInputSchema.parse({
     credit_sources: [{
       activity_reference: "Clinical activity",
@@ -231,7 +232,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
   ]);
 });
 
-Deno.test("Form 3800: passive source vintages keep oldest carryovers first", () => {
+test("Form 3800: passive source vintages keep oldest carryovers first", () => {
   const pac = calculateForm8582CR(form8582crInputSchema.parse({
     credit_sources: [{
       activity_reference: "Rental",
@@ -287,7 +288,7 @@ Deno.test("Form 3800: passive source vintages keep oldest carryovers first", () 
   );
 });
 
-Deno.test("Form 3800: Form 8834 vintage cannot enter the general business credit", () => {
+test("Form 3800: Form 8834 vintage cannot enter the general business credit", () => {
   const pac = calculateForm8582CR(form8582crInputSchema.parse({
     credit_sources: [{
       activity_reference: "Legacy vehicle",
@@ -314,7 +315,7 @@ Deno.test("Form 3800: Form 8834 vintage cannot enter the general business credit
   );
 });
 
-Deno.test("Form 3800: groups same-line passive sources without losing activity or vintage", () => {
+test("Form 3800: groups same-line passive sources without losing activity or vintage", () => {
   const source = (
     activityReference: string,
     originatingTaxYear: number,
@@ -358,7 +359,7 @@ Deno.test("Form 3800: groups same-line passive sources without losing activity o
   );
 });
 
-Deno.test("Form 3800 tax use applies oldest carryovers before current-year credit", () => {
+test("Form 3800 tax use applies oldest carryovers before current-year credit", () => {
   const sources = [
     {
       sourceKey: "current",
@@ -401,7 +402,7 @@ Deno.test("Form 3800 tax use applies oldest carryovers before current-year credi
   );
 });
 
-Deno.test("Form 3800 tax use keeps Form 8826 cents after an older passive carryover", () => {
+test("Form 3800 tax use keeps Form 8826 cents after an older passive carryover", () => {
   const allocated = allocateForm3800CreditUse([
     {
       sourceKey: "access",
@@ -427,7 +428,7 @@ Deno.test("Form 3800 tax use keeps Form 8826 cents after an older passive carryo
   assertEquals(allocated.map((row) => row.unusedAfterTaxLimit), [100.15, 0]);
 });
 
-Deno.test("Form 3800 source-use bridge handles nonpassive-only credits", () => {
+test("Form 3800 source-use bridge handles nonpassive-only credits", () => {
   const lines = calculateForm3800Nonpassive({
     filingStatus: FilingStatus.Single,
     regularTax: 50,
@@ -451,7 +452,7 @@ Deno.test("Form 3800 source-use bridge handles nonpassive-only credits", () => {
   assertEquals(result.nonpassiveSources[0].unusedAfterTaxLimit, 50.25);
 });
 
-Deno.test("Form 3800 tax use follows the named same-year credit-type order", () => {
+test("Form 3800 tax use follows the named same-year credit-type order", () => {
   const sources = [
     {
       sourceKey: "orphan",
@@ -494,7 +495,7 @@ Deno.test("Form 3800 tax use follows the named same-year credit-type order", () 
   );
 });
 
-Deno.test("Form 3800 tax use stops an ambiguous partial same-year source order", () => {
+test("Form 3800 tax use stops an ambiguous partial same-year source order", () => {
   const sources = [
     {
       sourceKey: "other",
@@ -524,7 +525,7 @@ Deno.test("Form 3800 tax use stops an ambiguous partial same-year source order",
   );
 });
 
-Deno.test("Form 3800 passive source years reconcile with nonpassive credit ordering", () => {
+test("Form 3800 passive source years reconcile with nonpassive credit ordering", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
@@ -665,7 +666,7 @@ function input(overrides: Record<string, number> = {}) {
   };
 }
 
-Deno.test("Form 3800 carryforwards enter Part I line 4 and Part II line 34", () => {
+test("Form 3800 carryforwards enter Part I line 4 and Part II line 34", () => {
   const lines = calculateForm3800Nonpassive(
     input({
       standardCarryforward: 600,
@@ -705,7 +706,7 @@ const returnLines = {
   form8912CreditInSchedule3Line7: 200,
 };
 
-Deno.test("Form 3800: derives Part II tax and prior credits from finalized return lines", () => {
+test("Form 3800: derives Part II tax and prior credits from finalized return lines", () => {
   const credits = classifyForm8835Credits([{
     form3800_line: "1f",
     credit_amount: 5_000,
@@ -725,7 +726,7 @@ Deno.test("Form 3800: derives Part II tax and prior credits from finalized retur
   assertEquals(derived.standardCredit, 5_000);
 });
 
-Deno.test("Form 3800: rejects exclusions that exceed their source lines", () => {
+test("Form 3800: rejects exclusions that exceed their source lines", () => {
   const credits = classifyForm8835Credits([{
     form3800_line: "1f",
     credit_amount: 100,
@@ -760,7 +761,7 @@ Deno.test("Form 3800: rejects exclusions that exceed their source lines", () => 
   );
 });
 
-Deno.test("Form 3800 Part II: MFS threshold depends on spouse business credit", () => {
+test("Form 3800 Part II: MFS threshold depends on spouse business credit", () => {
   const base = input({ regularTax: 20_000 });
   const withSpouseCredit = calculateForm3800Nonpassive({
     ...base,
@@ -776,7 +777,7 @@ Deno.test("Form 3800 Part II: MFS threshold depends on spouse business credit", 
   assertEquals(withoutSpouseCredit.line13, 0);
 });
 
-Deno.test("Form 3800 Part II: ordinary credit cannot exceed tax above TMT", () => {
+test("Form 3800 Part II: ordinary credit cannot exceed tax above TMT", () => {
   const result = calculateForm3800Nonpassive(
     input({ standardCredit: 30_000 }),
     ZERO_FORM3800_PASSIVE_ACTIVITY,
@@ -789,7 +790,7 @@ Deno.test("Form 3800 Part II: ordinary credit cannot exceed tax above TMT", () =
   assertEquals(result.unusedStandardCredit, 10_000);
 });
 
-Deno.test("Form 3800 Part II: specified credit reaches section C after ordinary credit", () => {
+test("Form 3800 Part II: specified credit reaches section C after ordinary credit", () => {
   const result = calculateForm3800Nonpassive(
     input({
       standardCredit: 30_000,
@@ -806,7 +807,7 @@ Deno.test("Form 3800 Part II: specified credit reaches section C after ordinary 
   assertEquals(result.line38, 35_000);
 });
 
-Deno.test("Form 3800 Part II: foreign and prior credits reduce net income tax", () => {
+test("Form 3800 Part II: foreign and prior credits reduce net income tax", () => {
   const result = calculateForm3800Nonpassive(
     input({
       foreignTaxCredit: 3_000,
@@ -823,7 +824,7 @@ Deno.test("Form 3800 Part II: foreign and prior credits reduce net income tax", 
   assertEquals(result.line17, 22_000);
 });
 
-Deno.test("Form 3800 Part II: no net income tax allows no business credit", () => {
+test("Form 3800 Part II: no net income tax allows no business credit", () => {
   const result = calculateForm3800Nonpassive(
     input({
       regularTax: 5_000,
@@ -842,7 +843,7 @@ Deno.test("Form 3800 Part II: no net income tax allows no business credit", () =
   assertEquals(result.unusedSpecifiedCredit, 3_000);
 });
 
-Deno.test("Form 3800 Part II: AMT and TMT are distinct inputs", () => {
+test("Form 3800 Part II: AMT and TMT are distinct inputs", () => {
   const result = calculateForm3800Nonpassive(
     input({
       regularTax: 20_000,
@@ -861,7 +862,7 @@ Deno.test("Form 3800 Part II: AMT and TMT are distinct inputs", () => {
   assertEquals(result.line37, 1_000);
 });
 
-Deno.test("Form 3800 Part II: passive standard, empowerment, and specified credits use their separate limits", () => {
+test("Form 3800 Part II: passive standard, empowerment, and specified credits use their separate limits", () => {
   const result = calculateForm3800Nonpassive(
     input({
       standardCredit: 1_000,
@@ -891,7 +892,7 @@ Deno.test("Form 3800 Part II: passive standard, empowerment, and specified credi
   assertEquals(result.line38, 18_000);
 });
 
-Deno.test("Form 3800 Part II: empowerment credit is limited after standard credit", () => {
+test("Form 3800 Part II: empowerment credit is limited after standard credit", () => {
   const result = calculateForm3800Nonpassive(
     input({
       standardCredit: 20_000,
@@ -908,7 +909,7 @@ Deno.test("Form 3800 Part II: empowerment credit is limited after standard credi
   assertEquals(result.line38, 25_000);
 });
 
-Deno.test("Form 3800 Part II: rejects passive credit exceeding its before-limit line", () => {
+test("Form 3800 Part II: rejects passive credit exceeding its before-limit line", () => {
   assertThrows(
     () =>
       calculateForm3800Nonpassive(input(), {
@@ -921,7 +922,7 @@ Deno.test("Form 3800 Part II: rejects passive credit exceeding its before-limit 
   );
 });
 
-Deno.test("Form 3800 Part II: rejects negative and nonfinite source amounts", () => {
+test("Form 3800 Part II: rejects negative and nonfinite source amounts", () => {
   assertThrows(() =>
     calculateForm3800Nonpassive(
       input({ standardCredit: -1 }),
@@ -936,7 +937,7 @@ Deno.test("Form 3800 Part II: rejects negative and nonfinite source amounts", ()
   );
 });
 
-Deno.test("Form 3800: separates Form 8835 Part III lines 1f and 4e after transfer", () => {
+test("Form 3800: separates Form 8835 Part III lines 1f and 4e after transfer", () => {
   const result = classifyForm8835Credits([
     {
       form3800_line: "1f",
@@ -962,14 +963,14 @@ Deno.test("Form 3800: separates Form 8835 Part III lines 1f and 4e after transfe
   ]);
 });
 
-Deno.test("Form 3800: no Form 8835 facilities leave its credit classification empty", () => {
+test("Form 3800: no Form 8835 facilities leave its credit classification empty", () => {
   const result = classifyForm8835Credits([]);
   assertEquals(result.standardCredit, 0);
   assertEquals(result.specifiedCredit, 0);
   assertEquals(result.rows, []);
 });
 
-Deno.test("Form 3800: multiple same-line facilities require Part V detail", () => {
+test("Form 3800: multiple same-line facilities require Part V detail", () => {
   const result = classifyForm8835Credits([
     {
       form3800_line: "4e",
@@ -989,7 +990,7 @@ Deno.test("Form 3800: multiple same-line facilities require Part V detail", () =
   assertEquals(result.rows[0].facilities.length, 2);
 });
 
-Deno.test("Form 3800: transfer cannot omit the signed statement file", () => {
+test("Form 3800: transfer cannot omit the signed statement file", () => {
   assertThrows(() =>
     classifyForm8835Credits([{
       form3800_line: "4e",
@@ -1001,7 +1002,7 @@ Deno.test("Form 3800: transfer cannot omit the signed statement file", () => {
   );
 });
 
-Deno.test("Form 3800: passive Form 8835 credit cannot enter nonpassive limits", () => {
+test("Form 3800: passive Form 8835 credit cannot enter nonpassive limits", () => {
   assertThrows(
     () =>
       classifyForm8835Credits([{

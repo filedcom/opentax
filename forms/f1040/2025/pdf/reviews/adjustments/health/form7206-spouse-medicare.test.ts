@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -55,7 +58,7 @@ for (
     refund: 2220,
   }]
 ) {
-  Deno.test(`source-owned Medicare7206 and joint8995 ${scenario.id} full public/XSD/PDF`, async () => {
+  test(`source-owned Medicare7206 and joint8995 ${scenario.id} full public/XSD/PDF`, async () => {
     const f = spouseMedicareFamily(scenario.wages, scenario.excluded),
       p = f.pending,
       h = p.form7206,
@@ -152,25 +155,25 @@ for (
         `<QlfyBusinessIncomeOrLossAmt>${scenario.qbi}</QlfyBusinessIncomeOrLossAmt>`,
       ]
     ) assertStringIncludes(b.bundle.xml, value);
-    const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+    const tmp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(tmp, b.bundle.xml);
-      const v = await new Deno.Command("xmllint", {
+      await fs.writeFile(tmp, b.bundle.xml);
+      const v = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, tmp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
     } finally {
-      await Deno.remove(tmp);
+      await sys.remove(tmp);
     }
     const pdf = await b.renderPdf(), doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), 12);
     assertEquals(doc.getForm().getFields().length, 0);
-    const pt = await Deno.makeTempFile({ suffix: ".pdf" });
+    const pt = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(pt, pdf);
-      const t = await new Deno.Command("pdftotext", {
+      await fs.writeFile(pt, pdf);
+      const t = await new sys.Command("pdftotext", {
         args: [pt, "-"],
         stdout: "piped",
       }).output();
@@ -180,24 +183,24 @@ for (
       assertStringIncludes(text, "100%");
       assertStringIncludes(text, String(scenario.qbi));
     } finally {
-      await Deno.remove(pt);
+      await sys.remove(pt);
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-spouse-medicare-qbi-evidence";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${scenario.id}-source-input.json`,
         JSON.stringify({ inputs: f.inputs, filer: f.filer }, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${scenario.id}-full-return.xml`,
         b.bundle.xml,
       );
-      await Deno.writeFile(`${dir}/${scenario.id}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${scenario.id}-filled-return.pdf`, pdf);
     }
   });
 }
-Deno.test("Medicare joint QBI rejects detached plan, wrong owner, premium eligibility, borrowed receipts and filed deduction tampering in native/PDF", async () => {
+test("Medicare joint QBI rejects detached plan, wrong owner, premium eligibility, borrowed receipts and filed deduction tampering in native/PDF", async () => {
   const f = spouseMedicareFamily();
   const mutations: Array<(p: any) => void> = [
     (p) => p.form7206.single_schedule_c_plan.recipient = "T",
@@ -254,7 +257,7 @@ Deno.test("Medicare joint QBI rejects detached plan, wrong owner, premium eligib
   );
   assertThrows(() => form7206Pdf.projectFields!(h.form7206, h));
 });
-Deno.test("Medicare public source recalculates eligibility and rejects stale source income or unreviewed scalar health deductions", () => {
+test("Medicare public source recalculates eligibility and rejects stale source income or unreviewed scalar health deductions", () => {
   for (
     const mutate of [
       (i: any) =>

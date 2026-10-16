@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
 
-Deno.test("zero-only computed Schedule 1 is absent from both prepared outputs", async () => {
+test("zero-only computed Schedule 1 is absent from both prepared outputs", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-w2-refund"
   )!;
@@ -22,7 +23,7 @@ Deno.test("zero-only computed Schedule 1 is absent from both prepared outputs", 
   assertEquals(origins.some((page) => page.formKey === "schedule1"), false);
 });
 
-Deno.test("fully repaid unemployment keeps its zero source line and PDF page", async () => {
+test("fully repaid unemployment keeps its zero source line and PDF page", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-fully-repaid-unemployment"
   )!;
@@ -39,7 +40,7 @@ Deno.test("fully repaid unemployment keeps its zero source line and PDF page", a
   );
 });
 
-Deno.test("zero-net Schedule C and passive Schedule E do not add a blank Schedule 1", async () => {
+test("zero-net Schedule C and passive Schedule E do not add a blank Schedule 1", async () => {
   for (
     const id of [
       "single-form4562-section179-w2-income-limit",

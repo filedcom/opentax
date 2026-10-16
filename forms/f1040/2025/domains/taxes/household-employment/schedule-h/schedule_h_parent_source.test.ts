@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -352,13 +355,13 @@ function parentXsdPath() {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  try { return Deno.env.get("SCHEDULE_H_PARENT_XSD_PATH") || local; }
+  try { return process.env.SCHEDULE_H_PARENT_XSD_PATH || local; }
   catch { return local; }
 }
 
-Deno.test("Schedule H parent source derives actual FICA exception by services quarter and retains FUTA exclusion", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts"),
-    root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+test("Schedule H parent source derives actual FICA exception by services quarter and retains FUTA exclusion", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts"),
+    root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   const xsd = parentXsdPath();
   for (const [kind, tax, futa] of expected) {
     const inputs = source(kind),
@@ -405,17 +408,17 @@ Deno.test("Schedule H parent source derives actual FICA exception by services qu
       futa ? 2 : 1,
       kind,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     const changed = structuredClone(payroll),
       workers = (changed.fica_only_payroll ?? changed.federal_unemployment)!
@@ -453,8 +456,8 @@ Deno.test("Schedule H parent source derives actual FICA exception by services qu
       );
     }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${kind}.json`,
         JSON.stringify(
           {
@@ -469,13 +472,13 @@ Deno.test("Schedule H parent source derives actual FICA exception by services qu
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${kind}.xml`, bundle.xml);
-      await Deno.writeFile(`${root}/${kind}.pdf`, pdf);
+      await fs.writeFile(`${root}/${kind}.xml`, bundle.xml);
+      await fs.writeFile(`${root}/${kind}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H parent ledger rejects dates, unsupported circumstances, amount and source contradictions", () => {
+test("Schedule H parent ledger rejects dates, unsupported circumstances, amount and source contradictions", () => {
   const rejects = (
     mutate: (p: any, h: any) => void,
     kind: "partial" | "divorced" = "partial",
@@ -682,9 +685,9 @@ function datedParentSource(kind: DatedParentKind) {
   return inputs;
 }
 
-Deno.test("Schedule H parent dated status and ordinary-period majority reaches full return", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+test("Schedule H parent dated status and ordinary-period majority reaches full return", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   const xsd = parentXsdPath();
   const cases: [DatedParentKind, number, number][] = [
     ["birthday-majority", 1302, 3750], ["birthday-minority", 1172, 2900],
@@ -694,8 +697,8 @@ Deno.test("Schedule H parent dated status and ordinary-period majority reaches f
     ["long-mixed-birthday", 1238, 3325],
     ["irregular-mixed-birthday", 1238, 3325],
   ];
-  const onlyFlag = Deno.args.indexOf("--only-parent-kind");
-  const onlyKind = onlyFlag >= 0 ? Deno.args[onlyFlag + 1] : undefined;
+  const onlyFlag = process.argv.slice(2).indexOf("--only-parent-kind");
+  const onlyKind = onlyFlag >= 0 ? process.argv.slice(2)[onlyFlag + 1] : undefined;
   for (const [kind, tax, parentWages] of cases) {
     if (onlyKind && kind !== onlyKind) continue;
     const inputs = datedParentSource(kind);
@@ -709,22 +712,22 @@ Deno.test("Schedule H parent dated status and ordinary-period majority reaches f
     assertEquals(bundle.xml.includes(`<CombinedFUTATaxPlusNetTaxesAmt>${tax}</CombinedFUTATaxPlusNetTaxesAmt>`), true, kind);
     const origins: any[] = [];
     const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle, origins);
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", { args: ["--noout", "--schema", xsd, temp], stdout: "piped", stderr: "piped" }).output();
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", { args: ["--noout", "--schema", xsd, temp], stdout: "piped", stderr: "piped" }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
-    } finally { await Deno.remove(temp); }
+    } finally { await sys.remove(temp); }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(`${root}/${kind}.json`, JSON.stringify({ inputs, pending, preparedPending: bundle.pending, carryforwards: r.carryforwards, filer, origins }, null, 2));
-      await Deno.writeTextFile(`${root}/${kind}.xml`, bundle.xml);
-      await Deno.writeFile(`${root}/${kind}.pdf`, pdf);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${kind}.json`, JSON.stringify({ inputs, pending, preparedPending: bundle.pending, carryforwards: r.carryforwards, filer, origins }, null, 2));
+      await fs.writeFile(`${root}/${kind}.xml`, bundle.xml);
+      await fs.writeFile(`${root}/${kind}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H parent dated sources reject omitted periods, false medical quarters and cash conflicts", async () => {
+test("Schedule H parent dated sources reject omitted periods, false medical quarters and cash conflicts", async () => {
   const valid = datedParentSource("cross-quarter-care");
   const result = f1040_2025.executeReturn(valid);
   assertEquals(result.diagnostics, []);

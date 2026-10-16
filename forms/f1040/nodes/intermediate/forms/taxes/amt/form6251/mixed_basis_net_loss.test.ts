@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -82,7 +83,7 @@ function compute(raw: unknown) {
   );
 }
 
-Deno.test("Form 6251 nets audited same-term gain and loss within both Schedule D limits", () => {
+test("Form 6251 nets audited same-term gain and loss within both Schedule D limits", () => {
   // Regular Schedule D: +500 - 2,000 = -1,500. AMT Schedule D:
   // +700 - 2,500 = -1,800. Both are fully deductible in the current year.
   const result = compute(input);
@@ -105,7 +106,7 @@ Deno.test("Form 6251 nets audited same-term gain and loss within both Schedule D
   );
 });
 
-Deno.test("Form 6251 caps regular and AMT mixed-sign net losses separately", () => {
+test("Form 6251 caps regular and AMT mixed-sign net losses separately", () => {
   const deeperAmtLoss = compute({
     ...input,
     line2k_8949_basis_dispositions: [gain, {
@@ -127,7 +128,7 @@ Deno.test("Form 6251 caps regular and AMT mixed-sign net losses separately", () 
   );
 });
 
-Deno.test("Form 6251 rejects mixed-sign rows with other activity or a basis sign change", () => {
+test("Form 6251 rejects mixed-sign rows with other activity or a basis sign change", () => {
   assertThrows(
     () =>
       compute({
@@ -163,7 +164,7 @@ Deno.test("Form 6251 rejects mixed-sign rows with other activity or a basis sign
   );
 });
 
-Deno.test("Form 6251 replays a cross-term offset with fully deductible regular and AMT losses", () => {
+test("Form 6251 replays a cross-term offset with fully deductible regular and AMT losses", () => {
   for (
     const [shortPart, longPart] of [
       [loss, { ...gain, part: "D" as const }],
@@ -227,7 +228,7 @@ Deno.test("Form 6251 replays a cross-term offset with fully deductible regular a
   }
 });
 
-Deno.test("Form 6251 caps a cross-term AMT loss at the current limit", () => {
+test("Form 6251 caps a cross-term AMT loss at the current limit", () => {
   const longGain = { ...gain, part: "D" as const };
   const deepAmtLoss = {
     ...loss,
@@ -255,7 +256,7 @@ Deno.test("Form 6251 caps a cross-term AMT loss at the current limit", () => {
   );
 });
 
-Deno.test("Form 6251 reconciles four audited cross-term gain and loss lots inside both capital-loss limits", () => {
+test("Form 6251 reconciles four audited cross-term gain and loss lots inside both capital-loss limits", () => {
   const longGain = {
     source_transaction_id: "broker-lt-gain",
     part: "D" as const,

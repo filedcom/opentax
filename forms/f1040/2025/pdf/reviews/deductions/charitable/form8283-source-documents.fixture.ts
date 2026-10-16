@@ -1,3 +1,4 @@
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
 /** Coherent test documents. Typed simulated signatures do not authenticate an
@@ -121,7 +122,7 @@ export async function completed8283Source(
     const cached =
       ".pdf-cache/https_www_irs_gov_pub_irs_prior_f8283_2025_pdf.pdf";
     try {
-      return await Deno.readFile(cached);
+      return await sys.readBytes(cached);
     } catch {
       const response = await fetch(
         "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",

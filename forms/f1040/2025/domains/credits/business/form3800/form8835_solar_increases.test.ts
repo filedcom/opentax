@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { solarCases, solarFixture } from "./form8835_solar.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -10,7 +12,7 @@ import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 
 for (const c of solarCases) {
-  Deno.test(`Form 8835 solar source-to-return: ${c.id}`, async () => {
+  test(`Form 8835 solar source-to-return: ${c.id}`, async () => {
     const { input, attachments } = await solarFixture(c.id);
     const credits = input.f8835.map((f: any) => {
       const base = Math.round(f.kwh_sold * 6 / 1000);
@@ -122,13 +124,13 @@ for (const c of solarCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_SOLAR_EVIDENCE_DIR");
+      root = process.env.FORM8835_SOLAR_EVIDENCE_DIR;
     } catch { /* private evidence optional */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -145,7 +147,7 @@ for (const c of solarCases) {
         ),
       );
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
     }
   });

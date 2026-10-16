@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -50,7 +52,7 @@ async function assertSchema(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const process = new Deno.Command("xmllint", {
+  const process = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -63,7 +65,7 @@ async function assertSchema(xml: string) {
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
 }
 
-Deno.test("actual patron sources phase in wages before Schedule D and DPAD with full XML/PDF", async () => {
+test("actual patron sources phase in wages before Schedule D and DPAD with full XML/PDF", async () => {
   const expected = [
     ["phase-farm", 210117, .25634, 3889, 41284, 13552, 10000, 37732, 62678],
     [
@@ -153,7 +155,7 @@ Deno.test("actual patron sources phase in wages before Schedule D and DPAD with 
   }
 });
 
-Deno.test("public patron whole-dollar threshold boundaries retain source and filed equations", async () => {
+test("public patron whole-dollar threshold boundaries retain source and filed equations", async () => {
   for (const target of [197300, 197301, 247299, 247300, 247301]) {
     const original = prepared("phase-farm").fixture;
     const inputs = structuredClone(original.inputs) as any;
@@ -198,7 +200,7 @@ Deno.test("public patron whole-dollar threshold boundaries retain source and fil
   }
 });
 
-Deno.test("phase-in patron rejects detached sources, percentages' operands and final native/PDF joins", async () => {
+test("phase-in patron rejects detached sources, percentages' operands and final native/PDF joins", async () => {
   for (const kind of ["phase-farm", "phase-c-health", "phase-income-cap"]) {
     const { fixture, pending: base } = prepared(kind);
     for (

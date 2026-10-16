@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -22,7 +23,7 @@ const taxpayerW2 = {
   ss_wages_and_tips: 30_000,
 };
 
-Deno.test("Form 4137 PDF maps the five employer rows and numbered lines", () => {
+test("Form 4137 PDF maps the five employer rows and numbered lines", () => {
   const names = Object.fromEntries(
     form4137Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -48,7 +49,7 @@ Deno.test("Form 4137 PDF maps the five employer rows and numbered lines", () => 
   assertEquals(form4137Pdf.pageIndices?.({}), [0]);
 });
 
-Deno.test("Form 4137 PDF creates separate calculated taxpayer and spouse copies", () => {
+test("Form 4137 PDF creates separate calculated taxpayer and spouse copies", () => {
   const copies = form4137Pdf.instances?.({
     taxpayer_ssn: "123-45-6789",
     spouse_ssn: "987-65-4321",
@@ -82,7 +83,7 @@ Deno.test("Form 4137 PDF creates separate calculated taxpayer and spouse copies"
   assertEquals(copies[1].line13, 15);
 });
 
-Deno.test("Form 4137 PDF adds continuation for employers beyond five", async () => {
+test("Form 4137 PDF adds continuation for employers beyond five", async () => {
   const employers = Array.from({ length: 6 }, (_, index) => ({
     name: `CAFE ${index + 1}`,
     ein: "12-3456789",
@@ -106,7 +107,7 @@ Deno.test("Form 4137 PDF adds continuation for employers beyond five", async () 
   assertEquals(document.getPageCount(), 2);
 });
 
-Deno.test("Form 4137 PDF requires spouse identity for a spouse copy", async () => {
+test("Form 4137 PDF requires spouse identity for a spouse copy", async () => {
   const [copy] = form4137Pdf.instances?.({
     forms: [{ ...taxpayerForm, recipient: "spouse" }],
     taxpayer_ssn: "123-45-6789",
@@ -139,7 +140,7 @@ Deno.test("Form 4137 PDF requires spouse identity for a spouse copy", async () =
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Form 4137 PDF rejects duplicate recipient forms", () => {
+test("Form 4137 PDF rejects duplicate recipient forms", () => {
   assertThrows(
     () => form4137Pdf.instances?.({ forms: [taxpayerForm, taxpayerForm] }),
     Error,

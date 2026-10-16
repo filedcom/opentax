@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8915d } from "./index.ts";
 
-Deno.test("Form 8915-D intake validates the reported distribution", () => {
+test("Form 8915-D intake validates the reported distribution", () => {
   assertEquals(
     f8915d.inputSchema.safeParse({
       f8915ds: [{ total_2019_distribution: 10_000 }],
@@ -16,7 +17,7 @@ Deno.test("Form 8915-D intake validates the reported distribution", () => {
   );
 });
 
-Deno.test("Form 8915-D rejects both asserted income and repayment before line 8z", () => {
+test("Form 8915-D rejects both asserted income and repayment before line 8z", () => {
   for (
     const item of [
       { total_2019_distribution: 10_000 },

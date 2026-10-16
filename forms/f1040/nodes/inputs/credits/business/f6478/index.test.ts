@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { BiofuelType, f6478 } from "./index.ts";
 
@@ -5,12 +6,12 @@ function compute(input: Parameters<typeof f6478.compute>[1]) {
   return f6478.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-Deno.test("Form 6478 empty source makes no claim", () => {
+test("Form 6478 empty source makes no claim", () => {
   assertEquals(compute({}).outputs, []);
   assertEquals(compute({ fuel_entries: [] }).outputs, []);
 });
 
-Deno.test("Form 6478 rejects 2025 production gallons rather than creating a credit", () => {
+test("Form 6478 rejects 2025 production gallons rather than creating a credit", () => {
   for (const fuel_type of Object.values(BiofuelType)) {
     assertThrows(
       () => compute({ fuel_entries: [{ fuel_type, gallons: 1_000 }] }),
@@ -20,7 +21,7 @@ Deno.test("Form 6478 rejects 2025 production gallons rather than creating a cred
   }
 });
 
-Deno.test("Form 6478 rejects zero-gallon and overridden-rate entries instead of implying eligibility", () => {
+test("Form 6478 rejects zero-gallon and overridden-rate entries instead of implying eligibility", () => {
   assertThrows(
     () =>
       compute({
@@ -46,7 +47,7 @@ Deno.test("Form 6478 rejects zero-gallon and overridden-rate entries instead of 
   );
 });
 
-Deno.test("Form 6478 still rejects malformed gallons", () => {
+test("Form 6478 still rejects malformed gallons", () => {
   assertEquals(
     f6478.inputSchema.safeParse({
       fuel_entries: [{
@@ -58,7 +59,7 @@ Deno.test("Form 6478 still rejects malformed gallons", () => {
   );
 });
 
-Deno.test("Form 6478 rejects an unmodeled pass-through line 3 instead of stripping it", () => {
+test("Form 6478 rejects an unmodeled pass-through line 3 instead of stripping it", () => {
   assertThrows(
     () =>
       compute(

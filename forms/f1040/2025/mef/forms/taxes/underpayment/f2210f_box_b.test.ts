@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildForm2210FBoxB, form2210f } from "./f2210f_box_b.ts";
 import {
@@ -53,7 +54,7 @@ function source() {
   });
 }
 
-Deno.test("Form 2210-F box B local XML follows TY2025 element order and amounts", () => {
+test("Form 2210-F box B local XML follows TY2025 element order and amounts", () => {
   const xml = buildForm2210FBoxB(source());
   assert(xml.startsWith("<IRS2210F>"));
   assert(xml.includes("<JointReturnInd>X</JointReturnInd>"));
@@ -68,14 +69,14 @@ Deno.test("Form 2210-F box B local XML follows TY2025 element order and amounts"
   assertEquals(xml.indexOf("<JointReturnInd>"), xml.indexOf("<IRS2210F>") + 10);
 });
 
-Deno.test("Form 2210-F box B local XML omits Part III when no penalty is due", () => {
+test("Form 2210-F box B local XML omits Part III when no penalty is due", () => {
   const xml = buildForm2210FBoxB({ ...source(), current_withholding: 8_000 });
   assert(xml.includes("<UnderpaymentAmt>0</UnderpaymentAmt>"));
   assert(!xml.includes("<PenaltyAmt>"));
   assert(!xml.includes("<EarlierOfPaymentOrTaxDueDt>"));
 });
 
-Deno.test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
+test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
   const input = source();
   assertThrows(() =>
     buildForm2210FBoxB({
@@ -98,7 +99,7 @@ Deno.test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
   );
 });
 
-Deno.test("registered Form 2210-F checks finalized 1040 and filed worksheet", () => {
+test("registered Form 2210-F checks finalized 1040 and filed worksheet", () => {
   const zeroTaxSource = {
     ...source(),
     current_included_schedule2_taxes: 0,

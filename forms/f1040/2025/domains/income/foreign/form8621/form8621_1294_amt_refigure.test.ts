@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
@@ -26,10 +29,10 @@ function copy(document_id: string, content: string) {
 }
 
 async function assertFullXsd(xml: string): Promise<void> {
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -44,7 +47,7 @@ async function assertFullXsd(xml: string): Promise<void> {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
@@ -96,7 +99,7 @@ const holding = {
   },
 };
 
-Deno.test("Form 8621 Election B refigures sourced ISO AMT on the full return", async () => {
+test("Form 8621 Election B refigures sourced ISO AMT on the full return", async () => {
   const inputs = { ...iso.inputs, f8621: [holding] };
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
@@ -145,8 +148,8 @@ Deno.test("Form 8621 Election B refigures sourced ISO AMT on the full return", a
     origins,
   );
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-  const review = Deno.env.get("FORM8621_AMT_REVIEW_PDF");
-  if (review) await Deno.writeFile(review, pdf);
+  const review = process.env.FORM8621_AMT_REVIEW_PDF;
+  if (review) await fs.writeFile(review, pdf);
   const changed = structuredClone(pending) as Record<string, any>;
   changed.form8621_1294_refigure.source_inputs.f3921[0]
     .box4_fmv_per_share++;
@@ -157,7 +160,7 @@ Deno.test("Form 8621 Election B refigures sourced ISO AMT on the full return", a
   );
 });
 
-Deno.test("Form 8621 Election B refigures sourced Schedule J farm tax", async () => {
+test("Form 8621 Election B refigures sourced Schedule J farm tax", async () => {
   const inputs = { ...farm.inputs, f8621: [holding] };
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
@@ -197,8 +200,8 @@ Deno.test("Form 8621 Election B refigures sourced Schedule J farm tax", async ()
     origins,
   );
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-  const review = Deno.env.get("FORM8621_SCHEDULEJ_REVIEW_PDF");
-  if (review) await Deno.writeFile(review, pdf);
+  const review = process.env.FORM8621_SCHEDULEJ_REVIEW_PDF;
+  if (review) await fs.writeFile(review, pdf);
   const changed = structuredClone(pending) as Record<string, any>;
   changed.schedule_j_calculation.nonfarm_qef_ordinary++;
   assertThrows(
@@ -208,7 +211,7 @@ Deno.test("Form 8621 Election B refigures sourced Schedule J farm tax", async ()
   );
 });
 
-Deno.test("Form 8621 Election B refigures child Form 8615 tax", async () => {
+test("Form 8621 Election B refigures child Form 8615 tax", async () => {
   const inputs = {
     ...child.inputs,
     f8615: {
@@ -264,8 +267,8 @@ Deno.test("Form 8621 Election B refigures child Form 8615 tax", async () => {
     origins,
   );
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-  const review = Deno.env.get("FORM8621_8615_REVIEW_PDF");
-  if (review) await Deno.writeFile(review, pdf);
+  const review = process.env.FORM8621_8615_REVIEW_PDF;
+  if (review) await fs.writeFile(review, pdf);
   const changed = structuredClone(pending) as Record<string, any>;
   changed.form8621_1294_refigure.source_inputs.f8615
     .child_unearned_income++;

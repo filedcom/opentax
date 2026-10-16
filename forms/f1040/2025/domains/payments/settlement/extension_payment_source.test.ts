@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -47,7 +48,7 @@ function returnWithPayment() {
   return { pending, filer };
 }
 
-Deno.test("reviewed extension payment reaches Schedule 3, Form 1040, and native XML", () => {
+test("reviewed extension payment reaches Schedule 3, Form 1040, and native XML", () => {
   const { pending, filer } = returnWithPayment();
   assertEquals(pending.schedule3.line10_amount_paid_extension, 1_500);
   assertEquals(pending.schedule3.line15_total, 1_500);
@@ -66,7 +67,7 @@ Deno.test("reviewed extension payment reaches Schedule 3, Form 1040, and native 
   );
 });
 
-Deno.test("extension payment rejects missing or changed evidence and final return amounts", () => {
+test("extension payment rejects missing or changed evidence and final return amounts", () => {
   const { pending, filer } = returnWithPayment();
   const changed = (parts: Record<string, unknown>) => ({
     ...pending,
@@ -115,7 +116,7 @@ Deno.test("extension payment rejects missing or changed evidence and final retur
   }
 });
 
-Deno.test("PDF export rejects an extension payment with a changed owner before rendering", async () => {
+test("PDF export rejects an extension payment with a changed owner before rendering", async () => {
   const { pending, filer } = returnWithPayment();
   const changed = {
     ...pending,

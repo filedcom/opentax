@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -114,7 +116,7 @@ const cases = [
   },
 ];
 for (const entry of cases) {
-  Deno.test(`Joint royalty debt and complete spouse interest inventory: ${entry.id}`, async () => {
+  test(`Joint royalty debt and complete spouse interest inventory: ${entry.id}`, async () => {
     const base = royaltyBondInputs({
       ...royaltyBondCases[0],
       ...entry,
@@ -232,12 +234,12 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_JOINT_ROYALTY_PROOF_DIR");
+    const root = process.env.OPENTAX_JOINT_ROYALTY_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -69,7 +70,7 @@ const schedule1 = {
 };
 const general = { filing_status: FilingStatus.Single };
 
-Deno.test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from sourced passive income and final return", () => {
+test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from sourced passive income and final return", () => {
   const result = calculateForm8582CRLine6OrdinaryWorksheet(
     worksheet,
     scheduleE,
@@ -84,7 +85,7 @@ Deno.test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from
   assertEquals(result.tax_without_passive, taxWithout);
 });
 
-Deno.test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () => {
+test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () => {
   assertThrows(
     () =>
       calculateForm8582CRLine6OrdinaryWorksheet(
@@ -134,7 +135,7 @@ Deno.test("Form 8582-CR line 6 candidate rejects source and final-tax tampering"
   );
 });
 
-Deno.test("Form 8582-CR line 6 binds every rental amount and owner independent of ordering", () => {
+test("Form 8582-CR line 6 binds every rental amount and owner independent of ordering", () => {
   const rentals = [
     { ...scheduleE.schedule_es[0], rent_income: 12000 },
     {

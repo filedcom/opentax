@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import type { MefBundle } from "../../../builder.ts";
@@ -13,7 +16,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -49,7 +52,7 @@ const item = {
   tax_period_end: "2025-12-31",
 };
 
-Deno.test("two payer-issued Form 2439 copies retain named native references through prepared inventory", () => {
+test("two payer-issued Form 2439 copies retain named native references through prepared inventory", () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single", line31_additional_payments: 3_000 },
     schedule3: {
@@ -90,7 +93,7 @@ Deno.test("two payer-issued Form 2439 copies retain named native references thro
   );
 });
 
-Deno.test("Form 2439 native document retains payer, shareholder, and box 2 source", () => {
+test("Form 2439 native document retains payer, shareholder, and box 2 source", () => {
   const [xml] = form2439.build(
     { f2439s: [item] },
     {
@@ -109,7 +112,7 @@ Deno.test("Form 2439 native document retains payer, shareholder, and box 2 sourc
   );
 });
 
-Deno.test("Form 2439 gain-only Copy B is included without Schedule 3 credit", () => {
+test("Form 2439 gain-only Copy B is included without Schedule 3 credit", () => {
   const [xml] = form2439.build(
     { f2439s: [{ ...item, box2: undefined }] },
     { filer },
@@ -121,7 +124,7 @@ Deno.test("Form 2439 gain-only Copy B is included without Schedule 3 credit", ()
   assertEquals(xml.includes("TaxPaidByRICOrREITAmt"), false);
 });
 
-Deno.test("Form 2439 gain-only Copy B still needs complete source facts", () => {
+test("Form 2439 gain-only Copy B still needs complete source facts", () => {
   assertThrows(
     () => form2439.build({ f2439s: [{ box1a: 2_000 }] }, { filer }),
     Error,
@@ -129,7 +132,7 @@ Deno.test("Form 2439 gain-only Copy B still needs complete source facts", () => 
   );
 });
 
-Deno.test("Form 2439 native export rejects source/shareholder or Schedule 3 mismatches", () => {
+test("Form 2439 native export rejects source/shareholder or Schedule 3 mismatches", () => {
   assertThrows(
     () =>
       form2439.build(
@@ -162,7 +165,7 @@ Deno.test("Form 2439 native export rejects source/shareholder or Schedule 3 mism
   );
 });
 
-Deno.test("Form 2439 direct export also rejects unsupported box 1c", () => {
+test("Form 2439 direct export also rejects unsupported box 1c", () => {
   assertThrows(
     () => form2439.build({ f2439s: [{ box1a: 2_000, box1c: 500 }] }),
     Error,
@@ -170,7 +173,7 @@ Deno.test("Form 2439 direct export also rejects unsupported box 1c", () => {
   );
 });
 
-Deno.test("Form 2439 spouse credit uses the spouse SSN and rejects an unverified payer copy", () => {
+test("Form 2439 spouse credit uses the spouse SSN and rejects an unverified payer copy", () => {
   const jointFiler: FilerIdentity = {
     ...filer,
     fullName: "Alex and Sam Taxpayer",
@@ -231,12 +234,7 @@ Deno.test("Form 2439 spouse credit uses the spouse SSN and rejects an unverified
   );
 });
 
-Deno.test({
-  name: "XSD: Form 2439 box 2 links Schedule 3 line 13a and Form 1040 line 31",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 2439 box 2 links Schedule 3 line 13a and Form 1040 line 31", async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single", line31_additional_payments: 1_500 },
     schedule3: {
@@ -251,16 +249,16 @@ Deno.test({
   assertStringIncludes(xml, "<TaxPaidByRICOrREITAmt referenceDocumentId=");
   assertStringIncludes(xml, "<OtherPaymentsAmt>1500</OtherPaymentsAmt>");
   assertStringIncludes(xml, 'referenceDocumentName="IRS2439"');
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

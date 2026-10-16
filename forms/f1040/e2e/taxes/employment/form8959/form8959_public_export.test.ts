@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../2025/index.ts";
 import { buildMefXml } from "../../../../2025/mef/builder.ts";
@@ -77,17 +80,14 @@ const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(schema).isFile;
+  schemaAvailable = sys.statSync(schema).isFile;
 } catch { /* local schema */ }
 
-const evidenceDir = Deno.args.find((arg) => arg.startsWith("--evidence-dir="))
+const evidenceDir = process.argv.slice(2).find((arg) => arg.startsWith("--evidence-dir="))
   ?.slice("--evidence-dir=".length);
 
 for (const c of cases) {
-  Deno.test({
-    name: `Form8959 public source/native/PDF projection: ${c.id}`,
-    ignore: !schemaAvailable,
-    fn: async () => {
+  test.skipIf(!schemaAvailable)(`Form8959 public source/native/PDF projection: ${c.id}`, async () => {
       const hasSpouse = c.status !== "single";
       const general = {
         filing_status: c.status,
@@ -188,7 +188,7 @@ for (const c of cases) {
       assertEquals(projected.line24_total_withheld, c.credit);
       const xml = buildMefXml(p, filer);
       assertStringIncludes(xml, "<IRS8959");
-      const child = new Deno.Command("xmllint", {
+      const child = new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, "-"],
         stdin: "piped",
         stdout: "piped",
@@ -200,9 +200,9 @@ for (const c of cases) {
       const checked = await child.output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
       if (evidenceDir) {
-        await Deno.mkdir(evidenceDir, { recursive: true });
-        await Deno.writeTextFile(`${evidenceDir}/${c.id}.xml`, xml);
-        await Deno.writeTextFile(
+        await fs.mkdir(evidenceDir, { recursive: true });
+        await fs.writeFile(`${evidenceDir}/${c.id}.xml`, xml);
+        await fs.writeFile(
           `${evidenceDir}/${c.id}.json`,
           JSON.stringify(
             {
@@ -231,6 +231,5 @@ for (const c of cases) {
           form8959: changed.form8959,
         })
       );
-    },
-  });
+    });
 }

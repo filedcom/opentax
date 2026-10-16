@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -125,7 +128,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("three-country mixed credit retains its parent and Schedule B pages in an XSD-valid packet", async () => {
+test("three-country mixed credit retains its parent and Schedule B pages in an XSD-valid packet", async () => {
   const result = filedReturn();
   const filer =
     pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
@@ -154,17 +157,17 @@ Deno.test("three-country mixed credit retains its parent and Schedule B pages in
     2,
   );
   try {
-    await Deno.stat(XSD_PATH);
+    await sys.stat(XSD_PATH);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
+    if (sys.isNotFound(error)) {
       throw new Error(`Missing verification prerequisite: ${XSD_PATH}`);
     }
     throw error;
   }
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -175,11 +178,11 @@ Deno.test("three-country mixed credit retains its parent and Schedule B pages in
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 });
 
-Deno.test("three-country interest and ordinary dividends reconcile native Form 1116 and PDF A/B/C", () => {
+test("three-country interest and ordinary dividends reconcile native Form 1116 and PDF A/B/C", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -223,7 +226,7 @@ Deno.test("three-country interest and ordinary dividends reconcile native Form 1
   );
 });
 
-Deno.test("three-country mixed credit rejects changed dividend, interest, review and filed return", () => {
+test("three-country mixed credit rejects changed dividend, interest, review and filed return", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -270,7 +273,7 @@ Deno.test("three-country mixed credit rejects changed dividend, interest, review
   }
 });
 
-Deno.test("three_country_mixed complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+test("three_country_mixed complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
   await verifyPassive1116Packet(filedReturn().pending, "three_country_mixed", {
     "interest": 30000,
     "dividends": 30000,

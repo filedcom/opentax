@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
@@ -33,7 +34,7 @@ function compute(overrides: Record<string, unknown> = {}) {
   );
 }
 
-Deno.test("Form 8919 sends lines 6, 10 and 13 to their distinct destinations", () => {
+test("Form 8919 sends lines 6, 10 and 13 to their distinct destinations", () => {
   const result = compute();
   assertEquals(fieldsOf(result.outputs, f1040)?.line1g_wages_8919, 50_000);
   assertEquals(
@@ -48,7 +49,7 @@ Deno.test("Form 8919 sends lines 6, 10 and 13 to their distinct destinations", (
   );
 });
 
-Deno.test("Form 8919 derives line 8 from W-2 and Form 4137, then caps line 10", () => {
+test("Form 8919 derives line 8 from W-2 and Form 4137, then caps line 10", () => {
   const result = compute({
     w2_sources: [{
       employee_ssn: "123-45-6789",
@@ -67,7 +68,7 @@ Deno.test("Form 8919 derives line 8 from W-2 and Form 4137, then caps line 10", 
   );
 });
 
-Deno.test("Form 8919 caps combined RRTA line 8 compensation once per recipient", () => {
+test("Form 8919 caps combined RRTA line 8 compensation once per recipient", () => {
   const forms = calculateForm8919(
     inputSchema.parse(input({
       w2_sources: [
@@ -89,7 +90,7 @@ Deno.test("Form 8919 caps combined RRTA line 8 compensation once per recipient",
   assertEquals(forms[0].line10, 0);
 });
 
-Deno.test("Form 8919 separates taxpayer and spouse wage bases", () => {
+test("Form 8919 separates taxpayer and spouse wage bases", () => {
   const forms = calculateForm8919(
     inputSchema.parse(input({
       spouse_ssn: "987-65-4321",
@@ -116,7 +117,7 @@ Deno.test("Form 8919 separates taxpayer and spouse wage bases", () => {
   assertEquals(forms.map((form) => form.line6), [50_000, 20_000]);
 });
 
-Deno.test("Form 8919 joint return rejects W-2 with no attributed employee SSN", () => {
+test("Form 8919 joint return rejects W-2 with no attributed employee SSN", () => {
   assertThrows(() =>
     calculateForm8919(
       inputSchema.parse(input({
@@ -128,7 +129,7 @@ Deno.test("Form 8919 joint return rejects W-2 with no attributed employee SSN", 
   );
 });
 
-Deno.test("Form 8919 only accepts 2025 reasons A, C, G, H with required evidence", () => {
+test("Form 8919 only accepts 2025 reasons A, C, G, H with required evidence", () => {
   const byReason = {
     A: {
       ...firm,
@@ -190,7 +191,7 @@ Deno.test("Form 8919 only accepts 2025 reasons A, C, G, H with required evidence
   );
 });
 
-Deno.test("Form 8919 reason H needs a same-firm W-2", () => {
+test("Form 8919 reason H needs a same-firm W-2", () => {
   const withH = inputSchema.parse(input({
     forms: [{
       recipient: "taxpayer",
@@ -225,7 +226,7 @@ Deno.test("Form 8919 reason H needs a same-firm W-2", () => {
   );
 });
 
-Deno.test("Form 8919 matches routed 1099-NEC amount and payer name without adding it twice", () => {
+test("Form 8919 matches routed 1099-NEC amount and payer name without adding it twice", () => {
   const withSource = inputSchema.parse(input({
     forms: [{
       recipient: "taxpayer",
@@ -275,7 +276,7 @@ Deno.test("Form 8919 matches routed 1099-NEC amount and payer name without addin
   assertThrows(() => calculateForm8919({ ...withSource, forms: [] }, 176_100));
 });
 
-Deno.test("Form 8919 reason H combines MISC and NEC from the same W-2 firm", () => {
+test("Form 8919 reason H combines MISC and NEC from the same W-2 firm", () => {
   const parsed = inputSchema.parse(input({
     forms: [{
       recipient: "taxpayer",
@@ -316,7 +317,7 @@ Deno.test("Form 8919 reason H combines MISC and NEC from the same W-2 firm", () 
   assertEquals(calculateForm8919(parsed, 176_100)[0].line8, 20_000);
 });
 
-Deno.test("Form 8919 rejects duplicate recipient forms and duplicate firms", () => {
+test("Form 8919 rejects duplicate recipient forms and duplicate firms", () => {
   const parsed = inputSchema.parse(input());
   assertThrows(() =>
     calculateForm8919({

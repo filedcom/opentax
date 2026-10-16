@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm8396,
@@ -57,7 +58,7 @@ const matchedPending = {
   },
 };
 
-Deno.test("Form 8396 XML carries source, allowed credit, and vintage carryforward", () => {
+test("Form 8396 XML carries source, allowed credit, and vintage carryforward", () => {
   const xml = form8396.build(fields, {
     pending: matchedPending,
   });
@@ -91,7 +92,7 @@ Deno.test("Form 8396 XML carries source, allowed credit, and vintage carryforwar
   );
 });
 
-Deno.test("Form 8396 XML rejects line 9 and Schedule 3 mismatches", () => {
+test("Form 8396 XML rejects line 9 and Schedule 3 mismatches", () => {
   assertThrows(
     () => form8396.build({ ...fields, line9: 1_200 }),
     Error,
@@ -107,7 +108,7 @@ Deno.test("Form 8396 XML rejects line 9 and Schedule 3 mismatches", () => {
   );
 });
 
-Deno.test("Form 8396 XML rejects a missing or mismatched Form 1098", () => {
+test("Form 8396 XML rejects a missing or mismatched Form 1098", () => {
   assertThrows(
     () =>
       form8396.build(fields, {
@@ -150,7 +151,7 @@ Deno.test("Form 8396 XML rejects a missing or mismatched Form 1098", () => {
   );
 });
 
-Deno.test("Form 8396 accepts a named lender statement without an entered Form 1098", () => {
+test("Form 8396 accepts a named lender statement without an entered Form 1098", () => {
   const statementSource = form8396SourceSchema.parse({
     ...source,
     interest_evidence: {

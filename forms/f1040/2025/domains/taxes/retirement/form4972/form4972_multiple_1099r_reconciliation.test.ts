@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildIRS4972 } from "../../../../mef/forms/taxes/retirement/f4972.ts";
 import { projectedFields } from "../../../../pdf/forms/taxes/retirement/f4972.ts";
@@ -43,7 +44,7 @@ const election = {
   elect_10yr_averaging: true,
 };
 
-Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
+test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
   const outputs = form4972.compute(
     { taxYear: 2025, formType: "f1040" },
     election,
@@ -108,7 +109,7 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
   );
 });
 
-Deno.test("Form 4972 combines two box 3 gains under Part II and Part III", () => {
+test("Form 4972 combines two box 3 gains under Part II and Part III", () => {
   const capitalSources = [
     { ...sources[0], box3_capital_gain: 5_000 },
     { ...sources[1], box3_capital_gain: 7_000 },

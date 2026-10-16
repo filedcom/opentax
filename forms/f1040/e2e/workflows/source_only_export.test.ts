@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -22,7 +25,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test("clergy housing cannot reach a prepared return without matched source facts", () => {
+test("clergy housing cannot reach a prepared return without matched source facts", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -157,13 +160,13 @@ const RETURN_XSD_PATH = new URL(
 ).pathname;
 let returnXsdAvailable = false;
 try {
-  Deno.statSync(RETURN_XSD_PATH);
+  sys.statSync(RETURN_XSD_PATH);
   returnXsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test("Form 8888 split refund cannot export without a matching final refund", () => {
+test("Form 8888 split refund cannot export without a matching final refund", () => {
   const fields = {
     account_1: {
       routing_number: "021000021",
@@ -192,7 +195,7 @@ Deno.test("Form 8888 split refund cannot export without a matching final refund"
   );
 });
 
-Deno.test("reviewed Form 9465 request stays blocked in MeF and PDF", () => {
+test("reviewed Form 9465 request stays blocked in MeF and PDF", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     f9465: attached9465,
   }, { taxYear: 2025, formType: "f1040" });
@@ -213,7 +216,7 @@ Deno.test("reviewed Form 9465 request stays blocked in MeF and PDF", () => {
   );
 });
 
-Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits its native forms", () => {
+test("Schedule R stays blocked and reviewed S-corporation stock loss emits its native forms", () => {
   for (
     const [inputs, key, formName] of [
       [
@@ -275,7 +278,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
   }
 });
 
-Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", () => {
+test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     schedule1a: { senior_zero_exclusions_review: seniorZeroExclusionsReview },
     general: {
@@ -318,7 +321,7 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
   );
 });
 
-Deno.test("Schedule R cannot override a conflicting Form 1040 birth date", () => {
+test("Schedule R cannot override a conflicting Form 1040 birth date", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     ...dependentScheduleRInputs,
     general: {
@@ -340,12 +343,7 @@ Deno.test("Schedule R cannot override a conflicting Form 1040 birth date", () =>
   );
 });
 
-Deno.test({
-  name: "XSD: dependent age-65 Schedule R credit reaches a full Form 1040",
-  ignore: !returnXsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!returnXsdAvailable)("XSD: dependent age-65 Schedule R credit reaches a full Form 1040", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -373,27 +371,21 @@ Deno.test({
     ),
     true,
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", RETURN_XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: sourced under-65 disability Schedule R credit reaches a full Form 1040",
-  ignore: !returnXsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!returnXsdAvailable)("XSD: sourced under-65 disability Schedule R credit reaches a full Form 1040", async () => {
   const disabilityInputs = {
     ...dependentScheduleRInputs,
     general: {
@@ -461,27 +453,21 @@ Deno.test({
     xml.includes("<TaxableDisabilityAmt>5000</TaxableDisabilityAmt>"),
     true,
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", RETURN_XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: reviewed Form 7203 loss joins full Form 1040, Schedule 1 and Schedule E",
-  ignore: !returnXsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!returnXsdAvailable)("XSD: reviewed Form 7203 loss joins full Form 1040, Schedule 1 and Schedule E", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -503,26 +489,21 @@ Deno.test({
   ) {
     assertEquals(xml.includes(value), true, value);
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", RETURN_XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: split Form 8888 refund matches a W-2 Form 1040 refund",
-  ignore: !returnXsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!returnXsdAvailable)("XSD: split Form 8888 refund matches a W-2 Form 1040 refund", async () => {
   const inputs = {
     general: stockLossInputs.general,
     w2: [{
@@ -578,16 +559,16 @@ Deno.test({
   ) {
     assertEquals(xml.includes(value), true, value);
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", RETURN_XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

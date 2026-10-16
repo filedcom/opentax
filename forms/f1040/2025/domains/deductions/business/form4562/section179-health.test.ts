@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
@@ -6,7 +7,7 @@ import {
   section179HealthInput,
 } from "./section179-health.fixture.ts";
 
-Deno.test("Section 179, source health months, SE, QBI and credit settle through complete returns", async () => {
+test("Section 179, source health months, SE, QBI and credit settle through complete returns", async () => {
   for (const scenario of section179HealthCases) {
     const input = section179HealthInput(scenario);
     const before = JSON.stringify(input);
@@ -54,7 +55,7 @@ Deno.test("Section 179, source health months, SE, QBI and credit settle through 
   }
 });
 
-Deno.test("Section 179 health integration rejects contradictory active income, premium and ownership facts", async () => {
+test("Section 179 health integration rejects contradictory active income, premium and ownership facts", async () => {
   const input = section179HealthInput(section179HealthCases[0]);
   const unadjusted = structuredClone(input);
   unadjusted.form4562.current_year_inventory.section179_election

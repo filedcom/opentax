@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
@@ -16,21 +19,21 @@ const xsdPath = new URL(
 ).pathname;
 
 async function validateReturn(xml: string): Promise<void> {
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("Form 1040 refund bank source reaches native return and filled PDF; orphan filed details fail closed", async () => {
+test("Form 1040 refund bank source reaches native return and filled PDF; orphan filed details fail closed", async () => {
   const general = {
     ...(fixture.inputs.general as Record<string, unknown>),
     bank_routing_number: "021000021",
@@ -57,10 +60,10 @@ Deno.test("Form 1040 refund bank source reaches native return and filled PDF; or
   await validateReturn(xml);
   const filled = await buildPdfBytes(pending, filer, ".pdf-cache");
   assertEquals((await PDFDocument.load(filled)).getPageCount(), 2);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, filled);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, filled);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -70,7 +73,7 @@ Deno.test("Form 1040 refund bank source reaches native return and filled PDF; or
     assertEquals(rendered.replace(/\s/g, "").includes("021000021"), true);
     assertEquals(rendered.replace(/\s/g, "").includes("123456789"), true);
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 
   const orphan = {
@@ -115,7 +118,7 @@ Deno.test("Form 1040 refund bank source reaches native return and filled PDF; or
   );
 });
 
-Deno.test("Form 1040 Form 8888 attachment is linked in native XML and marked on filled PDF", async () => {
+test("Form 1040 Form 8888 attachment is linked in native XML and marked on filled PDF", async () => {
   const allocation = pdfReviewFixtures.find((item) =>
     item.id === "single-form8888-two-account-refund"
   )!;
@@ -132,10 +135,10 @@ Deno.test("Form 1040 Form 8888 attachment is linked in native XML and marked on 
   await validateReturn(xml);
   const filled = await buildPdfBytes(pending, filer, ".pdf-cache");
   assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, filled);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, filled);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -149,6 +152,6 @@ Deno.test("Form 1040 Form 8888 attachment is linked in native XML and marked on 
     assertEquals(rendered.replace(/\s/g, "").includes("111222333"), true);
     assertEquals(rendered.replace(/\s/g, "").includes("444555666"), true);
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

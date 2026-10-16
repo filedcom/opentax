@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
@@ -81,7 +84,7 @@ function source() {
   return input;
 }
 
-Deno.test("QEF Election B refigures actual education MAGI, phaseout, and credit capacity", async () => {
+test("QEF Election B refigures actual education MAGI, phaseout, and credit capacity", async () => {
   const input = source();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -121,20 +124,20 @@ Deno.test("QEF Election B refigures actual education MAGI, phaseout, and credit 
     packet.bundle,
     origins,
   );
-  const out = Deno.env.get("FORM8621_EDUCATION_EVIDENCE_DIR") ??
+  const out = process.env.FORM8621_EDUCATION_EVIDENCE_DIR ??
     ".state/research/form8621-qef-education";
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const xsd = await new Deno.Command("xmllint", {
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -152,7 +155,7 @@ function educationFiler() {
   return education.filer as Parameters<typeof f1040_2025.prepareReturn>[1];
 }
 
-Deno.test("QEF education source and stale worksheet conflicts are rejected", () => {
+test("QEF education source and stale worksheet conflicts are rejected", () => {
   const stale = source();
   (stale.f8863 as Record<string, unknown>[])[0].filer_magi = 81_000;
   assertThrows(() => f1040_2025.executeReturn(stale), Error, "filed MAGI");
@@ -173,7 +176,7 @@ Deno.test("QEF education source and stale worksheet conflicts are rejected", () 
   );
 });
 
-Deno.test("native and PDF education copies reject a changed filed credit", async () => {
+test("native and PDF education copies reject a changed filed credit", async () => {
   const result = f1040_2025.executeReturn(source());
   assertEquals(result.diagnostics, []);
   const pending = structuredClone(buildPending(result.pending));
@@ -190,7 +193,7 @@ Deno.test("native and PDF education copies reject a changed filed credit", async
   );
 });
 
-Deno.test("QEF counterfactual cannot defer a change in Chapter 2A NIIT", () => {
+test("QEF counterfactual cannot defer a change in Chapter 2A NIIT", () => {
   const base = pdfReviewFixtures.find((row) =>
     row.id === "single-high-wage-no-niit"
   )!;
@@ -232,7 +235,7 @@ Deno.test("QEF counterfactual cannot defer a change in Chapter 2A NIIT", () => {
   );
 });
 
-Deno.test("issued Form 1098-T and payments retain an LLC credit-limit refigure", async () => {
+test("issued Form 1098-T and payments retain an LLC credit-limit refigure", async () => {
   const base = pdfReviewFixtures.find((row) =>
     row.id === "single-form8863-lifetime-learning-scholarship"
   )!;
@@ -321,21 +324,21 @@ Deno.test("issued Form 1098-T and payments retain an LLC credit-limit refigure",
     origins,
   );
   const out = `${
-    Deno.env.get("FORM8621_EDUCATION_EVIDENCE_DIR") ??
+    process.env.FORM8621_EDUCATION_EVIDENCE_DIR ??
       ".state/research/form8621-qef-education"
   }/issued`;
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, packet.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, packet.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const xsd = await new Deno.Command("xmllint", {
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -348,7 +351,7 @@ Deno.test("issued Form 1098-T and payments retain an LLC credit-limit refigure",
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
-Deno.test("dependent education and Schedule 8812 worksheets refigure together", async () => {
+test("dependent education and Schedule 8812 worksheets refigure together", async () => {
   const reviewed = claimantFixture("parent-two");
   const input = structuredClone(reviewed.inputs) as Record<string, unknown>;
   for (const student of input.f8863 as Record<string, unknown>[]) {
@@ -396,21 +399,21 @@ Deno.test("dependent education and Schedule 8812 worksheets refigure together", 
     origins,
   );
   const out = `${
-    Deno.env.get("FORM8621_EDUCATION_EVIDENCE_DIR") ??
+    process.env.FORM8621_EDUCATION_EVIDENCE_DIR ??
       ".state/research/form8621-qef-education"
   }/dependent`;
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, packet.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, packet.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const xsd = await new Deno.Command("xmllint", {
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -430,7 +433,7 @@ Deno.test("dependent education and Schedule 8812 worksheets refigure together", 
   );
 });
 
-Deno.test("QEF Election B replays sourced Form 3800 tax-limited business credit", async () => {
+test("QEF Election B replays sourced Form 3800 tax-limited business credit", async () => {
   const base = pdfReviewFixtures.find((row) =>
     row.id === "single-employer-childcare-facility-and-referral-credit"
   )!;
@@ -467,20 +470,20 @@ Deno.test("QEF Election B replays sourced Form 3800 tax-limited business credit"
     packet.bundle,
     origins,
   );
-  const out = Deno.env.get("FORM8621_BUSINESS_EVIDENCE_DIR") ??
+  const out = process.env.FORM8621_BUSINESS_EVIDENCE_DIR ??
     ".state/research/form8621-qef-business-credit";
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, packet.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, packet.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const xsd = await new Deno.Command("xmllint", {
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -493,7 +496,7 @@ Deno.test("QEF Election B replays sourced Form 3800 tax-limited business credit"
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
-Deno.test("native and PDF business-credit copies reject a changed allowed credit", async () => {
+test("native and PDF business-credit copies reject a changed allowed credit", async () => {
   const base = pdfReviewFixtures.find((row) =>
     row.id === "single-employer-childcare-facility-and-referral-credit"
   )!;

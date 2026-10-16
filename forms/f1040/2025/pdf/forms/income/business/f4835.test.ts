@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4835Pdf } from "./f4835.ts";
 
@@ -9,7 +10,7 @@ function copies(pending: Record<string, Record<string, unknown>>) {
   return form4835Pdf.instances?.(projected) ?? [];
 }
 
-Deno.test("Form 4835 PDF projects one copy per source activity and printed totals", () => {
+test("Form 4835 PDF projects one copy per source activity and printed totals", () => {
   const pending = {
     f4835: {
       f4835s: [{
@@ -48,7 +49,7 @@ Deno.test("Form 4835 PDF projects one copy per source activity and printed total
   assertEquals(form4835Pdf.pageIndices?.(north), [0]);
 });
 
-Deno.test("Form 4835 PDF field map uses the 2025 AcroForm widgets", () => {
+test("Form 4835 PDF field map uses the 2025 AcroForm widgets", () => {
   const byKey = Object.fromEntries(
     form4835Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -74,7 +75,7 @@ Deno.test("Form 4835 PDF field map uses the 2025 AcroForm widgets", () => {
   );
 });
 
-Deno.test("Form 4835 PDF blocks losses without linked Form 8582 allocation", () => {
+test("Form 4835 PDF blocks losses without linked Form 8582 allocation", () => {
   assertThrows(() => copies({
     f4835: {
       f4835s: [{
@@ -87,7 +88,7 @@ Deno.test("Form 4835 PDF blocks losses without linked Form 8582 allocation", () 
   }), Error, "computed Form 8582 activity allocation");
 });
 
-Deno.test("Form 4835 PDF blocks source paths requiring unrepresented statements", () => {
+test("Form 4835 PDF blocks source paths requiring unrepresented statements", () => {
   assertThrows(() => copies({
     f4835: {
       f4835s: [{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -7,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { registry } from "../../../../registry.ts";
 
-Deno.test("1099-K reviewed owner and TIN owner cannot repeat one processor account in native or PDF export", async () => {
+test("1099-K reviewed owner and TIN owner cannot repeat one processor account in native or PDF export", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-k-blank-tin-withholding"
   );

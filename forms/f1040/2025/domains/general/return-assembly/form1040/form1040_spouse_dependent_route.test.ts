@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -48,7 +49,7 @@ function filed() {
   return normalizeAllPending(result.pending);
 }
 
-Deno.test("MFJ claimable spouse uses dependent worksheet and only refunds withholding", () => {
+test("MFJ claimable spouse uses dependent worksheet and only refunds withholding", () => {
   const pending = filed();
   const fields = pending.f1040;
   assertEquals(fields.spouse_can_be_claimed_as_dependent, true);
@@ -66,7 +67,7 @@ Deno.test("MFJ claimable spouse uses dependent worksheet and only refunds withho
   assertEquals(projected.line12a_standard_deduction, 1_350);
 });
 
-Deno.test("MFJ claimable spouse rejects missing review, non-MFJ, and other W-2 owner", () => {
+test("MFJ claimable spouse rejects missing review, non-MFJ, and other W-2 owner", () => {
   for (
     const changed of [
       { ...general, mfj_dependent_refund_only_review: undefined },
@@ -99,7 +100,7 @@ Deno.test("MFJ claimable spouse rejects missing review, non-MFJ, and other W-2 o
   );
 });
 
-Deno.test("MFJ claimable spouse rejects worksheet, EIC, tax, and payment tampering", () => {
+test("MFJ claimable spouse rejects worksheet, EIC, tax, and payment tampering", () => {
   const pending = filed();
   for (
     const delta of [
@@ -116,7 +117,7 @@ Deno.test("MFJ claimable spouse rejects worksheet, EIC, tax, and payment tamperi
   }
 });
 
-Deno.test("MFJ claimable spouse review fixture produces native XML and a filled Form 1040", async () => {
+test("MFJ claimable spouse review fixture produces native XML and a filled Form 1040", async () => {
   const fixture = pdfReviewFixtures.find((entry) =>
     entry.id === "mfj-spouse-dependent-refund-only"
   )!;

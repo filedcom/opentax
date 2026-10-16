@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -87,8 +90,8 @@ const expected = {
 // separate owner net*92.35%, line10 min(net,176100)*12.4% + line11 net*2.9%,
 // half each filed SE tax; per-farm receipts ratios, rounded9%/50% lesser,
 // per-business wage phase-in, then shared line37 and summed box6 line38 cap.
-Deno.test("independent T/S patron farms retain owner costs, separate reductions and shared DPAD income cap", async () => {
-  const archive = await Deno.makeTempDir({
+test("independent T/S patron farms retain owner costs, separate reductions and shared DPAD income cap", async () => {
+  const archive = await sys.makeTempDir({
     prefix: "opentax-independent-patron-source-",
   });
   console.info(`Independent patron source archive: ${archive}`);
@@ -175,7 +178,7 @@ Deno.test("independent T/S patron farms retain owner costs, separate reductions 
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -190,7 +193,7 @@ Deno.test("independent T/S patron farms retain owner costs, separate reductions 
       0,
       new TextDecoder().decode(validation.stderr),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${archive}/${kind}.json`,
       JSON.stringify(
         {
@@ -206,11 +209,11 @@ Deno.test("independent T/S patron farms retain owner costs, separate reductions 
         2,
       ),
     );
-    await Deno.writeTextFile(`${archive}/${kind}.xml`, bundle.xml);
-    await Deno.writeFile(`${archive}/${kind}.pdf`, pdf);
+    await fs.writeFile(`${archive}/${kind}.xml`, bundle.xml);
+    await fs.writeFile(`${archive}/${kind}.pdf`, pdf);
   }
 });
-Deno.test("independent patron rejects owner, allocation, payroll, duplicate source and final filed conflicts", async () => {
+test("independent patron rejects owner, allocation, payroll, duplicate source and final filed conflicts", async () => {
   const fixture = independentPatronFixture("phase"),
     result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);
@@ -278,7 +281,7 @@ Deno.test("independent patron rejects owner, allocation, payroll, duplicate sour
   await assertRejects(() => buildPdfBytes(good, wrong, ".pdf-cache"));
 });
 
-Deno.test("independent farms may share a cooperative issuer while farm and issued-copy identities remain distinct", async () => {
+test("independent farms may share a cooperative issuer while farm and issued-copy identities remain distinct", async () => {
   const fixture = independentPatronFixture("phase"),
     inputs = structuredClone(fixture.inputs) as any;
   const reviews = inputs.qbi_patron.independent_farm_reviews;

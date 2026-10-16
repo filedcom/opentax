@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule3Pdf } from "../../general/return-assembly/schedule3.ts";
 
@@ -20,7 +21,7 @@ const form8911Source = {
   tentative_minimum_tax: 0,
 };
 
-Deno.test("Schedule 3 PDF cannot print a positive elderly credit without Schedule R", () => {
+test("Schedule 3 PDF cannot print a positive elderly credit without Schedule R", () => {
   assertThrows(
     () =>
       schedule3Pdf.projectFields?.(
@@ -34,7 +35,7 @@ Deno.test("Schedule 3 PDF cannot print a positive elderly credit without Schedul
   assertEquals(schedule3Pdf.projectFields?.(fields, {}), fields);
 });
 
-Deno.test("Schedule 3 PDF maps Form 8911 personal-use credit to 2025 line 6j", () => {
+test("Schedule 3 PDF maps Form 8911 personal-use credit to 2025 line 6j", () => {
   const entry = schedule3Pdf.fields.find((field) =>
     field.domainKey === "line6j_alt_fuel_vehicle_refueling"
   );
@@ -47,7 +48,7 @@ Deno.test("Schedule 3 PDF maps Form 8911 personal-use credit to 2025 line 6j", (
   );
 });
 
-Deno.test("Schedule 3 PDF line 6j rejects a bare Form 8911 credit", () => {
+test("Schedule 3 PDF line 6j rejects a bare Form 8911 credit", () => {
   assertThrows(
     () =>
       schedule3Pdf.projectFields?.(

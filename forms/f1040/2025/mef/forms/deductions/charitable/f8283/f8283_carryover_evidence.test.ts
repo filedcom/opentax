@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form8283CarryoverAttachmentDescription,
@@ -71,7 +72,7 @@ function attachmentContext() {
   };
 }
 
-Deno.test("Form 8283 prior-year Section A review joins ledger, taxpayer, PDF bytes and MeF document", () => {
+test("Form 8283 prior-year Section A review joins ledger, taxpayer, PDF bytes and MeF document", () => {
   const result = reviewForm8283CarryoverAttachment(
     evidence(),
     carryover(),
@@ -83,7 +84,7 @@ Deno.test("Form 8283 prior-year Section A review joins ledger, taxpayer, PDF byt
   assertEquals(result.filed2024ReturnReference, "accepted-2024-return");
 });
 
-Deno.test("Form 8283 prior-year Section A review rejects a different gift, taxpayer or PDF", () => {
+test("Form 8283 prior-year Section A review rejects a different gift, taxpayer or PDF", () => {
   assertThrows(() =>
     reviewForm8283CarryoverAttachment(
       evidence(),
@@ -115,7 +116,7 @@ Deno.test("Form 8283 prior-year Section A review rejects a different gift, taxpa
   );
 });
 
-Deno.test("Form 8283 prior-year Section A review rejects invalid date, value or appraisal branch", () => {
+test("Form 8283 prior-year Section A review rejects invalid date, value or appraisal branch", () => {
   const source = evidence();
   assertThrows(() =>
     reviewForm8283CarryoverAttachment(

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   CoverageType,
@@ -62,7 +63,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("Medicare owner's retained current HSA excess reaches only that owner's Form 5329", () => {
+test("Medicare owner's retained current HSA excess reaches only that owner's Form 5329", () => {
   const result = preparedReturn();
   const forms = result.pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],
@@ -118,7 +119,7 @@ Deno.test("Medicare owner's retained current HSA excess reaches only that owner'
   );
 });
 
-Deno.test("paired Medicare HSA excess rejects month, owner form, and return tampering", () => {
+test("paired Medicare HSA excess rejects month, owner form, and return tampering", () => {
   const pending = preparedReturn().pending;
   const forms = pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],

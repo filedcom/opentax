@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
@@ -7,10 +10,10 @@ import { buildCurrentLossOperatingReviewPdfs } from "./current-loss-operating-re
 import { form4835Pdf } from "../forms/income/business/f4835.ts";
 
 async function textOf(bytes: Uint8Array) {
-  const temp = await Deno.makeTempFile({ suffix: ".pdf" });
+  const temp = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(temp, bytes);
-    const r = await new Deno.Command("pdftotext", {
+    await fs.writeFile(temp, bytes);
+    const r = await new sys.Command("pdftotext", {
       args: ["-layout", temp, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -18,13 +21,13 @@ async function textOf(bytes: Uint8Array) {
     assertEquals(r.code, 0);
     return new TextDecoder().decode(r.stdout);
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
 }
 
-Deno.test("current loss operating review PDFs retain original expenses and only allowed deductions across Schedule E and Form 4835", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("current loss operating review PDFs retain original expenses and only allowed deductions across Schedule E and Form 4835", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -134,17 +137,17 @@ Deno.test("current loss operating review PDFs retain original expenses and only 
     );
     assertEquals(pending, before);
     if (output) {
-      await Deno.writeFile(
+      await sys.writeBytes(
         `${output}/${c.id}-schedule-e.pdf`,
         review.scheduleE.bytes,
         { createNew: true, mode: 0o600 },
       );
-      await Deno.writeFile(
+      await sys.writeBytes(
         `${output}/${c.id}-4835.pdf`,
         review.farms[0].bytes,
         { createNew: true, mode: 0o600 },
       );
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-operating.json`,
         JSON.stringify(
           {
@@ -160,12 +163,12 @@ Deno.test("current loss operating review PDFs retain original expenses and only 
         ),
         { createNew: true, mode: 0o600 },
       );
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-schedule-e.txt`,
         scheduleText,
         { createNew: true, mode: 0o600 },
       );
-      await Deno.writeTextFile(`${output}/${c.id}-4835.txt`, farmText, {
+      await sys.writeText(`${output}/${c.id}-4835.txt`, farmText, {
         createNew: true,
         mode: 0o600,
       });

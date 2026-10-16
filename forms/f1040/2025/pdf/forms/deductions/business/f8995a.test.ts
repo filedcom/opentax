@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995aPdf } from "./f8995a.ts";
 import { form8995aScheduleDPdf } from "./f8995a_schedule_d.ts";
@@ -54,7 +55,7 @@ const mapped = (
 ): string | undefined =>
   descriptor.fields.find((field) => field.domainKey === key)?.pdfField;
 
-Deno.test("Form 8995-A PDF projects column A, patron reduction, and Form 1040 deduction", () => {
+test("Form 8995-A PDF projects column A, patron reduction, and Form 1040 deduction", () => {
   const projected = form8995aPdf.projectFields?.(patron, pending);
   assertEquals(projected?.business_name, "Smith Farm");
   assertEquals(projected?.business_ein, "123456789");
@@ -84,7 +85,7 @@ Deno.test("Form 8995-A PDF projects column A, patron reduction, and Form 1040 de
   );
 });
 
-Deno.test("Schedule D PDF projects sourced column A and reconciles line 6 to parent line 14", () => {
+test("Schedule D PDF projects sourced column A and reconciles line 6 to parent line 14", () => {
   const projected = form8995aScheduleDPdf.projectFields?.(patron, pending);
   assertEquals(projected, {
     line1a: "Smith Farm",
@@ -101,7 +102,7 @@ Deno.test("Schedule D PDF projects sourced column A and reconciles line 6 to par
   );
 });
 
-Deno.test("Form 8995-A PDFs reject missing source, companion, parent, and 1040 mismatch", () => {
+test("Form 8995-A PDFs reject missing source, companion, parent, and 1040 mismatch", () => {
   assertThrows(
     () =>
       form8995aPdf.projectFields?.(patron, {
@@ -140,7 +141,7 @@ Deno.test("Form 8995-A PDFs reject missing source, companion, parent, and 1040 m
   );
 });
 
-Deno.test("Form 8995-A PDF requires SSTB companion and patron status", () => {
+test("Form 8995-A PDF requires SSTB companion and patron status", () => {
   assertThrows(
     () =>
       form8995aPdf.projectFields?.({

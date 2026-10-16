@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { scheduleJNonfarmW2Inputs } from "../../income-averaging/schedule-j/schedule_j_nonfarm_w2.fixture.ts";
@@ -38,7 +41,7 @@ function zeroTaxChildReturn(): Record<string, unknown> {
   return input;
 }
 
-Deno.test("issued participant, child, farm, dividend, W-2 and ISO sources refigure Schedule J AMT without its election", async () => {
+test("issued participant, child, farm, dividend, W-2 and ISO sources refigure Schedule J AMT without its election", async () => {
   const input = sourcedReturn();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -82,24 +85,24 @@ Deno.test("issued participant, child, farm, dividend, W-2 and ISO sources refigu
     prepared.bundle,
     origins,
   );
-  const dir = Deno.args[0] ?? ".state/research/form4972-schedulej-child-amt";
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  const dir = process.argv.slice(2)[0] ?? ".state/research/form4972-schedulej-child-amt";
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source.json`,
     JSON.stringify(input, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
+  await fs.writeFile(
     `${dir}/carry.json`,
     JSON.stringify(result.carryforwards, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const checked = await new Deno.Command("xmllint", {
+  const checked = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -133,7 +136,7 @@ Deno.test("issued participant, child, farm, dividend, W-2 and ISO sources refigu
   assertThrows(() => f1040_2025.executeReturn(badSource));
 });
 
-Deno.test("child income just above filing threshold retains a zero-tax Form8814 with Schedule J, Form4972 and AMT", async () => {
+test("child income just above filing threshold retains a zero-tax Form8814 with Schedule J, Form4972 and AMT", async () => {
   const input = zeroTaxChildReturn();
   const r = f1040_2025.executeReturn(input);
   assertEquals(r.diagnostics, []);
@@ -159,25 +162,25 @@ Deno.test("child income just above filing threshold retains a zero-tax Form8814 
     origins,
   );
   assertEquals(origins.filter((x) => x.formKey === "form8814").length, 1);
-  const dir = (Deno.args[0] ?? ".state/research/form4972-schedulej-child-amt") +
+  const dir = (process.argv.slice(2)[0] ?? ".state/research/form4972-schedulej-child-amt") +
     "/zero-child-tax";
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source.json`,
     JSON.stringify(input, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
+  await fs.writeFile(
     `${dir}/carry.json`,
     JSON.stringify(r.carryforwards, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const checked = await new Deno.Command("xmllint", {
+  const checked = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",

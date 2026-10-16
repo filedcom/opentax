@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8938Fixture } from "../../../../mef/forms/general/foreign/f8938.fixture.ts";
 import { form8938Pdf } from "./f8938.ts";
@@ -6,7 +7,7 @@ function pages(raw: Record<string, unknown>) {
   return form8938Pdf.instances!(raw);
 }
 
-Deno.test("staged Form 8938 PDF projects official 2021 fields for one Part V and VI asset", () => {
+test("staged Form 8938 PDF projects official 2021 fields for one Part V and VI asset", () => {
   const [fields] = pages(form8938Fixture());
   assertEquals(form8938Pdf.pageIndices!(fields), [0, 1]);
   assertEquals(fields.calendarYearSuffix, "25");
@@ -32,7 +33,7 @@ Deno.test("staged Form 8938 PDF projects official 2021 fields for one Part V and
   assertEquals(fields.otherEntityCityCountry, "Berlin, DE, 10115");
 });
 
-Deno.test("staged Form 8938 PDF classifies a nonentity counterparty", () => {
+test("staged Form 8938 PDF classifies a nonentity counterparty", () => {
   const source = form8938Fixture();
   const [fields] = pages({
     ...source,
@@ -55,7 +56,7 @@ Deno.test("staged Form 8938 PDF classifies a nonentity counterparty", () => {
   assertEquals(fields.otherIssuerName, "Example Foreign Corp.");
 });
 
-Deno.test("staged Form 8938 PDF retains Part IV-only one-page form", () => {
+test("staged Form 8938 PDF retains Part IV-only one-page form", () => {
   const source = form8938Fixture();
   const asset = {
     ...source.assets[2],
@@ -74,7 +75,7 @@ Deno.test("staged Form 8938 PDF retains Part IV-only one-page form", () => {
   assertEquals(page.partIV_8621, 1);
 });
 
-Deno.test("staged Form 8938 PDF repeats page 2 for overflow without repeating page 1", () => {
+test("staged Form 8938 PDF repeats page 2 for overflow without repeating page 1", () => {
   const source = form8938Fixture();
   const secondAccount = {
     ...source.assets[0],
@@ -106,7 +107,7 @@ Deno.test("staged Form 8938 PDF repeats page 2 for overflow without repeating pa
   assertEquals(copies[1].otherIdentifier, "STOCK-200");
 });
 
-Deno.test("staged Form 8938 PDF leaves the unused side blank on uneven continuation", () => {
+test("staged Form 8938 PDF leaves the unused side blank on uneven continuation", () => {
   const source = form8938Fixture();
   const secondAccount = {
     ...source.assets[0],
@@ -126,7 +127,7 @@ Deno.test("staged Form 8938 PDF leaves the unused side blank on uneven continuat
   assertEquals(form8938Pdf.pageIndices!(copies[1]), [1]);
 });
 
-Deno.test("staged Form 8938 PDF rejects tampered source", () => {
+test("staged Form 8938 PDF rejects tampered source", () => {
   const source = form8938Fixture();
   assertThrows(() => pages({ ...source, year_end_value_all_assets: 1 }), Error);
   assertThrows(() =>

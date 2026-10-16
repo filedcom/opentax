@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -32,12 +35,7 @@ const xsd = new URL(
 const plan = buildExecutionPlan(registry);
 
 for (const days of [120, 121] as const) {
-  Deno.test({
-    name:
-      `TY2025 Form8941 ${days} actual seasonal service days and excluded coverage: full source, XSD and PDF`,
-    sanitizeResources: false,
-    sanitizeOps: false,
-    async fn() {
+  test(`TY2025 Form8941 ${days} actual seasonal service days and excluded coverage: full source, XSD and PDF`, async () => {
       const input = form8941WorkerInputs(days);
       const filer = extractFilerIdentity(input.general)!;
       const result = execute(plan, registry, input, {
@@ -82,9 +80,9 @@ for (const days of [120, 121] as const) {
           days === 120 ? 4 : 5
         }</SmllEmplrHIPFTEEmplForTaxYrCnt>`,
       );
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const prefix = `${dir}seasonal-${days}`;
-      await Deno.writeTextFile(
+      await fs.writeFile(
         prefix + ".json",
         JSON.stringify(
           {
@@ -97,13 +95,13 @@ for (const days of [120, 121] as const) {
           2,
         ),
       );
-      await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-      const valid = await new Deno.Command("xmllint", {
+      await fs.writeFile(prefix + ".xml", bundle.xml);
+      const valid = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, prefix + ".xml"],
         stderr: "piped",
       }).output();
       assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-      await Deno.writeFile(
+      await fs.writeFile(
         prefix + ".pdf",
         await buildPdfBytes(
           bundle.pending,
@@ -112,26 +110,20 @@ for (const days of [120, 121] as const) {
           bundle,
         ),
       );
-      const extracted = await new Deno.Command("pdftotext", {
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-layout", prefix + ".pdf", "-"],
         stdout: "piped",
       }).output();
       assertEquals(extracted.code, 0);
       const packet = new TextDecoder().decode(extracted.stdout);
-      await Deno.writeTextFile(prefix + ".txt", packet);
+      await fs.writeFile(prefix + ".txt", packet);
       assertStringIncludes(packet, "Small Employer Health Insurance");
       assertStringIncludes(packet, "14614");
       assertStringIncludes(packet, "24631");
-    },
-  });
+    });
 }
 
-Deno.test({
-  name:
-    "TY2025 Form8941 excluded spouse: filed MFJ identity to full XSD and PDF",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 Form8941 excluded spouse: filed MFJ identity to full XSD and PDF", async () => {
     const input = form8941SpouseWorkerInputs();
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -156,32 +148,31 @@ Deno.test({
       attachments: [],
     });
     const prefix = `${dir}seasonal-120-spouse`;
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       prefix + ".json",
       JSON.stringify({ input, lines, pending: result.pending }, null, 2),
     );
-    await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-    const valid = await new Deno.Command("xmllint", {
+    await fs.writeFile(prefix + ".xml", bundle.xml);
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, prefix + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       prefix + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-    const extracted = await new Deno.Command("pdftotext", {
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", prefix + ".pdf", "-"],
       stdout: "piped",
     }).output();
     assertEquals(extracted.code, 0);
     const packet = new TextDecoder().decode(extracted.stdout);
-    await Deno.writeTextFile(prefix + ".txt", packet);
+    await fs.writeFile(prefix + ".txt", packet);
     assertStringIncludes(packet, "Sam Soleproprietor");
     assertStringIncludes(packet, "14614");
-  },
-});
+  });
 
 type Mutation = readonly [string, (source: any) => void];
 const mutations: readonly Mutation[] = [
@@ -228,12 +219,7 @@ const mutations: readonly Mutation[] = [
   }],
 ];
 
-Deno.test({
-  name:
-    "TY2025 Form8941 seasonal and excluded records reject actual public and native/PDF conflicts",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 Form8941 seasonal and excluded records reject actual public and native/PDF conflicts", async () => {
     const input = form8941WorkerInputs(120);
     const filer = extractFilerIdentity(input.general)!;
     const result = execute(plan, registry, input, {
@@ -319,5 +305,4 @@ Deno.test({
         dir + "negative-cache",
       )
     );
-  },
-});
+  });

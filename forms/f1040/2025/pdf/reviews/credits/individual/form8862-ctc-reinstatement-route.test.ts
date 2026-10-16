@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -12,7 +13,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-8862-ctc-reinstatement"
 )!;
 
-Deno.test("reviewed CTC credit calculates, but notice assertions cannot authorize export", async () => {
+test("reviewed CTC credit calculates, but notice assertions cannot authorize export", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

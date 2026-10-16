@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -17,7 +20,7 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
 
-Deno.test("elected W-2 code-Q combat pay reaches Form 1040 line 1i and both exports", async () => {
+test("elected W-2 code-Q combat pay reaches Form 1040 line 1i and both exports", async () => {
   const [wage] = base.inputs.w2 as Record<string, unknown>[];
   const result = execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
@@ -38,28 +41,28 @@ Deno.test("elected W-2 code-Q combat pay reaches Form 1040 line 1i and both expo
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
     assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
     assertEquals(/1,?000/.test(new TextDecoder().decode(extracted.stdout)), true);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const altered = structuredClone(pending);

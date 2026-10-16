@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -48,7 +49,7 @@ function filedFarm() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("farm QBI and one qualified-dividend copy reach Form 1040, Form 8995, MeF and PDF", () => {
+test("farm QBI and one qualified-dividend copy reach Form 1040, Form 8995, MeF and PDF", () => {
   const result = filedFarm();
   assertEquals(result.diagnostics, []);
   const { pending } = result;
@@ -72,7 +73,7 @@ Deno.test("farm QBI and one qualified-dividend copy reach Form 1040, Form 8995, 
   assertEquals(pdf?.line15, fields?.line15);
 });
 
-Deno.test("farm QBI export rejects altered qualified-dividend source and return", () => {
+test("farm QBI export rejects altered qualified-dividend source and return", () => {
   const { pending } = filedFarm();
   const fields = pending.form8995;
   for (

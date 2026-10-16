@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { f1095a } from "../../../../../../nodes/inputs/credits/health/f1095a/index.ts";
@@ -96,7 +97,7 @@ function caseForIncome(income: number, advance: number) {
   return { fields, pending, policies, credit, repayment };
 }
 
-Deno.test("two sequential Situation 4 policies reconcile source, Part IV, credit, and PDF", () => {
+test("two sequential Situation 4 policies reconcile source, Part IV, credit, and PDF", () => {
   const { fields, pending, credit } = caseForIncome(30_000, 200);
   const allocations = fields.shared_policy_allocations as Array<{
     policy_number: string;
@@ -118,7 +119,7 @@ Deno.test("two sequential Situation 4 policies reconcile source, Part IV, credit
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("two sequential Situation 4 policies reconcile repayment and reject source or return drift", () => {
+test("two sequential Situation 4 policies reconcile repayment and reject source or return drift", () => {
   const { fields, pending, policies, repayment } = caseForIncome(75_000, 800);
   assertEquals(repayment > 0, true);
   const xml = form8962.build(fields, { filer, pending });

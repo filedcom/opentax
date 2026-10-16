@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form7203 } from "./index.ts";
 
@@ -11,25 +12,25 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── 1. nodeType identity ─────────────────────────────────────────────────────
 
-Deno.test("form7203 — nodeType is 'form7203'", () => {
+test("form7203 — nodeType is 'form7203'", () => {
   assertEquals(form7203.nodeType, "form7203");
 });
 
 // ─── 2. Input validation ──────────────────────────────────────────────────────
 
-Deno.test("form7203 — rejects negative stock_basis_beginning", () => {
+test("form7203 — rejects negative stock_basis_beginning", () => {
   assertThrows(() => compute({ stock_basis_beginning: -1 }));
 });
 
-Deno.test("form7203 — rejects negative debt_basis_beginning", () => {
+test("form7203 — rejects negative debt_basis_beginning", () => {
   assertThrows(() => compute({ debt_basis_beginning: -1 }));
 });
 
-Deno.test("form7203 — rejects negative additional_contributions", () => {
+test("form7203 — rejects negative additional_contributions", () => {
   assertThrows(() => compute({ additional_contributions: -100 }));
 });
 
-Deno.test("form7203 — a $500 cash contribution increases stock loss capacity", () => {
+test("form7203 — a $500 cash contribution increases stock loss capacity", () => {
   const result = compute({
     stock_basis_beginning: 3_000,
     additional_contributions: 500,
@@ -39,35 +40,35 @@ Deno.test("form7203 — a $500 cash contribution increases stock loss capacity",
   assertEquals(result.carryforwards?.suspended_scorp_loss_7203, 500);
 });
 
-Deno.test("form7203 — rejects negative ordinary_income", () => {
+test("form7203 — rejects negative ordinary_income", () => {
   assertThrows(() => compute({ ordinary_income: -500 }));
 });
 
-Deno.test("form7203 — rejects negative ordinary_loss", () => {
+test("form7203 — rejects negative ordinary_loss", () => {
   assertThrows(() => compute({ ordinary_loss: -1_000 }));
 });
 
-Deno.test("form7203 — rejects negative prior_year_unallowed_loss", () => {
+test("form7203 — rejects negative prior_year_unallowed_loss", () => {
   assertThrows(() => compute({ prior_year_unallowed_loss: -200 }));
 });
 
-Deno.test("form7203 — rejects negative distributions", () => {
+test("form7203 — rejects negative distributions", () => {
   assertThrows(() => compute({ distributions: -500 }));
 });
 
-Deno.test("form7203 — rejects negative nondeductible_expenses", () => {
+test("form7203 — rejects negative nondeductible_expenses", () => {
   assertThrows(() => compute({ nondeductible_expenses: -100 }));
 });
 
-Deno.test("form7203 — rejects negative new_loans", () => {
+test("form7203 — rejects negative new_loans", () => {
   assertThrows(() => compute({ new_loans: -1_000 }));
 });
 
-Deno.test("form7203 — rejects negative tax_exempt_income", () => {
+test("form7203 — rejects negative tax_exempt_income", () => {
   assertThrows(() => compute({ tax_exempt_income: -500 }));
 });
 
-Deno.test("form7203 — accepts all zero inputs: no loss pool → no outputs", () => {
+test("form7203 — accepts all zero inputs: no loss pool → no outputs", () => {
   const result = compute({
     stock_basis_beginning: 0,
     debt_basis_beginning: 0,
@@ -79,7 +80,7 @@ Deno.test("form7203 — accepts all zero inputs: no loss pool → no outputs", (
 
 // ─── 3. No loss — no output ──────────────────────────────────────────────────
 
-Deno.test("form7203 — no loss, no prior unallowed: empty outputs", () => {
+test("form7203 — no loss, no prior unallowed: empty outputs", () => {
   const result = compute({
     stock_basis_beginning: 10_000,
     ordinary_loss: 0,
@@ -88,14 +89,14 @@ Deno.test("form7203 — no loss, no prior unallowed: empty outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form7203 — omitted loss fields: empty outputs", () => {
+test("form7203 — omitted loss fields: empty outputs", () => {
   const result = compute({ stock_basis_beginning: 5_000 });
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── 4. Loss fully within stock basis — no disallowance ──────────────────────
 
-Deno.test("form7203 — loss equals stock basis: fully allowed, no output", () => {
+test("form7203 — loss equals stock basis: fully allowed, no output", () => {
   // stock_basis = 10_000, loss = 10_000 → disallowed = 0
   const result = compute({
     stock_basis_beginning: 10_000,
@@ -104,7 +105,7 @@ Deno.test("form7203 — loss equals stock basis: fully allowed, no output", () =
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form7203 — loss less than stock basis: fully allowed, no output", () => {
+test("form7203 — loss less than stock basis: fully allowed, no output", () => {
   // stock_basis = 20_000, loss = 5_000 → disallowed = 0
   const result = compute({
     stock_basis_beginning: 20_000,
@@ -115,7 +116,7 @@ Deno.test("form7203 — loss less than stock basis: fully allowed, no output", (
 
 // ─── 5. Loss exceeds stock basis but within debt basis ───────────────────────
 
-Deno.test("form7203 — debt cannot allow an ordinary loss without Part II source and filing review", () => {
+test("form7203 — debt cannot allow an ordinary loss without Part II source and filing review", () => {
   for (const input of [
     { stock_basis_beginning: 3_000, debt_basis_beginning: 5_000, ordinary_loss: 7_000 },
     { stock_basis_beginning: 4_000, debt_basis_beginning: 2_000, ordinary_loss: 6_000 },
@@ -131,7 +132,7 @@ Deno.test("form7203 — debt cannot allow an ordinary loss without Part II sourc
 
 // ─── 6. Loss exceeds total basis — partial disallowance ──────────────────────
 
-Deno.test("form7203 — loss exceeds stock only, no debt: routes basis_disallowed_add_back to schedule1", () => {
+test("form7203 — loss exceeds stock only, no debt: routes basis_disallowed_add_back to schedule1", () => {
   // stock = 2_000, debt = 0, loss = 5_000 → allowed = 2_000, disallowed = 3_000
   const result = compute({
     stock_basis_beginning: 2_000,
@@ -140,7 +141,7 @@ Deno.test("form7203 — loss exceeds stock only, no debt: routes basis_disallowe
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
-Deno.test("form7203 — partial debt-supported loss cannot post a reduced Schedule 1 add-back", () => {
+test("form7203 — partial debt-supported loss cannot post a reduced Schedule 1 add-back", () => {
   assertThrows(
     () => compute({ stock_basis_beginning: 2_000, debt_basis_beginning: 1_000, ordinary_loss: 5_000 }),
     Error,
@@ -150,7 +151,7 @@ Deno.test("form7203 — partial debt-supported loss cannot post a reduced Schedu
 
 // ─── 7. Zero basis — full disallowance ───────────────────────────────────────
 
-Deno.test("form7203 — zero stock and debt basis: entire loss disallowed", () => {
+test("form7203 — zero stock and debt basis: entire loss disallowed", () => {
   // stock = 0, debt = 0, loss = 8_000 → disallowed = 8_000
   const result = compute({
     stock_basis_beginning: 0,
@@ -160,7 +161,7 @@ Deno.test("form7203 — zero stock and debt basis: entire loss disallowed", () =
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 8_000);
 });
 
-Deno.test("form7203 — omitted basis fields default to zero: entire loss disallowed", () => {
+test("form7203 — omitted basis fields default to zero: entire loss disallowed", () => {
   // no basis provided → stock=0, debt=0, loss=3_000 → disallowed=3_000
   const result = compute({ ordinary_loss: 3_000 });
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
@@ -168,7 +169,7 @@ Deno.test("form7203 — omitted basis fields default to zero: entire loss disall
 
 // ─── 8. Prior year unallowed losses ──────────────────────────────────────────
 
-Deno.test("form7203 — prior-year loss cannot be added back as current disallowance", () => {
+test("form7203 — prior-year loss cannot be added back as current disallowance", () => {
   assertThrows(() => compute({
     stock_basis_beginning: 3_000,
     ordinary_loss: 1_000,
@@ -176,14 +177,14 @@ Deno.test("form7203 — prior-year loss cannot be added back as current disallow
   }), Error, "source-linked current/prior loss allocation");
 });
 
-Deno.test("form7203 — prior-year loss within basis still needs current return routing", () => {
+test("form7203 — prior-year loss within basis still needs current return routing", () => {
   assertThrows(() => compute({
     stock_basis_beginning: 5_000,
     prior_year_unallowed_loss: 3_000,
   }), Error, "source-linked current/prior loss allocation");
 });
 
-Deno.test("form7203 — prior-year loss exceeding basis cannot create current add-back", () => {
+test("form7203 — prior-year loss exceeding basis cannot create current add-back", () => {
   assertThrows(() => compute({
     stock_basis_beginning: 2_000,
     prior_year_unallowed_loss: 4_000,
@@ -192,7 +193,7 @@ Deno.test("form7203 — prior-year loss exceeding basis cannot create current ad
 
 // ─── 9. Ordinary income increases stock basis ─────────────────────────────────
 
-Deno.test("form7203 — ordinary income increases stock basis before loss check", () => {
+test("form7203 — ordinary income increases stock basis before loss check", () => {
   // stock = 2_000, ordinary_income = 3_000 → basis = 5_000, loss = 4_000 → disallowed = 0
   const result = compute({
     stock_basis_beginning: 2_000,
@@ -204,7 +205,7 @@ Deno.test("form7203 — ordinary income increases stock basis before loss check"
 
 // ─── 10. Distributions reduce stock basis before loss limitation ──────────────
 
-Deno.test("form7203 — distributions reduce stock basis before loss check", () => {
+test("form7203 — distributions reduce stock basis before loss check", () => {
   // stock = 8_000, distributions = 6_000 → basis_after_distrib = 2_000
   // loss = 5_000, allowed = 2_000, disallowed = 3_000
   const result = compute({
@@ -215,7 +216,7 @@ Deno.test("form7203 — distributions reduce stock basis before loss check", () 
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
-Deno.test("form7203 — excess distributions need Form 8949 facts", () => {
+test("form7203 — excess distributions need Form 8949 facts", () => {
   assertThrows(() => compute({
     stock_basis_beginning: 3_000,
     distributions: 5_000,
@@ -225,7 +226,7 @@ Deno.test("form7203 — excess distributions need Form 8949 facts", () => {
 
 // ─── 11. Nondeductible expenses reduce stock basis ────────────────────────────
 
-Deno.test("form7203 — nondeductible expenses reduce stock basis before loss check", () => {
+test("form7203 — nondeductible expenses reduce stock basis before loss check", () => {
   // stock = 6_000, nondeductible = 3_000 → basis_after_nonded = 3_000, loss = 5_000 → disallowed = 2_000
   const result = compute({
     stock_basis_beginning: 6_000,
@@ -237,7 +238,7 @@ Deno.test("form7203 — nondeductible expenses reduce stock basis before loss ch
 
 // ─── 12. Additional contributions increase basis ──────────────────────────────
 
-Deno.test("form7203 — contributions increase stock basis, saving loss from disallowance", () => {
+test("form7203 — contributions increase stock basis, saving loss from disallowance", () => {
   // stock = 1_000, contributions = 4_000 → basis = 5_000, loss = 4_000 → disallowed = 0
   const result = compute({
     stock_basis_beginning: 1_000,
@@ -249,7 +250,7 @@ Deno.test("form7203 — contributions increase stock basis, saving loss from dis
 
 // ─── 13. New loans increase debt basis ───────────────────────────────────────
 
-Deno.test("form7203 — unsourced new loan cannot increase loss basis", () => {
+test("form7203 — unsourced new loan cannot increase loss basis", () => {
   assertThrows(
     () => compute({ stock_basis_beginning: 0, new_loans: 3_000, ordinary_loss: 4_000 }),
     Error,
@@ -259,7 +260,7 @@ Deno.test("form7203 — unsourced new loan cannot increase loss basis", () => {
 
 // ─── 14. Output routing ──────────────────────────────────────────────────────
 
-Deno.test("form7203 — disallowed loss routes to both schedule1 and agi_aggregator", () => {
+test("form7203 — disallowed loss routes to both schedule1 and agi_aggregator", () => {
   // stock = 1_000, loss = 4_000 → disallowed = 3_000; routes to 2 outputs
   const result = compute({
     stock_basis_beginning: 1_000,
@@ -270,7 +271,7 @@ Deno.test("form7203 — disallowed loss routes to both schedule1 and agi_aggrega
   assertEquals(findOutput(result, "agi_aggregator")!.fields.basis_disallowed_add_back, 3_000);
 });
 
-Deno.test("form7203 — when no disallowance: no outputs at all", () => {
+test("form7203 — when no disallowance: no outputs at all", () => {
   const result = compute({
     stock_basis_beginning: 10_000,
     ordinary_loss: 2_000,
@@ -280,7 +281,7 @@ Deno.test("form7203 — when no disallowance: no outputs at all", () => {
 
 // ─── 15. Tax-exempt income increases stock basis ──────────────────────────────
 
-Deno.test("form7203 — tax_exempt_income increases stock basis before loss limitation", () => {
+test("form7203 — tax_exempt_income increases stock basis before loss limitation", () => {
   // stock = 1_000, tax_exempt = 2_000 → basis = 3_000, loss = 3_000 → disallowed = 0
   const result = compute({
     stock_basis_beginning: 1_000,
@@ -292,7 +293,7 @@ Deno.test("form7203 — tax_exempt_income increases stock basis before loss limi
 
 // ─── Spec scenario: stock=$5k, debt=$3k, loss=$9k ────────────────────────────
 
-Deno.test("form7203 — positive debt basis still stops before mixed stock/debt loss allocation", () => {
+test("form7203 — positive debt basis still stops before mixed stock/debt loss allocation", () => {
   assertThrows(
     () => compute({ stock_basis_beginning: 5_000, debt_basis_beginning: 3_000, ordinary_loss: 9_000 }),
     Error,
@@ -302,7 +303,7 @@ Deno.test("form7203 — positive debt basis still stops before mixed stock/debt 
 
 // ─── 16. Smoke test ───────────────────────────────────────────────────────────
 
-Deno.test("form7203 — mixed prior-year source stops before overstating current Schedule 1", () => {
+test("form7203 — mixed prior-year source stops before overstating current Schedule 1", () => {
   // stock = 5_000
   // + contributions = 2_000 → 7_000
   // + ordinary_income = 3_000 → 10_000

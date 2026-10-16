@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8908, itemSchema } from "./index.ts";
 import type { z } from "zod";
@@ -35,7 +36,7 @@ function compute(items: F8908Item[]) {
   );
 }
 
-Deno.test("Form 8908 refuses the old amount override and approximate route", () => {
+test("Form 8908 refuses the old amount override and approximate route", () => {
   assertEquals(
     itemSchema.safeParse({
       construction_type: "single_family",
@@ -47,7 +48,7 @@ Deno.test("Form 8908 refuses the old amount override and approximate route", () 
   assertThrows(() => compute([home()]), Error, "native Form 8908");
 });
 
-Deno.test("Form 8908 requires a distinct home and one contractor", () => {
+test("Form 8908 requires a distinct home and one contractor", () => {
   assertThrows(() => compute([]));
   assertThrows(
     () => compute([home(), home({ certification_reference: "cert-2" })]),
@@ -68,7 +69,7 @@ Deno.test("Form 8908 requires a distinct home and one contractor", () => {
   );
 });
 
-Deno.test("Form 8908 requires timely certification and Form 7220 review", () => {
+test("Form 8908 requires timely certification and Form 7220 review", () => {
   assertThrows(
     () => compute([home({ certified_on: "2025-06-01" })]),
     Error,

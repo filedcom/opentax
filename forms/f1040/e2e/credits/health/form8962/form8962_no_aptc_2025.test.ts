@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -90,10 +93,10 @@ async function validateXml(xml: string) {
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, xmlPath],
       stderr: "piped",
     }).output();
@@ -103,11 +106,11 @@ async function validateXml(xml: string) {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("200% FPL no-APTC 1095-A reaches full return, MeF, and PDF", async () => {
+test("200% FPL no-APTC 1095-A reaches full return, MeF, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     w2: [w2(30_120, 3_000)],
@@ -136,7 +139,7 @@ Deno.test("200% FPL no-APTC 1095-A reaches full return, MeF, and PDF", async () 
   await validateXml(xml);
 });
 
-Deno.test("no-APTC 1095-A cents are rounded before Form 8962 credit and e-file", async () => {
+test("no-APTC 1095-A cents are rounded before Form 8962 credit and e-file", async () => {
   const centsPolicy = {
     ...policy,
     monthly_premiums: Array(12).fill(800.51),
@@ -193,7 +196,7 @@ Deno.test("no-APTC 1095-A cents are rounded before Form 8962 credit and e-file",
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
-Deno.test("unchanged no-APTC policy rounds annual 1095-A totals for line 11", async () => {
+test("unchanged no-APTC policy rounds annual 1095-A totals for line 11", async () => {
   const annualCentsPolicy = {
     ...policy,
     monthly_premiums: Array(12).fill(800.49),
@@ -276,7 +279,7 @@ function twoNoAptcPolicies(benchmarks: number[]) {
   }));
 }
 
-Deno.test("two no-APTC policy premiums combine cents before monthly filing", async () => {
+test("two no-APTC policy premiums combine cents before monthly filing", async () => {
   const policies = twoNoAptcPolicies([
     ...Array(6).fill(700.49),
     ...Array(6).fill(800.49),
@@ -320,7 +323,7 @@ Deno.test("two no-APTC policy premiums combine cents before monthly filing", asy
   );
 });
 
-Deno.test("two no-APTC policies round combined annual premiums once", async () => {
+test("two no-APTC policies round combined annual premiums once", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     w2: [w2(30_120, 3_000)],
@@ -351,7 +354,7 @@ Deno.test("two no-APTC policies round combined annual premiums once", async () =
   assertThrows(() => buildMefXml(changedPremium, filer));
 });
 
-Deno.test("protected partial premium reduces one no-APTC month and full-return credit", async () => {
+test("protected partial premium reduces one no-APTC month and full-return credit", async () => {
   const protectedPayment = {
     status: "protected_partial" as const,
     amount: 500.51,
@@ -430,7 +433,7 @@ Deno.test("protected partial premium reduces one no-APTC month and full-return c
   );
 });
 
-Deno.test("state emergency order protects a partially paid no-APTC month", async () => {
+test("state emergency order protects a partially paid no-APTC month", async () => {
   const emergencyPayment = {
     status: "emergency_order_partial" as const,
     amount: 400,
@@ -532,7 +535,7 @@ Deno.test("state emergency order protects a partially paid no-APTC month", async
   }
 });
 
-Deno.test("lawfully present filer below 100% FPL claims no-APTC monthly credit", async () => {
+test("lawfully present filer below 100% FPL claims no-APTC monthly credit", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: lawfulGeneral,
     w2: [w2(10_000, 0)],
@@ -579,7 +582,7 @@ Deno.test("lawfully present filer below 100% FPL claims no-APTC monthly credit",
   );
 });
 
-Deno.test("lawfully present filer below 100% FPL claims no-APTC annual credit", async () => {
+test("lawfully present filer below 100% FPL claims no-APTC annual credit", async () => {
   const annualPolicy = {
     ...policy,
     monthly_slcsps: Array(12).fill(0),

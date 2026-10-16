@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as InputFilingStatus } from "../../../../../nodes/types.ts";
@@ -121,7 +122,7 @@ function filedReturn(k1: Record<string, unknown> = source) {
   return result;
 }
 
-Deno.test("Form 7203 cash capital and separate new note allocate current K-1 loss through return, native and PDF", async () => {
+test("Form 7203 cash capital and separate new note allocate current K-1 loss through return, native and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -162,7 +163,7 @@ Deno.test("Form 7203 cash capital and separate new note allocate current K-1 los
   await prepared.renderPdf();
 });
 
-Deno.test("Form 7203 capital-and-debt route rejects overlapping source and altered pending return", () => {
+test("Form 7203 capital-and-debt route rejects overlapping source and altered pending return", () => {
   const overlap = filedReturn({
     ...source,
     form7203_stock_loss_ledger: {
@@ -218,7 +219,7 @@ const repaidSource = {
   form7203_debt_evidence: repaidNote,
 };
 
-Deno.test("Form 7203 cash capital plus a partially repaid new note support one K-1 loss through return, native and PDF", async () => {
+test("Form 7203 cash capital plus a partially repaid new note support one K-1 loss through return, native and PDF", async () => {
   const result = filedReturn(repaidSource);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -252,7 +253,7 @@ Deno.test("Form 7203 cash capital plus a partially repaid new note support one K
   await prepared.renderPdf();
 });
 
-Deno.test("Form 7203 sums two dated principal repayments on one fully based note before loss allocation", async () => {
+test("Form 7203 sums two dated principal repayments on one fully based note before loss allocation", async () => {
   const twoRepayments = {
     ...repaidNote,
     principal_repayments: [{
@@ -381,7 +382,7 @@ Deno.test("Form 7203 sums two dated principal repayments on one fully based note
   );
 });
 
-Deno.test("Form 7203 combined capital, note and repayment reject cross-source or return tampering", () => {
+test("Form 7203 combined capital, note and repayment reject cross-source or return tampering", () => {
   const overlap = filedReturn({
     ...repaidSource,
     form7203_debt_evidence: {

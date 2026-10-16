@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -13,7 +14,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-situation4-two-agreed-percentages"
 )!;
 
-Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV, Schedule 3, Form 1040, MeF, and PDF", async () => {
+test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV, Schedule 3, Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -146,7 +147,7 @@ Deno.test("two sourced Situation 4 percentages reach monthly Form 8962, Part IV,
   );
 });
 
-Deno.test("the same two Situation 4 agreement periods reconcile excess APTC to Schedule 2 and Form 1040", async () => {
+test("the same two Situation 4 agreement periods reconcile excess APTC to Schedule 2 and Form 1040", async () => {
   const originalW2 = (fixture.inputs.w2 as Record<string, unknown>[])[0];
   const originalPolicy =
     (fixture.inputs.f1095a as Record<string, unknown>[])[0];

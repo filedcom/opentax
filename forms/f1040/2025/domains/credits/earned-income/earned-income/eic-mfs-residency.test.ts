@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -14,7 +17,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 for (const kind of ["ordinary", "birth", "death"] as const) {
   for (const basis of ["last_six_months_apart", "legal_separation"] as const) {
     for (const claimed of [false, true]) {
-      Deno.test(`MFS reviewed EIC native ${kind}/${basis}/${claimed ? "claimed" : "released"}`, async () => {
+      test(`MFS reviewed EIC native ${kind}/${basis}/${claimed ? "claimed" : "released"}`, async () => {
         const result = f1040_2025.executeReturn(
           mfsResidencyInputs(kind, basis, claimed),
         );
@@ -46,17 +49,17 @@ for (const kind of ["ordinary", "birth", "death"] as const) {
           "<QualifyingChildSSN>444556666</QualifyingChildSSN>",
         );
         assertStringIncludes(xml, "<IRS1040ScheduleEIC");
-        const path = await Deno.makeTempFile({
+        const path = await sys.makeTempFile({
           prefix: "opentax-eic-mfs-residency-",
           suffix: ".xml",
         });
-        await Deno.writeTextFile(path, xml);
+        await fs.writeFile(path, xml);
         console.log(`EIC_MFS_RESIDENCY_XML ${path}`);
         const schema = new URL(
           "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
           import.meta.url,
         ).pathname;
-        const validated = await new Deno.Command("xmllint", {
+        const validated = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", schema, path],
           stderr: "piped",
         }).output();

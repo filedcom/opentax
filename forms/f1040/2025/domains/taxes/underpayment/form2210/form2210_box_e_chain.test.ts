@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import {
@@ -76,7 +77,7 @@ async function fixture() {
   };
 }
 
-Deno.test("Form 2210 box E retained prior returns drive complete page-1 MeF and PDF fields", async () => {
+test("Form 2210 box E retained prior returns drive complete page-1 MeF and PDF fields", async () => {
   const { source, documents } = await fixture();
   const filed_lines = calculateForm2210BoxEPage1(source);
   const record = { source, filed_lines };
@@ -112,7 +113,7 @@ Deno.test("Form 2210 box E retained prior returns drive complete page-1 MeF and 
   );
 });
 
-Deno.test("Form 2210 box E rejects changed prior bytes, filer, status, and tax", async () => {
+test("Form 2210 box E rejects changed prior bytes, filer, status, and tax", async () => {
   const { source, documents } = await fixture();
   await assertRejects(() =>
     inspectForm2210BoxEPriorReturnBytes(

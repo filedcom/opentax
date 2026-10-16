@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { qualifiedRothSource } from "./form4852_qualified_roth.fixture.ts";
 import { annualRecharacterizationSource } from "./form4852_recharacterization.fixture.ts";
 import { assertForm4852RetainedEvidence } from "./form4852_retained_evidence.ts";
@@ -50,7 +53,7 @@ const pension = (n: number, facts: Record<string, unknown>) =>
   });
 const template = () => officialForm4852EvidenceTemplate("f4852");
 
-Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owners/copies, FICA/SE/SALT and retirement consequences to whole returns", async () => {
+test("Form4852 actual public completed-PDF sources reconcile multiple owners/copies, FICA/SE/SALT and retirement consequences to whole returns", async () => {
   const jointFiler = {
     ...form4852Filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -564,7 +567,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
       },
     },
   ];
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   for (const row of rows) {
     const retained = await retainedForm4852Sources(
       row.items,
@@ -848,13 +851,13 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
         row.items.filter((i) => i.form_type === "R_1099").length,
     );
     assertStringIncludes(prepared.bundle.xml, "<StandardOrNonStandardCd>N</");
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const x = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const x = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, `${root}/${row.id}.xml`],
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
     const origins: PdfPageOrigin[] = [];
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/${row.id}.pdf`,
       await buildPdfBytes(
         prepared.bundle.pending,
@@ -864,26 +867,26 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
         origins,
       ),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify({ inputs, filer: row.filer, pending }, null, 2),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const documentManifest = [];
     for (const [index, doc] of retained.documents.entries()) {
       const path = `${row.id}-retained/document-${index + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, doc.bytes);
+      await fs.writeFile(`${root}/${path}`, doc.bytes);
       documentManifest.push({
         document_reference: doc.document_reference,
         path,
         sha256: createHash("sha256").update(doc.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(documentManifest, null, 2),
     );
@@ -1015,7 +1018,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
   }
 });
 
-Deno.test("Form4852 retained source cannot also enter income as an ordinary W2 or retirement copy", async () => {
+test("Form4852 retained source cannot also enter income as an ordinary W2 or retirement copy", async () => {
   for (const type of [FormType.W2, FormType.R_1099]) {
     const n = type === FormType.W2 ? 30 : 31;
     const item = substitute(

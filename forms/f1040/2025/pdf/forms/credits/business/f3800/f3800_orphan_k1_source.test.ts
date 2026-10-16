@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { prepareForm3800DocumentParts } from "../../../../../mef/forms/credits/business/f3800/f3800.ts";
@@ -55,7 +56,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 3800 nine-page PDF binds a direct partnership code Z credit to prepared line 1h and Form 1040", () => {
+test("Form 3800 nine-page PDF binds a direct partnership code Z credit to prepared line 1h and Form 1040", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
@@ -148,7 +149,7 @@ Deno.test("Form 3800 nine-page PDF binds a direct partnership code Z credit to p
   );
 });
 
-Deno.test("Form 3800 prints separate self-earned and partnership orphan-drug sources on Part V", () => {
+test("Form 3800 prints separate self-earned and partnership orphan-drug sources on Part V", () => {
   const filedForm8820 = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -248,7 +249,7 @@ Deno.test("Form 3800 prints separate self-earned and partnership orphan-drug sou
   );
 });
 
-Deno.test("Form 3800 prints two distinct partnership orphan-drug credits in line 1h and Part V", () => {
+test("Form 3800 prints two distinct partnership orphan-drug credits in line 1h and Part V", () => {
   const second = {
     ...entry,
     source_ein: "987654321",

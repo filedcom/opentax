@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   interstateCases,
@@ -15,7 +16,7 @@ import { form8962Pdf } from "../../../../pdf/forms/credits/health/f8962.ts";
 import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits/health/f1095a/index.ts";
 
 for (const c of interstateCases) {
-  Deno.test(`Interstate public return reconciles poverty region, PTC and final tax: ${c.id}`, async () => {
+  test(`Interstate public return reconciles poverty region, PTC and final tax: ${c.id}`, async () => {
     const input = interstateInputs(c), held = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -49,7 +50,7 @@ for (const c of interstateCases) {
   });
 }
 
-Deno.test("Interstate public-return native and PDF gates reject missing review, wrong person, source, region and repayment", async () => {
+test("Interstate public-return native and PDF gates reject missing review, wrong person, source, region and repayment", async () => {
   for (
     const id of [
       "twelve-reported",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -24,7 +25,7 @@ function retained(recipient_tin?: string) {
   };
 }
 
-Deno.test("positive 1099-DIV owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-DIV owner is checked by native and PDF Form 1040", () => {
   const source = retained("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -43,7 +44,7 @@ Deno.test("positive 1099-DIV owner is checked by native and PDF Form 1040", () =
   }
 });
 
-Deno.test("joint spouse 1099-DIV belongs on MFJ return only", () => {
+test("joint spouse 1099-DIV belongs on MFJ return only", () => {
   const source = retained("444556666");
   const joint = {
     ...filed,
@@ -68,7 +69,7 @@ Deno.test("joint spouse 1099-DIV belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("positive 1099-DIV needs an identified payer in both Form 1040 exports", () => {
+test("positive 1099-DIV needs an identified payer in both Form 1040 exports", () => {
   const pending = {
     f1099div: {
       f1099divs: [{
@@ -87,7 +88,7 @@ Deno.test("positive 1099-DIV needs an identified payer in both Form 1040 exports
   );
 });
 
-Deno.test("capital-gain-only and tax-exempt 1099-DIV copies require owners", () => {
+test("capital-gain-only and tax-exempt 1099-DIV copies require owners", () => {
   for (const box of [{ box2a: 75 }, { box12: 50 }]) {
     const pending = {
       f1099div: {
@@ -107,7 +108,7 @@ Deno.test("capital-gain-only and tax-exempt 1099-DIV copies require owners", () 
   }
 });
 
-Deno.test("native and PDF exports reject a corrected DIV copy with a missing payer TIN", () => {
+test("native and PDF exports reject a corrected DIV copy with a missing payer TIN", () => {
   const issued = {
     ...retained("111223333").f1099div.f1099divs[0],
     payerName: "Fund  Company",

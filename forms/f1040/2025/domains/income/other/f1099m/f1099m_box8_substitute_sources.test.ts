@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -70,7 +72,7 @@ const pending = {
   },
 };
 
-Deno.test("1099-MISC box 8 sources reconcile one to one with Schedule 1", () => {
+test("1099-MISC box 8 sources reconcile one to one with Schedule 1", () => {
   assertEquals(assertSchedule1Box8SourceIdentity(pending, filer), undefined);
   assertThrows(
     () =>
@@ -172,7 +174,7 @@ function mixedFiling() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two 1099-MISC box 8 copies retain payer rows through 1040, native statement, and PDF", async () => {
+test("two 1099-MISC box 8 copies retain payer rows through 1040, native statement, and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_substitute_payments, 750);
@@ -194,7 +196,7 @@ Deno.test("two 1099-MISC box 8 copies retain payer rows through 1040, native sta
   assertEquals(projected.line8z_other, 750);
   assertEquals(projected.line8z_description, "SEE STATEMENT");
   const pdf = await buildPdfBytes(pending, actualFiler, ".pdf-cache", bundle);
-  const extracted = new Deno.Command("pdftotext", {
+  const extracted = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -208,11 +210,11 @@ Deno.test("two 1099-MISC box 8 copies retain payer rows through 1040, native sta
   assertStringIncludes(text, "Substitute payments 234567890");
   assertStringIncludes(text, "2025 Schedule 1 (Form 1040) line 8z");
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -225,7 +227,7 @@ Deno.test("two 1099-MISC box 8 copies retain payer rows through 1040, native sta
   assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
 });
 
-Deno.test("box 8, RTAA, and taxable grant rows combine once in a full return", async () => {
+test("box 8, RTAA, and taxable grant rows combine once in a full return", async () => {
   const result = mixedFiling();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line8z_substitute_payments, 750);
@@ -255,7 +257,7 @@ Deno.test("box 8, RTAA, and taxable grant rows combine once in a full return", a
   assertEquals(projected.line8z_other, 1_750);
   assertEquals(projected.line8z_description, "SEE STATEMENT");
   const pdf = await buildPdfBytes(pending, actualFiler, ".pdf-cache", bundle);
-  const extraction = new Deno.Command("pdftotext", {
+  const extraction = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -276,11 +278,11 @@ Deno.test("box 8, RTAA, and taxable grant rows combine once in a full return", a
     ]
   ) assertStringIncludes(text, label);
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -293,7 +295,7 @@ Deno.test("box 8, RTAA, and taxable grant rows combine once in a full return", a
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
 });
 
-Deno.test("altered 1099-MISC box 8 copy or statement row rejects native and PDF exports", async () => {
+test("altered 1099-MISC box 8 copy or statement row rejects native and PDF exports", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

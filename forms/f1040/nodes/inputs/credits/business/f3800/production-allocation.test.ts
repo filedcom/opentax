@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertCurrentProductionAllocationSource,
@@ -48,7 +49,7 @@ const filing = {
   primarySSN: "111-22-3333",
   appliedByLine: { "1f": 500, "4e": 700 },
 };
-Deno.test("Form 3800 production review keys reordered facilities and reconciles each credit class", () => {
+test("Form 3800 production review keys reordered facilities and reconciles each credit class", () => {
   assertEquals(reconcileCurrentProductionAllocation(review, sources, filing), [
     700,
     500,
@@ -63,7 +64,7 @@ Deno.test("Form 3800 production review keys reordered facilities and reconciles 
   );
   assertCurrentProductionAllocationSource(review, structuredClone(review));
 });
-Deno.test("Form 3800 production review rejects source, inventory, filer and class-use drift", () => {
+test("Form 3800 production review rejects source, inventory, filer and class-use drift", () => {
   const badSource = [
     { credit_amount: 3001 },
     { transfer_out_amount: 1 },
@@ -141,7 +142,7 @@ Deno.test("Form 3800 production review rejects source, inventory, filer and clas
     })
   );
 });
-Deno.test("Form 3800 production allocation schema rejects unreviewed and imprecise records", () => {
+test("Form 3800 production allocation schema rejects unreviewed and imprecise records", () => {
   for (
     const changed of [
       { tax_year: 2024 },

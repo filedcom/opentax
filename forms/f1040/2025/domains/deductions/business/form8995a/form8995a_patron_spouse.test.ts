@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -13,8 +16,8 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-Deno.test("spouse-owned patron farm and C health return retains owner SE and source joins", async () => {
-  const archive = await Deno.makeTempDir({
+test("spouse-owned patron farm and C health return retains owner SE and source joins", async () => {
+  const archive = await sys.makeTempDir({
     prefix: "opentax-spouse-patron-source-",
   });
   console.info(`Spouse patron source archive: ${archive}`);
@@ -54,7 +57,7 @@ Deno.test("spouse-owned patron farm and C health return retains owner SE and sou
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -74,10 +77,10 @@ Deno.test("spouse-owned patron farm and C health return retains owner SE and sou
     if (kind === "c-health") {
       assertEquals(pending.form7206.recipient_ssn, "444556666");
     }
-    await Deno.mkdir(archive, {
+    await fs.mkdir(archive, {
       recursive: true,
     });
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${archive}/${kind}.json`,
       JSON.stringify(
         {
@@ -92,18 +95,18 @@ Deno.test("spouse-owned patron farm and C health return retains owner SE and sou
         2,
       ),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${archive}/${kind}.xml`,
       bundle.xml,
     );
-    await Deno.writeFile(
+    await fs.writeFile(
       `${archive}/${kind}.pdf`,
       pdf,
     );
   }
 });
 
-Deno.test("spouse patron owner and nonowner wage conflicts reject native and direct PDF", async () => {
+test("spouse patron owner and nonowner wage conflicts reject native and direct PDF", async () => {
   for (const kind of ["farm", "c-health"]) {
     const fixture = spouseOwnedPatronFixture(
       pdfReviewFixtures.find((f) => f.id === `joint-form8995a-patron-${kind}`)!,
@@ -184,7 +187,7 @@ Deno.test("spouse patron owner and nonowner wage conflicts reject native and dir
   }
 });
 
-Deno.test("spouse patron primary wages cross both joint phase-in boundaries", async () => {
+test("spouse patron primary wages cross both joint phase-in boundaries", async () => {
   const fixture = spouseOwnedPatronFixture(
     pdfReviewFixtures.find((f) => f.id === "joint-form8995a-patron-farm")!,
   );
@@ -212,12 +215,12 @@ Deno.test("spouse patron primary wages cross both joint phase-in boundaries", as
       bundle,
       origins,
     );
-    const folder = await Deno.makeTempDir({
+    const folder = await sys.makeTempDir({
       prefix: "opentax-spouse-patron-boundary-",
     });
     console.info(`Spouse patron boundary ${target} archive: ${folder}`);
-    await Deno.mkdir(folder, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(folder, { recursive: true });
+    await fs.writeFile(
       `${folder}/${target}.json`,
       JSON.stringify(
         {
@@ -232,9 +235,9 @@ Deno.test("spouse patron primary wages cross both joint phase-in boundaries", as
         2,
       ),
     );
-    await Deno.writeTextFile(`${folder}/${target}.xml`, bundle.xml);
-    await Deno.writeFile(`${folder}/${target}.pdf`, pdf);
-    const child = new Deno.Command("xmllint", {
+    await fs.writeFile(`${folder}/${target}.xml`, bundle.xml);
+    await fs.writeFile(`${folder}/${target}.pdf`, pdf);
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -252,7 +255,7 @@ Deno.test("spouse patron primary wages cross both joint phase-in boundaries", as
   }
 });
 
-Deno.test("spouse patron nonowner wage copies require actual joint status at public or native and direct PDF gates", async () => {
+test("spouse patron nonowner wage copies require actual joint status at public or native and direct PDF gates", async () => {
   const fixture = spouseOwnedPatronFixture(
     pdfReviewFixtures.find((f) => f.id === "joint-form8995a-patron-farm")!,
   );

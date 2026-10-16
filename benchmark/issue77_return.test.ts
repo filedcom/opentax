@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals } from "@std/assert";
 import { catalog } from "../catalog.ts";
 import { buildEngineInputs } from "../cli/store/store.ts";
@@ -8,11 +10,11 @@ import { normalizeAllPending } from "../forms/f1040/2025/return-processing/pendi
 const definition = catalog["f1040:2025"];
 async function replay(name: string, omitWorksheet = false) {
   const fixture = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         `./cases/f1040/2025/${name}/input.json`,
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   assertEquals(fixture.source, "synthetic");
@@ -35,7 +37,7 @@ async function replay(name: string, omitWorksheet = false) {
   };
 }
 
-Deno.test("issue77 complete synthetic case78 uses EIC table through the return graph", async () => {
+test("issue77 complete synthetic case78 uses EIC table through the return graph", async () => {
   const result = await replay("78-single-w2-1099int-1099div-1099b");
   assertEquals(result.diagnostics, []);
   const lines = result.pending.f1040;
@@ -48,7 +50,7 @@ Deno.test("issue77 complete synthetic case78 uses EIC table through the return g
   assertEquals(lines.line35a_refund, 382);
 });
 
-Deno.test("issue77 case86 worksheet intake preserves automatic child credit and owner credit", async () => {
+test("issue77 case86 worksheet intake preserves automatic child credit and owner credit", async () => {
   const result = await replay("86-mfj-w2");
   assertEquals(result.diagnostics, []);
   const lines = result.pending.f1040;
@@ -78,7 +80,7 @@ const seniors: [string, number, number][] = [
   ["128-mfj-senior-both65-1099r-interest", 12000, 0],
 ];
 for (const [name, deduction, taxable] of seniors) {
-  Deno.test(`issue77 senior deduction reaches Form 1040: ${name}`, async () => {
+  test(`issue77 senior deduction reaches Form 1040: ${name}`, async () => {
     const { pending, diagnostics } = await replay(name);
     assertEquals(diagnostics, []);
     assertEquals(pending.f1040.line13b_additional_deductions, deduction);
@@ -94,7 +96,7 @@ const marketplace: [string, number, number][] = [
   ["110-single-marketplace-excess-aptc-repayment", 1406, 0],
 ];
 for (const [name, credit, repayment] of marketplace) {
-  Deno.test(`issue77 2025 PTC with synthetic monthly records: ${name}`, async () => {
+  test(`issue77 2025 PTC with synthetic monthly records: ${name}`, async () => {
     const { pending, diagnostics } = await replay(name);
     assertEquals(diagnostics, []);
     assertEquals(pending.form8962.net_premium_tax_credit ?? 0, credit);
@@ -107,7 +109,7 @@ for (const [name, credit, repayment] of marketplace) {
   });
 }
 
-Deno.test("issue77 case48 preserves the source Medicare withholding dollar in payments", async () => {
+test("issue77 case48 preserves the source Medicare withholding dollar in payments", async () => {
   const { pending, diagnostics } = await replay("48-mfj-w2-marketplace-1095a");
   assertEquals(diagnostics, []);
   // Form 8959: 798 + 653 - (55,000 + 45,000) * .0145 = 1.
@@ -128,7 +130,7 @@ const familyCases: [string, number, number, number, number][] = [
   ["133-hoh-w2-ctc", 864, 2200, 0, 4339],
 ];
 for (const [name, eic, ctc, actc, refund] of familyCases) {
-  Deno.test(`issue77 child and dependent credits through complete return: ${name}`, async () => {
+  test(`issue77 child and dependent credits through complete return: ${name}`, async () => {
     const { pending, diagnostics } = await replay(name);
     assertEquals(diagnostics, []);
     assertEquals(pending.f1040.line27_eitc ?? 0, eic);
@@ -144,7 +146,7 @@ for (
     ["95-single-w2-k1-1099r-1099int-1099div-1099b", 298684],
   ] as const
 ) {
-  Deno.test(`issue77 reported investment income tax: ${name}`, async () => {
+  test(`issue77 reported investment income tax: ${name}`, async () => {
     const { pending, diagnostics } = await replay(name);
     assertEquals(diagnostics, []);
     assertEquals(pending.f1040.line16_income_tax, tax);
@@ -158,7 +160,7 @@ for (
     ["95-single-w2-k1-1099r-1099int-1099div-1099b", 972837, 957087, 312559],
   ] as const
 ) {
-  Deno.test(`issue77 rounded capital/SSA sources balance through Form 1040: ${name}`, async () => {
+  test(`issue77 rounded capital/SSA sources balance through Form 1040: ${name}`, async () => {
     const { pending, diagnostics } = await replay(name);
     assertEquals(diagnostics, []);
     assertEquals(pending.f1040.line9_total_income, income);
@@ -168,22 +170,22 @@ for (
   });
 }
 
-Deno.test("issue77 completed fixtures match all seven summary amounts exactly", async () => {
+test("issue77 completed fixtures match all seven summary amounts exactly", async () => {
   const archive = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         "./reference/2025/issue77-original-incomplete.json",
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   for (const name of Object.keys(archive)) {
     const fixture = JSON.parse(
-      await Deno.readTextFile(
+      await fs.readFile(
         new URL(
           `./cases/f1040/2025/${name}/correct.json`,
           import.meta.url,
-        ),
+        ), "utf8",
       ),
     );
     const result = await replay(name);

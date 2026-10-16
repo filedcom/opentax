@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -54,7 +55,7 @@ const pending = {
   },
 };
 
-Deno.test("Schedule A zero wage-limit reduction retains all QBI in parent, native, and PDF", () => {
+test("Schedule A zero wage-limit reduction retains all QBI in parent, native, and PDF", () => {
   const parsed = inputSchema.parse(claim);
   const lines = calculateOneSstb8995ALines(parsed);
   assertEquals(lines.line19, 0);
@@ -107,7 +108,7 @@ Deno.test("Schedule A zero wage-limit reduction retains all QBI in parent, nativ
   assertEquals(pdfSchedule?.line12, 20_000);
 });
 
-Deno.test("Schedule A zero reduction rejects changed source and settled return amounts", () => {
+test("Schedule A zero reduction rejects changed source and settled return amounts", () => {
   const changedSource = {
     ...claim,
     sstb_filing_details: {

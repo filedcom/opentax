@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import {
@@ -9,7 +10,7 @@ import {
 // Published TY2025 IRS Publication 1040 Tax Table rows, in column order
 // Single / MFJ (and QSS) / MFS / HOH:
 // https://www.irs.gov/publications/p1040
-Deno.test("2025 Tax Table keeps the special first three ranges", () => {
+test("2025 Tax Table keeps the special first three ranges", () => {
   for (
     const [income, expected] of [
       [0, 0],
@@ -25,14 +26,14 @@ Deno.test("2025 Tax Table keeps the special first three ranges", () => {
   }
 });
 
-Deno.test("2025 Tax Table changes from $25 to $50 ranges at $3,000", () => {
+test("2025 Tax Table changes from $25 to $50 ranges at $3,000", () => {
   assertEquals(taxTable2025(2_999, FilingStatus.Single), 299);
   assertEquals(taxTable2025(3_000, FilingStatus.Single), 303);
   assertEquals(taxTable2025(3_049, FilingStatus.Single), 303);
   assertEquals(taxTable2025(3_050, FilingStatus.Single), 308);
 });
 
-Deno.test("2025 Tax Table matches published filing-status columns", () => {
+test("2025 Tax Table matches published filing-status columns", () => {
   const statuses = [
     FilingStatus.Single,
     FilingStatus.MFJ,
@@ -49,14 +50,14 @@ Deno.test("2025 Tax Table matches published filing-status columns", () => {
   });
 });
 
-Deno.test("2025 Tax Table rejects out-of-range amounts", () => {
+test("2025 Tax Table rejects out-of-range amounts", () => {
   for (const income of [-1, 100_000, Number.NaN, Number.POSITIVE_INFINITY]) {
     assertThrows(() => taxTable2025(income, FilingStatus.Single));
   }
   assertEquals(ordinaryTax2025(100_000, FilingStatus.Single), 16_914);
 });
 
-Deno.test("Form 8615 QDCGT uses Tax Table for both line 22 and line 24", () => {
+test("Form 8615 QDCGT uses Tax Table for both line 22 and line 24", () => {
   // $3,650 single taxable income: $1,000 QD leaves $2,650 ordinary.
   assertEquals(
     qualifiedDividendTax2025(3_650, 1_000, 0, FilingStatus.Single),

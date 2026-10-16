@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { inputSchema as scheduleCSchema } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -8,7 +9,7 @@ import {
 } from "./current-year.fixture.ts";
 import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 
-Deno.test("Current-year MACRS returns reconcile property credits, Schedule C, SE, QBI and native rows", async () => {
+test("Current-year MACRS returns reconcile property credits, Schedule C, SE, QBI and native rows", async () => {
   for (
     const [late, construction, bonus, residual, depreciation, total, credit]
       of [
@@ -50,7 +51,7 @@ Deno.test("Current-year MACRS returns reconcile property credits, Schedule C, SE
   }
 });
 
-Deno.test("Current-year export rejects changed class rows, totals, owner and source joins", async () => {
+test("Current-year export rejects changed class rows, totals, owner and source joins", async () => {
   const result = f1040_2025.executeReturn(currentYearInput());
   const p = result.pending;
   const filed = filedCurrentYearSchema.parse(p.form4562);
@@ -122,7 +123,7 @@ Deno.test("Current-year export rejects changed class rows, totals, owner and sou
   );
 });
 
-Deno.test("Current-year complete inventories file six classes, multiple quarters and multiple activities", async () => {
+test("Current-year complete inventories file six classes, multiple quarters and multiple activities", async () => {
   for (
     const [mode, convention, deduction, credit, copies, rows] of [
       ["mixed-bonus", "MQ", 23970, 1800, 2, 1],
@@ -173,7 +174,7 @@ Deno.test("Current-year complete inventories file six classes, multiple quarters
   }
 });
 
-Deno.test("Profitable activities reject missing QBI allocation reviews", async () => {
+test("Profitable activities reject missing QBI allocation reviews", async () => {
   const source = currentYearMultiInput("mixed-bonus");
   const result = f1040_2025.executeReturn({
     ...source,

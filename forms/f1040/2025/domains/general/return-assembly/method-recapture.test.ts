@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
@@ -23,7 +24,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`Form3115 public business adjustment and export boundary: ${c.id}`, async () => {
+  test(`Form3115 public business adjustment and export boundary: ${c.id}`, async () => {
     const r = f1040_2025.executeReturn({
       ...base.inputs,
       schedule_c: [{
@@ -84,7 +85,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`Form4255 public tax routing and export boundary: ${c.id}`, async () => {
+  test(`Form4255 public tax routing and export boundary: ${c.id}`, async () => {
     const row = {
       ...form4255Row,
       credit_line: c.creditLine,

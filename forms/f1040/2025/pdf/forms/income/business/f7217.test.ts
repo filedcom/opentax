@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/types.ts";
 import { form7217Pdf } from "./f7217.ts";
@@ -40,7 +41,7 @@ function mapped(key: string): string | undefined {
     ?.pdfField;
 }
 
-Deno.test("Form 7217 PDF maps verified identity, Part I, Part II, and total widgets", () => {
+test("Form 7217 PDF maps verified identity, Part I, Part II, and total widgets", () => {
   assertEquals(mapped("partner_name"), "topmostSubform[0].Page1[0].f1_1[0]");
   assertEquals(
     mapped("distribution_date_printed"),
@@ -66,7 +67,7 @@ Deno.test("Form 7217 PDF maps verified identity, Part I, Part II, and total widg
   );
 });
 
-Deno.test("Form 7217 PDF produces a reconciled two-page instance per partnership date", () => {
+test("Form 7217 PDF produces a reconciled two-page instance per partnership date", () => {
   const instances = form7217Pdf.instances?.({
     form7217s: [item, { ...item, distribution_date: "2025-04-01" }],
   }, filer);
@@ -83,7 +84,7 @@ Deno.test("Form 7217 PDF produces a reconciled two-page instance per partnership
   assertEquals(instances?.[1].distribution_date_printed, "04/01/2025");
 });
 
-Deno.test("Form 7217 PDF shows classified section 731(c) securities on line 5b and Part II", () => {
+test("Form 7217 PDF shows classified section 731(c) securities on line 5b and Part II", () => {
   const security = {
     ...item,
     marketable_securities_fmv: 2_000,
@@ -109,7 +110,7 @@ Deno.test("Form 7217 PDF shows classified section 731(c) securities on line 5b a
   assertEquals(instance?.row2_fmv, 2_000);
 });
 
-Deno.test("Form 7217 PDF does not print unreconciled or misclassified source", () => {
+test("Form 7217 PDF does not print unreconciled or misclassified source", () => {
   assertThrows(
     () => form7217Pdf.instances?.({ form7217s: [item] }),
     Error,
@@ -150,7 +151,7 @@ Deno.test("Form 7217 PDF does not print unreconciled or misclassified source", (
   );
 });
 
-Deno.test("Form 7217 PDF carries a 31st property onto a linked Part II", () => {
+test("Form 7217 PDF carries a 31st property onto a linked Part II", () => {
   const [first, continuation] = form7217Pdf.instances({
     form7217s: [{
       ...item,

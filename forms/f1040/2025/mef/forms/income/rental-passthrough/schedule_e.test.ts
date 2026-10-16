@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { itemSchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
@@ -25,7 +27,7 @@ function property(overrides: Record<string, unknown> = {}) {
   });
 }
 
-Deno.test("Schedule E long type 8 description is preserved in a bundled statement", async () => {
+test("Schedule E long type 8 description is preserved in a bundled statement", async () => {
   const description = "Detached mixed-use storage facility";
   const pending = {
     schedule_e: {
@@ -79,7 +81,7 @@ Deno.test("Schedule E long type 8 description is preserved in a bundled statemen
   assertEquals(replay.attachments[0].bytes, bundle.attachments[0].bytes);
 });
 
-Deno.test("Schedule E serializes property lines and totals in XSD order", () => {
+test("Schedule E serializes property lines and totals in XSD order", () => {
   const xml = scheduleE.build({
     schedule_es: [property({
       expense_advertising: 100,
@@ -121,7 +123,7 @@ Deno.test("Schedule E serializes property lines and totals in XSD order", () => 
   );
 });
 
-Deno.test("Schedule E Part III matches a trust K-1 box 5 source", () => {
+test("Schedule E Part III matches a trust K-1 box 5 source", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",
@@ -175,7 +177,7 @@ Deno.test("Schedule E Part III matches a trust K-1 box 5 source", () => {
   );
 });
 
-Deno.test("Schedule E Part III carries sourced passive trust income", () => {
+test("Schedule E Part III carries sourced passive trust income", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",
@@ -230,7 +232,7 @@ Deno.test("Schedule E Part III carries sourced passive trust income", () => {
   );
 });
 
-Deno.test("Schedule E combines passive and other income from one trust once", () => {
+test("Schedule E combines passive and other income from one trust once", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",
@@ -273,7 +275,7 @@ Deno.test("Schedule E combines passive and other income from one trust once", ()
   );
 });
 
-Deno.test("Schedule E combines two properties and Form 4835 farm income", () => {
+test("Schedule E combines two properties and Form 4835 farm income", () => {
   const xml = scheduleE.build({
     schedule_es: [
       property({ rent_income: 10000, expense_taxes: 1000 }),
@@ -314,7 +316,7 @@ Deno.test("Schedule E combines two properties and Form 4835 farm income", () => 
   );
 });
 
-Deno.test("Schedule E royalty income is not excluded by zero rental days", () => {
+test("Schedule E royalty income is not excluded by zero rental days", () => {
   const xml = scheduleE.build({
     schedule_es: [property({
       property_type: 6,
@@ -338,7 +340,7 @@ Deno.test("Schedule E royalty income is not excluded by zero rental days", () =>
   );
 });
 
-Deno.test("Schedule E excludes under-15-day rentals only when used as a home", () => {
+test("Schedule E excludes under-15-day rentals only when used as a home", () => {
   assertEquals(
     scheduleE.build({
       schedule_es: [property({ fair_rental_days: 14, personal_use_days: 15 })],
@@ -353,7 +355,7 @@ Deno.test("Schedule E excludes under-15-day rentals only when used as a home", (
   );
 });
 
-Deno.test("Schedule E accepts determinable nonpassive loss", () => {
+test("Schedule E accepts determinable nonpassive loss", () => {
   const xml = scheduleE.build({
     schedule_es: [property({
       activity_type: "D",
@@ -376,7 +378,7 @@ Deno.test("Schedule E accepts determinable nonpassive loss", () => {
   );
 });
 
-Deno.test("Schedule E emits active rental loss for linked Form 8582 reconciliation", () => {
+test("Schedule E emits active rental loss for linked Form 8582 reconciliation", () => {
   const rental = property({ rent_income: 1_000, expense_taxes: 2_000 });
   const xml = scheduleE.build({
     schedule_es: [rental],
@@ -413,7 +415,7 @@ Deno.test("Schedule E emits active rental loss for linked Form 8582 reconciliati
   );
 });
 
-Deno.test("Schedule E rejects active rental loss without its Form 8582", () => {
+test("Schedule E rejects active rental loss without its Form 8582", () => {
   assertThrows(
     () =>
       scheduleE.build({
@@ -424,7 +426,7 @@ Deno.test("Schedule E rejects active rental loss without its Form 8582", () => {
   );
 });
 
-Deno.test("Schedule E real estate professional net is reconciled on line 43", () => {
+test("Schedule E real estate professional net is reconciled on line 43", () => {
   const xml = scheduleE.build({
     schedule_es: [property({
       activity_type: "C",
@@ -438,7 +440,7 @@ Deno.test("Schedule E real estate professional net is reconciled on line 43", ()
   );
 });
 
-Deno.test("Schedule E rejects unresolved loss and expense limitations", () => {
+test("Schedule E rejects unresolved loss and expense limitations", () => {
   assertThrows(() =>
     scheduleE.build({
       schedule_es: [
@@ -481,13 +483,13 @@ Deno.test("Schedule E rejects unresolved loss and expense limitations", () => {
   );
 });
 
-Deno.test("Schedule E actual issued RPE K1 keeps legal source identity while native business name fits schema", async () => {
+test("Schedule E actual issued RPE K1 keeps legal source identity while native business name fits schema", async () => {
   const source = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         "../../../../domains/deductions/business/form8995a/form8995a-rpe-3-business-source.json",
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   const item = source.k1_s_corp[0], original = structuredClone(item);

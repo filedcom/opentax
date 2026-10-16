@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { k1_trust } from "../../../income/rental-passthrough/k1_trust/index.ts";
 import { f3468 } from "./index.ts";
@@ -9,7 +10,7 @@ import {
 
 const context = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("trust K-1 box 14 code M routes reviewed property facts to Form 3468", () => {
+test("trust K-1 box 14 code M routes reviewed property facts to Form 3468", () => {
   const result = k1_trust.compute(
     context,
     k1_trust.inputSchema.parse(trustK1PartVFixture),
@@ -22,7 +23,7 @@ Deno.test("trust K-1 box 14 code M routes reviewed property facts to Form 3468",
   assertEquals(result.outputs.some((row) => row.nodeType === "f3800"), false);
 });
 
-Deno.test("Form 3468 derives 30% credit and sends it to Form 3800 line 1v source", () => {
+test("Form 3468 derives 30% credit and sends it to Form 3800 line 1v source", () => {
   const result = f3468.compute(
     context,
     f3468.inputSchema.parse(trustForm3468PartVFixture),
@@ -42,7 +43,7 @@ Deno.test("Form 3468 derives 30% credit and sends it to Form 3800 line 1v source
   }]);
 });
 
-Deno.test("Form 3468 rejects a changed review packet and direct-credit mix", () => {
+test("Form 3468 rejects a changed review packet and direct-credit mix", () => {
   const { not_section48d_lessee_confirmed: _missing, ...withoutLesseeReview } =
     trustPartVStatementFixture;
   assertThrows(() =>
@@ -84,7 +85,7 @@ Deno.test("Form 3468 rejects a changed review packet and direct-credit mix", () 
   );
 });
 
-Deno.test("K-1 box 13 code M cannot be relabeled as clean electricity", () => {
+test("K-1 box 13 code M cannot be relabeled as clean electricity", () => {
   assertThrows(() =>
     k1_trust.compute(
       context,

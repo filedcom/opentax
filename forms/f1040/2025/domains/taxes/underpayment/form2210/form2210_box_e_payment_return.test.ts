@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -101,7 +104,7 @@ async function fixture() {
   return { inputs, ledger, documents };
 }
 
-Deno.test("2210 payment staging derives safe harbor and withholding from actual public return and retained prior bytes", async () => {
+test("2210 payment staging derives safe harbor and withholding from actual public return and retained prior bytes", async () => {
   const { inputs, ledger, documents } = await fixture();
   const before = structuredClone(inputs);
   const r = await stageForm2210BoxEPaymentReturn(inputs, ledger, documents);
@@ -139,7 +142,7 @@ Deno.test("2210 payment staging derives safe harbor and withholding from actual 
   }
 });
 
-Deno.test("2210 payment staging rejects detached finalized tax identity prior bytes and amount overrides", async () => {
+test("2210 payment staging rejects detached finalized tax identity prior bytes and amount overrides", async () => {
   const changes: Array<(f: Awaited<ReturnType<typeof fixture>>) => void> = [
     (f) => f.inputs.w2[0].box1_wages += 10000,
     (f) => f.inputs.w2[0].box2_fed_withheld += 1,
@@ -167,7 +170,7 @@ Deno.test("2210 payment staging rejects detached finalized tax identity prior by
   }
 });
 
-Deno.test("2210 payment staging snapshots caller inputs and prior bytes before asynchronous verification", async () => {
+test("2210 payment staging snapshots caller inputs and prior bytes before asynchronous verification", async () => {
   const f = await fixture();
   const staged = stageForm2210BoxEPaymentReturn(
     f.inputs,
@@ -182,7 +185,7 @@ Deno.test("2210 payment staging snapshots caller inputs and prior bytes before a
   assertEquals(r.payment_worksheet.payments[0].amount_cents, 75000);
 });
 
-Deno.test("2210 computed late-payment worksheet never injects a claimed Form 1040 penalty", async () => {
+test("2210 computed late-payment worksheet never injects a claimed Form 1040 penalty", async () => {
   const f = await fixture();
   f.ledger.payments = [];
   const r = await stageForm2210BoxEPaymentReturn(
@@ -219,23 +222,19 @@ const regularPdfTemplate = new URL(
 ).pathname;
 let regularPdfTemplateAvailable = false;
 try {
-  Deno.statSync(regularPdfTemplate);
+  sys.statSync(regularPdfTemplate);
   regularPdfTemplateAvailable = true;
 } catch {
   // Canonical reviewed IRS bytes are retained privately, like the XSD bundle.
 }
 
-Deno.test({
-  name:
-    "2210 staged interactive PDF binds joint identity and native penalty, preserving blank shaded and skipped cells",
-  ignore: !regularPdfTemplateAvailable,
-}, async () => {
+test.skipIf(!regularPdfTemplateAvailable)("2210 staged interactive PDF binds joint identity and native penalty, preserving blank shaded and skipped cells", async () => {
   const f = await actualFixture();
   const result = await stageForm2210RegularPdfDocument(
     f.inputs,
     f.ledger,
     f.documents,
-    await Deno.readFile(regularPdfTemplate),
+    await sys.readBytes(regularPdfTemplate),
   );
   const pdf = await PDFDocument.load(result.pdf_bytes);
   assertEquals(pdf.getPageCount(), 2);
@@ -286,13 +285,9 @@ Deno.test({
   assertEquals(result.filingReady, false);
 });
 
-Deno.test({
-  name:
-    "2210 staged PDF rejects changed template and snapshots facts and bytes before awaits",
-  ignore: !regularPdfTemplateAvailable,
-}, async () => {
+test.skipIf(!regularPdfTemplateAvailable)("2210 staged PDF rejects changed template and snapshots facts and bytes before awaits", async () => {
   const f = await actualFixture();
-  const template = await Deno.readFile(regularPdfTemplate);
+  const template = await sys.readBytes(regularPdfTemplate);
   const corrupted = new Uint8Array(template);
   corrupted[0] ^= 1;
   await assertRejects(() =>
@@ -322,17 +317,13 @@ const regularNativeSchema = new URL(
 ).pathname;
 let regularNativeSchemaAvailable = false;
 try {
-  Deno.statSync(regularNativeSchema);
+  sys.statSync(regularNativeSchema);
   regularNativeSchemaAvailable = true;
 } catch {
   // IRS schema bundles are private and are not distributed with the repo.
 }
 
-Deno.test({
-  name:
-    "2210 regular D/E native projection maps all represented cells and validates the retained IRS schema",
-  ignore: !regularNativeSchemaAvailable,
-}, async () => {
+test.skipIf(!regularNativeSchemaAvailable)("2210 regular D/E native projection maps all represented cells and validates the retained IRS schema", async () => {
   const f = await actualFixture();
   const result = await stageForm2210RegularNativeDocument(
     f.inputs,
@@ -361,17 +352,17 @@ Deno.test({
       "<TotalPenaltyAmt>102</TotalPenaltyAmt>",
     ]
   ) assertStringIncludes(xml, fragment);
-  const directory = await Deno.makeTempDir({ prefix: "2210-native-review-" });
+  const directory = await sys.makeTempDir({ prefix: "2210-native-review-" });
   try {
     const file = `${directory}/document.xml`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       file,
       xml.replace(
         "<IRS2210>",
         '<IRS2210 xmlns="http://www.irs.gov/efile" documentId="Staged2210">',
       ),
     );
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", regularNativeSchema, file],
       stdout: "piped",
       stderr: "piped",
@@ -382,7 +373,7 @@ Deno.test({
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
   for (const format of ["mef", "pdf"] as const) {
     await assertRejects(async () =>
@@ -394,7 +385,7 @@ Deno.test({
   }
 });
 
-Deno.test("2210 native penalty rounds the exact rational directly without a cent-rounding bump", async () => {
+test("2210 native penalty rounds the exact rational directly without a cent-rounding bump", async () => {
   const f = await actualFixture();
   f.ledger.payments.push({
     ...f.ledger.payments[0],
@@ -422,7 +413,7 @@ Deno.test("2210 native penalty rounds the exact rational directly without a cent
   );
 });
 
-Deno.test("2210 native source chain rejects detached calculated lines and unsupported balance facts", async () => {
+test("2210 native source chain rejects detached calculated lines and unsupported balance facts", async () => {
   const original = await actualFixture();
   const variants = [
     (f: typeof original) => f.ledger.filed_lines = { line19: 1 },
@@ -447,7 +438,7 @@ Deno.test("2210 native source chain rejects detached calculated lines and unsupp
   }
 });
 
-Deno.test("2210 simultaneous boxes D/E bind dated withholding to the executed return and compare methods", async () => {
+test("2210 simultaneous boxes D/E bind dated withholding to the executed return and compare methods", async () => {
   const f = await actualFixture();
   const r = await stageForm2210BoxEActualWithholdingReturn(
     f.inputs,
@@ -473,7 +464,7 @@ Deno.test("2210 simultaneous boxes D/E bind dated withholding to the executed re
   }
 });
 
-Deno.test("2210 actual withholding staging rejects nonbeneficial elections and detached date/amount/method evidence", async () => {
+test("2210 actual withholding staging rejects nonbeneficial elections and detached date/amount/method evidence", async () => {
   const changes: Array<(f: Awaited<ReturnType<typeof actualFixture>>) => void> =
     [
       (f) => f.ledger.payments[0].paid_on = "2025-12-31",

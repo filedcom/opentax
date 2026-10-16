@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8866, LookbackYear } from "./index.ts";
 
@@ -19,7 +20,7 @@ function compute(items: F8866Item[]) {
   );
 }
 
-Deno.test("Form 8866 validates source before filing review", () => {
+test("Form 8866 validates source before filing review", () => {
   assertThrows(() => compute([]), Error);
   assertEquals(
     f8866.inputSchema.safeParse({ f8866s: [minimalItem({ property_description: "" })] }).success,
@@ -35,7 +36,7 @@ Deno.test("Form 8866 validates source before filing review", () => {
   );
 });
 
-Deno.test("Form 8866 blocks owed interest instead of Schedule 1 income", () => {
+test("Form 8866 blocks owed interest instead of Schedule 1 income", () => {
   assertThrows(
     () => compute([minimalItem({ interest_owed_or_due: 950 })]),
     Error,
@@ -43,7 +44,7 @@ Deno.test("Form 8866 blocks owed interest instead of Schedule 1 income", () => {
   );
 });
 
-Deno.test("Form 8866 blocks refunded interest instead of Schedule 1 deduction", () => {
+test("Form 8866 blocks refunded interest instead of Schedule 1 deduction", () => {
   assertThrows(
     () => compute([minimalItem({ interest_owed_or_due: -600 })]),
     Error,
@@ -51,7 +52,7 @@ Deno.test("Form 8866 blocks refunded interest instead of Schedule 1 deduction", 
   );
 });
 
-Deno.test("Form 8866 does not drop zero, missing or offsetting interest source", () => {
+test("Form 8866 does not drop zero, missing or offsetting interest source", () => {
   for (const items of [
     [minimalItem()],
     [minimalItem({ interest_owed_or_due: 0 })],
@@ -64,7 +65,7 @@ Deno.test("Form 8866 does not drop zero, missing or offsetting interest source",
   }
 });
 
-Deno.test("Form 8866 workpaper facts still require a filing-branch review", () => {
+test("Form 8866 workpaper facts still require a filing-branch review", () => {
   assertThrows(
     () => compute([minimalItem({
       lookback_year: LookbackYear.Tenth,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertMatch, assertThrows } from "@std/assert";
 import {
   decodePDFRawStream,
@@ -16,11 +17,11 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/index.ts";
 
-Deno.test("2025 Form 4972 PDF omits an absent election from another return", () => {
+test("2025 Form 4972 PDF omits an absent election from another return", () => {
   assertEquals(form4972Pdf.instances?.({}, undefined, {}), []);
 });
 
-Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", async () => {
+test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", async () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -66,7 +67,7 @@ Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", 
   assertMatch(operators, /<4d5244>/i);
 });
 
-Deno.test("2025 Form 4972 PDF binds partial beneficiary estate allocation", () => {
+test("2025 Form 4972 PDF binds partial beneficiary estate allocation", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -114,7 +115,7 @@ Deno.test("2025 Form 4972 PDF binds partial beneficiary estate allocation", () =
   );
 });
 
-Deno.test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit on line 9", () => {
+test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit on line 9", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -163,7 +164,7 @@ Deno.test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit o
   );
 });
 
-Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-benefit adjustment", () => {
+test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-benefit adjustment", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -211,7 +212,7 @@ Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-bene
   );
 });
 
-Deno.test("2025 Form 4972 PDF separates partial beneficiary capital and ordinary death-benefit lines", () => {
+test("2025 Form 4972 PDF separates partial beneficiary capital and ordinary death-benefit lines", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -274,7 +275,7 @@ Deno.test("2025 Form 4972 PDF separates partial beneficiary capital and ordinary
   );
 });
 
-Deno.test("2025 Form 4972 PDF reconciles partial-share capital and ordinary lines", () => {
+test("2025 Form 4972 PDF reconciles partial-share capital and ordinary lines", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -309,7 +310,7 @@ Deno.test("2025 Form 4972 PDF reconciles partial-share capital and ordinary line
   );
 });
 
-Deno.test("2025 Form 4972 PDF projects a shared annuity from box 8 percentage", () => {
+test("2025 Form 4972 PDF projects a shared annuity from box 8 percentage", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -355,7 +356,7 @@ Deno.test("2025 Form 4972 PDF projects a shared annuity from box 8 percentage", 
   );
 });
 
-Deno.test("2025 Form 4972 PDF reconciles partial-share NUA, MRD, and the grossed-up note", async () => {
+test("2025 Form 4972 PDF reconciles partial-share NUA, MRD, and the grossed-up note", async () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -410,7 +411,7 @@ Deno.test("2025 Form 4972 PDF reconciles partial-share NUA, MRD, and the grossed
   assertMatch(operators, /<4d5244>/i);
 });
 
-Deno.test("2025 Form 4972 PDF projects Part-III-only partial-share NUA without line 6", () => {
+test("2025 Form 4972 PDF projects Part-III-only partial-share NUA without line 6", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -549,7 +550,7 @@ function pending(
   };
 }
 
-Deno.test("2025 Form 4972 PDF uses calculated line fields instead of 1099-R source boxes", () => {
+test("2025 Form 4972 PDF uses calculated line fields instead of 1099-R source boxes", () => {
   const byKey = new Map(
     form4972Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -579,7 +580,7 @@ Deno.test("2025 Form 4972 PDF uses calculated line fields instead of 1099-R sour
   assertEquals(form4972Pdf.pageIndices?.({}), [0]);
 });
 
-Deno.test("2025 Form 4972 PDF splits line 20 at its printed decimal point", () => {
+test("2025 Form 4972 PDF splits line 20 at its printed decimal point", () => {
   const projected = projectedFields(
     {
       ...partIII,
@@ -613,7 +614,7 @@ Deno.test("2025 Form 4972 PDF splits line 20 at its printed decimal point", () =
   assertEquals(projected?.line20_fraction, "09091");
 });
 
-Deno.test("2025 Form 4972 PDF selects the spouse recipient without using taxpayer identity", () => {
+test("2025 Form 4972 PDF selects the spouse recipient without using taxpayer identity", () => {
   const projected = projectedFields(
     { ...partII, recipient: "S" },
     {
@@ -630,7 +631,7 @@ Deno.test("2025 Form 4972 PDF selects the spouse recipient without using taxpaye
   assertEquals(form4972Pdf.includeWhen?.({ lump_sum_amount: 20_000 }), false);
 });
 
-Deno.test("2025 Form 4972 PDF full-share ordinary path rejects missing final tax and altered calculated lines", () => {
+test("2025 Form 4972 PDF full-share ordinary path rejects missing final tax and altered calculated lines", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -673,7 +674,7 @@ Deno.test("2025 Form 4972 PDF full-share ordinary path rejects missing final tax
   );
 });
 
-Deno.test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints question 5b", () => {
+test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints question 5b", () => {
   const allPending = {
     ...pending("T", 100_000, 30_000),
     f1040: { form4972_tax: 5_460 },
@@ -695,7 +696,7 @@ Deno.test("2025 Form 4972 PDF reconciles beneficiary estate tax and prints quest
   );
 });
 
-Deno.test("2025 Form 4972 PDF refuses a calculated form without selected recipient identity", () => {
+test("2025 Form 4972 PDF refuses a calculated form without selected recipient identity", () => {
   assertThrows(
     () =>
       projectedFields({ ...partII, recipient: "S" }, {
@@ -708,7 +709,7 @@ Deno.test("2025 Form 4972 PDF refuses a calculated form without selected recipie
   );
 });
 
-Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", () => {
+test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", () => {
   assertThrows(
     () => projectedFields({ lump_sum_amount: 10_000 }, {}),
     Error,
@@ -751,7 +752,7 @@ Deno.test("2025 Form 4972 PDF rejects incomplete or unsourced elected parts", ()
   );
 });
 
-Deno.test("2025 Form 4972 PDF reconciles NUA notes to the elected 1099-R", () => {
+test("2025 Form 4972 PDF reconciles NUA notes to the elected 1099-R", () => {
   const fields = {
     ...eligibility,
     recipient: "T",
@@ -795,7 +796,7 @@ Deno.test("2025 Form 4972 PDF reconciles NUA notes to the elected 1099-R", () =>
   );
 });
 
-Deno.test("2025 Form 4972 PDF projects sourced Part-II-only NUA without Part III", () => {
+test("2025 Form 4972 PDF projects sourced Part-II-only NUA without Part III", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -823,7 +824,7 @@ Deno.test("2025 Form 4972 PDF projects sourced Part-II-only NUA without Part III
   ]);
 });
 
-Deno.test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocations", () => {
+test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocations", () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -863,7 +864,7 @@ Deno.test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocati
   );
 });
 
-Deno.test("2025 Form 4972 PDF keeps partial-share Part-II-only NUA but omits MRD", async () => {
+test("2025 Form 4972 PDF keeps partial-share Part-II-only NUA but omits MRD", async () => {
   const source = {
     ...eligibility,
     recipient: "T",
@@ -913,7 +914,7 @@ Deno.test("2025 Form 4972 PDF keeps partial-share Part-II-only NUA but omits MRD
   assertEquals(/<4d5244>/i.test(operators), false);
 });
 
-Deno.test("2025 Form 4972 prints elected NUA beside each applicable form line", () => {
+test("2025 Form 4972 prints elected NUA beside each applicable form line", () => {
   assertEquals(
     form4972NuaAnnotations({
       line6: 36_000,
@@ -929,7 +930,7 @@ Deno.test("2025 Form 4972 prints elected NUA beside each applicable form line", 
   assertEquals(typeof form4972Pdf.decoratePages, "function");
 });
 
-Deno.test("2025 Form 4972 gates each NUA notation by its calculated elected line", () => {
+test("2025 Form 4972 gates each NUA notation by its calculated elected line", () => {
   assertEquals(
     form4972NuaAnnotations({
       line6_nua_capital_gain: 6_000,
@@ -957,7 +958,7 @@ Deno.test("2025 Form 4972 gates each NUA notation by its calculated elected line
   );
 });
 
-Deno.test("2025 Form 4972 PDF writes both NUA labels into the filing page", async () => {
+test("2025 Form 4972 PDF writes both NUA labels into the filing page", async () => {
   const document = await PDFDocument.create();
   const page = document.addPage([612, 792]);
   await form4972Pdf.decoratePages?.(document, [page], {

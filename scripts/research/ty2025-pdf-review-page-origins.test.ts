@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import {
   assertReviewedPageOrigin,
   assertReviewPageOrigins,
 } from "./ty2025-pdf-review-page-origins.ts";
 
-Deno.test("review rejects a missing expected form hidden by an edited checklist", () => {
+test("review rejects a missing expected form hidden by an edited checklist", () => {
   const actual = [
     { pageNumber: 1, formKey: "f1040", formCopy: 1 },
     { pageNumber: 2, formKey: "f1040", formCopy: 1 },
@@ -27,7 +28,7 @@ Deno.test("review rejects a missing expected form hidden by an edited checklist"
   );
 });
 
-Deno.test("review rejects a replaced page-origin manifest even with matching page count", () => {
+test("review rejects a replaced page-origin manifest even with matching page count", () => {
   const actual = [{ pageNumber: 1, formKey: "schedule3", formCopy: 1 }];
   const recorded = [{ pageNumber: 1, formKey: "f1040", formCopy: 1 }];
   assertThrows(
@@ -37,7 +38,7 @@ Deno.test("review rejects a replaced page-origin manifest even with matching pag
   );
 });
 
-Deno.test("review rejects pages of one form copy split around another form", () => {
+test("review rejects pages of one form copy split around another form", () => {
   const actual = [
     { pageNumber: 1, formKey: "f1040", formCopy: 1 },
     { pageNumber: 2, formKey: "schedule3", formCopy: 1 },
@@ -56,7 +57,7 @@ Deno.test("review rejects pages of one form copy split around another form", () 
   );
 });
 
-Deno.test("review rejects form copies emitted in reverse order", () => {
+test("review rejects form copies emitted in reverse order", () => {
   const actual = [
     { pageNumber: 1, formKey: "f1040", formCopy: 1 },
     { pageNumber: 2, formKey: "f8949", formCopy: 2 },

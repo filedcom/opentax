@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -76,7 +77,7 @@ function filedReturn() {
   return normalizeForm8606TestPending(result.pending);
 }
 
-Deno.test("spouse zero-opening-basis contribution reconciles joint return, native owner and PDF", () => {
+test("spouse zero-opening-basis contribution reconciles joint return, native owner and PDF", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assertEquals(pending.form8606.print_line1_nondeductible, 7_000);
@@ -103,7 +104,7 @@ Deno.test("spouse zero-opening-basis contribution reconciles joint return, nativ
   assertEquals(pdf.print_line14_remaining_basis, 7_000);
 });
 
-Deno.test("spouse zero-opening-basis route rejects missing separate-form review and owner, source or return tampering", () => {
+test("spouse zero-opening-basis route rejects missing separate-form review and owner, source or return tampering", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const changed = (next: Record<string, Record<string, unknown>>) => ({

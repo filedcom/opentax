@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { extractFilerIdentity } from "./filer.ts";
 import { AccountType, FilingStatus, PINEnteredBy } from "./header.ts";
@@ -18,43 +19,43 @@ function baseFiler(): Record<string, unknown> {
 
 // ─── Returns undefined when missing required fields ──────────────────────────
 
-Deno.test("returns undefined when SSN is missing", () => {
+test("returns undefined when SSN is missing", () => {
   const { taxpayer_ssn: _, ...data } = baseFiler();
   assertEquals(extractFilerIdentity(data), undefined);
 });
 
-Deno.test("returns undefined when last name is missing", () => {
+test("returns undefined when last name is missing", () => {
   const { taxpayer_last_name: _, ...data } = baseFiler();
   assertEquals(extractFilerIdentity(data), undefined);
 });
 
-Deno.test("returns undefined for empty object", () => {
+test("returns undefined for empty object", () => {
   assertEquals(extractFilerIdentity({}), undefined);
 });
 
 // ─── Basic identity extraction ───────────────────────────────────────────────
 
-Deno.test("extracts primarySSN", () => {
+test("extracts primarySSN", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.primarySSN, "123456789");
 });
 
-Deno.test("builds nameLine1 as LAST FIRST MI", () => {
+test("builds nameLine1 as LAST FIRST MI", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.nameLine1, "SMITH JOHN A");
 });
 
-Deno.test("derives 4-char nameControl from last name", () => {
+test("derives 4-char nameControl from last name", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.nameControl, "SMIT");
 });
 
-Deno.test("extracts filing status", () => {
+test("extracts filing status", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.filingStatus, FilingStatus.Single);
 });
 
-Deno.test("defaults to Single when filing_status not a number", () => {
+test("defaults to Single when filing_status not a number", () => {
   const data = { ...baseFiler(), filing_status: undefined };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.filingStatus, FilingStatus.Single);
@@ -62,7 +63,7 @@ Deno.test("defaults to Single when filing_status not a number", () => {
 
 // ─── Address extraction ──────────────────────────────────────────────────────
 
-Deno.test("extracts domestic address", () => {
+test("extracts domestic address", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.address.line1, "123 MAIN ST");
   assertEquals(filer.address.city, "SPRINGFIELD");
@@ -70,13 +71,13 @@ Deno.test("extracts domestic address", () => {
   assertEquals(filer.address.zip, "62701");
 });
 
-Deno.test("extracts address line 2 when present", () => {
+test("extracts address line 2 when present", () => {
   const data = { ...baseFiler(), address_line2: "APT 4B" };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.address.line2, "APT 4B");
 });
 
-Deno.test("extracts foreign address fields", () => {
+test("extracts foreign address fields", () => {
   const data = {
     ...baseFiler(),
     address_foreign_country: "CA",
@@ -91,19 +92,19 @@ Deno.test("extracts foreign address fields", () => {
 
 // ─── Optional taxpayer fields ────────────────────────────────────────────────
 
-Deno.test("extracts IP PIN", () => {
+test("extracts IP PIN", () => {
   const data = { ...baseFiler(), taxpayer_ip_pin: "123456" };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.ipPin, "123456");
 });
 
-Deno.test("extracts signature PIN", () => {
+test("extracts signature PIN", () => {
   const data = { ...baseFiler(), taxpayer_signature_pin: "12345" };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.signaturePin, "12345");
 });
 
-Deno.test("extracts phone and email", () => {
+test("extracts phone and email", () => {
   const data = {
     ...baseFiler(),
     taxpayer_daytime_phone: "555-1234",
@@ -114,7 +115,7 @@ Deno.test("extracts phone and email", () => {
   assertEquals(filer.email, "john@example.com");
 });
 
-Deno.test("extracts deceased info", () => {
+test("extracts deceased info", () => {
   const data = {
     ...baseFiler(),
     taxpayer_deceased: true,
@@ -127,12 +128,12 @@ Deno.test("extracts deceased info", () => {
 
 // ─── Spouse extraction ───────────────────────────────────────────────────────
 
-Deno.test("spouse is undefined when no spouse SSN", () => {
+test("spouse is undefined when no spouse SSN", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.spouse, undefined);
 });
 
-Deno.test("extracts spouse identity when SSN and last name present", () => {
+test("extracts spouse identity when SSN and last name present", () => {
   const data = {
     ...baseFiler(),
     spouse_ssn: "987654321",
@@ -151,7 +152,7 @@ Deno.test("extracts spouse identity when SSN and last name present", () => {
   assertEquals(filer.spouse?.signaturePin, "54321");
 });
 
-Deno.test("spouse is undefined when SSN present but no last name", () => {
+test("spouse is undefined when SSN present but no last name", () => {
   const data = { ...baseFiler(), spouse_ssn: "987654321" };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.spouse, undefined);
@@ -159,12 +160,12 @@ Deno.test("spouse is undefined when SSN present but no last name", () => {
 
 // ─── Bank account extraction ─────────────────────────────────────────────────
 
-Deno.test("bankAccount is undefined when routing missing", () => {
+test("bankAccount is undefined when routing missing", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.bankAccount, undefined);
 });
 
-Deno.test("extracts checking account", () => {
+test("extracts checking account", () => {
   const data = {
     ...baseFiler(),
     bank_routing_number: "021000021",
@@ -177,7 +178,7 @@ Deno.test("extracts checking account", () => {
   assertEquals(filer.bankAccount?.accountType, AccountType.Checking);
 });
 
-Deno.test("extracts savings account", () => {
+test("extracts savings account", () => {
   const data = {
     ...baseFiler(),
     bank_routing_number: "021000021",
@@ -188,7 +189,7 @@ Deno.test("extracts savings account", () => {
   assertEquals(filer.bankAccount?.accountType, AccountType.Savings);
 });
 
-Deno.test("bankAccount undefined when partial fields", () => {
+test("bankAccount undefined when partial fields", () => {
   const data = { ...baseFiler(), bank_routing_number: "021000021" };
   const filer = extractFilerIdentity(data)!;
   assertEquals(filer.bankAccount, undefined);
@@ -196,12 +197,12 @@ Deno.test("bankAccount undefined when partial fields", () => {
 
 // ─── Default values ──────────────────────────────────────────────────────────
 
-Deno.test("sets pinEnteredBy to Taxpayer by default", () => {
+test("sets pinEnteredBy to Taxpayer by default", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(filer.pinEnteredBy, PINEnteredBy.Taxpayer);
 });
 
-Deno.test("generates a timestamp", () => {
+test("generates a timestamp", () => {
   const filer = extractFilerIdentity(baseFiler())!;
   assertEquals(typeof filer.timestamp, "string");
   assertEquals(filer.timestamp!.length > 0, true);

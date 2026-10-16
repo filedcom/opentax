@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { compareAtsAttachments } from "./ty2025-attachment-coverage.ts";
 
@@ -9,7 +10,7 @@ const retained = {
   sha256: "a".repeat(64),
 };
 
-Deno.test("ATS attachment coverage distinguishes missing, blocked and uninventoried evidence", () => {
+test("ATS attachment coverage distinguishes missing, blocked and uninventoried evidence", () => {
   assertEquals(
     compareAtsAttachments(requirement, []).rows?.[0].result,
     "missing",
@@ -27,7 +28,7 @@ Deno.test("ATS attachment coverage distinguishes missing, blocked and uninventor
   assertEquals(compareAtsAttachments(null, []).allKnownRequiredPresent, null);
 });
 
-Deno.test("ATS attachment names cannot replace exact descriptions or retained bytes", () => {
+test("ATS attachment names cannot replace exact descriptions or retained bytes", () => {
   assertEquals(
     compareAtsAttachments(requirement, [retained]).allKnownRequiredPresent,
     true,
@@ -55,7 +56,7 @@ Deno.test("ATS attachment names cannot replace exact descriptions or retained by
   );
 });
 
-Deno.test("ATS empty reviewed cover inventories do not certify complete attachment requirements", () => {
+test("ATS empty reviewed cover inventories do not certify complete attachment requirements", () => {
   for (const observed of [null, []]) {
     const coverage = compareAtsAttachments([], observed);
     assertEquals(coverage.requirementsInventoried, true);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -74,7 +75,7 @@ function pairedReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4972 joint spouses retain separate tax and native/PDF forms", () => {
+test("Form 4972 joint spouses retain separate tax and native/PDF forms", () => {
   const result = pairedReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -104,7 +105,7 @@ Deno.test("Form 4972 joint spouses retain separate tax and native/PDF forms", ()
   );
 });
 
-Deno.test("Form 4972 joint spouse collection rejects source, plan, and return tampering", () => {
+test("Form 4972 joint spouse collection rejects source, plan, and return tampering", () => {
   const result = pairedReturn();
   const pending = result.pending;
   assertThrows(() =>
@@ -170,7 +171,7 @@ function pairedNuaReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 4972 spouse pair keeps one full-share NUA election on its own Part III form", () => {
+test("Form 4972 spouse pair keeps one full-share NUA election on its own Part III form", () => {
   const result = pairedNuaReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -201,7 +202,7 @@ Deno.test("Form 4972 spouse pair keeps one full-share NUA election on its own Pa
   assertEquals(pdf?.[1].line8_nua_included, undefined);
 });
 
-Deno.test("Form 4972 spouse NUA pair rejects altered source, form, and combined tax", () => {
+test("Form 4972 spouse NUA pair rejects altered source, form, and combined tax", () => {
   const pending = pairedNuaReturn().pending;
   const changedSource = {
     ...pending,

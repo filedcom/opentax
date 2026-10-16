@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -91,7 +92,7 @@ function partialDeathEstateCase() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("partial beneficiary Part III combines full death exclusion and sourced estate tax before recipient tax share", () => {
+test("partial beneficiary Part III combines full death exclusion and sourced estate tax before recipient tax share", () => {
   const { fields, outputs, pending } = partialDeathEstateCase();
   assertEquals(fields.line8, 40_000);
   assertEquals(fields.line9, 5_000);
@@ -118,7 +119,7 @@ Deno.test("partial beneficiary Part III combines full death exclusion and source
   assertEquals(pdf.line30, pending.f1040.form4972_tax);
 });
 
-Deno.test("partial beneficiary death plus estate rejects allocation, identity, source, and tax drift", () => {
+test("partial beneficiary death plus estate rejects allocation, identity, source, and tax drift", () => {
   const { election, fields, pending } = partialDeathEstateCase();
   assertThrows(() =>
     calculator.compute(

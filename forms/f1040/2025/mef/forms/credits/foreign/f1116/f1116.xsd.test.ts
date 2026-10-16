@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
@@ -23,7 +26,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The local IRS schema bundle is optional in CI.
@@ -80,21 +83,21 @@ function computedFields() {
 }
 
 async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 }
 
-Deno.test("Form 1116 keeps category credits separate and caps the total", () => {
+test("Form 1116 keeps category credits separate and caps the total", () => {
   const fields = computedFields();
   assertEquals(fields.category_summaries?.map((item) => item.allowedCredit), [
     450,
@@ -112,7 +115,7 @@ Deno.test("Form 1116 keeps category credits separate and caps the total", () => 
   );
 });
 
-Deno.test("Form 1116 source edges remain acyclic before credit calculation", () => {
+test("Form 1116 source edges remain acyclic before credit calculation", () => {
   const plan = buildExecutionPlan(registry).map((step) => step.nodeType);
   assertEquals(
     plan.indexOf("income_tax_calculation") < plan.indexOf("form_1116"),
@@ -129,13 +132,7 @@ Deno.test("Form 1116 source edges remain acyclic before credit calculation", () 
   assertEquals(plan.indexOf("form_1116") < plan.indexOf("f1040"), true);
 });
 
-Deno.test({
-  name:
-    "XSD: domestic qualified dividends adjust Form 1116 line 18 from return sources",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: domestic qualified dividends adjust Form 1116 line 18 from return sources", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     schedule_b_part_iii: {
       foreign_accounts_question: false,
@@ -209,7 +206,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test("Form 1116 rejects missing source facts and stale aggregate data", () => {
+test("Form 1116 rejects missing source facts and stale aggregate data", () => {
   assertThrows(
     () => form1116.build({ foreign_tax_paid: 500 }),
     Error,
@@ -231,12 +228,7 @@ Deno.test("Form 1116 rejects missing source facts and stale aggregate data", () 
   );
 });
 
-Deno.test({
-  name: "XSD: two Form 1116 categories are separate valid MeF documents",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two Form 1116 categories are separate valid MeF documents", async () => {
   const xml = buildMefXml({
     form_1116: computedFields(),
     schedule3: { line1_foreign_tax_credit: 1_350, line1_total: 1_350 },
@@ -254,7 +246,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test("Form 1116 country input and export reject ISO DE and unknown codes", () => {
+test("Form 1116 country input and export reject ISO DE and unknown codes", () => {
   assertEquals(ty2025IrsCountryCodeSchema.safeParse("GM").success, true);
   assertEquals(ty2025IrsCountryCodeSchema.safeParse("DE").success, false);
   assertEquals(ty2025IrsCountryCodeSchema.safeParse("ZZ").success, false);
@@ -294,12 +286,7 @@ Deno.test("Form 1116 country input and export reject ISO DE and unknown codes", 
   }
 });
 
-Deno.test({
-  name: "XSD: German 1099 interest reaches Form 1116 with IRS code GM",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: German 1099 interest reaches Form 1116 with IRS code GM", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -358,11 +345,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "Form 1116 line 1b rejects XML without its conversion explanation PDF",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, () => {
+test("Form 1116 line 1b rejects XML without its conversion explanation PDF", () => {
   const currency = {
     currency_code: "EUR",
     amount: 1_600,
@@ -488,13 +471,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: Form 1116 current-year excess includes native Schedule B lines 6 and 8",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1116 current-year excess includes native Schedule B lines 6 and 8", async () => {
   const result = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -546,13 +523,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name:
-    "XSD: Form 1116 uses sourced 2021-2024 carryovers with Schedule B lines 1, 3, 4, and 8",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1116 uses sourced 2021-2024 carryovers with Schedule B lines 1, 3, 4, and 8", async () => {
   const filedForm1040Id = "filed-2024-form1040-123456789";
   const filedScheduleBId = "filed-2024-passive-schedule-b-123456789";
   const carryover = {
@@ -639,13 +610,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name:
-    "XSD: Form 1116 direct foreign expense has a linked explanation statement",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1116 direct foreign expense has a linked explanation statement", async () => {
   const fields = computedFields();
   const [passive, general] = fields.category_summaries ?? [];
   const withExpense = {
@@ -684,12 +649,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name: "XSD: Form 1116 line 3b links its other-deductions statement",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 1116 line 3b links its other-deductions statement", async () => {
   const xml = buildMefXml({
     form_1116: {
       ...computedFields(),
@@ -711,13 +671,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name:
-    "XSD: foreign-employer tax reaches Form 1116 and Schedule 3 through the graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: foreign-employer tax reaches Form 1116 and Schedule 3 through the graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -776,13 +730,7 @@ Deno.test({
   await validateXsd(xml);
 });
 
-Deno.test({
-  name:
-    "Form 1116 mixed interest/dividend source remains closed without a combined review",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("Form 1116 mixed interest/dividend source remains closed without a combined review", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -851,13 +799,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "XSD: trust K-1 foreign tax statement reaches Form 1116 through the graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: trust K-1 foreign tax statement reaches Form 1116 through the graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

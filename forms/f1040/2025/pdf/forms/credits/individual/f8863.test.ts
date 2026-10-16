@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   adultEducationReview,
   educationDependentReview,
@@ -88,7 +89,7 @@ const final = {
   schedule3: { line3_education_credit: 1_500 },
 };
 
-Deno.test("Form 8863 PDF maps the canonical page-one totals and one sourced Part III", () => {
+test("Form 8863 PDF maps the canonical page-one totals and one sourced Part III", () => {
   const instances = form8863Pdf.instances?.(source, filer, final) ?? [];
   assertEquals(instances.length, 1);
   assertEquals(form8863Pdf.pageIndices?.(instances[0]), [0, 1]);
@@ -115,7 +116,7 @@ Deno.test("Form 8863 PDF maps the canonical page-one totals and one sourced Part
   );
 });
 
-Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => {
+test("Form 8863 PDF adds only a Part III page for a second student", () => {
   const llc = {
     ...student,
     credit_type: "llc" as const,
@@ -152,7 +153,7 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
   assertEquals(instances[1].line19, undefined);
 });
 
-Deno.test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier", () => {
+test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier", () => {
   const firstTierStudent = {
     ...student,
     aoc_adjusted_expenses: 2_000,
@@ -191,7 +192,7 @@ Deno.test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier
   }
 });
 
-Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return paths", () => {
+test("Form 8863 PDF closes ambiguous institution and unreconciled return paths", () => {
   assertThrows(
     () => form8863Pdf.instances?.(source, filer, {}),
     Error,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { registry } from "../../forms/f1040/2025/registry.ts";
@@ -66,7 +67,7 @@ mockBNode = new MockBNode();
 
 // --- Tests ---
 
-Deno.test("computeTaxGraph: start returns full tree start -> [w2, int, div]", () => {
+test("computeTaxGraph: start returns full tree start -> [w2, int, div]", () => {
   const result: GraphNode = computeTaxGraph("start", registry);
 
   assertEquals(result.nodeType, "start");
@@ -85,7 +86,7 @@ Deno.test("computeTaxGraph: start returns full tree start -> [w2, int, div]", ()
   assertEquals(f1040Child!.registered, true);
 });
 
-Deno.test("computeTaxGraph: w2 returns subtree with f1040 as a child", () => {
+test("computeTaxGraph: w2 returns subtree with f1040 as a child", () => {
   const result: GraphNode = computeTaxGraph("w2", registry);
 
   assertEquals(result.nodeType, "w2");
@@ -100,7 +101,7 @@ Deno.test("computeTaxGraph: w2 returns subtree with f1040 as a child", () => {
   assertEquals(f1040Node!.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: f1040 returns leaf node with empty children", () => {
+test("computeTaxGraph: f1040 returns leaf node with empty children", () => {
   const result: GraphNode = computeTaxGraph("f1040", registry);
 
   assertEquals(result.nodeType, "f1040");
@@ -109,7 +110,7 @@ Deno.test("computeTaxGraph: f1040 returns leaf node with empty children", () => 
   assertEquals(result.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: maxDepth=1 on start returns start -> [w2, int, div] with children truncated", () => {
+test("computeTaxGraph: maxDepth=1 on start returns start -> [w2, int, div] with children truncated", () => {
   const result: GraphNode = computeTaxGraph("start", registry, 1);
 
   assertEquals(result.nodeType, "start");
@@ -123,7 +124,7 @@ Deno.test("computeTaxGraph: maxDepth=1 on start returns start -> [w2, int, div] 
   }
 });
 
-Deno.test("computeTaxGraph: maxDepth=0 on start returns just start node with empty children", () => {
+test("computeTaxGraph: maxDepth=0 on start returns just start node with empty children", () => {
   const result: GraphNode = computeTaxGraph("start", registry, 0);
 
   assertEquals(result.nodeType, "start");
@@ -131,7 +132,7 @@ Deno.test("computeTaxGraph: maxDepth=0 on start returns just start node with emp
   assertEquals(result.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: unregistered child appears with registered=false and empty children", () => {
+test("computeTaxGraph: unregistered child appears with registered=false and empty children", () => {
   // mock_parent declares output to "nonexistent" node, which is not in the registry
   const mockRegistry: NodeRegistry = {
     mock_parent: new MockParentNode(),
@@ -150,7 +151,7 @@ Deno.test("computeTaxGraph: unregistered child appears with registered=false and
   assertEquals(unregisteredChild.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: cycle guard prevents infinite recursion on A->B->A", () => {
+test("computeTaxGraph: cycle guard prevents infinite recursion on A->B->A", () => {
   const cyclicRegistry: NodeRegistry = {
     mock_a: mockANode,
     mock_b: mockBNode,
@@ -176,7 +177,7 @@ Deno.test("computeTaxGraph: cycle guard prevents infinite recursion on A->B->A",
   assertEquals(cycleNode.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: unknown root nodeType throws error with descriptive message", () => {
+test("computeTaxGraph: unknown root nodeType throws error with descriptive message", () => {
   assertThrows(
     () => computeTaxGraph("bogus_type", registry),
     Error,

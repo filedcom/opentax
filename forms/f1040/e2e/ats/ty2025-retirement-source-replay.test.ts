@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../2025/index.ts";
 import { f1099r } from "../../2025/mef/forms/income/retirement/f1099r.ts";
@@ -15,7 +16,7 @@ for (
     ["1040-08", scenario104008Input, "400001039", 2],
   ] as const
 ) {
-  Deno.test(`ATS ${id}: issued retirement sources survive graph and native copy projection`, () => {
+  test(`ATS ${id}: issued retirement sources survive graph and native copy projection`, () => {
     const input = factory();
     const copies = input.f1099r as Record<string, unknown>[];
     assertEquals(copies.length, count);
@@ -44,7 +45,7 @@ for (
     }
   });
 
-  Deno.test(`ATS ${id}: every issued retirement copy rejects missing or wrong recipient`, () => {
+  test(`ATS ${id}: every issued retirement copy rejects missing or wrong recipient`, () => {
     for (let index = 0; index < count; index++) {
       for (const wrongRecipient of [undefined, "999001234"]) {
         const input = factory();

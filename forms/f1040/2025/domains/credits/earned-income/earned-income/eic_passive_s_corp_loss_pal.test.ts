@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { firstYearPassiveSCorpLoss8582Activity } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts";
 import { passiveK1Activities } from "../../../../../nodes/inputs/income/rental-passthrough/k1_passive_source.ts";
@@ -48,7 +49,7 @@ for (
     { cash: 6000, income: 3000, allowed: 3000, basisCarry: 0, palCarry: 1000 },
   ]
 ) {
-  Deno.test(`Passive S-corp basis ${c.cash} and passive income ${c.income} preserve separate basis/PAL losses`, () => {
+  test(`Passive S-corp basis ${c.cash} and passive income ${c.income} preserve separate basis/PAL losses`, () => {
     const { source, loss, result } = workpaper(c.cash, c.income);
     assertEquals(loss.stages.basisSuspendedLoss, c.basisCarry);
     assertEquals(loss.activity.current_net, -Math.min(c.cash, 4000));
@@ -78,14 +79,14 @@ for (
   });
 }
 
-Deno.test("Passive S-corp adapter replays changed source records rather than trusting previous stage amounts", () => {
+test("Passive S-corp adapter replays changed source records rather than trusting previous stage amounts", () => {
   const { source, k1 } = passiveSCorpLossRecords();
   firstYearPassiveSCorpLoss8582Activity(source, k1);
   source.stock_subscription.cash_payment.corporate_bank_credit -= 1;
   assertThrows(() => firstYearPassiveSCorpLoss8582Activity(source, k1));
 });
 
-Deno.test("A basis-suspended loss cannot be injected into the reconciled Form 8582 activity total", () => {
+test("A basis-suspended loss cannot be injected into the reconciled Form 8582 activity total", () => {
   const { input } = workpaper(1000, 3000);
   const contradictory = { ...input, current_loss: 4000 };
   assertThrows(() =>
@@ -93,7 +94,7 @@ Deno.test("A basis-suspended loss cannot be injected into the reconciled Form 85
   );
 });
 
-Deno.test("A second source cannot reuse the loss activity's durable ID", () => {
+test("A second source cannot reuse the loss activity's durable ID", () => {
   const { input, loss } = workpaper(1000, 3000);
   input.activities![1].activity_id = loss.activity.activity_id;
   assertThrows(() =>

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
 import {
@@ -9,7 +10,7 @@ import {
   SCENARIO_1040_01_RECONCILIATION,
 } from "./scenario_1040_01_input.ts";
 
-Deno.test("ATS 1040 Scenario 1 retains two distinct W-2s and a partial Schedule H", () => {
+test("ATS 1040 Scenario 1 retains two distinct W-2s and a partial Schedule H", () => {
   const input = scenario104001Input();
   const wageForms = input.w2 as Record<string, unknown>[];
   const household = input.schedule_h as Record<string, unknown>;
@@ -33,7 +34,7 @@ Deno.test("ATS 1040 Scenario 1 retains two distinct W-2s and a partial Schedule 
   assertEquals(household.medicare_wages, 3_100);
 });
 
-Deno.test("ATS 1040 Scenario 1 W-2 and household tax source slices reconcile", () => {
+test("ATS 1040 Scenario 1 W-2 and household tax source slices reconcile", () => {
   const input = scenario104001Input();
   const context = { taxYear: 2025, formType: "f1040" };
   const wageResult = w2.compute(
@@ -83,7 +84,7 @@ Deno.test("ATS 1040 Scenario 1 W-2 and household tax source slices reconcile", (
   );
 });
 
-Deno.test("ATS 1040 Scenario 1 keeps Form 5695 packet conflicts outside filing input", () => {
+test("ATS 1040 Scenario 1 keeps Form 5695 packet conflicts outside filing input", () => {
   const input = scenario104001Input();
   const source = SCENARIO_1040_01_RECONCILIATION.form5695;
   assertEquals("f5695" in input, false);

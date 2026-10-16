@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
   assertEquals,
@@ -19,7 +22,7 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
 
-Deno.test("short-term capital installment sale joins Schedule D, Form 1040, native XML and PDF", async () => {
+test("short-term capital installment sale joins Schedule D, Form 1040, native XML and PDF", async () => {
   const sale = {
     property_description: "Investment land",
     date_acquired: "2025-01-01",
@@ -119,7 +122,7 @@ Deno.test("short-term capital installment sale joins Schedule D, Form 1040, nati
   );
 });
 
-Deno.test("Form 6252 mortgage-assumed land sale joins Schedule D, Form 1040, native XML and PDF", async () => {
+test("Form 6252 mortgage-assumed land sale joins Schedule D, Form 1040, native XML and PDF", async () => {
   const sale = {
     property_description: "Vacant land",
     date_acquired: "2020-01-01",
@@ -160,31 +163,31 @@ Deno.test("Form 6252 mortgage-assumed land sale joins Schedule D, Form 1040, nat
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 5);
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-form6252-land/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
   }
 });
 
-Deno.test("three installment sales retain individual PDFs and capital/business destinations", async () => {
+test("three installment sales retain individual PDFs and capital/business destinations", async () => {
   const common = {
     date_acquired: "2020-01-01",
     date_sold: "2025-03-01",
@@ -246,31 +249,31 @@ Deno.test("three installment sales retain individual PDFs and capital/business d
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 9);
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-form6252-three-sales/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
   }
 });
 
-Deno.test("2024 land sale final payment joins 2025 Schedule D, Form 1040, native XML and PDF", async () => {
+test("2024 land sale final payment joins 2025 Schedule D, Form 1040, native XML and PDF", async () => {
   const sale = {
     property_description: "Vacant land",
     date_acquired: "2020-01-01",

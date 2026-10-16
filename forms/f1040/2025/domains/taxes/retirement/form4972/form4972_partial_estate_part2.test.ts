@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -72,7 +73,7 @@ function partialEstatePartIICase() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("Form 4972 partial beneficiary Part II allocates estate tax to capital and ordinary shares", () => {
+test("Form 4972 partial beneficiary Part II allocates estate tax to capital and ordinary shares", () => {
   const { outputs, fields, pending } = partialEstatePartIICase();
   assertEquals(fields.line6, 3_800);
   assertEquals(fields.line7, 760);
@@ -102,7 +103,7 @@ Deno.test("Form 4972 partial beneficiary Part II allocates estate tax to capital
   assertEquals(pdf?.line7, 760);
 });
 
-Deno.test("Form 4972 partial estate Part II rejects changed allocation, source share and return tax", () => {
+test("Form 4972 partial estate Part II rejects changed allocation, source share and return tax", () => {
   const { election, fields, pending } = partialEstatePartIICase();
   assertThrows(() =>
     form4972Node.compute(

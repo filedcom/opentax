@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { buildForm8820Document } from "./f8820.ts";
 import { form8820ControlledGroupStatement } from "./f8820_controlled_group_statement.ts";
@@ -13,18 +16,13 @@ const STATEMENT_XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test({
-  name: "XSD: Form 8820 source document maps Part I and orphan-drug details",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8820 source document maps Part I and orphan-drug details", async () => {
   const xml = buildForm8820Document({
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -42,26 +40,21 @@ Deno.test({
     "<IRS8820>",
     '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8820 controlled-group allocation and linked statement",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8820 controlled-group allocation and linked statement", async () => {
   const source = {
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -101,33 +94,28 @@ Deno.test({
     root: "ControlledGroupMembersStmt",
   }];
   for (const { xml, schema, root } of documents) {
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         path,
         xml.replace(
           `<${root}>`,
           `<${root} xmlns="http://www.irs.gov/efile" documentId="${root}1">`,
         ),
       );
-      const result = await new Deno.Command("xmllint", {
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8820 keeps a zero-credit reduced election",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8820 keeps a zero-credit reduced election", async () => {
   const xml = buildForm8820Document({
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -145,26 +133,21 @@ Deno.test({
     "<IRS8820>",
     '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8820 reports mixed pass-through line 3 and line 4",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8820 reports mixed pass-through line 3 and line 4", async () => {
   const xml = buildForm8820Document({
     f8820s: [{
       generic_name: "Test Orphan Drug",
@@ -189,16 +172,16 @@ Deno.test({
     "<IRS8820>",
     '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

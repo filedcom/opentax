@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { calculateForm2210FBoxB } from "./form2210f_box_b.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
@@ -51,7 +52,7 @@ function sourcedBoxB() {
   };
 }
 
-Deno.test("Form 2210-F box B calculates a sourced two-return changed-joint-status underpayment", () => {
+test("Form 2210-F box B calculates a sourced two-return changed-joint-status underpayment", () => {
   const lines = calculateForm2210FBoxB(sourcedBoxB());
   assertEquals(lines.box_b, true);
   assertEquals(lines.line3, 18_000);
@@ -66,7 +67,7 @@ Deno.test("Form 2210-F box B calculates a sourced two-return changed-joint-statu
   assertEquals(lines.line16, 121);
 });
 
-Deno.test("Form 2210-F box B uses full-payment date for one complete settlement", () => {
+test("Form 2210-F box B uses full-payment date for one complete settlement", () => {
   const lines = calculateForm2210FBoxB({
     ...sourcedBoxB(),
     full_underpayment_paid_on: "2026-02-14",
@@ -75,7 +76,7 @@ Deno.test("Form 2210-F box B uses full-payment date for one complete settlement"
   assertEquals(lines.line16, 40);
 });
 
-Deno.test("Form 2210-F box B binds one full settlement to retained payment bytes", async () => {
+test("Form 2210-F box B binds one full settlement to retained payment bytes", async () => {
   const source = {
     ...sourcedBoxB(),
     full_underpayment_paid_on: "2026-02-14",
@@ -131,7 +132,7 @@ Deno.test("Form 2210-F box B binds one full settlement to retained payment bytes
   );
 });
 
-Deno.test("Form 2210-F box B still attaches when withholding clears the required payment", () => {
+test("Form 2210-F box B still attaches when withholding clears the required payment", () => {
   const lines = calculateForm2210FBoxB({
     ...sourcedBoxB(),
     current_withholding: 8_000,
@@ -141,7 +142,7 @@ Deno.test("Form 2210-F box B still attaches when withholding clears the required
   assertEquals(lines.line16, 0);
 });
 
-Deno.test("Form 2210-F box B rejects unproven farmer status and duplicate prior returns", () => {
+test("Form 2210-F box B rejects unproven farmer status and duplicate prior returns", () => {
   const source = sourcedBoxB();
   assertThrows(() =>
     calculateForm2210FBoxB({
@@ -176,7 +177,7 @@ Deno.test("Form 2210-F box B rejects unproven farmer status and duplicate prior 
   );
 });
 
-Deno.test("Form 2210-F box B rejects when its filing reason or settlement is absent", () => {
+test("Form 2210-F box B rejects when its filing reason or settlement is absent", () => {
   const source = sourcedBoxB();
   assertThrows(() =>
     calculateForm2210FBoxB({

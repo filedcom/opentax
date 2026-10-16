@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildMefBundle } from "../mef/builder.ts";
 import { f1040_2025 } from "../index.ts";
@@ -37,7 +38,7 @@ function stableXml(xml: string): string {
   );
 }
 
-Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay", async () => {
+test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay", async () => {
   const seen = new Set<string>();
   let checkedFixtures = 0;
   let checkedAmounts = 0;

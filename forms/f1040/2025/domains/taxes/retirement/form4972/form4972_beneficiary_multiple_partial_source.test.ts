@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -33,8 +36,8 @@ const expected = {
   },
 };
 
-Deno.test("same-participant partial beneficiary combines two and three issued cash, NUA and annuity copies", async () => {
-  await Deno.mkdir(dir, { recursive: true });
+test("same-participant partial beneficiary combines two and three issued cash, NUA and annuity copies", async () => {
+  await fs.mkdir(dir, { recursive: true });
   for (const count of [2, 3] as const) {
     const input = partialBeneficiaryMultipleInputs(count);
     const result = f1040_2025.executeReturn(input);
@@ -75,22 +78,22 @@ Deno.test("same-participant partial beneficiary combines two and three issued ca
     const id = `beneficiary-${count}-copies`;
     const xmlPath = `${dir}/${id}.xml`;
     const pdfPath = `${dir}/${id}.pdf`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify({ input, pending }, null, 2),
     );
-    await Deno.writeTextFile(xmlPath, xml);
+    await fs.writeFile(xmlPath, xml);
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(pdfPath, pdf);
+    await fs.writeFile(pdfPath, pdf);
     const document = await PDFDocument.load(pdf);
     assertEquals(document.getPageCount(), 3);
     assertEquals(document.getForm().getFields().length, 0);
-    const schema = await new Deno.Command("xmllint", {
+    const schema = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
     assertEquals(schema.code, 0, new TextDecoder().decode(schema.stderr));
-    const extracted = await new Deno.Command("pdftotext", {
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -100,7 +103,7 @@ Deno.test("same-participant partial beneficiary combines two and three issued ca
     assertStringIncludes(text, String(e.tax));
     assertStringIncludes(text, String(e.line11));
     assertStringIncludes(text, "MRD");
-    await Deno.writeTextFile(`${dir}/${id}.txt`, text);
+    await fs.writeFile(`${dir}/${id}.txt`, text);
     for (
       const mutate of [
         (q: any) => q.f1099r.f1099rs.pop(),
@@ -129,7 +132,7 @@ Deno.test("same-participant partial beneficiary combines two and three issued ca
   }
 });
 
-Deno.test("partial beneficiary source rejects unequal or unsupported share facts before graph", () => {
+test("partial beneficiary source rejects unequal or unsupported share facts before graph", () => {
   const base = partialBeneficiaryMultipleInputs(3);
   for (
     const mutate of [

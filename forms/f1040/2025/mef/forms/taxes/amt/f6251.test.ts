@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FIELD_MAP, form6251 } from "./f6251.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -170,7 +171,7 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
-Deno.test("sourced retained ISO plus qualified dividends reconciles Part III in MeF and PDF", () => {
+test("sourced retained ISO plus qualified dividends reconciles Part III in MeF and PDF", () => {
   const result = calculatedForm6251.compute(
     { taxYear: 2025, formType: "f1040" },
     form6251InputSchema.parse({
@@ -246,7 +247,7 @@ Deno.test("sourced retained ISO plus qualified dividends reconciles Part III in 
   );
 });
 
-Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => {
+test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => {
   const result = calculatedForm6251.compute(
     { taxYear: 2025, formType: "f1040" },
     form6251InputSchema.parse({
@@ -334,7 +335,7 @@ Deno.test("retained ISO Part III sums distinct ordinary 1099-DIV payers", () => 
   );
 });
 
-Deno.test("line 2j estate/trust adjustment serializes signed in XSD order", () => {
+test("line 2j estate/trust adjustment serializes signed in XSD order", () => {
   const xml = filed({
     iso_adjustment: 100,
     line2j_estates_and_trusts: -800,
@@ -348,7 +349,7 @@ Deno.test("line 2j estate/trust adjustment serializes signed in XSD order", () =
   assertEquals(line2i >= 0 && line2i < line2j && line2j < line2l, true);
 });
 
-Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order", () => {
+test("line 2k Form 8949 AMT basis difference serializes signed in XSD order", () => {
   const xml = form6251.build({
     line11_amt: 1,
     line2j_estates_and_trusts: 100,
@@ -400,7 +401,7 @@ Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("empty object returns empty string", () => {
+test("empty object returns empty string", () => {
   assertEquals(form6251.build({}), "");
 });
 
@@ -408,7 +409,7 @@ Deno.test("empty object returns empty string", () => {
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("all unknown keys returns empty string", () => {
+test("all unknown keys returns empty string", () => {
   assertEquals(form6251.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
@@ -416,19 +417,19 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("regular_tax_income at zero does not file Form 6251 by itself", () => {
+test("regular_tax_income at zero does not file Form 6251 by itself", () => {
   const result = form6251.build({ regular_tax_income: 0 });
   assertEquals(result, "");
 });
 
-Deno.test("an adjustment without AMT does not attach Form 6251", () => {
+test("an adjustment without AMT does not attach Form 6251", () => {
   assertEquals(
     form6251.build({ iso_adjustment: 5_000 }, isoContext(5_000)),
     "",
   );
 });
 
-Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
+test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
   const tags = FIELD_MAP.map(([, tag]) => tag);
   const line2c = tags.indexOf("InvestmentInterestAmt");
   const line2d = tags.indexOf("DepletionAmt");
@@ -436,7 +437,7 @@ Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 
   assertEquals(line2c >= 0 && line2c < line2d && line2d < line2g, true);
 });
 
-Deno.test("line 2o circulation cost serializes signed after depreciation", () => {
+test("line 2o circulation cost serializes signed after depreciation", () => {
   const xml = form6251.build({
     line11_amt: 1,
     depreciation_adjustment: 100,
@@ -467,7 +468,7 @@ Deno.test("line 2o circulation cost serializes signed after depreciation", () =>
   assertEquals(line2l >= 0 && line2l < line2o && line2o < line4, true);
 });
 
-Deno.test("a claimed Form 8911 credit attaches Form 6251 with zero AMT", () => {
+test("a claimed Form 8911 credit attaches Form 6251 with zero AMT", () => {
   const xml = form6251.build({ must_file_for_credit: true, line11_amt: 0 });
   assertStringIncludes(
     xml,
@@ -475,7 +476,7 @@ Deno.test("a claimed Form 8911 credit attaches Form 6251 with zero AMT", () => {
   );
 });
 
-Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero AMT", () => {
+test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero AMT", () => {
   const xml = form6251.build({
     tentative_tax: 29_094,
     amtftc: 29_094,
@@ -498,7 +499,7 @@ Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero 
   );
 });
 
-Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line 7 is below line 10", () => {
+test("negative-adjustment filing attaches zero-AMT Form 6251 even when line 7 is below line 10", () => {
   assertThrows(
     () =>
       form6251.build({
@@ -514,7 +515,7 @@ Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line
   );
 });
 
-Deno.test("domestic preferential-income counterfactual retains a zero-AMT filing form", () => {
+test("domestic preferential-income counterfactual retains a zero-AMT filing form", () => {
   assertThrows(
     () =>
       form6251.build({
@@ -531,7 +532,7 @@ Deno.test("domestic preferential-income counterfactual retains a zero-AMT filing
   );
 });
 
-Deno.test("negative-adjustment filing trigger cannot emit an empty Form 6251", () => {
+test("negative-adjustment filing trigger cannot emit an empty Form 6251", () => {
   assertThrows(
     () => form6251.build({ must_file_for_negative_adjustments: true }),
     Error,
@@ -539,7 +540,7 @@ Deno.test("negative-adjustment filing trigger cannot emit an empty Form 6251", (
   );
 });
 
-Deno.test("Part III fields follow TY2025 XSD order and omit inapplicable lines", () => {
+test("Part III fields follow TY2025 XSD order and omit inapplicable lines", () => {
   const xml = filed({
     line12: 111_900,
     line13: 10_000,
@@ -565,7 +566,7 @@ Deno.test("Part III fields follow TY2025 XSD order and omit inapplicable lines",
 // Section 4: Per-field mapping for the base input fields
 // ---------------------------------------------------------------------------
 
-Deno.test("regular_tax_income maps to Form 6251 line 1b", () => {
+test("regular_tax_income maps to Form 6251 line 1b", () => {
   const result = filed({
     regular_tax_income: 75000,
     iso_adjustment: 1,
@@ -576,7 +577,7 @@ Deno.test("regular_tax_income maps to Form 6251 line 1b", () => {
   );
 });
 
-Deno.test("regular_tax maps to AdjustedRegularTaxAmt", () => {
+test("regular_tax maps to AdjustedRegularTaxAmt", () => {
   const result = filed({ regular_tax: 12000, iso_adjustment: 1 });
   assertStringIncludes(
     result,
@@ -584,7 +585,7 @@ Deno.test("regular_tax maps to AdjustedRegularTaxAmt", () => {
   );
 });
 
-Deno.test("iso_adjustment maps to IncentiveStockOptionsAmt", () => {
+test("iso_adjustment maps to IncentiveStockOptionsAmt", () => {
   const result = filed({ iso_adjustment: 5000 });
   assertStringIncludes(
     result,
@@ -592,7 +593,7 @@ Deno.test("iso_adjustment maps to IncentiveStockOptionsAmt", () => {
   );
 });
 
-Deno.test("depreciation_adjustment maps to DepreciationAmt", () => {
+test("depreciation_adjustment maps to DepreciationAmt", () => {
   const result = filed({ depreciation_adjustment: 3000 });
   assertStringIncludes(
     result,
@@ -600,7 +601,7 @@ Deno.test("depreciation_adjustment maps to DepreciationAmt", () => {
   );
 });
 
-Deno.test("unsourced direct ATNOLD cannot be serialized as Form 6251 line 2f", () => {
+test("unsourced direct ATNOLD cannot be serialized as Form 6251 line 2f", () => {
   for (const adjustment of [-2_000, 2_000]) {
     assertThrows(
       () => filed({ nol_adjustment: adjustment }),
@@ -610,7 +611,7 @@ Deno.test("unsourced direct ATNOLD cannot be serialized as Form 6251 line 2f", (
   }
 });
 
-Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt", () => {
+test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt", () => {
   const result = filed({ private_activity_bond_interest: 800 });
   assertStringIncludes(
     result,
@@ -618,7 +619,7 @@ Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt"
   );
 });
 
-Deno.test("private-activity-bond interest cannot export without its retained source", () => {
+test("private-activity-bond interest cannot export without its retained source", () => {
   const fields = { line11_amt: 1, private_activity_bond_interest: 800 };
   assertThrows(
     () => form6251.build(fields),
@@ -632,7 +633,7 @@ Deno.test("private-activity-bond interest cannot export without its retained sou
   );
 });
 
-Deno.test("qsbs_adjustment maps to Section1202ExclusionAmt", () => {
+test("qsbs_adjustment maps to Section1202ExclusionAmt", () => {
   const result = filed({ qsbs_adjustment: 10000 });
   assertStringIncludes(
     result,
@@ -640,12 +641,12 @@ Deno.test("qsbs_adjustment maps to Section1202ExclusionAmt", () => {
   );
 });
 
-Deno.test("line2a_taxes_paid maps to ScheduleATaxesAmt", () => {
+test("line2a_taxes_paid maps to ScheduleATaxesAmt", () => {
   const result = filed({ line2a_taxes_paid: 15000 });
   assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
 });
 
-Deno.test("line2b_tax_refund rejects an unsourced direct export", () => {
+test("line2b_tax_refund rejects an unsourced direct export", () => {
   assertThrows(
     () => filed({ line2b_tax_refund: 1_000 }),
     Error,
@@ -653,7 +654,7 @@ Deno.test("line2b_tax_refund rejects an unsourced direct export", () => {
   );
 });
 
-Deno.test("mixed other_adjustments cannot be serialized as line 3", () => {
+test("mixed other_adjustments cannot be serialized as line 3", () => {
   for (const adjustment of [-1000, 1000]) {
     assertThrows(
       () => filed({ other_adjustments: adjustment }),
@@ -663,7 +664,7 @@ Deno.test("mixed other_adjustments cannot be serialized as line 3", () => {
   }
 });
 
-Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
+test("amtftc maps to AMTForeignTaxCreditAmt", () => {
   const result = filed({ amtftc: 4500 });
   assertStringIncludes(
     result,
@@ -671,7 +672,7 @@ Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
   );
 });
 
-Deno.test("Form 6251 XML rejects a line 8 credit when line 10 reaches line 7", () => {
+test("Form 6251 XML rejects a line 8 credit when line 10 reaches line 7", () => {
   assertThrows(
     () =>
       form6251.build({
@@ -691,12 +692,12 @@ Deno.test("Form 6251 XML rejects a line 8 credit when line 10 reaches line 7", (
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("context-only income does not file Form 6251", () => {
+test("context-only income does not file Form 6251", () => {
   const result = form6251.build({ regular_tax_income: 75000 });
   assertEquals(result, "");
 });
 
-Deno.test("context-only income and regular tax do not file Form 6251", () => {
+test("context-only income and regular tax do not file Form 6251", () => {
   const result = form6251.build({
     regular_tax_income: 75000,
     regular_tax: 12000,
@@ -721,7 +722,7 @@ const allFields = {
   amtftc: 4500,
 };
 
-Deno.test("base fields present: output wrapped in IRS6251 tag", () => {
+test("base fields present: output wrapped in IRS6251 tag", () => {
   const context = isoContext(5_000);
   const result = form6251.build(allFields, {
     ...context,
@@ -731,7 +732,7 @@ Deno.test("base fields present: output wrapped in IRS6251 tag", () => {
   assertStringIncludes(result, "</IRS6251>");
 });
 
-Deno.test("base fields present: all elements emitted", () => {
+test("base fields present: all elements emitted", () => {
   const context = isoContext(5_000);
   const result = form6251.build(allFields, {
     ...context,
@@ -772,7 +773,7 @@ Deno.test("base fields present: all elements emitted", () => {
 // Section 7: Non-number fields (filing_status) are ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("filing_status string field is silently ignored", () => {
+test("filing_status string field is silently ignored", () => {
   const result = filed({
     filing_status: "MFJ",
     regular_tax_income: 75000,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import {
@@ -179,7 +180,7 @@ function nonenrolledOtherFamilyCase(taxpayerIncome: number) {
   return { fields, pending, policy, credit, repayment };
 }
 
-Deno.test("Situation 4 shared policy joins a claimed dependent and the nonenrolled other taxpayer's covered child through native, PDF and final credit", () => {
+test("Situation 4 shared policy joins a claimed dependent and the nonenrolled other taxpayer's covered child through native, PDF and final credit", () => {
   const { fields, pending, credit } = nonenrolledOtherFamilyCase(20_000);
   assertEquals(fields.dependents_modified_agi, 13_000);
   assertEquals(fields.household_income, 33_000);
@@ -202,7 +203,7 @@ Deno.test("Situation 4 shared policy joins a claimed dependent and the nonenroll
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Situation 4 nonenrolled other-family case reaches repayment and rejects claim, allocation, dependent and return drift", () => {
+test("Situation 4 nonenrolled other-family case reaches repayment and rejects claim, allocation, dependent and return drift", () => {
   const { fields, pending, policy, repayment } = nonenrolledOtherFamilyCase(
     75_000,
   );
@@ -283,7 +284,7 @@ Deno.test("Situation 4 nonenrolled other-family case reaches repayment and rejec
     }), Error);
 });
 
-Deno.test("shared Situation 4 family policy binds the dependent return and both tax families through Form 8962 and PDF", () => {
+test("shared Situation 4 family policy binds the dependent return and both tax families through Form 8962 and PDF", () => {
   const { fields, pending, credit } = sharedFamilyCase();
   assertEquals(fields.household_size, 2);
   assertEquals(fields.dependents_modified_agi, 13_000);
@@ -307,7 +308,7 @@ Deno.test("shared Situation 4 family policy binds the dependent return and both 
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("shared Situation 4 family policy rejects dependent, agreement, covered-person, and final-return drift", () => {
+test("shared Situation 4 family policy rejects dependent, agreement, covered-person, and final-return drift", () => {
   const { fields, pending, policy, credit } = sharedFamilyCase();
   const changedDependent = {
     ...pending,

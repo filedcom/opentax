@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099int, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -97,7 +98,7 @@ function interestNet(fields: unknown): number | undefined {
     ?.interest_detail?.net;
 }
 
-Deno.test("1099-INT rejects corrected references on one identified payer/account", () => {
+test("1099-INT rejects corrected references on one identified payer/account", () => {
   const issued = minimalItem({
     payer_name: "Test Bank",
     payer_tin: "123456789",
@@ -132,7 +133,7 @@ Deno.test("1099-INT rejects corrected references on one identified payer/account
   );
 });
 
-Deno.test("1099-INT rejects a repeated source when payer TIN and account are absent", () => {
+test("1099-INT rejects a repeated source when payer TIN and account are absent", () => {
   const issued = minimalItem({
     payer_name: "Test Bank",
     source_document_reference: "issued-1099int-2025-1",
@@ -154,7 +155,7 @@ Deno.test("1099-INT rejects a repeated source when payer TIN and account are abs
   );
 });
 
-Deno.test("1099-INT rejects positive same-payer copies when one lacks copy identity", () => {
+test("1099-INT rejects positive same-payer copies when one lacks copy identity", () => {
   const unidentified = minimalItem({ box1: 200 });
   const identified = minimalItem({ box1: 300, account_number: "SAV-1" });
   const message =
@@ -182,7 +183,7 @@ Deno.test("1099-INT rejects positive same-payer copies when one lacks copy ident
   );
 });
 
-Deno.test("1099-INT does not split one payer when only one copy has its TIN", () => {
+test("1099-INT does not split one payer when only one copy has its TIN", () => {
   const withTin = minimalItem({
     payer_name: "Test Bank",
     payer_tin: "123456789",
@@ -211,7 +212,7 @@ Deno.test("1099-INT does not split one payer when only one copy has its TIN", ()
   );
 });
 
-Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
+test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
   assertEquals(findOutput(ordinary, "form4952"), undefined);
   const investment = compute([minimalItem({
@@ -226,7 +227,7 @@ Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 on
   );
 });
 
-Deno.test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4952", () => {
+test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4952", () => {
   const result = compute([minimalItem({
     box8: 500,
     box9: 300,
@@ -241,7 +242,7 @@ Deno.test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4
   );
 });
 
-Deno.test("1099-INT rejects adjustments larger than reported interest", () => {
+test("1099-INT rejects adjustments larger than reported interest", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -258,39 +259,39 @@ Deno.test("1099-INT rejects adjustments larger than reported interest", () => {
 // 1. Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("schema: empty payer_name throws", () => {
+test("schema: empty payer_name throws", () => {
   assertThrows(() => compute([minimalItem({ payer_name: "" })]), Error);
 });
 
-Deno.test("schema: negative box1 throws", () => {
+test("schema: negative box1 throws", () => {
   assertThrows(() => compute([minimalItem({ box1: -1 })]), Error);
 });
 
-Deno.test("schema: negative box3 throws", () => {
+test("schema: negative box3 throws", () => {
   assertThrows(() => compute([minimalItem({ box3: -1 })]), Error);
 });
 
-Deno.test("schema: box9 exceeding box8 throws", () => {
+test("schema: box9 exceeding box8 throws", () => {
   assertThrows(() => compute([minimalItem({ box8: 80, box9: 100 })]), Error);
 });
 
-Deno.test("schema: box9 equal to box8 is valid", () => {
+test("schema: box9 equal to box8 is valid", () => {
   const result = compute([minimalItem({ box8: 100, box9: 100 })]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("schema: box13 exceeding box8 throws", () => {
+test("schema: box13 exceeding box8 throws", () => {
   assertThrows(() => compute([minimalItem({ box8: 100, box13: 150 })]), Error);
 });
 
-Deno.test("schema: seller financing requires the buyer-use answer", () => {
+test("schema: seller financing requires the buyer-use answer", () => {
   assertThrows(
     () => compute([minimalItem({ seller_financed: true, box1: 100 })]),
     Error,
   );
 });
 
-Deno.test("schema: personal-residence seller financing requires buyer details", () => {
+test("schema: personal-residence seller financing requires buyer details", () => {
   assertThrows(() =>
     compute([minimalItem({
       seller_financed: true,
@@ -300,7 +301,7 @@ Deno.test("schema: personal-residence seller financing requires buyer details", 
   );
 });
 
-Deno.test("schema: buyer-use answer requires seller financing", () => {
+test("schema: buyer-use answer requires seller financing", () => {
   assertThrows(() =>
     compute([minimalItem({
       buyer_used_as_personal_residence: false,
@@ -309,7 +310,7 @@ Deno.test("schema: buyer-use answer requires seller financing", () => {
   );
 });
 
-Deno.test("schema: seller_financed with 8-digit SSN throws", () => {
+test("schema: seller_financed with 8-digit SSN throws", () => {
   assertThrows(
     () =>
       compute([
@@ -324,7 +325,7 @@ Deno.test("schema: seller_financed with 8-digit SSN throws", () => {
   );
 });
 
-Deno.test("schema: seller_financed requires a structured address", () => {
+test("schema: seller_financed requires a structured address", () => {
   assertThrows(
     () =>
       compute([
@@ -339,7 +340,7 @@ Deno.test("schema: seller_financed requires a structured address", () => {
   );
 });
 
-Deno.test("schema: seller_financed with all required fields is valid", () => {
+test("schema: seller_financed with all required fields is valid", () => {
   const result = compute([
     minimalItem({
       seller_financed: true,
@@ -357,7 +358,7 @@ Deno.test("schema: seller_financed with all required fields is valid", () => {
   );
 });
 
-Deno.test("schema: seller-financed foreign buyer uses a complete foreign address", () => {
+test("schema: seller-financed foreign buyer uses a complete foreign address", () => {
   const foreignBuyer: SellerFinancedBuyer = {
     address_type: "foreign",
     name: "Jane Buyer",
@@ -405,17 +406,17 @@ Deno.test("schema: seller-financed foreign buyer uses a complete foreign address
 // 2. Per-Box Routing
 // ---------------------------------------------------------------------------
 
-Deno.test("box1 routes to schedule_b with correct net taxable_interest", () => {
+test("box1 routes to schedule_b with correct net taxable_interest", () => {
   const result = compute([minimalItem({ box1: 100 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
 });
 
-Deno.test("box1 = 0 routes to schedule_b with taxable_interest_net = 0", () => {
+test("box1 = 0 routes to schedule_b with taxable_interest_net = 0", () => {
   const result = compute([minimalItem({ box1: 0 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 0);
 });
 
-Deno.test("box2 routes to schedule1 line18_early_withdrawal", () => {
+test("box2 routes to schedule1 line18_early_withdrawal", () => {
   const result = compute([minimalItem({ box2: 50 })]);
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal,
@@ -423,27 +424,27 @@ Deno.test("box2 routes to schedule1 line18_early_withdrawal", () => {
   );
 });
 
-Deno.test("box2 = 0 produces no schedule1 output", () => {
+test("box2 = 0 produces no schedule1 output", () => {
   const result = compute([minimalItem({ box2: 0 })]);
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("box3 (US savings bond interest) adds to schedule_b taxable_interest_net", () => {
+test("box3 (US savings bond interest) adds to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box3: 75 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 75);
 });
 
-Deno.test("box3 + box1 both included in schedule_b taxable_interest_net", () => {
+test("box3 + box1 both included in schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, box3: 75 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 175);
 });
 
-Deno.test("box4 routes to f1040 line25b_withheld_1099", () => {
+test("box4 routes to f1040 line25b_withheld_1099", () => {
   const result = compute([minimalItem({ box4: 25 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 25);
 });
 
-Deno.test("box4 = 0 produces no f1040 withholding output", () => {
+test("box4 = 0 produces no f1040 withholding output", () => {
   const result = compute([minimalItem({ box4: 0 })]);
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line25b_withheld_1099,
@@ -451,7 +452,7 @@ Deno.test("box4 = 0 produces no f1040 withholding output", () => {
   );
 });
 
-Deno.test("box6 below $300 still routes to Form 1116 without an election", () => {
+test("box6 below $300 still routes to Form 1116 without an election", () => {
   const result = compute([taxedInterest(200, 500)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -460,7 +461,7 @@ Deno.test("box6 below $300 still routes to Form 1116 without an election", () =>
   );
 });
 
-Deno.test("1099-INT foreign tax preserves its document reference for Form 1116", () => {
+test("1099-INT foreign tax preserves its document reference for Form 1116", () => {
   const result = compute([taxedInterest(50, 1_000, {
     foreign_tax_source_document_reference: "Bank 1099-INT 2025",
   })]);
@@ -471,12 +472,12 @@ Deno.test("1099-INT foreign tax preserves its document reference for Form 1116",
   );
 });
 
-Deno.test("box6 = 0 produces no foreign tax output", () => {
+test("box6 = 0 produces no foreign tax output", () => {
   const result = compute([minimalItem({ box1: 500, box6: 0 })]);
   assertEquals(findOutput(result, "form_1116"), undefined);
 });
 
-Deno.test("box8 routes to f1040 line2a_tax_exempt (informational MAGI component)", () => {
+test("box8 routes to f1040 line2a_tax_exempt (informational MAGI component)", () => {
   const result = compute([minimalItem({ box8: 300 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 300);
   assertEquals(
@@ -485,27 +486,27 @@ Deno.test("box8 routes to f1040 line2a_tax_exempt (informational MAGI component)
   );
 });
 
-Deno.test("box8 = 0 produces no f1040 line2a output", () => {
+test("box8 = 0 produces no f1040 line2a output", () => {
   const result = compute([minimalItem({ box8: 0 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, undefined);
 });
 
-Deno.test("box9 (PAB interest) routes to form6251 line2g_pab_interest", () => {
+test("box9 (PAB interest) routes to form6251 line2g_pab_interest", () => {
   const result = compute([minimalItem({ box8: 100, box9: 100 })]);
   assertEquals(fieldsOf(result.outputs, form6251)?.line2g_pab_interest, 100);
 });
 
-Deno.test("box9 = 0 produces no form6251 output", () => {
+test("box9 = 0 produces no form6251 output", () => {
   const result = compute([minimalItem({ box8: 200, box9: 0 })]);
   assertEquals(findOutput(result, "form6251"), undefined);
 });
 
-Deno.test("box10 (market discount) adds to schedule_b taxable_interest_net", () => {
+test("box10 (market discount) adds to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, box10: 50 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 150);
 });
 
-Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election made", () => {
+test("box11 (ABP) reduces schedule_b taxable_interest_net when election made", () => {
   const result = compute([
     minimalItem({
       box1: 100,
@@ -516,17 +517,17 @@ Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election mad
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 70);
 });
 
-Deno.test("box11 (ABP) does NOT reduce net without IRC §171 election", () => {
+test("box11 (ABP) does NOT reduce net without IRC §171 election", () => {
   const result = compute([minimalItem({ box1: 100, box11: 30 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
 });
 
-Deno.test("box12 (ABP treasury) reduces schedule_b taxable_interest_net", () => {
+test("box12 (ABP treasury) reduces schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box3: 100, box12: 20 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 80);
 });
 
-Deno.test("box13 (ABP tax-exempt) reduces f1040 line2a — net = box8 - box13", () => {
+test("box13 (ABP tax-exempt) reduces f1040 line2a — net = box8 - box13", () => {
   const result = compute([minimalItem({ box8: 100, box13: 15 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 85);
   assertEquals(
@@ -535,7 +536,7 @@ Deno.test("box13 (ABP tax-exempt) reduces f1040 line2a — net = box8 - box13", 
   );
 });
 
-Deno.test("box13 = box8: line2a is zero, no f1040 line2a output", () => {
+test("box13 = box8: line2a is zero, no f1040 line2a output", () => {
   const result = compute([minimalItem({ box8: 100, box13: 100 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, undefined);
 });
@@ -544,26 +545,26 @@ Deno.test("box13 = box8: line2a is zero, no f1040 line2a output", () => {
 // 3. Net Taxable Interest Calculation
 // ---------------------------------------------------------------------------
 
-Deno.test("nominee_interest reduces schedule_b taxable_interest_net", () => {
+test("nominee_interest reduces schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, nominee_interest: 40 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 60);
 });
 
-Deno.test("accrued_interest_paid reduces schedule_b taxable_interest_net", () => {
+test("accrued_interest_paid reduces schedule_b taxable_interest_net", () => {
   const result = compute([
     minimalItem({ box1: 100, accrued_interest_paid: 10 }),
   ]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 90);
 });
 
-Deno.test("non_taxable_oid_adjustment reduces schedule_b taxable_interest_net", () => {
+test("non_taxable_oid_adjustment reduces schedule_b taxable_interest_net", () => {
   const result = compute([
     minimalItem({ box1: 100, non_taxable_oid_adjustment: 8 }),
   ]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 92);
 });
 
-Deno.test("1099-INT keeps reported interest and adjustment categories for Schedule B", () => {
+test("1099-INT keeps reported interest and adjustment categories for Schedule B", () => {
   const result = compute([minimalItem({
     payer_name: "Bond Bank",
     box1: 2_000,
@@ -584,7 +585,7 @@ Deno.test("1099-INT keeps reported interest and adjustment categories for Schedu
   });
 });
 
-Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustment (with election)", () => {
+test("combined reductions: box1 - box11 - nominee - accrued - oid adjustment (with election)", () => {
   // 200 - 20 - 15 - 10 - 5 = 150
   const result = compute([
     minimalItem({
@@ -603,7 +604,7 @@ Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustmen
 // 4. Aggregation — Multiple Payers
 // ---------------------------------------------------------------------------
 
-Deno.test("multiple payers — box1 produces one schedule_b output per payer", () => {
+test("multiple payers — box1 produces one schedule_b output per payer", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box1: 100 }),
     minimalItem({ payer_name: "Bank B", box1: 150 }),
@@ -617,7 +618,7 @@ Deno.test("multiple payers — box1 produces one schedule_b output per payer", (
   assertEquals(total, 250);
 });
 
-Deno.test("multiple payers — box2 summed to single schedule1 output", () => {
+test("multiple payers — box2 summed to single schedule1 output", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box2: 25 }),
     minimalItem({ payer_name: "Bank B", box2: 50 }),
@@ -628,7 +629,7 @@ Deno.test("multiple payers — box2 summed to single schedule1 output", () => {
   );
 });
 
-Deno.test("multiple payers — box3 included in each schedule_b net", () => {
+test("multiple payers — box3 included in each schedule_b net", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box3: 60 }),
     minimalItem({ payer_name: "Bank B", box3: 80 }),
@@ -642,7 +643,7 @@ Deno.test("multiple payers — box3 included in each schedule_b net", () => {
   assertEquals(total, 140);
 });
 
-Deno.test("multiple payers — box4 withholding summed to single f1040 output", () => {
+test("multiple payers — box4 withholding summed to single f1040 output", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box4: 10 }),
     minimalItem({ payer_name: "Bank B", box4: 20 }),
@@ -650,7 +651,7 @@ Deno.test("multiple payers — box4 withholding summed to single f1040 output", 
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 30);
 });
 
-Deno.test("multiple payers — box8 summed to single f1040 line2a output", () => {
+test("multiple payers — box8 summed to single f1040 line2a output", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box8: 200 }),
     minimalItem({ payer_name: "Bank B", box8: 300 }),
@@ -658,7 +659,7 @@ Deno.test("multiple payers — box8 summed to single f1040 line2a output", () =>
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 500);
 });
 
-Deno.test("multiple payers — box9 summed to single form6251 output", () => {
+test("multiple payers — box9 summed to single form6251 output", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box8: 100, box9: 50 }),
     minimalItem({ payer_name: "Bank B", box8: 100, box9: 75 }),
@@ -666,7 +667,7 @@ Deno.test("multiple payers — box9 summed to single form6251 output", () => {
   assertEquals(fieldsOf(result.outputs, form6251)?.line2g_pab_interest, 125);
 });
 
-Deno.test("multiple payers — box13 reductions accumulate across payers", () => {
+test("multiple payers — box13 reductions accumulate across payers", () => {
   // Bank A: 100 - 10 = 90; Bank B: 100 - 15 = 85; combined f1040 line2a = 175
   const result = compute([
     minimalItem({ payer_name: "Bank A", box8: 100, box13: 10 }),
@@ -675,7 +676,7 @@ Deno.test("multiple payers — box13 reductions accumulate across payers", () =>
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 175);
 });
 
-Deno.test("multiple payers — nominee_interest deductions reduce each schedule_b net", () => {
+test("multiple payers — nominee_interest deductions reduce each schedule_b net", () => {
   const result = compute([
     minimalItem({ payer_name: "Bank A", box1: 100, nominee_interest: 25 }),
     minimalItem({ payer_name: "Bank B", box1: 100, nominee_interest: 40 }),
@@ -693,7 +694,7 @@ Deno.test("multiple payers — nominee_interest deductions reduce each schedule_
 // 5. Foreign tax source facts for Form 1116
 // ---------------------------------------------------------------------------
 
-Deno.test("box6 at $300 still routes to Form 1116 without an election", () => {
+test("box6 at $300 still routes to Form 1116 without an election", () => {
   const result = compute([taxedInterest(300, 500)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -702,7 +703,7 @@ Deno.test("box6 at $300 still routes to Form 1116 without an election", () => {
   );
 });
 
-Deno.test("box6 above $300 routes to Form 1116", () => {
+test("box6 above $300 routes to Form 1116", () => {
   const result = compute([taxedInterest(350, 500)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -711,7 +712,7 @@ Deno.test("box6 above $300 routes to Form 1116", () => {
   );
 });
 
-Deno.test("box6 at $600 still routes to Form 1116 without an election", () => {
+test("box6 at $600 still routes to Form 1116 without an election", () => {
   const result = compute([taxedInterest(600, 1000)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -720,7 +721,7 @@ Deno.test("box6 at $600 still routes to Form 1116 without an election", () => {
   );
 });
 
-Deno.test("box6 above $600 routes to Form 1116", () => {
+test("box6 above $600 routes to Form 1116", () => {
   const result = compute([taxedInterest(650, 1000)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -729,7 +730,7 @@ Deno.test("box6 above $600 routes to Form 1116", () => {
   );
 });
 
-Deno.test("foreign tax cannot assume the whole 1099-INT box 1 is foreign source", () => {
+test("foreign tax cannot assume the whole 1099-INT box 1 is foreign source", () => {
   assertThrows(
     () => compute([minimalItem({ box1: 500, box6: 50 })]),
     Error,
@@ -741,13 +742,13 @@ Deno.test("foreign tax cannot assume the whole 1099-INT box 1 is foreign source"
 // 6. Informational / no-op fields
 // ---------------------------------------------------------------------------
 
-Deno.test("box5 (TCJA-suspended investment expenses) does not add output", () => {
+test("box5 (TCJA-suspended investment expenses) does not add output", () => {
   const without = compute([minimalItem({ box1: 100 })]);
   const withBox5 = compute([minimalItem({ box1: 100, box5: 100 })]);
   assertEquals(withBox5.outputs.length, without.outputs.length);
 });
 
-Deno.test("box14, box15, box16, box17 (state fields) do not add federal outputs", () => {
+test("box14, box15, box16, box17 (state fields) do not add federal outputs", () => {
   const without = compute([minimalItem({ box1: 100 })]);
   const withState = compute([
     minimalItem({
@@ -761,7 +762,7 @@ Deno.test("box14, box15, box16, box17 (state fields) do not add federal outputs"
   assertEquals(withState.outputs.length, without.outputs.length);
 });
 
-Deno.test("box7 (foreign country name string) does not change output count", () => {
+test("box7 (foreign country name string) does not change output count", () => {
   const without = compute([taxedInterest(50, 100, { box7: undefined })]);
   const withCountry = compute([taxedInterest(50, 100)]);
   assertEquals(withCountry.outputs.length, without.outputs.length);
@@ -771,15 +772,15 @@ Deno.test("box7 (foreign country name string) does not change output count", () 
 // 7. Hard Validation Rules
 // ---------------------------------------------------------------------------
 
-Deno.test("hard block: box9 > box8 throws (box9 is a subset of box8)", () => {
+test("hard block: box9 > box8 throws (box9 is a subset of box8)", () => {
   assertThrows(() => compute([minimalItem({ box8: 80, box9: 100 })]), Error);
 });
 
-Deno.test("hard block: box13 > box8 throws (bond premium on tax-exempt cannot exceed interest)", () => {
+test("hard block: box13 > box8 throws (bond premium on tax-exempt cannot exceed interest)", () => {
   assertThrows(() => compute([minimalItem({ box8: 50, box13: 100 })]), Error);
 });
 
-Deno.test("hard block: seller_financed + missing SSN throws", () => {
+test("hard block: seller_financed + missing SSN throws", () => {
   assertThrows(
     () =>
       compute([
@@ -794,7 +795,7 @@ Deno.test("hard block: seller_financed + missing SSN throws", () => {
   );
 });
 
-Deno.test("hard block: seller_financed + missing buyer address throws", () => {
+test("hard block: seller_financed + missing buyer address throws", () => {
   assertThrows(
     () =>
       compute([
@@ -813,18 +814,18 @@ Deno.test("hard block: seller_financed + missing buyer address throws", () => {
 // 8. Edge Cases
 // ---------------------------------------------------------------------------
 
-Deno.test("box4 backup withholding with zero box1 still routes to f1040 line25b", () => {
+test("box4 backup withholding with zero box1 still routes to f1040 line25b", () => {
   const result = compute([minimalItem({ box1: 0, box4: 50 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 50);
 });
 
-Deno.test("box8 tax-exempt interest and box1 taxable interest route to different nodes", () => {
+test("box8 tax-exempt interest and box1 taxable interest route to different nodes", () => {
   const result = compute([minimalItem({ box1: 100, box8: 500 })]);
   assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 500);
 });
 
-Deno.test("box10 = 0 does not change schedule_b net vs baseline", () => {
+test("box10 = 0 does not change schedule_b net vs baseline", () => {
   const baseline = compute([minimalItem({ box1: 100 })]);
   const withZero = compute([minimalItem({ box1: 100, box10: 0 })]);
   assertEquals(
@@ -837,7 +838,7 @@ Deno.test("box10 = 0 does not change schedule_b net vs baseline", () => {
 // 9. Smoke Test
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: two payers with multiple boxes — all expected outputs present", () => {
+test("smoke: two payers with multiple boxes — all expected outputs present", () => {
   // Payer A: box1=500, box3=200, box4=75, box6=100, box8=300, box9=50 (box8>=50)
   // Payer B: box1=600, box2=25, box4=50, box6=150, box8=100, box9=100, box13=50
   // Both payers have verified foreign-source interest; no shortcut election.
@@ -913,7 +914,7 @@ Deno.test("smoke: two payers with multiple boxes — all expected outputs presen
 // Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
 // ---------------------------------------------------------------------------
 
-Deno.test("Form 1116 uses verified foreign-source interest, not the whole box 1", () => {
+test("Form 1116 uses verified foreign-source interest, not the whole box 1", () => {
   const result = compute([taxedInterest(500, 600, { box1: 1000 })]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -922,7 +923,7 @@ Deno.test("Form 1116 uses verified foreign-source interest, not the whole box 1"
   );
 });
 
-Deno.test("Form 1116 carries 1099 tax kind, method, and country", () => {
+test("Form 1116 carries 1099 tax kind, method, and country", () => {
   const result = compute([taxedInterest(500, 1000)]);
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
@@ -941,7 +942,7 @@ Deno.test("Form 1116 carries 1099 tax kind, method, and country", () => {
   );
 });
 
-Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
+test("only payers that withheld foreign tax contribute foreign_income", () => {
   const result = compute([
     taxedInterest(500, 1000, { payer_name: "FOREIGN BANK" }),
     minimalItem({ payer_name: "DOMESTIC BANK", box1: 4000 }),

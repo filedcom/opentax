@@ -1,3 +1,5 @@
+import { test as bunTest } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -23,15 +25,10 @@ const cases = [
   { id: "mixed-thirty-one", count: 31, credit: 100, mixed: true },
 ];
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM3800_PART_V_EVIDENCE");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM3800_PART_V_EVIDENCE;
 }
 for (const test of cases) {
-  Deno.test(`Form 3800 complete Part V inventory: ${test.id}`, async () => {
+  bunTest(`Form 3800 complete Part V inventory: ${test.id}`, async () => {
     const input = fixture(test);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -192,10 +189,10 @@ for (const test of cases) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${test.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${test.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${test.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${test.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${test.id}.json`,
         JSON.stringify(
           {

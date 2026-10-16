@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { w2gPayerCopyFixture } from "../../../../domains/income/other/w2g_payer_copy.fixture.ts";
 import {
   assertEquals,
@@ -27,7 +30,7 @@ const xsd = new URL(
 ).pathname;
 const xsdAvailable = (() => {
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
     return true;
   } catch {
     return false;
@@ -112,14 +115,11 @@ const directNewMarketsReviewIds = new Set([
 ]);
 
 for (const fixture of pdfReviewFixtures) {
-  Deno.test({
-    name: fixture.id === "single-form461-schedule-c-excess-business-loss"
+  test.skipIf(!xsdAvailable)(fixture.id === "single-form461-schedule-c-excess-business-loss"
       ? `filled-PDF source ${fixture.id} keeps the sourced loss and blocks unsupported QBI carryforward export`
       : directNewMarketsReviewIds.has(fixture.id)
       ? `filled-PDF source ${fixture.id} blocks unauthenticated direct Form 8874 export`
-      : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
-    ignore: !xsdAvailable,
-    async fn() {
+      : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`, async () => {
       const result = f1040_2025.executeReturn({ ...fixture.inputs });
       if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
         assertEquals(result.diagnostics.length, 1);
@@ -1602,10 +1602,10 @@ for (const fixture of pdfReviewFixtures) {
       if (fixture.id.startsWith("single-ira-late-")) {
         assertEquals(xml.includes("synthetic-"), false);
       }
-      const path = await Deno.makeTempFile({ suffix: ".xml" });
+      const path = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(path, xml);
-        const checked = await new Deno.Command("xmllint", {
+        await fs.writeFile(path, xml);
+        const checked = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, path],
           stdout: "piped",
           stderr: "piped",
@@ -1616,17 +1616,12 @@ for (const fixture of pdfReviewFixtures) {
           `${fixture.id}: ${new TextDecoder().decode(checked.stderr)}`,
         );
       } finally {
-        await Deno.remove(path);
+        await sys.remove(path);
       }
-    },
-  });
+    });
 }
 
-Deno.test({
-  name:
-    "two Form 8814 child gains retain two native copies and one TY2025 Schedule D total",
-  ignore: !xsdAvailable,
-  async fn() {
+test.skipIf(!xsdAvailable)("two Form 8814 child gains retain two native copies and one TY2025 Schedule D total", async () => {
     const fixture = pdfReviewFixtures.find((item) =>
       item.id === "single-form8814-child-gain-with-schedule-d"
     );
@@ -1657,17 +1652,16 @@ Deno.test({
       xml,
       "<CapitalGainDistributionsAmt>358</CapitalGainDistributionsAmt>",
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
-  },
-});
+  });

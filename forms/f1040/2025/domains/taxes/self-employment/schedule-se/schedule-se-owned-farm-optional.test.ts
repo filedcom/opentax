@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -13,9 +16,9 @@ const single = pdfReviewFixtures.find((f) => f.id === "single-schedule-c")!;
 const joint = pdfReviewFixtures.find((f) =>
   f.id === "joint-form8995a-patron-farm"
 )!;
-Deno.test("optional farm sources retain actual profits and owner gross-income QBI allocation in full XSD/PDF", async () => {
+test("optional farm sources retain actual profits and owner gross-income QBI allocation in full XSD/PDF", async () => {
   const root = ".state/research/2026-10-06-owned-farm-optional";
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   for (const row of optionalFarmCases) {
     const inputs = optionalFarmInputs(single, joint, row);
     const r = f1040_2025.executeReturn(inputs);
@@ -61,7 +64,7 @@ Deno.test("optional farm sources retain actual profits and owner gross-income QB
       (xml.match(/<IRS1040ScheduleSE\b/g) ?? []).length,
       owned.instances.length,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -85,16 +88,16 @@ Deno.test("optional farm sources retain actual profits and owner gross-income QB
         .length,
       0,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}-inputs.json`,
       JSON.stringify(inputs, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}-pending.json`,
       JSON.stringify(r.pending, null, 2),
     );
-    await Deno.writeTextFile(`${root}/${row.id}-return.xml`, xml);
-    await Deno.writeFile(`${root}/${row.id}-return.pdf`, bytes);
+    await fs.writeFile(`${root}/${row.id}-return.xml`, xml);
+    await fs.writeFile(`${root}/${row.id}-return.pdf`, bytes);
     console.log(JSON.stringify({
       id: row.id,
       pages: pdf.getPageCount(),
@@ -107,7 +110,7 @@ Deno.test("optional farm sources retain actual profits and owner gross-income QB
   }
 });
 
-Deno.test("optional farm source and allocation conflicts reject native and direct PDF", async () => {
+test("optional farm source and allocation conflicts reject native and direct PDF", async () => {
   const result = f1040_2025.executeReturn(
     optionalFarmInputs(single, joint, optionalFarmCases[2]),
   );
@@ -165,7 +168,7 @@ Deno.test("optional farm source and allocation conflicts reject native and direc
     await assertRejects(() => buildPdfBytes(copy, joint.filer));
   }
 });
-Deno.test("optional farm gross and net eligibility use combined source farms, not source-provided earnings", async () => {
+test("optional farm gross and net eligibility use combined source farms, not source-provided earnings", async () => {
   const inputs = optionalFarmInputs(single, joint, optionalFarmCases[7]);
   inputs.schedule_f.schedule_fs[0].line16_feed = 10861 - 7840;
   const result = f1040_2025.executeReturn(inputs);

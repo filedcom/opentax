@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { educator_expenses, type EducatorExpensesInput } from "./index.ts";
 import { FilingStatus } from "../../../../types.ts";
@@ -13,7 +14,7 @@ function compute(input: EducatorExpensesInput) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("educator_expenses.inputSchema: valid single educator passes", () => {
+test("educator_expenses.inputSchema: valid single educator passes", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: 400,
     filing_status: FilingStatus.Single,
@@ -21,7 +22,7 @@ Deno.test("educator_expenses.inputSchema: valid single educator passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("educator_expenses.inputSchema: valid MFJ with two educators passes", () => {
+test("educator_expenses.inputSchema: valid MFJ with two educators passes", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: 350,
     educator2_expenses: 250,
@@ -30,7 +31,7 @@ Deno.test("educator_expenses.inputSchema: valid MFJ with two educators passes", 
   assertEquals(parsed.success, true);
 });
 
-Deno.test("educator_expenses.inputSchema: negative educator1_expenses fails", () => {
+test("educator_expenses.inputSchema: negative educator1_expenses fails", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: -50,
     filing_status: FilingStatus.Single,
@@ -38,7 +39,7 @@ Deno.test("educator_expenses.inputSchema: negative educator1_expenses fails", ()
   assertEquals(parsed.success, false);
 });
 
-Deno.test("educator_expenses.inputSchema: negative educator2_expenses fails", () => {
+test("educator_expenses.inputSchema: negative educator2_expenses fails", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: 200,
     educator2_expenses: -100,
@@ -47,7 +48,7 @@ Deno.test("educator_expenses.inputSchema: negative educator2_expenses fails", ()
   assertEquals(parsed.success, false);
 });
 
-Deno.test("educator_expenses.inputSchema: invalid filing_status fails", () => {
+test("educator_expenses.inputSchema: invalid filing_status fails", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: 200,
     filing_status: "INVALID",
@@ -55,7 +56,7 @@ Deno.test("educator_expenses.inputSchema: invalid filing_status fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("educator_expenses.inputSchema: educator2_expenses optional for non-MFJ", () => {
+test("educator_expenses.inputSchema: educator2_expenses optional for non-MFJ", () => {
   const parsed = educator_expenses.inputSchema.safeParse({
     educator1_expenses: 300,
     filing_status: FilingStatus.HOH,
@@ -67,31 +68,31 @@ Deno.test("educator_expenses.inputSchema: educator2_expenses optional for non-MF
 // 2. Single Filer — $300 Per-Educator Cap
 // =============================================================================
 
-Deno.test("educator_expenses.compute: single filer expenses below $300 — passes through", () => {
+test("educator_expenses.compute: single filer expenses below $300 — passes through", () => {
   const result = compute({ educator1_expenses: 200, filing_status: FilingStatus.Single });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 200);
 });
 
-Deno.test("educator_expenses.compute: single filer expenses at exactly $300 — passes through", () => {
+test("educator_expenses.compute: single filer expenses at exactly $300 — passes through", () => {
   const result = compute({ educator1_expenses: 300, filing_status: FilingStatus.Single });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 300);
 });
 
-Deno.test("educator_expenses.compute: single filer expenses above $300 — capped at 300", () => {
+test("educator_expenses.compute: single filer expenses above $300 — capped at 300", () => {
   const result = compute({ educator1_expenses: 500, filing_status: FilingStatus.Single });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 300);
 });
 
-Deno.test("educator_expenses.compute: HOH filer — capped at $300", () => {
+test("educator_expenses.compute: HOH filer — capped at $300", () => {
   const result = compute({ educator1_expenses: 400, filing_status: FilingStatus.HOH });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 300);
 });
 
-Deno.test("educator_expenses.compute: MFS filer — capped at $300", () => {
+test("educator_expenses.compute: MFS filer — capped at $300", () => {
   const result = compute({ educator1_expenses: 400, filing_status: FilingStatus.MFS });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 300);
@@ -101,7 +102,7 @@ Deno.test("educator_expenses.compute: MFS filer — capped at $300", () => {
 // 3. MFJ — $600 Total Cap, $300 Per Educator
 // =============================================================================
 
-Deno.test("educator_expenses.compute: MFJ both educators below $300 — sum passes through", () => {
+test("educator_expenses.compute: MFJ both educators below $300 — sum passes through", () => {
   const result = compute({
     educator1_expenses: 200,
     educator2_expenses: 150,
@@ -111,7 +112,7 @@ Deno.test("educator_expenses.compute: MFJ both educators below $300 — sum pass
   assertEquals(fields.line11_educator_expenses, 350);
 });
 
-Deno.test("educator_expenses.compute: MFJ each educator at $300 — total is $600", () => {
+test("educator_expenses.compute: MFJ each educator at $300 — total is $600", () => {
   const result = compute({
     educator1_expenses: 300,
     educator2_expenses: 300,
@@ -121,7 +122,7 @@ Deno.test("educator_expenses.compute: MFJ each educator at $300 — total is $60
   assertEquals(fields.line11_educator_expenses, 600);
 });
 
-Deno.test("educator_expenses.compute: MFJ educator1 above $300 — per-educator cap applied", () => {
+test("educator_expenses.compute: MFJ educator1 above $300 — per-educator cap applied", () => {
   const result = compute({
     educator1_expenses: 500,
     educator2_expenses: 200,
@@ -132,7 +133,7 @@ Deno.test("educator_expenses.compute: MFJ educator1 above $300 — per-educator 
   assertEquals(fields.line11_educator_expenses, 500);
 });
 
-Deno.test("educator_expenses.compute: MFJ both above $300 — each capped at $300, total $600", () => {
+test("educator_expenses.compute: MFJ both above $300 — each capped at $300, total $600", () => {
   const result = compute({
     educator1_expenses: 800,
     educator2_expenses: 700,
@@ -142,7 +143,7 @@ Deno.test("educator_expenses.compute: MFJ both above $300 — each capped at $30
   assertEquals(fields.line11_educator_expenses, 600);
 });
 
-Deno.test("educator_expenses.compute: MFJ only educator1 — educator2 omitted, capped at $300", () => {
+test("educator_expenses.compute: MFJ only educator1 — educator2 omitted, capped at $300", () => {
   const result = compute({
     educator1_expenses: 400,
     filing_status: FilingStatus.MFJ,
@@ -156,13 +157,13 @@ Deno.test("educator_expenses.compute: MFJ only educator1 — educator2 omitted, 
 // 4. AGI Aggregator Routing
 // =============================================================================
 
-Deno.test("educator_expenses.compute: routes to agi_aggregator with correct amount", () => {
+test("educator_expenses.compute: routes to agi_aggregator with correct amount", () => {
   const result = compute({ educator1_expenses: 250, filing_status: FilingStatus.Single });
   const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line11_educator_expenses, 250);
 });
 
-Deno.test("educator_expenses.compute: MFJ agi_aggregator receives capped total", () => {
+test("educator_expenses.compute: MFJ agi_aggregator receives capped total", () => {
   const result = compute({
     educator1_expenses: 400,
     educator2_expenses: 400,
@@ -176,12 +177,12 @@ Deno.test("educator_expenses.compute: MFJ agi_aggregator receives capped total",
 // 5. Zero / No Output
 // =============================================================================
 
-Deno.test("educator_expenses.compute: zero expenses — no outputs", () => {
+test("educator_expenses.compute: zero expenses — no outputs", () => {
   const result = compute({ educator1_expenses: 0, filing_status: FilingStatus.Single });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("educator_expenses.compute: both zero expenses MFJ — no outputs", () => {
+test("educator_expenses.compute: both zero expenses MFJ — no outputs", () => {
   const result = compute({
     educator1_expenses: 0,
     educator2_expenses: 0,
@@ -194,13 +195,13 @@ Deno.test("educator_expenses.compute: both zero expenses MFJ — no outputs", ()
 // 6. Output Count
 // =============================================================================
 
-Deno.test("educator_expenses.compute: only one schedule1 output emitted", () => {
+test("educator_expenses.compute: only one schedule1 output emitted", () => {
   const result = compute({ educator1_expenses: 200, filing_status: FilingStatus.Single });
   const s1Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1");
   assertEquals(s1Outputs.length, 1);
 });
 
-Deno.test("educator_expenses.compute: only one agi_aggregator output emitted", () => {
+test("educator_expenses.compute: only one agi_aggregator output emitted", () => {
   const result = compute({ educator1_expenses: 200, filing_status: FilingStatus.Single });
   const agiOutputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "agi_aggregator");
   assertEquals(agiOutputs.length, 1);
@@ -210,7 +211,7 @@ Deno.test("educator_expenses.compute: only one agi_aggregator output emitted", (
 // 7. QSS Filing Status
 // =============================================================================
 
-Deno.test("educator_expenses.compute: QSS filer — capped at $300", () => {
+test("educator_expenses.compute: QSS filer — capped at $300", () => {
   const result = compute({ educator1_expenses: 400, filing_status: FilingStatus.QSS });
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line11_educator_expenses, 300);
@@ -220,7 +221,7 @@ Deno.test("educator_expenses.compute: QSS filer — capped at $300", () => {
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("educator_expenses.compute: smoke test — MFJ both educators at cap", () => {
+test("educator_expenses.compute: smoke test — MFJ both educators at cap", () => {
   const result = compute({
     educator1_expenses: 300,
     educator2_expenses: 300,

@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../scripts/support/sys.ts";
 import { basename, dirname, join, relative } from "@std/path";
 import { z } from "zod";
 import { catalog } from "../catalog.ts";
@@ -162,7 +164,7 @@ async function parseFile<T>(
   name: string,
   schema: z.ZodType<T>,
 ): Promise<{ raw: unknown; parsed: T }> {
-  const raw = JSON.parse(await Deno.readTextFile(join(directory, name)));
+  const raw = JSON.parse(await fs.readFile(join(directory, name), "utf8"));
   try {
     return { raw, parsed: schema.parse(raw) };
   } catch (error) {
@@ -218,7 +220,7 @@ export async function inspectBenchmarkCases(
   const problems: CaseProblem[] = [];
   async function visit(directory: string): Promise<void> {
     const entries = [];
-    for await (const entry of Deno.readDir(directory)) entries.push(entry);
+    for await (const entry of sys.readDir(directory)) entries.push(entry);
     entries.sort((a, b) => a.name.localeCompare(b.name));
     if (
       entries.some((entry) =>
@@ -273,10 +275,10 @@ export type CaseBaseline = z.infer<typeof caseBaselineSchema>;
 export async function readCaseBaseline(repo: string): Promise<CaseBaseline> {
   try {
     return caseBaselineSchema.parse(
-      JSON.parse(await Deno.readTextFile(join(repo, CASE_BASELINE_PATH))),
+      JSON.parse(await fs.readFile(join(repo, CASE_BASELINE_PATH), "utf8")),
     );
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return [];
+    if (sys.isNotFound(error)) return [];
     throw error;
   }
 }
@@ -316,7 +318,7 @@ export function applyCaseBaseline(
 }
 
 export function checkedCommandOutput(
-  result: Deno.CommandOutput,
+  result: sys.CommandOutput,
   label: string,
 ): string {
   if (!result.success || result.code !== 0) {
@@ -333,7 +335,7 @@ export async function benchmarkTax(
   taxDirectory: string,
   args: string[],
 ): Promise<string> {
-  const result = await new Deno.Command("deno", {
+  const result = await new sys.Command("deno", {
     args: [
       "run",
       "--allow-read",

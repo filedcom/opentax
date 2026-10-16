@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
@@ -115,7 +116,7 @@ function pairedPriorExcessCase(bothOwners = false) {
   return { source, forms, pending, context };
 }
 
-Deno.test("paired owner prior HSA excess reaches Form 8889 and owner Form 5329 native/PDF", () => {
+test("paired owner prior HSA excess reaches Form 8889 and owner Form 5329 native/PDF", () => {
   const { forms, pending, context } = pairedPriorExcessCase();
   assertEquals(forms[0]?.print_line13_deduction, 4_300);
   assertEquals(forms[1]?.print_line13_deduction, 1_000);
@@ -130,7 +131,7 @@ Deno.test("paired owner prior HSA excess reaches Form 8889 and owner Form 5329 n
   );
 });
 
-Deno.test("both paired HSA owners carry independently reviewed 2024 excess through native and PDF", () => {
+test("both paired HSA owners carry independently reviewed 2024 excess through native and PDF", () => {
   const { forms, pending, context } = pairedPriorExcessCase(true);
   assertEquals(pending.form5329.owner_forms.map((form) => form.owner), [
     "T",
@@ -209,7 +210,7 @@ Deno.test("both paired HSA owners carry independently reviewed 2024 excess throu
   );
 });
 
-Deno.test("paired prior excess rejects swapped 2024 owner and changed Form 5329 tax", () => {
+test("paired prior excess rejects swapped 2024 owner and changed Form 5329 tax", () => {
   const { source, forms, pending, context } = pairedPriorExcessCase();
   assertThrows(
     () =>

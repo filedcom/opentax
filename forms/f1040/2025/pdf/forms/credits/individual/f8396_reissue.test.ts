@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8396 } from "../../../../../nodes/intermediate/forms/credits/individual/form8396/calculation.ts";
 import { reissuedMccSource } from "../../../../../nodes/intermediate/forms/credits/individual/form8396/reissued_mcc.fixture.ts";
@@ -10,14 +11,14 @@ const fields = {
   credit_limit_worksheet_line2: 0,
 };
 
-Deno.test("Form 8396 PDF projects the ceiling-limited reissued certificate", () => {
+test("Form 8396 PDF projects the ceiling-limited reissued certificate", () => {
   const projected = form8396Pdf.projectFields?.(fields, {});
   assertEquals(projected?.line2_percent, "18");
   assertEquals(projected?.line3, 800);
   assertEquals(projected?.line9, 800);
 });
 
-Deno.test("Form 8396 PDF rejects a reissued credit above its source ceiling", () => {
+test("Form 8396 PDF rejects a reissued credit above its source ceiling", () => {
   assertThrows(
     () => form8396Pdf.projectFields?.({ ...fields, line3: 900 }, {}),
     Error,

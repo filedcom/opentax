@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -45,8 +48,8 @@ const expected = {
   },
 };
 
-Deno.test("two and three issued beneficiary copies reconcile death exclusion, estate tax, NUA and annuity through full XML and PDF", async () => {
-  await Deno.mkdir(dir, { recursive: true });
+test("two and three issued beneficiary copies reconcile death exclusion, estate tax, NUA and annuity through full XML and PDF", async () => {
+  await fs.mkdir(dir, { recursive: true });
   for (const count of [2, 3] as const) {
     const input = partialBeneficiaryMultipleAllocationInputs(
       count,
@@ -106,22 +109,22 @@ Deno.test("two and three issued beneficiary copies reconcile death exclusion, es
     const id = `beneficiary-${count}-death-estate`;
     const xmlPath = `${dir}/${id}.xml`;
     const pdfPath = `${dir}/${id}.pdf`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify({ input, pending }, null, 2),
     );
-    await Deno.writeTextFile(xmlPath, xml);
+    await fs.writeFile(xmlPath, xml);
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(pdfPath, pdf);
+    await fs.writeFile(pdfPath, pdf);
     const document = await PDFDocument.load(pdf);
     assertEquals(document.getPageCount(), 3);
     assertEquals(document.getForm().getFields().length, 0);
-    const schema = await new Deno.Command("xmllint", {
+    const schema = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
     assertEquals(schema.code, 0, new TextDecoder().decode(schema.stderr));
-    const extracted = await new Deno.Command("pdftotext", {
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -132,7 +135,7 @@ Deno.test("two and three issued beneficiary copies reconcile death exclusion, es
       assertStringIncludes(text, String(value));
     }
     assertStringIncludes(text, "MRD");
-    await Deno.writeTextFile(`${dir}/${id}.txt`, text);
+    await fs.writeFile(`${dir}/${id}.txt`, text);
     for (
       const mutate of [
         (q: any) => q.f1099r.f1099rs.pop(),
@@ -170,7 +173,7 @@ Deno.test("two and three issued beneficiary copies reconcile death exclusion, es
   }
 });
 
-Deno.test("death and estate group rejects incomplete beneficiary, owner, source and allocation facts before graph", () => {
+test("death and estate group rejects incomplete beneficiary, owner, source and allocation facts before graph", () => {
   const base = partialBeneficiaryMultipleAllocationInputs(
     3,
     "death-estate-nua-annuity",
@@ -238,7 +241,7 @@ const allocationTax: Record<AllocationRoute, readonly [number, number]> = {
   "death-estate": [1535, 3235],
 };
 
-Deno.test("all sourced death-only, estate-only, and combined two/three-copy routes retain native and PDF 4972", async () => {
+test("all sourced death-only, estate-only, and combined two/three-copy routes retain native and PDF 4972", async () => {
   for (
     const [route, taxes] of Object.entries(allocationTax) as [
       AllocationRoute,
@@ -269,17 +272,17 @@ Deno.test("all sourced death-only, estate-only, and combined two/three-copy rout
       const id = `beneficiary-${count}-${route}`;
       const xmlPath = `${dir}/${id}.xml`;
       const pdfPath = `${dir}/${id}.pdf`;
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${id}.json`,
         JSON.stringify({ input, pending }, null, 2),
       );
-      await Deno.writeTextFile(xmlPath, xml);
+      await fs.writeFile(xmlPath, xml);
       const pdf = await prepared.renderPdf();
-      await Deno.writeFile(pdfPath, pdf);
+      await fs.writeFile(pdfPath, pdf);
       const document = await PDFDocument.load(pdf);
       assertEquals(document.getPageCount(), 3, id);
       assertEquals(document.getForm().getFields().length, 0, id);
-      const schema = await new Deno.Command("xmllint", {
+      const schema = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -288,7 +291,7 @@ Deno.test("all sourced death-only, estate-only, and combined two/three-copy rout
         0,
         `${id}: ${new TextDecoder().decode(schema.stderr)}`,
       );
-      const extracted = await new Deno.Command("pdftotext", {
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-layout", pdfPath, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -297,7 +300,7 @@ Deno.test("all sourced death-only, estate-only, and combined two/three-copy rout
       const text = new TextDecoder().decode(extracted.stdout);
       assertStringIncludes(text, String(tax));
       assertStringIncludes(text, "MRD");
-      await Deno.writeTextFile(`${dir}/${id}.txt`, text);
+      await fs.writeFile(`${dir}/${id}.txt`, text);
     }
   }
 });

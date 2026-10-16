@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertNotEquals,
@@ -17,7 +20,7 @@ import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 import { form8814Pdf } from "./f8814.ts";
 import { scheduleDPdf } from "./schedule_d.ts";
 
-Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b", async () => {
+test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-form8814-child-gain-with-schedule-d"
   );
@@ -47,7 +50,7 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
   assertEquals(projected?.print_form8814_line7a_included, true);
   assertEquals(projected?.print_form8814_line7b_amount, 179);
 
-  const temp = await Deno.makeTempDir();
+  const temp = await sys.makeTempDir();
   try {
     const marked = await fillFormPdf(
       irs1040Pdf,
@@ -64,15 +67,15 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
     if (!marked || !unmarked) throw new Error("Form 1040 was not rendered");
     const markedPath = join(temp, "marked.pdf");
     const unmarkedPath = join(temp, "unmarked.pdf");
-    await Deno.writeFile(markedPath, marked);
-    await Deno.writeFile(unmarkedPath, unmarked);
-    const printed = await new Deno.Command("pdftotext", {
+    await fs.writeFile(markedPath, marked);
+    await fs.writeFile(unmarkedPath, unmarked);
+    const printed = await new sys.Command("pdftotext", {
       args: ["-f", "1", "-l", "1", "-layout", markedPath, "-"],
     }).output();
     if (!printed.success) throw new Error("Form 1040 text extraction failed");
     assertStringIncludes(new TextDecoder().decode(printed.stdout), "179");
     const raster = async (path: string, prefix: string) => {
-      const run = await new Deno.Command("pdftoppm", {
+      const run = await new sys.Command("pdftoppm", {
         args: [
           "-f",
           "1",
@@ -95,17 +98,17 @@ Deno.test("Form 8814 gain through Schedule D marks and amounts Form 1040 line 7b
         ],
       }).output();
       if (!run.success) throw new Error("Form 1040 raster failed");
-      return Deno.readFile(`${prefix}.png`);
+      return sys.readBytes(`${prefix}.png`);
     };
     const markedBox = await raster(markedPath, join(temp, "marked-box"));
     const blankBox = await raster(unmarkedPath, join(temp, "blank-box"));
     assertNotEquals(markedBox, blankBox);
   } finally {
-    await Deno.remove(temp, { recursive: true });
+    await sys.remove(temp, { recursive: true });
   }
 });
 
-Deno.test("two elected children retain two Form 8814 copies and one Schedule D gain total", async () => {
+test("two elected children retain two Form 8814 copies and one Schedule D gain total", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-form8814-child-gain-with-schedule-d"
   );
@@ -165,7 +168,7 @@ Deno.test("two elected children retain two Form 8814 copies and one Schedule D g
   assertEquals(scheduleD?.print_line13_cap_gain_distrib, 358);
   assertEquals(scheduleD?.print_form8814_line13_note, "Form 8814 $358");
 
-  const temp = await Deno.makeTempDir();
+  const temp = await sys.makeTempDir();
   try {
     const pageOrigins: PdfPageOrigin[] = [];
     const pdf = await buildPdfBytes(
@@ -187,8 +190,8 @@ Deno.test("two elected children retain two Form 8814 copies and one Schedule D g
       true,
     );
     const path = join(temp, "two-children.pdf");
-    await Deno.writeFile(path, pdf);
-    const printed = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, pdf);
+    const printed = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
     }).output();
     assertEquals(printed.code, 0, new TextDecoder().decode(printed.stderr));
@@ -213,6 +216,6 @@ Deno.test("two elected children retain two Form 8814 copies and one Schedule D g
     assertStringIncludes(scheduleDText, "$358");
     assertEquals(/\b13\s+358\b/.test(scheduleDText), true);
   } finally {
-    await Deno.remove(temp, { recursive: true });
+    await sys.remove(temp, { recursive: true });
   }
 });

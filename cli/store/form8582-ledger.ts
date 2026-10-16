@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { join } from "@std/path";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
@@ -112,9 +114,9 @@ export async function archiveForm8582LedgerCandidate(
     throw new Error("Form 8582 ledger return ID differs from directory");
   }
   const root = join(returnPath, "form8582-ledger-candidates");
-  await Deno.mkdir(root, { recursive: true, mode: 0o700 });
+  await fs.mkdir(root, { recursive: true, mode: 0o700 });
   const staging = join(root, `.staging-${crypto.randomUUID()}`);
-  await Deno.mkdir(staging, { mode: 0o700 });
+  await fs.mkdir(staging, { mode: 0o700 });
   try {
     await writeSynced(join(staging, "source.json"), data.sourceBytes);
     await writeSynced(join(staging, "form8582.xml"), data.xmlBytes);
@@ -122,9 +124,9 @@ export async function archiveForm8582LedgerCandidate(
       join(staging, "record.json"),
       encoder.encode(JSON.stringify(data.record, null, 2)),
     );
-    await Deno.rename(staging, join(root, data.record.recordId));
+    await fs.rename(staging, join(root, data.record.recordId));
   } catch (error) {
-    await Deno.remove(staging, { recursive: true }).catch(() => {});
+    await sys.remove(staging, { recursive: true }).catch(() => {});
     throw error;
   }
   return data.record;
@@ -143,10 +145,10 @@ export async function readForm8582LedgerCandidate(
   const returnPath = join(baseDir, returnId);
   const path = join(returnPath, "form8582-ledger-candidates", recordId);
   const stored = candidateSchema.parse(
-    JSON.parse(await Deno.readTextFile(join(path, "record.json"))),
+    JSON.parse(await fs.readFile(join(path, "record.json"), "utf8")),
   );
-  const sourceBytes = await Deno.readFile(join(path, "source.json"));
-  const xmlBytes = await Deno.readFile(join(path, "form8582.xml"));
+  const sourceBytes = await sys.readBytes(join(path, "source.json"));
+  const xmlBytes = await sys.readBytes(join(path, "form8582.xml"));
   const expected = await calculateCandidate(
     returnPath,
     recordId,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as MefFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -159,7 +160,7 @@ function project(pending: unknown = finalPending) {
   );
 }
 
-Deno.test("Form 8839 staged native and PDF values use one reconciled credit", () => {
+test("Form 8839 staged native and PDF values use one reconciled credit", () => {
   const result = project();
   assertStringIncludes(result.xml, "<AdoptionFinalInd>X</AdoptionFinalInd>");
   assertStringIncludes(
@@ -177,7 +178,7 @@ Deno.test("Form 8839 staged native and PDF values use one reconciled credit", ()
   assertEquals(result.pdfFields.noPhaseout, true);
 });
 
-Deno.test("Form 8839 staged income phaseout settles credit before native/PDF projection", () => {
+test("Form 8839 staged income phaseout settles credit before native/PDF projection", () => {
   const phasedSink = {
     ...sinkInput,
     line1a_wages: 269_190,
@@ -258,7 +259,7 @@ Deno.test("Form 8839 staged income phaseout settles credit before native/PDF pro
   );
 });
 
-Deno.test("Form 8839 staged native/PDF candidate nets a documented private reimbursement", () => {
+test("Form 8839 staged native/PDF candidate nets a documented private reimbursement", () => {
   const reimbursement = {
     source_document_id: "private-reimbursement-1",
     document_sha256: "d".repeat(64),
@@ -333,7 +334,7 @@ Deno.test("Form 8839 staged native/PDF candidate nets a documented private reimb
   );
 });
 
-Deno.test("Form 8839 staged projection rejects altered final return, source or missing pending", () => {
+test("Form 8839 staged projection rejects altered final return, source or missing pending", () => {
   for (
     const pending of [
       {

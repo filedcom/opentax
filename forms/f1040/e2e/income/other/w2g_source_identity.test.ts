@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -24,7 +25,7 @@ const source = {
   box4_federal_withheld: 0,
 };
 
-Deno.test("identified non-withheld W-2G reaches the full return and resists payer-copy tampering", async () => {
+test("identified non-withheld W-2G reaches the full return and resists payer-copy tampering", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

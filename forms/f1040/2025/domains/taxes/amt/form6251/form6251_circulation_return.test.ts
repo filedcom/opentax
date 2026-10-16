@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -12,7 +13,7 @@ for (
     [10000, 10000, true, 440000, 93750],
   ] as const
 ) {
-  Deno.test(`circulation expense reaches complete return: ${regular}/${amt}/${elected}`, async () => {
+  test(`circulation expense reaches complete return: ${regular}/${amt}/${elected}`, async () => {
     const result = f1040_2025.executeReturn(
       circulationInputs(regular, amt, elected),
     );

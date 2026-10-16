@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form8844 } from "./f8844.ts";
 
@@ -48,7 +49,7 @@ const context = {
   documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
 };
 
-Deno.test("Form 8844 native XML carries sourced line 1, line 2 and line 4", () => {
+test("Form 8844 native XML carries sourced line 1, line 2 and line 4", () => {
   const xml = form8844.build(source, context);
   assertStringIncludes(
     xml,
@@ -64,7 +65,7 @@ Deno.test("Form 8844 native XML carries sourced line 1, line 2 and line 4", () =
   );
 });
 
-Deno.test("Form 8844 refuses Form 3800 or Schedule C tampering", () => {
+test("Form 8844 refuses Form 3800 or Schedule C tampering", () => {
   assertThrows(
     () =>
       form8844.build(source, {

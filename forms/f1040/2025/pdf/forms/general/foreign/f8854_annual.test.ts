@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { annualInputSchema } from "../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
@@ -12,7 +13,7 @@ import { fillFormPdf } from "../../../builder.ts";
 const source = form8854AnnualNoEvent;
 const pending = { f8854_annual: source };
 
-Deno.test("annual Form 8854 prior-property source reaches native and matching PDF Part III", () => {
+test("annual Form 8854 prior-property source reaches native and matching PDF Part III", () => {
   const parsed = annualInputSchema.parse(source);
   assertEquals(
     f8854Annual.compute({ taxYear: 2025, formType: "f1040" }, parsed).outputs,
@@ -39,7 +40,7 @@ Deno.test("annual Form 8854 prior-property source reaches native and matching PD
   );
 });
 
-Deno.test("annual Form 8854 PDF retains Part I and its two Part III pages", async () => {
+test("annual Form 8854 PDF retains Part I and its two Part III pages", async () => {
   const [fields] = form8854AnnualPdf.instances!(
     source,
     form8992Filer,
@@ -65,7 +66,7 @@ Deno.test("annual Form 8854 PDF retains Part I and its two Part III pages", asyn
   assertEquals(packet.getPageCount(), 3);
 });
 
-Deno.test("annual Form 8854 PDF rejects prior-ledger tampering and 2025 events", () => {
+test("annual Form 8854 PDF rejects prior-ledger tampering and 2025 events", () => {
   assertThrows(
     () => form8854AnnualPdf.instances!(source, form8992Filer),
     Error,

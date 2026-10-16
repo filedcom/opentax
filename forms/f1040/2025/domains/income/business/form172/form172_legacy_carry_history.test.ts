@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172CarryHistory } from "./form172_carry_history.ts";
 import { stageForm172CarryHistorySource } from "./form172_carry_history_source.ts";
@@ -121,7 +122,7 @@ function history(start = 2018) {
     ),
   };
 }
-Deno.test("Form 172 historical carry avoids post-2017 deduction limit for pre-2018 origin", () => {
+test("Form 172 historical carry avoids post-2017 deduction limit for pre-2018 origin", () => {
   const h = history();
   h.annual_reviews[6] = annual(2024, 100000);
   const r = calculateForm172CarryHistory(legacy(), h);
@@ -134,7 +135,7 @@ Deno.test("Form 172 historical carry avoids post-2017 deduction limit for pre-20
   assertEquals(a.absorbed, 100000);
   assertEquals(r.openingLoss, 0);
 });
-Deno.test("Form 172 oldest historical origin requires every year through the final carry year", () => {
+test("Form 172 oldest historical origin requires every year through the final carry year", () => {
   const o = legacy();
   o.tax_year = 2005;
   o.reviewed_form1040.tax_year = 2005;
@@ -150,7 +151,7 @@ Deno.test("Form 172 oldest historical origin requires every year through the fin
     })
   );
 });
-Deno.test("Form 172 historical general carryback requires two reviewed preceding years", () => {
+test("Form 172 historical general carryback requires two reviewed preceding years", () => {
   const h = {
     ...history(),
     carry_policy: {
@@ -188,7 +189,7 @@ Deno.test("Form 172 historical general carryback requires two reviewed preceding
     calculateForm172CarryHistory(legacy(), { ...h, carry_policy: policy })
   );
 });
-Deno.test("Form 172 historical annual DPAD is restored for modified-income absorption", () => {
+test("Form 172 historical annual DPAD is restored for modified-income absorption", () => {
   const a = annual(2016, 17000);
   a.section199_deduction!.amount = 3000;
   const r = calculateForm172CarryAbsorption(legacy(), {
@@ -206,7 +207,7 @@ Deno.test("Form 172 historical annual DPAD is restored for modified-income absor
     })
   );
 });
-Deno.test("Form 172 historical earlier deductions reduce current capacity without changing origin", () => {
+test("Form 172 historical earlier deductions reduce current capacity without changing origin", () => {
   const a = annual(2024, 80000);
   const r = calculateForm172CarryAbsorption(legacy(), {
     ...a,
@@ -226,7 +227,7 @@ Deno.test("Form 172 historical earlier deductions reduce current capacity withou
   assertEquals(r.absorbed, 80000);
   assertEquals(r.remainingLoss, 20000);
 });
-Deno.test("Form 172 historical carry source replays exact origin and annual package bytes", async () => {
+test("Form 172 historical carry source replays exact origin and annual package bytes", async () => {
   const o = legacy(), h = history();
   h.annual_reviews[6] = annual(2024, 25000);
   const docs = [{
@@ -283,7 +284,7 @@ function whbaaFixture(year = 2009, period: 3 | 4 | 5 = 5) {
   };
   return { o, h, years };
 }
-Deno.test("Form172 WHBAA reviewed histories require complete elected3 4 or5 year carrybacks", () => {
+test("Form172 WHBAA reviewed histories require complete elected3 4 or5 year carrybacks", () => {
   for (const year of [2008, 2009]) {
     for (const period of [3, 4, 5] as const) {
       const { o, h, years } = whbaaFixture(year, period);
@@ -301,7 +302,7 @@ Deno.test("Form172 WHBAA reviewed histories require complete elected3 4 or5 year
     }
   }
 });
-Deno.test("Form172 WHBAA Notice2010-58 A13 separates fifth-year25000 deduction from30000 absorption", () => {
+test("Form172 WHBAA Notice2010-58 A13 separates fifth-year25000 deduction from30000 absorption", () => {
   const { o, h } = whbaaFixture();
   h.annual_reviews[0] = annual(2004, 50000);
   h.annual_reviews[0].agi = 60000;
@@ -313,7 +314,7 @@ Deno.test("Form172 WHBAA Notice2010-58 A13 separates fifth-year25000 deduction f
   assertEquals(r.annualResults[1].openingLoss, 70000);
   assertEquals(r.openingLoss, 70000);
 });
-Deno.test("Form172 WHBAA Notice2010-58 A12 applies fifty percent after earlier actual deductions", () => {
+test("Form172 WHBAA Notice2010-58 A12 applies fifty percent after earlier actual deductions", () => {
   const { o, h } = whbaaFixture(2008);
   o.inventory.noncapital_deductions[0].amount = 510000;
   o.reviewed_form1040.agi = -503000;
@@ -345,7 +346,7 @@ Deno.test("Form172 WHBAA Notice2010-58 A12 applies fifty percent after earlier a
   assertEquals(r.annualResults[0].absorbed, 50000);
   assertEquals(r.openingLoss, 450000);
 });
-Deno.test("Form172 WHBAA rejects wrong origin period incomplete years and injected fifth-year scope", () => {
+test("Form172 WHBAA rejects wrong origin period incomplete years and injected fifth-year scope", () => {
   const { o, h } = whbaaFixture();
   const wrong = structuredClone(o);
   wrong.tax_year = 2017;
@@ -387,7 +388,7 @@ Deno.test("Form172 WHBAA rejects wrong origin period incomplete years and inject
     })
   );
 });
-Deno.test("Form172 retained WHBAA history bytes recompute fifth-year absorption and next-year openings", async () => {
+test("Form172 retained WHBAA history bytes recompute fifth-year absorption and next-year openings", async () => {
   const { o, h } = whbaaFixture();
   h.annual_reviews[0] = annual(2004, 50000);
   h.annual_reviews[0].agi = 60000;

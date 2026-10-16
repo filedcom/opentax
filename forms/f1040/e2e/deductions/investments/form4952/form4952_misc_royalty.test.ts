@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -5,7 +6,7 @@ import { registry } from "../../../../2025/registry.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("one 1099-MISC box 2 passthrough merges with its Schedule E property without duplicate income", () => {
+test("one 1099-MISC box 2 passthrough merges with its Schedule E property without duplicate income", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: "single",

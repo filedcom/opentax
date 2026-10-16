@@ -1,3 +1,4 @@
+import * as sys from "../support/sys.ts";
 import { join } from "@std/path";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
@@ -16,7 +17,7 @@ export async function reviewTemplateCacheEvidence(
   cacheDirectory: string,
   registeredUrls: readonly string[],
 ): Promise<ReviewTemplateCacheEntry[]> {
-  const directoryInfo = await Deno.lstat(cacheDirectory);
+  const directoryInfo = await sys.lstat(cacheDirectory);
   if (!directoryInfo.isDirectory || directoryInfo.isSymlink) {
     throw new Error("IRS template cache is not a regular directory");
   }
@@ -40,17 +41,17 @@ export async function reviewTemplateCacheEvidence(
     sourceByFileName.set(fileName, sourceUrl);
   }
   const evidence: ReviewTemplateCacheEntry[] = [];
-  for await (const entry of Deno.readDir(cacheDirectory)) {
+  for await (const entry of sys.readDir(cacheDirectory)) {
     const sourceUrl = sourceByFileName.get(entry.name);
     if (!sourceUrl || !entry.isFile || entry.isSymlink) {
       throw new Error("Unexpected IRS template cache entry: " + entry.name);
     }
     const cachePath = join(cacheDirectory, entry.name);
-    const fileInfo = await Deno.lstat(cachePath);
+    const fileInfo = await sys.lstat(cachePath);
     if (!fileInfo.isFile || fileInfo.isSymlink) {
       throw new Error("Unexpected IRS template cache entry: " + entry.name);
     }
-    const bytes = await Deno.readFile(cachePath);
+    const bytes = await sys.readBytes(cachePath);
     if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") {
       throw new Error("IRS template cache entry is not a PDF: " + entry.name);
     }

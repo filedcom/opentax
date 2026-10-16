@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -40,11 +43,7 @@ for (
     5942,
   ], ["zero-use", 90000, 0]] as const
 ) {
-  Deno.test({
-    name: `TY2025 Form8941 owned farm ${name}: source, full XSD and PDF`,
-    sanitizeResources: false,
-    sanitizeOps: false,
-    async fn() {
+  test(`TY2025 Form8941 owned farm ${name}: source, full XSD and PDF`, async () => {
       const input = form8941FarmShopInputs(agriculture);
       const result = execute(plan, registry, input, {
         taxYear: 2025,
@@ -88,18 +87,18 @@ for (
         bundle.xml,
         "<SumSmllrAmtAndCreditForHIPAmt>14614</SumSmllrAmtAndCreditForHIPAmt>",
       );
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         dir + name + ".json",
         JSON.stringify({ input, lines, pending: result.pending }, null, 2),
       );
-      await Deno.writeTextFile(dir + name + ".xml", bundle.xml);
-      const valid = await new Deno.Command("xmllint", {
+      await fs.writeFile(dir + name + ".xml", bundle.xml);
+      const valid = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, dir + name + ".xml"],
         stderr: "piped",
       }).output();
       assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-      await Deno.writeFile(
+      await fs.writeFile(
         dir + name + ".pdf",
         await buildPdfBytes(
           bundle.pending,
@@ -108,24 +107,23 @@ for (
           bundle,
         ),
       );
-      const extraction = await new Deno.Command("pdftotext", {
+      const extraction = await new sys.Command("pdftotext", {
         args: ["-layout", dir + name + ".pdf", "-"],
         stdout: "piped",
       }).output();
       assertEquals(extraction.code, 0);
       const packet = new TextDecoder().decode(extraction.stdout);
-      await Deno.writeTextFile(dir + name + ".txt", packet);
+      await fs.writeFile(dir + name + ".txt", packet);
       assertStringIncludes(packet, "Small Employer Health Insurance");
       assertStringIncludes(packet, "25631");
       assertEquals(
         packet.split("\f").filter((p) => p.trim()).length,
         name === "zero-use" ? 22 : 23,
       );
-    },
-  });
+    });
 }
 
-Deno.test("TY2025 Form8941 farm source conflicts reject before native/PDF", () => {
+test("TY2025 Form8941 farm source conflicts reject before native/PDF", () => {
   const input = form8941FarmShopInputs();
   const result = execute(plan, registry, input, {
     taxYear: 2025,
@@ -205,12 +203,7 @@ Deno.test("TY2025 Form8941 farm source conflicts reject before native/PDF", () =
   );
 });
 
-Deno.test({
-  name:
-    "TY2025 owned farm SHOP and certified WOTC: distinct Form3800 rows, both full deductions, full XSD and PDF",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 owned farm SHOP and certified WOTC: distinct Form3800 rows, both full deductions, full XSD and PDF", async () => {
     const base = pdfReviewFixtures.find((row) =>
       row.id === "owned-farm-wotc-single-below"
     )!;
@@ -257,28 +250,28 @@ Deno.test({
         .totalCredit,
       14614,
     );
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       dir + "shop-wotc.json",
       JSON.stringify({ input, pending: p }, null, 2),
     );
-    await Deno.writeTextFile(dir + "shop-wotc.xml", bundle.xml);
-    const valid = await new Deno.Command("xmllint", {
+    await fs.writeFile(dir + "shop-wotc.xml", bundle.xml);
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "shop-wotc.xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       dir + "shop-wotc.pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-    const extraction = await new Deno.Command("pdftotext", {
+    const extraction = await new sys.Command("pdftotext", {
       args: ["-layout", dir + "shop-wotc.pdf", "-"],
       stdout: "piped",
     }).output();
     assertEquals(extraction.code, 0);
     const packet = new TextDecoder().decode(extraction.stdout);
-    await Deno.writeTextFile(dir + "shop-wotc.txt", packet);
+    await fs.writeFile(dir + "shop-wotc.txt", packet);
     assertStringIncludes(
       packet,
       "Credit for Small Employer Health Insurance Premiums",
@@ -286,5 +279,4 @@ Deno.test({
     assertStringIncludes(packet, "Work Opportunity Credit");
     assertStringIncludes(packet, "25631");
     assert(packet.split("\f").filter((page) => page.trim()).length >= 24);
-  },
-});
+  });

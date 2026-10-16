@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import {
   mixedTransferCases,
@@ -9,7 +11,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
 
 for (const c of mixedTransferCases) {
-  Deno.test(`Form 8835 mixed transfer limits and allocations: ${c.id}`, async () => {
+  test(`Form 8835 mixed transfer limits and allocations: ${c.id}`, async () => {
     const { input, attachments, expected } = await mixedTransferFixture(c);
     const execution = f1040_2025.executeReturn(input);
     assertEquals(execution.diagnostics, []);
@@ -85,13 +87,13 @@ for (const c of mixedTransferCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_MIXED_TRANSFER_EVIDENCE");
+      root = process.env.FORM8835_MIXED_TRANSFER_EVIDENCE;
     } catch { /* Optional private evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -107,7 +109,7 @@ for (const c of mixedTransferCases) {
         ),
       );
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
     }
   });

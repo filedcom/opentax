@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -150,16 +152,11 @@ const cases = [
 ];
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM4797_PRIOR_HISTORY_DIR");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM4797_PRIOR_HISTORY_DIR;
 }
 
 for (const entry of cases) {
-  Deno.test(`Form 4797 reviewed history public calculation and export boundary: ${entry.id}`, async () => {
+  test(`Form 4797 reviewed history public calculation and export boundary: ${entry.id}`, async () => {
     const inputs = sourceInputs(entry.history, entry.net, entry.mixed);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -194,8 +191,8 @@ for (const entry of cases) {
     );
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -222,7 +219,7 @@ for (const entry of cases) {
   });
 }
 
-Deno.test("Form 4797 public prior history rejects another taxpayer and mismatched joint owners", () => {
+test("Form 4797 public prior history rejects another taxpayer and mismatched joint owners", () => {
   const inputs = sourceInputs(irsSection1231History, 2000);
   assertThrows(
     () =>
@@ -248,7 +245,7 @@ Deno.test("Form 4797 public prior history rejects another taxpayer and mismatche
   );
 });
 
-Deno.test("Form 4797 public history cannot inject a prior-loss balance or stale year source", () => {
+test("Form 4797 public history cannot inject a prior-loss balance or stale year source", () => {
   const inputs = sourceInputs(irsSection1231History, 2000);
   assertThrows(() =>
     f1040_2025.executeReturn({
@@ -270,7 +267,7 @@ Deno.test("Form 4797 public history cannot inject a prior-loss balance or stale 
   );
 });
 
-Deno.test("Form 4797 public history rejects a current loss limited outside the calculation", () => {
+test("Form 4797 public history rejects a current loss limited outside the calculation", () => {
   const result = f1040_2025.executeReturn(sourceInputs({
     ...irsSection1231History,
     current_year_loss_taken_into_account: 1000,

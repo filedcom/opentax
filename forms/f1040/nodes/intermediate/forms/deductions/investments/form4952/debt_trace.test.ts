@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form4952DirectDebtTraceSchema,
@@ -34,7 +35,7 @@ const trace = form4952DirectDebtTraceSchema.parse({
   }],
 });
 
-Deno.test("Form 4952 direct debt trace matches one taxable purchase and paid interest", () => {
+test("Form 4952 direct debt trace matches one taxable purchase and paid interest", () => {
   assertEquals(
     reconcileForm4952DirectDebtTrace(
       trace,
@@ -45,7 +46,7 @@ Deno.test("Form 4952 direct debt trace matches one taxable purchase and paid int
   );
 });
 
-Deno.test("Form 4952 direct debt trace rejects other uses, source drift, and duplicate payments", () => {
+test("Form 4952 direct debt trace rejects other uses, source drift, and duplicate payments", () => {
   const form = { investment_interest_expense: 400 };
   const reject = (input: unknown, fields: unknown = form, tin = "123456789") =>
     assertThrows(
@@ -72,7 +73,7 @@ Deno.test("Form 4952 direct debt trace rejects other uses, source drift, and dup
   });
 });
 
-Deno.test("Form4952 retains exact principal and paid cents without floating-point drift", () => {
+test("Form4952 retains exact principal and paid cents without floating-point drift", () => {
   const source = {
     ...trace,
     borrowed_principal: 10000.49,

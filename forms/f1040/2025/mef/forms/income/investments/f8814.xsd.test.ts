@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { calculateForm8814 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
 import { schedule_b as scheduleBNode } from "../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/index.ts";
@@ -15,7 +18,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -31,12 +34,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name: "XSD: 2025 Form 8814 child election, 1040 indicator, and line 16",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 2025 Form 8814 child election, 1040 indicator, and line 16", async () => {
   const pending: MefFormsPending = {
     f1040: {
       filing_status: "single",
@@ -78,26 +76,21 @@ Deno.test({
   }, filer);
   assertStringIncludes(xml, "<IRS8814");
   assertStringIncludes(xml, "<Form8814Ind");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8814 child interest statement links only the adjusted child",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8814 child interest statement links only the adjusted child", async () => {
   const child = {
     child_name: "Alex Rivera",
     child_name_control: "RIVE",
@@ -239,16 +232,16 @@ Deno.test({
     xml,
     "<ForeignTrustQuestionInd>true</ForeignTrustQuestionInd>",
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

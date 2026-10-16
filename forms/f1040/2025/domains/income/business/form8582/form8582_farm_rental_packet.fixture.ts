@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -125,12 +126,12 @@ export async function verifyFarmRentalPacket(
   );
   assertEquals((await PDFDocument.load(bytes)).getPageCount(), origins.length);
   assertEquals(origins.filter((page) => page.formKey === "form8582").length, 3);
-  const root = Deno.env.get("OPENTAX_FORM8582_FARM_PROOF_DIR");
+  const root = process.env.OPENTAX_FORM8582_FARM_PROOF_DIR;
   if (root) {
-    await Deno.mkdir(root, { recursive: true });
-    await Deno.writeFile(`${root}/${id}.pdf`, bytes);
-    await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(root, { recursive: true });
+    await fs.writeFile(`${root}/${id}.pdf`, bytes);
+    await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${root}/${id}.json`,
       JSON.stringify(
         {

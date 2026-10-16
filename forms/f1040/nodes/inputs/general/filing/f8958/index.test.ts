@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../types.ts";
 import {
@@ -63,7 +64,7 @@ const source = {
   }],
 };
 
-Deno.test("f8958 stages item-level allocations with exact A=B+C arithmetic", () => {
+test("f8958 stages item-level allocations with exact A=B+C arithmetic", () => {
   const result = prepareF8958Allocation(source);
   assertEquals(result.totalsByLine.find((item) => item.line === 1), {
     line: Form8958Line.Wages,
@@ -78,7 +79,7 @@ Deno.test("f8958 stages item-level allocations with exact A=B+C arithmetic", () 
   assertEquals(outputs[0].fields.f8958_allocation, source);
 });
 
-Deno.test("f8958 rejects old amount-only and empty allocation shapes", () => {
+test("f8958 rejects old amount-only and empty allocation shapes", () => {
   for (
     const input of [
       {},
@@ -90,7 +91,7 @@ Deno.test("f8958 rejects old amount-only and empty allocation shapes", () => {
   }
 });
 
-Deno.test("f8958 rejects mismatched sums, unjustified splits and duplicate rows", () => {
+test("f8958 rejects mismatched sums, unjustified splits and duplicate rows", () => {
   const wage = source.rows[0];
   for (
     const rows of [
@@ -105,7 +106,7 @@ Deno.test("f8958 rejects mismatched sums, unjustified splits and duplicate rows"
   }
 });
 
-Deno.test("f8958 rejects inferred equal spouse self-employment tax", () => {
+test("f8958 rejects inferred equal spouse self-employment tax", () => {
   assertThrows(() =>
     prepareF8958Allocation({
       ...source,
@@ -117,7 +118,7 @@ Deno.test("f8958 rejects inferred equal spouse self-employment tax", () => {
   );
 });
 
-Deno.test("f8958 rejects more than 40 rows for one native line", () => {
+test("f8958 rejects more than 40 rows for one native line", () => {
   assertEquals(
     inputSchema.safeParse({
       ...source,
@@ -130,7 +131,7 @@ Deno.test("f8958 rejects more than 40 rows for one native line", () => {
   );
 });
 
-Deno.test("f8958 requires distinct MFS spouses and a 2025 period", () => {
+test("f8958 requires distinct MFS spouses and a 2025 period", () => {
   assertEquals(
     inputSchema.safeParse({
       ...source,

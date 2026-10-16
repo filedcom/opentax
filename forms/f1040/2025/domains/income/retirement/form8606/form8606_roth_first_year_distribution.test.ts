@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -77,7 +78,7 @@ function filedReturn() {
   return normalizeForm8606TestPending(result.pending);
 }
 
-Deno.test("first-year Roth contribution and code J distribution print Form 8606 Part III with 1040/5329 joins", () => {
+test("first-year Roth contribution and code J distribution print Form 8606 Part III with 1040/5329 joins", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assertEquals(pending.form8606.print_roth_line19_distributions, 7_000);
@@ -113,7 +114,7 @@ Deno.test("first-year Roth contribution and code J distribution print Form 8606 
   assertEquals(pdf.print_owner_ssn, "111223333");
 });
 
-Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finalized return tampering", () => {
+test("first-year Roth Part III rejects source, owner, Form 5329, and finalized return tampering", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { canonicalForm1098CopyDocument } from "../../../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -163,7 +166,7 @@ async function resultFor(
   };
 }
 
-Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports", async () => {
+test("one or more sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports", async () => {
   const { pending, filer } = await resultFor(200_000);
   assertEquals(pending.schedule_a?.line_8a_mortgage_interest_1098, 3_000);
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
@@ -173,17 +176,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const filled = await buildPdfBytes(
     bundle.pending,
@@ -192,10 +195,10 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     bundle,
   );
   assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, filled);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, filled);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -206,7 +209,7 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const atLimit = await resultFor(250_000);
@@ -249,17 +252,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const reviewedXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const reviewedXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(reviewedXmlPath, reviewedBundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(reviewedXmlPath, reviewedBundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, reviewedXmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(reviewedXmlPath);
+    await sys.remove(reviewedXmlPath);
   }
   const reviewedPdf = await buildPdfBytes(
     reviewedBundle.pending,
@@ -292,17 +295,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const oneXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const oneXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(oneXmlPath, oneBundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(oneXmlPath, oneBundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, oneXmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(oneXmlPath);
+    await sys.remove(oneXmlPath);
   }
   const onePdf = await buildPdfBytes(
     oneBundle.pending,
@@ -311,10 +314,10 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     oneBundle,
   );
   assertEquals((await PDFDocument.load(onePdf)).getPageCount(), 3);
-  const onePdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const onePdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(onePdfPath, onePdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(onePdfPath, onePdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", onePdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -325,7 +328,7 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       true,
     );
   } finally {
-    await Deno.remove(onePdfPath);
+    await sys.remove(onePdfPath);
   }
   const oneBelowAverageLimit = await resultFor(
     900_000,
@@ -385,17 +388,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const purchaseXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const purchaseXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(purchaseXmlPath, purchaseBundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(purchaseXmlPath, purchaseBundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, purchaseXmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(purchaseXmlPath);
+    await sys.remove(purchaseXmlPath);
   }
   const purchasePdf = await buildPdfBytes(
     purchaseBundle.pending,
@@ -404,10 +407,10 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     purchaseBundle,
   );
   assertEquals((await PDFDocument.load(purchasePdf)).getPageCount(), 3);
-  const purchasePdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const purchasePdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(purchasePdfPath, purchasePdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(purchasePdfPath, purchasePdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", purchasePdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -418,7 +421,7 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       true,
     );
   } finally {
-    await Deno.remove(purchasePdfPath);
+    await sys.remove(purchasePdfPath);
   }
 
   const purchaseWithExisting = await resultFor(
@@ -476,17 +479,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const multiPropertyXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const multiPropertyXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(multiPropertyXmlPath, multiPropertyBundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(multiPropertyXmlPath, multiPropertyBundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, multiPropertyXmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(multiPropertyXmlPath);
+    await sys.remove(multiPropertyXmlPath);
   }
   const multiPropertyPdf = await buildPdfBytes(
     multiPropertyBundle.pending,
@@ -495,10 +498,10 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     multiPropertyBundle,
   );
   assertEquals((await PDFDocument.load(multiPropertyPdf)).getPageCount(), 3);
-  const multiPropertyPdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const multiPropertyPdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(multiPropertyPdfPath, multiPropertyPdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(multiPropertyPdfPath, multiPropertyPdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", multiPropertyPdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -509,7 +512,7 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       true,
     );
   } finally {
-    await Deno.remove(multiPropertyPdfPath);
+    await sys.remove(multiPropertyPdfPath);
   }
 
   const underLimitPurchaseUnreviewed = await resultFor(
@@ -582,17 +585,17 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     ),
     true,
   );
-  const jointXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const jointXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(jointXmlPath, jointBundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(jointXmlPath, jointBundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, jointXmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(jointXmlPath);
+    await sys.remove(jointXmlPath);
   }
   const jointPdf = await buildPdfBytes(
     jointBundle.pending,
@@ -601,10 +604,10 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     jointBundle,
   );
   assertEquals((await PDFDocument.load(jointPdf)).getPageCount(), 3);
-  const jointPdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const jointPdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(jointPdfPath, jointPdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(jointPdfPath, jointPdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", jointPdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -615,7 +618,7 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
       true,
     );
   } finally {
-    await Deno.remove(jointPdfPath);
+    await sys.remove(jointPdfPath);
   }
 
   const belowAverageLimit = await resultFor(300_000, 1_000, 200_000);

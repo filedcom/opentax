@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../pdf/forms/general/return-assembly/f1040.ts";
@@ -6,7 +7,7 @@ import {
   assertReturnWideArithmetic,
 } from "./return-wide-arithmetic.ts";
 
-Deno.test("Form 1040 export replays retained wage and total-income components", () => {
+test("Form 1040 export replays retained wage and total-income components", () => {
   const income = {
     line1a_wages: 40_000,
     line1b_household_wages: 2_000,
@@ -111,7 +112,7 @@ Deno.test("Form 1040 export replays retained wage and total-income components", 
   );
 });
 
-Deno.test("Form 1040 export rejects malformed income components before line 9 replay", () => {
+test("Form 1040 export rejects malformed income components before line 9 replay", () => {
   for (const invalid of ["500", [250, "250"], Number.NaN]) {
     const fields = {
       line2b_taxable_interest: invalid,
@@ -141,7 +142,7 @@ Deno.test("Form 1040 export rejects malformed income components before line 9 re
   }
 });
 
-Deno.test("Form 1040 export rejects malformed filed subtotals before arithmetic replay", () => {
+test("Form 1040 export rejects malformed filed subtotals before arithmetic replay", () => {
   for (
     const [fields, key] of [
       [
@@ -176,7 +177,7 @@ Deno.test("Form 1040 export rejects malformed filed subtotals before arithmetic 
   }
 });
 
-Deno.test("Form 1040 export rejects negative filed tax and payment amounts", () => {
+test("Form 1040 export rejects negative filed tax and payment amounts", () => {
   for (
     const [fields, key] of [
       [{
@@ -203,7 +204,7 @@ Deno.test("Form 1040 export rejects negative filed tax and payment amounts", () 
   }
 });
 
-Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => {
+test("Form 1040 export replays AGI, deductions, and taxable income", () => {
   const income = {
     line9_total_income: 70_000,
     line10_adjustments: 2_000,
@@ -253,7 +254,7 @@ Deno.test("Form 1040 export replays AGI, deductions, and taxable income", () => 
   });
 });
 
-Deno.test("Form 1040 export replays overpayment and amount owed", () => {
+test("Form 1040 export replays overpayment and amount owed", () => {
   const refund = {
     line24_total_tax: 1_000,
     line33_total_payments: 1_200,
@@ -311,7 +312,7 @@ Deno.test("Form 1040 export replays overpayment and amount owed", () => {
   });
 });
 
-Deno.test("Form 1040 refund and applied amount exhaust the overpayment after penalty", () => {
+test("Form 1040 refund and applied amount exhaust the overpayment after penalty", () => {
   const fields = {
     line24_total_tax: 1_000,
     line33_total_payments: 1_200,
@@ -348,7 +349,7 @@ Deno.test("Form 1040 refund and applied amount exhaust the overpayment after pen
   });
 });
 
-Deno.test("Form 1040 line 33 replays a payment component when zero subtotals are omitted", () => {
+test("Form 1040 line 33 replays a payment component when zero subtotals are omitted", () => {
   const fields = {
     line25a_w2_withheld: 125,
     line33_total_payments: 125,
@@ -397,7 +398,7 @@ const filed = {
   line33_total_payments: 1_890,
 };
 
-Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
+test("Form 1040 native and PDF replay final tax and payment totals", () => {
   const pending = {
     f1040es: {
       payment_q1: 100,
@@ -438,7 +439,7 @@ Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => 
   }
 });
 
-Deno.test("final Form 1040 joins Schedules B, 1, 1-A, 2, and 3 totals", () => {
+test("final Form 1040 joins Schedules B, 1, 1-A, 2, and 3 totals", () => {
   const fields = {
     line2b_taxable_interest: 120,
     line8_additional_income: 300,
@@ -550,7 +551,7 @@ Deno.test("final Form 1040 joins Schedules B, 1, 1-A, 2, and 3 totals", () => {
   );
 });
 
-Deno.test("final Form 1040 rejects malformed attached Schedule totals", () => {
+test("final Form 1040 rejects malformed attached Schedule totals", () => {
   for (
     const [fields, pending, reason] of [
       [
@@ -603,7 +604,7 @@ Deno.test("final Form 1040 rejects malformed attached Schedule totals", () => {
   }
 });
 
-Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
+test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
   const pending = { schedule3: { line15_total: 42.6 } };
   assertReturnScheduleJoins({ line31_additional_payments: 42.6 }, pending);
   assertReturnScheduleJoins({ line31_additional_payments: 43 }, pending);
@@ -618,7 +619,7 @@ Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
   );
 });
 
-Deno.test("full-return Schedule 1 totals replay printed income and adjustments", () => {
+test("full-return Schedule 1 totals replay printed income and adjustments", () => {
   const schedule1 = {
     line3_schedule_c: 100,
     line8a_nol_deduction: 20,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildStartNode } from "../../../../../../2025/return-processing/start.ts";
 import { inputNodes } from "../../../../../../2025/inputs.ts";
@@ -32,7 +33,7 @@ function compute(input: Record<string, unknown>) {
   );
 }
 
-Deno.test("Form 4562 one fully expensed Schedule C asset produces filed lines", () => {
+test("Form 4562 one fully expensed Schedule C asset produces filed lines", () => {
   const result = compute({ asset });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "form4562");
@@ -60,7 +61,7 @@ Deno.test("Form 4562 one fully expensed Schedule C asset produces filed lines", 
   );
 });
 
-Deno.test("Form 4562 taxpayer business-income limit creates next-year carryover", () => {
+test("Form 4562 taxpayer business-income limit creates next-year carryover", () => {
   const result = compute({
     asset: { ...asset, taxpayer_active_business_income: 60_000 },
   });
@@ -76,7 +77,7 @@ Deno.test("Form 4562 taxpayer business-income limit creates next-year carryover"
   assertEquals(result.carryforwards?.section179_disallowed_next_year, 40_000);
 });
 
-Deno.test("Form 4562 refuses missing, residual, or ineligible asset facts", () => {
+test("Form 4562 refuses missing, residual, or ineligible asset facts", () => {
   assertThrows(() => compute({ asset: { ...asset, source_document_ref: "" } }));
   assertThrows(() => compute({ asset: { ...asset, elected_cost: 90_000 } }));
   assertThrows(() => compute({ asset: { ...asset, elected_cost: 110_000 } }));
@@ -96,12 +97,12 @@ Deno.test("Form 4562 refuses missing, residual, or ineligible asset facts", () =
   );
 });
 
-Deno.test("Form 4562 rejects old aggregate-only inputs even beside a valid asset", () => {
+test("Form 4562 rejects old aggregate-only inputs even beside a valid asset", () => {
   assertThrows(() => compute({ section_179_deduction: 10_000 }));
   assertThrows(() => compute({ asset, macrs_gds_basis: 5_000 }));
 });
 
-Deno.test("Form 4562 asset is registered as a public start-node input", () => {
+test("Form 4562 asset is registered as a public start-node input", () => {
   const start = buildStartNode(inputNodes);
   assertEquals(
     start.inputSchema.safeParse({

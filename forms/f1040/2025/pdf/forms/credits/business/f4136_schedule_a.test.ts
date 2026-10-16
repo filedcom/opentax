@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { form4136ScheduleAPdf } from "./f4136_schedule_a.ts";
 
@@ -14,7 +15,7 @@ const business = {
   no_duplicate_excise_claim: true,
 };
 
-Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
+test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
   const names = Object.fromEntries(
     form4136ScheduleAPdf.fields.map((
       field,
@@ -140,7 +141,7 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
 });
 
-Deno.test("Schedule A (Form 4136) keeps aviation vendor lines 8a, 8c, 8d, and 8f on their activity", () => {
+test("Schedule A (Form 4136) keeps aviation vendor lines 8a, 8c, 8d, and 8f on their activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -268,7 +269,7 @@ Deno.test("Schedule A (Form 4136) keeps aviation vendor lines 8a, 8c, 8d, and 8f
   assertEquals(instances[1].line8f_quantity, undefined);
 });
 
-Deno.test("Schedule A (Form 4136) keeps registered card issuer line 13c on its activity", () => {
+test("Schedule A (Form 4136) keeps registered card issuer line 13c on its activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -334,7 +335,7 @@ Deno.test("Schedule A (Form 4136) keeps registered card issuer line 13c on its a
   assertEquals(instances[1].line13c_quantity, undefined);
 });
 
-Deno.test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", () => {
+test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -390,7 +391,7 @@ Deno.test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", (
   assertEquals(instances[1].line7b_quantity, undefined);
 });
 
-Deno.test("Schedule A (Form 4136) keeps vendor bus line 6b on its activity", () => {
+test("Schedule A (Form 4136) keeps vendor bus line 6b on its activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -448,7 +449,7 @@ Deno.test("Schedule A (Form 4136) keeps vendor bus line 6b on its activity", () 
   assertEquals(instances[1].line6b_quantity, undefined);
 });
 
-Deno.test("Schedule A (Form 4136) keeps blender line 15a on its activity", () => {
+test("Schedule A (Form 4136) keeps blender line 15a on its activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -496,7 +497,7 @@ Deno.test("Schedule A (Form 4136) keeps blender line 15a on its activity", () =>
   assertEquals(instances[1].line15a_quantity, undefined);
 });
 
-Deno.test("Schedule A (Form 4136) expands one PDF per business activity", () => {
+test("Schedule A (Form 4136) expands one PDF per business activity", () => {
   const claim = {
     line: "1a",
     unit: "gallons",
@@ -529,7 +530,7 @@ Deno.test("Schedule A (Form 4136) expands one PDF per business activity", () => 
   assertEquals(instances[1].line17_total_dollars, "9");
 });
 
-Deno.test("Schedule A (Form 4136) preserves vendor line 6a on its activity", () => {
+test("Schedule A (Form 4136) preserves vendor line 6a on its activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -76,7 +77,7 @@ function mixedTermCase() {
   return { filed, pending, schedule2Amount };
 }
 
-Deno.test("mixed-term short loss offsets regular long gain that becomes AMT net loss", () => {
+test("mixed-term short loss offsets regular long gain that becomes AMT net loss", () => {
   const { filed, pending, schedule2Amount } = mixedTermCase();
   assertEquals(filed.net_capital_gain, 1_500);
   assertEquals(filed.line2k_disposition, -2_700);
@@ -94,7 +95,7 @@ Deno.test("mixed-term short loss offsets regular long gain that becomes AMT net 
   );
 });
 
-Deno.test("mixed-term gain-to-AMT-loss route rejects altered sources and return", () => {
+test("mixed-term gain-to-AMT-loss route rejects altered sources and return", () => {
   const { filed, pending } = mixedTermCase();
   assertThrows(
     () =>
@@ -159,7 +160,7 @@ Deno.test("mixed-term gain-to-AMT-loss route rejects altered sources and return"
   );
 });
 
-Deno.test("audited short-term losses offset one long-term regular gain that becomes AMT loss", () => {
+test("audited short-term losses offset one long-term regular gain that becomes AMT loss", () => {
   const auditedLots = [
     {
       source_transaction_id: "2025-short-loss-a",

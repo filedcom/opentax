@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -76,7 +77,7 @@ function compute(raw: unknown) {
   );
 }
 
-Deno.test("Form 6251 nets audited short-term gains and losses without creating preferential gain", () => {
+test("Form 6251 nets audited short-term gains and losses without creating preferential gain", () => {
   // Regular Schedule D net: +3,000 - 1,000 = +2,000.
   // AMT Schedule D net: +3,500 - 1,200 = +2,300.
   const result = compute(input);
@@ -99,7 +100,7 @@ Deno.test("Form 6251 nets audited short-term gains and losses without creating p
   );
 });
 
-Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule D refigures", () => {
+test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule D refigures", () => {
   const unsupported: Array<[unknown, string]> = [
     [{ ...input, qualified_dividends: 100 }, "no preferential-rate"],
     [{ ...input, form4952_regular_election: 100 }, "no preferential-rate"],
@@ -143,7 +144,7 @@ Deno.test("Form 6251 short-term mixed-sign net gain rejects unsupported Schedule
   }
 });
 
-Deno.test("Form 6251 short-term mixed-sign rows retain a zero difference", () => {
+test("Form 6251 short-term mixed-sign rows retain a zero difference", () => {
   const result = compute({
     ...input,
     line2k_8949_basis_dispositions: [
@@ -156,7 +157,7 @@ Deno.test("Form 6251 short-term mixed-sign rows retain a zero difference", () =>
   assertEquals(filed?.fields.amti, 200_000);
 });
 
-Deno.test("Form 6251 nets audited long-term gains and losses for AMT Part III", () => {
+test("Form 6251 nets audited long-term gains and losses for AMT Part III", () => {
   const longGain = {
     ...gain,
     source_transaction_id: "long-gain",

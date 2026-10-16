@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { form8936 } from "./f8936.ts";
@@ -39,7 +40,7 @@ function context(line18: number, line6f = 7_500, line6m = 0) {
   };
 }
 
-Deno.test("Form 8936: current/prior MAGI groups and new credit follow 2025 XSD lines", () => {
+test("Form 8936: current/prior MAGI groups and new credit follow 2025 XSD lines", () => {
   const xml = form8936.build(source, context(10_000));
   assertStringIncludes(xml, "<CurrentYrMAGIAmountGrp>");
   assertStringIncludes(
@@ -70,7 +71,7 @@ Deno.test("Form 8936: current/prior MAGI groups and new credit follow 2025 XSD l
   );
 });
 
-Deno.test("Form 8936: commercial credit reaches Part V lines 19 and 21", () => {
+test("Form 8936: commercial credit reaches Part V lines 19 and 21", () => {
   const commercial = {
     ...vehicle,
     credit_kind: "qualified_commercial_clean_vehicle" as const,
@@ -120,7 +121,7 @@ Deno.test("Form 8936: commercial credit reaches Part V lines 19 and 21", () => {
   );
 });
 
-Deno.test("Form 8936: previously owned credit uses Part IV and prior MFJ status code", () => {
+test("Form 8936: previously owned credit uses Part IV and prior MFJ status code", () => {
   const used = {
     ...vehicle,
     credit_kind: "previously_owned_clean_vehicle" as const,
@@ -152,11 +153,11 @@ Deno.test("Form 8936: previously owned credit uses Part IV and prior MFJ status 
   );
 });
 
-Deno.test("Form 8936: empty vehicle input emits no document", () => {
+test("Form 8936: empty vehicle input emits no document", () => {
   assertEquals(form8936.build({ ...source, f8936s: [] }), "");
 });
 
-Deno.test("Form 8936: tax-liability shortage caps line 13 but preserves tentative line 9", () => {
+test("Form 8936: tax-liability shortage caps line 13 but preserves tentative line 9", () => {
   const xml = form8936.build(source, context(5_000, 5_000));
   assertStringIncludes(
     xml,
@@ -172,7 +173,7 @@ Deno.test("Form 8936: tax-liability shortage caps line 13 but preserves tentativ
   );
 });
 
-Deno.test("Form 8936: mismatched Schedule 3 credit stops XML", () => {
+test("Form 8936: mismatched Schedule 3 credit stops XML", () => {
   assertThrows(
     () => form8936.build(source, context(10_000, 5_000)),
     Error,
@@ -180,7 +181,7 @@ Deno.test("Form 8936: mismatched Schedule 3 credit stops XML", () => {
   );
 });
 
-Deno.test("Form 8936: mismatched Form 1040 AGI stops XML", () => {
+test("Form 8936: mismatched Form 1040 AGI stops XML", () => {
   assertThrows(
     () =>
       form8936.build(source, {
@@ -197,7 +198,7 @@ Deno.test("Form 8936: mismatched Form 1040 AGI stops XML", () => {
   );
 });
 
-Deno.test("Form 8936: dealer transfer is not silently serialized as a claimed personal credit", () => {
+test("Form 8936: dealer transfer is not silently serialized as a claimed personal credit", () => {
   const xml = form8936.build({
     ...source,
     f8936s: [{
@@ -210,7 +211,7 @@ Deno.test("Form 8936: dealer transfer is not silently serialized as a claimed pe
   assertEquals(xml.includes("<CrPrsnlUsePartNewCleanVehGrp>"), false);
 });
 
-Deno.test("Form 8936: disqualified dealer transfer requires matching Schedule 2 repayment", () => {
+test("Form 8936: disqualified dealer transfer requires matching Schedule 2 repayment", () => {
   const transferred = {
     ...source,
     current_year_magi: { adjusted_gross_income: 200_000 },
@@ -243,7 +244,7 @@ Deno.test("Form 8936: disqualified dealer transfer requires matching Schedule 2 
   assertStringIncludes(xml, "<IRS8936>");
 });
 
-Deno.test("Form 8936: business-use Part II reconciles to Form 3800", () => {
+test("Form 8936: business-use Part II reconciles to Form 3800", () => {
   const businessSource = {
     ...source,
     f8936s: [{

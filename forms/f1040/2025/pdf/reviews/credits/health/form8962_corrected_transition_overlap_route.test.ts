@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -89,7 +90,7 @@ const inputs = {
   f1095a: policies,
 };
 
-Deno.test("independently corrected transition-month SLCSP reaches Form 8962, return, MeF, and PDF", async () => {
+test("independently corrected transition-month SLCSP reaches Form 8962, return, MeF, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
     taxYear: 2025,
     formType: "f1040",

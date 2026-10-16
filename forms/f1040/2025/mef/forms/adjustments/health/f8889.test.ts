@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { Buffer } from "node:buffer";
@@ -11,7 +12,7 @@ import {
 import { form8889 } from "./f8889.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
 
-Deno.test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF, PDF, and Schedule 1", () => {
+test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF, PDF, and Schedule 1", () => {
   const source = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -126,7 +127,7 @@ Deno.test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF,
   );
 });
 
-Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, PDF, and Form 1040", () => {
+test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, PDF, and Form 1040", () => {
   const retained = (facts: Record<string, unknown>) => {
     const bytes = Buffer.from(JSON.stringify(facts));
     return {
@@ -369,7 +370,7 @@ function buildInvalid(raw: unknown, buildContext: MefBuildContext = context) {
   );
 }
 
-Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16, and 17b amounts", () => {
+test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16, and 17b amounts", () => {
   const source = form8889InputSchema.parse({
     beneficiary_identity: {
       owner: "T",
@@ -459,7 +460,7 @@ Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16,
   );
 });
 
-Deno.test("Form 8889 rollover source reconciles to MeF, PDF, and the return", () => {
+test("Form 8889 rollover source reconciles to MeF, PDF, and the return", () => {
   const source = form8889InputSchema.parse({
     beneficiary_identity: {
       owner: "T",
@@ -558,7 +559,7 @@ Deno.test("Form 8889 rollover source reconciles to MeF, PDF, and the return", ()
   );
 });
 
-Deno.test("Form 8889 emits two owner documents and reconciles the combined deduction", () => {
+test("Form 8889 emits two owner documents and reconciles the combined deduction", () => {
   const source = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -682,7 +683,7 @@ function spouseOnlyCase() {
   return { forms, pending, buildContext };
 }
 
-Deno.test("Form 8889 spouse-only MeF uses spouse identity and reconciled deduction", () => {
+test("Form 8889 spouse-only MeF uses spouse identity and reconciled deduction", () => {
   const { forms, buildContext } = spouseOnlyCase();
   const xml = form8889.build({ forms }, buildContext);
   assertEquals(xml.length, 1);
@@ -698,7 +699,7 @@ Deno.test("Form 8889 spouse-only MeF uses spouse identity and reconciled deducti
   );
 });
 
-Deno.test("Form 8889 spouse-only excess retains a matching spouse Form 5329 source", () => {
+test("Form 8889 spouse-only excess retains a matching spouse Form 5329 source", () => {
   const { buildContext } = spouseOnlyCase();
   const source = {
     beneficiary_identity: {
@@ -747,7 +748,7 @@ Deno.test("Form 8889 spouse-only excess retains a matching spouse Form 5329 sour
   );
 });
 
-Deno.test("Form 8889 omits an empty pending slot", () => {
+test("Form 8889 omits an empty pending slot", () => {
   assertEquals(
     form8889.build({} as Parameters<typeof form8889.build>[0], context),
     [],
@@ -755,7 +756,7 @@ Deno.test("Form 8889 omits an empty pending slot", () => {
   assertThrows(() => buildInvalid({ unrelated: 10 }));
 });
 
-Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => {
+test("Form 8889 rejects raw HSA values without computed form lines", () => {
   assertThrows(
     () => buildInvalid({ taxpayer_hsa_contributions: 3_000 }),
     Error,
@@ -784,7 +785,7 @@ Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => 
   );
 });
 
-Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () => {
+test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () => {
   const result = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form8889InputSchema.parse({
@@ -823,7 +824,7 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
   );
 });
 
-Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10", () => {
+test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10", () => {
   const result = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form8889InputSchema.parse({
@@ -871,7 +872,7 @@ Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10",
   );
 });
 
-Deno.test("Form 8889 source rejects the obsolete spouse allocation field", () => {
+test("Form 8889 source rejects the obsolete spouse allocation field", () => {
   assertThrows(
     () =>
       form8889Node.compute(
@@ -895,7 +896,7 @@ Deno.test("Form 8889 source rejects the obsolete spouse allocation field", () =>
   );
 });
 
-Deno.test("Form 8889 requires the beneficiary SSN for every filed form", () => {
+test("Form 8889 requires the beneficiary SSN for every filed form", () => {
   assertThrows(
     () => buildPrimary({ print_line14a_distributions: 500 }, {}),
     Error,
@@ -903,7 +904,7 @@ Deno.test("Form 8889 requires the beneficiary SSN for every filed form", () => {
   );
 });
 
-Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", () => {
+test("Form 8889 distribution-only filing has no invented HDHP coverage", () => {
   const xml = buildPrimary({
     print_line14a_distributions: 800,
     print_line14c: 800,
@@ -928,7 +929,7 @@ Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", ()
   assertEquals(xml.includes("HDHPFamilyCoverageInd"), false);
 });
 
-Deno.test("Form 8889 serializes ordinary HSA lines in XSD order", () => {
+test("Form 8889 serializes ordinary HSA lines in XSD order", () => {
   const xml = buildPrimary({
     print_line1_coverage: "family",
     print_line2_taxpayer_contributions: 2_000,
@@ -985,7 +986,7 @@ Deno.test("Form 8889 serializes ordinary HSA lines in XSD order", () => {
   assertEquals(xml.includes("HDHPSelfOnlyCoverageInd"), false);
 });
 
-Deno.test("Form 8889 self-only line 1 and explicit zero deduction", () => {
+test("Form 8889 self-only line 1 and explicit zero deduction", () => {
   const xml = buildPrimary({
     print_line1_coverage: "self_only",
     print_line2_taxpayer_contributions: 0,
@@ -1000,7 +1001,7 @@ Deno.test("Form 8889 self-only line 1 and explicit zero deduction", () => {
   assertStringIncludes(xml, "<TotalHSADeductionAmt>0</TotalHSADeductionAmt>");
 });
 
-Deno.test("Form 8889 rejects invalid coverage, exception, and amounts", () => {
+test("Form 8889 rejects invalid coverage, exception, and amounts", () => {
   assertThrows(
     () => buildPrimary({ print_line1_coverage: "both" }),
     Error,

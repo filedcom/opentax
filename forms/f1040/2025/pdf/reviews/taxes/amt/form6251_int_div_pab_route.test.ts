@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
   assert,
@@ -68,7 +69,7 @@ function filed() {
   return { form, pending: buildPending(result.pending) };
 }
 
-Deno.test("one direct bond and one PAB fund reach Form 6251, Schedule 2, Form 1040, native and PDF", async () => {
+test("one direct bond and one PAB fund reach Form 6251, Schedule 2, Form 1040, native and PDF", async () => {
   const { form, pending } = filed();
   const f1040 = pending.f1040 as Record<string, number>;
   const schedule2 = pending.schedule2 as Record<string, number>;
@@ -95,7 +96,7 @@ Deno.test("one direct bond and one PAB fund reach Form 6251, Schedule 2, Form 10
   );
 });
 
-Deno.test("mixed PAB sources reject changed payer, review, amount, return and tax", () => {
+test("mixed PAB sources reject changed payer, review, amount, return and tax", () => {
   const { form, pending } = filed();
   for (
     const changed of [
@@ -181,7 +182,7 @@ function filedWithDirectBondExpense() {
   return { form, pending: buildPending(result.pending) };
 }
 
-Deno.test("direct-bond expense reduces mixed PAB AMT preference but not Form 1040 tax-exempt interest", async () => {
+test("direct-bond expense reduces mixed PAB AMT preference but not Form 1040 tax-exempt interest", async () => {
   const { form, pending } = filedWithDirectBondExpense();
   const f1040 = pending.f1040 as Record<string, number>;
   const schedule2 = pending.schedule2 as Record<string, number>;
@@ -208,7 +209,7 @@ Deno.test("direct-bond expense reduces mixed PAB AMT preference but not Form 104
   );
 });
 
-Deno.test("mixed PAB direct expense rejects altered workpaper and final return", () => {
+test("mixed PAB direct expense rejects altered workpaper and final return", () => {
   const { form, pending } = filedWithDirectBondExpense();
   for (
     const changed of [

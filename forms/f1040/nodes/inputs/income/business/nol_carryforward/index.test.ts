@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { nol_carryforward, NolType } from "./index.ts";
 import { assertAttachmentCoverage } from "../../../../../2025/return-processing/attachment-coverage.ts";
@@ -9,7 +10,7 @@ const loss = {
   nol_type: NolType.POST2017,
 };
 
-Deno.test("NOL: input still rejects an empty loss ledger and negative amount", () => {
+test("NOL: input still rejects an empty loss ledger and negative amount", () => {
   assertEquals(
     nol_carryforward.inputSchema.safeParse({
       nol_carryforwards: [],
@@ -26,7 +27,7 @@ Deno.test("NOL: input still rejects an empty loss ledger and negative amount", (
   );
 });
 
-Deno.test("NOL: asserted current-year income cannot source a Schedule 1 deduction", () => {
+test("NOL: asserted current-year income cannot source a Schedule 1 deduction", () => {
   assertThrows(
     () =>
       nol_carryforward.compute(context, {
@@ -39,7 +40,7 @@ Deno.test("NOL: asserted current-year income cannot source a Schedule 1 deductio
   assertEquals(nol_carryforward.outputNodes.nodeTypes, []);
 });
 
-Deno.test("NOL: a prior-2018 and post-2017 mixture also rejects before AGI", () => {
+test("NOL: a prior-2018 and post-2017 mixture also rejects before AGI", () => {
   assertThrows(
     () =>
       nol_carryforward.compute(context, {
@@ -54,7 +55,7 @@ Deno.test("NOL: a prior-2018 and post-2017 mixture also rejects before AGI", () 
   );
 });
 
-Deno.test("NOL: a currently unusable positive carryforward is not silently discarded", () => {
+test("NOL: a currently unusable positive carryforward is not silently discarded", () => {
   assertThrows(
     () =>
       nol_carryforward.compute(context, {
@@ -66,7 +67,7 @@ Deno.test("NOL: a currently unusable positive carryforward is not silently disca
   );
 });
 
-Deno.test("NOL: a zero-valued placeholder has no tax output but cannot be filed", () => {
+test("NOL: a zero-valued placeholder has no tax output but cannot be filed", () => {
   const input = {
     nol_carryforwards: [{ ...loss, nol_amount: 0 }],
     current_year_taxable_income: 0,
@@ -81,7 +82,7 @@ Deno.test("NOL: a zero-valued placeholder has no tax output but cannot be filed"
   }
 });
 
-Deno.test("NOL: direct positive Schedule 1 line 8a cannot bypass source and AMT refigure", () => {
+test("NOL: direct positive Schedule 1 line 8a cannot bypass source and AMT refigure", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () =>

@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { createHash } from "node:crypto";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { itemSchema } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
@@ -137,15 +139,15 @@ async function filedConversionPdf(
   const cache = `.state/research/f8606--${prior.tax_year}.pdf`;
   let bytes: Uint8Array;
   try {
-    bytes = await Deno.readFile(cache);
+    bytes = await sys.readBytes(cache);
   } catch {
     const response = await fetch(
       `https://www.irs.gov/pub/irs-prior/f8606--${prior.tax_year}.pdf`,
     );
     if (!response.ok) throw new Error(`prior8606 ${response.status}`);
     bytes = new Uint8Array(await response.arrayBuffer());
-    await Deno.mkdir(".state/research", { recursive: true });
-    await Deno.writeFile(cache, bytes);
+    await fs.mkdir(".state/research", { recursive: true });
+    await fs.writeFile(cache, bytes);
   }
   const pdf = await PDFDocument.load(bytes), form = pdf.getForm();
   form.getTextField("topmostSubform[0].Page1[0].f1_1[0]").setText(

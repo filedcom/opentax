@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8859Pdf } from "./f8859.ts";
 
@@ -11,7 +12,7 @@ const fields = {
   worksheet_line2_credits: 170,
 };
 
-Deno.test("Form 8859 PDF maps lines 1-4 and all three limit worksheet entries", () => {
+test("Form 8859 PDF maps lines 1-4 and all three limit worksheet entries", () => {
   const names = Object.fromEntries(
     form8859Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -36,7 +37,7 @@ Deno.test("Form 8859 PDF maps lines 1-4 and all three limit worksheet entries", 
   );
 });
 
-Deno.test("Form 8859 PDF requires the printed worksheet and Schedule 3 to reconcile", () => {
+test("Form 8859 PDF requires the printed worksheet and Schedule 3 to reconcile", () => {
   assertEquals(
     form8859Pdf.projectFields?.(fields, {
       schedule3: { line6h_dc_homebuyer_credit: 830 },

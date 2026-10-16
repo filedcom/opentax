@@ -1,15 +1,18 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import { formAddCommand } from "./form.ts";
 
-Deno.test("createReturnCommand creates return.json with meta and inputs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("createReturnCommand creates return.json with meta and inputs", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const result = await createReturnCommand({ year: 2025, baseDir: tmpDir });
 
     const returnJson = JSON.parse(
-      await Deno.readTextFile(`${tmpDir}/${result.returnId}/return.json`),
+      await fs.readFile(`${tmpDir}/${result.returnId}/return.json`, "utf8"),
     );
 
     assertEquals(returnJson.meta.returnId, result.returnId);
@@ -18,18 +21,18 @@ Deno.test("createReturnCommand creates return.json with meta and inputs", async 
     assertEquals(typeof returnJson.inputs, "object");
     assertEquals(Array.isArray(returnJson.inputs), false);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("createReturnCommand returns a returnId string", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("createReturnCommand returns a returnId string", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const result = await createReturnCommand({ year: 2025, baseDir: tmpDir });
     assertEquals(typeof result.returnId, "string");
     assertEquals(result.returnId.length > 0, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
@@ -41,8 +44,8 @@ async function makeReturn(tmpDir: string): Promise<string> {
   return returnId;
 }
 
-Deno.test("getReturnCommand single W-2 returns line_1a = 85000", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand single W-2 returns line_1a = 85000", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -61,12 +64,12 @@ Deno.test("getReturnCommand single W-2 returns line_1a = 85000", async () => {
     assertEquals(Array.isArray(result.forms), true);
     assertEquals(Array.isArray(result.warnings), true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -84,12 +87,12 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
     assertEquals(result.summary.line1z_total_wages, 130000);
     assertEquals(result.summary.line9_total_income, 130000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("CLI return reports the Form 4952 limit and carryforward", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("CLI return reports the Form 4952 limit and carryforward", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     for (
@@ -128,12 +131,12 @@ Deno.test("CLI return reports the Form 4952 limit and carryforward", async () =>
     assertEquals(result.carryforwards.investment_interest_excess_4952, 48_000);
     assertEquals(result.forms.includes("form4952"), true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("getReturnCommand reports the standard deduction selected over Schedule A", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand reports the standard deduction selected over Schedule A", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -150,12 +153,12 @@ Deno.test("getReturnCommand reports the standard deduction selected over Schedul
     assertEquals(result.lines.line12c_deduction_total, 31_500);
     assertEquals(result.summary.line15_taxable_income, 68_500);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand empty return returns line_1a = 0", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
 
@@ -169,12 +172,12 @@ Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
     assertEquals(result.forms.length >= 0, true);
     assertEquals(result.warnings.length >= 0, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand calculates above-threshold Schedule C QBI", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -210,18 +213,18 @@ Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async ()
       44_854,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("getReturnCommand nonexistent returnId throws descriptive error", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("getReturnCommand nonexistent returnId throws descriptive error", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await assertRejects(
       () => getReturnCommand({ returnId: "nonexistent-id", baseDir: tmpDir }),
       Error,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });

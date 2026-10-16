@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import type { F8862Input } from "../../../../../nodes/inputs/credits/individual/f8862/index.ts";
@@ -62,7 +63,7 @@ function rejectsBoth(
   );
 }
 
-Deno.test("Form 8862 EITC-only childless and income-only claims retain calculation joins but cannot export an unauthenticated notice", () => {
+test("Form 8862 EITC-only childless and income-only claims retain calculation joins but cannot export an unauthenticated notice", () => {
   rejectsBoth(fields, pending, authenticationError);
   rejectsBoth(
     {
@@ -76,7 +77,7 @@ Deno.test("Form 8862 EITC-only childless and income-only claims retain calculati
   );
 });
 
-Deno.test("Form 8862 EITC notice and final-credit tampering fails before the authentication gate", () => {
+test("Form 8862 EITC notice and final-credit tampering fails before the authentication gate", () => {
   for (
     const final of [
       {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8912BondInterest,
@@ -20,7 +21,7 @@ const base: Form8912IndividualLimitInput = {
   hasPassThroughCrebCredit: false,
 };
 
-Deno.test("Form 8912: Part II limits the bond credit after Form 3800 and earlier credits", () => {
+test("Form 8912: Part II limits the bond credit after Form 3800 and earlier credits", () => {
   const lines = calculateForm8912IndividualLimit(base);
   assertEquals(lines.line4, 3_500);
   assertEquals(lines.line10e, 6_500);
@@ -29,7 +30,7 @@ Deno.test("Form 8912: Part II limits the bond credit after Form 3800 and earlier
   assertEquals(lines.unusedCredit, 0);
 });
 
-Deno.test("Form 8912: unused credit is kept separate from the Schedule 3 line 6k amount", () => {
+test("Form 8912: unused credit is kept separate from the Schedule 3 line 6k amount", () => {
   const lines = calculateForm8912IndividualLimit({
     ...base,
     form1040Line16: 7_000,
@@ -39,7 +40,7 @@ Deno.test("Form 8912: unused credit is kept separate from the Schedule 3 line 6k
   assertEquals(lines.unusedCredit, 3_000);
 });
 
-Deno.test("Form 8912: pass-through CREB credit stops without its separate limit", () => {
+test("Form 8912: pass-through CREB credit stops without its separate limit", () => {
   assertThrows(
     () =>
       calculateForm8912IndividualLimit({
@@ -72,7 +73,7 @@ const finalized = {
   form3800AllowedCredit: 3_000,
 };
 
-Deno.test("Form 8912: finalized return bridge excludes FTC, GBC, prior AMT, and itself", () => {
+test("Form 8912: finalized return bridge excludes FTC, GBC, prior AMT, and itself", () => {
   const input = deriveForm8912IndividualLimitInput(source, finalized);
   assertEquals(input.foreignTaxCredit, 1_000);
   assertEquals(input.priorAllowableCredits, 2_000);
@@ -90,7 +91,7 @@ Deno.test("Form 8912: finalized return bridge excludes FTC, GBC, prior AMT, and 
   assertEquals(withOwnCredit.priorAllowableCredits, 2_000);
 });
 
-Deno.test("Form 8912: finalized return bridge rejects unproven Form 3800 amounts", () => {
+test("Form 8912: finalized return bridge rejects unproven Form 3800 amounts", () => {
   assertThrows(
     () =>
       deriveForm8912IndividualLimitInput(source, {
@@ -111,7 +112,7 @@ Deno.test("Form 8912: finalized return bridge rejects unproven Form 3800 amounts
   );
 });
 
-Deno.test("Form 8912: bond-interest calculation excludes purchased accrued interest", () => {
+test("Form 8912: bond-interest calculation excludes purchased accrued interest", () => {
   const interest = calculateForm8912BondInterest(275, 50, 20);
   assertEquals(interest.creditInterest, 275);
   assertEquals(interest.purchaseAccruedInterestRecoveredAsBasis, 50);

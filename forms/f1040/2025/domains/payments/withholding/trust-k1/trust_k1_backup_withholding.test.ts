@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -18,7 +19,7 @@ const general = {
   address_zip: "78701",
 };
 
-Deno.test("trust K-1 box 13 code B stays retained but cannot silently leave native or PDF export", async () => {
+test("trust K-1 box 13 code B stays retained but cannot silently leave native or PDF export", async () => {
   const result = f1040_2025.executeReturn({
     general,
     k1_trust: [{
@@ -56,7 +57,7 @@ Deno.test("trust K-1 box 13 code B stays retained but cannot silently leave nati
   );
 });
 
-Deno.test("joint return graph combines both owners' trust codeB withholding with W-2G and rejects changed source totals", async () => {
+test("joint return graph combines both owners' trust codeB withholding with W-2G and rejects changed source totals", async () => {
   const joint = {
     ...general,
     filing_status: FilingStatus.MFJ,

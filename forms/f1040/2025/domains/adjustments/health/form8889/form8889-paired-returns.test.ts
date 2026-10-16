@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import fixtures from "./form8889-paired-returns.fixture.json" with {
   type: "json",
@@ -17,7 +18,7 @@ import { inputSchema as hsaSchema } from "../../../../../nodes/intermediate/form
 // Expected values come from the independent source/Decimal and IRS tax-table
 // replay documented in the paired-HSA gap, not from the return under test.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`Paired HSA public return reconciles both owners and final tax: ${id}`, async () => {
+  test(`Paired HSA public return reconciles both owners and final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input), e = expected[id];
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -96,7 +97,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("Paired HSA rejects42 native variants and40 PDF variants; two PDF tax checks remain deferred", async () => {
+test("Paired HSA rejects42 native variants and40 PDF variants; two PDF tax checks remain deferred", async () => {
   let variants = 0, pdfVariants = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

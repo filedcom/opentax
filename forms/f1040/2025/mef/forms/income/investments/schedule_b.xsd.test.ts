@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -10,7 +13,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -46,12 +49,7 @@ function buildScheduleBXml(
   );
 }
 
-Deno.test({
-  name: "XSD: Schedule B Part III-only FBAR filing and country codes",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule B Part III-only FBAR filing and country codes", async () => {
   const xml = buildScheduleBXml({
     foreign_accounts_question: true,
     fincen_form114_required: true,
@@ -62,26 +60,21 @@ Deno.test({
   assertStringIncludes(xml, "<FinCENForm114Ind>true</FinCENForm114Ind>");
   assertStringIncludes(xml, "<ForeignCountryCd>CA</ForeignCountryCd>");
   assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Schedule B accepts more than 15 native dividend payers",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule B accepts more than 15 native dividend payers", async () => {
   const xml = buildScheduleBXml({
     dividend_rows: Array.from({ length: 16 }, (_, index) => ({
       payerName: `Fund ${index + 1}`,
@@ -92,26 +85,21 @@ Deno.test({
     foreign_trust_question: false,
   });
   assertEquals((xml.match(/<Form1040SchBPartII>/g) ?? []).length, 16);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Schedule B seller-financed buyer and interest adjustments",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule B seller-financed buyer and interest adjustments", async () => {
   const xml = buildScheduleBXml({
     seller_financed_rows: [{
       buyer: {
@@ -141,26 +129,21 @@ Deno.test({
     xml,
     "<TaxableInterestSubtotalAmt>1850</TaxableInterestSubtotalAmt>",
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Schedule B nominee dividends report gross line 5 and net line 6",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule B nominee dividends report gross line 5 and net line 6", async () => {
   const xml = buildScheduleBXml({
     dividend_rows: [{ payerName: "Fund", amount: 1_000 }],
     dividend_line5_subtotal: 1_000,
@@ -170,26 +153,21 @@ Deno.test({
     foreign_trust_question: false,
   });
   assertStringIncludes(xml, "<NomineeDividendAmt ");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Schedule B seller-financed foreign buyer address",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule B seller-financed foreign buyer address", async () => {
   const xml = buildScheduleBXml({
     seller_financed_rows: [{
       buyer: {
@@ -211,16 +189,16 @@ Deno.test({
     foreign_trust_question: false,
   });
   assertStringIncludes(xml, "<SellerFinancedAddressForeign>");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

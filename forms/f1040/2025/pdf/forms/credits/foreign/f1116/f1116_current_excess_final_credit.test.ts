@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
@@ -12,7 +13,7 @@ function requiredNumber(value: unknown): number {
   return value;
 }
 
-Deno.test("current-year excess Form 1116 parent checks final Schedule 3 and Form 1040 credit", () => {
+test("current-year excess Form 1116 parent checks final Schedule 3 and Form 1040 credit", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-foreign-interest-current-excess"
   );

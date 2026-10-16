@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import fixtures from "./form8962-dependent-thresholds.fixture.json" with {
   type: "json",
@@ -17,7 +18,7 @@ import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits
 // Expected amounts come from the independent source/Decimal and IRS Tax Table
 // replay documented in the dependent MAGI gap, not the return under test.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`Dependent filing threshold public return reconciles source and final tax: ${id}`, async () => {
+  test(`Dependent filing threshold public return reconciles source and final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -57,7 +58,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("Dependent filing thresholds reject changed source, review and final totals in native and PDF", async () => {
+test("Dependent filing thresholds reject changed source, review and final totals in native and PDF", async () => {
   let variants = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../../../intermediate/aggregation/taxes/other/schedule2/index.ts";
@@ -172,7 +173,7 @@ function compute(...items: unknown[]) {
   return f8828.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-Deno.test("f8828: source-backed Form 8828 lines 9-23 route to Schedule 2 line 17b", () => {
+test("f8828: source-backed Form 8828 lines 9-23 route to Schedule 2 line 17b", () => {
   const item = f8828.inputSchema.parse({ f8828s: [transaction()] }).f8828s[0];
   const lines = computeF8828Lines(item);
   assertEquals(lines.line7_full_years, 4);
@@ -195,7 +196,7 @@ Deno.test("f8828: source-backed Form 8828 lines 9-23 route to Schedule 2 line 17
   );
 });
 
-Deno.test("f8828: gift outside divorce uses deed-date FMV as line 9 and recaptures tax", () => {
+test("f8828: gift outside divorce uses deed-date FMV as line 9 and recaptures tax", () => {
   const source = f8828.inputSchema.parse({ f8828s: [gift()] }).f8828s[0];
   const lines = computeF8828Lines(source);
   assertEquals(lines.line9_sales_price, 280_000);
@@ -208,7 +209,7 @@ Deno.test("f8828: gift outside divorce uses deed-date FMV as line 9 and recaptur
   );
 });
 
-Deno.test("f8828: gift needs exact deed, appraisal, payoff, and no-consideration facts", () => {
+test("f8828: gift needs exact deed, appraisal, payoff, and no-consideration facts", () => {
   const valid = gift();
   for (
     const reviewed_gift of [
@@ -230,7 +231,7 @@ Deno.test("f8828: gift needs exact deed, appraisal, payoff, and no-consideration
   );
 });
 
-Deno.test("f8828: jointly liable owner files only the documented three-quarter interest", () => {
+test("f8828: jointly liable owner files only the documented three-quarter interest", () => {
   const source =
     f8828.inputSchema.parse({ f8828s: [jointOwnerSale()] }).f8828s[0];
   const lines = computeF8828Lines(source);
@@ -246,7 +247,7 @@ Deno.test("f8828: jointly liable owner files only the documented three-quarter i
   );
 });
 
-Deno.test("f8828: jointly liable owner rejects share and liability tamper", () => {
+test("f8828: jointly liable owner rejects share and liability tamper", () => {
   const valid = jointOwnerSale();
   for (
     const reviewed_coownership of [
@@ -264,7 +265,7 @@ Deno.test("f8828: jointly liable owner rejects share and liability tamper", () =
   }
 });
 
-Deno.test("f8828: qualifying MCC reissue preserves original closing and final payoff", () => {
+test("f8828: qualifying MCC reissue preserves original closing and final payoff", () => {
   const source =
     f8828.inputSchema.parse({ f8828s: [reissuedMccSale()] }).f8828s[0];
   const lines = computeF8828Lines(source);
@@ -278,7 +279,7 @@ Deno.test("f8828: qualifying MCC reissue preserves original closing and final pa
   );
 });
 
-Deno.test("f8828: MCC reissue rejects missing issuer conditions and refinance-date payoff", () => {
+test("f8828: MCC reissue rejects missing issuer conditions and refinance-date payoff", () => {
   const valid = reissuedMccSale();
   for (
     const reviewed_mcc_reissue of [
@@ -320,7 +321,7 @@ Deno.test("f8828: MCC reissue rejects missing issuer conditions and refinance-da
   );
 });
 
-Deno.test("f8828: income percentage rounds to nearest whole percent and caps at 100", () => {
+test("f8828: income percentage rounds to nearest whole percent and caps at 100", () => {
   const partial = f8828.inputSchema.parse({
     f8828s: [transaction({ adjusted_qualifying_income: 98_725 })],
   }).f8828s[0];
@@ -331,7 +332,7 @@ Deno.test("f8828: income percentage rounds to nearest whole percent and caps at 
   assertEquals(computeF8828Lines(full).line18_income_percentage, 100);
 });
 
-Deno.test("f8828: half the gain caps tax and zero-gain form yields no Schedule 2 amount", () => {
+test("f8828: half the gain caps tax and zero-gain form yields no Schedule 2 amount", () => {
   const capped = transaction({
     sales_price_of_interest: 269_000,
     adjusted_basis_of_interest: 250_000,
@@ -352,7 +353,7 @@ Deno.test("f8828: half the gain caps tax and zero-gain form yields no Schedule 2
   );
 });
 
-Deno.test("f8828: early full repayment uses the IRS holding period worksheet", () => {
+test("f8828: early full repayment uses the IRS holding period worksheet", () => {
   // Repayment after 2 years: 40%; sale 3 years later: 60%; line 20 = 24%.
   const sale = transaction({
     original_loan_closing_date: "2020-01-01",
@@ -409,7 +410,7 @@ Deno.test("f8828: early full repayment uses the IRS holding period worksheet", (
   }
 });
 
-Deno.test("f8828: partial years use the issuer's year of disposition", () => {
+test("f8828: partial years use the issuer's year of disposition", () => {
   const yearSix = transaction({
     original_loan_closing_date: "2020-01-01",
     disposition_date: "2025-02-01",
@@ -423,7 +424,7 @@ Deno.test("f8828: partial years use the issuer's year of disposition", () => {
   );
 });
 
-Deno.test("f8828: multiple separate homes aggregate only calculated tax", () => {
+test("f8828: multiple separate homes aggregate only calculated tax", () => {
   const result = compute(
     transaction(),
     transaction({
@@ -441,7 +442,7 @@ Deno.test("f8828: multiple separate homes aggregate only calculated tax", () => 
   );
 });
 
-Deno.test("f8828: rejects tampered issuer amount, percentage, dates, and MAGI gain", () => {
+test("f8828: rejects tampered issuer amount, percentage, dates, and MAGI gain", () => {
   for (
     const change of [
       { issuer_federally_subsidized_amount: 375 },

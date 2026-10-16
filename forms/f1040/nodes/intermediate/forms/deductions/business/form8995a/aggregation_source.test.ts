@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
@@ -204,7 +205,7 @@ function stagedContext() {
   };
 }
 
-Deno.test("Schedule B evidence derives two member totals and emits companion", () => {
+test("Schedule B evidence derives two member totals and emits companion", () => {
   const input = aggregationInput();
   const derived = validateTwoBusinessAggregationSource(input);
   assertEquals(derived.qbi, 171_000);
@@ -218,7 +219,7 @@ Deno.test("Schedule B evidence derives two member totals and emits companion", (
   );
 });
 
-Deno.test("Schedule B source rejects changed member amounts and duplicate factors", () => {
+test("Schedule B source rejects changed member amounts and duplicate factors", () => {
   const input = aggregationInput();
   assertThrows(
     () =>
@@ -252,7 +253,7 @@ Deno.test("Schedule B source rejects changed member amounts and duplicate factor
   );
 });
 
-Deno.test("Schedule B requires reviewed allocation and no other business adjustments", () => {
+test("Schedule B requires reviewed allocation and no other business adjustments", () => {
   const input = aggregationInput();
   assertThrows(() =>
     inputSchema.parse({
@@ -287,7 +288,7 @@ Deno.test("Schedule B requires reviewed allocation and no other business adjustm
   );
 });
 
-Deno.test("Schedule B source rejects short ownership and mismatched election names", () => {
+test("Schedule B source rejects short ownership and mismatched election names", () => {
   const input = aggregationInput();
   assertThrows(
     () =>
@@ -322,7 +323,7 @@ Deno.test("Schedule B source rejects short ownership and mismatched election nam
   );
 });
 
-Deno.test("staged Schedule B and aggregated parent derive matching native and PDF values", () => {
+test("staged Schedule B and aggregated parent derive matching native and PDF values", () => {
   const { input, filer, pending, context } = stagedContext();
   const parentXml = buildStagedAggregatedIRS8995A(input, context);
   const scheduleXml = buildStagedIRS8995AScheduleB(input, context);
@@ -359,7 +360,7 @@ Deno.test("staged Schedule B and aggregated parent derive matching native and PD
   assertEquals(schedulePdf?.total_qbi, 171_000);
 });
 
-Deno.test("staged Schedule B refuses missing companion, changed Schedule C, and wrong filer", () => {
+test("staged Schedule B refuses missing companion, changed Schedule C, and wrong filer", () => {
   const { input, filer, pending, context } = stagedContext();
   assertThrows(
     () =>

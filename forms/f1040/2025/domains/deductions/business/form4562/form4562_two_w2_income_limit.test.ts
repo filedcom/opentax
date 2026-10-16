@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -87,7 +88,7 @@ function filedReturn() {
   });
 }
 
-Deno.test("Form 4562 combines two employer W-2s with Schedule C to cap section 179 and carry over the remainder", () => {
+test("Form 4562 combines two employer W-2s with Schedule C to cap section 179 and carry over the remainder", () => {
   const result = filedReturn();
   assertEquals(
     result.diagnostics.map(({ nodeType, message }) => [nodeType, message]),
@@ -134,7 +135,7 @@ Deno.test("Form 4562 combines two employer W-2s with Schedule C to cap section 1
   assertEquals(form4562Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 4562 two-W-2 limit rejects duplicate, missing, third, changed-owner, and return tampering", () => {
+test("Form 4562 two-W-2 limit rejects duplicate, missing, third, changed-owner, and return tampering", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const filed = filedForm4562Schema.parse(pending.form4562);
   const badW2s = [

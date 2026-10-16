@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -15,7 +18,7 @@ const xsd =
 for (
   const c of [...overflowDebtCases, { id: "independent_owners", allowed: 7600 }]
 ) {
-  Deno.test(`overflow ${c.id}: complete source/PartII copies/native/fullXSD/PDF`, async () => {
+  test(`overflow ${c.id}: complete source/PartII copies/native/fullXSD/PDF`, async () => {
     const family = c.id === "independent_owners",
       { inputs, filer } = family
         ? overflowFamilyInputs()
@@ -182,7 +185,7 @@ for (
       (xml.match(/<OpenAccountDebtInd>X<\/OpenAccountDebtInd>/g) ?? []).length,
       ownerSpecs.length,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, "-"],
         stdin: "piped",
         stderr: "piped",
@@ -210,13 +213,9 @@ for (
       copies.flatMap((_: any, i: number) => [i + 1, i + 1]),
     );
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_OVERFLOW_DEBT_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_OVERFLOW_DEBT_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [ext, value] of Object.entries({
@@ -235,17 +234,17 @@ for (
           },
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${ext}`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
-Deno.test("overflow rejects missing/cross-owned/colliding instruments and unjoined cash", () => {
+test("overflow rejects missing/cross-owned/colliding instruments and unjoined cash", () => {
   const mutations: [string, (n: any) => void][] = [
     ["missing outer note", (n) => n.additional_formal_notes.pop()],
     [
@@ -309,7 +308,7 @@ Deno.test("overflow rejects missing/cross-owned/colliding instruments and unjoin
     );
   }
 });
-Deno.test("overflow native/directPDF reject altered owner inventory, loss/carry and final tax", async () => {
+test("overflow native/directPDF reject altered owner inventory, loss/carry and final tax", async () => {
   const { inputs, filer } = overflowFamilyInputs(),
     r = f1040_2025.executeReturn(inputs as any);
   assertEquals(r.diagnostics, []);

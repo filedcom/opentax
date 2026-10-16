@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertForm1098Box4Sources,
@@ -104,12 +105,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // Section 1: Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.schema: empty array accepted — zero items produces empty outputs", () => {
+test("f1098.schema: empty array accepted — zero items produces empty outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("2025 purchase points and existing acquisition loan share the $750,000 limit", () => {
+test("2025 purchase points and existing acquisition loan share the $750,000 limit", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = inputSchema.parse({
     f1098s: fixture.f1098,
@@ -210,7 +211,7 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
   );
 });
 
-Deno.test("purchase points and two-loan interest use one over-limit Pub. 936 ratio", () => {
+test("purchase points and two-loan interest use one over-limit Pub. 936 ratio", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const review = fixture.f1098_purchase_points_cross_loan_review
     .purchase_points_cross_loan_review;
@@ -278,7 +279,7 @@ Deno.test("purchase points and two-loan interest use one over-limit Pub. 936 rat
   );
 });
 
-Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () => {
+test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () => {
   const source = {
     f1098s: [
       reviewedInterest(20_000, 16_660, {
@@ -472,7 +473,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   );
 });
 
-Deno.test("MFS two-loan mortgage limit needs solely paid noncommunity interest", () => {
+test("MFS two-loan mortgage limit needs solely paid noncommunity interest", () => {
   const source = {
     f1098s: [
       reviewedInterest(20_000, 8_340, {
@@ -586,7 +587,7 @@ Deno.test("MFS two-loan mortgage limit needs solely paid noncommunity interest",
   );
 });
 
-Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidence", () => {
+test("2025 purchase mortgage needs closing and month-by-month limit evidence", () => {
   const source = {
     f1098s: [reviewedInterest(1_000, 833, {
       lender_name: "Purchase Lender",
@@ -701,7 +702,7 @@ Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidenc
   );
 });
 
-Deno.test("2025 purchase plus existing mortgage needs one qualified second home", () => {
+test("2025 purchase plus existing mortgage needs one qualified second home", () => {
   const purchaseRef = "2025 principal residence Form 1098";
   const secondRef = "2025 prior home Form 1098";
   const balances = (reference: string, firstMonth: number) =>
@@ -833,22 +834,22 @@ Deno.test("2025 purchase plus existing mortgage needs one qualified second home"
   );
 });
 
-Deno.test("f1098.schema: missing box1_mortgage_interest throws", () => {
+test("f1098.schema: missing box1_mortgage_interest throws", () => {
   assertThrows(() => compute([{ for_routing: ForRouting.A }]), Error);
 });
 
-Deno.test("f1098.schema: negative box1_mortgage_interest throws", () => {
+test("f1098.schema: negative box1_mortgage_interest throws", () => {
   assertThrows(
     () => compute([minimalItem({ box1_mortgage_interest: -1 })]),
     Error,
   );
 });
 
-Deno.test("f1098.schema: invalid for_routing value throws", () => {
+test("f1098.schema: invalid for_routing value throws", () => {
   assertThrows(() => compute([minimalItem({ for_routing: "B" })]), Error);
 });
 
-Deno.test("f1098.schema: missing for_routing defaults to Schedule A routing", () => {
+test("f1098.schema: missing for_routing defaults to Schedule A routing", () => {
   // Per implementation: for_routing ?? ForRouting.A — defaults to A
   const result = compute([
     reviewedInterest(5_000, 5_000, { for_routing: undefined }),
@@ -861,13 +862,13 @@ Deno.test("f1098.schema: missing for_routing defaults to Schedule A routing", ()
 // Section 2: Schedule A — mortgage interest routing
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: box1 with for_routing=A routes to schedule_a line_8a", () => {
+test("f1098.compute: box1 with for_routing=A routes to schedule_a line_8a", () => {
   const result = compute([reviewedInterest(12_000)]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_8a_mortgage_interest_1098, 12_000);
 });
 
-Deno.test("f1098.compute: reviewed partial box1 deduction excludes prepaid or limited interest", () => {
+test("f1098.compute: reviewed partial box1 deduction excludes prepaid or limited interest", () => {
   const result = compute([reviewedInterest(12_000, 7_500)]);
   assertEquals(
     fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098,
@@ -875,7 +876,7 @@ Deno.test("f1098.compute: reviewed partial box1 deduction excludes prepaid or li
   );
 });
 
-Deno.test("f1098.compute: positive personal box1 without Pub. 936 workpaper fails closed", () => {
+test("f1098.compute: positive personal box1 without Pub. 936 workpaper fails closed", () => {
   assertThrows(
     () => compute([minimalItem({ box1_mortgage_interest: 12_000 })]),
     Error,
@@ -883,7 +884,7 @@ Deno.test("f1098.compute: positive personal box1 without Pub. 936 workpaper fail
   );
 });
 
-Deno.test("f1098.compute: box1 deduction cannot exceed source amount or omit workpaper reference", () => {
+test("f1098.compute: box1 deduction cannot exceed source amount or omit workpaper reference", () => {
   assertThrows(() => compute([reviewedInterest(12_000, 12_001)]), Error);
   assertThrows(
     () =>
@@ -896,17 +897,17 @@ Deno.test("f1098.compute: box1 deduction cannot exceed source amount or omit wor
   );
 });
 
-Deno.test("f1098.compute: reviewed zero box1 deduction creates no Schedule A interest", () => {
+test("f1098.compute: reviewed zero box1 deduction creates no Schedule A interest", () => {
   const result = compute([reviewedInterest(12_000, 0)]);
   assertEquals(fieldsOf(result.outputs, scheduleA), undefined);
 });
 
-Deno.test("f1098.compute: box1=0 with for_routing=A produces no schedule_a output", () => {
+test("f1098.compute: box1=0 with for_routing=A produces no schedule_a output", () => {
   const result = compute([minimalItem({ box1_mortgage_interest: 0 })]);
   assertEquals(findOutput(result, "schedule_a"), undefined);
 });
 
-Deno.test("f1098.compute: box4 prior-year recovery does not reduce current box1 interest", () => {
+test("f1098.compute: box4 prior-year recovery does not reduce current box1 interest", () => {
   const result = compute([
     reviewedRecovery(1_500, 1_500, { box1_mortgage_interest: 10_000 }),
   ]);
@@ -916,7 +917,7 @@ Deno.test("f1098.compute: box4 prior-year recovery does not reduce current box1 
   );
 });
 
-Deno.test("f1098.compute: box4 equal to box1 still leaves current interest deductible", () => {
+test("f1098.compute: box4 equal to box1 still leaves current interest deductible", () => {
   const result = compute([
     reviewedRecovery(5_000, 0, { box1_mortgage_interest: 5_000 }),
   ]);
@@ -926,7 +927,7 @@ Deno.test("f1098.compute: box4 equal to box1 still leaves current interest deduc
   );
 });
 
-Deno.test("f1098.compute: reviewed zero-tax-benefit recovery creates no income", () => {
+test("f1098.compute: reviewed zero-tax-benefit recovery creates no income", () => {
   const result = compute([
     reviewedRecovery(2_000, 0, { box1_mortgage_interest: 10_000 }),
   ]);
@@ -936,7 +937,7 @@ Deno.test("f1098.compute: reviewed zero-tax-benefit recovery creates no income",
   assertEquals(findOutput(result, "agi_aggregator"), undefined);
 });
 
-Deno.test("f1098.compute: reviewed taxable box4 recovery routes to Schedule 1 and AGI", () => {
+test("f1098.compute: reviewed taxable box4 recovery routes to Schedule 1 and AGI", () => {
   const result = compute([
     reviewedRecovery(2_000, 1_200, { box1_mortgage_interest: 10_000 }),
   ]);
@@ -949,14 +950,14 @@ Deno.test("f1098.compute: reviewed taxable box4 recovery routes to Schedule 1 an
   );
 });
 
-Deno.test("f1098.compute: positive box4 without prior-year tax-benefit workpaper is rejected", () => {
+test("f1098.compute: positive box4 without prior-year tax-benefit workpaper is rejected", () => {
   assertThrows(
     () => compute([minimalItem({ box4_refund_overpaid: 200 })]),
     Error,
   );
 });
 
-Deno.test("f1098.compute: box4 same-year designation is rejected", () => {
+test("f1098.compute: box4 same-year designation is rejected", () => {
   assertThrows(
     () =>
       compute([reviewedRecovery(200, 200, { box4_prior_year_refund: false })]),
@@ -964,7 +965,7 @@ Deno.test("f1098.compute: box4 same-year designation is rejected", () => {
   );
 });
 
-Deno.test("f1098.compute: positive box4 needs identified lender, recipient, and payer copy", () => {
+test("f1098.compute: positive box4 needs identified lender, recipient, and payer copy", () => {
   for (
     const missing of [
       "lender_name",
@@ -979,7 +980,7 @@ Deno.test("f1098.compute: positive box4 needs identified lender, recipient, and 
   }
 });
 
-Deno.test("f1098 box4 filing reconciles payer recipient and taxable recovery", () => {
+test("f1098 box4 filing reconciles payer recipient and taxable recovery", () => {
   const source = {
     f1098s: [{
       ...reviewedRecovery(2_000, 1_200),
@@ -1019,18 +1020,18 @@ Deno.test("f1098 box4 filing reconciles payer recipient and taxable recovery", (
   );
 });
 
-Deno.test("f1098.compute: box4 taxable recovery above refund is rejected", () => {
+test("f1098.compute: box4 taxable recovery above refund is rejected", () => {
   assertThrows(() => compute([reviewedRecovery(200, 201)]), Error);
 });
 
-Deno.test("f1098.compute: box4 rental recovery does not enter personal Schedule 1 route", () => {
+test("f1098.compute: box4 rental recovery does not enter personal Schedule 1 route", () => {
   assertThrows(
     () => compute([reviewedRecovery(200, 100, { for_routing: ForRouting.E })]),
     Error,
   );
 });
 
-Deno.test("f1098.compute: reviewed deductible box6 points route to Schedule A line 8a", () => {
+test("f1098.compute: reviewed deductible box6 points route to Schedule A line 8a", () => {
   const result = compute([
     reviewedPoints(2_000),
   ]);
@@ -1039,7 +1040,7 @@ Deno.test("f1098.compute: reviewed deductible box6 points route to Schedule A li
   assertEquals(fields.line_8c_points_no_1098, undefined);
 });
 
-Deno.test("f1098.compute: box1 + box6 both route to schedule_a in single output", () => {
+test("f1098.compute: box1 + box6 both route to schedule_a in single output", () => {
   const result = compute([
     reviewedPoints(3_000, 3_000, { box1_mortgage_interest: 15_000 }),
   ]);
@@ -1052,24 +1053,24 @@ Deno.test("f1098.compute: box1 + box6 both route to schedule_a in single output"
   assertEquals(fields.line_8c_points_no_1098, undefined);
 });
 
-Deno.test("f1098.compute: reviewed partial current-year box6 deduction uses only approved amount", () => {
+test("f1098.compute: reviewed partial current-year box6 deduction uses only approved amount", () => {
   const result = compute([reviewedPoints(3_000, 1_200)]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_8a_mortgage_interest_1098, 1_200);
 });
 
-Deno.test("f1098.compute: positive box6 without Pub. 936 workpaper is rejected", () => {
+test("f1098.compute: positive box6 without Pub. 936 workpaper is rejected", () => {
   assertThrows(
     () => compute([minimalItem({ box6_points_paid: 2_000 })]),
     Error,
   );
 });
 
-Deno.test("f1098.compute: box6 deduction above reported amount is rejected", () => {
+test("f1098.compute: box6 deduction above reported amount is rejected", () => {
   assertThrows(() => compute([reviewedPoints(2_000, 2_001)]), Error);
 });
 
-Deno.test("f1098.compute: box6 deduction without workpaper reference is rejected", () => {
+test("f1098.compute: box6 deduction without workpaper reference is rejected", () => {
   assertThrows(() =>
     compute([minimalItem({
       box6_points_paid: 2_000,
@@ -1077,14 +1078,14 @@ Deno.test("f1098.compute: box6 deduction without workpaper reference is rejected
     })]), Error);
 });
 
-Deno.test("f1098.compute: box6 refinance claim is rejected pending amortization facts", () => {
+test("f1098.compute: box6 refinance claim is rejected pending amortization facts", () => {
   assertThrows(
     () => compute([reviewedPoints(2_000, 2_000, { refinance: true })]),
     Error,
   );
 });
 
-Deno.test("f1098.compute: construction refinance box6 points amortize by 2025 payments", () => {
+test("f1098.compute: construction refinance box6 points amortize by 2025 payments", () => {
   const source = reviewedPoints(2_000, 0, {
     refinance: true,
     box6_current_year_deductible_points: undefined,
@@ -1139,12 +1140,12 @@ Deno.test("f1098.compute: construction refinance box6 points amortize by 2025 pa
   );
 });
 
-Deno.test("f1098.compute: reviewed zero current-year box6 deduction creates no Schedule A points", () => {
+test("f1098.compute: reviewed zero current-year box6 deduction creates no Schedule A points", () => {
   const result = compute([reviewedPoints(2_000, 0)]);
   assertEquals(fieldsOf(result.outputs, scheduleA), undefined);
 });
 
-Deno.test("f1098.compute: box5 MIP is not deductible for TY2025 — no MIP field in any output", () => {
+test("f1098.compute: box5 MIP is not deductible for TY2025 — no MIP field in any output", () => {
   const result = compute([
     reviewedInterest(10_000, 10_000, { box5_mip: 1_200 }),
   ]);
@@ -1161,7 +1162,7 @@ Deno.test("f1098.compute: box5 MIP is not deductible for TY2025 — no MIP field
 // Section 3: Other routing destinations
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: rental box1 without property-linked current-year workpaper fails closed", () => {
+test("f1098.compute: rental box1 without property-linked current-year workpaper fails closed", () => {
   assertThrows(
     () =>
       compute([
@@ -1175,21 +1176,21 @@ Deno.test("f1098.compute: rental box1 without property-linked current-year workp
   );
 });
 
-Deno.test("f1098.compute: rental box1 cannot use a personal Schedule A workpaper", () => {
+test("f1098.compute: rental box1 cannot use a personal Schedule A workpaper", () => {
   assertThrows(() =>
     compute([
       reviewedInterest(8_000, 6_000, { for_routing: ForRouting.E }),
     ]), Error);
 });
 
-Deno.test("f1098.compute: zero rental box1 produces no Schedule A output", () => {
+test("f1098.compute: zero rental box1 produces no Schedule A output", () => {
   const result = compute([
     minimalItem({ box1_mortgage_interest: 0, for_routing: ForRouting.E }),
   ]);
   assertEquals(findOutput(result, "schedule_a"), undefined);
 });
 
-Deno.test("f1098.compute: business box1 without business-linked current-year workpaper fails closed", () => {
+test("f1098.compute: business box1 without business-linked current-year workpaper fails closed", () => {
   assertThrows(
     () =>
       compute([
@@ -1203,7 +1204,7 @@ Deno.test("f1098.compute: business box1 without business-linked current-year wor
   );
 });
 
-Deno.test("f1098.compute: Form 8829 interest needs homeowner allocation facts", () => {
+test("f1098.compute: Form 8829 interest needs homeowner allocation facts", () => {
   assertThrows(
     () =>
       compute([
@@ -1217,7 +1218,7 @@ Deno.test("f1098.compute: Form 8829 interest needs homeowner allocation facts", 
   );
 });
 
-Deno.test("f1098.compute: box6 with rental routing is rejected rather than dropped", () => {
+test("f1098.compute: box6 with rental routing is rejected rather than dropped", () => {
   assertThrows(() =>
     compute([
       reviewedPoints(1_500, 1_500, {
@@ -1231,7 +1232,7 @@ Deno.test("f1098.compute: box6 with rental routing is rejected rather than dropp
 // Section 4: DEDM override
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: DEDM override without a linked source cannot silently suppress box1", () => {
+test("f1098.compute: DEDM override without a linked source cannot silently suppress box1", () => {
   assertThrows(
     () =>
       compute([reviewedInterest(15_000, 15_000, {
@@ -1243,7 +1244,7 @@ Deno.test("f1098.compute: DEDM override without a linked source cannot silently 
   );
 });
 
-Deno.test("f1098.compute: box6 with DEDM override is rejected pending allocation", () => {
+test("f1098.compute: box6 with DEDM override is rejected pending allocation", () => {
   assertThrows(
     () => compute([reviewedPoints(2_000, 2_000, { dedm_override: true })]),
     Error,
@@ -1254,7 +1255,7 @@ Deno.test("f1098.compute: box6 with DEDM override is rejected pending allocation
 // Section 5: Multiple 1098s — aggregation
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: two for_routing=A items — box1 amounts sum to schedule_a", () => {
+test("f1098.compute: two for_routing=A items — box1 amounts sum to schedule_a", () => {
   const result = compute([
     reviewedInterest(9_000),
     reviewedInterest(5_000),
@@ -1263,7 +1264,7 @@ Deno.test("f1098.compute: two for_routing=A items — box1 amounts sum to schedu
   assertEquals(fields.line_8a_mortgage_interest_1098, 14_000);
 });
 
-Deno.test("f1098.compute: two box4 recoveries do not reduce current interest", () => {
+test("f1098.compute: two box4 recoveries do not reduce current interest", () => {
   const result = compute([
     reviewedRecovery(500, 500, { box1_mortgage_interest: 10_000 }),
     reviewedRecovery(200, 100, { box1_mortgage_interest: 8_000 }),
@@ -1276,7 +1277,7 @@ Deno.test("f1098.compute: two box4 recoveries do not reduce current interest", (
   );
 });
 
-Deno.test("f1098.compute: two reviewed box6 sources aggregate on Schedule A line 8a", () => {
+test("f1098.compute: two reviewed box6 sources aggregate on Schedule A line 8a", () => {
   const result = compute([
     reviewedPoints(1_000),
     reviewedPoints(1_500),
@@ -1286,7 +1287,7 @@ Deno.test("f1098.compute: two reviewed box6 sources aggregate on Schedule A line
   assertEquals(fields.line_8c_points_no_1098, undefined);
 });
 
-Deno.test("f1098.compute: positive box6 needs identified lender and recipient", () => {
+test("f1098.compute: positive box6 needs identified lender and recipient", () => {
   assertThrows(
     () => compute([reviewedPoints(1_000, 1_000, { lender_name: undefined })]),
     Error,
@@ -1299,7 +1300,7 @@ Deno.test("f1098.compute: positive box6 needs identified lender and recipient", 
   );
 });
 
-Deno.test("f1098.compute: duplicate payer-issued Form 1098 rejects", () => {
+test("f1098.compute: duplicate payer-issued Form 1098 rejects", () => {
   assertThrows(
     () => compute([reviewedPoints(1_000), reviewedPoints(1_000)]),
     Error,
@@ -1307,7 +1308,7 @@ Deno.test("f1098.compute: duplicate payer-issued Form 1098 rejects", () => {
   );
 });
 
-Deno.test("f1098.compute: multiple unreviewed rental box1 sources fail closed", () => {
+test("f1098.compute: multiple unreviewed rental box1 sources fail closed", () => {
   assertThrows(() =>
     compute([
       minimalItem({ box1_mortgage_interest: 4_000, for_routing: ForRouting.E }),
@@ -1315,7 +1316,7 @@ Deno.test("f1098.compute: multiple unreviewed rental box1 sources fail closed", 
     ]), Error);
 });
 
-Deno.test("f1098.compute: mixed reviewed personal and unreviewed rental sources fail together", () => {
+test("f1098.compute: mixed reviewed personal and unreviewed rental sources fail together", () => {
   assertThrows(() =>
     compute([
       reviewedInterest(6_000),
@@ -1323,7 +1324,7 @@ Deno.test("f1098.compute: mixed reviewed personal and unreviewed rental sources 
     ]), Error);
 });
 
-Deno.test("f1098.compute: three for_routing=A items all sum — engine accepts any number of 1098s", () => {
+test("f1098.compute: three for_routing=A items all sum — engine accepts any number of 1098s", () => {
   const result = compute([
     reviewedInterest(5_000),
     reviewedInterest(4_000),
@@ -1333,7 +1334,7 @@ Deno.test("f1098.compute: three for_routing=A items all sum — engine accepts a
   assertEquals(fields.line_8a_mortgage_interest_1098, 12_000);
 });
 
-Deno.test("f1098.compute: multiple prior-year box4 refunds sum on schedule1 line8z", () => {
+test("f1098.compute: multiple prior-year box4 refunds sum on schedule1 line8z", () => {
   const result = compute([
     reviewedRecovery(1_000, 800, { box1_mortgage_interest: 10_000 }),
     reviewedRecovery(500, 300, { box1_mortgage_interest: 8_000 }),
@@ -1347,7 +1348,7 @@ Deno.test("f1098.compute: multiple prior-year box4 refunds sum on schedule1 line
   );
 });
 
-Deno.test("f1098.compute: multiple prior-year items produce exactly one schedule1 output", () => {
+test("f1098.compute: multiple prior-year items produce exactly one schedule1 output", () => {
   const result = compute([
     reviewedRecovery(1_000, 1_000, { box1_mortgage_interest: 10_000 }),
     reviewedRecovery(500, 500, { box1_mortgage_interest: 8_000 }),
@@ -1360,7 +1361,7 @@ Deno.test("f1098.compute: multiple prior-year items produce exactly one schedule
 // Section 6: Informational fields — output count and routing unchanged
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: box2 outstanding_principal is informational — does not change output count", () => {
+test("f1098.compute: box2 outstanding_principal is informational — does not change output count", () => {
   const without = compute([reviewedInterest(8_000)]);
   const withBox2 = compute([
     reviewedInterest(8_000, 8_000, {
@@ -1370,7 +1371,7 @@ Deno.test("f1098.compute: box2 outstanding_principal is informational — does n
   assertEquals(withBox2.outputs.length, without.outputs.length);
 });
 
-Deno.test("f1098.compute: box10_other lender free-text does NOT auto-route to real estate tax line", () => {
+test("f1098.compute: box10_other lender free-text does NOT auto-route to real estate tax line", () => {
   const result = compute([
     reviewedInterest(8_000, 8_000, {
       box10_other: "RE taxes paid: $4200",
@@ -1384,7 +1385,7 @@ Deno.test("f1098.compute: box10_other lender free-text does NOT auto-route to re
   assertEquals(taxOut, undefined);
 });
 
-Deno.test("f1098.compute: qualified_premiums_checkbox=true has no effect for TY2025", () => {
+test("f1098.compute: qualified_premiums_checkbox=true has no effect for TY2025", () => {
   const without = compute([
     reviewedInterest(8_000, 8_000, { box5_mip: 900 }),
   ]);
@@ -1406,7 +1407,7 @@ Deno.test("f1098.compute: qualified_premiums_checkbox=true has no effect for TY2
 // Section 7: Smoke test
 // ---------------------------------------------------------------------------
 
-Deno.test("f1098.compute: smoke — comprehensive item routes correctly", () => {
+test("f1098.compute: smoke — comprehensive item routes correctly", () => {
   const result = compute([{
     box1_mortgage_interest: 18_000,
     box1_current_year_deductible_interest: 18_000,

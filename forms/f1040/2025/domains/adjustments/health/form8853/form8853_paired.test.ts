@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -137,15 +139,10 @@ function expected(id: string) {
   };
 }
 function evidenceRoot() {
-  try {
-    return Deno.env.get("ARCHER_PAIRED_EVIDENCE");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.ARCHER_PAIRED_EVIDENCE;
 }
 for (const id of cases) {
-  Deno.test(`Archer paired contributions/distributions complete return: ${id}`, async () => {
+  test(`Archer paired contributions/distributions complete return: ${id}`, async () => {
     const input = pairedInput(id), target = expected(id);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -240,10 +237,10 @@ for (const id of cases) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -262,7 +259,7 @@ for (const id of cases) {
   });
 }
 
-Deno.test("Archer paired public source rejects incomplete and conflicting annual inventories", () => {
+test("Archer paired public source rejects incomplete and conflicting annual inventories", () => {
   for (const id of cases) {
     const mutations: Array<(p: ReturnType<typeof pairedInput>) => void> = [
       (p) => {

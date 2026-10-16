@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import { reconcilePreAdoptionForm8839Credit } from "./pre_adoption_reconciliation.ts";
@@ -120,7 +121,7 @@ const sinkInput = {
   credit_limit_schedule3_lines: schedule3,
 };
 
-Deno.test("Form 8839 reconciles pure MAGI and limit from computed pre-adoption 1040", () => {
+test("Form 8839 reconciles pure MAGI and limit from computed pre-adoption 1040", () => {
   const result = reconcilePreAdoptionForm8839Credit(
     childSource,
     childReview,
@@ -135,7 +136,7 @@ Deno.test("Form 8839 reconciles pure MAGI and limit from computed pre-adoption 1
   assertEquals(result.credit.line18, 7_000);
 });
 
-Deno.test("Form 8839 staged sink derives both final return and Schedule 3 from its own pre-credit computation", () => {
+test("Form 8839 staged sink derives both final return and Schedule 3 from its own pre-credit computation", () => {
   const final = finalizeStagedForm8839Sink(
     childSource,
     childReview,
@@ -154,7 +155,7 @@ Deno.test("Form 8839 staged sink derives both final return and Schedule 3 from i
   assertEquals(final.final1040.line30_refundable_adoption, 5_000);
 });
 
-Deno.test("Form 8839 staged sink refuses prefilled adoption credit and unreconciled prior credits", () => {
+test("Form 8839 staged sink refuses prefilled adoption credit and unreconciled prior credits", () => {
   assertThrows(() =>
     finalizeStagedForm8839Sink(childSource, childReview, {
       ...sinkInput,
@@ -169,7 +170,7 @@ Deno.test("Form 8839 staged sink refuses prefilled adoption credit and unreconci
   );
 });
 
-Deno.test("Form 8839 rejects absent return-wide zero-source review", () => {
+test("Form 8839 rejects absent return-wide zero-source review", () => {
   assertThrows(() =>
     reconcilePreAdoptionForm8839Credit(childSource, childReview, sinkInput, {})
   );
@@ -184,7 +185,7 @@ Deno.test("Form 8839 rejects absent return-wide zero-source review", () => {
   );
 });
 
-Deno.test("Form 8839 rejects unsettled priorities and existing adoption amounts", () => {
+test("Form 8839 rejects unsettled priorities and existing adoption amounts", () => {
   for (
     const changed of [
       { ...sinkInput, line30_refundable_adoption: 5_000 },
@@ -212,7 +213,7 @@ Deno.test("Form 8839 rejects unsettled priorities and existing adoption amounts"
   }
 });
 
-Deno.test("Form 8839 rejects asserted AGI inconsistent with computed income", () => {
+test("Form 8839 rejects asserted AGI inconsistent with computed income", () => {
   assertThrows(() =>
     reconcilePreAdoptionForm8839Credit(
       childSource,

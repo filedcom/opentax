@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -124,7 +125,7 @@ const pending = {
   f1040: { line11_agi: 100_000, line31_additional_payments: 480 },
 };
 
-Deno.test("Form 8962 three identified same-state policies combine A/C and one B through MeF/PDF", () => {
+test("Form 8962 three identified same-state policies combine A/C and one B through MeF/PDF", () => {
   const source = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1095a,
@@ -146,7 +147,7 @@ Deno.test("Form 8962 three identified same-state policies combine A/C and one B 
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 verified three-person policies at 200% FPL use the single-filer cap", () => {
+test("Form 8962 verified three-person policies at 200% FPL use the single-filer cap", () => {
   const lowIncomePolicies = policies.map((policy) => ({
     ...policy,
     monthly_aptcs: Array<number>(12).fill(500),
@@ -226,7 +227,7 @@ Deno.test("Form 8962 verified three-person policies at 200% FPL use the single-f
   );
 });
 
-Deno.test("Form 8962 three-policy route rejects duplicate people, divergent SLCSP, reused evidence and final-return mismatch", () => {
+test("Form 8962 three-policy route rejects duplicate people, divergent SLCSP, reused evidence and final-return mismatch", () => {
   assertThrows(
     () => form8962.build(fields, { filer, pending: {
       ...pending,
@@ -301,7 +302,7 @@ Deno.test("Form 8962 three-policy route rejects duplicate people, divergent SLCS
   );
 });
 
-Deno.test("Form 8962 annual line 11 combines three unchanged family policies and one same-state SLCSP", () => {
+test("Form 8962 annual line 11 combines three unchanged family policies and one same-state SLCSP", () => {
   const annualPolicies = policies.map((policy) => ({
     ...policy,
     monthly_slcsps: Array<number>(12).fill(1_200),

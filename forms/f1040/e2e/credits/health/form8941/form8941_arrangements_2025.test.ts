@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -161,11 +164,7 @@ const cases: readonly [
 for (
   const [name, kind, receipts, partYear, paid, cap, credit, allowed] of cases
 ) {
-  Deno.test({
-    name: `Form8941 qualifying arrangement ${name} owned public full-XSD/PDF`,
-    sanitizeOps: false,
-    sanitizeResources: false,
-  }, async () => {
+  test(`Form8941 qualifying arrangement ${name} owned public full-XSD/PDF`, async () => {
     const { input, pending, filer } = run(kind, receipts, partYear);
     const lines = calculateForm8941(input.f8941);
     assertEquals([lines.line4, lines.line5, lines.line16], [paid, cap, credit]);
@@ -223,8 +222,8 @@ for (
       bundle.xml,
       `<SumSmllrAmtAndCreditForHIPAmt>${credit}</SumSmllrAmtAndCreditForHIPAmt>`,
     );
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       dir + name + ".json",
       JSON.stringify(
         {
@@ -238,23 +237,23 @@ for (
         2,
       ),
     );
-    await Deno.writeTextFile(dir + name + ".xml", bundle.xml);
-    const valid = await new Deno.Command("xmllint", {
+    await fs.writeFile(dir + name + ".xml", bundle.xml);
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + name + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       dir + name + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", dir + name + ".pdf", "-"],
       stdout: "piped",
     }).output();
     assertEquals(text.code, 0);
     const packet = new TextDecoder().decode(text.stdout);
-    await Deno.writeTextFile(dir + name + ".txt", packet);
+    await fs.writeFile(dir + name + ".txt", packet);
     assertStringIncludes(packet, "Small Employer Health Insurance");
     assertStringIncludes(packet, String(credit));
     assertStringIncludes(packet, String(benefit));
@@ -432,12 +431,7 @@ const sourceMutations: [string, (source: any) => void][] = [
       s.shop_review.employee_premium_reviews[0].payroll_hours_of_service = 1040,
   ],
 ];
-Deno.test({
-  name:
-    "Form8941 qualifying arrangements actual native/PDF and public source conflicts",
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test("Form8941 qualifying arrangements actual native/PDF and public source conflicts", async () => {
   const baseline = run("list-self-computed-family-floor", 200000);
   const bundle = await buildMefBundle(buildPending(baseline.pending), {
     filer: baseline.filer,
@@ -507,7 +501,7 @@ Deno.test({
       name,
     );
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     dir + "negative-proof.json",
     JSON.stringify(
       {
@@ -519,7 +513,7 @@ Deno.test({
     ),
   );
 });
-Deno.test("Form8941 composite exception and independent-tier rule boundaries", () => {
+test("Form8941 composite exception and independent-tier rule boundaries", () => {
   for (
     const [kind, mutate, message] of [
       [
@@ -556,7 +550,7 @@ Deno.test("Form8941 composite exception and independent-tier rule boundaries", (
     assertThrows(() => calculateForm8941(source), Error, message);
   }
 });
-Deno.test("Form8941 list composite denominator includes employees in other tiers and absent coverage months", () => {
+test("Form8941 list composite denominator includes employees in other tiers and absent coverage months", () => {
   const source = form8941ArrangementSource(
     "list-self-computed-family-floor",
     true,

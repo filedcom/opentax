@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertStringIncludes } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -6,7 +7,7 @@ import {
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
 
-Deno.test("Form 3800 XML: Parts I and II keep passive and nonpassive credits on their own lines", () => {
+test("Form 3800 XML: Parts I and II keep passive and nonpassive credits on their own lines", () => {
   const passive: Form3800PassiveActivityLines = {
     line2: 600,
     line3: 400,

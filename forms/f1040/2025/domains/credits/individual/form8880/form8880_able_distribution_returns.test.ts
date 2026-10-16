@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { z } from "zod";
 import {
   assertAlmostEquals,
@@ -235,7 +237,7 @@ function account(
   };
 }
 for (const item of cases) {
-  Deno.test(`ABLE distribution complete return: ${item.name}`, async () => {
+  test(`ABLE distribution complete return: ${item.name}`, async () => {
     const joint = item.name.startsWith("joint-");
     const primary = distribution(
       "111223333",
@@ -509,10 +511,10 @@ for (const item of cases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
-    const dir = Deno.env.get("FORM8880_ABLE_DISTRIBUTION_EVIDENCE");
+    const dir = process.env.FORM8880_ABLE_DISTRIBUTION_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -520,17 +522,17 @@ for (const item of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }
-Deno.test("ABLE annual earnings ratio and first-60-day expense boundary", () => {
+test("ABLE annual earnings ratio and first-60-day expense boundary", () => {
   const source = distribution("111223333", 2400, 400, 1600);
   assertAlmostEquals(
     ableDistributionAmounts(source).taxableEarnings,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -13,7 +14,7 @@ import {
 } from "./scenario_1040_04_input.ts";
 import { SCENARIO_1040_04_FACTS } from "./ty2025_cases.ts";
 
-Deno.test("ATS 1040 Scenario 4 W-2 reaches calculation, native statement and partial PDF", async () => {
+test("ATS 1040 Scenario 4 W-2 reaches calculation, native statement and partial PDF", async () => {
   const input = scenario104004Input();
   const result = execute(buildExecutionPlan(registry), registry, input, {
     taxYear: 2025,
@@ -50,7 +51,7 @@ Deno.test("ATS 1040 Scenario 4 W-2 reaches calculation, native statement and par
   assertEquals((await PDFDocument.load(pdf!)).getPageCount(), 2);
 });
 
-Deno.test("ATS 1040 Scenario 4 printed solar and vehicle credits stay outside filing input", () => {
+test("ATS 1040 Scenario 4 printed solar and vehicle credits stay outside filing input", () => {
   const facts = SCENARIO_1040_04_FACTS;
   const recon = SCENARIO_1040_04_RECONCILIATION;
   assertEquals(

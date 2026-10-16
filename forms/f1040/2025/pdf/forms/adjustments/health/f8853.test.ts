@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -28,7 +31,7 @@ const archerSource = {
   },
 };
 
-Deno.test("2025 Form 8853 Archer and Medicare distributions use their printed lines", () => {
+test("2025 Form 8853 Archer and Medicare distributions use their printed lines", () => {
   const byKey = new Map(
     form8853Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -45,7 +48,7 @@ Deno.test("2025 Form 8853 Archer and Medicare distributions use their printed li
   );
 });
 
-Deno.test("2025 Form 8853 LTC source amounts use lines 17, 18, 19, 22, and 24", () => {
+test("2025 Form 8853 LTC source amounts use lines 17, 18, 19, 22, and 24", () => {
   const byKey = new Map(
     form8853Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -57,7 +60,7 @@ Deno.test("2025 Form 8853 LTC source amounts use lines 17, 18, 19, 22, and 24", 
   assertEquals(byKey.has("ltc_period_days"), false);
 });
 
-Deno.test("2025 Form 8853 PDF projects filed Archer lines and holder identity", () => {
+test("2025 Form 8853 PDF projects filed Archer lines and holder identity", () => {
   const instances = form8853Pdf.instances?.(archerSource, filer, {}) ?? [];
   assertEquals(instances.length, 1);
   assertEquals(instances[0].archer_msa_distributions, 3_000);
@@ -82,13 +85,13 @@ Deno.test("2025 Form 8853 PDF projects filed Archer lines and holder identity", 
   );
 });
 
-Deno.test("2025 Form 8853 filed PDF prints the Archer lines on one page", async () => {
+test("2025 Form 8853 filed PDF prints the Archer lines on one page", async () => {
   const bytes = await buildPdfBytes({ form8853: archerSource }, filer);
   assertEquals((await PDFDocument.load(bytes)).getPageCount(), 1);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, bytes);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, bytes);
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -102,6 +105,6 @@ Deno.test("2025 Form 8853 filed PDF prints the Archer lines on one page", async 
       assertEquals(new RegExp(`\\b${line}\\s+${value}\\b`).test(printed), true);
     }
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

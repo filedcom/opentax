@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -13,13 +15,13 @@ const sharedSchemaRoot = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(sharedSchemaRoot).isDirectory;
+  schemaAvailable = sys.statSync(sharedSchemaRoot).isDirectory;
 } catch {
   // The research schema bundle is optional in other workspaces.
 }
 
 async function validateStandaloneSchema(xml: string, schema: string) {
-  const command = new Deno.Command("xmllint", {
+  const command = new sys.Command("xmllint", {
     args: ["--noout", "--schema", `${sharedSchemaRoot}${schema}`, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -37,7 +39,7 @@ async function validateStandaloneSchema(xml: string, schema: string) {
   assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
 }
 
-Deno.test("Form 8992 and Schedule A serialize the same reviewed Category 5a CFC", () => {
+test("Form 8992 and Schedule A serialize the same reviewed Category 5a CFC", () => {
   const context = {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -73,7 +75,7 @@ Deno.test("Form 8992 and Schedule A serialize the same reviewed Category 5a CFC"
   );
 });
 
-Deno.test("Form 8992 blocks source, filer, return, and companion-document tampering", () => {
+test("Form 8992 blocks source, filer, return, and companion-document tampering", () => {
   assertThrows(
     () =>
       form8992.build({}, {
@@ -123,7 +125,7 @@ Deno.test("Form 8992 blocks source, filer, return, and companion-document tamper
   );
 });
 
-Deno.test("Form 8992 Schedule A uses EIN when sourced as EIN", () => {
+test("Form 8992 Schedule A uses EIN when sourced as EIN", () => {
   const cfc = {
     ...form8992Cfc,
     foreign_corp_reference_id: undefined,
@@ -137,12 +139,7 @@ Deno.test("Form 8992 Schedule A uses EIN when sourced as EIN", () => {
   assertEquals(xml.includes("ForeignEntityIdentificationGrp"), false);
 });
 
-Deno.test({
-  name: "Form 8992 and Schedule A standalone XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Form 8992 and Schedule A standalone XML satisfies TY2025 v5.4 XSD", async () => {
     const context = {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -156,5 +153,4 @@ Deno.test({
       form8992ScheduleA.build({}, context),
       "IRS8992ScheduleA/IRS8992ScheduleA.xsd",
     );
-  },
-});
+  });

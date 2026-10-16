@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -27,7 +28,7 @@ function rows(count: number): Record<string, unknown> {
   };
 }
 
-Deno.test("Schedule B interest statement starts after 14 printed payers", async () => {
+test("Schedule B interest statement starts after 14 printed payers", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBInterestStatement(document, rows(14), filer);
   assertEquals(document.getPageCount(), 0);
@@ -39,13 +40,13 @@ Deno.test("Schedule B interest statement starts after 14 printed payers", async 
   );
 });
 
-Deno.test("Schedule B interest statement paginates all additional payers", async () => {
+test("Schedule B interest statement paginates all additional payers", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBInterestStatement(document, rows(75), filer);
   assertEquals(document.getPageCount(), 3);
 });
 
-Deno.test("Schedule B interest statement keeps paired rows after pending normalization", async () => {
+test("Schedule B interest statement keeps paired rows after pending normalization", async () => {
   const document = await PDFDocument.create();
   const normalized = normalizeAllPending({
     schedule_b: {
@@ -62,7 +63,7 @@ Deno.test("Schedule B interest statement keeps paired rows after pending normali
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Schedule B interest continuation reconciles gross line 1 before deductions", async () => {
+test("Schedule B interest continuation reconciles gross line 1 before deductions", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBInterestStatement(document, {
     ...rows(15),
@@ -73,7 +74,7 @@ Deno.test("Schedule B interest continuation reconciles gross line 1 before deduc
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Schedule B interest statement rejects missing payer detail", async () => {
+test("Schedule B interest statement rejects missing payer detail", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>
@@ -91,7 +92,7 @@ Deno.test("Schedule B interest statement rejects missing payer detail", async ()
   );
 });
 
-Deno.test("Schedule B interest statement requires filer identity", async () => {
+test("Schedule B interest statement requires filer identity", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () => appendScheduleBInterestStatement(document, rows(15), undefined),

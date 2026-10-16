@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8834Pdf } from "./f8834.ts";
 
@@ -18,7 +19,7 @@ const fields = {
   line7_allowed_credit: 450,
 };
 
-Deno.test("Form 8834 PDF maps all nine credit lines and omits the instructions page", () => {
+test("Form 8834 PDF maps all nine credit lines and omits the instructions page", () => {
   assertEquals(form8834Pdf.pageIndices?.(fields), [0]);
   const names = Object.fromEntries(
     form8834Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
@@ -34,7 +35,7 @@ Deno.test("Form 8834 PDF maps all nine credit lines and omits the instructions p
   );
 });
 
-Deno.test("Form 8834 PDF requires source and Schedule 3 reconciliation", () => {
+test("Form 8834 PDF requires source and Schedule 3 reconciliation", () => {
   assertEquals(
     form8834Pdf.projectFields?.(fields, {
       schedule3: { line6i_qualified_electric_vehicle_credit: 450 },

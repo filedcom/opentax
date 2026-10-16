@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -8,7 +9,7 @@ import { buildStartNode, inputNodes } from "../../../../2025/return-processing/s
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("Form 4972 public election accepts eligibility but not substitute 1099-R facts", () => {
+test("Form 4972 public election accepts eligibility but not substitute 1099-R facts", () => {
   const start = buildStartNode(inputNodes);
   const election = {
     source_document_references: ["source-4972"],
@@ -42,7 +43,7 @@ Deno.test("Form 4972 public election accepts eligibility but not substitute 1099
   }
 });
 
-Deno.test("Form 4972 public election fails closed without the elected source Form 1099-R", () => {
+test("Form 4972 public election fails closed without the elected source Form 1099-R", () => {
   const result = execute(plan, registry, {
     form4972: {
       elections: [{
@@ -143,7 +144,7 @@ function printed(
   return (result.pending.form4972?.forms as Record<string, unknown>[])[0];
 }
 
-Deno.test("Form 4972 Part II only reports its ordinary portion on 1040 lines 5a and 5b", () => {
+test("Form 4972 Part II only reports its ordinary portion on 1040 lines 5a and 5b", () => {
   const result = electedReturn(false);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line7, 6_000);
@@ -152,14 +153,14 @@ Deno.test("Form 4972 Part II only reports its ordinary portion on 1040 lines 5a 
   assertEquals(result.pending.f1040?.line9_total_income, 70_000);
 });
 
-Deno.test("Form 4972 Parts II and III keep the entire distribution off 1040 line 5b", () => {
+test("Form 4972 Parts II and III keep the entire distribution off 1040 line 5b", () => {
   const result = electedReturn(true);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line5b_pension_taxable ?? 0, 0);
   assertEquals(result.pending.f1040?.line9_total_income ?? 0, 0);
 });
 
-Deno.test("Form 4972 Part II ordinary income combines with a separate pension", () => {
+test("Form 4972 Part II ordinary income combines with a separate pension", () => {
   const result = electedReturn(false, true);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line5a_pension_gross, 71_000);
@@ -167,7 +168,7 @@ Deno.test("Form 4972 Part II ordinary income combines with a separate pension", 
   assertEquals(result.pending.f1040?.line9_total_income, 71_000);
 });
 
-Deno.test("Form 4972 Part II death benefit reduces the 1040 ordinary-income share", () => {
+test("Form 4972 Part II death benefit reduces the 1040 ordinary-income share", () => {
   const result = electedReturn(false, false, 5_000);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line6, 28_500);
@@ -176,7 +177,7 @@ Deno.test("Form 4972 Part II death benefit reduces the 1040 ordinary-income shar
   assertEquals(result.pending.f1040?.line9_total_income, 66_500);
 });
 
-Deno.test("Form 4972 Part II NUA election reaches Form 1040 ordinary income", () => {
+test("Form 4972 Part II NUA election reaches Form 1040 ordinary income", () => {
   const result = electedReturn(false, false, 0, 20_000);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line6, 36_000);
@@ -189,7 +190,7 @@ Deno.test("Form 4972 Part II NUA election reaches Form 1040 ordinary income", ()
   assertEquals(result.pending.f1040?.form4972_tax, 7_200);
 });
 
-Deno.test("Form 4972 Part II-only estate tax reaches Schedule A without reducing pension income", () => {
+test("Form 4972 Part II-only estate tax reaches Schedule A without reducing pension income", () => {
   const result = electedReturn(false, false, 0, 0, 4_000);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line6, 28_800);
@@ -199,7 +200,7 @@ Deno.test("Form 4972 Part II-only estate tax reaches Schedule A without reducing
   assertEquals(result.pending.schedule_a?.line_16_other_deductions, 2_800);
 });
 
-Deno.test("Form 4972 Part II-only death benefit and estate tax reach distinct Form 1040 and Schedule A lines", () => {
+test("Form 4972 Part II-only death benefit and estate tax reach distinct Form 1040 and Schedule A lines", () => {
   const result = electedReturn(false, false, 5_000, 0, 4_000);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line6, 27_300);
@@ -210,7 +211,7 @@ Deno.test("Form 4972 Part II-only death benefit and estate tax reach distinct Fo
   assertEquals(result.pending.schedule_a?.line_16_other_deductions, 2_800);
 });
 
-Deno.test("Form 4972 combined election keeps the ordinary estate-tax share on line 18", () => {
+test("Form 4972 combined election keeps the ordinary estate-tax share on line 18", () => {
   const result = electedReturn(true, false, 0, 0, 4_000);
   assertEquals(result.diagnostics, []);
   assertEquals(printed(result).line6, 28_800);
@@ -218,7 +219,7 @@ Deno.test("Form 4972 combined election keeps the ordinary estate-tax share on li
   assertEquals(result.pending.schedule_a?.line_16_other_deductions, undefined);
 });
 
-Deno.test("Form 4972 shared annuity keeps box 8 and box 9a percentages separate", () => {
+test("Form 4972 shared annuity keeps box 8 and box 9a percentages separate", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

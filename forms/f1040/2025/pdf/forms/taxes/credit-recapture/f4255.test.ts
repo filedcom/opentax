@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -48,7 +49,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4255 EP-only rows route through Schedule 2 and project to matching PDF Part I", () => {
+test("Form 4255 EP-only rows route through Schedule 2 and project to matching PDF Part I", () => {
   const parsed = inputSchema.parse(source);
   const result = f4255.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -82,7 +83,7 @@ Deno.test("Form 4255 EP-only rows route through Schedule 2 and project to matchi
   );
 });
 
-Deno.test("Form 4255 EP-only PDF retains its three populated Part I pages", async () => {
+test("Form 4255 EP-only PDF retains its three populated Part I pages", async () => {
   const [fields] = form4255Pdf.instances!(source, form8992Filer, pending);
   const pdf = await fillFormPdf(
     form4255Pdf,
@@ -104,7 +105,7 @@ Deno.test("Form 4255 EP-only PDF retains its three populated Part I pages", asyn
   assertEquals(packet.getPageCount(), 3);
 });
 
-Deno.test("Form 4255 PDF rejects source, return, and unsupported recapture changes", () => {
+test("Form 4255 PDF rejects source, return, and unsupported recapture changes", () => {
   assertThrows(
     () => form4255Pdf.instances!(source, form8992Filer),
     Error,

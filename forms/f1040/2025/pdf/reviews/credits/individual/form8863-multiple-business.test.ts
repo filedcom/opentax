@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   claimantRefundRestriction,
@@ -274,7 +276,7 @@ function source(item: typeof cases[number], taxableScholarship: boolean) {
 
 for (const item of cases) {
   for (const taxableScholarship of [false, true]) {
-    Deno.test(`Multiple personal-service businesses AOTC ${item.name}${taxableScholarship ? "-taxable-scholarship" : ""} reconciles calculation and export boundary`, async () => {
+    test(`Multiple personal-service businesses AOTC ${item.name}${taxableScholarship ? "-taxable-scholarship" : ""} reconciles calculation and export boundary`, async () => {
       const s = source(item, taxableScholarship);
       if (s.review.kind !== "under_24") {
         throw new Error("Expected young claimant");
@@ -329,10 +331,10 @@ for (const item of cases) {
           Error,
           "Multiple Schedule C Form 8995 payroll, business, shared SE allocation and return sources do not reconcile",
         );
-        if (Deno.args.includes("--write-review-artifacts")) {
+        if (process.argv.slice(2).includes("--write-review-artifacts")) {
           const dir =
             `.state/research/form8863-multiple-business-2026-10-09/blocked-${item.name}`;
-          await Deno.mkdir(dir, { recursive: true });
+          await fs.mkdir(dir, { recursive: true });
           for (
             const [name, value] of [
               ["source", s.inputs],
@@ -341,7 +343,7 @@ for (const item of cases) {
               ["block", { native: nativeError.message, pdf: pdfError.message }],
             ] as const
           ) {
-            await Deno.writeTextFile(
+            await fs.writeFile(
               `${dir}/${name}.json`,
               JSON.stringify(value, null, 2),
             );
@@ -436,10 +438,10 @@ for (const item of cases) {
         );
         await assertRejects(() => buildPdfBytes(changed, filer, ".pdf-cache"));
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir =
           `.state/research/form8863-multiple-business-2026-10-09/${item.name}`;
-        await Deno.mkdir(dir, { recursive: true });
+        await fs.mkdir(dir, { recursive: true });
         for (
           const [name, data] of [
             ["source", s.inputs],
@@ -448,13 +450,13 @@ for (const item of cases) {
             ["expected", s],
           ] as const
         ) {
-          await Deno.writeTextFile(
+          await fs.writeFile(
             `${dir}/${name}.json`,
             JSON.stringify(data, null, 2),
           );
         }
-        await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-        await Deno.writeFile(`${dir}/return.pdf`, pdf);
+        await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+        await fs.writeFile(`${dir}/return.pdf`, pdf);
       }
     });
   }

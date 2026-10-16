@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { form8962Pdf } from "../../../../../pdf/forms/credits/health/f8962.ts";
@@ -102,7 +103,7 @@ const pending = {
   f1040: { line11_agi: 75_300, line17_additional_taxes: 1_463 },
 };
 
-Deno.test("Form 8962 move with an uncovered month emits eleven XML rows and leaves the PDF month blank", () => {
+test("Form 8962 move with an uncovered month emits eleven XML rows and leaves the PDF month blank", () => {
   const xml = form8962.build(fields, { filer, pending });
   assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 11);
   assertEquals(xml.includes("<MonthCd>APRIL</MonthCd>"), false);
@@ -116,7 +117,7 @@ Deno.test("Form 8962 move with an uncovered month emits eleven XML rows and leav
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 move gap rejects a sourced amount and a mismatched final repayment", () => {
+test("Form 8962 move gap rejects a sourced amount and a mismatched final repayment", () => {
   assertThrows(
     () =>
       form8962.build(fields, {

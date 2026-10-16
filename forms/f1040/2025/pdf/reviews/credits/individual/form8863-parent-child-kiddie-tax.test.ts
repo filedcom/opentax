@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -29,7 +32,7 @@ const xsd = new URL(
 for (
   const [issued, exactHalf] of [[true, false], [false, false], [false, true]]
 ) {
-  Deno.test(`source-owned ${issued ? "W2" : "8r"}${exactHalf ? " exact-half-support" : ""} scholarship child requires positive Form 8615 from its settled parent return`, async () => {
+  test(`source-owned ${issued ? "W2" : "8r"}${exactHalf ? " exact-half-support" : ""} scholarship child requires positive Form 8615 from its settled parent return`, async () => {
     const p = taxablePair(issued, exactHalf);
     const review = dependentScholarshipReviewSchema.parse(p.review);
     const facts = dependentKiddieTaxFacts(
@@ -87,25 +90,25 @@ for (
           "<ParentTentativeTaxAmt>7955</ParentTentativeTaxAmt>",
         );
       }
-      const path = await Deno.makeTempFile({ suffix: ".xml" });
+      const path = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(path, packet.bundle.xml);
-        const checked = await new Deno.Command("xmllint", {
+        await fs.writeFile(path, packet.bundle.xml);
+        const checked = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, path],
           stderr: "piped",
           stdout: "piped",
         }).output();
         assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
       } finally {
-        await Deno.remove(path);
+        await sys.remove(path);
       }
       const pdf = await packet.renderPdf();
       const doc = await PDFDocument.load(pdf);
       if (owner === "child") {
-        const tmpPdf = await Deno.makeTempFile({ suffix: ".pdf" });
+        const tmpPdf = await sys.makeTempFile({ suffix: ".pdf" });
         try {
-          await Deno.writeFile(tmpPdf, pdf);
-          const text = await new Deno.Command("pdftotext", {
+          await fs.writeFile(tmpPdf, pdf);
+          const text = await new sys.Command("pdftotext", {
             args: [tmpPdf, "-"],
             stdout: "piped",
           }).output();
@@ -114,31 +117,31 @@ for (
             "Taylor Example",
           );
         } finally {
-          await Deno.remove(tmpPdf);
+          await sys.remove(tmpPdf);
         }
       }
       assertEquals(doc.getPageCount(), pages);
       assertEquals(doc.getForm().getFields().length, 0);
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-parent-child-kiddie-tax-evidence";
         const stem = `${
           issued ? "w2" : exactHalf ? "line8r-half" : "line8r"
         }-${owner}`;
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${stem}-source-input.json`,
           JSON.stringify({ inputs, filer: identity }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${stem}-full-return.xml`,
           packet.bundle.xml,
         );
-        await Deno.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
       }
     }
   });
 }
-Deno.test("dependent child and parent exports reject detached kiddie tax eligibility, tax and settled sources", async () => {
+test("dependent child and parent exports reject detached kiddie tax eligibility, tax and settled sources", async () => {
   const p = taxablePair(true);
   const changes: Array<(p: any) => void> = [
     (p) => delete p.form8615,
@@ -245,7 +248,7 @@ Deno.test("dependent child and parent exports reject detached kiddie tax eligibi
     await assertRejects(() => f1040_2025.prepareReturn(parent, filer));
   }
 });
-Deno.test("Form 8615 source eligibility includes exact half earned support and excludes full-time scholarships", () => {
+test("Form 8615 source eligibility includes exact half earned support and excludes full-time scholarships", () => {
   const p = taxablePair(true);
   const review = dependentScholarshipReviewSchema.parse(p.review);
   review.support_sources[0].amount = 7500; // 7500 + 4500 + 8000 = 20000.
@@ -273,7 +276,7 @@ Deno.test("Form 8615 source eligibility includes exact half earned support and e
   );
 });
 
-Deno.test("public child calculation rejects manual parent facts and omitted positive-tax source eligibility", () => {
+test("public child calculation rejects manual parent facts and omitted positive-tax source eligibility", () => {
   const p = taxablePair(true);
   const without = structuredClone(p.child);
   delete without.general.dependent_education_income_review.kiddie_tax_review;

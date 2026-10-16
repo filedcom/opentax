@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -81,7 +82,7 @@ function filedReturn() {
   return normalizeForm8606TestPending(result.pending);
 }
 
-Deno.test("spouse-owned first-year Roth distribution keeps one owner through Form 8606, Form 5329, and Form 1040", () => {
+test("spouse-owned first-year Roth distribution keeps one owner through Form 8606, Form 5329, and Form 1040", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assertEquals(pending.form8606.print_roth_line19_distributions, 7_000);
@@ -113,7 +114,7 @@ Deno.test("spouse-owned first-year Roth distribution keeps one owner through For
   assertEquals(pdf.print_roth_line25c_taxable, 2_000);
 });
 
-Deno.test("spouse Roth Form 8606 rejects changed owner, source, early tax, and finalized IRA amount", () => {
+test("spouse Roth Form 8606 rejects changed owner, source, early tax, and finalized IRA amount", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];

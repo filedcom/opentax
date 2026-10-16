@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { z } from "zod";
 import {
   assertMigrationDocuments,
@@ -244,7 +245,7 @@ export async function assertMigrationDiskSources(
   ];
   const sources = await Promise.all(
     paths.map(async (path) =>
-      [path, await Deno.readTextFile(join(root, path))] as const
+      [path, await fs.readFile(join(root, path), "utf8")] as const
     ),
   );
   return assertMigrationActualSources(proof, new Map(sources));
@@ -510,18 +511,18 @@ export function assertMigrationProof(value: unknown, graph?: unknown) {
 }
 
 if (import.meta.main) {
-  const [proofPath, graphPath] = Deno.args;
+  const [proofPath, graphPath] = process.argv.slice(2);
   if (!proofPath || !graphPath) {
     throw new Error("Usage: migration.ts PROOF.json MODULE_GRAPH.json");
   }
-  const proof: unknown = JSON.parse(await Deno.readTextFile(proofPath));
-  const graph: unknown = JSON.parse(await Deno.readTextFile(graphPath));
+  const proof: unknown = JSON.parse(await fs.readFile(proofPath, "utf8"));
+  const graph: unknown = JSON.parse(await fs.readFile(graphPath, "utf8"));
   if (!migrationProofSchema.parse(proof).inventory) {
     throw new Error(
       "CLI verification requires exhaustive before/after inventory",
     );
   }
-  const root = await Deno.realPath(Deno.cwd());
+  const root = await fs.realpath(process.cwd());
   if (!migrationProofSchema.parse(proof).originalManifest) {
     throw new Error("CLI verification requires original source SHA manifest");
   }

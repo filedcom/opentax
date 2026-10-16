@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -40,7 +41,7 @@ const highChild = {
   childRegularTax: 45_000,
 };
 
-Deno.test("Form 8615 applies the TY2025 Tax Table to lines 9, 15, and 17", () => {
+test("Form 8615 applies the TY2025 Tax Table to lines 9, 15, and 17", () => {
   const result = calculateForm8615(source, context);
   assertEquals(result.fields.line9_family_tax, 9_402);
   assertEquals(result.fields.line10_parent_tax, 9_126);
@@ -51,7 +52,7 @@ Deno.test("Form 8615 applies the TY2025 Tax Table to lines 9, 15, and 17", () =>
   assertEquals(result.line18Tax, 412);
 });
 
-Deno.test("Form 8615 allocates parental-rate tax across other children above the table range", () => {
+test("Form 8615 allocates parental-rate tax across other children above the table range", () => {
   const result = calculateForm8615({
     ...source,
     parent_taxable_income: 120_000,
@@ -69,7 +70,7 @@ Deno.test("Form 8615 allocates parental-rate tax across other children above the
   assertEquals((result.fields.line13_allocable_tax ?? 0) > 0, true);
 });
 
-Deno.test("Form 8615 still attaches when line 3 is zero or less", () => {
+test("Form 8615 still attaches when line 3 is zero or less", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 2_600,
@@ -81,7 +82,7 @@ Deno.test("Form 8615 still attaches when line 3 is zero or less", () => {
   assertEquals(result.line18Tax, 365);
 });
 
-Deno.test("Form 8615 stop case keeps the child's regular tax without unused special worksheets", () => {
+test("Form 8615 stop case keeps the child's regular tax without unused special worksheets", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 2_600,
@@ -95,7 +96,7 @@ Deno.test("Form 8615 stop case keeps the child's regular tax without unused spec
   assertEquals(result.line18Tax, 365);
 });
 
-Deno.test("Form 8615 stops after line 5 when taxable income is zero", () => {
+test("Form 8615 stops after line 5 when taxable income is zero", () => {
   const result = calculateForm8615(source, {
     ...context,
     childTaxableIncome: 0,
@@ -109,7 +110,7 @@ Deno.test("Form 8615 stops after line 5 when taxable income is zero", () => {
   assertEquals(result.line18Tax, 0);
 });
 
-Deno.test("Form 8615 line 2 includes directly connected itemized deductions", () => {
+test("Form 8615 line 2 includes directly connected itemized deductions", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 120_000,
@@ -124,7 +125,7 @@ Deno.test("Form 8615 line 2 includes directly connected itemized deductions", ()
   assertEquals(result.fields.line5_child_net_unearned_income, 116_650);
 });
 
-Deno.test("Form 8615 rejects unsupported preferential-rate worksheet paths", () => {
+test("Form 8615 rejects unsupported preferential-rate worksheet paths", () => {
   assertThrows(
     () =>
       calculateForm8615({
@@ -145,7 +146,7 @@ Deno.test("Form 8615 rejects unsupported preferential-rate worksheet paths", () 
   );
 });
 
-Deno.test("Form 8615 Line 5 Worksheet #1 allocates a child's qualified dividends", () => {
+test("Form 8615 Line 5 Worksheet #1 allocates a child's qualified dividends", () => {
   const result = line5PreferentialIncome(
     source,
     {
@@ -163,7 +164,7 @@ Deno.test("Form 8615 Line 5 Worksheet #1 allocates a child's qualified dividends
   assertEquals(result, { qualifiedDividends: 460, netCapitalGain: 0 });
 });
 
-Deno.test("Form 8615 uses the Tax Table inside both preferential worksheets", () => {
+test("Form 8615 uses the Tax Table inside both preferential worksheets", () => {
   const result = calculateForm8615(source, {
     ...context,
     childHasPreferentialIncome: true,
@@ -176,7 +177,7 @@ Deno.test("Form 8615 uses the Tax Table inside both preferential worksheets", ()
   assertEquals(result.fields.line18_child_tax, 297);
 });
 
-Deno.test("Form 8615 Line 5 Worksheet #2 allocates connected itemized costs", () => {
+test("Form 8615 Line 5 Worksheet #2 allocates connected itemized costs", () => {
   const worksheetSource = {
     ...source,
     itemized_deductions_directly_connected: 2_000,
@@ -200,7 +201,7 @@ Deno.test("Form 8615 Line 5 Worksheet #2 allocates connected itemized costs", ()
   assertEquals(result, { qualifiedDividends: 130, netCapitalGain: 65 });
 });
 
-Deno.test("Form 8615 Line 5 Worksheet #3 handles the taxable-income cap", () => {
+test("Form 8615 Line 5 Worksheet #3 handles the taxable-income cap", () => {
   const result = line5PreferentialIncome(
     source,
     {
@@ -220,7 +221,7 @@ Deno.test("Form 8615 Line 5 Worksheet #3 handles the taxable-income cap", () => 
   assertEquals(result, { qualifiedDividends: 300, netCapitalGain: 0 });
 });
 
-Deno.test("Form 8615 uses parent and sibling preferential income on family line 9", () => {
+test("Form 8615 uses parent and sibling preferential income on family line 9", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 120_000,
@@ -236,7 +237,7 @@ Deno.test("Form 8615 uses parent and sibling preferential income on family line 
   assertEquals(result.fields.line9_preferential_tax_used, true);
 });
 
-Deno.test("Form 8615 uses the parent's qualified dividends on family line 9", () => {
+test("Form 8615 uses the parent's qualified dividends on family line 9", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 120_000,
@@ -250,7 +251,7 @@ Deno.test("Form 8615 uses the parent's qualified dividends on family line 9", ()
   assertEquals(result.fields.line10_preferential_tax_used, true);
 });
 
-Deno.test("Form 8615 keeps the parent's full dividends even above taxable income", () => {
+test("Form 8615 keeps the parent's full dividends even above taxable income", () => {
   const result = calculateForm8615({
     ...source,
     child_unearned_income: 120_000,
@@ -263,7 +264,7 @@ Deno.test("Form 8615 keeps the parent's full dividends even above taxable income
   assertEquals((result.fields.line9_family_tax ?? 0) > 0, true);
 });
 
-Deno.test("Form 8615 selects the Schedule D stop for child special-rate gain", () => {
+test("Form 8615 selects the Schedule D stop for child special-rate gain", () => {
   assertThrows(
     () =>
       calculateForm8615(source, {
@@ -278,7 +279,7 @@ Deno.test("Form 8615 selects the Schedule D stop for child special-rate gain", (
   );
 });
 
-Deno.test("Form 8615 rejects incomplete preferential allocations", () => {
+test("Form 8615 rejects incomplete preferential allocations", () => {
   assertThrows(
     () =>
       calculateForm8615({
@@ -302,7 +303,7 @@ Deno.test("Form 8615 rejects incomplete preferential allocations", () => {
   );
 });
 
-Deno.test("Form 8615 filed-form node never posts tax to Schedule 2", () => {
+test("Form 8615 filed-form node never posts tax to Schedule 2", () => {
   const fields = calculateForm8615({
     ...source,
     child_unearned_income: 120_000,

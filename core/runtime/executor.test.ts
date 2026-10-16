@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import type { NodeRegistry } from "../types/node-registry.ts";
@@ -88,7 +89,7 @@ class MockOptionalNode extends TaxNode<typeof optionalInputSchema> {
 
 // --- Tests ---
 
-Deno.test("executor: self-output replaces accumulated contributions", () => {
+test("executor: self-output replaces accumulated contributions", () => {
   const startSchema = z.object({ amount: z.number() });
   const sinkSchema = z.object({ amount: z.array(z.number()) });
   class Start extends TaxNode<typeof startSchema> {
@@ -128,7 +129,7 @@ Deno.test("executor: self-output replaces accumulated contributions", () => {
   assertEquals(result.pending.sink.amount, 7_000);
 });
 
-Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's output", () => {
+test("executor: 2-node DAG (A -> B) executes in order, B receives A's output", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_a", nodeType: "mock_a" },
@@ -162,7 +163,7 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
   assertEquals(result.pending["mock_b"]?.["received"], 42);
 });
 
-Deno.test("executor: finalization replaces an earlier node's accumulated filed value", () => {
+test("executor: finalization replaces an earlier node's accumulated filed value", () => {
   const valueSchema = z.object({ value: z.number() });
   class Start extends TaxNode<typeof valueSchema> {
     readonly nodeType = "start";
@@ -210,7 +211,7 @@ Deno.test("executor: finalization replaces an earlier node's accumulated filed v
   assertEquals(result.diagnostics, []);
 });
 
-Deno.test("executor: scalar field set — single deposit sets scalar value, not array", () => {
+test("executor: scalar field set — single deposit sets scalar value, not array", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_a", nodeType: "mock_a" },
@@ -240,7 +241,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value, not 
   assertEquals(result.pending["mock_a"]?.["value"], 99);
 });
 
-Deno.test("executor: a node's final self-output replaces its input field", () => {
+test("executor: a node's final self-output replaces its input field", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "summary", nodeType: "summary" },
@@ -267,7 +268,7 @@ Deno.test("executor: a node's final self-output replaces its input field", () =>
   assertEquals(result.pending.summary.amount, 2_000);
 });
 
-Deno.test("executor: optional node skip — node with no deposited inputs is silently skipped", () => {
+test("executor: optional node skip — node with no deposited inputs is silently skipped", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_optional", nodeType: "mock_optional" },
@@ -298,7 +299,7 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
   assertEquals(result.pending["mock_optional"], undefined);
 });
 
-Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2 node aggregates internally, f1040 receives scalar (not array)", () => {
+test("executor: array-dispatch model — start dispatches full w2 array, w2 node aggregates internally, f1040 receives scalar (not array)", () => {
   // Start sends { w2s: [all w2s] } in one output — not one per item.
   // W2 node receives the full array and computes the total internally.
   // The engine never promotes scalars to arrays; aggregation is the node's responsibility.
@@ -338,7 +339,7 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
   assertEquals(Array.isArray(f1040Pending?.["wages"]), false);
 });
 
-Deno.test("executor: stateless — same inputs produce identical outputs on repeated execution", () => {
+test("executor: stateless — same inputs produce identical outputs on repeated execution", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_a", nodeType: "mock_a" },
@@ -379,7 +380,7 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
   );
 });
 
-Deno.test("executor: multi-source diamond — two nodes depositing to same target, both deposits arrive as scalars", () => {
+test("executor: multi-source diamond — two nodes depositing to same target, both deposits arrive as scalars", () => {
   // B and C both deposit different scalar fields to D.
   // Engine merges them; D's pending has both fields as scalars.
   const bInputSchema = z.object({ x: z.number() });
@@ -466,7 +467,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
   assertEquals(result.pending["diamond_d"]?.["y"], 20);
 });
 
-Deno.test("executor: Zod parse failure produces diagnostic entry, not silent skip", () => {
+test("executor: Zod parse failure produces diagnostic entry, not silent skip", () => {
   // A node with a strict required string field receives a number — parse fails.
   // Expect: diagnostic entry emitted, compute() NOT called (no downstream output).
   const badParseInputSchema = z.object({ name: z.string() });
@@ -539,7 +540,7 @@ Deno.test("executor: Zod parse failure produces diagnostic entry, not silent ski
   assertEquals(result.pending["should_not_appear"], undefined);
 });
 
-Deno.test("executor: compute() throw produces diagnostic entry, does not abort execution", () => {
+test("executor: compute() throw produces diagnostic entry, does not abort execution", () => {
   // A node whose compute() throws — diagnostic emitted, no crash.
   const throwInputSchema = z.object({ trigger: z.number() });
   class MockThrowNode extends TaxNode<typeof throwInputSchema> {
@@ -594,7 +595,7 @@ Deno.test("executor: compute() throw produces diagnostic entry, does not abort e
   assertEquals(entry.message.includes("intentional boom"), true);
 });
 
-Deno.test("executor: remaining nodes execute after single node failure", () => {
+test("executor: remaining nodes execute after single node failure", () => {
   // 4-node plan: start -> good_a, start -> bad_b (throws), good_a -> good_c
   // bad_b throws; good_a and good_c should still execute.
   // Expect: good_c's output in pending, exactly 1 diagnostic (for bad_b).

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
@@ -75,7 +77,7 @@ const cases = [
 ] as const;
 
 for (const entry of cases) {
-  Deno.test(`Form 8839 foreign MAGI and finalized packet: ${entry.id}`, async () => {
+  test(`Form 8839 foreign MAGI and finalized packet: ${entry.id}`, async () => {
     const address = {
       ...foreign.foreign_address,
       city: "Gothenburg",
@@ -168,12 +170,12 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_FORM8839_FOREIGN_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8839_FOREIGN_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -189,7 +191,7 @@ for (const entry of cases) {
         ),
       );
       for (const attachment of adoptionReviewAttachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${root}/${attachment.fileName}`,
           attachment.bytes,
         );

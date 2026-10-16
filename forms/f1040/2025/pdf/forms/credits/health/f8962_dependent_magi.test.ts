@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { DependentRelationship } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -42,7 +43,7 @@ const dependentSource = {
   }],
 };
 
-Deno.test("Form 8962 PDF line 2b uses the same verified dependent source as MeF", () => {
+test("Form 8962 PDF line 2b uses the same verified dependent source as MeF", () => {
   const projected = form8962Pdf.projectFields?.({
     household_size: 2,
     taxpayer_modified_agi: 75_300,
@@ -91,7 +92,7 @@ Deno.test("Form 8962 PDF line 2b uses the same verified dependent source as MeF"
   );
 });
 
-Deno.test("Form 8962 PDF checks the finalized Schedule 3 and Form 1040 premium credit", () => {
+test("Form 8962 PDF checks the finalized Schedule 3 and Form 1040 premium credit", () => {
   const fields = {
     annual_premium: 6_000,
     net_premium_tax_credit: 100,
@@ -124,7 +125,7 @@ Deno.test("Form 8962 PDF checks the finalized Schedule 3 and Form 1040 premium c
   );
 });
 
-Deno.test("Form 8962 dependent filing threshold cannot be asserted from a below-limit interest return", () => {
+test("Form 8962 dependent filing threshold cannot be asserted from a below-limit interest return", () => {
   const dependent = dependentSource.dependents[0];
   const belowLimit = {
     ...dependentSource,
@@ -159,7 +160,7 @@ Deno.test("Form 8962 dependent filing threshold cannot be asserted from a below-
   );
 });
 
-Deno.test("Form 8962 dependent threshold rejects a normalized impossible birth date", () => {
+test("Form 8962 dependent threshold rejects a normalized impossible birth date", () => {
   const general = {
     ...dependentSource,
     dependents: [{ ...dependentSource.dependents[0], dob: "2025-02-30" }],
@@ -178,7 +179,7 @@ Deno.test("Form 8962 dependent threshold rejects a normalized impossible birth d
   );
 });
 
-Deno.test("Form 8962 PDF closes a not-required dependent without a filing review even with zero line 2b", () => {
+test("Form 8962 PDF closes a not-required dependent without a filing review even with zero line 2b", () => {
   const general = {
     ...dependentSource,
     dependents: [{
@@ -200,7 +201,7 @@ Deno.test("Form 8962 PDF closes a not-required dependent without a filing review
   );
 });
 
-Deno.test("Form 8962 PDF does not demand dependent tax-return facts when there is no policy", () => {
+test("Form 8962 PDF does not demand dependent tax-return facts when there is no policy", () => {
   const projected = form8962Pdf.projectFields?.({
     household_size: 2,
     dependents_modified_agi: 0,

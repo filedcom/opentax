@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -20,7 +21,7 @@ const source = inputSchema.parse({
   subject_to_passive_activity_limit: false,
 });
 
-Deno.test("Form 8820 MeF maps the election, wage offset, and drug identity", () => {
+test("Form 8820 MeF maps the election, wage offset, and drug identity", () => {
   const xml = buildForm8820Document(source);
   assertStringIncludes(
     xml,
@@ -49,7 +50,7 @@ Deno.test("Form 8820 MeF maps the election, wage offset, and drug identity", () 
   );
 });
 
-Deno.test("Form 8820 MeF links its controlled-group calculation statement", () => {
+test("Form 8820 MeF links its controlled-group calculation statement", () => {
   const grouped = {
     ...source,
     controlled_group: {
@@ -99,7 +100,7 @@ Deno.test("Form 8820 MeF links its controlled-group calculation statement", () =
   assertStringIncludes(statements[0], "credit share 39500");
 });
 
-Deno.test("Form 8820 MeF links every statement for a large controlled group", () => {
+test("Form 8820 MeF links every statement for a large controlled group", () => {
   const members = [
     {
       ein: "123456789",
@@ -148,7 +149,7 @@ Deno.test("Form 8820 MeF links every statement for a large controlled group", ()
   assertStringIncludes(statements.join(""), "Related business 30");
 });
 
-Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement", () => {
+test("Form 8820 MeF requires the linked Form 3800 and any expense statement", () => {
   assertThrows(() =>
     form8820.build(source, {
       documentIdsByPendingKey: {},
@@ -202,7 +203,7 @@ Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement
   assertEquals(form8820.build({}), "");
 });
 
-Deno.test("Form 8820 MeF preserves a zero-credit reduced election without Form 3800", () => {
+test("Form 8820 MeF preserves a zero-credit reduced election without Form 3800", () => {
   const election = {
     ...source,
     f8820s: [{ ...source.f8820s[0], qualified_clinical_testing_expenses: 0 }],
@@ -223,7 +224,7 @@ Deno.test("Form 8820 MeF preserves a zero-credit reduced election without Form 3
   );
 });
 
-Deno.test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only form", () => {
+test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only form", () => {
   const passThrough = {
     source_type: "partnership" as const,
     entity_ein: "123456789",
@@ -251,7 +252,7 @@ Deno.test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only for
   );
 });
 
-Deno.test("Form 8820 pass-through credit reconciles to partnership and S-corp K-1 code Z", () => {
+test("Form 8820 pass-through credit reconciles to partnership and S-corp K-1 code Z", () => {
   const partnershipCredit = {
     source_type: "partnership" as const,
     entity_ein: "123456789",
@@ -337,7 +338,7 @@ Deno.test("Form 8820 pass-through credit reconciles to partnership and S-corp K-
   );
 });
 
-Deno.test("Form 8820 rejects estate and trust K-1 code M as orphan-drug credit", () => {
+test("Form 8820 rejects estate and trust K-1 code M as orphan-drug credit", () => {
   const credits = ["estate", "trust"].map((type, index) => ({
     source_type: type as "estate" | "trust",
     entity_ein: String(123_456_789 + index),
@@ -364,7 +365,7 @@ Deno.test("Form 8820 rejects estate and trust K-1 code M as orphan-drug credit",
   }
 });
 
-Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule C", () => {
+test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule C", () => {
   const fullCredit = {
     ...source,
     reduced_section280c_credit_election: false,
@@ -452,7 +453,7 @@ Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule C
   );
 });
 
-Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule F", () => {
+test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule F", () => {
   const farmSource = {
     ...source,
     reduced_section280c_credit_election: false,
@@ -540,7 +541,7 @@ Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule F
   );
 });
 
-Deno.test("Form 8820 builds its own section 280C PDF attachment", async () => {
+test("Form 8820 builds its own section 280C PDF attachment", async () => {
   const filer = {
     primarySSN: "123456789",
     nameLine1: "TEST TAXPAYER",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
@@ -36,7 +37,7 @@ function parts(credit = 1_250, appliedCredit = 1_250) {
   });
 }
 
-Deno.test("Form 8994 stages one sourced specified Form 3800 line 4j and Part V row", () => {
+test("Form 8994 stages one sourced specified Form 3800 line 4j and Part V row", () => {
   const filed = parts();
   assertEquals(filed.currentRows.map((row) => row.line), ["4j"]);
   assertEquals(filed.currentAmounts.map((row) => row.line), ["4j"]);
@@ -59,7 +60,7 @@ Deno.test("Form 8994 stages one sourced specified Form 3800 line 4j and Part V r
   );
 });
 
-Deno.test("Form 8994 full Schedule C wage reduction persists under partial tax use", () => {
+test("Form 8994 full Schedule C wage reduction persists under partial tax use", () => {
   const pending = {
     ...form8994MatchedPending,
     f3800: {
@@ -99,7 +100,7 @@ Deno.test("Form 8994 full Schedule C wage reduction persists under partial tax u
   );
 });
 
-Deno.test("IRS8994 native projection uses the verified A–D and lines 1–3 tags", () => {
+test("IRS8994 native projection uses the verified A–D and lines 1–3 tags", () => {
   const xml = form8994.build(form8994MatchedPending.f8994, {
     pending: form8994MatchedPending,
     documentIdsByPendingKey: { f3800: ["IRS3800_1"] },

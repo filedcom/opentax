@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -68,7 +69,7 @@ function selfOnlyPair() {
   return { forms, pending };
 }
 
-Deno.test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", () => {
+test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", () => {
   const { forms, pending } = selfOnlyPair();
   const xml = form8889Mef.build(
     { forms } as Parameters<typeof form8889Mef.build>[0],
@@ -135,7 +136,7 @@ Deno.test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", 
   );
 });
 
-Deno.test("paired partial-year self-only Forms 8889 reconcile distinct owner months", () => {
+test("paired partial-year self-only Forms 8889 reconcile distinct owner months", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -245,7 +246,7 @@ Deno.test("paired partial-year self-only Forms 8889 reconcile distinct owner mon
   );
 });
 
-Deno.test("paired Medicare mixed-month Forms 8889 reconcile MeF and PDF", () => {
+test("paired Medicare mixed-month Forms 8889 reconcile MeF and PDF", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -320,7 +321,7 @@ Deno.test("paired Medicare mixed-month Forms 8889 reconcile MeF and PDF", () => 
   );
 });
 
-Deno.test("paired other-coverage loss allocates family months and reconciles MeF/PDF", () => {
+test("paired other-coverage loss allocates family months and reconciles MeF/PDF", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -468,7 +469,7 @@ Deno.test("paired other-coverage loss allocates family months and reconciles MeF
   );
 });
 
-Deno.test("paired family Form 8889 reconciles the sourced 2025 allocation through MeF and PDF", () => {
+test("paired family Form 8889 reconciles the sourced 2025 allocation through MeF and PDF", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -551,7 +552,7 @@ Deno.test("paired family Form 8889 reconciles the sourced 2025 allocation throug
   );
 });
 
-Deno.test("paired mixed-coverage Form 8889 reconciles both owner forms through MeF and PDF", () => {
+test("paired mixed-coverage Form 8889 reconciles both owner forms through MeF and PDF", () => {
   const coverage = [
     ...Array(5).fill(CoverageType.Family),
     ...Array(7).fill(CoverageType.SelfOnly),
@@ -640,7 +641,7 @@ Deno.test("paired mixed-coverage Form 8889 reconciles both owner forms through M
   );
 });
 
-Deno.test("paired mismatched HDHP plans reconcile deemed family months through MeF and PDF", () => {
+test("paired mismatched HDHP plans reconcile deemed family months through MeF and PDF", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -744,7 +745,7 @@ Deno.test("paired mismatched HDHP plans reconcile deemed family months through M
   );
 });
 
-Deno.test("paired 2024 last-month recapture reaches two MeF and PDF owner forms", () => {
+test("paired 2024 last-month recapture reaches two MeF and PDF owner forms", () => {
   const prior = {
     contribution_year: 2024 as const,
     eligible_hdhp_coverage_by_month: [
@@ -921,7 +922,7 @@ function pairedDistributions() {
   return { source, forms, pending };
 }
 
-Deno.test("paired 1099-SA and medical receipt sources reconcile normal distributions through MeF and PDF", () => {
+test("paired 1099-SA and medical receipt sources reconcile normal distributions through MeF and PDF", () => {
   const { forms, pending } = pairedDistributions();
   assertEquals(forms.map((form) => form.print_line14a_distributions), [
     1_000,
@@ -939,7 +940,7 @@ Deno.test("paired 1099-SA and medical receipt sources reconcile normal distribut
   assertEquals(form8889Pdf.instances?.({ forms }, filer, pending)?.length, 2);
 });
 
-Deno.test("paired Form 8889 rejects missing or mismatched 1099-SA evidence", () => {
+test("paired Form 8889 rejects missing or mismatched 1099-SA evidence", () => {
   const { source, forms, pending } = pairedDistributions();
   const missing = {
     ...source,
@@ -982,7 +983,7 @@ Deno.test("paired Form 8889 rejects missing or mismatched 1099-SA evidence", () 
   }
 });
 
-Deno.test("paired Form 8889 rejects reused receipts and return totals that omit taxable HSA income", () => {
+test("paired Form 8889 rejects reused receipts and return totals that omit taxable HSA income", () => {
   const { source, forms, pending } = pairedDistributions();
   assertThrows(
     () =>
@@ -1020,7 +1021,7 @@ Deno.test("paired Form 8889 rejects reused receipts and return totals that omit 
   );
 });
 
-Deno.test("paired Form 8889 prints both W-2-funded HSAs without inventing Schedule 1 income or deduction", () => {
+test("paired Form 8889 prints both W-2-funded HSAs without inventing Schedule 1 income or deduction", () => {
   const employerYear = {
     made_in_2025_for_2024_in_w2: 0,
     made_in_2026_for_2025: 0,

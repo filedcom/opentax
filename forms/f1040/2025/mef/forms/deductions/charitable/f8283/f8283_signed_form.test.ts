@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { SectionBPropertyType } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
@@ -91,7 +92,7 @@ function attachments(bytes: Uint8Array) {
   ];
 }
 
-Deno.test("Form 8283 Section B rejects signature excerpts without a reviewed completed signed form", async () => {
+test("Form 8283 Section B rejects signature excerpts without a reviewed completed signed form", async () => {
   const bytes = await pdfBytes();
   const {
     signed_form_attachment_file_name: _file,
@@ -109,7 +110,7 @@ Deno.test("Form 8283 Section B rejects signature excerpts without a reviewed com
   );
 });
 
-Deno.test("Form 8283 Section B rejects a PDF whose bytes differ from the reviewed source", async () => {
+test("Form 8283 Section B rejects a PDF whose bytes differ from the reviewed source", async () => {
   const reviewed = await pdfBytes();
   const changed = await PDFDocument.load(reviewed);
   changed.addPage([612, 792]);
@@ -128,7 +129,7 @@ Deno.test("Form 8283 Section B rejects a PDF whose bytes differ from the reviewe
   );
 });
 
-Deno.test("Form 8283 Section B links the reviewed completed signed form as a distinct binary document", async () => {
+test("Form 8283 Section B links the reviewed completed signed form as a distinct binary document", async () => {
   // Synthetic PDF bytes exercise the identity/link contract, not signature
   // authentication. Production review must inspect the completed source form.
   const bytes = await pdfBytes();

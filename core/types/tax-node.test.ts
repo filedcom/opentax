@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "./tax-node.ts";
@@ -32,13 +33,13 @@ class MockAddNode extends TaxNode<typeof addSchema> {
   }
 }
 
-Deno.test("MockAddNode: can be instantiated", () => {
+test("MockAddNode: can be instantiated", () => {
   const node = new MockAddNode();
   assertEquals(node.nodeType, "mock_add");
   assertEquals(node.outputNodeTypes, ["mock_output"]); // computed from outputNodes
 });
 
-Deno.test("MockAddNode: compute() returns a valid NodeResult with outputs array", () => {
+test("MockAddNode: compute() returns a valid NodeResult with outputs array", () => {
   const node = new MockAddNode();
   const result = node.compute({ taxYear: 2025, formType: "f1040" }, { a: 3, b: 4 });
   assertEquals(result.outputs.length, 1);
@@ -46,7 +47,7 @@ Deno.test("MockAddNode: compute() returns a valid NodeResult with outputs array"
   assertEquals((result.outputs[0].fields as { sum: number }).sum, 7);
 });
 
-Deno.test("MockAddNode: inputSchema validates valid input via safeParse", () => {
+test("MockAddNode: inputSchema validates valid input via safeParse", () => {
   const node = new MockAddNode();
   const parsed = node.inputSchema.safeParse({ a: 10, b: 20 });
   assertEquals(parsed.success, true);
@@ -56,13 +57,13 @@ Deno.test("MockAddNode: inputSchema validates valid input via safeParse", () => 
   }
 });
 
-Deno.test("MockAddNode: inputSchema rejects invalid input via safeParse", () => {
+test("MockAddNode: inputSchema rejects invalid input via safeParse", () => {
   const node = new MockAddNode();
   const parsed = node.inputSchema.safeParse({ a: "not-a-number", b: 20 });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("MockAddNode: inputSchema rejects missing fields via safeParse", () => {
+test("MockAddNode: inputSchema rejects missing fields via safeParse", () => {
   const node = new MockAddNode();
   const parsed = node.inputSchema.safeParse({ a: 5 });
   assertEquals(parsed.success, false);

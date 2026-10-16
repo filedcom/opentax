@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form2555 } from "./index.ts";
 
@@ -11,12 +12,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Smoke / Empty Input ──────────────────────────────────────────────────────
 
-Deno.test("smoke — empty input returns no outputs", () => {
+test("smoke — empty input returns no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("no qualification — zero days and no bona fide → no output", () => {
+test("no qualification — zero days and no bona fide → no output", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 100,
@@ -26,7 +27,7 @@ Deno.test("no qualification — zero days and no bona fide → no output", () =>
 
 // ─── Physical Presence Test ───────────────────────────────────────────────────
 
-Deno.test("physical presence — exactly 330 days qualifies", () => {
+test("physical presence — exactly 330 days qualifies", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 330,
@@ -40,7 +41,7 @@ Deno.test("physical presence — exactly 330 days qualifies", () => {
   assertEquals(findOutput(result, "eitc")?.fields.form2555_filed, true);
 });
 
-Deno.test("physical presence — 329 days does not qualify", () => {
+test("physical presence — 329 days does not qualify", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 329,
@@ -48,7 +49,7 @@ Deno.test("physical presence — 329 days does not qualify", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("physical presence — 365 days qualifies", () => {
+test("physical presence — 365 days qualifies", () => {
   const result = compute({
     foreign_wages: 80_000,
     days_in_foreign_country: 365,
@@ -59,20 +60,20 @@ Deno.test("physical presence — 365 days qualifies", () => {
 
 // ─── Bona Fide Residence Test ─────────────────────────────────────────────────
 
-Deno.test("bona fide resident — qualifies with 0 days", () => {
+test("bona fide resident — qualifies with 0 days", () => {
   const result = compute({ foreign_wages: 40_000, bona_fide_resident: true });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 40_000);
 });
 
-Deno.test("bona fide resident = false and 0 days → no output", () => {
+test("bona fide resident = false and 0 days → no output", () => {
   const result = compute({ foreign_wages: 40_000, bona_fide_resident: false });
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── FEIE Amount — Limit at $130,000 ─────────────────────────────────────────
 
-Deno.test("FEIE — income below limit: full exclusion", () => {
+test("FEIE — income below limit: full exclusion", () => {
   const result = compute({
     foreign_wages: 100_000,
     days_in_foreign_country: 365,
@@ -81,7 +82,7 @@ Deno.test("FEIE — income below limit: full exclusion", () => {
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 100_000);
 });
 
-Deno.test("FEIE — income exactly at $130,000 limit", () => {
+test("FEIE — income exactly at $130,000 limit", () => {
   const result = compute({
     foreign_wages: 130_000,
     days_in_foreign_country: 365,
@@ -90,7 +91,7 @@ Deno.test("FEIE — income exactly at $130,000 limit", () => {
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 130_000);
 });
 
-Deno.test("FEIE — income above $130,000: capped at $130,000", () => {
+test("FEIE — income above $130,000: capped at $130,000", () => {
   const result = compute({
     foreign_wages: 200_000,
     days_in_foreign_country: 365,
@@ -101,7 +102,7 @@ Deno.test("FEIE — income above $130,000: capped at $130,000", () => {
 
 // ─── Self-Employment Income ───────────────────────────────────────────────────
 
-Deno.test("SE income — combined wages + SE excluded, capped at $130k", () => {
+test("SE income — combined wages + SE excluded, capped at $130k", () => {
   const result = compute({
     foreign_wages: 60_000,
     foreign_self_employment_income: 90_000,
@@ -112,7 +113,7 @@ Deno.test("SE income — combined wages + SE excluded, capped at $130k", () => {
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 130_000);
 });
 
-Deno.test("SE income only — no wages", () => {
+test("SE income only — no wages", () => {
   const result = compute({
     foreign_self_employment_income: 50_000,
     days_in_foreign_country: 365,
@@ -123,7 +124,7 @@ Deno.test("SE income only — no wages", () => {
 
 // ─── Housing Exclusion ────────────────────────────────────────────────────────
 
-Deno.test("legacy aggregate housing amounts fail closed instead of being added to FEIE", () => {
+test("legacy aggregate housing amounts fail closed instead of being added to FEIE", () => {
   for (
     const source of [
       { foreign_housing_expenses: 30_000 },
@@ -146,7 +147,7 @@ Deno.test("legacy aggregate housing amounts fail closed instead of being added t
 
 // ─── Partial-year FEIE proration (IRC §911(b)(2)(A)) ─────────────────────────
 
-Deno.test("proration — 182 qualifying days: limit = $130,000 × 182/365 ≈ $64,767", () => {
+test("proration — 182 qualifying days: limit = $130,000 × 182/365 ≈ $64,767", () => {
   const result = compute({
     foreign_wages: 200_000,
     days_in_foreign_country: 330,
@@ -157,7 +158,7 @@ Deno.test("proration — 182 qualifying days: limit = $130,000 × 182/365 ≈ $6
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, expected);
 });
 
-Deno.test("proration — 365 qualifying days: full $130,000 limit applies", () => {
+test("proration — 365 qualifying days: full $130,000 limit applies", () => {
   const result = compute({
     foreign_wages: 200_000,
     days_in_foreign_country: 365,
@@ -166,7 +167,7 @@ Deno.test("proration — 365 qualifying days: full $130,000 limit applies", () =
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 130_000);
 });
 
-Deno.test("proration — income below prorated limit: full income excluded", () => {
+test("proration — income below prorated limit: full income excluded", () => {
   // 91 qualifying days → limit ≈ $32,411; income $20,000 → exclude $20,000
   const result = compute({
     foreign_wages: 20_000,
@@ -179,7 +180,7 @@ Deno.test("proration — income below prorated limit: full income excluded", () 
 
 // ─── SE income preservation for Schedule SE (row 17 fix) ─────────────────────
 
-Deno.test("SE income routes to schedule_se as net_profit_schedule_c", () => {
+test("SE income routes to schedule_se as net_profit_schedule_c", () => {
   const result = compute({
     foreign_self_employment_income: 50_000,
     days_in_foreign_country: 365,
@@ -188,7 +189,7 @@ Deno.test("SE income routes to schedule_se as net_profit_schedule_c", () => {
   assertEquals(se?.fields.net_profit_schedule_c, 50_000);
 });
 
-Deno.test("SE income excluded from income tax but still triggers SE tax", () => {
+test("SE income excluded from income tax but still triggers SE tax", () => {
   const result = compute({
     foreign_wages: 30_000,
     foreign_self_employment_income: 40_000,
@@ -202,7 +203,7 @@ Deno.test("SE income excluded from income tax but still triggers SE tax", () => 
   assertEquals(se?.fields.net_profit_schedule_c, 40_000);
 });
 
-Deno.test("no SE income → no schedule_se output", () => {
+test("no SE income → no schedule_se output", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 365,
@@ -213,7 +214,7 @@ Deno.test("no SE income → no schedule_se output", () => {
 
 // ─── §911(f) stacking rule — routes exclusion to income_tax_calculation ───────
 
-Deno.test("stacking rule: exclusion emitted to income_tax_calculation", () => {
+test("stacking rule: exclusion emitted to income_tax_calculation", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 365,
@@ -222,7 +223,7 @@ Deno.test("stacking rule: exclusion emitted to income_tax_calculation", () => {
   assertEquals(itc?.fields.foreign_earned_income_exclusion, 50_000);
 });
 
-Deno.test("stacking rule: aggregate housing cannot enter income tax calculation", () => {
+test("stacking rule: aggregate housing cannot enter income tax calculation", () => {
   assertThrows(
     () =>
       compute({
@@ -237,7 +238,7 @@ Deno.test("stacking rule: aggregate housing cannot enter income tax calculation"
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule1 and agi_aggregator", () => {
+test("output routes to schedule1 and agi_aggregator", () => {
   const result = compute({
     foreign_wages: 50_000,
     days_in_foreign_country: 365,

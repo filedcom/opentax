@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   DependentCreditCategory,
@@ -26,7 +27,7 @@ function assertNotIncludes(actual: string, expected: string) {
 // IRS1040 always emits IndividualReturnFilingStatusCd, VirtualCurAcquiredDurTYInd,
 // and RefundProductCd regardless of input (all required by IRS1040.xsd).
 
-Deno.test("empty object still emits required IRS1040 fields", () => {
+test("empty object still emits required IRS1040 fields", () => {
   const result = irs1040.build({});
   assertStringIncludes(result, "<IRS1040>");
   assertStringIncludes(result, "<IndividualReturnFilingStatusCd>");
@@ -37,7 +38,7 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
   );
 });
 
-Deno.test("direct Form 1040 MeF descriptor rejects deceased source and filer facts", () => {
+test("direct Form 1040 MeF descriptor rejects deceased source and filer facts", () => {
   assertThrows(
     () =>
       irs1040.build({}, { pending: { general: { spouse_deceased: true } } }),
@@ -51,7 +52,7 @@ Deno.test("direct Form 1040 MeF descriptor rejects deceased source and filer fac
   );
 });
 
-Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
+test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
     Error,
@@ -59,7 +60,7 @@ Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its d
   );
 });
 
-Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
+test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -70,7 +71,7 @@ Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   );
 });
 
-Deno.test("Form 1040 MeF accepts a finalized Form 8912 only with its document", () => {
+test("Form 1040 MeF accepts a finalized Form 8912 only with its document", () => {
   const fields = {
     form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
   };
@@ -92,7 +93,7 @@ Deno.test("Form 1040 MeF accepts a finalized Form 8912 only with its document", 
   );
 });
 
-Deno.test("Form 1040 line 16 labels and references the Form 8814 tax", () => {
+test("Form 1040 line 16 labels and references the Form 8814 tax", () => {
   const xml = irs1040.build(
     { line16_income_tax: 2_135, form8814_tax: 135 },
     { documentIdsByPendingKey: { form8814: ["DOC8814"] } },
@@ -104,7 +105,7 @@ Deno.test("Form 1040 line 16 labels and references the Form 8814 tax", () => {
   );
 });
 
-Deno.test("Form 1040 rejects an elected child tax without its document", () => {
+test("Form 1040 rejects an elected child tax without its document", () => {
   assertThrows(
     () =>
       irs1040.build(
@@ -116,7 +117,7 @@ Deno.test("Form 1040 rejects an elected child tax without its document", () => {
   );
 });
 
-Deno.test("Form 1040 line 16 links an attached Form 4972", () => {
+test("Form 1040 line 16 links an attached Form 4972", () => {
   const xml = irs1040.build(
     { line16_income_tax: 14_705, form4972_tax: 14_705 },
     { documentIdsByPendingKey: { form4972: ["DOC4972"] } },
@@ -128,7 +129,7 @@ Deno.test("Form 1040 line 16 links an attached Form 4972", () => {
   );
 });
 
-Deno.test("Form 1040 rejects Form 4972 tax with no attached document", () => {
+test("Form 1040 rejects Form 4972 tax with no attached document", () => {
   assertThrows(
     () =>
       irs1040.build(
@@ -140,7 +141,7 @@ Deno.test("Form 1040 rejects Form 4972 tax with no attached document", () => {
   );
 });
 
-Deno.test("Form 1040 cannot claim dependent credits without dependent rows", () => {
+test("Form 1040 cannot claim dependent credits without dependent rows", () => {
   assertThrows(
     () => irs1040.build({ qualifying_child_tax_credit_count: 1 }),
     Error,
@@ -148,7 +149,7 @@ Deno.test("Form 1040 cannot claim dependent credits without dependent rows", () 
   );
 });
 
-Deno.test("dependent rows preserve identity, relationship, residency, and credit choice", () => {
+test("dependent rows preserve identity, relationship, residency, and credit choice", () => {
   const result = irs1040.build({
     ...eligibleFiler,
     dependent_count: 2,
@@ -217,7 +218,7 @@ Deno.test("dependent rows preserve identity, relationship, residency, and credit
   );
 });
 
-Deno.test("dependent rows cannot silently omit the required name control", () => {
+test("dependent rows cannot silently omit the required name control", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -245,7 +246,7 @@ Deno.test("dependent rows cannot silently omit the required name control", () =>
   );
 });
 
-Deno.test("dependent credit row needs confirmed qualifying U.S. status", () => {
+test("dependent credit row needs confirmed qualifying U.S. status", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -273,7 +274,7 @@ Deno.test("dependent credit row needs confirmed qualifying U.S. status", () => {
   );
 });
 
-Deno.test("dependent credit row needs a confirmed joint-return answer", () => {
+test("dependent credit row needs a confirmed joint-return answer", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -301,7 +302,7 @@ Deno.test("dependent credit row needs a confirmed joint-return answer", () => {
   );
 });
 
-Deno.test("Form 1040 cannot mark a child for CTC without an employment-valid timely SSN", () => {
+test("Form 1040 cannot mark a child for CTC without an employment-valid timely SSN", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -330,7 +331,7 @@ Deno.test("Form 1040 cannot mark a child for CTC without an employment-valid tim
   );
 });
 
-Deno.test("a dependent row without a credit still needs a support basis", () => {
+test("a dependent row without a credit still needs a support basis", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -354,7 +355,7 @@ Deno.test("a dependent row without a credit still needs a support basis", () => 
   );
 });
 
-Deno.test("qualifying-relative ODC row needs verified income", () => {
+test("qualifying-relative ODC row needs verified income", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -381,7 +382,7 @@ Deno.test("qualifying-relative ODC row needs verified income", () => {
   );
 });
 
-Deno.test("unrelated ODC row cannot claim the credit without full-year residence", () => {
+test("unrelated ODC row cannot claim the credit without full-year residence", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -409,7 +410,7 @@ Deno.test("unrelated ODC row cannot claim the credit without full-year residence
   );
 });
 
-Deno.test("grandparent and in-law ODC rows use their IRS relationship codes", () => {
+test("grandparent and in-law ODC rows use their IRS relationship codes", () => {
   const result = irs1040.build({
     ...eligibleFiler,
     dependent_count: 2,
@@ -460,7 +461,7 @@ Deno.test("grandparent and in-law ODC rows use their IRS relationship codes", ()
   assertEquals([...result.matchAll(/<EligibleForODCInd>/g)].length, 2);
 });
 
-Deno.test("all unknown keys still emits required IRS1040 fields", () => {
+test("all unknown keys still emits required IRS1040 fields", () => {
   const result = irs1040.build({ unknown_field: 999, foo: 123, bar: "baz" });
   assertStringIncludes(result, "<IRS1040>");
   assertStringIncludes(result, "<IndividualReturnFilingStatusCd>");
@@ -470,7 +471,7 @@ Deno.test("all unknown keys still emits required IRS1040 fields", () => {
   );
 });
 
-Deno.test("filing_status single maps to IndividualReturnFilingStatusCd 1", () => {
+test("filing_status single maps to IndividualReturnFilingStatusCd 1", () => {
   const result = irs1040.build({ filing_status: "single" });
   assertStringIncludes(
     result,
@@ -478,7 +479,7 @@ Deno.test("filing_status single maps to IndividualReturnFilingStatusCd 1", () =>
   );
 });
 
-Deno.test("filing_status mfj maps to IndividualReturnFilingStatusCd 2", () => {
+test("filing_status mfj maps to IndividualReturnFilingStatusCd 2", () => {
   const result = irs1040.build({ filing_status: "mfj" });
   assertStringIncludes(
     result,
@@ -486,7 +487,7 @@ Deno.test("filing_status mfj maps to IndividualReturnFilingStatusCd 2", () => {
   );
 });
 
-Deno.test("RefundProductCd always emitted at end", () => {
+test("RefundProductCd always emitted at end", () => {
   const result = irs1040.build({ line1a_wages: 50000 });
   assertStringIncludes(
     result,
@@ -503,12 +504,12 @@ Deno.test("RefundProductCd always emitted at end", () => {
 
 // ─── Section 2: Zero value emitted ───────────────────────────────────────────
 
-Deno.test("line1a_wages zero emits WagesAmt zero", () => {
+test("line1a_wages zero emits WagesAmt zero", () => {
   const result = irs1040.build({ line1a_wages: 0 });
   assertStringIncludes(result, "<WagesAmt>0</WagesAmt>");
 });
 
-Deno.test("line25a_w2_withheld zero emits FormW2WithheldTaxAmt zero", () => {
+test("line25a_w2_withheld zero emits FormW2WithheldTaxAmt zero", () => {
   const result = irs1040.build({ line25a_w2_withheld: 0 });
   assertStringIncludes(
     result,
@@ -516,7 +517,7 @@ Deno.test("line25a_w2_withheld zero emits FormW2WithheldTaxAmt zero", () => {
   );
 });
 
-Deno.test("line12c_deduction_total zero is emitted", () => {
+test("line12c_deduction_total zero is emitted", () => {
   const result = irs1040.build({ line12c_deduction_total: 0 });
   assertStringIncludes(
     result,
@@ -527,12 +528,12 @@ Deno.test("line12c_deduction_total zero is emitted", () => {
 // ─── Section 3: Per-field mapping ────────────────────────────────────────────
 // Tag names verified against IRS1040.xsd (2025v3.0)
 
-Deno.test("line1a_wages maps to WagesAmt", () => {
+test("line1a_wages maps to WagesAmt", () => {
   const result = irs1040.build({ line1a_wages: 50000 });
   assertStringIncludes(result, "<WagesAmt>50000</WagesAmt>");
 });
 
-Deno.test("Form 1040 preserves household wages, Medicaid waivers, wage total, and Schedule 1 income", () => {
+test("Form 1040 preserves household wages, Medicaid waivers, wage total, and Schedule 1 income", () => {
   const result = irs1040.build({
     line1b_household_wages: 2_000,
     line1d_medicaid_waiver: 300,
@@ -557,12 +558,12 @@ Deno.test("Form 1040 preserves household wages, Medicaid waivers, wage total, an
   );
 });
 
-Deno.test("line1e_taxable_dep_care maps to TaxableBenefitsAmt", () => {
+test("line1e_taxable_dep_care maps to TaxableBenefitsAmt", () => {
   const result = irs1040.build({ line1e_taxable_dep_care: 3000 });
   assertStringIncludes(result, "<TaxableBenefitsAmt>3000</TaxableBenefitsAmt>");
 });
 
-Deno.test("line1i_combat_pay maps to NontxCombatPayElectionAmt", () => {
+test("line1i_combat_pay maps to NontxCombatPayElectionAmt", () => {
   const result = irs1040.build({ line1i_combat_pay: 1200 });
   assertStringIncludes(
     result,
@@ -570,7 +571,7 @@ Deno.test("line1i_combat_pay maps to NontxCombatPayElectionAmt", () => {
   );
 });
 
-Deno.test("line2a_tax_exempt maps to TaxExemptInterestAmt", () => {
+test("line2a_tax_exempt maps to TaxExemptInterestAmt", () => {
   const result = irs1040.build({ line2a_tax_exempt: 500 });
   assertStringIncludes(
     result,
@@ -578,7 +579,7 @@ Deno.test("line2a_tax_exempt maps to TaxExemptInterestAmt", () => {
   );
 });
 
-Deno.test("line3a_qualified_dividends maps to QualifiedDividendsAmt", () => {
+test("line3a_qualified_dividends maps to QualifiedDividendsAmt", () => {
   const result = irs1040.build({ line3a_qualified_dividends: 1500 });
   assertStringIncludes(
     result,
@@ -586,7 +587,7 @@ Deno.test("line3a_qualified_dividends maps to QualifiedDividendsAmt", () => {
   );
 });
 
-Deno.test("line4a_ira_gross maps to IRADistributionsAmt", () => {
+test("line4a_ira_gross maps to IRADistributionsAmt", () => {
   const result = irs1040.build({ line4a_ira_gross: 20000 });
   assertStringIncludes(
     result,
@@ -594,12 +595,12 @@ Deno.test("line4a_ira_gross maps to IRADistributionsAmt", () => {
   );
 });
 
-Deno.test("line4b_ira_taxable maps to TaxableIRAAmt", () => {
+test("line4b_ira_taxable maps to TaxableIRAAmt", () => {
   const result = irs1040.build({ line4b_ira_taxable: 18000 });
   assertStringIncludes(result, "<TaxableIRAAmt>18000</TaxableIRAAmt>");
 });
 
-Deno.test("line5a_pension_gross maps to PensionsAnnuitiesAmt", () => {
+test("line5a_pension_gross maps to PensionsAnnuitiesAmt", () => {
   const result = irs1040.build({ line5a_pension_gross: 24000 });
   assertStringIncludes(
     result,
@@ -607,7 +608,7 @@ Deno.test("line5a_pension_gross maps to PensionsAnnuitiesAmt", () => {
   );
 });
 
-Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
+test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
   const result = irs1040.build({ line5b_pension_taxable: 22000 });
   assertStringIncludes(
     result,
@@ -615,7 +616,7 @@ Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
   );
 });
 
-Deno.test("payer code G reconciles to Form 1040 line 5c in native MeF sequence", () => {
+test("payer code G reconciles to Form 1040 line 5c in native MeF sequence", () => {
   const source = {
     f1099rs: [{
       payer_name: "Jubilee",
@@ -652,7 +653,7 @@ Deno.test("payer code G reconciles to Form 1040 line 5c in native MeF sequence",
   );
 });
 
-Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
+test("IRA rollover prints line 4c(1) only from reviewed source", () => {
   const source = {
     f1099rs: [{
       payer_name: "IRA Custodian",
@@ -761,7 +762,7 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
   );
 });
 
-Deno.test("line25a_w2_withheld maps to FormW2WithheldTaxAmt", () => {
+test("line25a_w2_withheld maps to FormW2WithheldTaxAmt", () => {
   const result = irs1040.build({ line25a_w2_withheld: 8000 });
   assertStringIncludes(
     result,
@@ -769,7 +770,7 @@ Deno.test("line25a_w2_withheld maps to FormW2WithheldTaxAmt", () => {
   );
 });
 
-Deno.test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
+test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
   const result = irs1040.build({ line25b_withheld_1099: 450 });
   assertStringIncludes(
     result,
@@ -777,7 +778,7 @@ Deno.test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
   );
 });
 
-Deno.test("line12c_deduction_total maps to TotalItemizedOrStandardDedAmt", () => {
+test("line12c_deduction_total maps to TotalItemizedOrStandardDedAmt", () => {
   const result = irs1040.build({ line12c_deduction_total: 27700 });
   assertStringIncludes(
     result,
@@ -785,7 +786,7 @@ Deno.test("line12c_deduction_total maps to TotalItemizedOrStandardDedAmt", () =>
   );
 });
 
-Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
+test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   const result = irs1040.build({ line28_actc: 1600 });
   assertStringIncludes(
     result,
@@ -793,7 +794,7 @@ Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   );
 });
 
-Deno.test("Form 1040 native line 27c prints only a retained EIC opt-out", () => {
+test("Form 1040 native line 27c prints only a retained EIC opt-out", () => {
   const fields = {
     filing_status: "single",
     do_not_claim_eic: true,
@@ -837,7 +838,7 @@ Deno.test("Form 1040 native line 27c prints only a retained EIC opt-out", () => 
   );
 });
 
-Deno.test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", () => {
+test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", () => {
   const source = { f8812s: [{ do_not_claim_actc: true }] };
   const xml = irs1040.build({
     line28_actc: 0,
@@ -867,7 +868,7 @@ Deno.test("Form 1040 native line 28 emits only the sourced ACTC opt-out mark", (
   );
 });
 
-Deno.test("line29_refundable_aoc maps to RefundableAmerOppCreditAmt", () => {
+test("line29_refundable_aoc maps to RefundableAmerOppCreditAmt", () => {
   const result = irs1040.build({ line29_refundable_aoc: 2500 });
   assertStringIncludes(
     result,
@@ -875,19 +876,19 @@ Deno.test("line29_refundable_aoc maps to RefundableAmerOppCreditAmt", () => {
   );
 });
 
-Deno.test("line17_additional_taxes maps to AdditionalTaxAmt", () => {
+test("line17_additional_taxes maps to AdditionalTaxAmt", () => {
   const result = irs1040.build({ line17_additional_taxes: 3200 });
   assertStringIncludes(result, "<AdditionalTaxAmt>3200</AdditionalTaxAmt>");
 });
 
-Deno.test("line33_total_payments maps to TotalPaymentsAmt", () => {
+test("line33_total_payments maps to TotalPaymentsAmt", () => {
   const result = irs1040.build({ line33_total_payments: 11000 });
   assertStringIncludes(result, "<TotalPaymentsAmt>11000</TotalPaymentsAmt>");
 });
 
 // ─── Section 4: Sparse output ────────────────────────────────────────────────
 
-Deno.test("absent field not emitted when other field present", () => {
+test("absent field not emitted when other field present", () => {
   const result = irs1040.build({ line3a_qualified_dividends: 1500 });
   assertStringIncludes(
     result,
@@ -896,7 +897,7 @@ Deno.test("absent field not emitted when other field present", () => {
   assertNotIncludes(result, "<WagesAmt>");
 });
 
-Deno.test("IRA gross present but IRA taxable absent - only gross element emitted", () => {
+test("IRA gross present but IRA taxable absent - only gross element emitted", () => {
   const result = irs1040.build({ line4a_ira_gross: 20000 });
   assertStringIncludes(
     result,
@@ -905,28 +906,28 @@ Deno.test("IRA gross present but IRA taxable absent - only gross element emitted
   assertNotIncludes(result, "<TaxableIRAAmt>");
 });
 
-Deno.test("null value field not emitted", () => {
+test("null value field not emitted", () => {
   const result = irs1040.build({ line1a_wages: null });
   assertNotIncludes(result, "<WagesAmt>");
 });
 
 // ─── Section 5: Mixed known/unknown keys ─────────────────────────────────────
 
-Deno.test("known field emitted, unknown key dropped", () => {
+test("known field emitted, unknown key dropped", () => {
   const result = irs1040.build({ line1a_wages: 50000, unknown_field: 999 });
   assertStringIncludes(result, "<WagesAmt>50000</WagesAmt>");
   assertNotIncludes(result, "unknown_field");
   assertNotIncludes(result, ">999<");
 });
 
-Deno.test("wrapper IRS1040 element always present", () => {
+test("wrapper IRS1040 element always present", () => {
   const result = irs1040.build({ line1a_wages: 100 });
   assertStringIncludes(result, "<IRS1040>");
 });
 
 // ─── Section 6: Element ordering ─────────────────────────────────────────────
 
-Deno.test("elements emitted in field map order regardless of input insertion order", () => {
+test("elements emitted in field map order regardless of input insertion order", () => {
   // Input provides pension before wages, but output must follow field map order
   const result = irs1040.build({
     line5a_pension_gross: 24000,
@@ -941,7 +942,7 @@ Deno.test("elements emitted in field map order regardless of input insertion ord
   );
 });
 
-Deno.test("all fields ordering matches field map sequence", () => {
+test("all fields ordering matches field map sequence", () => {
   const result = irs1040.build({
     line1a_wages: 1,
     line1e_taxable_dep_care: 2,
@@ -992,12 +993,12 @@ Deno.test("all fields ordering matches field map sequence", () => {
 
 // ─── Section 7: Additional field mappings ────────────────────────────────────
 
-Deno.test("line2b_taxable_interest maps to TaxableInterestAmt", () => {
+test("line2b_taxable_interest maps to TaxableInterestAmt", () => {
   const result = irs1040.build({ line2b_taxable_interest: 1200 });
   assertStringIncludes(result, "<TaxableInterestAmt>1200</TaxableInterestAmt>");
 });
 
-Deno.test("line3b_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
+test("line3b_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
   const result = irs1040.build({ line3b_ordinary_dividends: 800 });
   assertStringIncludes(
     result,
@@ -1005,17 +1006,17 @@ Deno.test("line3b_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
   );
 });
 
-Deno.test("line6a_ss_gross maps to SocSecBnftAmt", () => {
+test("line6a_ss_gross maps to SocSecBnftAmt", () => {
   const result = irs1040.build({ line6a_ss_gross: 24000 });
   assertStringIncludes(result, "<SocSecBnftAmt>24000</SocSecBnftAmt>");
 });
 
-Deno.test("line6b_ss_taxable maps to TaxableSocSecAmt", () => {
+test("line6b_ss_taxable maps to TaxableSocSecAmt", () => {
   const result = irs1040.build({ line6b_ss_taxable: 20400 });
   assertStringIncludes(result, "<TaxableSocSecAmt>20400</TaxableSocSecAmt>");
 });
 
-Deno.test("line7_capital_gain maps to CapitalGainLossAmt", () => {
+test("line7_capital_gain maps to CapitalGainLossAmt", () => {
   const result = irs1040.build({ line7_capital_gain: -3000 });
   assertStringIncludes(
     result,
@@ -1023,7 +1024,7 @@ Deno.test("line7_capital_gain maps to CapitalGainLossAmt", () => {
   );
 });
 
-Deno.test("age and blindness boxes carry a matching count before the deduction", () => {
+test("age and blindness boxes carry a matching count before the deduction", () => {
   const result = irs1040.build({
     filing_status: "mfj",
     taxpayer_age_65_or_older: true,
@@ -1041,7 +1042,7 @@ Deno.test("age and blindness boxes carry a matching count before the deduction",
   );
 });
 
-Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields", () => {
+test("age boxes follow AGI when rollover and MFS indicators add XML fields", () => {
   const source = {
     f1099rs: [{
       payer_name: "Jubilee",
@@ -1085,7 +1086,7 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
   assertEquals(agi >= 0 && agi < age && age < deduction, true);
 });
 
-Deno.test("MFS spouse-itemizes indicator is kept and cannot be used for another status", () => {
+test("MFS spouse-itemizes indicator is kept and cannot be used for another status", () => {
   const result = irs1040.build({
     filing_status: "mfs",
     mfs_spouse_itemizing: true,
@@ -1099,7 +1100,7 @@ Deno.test("MFS spouse-itemizes indicator is kept and cannot be used for another 
   );
 });
 
-Deno.test("direct capital-gain distributions mark Schedule D not required", () => {
+test("direct capital-gain distributions mark Schedule D not required", () => {
   const result = irs1040.build({ line7a_cap_gain_distrib: 7500 });
   assertStringIncludes(
     result,
@@ -1108,7 +1109,7 @@ Deno.test("direct capital-gain distributions mark Schedule D not required", () =
   assertEquals([...result.matchAll(/<CapitalGainLossAmt>/g)].length, 1);
 });
 
-Deno.test("line 7a cannot serialize two competing capital-gain sources", () => {
+test("line 7a cannot serialize two competing capital-gain sources", () => {
   assertThrows(
     () =>
       irs1040.build({
@@ -1120,12 +1121,12 @@ Deno.test("line 7a cannot serialize two competing capital-gain sources", () => {
   );
 });
 
-Deno.test("line1c_unreported_tips maps to TipIncomeAmt", () => {
+test("line1c_unreported_tips maps to TipIncomeAmt", () => {
   const result = irs1040.build({ line1c_unreported_tips: 500 });
   assertStringIncludes(result, "<TipIncomeAmt>500</TipIncomeAmt>");
 });
 
-Deno.test("line1f_taxable_adoption_benefits maps to TaxableBenefitsForm8839Amt", () => {
+test("line1f_taxable_adoption_benefits maps to TaxableBenefitsForm8839Amt", () => {
   const result = irs1040.build({ line1f_taxable_adoption_benefits: 1500 });
   assertStringIncludes(
     result,
@@ -1133,7 +1134,7 @@ Deno.test("line1f_taxable_adoption_benefits maps to TaxableBenefitsForm8839Amt",
   );
 });
 
-Deno.test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
+test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
   const result = irs1040.build({ line1g_wages_8919: 7500 });
   assertStringIncludes(
     result,
@@ -1141,7 +1142,7 @@ Deno.test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
   );
 });
 
-Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
+test("line25c_total maps to TaxWithheldOtherAmt", () => {
   const result = irs1040.build({ line25c_total: 900 });
   assertStringIncludes(
     result,
@@ -1149,7 +1150,7 @@ Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
   );
 });
 
-Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
+test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   const issuedW2G = {
     box1_winnings: 1_000,
     box4_federal_withheld: 250,
@@ -1187,7 +1188,7 @@ Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
   );
 });
 
-Deno.test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
+test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
   const result = irs1040.build({ line13_qbi_deduction: 5000 });
   assertStringIncludes(
     result,
@@ -1195,7 +1196,7 @@ Deno.test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
   );
 });
 
-Deno.test("line30_refundable_adoption maps to RefundableAdoptionCreditAmt", () => {
+test("line30_refundable_adoption maps to RefundableAdoptionCreditAmt", () => {
   const result = irs1040.build({ line30_refundable_adoption: 2000 });
   assertStringIncludes(
     result,
@@ -1203,7 +1204,7 @@ Deno.test("line30_refundable_adoption maps to RefundableAdoptionCreditAmt", () =
   );
 });
 
-Deno.test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", () => {
+test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", () => {
   const result = irs1040.build({ line20_nonrefundable_credits: 4500 });
   assertStringIncludes(
     result,
@@ -1211,7 +1212,7 @@ Deno.test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", (
   );
 });
 
-Deno.test("line31_additional_payments maps to TotalOtherPaymentsRfdblCrAmt", () => {
+test("line31_additional_payments maps to TotalOtherPaymentsRfdblCrAmt", () => {
   const result = irs1040.build({ line31_additional_payments: 1100 });
   assertStringIncludes(
     result,
@@ -1221,7 +1222,7 @@ Deno.test("line31_additional_payments maps to TotalOtherPaymentsRfdblCrAmt", () 
 
 // ─── Section 8: All mapped fields ────────────────────────────────────────────
 
-Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () => {
+test("all mapped fields produce correct elements and IRS1040 wrapper", () => {
   const result = irs1040.build({
     line1a_wages: 50000,
     line1c_unreported_tips: 500,

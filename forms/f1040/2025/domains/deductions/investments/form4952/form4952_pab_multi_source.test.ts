@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -6,7 +8,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form4952PabMultiInputs } from "./form4952_pab_multi.fixture.ts";
 import { calculateAmtForm4952 } from "../../../../../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
 
-Deno.test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251", async () => {
+test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251", async () => {
   const input = form4952PabMultiInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -53,18 +55,18 @@ Deno.test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251
     prepared.bundle,
     origins,
   );
-  const dir = Deno.args[0] ?? ".state/research/form4952-pab-multi-source";
-  await Deno.mkdir(dir, { recursive: true });
+  const dir = process.argv.slice(2)[0] ?? ".state/research/form4952-pab-multi-source";
+  await fs.mkdir(dir, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(`${dir}/source.json`, JSON.stringify(input, null, 2)),
-    Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(p, null, 2)),
-    Deno.writeTextFile(
+    fs.writeFile(`${dir}/source.json`, JSON.stringify(input, null, 2)),
+    fs.writeFile(`${dir}/pending.json`, JSON.stringify(p, null, 2)),
+    fs.writeFile(
       `${dir}/carry.json`,
       JSON.stringify(result.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(`${dir}/origins.json`, JSON.stringify(origins, null, 2)),
-    Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml),
-    Deno.writeFile(`${dir}/return.pdf`, pdf),
+    fs.writeFile(`${dir}/origins.json`, JSON.stringify(origins, null, 2)),
+    fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml),
+    fs.writeFile(`${dir}/return.pdf`, pdf),
   ]);
   const reject = async (change: (x: any) => void) => {
     const altered = structuredClone(input);
@@ -194,26 +196,26 @@ Deno.test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251
     threeOrigins,
   );
   const threeDir = `${dir}/three-issuer`;
-  await Deno.mkdir(threeDir, { recursive: true });
+  await fs.mkdir(threeDir, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(
+    fs.writeFile(
       `${threeDir}/source.json`,
       JSON.stringify(third, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${threeDir}/pending.json`,
       JSON.stringify(three, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${threeDir}/carry.json`,
       JSON.stringify(threeResult.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${threeDir}/origins.json`,
       JSON.stringify(threeOrigins, null, 2),
     ),
-    Deno.writeTextFile(`${threeDir}/return.xml`, threePrepared.bundle.xml),
-    Deno.writeFile(`${threeDir}/return.pdf`, threePdf),
+    fs.writeFile(`${threeDir}/return.xml`, threePrepared.bundle.xml),
+    fs.writeFile(`${threeDir}/return.pdf`, threePdf),
   ]);
 
   const four = structuredClone(third);
@@ -251,23 +253,23 @@ Deno.test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251
     fourOrigins,
   );
   const fourDir = `${dir}/four-issuer`;
-  await Deno.mkdir(fourDir, { recursive: true });
+  await fs.mkdir(fourDir, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(`${fourDir}/source.json`, JSON.stringify(four, null, 2)),
-    Deno.writeTextFile(
+    fs.writeFile(`${fourDir}/source.json`, JSON.stringify(four, null, 2)),
+    fs.writeFile(
       `${fourDir}/pending.json`,
       JSON.stringify(fourPending, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${fourDir}/carry.json`,
       JSON.stringify(fourResult.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${fourDir}/origins.json`,
       JSON.stringify(fourOrigins, null, 2),
     ),
-    Deno.writeTextFile(`${fourDir}/return.xml`, fourPrepared.bundle.xml),
-    Deno.writeFile(`${fourDir}/return.pdf`, fourPdf),
+    fs.writeFile(`${fourDir}/return.xml`, fourPrepared.bundle.xml),
+    fs.writeFile(`${fourDir}/return.pdf`, fourPdf),
   ]);
 
   // The gross-versus-net line 4a choice matters when AMT investment income,
@@ -305,28 +307,28 @@ Deno.test("multiple issued PAB copies and paid bond debt refigure Form 4952/6251
     limitedOrigins,
   );
   const limitedDir = `${dir}/income-limited`;
-  await Deno.mkdir(limitedDir, { recursive: true });
+  await fs.mkdir(limitedDir, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(
+    fs.writeFile(
       `${limitedDir}/source.json`,
       JSON.stringify(incomeLimited, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${limitedDir}/pending.json`,
       JSON.stringify(limited, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${limitedDir}/carry.json`,
       JSON.stringify(limitedResult.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${limitedDir}/origins.json`,
       JSON.stringify(limitedOrigins, null, 2),
     ),
-    Deno.writeTextFile(
+    fs.writeFile(
       `${limitedDir}/return.xml`,
       limitedPrepared.bundle.xml,
     ),
-    Deno.writeFile(`${limitedDir}/return.pdf`, limitedPdf),
+    fs.writeFile(`${limitedDir}/return.pdf`, limitedPdf),
   ]);
 });

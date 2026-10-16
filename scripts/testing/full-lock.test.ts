@@ -1,10 +1,12 @@
+import { test } from "bun:test";
+import * as sys from "../support/sys.ts";
 import { assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
 
-Deno.test("full regression lock refuses a concurrent owner and foreign release", async () => {
-  const path = join(await Deno.makeTempDir(), "full.lock");
-  const owner = { pid: Deno.pid, evidence: "first", startedAt: "retained" };
+test("full regression lock refuses a concurrent owner and foreign release", async () => {
+  const path = join(await sys.makeTempDir(), "full.lock");
+  const owner = { pid: process.pid, evidence: "first", startedAt: "retained" };
   await acquireFullRunLock(path, owner);
   await assertRejects(
     () => acquireFullRunLock(path, { ...owner, evidence: "second" }),

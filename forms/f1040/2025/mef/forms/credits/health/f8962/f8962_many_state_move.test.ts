@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { general } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -115,7 +116,7 @@ for (
   const stateCount = new Set(residenceMonths).size;
   const pending = moveSource(residenceMonths);
 
-  Deno.test(`Form 8962 ${stateCount}-state reported move reconciles source, monthly return, native MeF, and PDF`, () => {
+  test(`Form 8962 ${stateCount}-state reported move reconciles source, monthly return, native MeF, and PDF`, () => {
     const residence = general.compute(
       { taxYear: 2025, formType: "f1040" },
       general.inputSchema.parse(pending.general),
@@ -156,7 +157,7 @@ for (
     assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
   });
 
-  Deno.test(`Form 8962 ${stateCount}-state move rejects missing arrival review and changed final tax`, () => {
+  test(`Form 8962 ${stateCount}-state move rejects missing arrival review and changed final tax`, () => {
     const changedPolicies = pending.f1095a.f1095as.map((policy, index) =>
       index === 1 ? { ...policy, slcsp_review_periods: undefined } : policy
     );

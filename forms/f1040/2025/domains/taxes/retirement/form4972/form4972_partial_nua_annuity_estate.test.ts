@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -86,7 +87,7 @@ function caseData() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("partial NUA, annuity, and estate Part III joins Form 1040, native, and PDF", () => {
+test("partial NUA, annuity, and estate Part III joins Form 1040, native, and PDF", () => {
   const { outputs, fields, pending } = caseData();
   assertEquals(fields.line8, 48_000);
   assertEquals(fields.line8_nua_included, 8_000);
@@ -118,7 +119,7 @@ Deno.test("partial NUA, annuity, and estate Part III joins Form 1040, native, an
   assertEquals(pdf.line30, pending.f1040.form4972_tax);
 });
 
-Deno.test("partial NUA, annuity, and estate route rejects allocation and source tampering", () => {
+test("partial NUA, annuity, and estate route rejects allocation and source tampering", () => {
   const { election, fields, pending } = caseData();
   assertThrows(() =>
     calculator.compute(

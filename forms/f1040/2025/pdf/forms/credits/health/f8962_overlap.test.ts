@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { form8962Pdf } from "./f8962.ts";
 
-Deno.test("Form 8962 PDF fails closed on simultaneous same-state policies", () => {
+test("Form 8962 PDF fails closed on simultaneous same-state policies", () => {
   const policies = [
     { policy_number: "POLICY-1", premium: 300, aptc: 100 },
     { policy_number: "POLICY-2", premium: 200, aptc: 100 },

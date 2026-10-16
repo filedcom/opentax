@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -16,7 +18,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 
-Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election at both exports", async () => {
+test("Schedule 1 line 8z Form 8814 amount replays retained child election at both exports", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -45,7 +47,7 @@ Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election a
   });
   assertEquals(positive.xml.includes("FORM 8814"), true);
   const pdf = await buildPdfBytes(pending, fixture.filer);
-  const extracted = new Deno.Command("pdftotext", {
+  const extracted = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -62,13 +64,13 @@ Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election a
   );
   let xsdAvailable = true;
   try {
-    Deno.statSync(xsd);
+    sys.statSync(xsd);
   } catch {
     xsdAvailable = false;
   }
   assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
   if (xsdAvailable) {
-    const validator = new Deno.Command("xmllint", {
+    const validator = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",

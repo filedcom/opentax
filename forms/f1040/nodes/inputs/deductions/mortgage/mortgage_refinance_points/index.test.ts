@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertRefinancePointsSource,
@@ -45,7 +46,7 @@ const form1098 = {
   }],
 };
 
-Deno.test("ordinary refinance points amortize once and reconcile to line 8c", () => {
+test("ordinary refinance points amortize once and reconcile to line 8c", () => {
   assertEquals(refinancePointsDeduction(source), 67);
   const result = mortgage_refinance_points.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -68,7 +69,7 @@ Deno.test("ordinary refinance points amortize once and reconcile to line 8c", ()
   );
 });
 
-Deno.test("2025 refinance principal agrees with the linked current-year Form 1098 box 2", () => {
+test("2025 refinance principal agrees with the linked current-year Form 1098 box 2", () => {
   const reported = {
     ...form1098.f1098s[0],
     box3_origination_date: "06/15/2025",
@@ -93,7 +94,7 @@ Deno.test("2025 refinance principal agrees with the linked current-year Form 109
   );
 });
 
-Deno.test("ordinary refinance points paid off in 2025 deduct remaining balance on line 8c", () => {
+test("ordinary refinance points paid off in 2025 deduct remaining balance on line 8c", () => {
   const paidOff = {
     ...refinance,
     monthly_payment_records: [7, 8, 9].map((month) => ({
@@ -143,7 +144,7 @@ Deno.test("ordinary refinance points paid off in 2025 deduct remaining balance o
   );
 });
 
-Deno.test("mixed prior-debt and main-home-improvement refinance points allocate immediate and ratable portions", () => {
+test("mixed prior-debt and main-home-improvement refinance points allocate immediate and ratable portions", () => {
   const improved = {
     ...refinance,
     prior_qualified_home_debt: 75_000,
@@ -185,7 +186,7 @@ Deno.test("mixed prior-debt and main-home-improvement refinance points allocate 
   );
 });
 
-Deno.test("2024-origin refinance points use a filed-year ledger for 2025 amortization", () => {
+test("2024-origin refinance points use a filed-year ledger for 2025 amortization", () => {
   const priorLoan = {
     ...refinance,
     refinance_close_year: 2024 as const,
@@ -239,7 +240,7 @@ Deno.test("2024-origin refinance points use a filed-year ledger for 2025 amortiz
   );
 });
 
-Deno.test("2023-origin refinance points require two filed-year ledgers before 2025 amortization", () => {
+test("2023-origin refinance points require two filed-year ledgers before 2025 amortization", () => {
   const priorLoan = {
     ...refinance,
     refinance_close_year: 2023 as const,
@@ -316,7 +317,7 @@ Deno.test("2023-origin refinance points require two filed-year ledgers before 20
   }
 });
 
-Deno.test("refinance points reject mismatched payer, owner, and filed amount", () => {
+test("refinance points reject mismatched payer, owner, and filed amount", () => {
   assertThrows(
     () => assertRefinancePointsSource(source, undefined, ["111223333"], 67),
     Error,
@@ -352,7 +353,7 @@ Deno.test("refinance points reject mismatched payer, owner, and filed amount", (
   );
 });
 
-Deno.test("refinance points reject cash-out, service fees, and payment gaps", () => {
+test("refinance points reject cash-out, service fees, and payment gaps", () => {
   for (
     const change of [
       { refinanced_principal: 101_000 },

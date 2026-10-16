@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -74,7 +75,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("first-year retained Part II sale uses ordinary gain and preserves the activity PAL", () => {
+test("first-year retained Part II sale uses ordinary gain and preserves the activity PAL", () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   assertEquals(result.carryforwards.suspended_pal_8582, 3_000);
@@ -111,7 +112,7 @@ Deno.test("first-year retained Part II sale uses ordinary gain and preserves the
   );
 });
 
-Deno.test("first-year retained Part II sale rejects changed acquisition, closing, gain and return", () => {
+test("first-year retained Part II sale rejects changed acquisition, closing, gain and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const altered: Array<typeof pending> = [
     {

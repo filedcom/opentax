@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
@@ -42,7 +43,7 @@ async function preparedReturn() {
   };
 }
 
-Deno.test("Form 8820 child PDF binds its direct credit to prepared Form 3800 and Form 1040", async () => {
+test("Form 8820 child PDF binds its direct credit to prepared Form 3800 and Form 1040", async () => {
   const { pending, parts, xml, filer } = await preparedReturn();
   assertEquals(parts.lines.line38, 1_975);
   assertEquals(pending.schedule3.line6a_total, 1_975);
@@ -54,7 +55,7 @@ Deno.test("Form 8820 child PDF binds its direct credit to prepared Form 3800 and
   assertEquals(form8820Pdf.instances!(fields, filer, pending, parts), [fields]);
 });
 
-Deno.test("Form 8820 child PDF rejects changed source, prepared line 1h, and final credit", async () => {
+test("Form 8820 child PDF rejects changed source, prepared line 1h, and final credit", async () => {
   const { pending, parts, filer } = await preparedReturn();
   const fields = form8820Pdf.projectFields!(pending.f8820, pending);
   assertThrows(() => form8820Pdf.instances!(fields, filer, pending));

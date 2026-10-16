@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   directAgriBiodieselPending,
@@ -38,7 +39,7 @@ const finalPending = {
   schedule3: { line6a_total: 500, line8_total: 500 },
 };
 
-Deno.test("Form 8864 official PDF projects the dated direct producer lines", () => {
+test("Form 8864 official PDF projects the dated direct producer lines", () => {
   const fields = Object.fromEntries(
     form8864Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -71,7 +72,7 @@ Deno.test("Form 8864 official PDF projects the dated direct producer lines", () 
   );
 });
 
-Deno.test("Form 8864 PDF rejects a missing Schedule C income inclusion", () => {
+test("Form 8864 PDF rejects a missing Schedule C income inclusion", () => {
   const business = directAgriBiodieselPending.schedule_c.schedule_cs[0];
   assertThrows(
     () =>
@@ -92,7 +93,7 @@ Deno.test("Form 8864 PDF rejects a missing Schedule C income inclusion", () => {
   );
 });
 
-Deno.test("Form 8864 PDF rejects missing or altered Form 3800 document identity", () => {
+test("Form 8864 PDF rejects missing or altered Form 3800 document identity", () => {
   const fields = form8864Pdf.projectFields?.(
     directAgriBiodieselSource,
     directAgriBiodieselPending,
@@ -118,7 +119,7 @@ Deno.test("Form 8864 PDF rejects missing or altered Form 3800 document identity"
   assertEquals(form8864Pdf.instances?.({}, undefined, {}), []);
 });
 
-Deno.test("Form 8864 PDF joins applied credit to Schedule 3 and finalized Form 1040", () => {
+test("Form 8864 PDF joins applied credit to Schedule 3 and finalized Form 1040", () => {
   const fields = form8864Pdf.projectFields!(
     directAgriBiodieselSource,
     finalPending,

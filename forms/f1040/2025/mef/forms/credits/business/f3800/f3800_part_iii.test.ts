@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { combineForm3800CurrentCreditAmounts } from "./f3800_current_rows.ts";
 import { buildForm3800PartIIIXml } from "./f3800_part_iii.ts";
 
-Deno.test("Form 3800 Part III puts source lines and subtotals in schema order", () => {
+test("Form 3800 Part III puts source lines and subtotals in schema order", () => {
   const amounts = combineForm3800CurrentCreditAmounts([
     {
       line: "1e",
@@ -57,7 +58,7 @@ Deno.test("Form 3800 Part III puts source lines and subtotals in schema order", 
   );
 });
 
-Deno.test("Form 3800 Part III rejects duplicate and unmatched line groups", () => {
+test("Form 3800 Part III rejects duplicate and unmatched line groups", () => {
   const amounts = combineForm3800CurrentCreditAmounts([{
     line: "1e",
     grossCredit: 100,
@@ -96,6 +97,6 @@ Deno.test("Form 3800 Part III rejects duplicate and unmatched line groups", () =
   );
 });
 
-Deno.test("Form 3800 Part III omits current-year groups on a carryover-only return", () => {
+test("Form 3800 Part III omits current-year groups on a carryover-only return", () => {
   assertEquals(buildForm3800PartIIIXml({ rows: [], amounts: [] }), []);
 });

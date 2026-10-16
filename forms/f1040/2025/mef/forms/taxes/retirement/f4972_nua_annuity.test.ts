@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -73,7 +74,7 @@ function pending(tax: number, box8 = 5_000) {
   };
 }
 
-Deno.test("Form 4972 full-share NUA plus annuity reconciles source, native XML, and PDF", () => {
+test("Form 4972 full-share NUA plus annuity reconciles source, native XML, and PDF", () => {
   const fields = calculated(source);
   assertEquals(fields.line6, 12_000);
   assertEquals(fields.line6_nua_capital_gain, 2_000);
@@ -96,7 +97,7 @@ Deno.test("Form 4972 full-share NUA plus annuity reconciles source, native XML, 
   ]);
 });
 
-Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconcile", () => {
+test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconcile", () => {
   const beneficiary = {
     ...source,
     beneficiary_distribution: true,
@@ -191,7 +192,7 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   assertEquals(projectedFields(fractional, fractionalSources)?.line6, 10999);
 });
 
-Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or partial share", () => {
+test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or partial share", () => {
   const fields = calculated(source);
   const allPending = pending(fields.line30 as number);
   assertThrows(
@@ -248,7 +249,7 @@ Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or pa
   assertEquals(projectedFields(roundedFields, roundedSources)?.line6, 11999);
 });
 
-Deno.test("Form 4972 Part-III-only full-share NUA plus annuity omits Part II", () => {
+test("Form 4972 Part-III-only full-share NUA plus annuity omits Part II", () => {
   const fields = calculated({ ...source, elect_capital_gain: false });
   assertEquals(fields.line6, undefined);
   assertEquals(fields.line8, 36_000);
@@ -264,7 +265,7 @@ Deno.test("Form 4972 Part-III-only full-share NUA plus annuity omits Part II", (
   );
 });
 
-Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages", () => {
+test("Form 4972 partial NUA and annuity reconciles both source percentages", () => {
   const selected = {
     ...source,
     annuity_actuarial_value: 2_000,
@@ -370,7 +371,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
   );
 });
 
-Deno.test("Form 4972 Part-III-only partial NUA and annuity omits Part II", () => {
+test("Form 4972 Part-III-only partial NUA and annuity omits Part II", () => {
   const selected = {
     ...source,
     annuity_actuarial_value: 2_000,

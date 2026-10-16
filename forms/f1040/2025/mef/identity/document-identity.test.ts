@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { documentId, validateDocumentReferences } from "./document-identity.ts";
 import { assertPreparedDocumentInventory } from "../attachments/prepared-attachment-manifest.ts";
 import type { MefBundle } from "../builder.ts";
 
-Deno.test("MeF document IDs stay unique for repeated form copies", () => {
+test("MeF document IDs stay unique for repeated form copies", () => {
   const fragments = Array.from({ length: 12 }, () => ({
     pendingKey: "w2",
     tag: "IRSW2",
@@ -14,7 +15,7 @@ Deno.test("MeF document IDs stay unique for repeated form copies", () => {
   assertEquals(documentId("IRSW2", 11), "IRSW211");
 });
 
-Deno.test("Form 8886 expected-benefit references use the schema document name for the shortened root", () => {
+test("Form 8886 expected-benefit references use the schema document name for the shortened root", () => {
   const fragments = (name: string) => [{
     pendingKey: "f8886",
     tag: "IRS8886",
@@ -46,7 +47,7 @@ Deno.test("Form 8886 expected-benefit references use the schema document name fo
   );
 });
 
-Deno.test("MeF document identity rejects distinct roots whose truncated IDs collide", () => {
+test("MeF document identity rejects distinct roots whose truncated IDs collide", () => {
   const first = `${"A".repeat(28)}1x`;
   const second = `${"A".repeat(28)}x`;
   assertEquals(documentId(first, 1), documentId(second, 11));
@@ -66,7 +67,7 @@ Deno.test("MeF document identity rejects distinct roots whose truncated IDs coll
   );
 });
 
-Deno.test("repeated MeF form references keep their declared document name", () => {
+test("repeated MeF form references keep their declared document name", () => {
   const badReference =
     '<Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/>';
   const goodReference =
@@ -132,7 +133,7 @@ Deno.test("repeated MeF form references keep their declared document name", () =
   );
 });
 
-Deno.test("MeF multi-name references identify every referenced document root", () => {
+test("MeF multi-name references identify every referenced document root", () => {
   const fragments = (referenceName: string) => [{
     pendingKey: "f1040",
     tag: "IRS1040",
@@ -175,7 +176,7 @@ Deno.test("MeF multi-name references identify every referenced document root", (
   );
 });
 
-Deno.test("Form 8814 child-interest reference uses its exact IRS schema name", () => {
+test("Form 8814 child-interest reference uses its exact IRS schema name", () => {
   const childId = documentId("ChildTaxableInterestStmt", 1);
   const fragments = (name: string) => [{
     pendingKey: "form8814",
@@ -197,7 +198,7 @@ Deno.test("Form 8814 child-interest reference uses its exact IRS schema name", (
   }
 });
 
-Deno.test("Schedule F statement references use exact IRS names despite shortened roots", () => {
+test("Schedule F statement references use exact IRS names despite shortened roots", () => {
   const statements = [
     ["CCCLoanDetailCashMethodStmt", "CCCLoanDetailCashMethodStatement"],
     ["CCCLoanDetailAccrualMethodStmt", "CCCLoanDetailAccrualMethodStatement"],
@@ -227,7 +228,7 @@ Deno.test("Schedule F statement references use exact IRS names despite shortened
   }
 });
 
-Deno.test("prepared MeF inventory counts only direct ReturnData documents", () => {
+test("prepared MeF inventory counts only direct ReturnData documents", () => {
   const bundle: MefBundle = {
     xml:
       '<Return><ReturnHeader binaryAttachmentCnt="0"/><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Decoy documentId="Decoy1"/></IRS1040></ReturnData></Return>',

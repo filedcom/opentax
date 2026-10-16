@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { independentPatronHealthFixtures } from "../../../../pdf/reviews/general/composed-returns/review-independent-patron-health.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -43,8 +46,8 @@ const ownedExpected = [
   ]],
   [[6000, 0], [133403, 167283], [105318, 104552], [9479, 9410], [17202, 24047]],
 ];
-Deno.test("actual independent patron owner policies flow through7206, separate QBI and full return XSD/PDF", async () => {
-  const archive = await Deno.makeTempDir({
+test("actual independent patron owner policies flow through7206, separate QBI and full return XSD/PDF", async () => {
+  const archive = await sys.makeTempDir({
     prefix: "opentax-independent-patron-health-source-",
   });
   console.log("Health source archive:", archive);
@@ -107,9 +110,9 @@ Deno.test("actual independent patron owner policies flow through7206, separate Q
       origins,
     );
     const xml = `${archive}/${index}.xml`;
-    await Deno.writeTextFile(xml, bundle.xml);
-    await Deno.writeFile(`${archive}/${index}.pdf`, pdf);
-    const child = await new Deno.Command("xmllint", {
+    await fs.writeFile(xml, bundle.xml);
+    await fs.writeFile(`${archive}/${index}.pdf`, pdf);
+    const child = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -120,7 +123,7 @@ Deno.test("actual independent patron owner policies flow through7206, separate Q
       stderr: "piped",
     }).output();
     assertEquals(child.code, 0, new TextDecoder().decode(child.stderr));
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${archive}/${index}.json`,
       JSON.stringify(
         {
@@ -138,7 +141,7 @@ Deno.test("actual independent patron owner policies flow through7206, separate Q
     );
   }
 });
-Deno.test("patron owner plans reject borrowed identity, income, halfSE, payments, deductions and filed conflicts", async () => {
+test("patron owner plans reject borrowed identity, income, halfSE, payments, deductions and filed conflicts", async () => {
   const fixture = independentPatronHealthFixtures()[0];
   const result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);
@@ -203,7 +206,7 @@ Deno.test("patron owner plans reject borrowed identity, income, halfSE, payments
   );
 });
 
-Deno.test("zero business Part II wages and property stay zero above the shared income threshold", () => {
+test("zero business Part II wages and property stay zero above the shared income threshold", () => {
   const fixture = independentPatronHealthFixtures()[1];
   const result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);

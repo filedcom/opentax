@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -21,9 +24,9 @@ const xsd = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
-Deno.test("current issued passive ordinary K1 gains release owned farm PAL with filed character and QBI", async () => {
-  const index = Deno.args.indexOf("--write-review-artifacts"),
-    output = index < 0 ? undefined : Deno.args[index + 1];
+test("current issued passive ordinary K1 gains release owned farm PAL with filed character and QBI", async () => {
+  const index = process.argv.slice(2).indexOf("--write-review-artifacts"),
+    output = index < 0 ? undefined : process.argv.slice(2)[index + 1];
   for (const c of passiveLine10Cases) {
     const inputs = c.inputs(),
       r = f1040_2025.executeReturn(inputs),
@@ -77,20 +80,20 @@ Deno.test("current issued passive ordinary K1 gains release owned farm PAL with 
         bundle,
         origins,
       ),
-      path = await Deno.makeTempFile({ suffix: ".xml" });
-    await Deno.writeTextFile(path, bundle.xml);
-    const v = await new Deno.Command("xmllint", {
+      path = await sys.makeTempFile({ suffix: ".xml" });
+    await fs.writeFile(path, bundle.xml);
+    const v = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stderr: "piped",
     }).output();
     assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
-    await Deno.remove(path);
+    await sys.remove(path);
     if (output) {
       const dir = `${output}/${c.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify(
           {
@@ -118,7 +121,7 @@ Deno.test("current issued passive ordinary K1 gains release owned farm PAL with 
     }
   }
 });
-Deno.test("ordinary K1 passive source owner inventory and PAL/QBI/export conflicts are rejected", async () => {
+test("ordinary K1 passive source owner inventory and PAL/QBI/export conflicts are rejected", async () => {
   const r = f1040_2025.executeReturn(passiveLine10Inputs()),
     base: any = buildPending(r.pending),
     filer = extractFilerIdentity(r.pending.f1040)!;

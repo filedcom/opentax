@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -60,7 +61,7 @@ function filedReturn() {
   };
 }
 
-Deno.test("Form 6251 offsets a regular short-term gain into a deductible AMT loss", () => {
+test("Form 6251 offsets a regular short-term gain into a deductible AMT loss", () => {
   const { result, filed, filer } = filedReturn();
   // Regular +$2,000 short / -$1,000 long nets +$1,000; AMT +$1,000 short
   // / -$2,000 long nets -$1,000. Neither side has preferential net gain.
@@ -79,7 +80,7 @@ Deno.test("Form 6251 offsets a regular short-term gain into a deductible AMT los
   );
 });
 
-Deno.test("Form 6251 mixed-term regular gain to AMT loss rejects source and return drift", () => {
+test("Form 6251 mixed-term regular gain to AMT loss rejects source and return drift", () => {
   const { result, filed, filer } = filedReturn();
   const altered = [
     { ...result.pending, f8949: { f8949s: [lots[0]] } },

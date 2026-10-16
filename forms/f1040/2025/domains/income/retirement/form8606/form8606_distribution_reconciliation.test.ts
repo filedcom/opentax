@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -66,7 +67,7 @@ function filedReturn() {
   return normalizeForm8606TestPending(result.pending);
 }
 
-Deno.test("reviewed prior-basis IRA distribution reconciles Form 8606 Part I and Form 1040", async () => {
+test("reviewed prior-basis IRA distribution reconciles Form 8606 Part I and Form 1040", async () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   assertEquals(pending.f1040.line4a_ira_gross, 20_000);
@@ -92,7 +93,7 @@ Deno.test("reviewed prior-basis IRA distribution reconciles Form 8606 Part I and
   );
 });
 
-Deno.test("reviewed Form 8606 distribution rejects changed source, basis, owner, or return", () => {
+test("reviewed Form 8606 distribution rejects changed source, basis, owner, or return", () => {
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];

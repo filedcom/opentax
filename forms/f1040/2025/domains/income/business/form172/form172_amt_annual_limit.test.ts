@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { stageForm172ModernAmtModelHistorySource } from "./form172_amt_modern_model_history_source.ts";
 import { calculateForm172ModernAmtModelHistory } from "./form172_amt_modern_model_history.ts";
 import {
@@ -101,7 +102,7 @@ function annual() {
     })),
   };
 }
-Deno.test("Form 172 AMT annual cap uses all signed tentative components before ATNOLD", () => {
+test("Form 172 AMT annual cap uses all signed tentative components before ATNOLD", () => {
   const r = calculateForm172AmtAnnualLimit(origin(), amt(), annual());
   assertEquals(r.originAmtNol, 80000);
   assertEquals(r.tentativeAmtiBeforeAtnold, 100000);
@@ -111,7 +112,7 @@ Deno.test("Form 172 AMT annual cap uses all signed tentative components before A
   assertEquals(r.amtCarryAbsorptionReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 AMT annual cap preserves refund and negative depreciation signs", () => {
+test("Form 172 AMT annual cap preserves refund and negative depreciation signs", () => {
   const a = annual();
   a.components.find((c) => c.line === "2b")!.amount = -5000;
   a.components.find((c) => c.line === "2l")!.amount = -10000;
@@ -119,7 +120,7 @@ Deno.test("Form 172 AMT annual cap preserves refund and negative depreciation si
   assertEquals(r.tentativeAmtiBeforeAtnold, 75000);
   assertEquals(r.ordinary90PercentLimit, 67500);
 });
-Deno.test("Form 172 AMT annual cap floors negative AMTI and rounds exact dollars", () => {
+test("Form 172 AMT annual cap floors negative AMTI and rounds exact dollars", () => {
   const a = annual();
   a.components.forEach((c) => c.amount = 0);
   a.components[0].amount = -1;
@@ -133,7 +134,7 @@ Deno.test("Form 172 AMT annual cap floors negative AMTI and rounds exact dollars
     90005,
   );
 });
-Deno.test("Form 172 AMT annual cap rejects omitted duplicate line2f or asserted capacity", () => {
+test("Form 172 AMT annual cap rejects omitted duplicate line2f or asserted capacity", () => {
   const a = annual();
   for (
     const components of [a.components.slice(1), [
@@ -156,7 +157,7 @@ Deno.test("Form 172 AMT annual cap rejects omitted duplicate line2f or asserted 
     })
   );
 });
-Deno.test("Form 172 AMT annual cap rejects source owner year tentative-depletion and sign conflicts", () => {
+test("Form 172 AMT annual cap rejects source owner year tentative-depletion and sign conflicts", () => {
   const a = annual();
   for (
     const patch of [
@@ -201,7 +202,7 @@ function annual2025() {
     ),
   };
 }
-Deno.test("Form172 2025 AMT line1b restores senior deduction and counts line1a only as a subtrahend", () => {
+test("Form172 2025 AMT line1b restores senior deduction and counts line1a only as a subtrahend", () => {
   const r = calculateForm172AmtAnnualLimit(origin(), amt(), annual2025());
   assertEquals(r.form6251Line1a, 17750);
   assertEquals(r.tentativeAmtiBeforeAtnold, 50000);
@@ -210,7 +211,7 @@ Deno.test("Form172 2025 AMT line1b restores senior deduction and counts line1a o
   assertEquals(r.amtCarryAbsorptionReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form172 2025 AMT line1b preserves negative AGI and additional non-senior deductions", () => {
+test("Form172 2025 AMT line1b preserves negative AGI and additional non-senior deductions", () => {
   const a = annual2025();
   a.reviewed_form1040.line11b_agi = -5000;
   a.reviewed_form1040.line14_deductions = 26750;
@@ -220,7 +221,7 @@ Deno.test("Form172 2025 AMT line1b preserves negative AGI and additional non-sen
   assertEquals(r.tentativeAmtiBeforeAtnold, -8000);
   assertEquals(r.ordinary90PercentLimit, 0);
 });
-Deno.test("Form172 AMT annual rejects mixing legacy line1 and current line1b layouts", () => {
+test("Form172 AMT annual rejects mixing legacy line1 and current line1b layouts", () => {
   const a = annual2025();
   for (
     const components of [
@@ -248,7 +249,7 @@ Deno.test("Form172 AMT annual rejects mixing legacy line1 and current line1b lay
   const { reviewed_form1040: _, ...missing } = a;
   assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), missing));
 });
-Deno.test("Form172 2025 AMT rejects wrong current return operands identity and senior totals", () => {
+test("Form172 2025 AMT rejects wrong current return operands identity and senior totals", () => {
   const a = annual2025();
   for (
     const patch of [
@@ -291,7 +292,7 @@ function legacyAnnual(year = 2016) {
     })),
   };
 }
-Deno.test("Form172 historical annual cap restores separately reviewed section199 after tentative AMTI", () => {
+test("Form172 historical annual cap restores separately reviewed section199 after tentative AMTI", () => {
   for (const year of [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017]) {
     const r = calculateForm172AmtAnnualLimit(
       origin(),
@@ -306,7 +307,7 @@ Deno.test("Form172 historical annual cap restores separately reviewed section199
     assertEquals(r.filingReady, false);
   }
 });
-Deno.test("Form172 historical annual preserves parenthetical deductions and medical year boundary", () => {
+test("Form172 historical annual preserves parenthetical deductions and medical year boundary", () => {
   const a = legacyAnnual();
   a.components.find((c) => c.line === "2")!.amount = 2000;
   for (const line of ["6", "7", "25"]) {
@@ -319,7 +320,7 @@ Deno.test("Form172 historical annual preserves parenthetical deductions and medi
     calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, tax_year: 2017 })
   );
 });
-Deno.test("Form172 historical annual cap rejects wrong layout omitted ATNOLD and reversed parentheticals", () => {
+test("Form172 historical annual cap rejects wrong layout omitted ATNOLD and reversed parentheticals", () => {
   const a = legacyAnnual();
   for (
     const components of [annual().components, a.components.slice(1), [
@@ -337,7 +338,7 @@ Deno.test("Form172 historical annual cap rejects wrong layout omitted ATNOLD and
     assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), b));
   }
 });
-Deno.test("Form172 annual cap rejects missing duplicate and modern section199 reviews", () => {
+test("Form172 annual cap rejects missing duplicate and modern section199 reviews", () => {
   const a = legacyAnnual();
   const { section199_deduction: _, ...missing } = a;
   assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), missing));
@@ -365,7 +366,7 @@ Deno.test("Form172 annual cap rejects missing duplicate and modern section199 re
   modern.components.find((c) => c.line === "2s")!.amount = 1;
   assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), modern));
 });
-Deno.test("Form172 historical cap floors only after section199 restoration", () => {
+test("Form172 historical cap floors only after section199 restoration", () => {
   const a = legacyAnnual();
   a.components.forEach((c) => c.amount = 0);
   a.components[0].amount = -2000;
@@ -380,7 +381,7 @@ Deno.test("Form172 historical cap floors only after section199 restoration", () 
   );
 });
 
-Deno.test("Form172 early annual layouts distinguish ScheduleL2010 from reserved2011 and2012 line6", () => {
+test("Form172 early annual layouts distinguish ScheduleL2010 from reserved2011 and2012 line6", () => {
   const a = legacyAnnual(2010);
   a.components.find((c) => c.line === "6")!.amount = -1000;
   assertEquals(
@@ -423,7 +424,7 @@ function modernOrdinaryCap() {
     }],
   };
 }
-Deno.test("Form172 modern ordinary ceiling coordinates 80% and 90% separately", () => {
+test("Form172 modern ordinary ceiling coordinates 80% and 90% separately", () => {
   const v = modernOrdinaryCap();
   v.annual_review.components[0].amount = 40000; // AMTI90k; 80%72k vs90%81k
   const r = calculateForm172AmtModernOrdinaryCap(v);
@@ -502,7 +503,7 @@ function modernOlderLoss(year: number, opening: number) {
     ordinary_section56_category_reviewed: true,
   };
 }
-Deno.test("Form172 modern mixed vintages subtract pre2018 opening before 80%", () => {
+test("Form172 modern mixed vintages subtract pre2018 opening before 80%", () => {
   const v = modernOrdinaryCap();
   v.losses.push(modernOlderLoss(2017, 50000));
   const r = calculateForm172AmtModernOrdinaryCap(v);
@@ -518,7 +519,7 @@ Deno.test("Form172 modern mixed vintages subtract pre2018 opening before 80%", (
   assertEquals(capped.section172DeductionCap, 80000);
   assertEquals(capped.ordinaryDeductionCap, 45000);
 });
-Deno.test("Form172 modern annual cap suspends 80% in 2018–20, applies it from2021", () => {
+test("Form172 modern annual cap suspends 80% in 2018–20, applies it from2021", () => {
   for (const year of [2018, 2019, 2020, 2021, 2024]) {
     const v = modernOrdinaryCap();
     v.annual_review.tax_year = year;
@@ -544,7 +545,7 @@ Deno.test("Form172 modern annual cap suspends 80% in 2018–20, applies it from2
     72000,
   );
 });
-Deno.test("Form172 modern cap rejects invalid opening year owner category and authority", () => {
+test("Form172 modern cap rejects invalid opening year owner category and authority", () => {
   for (
     const mutate of [
       (v: ReturnType<typeof modernOrdinaryCap>) => {
@@ -584,7 +585,7 @@ Deno.test("Form172 modern cap rejects invalid opening year owner category and au
   v.losses = [modernOlderLoss(2024, 80000)];
   assertThrows(() => calculateForm172AmtModernOrdinaryCap(v));
 });
-Deno.test("Form172 modern cap binds TY2025 operands and last pre2018 carry year", () => {
+test("Form172 modern cap binds TY2025 operands and last pre2018 carry year", () => {
   const v = modernOrdinaryCap();
   const a = annual2025();
   const r = calculateForm172AmtModernOrdinaryCap({
@@ -613,7 +614,7 @@ Deno.test("Form172 modern cap binds TY2025 operands and last pre2018 carry year"
     })
   );
 });
-Deno.test("Form172 modern cap negative bases and whole-dollar percentages", () => {
+test("Form172 modern cap negative bases and whole-dollar percentages", () => {
   const v = modernOrdinaryCap();
   v.annual_review.components.forEach((c) => c.amount = 0);
   v.annual_review.components[0].amount = -10;
@@ -624,7 +625,7 @@ Deno.test("Form172 modern cap negative bases and whole-dollar percentages", () =
   assertEquals(r.ordinary90PercentLimit, 9001);
   assertEquals(r.ordinaryDeductionCap, 8001);
 });
-Deno.test("Form172 modern deduction allocation sorts mixed vintages and preserves exhausted rows", () => {
+test("Form172 modern deduction allocation sorts mixed vintages and preserves exhausted rows", () => {
   const v = modernOrdinaryCap();
   v.losses = [
     modernOlderLoss(2020, 40000),
@@ -663,7 +664,7 @@ Deno.test("Form172 modern deduction allocation sorts mixed vintages and preserve
     r.allocations,
   );
 });
-Deno.test("Form172 modern allocation respects shared 80% after2020 and suspended cap before2021", () => {
+test("Form172 modern allocation respects shared 80% after2020 and suspended cap before2021", () => {
   const v = modernOrdinaryCap();
   v.annual_review.components[0].amount = 40000; //AMTI90k
   v.losses = [modernOlderLoss(2020, 50000), modernOlderLoss(2019, 30000)];
@@ -680,7 +681,7 @@ Deno.test("Form172 modern allocation respects shared 80% after2020 and suspended
   ]);
   assertEquals(suspended.totalActualDeduction, 80000);
 });
-Deno.test("Form172 modern allocation handles TY2025 zero income and oldest balance exceeding cap", () => {
+test("Form172 modern allocation handles TY2025 zero income and oldest balance exceeding cap", () => {
   const v = modernOrdinaryCap();
   const a = annual2025();
   const raw = {
@@ -756,7 +757,7 @@ function modernModified(cap = modernOrdinaryCap()) {
     }],
   };
 }
-Deno.test("Modern modified AMTI adds independent capital QBI250 and remaining QSBS exclusion", () => {
+test("Modern modified AMTI adds independent capital QBI250 and remaining QSBS exclusion", () => {
   const c = modernOrdinaryCap();
   c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
   c.deductions_review.section199a_deduction_in_tentative_amti = 10000;
@@ -774,7 +775,7 @@ Deno.test("Modern modified AMTI adds independent capital QBI250 and remaining QS
   assertEquals(r.amtCarryAbsorptionReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Modern modified AMTI reconciles TY2025 refigured1040 operands independently", () => {
+test("Modern modified AMTI reconciles TY2025 refigured1040 operands independently", () => {
   const c = modernOrdinaryCap();
   const a = annual2025();
   a.components.find((l) => l.line === "2h")!.amount = 700;
@@ -818,7 +819,7 @@ Deno.test("Modern modified AMTI reconciles TY2025 refigured1040 operands indepen
   const { refigured_form1040: _, ...missing } = review;
   assertThrows(() => calculateForm172ModernAmtModifiedIncome(raw, missing));
 });
-Deno.test("Modern modified AMTI rejects stale originals signs missing lines and refigured NOL", () => {
+test("Modern modified AMTI rejects stale originals signs missing lines and refigured NOL", () => {
   const c = modernOrdinaryCap();
   c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
   for (
@@ -891,7 +892,7 @@ Deno.test("Modern modified AMTI rejects stale originals signs missing lines and 
     })
   );
 });
-Deno.test("Modern modified AMTI preserves MFS capital limit and signed negative base", () => {
+test("Modern modified AMTI preserves MFS capital limit and signed negative base", () => {
   const c = modernOrdinaryCap();
   c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
   const v = modernModified(c);
@@ -943,7 +944,7 @@ function modernVintage() {
   };
   return { cap, reviews };
 }
-Deno.test("Modern AMT vintage contexts reconcile earlier actual deductions and independent refigures", () => {
+test("Modern AMT vintage contexts reconcile earlier actual deductions and independent refigures", () => {
   const { cap, reviews } = modernVintage();
   const r = calculateForm172ModernAmtVintageModifiedIncome(cap, reviews);
   assertEquals(
@@ -973,7 +974,7 @@ Deno.test("Modern AMT vintage contexts reconcile earlier actual deductions and i
     r,
   );
 });
-Deno.test("Modern AMT vintage contexts reject missing zero rows stale amounts and cross-context aliases", () => {
+test("Modern AMT vintage contexts reject missing zero rows stale amounts and cross-context aliases", () => {
   const { cap, reviews } = modernVintage();
   for (
     const mutate of [
@@ -1034,7 +1035,7 @@ Deno.test("Modern AMT vintage contexts reject missing zero rows stale amounts an
     })
   );
 });
-Deno.test("Modern AMT vintage contexts preserve negative result before zero floor", () => {
+test("Modern AMT vintage contexts preserve negative result before zero floor", () => {
   const { cap, reviews } = modernVintage();
   reviews.vintages[0].modified_review.components.find((c) => c.line === "1")!
     .refigured_amount = -100000;
@@ -1044,7 +1045,7 @@ Deno.test("Modern AMT vintage contexts preserve negative result before zero floo
   assertEquals(last.signedModifiedAmtiAfterEarlierAtnold, -127560);
   assertEquals(last.modifiedAmtiAfterEarlierAtnold, 0);
 });
-Deno.test("Modern AMT TY2025 vintage contexts bind separate1040 refigures and earlier deductions", () => {
+test("Modern AMT TY2025 vintage contexts bind separate1040 refigures and earlier deductions", () => {
   const c = modernOrdinaryCap();
   const a = annual2025();
   a.components.find((l) => l.line === "2h")!.amount = 700;
@@ -1109,7 +1110,7 @@ Deno.test("Modern AMT TY2025 vintage contexts bind separate1040 refigures and ea
     calculateForm172ModernAmtVintageModifiedIncome(cap, reviews)
   );
 });
-Deno.test("Modern AMT section172 capacity subtracts annual excess reduction from each context", () => {
+test("Modern AMT section172 capacity subtracts annual excess reduction from each context", () => {
   const { cap, reviews } = modernVintage();
   const r = calculateForm172ModernAmtSection172Capacity(cap, reviews);
   assertEquals(r.annualPost2017IncomeExcess, 50700);
@@ -1130,7 +1131,7 @@ Deno.test("Modern AMT section172 capacity subtracts annual excess reduction from
     false,
   );
 });
-Deno.test("Modern AMT section172 reduction uses original QBI250 annual base rather than modified income", () => {
+test("Modern AMT section172 reduction uses original QBI250 annual base rather than modified income", () => {
   const { cap, reviews } = modernVintage();
   cap.deductions_review.section199a_deduction_in_tentative_amti = 10000;
   cap.deductions_review.section250_deduction_in_tentative_amti = 5000;
@@ -1155,7 +1156,7 @@ Deno.test("Modern AMT section172 reduction uses original QBI250 annual base rath
     12230,
   );
 });
-Deno.test("Modern AMT section172 capacity suspends reduction before2021 and floors signed negatives", () => {
+test("Modern AMT section172 capacity suspends reduction before2021 and floors signed negatives", () => {
   const cap = modernOrdinaryCap();
   cap.annual_review.tax_year = 2020;
   cap.deductions_review.tax_year = 2020;
@@ -1208,7 +1209,7 @@ async function modernRetained(raw: unknown) {
     documents: [{ reference: cap.reference, bytes }],
   };
 }
-Deno.test("Modern AMT retained bytes recompute cap allocation modified contexts and statutory capacities", async () => {
+test("Modern AMT retained bytes recompute cap allocation modified contexts and statutory capacities", async () => {
   const c = modernOrdinaryCap();
   const basic = await modernRetained(c);
   const cap = await stageForm172ModernAmtCapSource(
@@ -1258,7 +1259,7 @@ Deno.test("Modern AMT retained bytes recompute cap allocation modified contexts 
   );
   assertEquals(capacities.section56AbsorptionLimitReconciled, false);
 });
-Deno.test("Modern AMT retained source rejects digest identity owner year and document inventory conflicts", async () => {
+test("Modern AMT retained source rejects digest identity owner year and document inventory conflicts", async () => {
   const p = await modernRetained(modernOrdinaryCap());
   const damaged = p.documents[0].bytes.slice();
   damaged[20] ^= 1;
@@ -1289,7 +1290,7 @@ Deno.test("Modern AMT retained source rejects digest identity owner year and doc
     await assertRejects(() => stageForm172ModernAmtCapSource(p.binding, docs));
   }
 });
-Deno.test("Modern AMT retained source rehash cannot hide changed original operands or earlier deductions", async () => {
+test("Modern AMT retained source rehash cannot hide changed original operands or earlier deductions", async () => {
   const { cap, reviews } = modernVintage();
   reviews.vintages[0].earlier_nol_deductions[0].amount = 1;
   const p = await modernRetained({ ...cap, vintage_reviews: reviews });
@@ -1313,7 +1314,7 @@ Deno.test("Modern AMT retained source rehash cannot hide changed original operan
     )
   );
 });
-Deno.test("Modern AMT retained source rejects noncanonical duplicate-key BOM and invalid UTF8", async () => {
+test("Modern AMT retained source rejects noncanonical duplicate-key BOM and invalid UTF8", async () => {
   const p = await modernRetained(modernOrdinaryCap());
   const original = new TextDecoder().decode(p.documents[0].bytes);
   for (
@@ -1336,7 +1337,7 @@ Deno.test("Modern AMT retained source rejects noncanonical duplicate-key BOM and
     );
   }
 });
-Deno.test("Modern AMT retained source owns caller binding and bytes before first await", async () => {
+test("Modern AMT retained source owns caller binding and bytes before first await", async () => {
   const { cap, reviews } = modernVintage();
   const p = await modernRetained({ ...cap, vintage_reviews: reviews });
   const pending = stageForm172ModernAmtSection172CapacitySource(
@@ -1358,7 +1359,7 @@ Deno.test("Modern AMT retained source owns caller binding and bytes before first
   assertEquals(r.packetAdmissionVerified, false);
 });
 
-Deno.test("Modern AMT ordinary model keeps cumulative90 capacity separate from section172 and actual deductions", () => {
+test("Modern AMT ordinary model keeps cumulative90 capacity separate from section172 and actual deductions", () => {
   const { cap, reviews } = modernVintage();
   const r = calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(cap, reviews);
   assertEquals(
@@ -1394,7 +1395,7 @@ Deno.test("Modern AMT ordinary model keeps cumulative90 capacity separate from s
     r,
   );
 });
-Deno.test("Modern AMT ordinary model section172 limit binds independently and negative contexts consume zero", () => {
+test("Modern AMT ordinary model section172 limit binds independently and negative contexts consume zero", () => {
   const { cap, reviews } = modernVintage();
   const third = reviews.vintages.find((v) => v.origin_year === 2019)!;
   third.modified_review.components.find((c) => c.line === "1")!
@@ -1414,7 +1415,7 @@ Deno.test("Modern AMT ordinary model section172 limit binds independently and ne
   assertEquals(r.chronologicalModelApplications[3].modelRemaining, 40000);
   assertEquals(r.totalModelAbsorbed, 74860);
 });
-Deno.test("Modern AMT ordinary model rejects stale prior actual deductions and original operand changes", () => {
+test("Modern AMT ordinary model rejects stale prior actual deductions and original operand changes", () => {
   const { cap, reviews } = modernVintage();
   reviews.vintages[0].earlier_nol_deductions[1].amount += 1;
   assertThrows(() =>
@@ -1429,7 +1430,7 @@ Deno.test("Modern AMT ordinary model rejects stale prior actual deductions and o
     )
   );
 });
-Deno.test("Modern AMT ordinary coordination model binds retained bytes without admitting accepted carry", async () => {
+test("Modern AMT ordinary coordination model binds retained bytes without admitting accepted carry", async () => {
   const { cap, reviews } = modernVintage();
   const packageData = { ...cap, vintage_reviews: reviews };
   const p = await modernRetained(packageData);
@@ -1547,7 +1548,7 @@ function modernModelHistory() {
     ),
   };
 }
-Deno.test("Modern AMT model history retains all eight2018–2025 years including exhausted vintages", () => {
+test("Modern AMT model history retains all eight2018–2025 years including exhausted vintages", () => {
   const h = modernModelHistory();
   const r = calculateForm172ModernAmtModelHistory(h);
   assertEquals(r.modelAnnualApplications.length, 8);
@@ -1568,7 +1569,7 @@ Deno.test("Modern AMT model history retains all eight2018–2025 years including
   assertEquals(r.survivingAcceptedCarryVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Modern AMT model history rejects missing reordered stale zero origin and owner histories", () => {
+test("Modern AMT model history rejects missing reordered stale zero origin and owner histories", () => {
   for (
     const mutate of [
       (h: ReturnType<typeof modernModelHistory>) => {
@@ -1604,7 +1605,7 @@ Deno.test("Modern AMT model history rejects missing reordered stale zero origin 
     assertThrows(() => calculateForm172ModernAmtModelHistory(h));
   }
 });
-Deno.test("Modern AMT model history new loss joins the preceding annual AMTI and QBI250 operands", () => {
+test("Modern AMT model history new loss joins the preceding annual AMTI and QBI250 operands", () => {
   const prior = modernOlderLoss(2017, 50000);
   const added = modernOlderLoss(2023, 80000);
   const first = modernHistoryYear(2023, [prior], true);
@@ -1668,7 +1669,7 @@ async function modernHistoryRetained(
     documents: [{ reference: raw.reference, bytes }],
   };
 }
-Deno.test("Modern AMT model history retained package recomputes every year without authenticating carry", async () => {
+test("Modern AMT model history retained package recomputes every year without authenticating carry", async () => {
   const p = await modernHistoryRetained();
   const r = await stageForm172ModernAmtModelHistorySource(
     p.binding,
@@ -1693,7 +1694,7 @@ Deno.test("Modern AMT model history retained package recomputes every year witho
     stageForm172ModernAmtModelHistorySource(changed.binding, changed.documents)
   );
 });
-Deno.test("Modern AMT model history rejects source inventory binding and noncanonical JSON substitutions", async () => {
+test("Modern AMT model history rejects source inventory binding and noncanonical JSON substitutions", async () => {
   const p = await modernHistoryRetained();
   for (
     const documents of [[], [p.documents[0], p.documents[0]], [...p.documents, {
@@ -1735,7 +1736,7 @@ Deno.test("Modern AMT model history rejects source inventory binding and noncano
     );
   }
 });
-Deno.test("Modern AMT model history owns binding and all caller bytes before digest await", async () => {
+test("Modern AMT model history owns binding and all caller bytes before digest await", async () => {
   const p = await modernHistoryRetained();
   const pending = stageForm172ModernAmtModelHistorySource(
     p.binding,

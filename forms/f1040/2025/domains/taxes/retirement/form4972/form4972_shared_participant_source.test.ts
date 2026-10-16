@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { PDFDocument } from "pdf-lib";
 import expected from "./form4972_shared_participant.expected.json" with {
   type: "json",
@@ -192,7 +195,7 @@ export function sharedParticipantInputs(
   }
   return input;
 }
-Deno.test("shared participant spouse beneficiaries reconcile complete administrator pools", () => {
+test("shared participant spouse beneficiaries reconcile complete administrator pools", () => {
   const input = sharedParticipantInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -213,7 +216,7 @@ Deno.test("shared participant spouse beneficiaries reconcile complete administra
     result.pending.f1040!.form4972_tax,
   );
 });
-Deno.test("shared participant administrator conflicts reject before filing", () => {
+test("shared participant administrator conflicts reject before filing", () => {
   const mutations: [
     string,
     (input: ReturnType<typeof sharedParticipantInputs>) => void,
@@ -291,7 +294,7 @@ Deno.test("shared participant administrator conflicts reject before filing", () 
   }
 });
 
-Deno.test("shared participant final native and PDF reject changed administrator records", () => {
+test("shared participant final native and PDF reject changed administrator records", () => {
   const input = sharedParticipantInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -324,9 +327,9 @@ Deno.test("shared participant final native and PDF reject changed administrator 
   }
 });
 
-Deno.test("shared participant public packets match independent worksheets and full XSD", async () => {
+test("shared participant public packets match independent worksheets and full XSD", async () => {
   const dir = ".state/research/2026-10-06-form4972-shared-participant";
-  await Deno.mkdir(dir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
   const xsd =
     ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
   for (const id of sharedParticipantCases) {
@@ -348,24 +351,24 @@ Deno.test("shared participant public packets match independent worksheets and fu
       extractFilerIdentity(input.general)!,
     );
     const path = dir + "/" + id;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path + ".json",
       JSON.stringify({ input, pending: result.pending }, null, 2),
     );
-    await Deno.writeTextFile(path + ".xml", prepared.bundle.xml);
+    await fs.writeFile(path + ".xml", prepared.bundle.xml);
     assertEquals((prepared.bundle.xml.match(/<IRS4972\b/g) ?? []).length, 2);
     assertEquals((prepared.bundle.xml.match(/<IRS1099R\b/g) ?? []).length, 5);
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(path + ".pdf", pdf);
+    await fs.writeFile(path + ".pdf", pdf);
     const document = await PDFDocument.load(pdf);
     assertEquals(document.getPageCount(), 4);
     assertEquals(document.getForm().getFields().length, 0);
-    const validated = await new Deno.Command("xmllint", {
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", path + ".pdf", path + ".txt"],
       stderr: "piped",
     }).output();

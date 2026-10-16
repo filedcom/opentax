@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 // deno-lint-ignore-file no-explicit-any
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -10,9 +13,9 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
 
-const evidenceDir = Deno.env.get("SCHEDULE_J_JOINT_POSITIVE_EVIDENCE_DIR") ??
+const evidenceDir = process.env.SCHEDULE_J_JOINT_POSITIVE_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-positive-oct6/packets";
-const xsd = Deno.env.get("SCHEDULE_J_JOINT_XSD_PATH") ??
+const xsd = process.env.SCHEDULE_J_JOINT_XSD_PATH ??
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 async function packet(id: string, input: Record<string, unknown>) {
@@ -30,18 +33,18 @@ async function packet(id: string, input: Record<string, unknown>) {
     origins,
   );
   const dir = `${evidenceDir}/${id}`;
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const validation = await new Deno.Command("xmllint", {
+  const validation = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, `${dir}/return.xml`],
     stderr: "piped",
   }).output();
@@ -50,7 +53,7 @@ async function packet(id: string, input: Record<string, unknown>) {
   return { result, pending, origins, xml: prepared.bundle.xml };
 }
 
-Deno.test("joint C/F wages and UBIA derive three distinct full phase-out limits", async () => {
+test("joint C/F wages and UBIA derive three distinct full phase-out limits", async () => {
   for (
     const [kind, owner, wages, ubia, rowDed, preQbi, tax, noJTax] of [
       ["wages", "S", 20_000, 0, 10_000, 614_167, 146_803, 150_553],
@@ -93,7 +96,7 @@ Deno.test("joint C/F wages and UBIA derive three distinct full phase-out limits"
   }
 });
 
-Deno.test("joint positive QBI source rejects payroll, W-2, ownership, property, and final export conflicts", async () => {
+test("joint positive QBI source rejects payroll, W-2, ownership, property, and final export conflicts", async () => {
   const good: any = scheduleJJointFishingPositiveLimitsInputs("combined");
   const invalid = [
     (v: any) =>
@@ -149,7 +152,7 @@ Deno.test("joint positive QBI source rejects payroll, W-2, ownership, property, 
   await assertRejects(() => buildPdfBytes(pending, filer, ".pdf-cache"));
 });
 
-Deno.test("cash farm deducts unemployment only when actually paid in 2025", () => {
+test("cash farm deducts unemployment only when actually paid in 2025", () => {
   const input: any = scheduleJJointFishingPositiveLimitsInputs("wages");
   const f = input.schedule_f.schedule_fs[0];
   const proof = f.qbi_positive_limit_inventory;
@@ -168,7 +171,7 @@ Deno.test("cash farm deducts unemployment only when actually paid in 2025", () =
   assertEquals(pending.f1040.line13_qbi_deduction, 10_000);
 });
 
-Deno.test("farm unemployment wage bases apply separately to each employee", () => {
+test("farm unemployment wage bases apply separately to each employee", () => {
   const input: any = scheduleJJointFishingPositiveLimitsInputs("wages");
   const farm = input.schedule_f.schedule_fs[0];
   const proof = farm.qbi_positive_limit_inventory;

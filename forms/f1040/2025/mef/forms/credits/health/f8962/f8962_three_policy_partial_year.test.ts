@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -111,7 +112,7 @@ const fields = {
   excess_advance_premium: 60,
 };
 
-Deno.test("Form 8962 three-policy partial year leaves uncovered months blank through source, MeF, and PDF", () => {
+test("Form 8962 three-policy partial year leaves uncovered months blank through source, MeF, and PDF", () => {
   const source = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1095a,
@@ -131,7 +132,7 @@ Deno.test("Form 8962 three-policy partial year leaves uncovered months blank thr
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 three-policy partial year rejects staggered enrollment and residual SLCSP", () => {
+test("Form 8962 three-policy partial year rejects staggered enrollment and residual SLCSP", () => {
   assertThrows(
     () => form8962.build(fields, { filer, pending: {
       ...pending,

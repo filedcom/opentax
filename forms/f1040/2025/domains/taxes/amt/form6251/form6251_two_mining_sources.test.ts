@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -84,7 +85,7 @@ function filing(scheduleCItems = mines) {
   return result;
 }
 
-Deno.test("four distinct current-year mines reconcile Form 6251, Schedule 2, Form 1040, native, and PDF", async () => {
+test("four distinct current-year mines reconcile Form 6251, Schedule 2, Form 1040, native, and PDF", async () => {
   const allMines = [
     ...mines,
     mine("mine-north-2025", "north-claim", 30_000),
@@ -173,7 +174,7 @@ Deno.test("four distinct current-year mines reconcile Form 6251, Schedule 2, For
   }
 });
 
-Deno.test("two distinct mine workpapers sum once on Form 6251 line 2q and the final return", () => {
+test("two distinct mine workpapers sum once on Form 6251 line 2q and the final return", () => {
   const pending = filing().pending;
   const fields = pending.form6251!;
   assertEquals(pending.schedule1?.line3_schedule_c, 0);
@@ -188,7 +189,7 @@ Deno.test("two distinct mine workpapers sum once on Form 6251 line 2q and the fi
   );
 });
 
-Deno.test("two-mine line 2q export rejects a changed mine, duplicate property, and changed Schedule 1", () => {
+test("two-mine line 2q export rejects a changed mine, duplicate property, and changed Schedule 1", () => {
   const pending = filing().pending;
   const fields = pending.form6251!;
   const altered = [{

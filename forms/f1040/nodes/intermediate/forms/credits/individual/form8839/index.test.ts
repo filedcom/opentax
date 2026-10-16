@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   finalizedReturnCreditContextSchema,
@@ -60,11 +61,11 @@ function finalizedContext(overrides: Record<string, unknown> = {}) {
   });
 }
 
-Deno.test("Form 8839: inactive input emits no credit", () => {
+test("Form 8839: inactive input emits no credit", () => {
   assertEquals(form8839.compute(nodeContext, {}).outputs, []);
 });
 
-Deno.test("Form 8839: base child node remains closed outside reviewed public route", () => {
+test("Form 8839: base child node remains closed outside reviewed public route", () => {
   assertThrows(
     () =>
       form8839.compute(nodeContext, {
@@ -76,7 +77,7 @@ Deno.test("Form 8839: base child node remains closed outside reviewed public rou
   );
 });
 
-Deno.test("Form 8839: employer benefits remain fail-closed", () => {
+test("Form 8839: employer benefits remain fail-closed", () => {
   assertThrows(
     () => form8839.compute(nodeContext, { adoption_benefits: 5_000 }),
     Error,
@@ -93,7 +94,7 @@ Deno.test("Form 8839: employer benefits remain fail-closed", () => {
   );
 });
 
-Deno.test("Form 8839: source stage derives receipt amount before final return exists", () => {
+test("Form 8839: source stage derives receipt amount before final return exists", () => {
   const prepared = prepareForm8839Credit({ children: [domesticChild(15_000)] });
   assertEquals(prepared.perChild[0]?.line3, 0);
   assertEquals(prepared.perChild[0]?.line5, 15_000);
@@ -109,7 +110,7 @@ Deno.test("Form 8839: source stage derives receipt amount before final return ex
   assertEquals(settled.line18, 10_000);
 });
 
-Deno.test("Form 8839: negative finalized AGI leaves the credit unphased", () => {
+test("Form 8839: negative finalized AGI leaves the credit unphased", () => {
   const settled = settleForm8839Credit(
     prepareForm8839Credit({ children: [domesticChild(15_000)] }),
     finalizedContext({ form1040_line11b_agi: -2_000 }),
@@ -120,7 +121,7 @@ Deno.test("Form 8839: negative finalized AGI leaves the credit unphased", () => 
   assertEquals(settled.line14, 10_000);
 });
 
-Deno.test("Form 8839: refundable line 13 survives zero nonrefundable capacity", () => {
+test("Form 8839: refundable line 13 survives zero nonrefundable capacity", () => {
   const settled = settleForm8839Credit(
     prepareForm8839Credit({ children: [domesticChild(15_000)] }),
     finalizedContext({ form1040_line18_tax_before_credits: 1_000 }),
@@ -132,7 +133,7 @@ Deno.test("Form 8839: refundable line 13 survives zero nonrefundable capacity", 
   assertEquals(settled.line18, 0);
 });
 
-Deno.test("Form 8839: TY2025 MAGI phaseout boundaries reconcile both credit portions", () => {
+test("Form 8839: TY2025 MAGI phaseout boundaries reconcile both credit portions", () => {
   const prepared = prepareForm8839Credit({ children: [domesticChild(15_000)] });
   const cases = [
     { agi: 259_190, fraction: 0, line13: 5_000, line14: 10_000 },
@@ -150,7 +151,7 @@ Deno.test("Form 8839: TY2025 MAGI phaseout boundaries reconcile both credit port
   }
 });
 
-Deno.test("Form 8839: MAGI adds Puerto Rico, Form 2555 and Form 4563 amounts", () => {
+test("Form 8839: MAGI adds Puerto Rico, Form 2555 and Form 4563 amounts", () => {
   const settled = settleForm8839Credit(
     prepareForm8839Credit({ children: [domesticChild(15_000)] }),
     finalizedContext({
@@ -167,7 +168,7 @@ Deno.test("Form 8839: MAGI adds Puerto Rico, Form 2555 and Form 4563 amounts", (
   assertEquals(settled.fraction, 0.02);
 });
 
-Deno.test("Form 8839: prescribed other credits consume capacity, not adoption itself", () => {
+test("Form 8839: prescribed other credits consume capacity, not adoption itself", () => {
   const settled = settleForm8839Credit(
     prepareForm8839Credit({ children: [domesticChild(15_000)] }),
     finalizedContext({
@@ -196,7 +197,7 @@ Deno.test("Form 8839: prescribed other credits consume capacity, not adoption it
   assertEquals(settled.line18, 7_000);
 });
 
-Deno.test("Form 8839: receipt ledger nets documented reimbursement", () => {
+test("Form 8839: receipt ledger nets documented reimbursement", () => {
   const child = domesticChild(15_000);
   const prepared = prepareForm8839Credit({
     children: [{
@@ -213,7 +214,7 @@ Deno.test("Form 8839: receipt ledger nets documented reimbursement", () => {
   assertEquals(settled.line14, 6_000);
 });
 
-Deno.test("Form 8839: expense and prior-return guards reject impossible source", () => {
+test("Form 8839: expense and prior-return guards reject impossible source", () => {
   const child = domesticChild(1_000);
   assertThrows(
     () =>
@@ -258,7 +259,7 @@ Deno.test("Form 8839: expense and prior-return guards reject impossible source",
   );
 });
 
-Deno.test("Form 8839: special-needs source-stage amount uses remaining maximum", () => {
+test("Form 8839: special-needs source-stage amount uses remaining maximum", () => {
   const prepared = prepareForm8839Credit({
     children: [{
       ...domesticChild(0),
@@ -278,7 +279,7 @@ Deno.test("Form 8839: special-needs source-stage amount uses remaining maximum",
   assertEquals(prepared.perChild[0]?.line5, 12_280);
 });
 
-Deno.test("Form 8839: old asserted child and direct MAGI/limit fields reject", () => {
+test("Form 8839: old asserted child and direct MAGI/limit fields reject", () => {
   assertThrows(() =>
     inputSchema.parse({
       children: [{ qualified_expenses: 15_000, special_needs: false }],
@@ -292,7 +293,7 @@ Deno.test("Form 8839: old asserted child and direct MAGI/limit fields reject", (
   );
 });
 
-Deno.test("Form 8839: settlement needs each finalized return component", () => {
+test("Form 8839: settlement needs each finalized return component", () => {
   assertThrows(() =>
     finalizedReturnCreditContextSchema.parse({
       form1040_line11b_agi: 200_000,
@@ -301,7 +302,7 @@ Deno.test("Form 8839: settlement needs each finalized return component", () => {
   );
 });
 
-Deno.test("Form 8839: settlement does not infer absent territory MAGI additions as zero", () => {
+test("Form 8839: settlement does not infer absent territory MAGI additions as zero", () => {
   const prepared = prepareForm8839Credit({
     children: [domesticChild(15_000)],
   });

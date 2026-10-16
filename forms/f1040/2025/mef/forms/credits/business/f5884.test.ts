@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TargetGroup } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
 import { form5884 } from "./f5884.ts";
@@ -37,7 +38,7 @@ export const workOpportunitySource = {
   }],
 };
 
-Deno.test("Form 5884 emits source wages and credit only when bundled with Form 3800", () => {
+test("Form 5884 emits source wages and credit only when bundled with Form 3800", () => {
   assertEquals(form5884.build({}), "");
   const xml = form5884.build(workOpportunitySource, {
     documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
@@ -70,7 +71,7 @@ Deno.test("Form 5884 emits source wages and credit only when bundled with Form 3
   );
 });
 
-Deno.test("Form 5884 full-return export reconciles its wage deduction", () => {
+test("Form 5884 full-return export reconciles its wage deduction", () => {
   const business = {
     schedule_cs: [{
       business_reference: "BUSINESS-1",
@@ -221,7 +222,7 @@ Deno.test("Form 5884 full-return export reconciles its wage deduction", () => {
   );
 });
 
-Deno.test("Form 5884 omits the taxpayer form for pass-through-only credit and prints line 3 for mixed credit", () => {
+test("Form 5884 omits the taxpayer form for pass-through-only credit and prints line 3 for mixed credit", () => {
   const passThrough = {
     source_type: "partnership" as const,
     entity_ein: "123456789",
@@ -251,7 +252,7 @@ Deno.test("Form 5884 omits the taxpayer form for pass-through-only credit and pr
   assertStringIncludes(mixed, "<TotalCreditsAmt>3650</TotalCreditsAmt>");
 });
 
-Deno.test("Form 5884 controlled-group share links both calculation statements", () => {
+test("Form 5884 controlled-group share links both calculation statements", () => {
   const groupSource = {
     ...workOpportunitySource,
     controlled_group: {

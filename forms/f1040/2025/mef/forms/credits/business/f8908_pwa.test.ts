@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
@@ -99,7 +100,7 @@ function context() {
   };
 }
 
-Deno.test("Form 8908 binds distinct completed Form 7220 PDFs to two residences", () => {
+test("Form 8908 binds distinct completed Form 7220 PDFs to two residences", () => {
   const links = reconcileForm8908PwaAttachments(source(), context());
   assertEquals(links.map((link) => link.acquisitionRecordReference), [
     "SALE-1",
@@ -119,7 +120,7 @@ Deno.test("Form 8908 binds distinct completed Form 7220 PDFs to two residences",
   ]);
 });
 
-Deno.test("Form 8908 rejects statement document reuse and home mismatch", () => {
+test("Form 8908 rejects statement document reuse and home mismatch", () => {
   const base = context();
   assertThrows(
     () =>
@@ -151,7 +152,7 @@ Deno.test("Form 8908 rejects statement document reuse and home mismatch", () => 
   );
 });
 
-Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attachments", () => {
+test("Form 8908 Form 7220 rejects missing, altered, or reused binary attachments", () => {
   const base = context();
   assertThrows(
     () =>
@@ -217,7 +218,7 @@ Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attach
   );
 });
 
-Deno.test("Form 8908 Form 7220 source rejects a changed residence and reused review/PDF", () => {
+test("Form 8908 Form 7220 source rejects a changed residence and reused review/PDF", () => {
   const moved = structuredClone(source());
   moved.homes[1].form7220!.residence.street = "99 Other Street";
   assertThrows(

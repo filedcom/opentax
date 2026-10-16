@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -9,7 +10,7 @@ import {
 } from "./form4852_roth_history.fixture.ts";
 import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
 
-Deno.test("ordinary retained Roth J/T unmarked owner sources reject marked current copies at public native and direct PDF boundaries", async () => {
+test("ordinary retained Roth J/T unmarked owner sources reject marked current copies at public native and direct PDF boundaries", async () => {
   for (const row of [rothCases[1], rothCases.find((r) => r.code === "T")!]) {
     const source = await rothReturnSource(row, 1101);
     const result = f1040_2025.executeReturn(source.inputs);
@@ -65,7 +66,7 @@ Deno.test("ordinary retained Roth J/T unmarked owner sources reject marked curre
   }
 });
 
-Deno.test("complete Roth history rejects marked prior ordinary account records and omitted account classification", async () => {
+test("complete Roth history rejects marked prior ordinary account records and omitted account classification", async () => {
   const source = await rothHistoryReturnSource(
     rothHistoryCases.find((r) => r.id === "prior-taxable-conversion-consumed")!,
     1102,

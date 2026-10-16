@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -69,7 +70,7 @@ function filedReturn() {
   });
 }
 
-Deno.test("2024 rental PAL offsets same activity 2025 profit and stays in Part V", () => {
+test("2024 rental PAL offsets same activity 2025 profit and stays in Part V", () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form8582.current_income, 3_000);
@@ -137,7 +138,7 @@ Deno.test("2024 rental PAL offsets same activity 2025 profit and stays in Part V
   }
 });
 
-Deno.test("reviewed 2024 activity record mismatch stops the 2025 return graph", () => {
+test("reviewed 2024 activity record mismatch stops the 2025 return graph", () => {
   const result = f1040_2025.executeReturn({
     general,
     w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
@@ -155,7 +156,7 @@ Deno.test("reviewed 2024 activity record mismatch stops the 2025 return graph", 
   assertEquals(result.diagnostics.length > 0, true);
 });
 
-Deno.test("2024 rental PAL source and finalized return tampering stop MeF and PDF", () => {
+test("2024 rental PAL source and finalized return tampering stop MeF and PDF", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const altered = [
     {

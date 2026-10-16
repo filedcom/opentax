@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { TSJ } from "../../../../../../nodes/types.ts";
@@ -75,7 +76,7 @@ const pending = {
   },
 };
 
-Deno.test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 4952", () => {
+test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 4952", () => {
   const fromMisc = f1099m.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1099m,
@@ -119,7 +120,7 @@ Deno.test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 495
   );
 });
 
-Deno.test("1099-MISC portfolio royalty rejects source, property, deduction, and filed-line mismatches", () => {
+test("1099-MISC portfolio royalty rejects source, property, deduction, and filed-line mismatches", () => {
   const cases = [
     {
       ...pending,

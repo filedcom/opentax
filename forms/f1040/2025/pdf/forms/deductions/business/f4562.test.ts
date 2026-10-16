@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
 import { form4562 as form4562Node } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/index.ts";
@@ -50,7 +51,7 @@ const allPending = {
   },
 };
 
-Deno.test("Form 4562 PDF maps the bounded Section 179 lines to canonical 2025 fields", () => {
+test("Form 4562 PDF maps the bounded Section 179 lines to canonical 2025 fields", () => {
   const field = (key: string) =>
     form4562Pdf.fields.filter((entry) => entry.domainKey === key).map((entry) =>
       entry.pdfField
@@ -76,7 +77,7 @@ Deno.test("Form 4562 PDF maps the bounded Section 179 lines to canonical 2025 fi
   assertEquals(field("bonus_depreciation_basis"), []);
 });
 
-Deno.test("Form 4562 PDF uses the native single-asset and Schedule C reconciliation", () => {
+test("Form 4562 PDF uses the native single-asset and Schedule C reconciliation", () => {
   const projected = form4562Pdf.projectFields?.(filed, allPending) ?? {};
   assertEquals(projected.line12_section179_expense_deduction, 100_000);
   assertEquals(projected.line22_total_depreciation, 100_000);

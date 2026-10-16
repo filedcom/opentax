@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -8,7 +9,7 @@ import {
 import { form8889Pdf } from "./f8889.ts";
 import { schedule1Pdf } from "../../general/return-assembly/schedule1/schedule1.ts";
 
-Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field", () => {
+test("2025 Form 8889 PDF projects every modeled line to its AcroForm field", () => {
   const expected = new Map<string, string>([
     ["beneficiary_name", "f1_1[0]"],
     ["beneficiary_ssn", "f1_2[0]"],
@@ -56,7 +57,7 @@ Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field"
   assertEquals(actual.size, expected.size);
 });
 
-Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", () => {
+test("Form 8889 PDF maps line 14b and age-65 exception fields separately", () => {
   const pending = {
     forms: [{
       owner: "primary",
@@ -92,7 +93,7 @@ Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", 
   }
 });
 
-Deno.test("Form 8889 PDF rejects unjoined owner identity and malformed printed lines", () => {
+test("Form 8889 PDF rejects unjoined owner identity and malformed printed lines", () => {
   const filer: FilerIdentity = {
     primarySSN: "123456789",
     fullName: "Alex Taxpayer",
@@ -131,7 +132,7 @@ Deno.test("Form 8889 PDF rejects unjoined owner identity and malformed printed l
   }
 });
 
-Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficiary", () => {
+test("Form 8889 PDF creates one correctly identified page per HSA beneficiary", () => {
   const source = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -201,7 +202,7 @@ Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficia
   );
 });
 
-Deno.test("Form 8889 PDF accepts one sourced spouse account and rejects changed lines", () => {
+test("Form 8889 PDF accepts one sourced spouse account and rejects changed lines", () => {
   const source = {
     beneficiary_identity: {
       owner: "S" as const,
@@ -262,7 +263,7 @@ Deno.test("Form 8889 PDF accepts one sourced spouse account and rejects changed 
   );
 });
 
-Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z", () => {
+test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z", () => {
   const [hsaOnly] = schedule1Pdf.instances?.({
     line8z_hsa_excess_earnings: 100,
   }) ?? [];
@@ -277,7 +278,7 @@ Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z",
   assertEquals(combined.line8z_description, "SEE STATEMENT");
 });
 
-Deno.test("Schedule 1 PDF identifies employer HSA excess on line 8z", () => {
+test("Schedule 1 PDF identifies employer HSA excess on line 8z", () => {
   const [projected] = schedule1Pdf.instances?.({
     line8z_hsa_excess_employer: 700,
     line8z_hsa_excess_earnings: 100,

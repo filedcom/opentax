@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099g } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -89,7 +90,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("1099-G repeated identified account cannot double income or withholding after a changed copy", () => {
+test("1099-G repeated identified account cannot double income or withholding after a changed copy", () => {
   const issued = minimalItem({
     payer_name: "State Agency",
     payer_tin: "123456789",
@@ -121,7 +122,7 @@ Deno.test("1099-G repeated identified account cannot double income or withholdin
   assertEquals(fieldsOf(distinct.outputs, f1040)?.line25b_withheld_1099, 40);
 });
 
-Deno.test("1099-G repeated issued reference without an account cannot double RTAA income", () => {
+test("1099-G repeated issued reference without an account cannot double RTAA income", () => {
   const issued = rtaaItem(500);
   assertThrows(
     () => compute([issued, { ...issued, box_5_rtaa: 600 }]),
@@ -131,7 +132,7 @@ Deno.test("1099-G repeated issued reference without an account cannot double RTA
   compute([issued, rtaaItem(600, "separate-issued-rtaa-copy")]);
 });
 
-Deno.test("1099-G cannot reuse one issued-copy reference across payers", () => {
+test("1099-G cannot reuse one issued-copy reference across payers", () => {
   const issued = rtaaItem(500);
   assertThrows(
     () =>
@@ -151,7 +152,7 @@ Deno.test("1099-G cannot reuse one issued-copy reference across payers", () => {
   }]);
 });
 
-Deno.test("1099-G repeated issued reference rejects with no payer TIN or account", () => {
+test("1099-G repeated issued reference rejects with no payer TIN or account", () => {
   const issued = minimalItem({
     payer_name: "State Agency",
     payer_tin: undefined,
@@ -172,7 +173,7 @@ Deno.test("1099-G repeated issued reference rejects with no payer TIN or account
   assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1000);
 });
 
-Deno.test("1099-G positive copies need account or issued-copy identity", () => {
+test("1099-G positive copies need account or issued-copy identity", () => {
   const unidentified = minimalItem({
     payer_name: "State Agency",
     payer_tin: "123456789",
@@ -200,7 +201,7 @@ Deno.test("1099-G positive copies need account or issued-copy identity", () => {
   assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1200);
 });
 
-Deno.test("1099-G keeps one payer identity when only one copy has its TIN", () => {
+test("1099-G keeps one payer identity when only one copy has its TIN", () => {
   const withTin = minimalItem({
     payer_name: "State Agency",
     payer_tin: "123456789",
@@ -241,7 +242,7 @@ Deno.test("1099-G keeps one payer identity when only one copy has its TIN", () =
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f1099g.inputSchema: negative box_1_unemployment fails validation", () => {
+test("f1099g.inputSchema: negative box_1_unemployment fails validation", () => {
   const parsed = f1099g.inputSchema.safeParse({
     f1099gs: [{ box_1_unemployment: -1 }],
   });
@@ -252,13 +253,13 @@ Deno.test("f1099g.inputSchema: negative box_1_unemployment fails validation", ()
 // 2. Per-Box Routing
 // =============================================================================
 
-Deno.test("f1099g.compute: box_1_unemployment routes to schedule1 line7_unemployment", () => {
+test("f1099g.compute: box_1_unemployment routes to schedule1 line7_unemployment", () => {
   const result = compute([minimalItem({ box_1_unemployment: 8000 })]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8000);
 });
 
-Deno.test("f1099g.compute: box_1_unemployment zero produces no schedule1 unemployment output", () => {
+test("f1099g.compute: box_1_unemployment zero produces no schedule1 unemployment output", () => {
   const result = compute([minimalItem({ box_1_unemployment: 0 })]);
   const out = result.outputs.find(
     (o) =>
@@ -268,7 +269,7 @@ Deno.test("f1099g.compute: box_1_unemployment zero produces no schedule1 unemplo
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_1_repaid reduces unemployment on schedule1 line7", () => {
+test("f1099g.compute: box_1_repaid reduces unemployment on schedule1 line7", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 8000, box_1_repaid: 2000 }),
   ]);
@@ -276,7 +277,7 @@ Deno.test("f1099g.compute: box_1_repaid reduces unemployment on schedule1 line7"
   assertEquals(input.line7_unemployment, 6000);
 });
 
-Deno.test("f1099g.compute: box_2_state_refund taxable when prior year itemized routes to schedule1 line1", () => {
+test("f1099g.compute: box_2_state_refund taxable when prior year itemized routes to schedule1 line1", () => {
   const result = compute([
     reviewedRefund(300, 300),
   ]);
@@ -285,7 +286,7 @@ Deno.test("f1099g.compute: box_2_state_refund taxable when prior year itemized r
   assertEquals(fieldsOf(result.outputs, form6251)?.line2b_tax_refund, 300);
 });
 
-Deno.test("f1099g.compute: box_2_state_refund not taxable when not itemized — no line1 output", () => {
+test("f1099g.compute: box_2_state_refund not taxable when not itemized — no line1 output", () => {
   const result = compute([
     reviewedRefund(300, 0),
   ]);
@@ -298,7 +299,7 @@ Deno.test("f1099g.compute: box_2_state_refund not taxable when not itemized — 
   assertEquals(fieldsOf(result.outputs, form6251), undefined);
 });
 
-Deno.test("f1099g.compute: partial taxable state refund uses reviewed amount on Schedule 1, AGI, and AMT", () => {
+test("f1099g.compute: partial taxable state refund uses reviewed amount on Schedule 1, AGI, and AMT", () => {
   const result = compute([reviewedRefund(500, 180)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line1_state_refund, 180);
   assertEquals(
@@ -309,7 +310,7 @@ Deno.test("f1099g.compute: partial taxable state refund uses reviewed amount on 
   assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 180);
 });
 
-Deno.test("f1099g.compute: state refund above box 2 or inconsistent with no itemization is rejected", () => {
+test("f1099g.compute: state refund above box 2 or inconsistent with no itemization is rejected", () => {
   assertThrows(() => compute([reviewedRefund(500, 501)]), Error);
   assertThrows(
     () =>
@@ -318,7 +319,7 @@ Deno.test("f1099g.compute: state refund above box 2 or inconsistent with no item
   );
 });
 
-Deno.test("f1099g.compute: positive state refund without workpaper reference is rejected", () => {
+test("f1099g.compute: positive state refund without workpaper reference is rejected", () => {
   assertThrows(
     () =>
       compute([
@@ -330,7 +331,7 @@ Deno.test("f1099g.compute: positive state refund without workpaper reference is 
   );
 });
 
-Deno.test("f1099g.compute: box_2_state_refund zero with itemized — no line1 output", () => {
+test("f1099g.compute: box_2_state_refund zero with itemized — no line1 output", () => {
   const result = compute([
     reviewedRefund(0, 0, { box_2_prior_year_itemized: true }),
   ]);
@@ -342,13 +343,13 @@ Deno.test("f1099g.compute: box_2_state_refund zero with itemized — no line1 ou
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_4_federal_withheld routes to f1040 line25b_withheld_1099", () => {
+test("f1099g.compute: box_4_federal_withheld routes to f1040 line25b_withheld_1099", () => {
   const result = compute([minimalItem({ box_4_federal_withheld: 400 })]);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 400);
 });
 
-Deno.test("f1099g.compute: box_4_federal_withheld zero — no f1040 withholding output", () => {
+test("f1099g.compute: box_4_federal_withheld zero — no f1040 withholding output", () => {
   const result = compute([minimalItem({ box_4_federal_withheld: 0 })]);
   const out = result.outputs.find(
     (o) =>
@@ -358,7 +359,7 @@ Deno.test("f1099g.compute: box_4_federal_withheld zero — no f1040 withholding 
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_5_rtaa routes to schedule1 line8z_rtaa", () => {
+test("f1099g.compute: box_5_rtaa routes to schedule1 line8z_rtaa", () => {
   const result = compute([rtaaItem(1500)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 1500);
@@ -366,7 +367,7 @@ Deno.test("f1099g.compute: box_5_rtaa routes to schedule1 line8z_rtaa", () => {
   assertEquals(input.f1099g_rtaa_sources?.[0]?.payer_tin, "123456789");
 });
 
-Deno.test("f1099g.compute: box_5_rtaa zero — no schedule1 rtaa output", () => {
+test("f1099g.compute: box_5_rtaa zero — no schedule1 rtaa output", () => {
   const result = compute([minimalItem({ box_5_rtaa: 0 })]);
   const out = result.outputs.find(
     (o) =>
@@ -376,13 +377,13 @@ Deno.test("f1099g.compute: box_5_rtaa zero — no schedule1 rtaa output", () => 
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_6_taxable_grants routes to schedule1 line8z_taxable_grants", () => {
+test("f1099g.compute: box_6_taxable_grants routes to schedule1 line8z_taxable_grants", () => {
   const result = compute([reviewedNonbusinessGrant(2000)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 2000);
 });
 
-Deno.test("f1099g.compute: unclassified box 6 grant cannot silently become line 8z income", () => {
+test("f1099g.compute: unclassified box 6 grant cannot silently become line 8z income", () => {
   assertThrows(
     () => compute([minimalItem({ box_6_taxable_grants: 2_000 })]),
     Error,
@@ -399,7 +400,7 @@ Deno.test("f1099g.compute: unclassified box 6 grant cannot silently become line 
   );
 });
 
-Deno.test("f1099g.compute: box_7_agriculture retains its farm source", () => {
+test("f1099g.compute: box_7_agriculture retains its farm source", () => {
   const result = compute([identifiedFarmItem({ box_7_agriculture: 3500 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out?.fields.farm_sources, [
@@ -407,7 +408,7 @@ Deno.test("f1099g.compute: box_7_agriculture retains its farm source", () => {
   ]);
 });
 
-Deno.test("1099-G positive farm payments reject missing issued payer or recipient identity", () => {
+test("1099-G positive farm payments reject missing issued payer or recipient identity", () => {
   for (
     const field of [
       "payer_name",
@@ -426,7 +427,7 @@ Deno.test("1099-G positive farm payments reject missing issued payer or recipien
   }
 });
 
-Deno.test("1099-G box 7 requires reviewed payment character", () => {
+test("1099-G box 7 requires reviewed payment character", () => {
   const source = identifiedFarmItem({ box_7_agriculture: 3500 });
   delete source.box_7_payment_kind;
   assertThrows(
@@ -436,7 +437,7 @@ Deno.test("1099-G box 7 requires reviewed payment character", () => {
   );
 });
 
-Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () => {
+test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () => {
   const result = compute([minimalItem({ box_7_agriculture: 0 })]);
   const out = result.outputs.find(
     (o) =>
@@ -446,7 +447,7 @@ Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () 
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_9_market_gain retains its farm source", () => {
+test("f1099g.compute: box_9_market_gain retains its farm source", () => {
   const result = compute([identifiedFarmItem({ box_9_market_gain: 600 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out?.fields.farm_sources, [
@@ -454,7 +455,7 @@ Deno.test("f1099g.compute: box_9_market_gain retains its farm source", () => {
   ]);
 });
 
-Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output", () => {
+test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output", () => {
   const result = compute([minimalItem({ box_9_market_gain: 0 })]);
   const out = result.outputs.find(
     (o) =>
@@ -464,7 +465,7 @@ Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output",
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: empty item produces no outputs", () => {
+test("f1099g.compute: empty item produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
@@ -473,7 +474,7 @@ Deno.test("f1099g.compute: empty item produces no outputs", () => {
 // 3. Aggregation — multiple 1099-G items
 // =============================================================================
 
-Deno.test("f1099g.compute: multiple items — box_1_unemployment summed across all items", () => {
+test("f1099g.compute: multiple items — box_1_unemployment summed across all items", () => {
   const result = compute([
     minimalItem({
       box_1_unemployment: 5000,
@@ -488,7 +489,7 @@ Deno.test("f1099g.compute: multiple items — box_1_unemployment summed across a
   assertEquals(input.line7_unemployment, 8000);
 });
 
-Deno.test("f1099g.compute: multiple items — box_1_repaid subtracted from total across all items", () => {
+test("f1099g.compute: multiple items — box_1_repaid subtracted from total across all items", () => {
   const result = compute([
     minimalItem({
       box_1_unemployment: 6000,
@@ -505,7 +506,7 @@ Deno.test("f1099g.compute: multiple items — box_1_repaid subtracted from total
   assertEquals(input.line7_unemployment, 8500); // 10000 - 1500
 });
 
-Deno.test("f1099g.compute: multiple items — box_4_federal_withheld summed to f1040 line25b", () => {
+test("f1099g.compute: multiple items — box_4_federal_withheld summed to f1040 line25b", () => {
   const result = compute([
     minimalItem({
       box_4_federal_withheld: 300,
@@ -520,7 +521,7 @@ Deno.test("f1099g.compute: multiple items — box_4_federal_withheld summed to f
   assertEquals(input.line25b_withheld_1099, 500);
 });
 
-Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 line8z_rtaa", () => {
+test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 line8z_rtaa", () => {
   const result = compute([
     rtaaItem(1000, "issued-rtaa-1099g-1"),
     rtaaItem(2000, "issued-rtaa-1099g-2"),
@@ -529,7 +530,7 @@ Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 lin
   assertEquals(input.line8z_rtaa, 3000);
 });
 
-Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when both itemized", () => {
+test("f1099g.compute: multiple items — box_2_state_refund summed when both itemized", () => {
   const result = compute([
     reviewedRefund(100, 100, {
       source_document_reference: "issued-refund-copy-1",
@@ -542,7 +543,7 @@ Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when bot
   assertEquals(input.line1_state_refund, 300);
 });
 
-Deno.test("f1099g.compute: multiple agricultural payments retain separate source records", () => {
+test("f1099g.compute: multiple agricultural payments retain separate source records", () => {
   const result = compute([
     identifiedFarmItem({ box_7_agriculture: 1000 }),
     identifiedFarmItem({
@@ -557,7 +558,7 @@ Deno.test("f1099g.compute: multiple agricultural payments retain separate source
   ]);
 });
 
-Deno.test("f1099g.compute: mixed items — unemployment and state refund both routed correctly", () => {
+test("f1099g.compute: mixed items — unemployment and state refund both routed correctly", () => {
   const result = compute([
     minimalItem({
       box_1_unemployment: 6000,
@@ -577,7 +578,7 @@ Deno.test("f1099g.compute: mixed items — unemployment and state refund both ro
 // =============================================================================
 
 // Box 1 unemployment — the $10 payer threshold is not an income exclusion.
-Deno.test("f1099g.compute: box_1_unemployment $9 routes to Schedule 1 and AGI", () => {
+test("f1099g.compute: box_1_unemployment $9 routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_1_unemployment: 9 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line7_unemployment, 9);
   assertEquals(
@@ -587,20 +588,20 @@ Deno.test("f1099g.compute: box_1_unemployment $9 routes to Schedule 1 and AGI", 
   );
 });
 
-Deno.test("f1099g.compute: box_1_unemployment $10 (at threshold) — routes to schedule1", () => {
+test("f1099g.compute: box_1_unemployment $10 (at threshold) — routes to schedule1", () => {
   const result = compute([minimalItem({ box_1_unemployment: 10 })]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 10);
 });
 
-Deno.test("f1099g.compute: box_1_unemployment $11 (above threshold) — routes to schedule1", () => {
+test("f1099g.compute: box_1_unemployment $11 (above threshold) — routes to schedule1", () => {
   const result = compute([minimalItem({ box_1_unemployment: 11 })]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 11);
 });
 
 // Box 2 state refund — this fixture designates the prior-year refund taxable.
-Deno.test("f1099g.compute: taxable $9 state refund routes to Schedule 1, AGI, and AMT reversal", () => {
+test("f1099g.compute: taxable $9 state refund routes to Schedule 1, AGI, and AMT reversal", () => {
   const result = compute([
     reviewedRefund(9, 9),
   ]);
@@ -613,7 +614,7 @@ Deno.test("f1099g.compute: taxable $9 state refund routes to Schedule 1, AGI, an
   assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 9);
 });
 
-Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized — routes to schedule1", () => {
+test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized — routes to schedule1", () => {
   const result = compute([
     reviewedRefund(10, 10),
   ]);
@@ -622,7 +623,7 @@ Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized �
 });
 
 // Box 5 RTAA — the $600 payer threshold is not an income exclusion.
-Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => {
+test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => {
   const result = compute([rtaaItem(599)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_rtaa, 599);
   assertEquals(
@@ -632,20 +633,20 @@ Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => 
   );
 });
 
-Deno.test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule1", () => {
+test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule1", () => {
   const result = compute([rtaaItem(600)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 600);
 });
 
-Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to schedule1", () => {
+test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to schedule1", () => {
   const result = compute([rtaaItem(601)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 601);
 });
 
 // Box 6 taxable grants — the $600 payer threshold is not an income exclusion.
-Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () => {
+test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () => {
   const result = compute([reviewedNonbusinessGrant(599)]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_taxable_grants, 599);
   assertEquals(
@@ -655,14 +656,14 @@ Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () 
   );
 });
 
-Deno.test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes to schedule1", () => {
+test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes to schedule1", () => {
   const result = compute([reviewedNonbusinessGrant(600)]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 600);
 });
 
 // Repayment netting
-Deno.test("f1099g.compute: box_1_repaid $3000 — net $7000 flows to line 7", () => {
+test("f1099g.compute: box_1_repaid $3000 — net $7000 flows to line 7", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 10000, box_1_repaid: 3000 }),
   ]);
@@ -670,7 +671,7 @@ Deno.test("f1099g.compute: box_1_repaid $3000 — net $7000 flows to line 7", ()
   assertEquals(input.line7_unemployment, 7000);
 });
 
-Deno.test("f1099g.compute: box_1_repaid $3001 — net $6999 on line7", () => {
+test("f1099g.compute: box_1_repaid $3001 — net $6999 on line7", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 10000, box_1_repaid: 3001 }),
   ]);
@@ -682,7 +683,7 @@ Deno.test("f1099g.compute: box_1_repaid $3001 — net $6999 on line7", () => {
 // 5. Hard Validation Rules — throws
 // =============================================================================
 
-Deno.test("f1099g.compute: throws on negative box_1_unemployment", () => {
+test("f1099g.compute: throws on negative box_1_unemployment", () => {
   assertThrows(() => compute([minimalItem({ box_1_unemployment: -1 })]), Error);
 });
 
@@ -690,7 +691,7 @@ Deno.test("f1099g.compute: throws on negative box_1_unemployment", () => {
 // 6. Warning-Only Rules — must NOT throw
 // =============================================================================
 
-Deno.test("f1099g.compute: box_1_railroad=true does not throw and routes unemployment to schedule1", () => {
+test("f1099g.compute: box_1_railroad=true does not throw and routes unemployment to schedule1", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 5000, box_1_railroad: true }),
   ]);
@@ -702,7 +703,7 @@ Deno.test("f1099g.compute: box_1_railroad=true does not throw and routes unemplo
 // 7. Informational Fields — must NOT produce tax outputs
 // =============================================================================
 
-Deno.test("f1099g.compute: state-only fields (box_10a, box_10b, box_11) produce no federal outputs", () => {
+test("f1099g.compute: state-only fields (box_10a, box_10b, box_11) produce no federal outputs", () => {
   const result = compute([minimalItem({
     box_10a_state: "CA",
     box_10b_state_id: "123-456-789",
@@ -711,7 +712,7 @@ Deno.test("f1099g.compute: state-only fields (box_10a, box_10b, box_11) produce 
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f1099g.compute: box_8_trade_or_business and administrative fields produce no outputs", () => {
+test("f1099g.compute: box_8_trade_or_business and administrative fields produce no outputs", () => {
   const result = compute([minimalItem({
     box_8_trade_or_business: true,
     box_3_tax_year: 2024,
@@ -726,14 +727,14 @@ Deno.test("f1099g.compute: box_8_trade_or_business and administrative fields pro
 // 8. Edge Cases
 // =============================================================================
 
-Deno.test("f1099g.compute: fully repaid current-year unemployment emits zero line 7 for the repayment annotation", () => {
+test("f1099g.compute: fully repaid current-year unemployment emits zero line 7 for the repayment annotation", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 5000, box_1_repaid: 5000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1)?.line7_unemployment, 0);
 });
 
-Deno.test("f1099g.compute: same-year repayment above retained benefits rejects", () => {
+test("f1099g.compute: same-year repayment above retained benefits rejects", () => {
   assertThrows(
     () =>
       compute([
@@ -744,7 +745,7 @@ Deno.test("f1099g.compute: same-year repayment above retained benefits rejects",
   );
 });
 
-Deno.test("f1099g.compute: positive state refund without tax-benefit workpaper fails closed", () => {
+test("f1099g.compute: positive state refund without tax-benefit workpaper fails closed", () => {
   assertThrows(
     () => compute([minimalItem({ box_2_state_refund: 300 })]),
     Error,
@@ -752,7 +753,7 @@ Deno.test("f1099g.compute: positive state refund without tax-benefit workpaper f
   );
 });
 
-Deno.test("f1099g.compute: mixed reviewed taxable and nontaxable refunds — only taxable recovery included", () => {
+test("f1099g.compute: mixed reviewed taxable and nontaxable refunds — only taxable recovery included", () => {
   const result = compute([
     reviewedRefund(200, 200, {
       source_document_reference: "issued-refund-copy-1",
@@ -765,7 +766,7 @@ Deno.test("f1099g.compute: mixed reviewed taxable and nontaxable refunds — onl
   assertEquals(input.line1_state_refund, 200);
 });
 
-Deno.test("f1099g.compute: empty g99s array produces no outputs", () => {
+test("f1099g.compute: empty g99s array produces no outputs", () => {
   const result = f1099g.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099gs: [],
   });
@@ -776,7 +777,7 @@ Deno.test("f1099g.compute: empty g99s array produces no outputs", () => {
 // 9. Smoke Test — all major boxes populated
 // =============================================================================
 
-Deno.test("f1099g.compute: smoke test — all major boxes populated produces correct outputs", () => {
+test("f1099g.compute: smoke test — all major boxes populated produces correct outputs", () => {
   const result = compute([
     minimalItem({
       box_1_unemployment: 12000,

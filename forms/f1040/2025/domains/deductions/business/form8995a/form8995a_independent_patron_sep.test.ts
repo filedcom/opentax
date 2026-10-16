@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { independentPatronSepFixtures } from "../../../../pdf/reviews/general/composed-returns/review-independent-patron-sep.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -13,8 +16,8 @@ const expected = [
   [140000, 15600, 710511, 45520, 633491, 160816, 233822],
   [119945, 15600, 464182, 70784, 361898, 72550, 136081],
 ];
-Deno.test("owned SEP actual census/contributions join ownerSE, health/QBI, Schedule1/1040 and native fullXSD/PDF", async () => {
-  const archive = await Deno.makeTempDir({
+test("owned SEP actual census/contributions join ownerSE, health/QBI, Schedule1/1040 and native fullXSD/PDF", async () => {
+  const archive = await sys.makeTempDir({
     prefix: "opentax-independent-patron-sep-source-",
   });
   console.log("Owned SEP actual source archive:", archive);
@@ -74,9 +77,9 @@ Deno.test("owned SEP actual census/contributions join ownerSE, health/QBI, Sched
       bundle,
       origins,
     );
-    await Deno.writeTextFile(`${archive}/${index}.xml`, bundle.xml);
-    await Deno.writeFile(`${archive}/${index}.pdf`, pdf);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${archive}/${index}.xml`, bundle.xml);
+    await fs.writeFile(`${archive}/${index}.pdf`, pdf);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -87,7 +90,7 @@ Deno.test("owned SEP actual census/contributions join ownerSE, health/QBI, Sched
       stderr: "piped",
     }).output();
     assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${archive}/${index}.json`,
       JSON.stringify(
         {
@@ -105,7 +108,7 @@ Deno.test("owned SEP actual census/contributions join ownerSE, health/QBI, Sched
     );
   }
 });
-Deno.test("owned SEP public source rejects wrong owner, census, uniform contribution, timing and copied payments", () => {
+test("owned SEP public source rejects wrong owner, census, uniform contribution, timing and copied payments", () => {
   const fixture = independentPatronSepFixtures()[1];
   for (
     const mutate of [
@@ -162,7 +165,7 @@ Deno.test("owned SEP public source rejects wrong owner, census, uniform contribu
     ),
   );
 });
-Deno.test("owned SEP filed conflicts reject native and direct PDF, including source-only context", async () => {
+test("owned SEP filed conflicts reject native and direct PDF, including source-only context", async () => {
   for (const index of [0, 3]) {
     const fixture = independentPatronSepFixtures()[index],
       result = f1040_2025.executeReturn(fixture.inputs);

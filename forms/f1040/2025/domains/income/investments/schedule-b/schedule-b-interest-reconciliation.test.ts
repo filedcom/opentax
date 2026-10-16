@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -20,7 +21,7 @@ function preparedFixture(id: string) {
   return { fixture, pending: buildPending(result.pending) };
 }
 
-Deno.test("Schedule B interest joins Form 1040 and AGI in both exporters", async () => {
+test("Schedule B interest joins Form 1040 and AGI in both exporters", async () => {
   const { fixture, pending } = preparedFixture(
     "single-form4952-interest-and-dividends",
   );
@@ -86,7 +87,7 @@ Deno.test("Schedule B interest joins Form 1040 and AGI in both exporters", async
   );
 });
 
-Deno.test("issued 1099-INT and 1099-OID adjustments match separate Schedule B payer rows", () => {
+test("issued 1099-INT and 1099-OID adjustments match separate Schedule B payer rows", () => {
   const rowInt = {
     payer_name: "Bond Bank",
     gross: 120,
@@ -157,7 +158,7 @@ Deno.test("issued 1099-INT and 1099-OID adjustments match separate Schedule B pa
   );
 });
 
-Deno.test("broker market discount reaches Schedule B before native and PDF export", async () => {
+test("broker market discount reaches Schedule B before native and PDF export", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-direct-broker-basis-sales"
   )!;
@@ -194,7 +195,7 @@ Deno.test("broker market discount reaches Schedule B before native and PDF expor
   );
 });
 
-Deno.test("issued 1099-B market discount uses the lesser of gain and box 1f", () => {
+test("issued 1099-B market discount uses the lesser of gain and box 1f", () => {
   const pending = {
     f1099b: {
       f1099bs: [{
@@ -226,7 +227,7 @@ Deno.test("issued 1099-B market discount uses the lesser of gain and box 1f", ()
   );
 });
 
-Deno.test("generic Schedule B interest rows replay distinct K-1 sources exactly", () => {
+test("generic Schedule B interest rows replay distinct K-1 sources exactly", () => {
   const pending = {
     k1_partnership: {
       k1_partnerships: [{
@@ -276,7 +277,7 @@ Deno.test("generic Schedule B interest rows replay distinct K-1 sources exactly"
   );
 });
 
-Deno.test("Form 8912 bond interest cannot gain an unsourced Schedule B copy in either export", async () => {
+test("Form 8912 bond interest cannot gain an unsourced Schedule B copy in either export", async () => {
   const { fixture, pending } = preparedFixture(
     "single-reported-tax-credit-bond",
   );
@@ -306,7 +307,7 @@ Deno.test("Form 8912 bond interest cannot gain an unsourced Schedule B copy in e
   );
 });
 
-Deno.test("excluded savings-bond interest remains zero on Form 1040", () => {
+test("excluded savings-bond interest remains zero on Form 1040", () => {
   const source = {
     f1099int: { f1099ints: [{ payer_name: "Savings Bank", box1: 800 }] },
     schedule_b: {

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument, PDFTextField } from "pdf-lib";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
@@ -13,10 +15,10 @@ const templatePath = new URL(
 ).pathname;
 let available = false;
 try {
-  Deno.statSync(templatePath);
+  sys.statSync(templatePath);
   available = true;
 } catch { /* Private reviewed template. */ }
-const template = () => Deno.readFile(templatePath);
+const template = () => sys.readBytes(templatePath);
 
 async function verify(
   result: Awaited<ReturnType<typeof stageForm8801PdfDocument>>,
@@ -46,7 +48,7 @@ async function verify(
   return form;
 }
 
-Deno.test("8801 PDF mapping follows printed parts including shared native lines", () => {
+test("8801 PDF mapping follows printed parts including shared native lines", () => {
   assertEquals(
     [1, 15, 16, 17, 26, 27, 41, 42, 43, 55].map(form8801PdfFieldForLine),
     [
@@ -65,10 +67,7 @@ Deno.test("8801 PDF mapping follows printed parts including shared native lines"
   for (const n of [0, 56, 1.5]) assertThrows(() => form8801PdfFieldForLine(n));
 });
 
-Deno.test({
-  name: "8801 interactive PDF binds partial credit, carry and current identity",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 interactive PDF binds partial credit, carry and current identity", async () => {
   const f = await fixture();
   f.inputs.w2[0].box1_wages = 30_000;
   const r = await stageForm8801PdfDocument(
@@ -98,10 +97,7 @@ Deno.test({
   assertEquals(form.getFields().length, 28);
 });
 
-Deno.test({
-  name: "8801 PDF Schedule D fills every printed line including 25 percent tax",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF Schedule D fills every printed line including 25 percent tax", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line1 = 300_000;
   facts.prior_credit_carryforward.amount = 100_000;
@@ -140,10 +136,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "8801 PDF preserves signed net deferral and blank skipped Part I tax",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF preserves signed net deferral and blank skipped Part I tax", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   facts.prior_credit_carryforward.amount = 10_000;
@@ -180,10 +173,7 @@ Deno.test({
   }
 });
 
-Deno.test({
-  name: "8801 PDF qualified dividends keeps skipped capital cells blank",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF qualified dividends keeps skipped capital cells blank", async () => {
   const f = await fixture({
     ...packageFacts(),
     capital_rate_workpaper: {
@@ -211,11 +201,7 @@ Deno.test({
   }
 });
 
-Deno.test({
-  name:
-    "8801 PDF rejects unverified templates and emits nothing after a nonpositive stop",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF rejects unverified templates and emits nothing after a nonpositive stop", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   const f = await fixture(facts);
@@ -235,11 +221,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name:
-    "8801 PDF joint identity includes both names and rejects an incomplete spouse",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF joint identity includes both names and rejects an incomplete spouse", async () => {
   const f = await fixture();
   Object.assign(f.inputs.general, {
     filing_status: "mfj",
@@ -269,10 +251,7 @@ Deno.test({
   );
 });
 
-Deno.test({
-  name: "8801 PDF snapshots every caller input before template digest awaits",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("8801 PDF snapshots every caller input before template digest awaits", async () => {
   const f = await fixture();
   const bytes = await template();
   const promise = stageForm8801PdfDocument(

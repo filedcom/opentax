@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form8820Pdf } from "./f8820.ts";
@@ -18,7 +19,7 @@ const source = {
   subject_to_passive_activity_limit: false,
 };
 
-Deno.test("Form 8820 PDF maps official Part I and Part II widgets", () => {
+test("Form 8820 PDF maps official Part I and Part II widgets", () => {
   const fields = Object.fromEntries(
     form8820Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -39,7 +40,7 @@ Deno.test("Form 8820 PDF maps official Part I and Part II widgets", () => {
   assertEquals(form8820Pdf.pageIndices?.({}), [0, 1]);
 });
 
-Deno.test("Form 8820 PDF projects its credit and checks Form 3800", () => {
+test("Form 8820 PDF projects its credit and checks Form 3800", () => {
   const projected = form8820Pdf.projectFields?.(source, {
     f3800: { f8820_credit: { credit_amount: 18_500 } },
   }) ?? {};
@@ -59,7 +60,7 @@ Deno.test("Form 8820 PDF projects its credit and checks Form 3800", () => {
   );
 });
 
-Deno.test("Form 8820 PDF includes a controlled-group allocation page", async () => {
+test("Form 8820 PDF includes a controlled-group allocation page", async () => {
   const grouped = {
     ...source,
     controlled_group: {
@@ -89,7 +90,7 @@ Deno.test("Form 8820 PDF includes a controlled-group allocation page", async () 
   assertEquals(pages.getPageCount(), 2);
 });
 
-Deno.test("Form 8820 PDF includes a zero-credit reduced election", () => {
+test("Form 8820 PDF includes a zero-credit reduced election", () => {
   const election = {
     ...source,
     f8820s: [{ ...drug, qualified_clinical_testing_expenses: 0 }],
@@ -108,7 +109,7 @@ Deno.test("Form 8820 PDF includes a zero-credit reduced election", () => {
   );
 });
 
-Deno.test("Form 8820 PDF compacts active drugs and appends Part II overflow", async () => {
+test("Form 8820 PDF compacts active drugs and appends Part II overflow", async () => {
   const many = {
     ...source,
     form8932_overlapping_wage_credit: 0,
@@ -131,7 +132,7 @@ Deno.test("Form 8820 PDF compacts active drugs and appends Part II overflow", as
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Form 8820 PDF prints mixed line 3 and omits a pass-through-only form", () => {
+test("Form 8820 PDF prints mixed line 3 and omits a pass-through-only form", () => {
   const passThrough = {
     source_type: "partnership" as const,
     entity_ein: "123456789",
@@ -156,7 +157,7 @@ Deno.test("Form 8820 PDF prints mixed line 3 and omits a pass-through-only form"
   assertEquals(form8820Pdf.includeWhen?.(only), false);
 });
 
-Deno.test("Form 8820 PDF appends the unreduced-credit expense statement", async () => {
+test("Form 8820 PDF appends the unreduced-credit expense statement", async () => {
   const fullCredit = {
     ...source,
     reduced_section280c_credit_election: false,

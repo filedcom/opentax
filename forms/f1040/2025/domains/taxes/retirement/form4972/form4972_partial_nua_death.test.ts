@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -91,7 +92,7 @@ function partialNuaDeathCase() {
   return { election, fields, outputs, pending };
 }
 
-Deno.test("Form 4972 partial NUA/death worksheets reach Form 1040, native and PDF", () => {
+test("Form 4972 partial NUA/death worksheets reach Form 1040, native and PDF", () => {
   const { fields, outputs, pending } = partialNuaDeathCase();
   // NUA capital share: 4,000 / 20,000 × 4,000 = 800.
   // Death worksheet capital share: 2,500 × 4,800 / 24,000 = 500.
@@ -125,7 +126,7 @@ Deno.test("Form 4972 partial NUA/death worksheets reach Form 1040, native and PD
   assertEquals(pdf?.line30, fields.line30);
 });
 
-Deno.test("Form 4972 partial NUA/death source copy and election join on the finalized return", () => {
+test("Form 4972 partial NUA/death source copy and election join on the finalized return", () => {
   const { election, pending } = partialNuaDeathCase();
   const source = pending.f1099r.f1099rs[0];
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -179,7 +180,7 @@ Deno.test("Form 4972 partial NUA/death source copy and election join on the fina
   );
 });
 
-Deno.test("Form 4972 partial NUA/death rejects altered allocation, source and return tax", () => {
+test("Form 4972 partial NUA/death rejects altered allocation, source and return tax", () => {
   const { election, fields, pending } = partialNuaDeathCase();
   assertThrows(() =>
     form4972Node.compute(

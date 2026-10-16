@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -17,7 +20,7 @@ import { eitcPdf } from "../../../../pdf/forms/credits/earned-income/eitc.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 for (const kind of ["ordinary", "birth", "death"] as ResidencyKind[]) {
   for (const owner of ["primary", "spouse", "split"] as WageOwner[]) {
-    Deno.test(`joint EIC complete source/native return ${kind}/${owner}`, async () => {
+    test(`joint EIC complete source/native return ${kind}/${owner}`, async () => {
       const result = f1040_2025.executeReturn(
         jointResidencyInputs(kind, owner),
       );
@@ -49,17 +52,17 @@ for (const kind of ["ordinary", "birth", "death"] as ResidencyKind[]) {
         (xml.match(/<QualifyingChildInformation>/g) ?? []).length,
         3,
       );
-      const path = await Deno.makeTempFile({
+      const path = await sys.makeTempFile({
         prefix: "opentax-eic-joint-residency-",
         suffix: ".xml",
       });
-      await Deno.writeTextFile(path, xml);
+      await fs.writeFile(path, xml);
       console.log(`EIC_JOINT_RESIDENCY_XML ${path}`);
       const schema = new URL(
         "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         import.meta.url,
       ).pathname;
-      const validation = await new Deno.Command("xmllint", {
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
         stdout: "piped",
         stderr: "piped",

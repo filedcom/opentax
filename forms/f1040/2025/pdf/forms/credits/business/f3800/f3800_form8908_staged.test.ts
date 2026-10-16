@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
@@ -105,7 +106,7 @@ const pwaAttachment = {
   },
 };
 
-Deno.test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () => {
+test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -119,7 +120,7 @@ Deno.test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () 
   assertEquals(pdf[form3800PartIIIFields("1p").i], 2_500);
 });
 
-Deno.test("staged Form 8908 PWA home binds a completed Form 7220 binary document", () => {
+test("staged Form 8908 PWA home binds a completed Form 7220 binary document", () => {
   const filed = { ...pending, f8908: { f8908s: [pwaHome] } };
   const context = {
     pending: filed,
@@ -138,7 +139,7 @@ Deno.test("staged Form 8908 PWA home binds a completed Form 7220 binary document
   );
 });
 
-Deno.test("staged Form 8908 line 1p rejects altered source and missing attachment", () => {
+test("staged Form 8908 line 1p rejects altered source and missing attachment", () => {
   assertThrows(
     () =>
       prepareForm3800DocumentParts(f3800, {
@@ -197,7 +198,7 @@ Deno.test("staged Form 8908 line 1p rejects altered source and missing attachmen
     }), Error);
 });
 
-Deno.test("Form 8908 and its staged Form 3800 claim remain closed to both public exports", () => {
+test("Form 8908 and its staged Form 3800 claim remain closed to both public exports", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () => assertAttachmentCoverage(pending, kind),

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -24,7 +25,7 @@ function retained(recipient_ssn?: string) {
   };
 }
 
-Deno.test("positive 1099-NEC income owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-NEC income owner is checked by native and PDF Form 1040", () => {
   const source = retained("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -41,7 +42,7 @@ Deno.test("positive 1099-NEC income owner is checked by native and PDF Form 1040
   }
 });
 
-Deno.test("joint spouse 1099-NEC belongs on MFJ return only", () => {
+test("joint spouse 1099-NEC belongs on MFJ return only", () => {
   const source = retained("444-55-6666");
   const joint = {
     ...filed,
@@ -64,7 +65,7 @@ Deno.test("joint spouse 1099-NEC belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("positive 1099-NEC withholding cannot belong to another recipient", () => {
+test("positive 1099-NEC withholding cannot belong to another recipient", () => {
   const source = {
     f1099nec: {
       f1099necs: [{
@@ -87,7 +88,7 @@ Deno.test("positive 1099-NEC withholding cannot belong to another recipient", ()
   );
 });
 
-Deno.test("1099-NEC box 4 needs an identified issued payer in both Form 1040 exports", () => {
+test("1099-NEC box 4 needs an identified issued payer in both Form 1040 exports", () => {
   const issued = {
     payer_name: "Payer",
     payer_tin: "123456789",
@@ -114,7 +115,7 @@ Deno.test("1099-NEC box 4 needs an identified issued payer in both Form 1040 exp
   }
 });
 
-Deno.test("one identified 1099-NEC issued copy cannot replay changed income at native or PDF export", () => {
+test("one identified 1099-NEC issued copy cannot replay changed income at native or PDF export", () => {
   const issued = {
     payer_name: "Payer",
     payer_tin: "123456789",
@@ -160,7 +161,7 @@ Deno.test("one identified 1099-NEC issued copy cannot replay changed income at n
   );
 });
 
-Deno.test("ambiguous repeated 1099-NEC copies reject full native and PDF export", async () => {
+test("ambiguous repeated 1099-NEC copies reject full native and PDF export", async () => {
   const issued = {
     payer_name: "Payer",
     payer_tin: "123456789",

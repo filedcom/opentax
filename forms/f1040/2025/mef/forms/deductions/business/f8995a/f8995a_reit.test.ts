@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -87,7 +88,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 8995-A carries one sourced REIT dividend through calculation, MeF, and PDF", () => {
+test("Form 8995-A carries one sourced REIT dividend through calculation, MeF, and PDF", () => {
   const parsed = form8995aInputSchema.parse(fields);
   const lines = calculateOneBusiness8995ALines(parsed);
   assertEquals(lines.line28, 1_000);
@@ -126,7 +127,7 @@ Deno.test("Form 8995-A carries one sourced REIT dividend through calculation, Me
   assertEquals(forwarded?.fields.reit_dividend_sources, [source]);
 });
 
-Deno.test("Form 8995-A REIT source, holding review, and return totals reject tampering", () => {
+test("Form 8995-A REIT source, holding review, and return totals reject tampering", () => {
   const build = (input: Record<string, unknown>, retained = pending) =>
     form8995a.build(form8995aInputSchema.parse(input), {
       filer,

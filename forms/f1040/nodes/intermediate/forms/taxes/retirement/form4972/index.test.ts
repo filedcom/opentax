@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
 import { income_tax_calculation } from "../../../../worksheets/taxes/calculation/income_tax_calculation/index.ts";
@@ -34,7 +35,7 @@ function calculated(input: Record<string, unknown>) {
   };
 }
 
-Deno.test("Form 4972 does not silently exclude income without an election", () => {
+test("Form 4972 does not silently exclude income without an election", () => {
   assertThrows(
     () => compute({ lump_sum_amount: 100_000, born_before_1936: true }),
     Error,
@@ -42,7 +43,7 @@ Deno.test("Form 4972 does not silently exclude income without an election", () =
   );
 });
 
-Deno.test("Form 4972 partial box 9a share grosses up Part III and prorates line 29", () => {
+test("Form 4972 partial box 9a share grosses up Part III and prorates line 29", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     recipient_share_pct: 50,
@@ -55,7 +56,7 @@ Deno.test("Form 4972 partial box 9a share grosses up Part III and prorates line 
   assertEquals(result.tax, 2_095);
 });
 
-Deno.test("Form 4972 shared beneficiary Part III uses full attributable estate tax before prorating", () => {
+test("Form 4972 shared beneficiary Part III uses full attributable estate tax before prorating", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     recipient_share_pct: 50,
@@ -80,7 +81,7 @@ Deno.test("Form 4972 shared beneficiary Part III uses full attributable estate t
   assertEquals(result.tax, 1_955);
 });
 
-Deno.test("Form 4972 partial-share estate tax rejects absent or changed allocation source", () => {
+test("Form 4972 partial-share estate tax rejects absent or changed allocation source", () => {
   const base = {
     lump_sum_amount: 20_000,
     recipient_share_pct: 50,
@@ -112,7 +113,7 @@ Deno.test("Form 4972 partial-share estate tax rejects absent or changed allocati
   );
 });
 
-Deno.test("Form 4972 shared beneficiary Part III uses the full death-benefit exclusion before line 29 proration", () => {
+test("Form 4972 shared beneficiary Part III uses the full death-benefit exclusion before line 29 proration", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     recipient_share_pct: 50,
@@ -143,7 +144,7 @@ Deno.test("Form 4972 shared beneficiary Part III uses the full death-benefit exc
   assertEquals(result.f1040, undefined);
 });
 
-Deno.test("Form 4972 partial beneficiary Part II and III allocate the death benefit separately on lines 6 and 9", () => {
+test("Form 4972 partial beneficiary Part II and III allocate the death benefit separately on lines 6 and 9", () => {
   const source = {
     lump_sum_amount: 20_000,
     capital_gain_amount: 4_000,
@@ -209,7 +210,7 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
   }
 });
 
-Deno.test("Form 4972 partial beneficiary Part-II-only uses recipient death-benefit share on Form 1040", () => {
+test("Form 4972 partial beneficiary Part-II-only uses recipient death-benefit share on Form 1040", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     capital_gain_amount: 4_000,
@@ -258,7 +259,7 @@ Deno.test("Form 4972 partial beneficiary Part-II-only uses recipient death-benef
   );
 });
 
-Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a but not the grossed-up distribution", () => {
+test("Form 4972 partial death benefit can exceed this recipient's box 2a but not the grossed-up distribution", () => {
   const base = {
     lump_sum_amount: 3_000,
     recipient_share_pct: 50,
@@ -291,7 +292,7 @@ Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a bu
   );
 });
 
-Deno.test("Form 4972 partial death benefit rejects unsourced recipient allocations", () => {
+test("Form 4972 partial death benefit rejects unsourced recipient allocations", () => {
   const base = {
     lump_sum_amount: 20_000,
     recipient_share_pct: 50,
@@ -327,7 +328,7 @@ Deno.test("Form 4972 partial death benefit rejects unsourced recipient allocatio
   }
 });
 
-Deno.test("Form 4972 shared estate tax rejects a missing administrator allocation", () => {
+test("Form 4972 shared estate tax rejects a missing administrator allocation", () => {
   for (
     const [additional, rejection] of [
       [
@@ -358,7 +359,7 @@ Deno.test("Form 4972 shared estate tax rejects a missing administrator allocatio
   }
 });
 
-Deno.test("Form 4972 partial box 9a Part II keeps recipient gain and grosses up ordinary income", () => {
+test("Form 4972 partial box 9a Part II keeps recipient gain and grosses up ordinary income", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     capital_gain_amount: 4_000,
@@ -375,7 +376,7 @@ Deno.test("Form 4972 partial box 9a Part II keeps recipient gain and grosses up 
   assertEquals(result.tax, 2_220);
 });
 
-Deno.test("Form 4972 uses box 8's own percentage for a shared annuity", () => {
+test("Form 4972 uses box 8's own percentage for a shared annuity", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     annuity_actuarial_value: 2_000,
@@ -390,7 +391,7 @@ Deno.test("Form 4972 uses box 8's own percentage for a shared annuity", () => {
   assertEquals(result.tax, 2_365);
 });
 
-Deno.test("Form 4972 shared annuity needs its own box 8 percentage", () => {
+test("Form 4972 shared annuity needs its own box 8 percentage", () => {
   for (const annuityShare of [undefined, 0, 101]) {
     assertThrows(() =>
       calculated({
@@ -404,7 +405,7 @@ Deno.test("Form 4972 shared annuity needs its own box 8 percentage", () => {
   }
 });
 
-Deno.test("Form 4972 partial share combines NUA and a separately shared annuity", () => {
+test("Form 4972 partial share combines NUA and a separately shared annuity", () => {
   const result = calculated({
     lump_sum_amount: 30_000,
     capital_gain_amount: 10_000,
@@ -433,7 +434,7 @@ Deno.test("Form 4972 partial share combines NUA and a separately shared annuity"
   assertEquals(result.tax, result.lines?.line30);
 });
 
-Deno.test("Form 4972 partial-share NUA grosses up only line 8 and its NUA note", () => {
+test("Form 4972 partial-share NUA grosses up only line 8 and its NUA note", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -458,7 +459,7 @@ Deno.test("Form 4972 partial-share NUA grosses up only line 8 and its NUA note",
   assertEquals(result.lines?.line30, 7_200 + (result.lines?.line29 as number));
 });
 
-Deno.test("Form 4972 partial-share Part III-only NUA includes all box 6 on line 8", () => {
+test("Form 4972 partial-share Part III-only NUA includes all box 6 on line 8", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -478,7 +479,7 @@ Deno.test("Form 4972 partial-share Part III-only NUA includes all box 6 on line 
   assertEquals(result.tax, result.lines?.line29);
 });
 
-Deno.test("Form 4972 partial-share Part-II-only NUA taxes the recipient gain and routes only recipient ordinary income", () => {
+test("Form 4972 partial-share Part-II-only NUA taxes the recipient gain and routes only recipient ordinary income", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -498,7 +499,7 @@ Deno.test("Form 4972 partial-share Part-II-only NUA taxes the recipient gain and
   assertEquals(result.f1040?.line5b_form4972_ordinary, 84_000);
 });
 
-Deno.test("Form 4972 partial-share Part-II-only without NUA keeps recipient ordinary income", () => {
+test("Form 4972 partial-share Part-II-only without NUA keeps recipient ordinary income", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     capital_gain_amount: 4_000,
@@ -512,7 +513,7 @@ Deno.test("Form 4972 partial-share Part-II-only without NUA keeps recipient ordi
   assertEquals(result.agi?.line5b_form4972_ordinary, 16_000);
 });
 
-Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () => {
+test("Form 4972 partial box 9a share rejects unsupported allocations", () => {
   assertThrows(
     () =>
       calculated({
@@ -550,7 +551,7 @@ Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () =
   );
 });
 
-Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations pending allocation evidence", () => {
+test("Form 4972 shared beneficiary rejects Part II estate-tax combinations pending allocation evidence", () => {
   for (
     const [extra, message] of [
       [
@@ -586,7 +587,7 @@ Deno.test("Form 4972 shared beneficiary rejects Part II estate-tax combinations 
   }
 });
 
-Deno.test("Form 4972 rejects an ineligible birth year", () => {
+test("Form 4972 rejects an ineligible birth year", () => {
   assertThrows(() =>
     calculated({
       lump_sum_amount: 100_000,
@@ -596,7 +597,7 @@ Deno.test("Form 4972 rejects an ineligible birth year", () => {
   );
 });
 
-Deno.test("Form 4972 beneficiary eligibility uses question 5b, not their own-plan question 5a", () => {
+test("Form 4972 beneficiary eligibility uses question 5b, not their own-plan question 5a", () => {
   const result = calculated({
     lump_sum_amount: 10_000,
     beneficiary_distribution: true,
@@ -620,7 +621,7 @@ Deno.test("Form 4972 beneficiary eligibility uses question 5b, not their own-pla
   );
 });
 
-Deno.test("Form 4972 keeps beneficiary and own-plan recipient roles distinct", () => {
+test("Form 4972 keeps beneficiary and own-plan recipient roles distinct", () => {
   assertThrows(
     () =>
       calculated({
@@ -651,7 +652,7 @@ Deno.test("Form 4972 keeps beneficiary and own-plan recipient roles distinct", (
   );
 });
 
-Deno.test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () => {
+test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -665,7 +666,7 @@ Deno.test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () 
   assertEquals(result.f1040?.line5b_form4972_ordinary, 70_000);
 });
 
-Deno.test("Form 4972 Part II-only NUA election splits box 6 into capital and ordinary income", () => {
+test("Form 4972 Part II-only NUA election splits box 6 into capital and ordinary income", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -679,7 +680,7 @@ Deno.test("Form 4972 Part II-only NUA election splits box 6 into capital and ord
   assertEquals(result.f1040?.line5b_form4972_ordinary, 84_000);
 });
 
-Deno.test("Form 4972 does not include box 6 NUA without its election", () => {
+test("Form 4972 does not include box 6 NUA without its election", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -690,7 +691,7 @@ Deno.test("Form 4972 does not include box 6 NUA without its election", () => {
   assertEquals(result.agi?.line5b_form4972_ordinary, 70_000);
 });
 
-Deno.test("Form 4972 NUA election requires a positive box 6 source amount", () => {
+test("Form 4972 NUA election requires a positive box 6 source amount", () => {
   assertThrows(
     () =>
       calculated({
@@ -704,7 +705,7 @@ Deno.test("Form 4972 NUA election requires a positive box 6 source amount", () =
   );
 });
 
-Deno.test("Form 4972 Part III follows lines 12 through 29, not a tax-on-allowance subtraction", () => {
+test("Form 4972 Part III follows lines 12 through 29, not a tax-on-allowance subtraction", () => {
   const result = calculated({
     lump_sum_amount: 10_000,
     elect_10yr_averaging: true,
@@ -716,7 +717,7 @@ Deno.test("Form 4972 Part III follows lines 12 through 29, not a tax-on-allowanc
   assertEquals(result.tax, 550);
 });
 
-Deno.test("Form 4972 uses the 2025 instructions tax rate schedule above $70,000", () => {
+test("Form 4972 uses the 2025 instructions tax rate schedule above $70,000", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     elect_10yr_averaging: true,
@@ -725,7 +726,7 @@ Deno.test("Form 4972 uses the 2025 instructions tax rate schedule above $70,000"
   assertEquals(result.tax, 14_470);
 });
 
-Deno.test("Form 4972 applies an eligible death benefit before the allowance", () => {
+test("Form 4972 applies an eligible death benefit before the allowance", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     death_benefit_exclusion: 5_000,
@@ -739,7 +740,7 @@ Deno.test("Form 4972 applies an eligible death benefit before the allowance", ()
   assertEquals(result.tax, 830);
 });
 
-Deno.test("Form 4972 combines capital-gain and ten-year elections on line 30", () => {
+test("Form 4972 combines capital-gain and ten-year elections on line 30", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 10_000,
@@ -755,7 +756,7 @@ Deno.test("Form 4972 combines capital-gain and ten-year elections on line 30", (
   assertEquals(result.f1040, undefined);
 });
 
-Deno.test("Form 4972 combined elections include NUA ordinary share on Part III line 8", () => {
+test("Form 4972 combined elections include NUA ordinary share on Part III line 8", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -771,7 +772,7 @@ Deno.test("Form 4972 combined elections include NUA ordinary share on Part III l
   assertEquals(result.agi, undefined);
 });
 
-Deno.test("Form 4972 NUA election uses the expanded base for death and estate allocations", () => {
+test("Form 4972 NUA election uses the expanded base for death and estate allocations", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -793,7 +794,7 @@ Deno.test("Form 4972 NUA election uses the expanded base for death and estate al
   assertEquals(result.lines?.line18, 2_800);
 });
 
-Deno.test("Form 4972 Part-II-only NUA estate allocation leaves ordinary IRD on Form 1040", () => {
+test("Form 4972 Part-II-only NUA estate allocation leaves ordinary IRD on Form 1040", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -812,7 +813,7 @@ Deno.test("Form 4972 Part-II-only NUA estate allocation leaves ordinary IRD on F
   assertEquals(result.scheduleA?.line_16_other_deductions, 2_800);
 });
 
-Deno.test("Form 4972 Part III-only NUA election includes all of box 6 on line 8", () => {
+test("Form 4972 Part III-only NUA election includes all of box 6 on line 8", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     box6_nua: 20_000,
@@ -824,7 +825,7 @@ Deno.test("Form 4972 Part III-only NUA election includes all of box 6 on line 8"
   assertEquals(result.lines?.line8_nua_included, 20_000);
 });
 
-Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", () => {
+test("Form 4972 Part II rejects an election without box 3 capital gain", () => {
   assertThrows(
     () => calculated({ lump_sum_amount: 10_000, elect_capital_gain: true }),
     Error,
@@ -832,7 +833,7 @@ Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", ()
   );
 });
 
-Deno.test("Form 4972 rejects a rounded-zero Part II election before suppressing 1099-R income", () => {
+test("Form 4972 rejects a rounded-zero Part II election before suppressing 1099-R income", () => {
   assertThrows(
     () =>
       calculated({
@@ -845,7 +846,7 @@ Deno.test("Form 4972 rejects a rounded-zero Part II election before suppressing 
   );
 });
 
-Deno.test("Form 4972 rejects a rounded-zero ten-year election before suppressing 1099-R income", () => {
+test("Form 4972 rejects a rounded-zero ten-year election before suppressing 1099-R income", () => {
   assertThrows(
     () => calculated({ lump_sum_amount: 4, elect_10yr_averaging: true }),
     Error,
@@ -853,7 +854,7 @@ Deno.test("Form 4972 rejects a rounded-zero ten-year election before suppressing
   );
 });
 
-Deno.test("Form 4972 Part II allocates a death benefit between capital gain and ordinary income", () => {
+test("Form 4972 Part II allocates a death benefit between capital gain and ordinary income", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     capital_gain_amount: 5_000,
@@ -869,7 +870,7 @@ Deno.test("Form 4972 Part II allocates a death benefit between capital gain and 
   assertEquals(result.f1040?.line5b_form4972_ordinary, 11_250);
 });
 
-Deno.test("Form 4972 annuity value goes through the actuarial adjustment", () => {
+test("Form 4972 annuity value goes through the actuarial adjustment", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
     annuity_actuarial_value: 2_000,
@@ -880,7 +881,7 @@ Deno.test("Form 4972 annuity value goes through the actuarial adjustment", () =>
   assertEquals(typeof result.lines?.line22, "number");
 });
 
-Deno.test("Form 4972 estate tax reduces line 19 before averaging", () => {
+test("Form 4972 estate tax reduces line 19 before averaging", () => {
   const result = calculated({
     lump_sum_amount: 10_000,
     federal_estate_tax: 1_000,
@@ -892,7 +893,7 @@ Deno.test("Form 4972 estate tax reduces line 19 before averaging", () => {
   assertEquals(result.tax, 440);
 });
 
-Deno.test("Form 4972 combined election allocates federal estate tax to lines 6 and 18", () => {
+test("Form 4972 combined election allocates federal estate tax to lines 6 and 18", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -909,7 +910,7 @@ Deno.test("Form 4972 combined election allocates federal estate tax to lines 6 a
   assertEquals(result.agi, undefined);
 });
 
-Deno.test("Form 4972 combined election allocates death benefit and estate tax separately", () => {
+test("Form 4972 combined election allocates death benefit and estate tax separately", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -926,7 +927,7 @@ Deno.test("Form 4972 combined election allocates death benefit and estate tax se
   assertEquals(result.lines?.line18, 2_800);
 });
 
-Deno.test("Form 4972 Part II-only estate tax reduces capital gain and sends ordinary IRD deduction to Schedule A", () => {
+test("Form 4972 Part II-only estate tax reduces capital gain and sends ordinary IRD deduction to Schedule A", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -944,7 +945,7 @@ Deno.test("Form 4972 Part II-only estate tax reduces capital gain and sends ordi
   assertEquals(result.scheduleA?.line_16_other_deductions, 2_800);
 });
 
-Deno.test("Form 4972 Part II-only applies death benefit and estate tax to separate capital and ordinary shares", () => {
+test("Form 4972 Part II-only applies death benefit and estate tax to separate capital and ordinary shares", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -963,7 +964,7 @@ Deno.test("Form 4972 Part II-only applies death benefit and estate tax to separa
   assertEquals(result.scheduleA?.line_16_other_deductions, 2_800);
 });
 
-Deno.test("Form 4972 combined election keeps ordinary estate tax inside Part III, not Schedule A", () => {
+test("Form 4972 combined election keeps ordinary estate tax inside Part III, not Schedule A", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
     capital_gain_amount: 30_000,
@@ -977,7 +978,7 @@ Deno.test("Form 4972 combined election keeps ordinary estate tax inside Part III
   assertEquals(result.scheduleA, undefined);
 });
 
-Deno.test("Form 4972 rejects capital gain above taxable distribution", () => {
+test("Form 4972 rejects capital gain above taxable distribution", () => {
   assertThrows(() =>
     calculated({
       lump_sum_amount: 10_000,
@@ -987,7 +988,7 @@ Deno.test("Form 4972 rejects capital gain above taxable distribution", () => {
   );
 });
 
-Deno.test("Form 4972 rejects a death benefit above $5,000", () => {
+test("Form 4972 rejects a death benefit above $5,000", () => {
   assertThrows(() =>
     calculated({
       lump_sum_amount: 50_000,
@@ -997,7 +998,7 @@ Deno.test("Form 4972 rejects a death benefit above $5,000", () => {
   );
 });
 
-Deno.test("Form 4972 rejects a death benefit larger than the taxable distribution", () => {
+test("Form 4972 rejects a death benefit larger than the taxable distribution", () => {
   assertThrows(
     () =>
       calculated({

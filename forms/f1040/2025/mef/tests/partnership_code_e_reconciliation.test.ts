@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -34,7 +35,7 @@ async function rejectsBoth(
   );
 }
 
-Deno.test("partnership code E export rejects a changed debt source", async () => {
+test("partnership code E export rejects a changed debt source", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -46,7 +47,7 @@ Deno.test("partnership code E export rejects a changed debt source", async () =>
   await rejectsBoth(pending, "do not match the issued K-1 facts");
 });
 
-Deno.test("partnership code E export rejects another recipient", async () => {
+test("partnership code E export rejects another recipient", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -62,13 +63,13 @@ Deno.test("partnership code E export rejects another recipient", async () => {
   await rejectsBoth(pending, "recipient is not the filer");
 });
 
-Deno.test("partnership code E export rejects mixed Form 1099-C", async () => {
+test("partnership code E export rejects mixed Form 1099-C", async () => {
   const pending = prepared();
   (pending as Record<string, unknown>).f1099c = { f1099cs: [{}] };
   await rejectsBoth(pending, "debt-level duplicate reconciliation");
 });
 
-Deno.test("partnership code E export rejects changed line 8c", async () => {
+test("partnership code E export rejects changed line 8c", async () => {
   const pending = prepared();
   (pending.schedule1 as Record<string, unknown>).line8c_cod_income = 1_001;
   await rejectsBoth(pending, "does not match its partnership code E sources");

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -42,7 +45,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`Form8995A ${c.id} retains both loss businesses and the existing full-return guard`, async () => {
+  test(`Form8995A ${c.id} retains both loss businesses and the existing full-return guard`, async () => {
     let rows: Record<string, unknown>[] = sourceRows.map((row, i) => ({
       ...row,
       line_1_gross_receipts: 0,
@@ -139,27 +142,21 @@ for (const c of cases) {
       Error,
       boundary,
     );
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_TWO_LOSSES_DIR",
-    });
-    const retained = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_TWO_LOSSES_DIR")
-      : undefined;
-    const dir = retained ? `${retained}/${c.id}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const retained = process.env.FORM8995A_TWO_LOSSES_DIR;
+    const dir = retained ? `${retained}/${c.id}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/input.json`,
         JSON.stringify(inputs, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/pending.json`,
         JSON.stringify(pending, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/parent-component.xml`, parentXml);
-      await Deno.writeTextFile(`${dir}/companion-component.xml`, companionXml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${dir}/parent-component.xml`, parentXml);
+      await fs.writeFile(`${dir}/companion-component.xml`, companionXml);
+      await fs.writeFile(
         `${dir}/projection.json`,
         JSON.stringify(
           {
@@ -207,7 +204,7 @@ for (const c of cases) {
         );
       }
     } finally {
-      if (!retained) await Deno.remove(dir, { recursive: true });
+      if (!retained) await sys.remove(dir, { recursive: true });
     }
   });
 }

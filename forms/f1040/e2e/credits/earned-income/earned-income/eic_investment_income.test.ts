@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -317,7 +320,7 @@ function runPassiveK1s(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 income", async () => {
+test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 income", async () => {
   const atLimit = runPassiveK1s(6_000, 5_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -335,10 +338,10 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -348,7 +351,7 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdfFields = scheduleEPdf.projectFields?.({}, atLimit.pending);
   assertEquals(pdfFields?.k1_0_passive_income, 6_000);
@@ -477,7 +480,7 @@ function runPartnershipLine10(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit", async () => {
+test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit", async () => {
   const atLimit = runPartnershipLine10(11_950, "passive");
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -502,10 +505,10 @@ Deno.test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit",
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -515,7 +518,7 @@ Deno.test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   assertEquals(
     irs1040Pdf.projectFields?.(atLimit.pending.f1040, atLimit.pending)
@@ -576,7 +579,7 @@ Deno.test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit",
   );
 });
 
-Deno.test("EIC reconciles Form 4835 with rental and three K-1 sources", async () => {
+test("EIC reconciles Form 4835 with rental and three K-1 sources", async () => {
   const atLimit = runPassiveK1s(3_000, 3_000, 1_950, 2_000, 2_000);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -600,10 +603,10 @@ Deno.test("EIC reconciles Form 4835 with rental and three K-1 sources", async ()
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -613,7 +616,7 @@ Deno.test("EIC reconciles Form 4835 with rental and three K-1 sources", async ()
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -703,7 +706,7 @@ function runFarmLossOffsets(rentIncome: number, farmLosses: number[]) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("EIC nets an allowed Form 4835 farm loss against passive rental income", async () => {
+test("EIC nets an allowed Form 4835 farm loss against passive rental income", async () => {
   const atLimit = runFarmLossOffsets(12_000, [50]);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -728,10 +731,10 @@ Deno.test("EIC nets an allowed Form 4835 farm loss against passive rental income
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -741,7 +744,7 @@ Deno.test("EIC nets an allowed Form 4835 farm loss against passive rental income
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -779,7 +782,7 @@ Deno.test("EIC nets an allowed Form 4835 farm loss against passive rental income
   );
 });
 
-Deno.test("EIC allocates two Form 4835 farm losses beside passive rent", async () => {
+test("EIC allocates two Form 4835 farm losses beside passive rent", async () => {
   const atLimit = runFarmLossOffsets(12_025, [50, 25]);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -808,10 +811,10 @@ Deno.test("EIC allocates two Form 4835 farm losses beside passive rent", async (
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -821,7 +824,7 @@ Deno.test("EIC allocates two Form 4835 farm losses beside passive rent", async (
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const scheduleFields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -864,7 +867,7 @@ Deno.test("EIC allocates two Form 4835 farm losses beside passive rent", async (
   );
 });
 
-Deno.test("prior Form 4835 passive loss reconciles EIC but blocks unauthenticated exports", async () => {
+test("prior Form 4835 passive loss reconciles EIC but blocks unauthenticated exports", async () => {
   const runPriorFarm = (rent: number) =>
     execute(plan, registry, {
       general,
@@ -937,7 +940,7 @@ Deno.test("prior Form 4835 passive loss reconciles EIC but blocks unauthenticate
   );
 });
 
-Deno.test("active rental special allowance nets passive farm income", async () => {
+test("active rental special allowance nets passive farm income", async () => {
   const runMixed = (wages: number) =>
     execute(plan, registry, {
       general,
@@ -992,10 +995,10 @@ Deno.test("active rental special allowance nets passive farm income", async () =
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1005,7 +1008,7 @@ Deno.test("active rental special allowance nets passive farm income", async () =
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     phased.pending.schedule_e,
@@ -1020,7 +1023,7 @@ Deno.test("active rental special allowance nets passive farm income", async () =
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {
+test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {
   const atLimit = runPassiveK1s(4_000, 4_000, 1_950, 2_000);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1044,10 +1047,10 @@ Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income",
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1057,7 +1060,7 @@ Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -1093,10 +1096,10 @@ Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income",
     buildPending(trustAndRental.pending),
     extractFilerIdentity(trustAndRental.pending.f1040),
   );
-  const secondXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const secondXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(secondXmlPath, trustAndRentalXml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(secondXmlPath, trustAndRentalXml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, secondXmlPath],
       stderr: "piped",
     }).output();
@@ -1106,11 +1109,11 @@ Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(secondXmlPath);
+    await sys.remove(secondXmlPath);
   }
 });
 
-Deno.test("three passive rentals print Schedule E property columns A through C", async () => {
+test("three passive rentals print Schedule E property columns A through C", async () => {
   const runRentals = (lastRent: number) =>
     execute(plan, registry, {
       general,
@@ -1148,10 +1151,10 @@ Deno.test("three passive rentals print Schedule E property columns A through C",
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1161,7 +1164,7 @@ Deno.test("three passive rentals print Schedule E property columns A through C",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -1183,7 +1186,7 @@ Deno.test("three passive rentals print Schedule E property columns A through C",
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("seven passive rentals print three Schedule E Part I copies", async () => {
+test("seven passive rentals print three Schedule E Part I copies", async () => {
   const runRentals = (lastRent: number) =>
     execute(plan, registry, {
       general,
@@ -1223,10 +1226,10 @@ Deno.test("seven passive rentals print three Schedule E Part I copies", async ()
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1236,7 +1239,7 @@ Deno.test("seven passive rentals print three Schedule E Part I copies", async ()
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -1261,7 +1264,7 @@ Deno.test("seven passive rentals print three Schedule E Part I copies", async ()
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("Schedule E type 8 and line 19 details follow their property sources", async () => {
+test("Schedule E type 8 and line 19 details follow their property sources", async () => {
   const result = execute(plan, registry, {
     general,
     w2: [w2],
@@ -1312,10 +1315,10 @@ Deno.test("Schedule E type 8 and line 19 details follow their property sources",
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1325,7 +1328,7 @@ Deno.test("Schedule E type 8 and line 19 details follow their property sources",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     result.pending.schedule_e,
@@ -1342,7 +1345,7 @@ Deno.test("Schedule E type 8 and line 19 details follow their property sources",
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("Schedule E long type 8 description travels with a full return", async () => {
+test("Schedule E long type 8 description travels with a full return", async () => {
   const description = "Detached mixed-use storage facility";
   const result = execute(plan, registry, {
     general,
@@ -1374,10 +1377,10 @@ Deno.test("Schedule E long type 8 description travels with a full return", async
   );
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
   assertEquals(bundle.attachments.length, 1);
-  const attachmentPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const attachmentPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(attachmentPath, bundle.attachments[0].bytes);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(attachmentPath, bundle.attachments[0].bytes);
+    const extracted = await new sys.Command("pdftotext", {
       args: [attachmentPath, "-"],
       stdout: "piped",
     }).output();
@@ -1386,7 +1389,7 @@ Deno.test("Schedule E long type 8 description travels with a full return", async
     assertEquals(text.includes(description), true);
     assertEquals(text.includes("Reviewed storage rental"), true);
   } finally {
-    await Deno.remove(attachmentPath);
+    await sys.remove(attachmentPath);
   }
   assertEquals(
     bundle.xml.includes(
@@ -1404,10 +1407,10 @@ Deno.test("Schedule E long type 8 description travels with a full return", async
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1417,7 +1420,7 @@ Deno.test("Schedule E long type 8 description travels with a full return", async
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     result.pending.schedule_e,
@@ -1429,7 +1432,7 @@ Deno.test("Schedule E long type 8 description travels with a full return", async
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages", async () => {
+test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages", async () => {
   const atLimit = runPassiveK1s(4_000, 4_000, 3_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1451,10 +1454,10 @@ Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pa
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1464,7 +1467,7 @@ Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pa
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const fields = scheduleEPdf.projectFields?.(
     atLimit.pending.schedule_e,
@@ -1478,7 +1481,7 @@ Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pa
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async () => {
+test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async () => {
   const atLimit = runPassiveTrust(11_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1492,10 +1495,10 @@ Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async ()
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1505,7 +1508,7 @@ Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async ()
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const forged = {
     ...atLimit.pending,
@@ -1526,7 +1529,7 @@ Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async ()
   );
 });
 
-Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", async () => {
+test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", async () => {
   const atLimit = runPassiveOrdinarySale(11_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1544,10 +1547,10 @@ Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", asy
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1557,7 +1560,7 @@ Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", asy
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const forged = {
     ...atLimit.pending,
@@ -1578,7 +1581,7 @@ Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", asy
   );
 });
 
-Deno.test("EIC Worksheet 1 counts passive Schedule E rental profit at the investment limit", async () => {
+test("EIC Worksheet 1 counts passive Schedule E rental profit at the investment limit", async () => {
   const atLimit = runPassiveRental(11_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1603,10 +1606,10 @@ Deno.test("EIC Worksheet 1 counts passive Schedule E rental profit at the invest
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1616,7 +1619,7 @@ Deno.test("EIC Worksheet 1 counts passive Schedule E rental profit at the invest
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const forged = {
     ...atLimit.pending,
@@ -1743,7 +1746,7 @@ function runMixedScheduleERoyalty(royaltyExpenses: number) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("EIC investment limit follows filed interest and dividends through the full graph", async () => {
+test("EIC investment limit follows filed interest and dividends through the full graph", async () => {
   const atLimit = run(11_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.f1040.line2a_tax_exempt, 11_950);
@@ -1755,10 +1758,10 @@ Deno.test("EIC investment limit follows filed interest and dividends through the
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1768,7 +1771,7 @@ Deno.test("EIC investment limit follows filed interest and dividends through the
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 
   const overLimit = run(11_951);
@@ -1809,7 +1812,7 @@ Deno.test("EIC investment limit follows filed interest and dividends through the
   );
 });
 
-Deno.test("EIC investment limit includes capital distributions but subtracts Form 4797 section 1231 gain", async () => {
+test("EIC investment limit includes capital distributions but subtracts Form 4797 section 1231 gain", async () => {
   const atLimit = runCapital(11_950);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1824,10 +1827,10 @@ Deno.test("EIC investment limit includes capital distributions but subtracts For
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1837,7 +1840,7 @@ Deno.test("EIC investment limit includes capital distributions but subtracts For
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 
   const overLimit = runCapital(11_951);
@@ -1877,7 +1880,7 @@ Deno.test("EIC investment limit includes capital distributions but subtracts For
   );
 });
 
-Deno.test("EIC investment limit includes Form 8814 tax-exempt interest and line 12 after Alaska adjustment", async () => {
+test("EIC investment limit includes Form 8814 tax-exempt interest and line 12 after Alaska adjustment", async () => {
   const atLimit = runForm8814(3_000, 11_650);
   assertEquals(atLimit.diagnostics, []);
   const atLimitChild = (atLimit.pending.form8814.items as Array<{
@@ -1896,10 +1899,10 @@ Deno.test("EIC investment limit includes Form 8814 tax-exempt interest and line 
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -1909,7 +1912,7 @@ Deno.test("EIC investment limit includes Form 8814 tax-exempt interest and line 
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 
   const overLimit = runForm8814(3_001, 11_650);
@@ -1953,7 +1956,7 @@ Deno.test("EIC investment limit includes Form 8814 tax-exempt interest and line 
   );
 });
 
-Deno.test("EIC investment limit nets filed Schedule E royalties and Schedule 1 personal-property rent", async () => {
+test("EIC investment limit nets filed Schedule E royalties and Schedule 1 personal-property rent", async () => {
   const atLimit = runRoyaltyAndRental(3_000, 9_000, 50);
   assertEquals(atLimit.diagnostics, []);
   assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
@@ -1991,10 +1994,10 @@ Deno.test("EIC investment limit nets filed Schedule E royalties and Schedule 1 p
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -2004,7 +2007,7 @@ Deno.test("EIC investment limit nets filed Schedule E royalties and Schedule 1 p
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 
   const overLimit = runRoyaltyAndRental(3_001, 9_000, 50);
@@ -2052,7 +2055,7 @@ Deno.test("EIC investment limit nets filed Schedule E royalties and Schedule 1 p
   );
 });
 
-Deno.test("EIC reconciles a reviewed mixed Schedule E royalty expense allocation", () => {
+test("EIC reconciles a reviewed mixed Schedule E royalty expense allocation", () => {
   const result = runMixedScheduleERoyalty(2_000);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.eitc.investment_income_floor, 4_000);

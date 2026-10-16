@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { createHash } from "node:crypto";
 import { f1040_2025 } from "../../../../index.ts";
@@ -124,7 +126,7 @@ for (
     ["mtm-unavailable-loss", [4], 0, 3875, 0],
   ] as const
 ) {
-  Deno.test(`adoption carryforward composes retained PFIC regimes: ${id}`, async () => {
+  test(`adoption carryforward composes retained PFIC regimes: ${id}`, async () => {
     const input = structuredClone(base.inputs) as Record<string, unknown>;
     Object.assign((input.w2 as Record<string, unknown>[])[0], {
       box1_wages: 50000,
@@ -174,22 +176,16 @@ for (
       packet.bundle,
       origins,
     );
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8621_REGIMES_EVIDENCE_DIR",
-    });
-    const out = permission.state === "granted"
-      ? Deno.env.get("FORM8621_REGIMES_EVIDENCE_DIR")
-      : undefined;
+    const out = process.env.FORM8621_REGIMES_EVIDENCE_DIR;
     if (out) {
       const dir = `${out}/${id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify({ input, pending, origins }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, packet.bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, packet.bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
     const changedLedger = {
       ...pending,

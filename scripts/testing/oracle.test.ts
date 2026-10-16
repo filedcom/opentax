@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 import { assert, assertEquals } from "@std/assert";
 import { join } from "@std/path";
 import {
@@ -29,7 +32,7 @@ const entry = (source: string): Ledger[number] => ({
   on: "2026-10-16",
 });
 
-Deno.test("a case is identified by its product and directory", () => {
+test("a case is identified by its product and directory", () => {
   assertEquals(
     caseKey("benchmark/cases/f1040/2025/01-single/correct.json"),
     { product: "f1040/2025", case: "01-single" },
@@ -41,7 +44,7 @@ Deno.test("a case is identified by its product and directory", () => {
   assertEquals(caseKey("benchmark/reference/2025/x.json"), undefined);
 });
 
-Deno.test("changes are the scored lines that differ, plus added and removed cases", () => {
+test("changes are the scored lines that differ, plus added and removed cases", () => {
   assertEquals(
     caseChanges(product, name, expected(31000), expected(31000)),
     [],
@@ -71,7 +74,7 @@ Deno.test("changes are the scored lines that differ, plus added and removed case
   }]);
 });
 
-Deno.test("an expected value changed to what the engine computes is refused unless a publication is cited", () => {
+test("an expected value changed to what the engine computes is refused unless a publication is cited", () => {
   const change = caseChanges(product, name, expected(31000), expected(31500));
   const uncited = ledgerProblems(change, new Map());
   assertEquals(uncited.map((p) => [p.kind, p.line]), [[
@@ -102,7 +105,7 @@ Deno.test("an expected value changed to what the engine computes is refused unle
   );
 });
 
-Deno.test("a new case needs a source and a removed case needs a ledger entry", () => {
+test("a new case needs a source and a removed case needs a ledger entry", () => {
   assertEquals(
     ledgerProblems(
       [{ kind: "added", product, case: name, cited: false }],
@@ -137,16 +140,16 @@ Deno.test("a new case needs a source and a removed case needs a ledger entry", (
 });
 
 async function run(root: string, args: string[]) {
-  const result = await new Deno.Command("git", { args, cwd: root }).output();
+  const result = await new sys.Command("git", { args, cwd: root }).output();
   assert(result.success, args.join(" "));
 }
 
-Deno.test("against a git base, an uncommitted edit to an expected value is caught until the ledger cites it", async () => {
-  const root = await Deno.makeTempDir();
+test("against a git base, an uncommitted edit to an expected value is caught until the ledger cites it", async () => {
+  const root = await sys.makeTempDir();
   const dir = join(root, "benchmark/cases", product, name);
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(join(dir, "input.json"), "{}");
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(join(dir, "input.json"), "{}");
+  await fs.writeFile(
     join(dir, "correct.json"),
     JSON.stringify(expected(31000)),
   );
@@ -164,7 +167,7 @@ Deno.test("against a git base, an uncommitted edit to an expected value is caugh
   ]);
   assertEquals((await oracleReport(root, "HEAD")).problems, []);
 
-  await Deno.writeTextFile(
+  await fs.writeFile(
     join(dir, "correct.json"),
     JSON.stringify(expected(31500)),
   );
@@ -172,7 +175,7 @@ Deno.test("against a git base, an uncommitted edit to an expected value is caugh
   assertEquals(caught.changes.length, 1);
   assertEquals(caught.problems.map((p) => p.kind), ["uncited-change"]);
 
-  await Deno.writeTextFile(
+  await fs.writeFile(
     join(root, "benchmark/cases", product, "ledger.json"),
     JSON.stringify([entry("IRS Pub 915 worksheet 1, p. 16")]),
   );

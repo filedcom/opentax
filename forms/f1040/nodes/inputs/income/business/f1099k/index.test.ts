@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099k, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -80,54 +81,54 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // Section 1: Input schema validation
 // ============================================================
 
-Deno.test("inputSchema: empty k99s array fails — at least one item required", () => {
+test("inputSchema: empty k99s array fails — at least one item required", () => {
   const parsed = inputSchema.safeParse({ f1099ks: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: missing pse_name fails validation", () => {
+test("inputSchema: missing pse_name fails validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ box1a_gross_payments: 5000 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: negative box1a_gross_payments fails validation", () => {
+test("inputSchema: negative box1a_gross_payments fails validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ pse_name: "PSE", box1a_gross_payments: -1 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: negative box4_federal_withheld fails validation", () => {
+test("inputSchema: negative box4_federal_withheld fails validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ pse_name: "PSE", box4_federal_withheld: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: negative box8_state_withheld fails validation", () => {
+test("inputSchema: negative box8_state_withheld fails validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ pse_name: "PSE", box8_state_withheld: -50 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("inputSchema: minimal item with only pse_name passes validation", () => {
+test("inputSchema: minimal item with only pse_name passes validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ pse_name: "PayPal" }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: all optional fields omitted — passes validation", () => {
+test("inputSchema: all optional fields omitted — passes validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{ pse_name: "Stripe" }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("inputSchema: zero values for currency fields passes validation", () => {
+test("inputSchema: zero values for currency fields passes validation", () => {
   const parsed = inputSchema.safeParse({
     f1099ks: [{
       pse_name: "PSE",
@@ -144,19 +145,19 @@ Deno.test("inputSchema: zero values for currency fields passes validation", () =
 // ============================================================
 
 // box1a_gross_payments — state-only, no federal output
-Deno.test("box1a_gross_payments > 0 produces no federal outputs", () => {
+test("box1a_gross_payments > 0 produces no federal outputs", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 25000 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box1a_gross_payments = 0 produces no outputs", () => {
+test("box1a_gross_payments = 0 produces no outputs", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
 // box4_federal_withheld — routes to f1040 line25b (see AMBIGUITY A1)
-Deno.test("box4_federal_withheld > 0 routes to f1040 line25b_withheld_1099", () => {
+test("box4_federal_withheld > 0 routes to f1040 line25b_withheld_1099", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
@@ -164,83 +165,83 @@ Deno.test("box4_federal_withheld > 0 routes to f1040 line25b_withheld_1099", () 
   assertEquals(input.line25b_withheld_1099, 480);
 });
 
-Deno.test("box4_federal_withheld = 0 does not route to f1040", () => {
+test("box4_federal_withheld = 0 does not route to f1040", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 0 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box4_federal_withheld omitted produces no f1040 output", () => {
+test("box4_federal_withheld omitted produces no f1040 output", () => {
   const result = compute([minimalItem()]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
 // box8_state_withheld — state only, no federal output
-Deno.test("box8_state_withheld > 0 produces no federal f1040 output", () => {
+test("box8_state_withheld > 0 produces no federal f1040 output", () => {
   const result = compute([minimalItem({ box8_state_withheld: 300 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box8_state_withheld = 0 produces no outputs", () => {
+test("box8_state_withheld = 0 produces no outputs", () => {
   const result = compute([minimalItem({ box8_state_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
 // Informational fields — no routing outputs
-Deno.test("filer_type_pse alone produces no outputs", () => {
+test("filer_type_pse alone produces no outputs", () => {
   const result = compute([minimalItem({ filer_type_pse: true })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("filer_type_epf alone produces no outputs", () => {
+test("filer_type_epf alone produces no outputs", () => {
   const result = compute([minimalItem({ filer_type_epf: true })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("transaction_type_payment_card alone produces no outputs", () => {
+test("transaction_type_payment_card alone produces no outputs", () => {
   const result = compute([
     minimalItem({ transaction_type_payment_card: true }),
   ]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("transaction_type_tpso alone produces no outputs", () => {
+test("transaction_type_tpso alone produces no outputs", () => {
   const result = compute([minimalItem({ transaction_type_tpso: true })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("box1b_card_not_present alone produces no outputs", () => {
+test("box1b_card_not_present alone produces no outputs", () => {
   const result = compute([minimalItem({ box1b_card_not_present: 5000 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("box3_transaction_count alone produces no outputs", () => {
+test("box3_transaction_count alone produces no outputs", () => {
   const result = compute([minimalItem({ box3_transaction_count: 250 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("box2_merchant_category_code alone produces no outputs", () => {
+test("box2_merchant_category_code alone produces no outputs", () => {
   const result = compute([
     minimalItem({ box2_merchant_category_code: "5812" }),
   ]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("box6_state alone produces no federal outputs", () => {
+test("box6_state alone produces no federal outputs", () => {
   const result = compute([minimalItem({ box6_state: "CA" })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box7_state_id alone produces no federal outputs", () => {
+test("box7_state_id alone produces no federal outputs", () => {
   const result = compute([minimalItem({ box7_state_id: "CA-123456" })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("monthly boxes 5a–5l alone produce no federal outputs", () => {
+test("monthly boxes 5a–5l alone produce no federal outputs", () => {
   const result = compute([minimalItem({
     box5a_january: 1000,
     box5b_february: 1000,
@@ -263,7 +264,7 @@ Deno.test("monthly boxes 5a–5l alone produce no federal outputs", () => {
 // Section 3: Aggregation — multiple items in one compute() call
 // ============================================================
 
-Deno.test("multiple items: box4 aggregated — two items with withholding emit combined total", () => {
+test("multiple items: box4 aggregated — two items with withholding emit combined total", () => {
   const result = compute([
     minimalItem({ box4_federal_withheld: 480 }),
     minimalItem({ pse_name: "Stripe", box4_federal_withheld: 720 }),
@@ -279,7 +280,7 @@ Deno.test("multiple items: box4 aggregated — two items with withholding emit c
   assertEquals(total, 1200);
 });
 
-Deno.test("multiple items: only items with box4 > 0 contribute to f1040 output", () => {
+test("multiple items: only items with box4 > 0 contribute to f1040 output", () => {
   const result = compute([
     minimalItem({ box4_federal_withheld: 500 }),
     minimalItem({ pse_name: "eBay", box4_federal_withheld: 0 }),
@@ -295,7 +296,7 @@ Deno.test("multiple items: only items with box4 > 0 contribute to f1040 output",
   assertEquals(total, 500);
 });
 
-Deno.test("multiple items: box8 from multiple items produces no federal output", () => {
+test("multiple items: box8 from multiple items produces no federal output", () => {
   const result = compute([
     minimalItem({ box8_state_withheld: 200 }),
     minimalItem({ pse_name: "Venmo", box8_state_withheld: 350 }),
@@ -304,7 +305,7 @@ Deno.test("multiple items: box8 from multiple items produces no federal output",
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("multiple items: three PSEs each with box4 — all withholdings routed", () => {
+test("multiple items: three PSEs each with box4 — all withholdings routed", () => {
   const result = compute([
     minimalItem({ pse_name: "PSE1", box4_federal_withheld: 100 }),
     minimalItem({ pse_name: "PSE2", box4_federal_withheld: 200 }),
@@ -328,26 +329,26 @@ Deno.test("multiple items: three PSEs each with box4 — all withholdings routed
 // The 99K node is state-only; threshold enforcement is informational.
 // box1a values below/at/above $20,000 must not produce federal outputs.
 
-Deno.test("box1a = $19,999 (below TPSO threshold) produces no federal outputs", () => {
+test("box1a = $19,999 (below TPSO threshold) produces no federal outputs", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 19999 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box1a = $20,000 (at TPSO threshold) produces no federal outputs", () => {
+test("box1a = $20,000 (at TPSO threshold) produces no federal outputs", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 20000 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("box1a = $20,001 (above TPSO threshold) produces no federal outputs", () => {
+test("box1a = $20,001 (above TPSO threshold) produces no federal outputs", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 20001 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
 // Payment card processor: no minimum threshold — all amounts must be accepted
-Deno.test("box1a = $1 (payment card, well below TPSO threshold) accepted — no federal outputs", () => {
+test("box1a = $1 (payment card, well below TPSO threshold) accepted — no federal outputs", () => {
   const result = compute([
     minimalItem({
       box1a_gross_payments: 1,
@@ -359,7 +360,7 @@ Deno.test("box1a = $1 (payment card, well below TPSO threshold) accepted — no 
 });
 
 // Backup withholding rate: 24% — verify rate in a box4 scenario
-Deno.test("box4_federal_withheld matches 24% backup withholding rate on box1a (24% of 2000 = 480)", () => {
+test("box4_federal_withheld matches 24% backup withholding rate on box1a (24% of 2000 = 480)", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
@@ -374,14 +375,14 @@ Deno.test("box4_federal_withheld matches 24% backup withholding rate on box1a (2
 // The 99K screen has no ERROR-level hard stops defined in context.md.
 // All schema violations should throw (handled by Zod parse in compute()).
 
-Deno.test("compute throws if k99s is empty (hard schema rule)", () => {
+test("compute throws if k99s is empty (hard schema rule)", () => {
   assertThrows(
     () => f1099k.compute({ taxYear: 2025, formType: "f1040" }, { f1099ks: [] }),
     Error,
   );
 });
 
-Deno.test("compute throws if pse_name is missing (required field)", () => {
+test("compute throws if pse_name is missing (required field)", () => {
   assertThrows(
     () =>
       f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -398,7 +399,7 @@ Deno.test("compute throws if pse_name is missing (required field)", () => {
 // Monthly consistency: sum(5a–5l) ≠ box_1a is a WARNING, not an error.
 // Must not throw; implementation may surface as a warnings array.
 
-Deno.test("monthly sum mismatch (5a+5b ≠ box1a) does NOT throw", () => {
+test("monthly sum mismatch (5a+5b ≠ box1a) does NOT throw", () => {
   const result = compute([minimalItem({
     box1a_gross_payments: 3000,
     box5a_january: 1000,
@@ -408,7 +409,7 @@ Deno.test("monthly sum mismatch (5a+5b ≠ box1a) does NOT throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("all 12 monthly boxes provided summing correctly = box1a does NOT throw", () => {
+test("all 12 monthly boxes provided summing correctly = box1a does NOT throw", () => {
   const result = compute([minimalItem({
     box1a_gross_payments: 12000,
     box5a_january: 1000,
@@ -427,7 +428,7 @@ Deno.test("all 12 monthly boxes provided summing correctly = box1a does NOT thro
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("all 12 monthly boxes provided but sum ≠ box1a does NOT throw (warning only)", () => {
+test("all 12 monthly boxes provided but sum ≠ box1a does NOT throw (warning only)", () => {
   const result = compute([minimalItem({
     box1a_gross_payments: 12000,
     box5a_january: 1000,
@@ -447,7 +448,7 @@ Deno.test("all 12 monthly boxes provided but sum ≠ box1a does NOT throw (warni
 });
 
 // EPF checkbox with PSE Name/Phone — no throw (informational state-only)
-Deno.test("filer_type_epf with pse_name and pse_phone does NOT throw", () => {
+test("filer_type_epf with pse_name and pse_phone does NOT throw", () => {
   const result = compute([minimalItem({
     filer_type_epf: true,
     pse_name: "My EPF",
@@ -456,7 +457,7 @@ Deno.test("filer_type_epf with pse_name and pse_phone does NOT throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("second_tin_notice = true does NOT throw", () => {
+test("second_tin_notice = true does NOT throw", () => {
   const result = compute([minimalItem({ second_tin_notice: true })]);
   assertEquals(Array.isArray(result.outputs), true);
 });
@@ -468,7 +469,7 @@ Deno.test("second_tin_notice = true does NOT throw", () => {
 // These fields affect the state-only 1099-K document; the federal output count
 // must not change when they are added to an otherwise-identical item.
 
-Deno.test("adding account_number does not change output count", () => {
+test("adding account_number does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withAcct = compute([
     minimalItem({ box4_federal_withheld: 600, account_number: "ACC-1234" }),
@@ -476,7 +477,7 @@ Deno.test("adding account_number does not change output count", () => {
   assertEquals(withAcct.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding box2_merchant_category_code does not change output count", () => {
+test("adding box2_merchant_category_code does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withMcc = compute([
     minimalItem({
@@ -487,7 +488,7 @@ Deno.test("adding box2_merchant_category_code does not change output count", () 
   assertEquals(withMcc.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding box3_transaction_count does not change output count", () => {
+test("adding box3_transaction_count does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withCount = compute([
     minimalItem({ box4_federal_withheld: 600, box3_transaction_count: 210 }),
@@ -495,7 +496,7 @@ Deno.test("adding box3_transaction_count does not change output count", () => {
   assertEquals(withCount.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding box1b_card_not_present does not change output count", () => {
+test("adding box1b_card_not_present does not change output count", () => {
   const base = compute([minimalItem({ box1a_gross_payments: 25000 })]);
   const with1b = compute([
     minimalItem({ box1a_gross_payments: 25000, box1b_card_not_present: 5000 }),
@@ -503,7 +504,7 @@ Deno.test("adding box1b_card_not_present does not change output count", () => {
   assertEquals(with1b.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding filer_type_pse checkbox does not change output count", () => {
+test("adding filer_type_pse checkbox does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withPse = compute([
     minimalItem({ box4_federal_withheld: 600, filer_type_pse: true }),
@@ -511,7 +512,7 @@ Deno.test("adding filer_type_pse checkbox does not change output count", () => {
   assertEquals(withPse.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding transaction_type_tpso checkbox does not change output count", () => {
+test("adding transaction_type_tpso checkbox does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withTpso = compute([
     minimalItem({ box4_federal_withheld: 600, transaction_type_tpso: true }),
@@ -519,7 +520,7 @@ Deno.test("adding transaction_type_tpso checkbox does not change output count", 
   assertEquals(withTpso.outputs.length, base.outputs.length);
 });
 
-Deno.test("adding box6_state and box7_state_id does not change output count", () => {
+test("adding box6_state and box7_state_id does not change output count", () => {
   const base = compute([minimalItem({ box4_federal_withheld: 600 })]);
   const withState = compute([
     minimalItem({
@@ -536,13 +537,13 @@ Deno.test("adding box6_state and box7_state_id does not change output count", ()
 // ============================================================
 
 // Edge case 1: PSE vs EPF mutual exclusivity — both false is valid
-Deno.test("no filer type checkbox checked — valid state (individual can still report)", () => {
+test("no filer type checkbox checked — valid state (individual can still report)", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 10000 })]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
 // Edge case 2: box1b must be a subset of box1a — no federal routing from either
-Deno.test("box1b_card_not_present greater than box1a_gross_payments — still no federal output", () => {
+test("box1b_card_not_present greater than box1a_gross_payments — still no federal output", () => {
   // Schema may not enforce this ordering, but routing must not produce federal output
   const result = compute([minimalItem({
     box1a_gross_payments: 5000,
@@ -553,7 +554,7 @@ Deno.test("box1b_card_not_present greater than box1a_gross_payments — still no
 });
 
 // Edge case 3: Box 4 backup withholding — state-record field only, still routes to f1040
-Deno.test("box4_federal_withheld on 99K screen — engine routes directly to f1040 (see AMBIGUITY A1)", () => {
+test("box4_federal_withheld on 99K screen — engine routes directly to f1040 (see AMBIGUITY A1)", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 960 })]);
   const f1040Out = findOutput(result, "f1040");
   // Per engine convention, box4 IS routed to f1040 even though Drake requires
@@ -562,14 +563,14 @@ Deno.test("box4_federal_withheld on 99K screen — engine routes directly to f10
 });
 
 // Edge case 4: Large gross amount (e.g., Airbnb host with $500K)
-Deno.test("large box1a_gross_payments ($500,000) produces no federal output", () => {
+test("large box1a_gross_payments ($500,000) produces no federal output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 500000 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
 });
 
 // Edge case 5: box8 state withholding with box4 — only box4 triggers federal output
-Deno.test("box4 and box8 both present — only f1040 output for box4", () => {
+test("box4 and box8 both present — only f1040 output for box4", () => {
   const result = compute([minimalItem({
     box4_federal_withheld: 600,
     box8_state_withheld: 400,
@@ -583,7 +584,7 @@ Deno.test("box4 and box8 both present — only f1040 output for box4", () => {
 });
 
 // Edge case 6: Second TIN notice — informational, no routing effect
-Deno.test("second_tin_notice = true with box4 — box4 still routes correctly", () => {
+test("second_tin_notice = true with box4 — box4 still routes correctly", () => {
   const result = compute([
     minimalItem({ box4_federal_withheld: 240, second_tin_notice: true }),
   ]);
@@ -594,7 +595,7 @@ Deno.test("second_tin_notice = true with box4 — box4 still routes correctly", 
 });
 
 // Edge case 7: TPSO with 200 transactions at exactly $20,000 (at threshold boundary)
-Deno.test("TPSO at exactly $20,000 and 200 transactions — accepted as valid input, no federal output", () => {
+test("TPSO at exactly $20,000 and 200 transactions — accepted as valid input, no federal output", () => {
   const result = compute([minimalItem({
     transaction_type_tpso: true,
     box1a_gross_payments: 20000,
@@ -605,7 +606,7 @@ Deno.test("TPSO at exactly $20,000 and 200 transactions — accepted as valid in
 });
 
 // Edge case 8: Single PSE with all boxes populated
-Deno.test("PSE item with all optional boxes present — only box4 produces federal output", () => {
+test("PSE item with all optional boxes present — only box4 produces federal output", () => {
   const result = compute([minimalItem({
     filer_type_pse: true,
     transaction_type_payment_card: true,
@@ -648,13 +649,13 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
 // Section 10: Income routing (for_routing field)
 // ============================================================
 
-Deno.test("for_routing=schedule_c: box1a above $5,000 routes to schedule_c", () => {
+test("for_routing=schedule_c: box1a above $5,000 routes to schedule_c", () => {
   const result = compute([businessItem(10_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
 });
 
-Deno.test("1099-K business route allocates box 1a and retains reviewed tip evidence", () => {
+test("1099-K business route allocates box 1a and retains reviewed tip evidence", () => {
   const result = compute([businessItem(10_000, {
     schedule_c_receipts_review: {
       included_in_schedule_c_gross_receipts: 8_000,
@@ -708,7 +709,7 @@ Deno.test("1099-K business route allocates box 1a and retains reviewed tip evide
   );
 });
 
-Deno.test("1099-K rejects an exact duplicate source row before doubling income or withholding", () => {
+test("1099-K rejects an exact duplicate source row before doubling income or withholding", () => {
   const issued = businessItem(10_000, {
     account_number: "merchant-1",
     box4_federal_withheld: 480,
@@ -738,7 +739,7 @@ Deno.test("1099-K rejects an exact duplicate source row before doubling income o
   );
 });
 
-Deno.test("1099-K identified payer copy cannot replay changed boxes or classification", () => {
+test("1099-K identified payer copy cannot replay changed boxes or classification", () => {
   const issued = businessItem(10_000, {
     account_number: "merchant-1",
     box4_federal_withheld: 480,
@@ -764,7 +765,7 @@ Deno.test("1099-K identified payer copy cannot replay changed boxes or classific
   );
 });
 
-Deno.test("1099-K reviewed owner without TIN cannot separate a corrected account copy", () => {
+test("1099-K reviewed owner without TIN cannot separate a corrected account copy", () => {
   const issued = hobbyItem(100, {
     account_number: "merchant-1",
     source_document_reference: "original-copy",
@@ -796,7 +797,7 @@ Deno.test("1099-K reviewed owner without TIN cannot separate a corrected account
   }]);
 });
 
-Deno.test("1099-K issued reference rejects changed boxes without an account", () => {
+test("1099-K issued reference rejects changed boxes without an account", () => {
   const issued = hobbyItem(100, {
     source_document_reference: "processor-issued-copy",
   });
@@ -828,7 +829,7 @@ Deno.test("1099-K issued reference rejects changed boxes without an account", ()
   ]);
 });
 
-Deno.test("1099-K rejects ambiguous same-processor copies without copy identity", () => {
+test("1099-K rejects ambiguous same-processor copies without copy identity", () => {
   const issued = hobbyItem(100);
   const changed = hobbyItem(150);
   for (
@@ -854,7 +855,7 @@ Deno.test("1099-K rejects ambiguous same-processor copies without copy identity"
   ]);
 });
 
-Deno.test("1099-K separates card, network, and card merchant-category copies", () => {
+test("1099-K separates card, network, and card merchant-category copies", () => {
   const card = hobbyItem(100, {
     account_number: "merchant-1",
     transaction_type_payment_card: true,
@@ -891,7 +892,7 @@ Deno.test("1099-K separates card, network, and card merchant-category copies", (
   ]);
 });
 
-Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
+test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
   const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
@@ -902,7 +903,7 @@ Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold"
   );
 });
 
-Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and AGI", () => {
+test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and AGI", () => {
   const result = compute([
     hobbyItem(8_000),
   ]);
@@ -919,7 +920,7 @@ Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and 
   );
 });
 
-Deno.test("1099-K nonbusiness route requires all box 1a receipts on line 8j", () => {
+test("1099-K nonbusiness route requires all box 1a receipts on line 8j", () => {
   assertThrows(
     () =>
       compute([hobbyItem(8_000, {
@@ -942,7 +943,7 @@ Deno.test("1099-K nonbusiness route requires all box 1a receipts on line 8j", ()
   );
 });
 
-Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short term", () => {
+test("1099-K personal loss uses Form 8949 code L and anniversary is short term", () => {
   const item = minimalItem({
     pse_tin: "12-3456789",
     recipient_tin: "987-65-4321",
@@ -987,7 +988,7 @@ Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short t
   );
 });
 
-Deno.test("1099-K personal selling expenses reduce Form 8949 proceeds but not box 1a", () => {
+test("1099-K personal selling expenses reduce Form 8949 proceeds but not box 1a", () => {
   const item = minimalItem({
     pse_tin: "12-3456789",
     recipient_tin: "987-65-4321",
@@ -1025,7 +1026,7 @@ Deno.test("1099-K personal selling expenses reduce Form 8949 proceeds but not bo
   );
 });
 
-Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C", () => {
+test("1099-K reviewed business refunds retain gross receipts for Schedule C", () => {
   const refunds = [{
     original_payment_transaction_id: "sale-1",
     refund_transaction_id: "refund-1",
@@ -1063,7 +1064,7 @@ Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C
   );
 });
 
-Deno.test("1099-K reviewed service processor fees retain gross receipts for Schedule C", () => {
+test("1099-K reviewed service processor fees retain gross receipts for Schedule C", () => {
   const feeReview = {
     amount: 90,
     fee_record_reference: "processor fee statement",
@@ -1086,7 +1087,7 @@ Deno.test("1099-K reviewed service processor fees retain gross receipts for Sche
   assertEquals(rows[0].processor_fees_review, feeReview);
 });
 
-Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
+test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
   const receiptReview = {
     included_in_schedule_c_gross_receipts: 2_000,
     not_included_in_schedule_c_receipts: 0,
@@ -1154,7 +1155,7 @@ Deno.test("1099-K mixed business and personal payments allocate box 1a exactly",
   );
 });
 
-Deno.test("1099-K reported-error payments aggregate on Schedule 1 without income", () => {
+test("1099-K reported-error payments aggregate on Schedule 1 without income", () => {
   const erroneous = (amount: number, pseTin: string) =>
     minimalItem({
       pse_tin: pseTin,
@@ -1203,7 +1204,7 @@ Deno.test("1099-K reported-error payments aggregate on Schedule 1 without income
   );
 });
 
-Deno.test("1099-K partial reported error leaves only classified payments in income", () => {
+test("1099-K partial reported error leaves only classified payments in income", () => {
   const reportedError = {
     payments: [{
       transaction_id: "repayment-2025",
@@ -1292,13 +1293,13 @@ Deno.test("1099-K partial reported error leaves only classified payments in inco
   );
 });
 
-Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
+test("no for_routing: box1a above threshold still produces no income output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold", () => {
+test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold", () => {
   const result = compute([businessItem(4_999)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
@@ -1309,7 +1310,7 @@ Deno.test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold"
   );
 });
 
-Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer threshold", () => {
+test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer threshold", () => {
   const result = compute([
     hobbyItem(1),
   ]);
@@ -1325,7 +1326,7 @@ Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer thresh
   );
 });
 
-Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1 nor AGI income", () => {
+test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1 nor AGI income", () => {
   const result = compute([
     hobbyItem(0, { nonbusiness_activity_review: undefined }),
   ]);
@@ -1333,7 +1334,7 @@ Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1
   assertEquals(findOutput(result, "agi_aggregator"), undefined);
 });
 
-Deno.test("for_routing=schedule_1_line_8j: sourced items aggregate once for Schedule 1 and AGI", () => {
+test("for_routing=schedule_1_line_8j: sourced items aggregate once for Schedule 1 and AGI", () => {
   const result = compute([
     hobbyItem(1, { source_document_reference: "small issued copy" }),
     hobbyItem(4_999, { source_document_reference: "large issued copy" }),
@@ -1354,7 +1355,7 @@ Deno.test("for_routing=schedule_1_line_8j: sourced items aggregate once for Sche
   assertEquals(agiAmounts, [5_000]);
 });
 
-Deno.test("legacy 1099-K line 8z routing is rejected for TY2025", () => {
+test("legacy 1099-K line 8z routing is rejected for TY2025", () => {
   assertEquals(
     f1099k.inputSchema.safeParse({
       f1099ks: [
@@ -1368,14 +1369,14 @@ Deno.test("legacy 1099-K line 8z routing is rejected for TY2025", () => {
   );
 });
 
-Deno.test("for_routing=schedule_c: zero gross does not create income", () => {
+test("for_routing=schedule_c: zero gross does not create income", () => {
   const result = compute([
     minimalItem({ box1a_gross_payments: 0, for_routing: "schedule_c" }),
   ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-Deno.test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (backup withheld) — only Stripe emits f1040 output", () => {
+test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (backup withheld) — only Stripe emits f1040 output", () => {
   const result = f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ks: [
       {

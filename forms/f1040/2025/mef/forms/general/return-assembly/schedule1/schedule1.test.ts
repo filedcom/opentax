@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule1 } from "./schedule1.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -35,7 +36,7 @@ const nativeFields = [
 ] as const;
 
 for (const [field, tag, amount] of nativeFields) {
-  Deno.test(`Schedule 1 ${field} uses TY2025 ${tag}`, () => {
+  test(`Schedule 1 ${field} uses TY2025 ${tag}`, () => {
     const xml = schedule1.build({ [field]: amount });
     assertStringIncludes(xml, `<${tag}>${amount}</${tag}>`);
     assertStringIncludes(xml, "<IRS1040Schedule1>");
@@ -43,7 +44,7 @@ for (const [field, tag, amount] of nativeFields) {
   });
 }
 
-Deno.test("Schedule 1 omits absent values and ignores unknown fields", () => {
+test("Schedule 1 omits absent values and ignores unknown fields", () => {
   assertEquals(schedule1.build({}), "");
   assertEquals(schedule1.build({ junk: 999 }), "");
   const xml = schedule1.build({ line7_unemployment: 4800, junk: 999 });
@@ -53,7 +54,7 @@ Deno.test("Schedule 1 omits absent values and ignores unknown fields", () => {
   assertNotIncludes(xml, "999");
 });
 
-Deno.test("Schedule 1 line 8n/8o XML stays closed until required foreign corporation forms are native", () => {
+test("Schedule 1 line 8n/8o XML stays closed until required foreign corporation forms are native", () => {
   assertThrows(
     () => schedule1.build({ line8n_section951a_inclusion: 11_000 }),
     Error,
@@ -66,7 +67,7 @@ Deno.test("Schedule 1 line 8n/8o XML stays closed until required foreign corpora
   );
 });
 
-Deno.test("Schedule 1 native rejects Form 1098 box 4 recovery without its payer source", () => {
+test("Schedule 1 native rejects Form 1098 box 4 recovery without its payer source", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "TEST TAXPAYER",
@@ -115,7 +116,7 @@ Deno.test("Schedule 1 native rejects Form 1098 box 4 recovery without its payer 
   );
 });
 
-Deno.test("Schedule 1 emits zero and signed source values", () => {
+test("Schedule 1 emits zero and signed source values", () => {
   assertStringIncludes(
     schedule1.build({ line1_state_refund: 0 }),
     "<StateLocalIncomeTaxRefundAmt>0</StateLocalIncomeTaxRefundAmt>",
@@ -134,7 +135,7 @@ Deno.test("Schedule 1 emits zero and signed source values", () => {
   );
 });
 
-Deno.test("Schedule 1 combines Schedule E contributions once", () => {
+test("Schedule 1 combines Schedule E contributions once", () => {
   const xml = schedule1.build({
     line4_other_gains: 1000,
     line5_schedule_e: [12_000, -5000],
@@ -154,7 +155,7 @@ Deno.test("Schedule 1 combines Schedule E contributions once", () => {
   );
 });
 
-Deno.test("Schedule 1 emits the TY2025 NOL and foreign exclusion as negative", () => {
+test("Schedule 1 emits the TY2025 NOL and foreign exclusion as negative", () => {
   const xml = schedule1.build({
     line8a_nol_deduction: 500,
     line8d_foreign_earned_income_exclusion: 200,
@@ -176,7 +177,7 @@ Deno.test("Schedule 1 emits the TY2025 NOL and foreign exclusion as negative", (
   );
 });
 
-Deno.test("Schedule 1 HSA income requires and links Form 8889", () => {
+test("Schedule 1 HSA income requires and links Form 8889", () => {
   const xml = schedule1.build({ line8f_hsa_income: 1100 }, {
     documentIdsByPendingKey: { form8889: ["IRS8889-1", "IRS8889-2"] },
   });
@@ -194,7 +195,7 @@ Deno.test("Schedule 1 HSA income requires and links Form 8889", () => {
   );
 });
 
-Deno.test("Schedule 1 employee business expenses require and link Form 2106", () => {
+test("Schedule 1 employee business expenses require and link Form 2106", () => {
   const xml = schedule1.build({ line12_business_expenses: 1200 }, {
     documentIdsByPendingKey: { f2106: ["IRS2106-1", "IRS2106-2"] },
   });
@@ -212,7 +213,7 @@ Deno.test("Schedule 1 employee business expenses require and link Form 2106", ()
   );
 });
 
-Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", () => {
+test("Schedule 1 line 8z sums typed sources once and links the statement", () => {
   const fields = {
     line8z_form8814: 50,
     line8z_hsa_excess_earnings: 100,
@@ -292,7 +293,7 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
   ) assertNotIncludes(xml, obsoleteTag);
 });
 
-Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate statement IDs", () => {
+test("Schedule 1 line 8z rejects generic amounts and missing or duplicate statement IDs", () => {
   for (const field of ["line8z_other", "line8z_other_income"]) {
     assertThrows(
       () => schedule1.build({ [field]: 25 }),
@@ -313,7 +314,7 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
   }
 });
 
-Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z", () => {
+test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "TEST TAXPAYER",
@@ -409,7 +410,7 @@ Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z"
   );
 });
 
-Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {
+test("Schedule 1 rejects unsupported sources without required filing facts", () => {
   for (
     const field of [
       "line8g_child_interest_dividends",
@@ -426,7 +427,7 @@ Deno.test("Schedule 1 rejects unsupported sources without required filing facts"
   }
 });
 
-Deno.test("Schedule 1 line 2a requires its dated alimony source", () => {
+test("Schedule 1 line 2a requires its dated alimony source", () => {
   assertThrows(
     () => schedule1.build({ line2a_alimony_received: 100 }),
     Error,
@@ -434,7 +435,7 @@ Deno.test("Schedule 1 line 2a requires its dated alimony source", () => {
   );
 });
 
-Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
+test("Schedule 1 native elements follow TY2025 schema order", () => {
   const xml = schedule1.build({
     line1_state_refund: 100,
     line8a_nol_deduction: 50,
@@ -468,7 +469,7 @@ Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
   }
 });
 
-Deno.test("Schedule 1 line 24k reconciles distinct final trust K-1 sources and beneficiary", () => {
+test("Schedule 1 line 24k reconciles distinct final trust K-1 sources and beneficiary", () => {
   const source = {
     estate_trust_name: "Family Trust",
     estate_trust_ein: "123456789",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
@@ -41,7 +42,7 @@ const directClaim = {
   },
 };
 
-Deno.test("Form 8874 PDF projects the six-column investment row and direct Form 3800 total", () => {
+test("Form 8874 PDF projects the six-column investment row and direct Form 3800 total", () => {
   const fields = form8874Pdf.projectFields!(source, {
     f8874: source,
     f1040: owner1040,
@@ -71,7 +72,7 @@ Deno.test("Form 8874 PDF projects the six-column investment row and direct Form 
   );
 });
 
-Deno.test("Form 8874 PDF uses the native K-1 line 2 reconciliation", () => {
+test("Form 8874 PDF uses the native K-1 line 2 reconciliation", () => {
   const pending = {
     f8874: source,
     f1040: owner1040,
@@ -115,7 +116,7 @@ Deno.test("Form 8874 PDF uses the native K-1 line 2 reconciliation", () => {
   );
 });
 
-Deno.test("Form 8874 PDF does not file a pass-through-only recipient form", () => {
+test("Form 8874 PDF does not file a pass-through-only recipient form", () => {
   assertEquals(
     form8874Pdf.projectFields!({}, {
       f3800: {
@@ -132,7 +133,7 @@ Deno.test("Form 8874 PDF does not file a pass-through-only recipient form", () =
   );
 });
 
-Deno.test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () => {
+test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () => {
   const passive = {
     investments: [{
       ...source.investments[0],
@@ -183,7 +184,7 @@ Deno.test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () =>
   );
 });
 
-Deno.test("Form 8874 PDF prints the IRS last-row attachment total for seven investments", () => {
+test("Form 8874 PDF prints the IRS last-row attachment total for seven investments", () => {
   const overflow = {
     investments: Array.from({ length: 7 }, (_, index) =>
       withReviewedForm8874A(
@@ -214,7 +215,7 @@ Deno.test("Form 8874 PDF prints the IRS last-row attachment total for seven inve
   assertEquals((fields.print_overflow_rows as unknown[]).length, 2);
 });
 
-Deno.test("Form 8874 PDF attaches long CDE identity instead of clipping its form row", async () => {
+test("Form 8874 PDF attaches long CDE identity instead of clipping its form row", async () => {
   const long = {
     investments: [withReviewedForm8874A(
       {
@@ -248,7 +249,7 @@ Deno.test("Form 8874 PDF attaches long CDE identity instead of clipping its form
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Form 8874 attachment keeps long and excess investments exactly once", () => {
+test("Form 8874 attachment keeps long and excess investments exactly once", () => {
   const investments = Array.from(
     { length: 7 },
     (_, index) =>
@@ -290,7 +291,7 @@ Deno.test("Form 8874 attachment keeps long and excess investments exactly once",
   );
 });
 
-Deno.test("Form 8874 overflow statement spans pages and rejects a changed last-row total", async () => {
+test("Form 8874 overflow statement spans pages and rejects a changed last-row total", async () => {
   const overflow = {
     investments: Array.from(
       { length: 24 },
@@ -332,7 +333,7 @@ Deno.test("Form 8874 overflow statement spans pages and rejects a changed last-r
   );
 });
 
-Deno.test("Form 8874 PDF rejects cents and a missing final credit join", () => {
+test("Form 8874 PDF rejects cents and a missing final credit join", () => {
   const cents = {
     investments: [withReviewedForm8874A(
       {

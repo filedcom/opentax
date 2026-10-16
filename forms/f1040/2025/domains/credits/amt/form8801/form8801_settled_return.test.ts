@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import { stageForm8801SettledReturn } from "./form8801_settled_return.ts";
 import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
 import { BondType } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
 
-Deno.test("Form 8801 settled credit flows through Schedule 3, tax and refund", async () => {
+test("Form 8801 settled credit flows through Schedule 3, tax and refund", async () => {
   const f = await fixture();
   const r = await stageForm8801SettledReturn(f.inputs, f.binding, f.documents);
   assertEquals(r.final_schedule3.line6b_prior_year_min_tax_credit, 5_182);
@@ -29,7 +30,7 @@ Deno.test("Form 8801 settled credit flows through Schedule 3, tax and refund", a
   }
 });
 
-Deno.test("Form 8801 partial credit leaves exact carry and zero income tax", async () => {
+test("Form 8801 partial credit leaves exact carry and zero income tax", async () => {
   const f = await fixture();
   f.inputs.w2[0].box1_wages = 30_000;
   f.inputs.w2[0].box2_fed_withheld = 0;
@@ -40,7 +41,7 @@ Deno.test("Form 8801 partial credit leaves exact carry and zero income tax", asy
   assertEquals(r.final_form1040.line37_amount_owed, undefined);
 });
 
-Deno.test("Form 8801 settlement switches amount owed to refund without stale balance", async () => {
+test("Form 8801 settlement switches amount owed to refund without stale balance", async () => {
   const f = await fixture();
   f.inputs.w2[0].box2_fed_withheld = 15_000;
   const r = await stageForm8801SettledReturn(f.inputs, f.binding, f.documents);
@@ -49,7 +50,7 @@ Deno.test("Form 8801 settlement switches amount owed to refund without stale bal
   assertEquals(r.final_form1040.line37_amount_owed, undefined);
 });
 
-Deno.test("Form 8801 nonpositive available amount inserts no credit", async () => {
+test("Form 8801 nonpositive available amount inserts no credit", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   const f = await fixture(facts);
@@ -61,7 +62,7 @@ Deno.test("Form 8801 nonpositive available amount inserts no credit", async () =
   assertEquals(r.carryforward_to_2026, 0);
 });
 
-Deno.test("Form 8801 vehicle-only available credit still requires guarded attachment", async () => {
+test("Form 8801 vehicle-only available credit still requires guarded attachment", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line1 = 0;
   facts.prior_form6251.line2a = 0;
@@ -80,7 +81,7 @@ Deno.test("Form 8801 vehicle-only available credit still requires guarded attach
   }
 });
 
-Deno.test("Form 8801 retains preceding foreign credit when final tax is recomputed", async () => {
+test("Form 8801 retains preceding foreign credit when final tax is recomputed", async () => {
   const f = await fixture();
   f.inputs.schedule_b_part_iii = {
     foreign_accounts_question: false,
@@ -102,7 +103,7 @@ Deno.test("Form 8801 retains preceding foreign credit when final tax is recomput
   assertEquals(r.final_form1040.line22_tax_after_credits, 14_960);
 });
 
-Deno.test("Form 8801 reruns later bond-credit limitation instead of adding settled credits", async () => {
+test("Form 8801 reruns later bond-credit limitation instead of adding settled credits", async () => {
   const f = await fixture();
   f.inputs.schedule_b_part_iii = {
     foreign_accounts_question: false,

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -5,8 +8,8 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8962FamilySourceInputs } from "./form8962_family_source.fixture.ts";
 
-Deno.test("complete larger and joint tax families reconcile sourced dependent MAGI, monthly PTC and printable overflow", async () => {
-  const out = await Deno.makeTempDir({ prefix: "opentax-8962-family-source-" });
+test("complete larger and joint tax families reconcile sourced dependent MAGI, monthly PTC and printable overflow", async () => {
+  const out = await sys.makeTempDir({ prefix: "opentax-8962-family-source-" });
   console.log("Family source archive:", out);
   for (
     const [size, region, joint, wages, household, credit, tax, refund, owed]
@@ -42,7 +45,7 @@ Deno.test("complete larger and joint tax families reconcile sourced dependent MA
     );
     const id = region + "-" + size + "-" + (joint ? "joint" : "single"),
       dir = out + "/" + id;
-    await Deno.mkdir(dir);
+    await fs.mkdir(dir);
     for (
       const [name, value] of Object.entries({
         "source.json": input,
@@ -52,18 +55,18 @@ Deno.test("complete larger and joint tax families reconcile sourced dependent MA
         "origins.json": origins,
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         dir + "/" + name,
         JSON.stringify(value, null, 2),
       );
     }
-    await Deno.writeFile(dir + "/return.pdf", pdf);
-    await Deno.writeTextFile(dir + "/return.xml", prepared.bundle.xml);
+    await fs.writeFile(dir + "/return.pdf", pdf);
+    await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const validated = await new Deno.Command("xmllint", {
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",
       stderr: "piped",

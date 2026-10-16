@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../../nodes/types.ts";
@@ -54,7 +55,7 @@ function caseFor(income: number, annual: boolean) {
   return { fields, pending, repayment };
 }
 
-Deno.test("Form 8962 one-policy annual Table 2/5 tiers reconcile through MeF and PDF", () => {
+test("Form 8962 one-policy annual Table 2/5 tiers reconcile through MeF and PDF", () => {
   for (
     const [income, pct, figure, cap] of [
       [22_590, 150, 0, 375],
@@ -82,7 +83,7 @@ Deno.test("Form 8962 one-policy annual Table 2/5 tiers reconcile through MeF and
   }
 });
 
-Deno.test("Form 8962 one-policy monthly below-400% repayment cap reconciles", () => {
+test("Form 8962 one-policy monthly below-400% repayment cap reconciles", () => {
   const { fields, pending } = caseFor(45_180, false);
   assertEquals(fields.federal_poverty_pct, 300);
   assertEquals(fields.monthly_applicable_contribution, 226);
@@ -103,7 +104,7 @@ Deno.test("Form 8962 one-policy monthly below-400% repayment cap reconciles", ()
   );
 });
 
-Deno.test("Form 8962 below-400% route rejects altered cap, filing amount, and wider family", () => {
+test("Form 8962 below-400% route rejects altered cap, filing amount, and wider family", () => {
   const { fields, pending } = caseFor(52_710, true);
   assertThrows(
     () =>

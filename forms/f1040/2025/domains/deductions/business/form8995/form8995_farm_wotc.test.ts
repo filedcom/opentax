@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -8,7 +10,7 @@ import { inputSchema } from "../../../../../nodes/intermediate/forms/deductions/
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("owned-farm-wotc")
 );
-Deno.test("owned farm WOTC actual source full return native PDF and full local XSD", async () => {
+test("owned farm WOTC actual source full return native PDF and full local XSD", async () => {
   for (const fixture of fixtures) {
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
@@ -32,7 +34,7 @@ Deno.test("owned farm WOTC actual source full return native PDF and full local X
     );
     const prepared = await f1040_2025.prepareReturn(r.pending, fixture.filer);
     assertStringIncludes(prepared.bundle.xml, "<IRS1040ScheduleF ");
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

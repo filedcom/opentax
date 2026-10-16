@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form4562 } from "./f4562.ts";
 import { filedForm4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/index.ts";
@@ -70,11 +71,11 @@ const context = {
   },
 };
 
-Deno.test("Form 4562 is absent when no source was filed", () => {
+test("Form 4562 is absent when no source was filed", () => {
   assertEquals(form4562.build([], {}), "");
 });
 
-Deno.test("Form 4562 emits native TY2025 section 179 tags and one asset row", () => {
+test("Form 4562 emits native TY2025 section 179 tags and one asset row", () => {
   const xml = form4562.build(filed, context);
   assertStringIncludes(
     xml,
@@ -110,7 +111,7 @@ Deno.test("Form 4562 emits native TY2025 section 179 tags and one asset row", ()
   assertEquals(xml.includes("<Section179DeductionAmt>"), false);
 });
 
-Deno.test("Form 4562 rejects Schedule C line 13 mismatch or missing activity", () => {
+test("Form 4562 rejects Schedule C line 13 mismatch or missing activity", () => {
   assertThrows(() =>
     form4562.build(filed, {
       pending: {
@@ -131,7 +132,7 @@ Deno.test("Form 4562 rejects Schedule C line 13 mismatch or missing activity", (
   );
 });
 
-Deno.test("Form 4562 line 11 rejects asserted income above the filed pre-section-179 Schedule C profit", () => {
+test("Form 4562 line 11 rejects asserted income above the filed pre-section-179 Schedule C profit", () => {
   assertThrows(
     () =>
       form4562.build(filed, {
@@ -151,7 +152,7 @@ Deno.test("Form 4562 line 11 rejects asserted income above the filed pre-section
   );
 });
 
-Deno.test("Form 4562 bounded income route rejects wages and another business source", () => {
+test("Form 4562 bounded income route rejects wages and another business source", () => {
   assertThrows(
     () =>
       form4562.build(filed, {
@@ -173,7 +174,7 @@ Deno.test("Form 4562 bounded income route rejects wages and another business sou
   );
 });
 
-Deno.test("Form 4562 rejects inconsistent lines and MFS allocation", () => {
+test("Form 4562 rejects inconsistent lines and MFS allocation", () => {
   assertThrows(() =>
     form4562.build({ ...filed, line22_total_depreciation: 99_999 }, context)
   );
@@ -192,7 +193,7 @@ Deno.test("Form 4562 rejects inconsistent lines and MFS allocation", () => {
   );
 });
 
-Deno.test("Form 4562 no longer accepts aggregate-only XML fields", () => {
+test("Form 4562 no longer accepts aggregate-only XML fields", () => {
   assertThrows(() =>
     filedForm4562Schema.parse({ section_179_deduction: 100_000 })
   );

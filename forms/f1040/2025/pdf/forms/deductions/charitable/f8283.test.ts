@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -175,7 +176,7 @@ const privateFoundationGift = {
   },
 };
 
-Deno.test("Form 8283 PDF prints private-foundation basis claim and explanation", () => {
+test("Form 8283 PDF prints private-foundation basis claim and explanation", () => {
   const pending = currentSectionAPending({
     section_a_items: [privateFoundationGift],
   });
@@ -568,7 +569,7 @@ function materialImprovementVehiclePending() {
   };
 }
 
-Deno.test("Form 8283 PDF prints reconciled Section B material-improvement vehicle", () => {
+test("Form 8283 PDF prints reconciled Section B material-improvement vehicle", () => {
   const pending = materialImprovementVehiclePending();
   const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
     [];
@@ -689,7 +690,7 @@ function purchasedOrdinaryTangiblePending(
   };
 }
 
-Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible and household gifts", () => {
+test("Form 8283 PDF prints purchased Section B art, equipment, collectible and household gifts", () => {
   const routes = [
     [
       SectionBPropertyType.ArtAtLeast20000,
@@ -799,7 +800,7 @@ Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible 
   }
 });
 
-Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", () => {
+test("Form 8283 PDF maps December 2025 Section A identity and four rows", () => {
   assertEquals(form8283Pdf.pageIndices?.({}), [0]);
   const byKey = new Map(
     form8283Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
@@ -829,7 +830,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
   assertEquals(form8283Pdf.fields.length, 92);
 });
 
-Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {
+test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {
   const pending = electedPending();
   const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
     [];
@@ -849,7 +850,7 @@ Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explana
   );
 });
 
-Deno.test("Form 8283 PDF prints one reconciled ordinary Section A gift", () => {
+test("Form 8283 PDF prints one reconciled ordinary Section A gift", () => {
   const pending = ordinaryPending();
   const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
     [];
@@ -881,7 +882,7 @@ Deno.test("Form 8283 PDF prints one reconciled ordinary Section A gift", () => {
   );
 });
 
-Deno.test("Form 8283 carries four distinct unreduced Section A gifts through Schedule A, MeF, and PDF", () => {
+test("Form 8283 carries four distinct unreduced Section A gifts through Schedule A, MeF, and PDF", () => {
   const base = ordinaryPending().f8283.section_a_items[0];
   const amounts = [700, 1_200, 1_500, 2_100];
   const form = {
@@ -954,7 +955,7 @@ Deno.test("Form 8283 carries four distinct unreduced Section A gifts through Sch
   );
 });
 
-Deno.test("Form 8283 carries five distinct unreduced Section A gifts on two PDF copies and one native document", () => {
+test("Form 8283 carries five distinct unreduced Section A gifts on two PDF copies and one native document", () => {
   const base = ordinaryPending().f8283.section_a_items[0];
   const amounts = [700, 1_200, 1_500, 2_100, 900];
   const form = {
@@ -1041,7 +1042,7 @@ Deno.test("Form 8283 carries five distinct unreduced Section A gifts on two PDF 
   );
 });
 
-Deno.test("Form 8283 carries eight distinct unreduced Section A gifts across two complete PDF copies", () => {
+test("Form 8283 carries eight distinct unreduced Section A gifts across two complete PDF copies", () => {
   const base = ordinaryPending().f8283.section_a_items[0];
   const amounts = [700, 1_200, 1_500, 2_100, 900, 800, 1_100, 1_300];
   const form = {
@@ -1127,7 +1128,7 @@ Deno.test("Form 8283 carries eight distinct unreduced Section A gifts across two
   assertThrows(() => form8283Pdf.instances?.(ninth, filer, pending), Error);
 });
 
-Deno.test("Form 8283 carries twelve distinct unreduced Section A gifts across three PDF copies", () => {
+test("Form 8283 carries twelve distinct unreduced Section A gifts across three PDF copies", () => {
   const base = ordinaryPending().f8283.section_a_items[0];
   const propertyClasses = [
     "bicycle",
@@ -1238,7 +1239,7 @@ Deno.test("Form 8283 carries twelve distinct unreduced Section A gifts across th
   );
 });
 
-Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", () => {
+test("Form 8283 PDF prints every sourced short-term Section A reduction", () => {
   const form = {
     section_a_items: [
       { ...shortTermGift, similar_item_group: "prints" },
@@ -1264,7 +1265,7 @@ Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", (
   );
 });
 
-Deno.test("Form 8283 PDF prints purchased inventory basis claim and reason", () => {
+test("Form 8283 PDF prints purchased inventory basis claim and reason", () => {
   const form = { section_a_items: [inventoryGift] };
   const [instance] = form8283Pdf.instances?.(
     form,
@@ -1279,7 +1280,7 @@ Deno.test("Form 8283 PDF prints purchased inventory basis claim and reason", () 
   );
 });
 
-Deno.test("Form 8283 PDF prints donor-created art basis claim and reason", () => {
+test("Form 8283 PDF prints donor-created art basis claim and reason", () => {
   const form = { section_a_items: [creatorGift] };
   const [instance] = form8283Pdf.instances?.(
     form,
@@ -1294,7 +1295,7 @@ Deno.test("Form 8283 PDF prints donor-created art basis claim and reason", () =>
   );
 });
 
-Deno.test("Form 8283 PDF prints donor-prepared manuscript basis claim and FMV reason", () => {
+test("Form 8283 PDF prints donor-prepared manuscript basis claim and FMV reason", () => {
   const form = { section_a_items: [manuscriptGift] };
   const [instance] = form8283Pdf.instances?.(
     form,
@@ -1313,7 +1314,7 @@ Deno.test("Form 8283 PDF prints donor-prepared manuscript basis claim and FMV re
   );
 });
 
-Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statement", () => {
+test("Form 8283 PDF prints unrelated-use tangible property basis and statement", () => {
   const form = { section_a_items: [unrelatedUseGift] };
   const pending = currentSectionAPending(form);
   const [instance] = form8283Pdf.instances?.(
@@ -1353,7 +1354,7 @@ Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statem
   );
 });
 
-Deno.test("Form 8283 mixed Section A preview keeps its sole reduction on item B", () => {
+test("Form 8283 mixed Section A preview keeps its sole reduction on item B", () => {
   const companion = {
     ...shortTermGift,
     property_description: "Purchased used books",
@@ -1398,7 +1399,7 @@ Deno.test("Form 8283 mixed Section A preview keeps its sole reduction on item B"
   assertStringIncludes(xml, "<FairMarketValueAmt");
 });
 
-Deno.test("Form 8283 mixed Section A preview rejects an unsourced unreduced companion", () => {
+test("Form 8283 mixed Section A preview rejects an unsourced unreduced companion", () => {
   const companion = {
     ...shortTermGift,
     property_description: "Purchased used books",
@@ -1429,7 +1430,7 @@ Deno.test("Form 8283 mixed Section A preview rejects an unsourced unreduced comp
   }
 });
 
-Deno.test("Form 8283 PDF rejects incomplete or divergent short-term reductions", () => {
+test("Form 8283 PDF rejects incomplete or divergent short-term reductions", () => {
   const form = { section_a_items: [shortTermGift] };
   assertThrows(
     () =>
@@ -1462,7 +1463,7 @@ Deno.test("Form 8283 PDF rejects incomplete or divergent short-term reductions",
   );
 });
 
-Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale proceeds", () => {
+test("Form 8283 PDF prints one reconciled vehicle capped at certified sale proceeds", () => {
   const pending = soldVehiclePending();
   const native = form8283.build(pending.f8283, {
     pending,
@@ -1530,7 +1531,7 @@ Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale 
   );
 });
 
-Deno.test("Form 8283 PDF prints one unreduced needy-transfer vehicle with matched certification", () => {
+test("Form 8283 PDF prints one unreduced needy-transfer vehicle with matched certification", () => {
   const form = { section_a_items: [needyVehicle] };
   const pending = currentSectionAPending(form);
   const [instance] = form8283Pdf.instances?.(form, filer, pending) ?? [];
@@ -1616,7 +1617,7 @@ Deno.test("Form 8283 PDF prints one unreduced needy-transfer vehicle with matche
   );
 });
 
-Deno.test("Form 8283 PDF prints reconciled Section B land without inventing signatures", () => {
+test("Form 8283 PDF prints reconciled Section B land without inventing signatures", () => {
   const pending = electedLandPending();
   const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
     [];
@@ -1669,7 +1670,7 @@ Deno.test("Form 8283 PDF prints reconciled Section B land without inventing sign
   assertEquals(byKey.has("section_b_appraiser_signed_date"), false);
 });
 
-Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () => {
+test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () => {
   const pending = electedPending();
   assertThrows(
     () =>

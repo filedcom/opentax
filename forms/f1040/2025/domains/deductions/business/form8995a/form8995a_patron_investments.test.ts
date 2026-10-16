@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -26,7 +29,7 @@ const patronInvestmentExpected: Record<string, number[]> = {
 type Row = Record<string, any>;
 
 for (const c of patronInvestmentCases) {
-  Deno.test(`Patron investments ${c.name}: owned sources, final tax and complete packet`, async () => {
+  test(`Patron investments ${c.name}: owned sources, final tax and complete packet`, async () => {
     const input = patronInvestmentFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -47,23 +50,17 @@ for (const c of patronInvestmentCases) {
     );
     assertEquals(pending.form8995a_schedule_d, pending.form8995a);
     assert(prepared.bundle.xml.includes("<IRS8995AScheduleD "));
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "PATRON_INVESTMENTS_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("PATRON_INVESTMENTS_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.PATRON_INVESTMENTS_EVIDENCE;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/source.json`,
         JSON.stringify({ input, filer, pending }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           pending,
@@ -73,11 +70,11 @@ for (const c of patronInvestmentCases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      const xsd = await new Deno.Command("xmllint", {
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -90,7 +87,7 @@ for (const c of patronInvestmentCases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const kinds = [
         "interest-owner",
@@ -170,7 +167,7 @@ for (const c of patronInvestmentCases) {
           `${c.name}/${kind}/pdf`,
         );
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/checks.json`,
         JSON.stringify(
           {
@@ -183,7 +180,7 @@ for (const c of patronInvestmentCases) {
         ),
       );
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }

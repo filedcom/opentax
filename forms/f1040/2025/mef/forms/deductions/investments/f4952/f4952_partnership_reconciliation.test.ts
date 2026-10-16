@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { k1Partnership } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { TSJ } from "../../../../../../nodes/types.ts";
@@ -49,7 +50,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 reconciles one K-1's box 5 interest and box 13 code H investment interest", () => {
+test("Form 4952 reconciles one K-1's box 5 interest and box 13 code H investment interest", () => {
   const source = k1Partnership.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.k1_partnership,
@@ -79,7 +80,7 @@ Deno.test("Form 4952 reconciles one K-1's box 5 interest and box 13 code H inves
   assertEquals(form4952Pdf.instances?.(fields, filer, pending), [fields]);
 });
 
-Deno.test("Form 4952 K-1 filing rejects an unrelated recipient", () => {
+test("Form 4952 K-1 filing rejects an unrelated recipient", () => {
   const unrelated = {
     ...pending,
     k1_partnership: {
@@ -106,7 +107,7 @@ Deno.test("Form 4952 K-1 filing rejects an unrelated recipient", () => {
   assertThrows(() => form4952Pdf.projectFields?.(fields, missing));
 });
 
-Deno.test("Form 4952 K-1 allows the joint spouse recipient", () => {
+test("Form 4952 K-1 allows the joint spouse recipient", () => {
   const joint = {
     ...filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -130,7 +131,7 @@ Deno.test("Form 4952 K-1 allows the joint spouse recipient", () => {
   assertEquals(form4952Pdf.instances?.(fields, joint, spouseSource), [fields]);
 });
 
-Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () => {
+test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () => {
   assertThrows(
     () => build(fields),
     Error,
@@ -202,7 +203,7 @@ Deno.test("Form 4952 K-1 path rejects unlinked or extra partnership facts", () =
   );
 });
 
-Deno.test("Form 4952 reconciles several distinct partnership K-1s by source amounts", () => {
+test("Form 4952 reconciles several distinct partnership K-1s by source amounts", () => {
   const second = {
     ...partnership,
     partnership_name: "Second Portfolio Partnership",
@@ -277,7 +278,7 @@ Deno.test("Form 4952 reconciles several distinct partnership K-1s by source amou
   );
 });
 
-Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and PDF export", () => {
+test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and PDF export", () => {
   const withCodeB = {
     ...partnership,
     box7_royalties: 600,

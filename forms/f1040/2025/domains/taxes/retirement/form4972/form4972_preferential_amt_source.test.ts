@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -13,10 +16,10 @@ import expected from "./form4972_preferential_amt.expected.json" with {
 import specialExpected from "./form4972_full_share_cents.expected.json" with {
   type: "json",
 };
-Deno.test("complete issued Form4972 inventories reconcile preferential source income, ISO AMT and phaseout through full packets", async () => {
-  const dir = Deno.env.get("FORM4972_PREFERENTIAL_AMT_EVIDENCE_DIR") ??
+test("complete issued Form4972 inventories reconcile preferential source income, ISO AMT and phaseout through full packets", async () => {
+  const dir = process.env.FORM4972_PREFERENTIAL_AMT_EVIDENCE_DIR ??
     ".state/research/4972-preferential-amt-source";
-  await Deno.mkdir(dir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
   for (const entry of preferentialAmtCases) {
     const id = entry[0],
       input = preferentialAmtInputs(entry),
@@ -76,17 +79,17 @@ Deno.test("complete issued Form4972 inventories reconcile preferential source in
       prepared.bundle,
       origins,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify({ input, pending: p }, null, 2),
     );
-    await Deno.writeTextFile(`${dir}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${dir}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(`${dir}/${id}.pdf`, pdf);
+    await fs.writeFile(
       `${dir}/${id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    const x = await new Deno.Command("xmllint", {
+    const x = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -95,7 +98,7 @@ Deno.test("complete issued Form4972 inventories reconcile preferential source in
       ],
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", `${dir}/${id}.pdf`, `${dir}/${id}.txt`],
     }).output();
     assertEquals(text.code, 0);
@@ -142,7 +145,7 @@ Deno.test("complete issued Form4972 inventories reconcile preferential source in
     }
   }
 });
-Deno.test("preferential AMT sources reject incomplete ownership, issuer, holding and exercise inventories before filing", async () => {
+test("preferential AMT sources reject incomplete ownership, issuer, holding and exercise inventories before filing", async () => {
   const source = preferentialAmtInputs(preferentialAmtCases[0]);
   for (
     const change of [

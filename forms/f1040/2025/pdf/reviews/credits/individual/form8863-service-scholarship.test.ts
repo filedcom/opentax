@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -272,7 +275,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 for (const kind of kinds) {
-  Deno.test(`required-service scholarship ${kind} actual receipts, compensation, income and support file full XSD/PDF`, async () => {
+  test(`required-service scholarship ${kind} actual receipts, compensation, income and support file full XSD/PDF`, async () => {
     const source = serviceFixture(kind);
     assertEquals(source.tax, source.phaseout ? 10595 : 1955);
     const review = claimantReviewSchema.parse(source.review);
@@ -345,10 +348,10 @@ for (const kind of kinds) {
       ),
       source.restricted,
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, prepared.bundle.xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, prepared.bundle.xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stdout: "piped",
         stderr: "piped",
@@ -359,28 +362,28 @@ for (const kind of kinds) {
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
     const pdf = await prepared.renderPdf();
     const doc = await PDFDocument.load(pdf);
     assertEquals(doc.getForm().getFields().length, 0);
     assertEquals(doc.getPageCount(), source.child ? 9 : 7);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-f8863-service-scholarship-evidence";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${kind}-source-input.json`,
         JSON.stringify({ inputs: source.inputs, filer }, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${kind}-full-return.xml`,
         prepared.bundle.xml,
       );
-      await Deno.writeFile(`${dir}/${kind}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${kind}-filled-return.pdf`, pdf);
     }
   });
 }
-Deno.test("required-service scholarship rejects detached terms, performance, payer, reporting, income and stale support credit", async () => {
+test("required-service scholarship rejects detached terms, performance, payer, reporting, income and stale support credit", async () => {
   for (const kind of ["w2-child-credit", "line8r-half"] as const) {
     const source = serviceFixture(kind);
     const result = f1040_2025.executeReturn(source.inputs);

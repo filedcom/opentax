@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { withRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
@@ -76,11 +77,11 @@ function context(sourceFacts: RentedHomeSource = source) {
   };
 }
 
-Deno.test("2025 Form 8829 empty pending slice emits no document", () => {
+test("2025 Form 8829 empty pending slice emits no document", () => {
   assertEquals(form8829.build({}), "");
 });
 
-Deno.test("2025 Form 8829 MeF files positive line 36 with matching Schedule C claim", () => {
+test("2025 Form 8829 MeF files positive line 36 with matching Schedule C claim", () => {
   const xml = form8829.build({
     rented_home: source,
     ...calculateRentedHomeForm8829(source),
@@ -114,7 +115,7 @@ Deno.test("2025 Form 8829 MeF files positive line 36 with matching Schedule C cl
   );
 });
 
-Deno.test("2025 Form 8829 MeF rejects mismatched or duplicated Schedule C deduction", () => {
+test("2025 Form 8829 MeF rejects mismatched or duplicated Schedule C deduction", () => {
   const fields = {
     rented_home: source,
     ...calculateRentedHomeForm8829(source),
@@ -153,7 +154,7 @@ Deno.test("2025 Form 8829 MeF rejects mismatched or duplicated Schedule C deduct
   );
 });
 
-Deno.test("2025 Form 8829 files line 43 carryover with zero current deduction", () => {
+test("2025 Form 8829 files line 43 carryover with zero current deduction", () => {
   const noIncome = { ...source, schedule_c_line29_tentative_profit: 0 };
   const xml = form8829.build(
     { rented_home: noIncome, ...calculateRentedHomeForm8829(noIncome) },
@@ -182,7 +183,7 @@ Deno.test("2025 Form 8829 files line 43 carryover with zero current deduction", 
   );
 });
 
-Deno.test("2025 Form 8829 rejects stale line 36 before filing", () => {
+test("2025 Form 8829 rejects stale line 36 before filing", () => {
   const lines = calculateRentedHomeForm8829(source);
   assertThrows(
     () =>
@@ -195,7 +196,7 @@ Deno.test("2025 Form 8829 rejects stale line 36 before filing", () => {
   );
 });
 
-Deno.test("2025 Form 8829 MeF emits direct repair and subtotal before indirect amounts", () => {
+test("2025 Form 8829 MeF emits direct repair and subtotal before indirect amounts", () => {
   const withDirectRepairs = withRentedHomeEvidence({
     ...source,
     repairs_direct: 700,

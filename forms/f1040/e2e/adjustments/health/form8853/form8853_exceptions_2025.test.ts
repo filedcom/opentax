@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertExists,
@@ -193,7 +196,7 @@ export function fixture(ledger: ArcherDistributionLedger) {
   };
 }
 
-Deno.test("Form8853 sourced mixed age65 and disability distributions retain on-event taxable penalty", () => {
+test("Form8853 sourced mixed age65 and disability distributions retain on-event taxable penalty", () => {
   for (const ledger of [ageLedger, disabilityLedger]) {
     assertEquals(calculateArcherLedger(ledger), {
       rawGross: 6000,
@@ -218,7 +221,7 @@ Deno.test("Form8853 sourced mixed age65 and disability distributions retain on-e
   assertEquals(calculateArcherLedger(allExcepted).line9a, false);
 });
 
-Deno.test("Form8853 source evidence rejects missing, invalid, duplicate, and death timing facts", () => {
+test("Form8853 source evidence rejects missing, invalid, duplicate, and death timing facts", () => {
   const duplicate = structuredClone(ageLedger);
   if (duplicate.source.kind !== "normal") throw new Error("fixture kind");
   duplicate.source.distributions.push(duplicate.source.distributions[0]);
@@ -255,7 +258,7 @@ for (
     ["cents mixed age65", centsMixedLedger, 4499, 600],
   ] as const
 ) {
-  Deno.test(`Form8853 ${name}: public source through full1040, native XSD and PDF`, async () => {
+  test(`Form8853 ${name}: public source through full1040, native XSD and PDF`, async () => {
     const result = execute(
       buildExecutionPlan(registry),
       registry,
@@ -305,11 +308,11 @@ for (
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-    const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
+    const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -318,8 +321,8 @@ for (
         0,
         new TextDecoder().decode(validation.stderr),
       );
-      await Deno.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
-      const text = await new Deno.Command("pdftotext", {
+      await fs.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
+      const text = await new sys.Command("pdftotext", {
         args: ["-layout", pdfPath, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -349,8 +352,8 @@ for (
         assertStringIncludes(printed, "Death of Archer MSA account holder");
       }
     } finally {
-      await Deno.remove(xmlPath);
-      await Deno.remove(pdfPath);
+      await sys.remove(xmlPath);
+      await sys.remove(pdfPath);
     }
     const projected = form8853Pdf.instances?.(
       result.pending.form8853!,
@@ -383,7 +386,7 @@ for (
   });
 }
 
-Deno.test("Form8853 estate FMV source calculates on final return; full packet retains deceased1040 blocker", async () => {
+test("Form8853 estate FMV source calculates on final return; full packet retains deceased1040 blocker", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -430,7 +433,7 @@ Deno.test("Form8853 estate FMV source calculates on final return; full packet re
   );
 });
 
-Deno.test("Form8853 archer rejects reused medical expense references through native and PDF export", async () => {
+test("Form8853 archer rejects reused medical expense references through native and PDF export", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

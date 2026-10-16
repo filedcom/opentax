@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form1116,
@@ -65,7 +66,7 @@ function currentReturn() {
   };
 }
 
-Deno.test("Schedule C staged refund joins a no-carryover 2025 Form 1116, Schedule 3, and Form 1040", () => {
+test("Schedule C staged refund joins a no-carryover 2025 Form 1116, Schedule 3, and Form 1040", () => {
   const { ledger, evidence } = stagedCase();
   const result = reconcileScheduleCCurrentYearCandidate(
     ledger,
@@ -89,7 +90,7 @@ Deno.test("Schedule C staged refund joins a no-carryover 2025 Form 1116, Schedul
   );
 });
 
-Deno.test("Schedule C current-year join rejects changed credit, tax total, and Schedule B", () => {
+test("Schedule C current-year join rejects changed credit, tax total, and Schedule B", () => {
   const { ledger, evidence } = stagedCase();
   const base = currentReturn();
   assertThrows(

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
@@ -31,7 +32,7 @@ function parts(credit = 500, appliedCredit = 500) {
   });
 }
 
-Deno.test("Form 8864 stages one sourced standard Form 3800 line 1l and Part V row", () => {
+test("Form 8864 stages one sourced standard Form 3800 line 1l and Part V row", () => {
   const filed = parts();
   assertEquals(filed.currentRows.map((row) => row.line), ["1l"]);
   assertEquals(filed.currentAmounts.map((row) => row.line), ["1l"]);
@@ -45,7 +46,7 @@ Deno.test("Form 8864 stages one sourced standard Form 3800 line 1l and Part V ro
   assertThrows(() => parts(499), Error, "invalid Form 8864 line 1l allocation");
 });
 
-Deno.test("IRS8864 native projection binds dated gallons to Form 3800 and AMT documents", () => {
+test("IRS8864 native projection binds dated gallons to Form 3800 and AMT documents", () => {
   const context = {
     pending: directAgriBiodieselPending,
     documentIdsByPendingKey: {

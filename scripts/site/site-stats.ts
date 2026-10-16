@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 /**
  * Keeps the node and input counts on opentax.filed.com in step with the engine.
  *
@@ -22,7 +23,7 @@ const inputPattern = /(\b|<b>)\d+(<\/b>)?(\s+input types)/g;
 for (const path of pages) {
   let html: string;
   try {
-    html = await Deno.readTextFile(path);
+    html = await fs.readFile(path, "utf8");
   } catch {
     continue;
   }
@@ -30,7 +31,7 @@ for (const path of pages) {
     .replace(nodePattern, (_m, open, close, rest) => `${open}${nodes}${close ?? ""}${rest}`)
     .replace(inputPattern, (_m, open, close, rest) => `${open}${inputs}${close ?? ""}${rest}`);
   if (updated !== html) {
-    await Deno.writeTextFile(path, updated);
+    await fs.writeFile(path, updated);
     console.log(`${path}: ${nodes} registered nodes, ${inputs} input types`);
   }
 }

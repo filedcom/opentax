@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateReviewedLegacyLossYear } from "./form172_legacy_loss_year.ts";
 function origin() {
@@ -77,7 +78,7 @@ function legacy() {
     },
   };
 }
-Deno.test("Form 172 legacy origin excludes personal exemptions and DPAD from loss", () => {
+test("Form 172 legacy origin excludes personal exemptions and DPAD from loss", () => {
   const r = calculateReviewedLegacyLossYear(legacy());
   assertEquals(r.taxYear, 2017);
   assertEquals(r.regularNol, 100000);
@@ -88,7 +89,7 @@ Deno.test("Form 172 legacy origin excludes personal exemptions and DPAD from los
   assertEquals(r.carryAvailabilityVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 legacy DPAD-only or exemption-only negative income creates no NOL", () => {
+test("Form 172 legacy DPAD-only or exemption-only negative income creates no NOL", () => {
   for (const dpad of [0, 3000]) {
     const v = legacy();
     v.inventory.noncapital_income[0].amount = 1000;
@@ -99,7 +100,7 @@ Deno.test("Form 172 legacy DPAD-only or exemption-only negative income creates n
     assertEquals(calculateReviewedLegacyLossYear(v).regularNol, 0);
   }
 });
-Deno.test("Form 172 legacy capital loss and earlier NOL do not create another origin", () => {
+test("Form 172 legacy capital loss and earlier NOL do not create another origin", () => {
   const v = legacy();
   v.inventory.capital_losses.push(
     {
@@ -124,7 +125,7 @@ Deno.test("Form 172 legacy capital loss and earlier NOL do not create another or
   assertEquals(r.capitalLossDeduction, 3000);
   assertEquals(r.section172CalculationLines[23], 20000);
 });
-Deno.test("Form 172 legacy review preserves oldest supported origin year", () => {
+test("Form 172 legacy review preserves oldest supported origin year", () => {
   const v = legacy();
   v.tax_year = 2005;
   v.reviewed_form1040.tax_year = 2005;
@@ -134,7 +135,7 @@ Deno.test("Form 172 legacy review preserves oldest supported origin year", () =>
   assertEquals(calculateReviewedLegacyLossYear(v).taxYear, 2005);
   assertEquals(calculateReviewedLegacyLossYear(v).regularNol, 100000);
 });
-Deno.test("Form 172 legacy review rejects mismatched source totals identity and scalar losses", () => {
+test("Form 172 legacy review rejects mismatched source totals identity and scalar losses", () => {
   const v = legacy();
   for (
     const patch of [{ agi: -1 }, { tax_year: 2016 }, {
@@ -153,7 +154,7 @@ Deno.test("Form 172 legacy review rejects mismatched source totals identity and 
   );
   assertThrows(() => calculateReviewedLegacyLossYear({ ...v, tax_year: 2018 }));
 });
-Deno.test("Form 172 legacy review retains duplicate owner and DPAD separation checks", () => {
+test("Form 172 legacy review retains duplicate owner and DPAD separation checks", () => {
   const v = legacy();
   v.inventory.noncapital_income[0].owner_ssn = "999887777";
   assertThrows(() => calculateReviewedLegacyLossYear(v));

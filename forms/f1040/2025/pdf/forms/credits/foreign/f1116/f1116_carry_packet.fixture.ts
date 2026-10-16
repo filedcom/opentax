@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../../index.ts";
@@ -46,12 +47,12 @@ export async function verifyCarryoverPacket(
     origins.filter((p) => p.formKey === "form1116_schedule_b").length,
     2,
   );
-  const root = Deno.env.get("OPENTAX_FORM1116_CARRY_PROOF_DIR");
+  const root = process.env.OPENTAX_FORM1116_CARRY_PROOF_DIR;
   if (root) {
-    await Deno.mkdir(root, { recursive: true });
-    await Deno.writeFile(`${root}/${id}.pdf`, bytes);
-    await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(root, { recursive: true });
+    await fs.writeFile(`${root}/${id}.pdf`, bytes);
+    await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${root}/${id}.json`,
       JSON.stringify({ pending, expected, filer, origins }, null, 2),
     );

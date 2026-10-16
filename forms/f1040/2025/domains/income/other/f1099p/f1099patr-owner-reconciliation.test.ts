@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -26,7 +27,7 @@ function personalDistribution(recipient_tin?: string) {
   };
 }
 
-Deno.test("positive 1099-PATR distribution owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-PATR distribution owner is checked by native and PDF Form 1040", () => {
   const source = personalDistribution("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -45,7 +46,7 @@ Deno.test("positive 1099-PATR distribution owner is checked by native and PDF Fo
   }
 });
 
-Deno.test("joint spouse 1099-PATR belongs on MFJ return only", () => {
+test("joint spouse 1099-PATR belongs on MFJ return only", () => {
   const source = personalDistribution("444556666");
   const joint = {
     ...filed,
@@ -68,7 +69,7 @@ Deno.test("joint spouse 1099-PATR belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("one 1099-PATR issued reference without an account cannot be counted twice", () => {
+test("one 1099-PATR issued reference without an account cannot be counted twice", () => {
   const issued = personalDistribution("111223333").f1099patr.f1099patrs[0];
   const duplicate = {
     f1099patr: {
@@ -102,7 +103,7 @@ Deno.test("one 1099-PATR issued reference without an account cannot be counted t
   irs1040Pdf.projectFields?.(filed, distinct);
 });
 
-Deno.test("positive PATR withholding and cooperative deduction need a filed owner", () => {
+test("positive PATR withholding and cooperative deduction need a filed owner", () => {
   for (
     const box of [{ box4_federal_withheld: 20 }, {
       box6_section199ag_deduction: 40,
@@ -124,7 +125,7 @@ Deno.test("positive PATR withholding and cooperative deduction need a filed owne
   }
 });
 
-Deno.test("positive 1099-PATR withholding needs an identified payer in both Form 1040 exports", () => {
+test("positive 1099-PATR withholding needs an identified payer in both Form 1040 exports", () => {
   const pending = {
     f1099patr: {
       f1099patrs: [{
@@ -143,7 +144,7 @@ Deno.test("positive 1099-PATR withholding needs an identified payer in both Form
   );
 });
 
-Deno.test("invalid specified-cooperative deduction rejects native and PDF export", () => {
+test("invalid specified-cooperative deduction rejects native and PDF export", () => {
   const pending = {
     f1099patr: {
       f1099patrs: [{

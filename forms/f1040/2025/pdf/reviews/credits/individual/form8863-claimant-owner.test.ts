@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -33,7 +36,7 @@ for (
     "student-scholarship",
   ] as const
 ) {
-  Deno.test(`education ${kind} owner/support source reaches 1040, credit ordering, full XSD and PDF`, async () => {
+  test(`education ${kind} owner/support source reaches 1040, credit ordering, full XSD and PDF`, async () => {
     const source = fixture(kind);
     const result = f1040_2025.executeReturn(source.inputs);
     assertEquals(result.diagnostics, []);
@@ -87,17 +90,17 @@ for (
       prepared.bundle.xml,
       `<StudentSSN>${source.students[0].student_ssn}</StudentSSN>`,
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, prepared.bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, prepared.bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
     const pdf = await prepared.renderPdf();
     const doc = await PDFDocument.load(pdf);
@@ -106,23 +109,23 @@ for (
       doc.getPageCount(),
       two ? 8 : kind === "student-scholarship" ? 7 : 5,
     );
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-f8863-owner-evidence";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${kind}-source-input.json`,
         JSON.stringify({ inputs: source.inputs, filer }, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${kind}-full-return.xml`,
         prepared.bundle.xml,
       );
-      await Deno.writeFile(`${dir}/${kind}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${kind}-filled-return.pdf`, pdf);
     }
   });
 }
 
-Deno.test("claimant support restriction follows age, earned/support threshold, full-time enrollment and parents/joint status", () => {
+test("claimant support restriction follows age, earned/support threshold, full-time enrollment and parents/joint status", () => {
   const source = fixture("student-refundable");
   const review = claimantReviewSchema.parse(source.review);
   assertEquals(claimantRefundRestriction(review, "single"), false);
@@ -189,7 +192,7 @@ Deno.test("claimant support restriction follows age, earned/support threshold, f
   );
 });
 
-Deno.test("education claimant rejects competing owners, dependency releases, detached income and filed-row tampering", async () => {
+test("education claimant rejects competing owners, dependency releases, detached income and filed-row tampering", async () => {
   for (const kind of ["parent-two", "student-refundable"] as const) {
     const source = fixture(kind);
     const calculated = f1040_2025.executeReturn(source.inputs);
@@ -304,13 +307,13 @@ Deno.test("education claimant rejects competing owners, dependency releases, det
   }
 });
 
-Deno.test("dependent scholarship income stays on student return and Schedule 8812 checks filed credit ordering", async () => {
+test("dependent scholarship income stays on student return and Schedule 8812 checks filed credit ordering", async () => {
   const source = fixture("parent-two");
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);
   const scholarshipFixture = JSON.parse(
-    await Deno.readTextFile(
-      new URL("../../general/composed-returns/review-8863-scholarship-source.json", import.meta.url),
+    await fs.readFile(
+      new URL("../../general/composed-returns/review-8863-scholarship-source.json", import.meta.url), "utf8",
     ),
   );
   const scholarship = {

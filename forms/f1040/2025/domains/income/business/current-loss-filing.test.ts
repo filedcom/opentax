@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../index.ts";
@@ -34,9 +37,9 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 
-Deno.test("source-bound current loss returns join original forms, Form1040, native Return1040 and prepared PDF", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("source-bound current loss returns join original forms, Form1040, native Return1040 and prepared PDF", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -131,30 +134,30 @@ Deno.test("source-bound current loss returns join original forms, Form1040, nati
       (await PDFDocument.load(bytes)).getPageCount(),
       origins.length,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     assertEquals(facts.pending, before);
     if (output) {
       const dir = `${output}/${c.id}`;
-      await Deno.mkdir(dir, { mode: 0o700 });
-      await Deno.writeFile(`${dir}/return.pdf`, bytes, {
+      await fs.mkdir(dir, { mode: 0o700 });
+      await sys.writeBytes(`${dir}/return.pdf`, bytes, {
         createNew: true,
         mode: 0o600,
       });
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml, {
+      await sys.writeText(`${dir}/return.xml`, bundle.xml, {
         createNew: true,
         mode: 0o600,
       });
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${dir}/source-pending.json`,
         JSON.stringify(
           {
@@ -174,7 +177,7 @@ Deno.test("source-bound current loss returns join original forms, Form1040, nati
   }
 });
 
-Deno.test("registered current-loss exports reject detached ownership, source, original character and finalized totals", async () => {
+test("registered current-loss exports reject detached ownership, source, original character and finalized totals", async () => {
   const original = source(true, 2000).pending;
   const filer = extractFilerIdentity(original.f1040)!;
   for (

@@ -1,10 +1,13 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { issuedRecaptureInputs } from "../../../../pdf/reviews/general/composed-returns/review-8611-issued-k1.fixture.ts";
-Deno.test("actual section42j5 issued K1 building recaptures reach complete native XSD and PDF", async () => {
+test("actual section42j5 issued K1 building recaptures reach complete native XSD and PDF", async () => {
   for (const joint of [false, true]) {
     const inputs = issuedRecaptureInputs(joint);
     const r = f1040_2025.executeReturn(inputs);
@@ -20,14 +23,14 @@ Deno.test("actual section42j5 issued K1 building recaptures reach complete nativ
       'section42j5Cd="SECTION 42(j)(5)"',
     );
     const dir = ".state/research/2026-10-06-form8611-issued-k1-source";
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const id = joint ? "joint-spouse" : "single";
-    await Deno.writeTextFile(`${dir}/${id}.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${dir}/${id}.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify({ inputs, pending: p }, null, 2),
     );
-    const x = await new Deno.Command("xmllint", {
+    const x = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -37,11 +40,11 @@ Deno.test("actual section42j5 issued K1 building recaptures reach complete nativ
       stderr: "piped",
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
-    await Deno.writeFile(`${dir}/${id}.pdf`, await prepared.renderPdf());
+    await fs.writeFile(`${dir}/${id}.pdf`, await prepared.renderPdf());
     console.log({ id, agi: p.f1040.line11_agi, tax: p.f1040.line24_total_tax });
   }
 });
-Deno.test("issued K1 recapture native PDF rejects stale building issuer recipient and final taxes", async () => {
+test("issued K1 recapture native PDF rejects stale building issuer recipient and final taxes", async () => {
   const inputs = issuedRecaptureInputs();
   const r = f1040_2025.executeReturn(inputs);
   const filer = extractFilerIdentity(inputs.general)!;

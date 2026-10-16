@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateReviewedAmtLossYear } from "./form172_amt_loss_year.ts";
 
@@ -58,7 +59,7 @@ function amt() {
     },
   };
 }
-Deno.test("Form 172 AMT origin independently refigures business deductions", () => {
+test("Form 172 AMT origin independently refigures business deductions", () => {
   const r = calculateReviewedAmtLossYear(origin(), amt());
   assertEquals(r.regularNol, 100000);
   assertEquals(r.amtNol, 80000);
@@ -67,7 +68,7 @@ Deno.test("Form 172 AMT origin independently refigures business deductions", () 
   assertEquals(r.amtCarryAvailabilityVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 AMT origin refigures nonbusiness limitation from AMT income", () => {
+test("Form 172 AMT origin refigures nonbusiness limitation from AMT income", () => {
   const v = amt();
   v.amt_inventory.noncapital_income.push({
     item_id: "pab",
@@ -84,7 +85,7 @@ Deno.test("Form 172 AMT origin refigures nonbusiness limitation from AMT income"
   assertEquals(r.amtLines[9], 0);
   assertEquals(r.amtNol, 75000);
 });
-Deno.test("Form 172 AMT origin removes QBI and section250 from the modified base", () => {
+test("Form 172 AMT origin removes QBI and section250 from the modified base", () => {
   const v = amt();
   v.reviewed_amt.qbi_deduction = 5000;
   v.reviewed_amt.section250_deduction = 2000;
@@ -93,7 +94,7 @@ Deno.test("Form 172 AMT origin removes QBI and section250 from the modified base
   assertEquals(r.amtSection172ModifiedBase, -80000);
   assertEquals(r.amtNol, 80000);
 });
-Deno.test("Form 172 AMT origin separately applies capital loss limitation", () => {
+test("Form 172 AMT origin separately applies capital loss limitation", () => {
   const v = amt();
   v.amt_inventory.capital_losses.push(
     {
@@ -110,7 +111,7 @@ Deno.test("Form 172 AMT origin separately applies capital loss limitation", () =
   assertEquals(r.amtLines[20], 7000);
   assertEquals(r.amtNol, 80000);
 });
-Deno.test("Form 172 AMT origin rejects scalar ATNOL mismatched totals and identity", () => {
+test("Form 172 AMT origin rejects scalar ATNOL mismatched totals and identity", () => {
   const v = amt();
   for (
     const patch of [{ amti_before_atnold: -1 }, { tax_year: 2020 }, {
@@ -134,7 +135,7 @@ Deno.test("Form 172 AMT origin rejects scalar ATNOL mismatched totals and identi
     })
   );
 });
-Deno.test("Form 172 AMT origin preserves owner duplicate and exclusion refinements", () => {
+test("Form 172 AMT origin preserves owner duplicate and exclusion refinements", () => {
   const v = amt();
   v.amt_inventory.noncapital_income[0].owner_ssn = "999887777";
   assertThrows(() => calculateReviewedAmtLossYear(origin(), v));
@@ -217,7 +218,7 @@ function historicalSources(year = 2017) {
   };
   return { old, alternative };
 }
-Deno.test("Form172 historical AMT origin independently restores section199 without personal exemptions", () => {
+test("Form172 historical AMT origin independently restores section199 without personal exemptions", () => {
   for (const year of [2005, 2010, 2017]) {
     const { old, alternative } = historicalSources(year);
     const r = calculateReviewedAmtLossYear(old, alternative);
@@ -230,7 +231,7 @@ Deno.test("Form172 historical AMT origin independently restores section199 witho
     assertEquals(r.filingReady, false);
   }
 });
-Deno.test("Form172 historical AMT origin rejects missing DPAD modern deductions and mixed review years", () => {
+test("Form172 historical AMT origin rejects missing DPAD modern deductions and mixed review years", () => {
   const { old, alternative } = historicalSources();
   for (
     const patch of [
@@ -274,7 +275,7 @@ import {
   form172AmtLegacyTentativeLines,
   form172AmtTentativeLines,
 } from "./form172_amt_annual_limit.ts";
-Deno.test("Form172 retained historical regular and independent AMT origins reproduce modern annual cap", async () => {
+test("Form172 retained historical regular and independent AMT origins reproduce modern annual cap", async () => {
   const { old, alternative } = historicalSources();
   const annual = {
     reference: "current-amt-review",
@@ -325,7 +326,7 @@ Deno.test("Form172 retained historical regular and independent AMT origins repro
   assertEquals(r.filingReady, false);
 });
 
-Deno.test("Form172 retained historical regular and independent AMT origins reproduce historical annual cap with separate section199", async () => {
+test("Form172 retained historical regular and independent AMT origins reproduce historical annual cap with separate section199", async () => {
   const { old, alternative } = historicalSources();
   const annual = {
     reference: "current-amt-review",

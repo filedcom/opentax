@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -45,7 +46,7 @@ function cappedReturn() {
   return { result, filed, filer };
 }
 
-Deno.test("Form 6251 caps a same-term AMT basis loss separately from regular Schedule D", () => {
+test("Form 6251 caps a same-term AMT basis loss separately from regular Schedule D", () => {
   const { result, filed, filer } = cappedReturn();
   // Regular loss -$2,000 is fully deductible; AMT loss -$5,000 is capped at
   // -$3,000, with the other $2,000 carried to the separate AMT ledger.
@@ -76,7 +77,7 @@ Deno.test("Form 6251 caps a same-term AMT basis loss separately from regular Sch
   );
 });
 
-Deno.test("Form 6251 capped AMT loss rejects changed basis, printed adjustment, and final joins", () => {
+test("Form 6251 capped AMT loss rejects changed basis, printed adjustment, and final joins", () => {
   const { result, filed, filer } = cappedReturn();
   const altered = [
     {
@@ -144,7 +145,7 @@ function cappedMixedTermReturn() {
   };
 }
 
-Deno.test("Form 6251 caps audited mixed-term losses separately for regular and AMT", () => {
+test("Form 6251 caps audited mixed-term losses separately for regular and AMT", () => {
   const { result, filed, filer } = cappedMixedTermReturn();
   // Short-term: -$2,000 regular/-$5,000 AMT. Long-term: -$500/-$1,500.
   // Both totals exceed the AMT limit only; regular is fully deductible.
@@ -162,7 +163,7 @@ Deno.test("Form 6251 caps audited mixed-term losses separately for regular and A
   );
 });
 
-Deno.test("Form 6251 capped mixed-term loss rejects omitted lot, changed AMT basis, and return totals", () => {
+test("Form 6251 capped mixed-term loss rejects omitted lot, changed AMT basis, and return totals", () => {
   const { result, filed, filer } = cappedMixedTermReturn();
   const altered = [
     {
@@ -243,7 +244,7 @@ function cappedMixedOffsetReturn() {
   };
 }
 
-Deno.test("Form 6251 caps audited mixed-term gain and loss separately for regular and AMT", () => {
+test("Form 6251 caps audited mixed-term gain and loss separately for regular and AMT", () => {
   const { result, filed, filer } = cappedMixedOffsetReturn();
   // $1,000 short gain offsets a $3,500 long loss for regular tax. For AMT,
   // $900 offsets a $5,600 loss, so only $3,000 of the $4,700 net is deducted.
@@ -261,7 +262,7 @@ Deno.test("Form 6251 caps audited mixed-term gain and loss separately for regula
   );
 });
 
-Deno.test("Form 6251 capped mixed-term offset rejects missing lot, AMT basis, and final loss tampering", () => {
+test("Form 6251 capped mixed-term offset rejects missing lot, AMT basis, and final loss tampering", () => {
   const { result, filed, filer } = cappedMixedOffsetReturn();
   const altered = [
     {

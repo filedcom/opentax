@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -106,7 +109,7 @@ const passive = buildForm3800PassiveRowXml([
   },
 ], {});
 
-Deno.test("Form 3800 joins same-line sources and selects the largest combined EIN", () => {
+test("Form 3800 joins same-line sources and selects the largest combined EIN", () => {
   const parts = joinForm3800DocumentParts(lines, nonpassive, passive);
   assertEquals(parts.currentRows.length, 1);
   assertEquals(parts.currentRows[0].metadata.sourceCount, 3);
@@ -138,7 +141,7 @@ Deno.test("Form 3800 joins same-line sources and selects the largest combined EI
   );
 });
 
-Deno.test("Form 3800 joins a passive-only current-year source", () => {
+test("Form 3800 joins a passive-only current-year source", () => {
   const passiveOnlyLines = calculateForm3800Nonpassive(
     { ...tax, regularTax: 100, standardCredit: 0 },
     { ...ZERO_FORM3800_PASSIVE_ACTIVITY, line2: 400, line3: 300 },
@@ -154,7 +157,7 @@ Deno.test("Form 3800 joins a passive-only current-year source", () => {
   );
 });
 
-Deno.test("Form 3800 join rejects a mismatched source-row set", () => {
+test("Form 3800 join rejects a mismatched source-row set", () => {
   assertThrows(
     () =>
       joinForm3800DocumentParts(lines, {
@@ -166,7 +169,7 @@ Deno.test("Form 3800 join rejects a mismatched source-row set", () => {
   );
 });
 
-Deno.test("Form 3800 joins passive and nonpassive carryovers on one Part IV line", async () => {
+test("Form 3800 joins passive and nonpassive carryovers on one Part IV line", async () => {
   const carryoverLines = calculateForm3800Nonpassive({
     ...tax,
     regularTax: 1_000,
@@ -245,26 +248,26 @@ Deno.test("Form 3800 joins passive and nonpassive carryovers on one Part IV line
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       xml.replace(
         "<IRS3800>",
         '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
       ),
     );
-    const result = await new Deno.Command("xmllint", {
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
@@ -117,7 +118,7 @@ function pairedDisabilityCase() {
   return { source, forms, pending, context };
 }
 
-Deno.test("paired Form 8889 reconciles disability exception by dated 1099-SA transactions", () => {
+test("paired Form 8889 reconciles disability exception by dated 1099-SA transactions", () => {
   const { forms, pending, context } = pairedDisabilityCase();
   assertEquals(forms[0]?.print_line16_taxable, 700);
   assertEquals(forms[0]?.print_line17a_exception, true);
@@ -136,7 +137,7 @@ Deno.test("paired Form 8889 reconciles disability exception by dated 1099-SA tra
   assertEquals(pdf?.[0]?.print_line17b_penalty, 60);
 });
 
-Deno.test("disability exception rejects unsourced code 3 and misallocated transactions", () => {
+test("disability exception rejects unsourced code 3 and misallocated transactions", () => {
   const { source, forms, context } = pairedDisabilityCase();
   assertThrows(
     () =>
@@ -172,7 +173,7 @@ Deno.test("disability exception rejects unsourced code 3 and misallocated transa
   );
 });
 
-Deno.test("paired disability exception allocates a code-1 rollover before disability", () => {
+test("paired disability exception allocates a code-1 rollover before disability", () => {
   const { source } = pairedDisabilityCase();
   const allocated = inputSchema.parse({
     ...source,

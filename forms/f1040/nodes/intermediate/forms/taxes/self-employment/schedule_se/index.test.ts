@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, schedule_se } from "./index.ts";
 
@@ -49,33 +50,33 @@ function computeExpectedSeTax(
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("input_validation_empty: all fields absent → only Form 7206 source", () => {
+test("input_validation_empty: all fields absent → only Form 7206 source", () => {
   const result = compute({});
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
-Deno.test("input_validation_zero_profit: net_profit_schedule_c=0 → only Form 7206 source", () => {
+test("input_validation_zero_profit: net_profit_schedule_c=0 → only Form 7206 source", () => {
   const result = compute({ net_profit_schedule_c: 0 });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // ── SE threshold ─────────────────────────────────────────────────────────────
 
-Deno.test("threshold_below_400: net_profit_schedule_c=399 → no SE tax (below $400 threshold)", () => {
+test("threshold_below_400: net_profit_schedule_c=399 → no SE tax (below $400 threshold)", () => {
   const result = compute({ net_profit_schedule_c: 399 });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // The $400 threshold is applied to line 4a (post-92.35% multiplier), not raw net profit.
 // min raw profit for SE tax: 400 / 0.9235 ≈ 433.24 → use 434 as "at threshold"
-Deno.test("threshold_at_multiplied_400: raw profit 434 → line4a=400.60 ≥ $400 → SE tax computed", () => {
+test("threshold_at_multiplied_400: raw profit 434 → line4a=400.60 ≥ $400 → SE tax computed", () => {
   // 434 × 0.9235 = 400.60 ≥ 400 → SE tax owed
   const result = compute({ net_profit_schedule_c: 434 });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
 });
 
-Deno.test("threshold_just_below_multiplied_400: raw profit 433 → line4a=399.88 < $400 → no SE tax", () => {
+test("threshold_just_below_multiplied_400: raw profit 433 → line4a=399.88 < $400 → no SE tax", () => {
   // 433 × 0.9235 = 399.88 < 400 → below threshold
   const result = compute({ net_profit_schedule_c: 433 });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
@@ -83,7 +84,7 @@ Deno.test("threshold_just_below_multiplied_400: raw profit 433 → line4a=399.88
 
 // ── Per-field calculation — Schedule C ──────────────────────────────────────
 
-Deno.test("calc_schedule_c_basic: net_profit_schedule_c=10000 → correct SE tax", () => {
+test("calc_schedule_c_basic: net_profit_schedule_c=10000 → correct SE tax", () => {
   const profit = 10_000;
   const result = compute({ net_profit_schedule_c: profit });
   const s2 = findOutput(result, "schedule2");
@@ -99,7 +100,7 @@ Deno.test("calc_schedule_c_basic: net_profit_schedule_c=10000 → correct SE tax
   );
 });
 
-Deno.test("ATS Scenario 12 profit adds rounded Schedule SE tax components", () => {
+test("ATS Scenario 12 profit adds rounded Schedule SE tax components", () => {
   const result = compute({ net_profit_schedule_c: 24_328 });
   assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, 3_438);
   assertEquals(
@@ -108,7 +109,7 @@ Deno.test("ATS Scenario 12 profit adds rounded Schedule SE tax components", () =
   );
 });
 
-Deno.test("calc_schedule_c_large: net_profit_schedule_c=200000 → SE tax uses full wage base", () => {
+test("calc_schedule_c_large: net_profit_schedule_c=200000 → SE tax uses full wage base", () => {
   const profit = 200_000;
   const result = compute({ net_profit_schedule_c: profit });
   const s2 = findOutput(result, "schedule2");
@@ -124,7 +125,7 @@ Deno.test("calc_schedule_c_large: net_profit_schedule_c=200000 → SE tax uses f
 
 // ── Per-field calculation — Schedule F (farm) ────────────────────────────────
 
-Deno.test("calc_schedule_f_basic: net_profit_schedule_f=5000 → SE tax computed from farm income", () => {
+test("calc_schedule_f_basic: net_profit_schedule_f=5000 → SE tax computed from farm income", () => {
   const profit = 5_000;
   const result = compute({ net_profit_schedule_f: profit });
   const s2 = findOutput(result, "schedule2");
@@ -139,14 +140,14 @@ Deno.test("calc_schedule_f_basic: net_profit_schedule_f=5000 → SE tax computed
   );
 });
 
-Deno.test("calc_schedule_f_below_400: net_profit_schedule_f=300 → no SE tax", () => {
+test("calc_schedule_f_below_400: net_profit_schedule_f=300 → no SE tax", () => {
   const result = compute({ net_profit_schedule_f: 300 });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // ── Per-field calculation — combined Schedule C + F ──────────────────────────
 
-Deno.test("calc_combined_c_and_f: schedule_c + schedule_f profits are summed", () => {
+test("calc_combined_c_and_f: schedule_c + schedule_f profits are summed", () => {
   const cProfit = 3_000;
   const fProfit = 2_000;
   const result = compute({
@@ -159,7 +160,7 @@ Deno.test("calc_combined_c_and_f: schedule_c + schedule_f profits are summed", (
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
-Deno.test("unsourced ministerial loss cannot offset Schedule C SE profit", () => {
+test("unsourced ministerial loss cannot offset Schedule C SE profit", () => {
   const result = compute({
     net_profit_schedule_c: 10_000,
     ministerial_se_earnings: -1_000,
@@ -168,7 +169,7 @@ Deno.test("unsourced ministerial loss cannot offset Schedule C SE profit", () =>
   assertEquals(s2?.fields.line4_se_tax, computeExpectedSeTax(10_000).seTax);
 });
 
-Deno.test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE tax computed", () => {
+test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE tax computed", () => {
   const result = compute({
     net_profit_schedule_c: 200,
     net_profit_schedule_f: 300,
@@ -179,7 +180,7 @@ Deno.test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE ta
 
 // ── SE deduction (line 13 = line 12 × 50%) ───────────────────────────────────
 
-Deno.test("calc_se_deduction_is_half: deduction = SE tax × 0.50", () => {
+test("calc_se_deduction_is_half: deduction = SE tax × 0.50", () => {
   const result = compute({ net_profit_schedule_c: 50_000 });
   const s2 = findOutput(result, "schedule2");
   const s1 = findOutput(result, "schedule1");
@@ -201,7 +202,7 @@ Deno.test("calc_se_deduction_is_half: deduction = SE tax × 0.50", () => {
 // W-2 SS wages reduce the SE SS wage base per Schedule SE Line 8a (IRC §1402(b)).
 // This prevents double SS tax on wages already subject to FICA withholding.
 
-Deno.test("threshold_wage_base_full: no offsets → full SS rate on full base", () => {
+test("threshold_wage_base_full: no offsets → full SS rate on full base", () => {
   const profit = 50_000;
   const result = compute({ net_profit_schedule_c: profit });
   const s2 = findOutput(result, "schedule2");
@@ -210,7 +211,7 @@ Deno.test("threshold_wage_base_full: no offsets → full SS rate on full base", 
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
-Deno.test("threshold_wage_base_partial_offset: unreported_tips reduce SS portion", () => {
+test("threshold_wage_base_partial_offset: unreported_tips reduce SS portion", () => {
   const profit = 100_000;
   const tips = 100_000;
   const result = compute({
@@ -223,7 +224,7 @@ Deno.test("threshold_wage_base_partial_offset: unreported_tips reduce SS portion
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
-Deno.test("threshold_wage_base_w2_offset: w2_ss_wages reduce available SS wage base", () => {
+test("threshold_wage_base_w2_offset: w2_ss_wages reduce available SS wage base", () => {
   const profit = 200_000;
   const w2SsWages = 100_000;
   const result = compute({
@@ -236,7 +237,7 @@ Deno.test("threshold_wage_base_w2_offset: w2_ss_wages reduce available SS wage b
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
-Deno.test("threshold_wage_base_w2_fully_consumed: w2_ss_wages >= wage base → only Medicare tax", () => {
+test("threshold_wage_base_w2_fully_consumed: w2_ss_wages >= wage base → only Medicare tax", () => {
   const profit = 50_000;
   const result = compute({
     net_profit_schedule_c: profit,
@@ -253,7 +254,7 @@ Deno.test("threshold_wage_base_w2_fully_consumed: w2_ss_wages >= wage base → o
   );
 });
 
-Deno.test("threshold_wage_base_fully_consumed: tips >= 176100 → only Medicare tax", () => {
+test("threshold_wage_base_fully_consumed: tips >= 176100 → only Medicare tax", () => {
   const profit = 50_000;
   const result = compute({
     net_profit_schedule_c: profit,
@@ -270,7 +271,7 @@ Deno.test("threshold_wage_base_fully_consumed: tips >= 176100 → only Medicare 
   );
 });
 
-Deno.test("threshold_wage_base_exceeded: tips > base → still only Medicare", () => {
+test("threshold_wage_base_exceeded: tips > base → still only Medicare", () => {
   const profit = 50_000;
   const result = compute({
     net_profit_schedule_c: profit,
@@ -288,7 +289,7 @@ Deno.test("threshold_wage_base_exceeded: tips > base → still only Medicare", (
 
 // ── unreported_tips_4137 offsets wage base ───────────────────────────────────
 
-Deno.test("offset_unreported_tips: unreported_tips_4137 reduces available SS wage base", () => {
+test("offset_unreported_tips: unreported_tips_4137 reduces available SS wage base", () => {
   const profit = 50_000;
   const tips = 10_000;
   const result = compute({
@@ -303,7 +304,7 @@ Deno.test("offset_unreported_tips: unreported_tips_4137 reduces available SS wag
 
 // ── wages_8919 offsets wage base ─────────────────────────────────────────────
 
-Deno.test("offset_wages_8919: wages_8919 reduces available SS wage base", () => {
+test("offset_wages_8919: wages_8919 reduces available SS wage base", () => {
   const profit = 50_000;
   const wages8919 = 20_000;
   const result = compute({
@@ -318,21 +319,21 @@ Deno.test("offset_wages_8919: wages_8919 reduces available SS wage base", () => 
 
 // ── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("routing_schedule2: SE tax routes to schedule2 with field line4_se_tax", () => {
+test("routing_schedule2: SE tax routes to schedule2 with field line4_se_tax", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
   assertEquals(typeof s2!.fields.line4_se_tax, "number");
 });
 
-Deno.test("routing_schedule1: SE deduction routes to schedule1 with field line15_se_deduction", () => {
+test("routing_schedule1: SE deduction routes to schedule1 with field line15_se_deduction", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(typeof s1!.fields.line15_se_deduction, "number");
 });
 
-Deno.test("routing_form8959_se_income: form8959 line 8 gets Part I line 6, not line 3", () => {
+test("routing_form8959_se_income: form8959 line 8 gets Part I line 6, not line 3", () => {
   const result = compute({ net_profit_schedule_c: 100_000 });
   const f8959 = findOutput(result, "form8959");
   // Sch SE line 3 = 100,000; line 4a = line 4c = line 6 = 100,000 x 0.9235 = 92,350.
@@ -341,7 +342,7 @@ Deno.test("routing_form8959_se_income: form8959 line 8 gets Part I line 6, not l
   assertEquals(f8959!.fields.se_income, 92_350);
 });
 
-Deno.test("routing_form8959_se_income_with_farm: line 6 nets farm and nonfarm profit", () => {
+test("routing_form8959_se_income_with_farm: line 6 nets farm and nonfarm profit", () => {
   const result = compute({
     net_profit_schedule_c: 60_000,
     net_profit_schedule_f: 40_000,
@@ -350,7 +351,7 @@ Deno.test("routing_form8959_se_income_with_farm: line 6 nets farm and nonfarm pr
   assertEquals(f8959!.fields.se_income, 92_350);
 });
 
-Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_tax_deduction", () => {
+test("routing_form8995: deductible half of SE tax routes to form8995 as se_tax_deduction", () => {
   // i8995, Determining Your Qualified Business Income: the items attributable to the trade
   // or business include the "deductible part of self-employment tax", so Line 13 reduces QBI.
   const result = compute({ net_profit_schedule_c: 10_000 });
@@ -363,7 +364,7 @@ Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_
   );
 });
 
-Deno.test("routing_includes_form7206_source_and_six_tax_outputs", () => {
+test("routing_includes_form7206_source_and_six_tax_outputs", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
   assertEquals(result.outputs.length, 8);
   const { seDeduction } = computeExpectedSeTax(10_000);
@@ -375,12 +376,12 @@ Deno.test("routing_includes_form7206_source_and_six_tax_outputs", () => {
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
 
-Deno.test("edge_negative_net_profit: negative Schedule C profit → no SE tax", () => {
+test("edge_negative_net_profit: negative Schedule C profit → no SE tax", () => {
   const result = compute({ net_profit_schedule_c: -5_000 });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
-Deno.test("edge_combined_loss_nets_below_threshold: c=1000 + f=-800 = 200 < $400 → no SE tax", () => {
+test("edge_combined_loss_nets_below_threshold: c=1000 + f=-800 = 200 < $400 → no SE tax", () => {
   const result = compute({
     net_profit_schedule_c: 1_000,
     net_profit_schedule_f: -800,
@@ -389,7 +390,7 @@ Deno.test("edge_combined_loss_nets_below_threshold: c=1000 + f=-800 = 200 < $400
 });
 
 // Combined = 434 (= 1000 + (-566)); 434 × 0.9235 = 400.60 ≥ $400 → SE tax computed
-Deno.test("edge_combined_nets_above_multiplied_threshold: c=1000 + f=-566 = 434 → line4a ≥ $400 → SE tax", () => {
+test("edge_combined_nets_above_multiplied_threshold: c=1000 + f=-566 = 434 → line4a ≥ $400 → SE tax", () => {
   const result = compute({
     net_profit_schedule_c: 1_000,
     net_profit_schedule_f: -566,
@@ -398,7 +399,7 @@ Deno.test("edge_combined_nets_above_multiplied_threshold: c=1000 + f=-566 = 434 
   assertEquals(s2 !== undefined, true);
 });
 
-Deno.test("edge_all_offsets: tips + 8919 fully consume wage base → only Medicare", () => {
+test("edge_all_offsets: tips + 8919 fully consume wage base → only Medicare", () => {
   const profit = 80_000;
   const result = compute({
     net_profit_schedule_c: profit,
@@ -417,7 +418,7 @@ Deno.test("edge_all_offsets: tips + 8919 fully consume wage base → only Medica
 
 // ── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_ss_wages all offsetting", () => {
+test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_ss_wages all offsetting", () => {
   const cProfit = 60_000;
   const fProfit = 10_000;
   const tips = 5_000;
@@ -453,7 +454,7 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_s
 
 // ── TY2025 Part II farm optional method ──────────────────────────────────────
 
-Deno.test("farm_optional_loss_election: line15 replaces farm loss on line1a", () => {
+test("farm_optional_loss_election: line15 replaces farm loss on line1a", () => {
   const result = compute({
     net_profit_schedule_f: -1_200,
     gross_farm_income: 900,
@@ -474,7 +475,7 @@ Deno.test("farm_optional_loss_election: line15 replaces farm loss on line1a", ()
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 600);
 });
 
-Deno.test("farm_optional_exact_gross_limit: $10,860 qualifies despite net profit at $7,840", () => {
+test("farm_optional_exact_gross_limit: $10,860 qualifies despite net profit at $7,840", () => {
   const result = compute({
     net_profit_schedule_f: 7_840,
     gross_farm_income: 10_860,
@@ -483,7 +484,7 @@ Deno.test("farm_optional_exact_gross_limit: $10,860 qualifies despite net profit
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 7_240);
 });
 
-Deno.test("farm_optional_net_profit_limit: profit below $7,840 qualifies despite larger gross", () => {
+test("farm_optional_net_profit_limit: profit below $7,840 qualifies despite larger gross", () => {
   const result = compute({
     net_profit_schedule_f: 7_839,
     gross_farm_income: 20_000,
@@ -492,7 +493,7 @@ Deno.test("farm_optional_net_profit_limit: profit below $7,840 qualifies despite
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 7_240);
 });
 
-Deno.test("farm_optional_ineligible: gross above $10,860 and profit at $7,840", () => {
+test("farm_optional_ineligible: gross above $10,860 and profit at $7,840", () => {
   assertThrows(
     () =>
       compute({
@@ -505,7 +506,7 @@ Deno.test("farm_optional_ineligible: gross above $10,860 and profit at $7,840", 
   );
 });
 
-Deno.test("farm_optional_requires_both_source_amounts", () => {
+test("farm_optional_requires_both_source_amounts", () => {
   assertThrows(
     () =>
       compute({
@@ -523,7 +524,7 @@ Deno.test("farm_optional_requires_both_source_amounts", () => {
   );
 });
 
-Deno.test("farm_optional_combines_nonfarm_regular_earnings_without_double_counting_farm", () => {
+test("farm_optional_combines_nonfarm_regular_earnings_without_double_counting_farm", () => {
   const result = compute({
     net_profit_schedule_c: 1_000,
     net_profit_schedule_f: 1_000,
@@ -540,7 +541,7 @@ Deno.test("farm_optional_combines_nonfarm_regular_earnings_without_double_counti
   );
 });
 
-Deno.test("farm_optional_nonfarm_loss_offsets_optional_farm_earnings", () => {
+test("farm_optional_nonfarm_loss_offsets_optional_farm_earnings", () => {
   const result = compute({
     net_profit_schedule_c: -1_000,
     net_profit_schedule_f: -300,
@@ -551,7 +552,7 @@ Deno.test("farm_optional_nonfarm_loss_offsets_optional_farm_earnings", () => {
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 1_000);
 });
 
-Deno.test("farm_optional_nonfarm_loss_can_reduce_line4c_below_the_filing_threshold", () => {
+test("farm_optional_nonfarm_loss_can_reduce_line4c_below_the_filing_threshold", () => {
   const result = compute({
     net_profit_schedule_c: -1_800,
     net_profit_schedule_f: -300,
@@ -562,7 +563,7 @@ Deno.test("farm_optional_nonfarm_loss_can_reduce_line4c_below_the_filing_thresho
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
-Deno.test("farm_optional_line4c_below_threshold: elected method can still yield no tax", () => {
+test("farm_optional_line4c_below_threshold: elected method can still yield no tax", () => {
   const result = compute({
     net_profit_schedule_f: -300,
     gross_farm_income: 450,

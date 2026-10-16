@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import fixtures from "./form8962-overlap.fixture.json" with { type: "json" };
 import expected from "./form8962-overlap.expected.json" with { type: "json" };
@@ -12,7 +13,7 @@ import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits
 // Expected amounts come from the independent source/Decimal and IRS Tax Table
 // replay documented in the policy-month gap, not the return under test.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`Overlapping/shared-policy public return reconciles source and final tax: ${id}`, async () => {
+  test(`Overlapping/shared-policy public return reconciles source and final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -47,7 +48,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("Complete overlap/shared returns reject policy, coverage and final-return drift in native and PDF", async () => {
+test("Complete overlap/shared returns reject policy, coverage and final-return drift in native and PDF", async () => {
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);
     assertEquals(result.diagnostics, []);

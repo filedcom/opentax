@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateCurrentYearInventory } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import { currentYearInput } from "./current-year.fixture.ts";
 
-Deno.test("Current-year depreciation applies credit basis before 40% bonus and residual HY/MQ", () => {
+test("Current-year depreciation applies credit basis before 40% bonus and residual HY/MQ", () => {
   for (
     const [late, construction, bonus, basis, depreciation, total] of [
       [false, false, 3760, 5640, 1128, 4888],
@@ -24,7 +25,7 @@ Deno.test("Current-year depreciation applies credit basis before 40% bonus and r
   }
 });
 
-Deno.test("Mid-quarter threshold is strictly above 40%, across businesses, before bonus", () => {
+test("Mid-quarter threshold is strictly above 40%, across businesses, before bonus", () => {
   const input = currentYearInput().form4562.current_year_inventory;
   const { form8911_property_reference: _p, ...asset } = input.assets[0];
   for (
@@ -58,7 +59,7 @@ Deno.test("Mid-quarter threshold is strictly above 40%, across businesses, befor
   }
 });
 
-Deno.test("All six GDS classes use the correct declining-balance rate and quarter", () => {
+test("All six GDS classes use the correct declining-balance rate and quarter", () => {
   const input = currentYearInput().form4562.current_year_inventory;
   const { form8911_property_reference: _p, ...asset } = input.assets[0];
   // $42,000 residual basis. Exact rates, rather than rounded percentage tables.
@@ -113,7 +114,7 @@ Deno.test("All six GDS classes use the correct declining-balance rate and quarte
   }
 });
 
-Deno.test("Current-year inventory rejects unreviewed eligibility, dates, elections and duplicates", () => {
+test("Current-year inventory rejects unreviewed eligibility, dates, elections and duplicates", () => {
   const input = currentYearInput().form4562.current_year_inventory;
   const asset = input.assets[0];
   for (
@@ -163,7 +164,7 @@ Deno.test("Current-year inventory rejects unreviewed eligibility, dates, electio
   );
 });
 
-Deno.test("Bonus acquisition cutoff and filed-line rounding preserve exact residual basis", () => {
+test("Bonus acquisition cutoff and filed-line rounding preserve exact residual basis", () => {
   const input = currentYearInput().form4562.current_year_inventory;
   const { form8911_property_reference: _p, ...asset } = input.assets[0];
   for (

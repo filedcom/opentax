@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -33,7 +35,7 @@ function calculated() {
   );
 }
 
-Deno.test("two household wage sources reach line 1b, native XML/XSD and PDF", async () => {
+test("two household wage sources reach line 1b, native XML/XSD and PDF", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1b_household_wages, 2_000);
@@ -43,7 +45,7 @@ Deno.test("two household wage sources reach line 1b, native XML/XSD and PDF", as
     xml,
     "<HouseholdEmployeeWagesAmt>2000</HouseholdEmployeeWagesAmt>",
   );
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -55,7 +57,7 @@ Deno.test("two household wage sources reach line 1b, native XML/XSD and PDF", as
   const checked = await validator.output();
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   const pdf = await buildPdfBytes(pending, base.filer);
-  const reader = new Deno.Command("pdftotext", {
+  const reader = new sys.Command("pdftotext", {
     args: ["-layout", "-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -69,7 +71,7 @@ Deno.test("two household wage sources reach line 1b, native XML/XSD and PDF", as
   assertStringIncludes(new TextDecoder().decode(extracted.stdout), "2000");
 });
 
-Deno.test("line 1b exports reject changed or missing household wage sources", async () => {
+test("line 1b exports reject changed or missing household wage sources", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -108,7 +110,7 @@ Deno.test("line 1b exports reject changed or missing household wage sources", as
   }
 });
 
-Deno.test("line 1b household federal withholding needs an issued wage source", async () => {
+test("line 1b household federal withholding needs an issued wage source", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

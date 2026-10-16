@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { itemSchema } from "../../../../../nodes/inputs/income/retirement/f8915f/index.ts";
@@ -62,7 +65,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 8915-F repayment worksheet replays exact bytes after time passes", async () => {
+test("Form 8915-F repayment worksheet replays exact bytes after time passes", async () => {
   const repaid = itemSchema.parse({
     ...item,
     full_inclusion_elected: false,
@@ -83,7 +86,7 @@ Deno.test("Form 8915-F repayment worksheet replays exact bytes after time passes
   assertEquals(second.bytes, first.bytes);
 });
 
-Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", async () => {
+test("bounded Form 8915-F native document matches source and TY2025 XSD", async () => {
   const xml = buildCurrentYearDistributionForm8915F(item, { filer, pending });
   assertStringIncludes(
     xml,
@@ -102,13 +105,13 @@ Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", a
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       `<?xml version="1.0"?>${
         xml.replace(
@@ -117,7 +120,7 @@ Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", a
         )
       }`,
     );
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stderr: "piped",
     }).output();
@@ -127,11 +130,11 @@ Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", a
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("bounded Form 8915-F native document rejects changed retirement income", () => {
+test("bounded Form 8915-F native document rejects changed retirement income", () => {
   assertThrows(
     () =>
       buildCurrentYearDistributionForm8915F(item, {

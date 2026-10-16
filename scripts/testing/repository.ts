@@ -1,3 +1,4 @@
+import * as sys from "../support/sys.ts";
 import { join, toFileUrl } from "@std/path";
 import {
   assertGraphCoverage,
@@ -6,7 +7,7 @@ import {
 } from "./contracts.ts";
 
 export async function repositoryFiles(root: string): Promise<string[]> {
-  const result = await new Deno.Command("git", {
+  const result = await new sys.Command("git", {
     args: ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
     cwd: root,
     stdout: "piped",
@@ -48,7 +49,7 @@ export async function runtimeSnapshot(
   const entries = await Promise.all(paths.map(async (path) => {
     const hash = await crypto.subtle.digest(
       "SHA-256",
-      await Deno.readFile(join(root, path)),
+      await sys.readBytes(join(root, path)),
     );
     return [
       path,
@@ -69,14 +70,14 @@ export async function graphPreflight(
     path.endsWith(".ts")
   );
   const entry = join(evidenceDirectory, "all-modules.ts");
-  await Deno.writeTextFile(
+  await sys.writeText(
     entry,
     paths.map((path) =>
       `import ${JSON.stringify(toFileUrl(join(root, path)).href)};`
     ).join("\n"),
     { createNew: true, mode: 0o600 },
   );
-  const result = await new Deno.Command("deno", {
+  const result = await new sys.Command("deno", {
     args: [
       "info",
       "--frozen",
@@ -89,12 +90,12 @@ export async function graphPreflight(
     stdout: "piped",
     stderr: "piped",
   }).output();
-  await Deno.writeFile(
+  await sys.writeBytes(
     join(evidenceDirectory, "module-graph.json"),
     result.stdout,
     { createNew: true, mode: 0o600 },
   );
-  await Deno.writeFile(
+  await sys.writeBytes(
     join(evidenceDirectory, "module-graph.stderr.log"),
     result.stderr,
     { createNew: true, mode: 0o600 },

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 // deno-lint-ignore-file no-explicit-any
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
@@ -17,9 +20,9 @@ import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/form
 import { form8995a } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
 
-const evidenceDir = Deno.env.get("SCHEDULE_J_FISHING_EVIDENCE_DIR") ??
+const evidenceDir = process.env.SCHEDULE_J_FISHING_EVIDENCE_DIR ??
   ".state/research/schedulej-fishing-preferential-source";
-const xsd = Deno.env.get("SCHEDULE_J_FISHING_XSD_PATH") ??
+const xsd = process.env.SCHEDULE_J_FISHING_XSD_PATH ??
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 async function packet(id: string, input: Record<string, unknown>) {
@@ -37,18 +40,18 @@ async function packet(id: string, input: Record<string, unknown>) {
     origins,
   );
   const dir = `${evidenceDir}/${id}`;
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const validation = await new Deno.Command("xmllint", {
+  const validation = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, `${dir}/return.xml`],
     stderr: "piped",
   }).output();
@@ -57,7 +60,7 @@ async function packet(id: string, input: Record<string, unknown>) {
   return { result, pending, origins, xml: prepared.bundle.xml };
 }
 
-Deno.test("retained commercial catch, one/two farms and dividends refigure actual Schedule J source", async () => {
+test("retained commercial catch, one/two farms and dividends refigure actual Schedule J source", async () => {
   for (const kind of scheduleJFishingCases) {
     const input = scheduleJFishingInputs(kind);
     const without = structuredClone(input) as any;
@@ -107,7 +110,7 @@ Deno.test("retained commercial catch, one/two farms and dividends refigure actua
   }
 });
 
-Deno.test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed catch fully sourced", async () => {
+test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed catch fully sourced", async () => {
   const input = scheduleJFishingFullPhaseoutInputs();
   const without = structuredClone(input) as any;
   delete without.schedule_j;
@@ -130,7 +133,7 @@ Deno.test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed ca
   assertEquals(elected.xml.includes("<IRS8995A "), false);
 });
 
-Deno.test("actual mixed fishing and farm phase-in derives separate advanced QBI", async () => {
+test("actual mixed fishing and farm phase-in derives separate advanced QBI", async () => {
   const input = scheduleJFishingPhaseInInputs();
   const noElection = structuredClone(input) as any;
   delete noElection.schedule_j;
@@ -177,7 +180,7 @@ Deno.test("actual mixed fishing and farm phase-in derives separate advanced QBI"
   }
 });
 
-Deno.test("fishing attribution rejects absent, mutated and mismatched source bytes", async () => {
+test("fishing attribution rejects absent, mutated and mismatched source bytes", async () => {
   const good: any = scheduleJFishingInputs("mixed-one-farm");
   const bads: any[] = [];
   const missing = structuredClone(good);
@@ -225,7 +228,7 @@ Deno.test("fishing attribution rejects absent, mutated and mismatched source byt
   await assertRejects(() => buildPdfBytes(pending, filer, ".pdf-cache"));
 });
 
-Deno.test("mixed fishing QBI within phase-in retains its required per-business filing guard", async () => {
+test("mixed fishing QBI within phase-in retains its required per-business filing guard", async () => {
   const input: any = scheduleJFishingInputs("mixed-one-farm");
   const proof =
     input.schedule_c[0].schedule_j_fishing_evidence.retained_catch_ledger;

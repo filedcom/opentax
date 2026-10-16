@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { form7203StockLossPdf } from "./f7203_stock_loss.ts";
@@ -56,7 +57,7 @@ function pending(basis = 3_000, printedLoss = -Math.min(4_000, basis)) {
   };
 }
 
-Deno.test("staged Form 7203 PDF maps the two-page stock-only source", () => {
+test("staged Form 7203 PDF maps the two-page stock-only source", () => {
   const instance = form7203StockLossPdf.instances?.(
     { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
     filer,
@@ -78,7 +79,7 @@ Deno.test("staged Form 7203 PDF maps the two-page stock-only source", () => {
   assertEquals(field("line47_carryover"), "topmostSubform[0].Page2[0].Table_Part3[0].Line47[0].f2_122[0]");
 });
 
-Deno.test("staged Form 7203 PDF skips zero-basis stock allowance", () => {
+test("staged Form 7203 PDF skips zero-basis stock allowance", () => {
   const instance = form7203StockLossPdf.instances?.(
     { stock_basis_beginning: 0, ordinary_loss: 4_000 },
     filer,
@@ -90,7 +91,7 @@ Deno.test("staged Form 7203 PDF skips zero-basis stock allowance", () => {
   assertEquals(instance?.line35_carryover, 4_000);
 });
 
-Deno.test("Form 7203 PDF prints a sourced cash capital contribution on line 2", () => {
+test("Form 7203 PDF prints a sourced cash capital contribution on line 2", () => {
   const previous = pending(3_000, -3_500);
   const contribution = {
     amount: 500,
@@ -124,7 +125,7 @@ Deno.test("Form 7203 PDF prints a sourced cash capital contribution on line 2", 
   )?.pdfField, "topmostSubform[0].Page1[0].f1_08[0]");
 });
 
-Deno.test("staged Form 7203 PDF rejects Schedule 1 printed-line mismatch", () => {
+test("staged Form 7203 PDF rejects Schedule 1 printed-line mismatch", () => {
   assertThrows(() => form7203StockLossPdf.instances?.(
     { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
     filer,
@@ -132,7 +133,7 @@ Deno.test("staged Form 7203 PDF rejects Schedule 1 printed-line mismatch", () =>
   ), Error, "must match Schedule 1 line 5");
 });
 
-Deno.test("staged Form 7203 PDF rejects an unreviewed debt-supported loss", () => {
+test("staged Form 7203 PDF rejects an unreviewed debt-supported loss", () => {
   assertThrows(
     () => form7203StockLossPdf.instances?.(
       { stock_basis_beginning: 3_000, ordinary_loss: 4_000, debt_basis_beginning: 1_000 },

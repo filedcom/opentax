@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   buildForm8886Document,
@@ -18,9 +21,9 @@ async function validate(
   root = "IRS8886",
   schemaUrl = schema,
 ): Promise<void> {
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       path,
       xml.replace(
         `<${root}`,
@@ -29,18 +32,18 @@ async function validate(
         }`,
       ),
     );
-    const result = await new Deno.Command("xmllint", {
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schemaUrl.pathname, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("Form 8886 disclosure preserves lifetime benefit, identity and statement numbering in XSD-valid native XML", async () => {
+test("Form 8886 disclosure preserves lifetime benefit, identity and statement numbering in XSD-valid native XML", async () => {
   const xml = buildForm8886Document(disclosureFixture, "111223333", 2, 3);
   assertStringIncludes(
     xml,
@@ -56,7 +59,7 @@ Deno.test("Form 8886 disclosure preserves lifetime benefit, identity and stateme
   await validate(xml);
 });
 
-Deno.test("Form 8886 native continuation retains every narrative word and links its dedicated XSD root", async () => {
+test("Form 8886 native continuation retains every narrative word and links its dedicated XSD root", async () => {
   const source = {
     ...disclosureFixture,
     transaction_steps:
@@ -96,7 +99,7 @@ Deno.test("Form 8886 native continuation retains every narrative word and links 
   );
 });
 
-Deno.test("Form 8886 continuation boundary does not add an empty statement or lose multi-entry narrative text", async () => {
+test("Form 8886 continuation boundary does not add an empty statement or lose multi-entry narrative text", async () => {
   const source = { ...disclosureFixture, transaction_steps: "Brief steps." };
   const remainingLength = 1000 - form8886NativeNarrative(source).initial.length;
   const exact = {
@@ -139,7 +142,7 @@ Deno.test("Form 8886 continuation boundary does not add an empty statement or lo
   );
 });
 
-Deno.test("Form 8886 simultaneous category and tax-credit/other flags retain IRS element order", async () => {
+test("Form 8886 simultaneous category and tax-credit/other flags retain IRS element order", async () => {
   const xml = buildForm8886Document(
     {
       ...disclosureFixture,
@@ -171,7 +174,7 @@ Deno.test("Form 8886 simultaneous category and tax-credit/other flags retain IRS
   await validate(xml);
 });
 
-Deno.test("Form 8886 refuses a different taxpayer, invalid numbering and truncating disclosure narratives", () => {
+test("Form 8886 refuses a different taxpayer, invalid numbering and truncating disclosure narratives", () => {
   assertThrows(() =>
     buildForm8886Document(disclosureFixture, "444556666", 1, 1)
   );
@@ -194,7 +197,7 @@ Deno.test("Form 8886 refuses a different taxpayer, invalid numbering and truncat
   );
 });
 
-Deno.test("Form 8886 general continuations preserve long names, involvement and original additional RTNs in line order", async () => {
+test("Form 8886 general continuations preserve long names, involvement and original additional RTNs in line order", async () => {
   const source = {
     ...disclosureFixture,
     transactions: [{
@@ -279,7 +282,7 @@ Deno.test("Form 8886 general continuations preserve long names, involvement and 
   );
 });
 
-Deno.test("Form 8886 lifetime benefit aggregation stays within the native fifteen-digit amount", async () => {
+test("Form 8886 lifetime benefit aggregation stays within the native fifteen-digit amount", async () => {
   const source = {
     ...disclosureFixture,
     benefits: [{
@@ -316,7 +319,7 @@ Deno.test("Form 8886 lifetime benefit aggregation stays within the native fiftee
   );
 });
 
-Deno.test("Form 8886 native copies explicitly identify primary and spouse taxpayers without using an EIN or changing printable narrative", async () => {
+test("Form 8886 native copies explicitly identify primary and spouse taxpayers without using an EIN or changing printable narrative", async () => {
   for (const taxpayer of ["111223333", "444556666"]) {
     const source = { ...disclosureFixture, taxpayer_ssn: taxpayer };
     const narrative = form8886Narrative(source);

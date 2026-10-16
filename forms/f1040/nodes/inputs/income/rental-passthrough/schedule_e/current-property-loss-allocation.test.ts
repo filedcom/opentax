@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { currentPropertyLossAllocation } from "./current-property-loss-allocation.ts";
 import { passivePropertyInputs } from "../../../../../2025/domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
 import { qualifiedFarmRentalSource } from "../../../../../2025/domains/credits/earned-income/earned-income/eic_passive_k1.fixture.ts";
 
-Deno.test("current closing, rent and tax source records retain independently allowed operating and ordinary sale losses", () => {
+test("current closing, rent and tax source records retain independently allowed operating and ordinary sale losses", () => {
   const property =
     passivePropertyInputs(-3000).schedule_e[0].current_property_source;
   const farm = qualifiedFarmRentalSource();
@@ -23,7 +24,7 @@ Deno.test("current closing, rent and tax source records retain independently all
   assertEquals(r.origins[0].recipient_tin, "111223333");
 });
 
-Deno.test("net-positive land recharacterization keeps a sale loss separate from an unrelated passive farm loss", () => {
+test("net-positive land recharacterization keeps a sale loss separate from an unrelated passive farm loss", () => {
   const property =
     passivePropertyInputs(-3000).schedule_e[0].current_property_source;
   property.rent_payments[0].amount = 8000;
@@ -39,7 +40,7 @@ Deno.test("net-positive land recharacterization keeps a sale loss separate from 
   assertEquals(r.passive_allocation!.suspended_loss, 5000);
 });
 
-Deno.test("source-only sale-loss allocation keeps complete-disposition, prior-history and duplicate-activity claims rejected", () => {
+test("source-only sale-loss allocation keeps complete-disposition, prior-history and duplicate-activity claims rejected", () => {
   const property =
     passivePropertyInputs(-3000).schedule_e[0].current_property_source;
   assertThrows(() => currentPropertyLossAllocation([property, property], []));

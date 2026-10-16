@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { HomeImprovementKind } from "../../../../../nodes/intermediate/forms/general/filing/joint_occupancy_statement/index.ts";
 import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 
-Deno.test("joint occupancy statement emits schema-order groups and a decimal share", () => {
+test("joint occupancy statement emits schema-order groups and a decimal share", () => {
   const [xml] = jointOccupancyStatement.build({
     statements: [{
       home_improvements: [
@@ -33,7 +34,7 @@ Deno.test("joint occupancy statement emits schema-order groups and a decimal sha
   assertStringIncludes(xml, "Shared A/C &amp; installation");
 });
 
-Deno.test("joint occupancy statement rejects an impossible allocation", () => {
+test("joint occupancy statement rejects an impossible allocation", () => {
   assertThrows(() =>
     jointOccupancyStatement.build({
       statements: [{
@@ -48,7 +49,7 @@ Deno.test("joint occupancy statement rejects an impossible allocation", () => {
   );
 });
 
-Deno.test("joint occupancy statement allocates a binding property cap", () => {
+test("joint occupancy statement allocates a binding property cap", () => {
   const [xml] = jointOccupancyStatement.build({
     statements: [{
       home_improvements: [{
@@ -63,7 +64,7 @@ Deno.test("joint occupancy statement allocates a binding property cap", () => {
   assertStringIncludes(xml, "<CalculatedCreditAmt>300</CalculatedCreditAmt>");
 });
 
-Deno.test("joint occupancy statement rejects a property cap above the IRS limit", () => {
+test("joint occupancy statement rejects a property cap above the IRS limit", () => {
   assertThrows(() =>
     jointOccupancyStatement.build({
       statements: [{
@@ -78,7 +79,7 @@ Deno.test("joint occupancy statement rejects a property cap above the IRS limit"
   );
 });
 
-Deno.test("joint occupancy statement rejects a share that rounds to one", () => {
+test("joint occupancy statement rejects a share that rounds to one", () => {
   assertThrows(() =>
     jointOccupancyStatement.build({
       statements: [{
@@ -93,7 +94,7 @@ Deno.test("joint occupancy statement rejects a share that rounds to one", () => 
   );
 });
 
-Deno.test("joint occupancy fuel-cell cost follows the IRS allocation example", () => {
+test("joint occupancy fuel-cell cost follows the IRS allocation example", () => {
   const [xml] = jointOccupancyStatement.build({
     statements: [{
       fuel_cell_properties: [{
@@ -115,7 +116,7 @@ Deno.test("joint occupancy fuel-cell cost follows the IRS allocation example", (
   );
 });
 
-Deno.test("joint occupancy statement rejects fractional fuel-cell increments", () => {
+test("joint occupancy statement rejects fractional fuel-cell increments", () => {
   assertThrows(() =>
     jointOccupancyStatement.build({
       statements: [{

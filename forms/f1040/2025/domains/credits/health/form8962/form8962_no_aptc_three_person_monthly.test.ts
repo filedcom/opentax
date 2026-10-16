@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as InputFilingStatus } from "../../../../../nodes/types.ts";
@@ -235,7 +236,7 @@ function filedReturn(
   });
 }
 
-Deno.test("Form 8962 three-person monthly policy combines one required-filing W-2 and one excluded reviewed interest dependent", async () => {
+test("Form 8962 three-person monthly policy combines one required-filing W-2 and one excluded reviewed interest dependent", async () => {
   const result = filedReturn("mixed");
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -258,7 +259,7 @@ Deno.test("Form 8962 three-person monthly policy combines one required-filing W-
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 required-W-2 and excluded-interest dependent rejects source and final-return tampering", async () => {
+test("Form 8962 required-W-2 and excluded-interest dependent rejects source and final-return tampering", async () => {
   const result = filedReturn("mixed");
   const pending = normalizeAllPending(result.pending);
   const changed = (first: unknown, second: unknown) => ({
@@ -316,7 +317,7 @@ Deno.test("Form 8962 required-W-2 and excluded-interest dependent rejects source
   );
 });
 
-Deno.test("Form 8962 three-person monthly policy excludes two reviewed not-required dependents through native and PDF", async () => {
+test("Form 8962 three-person monthly policy excludes two reviewed not-required dependents through native and PDF", async () => {
   const result = filedReturn("both_not_required");
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -339,7 +340,7 @@ Deno.test("Form 8962 three-person monthly policy excludes two reviewed not-requi
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 two reviewed not-required dependents reject threshold, borrowed source, coverage, and final-credit tampering", async () => {
+test("Form 8962 two reviewed not-required dependents reject threshold, borrowed source, coverage, and final-credit tampering", async () => {
   const result = filedReturn("both_not_required");
   const pending = normalizeAllPending(result.pending);
   const changed = (first: unknown, second: unknown) => ({
@@ -427,7 +428,7 @@ Deno.test("Form 8962 two reviewed not-required dependents reject threshold, borr
   );
 });
 
-Deno.test("Form 8962 monthly no-APTC policy with two required-filing dependents reaches final credit, native and PDF", async () => {
+test("Form 8962 monthly no-APTC policy with two required-filing dependents reaches final credit, native and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -452,7 +453,7 @@ Deno.test("Form 8962 monthly no-APTC policy with two required-filing dependents 
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 two-dependent no-APTC filing rejects dependent source, coverage, SLCSP and return tampering", async () => {
+test("Form 8962 two-dependent no-APTC filing rejects dependent source, coverage, SLCSP and return tampering", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const source = f1095aInputSchema.parse(pending.f1095a);

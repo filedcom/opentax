@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { rrb1099r } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -19,7 +20,7 @@ function compute(items: ReturnType<typeof source>[]) {
   );
 }
 
-Deno.test("RRB-1099-R fully taxable pension reaches Form 1040 and AGI", () => {
+test("RRB-1099-R fully taxable pension reaches Form 1040 and AGI", () => {
   const result = compute([source({
     box4_contributory_amount_paid: 4_000,
     box5_vested_dual_benefit: 500,
@@ -37,7 +38,7 @@ Deno.test("RRB-1099-R fully taxable pension reaches Form 1040 and AGI", () => {
   });
 });
 
-Deno.test("RRB-1099-R adds distinct pension statements", () => {
+test("RRB-1099-R adds distinct pension statements", () => {
   const result = compute([
     source({
       source_document_reference: "RRB-original-1",
@@ -57,7 +58,7 @@ Deno.test("RRB-1099-R adds distinct pension statements", () => {
   );
 });
 
-Deno.test("RRB-1099-R box 7 must replay boxes 4, 5, and 6", () => {
+test("RRB-1099-R box 7 must replay boxes 4, 5, and 6", () => {
   assertThrows(
     () =>
       compute([source({
@@ -70,7 +71,7 @@ Deno.test("RRB-1099-R box 7 must replay boxes 4, 5, and 6", () => {
   );
 });
 
-Deno.test("RRB-1099-R cost basis and prior-year repayments need review", () => {
+test("RRB-1099-R cost basis and prior-year repayments need review", () => {
   assertThrows(
     () =>
       compute([source({
@@ -88,7 +89,7 @@ Deno.test("RRB-1099-R cost basis and prior-year repayments need review", () => {
   );
 });
 
-Deno.test("RRB-1099-R cannot accept RRB-1099 SSEB boxes", () => {
+test("RRB-1099-R cannot accept RRB-1099 SSEB boxes", () => {
   assertThrows(
     () => compute([source({ box3_sseb_gross: 5_000 })]),
     Error,
@@ -106,7 +107,7 @@ Deno.test("RRB-1099-R cannot accept RRB-1099 SSEB boxes", () => {
   );
 });
 
-Deno.test("RRB-1099-R cannot accept old mislabeled pension boxes", () => {
+test("RRB-1099-R cannot accept old mislabeled pension boxes", () => {
   assertThrows(
     () => compute([source({ box8_tier2_gross: 5_000 })]),
     Error,
@@ -124,17 +125,17 @@ Deno.test("RRB-1099-R cannot accept old mislabeled pension boxes", () => {
   );
 });
 
-Deno.test("RRB-1099-R withholding uses box 9, even with no current pension", () => {
+test("RRB-1099-R withholding uses box 9, even with no current pension", () => {
   const result = compute([source({ box9_federal_withheld: 50 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 50);
   assertEquals(fieldsOf(result.outputs, agi_aggregator), undefined);
 });
 
-Deno.test("RRB-1099-R empty amounts have no tax output", () => {
+test("RRB-1099-R empty amounts have no tax output", () => {
   assertEquals(compute([source()]).outputs, []);
 });
 
-Deno.test("RRB-1099-R positive pension needs box 2 recipient identity", () => {
+test("RRB-1099-R positive pension needs box 2 recipient identity", () => {
   assertThrows(
     () =>
       compute([source({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   CoverageType,
@@ -75,7 +76,7 @@ function preparedReturn(medicareOwner: "T" | "S") {
 }
 
 for (const medicareOwner of ["T", "S"] as const) {
-  Deno.test(`January family Medicare excess for ${medicareOwner} reconciles both owner forms and return tax`, () => {
+  test(`January family Medicare excess for ${medicareOwner} reconciles both owner forms and return tax`, () => {
     const { pending } = preparedReturn(medicareOwner);
     const forms = pending.form8889.forms as Extract<
       Parameters<typeof form8889.build>[0],
@@ -117,7 +118,7 @@ for (const medicareOwner of ["T", "S"] as const) {
     );
   });
 
-  Deno.test(`January family Medicare excess for ${medicareOwner} rejects source, owner and return tampering`, () => {
+  test(`January family Medicare excess for ${medicareOwner} rejects source, owner and return tampering`, () => {
     const { source, pending } = preparedReturn(medicareOwner);
     const forms = pending.form8889.forms as Extract<
       Parameters<typeof form8889.build>[0],

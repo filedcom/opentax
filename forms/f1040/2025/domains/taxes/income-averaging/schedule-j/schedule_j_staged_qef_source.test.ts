@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
@@ -138,12 +141,12 @@ function alexSources(qef: boolean): Record<string, unknown> {
   return source;
 }
 
-Deno.test("Alex's issued farm and dividend sources compose Schedule J, adoption and QEF", async () => {
+test("Alex's issued farm and dividend sources compose Schedule J, adoption and QEF", async () => {
   const input = alexSources(true);
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  const out = Deno.env.get("SCHEDULE_J_STAGED_EVIDENCE_DIR") ??
+  const out = process.env.SCHEDULE_J_STAGED_EVIDENCE_DIR ??
     ".state/research/schedulej-staged-source";
   const bundle = await f1040_2025.prepareReturn(
     pending,
@@ -158,18 +161,18 @@ Deno.test("Alex's issued farm and dividend sources compose Schedule J, adoption 
     bundle.bundle,
     origins,
   );
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, bundle.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, bundle.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const check = await new Deno.Command("xmllint", {
+  const check = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -201,7 +204,7 @@ Deno.test("Alex's issued farm and dividend sources compose Schedule J, adoption 
   }
 });
 
-Deno.test("Alex's Schedule J and adoption source retains staged credit without QEF", async () => {
+test("Alex's Schedule J and adoption source retains staged credit without QEF", async () => {
   const input = alexSources(false);
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -211,7 +214,7 @@ Deno.test("Alex's Schedule J and adoption source retains staged credit without Q
     Number((pending.schedule_j as Record<string, number>)?.line23) > 0,
     true,
   );
-  const out = (Deno.env.get("SCHEDULE_J_STAGED_EVIDENCE_DIR") ??
+  const out = (process.env.SCHEDULE_J_STAGED_EVIDENCE_DIR ??
     ".state/research/schedulej-staged-source") + "/adoption-only";
   const bundle = await f1040_2025.prepareReturn(
     pending,
@@ -226,18 +229,18 @@ Deno.test("Alex's Schedule J and adoption source retains staged credit without Q
     bundle.bundle,
     origins,
   );
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, bundle.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, bundle.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const check = await new Deno.Command("xmllint", {
+  const check = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -250,7 +253,7 @@ Deno.test("Alex's Schedule J and adoption source retains staged credit without Q
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
-Deno.test("Alex's issued education sources compose the J and QEF shadow at the actual phaseout", async () => {
+test("Alex's issued education sources compose the J and QEF shadow at the actual phaseout", async () => {
   const source = alexSources(true);
   delete source.form8839;
   const pre = buildPending(executeScheduleJSourceReturn(source).pending);
@@ -304,7 +307,7 @@ Deno.test("Alex's issued education sources compose the J and QEF shadow at the a
   const pending = buildPending(result.pending);
   assertEquals(pending.schedule3?.line3_education_credit ?? 0, 0);
   assertEquals(Number(pending.f1040?.form8621_1294_deferred_tax) > 0, true);
-  const out = (Deno.env.get("SCHEDULE_J_STAGED_EVIDENCE_DIR") ??
+  const out = (process.env.SCHEDULE_J_STAGED_EVIDENCE_DIR ??
     ".state/research/schedulej-staged-source") + "/education";
   const bundle = await f1040_2025.prepareReturn(pending, adoptionFixture.filer);
   const origins: PdfPageOrigin[] = [];
@@ -315,18 +318,18 @@ Deno.test("Alex's issued education sources compose the J and QEF shadow at the a
     bundle.bundle,
     origins,
   );
-  await Deno.mkdir(out, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify({ source, pending }, null, 2),
   );
-  await Deno.writeTextFile(`${out}/return.xml`, bundle.bundle.xml);
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.xml`, bundle.bundle.xml);
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const check = await new Deno.Command("xmllint", {
+  const check = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -339,7 +342,7 @@ Deno.test("Alex's issued education sources compose the J and QEF shadow at the a
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
-Deno.test("original 200k farm and 35k dividend QEF cannot defer changed NIIT", () => {
+test("original 200k farm and 35k dividend QEF cannot defer changed NIIT", () => {
   const farm = structuredClone(farmFixture.inputs) as Record<string, any>;
   const source = preferentialAmtInputs(preferentialAmtCases[0]);
   delete source.w2;

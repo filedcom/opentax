@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { qualifiedRothSource } from "./form4852_qualified_roth.fixture.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDict, PDFDocument, PDFName, PDFNumber, PDFString } from "pdf-lib";
@@ -35,7 +38,7 @@ const w2 = {
   box5_medicare_wages: 75000,
   box6_medicare_withheld: 1087.5,
 };
-Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE margins bind multiple source copies and owners to whole returns", async () => {
+test("actual retained account classifications and printable IRA/SEP/SIMPLE margins bind multiple source copies and owners to whole returns", async () => {
   const template = await officialForm4852EvidenceTemplate("f4852");
   const make = (
     n: number,
@@ -95,7 +98,7 @@ Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE 
       refund: 2614,
     },
   ];
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   const manifest = [];
   for (const row of cases) {
     const base = form4852BaseInputs(row.joint);
@@ -141,9 +144,9 @@ Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE 
       row.items.length,
     );
     const path = `${root}/${row.id}`;
-    await Deno.mkdir(path, { recursive: true });
-    await Deno.writeTextFile(`${path}/return.xml`, prepared.bundle.xml);
-    const x = await new Deno.Command("xmllint", {
+    await fs.mkdir(path, { recursive: true });
+    await fs.writeFile(`${path}/return.xml`, prepared.bundle.xml);
+    const x = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, `${path}/return.xml`],
     }).output();
     assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
@@ -155,12 +158,12 @@ Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE 
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${path}/return.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${path}/return.pdf`, pdf);
+    await fs.writeFile(
       `${path}/source.json`,
       JSON.stringify({ inputs, filer }, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${path}/pending.json`,
       JSON.stringify(prepared.bundle.pending, null, 2),
     );
@@ -169,7 +172,7 @@ Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE 
       const name = `retained-${docs.length}.${
         d.bytes[0] === 37 ? "pdf" : "json"
       }`;
-      await Deno.writeFile(`${path}/${name}`, d.bytes);
+      await fs.writeFile(`${path}/${name}`, d.bytes);
       docs.push({
         reference: d.document_reference,
         file: name,
@@ -370,13 +373,13 @@ Deno.test("actual retained account classifications and printable IRA/SEP/SIMPLE 
       );
     }
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${root}/held-manifest.json`,
     JSON.stringify(manifest, null, 2),
   );
 });
 
-Deno.test("inherited CodeQ substitutes bind original-owner death and five-year sources without changing living owner's SIMPLE penalty eligibility", async () => {
+test("inherited CodeQ substitutes bind original-owner death and five-year sources without changing living owner's SIMPLE penalty eligibility", async () => {
   const item = substitute(FormType.R_1099, 1310, {
     gross_distribution: 5000,
     taxable_amount: 0,

@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildPending } from "../execution/pending.ts";
 
-Deno.test("MeF pending keeps finalized worksheet context", () => {
+test("MeF pending keeps finalized worksheet context", () => {
   const pending = buildPending({
     form8978_reporting_year: {
       schedule3_line6l: 500,
@@ -16,7 +17,7 @@ Deno.test("MeF pending keeps finalized worksheet context", () => {
   assertEquals(pending.f1040?.line24_total_tax, 900);
 });
 
-Deno.test("MeF pending retains Form 8949 transaction provenance for Form 8854 reconciliation", () => {
+test("MeF pending retains Form 8949 transaction provenance for Form 8854 reconciliation", () => {
   const transaction = {
     part: "F",
     description: "Deemed sale of shares",
@@ -32,7 +33,7 @@ Deno.test("MeF pending retains Form 8949 transaction provenance for Form 8854 re
   assertEquals(pending.form8949?.[0].source_transaction_id, "deemed-sale-1");
 });
 
-Deno.test("MeF pending files unadjusted broker-basis sales on Schedule D only", () => {
+test("MeF pending files unadjusted broker-basis sales on Schedule D only", () => {
   const direct = {
     part: "A",
     description: "Broker shares",
@@ -57,7 +58,7 @@ Deno.test("MeF pending files unadjusted broker-basis sales on Schedule D only", 
   assertEquals(pending.schedule_d?.transaction, [direct, adjusted]);
 });
 
-Deno.test("MeF pending retains a sale with an adjustment amount for Form 8949", () => {
+test("MeF pending retains a sale with an adjustment amount for Form 8949", () => {
   const adjusted = {
     part: "A",
     description: "Adjusted broker shares",
@@ -75,7 +76,7 @@ Deno.test("MeF pending retains a sale with an adjustment amount for Form 8949", 
   );
 });
 
-Deno.test("MeF pending excludes source-only Form 8960 but retains its completed calculation", () => {
+test("MeF pending excludes source-only Form 8960 but retains its completed calculation", () => {
   const sourceOnly = buildPending({
     form8960: {
       filing_status: "single",

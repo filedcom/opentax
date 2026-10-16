@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -49,7 +52,7 @@ const cases = [
 ] as const;
 
 for (const expected of cases) {
-  Deno.test(`reviewed Form 8814 child capital source joins ${expected.id} to Schedule J, QBI, Form 6251 and full return`, async () => {
+  test(`reviewed Form 8814 child capital source joins ${expected.id} to Schedule J, QBI, Form 6251 and full return`, async () => {
     const input = form8814CapitalScheduleJInputs(
       expected.withSale,
       expected.withParentDistribution,
@@ -122,26 +125,26 @@ for (const expected of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.args[0] ??
+    const root = process.argv.slice(2)[0] ??
       ".state/research/form8814-capital-schedulej-source";
     const dir = `${root}/${expected.id}`;
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       `${dir}/source.json`,
       JSON.stringify(input, null, 2),
     );
-    await Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
-    await Deno.writeTextFile(
+    await fs.writeFile(`${dir}/pending.json`, JSON.stringify(p, null, 2));
+    await fs.writeFile(
       `${dir}/carry.json`,
       JSON.stringify(actual.carryforwards, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-    await Deno.writeFile(`${dir}/return.pdf`, pdf);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+    await fs.writeFile(`${dir}/return.pdf`, pdf);
+    const checked = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

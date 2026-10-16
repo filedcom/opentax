@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -21,7 +23,7 @@ const expected = [
   [15600, 1232114.8599999999, 166423, 236285, 111536],
   [15600, 298131.86, 13626, 0, 55507],
 ];
-Deno.test("independent actual C/F health full limited excluded phase and current-use packets validate full XSD and PDF", async () => {
+test("independent actual C/F health full limited excluded phase and current-use packets validate full XSD and PDF", async () => {
   assertEquals(fixtures.length, 7);
   for (const [index, fixture] of fixtures.entries()) {
     const r = f1040_2025.executeReturn(fixture.inputs),
@@ -68,7 +70,7 @@ Deno.test("independent actual C/F health full limited excluded phase and current
       }),
     );
     const prepared = await f1040_2025.prepareReturn(r.pending, fixture.filer);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -88,7 +90,7 @@ Deno.test("independent actual C/F health full limited excluded phase and current
     assertEquals((await prepared.renderPdf()).length > 0, true);
   }
 });
-Deno.test("mixed C/F health rejects actual owner issuer month business payroll and prepared source conflicts", async () => {
+test("mixed C/F health rejects actual owner issuer month business payroll and prepared source conflicts", async () => {
   const fixture = fixtures[0];
   for (
     const mutate of [

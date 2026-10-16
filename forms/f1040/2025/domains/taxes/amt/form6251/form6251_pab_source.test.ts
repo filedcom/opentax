@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm6251PrivateActivityBondSource } from "./form6251_pab_source.ts";
 
 const payer = { payer_name: "Bond Payer", box8: 500, box9: 400 };
 
-Deno.test("Form 6251 line 2g replays retained private-activity-bond source", () => {
+test("Form 6251 line 2g replays retained private-activity-bond source", () => {
   const fields = {
     line2g_pab_interest: 400,
     private_activity_bond_interest: 400,
@@ -38,7 +39,7 @@ Deno.test("Form 6251 line 2g replays retained private-activity-bond source", () 
   );
 });
 
-Deno.test("Form 6251 line 2g closes mixed OID PAB channels without a reviewed source route", () => {
+test("Form 6251 line 2g closes mixed OID PAB channels without a reviewed source route", () => {
   const fields = {
     line2g_pab_interest: 625,
     private_activity_bond_interest: 700,
@@ -88,7 +89,7 @@ Deno.test("Form 6251 line 2g closes mixed OID PAB channels without a reviewed so
   );
 });
 
-Deno.test("Form 6251 line 2g replays net specified private-activity-bond OID", () => {
+test("Form 6251 line 2g replays net specified private-activity-bond OID", () => {
   const oid = {
     payer_name: "OID Payer",
     payer_tin: "123456789",

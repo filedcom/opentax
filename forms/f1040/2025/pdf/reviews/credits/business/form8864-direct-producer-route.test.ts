@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -20,7 +23,7 @@ const base = pdfReviewFixtures.find((fixture) =>
 )!;
 const source = base.inputs.f8864 as typeof directAgriBiodieselSource;
 
-Deno.test("direct Form 8864 producer source reaches full return, AMT, native and filled PDF", async () => {
+test("direct Form 8864 producer source reaches full return, AMT, native and filled PDF", async () => {
   const result = f1040_2025.executeReturn(base.inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -49,32 +52,32 @@ Deno.test("direct Form 8864 producer source reaches full return, AMT, native and
   assertEquals(fields.line8_gallons, 2500);
   assertEquals(fields.line8, 500);
   assertEquals(fields.line11, 500);
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
     const xsd = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await prepared.renderPdf();
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-10-05-form8864-direct-producer/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-    await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${directory}pending.json`,
       JSON.stringify(result.pending, null, 2),
     );

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -11,7 +13,7 @@ import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.t
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("joint-primary-wotc-")
 );
-Deno.test("joint primary WOTC preserves spouse W2 and full wage reduction through phase-in/native/PDF/XSD", async () => {
+test("joint primary WOTC preserves spouse W2 and full wage reduction through phase-in/native/PDF/XSD", async () => {
   for (const fixture of fixtures) {
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
@@ -72,7 +74,7 @@ Deno.test("joint primary WOTC preserves spouse W2 and full wage reduction throug
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const proc = new Deno.Command("xmllint", {
+    const proc = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -86,7 +88,7 @@ Deno.test("joint primary WOTC preserves spouse W2 and full wage reduction throug
     assertEquals((await prepared.renderPdf()).length > 0, true);
   }
 });
-Deno.test("joint WOTC native and PDF reject owned wage/credit/phase-in/source conflicts", () => {
+test("joint WOTC native and PDF reject owned wage/credit/phase-in/source conflicts", () => {
   const fixture = fixtures[0], r = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(r.diagnostics, []);
   const original = normalizeAllPending(r.pending);
@@ -118,7 +120,7 @@ Deno.test("joint WOTC native and PDF reject owned wage/credit/phase-in/source co
   }
 });
 
-Deno.test("joint WOTC parent rejects conflicting actual filed primary and spouse identities", () => {
+test("joint WOTC parent rejects conflicting actual filed primary and spouse identities", () => {
   const fixture = fixtures[0],
     r = f1040_2025.executeReturn(fixture.inputs),
     p = normalizeAllPending(r.pending);
@@ -134,7 +136,7 @@ Deno.test("joint WOTC parent rejects conflicting actual filed primary and spouse
   }
 });
 
-Deno.test("joint WOTC public source rejects missing owner review or W2 owned by neither spouse", () => {
+test("joint WOTC public source rejects missing owner review or W2 owned by neither spouse", () => {
   for (
     const mutate of [
       (inputs: any) =>

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateCategory5Inclusions,
@@ -273,7 +274,7 @@ const item: F5471Item = {
 };
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("Category 5a source calculates distinct Schedule 1 lines and Form 8992", () => {
+test("Category 5a source calculates distinct Schedule 1 lines and Form 8992", () => {
   const calculation = calculateCategory5Inclusions(item);
   assertEquals(calculation.section951a, 11_000);
   assertEquals(calculation.form8992.part_ii_line2, 10_000);
@@ -289,7 +290,7 @@ Deno.test("Category 5a source calculates distinct Schedule 1 lines and Form 8992
   assertEquals(outputs[1].nodeType, "agi_aggregator");
 });
 
-Deno.test("Category 4/5a source requires reviewed absence of 2025 pro rata share transition dividends", () => {
+test("Category 4/5a source requires reviewed absence of 2025 pro rata share transition dividends", () => {
   for (
     const key of [
       "q22a_section951a2b_distributions",
@@ -315,7 +316,7 @@ Deno.test("Category 4/5a source requires reviewed absence of 2025 pro rata share
   }
 });
 
-Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and asserted GILTI", () => {
+test("Category 5a rejects missing worksheets, wrong pro rata income, and asserted GILTI", () => {
   const invalid = [
     {
       ...item,
@@ -476,7 +477,7 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
   }
 });
 
-Deno.test("Category 5a rejects multiple CFCs until multi-CFC Form 8992 is modeled", () => {
+test("Category 5a rejects multiple CFCs until multi-CFC Form 8992 is modeled", () => {
   assertThrows(() =>
     f5471.compute(
       ctx,

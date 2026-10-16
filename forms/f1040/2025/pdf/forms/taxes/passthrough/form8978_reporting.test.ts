@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule2Pdf } from "../other/schedule2.ts";
 import { schedule3Pdf } from "../../general/return-assembly/schedule3.ts";
 
-Deno.test("negative Form 8978 worksheet prints the finalized Schedule 3 credit", () => {
+test("negative Form 8978 worksheet prints the finalized Schedule 3 credit", () => {
   const fields = schedule3Pdf.projectFields?.({}, {
     form8978_reporting_year: { schedule3_line6l: 500 },
   });
@@ -16,7 +17,7 @@ Deno.test("negative Form 8978 worksheet prints the finalized Schedule 3 credit",
   );
 });
 
-Deno.test("negative Form 8978 worksheet cannot print a negative Schedule 2 line 18", () => {
+test("negative Form 8978 worksheet cannot print a negative Schedule 2 line 18", () => {
   assertThrows(
     () =>
       schedule2Pdf.projectFields?.({ line8_form5329_tax: 125 }, {
@@ -30,7 +31,7 @@ Deno.test("negative Form 8978 worksheet cannot print a negative Schedule 2 line 
   );
 });
 
-Deno.test("Schedule 2 keeps its line 21 when Form 8978 is fully used on Schedule 3", () => {
+test("Schedule 2 keeps its line 21 when Form 8978 is fully used on Schedule 3", () => {
   const fields = schedule2Pdf.projectFields?.({ line8_form5329_tax: 125 }, {
     form8978_reporting_year: {
       schedule2_line17z_reduction: 0,

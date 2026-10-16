@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -51,7 +53,7 @@ function calculated() {
   );
 }
 
-Deno.test("unreported Form 4137 tips reach Form 1040 line 1c, native XML/XSD and PDF", async () => {
+test("unreported Form 4137 tips reach Form 1040 line 1c, native XML/XSD and PDF", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1c_unreported_tips, 1_500);
@@ -63,7 +65,7 @@ Deno.test("unreported Form 4137 tips reach Form 1040 line 1c, native XML/XSD and
     xml,
     "<TotalTipsReceivedMinusRptAmt>1500</TotalTipsReceivedMinusRptAmt>",
   );
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -75,7 +77,7 @@ Deno.test("unreported Form 4137 tips reach Form 1040 line 1c, native XML/XSD and
   const checked = await validator.output();
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   const pdf = await buildPdfBytes(pending, base.filer);
-  const reader = new Deno.Command("pdftotext", {
+  const reader = new sys.Command("pdftotext", {
     args: ["-layout", "-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -89,7 +91,7 @@ Deno.test("unreported Form 4137 tips reach Form 1040 line 1c, native XML/XSD and
   assertStringIncludes(new TextDecoder().decode(extracted.stdout), "1500");
 });
 
-Deno.test("line 1c final exports reject Form 4137 income even when tax rounds unchanged", async () => {
+test("line 1c final exports reject Form 4137 income even when tax rounds unchanged", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -136,7 +138,7 @@ Deno.test("line 1c final exports reject Form 4137 income even when tax rounds un
   );
 });
 
-Deno.test("Form 4137 rejects Form 8959 deposit drift hidden by whole-dollar rounding", async () => {
+test("Form 4137 rejects Form 8959 deposit drift hidden by whole-dollar rounding", async () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

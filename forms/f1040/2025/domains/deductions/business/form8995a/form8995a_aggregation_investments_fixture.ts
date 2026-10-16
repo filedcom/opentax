@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
@@ -44,8 +45,8 @@ export async function aggregationInvestmentFixture(
     );
   } else if (name === "single-rpe-income-cap") {
     input = JSON.parse(
-      await Deno.readTextFile(
-        new URL("./form8995a-rpe-3-business-source.json", import.meta.url),
+      await fs.readFile(
+        new URL("./form8995a-rpe-3-business-source.json", import.meta.url), "utf8",
       ),
     );
     delete input.w2;

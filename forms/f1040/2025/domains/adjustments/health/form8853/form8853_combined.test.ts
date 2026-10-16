@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -12,16 +14,11 @@ import { inputSchema } from "../../../../../nodes/intermediate/forms/adjustments
 import { combinedPackets } from "./form8853_combined.fixture.ts";
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM8853_COMBINED_DIR");
-  } catch (e) {
-    if (e instanceof Deno.errors.NotCapable) return undefined;
-    throw e;
-  }
+  return process.env.FORM8853_COMBINED_DIR;
 }
 
 for (const entry of combinedPackets) {
-  Deno.test(`Form 8853 combined Archer contribution/LTC complete return: ${entry.id}`, async () => {
+  test(`Form 8853 combined Archer contribution/LTC complete return: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -143,10 +140,10 @@ for (const entry of combinedPackets) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -175,7 +172,7 @@ for (const entry of combinedPackets) {
   });
 }
 
-Deno.test("Form 8853 combined activity needs an exclusive sourced review and complete ledgers", () => {
+test("Form 8853 combined activity needs an exclusive sourced review and complete ledgers", () => {
   const base = combinedPackets[0].inputs;
   const rejects = (input: Parameters<typeof f1040_2025.executeReturn>[0]) => {
     let result;

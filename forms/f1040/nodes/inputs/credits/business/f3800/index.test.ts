@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f3800 } from "./index.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "./calculation.ts";
@@ -46,7 +47,7 @@ const carriedCredit: Form3800CarryoverVintage = {
   original_reported_balance_carried_to_2025: 600,
 };
 
-Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Schedule 3 credit", () => {
+test("f3800: Form 8881 parts enter source-backed tax limit without gross Schedule 3 credit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8881_credit: {
       schedule_c_business_reference: "PLAN-BUSINESS-1",
@@ -84,7 +85,7 @@ Deno.test("f3800: Form 8881 parts enter source-backed tax limit without gross Sc
   );
 });
 
-Deno.test("f3800: staged Form 8908 source enters standard credit separately from legacy totals", () => {
+test("f3800: staged Form 8908 source enters standard credit separately from legacy totals", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8908_credit: {
       credit_amount: 2_500,
@@ -109,7 +110,7 @@ Deno.test("f3800: staged Form 8908 source enters standard credit separately from
   );
 });
 
-Deno.test("f3800: reconciled nonpassive vintages reach their separate tax limits", () => {
+test("f3800: reconciled nonpassive vintages reach their separate tax limits", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     carryforward_vintages: [{
       vintage: carriedCredit,
@@ -141,7 +142,7 @@ Deno.test("f3800: reconciled nonpassive vintages reach their separate tax limits
   });
 });
 
-Deno.test("f3800: passive and adjusted carryforward vintages stay outside the bounded route", () => {
+test("f3800: passive and adjusted carryforward vintages stay outside the bounded route", () => {
   assertThrows(
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -186,7 +187,7 @@ Deno.test("f3800: passive and adjusted carryforward vintages stay outside the bo
   }
 });
 
-Deno.test("f3800: estate/trust code M cannot enter orphan-drug calculation", () => {
+test("f3800: estate/trust code M cannot enter orphan-drug calculation", () => {
   for (const source_type of ["estate", "trust"] as const) {
     for (const subject_to_passive_activity_limit of [false, true]) {
       assertThrows(
@@ -207,7 +208,7 @@ Deno.test("f3800: estate/trust code M cannot enter orphan-drug calculation", () 
   }
 });
 
-Deno.test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limit", () => {
+test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limit", () => {
   const entry = {
     source_type: "trust" as const,
     source_ein: "123456789",
@@ -246,7 +247,7 @@ Deno.test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limi
     }), Error);
 });
 
-Deno.test("f3800: distinct K-1 orphan-drug sources add once", () => {
+test("f3800: distinct K-1 orphan-drug sources add once", () => {
   const credits = [
     {
       source_type: "partnership" as const,
@@ -284,12 +285,12 @@ Deno.test("f3800: distinct K-1 orphan-drug sources add once", () => {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f3800.inputSchema: empty array fails (min 1)", () => {
+test("f3800.inputSchema: empty array fails (min 1)", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800: passive source waits for the shared tax limit without depositing gross credit", () => {
+test("f3800: passive source waits for the shared tax limit without depositing gross credit", () => {
   const pac = calculateForm8582CR(form8582crInputSchema.parse({
     credit_sources: [{
       activity_reference: "Clinical activity",
@@ -337,7 +338,7 @@ Deno.test("f3800: passive source waits for the shared tax limit without depositi
   );
 });
 
-Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of depositing gross credit", () => {
+test("f3800: Form 8835 source credit waits for finalized tax instead of depositing gross credit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8835_credit_entries: [{
       form3800_line: "4e",
@@ -367,7 +368,7 @@ Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of dep
   );
 });
 
-Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => {
+test("f3800: Form 5884 specified credit waits for the shared limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f5884_credit: {
       credit_amount: 2_400,
@@ -403,7 +404,7 @@ Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => 
   );
 });
 
-Deno.test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
+test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8820_credit: {
       credit_amount: 19_750,
@@ -436,7 +437,7 @@ Deno.test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
   );
 });
 
-Deno.test("f3800: New Markets Credit K-1 sources wait for the shared limit", () => {
+test("f3800: New Markets Credit K-1 sources wait for the shared limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8874_k1_credit_entries: [{
       source_type: "partnership",
@@ -484,7 +485,7 @@ Deno.test("f3800: New Markets Credit K-1 sources wait for the shared limit", () 
   );
 });
 
-Deno.test("f3800: estate/trust New Markets Credit needs code ZZ statement identity", () => {
+test("f3800: estate/trust New Markets Credit needs code ZZ statement identity", () => {
   assertEquals(
     f3800.inputSchema.safeParse({
       f8874_k1_credit_entries: [{
@@ -499,7 +500,7 @@ Deno.test("f3800: estate/trust New Markets Credit needs code ZZ statement identi
   );
 });
 
-Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", () => {
+test("f3800: new clean vehicle business credit enters the ordinary limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8936_new_vehicle_credit: {
       credit_amount: 1_875,
@@ -532,7 +533,7 @@ Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", 
   );
 });
 
-Deno.test("f3800: rejects transferred credit larger than its source credit", () => {
+test("f3800: rejects transferred credit larger than its source credit", () => {
   assertThrows(() =>
     f3800.compute({ taxYear: 2025, formType: "f1040" }, {
       f8835_credit_entries: [{
@@ -548,7 +549,7 @@ Deno.test("f3800: rejects transferred credit larger than its source credit", () 
   );
 });
 
-Deno.test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation", () => {
+test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation", () => {
   assertThrows(
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -564,7 +565,7 @@ Deno.test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation"
   );
 });
 
-Deno.test("f3800: Form 8826 source credit reaches the final tax limit without a gross Schedule 3 deposit", () => {
+test("f3800: Form 8826 source credit reaches the final tax limit without a gross Schedule 3 deposit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8826_credit_entries: [{
       source_type: "self",
@@ -586,7 +587,7 @@ Deno.test("f3800: Form 8826 source credit reaches the final tax limit without a 
   );
 });
 
-Deno.test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => {
+test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => {
   assertThrows(
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -601,7 +602,7 @@ Deno.test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => 
   );
 });
 
-Deno.test("f3800: zero Form 8826 source credit produces no Schedule 3 claim", () => {
+test("f3800: zero Form 8826 source credit produces no Schedule 3 claim", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8826_credit_entries: [{
       source_type: "self",
@@ -612,7 +613,7 @@ Deno.test("f3800: zero Form 8826 source credit produces no Schedule 3 claim", ()
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f3800: Form 8826 source type and EIN must agree", () => {
+test("f3800: Form 8826 source type and EIN must agree", () => {
   assertEquals(
     f3800.inputSchema.safeParse({
       f8826_credit_entries: [{
@@ -636,7 +637,7 @@ Deno.test("f3800: Form 8826 source type and EIN must agree", () => {
   );
 });
 
-Deno.test("f3800: source-backed credit cannot combine with unbounded legacy credit", () => {
+test("f3800: source-backed credit cannot combine with unbounded legacy credit", () => {
   assertThrows(
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -652,7 +653,7 @@ Deno.test("f3800: source-backed credit cannot combine with unbounded legacy cred
   );
 });
 
-Deno.test("f3800: direct Form 8826 entries reject duplicate sources and sub-cent credit", () => {
+test("f3800: direct Form 8826 entries reject duplicate sources and sub-cent credit", () => {
   const entry = {
     source_type: "partnership" as const,
     source_ein: "123456789",
@@ -675,7 +676,7 @@ Deno.test("f3800: direct Form 8826 entries reject duplicate sources and sub-cent
   );
 });
 
-Deno.test("f3800: estate and trust disabled-access entries retain K-1 and statement identity", () => {
+test("f3800: estate and trust disabled-access entries retain K-1 and statement identity", () => {
   const entry = {
     source_type: "trust" as const,
     source_ein: "123456789",
@@ -713,45 +714,45 @@ Deno.test("f3800: estate and trust disabled-access entries retain K-1 and statem
   );
 });
 
-Deno.test("f3800.inputSchema: valid minimal item (empty object) passes", () => {
+test("f3800.inputSchema: valid minimal item (empty object) passes", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [{}] });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f3800.inputSchema: negative total_gbc fails", () => {
+test("f3800.inputSchema: negative total_gbc fails", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [{ total_gbc: -100 }] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800.inputSchema: negative work_opportunity_credit fails", () => {
+test("f3800.inputSchema: negative work_opportunity_credit fails", () => {
   const parsed = f3800.inputSchema.safeParse({
     f3800s: [{ work_opportunity_credit: -50 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800.inputSchema: negative research_credit fails", () => {
+test("f3800.inputSchema: negative research_credit fails", () => {
   const parsed = f3800.inputSchema.safeParse({
     f3800s: [{ research_credit: -200 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800.inputSchema: negative carryforward_credit fails", () => {
+test("f3800.inputSchema: negative carryforward_credit fails", () => {
   const parsed = f3800.inputSchema.safeParse({
     f3800s: [{ carryforward_credit: -10 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800.inputSchema: negative carryback_credit fails", () => {
+test("f3800.inputSchema: negative carryback_credit fails", () => {
   const parsed = f3800.inputSchema.safeParse({
     f3800s: [{ carryback_credit: -10 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800.inputSchema: valid full item passes", () => {
+test("f3800.inputSchema: valid full item passes", () => {
   const parsed = f3800.inputSchema.safeParse({
     f3800s: [{
       total_gbc: 5000,
@@ -768,7 +769,7 @@ Deno.test("f3800.inputSchema: valid full item passes", () => {
 // 2. Per-Field Routing — Component Credits
 // =============================================================================
 
-Deno.test("f3800.compute: total_gbc routes to schedule3.line6a_general_business_credit", () => {
+test("f3800.compute: total_gbc routes to schedule3.line6a_general_business_credit", () => {
   const result = compute([minimalItem({ total_gbc: 3000 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
@@ -776,25 +777,25 @@ Deno.test("f3800.compute: total_gbc routes to schedule3.line6a_general_business_
   assertEquals(fields.line6a_general_business_credit, 3000);
 });
 
-Deno.test("f3800.compute: work_opportunity_credit alone routes to schedule3", () => {
+test("f3800.compute: work_opportunity_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ work_opportunity_credit: 1500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 1500);
 });
 
-Deno.test("f3800.compute: research_credit alone routes to schedule3", () => {
+test("f3800.compute: research_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ research_credit: 4000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 4000);
 });
 
-Deno.test("f3800.compute: disabled_access_credit alone routes to schedule3", () => {
+test("f3800.compute: disabled_access_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ disabled_access_credit: 500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 500);
 });
 
-Deno.test("f3800.compute: employer_pension_startup_credit alone routes to schedule3", () => {
+test("f3800.compute: employer_pension_startup_credit alone routes to schedule3", () => {
   const result = compute([
     minimalItem({ employer_pension_startup_credit: 750 }),
   ]);
@@ -802,31 +803,31 @@ Deno.test("f3800.compute: employer_pension_startup_credit alone routes to schedu
   assertEquals(fields.line6a_general_business_credit, 750);
 });
 
-Deno.test("f3800.compute: employer_childcare_credit alone routes to schedule3", () => {
+test("f3800.compute: employer_childcare_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ employer_childcare_credit: 600 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 600);
 });
 
-Deno.test("f3800.compute: small_employer_health_credit alone routes to schedule3", () => {
+test("f3800.compute: small_employer_health_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ small_employer_health_credit: 2500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 2500);
 });
 
-Deno.test("f3800.compute: new_markets_credit alone routes to schedule3", () => {
+test("f3800.compute: new_markets_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ new_markets_credit: 10000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 10000);
 });
 
-Deno.test("f3800.compute: energy_efficient_home_credit alone routes to schedule3", () => {
+test("f3800.compute: energy_efficient_home_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ energy_efficient_home_credit: 1000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 1000);
 });
 
-Deno.test("f3800.compute: advanced_manufacturing_credit alone routes to schedule3", () => {
+test("f3800.compute: advanced_manufacturing_credit alone routes to schedule3", () => {
   const result = compute([
     minimalItem({ advanced_manufacturing_credit: 3500 }),
   ]);
@@ -834,24 +835,24 @@ Deno.test("f3800.compute: advanced_manufacturing_credit alone routes to schedule
   assertEquals(fields.line6a_general_business_credit, 3500);
 });
 
-Deno.test("f3800.compute: carryforward_credit alone routes to schedule3", () => {
+test("f3800.compute: carryforward_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ carryforward_credit: 800 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 800);
 });
 
-Deno.test("f3800.compute: carryback_credit alone routes to schedule3", () => {
+test("f3800.compute: carryback_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ carryback_credit: 400 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 400);
 });
 
-Deno.test("f3800.compute: empty item — no output", () => {
+test("f3800.compute: empty item — no output", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f3800.compute: all zero fields — no output", () => {
+test("f3800.compute: all zero fields — no output", () => {
   const result = compute([minimalItem({ total_gbc: 0, research_credit: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -860,7 +861,7 @@ Deno.test("f3800.compute: all zero fields — no output", () => {
 // 3. total_gbc Override Logic
 // =============================================================================
 
-Deno.test("f3800.compute: total_gbc overrides sum of components", () => {
+test("f3800.compute: total_gbc overrides sum of components", () => {
   // total_gbc = 5000, components sum = 1000+2000 = 3000, but total_gbc wins
   const result = compute([minimalItem({
     total_gbc: 5000,
@@ -871,7 +872,7 @@ Deno.test("f3800.compute: total_gbc overrides sum of components", () => {
   assertEquals(fields.line6a_general_business_credit, 5000);
 });
 
-Deno.test("f3800.compute: carryforward added to total_gbc override", () => {
+test("f3800.compute: carryforward added to total_gbc override", () => {
   // total_gbc = 5000, carryforward = 1000; result = 6000
   const result = compute([minimalItem({
     total_gbc: 5000,
@@ -881,7 +882,7 @@ Deno.test("f3800.compute: carryforward added to total_gbc override", () => {
   assertEquals(fields.line6a_general_business_credit, 6000);
 });
 
-Deno.test("f3800.compute: carryback added to total_gbc override", () => {
+test("f3800.compute: carryback added to total_gbc override", () => {
   // total_gbc = 3000, carryback = 500; result = 3500
   const result = compute([minimalItem({
     total_gbc: 3000,
@@ -891,7 +892,7 @@ Deno.test("f3800.compute: carryback added to total_gbc override", () => {
   assertEquals(fields.line6a_general_business_credit, 3500);
 });
 
-Deno.test("f3800.compute: total_gbc zero with non-zero carryforward — routes carryforward only", () => {
+test("f3800.compute: total_gbc zero with non-zero carryforward — routes carryforward only", () => {
   const result = compute([minimalItem({
     total_gbc: 0,
     carryforward_credit: 1200,
@@ -904,7 +905,7 @@ Deno.test("f3800.compute: total_gbc zero with non-zero carryforward — routes c
 // 4. Aggregation — Component Credits Summed
 // =============================================================================
 
-Deno.test("f3800.compute: multiple component credits summed", () => {
+test("f3800.compute: multiple component credits summed", () => {
   const result = compute([minimalItem({
     work_opportunity_credit: 1000,
     research_credit: 2000,
@@ -917,7 +918,7 @@ Deno.test("f3800.compute: multiple component credits summed", () => {
   assertEquals(fields.line6a_general_business_credit, 4500);
 });
 
-Deno.test("f3800.compute: all component credits plus carryovers summed", () => {
+test("f3800.compute: all component credits plus carryovers summed", () => {
   const result = compute([minimalItem({
     work_opportunity_credit: 1000,
     research_credit: 1000,
@@ -940,7 +941,7 @@ Deno.test("f3800.compute: all component credits plus carryovers summed", () => {
 // 5. Aggregation — Multiple Items (Multiple Form 3800 Entries)
 // =============================================================================
 
-Deno.test("f3800.compute: multiple items summed across entries", () => {
+test("f3800.compute: multiple items summed across entries", () => {
   const result = compute([
     minimalItem({ work_opportunity_credit: 2000 }),
     minimalItem({ research_credit: 3000 }),
@@ -949,7 +950,7 @@ Deno.test("f3800.compute: multiple items summed across entries", () => {
   assertEquals(fields.line6a_general_business_credit, 5000);
 });
 
-Deno.test("f3800.compute: one empty item plus one with credit — only credit counts", () => {
+test("f3800.compute: one empty item plus one with credit — only credit counts", () => {
   const result = compute([
     minimalItem(),
     minimalItem({ small_employer_health_credit: 1800 }),
@@ -958,7 +959,7 @@ Deno.test("f3800.compute: one empty item plus one with credit — only credit co
   assertEquals(fields.line6a_general_business_credit, 1800);
 });
 
-Deno.test("f3800.compute: multiple items produce exactly one schedule3 output", () => {
+test("f3800.compute: multiple items produce exactly one schedule3 output", () => {
   const result = compute([
     minimalItem({ work_opportunity_credit: 1000 }),
     minimalItem({ research_credit: 2000 }),
@@ -976,25 +977,25 @@ Deno.test("f3800.compute: multiple items produce exactly one schedule3 output", 
 // 6. Hard Validation
 // =============================================================================
 
-Deno.test("f3800.compute: throws on negative total_gbc", () => {
+test("f3800.compute: throws on negative total_gbc", () => {
   assertThrows(() => compute([minimalItem({ total_gbc: -1000 })]), Error);
 });
 
-Deno.test("f3800.compute: throws on negative work_opportunity_credit", () => {
+test("f3800.compute: throws on negative work_opportunity_credit", () => {
   assertThrows(
     () => compute([minimalItem({ work_opportunity_credit: -500 })]),
     Error,
   );
 });
 
-Deno.test("f3800.compute: throws on negative carryforward_credit", () => {
+test("f3800.compute: throws on negative carryforward_credit", () => {
   assertThrows(
     () => compute([minimalItem({ carryforward_credit: -100 })]),
     Error,
   );
 });
 
-Deno.test("f3800.compute: zero values do not throw", () => {
+test("f3800.compute: zero values do not throw", () => {
   const result = compute([minimalItem({ total_gbc: 0, research_credit: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -1003,7 +1004,7 @@ Deno.test("f3800.compute: zero values do not throw", () => {
 // 7. Edge Cases
 // =============================================================================
 
-Deno.test("f3800.compute: carryforward and carryback only (no current-year) — routes correctly", () => {
+test("f3800.compute: carryforward and carryback only (no current-year) — routes correctly", () => {
   const result = compute([
     minimalItem({ carryforward_credit: 1500, carryback_credit: 300 }),
   ]);
@@ -1011,7 +1012,7 @@ Deno.test("f3800.compute: carryforward and carryback only (no current-year) — 
   assertEquals(fields.line6a_general_business_credit, 1800);
 });
 
-Deno.test("f3800.compute: single item zero with carryforward zero — no output", () => {
+test("f3800.compute: single item zero with carryforward zero — no output", () => {
   const result = compute([minimalItem({ carryforward_credit: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -1020,7 +1021,7 @@ Deno.test("f3800.compute: single item zero with carryforward zero — no output"
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("f3800.compute: smoke test — mixed override and carryovers across multiple items", () => {
+test("f3800.compute: smoke test — mixed override and carryovers across multiple items", () => {
   const result = compute([
     minimalItem({
       // First 3800 entry: pre-computed total from GBC screen

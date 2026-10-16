@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm2210Payments,
@@ -36,7 +37,7 @@ function source(
   };
 }
 
-Deno.test("2210 dated payments reproduce IRS Example 3 installment carry and split principal days", () => {
+test("2210 dated payments reproduce IRS Example 3 installment carry and split principal days", () => {
   const r = calculateForm2210Payments(source([
     ["2025-04-30", 200000],
     ["2025-06-15", 300000],
@@ -64,7 +65,7 @@ Deno.test("2210 dated payments reproduce IRS Example 3 installment carry and spl
   assertEquals(r.unpaid_installments_cents, [0, 0, 0, 300000]);
 });
 
-Deno.test("2210 unpaid balances retain the IRS 76/92/92/105 day boundaries", () => {
+test("2210 unpaid balances retain the IRS 76/92/92/105 day boundaries", () => {
   const r = calculateForm2210Payments(source());
   assertEquals(
     r.segments.filter((s) => s.installment === 0).map((s) => s.days),
@@ -88,7 +89,7 @@ Deno.test("2210 unpaid balances retain the IRS 76/92/92/105 day boundaries", () 
   assertEquals(r.requiredAnnualPaymentReconciled, false);
 });
 
-Deno.test("2210 timely June Monday payments retain the actual date with zero penalty", () => {
+test("2210 timely June Monday payments retain the actual date with zero penalty", () => {
   const r = calculateForm2210Payments(source([
     ["2025-04-15", 400000],
     ["2025-06-16", 400000],
@@ -101,7 +102,7 @@ Deno.test("2210 timely June Monday payments retain the actual date with zero pen
   assertEquals(r.payments[1].line11_period_on, "2025-06-15");
 });
 
-Deno.test("2210 June Monday relief does not backdate payment of the April installment", () => {
+test("2210 June Monday relief does not backdate payment of the April installment", () => {
   const r = calculateForm2210Payments(source([["2025-06-16", 800000]]));
   assertEquals(
     r.segments.filter((s) => s.installment === 0).map((s) => s.days),
@@ -112,7 +113,7 @@ Deno.test("2210 June Monday relief does not backdate payment of the April instal
   assertEquals(r.columns.map((c) => c.line17), [400000, 0, 400000, 400000]);
 });
 
-Deno.test("2210 prepaid excess and equal withholding carry to future installments without double use", () => {
+test("2210 prepaid excess and equal withholding carry to future installments without double use", () => {
   const i = source([["2025-04-15", 1200000]]);
   i.withholding.amount_dollars = 4000;
   const r = calculateForm2210Payments(i);
@@ -123,7 +124,7 @@ Deno.test("2210 prepaid excess and equal withholding carry to future installment
   assertEquals(r.unpaid_installments_cents, [0, 0, 0, 0]);
 });
 
-Deno.test("2210 post-January settlement caps penalty at actual payment and preserves exact cents", () => {
+test("2210 post-January settlement caps penalty at actual payment and preserves exact cents", () => {
   const i = source([["2026-02-01", 1600001]]);
   i.payments[0].kind = "return_balance";
   const r = calculateForm2210Payments(i);
@@ -133,7 +134,7 @@ Deno.test("2210 post-January settlement caps penalty at actual payment and prese
   assertEquals(r.segments.every((s) => s.paid_on === "2026-02-01"), true);
 });
 
-Deno.test("2210 rejects foreign duplicate invalid-date and unsupported source methods", () => {
+test("2210 rejects foreign duplicate invalid-date and unsupported source methods", () => {
   const changes: Array<(i: any) => void> = [
     (i) => i.payments[0].taxpayer_ssn = "444556666",
     (i) => i.payments.push(structuredClone(i.payments[0])),
@@ -180,7 +181,7 @@ function actualWithholding(paid_on: string) {
   return i;
 }
 
-Deno.test("2210 early actual withholding is compared to the same equal annual credit", () => {
+test("2210 early actual withholding is compared to the same equal annual credit", () => {
   const r = compareForm2210WithholdingMethods(actualWithholding("2025-01-02"));
   assertEquals(r.actual.computed_penalty_cents, 10155);
   assertEquals(r.equal.computed_penalty_cents, 13966);
@@ -197,7 +198,7 @@ Deno.test("2210 early actual withholding is compared to the same equal annual cr
   assertEquals(r.filingReady, false);
 });
 
-Deno.test("2210 late withholding cannot be represented as a beneficial box D election", () => {
+test("2210 late withholding cannot be represented as a beneficial box D election", () => {
   const r = compareForm2210WithholdingMethods(actualWithholding("2025-12-31"));
   assertEquals(r.box_d_reduces_penalty, false);
   assertEquals(
@@ -206,7 +207,7 @@ Deno.test("2210 late withholding cannot be represented as a beneficial box D ele
   );
 });
 
-Deno.test("2210 actual withholding rejects missing total foreign year and double-counted credits", () => {
+test("2210 actual withholding rejects missing total foreign year and double-counted credits", () => {
   for (
     const change of [
       (i: Form2210PaymentInput) => i.payments[0].amount_cents -= 1,
@@ -221,7 +222,7 @@ Deno.test("2210 actual withholding rejects missing total foreign year and double
   }
 });
 
-Deno.test("2210 chronological allocation agrees with an independent daily principal oracle", () => {
+test("2210 chronological allocation agrees with an independent daily principal oracle", () => {
   let seed = 22102025;
   const next = () => (seed = (seed * 1664525 + 1013904223) >>> 0);
   const start = Date.parse("2025-01-01T00:00:00Z") / 86400000;
@@ -278,7 +279,7 @@ Deno.test("2210 chronological allocation agrees with an independent daily princi
   }
 });
 
-Deno.test("2210 actual withholding dates and cent splits agree with an independent daily oracle", () => {
+test("2210 actual withholding dates and cent splits agree with an independent daily oracle", () => {
   const due = ["2025-04-15", "2025-06-15", "2025-09-15", "2026-01-15"];
   const start = Date.parse("2025-01-01T00:00:00Z") / 86400000;
   const end = Date.parse("2026-04-15T00:00:00Z") / 86400000;

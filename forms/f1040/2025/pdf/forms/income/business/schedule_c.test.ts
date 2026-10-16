@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -37,14 +38,14 @@ function copies(
   return scheduleCPdf.instances?.(projected) ?? [];
 }
 
-Deno.test("Schedule C PDF prints EIN as nine digits in the IRS comb field", () => {
+test("Schedule C PDF prints EIN as nine digits in the IRS comb field", () => {
   const [copy] = copies({
     schedule_cs: [business({ line_d_ein: "12-3456789" })],
   });
   assertEquals(copy.line_d_ein, "123456789");
 });
 
-Deno.test("Schedule C PDF reconciles Form 5884 labor and prints the reduced profit", () => {
+test("Schedule C PDF reconciles Form 5884 labor and prints the reduced profit", () => {
   const wageSource = {
     subject_to_passive_activity_limit: false,
     f5884s: [{
@@ -107,7 +108,7 @@ Deno.test("Schedule C PDF reconciles Form 5884 labor and prints the reduced prof
   );
 });
 
-Deno.test("Schedule C PDF carries excess Part V descriptions on a statement", async () => {
+test("Schedule C PDF carries excess Part V descriptions on a statement", async () => {
   const other = Array.from({ length: 11 }, (_, index) => ({
     description: `BUSINESS EXPENSE ${index + 1}`,
     amount: (index + 1) * 10,
@@ -144,7 +145,7 @@ Deno.test("Schedule C PDF carries excess Part V descriptions on a statement", as
   assertEquals(morePages.getPageCount() > 1, true);
 });
 
-Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Part V rows", () => {
+test("Form 3115 adjustments print on the same Schedule C PDF income and Part V rows", () => {
   const [copy] = copies({
     schedule_cs: [business({ line_1_gross_receipts: 20_000 })],
     section481a_adjustments: [
@@ -193,7 +194,7 @@ Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Par
   );
 });
 
-Deno.test("2025 Schedule C PDF creates one two-page copy per taxpayer business and maps actual line amounts", () => {
+test("2025 Schedule C PDF creates one two-page copy per taxpayer business and maps actual line amounts", () => {
   const result = copies({
     schedule_cs: [
       business({
@@ -234,7 +235,7 @@ Deno.test("2025 Schedule C PDF creates one two-page copy per taxpayer business a
   assertEquals(scheduleCPdf.pageIndices, undefined);
 });
 
-Deno.test("Schedule C PDF resolves an omitted owner only on a known nonjoint return", () => {
+test("Schedule C PDF resolves an omitted owner only on a known nonjoint return", () => {
   const raw = { schedule_cs: [business({ proprietor_recipient: undefined })] };
   const single = scheduleCPdf.projectFields?.(raw, {
     general: { ...pending.general, filing_status: FilingStatus.Single },
@@ -250,7 +251,7 @@ Deno.test("Schedule C PDF resolves an omitted owner only on a known nonjoint ret
   );
 });
 
-Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse identity", () => {
+test("Schedule C PDF prints a spouse-owned joint business under the spouse identity", () => {
   const raw = { schedule_cs: [business({ proprietor_recipient: "S" })] };
   const general = {
     ...pending.general,
@@ -309,7 +310,7 @@ Deno.test("Schedule C PDF prints a spouse-owned joint business under the spouse 
   );
 });
 
-Deno.test("Schedule C PDF proprietor name matches the native filer on a single return", () => {
+test("Schedule C PDF proprietor name matches the native filer on a single return", () => {
   const filer = {
     ...testFiler(),
     primarySSN: "400001107",
@@ -332,7 +333,7 @@ Deno.test("Schedule C PDF proprietor name matches the native filer on a single r
   );
 });
 
-Deno.test("2025 Schedule C PDF places home-office Form 8829 deduction on the linked business", () => {
+test("2025 Schedule C PDF places home-office Form 8829 deduction on the linked business", () => {
   const [result] = copies({
     schedule_cs: [business()],
     form8829_line30: {
@@ -348,7 +349,7 @@ Deno.test("2025 Schedule C PDF places home-office Form 8829 deduction on the lin
   assertEquals(result.line31, 97_000);
 });
 
-Deno.test("2025 Schedule C PDF prints both simplified home-office areas and line 30", () => {
+test("2025 Schedule C PDF prints both simplified home-office areas and line 30", () => {
   const [result] = copies({
     schedule_cs: [business({
       home_office_method: "simplified",
@@ -390,7 +391,7 @@ Deno.test("2025 Schedule C PDF prints both simplified home-office areas and line
   }
 });
 
-Deno.test("2025 Schedule C PDF maps required business and vehicle boxes to printed fields", () => {
+test("2025 Schedule C PDF maps required business and vehicle boxes to printed fields", () => {
   const field = (key: string) =>
     scheduleCPdf.fields.find((entry) => entry.domainKey === key);
   assertEquals(
@@ -430,7 +431,7 @@ Deno.test("2025 Schedule C PDF maps required business and vehicle boxes to print
   assertEquals(result.vehicle_business_miles, 8_000);
 });
 
-Deno.test("2025 Schedule C PDF rejects answers to inapplicable follow-up boxes", () => {
+test("2025 Schedule C PDF rejects answers to inapplicable follow-up boxes", () => {
   for (const trigger of [false, undefined]) {
     for (const filed of [true, false]) {
       assertThrows(
@@ -478,7 +479,7 @@ Deno.test("2025 Schedule C PDF rejects answers to inapplicable follow-up boxes",
   assertEquals(copy.line_47b_written_evidence, undefined);
 });
 
-Deno.test("2025 Schedule C PDF refuses source details that cannot be printed faithfully", () => {
+test("2025 Schedule C PDF refuses source details that cannot be printed faithfully", () => {
   const unsupported = [
     business({ line_f_accounting_method: "other" }),
     business({ line_33_inventory_method: "other" }),

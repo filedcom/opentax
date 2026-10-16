@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
@@ -28,7 +29,7 @@ const source = {
   }],
 };
 
-Deno.test("1099-NEC backup withholding owner is replayed by both exporters", async () => {
+test("1099-NEC backup withholding owner is replayed by both exporters", async () => {
   assertNecWithholdingRecipient(source, filer);
   assertNecWithholdingRecipient({
     f1099necs: [{ ...source.f1099necs[0], recipient_ssn: "222334444" }],

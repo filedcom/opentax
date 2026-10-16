@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -167,27 +170,27 @@ const xsd = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(xsd);
+  sys.statSync(xsd);
   xsdAvailable = true;
 } catch { /* Local IRS bundle. */ }
 async function validateXml(xml: string) {
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
 for (const credit of ["aoc", "llc"] as const) {
   for (const reason of ["required", "exempt"] as const) {
-    Deno.test(`missing 1098-T ${reason} ${credit} sources calculate and file with truthful No indicators`, async () => {
+    test(`missing 1098-T ${reason} ${credit} sources calculate and file with truthful No indicators`, async () => {
       const item = student(
         credit,
         reason === "required" ? required : credit === "aoc" ? exempt : {
@@ -247,10 +250,10 @@ for (const credit of ["aoc", "llc"] as const) {
       const doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), 5);
       assertEquals(doc.getForm().getFields().length, 0);
-      const path = await Deno.makeTempFile({ suffix: ".pdf" });
+      const path = await sys.makeTempFile({ suffix: ".pdf" });
       try {
-        await Deno.writeFile(path, pdf);
-        const result = await new Deno.Command("pdftotext", {
+        await fs.writeFile(path, pdf);
+        const result = await new sys.Command("pdftotext", {
           args: ["-layout", path, "-"],
           stdout: "piped",
           stderr: "piped",
@@ -262,18 +265,12 @@ for (const credit of ["aoc", "llc"] as const) {
         assertEquals(/24\s+6455/.test(text), true);
         if (credit === "aoc") assertEquals(/29\s+1000/.test(text), true);
       } finally {
-        await Deno.remove(path);
+        await sys.remove(path);
       }
-      const evidencePermission = await Deno.permissions.query({
-        name: "env",
-        variable: "FORM8863_EVIDENCE_DIR",
-      });
-      const dir = evidencePermission.state === "granted"
-        ? Deno.env.get("FORM8863_EVIDENCE_DIR")
-        : undefined;
+      const dir = process.env.FORM8863_EVIDENCE_DIR;
       if (dir) {
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${reason}-${credit}-source-input.json`,
           JSON.stringify(
             {
@@ -291,11 +288,11 @@ for (const credit of ["aoc", "llc"] as const) {
             2,
           ),
         );
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/${reason}-${credit}-filled-return.pdf`,
           pdf,
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${reason}-${credit}-full-return.xml`,
           prepared.bundle.xml,
         );
@@ -304,7 +301,7 @@ for (const credit of ["aoc", "llc"] as const) {
   }
 }
 
-Deno.test("missing 1098-T source conditions and return joins reject incomplete or conflicting evidence", () => {
+test("missing 1098-T source conditions and return joins reject incomplete or conflicting evidence", () => {
   const original = student("aoc");
   const pending = returnCase(original);
   const wp = original.education_expense_workpaper!;
@@ -503,7 +500,7 @@ Deno.test("missing 1098-T source conditions and return joins reject incomplete o
   }
 });
 
-Deno.test("waived and scholarship missing-form basis cannot invent paid or untaxed credit expenses", () => {
+test("waived and scholarship missing-form basis cannot invent paid or untaxed credit expenses", () => {
   const original = student("aoc");
   const wp = original.education_expense_workpaper!;
   const taxableBasis = {
@@ -604,7 +601,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`taxable scholarship ${scenario.amount} missing-form credit routes through Schedule 1, AGI, native XML and filled packet`, async () => {
+  test(`taxable scholarship ${scenario.amount} missing-form credit routes through Schedule 1, AGI, native XML and filled packet`, async () => {
     const amount = scenario.amount;
     const source = {
       kind: "scholarship_not_on_w2",
@@ -690,10 +687,10 @@ for (
     const doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), 7);
     assertEquals(doc.getForm().getFields().length, 0);
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(path, pdf);
-      const output = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, pdf);
+      const output = await new sys.Command("pdftotext", {
         args: ["-layout", path, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -703,26 +700,20 @@ for (
       assertEquals(new RegExp(`8r\\s+${amount}`).test(text), true);
       assertEquals(new RegExp(`24\\s+${scenario.totalTax}`).test(text), true);
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8863_EVIDENCE_DIR",
-    });
-    const dir = permission.state === "granted"
-      ? Deno.env.get("FORM8863_EVIDENCE_DIR")
-      : undefined;
+    const dir = process.env.FORM8863_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${scenario.prefix}-source-input.json`,
         JSON.stringify({ inputs, filer: base.filer }, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${scenario.prefix}-full-return.xml`,
         prepared.bundle.xml,
       );
-      await Deno.writeFile(`${dir}/${scenario.prefix}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${scenario.prefix}-filled-return.pdf`, pdf);
     }
     for (
       const changed of [
@@ -817,7 +808,7 @@ for (
   });
 }
 
-Deno.test("taxable employer education joins reject detached and changed issued income copies", async () => {
+test("taxable employer education joins reject detached and changed issued income copies", async () => {
   const pending = returnCase(student("aoc", exempt));
   const originalW2 = pending.w2!.w2s![0];
   const originalIncome = pending.education_income!.education_incomes[0];

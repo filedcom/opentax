@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -52,7 +53,7 @@ const payers = [{
   pab_review_reference: "PAB-ELIGIBILITY-TWO",
 }];
 
-Deno.test("two sourced PAB payers reconcile Form 6251 line 2g through Schedule 2, Form 1040, native and PDF", async () => {
+test("two sourced PAB payers reconcile Form 6251 line 2g through Schedule 2, Form 1040, native and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

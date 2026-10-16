@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm4255Routes, f4255 } from "./index.ts";
 
@@ -36,7 +37,7 @@ const row = {
   excessive_payment_20_percent: 60,
 };
 
-Deno.test("Form 4255 row 2a routes only its net EPE and EP amounts to Part I", () => {
+test("Form 4255 row 2a routes only its net EPE and EP amounts to Part I", () => {
   const input = { rows: [row] };
   assertEquals(calculateForm4255Routes(input), {
     line1d: 1_500,
@@ -54,7 +55,7 @@ Deno.test("Form 4255 row 2a routes only its net EPE and EP amounts to Part I", (
   });
 });
 
-Deno.test("Form 4255 row 1d sends net EPE to Schedule 2 line 19, not line 1d", () => {
+test("Form 4255 row 1d sends net EPE to Schedule 2 line 19, not line 1d", () => {
   const input = {
     rows: [{
       ...row,
@@ -73,7 +74,7 @@ Deno.test("Form 4255 row 1d sends net EPE to Schedule 2 line 19, not line 1d", (
   });
 });
 
-Deno.test("Form 4255 stages an EP-only IRS determination without inventing Part II recapture", () => {
+test("Form 4255 stages an EP-only IRS determination without inventing Part II recapture", () => {
   const epOnly = {
     ...row,
     recaptured_total: 0,
@@ -100,7 +101,7 @@ Deno.test("Form 4255 stages an EP-only IRS determination without inventing Part 
   );
 });
 
-Deno.test("Form 4255 rejects ambiguous original-credit shortcut and inconsistent columns", () => {
+test("Form 4255 rejects ambiguous original-credit shortcut and inconsistent columns", () => {
   assertEquals(
     f4255.inputSchema.safeParse({
       properties: [{
@@ -160,7 +161,7 @@ Deno.test("Form 4255 rejects ambiguous original-credit shortcut and inconsistent
   );
 });
 
-Deno.test("Form 4255 rejects repeated credit-line rows before Schedule 2 summation", () => {
+test("Form 4255 rejects repeated credit-line rows before Schedule 2 summation", () => {
   const duplicate = {
     rows: [row, { ...row, source_document_reference: "second workpaper" }],
   };

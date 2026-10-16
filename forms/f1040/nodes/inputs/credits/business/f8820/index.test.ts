@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8820, f8820, inputSchema } from "./index.ts";
 import { f3800 } from "../f3800/index.ts";
@@ -23,7 +24,7 @@ function source(overrides: Record<string, unknown> = {}) {
   });
 }
 
-Deno.test("Form 8820 input rejects estate and trust K-1 orphan-drug claims", () => {
+test("Form 8820 input rejects estate and trust K-1 orphan-drug claims", () => {
   for (const source_type of ["estate", "trust"]) {
     assertThrows(
       () =>
@@ -43,7 +44,7 @@ Deno.test("Form 8820 input rejects estate and trust K-1 orphan-drug claims", () 
   }
 });
 
-Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
+test("Form 8820 reduced section 280C election uses 19.75%", () => {
   const lines = calculateForm8820(source());
   assertEquals(lines, {
     line1: 100_000,
@@ -55,7 +56,7 @@ Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
   });
 });
 
-Deno.test("Form 8820 allocates the aggregate controlled-group credit to members", () => {
+test("Form 8820 allocates the aggregate controlled-group credit to members", () => {
   const group = {
     group_classification_document_reference: "Section 41(f)(1)(B) analysis",
     taxpayer_member_ein: "123456789",
@@ -93,7 +94,7 @@ Deno.test("Form 8820 allocates the aggregate controlled-group credit to members"
   );
 });
 
-Deno.test("Form 8820 refuses an inconsistent controlled-group allocation", () => {
+test("Form 8820 refuses an inconsistent controlled-group allocation", () => {
   const group = {
     group_classification_document_reference: "Section 41(f)(1)(B) analysis",
     taxpayer_member_ein: "123456789",
@@ -131,7 +132,7 @@ Deno.test("Form 8820 refuses an inconsistent controlled-group allocation", () =>
   );
 });
 
-Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", () => {
+test("Form 8820 full credit uses 25% and needs the deduction statement", () => {
   assertThrows(() =>
     calculateForm8820(source({
       reduced_section280c_credit_election: false,
@@ -174,7 +175,7 @@ Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", ()
   );
 });
 
-Deno.test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
+test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
   const lines = calculateForm8820(source({
     form8932_overlapping_wage_credit: 1_250,
   }));
@@ -187,7 +188,7 @@ Deno.test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
   );
 });
 
-Deno.test("Form 8820 full-credit reduction can split deductions and capitalized basis", () => {
+test("Form 8820 full-credit reduction can split deductions and capitalized basis", () => {
   const input = source({
     reduced_section280c_credit_election: false,
     expense_reduction_statement_file_name: "orphan-drug-reductions.pdf",
@@ -271,7 +272,7 @@ Deno.test("Form 8820 full-credit reduction can split deductions and capitalized 
   );
 });
 
-Deno.test("Form 8820 requires identified, qualified drugs", () => {
+test("Form 8820 requires identified, qualified drugs", () => {
   assertEquals(
     inputSchema.safeParse({
       ...source(),
@@ -291,7 +292,7 @@ Deno.test("Form 8820 requires identified, qualified drugs", () => {
   );
 });
 
-Deno.test("Form 8820 sends the classified source credit to Form 3800", () => {
+test("Form 8820 sends the classified source credit to Form 3800", () => {
   const result = f8820.compute(
     { taxYear: 2025, formType: "f1040" },
     source(),
@@ -307,7 +308,7 @@ Deno.test("Form 8820 sends the classified source credit to Form 3800", () => {
   );
 });
 
-Deno.test("Form 8820 zero expenses produce no credit", () => {
+test("Form 8820 zero expenses produce no credit", () => {
   const result = f8820.compute(
     { taxYear: 2025, formType: "f1040" },
     source({
@@ -317,7 +318,7 @@ Deno.test("Form 8820 zero expenses produce no credit", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("Form 8820 accepts identified pass-through credit without own drugs", () => {
+test("Form 8820 accepts identified pass-through credit without own drugs", () => {
   const passThrough = {
     source_type: "partnership" as const,
     entity_ein: "123456789",

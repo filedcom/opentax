@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ext, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -30,21 +31,21 @@ function paymentEvidence(amount: number) {
 // Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.inputSchema: rejects negative line_4_total_tax", () => {
+test("ext.inputSchema: rejects negative line_4_total_tax", () => {
   assertThrows(
     () => compute({ produce_4868: "X", line_4_total_tax: -1 }),
     Error,
   );
 });
 
-Deno.test("ext.inputSchema: rejects negative line_7_amount_paying", () => {
+test("ext.inputSchema: rejects negative line_7_amount_paying", () => {
   assertThrows(
     () => compute({ produce_4868: "X", line_7_amount_paying: -100 }),
     Error,
   );
 });
 
-Deno.test("ext.compute: positive payment requires matching reviewed evidence", () => {
+test("ext.compute: positive payment requires matching reviewed evidence", () => {
   assertThrows(
     () => compute({ produce_4868: "X", line_7_amount_paying: 1500 }),
     Error,
@@ -66,7 +67,7 @@ Deno.test("ext.compute: positive payment requires matching reviewed evidence", (
 // Master Switch: produce_4868 must be "X" to emit any output
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.compute: produce_4868 absent — no outputs even with payment", () => {
+test("ext.compute: produce_4868 absent — no outputs even with payment", () => {
   assertEquals(
     compute({
       line_4_total_tax: 10000,
@@ -77,7 +78,7 @@ Deno.test("ext.compute: produce_4868 absent — no outputs even with payment", (
   );
 });
 
-Deno.test("ext.compute: produce_4868 not 'X' — no outputs", () => {
+test("ext.compute: produce_4868 not 'X' — no outputs", () => {
   assertEquals(
     compute({ produce_4868: "", line_7_amount_paying: 1500 }).outputs,
     [],
@@ -88,7 +89,7 @@ Deno.test("ext.compute: produce_4868 not 'X' — no outputs", () => {
 // Payment Routing: line_7_amount_paying → schedule3 line10
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.compute: payment > 0 routes to schedule3 line10_amount_paid_extension", () => {
+test("ext.compute: payment > 0 routes to schedule3 line10_amount_paid_extension", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
@@ -99,7 +100,7 @@ Deno.test("ext.compute: payment > 0 routes to schedule3 line10_amount_paid_exten
   assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 1500);
 });
 
-Deno.test("ext.compute: zero payment — no schedule3 output", () => {
+test("ext.compute: zero payment — no schedule3 output", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
@@ -109,7 +110,7 @@ Deno.test("ext.compute: zero payment — no schedule3 output", () => {
   assertEquals(schedule3Fields(result), undefined);
 });
 
-Deno.test("ext.compute: absent payment — no schedule3 output", () => {
+test("ext.compute: absent payment — no schedule3 output", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
@@ -118,7 +119,7 @@ Deno.test("ext.compute: absent payment — no schedule3 output", () => {
   assertEquals(schedule3Fields(result), undefined);
 });
 
-Deno.test("ext.compute: overpayment (line_7 > balance) routes full amount — no cap enforced", () => {
+test("ext.compute: overpayment (line_7 > balance) routes full amount — no cap enforced", () => {
   // Balance = 10000 - 2000 = 8000; paying 15000 is valid (creates refund)
   const result = compute({
     produce_4868: "X",
@@ -130,7 +131,7 @@ Deno.test("ext.compute: overpayment (line_7 > balance) routes full amount — no
   assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 15000);
 });
 
-Deno.test("ext.compute: payments exceed tax (refund expected) — extension still valid, no schedule3 if no line_7", () => {
+test("ext.compute: payments exceed tax (refund expected) — extension still valid, no schedule3 if no line_7", () => {
   // line_5 > line_4 → balance_due = 0; extension still files; no schedule3 without line_7
   const result = compute({
     produce_4868: "X",
@@ -145,7 +146,7 @@ Deno.test("ext.compute: payments exceed tax (refund expected) — extension stil
 // Informational Fields — must NOT affect tax routing
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.compute: amount_on_1040v does NOT affect schedule3 — uses line_7 value", () => {
+test("ext.compute: amount_on_1040v does NOT affect schedule3 — uses line_7 value", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
@@ -158,7 +159,7 @@ Deno.test("ext.compute: amount_on_1040v does NOT affect schedule3 — uses line_
   assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 500);
 });
 
-Deno.test("ext.compute: informational flags do not add outputs", () => {
+test("ext.compute: informational flags do not add outputs", () => {
   const baseCount = compute({
     produce_4868: "X",
     line_7_amount_paying: 500,
@@ -182,7 +183,7 @@ Deno.test("ext.compute: informational flags do not add outputs", () => {
 // Exactly one schedule3 output emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.compute: emits exactly one schedule3 output when payment present", () => {
+test("ext.compute: emits exactly one schedule3 output when payment present", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
@@ -201,7 +202,7 @@ Deno.test("ext.compute: emits exactly one schedule3 output when payment present"
 // Smoke test
 // ---------------------------------------------------------------------------
 
-Deno.test("ext.compute: smoke — all fields populated, schedule3 gets line_7 amount", () => {
+test("ext.compute: smoke — all fields populated, schedule3 gets line_7 amount", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 25000,

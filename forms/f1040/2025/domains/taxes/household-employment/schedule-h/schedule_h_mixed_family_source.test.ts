@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -345,9 +348,9 @@ function cases(): Array<
   ];
 }
 
-Deno.test("Schedule H mixed family payroll retains actual relationships through source, Form 1040, native and filled PDF", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+test("Schedule H mixed family payroll retains actual relationships through source, Form 1040, native and filled PDF", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
@@ -406,17 +409,17 @@ Deno.test("Schedule H mixed family payroll retains actual relationships through 
       futa > 0 ? 2 : 1,
       id,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     if (source.fica_only_payroll || source.federal_unemployment) {
       const changed = structuredClone(source);
@@ -481,8 +484,8 @@ Deno.test("Schedule H mixed family payroll retains actual relationships through 
       );
     }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -497,13 +500,13 @@ Deno.test("Schedule H mixed family payroll retains actual relationships through 
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, bundle.xml);
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, bundle.xml);
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H mixed family inventory rejects source, classification, payroll and FUTA contradictions", () => {
+test("Schedule H mixed family inventory rejects source, classification, payroll and FUTA contradictions", () => {
   const base = cases()[0].inputs.schedule_h;
   const rejects = (mutate: (x: any) => void) => {
     const x = structuredClone(base);

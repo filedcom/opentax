@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8815, type Form8815Input, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -98,7 +99,7 @@ for (
     FilingStatus.QSS,
   ]
 ) {
-  Deno.test(`2025 ${filingStatus} $99,500 start and $114,500 end`, () => {
+  test(`2025 ${filingStatus} $99,500 start and $114,500 end`, () => {
     const atStart = lines({
       filing_status: filingStatus,
       line9_worksheet: {
@@ -133,7 +134,7 @@ for (
   });
 }
 
-Deno.test("2025 MFJ $149,250 start and $179,250 end", () => {
+test("2025 MFJ $149,250 start and $179,250 end", () => {
   const start = lines({
     filing_status: FilingStatus.MFJ,
     line9_worksheet: {
@@ -165,7 +166,7 @@ Deno.test("2025 MFJ $149,250 start and $179,250 end", () => {
   );
 });
 
-Deno.test("education benefit and proceeds calculate lines 2-8", () => {
+test("education benefit and proceeds calculate lines 2-8", () => {
   const result = lines({
     line2_qualified_education_expenses: 10_000,
     line3_nontaxable_education_benefits: 2_000,
@@ -180,7 +181,7 @@ Deno.test("education benefit and proceeds calculate lines 2-8", () => {
   assertEquals(result.scheduleB?.ee_bond_exclusion, result.form?.line14);
 });
 
-Deno.test("line 4 equal to proceeds gives the full line 6 interest", () => {
+test("line 4 equal to proceeds gives the full line 6 interest", () => {
   const result = lines({
     line2_qualified_education_expenses: 14_000,
     line3_nontaxable_education_benefits: 2_000,
@@ -190,7 +191,7 @@ Deno.test("line 4 equal to proceeds gives the full line 6 interest", () => {
   assertEquals(result.form?.line14, 2_000);
 });
 
-Deno.test("line 6 worksheet removes interest already reported in earlier years", () => {
+test("line 6 worksheet removes interest already reported in earlier years", () => {
   const result = lines({
     line6_worksheet: {
       ...source.line6_worksheet,
@@ -201,7 +202,7 @@ Deno.test("line 6 worksheet removes interest already reported in earlier years",
   assertEquals(result.form?.line14, 1_500);
 });
 
-Deno.test("MFS, exhausted expenses, and unqualified bonds fail closed", () => {
+test("MFS, exhausted expenses, and unqualified bonds fail closed", () => {
   assertThrows(
     () => compute({ filing_status: FilingStatus.MFS }),
     Error,
@@ -222,7 +223,7 @@ Deno.test("MFS, exhausted expenses, and unqualified bonds fail closed", () => {
   );
 });
 
-Deno.test("omitted proceeds, MAGI worksheet, and old guessed fields are rejected", () => {
+test("omitted proceeds, MAGI worksheet, and old guessed fields are rejected", () => {
   const { bond_proceeds: _proceeds, ...withoutProceeds } = source;
   const { line9_worksheet: _worksheet, ...withoutMagi } = source;
   assertThrows(() => inputSchema.parse(withoutProceeds));
@@ -243,7 +244,7 @@ Deno.test("omitted proceeds, MAGI worksheet, and old guessed fields are rejected
   );
 });
 
-Deno.test("native MeF lines and Schedule B line 3 reconcile", () => {
+test("native MeF lines and Schedule B line 3 reconcile", () => {
   const result = lines({
     line2_qualified_education_expenses: 10_000,
     line3_nontaxable_education_benefits: 2_000,
@@ -306,7 +307,7 @@ Deno.test("native MeF lines and Schedule B line 3 reconcile", () => {
   );
 });
 
-Deno.test("PDF projection uses computed lines and beneficiary fields", () => {
+test("PDF projection uses computed lines and beneficiary fields", () => {
   const result = lines();
   const fields = { ...source, ...result.form };
   const projected = form8815Pdf.projectFields?.(fields, {});
@@ -319,7 +320,7 @@ Deno.test("PDF projection uses computed lines and beneficiary fields", () => {
   assertEquals(form8815Pdf.pageIndices?.(fields), [0]);
 });
 
-Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as MeF", () => {
+test("Form 8815 PDF requires the same final Schedule B and filing status as MeF", () => {
   const result = lines();
   const projected = form8815Pdf.projectFields?.(
     { ...source, ...result.form },
@@ -367,7 +368,7 @@ Deno.test("Form 8815 PDF requires the same final Schedule B and filing status as
   );
 });
 
-Deno.test("Form 8815 native and PDF reject return-wide MAGI tampering", () => {
+test("Form 8815 native and PDF reject return-wide MAGI tampering", () => {
   const result = lines();
   const fields = { ...source, ...result.form };
   const filer = {

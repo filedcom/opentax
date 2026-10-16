@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -13,12 +16,7 @@ import { scheduleH } from "../../../../mef/forms/taxes/household-employment/sche
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const optionalEnv = (name: string): string | undefined => {
-  try {
-    return Deno.env.get(name);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env[name];
 };
 const xsd = optionalEnv("SCHEDULE_H_STATE_RATE_XSD_PATH") ?? new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -331,7 +329,7 @@ const shortBirthdayPeriod = (
   covered_service_hours: coveredHours,
 });
 
-Deno.test("Schedule H reviewed Ohio state receipts retain the correct Section A filing path", async () => {
+test("Schedule H reviewed Ohio state receipts retain the correct Section A filing path", async () => {
   const raw = sectionAReviewedOhioSource();
   const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
   assertEquals(amounts.futaTax, 42);
@@ -930,7 +928,7 @@ function turning21HighPreBirthdaySource() {
   return raw;
 }
 
-Deno.test("Schedule H CA mixed family coverage separates state wages and federal FUTA wages", async () => {
+test("Schedule H CA mixed family coverage separates state wages and federal FUTA wages", async () => {
   for (
     const [id, covered] of [["mixed-ca-child17-state-excluded", false], [
       "mixed-ca-child20-state-covered",
@@ -955,7 +953,7 @@ Deno.test("Schedule H CA mixed family coverage separates state wages and federal
   }
 });
 
-Deno.test("Schedule H CA child turning 18 or 21 joins dated service to state and federal wage bases", async () => {
+test("Schedule H CA child turning 18 or 21 joins dated service to state and federal wage bases", async () => {
   const turn18 = turning18MixedStateSource();
   await verifyAdditionalPacket(turn18, "mixed-ca-child-turns18", 1_588);
   const turn21 = turning21MixedStateSource();
@@ -977,7 +975,7 @@ Deno.test("Schedule H CA child turning 18 or 21 joins dated service to state and
   );
 });
 
-Deno.test("Schedule H no ordinary pay period uses actual birthday-side services for federal and state wages", async () => {
+test("Schedule H no ordinary pay period uses actual birthday-side services for federal and state wages", async () => {
   for (const [id, raw, expectedTax, expectedFuta] of [
     ["child18-no-ordinary-period", turning18NoOrdinarySource(), 1_588, 114],
     ["child21-no-ordinary-period", turning21NoOrdinarySource(), 2_902, 204],
@@ -1091,7 +1089,7 @@ Deno.test("Schedule H no ordinary pay period uses actual birthday-side services 
   });
 });
 
-Deno.test("Schedule H crossing ordinary pay period uses sourced half, covered-majority and excluded-majority service time", async () => {
+test("Schedule H crossing ordinary pay period uses sourced half, covered-majority and excluded-majority service time", async () => {
   for (
     const [id, coveredHours, excludedHours, expectedTax, expectedFuta] of [
       ["child21-period-exact-half", 40, 40, 3_150, 222],
@@ -1124,7 +1122,7 @@ Deno.test("Schedule H crossing ordinary pay period uses sourced half, covered-ma
   }
 });
 
-Deno.test("Schedule H California child turning 18 uses the actual June ordinary-period majority", async () => {
+test("Schedule H California child turning 18 uses the actual June ordinary-period majority", async () => {
   const raw = turning18ShortPeriodSource();
   const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
   assertEquals(amounts.futaTax, 114);
@@ -1158,7 +1156,7 @@ Deno.test("Schedule H California child turning 18 uses the actual June ordinary-
   });
 });
 
-Deno.test("Schedule H CA covered child age 20 changes actual credit with adult state balance still unpaid", async () => {
+test("Schedule H CA covered child age 20 changes actual credit with adult state balance still unpaid", async () => {
   const raw = child20PartialStateSource();
   const amount = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
   assertEquals(amount.sectionB?.additionalCredit, 163);
@@ -1170,7 +1168,7 @@ Deno.test("Schedule H CA covered child age 20 changes actual credit with adult s
   await verifyAdditionalPacket(raw, "mixed-ca-child20-partial-state", 1_588);
 });
 
-Deno.test("Schedule H mixed family state coverage rejects missing or contradictory relationship and wage sources", async () => {
+test("Schedule H mixed family state coverage rejects missing or contradictory relationship and wage sources", async () => {
   const accepted = mixedFamilyStateSource(false);
   const result = f1040_2025.executeReturn({
     ...structuredClone(base.inputs),
@@ -1226,7 +1224,7 @@ Deno.test("Schedule H mixed family state coverage rejects missing or contradicto
   }
 });
 
-Deno.test("Schedule H CA family cash alone cannot satisfy federal FUTA quarter and dated transitions reject source conflicts", async () => {
+test("Schedule H CA family cash alone cannot satisfy federal FUTA quarter and dated transitions reject source conflicts", async () => {
   const below: any = mixedFamilyStateSource(false);
   const adult = below.federal_unemployment.employee_wages[0];
   adult.annual_cash_wages = 3_200;
@@ -1356,22 +1354,22 @@ async function verifyAdditionalPacket(
     origins,
   );
   assertEquals(origins.length, expectedPages);
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(temp, bundle.xml);
-    const check = await new Deno.Command("xmllint", {
+    await fs.writeFile(temp, bundle.xml);
+    const check = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, temp],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
   const dir = optionalEnv("SCHEDULE_H_STATE_RATE_EVIDENCE_DIR");
   if (dir) {
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       `${dir}/${id}.json`,
       JSON.stringify(
         {
@@ -1386,13 +1384,13 @@ async function verifyAdditionalPacket(
         2,
       ),
     );
-    await Deno.writeTextFile(`${dir}/${id}.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
+    await fs.writeFile(`${dir}/${id}.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/${id}.pdf`, pdf);
   }
   return { schedule, result, bundle };
 }
 
-Deno.test("Schedule H sources changed CA rates, TX wages and contributions into Section B full packet", async () => {
+test("Schedule H sources changed CA rates, TX wages and contributions into Section B full packet", async () => {
   const dir = optionalEnv("SCHEDULE_H_STATE_RATE_EVIDENCE_DIR");
   for (
     const [id, late, expected] of [
@@ -1441,17 +1439,17 @@ Deno.test("Schedule H sources changed CA rates, TX wages and contributions into 
       origins.filter((origin) => origin.formKey === "schedule_h").length,
       3,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     const altered: any = structuredClone(schedule);
     altered.federal_unemployment.state_rows[1].taxable_state_wages = 3_999;
@@ -1464,8 +1462,8 @@ Deno.test("Schedule H sources changed CA rates, TX wages and contributions into 
       )
     );
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${id}.json`,
         JSON.stringify(
           {
@@ -1480,13 +1478,13 @@ Deno.test("Schedule H sources changed CA rates, TX wages and contributions into 
           2,
         ),
       );
-      await Deno.writeTextFile(`${dir}/${id}.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
+      await fs.writeFile(`${dir}/${id}.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/${id}.pdf`, pdf);
     }
   }
 });
 
-Deno.test("Schedule H state review rejects dated payroll, rate, contribution and credit conflicts", () => {
+test("Schedule H state review rejects dated payroll, rate, contribution and credit conflicts", () => {
   const wrong = (edit: (raw: any) => void) => {
     const raw: any = source();
     edit(raw);
@@ -1554,7 +1552,7 @@ Deno.test("Schedule H state review rejects dated payroll, rate, contribution and
   wrong((s) => s.federal_unemployment.taxable_futa_wages = 8_000);
 });
 
-Deno.test("Schedule H state contribution cents reconcile exact receipts before filing", async () => {
+test("Schedule H state contribution cents reconcile exact receipts before filing", async () => {
   const raw: any = source();
   const unemployment = raw.federal_unemployment;
   changeSourceQuarterWages(raw, 2_003, 2_000);
@@ -1582,22 +1580,22 @@ Deno.test("Schedule H state contribution cents reconcile exact receipts before f
     origins,
   );
   assertEquals(origins.length, 7);
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(temp, bundle.xml);
-    const check = await new Deno.Command("xmllint", {
+    await fs.writeFile(temp, bundle.xml);
+    const check = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, temp],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
   const dir = optionalEnv("SCHEDULE_H_STATE_RATE_EVIDENCE_DIR");
   if (dir) {
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       `${dir}/changed-rate-cents.json`,
       JSON.stringify(
         {
@@ -1612,8 +1610,8 @@ Deno.test("Schedule H state contribution cents reconcile exact receipts before f
         2,
       ),
     );
-    await Deno.writeTextFile(`${dir}/changed-rate-cents.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/changed-rate-cents.pdf`, pdf);
+    await fs.writeFile(`${dir}/changed-rate-cents.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/changed-rate-cents.pdf`, pdf);
   }
   unemployment.state_payroll_review.contribution_payments[0].amount = 30.24;
   unemployment.state_payroll_review.contribution_payments.push({
@@ -1630,7 +1628,7 @@ Deno.test("Schedule H state contribution cents reconcile exact receipts before f
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(raw), 2025));
 });
 
-Deno.test("Schedule H rounds two source-cent rows before an uncapped credit", async () => {
+test("Schedule H rounds two source-cent rows before an uncapped credit", async () => {
   const raw: any = source(true);
   const unemployment = raw.federal_unemployment;
   changeSourceQuarterWages(raw, 2_003, 2_001);
@@ -1679,22 +1677,22 @@ Deno.test("Schedule H rounds two source-cent rows before an uncapped credit", as
     origins,
   );
   assertEquals(origins.length, 7);
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(temp, bundle.xml);
-    const check = await new Deno.Command("xmllint", {
+    await fs.writeFile(temp, bundle.xml);
+    const check = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, temp],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
   const dir = optionalEnv("SCHEDULE_H_STATE_RATE_EVIDENCE_DIR");
   if (dir) {
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       `${dir}/changed-rate-late-cents.json`,
       JSON.stringify(
         {
@@ -1709,12 +1707,12 @@ Deno.test("Schedule H rounds two source-cent rows before an uncapped credit", as
         2,
       ),
     );
-    await Deno.writeTextFile(`${dir}/changed-rate-late-cents.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/changed-rate-late-cents.pdf`, pdf);
+    await fs.writeFile(`${dir}/changed-rate-late-cents.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/changed-rate-late-cents.pdf`, pdf);
   }
 });
 
-Deno.test("Schedule H late source cents cannot leak fractional tax to Form 1040", async () => {
+test("Schedule H late source cents cannot leak fractional tax to Form 1040", async () => {
   const raw: any = source(true);
   const unemployment = raw.federal_unemployment;
   unemployment.state_rows[0].contributions_paid_by_due_date = 30.49;
@@ -1757,22 +1755,22 @@ Deno.test("Schedule H late source cents cannot leak fractional tax to Form 1040"
     origins,
   );
   assertEquals(origins.length, 7);
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(temp, bundle.xml);
-    const check = await new Deno.Command("xmllint", {
+    await fs.writeFile(temp, bundle.xml);
+    const check = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, temp],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
   const dir = optionalEnv("SCHEDULE_H_STATE_RATE_EVIDENCE_DIR");
   if (dir) {
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
       `${dir}/changed-rate-split-late-cents.json`,
       JSON.stringify(
         {
@@ -1787,15 +1785,15 @@ Deno.test("Schedule H late source cents cannot leak fractional tax to Form 1040"
         2,
       ),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${dir}/changed-rate-split-late-cents.xml`,
       bundle.xml,
     );
-    await Deno.writeFile(`${dir}/changed-rate-split-late-cents.pdf`, pdf);
+    await fs.writeFile(`${dir}/changed-rate-split-late-cents.pdf`, pdf);
   }
 });
 
-Deno.test("Schedule H zero state experience rate needs no invented payment", async () => {
+test("Schedule H zero state experience rate needs no invented payment", async () => {
   const raw: any = source();
   const unemployment = raw.federal_unemployment;
   unemployment.state_rows[0].experience_rate = 0;
@@ -1819,7 +1817,7 @@ Deno.test("Schedule H zero state experience rate needs no invented payment", asy
   );
 });
 
-Deno.test("Schedule H filed wage dollars drive line 17 credits after source-cent reconciliation", async () => {
+test("Schedule H filed wage dollars drive line 17 credits after source-cent reconciliation", async () => {
   const raw: any = source();
   const unemployment = raw.federal_unemployment;
   unemployment.employee_wages[0].annual_cash_wages = 8_009.49;
@@ -1853,7 +1851,7 @@ Deno.test("Schedule H filed wage dollars drive line 17 credits after source-cent
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(raw), 2025));
 });
 
-Deno.test("Schedule H legacy Section B native ratio matches its printed rate", async () => {
+test("Schedule H legacy Section B native ratio matches its printed rate", async () => {
   const raw: any = source();
   delete raw.federal_unemployment.state_payroll_review;
   const schedule = inputSchema.parse(raw);
@@ -1875,23 +1873,23 @@ Deno.test("Schedule H legacy Section B native ratio matches its printed rate", a
     ),
     false,
   );
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(temp, bundle.xml);
-    const check = await new Deno.Command("xmllint", {
+    await fs.writeFile(temp, bundle.xml);
+    const check = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, temp],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
   raw.federal_unemployment.state_rows[0].experience_rate = .030245;
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(raw), 2025));
 });
 
-Deno.test("Schedule H accepts accrued quarterly state receipts within one rate period", async () => {
+test("Schedule H accepts accrued quarterly state receipts within one rate period", async () => {
   const raw: any = source();
   const receipts = raw.federal_unemployment.state_payroll_review
     .contribution_payments;
@@ -1976,7 +1974,7 @@ Deno.test("Schedule H accepts accrued quarterly state receipts within one rate p
   );
 });
 
-Deno.test("Schedule H reconciles separately rounded quarter assessments on cent wages", async () => {
+test("Schedule H reconciles separately rounded quarter assessments on cent wages", async () => {
   const raw: any = source();
   const unemployment = raw.federal_unemployment;
   const employee = unemployment.employee_wages[0];
@@ -2044,7 +2042,7 @@ Deno.test("Schedule H reconciles separately rounded quarter assessments on cent 
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(wrong), 2025));
 });
 
-Deno.test("Schedule H retains a zero-taxable quarter after the state wage base", async () => {
+test("Schedule H retains a zero-taxable quarter after the state wage base", async () => {
   const raw: any = source();
   const unemployment = raw.federal_unemployment;
   unemployment.employee_wages[0].annual_cash_wages = 9_000;
@@ -2226,7 +2224,7 @@ function unpaidStateSource(
   return raw;
 }
 
-Deno.test("Schedule H retains assessed state contributions partly or wholly unpaid at filing", async () => {
+test("Schedule H retains assessed state contributions partly or wholly unpaid at filing", async () => {
   for (
     const [kind, tax, contributions, futa] of [
       ["partial", 1_384, 214, 160],
@@ -2289,7 +2287,7 @@ function txOnlyUnpaidStateSource() {
   return raw;
 }
 
-Deno.test("Schedule H one-state wholly unpaid assessment uses Section B without a late worksheet", async () => {
+test("Schedule H one-state wholly unpaid assessment uses Section B without a late worksheet", async () => {
   const raw = txOnlyUnpaidStateSource();
   const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
   assertEquals(amounts.sectionB?.additionalCredit, 216);
@@ -2306,7 +2304,7 @@ Deno.test("Schedule H one-state wholly unpaid assessment uses Section B without 
   assertEquals(bundle.xml.includes("<FUTATaxAmt>204</FUTATaxAmt>"), true);
 });
 
-Deno.test("Schedule H unpaid state balances reject missing, stale, duplicate and contradicted source records at every exporter", async () => {
+test("Schedule H unpaid state balances reject missing, stale, duplicate and contradicted source records at every exporter", async () => {
   const raw = unpaidStateSource("partial");
   const { schedule, result, bundle } = await verifyAdditionalPacket(
     raw,

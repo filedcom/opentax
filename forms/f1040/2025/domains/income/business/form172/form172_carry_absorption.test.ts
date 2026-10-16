@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172CarryAbsorption } from "./form172_carry_absorption.ts";
 
@@ -80,7 +81,7 @@ function annual() {
     }[],
   };
 }
-Deno.test("Form 172 absorption recomputes origin and excludes QBI from annual 80 percent capacity", () => {
+test("Form 172 absorption recomputes origin and excludes QBI from annual 80 percent capacity", () => {
   const r = calculateForm172CarryAbsorption(origin(), annual());
   assertEquals(r.openingLoss, 100000);
   assertEquals(r.taxableWithoutNolQbi250, 100000);
@@ -92,7 +93,7 @@ Deno.test("Form 172 absorption recomputes origin and excludes QBI from annual 80
   assertEquals(r.completeCarryHistoryVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 absorption subtracts pre-2018 availability before the post-2017 limitation", () => {
+test("Form 172 absorption subtracts pre-2018 availability before the post-2017 limitation", () => {
   const v = annual();
   v.earlier_nols.push({
     item_id: "old",
@@ -113,7 +114,7 @@ Deno.test("Form 172 absorption subtracts pre-2018 availability before the post-2
   assertEquals(r.absorbed, 64000);
   assertEquals(r.remainingLoss, 36000);
 });
-Deno.test("Form 172 deduction and statutory absorption differ when modified income has capital addback", () => {
+test("Form 172 deduction and statutory absorption differ when modified income has capital addback", () => {
   const v = annual();
   v.earlier_nols.push({
     item_id: "old",
@@ -133,7 +134,7 @@ Deno.test("Form 172 deduction and statutory absorption differ when modified inco
   assertEquals(r.absorbed, 43000);
   assertEquals(r.remainingLoss, 57000);
 });
-Deno.test("Form 172 absorption applies 20 percent to statutory excess rather than modified income", () => {
+test("Form 172 absorption applies 20 percent to statutory excess rather than modified income", () => {
   const v = annual();
   v.agi_refigures.push({
     item_id: "ira",
@@ -160,7 +161,7 @@ Deno.test("Form 172 absorption applies 20 percent to statutory excess rather tha
   assertEquals(r.currentDeduction, 80000);
   assertEquals(r.remainingLoss, 6400);
 });
-Deno.test("Form 172 pre-2021 carryback capacity subtracts every earlier NOL without an 80 percent reduction", () => {
+test("Form 172 pre-2021 carryback capacity subtracts every earlier NOL without an 80 percent reduction", () => {
   const v = annual();
   v.tax_year = 2017;
   v.section199_deduction = { reference: "dpad-2017", amount: 0 };
@@ -185,7 +186,7 @@ Deno.test("Form 172 pre-2021 carryback capacity subtracts every earlier NOL with
   assertEquals(r.remainingLoss, 20000);
   assertEquals(r.carrybackEligibilityVerified, false);
 });
-Deno.test("Form 172 negative annual income is refigured before the zero floor", () => {
+test("Form 172 negative annual income is refigured before the zero floor", () => {
   const v = annual();
   v.agi = 4600;
   v.qbi_deduction = 0;
@@ -198,7 +199,7 @@ Deno.test("Form 172 negative annual income is refigured before the zero floor", 
   assertEquals(r.absorbed, 10000);
   assertEquals(r.remainingLoss, 90000);
 });
-Deno.test("Form 172 reviewed earlier absorptions reduce the origin without claiming a complete ledger", () => {
+test("Form 172 reviewed earlier absorptions reduce the origin without claiming a complete ledger", () => {
   const v = annual();
   v.prior_absorption_records.push({
     item_id: "2020",
@@ -218,7 +219,7 @@ Deno.test("Form 172 reviewed earlier absorptions reduce the origin without claim
   assertEquals(r.remainingLoss, 0);
   assertEquals(r.completeCarryHistoryVerified, false);
 });
-Deno.test("Form 172 absorption rejects inconsistent source years, owner, capacity and prior utilization", () => {
+test("Form 172 absorption rejects inconsistent source years, owner, capacity and prior utilization", () => {
   const v = annual();
   for (
     const bad of [
@@ -310,7 +311,7 @@ Deno.test("Form 172 absorption rejects inconsistent source years, owner, capacit
   changed.noncapital_deductions[0].amount++;
   assertThrows(() => calculateForm172CarryAbsorption(changed, v));
 });
-Deno.test("Form172 current absorption retains Schedule1-A deduction in statutory capacity", () => {
+test("Form172 current absorption retains Schedule1-A deduction in statutory capacity", () => {
   const v = {
     ...annual(),
     tax_year: 2025,
@@ -346,7 +347,7 @@ Deno.test("Form172 current absorption retains Schedule1-A deduction in statutory
   assertEquals(modified.absorbed, 74200);
   assertEquals(modified.filingReady, false);
 });
-Deno.test("Form172 Schedule1-A workpapers reject historical positive and incomplete refigures", () => {
+test("Form172 Schedule1-A workpapers reject historical positive and incomplete refigures", () => {
   for (
     const patch of [
       {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { canonicalForm1098CopyDocument } from "../../../../../2025/pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, PDFName } from "pdf-lib";
@@ -75,7 +76,7 @@ async function review(bytes: Uint8Array) {
   };
 }
 
-Deno.test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", async () => {
+test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", async () => {
   const bytes = await copy();
   await verifyForm1098IssuerCopy(
     item,
@@ -156,7 +157,7 @@ Deno.test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", 
   );
 });
 
-Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missing or altered evidence", async () => {
+test("Form 1098 box 6 export binds original Copy B bytes and rejects missing or altered evidence", async () => {
   const bytes = await copy();
   const reviewed = await review(bytes);
   const source = {
@@ -252,7 +253,7 @@ async function issuerCopy(bytes: Uint8Array, fileName: string) {
   };
 }
 
-Deno.test("whole-return cross-loan review binds both lender-issued Forms 1098 at native and PDF export", async () => {
+test("whole-return cross-loan review binds both lender-issued Forms 1098 at native and PDF export", async () => {
   const fixture = purchasePointsCrossLoanFixture();
   const [purchase, existing] = fixture.f1098;
   const purchaseBytes = await lenderCopy(purchase);
@@ -350,7 +351,7 @@ Deno.test("whole-return cross-loan review binds both lender-issued Forms 1098 at
   );
 });
 
-Deno.test("two-loan Pub. 936 limit review also needs both issuer copies", async () => {
+test("two-loan Pub. 936 limit review also needs both issuer copies", async () => {
   const loans = [
     ["first Form 1098", 20_000, 16_660, 500_000, "01/15/2020"],
     ["second Form 1098", 16_000, 13_328, 400_000, "02/15/2021"],
@@ -389,7 +390,7 @@ Deno.test("two-loan Pub. 936 limit review also needs both issuer copies", async 
   );
 });
 
-Deno.test("Form1098 issuer metadata and stale/hidden/missing printable appearances cannot prove the submitted source copy", async () => {
+test("Form1098 issuer metadata and stale/hidden/missing printable appearances cannot prove the submitted source copy", async () => {
   const valid = await copy();
   const original = await PDFDocument.load(valid);
   const metadata = await PDFDocument.create();

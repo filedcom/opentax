@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 // deno-lint-ignore-file no-explicit-any
 import {
   assertEquals,
@@ -22,7 +24,7 @@ function prepared(i: number) {
   assertEquals(r.diagnostics, []);
   return { f, p: buildPending(r.pending) };
 }
-Deno.test("Form8978 reviewed public positive/negative/multi-year sources join full native/PDF and source bytes", async () => {
+test("Form8978 reviewed public positive/negative/multi-year sources join full native/PDF and source bytes", async () => {
   for (let i = 0; i < 3; i++) {
     const { f, p } = prepared(i);
     assertEquals(p.f8978?.line14, [1920, -1920, -8160][i]);
@@ -43,7 +45,7 @@ Deno.test("Form8978 reviewed public positive/negative/multi-year sources join fu
     });
     assertEquals(b.attachments.length, [3, 3, 9][i]);
     assertStringIncludes(b.xml, "IRS8978ScheduleA");
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -75,7 +77,7 @@ Deno.test("Form8978 reviewed public positive/negative/multi-year sources join fu
     }
   }
 });
-Deno.test("Form8978 native/PDF rejects partner, reviewed facts, tax totals, baseline and attachment conflicts", async () => {
+test("Form8978 native/PDF rejects partner, reviewed facts, tax totals, baseline and attachment conflicts", async () => {
   const { f, p } = prepared(2);
   const b = await buildMefBundle(p, {
     filer: f.filer,

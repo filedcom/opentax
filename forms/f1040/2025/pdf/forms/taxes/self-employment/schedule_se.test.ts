@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
 import { fillFormPdf } from "../../../builder.ts";
@@ -8,7 +11,7 @@ const byKey = new Map(
   scheduleSePdf.fields.map((field) => [field.domainKey, field.pdfField]),
 );
 
-Deno.test("2025 Schedule SE PDF uses printed AcroForm line positions", () => {
+test("2025 Schedule SE PDF uses printed AcroForm line positions", () => {
   assertEquals(
     byKey.get("net_profit_schedule_f"),
     "topmostSubform[0].Page1[0].f1_3[0]",
@@ -48,7 +51,7 @@ const taxpayerIdentity = {
   },
 };
 
-Deno.test("2025 Schedule SE PDF projects regular tax and deduction", () => {
+test("2025 Schedule SE PDF projects regular tax and deduction", () => {
   const projected = scheduleSePdf.projectFields?.({
     net_profit_schedule_c: 50_000,
   }, taxpayerIdentity);
@@ -62,7 +65,7 @@ Deno.test("2025 Schedule SE PDF projects regular tax and deduction", () => {
   assertEquals(projected?.line13, 3_533);
 });
 
-Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line 1a", () => {
+test("2025 Schedule SE PDF projects elected farm method without Part I line 1a", () => {
   const projected = scheduleSePdf.projectFields?.({
     farm_optional_method_elected: true,
     gross_farm_income: 9_000,
@@ -78,7 +81,7 @@ Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line
   assertEquals(projected?.line15, 6_000);
 });
 
-Deno.test("2025 Schedule SE PDF refuses an unsupported farm election", () => {
+test("2025 Schedule SE PDF refuses an unsupported farm election", () => {
   assertThrows(
     () =>
       scheduleSePdf.projectFields?.({
@@ -91,7 +94,7 @@ Deno.test("2025 Schedule SE PDF refuses an unsupported farm election", () => {
   );
 });
 
-Deno.test("Schedule SE filled PDF prints the sole spouse farm proprietor", async () => {
+test("Schedule SE filled PDF prints the sole spouse farm proprietor", async () => {
   const farmSource = {
     schedule_fs: [{
       farm_id: "farm-spouse",
@@ -154,10 +157,10 @@ Deno.test("Schedule SE filled PDF prints the sole spouse farm proprietor", async
     ".pdf-cache",
     pending,
   );
-  const file = await Deno.makeTempFile({ suffix: ".pdf" });
+  const file = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(file, bytes!);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(file, bytes!);
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", file, "-"],
     }).output();
     assertEquals(result.code, 0);
@@ -166,11 +169,11 @@ Deno.test("Schedule SE filled PDF prints the sole spouse farm proprietor", async
     assertStringIncludes(text, "111223333");
     assertStringIncludes(text, "50000");
   } finally {
-    await Deno.remove(file);
+    await sys.remove(file);
   }
 });
 
-Deno.test("Schedule SE rejects a spouse farm mixed with another owner's business", () => {
+test("Schedule SE rejects a spouse farm mixed with another owner's business", () => {
   assertThrows(
     () =>
       scheduleSePdf.projectFields!({
@@ -186,7 +189,7 @@ Deno.test("Schedule SE rejects a spouse farm mixed with another owner's business
   );
 });
 
-Deno.test("Schedule SE rejects mixed owners within multiple Schedule C rows", () => {
+test("Schedule SE rejects mixed owners within multiple Schedule C rows", () => {
   assertThrows(
     () =>
       scheduleSePdf.projectFields!({ net_profit_schedule_c: 30_000 }, {
@@ -203,7 +206,7 @@ Deno.test("Schedule SE rejects mixed owners within multiple Schedule C rows", ()
   );
 });
 
-Deno.test("Schedule SE filled PDF keeps spouse owner across multiple spouse businesses and farms", async () => {
+test("Schedule SE filled PDF keeps spouse owner across multiple spouse businesses and farms", async () => {
   const pending = {
     general: {
       taxpayer_first_name: "Test",
@@ -268,10 +271,10 @@ Deno.test("Schedule SE filled PDF keeps spouse owner across multiple spouse busi
     ".pdf-cache",
     pending,
   );
-  const file = await Deno.makeTempFile({ suffix: ".pdf" });
+  const file = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(file, bytes!);
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(file, bytes!);
+    const result = await new sys.Command("pdftotext", {
       args: ["-layout", file, "-"],
     }).output();
     assertEquals(result.code, 0);
@@ -282,6 +285,6 @@ Deno.test("Schedule SE filled PDF keeps spouse owner across multiple spouse busi
     assertStringIncludes(text, "50000");
     assertStringIncludes(text, "80000");
   } finally {
-    await Deno.remove(file);
+    await sys.remove(file);
   }
 });

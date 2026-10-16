@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -29,7 +30,7 @@ function allocations(count: number) {
   }));
 }
 
-Deno.test("Form 8962 allocation statement starts after four printed rows", async () => {
+test("Form 8962 allocation statement starts after four printed rows", async () => {
   const document = await PDFDocument.create();
   await appendForm8962AllocationStatement(
     document,
@@ -49,7 +50,7 @@ Deno.test("Form 8962 allocation statement starts after four printed rows", async
   );
 });
 
-Deno.test("Form 8962 allocation statement paginates through the MeF maximum", async () => {
+test("Form 8962 allocation statement paginates through the MeF maximum", async () => {
   const document = await PDFDocument.create();
   await appendForm8962AllocationStatement(
     document,
@@ -59,7 +60,7 @@ Deno.test("Form 8962 allocation statement paginates through the MeF maximum", as
   assertEquals(document.getPageCount(), 4);
 });
 
-Deno.test("Form 8962 allocation statement requires filer identification", async () => {
+test("Form 8962 allocation statement requires filer identification", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>
@@ -73,7 +74,7 @@ Deno.test("Form 8962 allocation statement requires filer identification", async 
   );
 });
 
-Deno.test("Form 8962 allocation statement rejects more than 99 rows", async () => {
+test("Form 8962 allocation statement rejects more than 99 rows", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>

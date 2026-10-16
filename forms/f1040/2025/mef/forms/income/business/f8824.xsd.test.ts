@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefBundle, buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -14,7 +17,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // Local IRS schema bundle is optional.
@@ -31,12 +34,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name: "XSD: Form 8824 pure exchange validates in TY2025 return",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8824 pure exchange validates in TY2025 return", async () => {
   const xml = buildMefXml({
     form8824: {
       relinquished_description: "Investment land in Austin Texas",
@@ -57,27 +55,21 @@ Deno.test({
     },
   }, filer);
   assertStringIncludes(xml, "<IRS8824 ");
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8824 business exchange reaches linked MeF documents through the graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8824 business exchange reaches linked MeF documents through the graph", async () => {
   const general = {
     filing_status: "single",
     digital_assets: false,
@@ -126,27 +118,21 @@ Deno.test({
     "<RealizedGainOrLossAmt>100000</RealizedGainOrLossAmt>",
   );
   assertEquals(bundle.attachments.length, 1);
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8824 business boot links its PDF statement and Form 4797 line 5",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8824 business boot links its PDF statement and Form 4797 line 5", async () => {
   const bundle = await buildMefBundle({
     form8824: {
       relinquished_description: "Business land in Austin Texas",
@@ -184,27 +170,21 @@ Deno.test({
     'referenceDocumentName="BinaryAttachment GeneralDependencySmall RealizedAndRecognizedGainInMultiAssetExchangesStmt"',
   );
   assertEquals(bundle.xml.includes("<CashFMVNetLiabRedByExpnssAmt>"), false);
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, bundle.xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, bundle.xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: Form 8824 investment land boot links its PDF statement and Schedule D",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8824 investment land boot links its PDF statement and Schedule D", async () => {
   const bundle = await buildMefBundle({
     form8824: {
       relinquished_description: "Investment land in Austin Texas",
@@ -238,16 +218,16 @@ Deno.test({
     bundle.xml,
     "<RecognizedGainAmt>50000</RecognizedGainAmt>",
   );
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

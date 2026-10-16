@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8839 } from "./f8839.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -23,15 +24,15 @@ const sourcedChild = {
   }],
 };
 
-Deno.test("Form 8839 MeF: absent pending emits no document", () => {
+test("Form 8839 MeF: absent pending emits no document", () => {
   assertEquals(form8839.build([]), "");
 });
 
-Deno.test("Form 8839 MeF: empty pending record rejects", () => {
+test("Form 8839 MeF: empty pending record rejects", () => {
   assertThrows(() => form8839.build({}), Error, "empty pending record");
 });
 
-Deno.test("Form 8839 MeF: receipt and decree identifiers do not bypass return reconciliation", () => {
+test("Form 8839 MeF: receipt and decree identifiers do not bypass return reconciliation", () => {
   assertThrows(
     () =>
       form8839.build({
@@ -42,7 +43,7 @@ Deno.test("Form 8839 MeF: receipt and decree identifiers do not bypass return re
   );
 });
 
-Deno.test("Form 8839 MeF: typed source facts still need reviewed contents and finalized return", () => {
+test("Form 8839 MeF: typed source facts still need reviewed contents and finalized return", () => {
   assertThrows(
     () =>
       form8839.build({
@@ -54,7 +55,7 @@ Deno.test("Form 8839 MeF: typed source facts still need reviewed contents and fi
   );
 });
 
-Deno.test("Form 8839 MeF: employer benefit fails closed", () => {
+test("Form 8839 MeF: employer benefit fails closed", () => {
   assertThrows(
     () => form8839.build({ adoption_benefits: 4_000 }),
     Error,

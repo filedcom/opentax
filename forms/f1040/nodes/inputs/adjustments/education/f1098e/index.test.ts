@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { f1098e, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -18,33 +19,33 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f1098e.inputSchema: valid minimal item passes", () => {
+test("f1098e.inputSchema: valid minimal item passes", () => {
   const parsed = f1098e.inputSchema.safeParse({
     f1098es: [{ box1_student_loan_interest: 1200 }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f1098e.inputSchema: empty array fails (min 1)", () => {
+test("f1098e.inputSchema: empty array fails (min 1)", () => {
   const parsed = f1098e.inputSchema.safeParse({ f1098es: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1098e.inputSchema: negative box1 fails", () => {
+test("f1098e.inputSchema: negative box1 fails", () => {
   const parsed = f1098e.inputSchema.safeParse({
     f1098es: [{ box1_student_loan_interest: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f1098e.inputSchema: optional lender_name passes", () => {
+test("f1098e.inputSchema: optional lender_name passes", () => {
   const parsed = f1098e.inputSchema.safeParse({
     f1098es: [{ box1_student_loan_interest: 500, lender_name: "Navient" }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f1098e.inputSchema: zero interest passes", () => {
+test("f1098e.inputSchema: zero interest passes", () => {
   const parsed = f1098e.inputSchema.safeParse({
     f1098es: [{ box1_student_loan_interest: 0 }],
   });
@@ -55,29 +56,29 @@ Deno.test("f1098e.inputSchema: zero interest passes", () => {
 // 2. Routing — Schedule 1 and AGI Aggregator
 // =============================================================================
 
-Deno.test("f1098e.compute: raw interest waits for finalized Schedule 1 phaseout", () => {
+test("f1098e.compute: raw interest waits for finalized Schedule 1 phaseout", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 1500 })]);
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("f1098e.compute: interest below cap routes to AGI before line 21", () => {
+test("f1098e.compute: interest below cap routes to AGI before line 21", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 1500 })]);
   const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 1500);
 });
 
-Deno.test("f1098e.compute: interest above $2,500 cap awaits MAGI phaseout", () => {
+test("f1098e.compute: interest above $2,500 cap awaits MAGI phaseout", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 3000 })]);
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("f1098e.compute: interest above $2,500 cap — capped at 2500 on agi_aggregator", () => {
+test("f1098e.compute: interest above $2,500 cap — capped at 2500 on agi_aggregator", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 3000 })]);
   const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 2500);
 });
 
-Deno.test("f1098e.compute: exactly at $2,500 cap passes through unchanged", () => {
+test("f1098e.compute: exactly at $2,500 cap passes through unchanged", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 2500 })]);
   const fields = fieldsOf(result.outputs, agi_aggregator)!;
   assertEquals(fields.line21_student_loan_interest, 2500);
@@ -87,12 +88,12 @@ Deno.test("f1098e.compute: exactly at $2,500 cap passes through unchanged", () =
 // 3. Zero / No Output
 // =============================================================================
 
-Deno.test("f1098e.compute: zero interest — no outputs", () => {
+test("f1098e.compute: zero interest — no outputs", () => {
   const result = compute([minimalItem({ box1_student_loan_interest: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f1098e.compute: all zero items — no outputs", () => {
+test("f1098e.compute: all zero items — no outputs", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 0 }),
     minimalItem({ box1_student_loan_interest: 0 }),
@@ -104,7 +105,7 @@ Deno.test("f1098e.compute: all zero items — no outputs", () => {
 // 4. Multiple 1098-E Forms
 // =============================================================================
 
-Deno.test("f1098e.compute: multiple forms — interest summed before phaseout", () => {
+test("f1098e.compute: multiple forms — interest summed before phaseout", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 800 }),
     minimalItem({ box1_student_loan_interest: 700 }),
@@ -113,7 +114,7 @@ Deno.test("f1098e.compute: multiple forms — interest summed before phaseout", 
   assertEquals(fields.line21_student_loan_interest, 1500);
 });
 
-Deno.test("f1098e.compute: multiple forms — sum capped at $2,500", () => {
+test("f1098e.compute: multiple forms — sum capped at $2,500", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 1500 }),
     minimalItem({ box1_student_loan_interest: 1500 }),
@@ -122,7 +123,7 @@ Deno.test("f1098e.compute: multiple forms — sum capped at $2,500", () => {
   assertEquals(fields.line21_student_loan_interest, 2500);
 });
 
-Deno.test("f1098e.compute: multiple forms — no premature schedule1 output", () => {
+test("f1098e.compute: multiple forms — no premature schedule1 output", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 600 }),
     minimalItem({ box1_student_loan_interest: 800 }),
@@ -133,7 +134,7 @@ Deno.test("f1098e.compute: multiple forms — no premature schedule1 output", ()
   assertEquals(s1Outputs.length, 0);
 });
 
-Deno.test("f1098e.compute: multiple forms — only one agi_aggregator output", () => {
+test("f1098e.compute: multiple forms — only one agi_aggregator output", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 600 }),
     minimalItem({ box1_student_loan_interest: 800 }),
@@ -148,7 +149,7 @@ Deno.test("f1098e.compute: multiple forms — only one agi_aggregator output", (
 // 5. Smoke Test
 // =============================================================================
 
-Deno.test("f1098e.compute: smoke test — two lenders, total capped", () => {
+test("f1098e.compute: smoke test — two lenders, total capped", () => {
   const result = compute([
     minimalItem({ box1_student_loan_interest: 1800, lender_name: "Navient" }),
     minimalItem({ box1_student_loan_interest: 1200, lender_name: "FedLoan" }),
@@ -159,7 +160,7 @@ Deno.test("f1098e.compute: smoke test — two lenders, total capped", () => {
   assertEquals(agiFields.line21_student_loan_interest, 2500);
 });
 
-Deno.test("1098-E identified lender statements reject repeated issued copies", () => {
+test("1098-E identified lender statements reject repeated issued copies", () => {
   const issued = {
     box1_student_loan_interest: 800,
     lender_name: "Example Loan Servicer",
@@ -188,7 +189,7 @@ Deno.test("1098-E identified lender statements reject repeated issued copies", (
   );
 });
 
-Deno.test("1098-E rejects two current copies for one lender, borrower, and loan account", () => {
+test("1098-E rejects two current copies for one lender, borrower, and loan account", () => {
   const issued = {
     box1_student_loan_interest: 800,
     lender_name: "Example Loan Servicer",
@@ -233,7 +234,7 @@ Deno.test("1098-E rejects two current copies for one lender, borrower, and loan 
   );
 });
 
-Deno.test("sub-threshold student-loan ledger needs dated, reconciled payments and loan review", () => {
+test("sub-threshold student-loan ledger needs dated, reconciled payments and loan review", () => {
   const record = {
     lender_name: "Example Loan Servicer",
     loan_account_number: "loan-1",
@@ -282,7 +283,7 @@ Deno.test("sub-threshold student-loan ledger needs dated, reconciled payments an
   }
 });
 
-Deno.test("corrected 1098-E replaces rather than adds its original", () => {
+test("corrected 1098-E replaces rather than adds its original", () => {
   const original = {
     box1_student_loan_interest: 800,
     lender_name: "Example Loan Servicer",
@@ -311,7 +312,7 @@ Deno.test("corrected 1098-E replaces rather than adds its original", () => {
   );
 });
 
-Deno.test("1098-E and unreported-interest ledger cannot claim the same loan", () => {
+test("1098-E and unreported-interest ledger cannot claim the same loan", () => {
   const issued = {
     box1_student_loan_interest: 800,
     lender_name: "Example Loan Servicer",

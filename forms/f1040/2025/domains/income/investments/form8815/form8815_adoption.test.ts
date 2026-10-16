@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { z } from "zod";
 import { contributionInputs } from "./form8815_contributions.fixture.ts";
@@ -98,7 +100,7 @@ const cases = [
 ] as const;
 
 for (const entry of cases) {
-  Deno.test(`Form 8815 and reviewed adoption credit coexist: ${entry.id}`, async () => {
+  test(`Form 8815 and reviewed adoption credit coexist: ${entry.id}`, async () => {
     const base = contributionInputs(
       entry.phase ? "mixed-single-phaseout" : "qtp-self",
     );
@@ -158,7 +160,7 @@ for (const entry of cases) {
     assertEquals(result.carryforwards.adoption_credit_2025 ?? 0, entry.carry);
     assertEquals(pending.f1040.line35a_refund, entry.refund);
     const filer = extractFilerIdentity(pending.f1040);
-    const root = Deno.env.get("OPENTAX_FORM8815_ADOPTION_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8815_ADOPTION_PROOF_DIR;
     if (entry.blocked) {
       // Existing deferred93: positive refund still retains the pre-credit amount owed.
       assertEquals(pending.f1040.line37_amount_owed, 6708);
@@ -173,8 +175,8 @@ for (const entry of cases) {
         "line 37 differs",
       );
       if (root) {
-        await Deno.mkdir(root, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(root, { recursive: true });
+        await fs.writeFile(
           `${root}/${entry.id}-blocked.json`,
           JSON.stringify(
             {
@@ -207,10 +209,10 @@ for (const entry of cases) {
       origins,
     );
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -226,7 +228,7 @@ for (const entry of cases) {
         ),
       );
       for (const attachment of adoptionReviewAttachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${root}/${attachment.fileName}`,
           attachment.bytes,
         );

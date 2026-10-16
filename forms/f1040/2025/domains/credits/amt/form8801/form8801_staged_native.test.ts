@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -17,37 +20,34 @@ const schema = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  Deno.statSync(schema);
+  sys.statSync(schema);
   schemaAvailable = true;
 } catch { /* Private IRS bundle. */ }
 
 async function validate(xml: string) {
-  const directory = await Deno.makeTempDir({ prefix: "8801-native-" });
+  const directory = await sys.makeTempDir({ prefix: "8801-native-" });
   try {
     const file = `${directory}/document.xml`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       file,
       xml.replace(
         "<IRS8801>",
         '<IRS8801 xmlns="http://www.irs.gov/efile" documentId="Staged8801">',
       ),
     );
-    const r = await new Deno.Command("xmllint", {
+    const r = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, file],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(r.code, 0, new TextDecoder().decode(r.stderr));
   } finally {
-    await Deno.remove(directory, { recursive: true });
+    await sys.remove(directory, { recursive: true });
   }
 }
 
-Deno.test({
-  name: "8801 native sequence covers every IRS schema line in exact order",
-  ignore: !schemaAvailable,
-}, async () => {
-  const xsd = await Deno.readTextFile(schema);
+test.skipIf(!schemaAvailable)("8801 native sequence covers every IRS schema line in exact order", async () => {
+  const xsd = await fs.readFile(schema, "utf8");
   const sequence = xsd.slice(
     xsd.indexOf('<xsd:complexType name="IRS8801Type">'),
   );
@@ -60,10 +60,7 @@ Deno.test({
   assertEquals<unknown>(form8801NativeLineMap, rows);
 });
 
-Deno.test({
-  name: "8801 native ordinary credit matches settled tax and partial carry",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("8801 native ordinary credit matches settled tax and partial carry", async () => {
   const f = await fixture();
   f.inputs.w2[0].box1_wages = 30_000;
   const r = await stageForm8801NativeDocument(f.inputs, f.binding, f.documents);
@@ -89,11 +86,7 @@ Deno.test({
   await validate(r.native_xml!);
 });
 
-Deno.test({
-  name:
-    "8801 native preserves signed exclusions and net deferral with a positive available carry",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("8801 native preserves signed exclusions and net deferral with a positive available carry", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   facts.prior_credit_carryforward.amount = 10_000;
@@ -126,11 +119,7 @@ Deno.test({
   await validate(negative.native_xml!);
 });
 
-Deno.test({
-  name:
-    "8801 native Schedule D includes the 25 percent computation and all represented capital lines",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("8801 native Schedule D includes the 25 percent computation and all represented capital lines", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line1 = 300_000;
   facts.prior_credit_carryforward.amount = 100_000;
@@ -162,10 +151,7 @@ Deno.test({
   await validate(r.native_xml!);
 });
 
-Deno.test({
-  name: "8801 native zero allowed credit retains a positive carry attachment",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("8801 native zero allowed credit retains a positive carry attachment", async () => {
   const f = await fixture();
   f.inputs.w2[0].box1_wages = 10_000;
   const r = await stageForm8801NativeDocument(f.inputs, f.binding, f.documents);
@@ -178,10 +164,7 @@ Deno.test({
   await validate(r.native_xml!);
 });
 
-Deno.test({
-  name: "8801 native qualified-dividend method omits skipped Schedule D cells",
-  ignore: !schemaAvailable,
-}, async () => {
+test.skipIf(!schemaAvailable)("8801 native qualified-dividend method omits skipped Schedule D cells", async () => {
   const f = await fixture({
     ...packageFacts(),
     capital_rate_workpaper: {
@@ -210,7 +193,7 @@ Deno.test({
   await validate(r.native_xml!);
 });
 
-Deno.test("8801 native nonpositive stop emits no attachment and rejects detached or modified source", async () => {
+test("8801 native nonpositive stop emits no attachment and rejects detached or modified source", async () => {
   const facts = packageFacts();
   facts.prior_form6251.line10 = 0;
   const f = await fixture(facts);

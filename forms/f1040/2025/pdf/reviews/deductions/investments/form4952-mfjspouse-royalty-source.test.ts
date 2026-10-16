@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -133,7 +136,7 @@ async function sourceInput() {
   };
 }
 
-Deno.test("MFJ spouse portfolio royalty and primary traced loan reconcile through Form 4952 and complete packet", async () => {
+test("MFJ spouse portfolio royalty and primary traced loan reconcile through Form 4952 and complete packet", async () => {
   const input = await sourceInput();
   const result = execute(buildExecutionPlan(registry), registry, input, {
     taxYear: 2025,
@@ -165,7 +168,7 @@ Deno.test("MFJ spouse portfolio royalty and primary traced loan reconcile throug
     bundle.xml,
     "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
   );
-  const out = await Deno.makeTempDir({ prefix: "opentax-4952-mfjspouse-" });
+  const out = await sys.makeTempDir({ prefix: "opentax-4952-mfjspouse-" });
   console.log("Form 4952 MFJ spouse source archive:", out);
   const origins: PdfPageOrigin[] = [];
   const pdf = await buildPdfBytes(
@@ -177,34 +180,34 @@ Deno.test("MFJ spouse portfolio royalty and primary traced loan reconcile throug
   );
   const pages = (await PDFDocument.load(pdf)).getPageCount();
   assertEquals(pages >= 7, true);
-  await Deno.writeTextFile(
+  await fs.writeFile(
     out + "/source.json",
     JSON.stringify(input, null, 2),
   );
-  await Deno.writeTextFile(out + "/filer.json", JSON.stringify(filer, null, 2));
-  await Deno.writeTextFile(
+  await fs.writeFile(out + "/filer.json", JSON.stringify(filer, null, 2));
+  await fs.writeFile(
     out + "/pending.json",
     JSON.stringify(normalized, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     out + "/prepared.json",
     JSON.stringify(bundle.pending, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     out + "/carry.json",
     JSON.stringify(result.carryforwards, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     out + "/origins.json",
     JSON.stringify(origins, null, 2),
   );
-  await Deno.writeTextFile(out + "/return.xml", bundle.xml);
-  await Deno.writeFile(out + "/return.pdf", pdf);
+  await fs.writeFile(out + "/return.xml", bundle.xml);
+  await fs.writeFile(out + "/return.pdf", pdf);
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const checked = await new Deno.Command("xmllint", {
+  const checked = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, out + "/return.xml"],
     stdout: "piped",
     stderr: "piped",
@@ -212,7 +215,7 @@ Deno.test("MFJ spouse portfolio royalty and primary traced loan reconcile throug
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
 });
 
-Deno.test("MFJ royalty path rejects mismatched spouse, property, interest, document and debt owners at both exporters", async () => {
+test("MFJ royalty path rejects mismatched spouse, property, interest, document and debt owners at both exporters", async () => {
   const input = await sourceInput();
   const result = execute(buildExecutionPlan(registry), registry, input, {
     taxYear: 2025,

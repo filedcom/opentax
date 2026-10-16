@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form8992Filer } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
@@ -51,7 +52,7 @@ const recipient = {
   },
 } as const;
 
-Deno.test("Form 8611 projects two calculated buildings into native and one-page PDFs", () => {
+test("Form 8611 projects two calculated buildings into native and one-page PDFs", () => {
   const f8611Source = inputSchema.parse({ f8611s: [owner, recipient] });
   const result = f8611.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -90,7 +91,7 @@ Deno.test("Form 8611 projects two calculated buildings into native and one-page 
   );
 });
 
-Deno.test("Form 8611 PDF preserves bond identity and section 42(j)(5) note", () => {
+test("Form 8611 PDF preserves bond identity and section 42(j)(5) note", () => {
   const bonded = {
     ...recipient,
     financed_with_tax_exempt_bonds: true,
@@ -117,7 +118,7 @@ Deno.test("Form 8611 PDF preserves bond identity and section 42(j)(5) note", () 
   assertEquals(pdf.section42j5_note, true);
 });
 
-Deno.test("Form 8611 PDF rejects changed recapture source or final return", () => {
+test("Form 8611 PDF rejects changed recapture source or final return", () => {
   const f8611Source = { f8611s: [owner] };
   assertThrows(
     () => form8611Pdf.instances!(f8611Source, form8992Filer),

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   singlePolicyCases,
@@ -37,7 +39,7 @@ const expected: Record<string, [number, number, number, number, number]> = {
   "single-excluded-cents": [3252.5, 43214.5, 5493, 2399, 9464],
 };
 for (const c of singlePolicyCases) {
-  Deno.test(`Single-plan health policy inventory through complete return: ${c.id}`, async () => {
+  test(`Single-plan health policy inventory through complete return: ${c.id}`, async () => {
     const input = singlePolicyInput(c), r = f1040_2025.executeReturn(input);
     assertEquals(r.diagnostics, []);
     const filer = extractFilerIdentity(r.pending.f1040);
@@ -89,11 +91,11 @@ for (const c of singlePolicyCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM7206_SINGLE_POLICY_EVIDENCE");
+      root = process.env.FORM7206_SINGLE_POLICY_EVIDENCE;
     } catch { /* optional private evidence */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -108,12 +110,12 @@ for (const c of singlePolicyCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
     }
   });
 }
-Deno.test("Single-plan health rejects mismatched public policy and payment records", () => {
+test("Single-plan health rejects mismatched public policy and payment records", () => {
   for (const change of sourceChanges) {
     const input = singlePolicyInput(singlePolicyCases[0]);
     change(input.form7206.single_schedule_c_plan);

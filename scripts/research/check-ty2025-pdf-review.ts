@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 /** Read-only audit of a human-completed TY2025 filled-PDF review manifest. */
 import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
@@ -30,15 +32,15 @@ import {
 } from "./ty2025-pdf-review-schema.ts";
 import { assertReviewScope } from "./ty2025-pdf-review-scope.ts";
 
-const [directoryArg, xsdArg] = Deno.args;
-if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
+const [directoryArg, xsdArg] = process.argv.slice(2);
+if (!directoryArg || !xsdArg || process.argv.slice(2).length !== 2) {
   throw new Error(
     "Usage: deno run --allow-read --allow-run=xmllint scripts/research/check-ty2025-pdf-review.ts /review-directory /absolute/path/Return1040.xsd",
   );
 }
 const directory = resolve(directoryArg);
 const xsdPath = resolve(xsdArg);
-if (!(await Deno.stat(xsdPath)).isFile) {
+if (!(await sys.stat(xsdPath)).isFile) {
   throw new Error(`TY2025 XSD is not a file: ${xsdPath}`);
 }
 
@@ -99,7 +101,7 @@ async function artifact(
   ) {
     throw new Error(`${caseId}: expected ${fileName} in the manifest`);
   }
-  const bytes = await Deno.readFile(join(directory, fileName));
+  const bytes = await sys.readBytes(join(directory, fileName));
   const digest = await sha256Hex(bytes);
   if (entry[hashKey] !== digest) {
     throw new Error(`${caseId}: ${fileName} SHA-256 differs from the manifest`);
@@ -108,7 +110,7 @@ async function artifact(
 }
 
 const manifest = object(
-  JSON.parse(await Deno.readTextFile(join(directory, "review-manifest.json"))),
+  JSON.parse(await fs.readFile(join(directory, "review-manifest.json"), "utf8")),
   "review manifest",
 );
 if (manifest.taxYear !== 2025) throw new Error("Review batch is not TY2025");
@@ -117,7 +119,7 @@ if (manifest.reviewReturnTimestamp !== REVIEW_RETURN_TIMESTAMP) {
     "Review batch header timestamp differs from the review source",
   );
 }
-const schemaDigest = await sha256Hex(await Deno.readFile(xsdPath));
+const schemaDigest = await sha256Hex(await sys.readBytes(xsdPath));
 assertReviewSchemaDigest(schemaDigest);
 await assertReviewSchemaTree(xsdPath);
 if (manifest.xsdSha256 !== schemaDigest) {
@@ -139,7 +141,7 @@ if (cases.length !== scope.includedFixtureIds.length) {
 }
 await assertReviewArtifactInventory(directory, scope.includedFixtureIds);
 const templateCache = join(directory, "irs-pdf-cache");
-const templateCacheInfo = await Deno.stat(templateCache).catch(() => undefined);
+const templateCacheInfo = await sys.stat(templateCache).catch(() => undefined);
 if (!templateCacheInfo?.isDirectory) {
   throw new Error("Retained IRS PDF template cache is not a directory");
 }
@@ -253,7 +255,7 @@ for (const [index, rawCase] of cases.entries()) {
   );
   await assertReviewPdfReplay(id, replayedPdf, entry.pdfSha256);
 
-  const validation = await new Deno.Command("xmllint", {
+  const validation = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsdPath, join(directory, `${id}.xml`)],
     stdout: "piped",
     stderr: "piped",

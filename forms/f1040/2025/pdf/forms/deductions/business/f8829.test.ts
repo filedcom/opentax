@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { withRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateRentedHomeForm8829 } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/index.ts";
@@ -6,7 +7,7 @@ import { form8829Pdf } from "./f8829.ts";
 
 const page = "topmostSubform[0].Page1[0]";
 
-Deno.test("2025 Form 8829 puts business and total area on lines 1 and 2", () => {
+test("2025 Form 8829 puts business and total area on lines 1 and 2", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -14,7 +15,7 @@ Deno.test("2025 Form 8829 puts business and total area on lines 1 and 2", () => 
   assertEquals(byKey.get("line2"), `${page}.f1_04[0]`);
 });
 
-Deno.test("2025 Form 8829 indirect expenses use printed lines 18 through 22", () => {
+test("2025 Form 8829 indirect expenses use printed lines 18 through 22", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -31,7 +32,7 @@ Deno.test("2025 Form 8829 indirect expenses use printed lines 18 through 22", ()
   );
 });
 
-Deno.test("2025 Form 8829 direct repairs and subtotal use column a", () => {
+test("2025 Form 8829 direct repairs and subtotal use column a", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -45,7 +46,7 @@ Deno.test("2025 Form 8829 direct repairs and subtotal use column a", () => {
   );
 });
 
-Deno.test("2025 Form 8829 rented-home PDF omits unsupported owner-home fields", () => {
+test("2025 Form 8829 rented-home PDF omits unsupported owner-home fields", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -53,7 +54,7 @@ Deno.test("2025 Form 8829 rented-home PDF omits unsupported owner-home fields", 
   assertEquals(byKey.has("home_fmv_or_basis"), false);
 });
 
-Deno.test("2025 Form 8829 operating carryover uses printed line 25", () => {
+test("2025 Form 8829 operating carryover uses printed line 25", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -61,7 +62,7 @@ Deno.test("2025 Form 8829 operating carryover uses printed line 25", () => {
   assertEquals(form8829Pdf.includeWhen?.({ line36: 0, line43: 200 }), true);
 });
 
-Deno.test("2025 Form 8829 maps every bounded rented-home calculated line and identity", () => {
+test("2025 Form 8829 maps every bounded rented-home calculated line and identity", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -96,7 +97,7 @@ Deno.test("2025 Form 8829 maps every bounded rented-home calculated line and ide
   );
 });
 
-Deno.test("2025 Form 8829 PDF projection checks source and formats percentages", () => {
+test("2025 Form 8829 PDF projection checks source and formats percentages", () => {
   const source = withRentedHomeEvidence(
     {
       business_reference: "C-1",

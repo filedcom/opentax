@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "./tax-node.ts";
@@ -30,12 +31,12 @@ const nodeB = new MockNodeB();
 
 // --- OutputNodes declaration ---
 
-Deno.test("OutputNodes: nodeTypes returns nodeType strings of all declared nodes", () => {
+test("OutputNodes: nodeTypes returns nodeType strings of all declared nodes", () => {
   const out = new OutputNodes([nodeA, nodeB]);
   assertEquals(out.nodeTypes, ["mock_a", "mock_b"]);
 });
 
-Deno.test("OutputNodes: nodeTypes is empty when no nodes declared", () => {
+test("OutputNodes: nodeTypes is empty when no nodes declared", () => {
   const out = new OutputNodes([]);
   assertEquals(out.nodeTypes, []);
 });

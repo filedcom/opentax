@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
 import { normalizeAllPending } from "../../../return-processing/pending.ts";
@@ -27,9 +29,9 @@ function source(farmIncome: boolean, rent: number) {
   return { inputs, pending, carryforwards: graph.carryforwards };
 }
 
-Deno.test("public current-loss sources retain separate operating and ordinary ledger characters into a source-reconciled next-year opening", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("public current-loss sources retain separate operating and ordinary ledger characters into a source-reconciled next-year opening", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   const reference = "Synthetic ledger reference; not IRS acceptance";
   for (
     const c of [
@@ -194,7 +196,7 @@ Deno.test("public current-loss sources retain separate operating and ordinary le
     );
     assertEquals(facts.pending, before);
     if (output) {
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-ledger.json`,
         JSON.stringify(
           {
@@ -214,7 +216,7 @@ Deno.test("public current-loss sources retain separate operating and ordinary le
   }
 });
 
-Deno.test("current-loss ledger and opening reject changed original forms, prior loss, duplicates, stored allocation and filing reference", () => {
+test("current-loss ledger and opening reject changed original forms, prior loss, duplicates, stored allocation and filing reference", () => {
   const facts = source(true, 2000);
   const original = facts.pending.form8582;
   const reference = "Synthetic ledger reference; not IRS acceptance";

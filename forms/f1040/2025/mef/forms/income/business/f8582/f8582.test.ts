@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8582 } from "./f8582.ts";
 
@@ -62,7 +63,7 @@ const reorderedActivityCase = {
   },
 };
 
-Deno.test("Form 8582 omits a gain-only activity with no passive loss", () => {
+test("Form 8582 omits a gain-only activity with no passive loss", () => {
   assertEquals(
     form8582.build({
       activities: [{
@@ -83,7 +84,7 @@ Deno.test("Form 8582 omits a gain-only activity with no passive loss", () => {
   );
 });
 
-Deno.test("Form 8582 MeF joins reordered source activities by durable ID", () => {
+test("Form 8582 MeF joins reordered source activities by durable ID", () => {
   const { fields, pending } = reorderedActivityCase;
   const xml = form8582.build(fields, { pending });
   assertEquals(
@@ -128,7 +129,7 @@ Deno.test("Form 8582 MeF joins reordered source activities by durable ID", () =>
   );
 });
 
-Deno.test("Form 8582 MeF preserves filed Part IX loss character without a 2025 sale", () => {
+test("Form 8582 MeF preserves filed Part IX loss character without a 2025 sale", () => {
   const source = {
     tax_year: 2024,
     activity_id: "passive-part-ix",
@@ -229,7 +230,7 @@ Deno.test("Form 8582 MeF preserves filed Part IX loss character without a 2025 s
   );
 });
 
-Deno.test("Form 8582 MeF keeps a single filed Part VIII Form 4797 loss", () => {
+test("Form 8582 MeF keeps a single filed Part VIII Form 4797 loss", () => {
   const source = {
     tax_year: 2024,
     activity_id: "passive-part-viii",
@@ -379,12 +380,12 @@ function buildWithFiledPriorOperating(
   });
 }
 
-Deno.test("Form 8582: absent activity emits no document", () => {
+test("Form 8582: absent activity emits no document", () => {
   assertEquals(form8582.build({}), "");
   assertEquals(form8582.build({ modified_agi: 75_000, current_loss: 0 }), "");
 });
 
-Deno.test("Form 8582 XML reconciles a retained Part II sale with filed prior operating PAL", () => {
+test("Form 8582 XML reconciles a retained Part II sale with filed prior operating PAL", () => {
   const sale = {
     activity_id: "rental-retained",
     activity_name: "Retained rental",
@@ -476,7 +477,7 @@ Deno.test("Form 8582 XML reconciles a retained Part II sale with filed prior ope
   );
 });
 
-Deno.test("Form 8582 XML puts active retained-sale PAL on Part IV with phased allowance", () => {
+test("Form 8582 XML puts active retained-sale PAL on Part IV with phased allowance", () => {
   const sale = {
     activity_id: "active-retained",
     activity_name: "Active retained rental",
@@ -588,7 +589,7 @@ Deno.test("Form 8582 XML puts active retained-sale PAL on Part IV with phased al
   );
 });
 
-Deno.test("Form 8582 joins multiple current Form 4797 sales by exact source facts, not row order", () => {
+test("Form 8582 joins multiple current Form 4797 sales by exact source facts, not row order", () => {
   const firstSale = {
     activity_id: "multi-sale",
     activity_name: "Multi sale rental",
@@ -688,7 +689,7 @@ Deno.test("Form 8582 joins multiple current Form 4797 sales by exact source fact
   );
 });
 
-Deno.test("Form 8582: aggregate losses cannot create invented MeF XML", () => {
+test("Form 8582: aggregate losses cannot create invented MeF XML", () => {
   assertThrows(
     () =>
       form8582.build({ current_loss: 8_000 }, {
@@ -699,7 +700,7 @@ Deno.test("Form 8582: aggregate losses cannot create invented MeF XML", () => {
   );
 });
 
-Deno.test("Form 8582: rental classification alone is insufficient", () => {
+test("Form 8582: rental classification alone is insufficient", () => {
   assertThrows(
     () =>
       form8582.build({ rental_current_loss: 8_000, has_active_rental: true }, {
@@ -710,7 +711,7 @@ Deno.test("Form 8582: rental classification alone is insufficient", () => {
   );
 });
 
-Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 allowance", () => {
+test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 allowance", () => {
   const mfsLivedApartSource = {
     months: Array.from({ length: 12 }, (_, index) => ({
       month: index + 1,
@@ -840,7 +841,7 @@ Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 all
   );
 });
 
-Deno.test("Form 8582: prior-year suspended losses require activity allocation", () => {
+test("Form 8582: prior-year suspended losses require activity allocation", () => {
   assertThrows(
     () =>
       form8582.build({ prior_unallowed: 2_000 }, {
@@ -851,7 +852,7 @@ Deno.test("Form 8582: prior-year suspended losses require activity allocation", 
   );
 });
 
-Deno.test("Form 8582 MeF joins filed prior balance to its Schedule E activity", () => {
+test("Form 8582 MeF joins filed prior balance to its Schedule E activity", () => {
   const source = {
     tax_year: 2024,
     activity_id: "rental-7",
@@ -927,7 +928,7 @@ Deno.test("Form 8582 MeF joins filed prior balance to its Schedule E activity", 
   );
 });
 
-Deno.test("Form 8582 rejects prior Form 4797 character and current sale without disposition review", () => {
+test("Form 8582 rejects prior Form 4797 character and current sale without disposition review", () => {
   const activity = {
     activity_id: "id-Land rental",
     name: "Land rental",
@@ -988,7 +989,7 @@ const singleRental = {
   filing_status: "single",
 };
 
-Deno.test("Form 8582 active direct MeF cannot omit its Schedule E source", () => {
+test("Form 8582 active direct MeF cannot omit its Schedule E source", () => {
   assertThrows(
     () => form8582.build(singleRental),
     Error,
@@ -996,7 +997,7 @@ Deno.test("Form 8582 active direct MeF cannot omit its Schedule E source", () =>
   );
 });
 
-Deno.test("Form 8582: fully allowed active rental reconciles Part I, II and worksheets", () => {
+test("Form 8582: fully allowed active rental reconciles Part I, II and worksheets", () => {
   const xml = buildWithCurrentScheduleE(singleRental);
   assertStringIncludes(xml, "<RentalRealtyLossAmt>8000</RentalRealtyLossAmt>");
   assertStringIncludes(xml, "<NetRentalRealtyAmt>-8000</NetRentalRealtyAmt>");
@@ -1011,7 +1012,7 @@ Deno.test("Form 8582: fully allowed active rental reconciles Part I, II and work
   assertStringIncludes(xml, "<LossesPct>1.00000</LossesPct>");
 });
 
-Deno.test("Form 8582: partially suspended rental allocates allowed and carried losses", () => {
+test("Form 8582: partially suspended rental allocates allowed and carried losses", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     modified_agi: 140_000,
@@ -1034,7 +1035,7 @@ Deno.test("Form 8582: partially suspended rental allocates allowed and carried l
   );
 });
 
-Deno.test("Form 8582: zero special allowance carries the whole rental loss", () => {
+test("Form 8582: zero special allowance carries the whole rental loss", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     modified_agi: 150_000,
@@ -1050,7 +1051,7 @@ Deno.test("Form 8582: zero special allowance carries the whole rental loss", () 
   assertEquals(xml.includes("<ParentWrkshtAllowanceGrp>"), false);
 });
 
-Deno.test("Form 8582: multiple fully allowed rentals allocate exact worksheet ratios", () => {
+test("Form 8582: multiple fully allowed rentals allocate exact worksheet ratios", () => {
   const second = {
     ...singleRental.activities[0],
     activity_id: "id-Second house",
@@ -1070,7 +1071,7 @@ Deno.test("Form 8582: multiple fully allowed rentals allocate exact worksheet ra
   assertEquals(xml.match(/<WrkshtAllowanceGrp>/g)?.length, 2);
 });
 
-Deno.test("Form 8582: eligible prior rental operating loss appears on line 1c", () => {
+test("Form 8582: eligible prior rental operating loss appears on line 1c", () => {
   const xml = buildWithFiledPriorOperating({
     ...singleRental,
     activities: [{
@@ -1097,7 +1098,7 @@ Deno.test("Form 8582: eligible prior rental operating loss appears on line 1c", 
   );
 });
 
-Deno.test("Form 8582: prior loss without past active participation moves to Part V", () => {
+test("Form 8582: prior loss without past active participation moves to Part V", () => {
   const xml = buildWithFiledPriorOperating({
     ...singleRental,
     activities: [{
@@ -1128,7 +1129,7 @@ Deno.test("Form 8582: prior loss without past active participation moves to Part
   assertEquals(xml.includes("<PriorYearRentalUnallowedAmt>"), false);
 });
 
-Deno.test("Form 8582: rental profit offsets prior loss before special allowance", () => {
+test("Form 8582: rental profit offsets prior loss before special allowance", () => {
   const xml = buildWithFiledPriorOperating({
     ...singleRental,
     activities: [{
@@ -1166,7 +1167,7 @@ Deno.test("Form 8582: rental profit offsets prior loss before special allowance"
   assertStringIncludes(xml, "<OverallLossAmt>3000</OverallLossAmt>");
 });
 
-Deno.test("Form 8582: profitable rental releases part of another rental loss", () => {
+test("Form 8582: profitable rental releases part of another rental loss", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     activities: [
@@ -1209,7 +1210,7 @@ Deno.test("Form 8582: profitable rental releases part of another rental loss", (
   assertStringIncludes(xml, "<OverallGainAmt>10000</OverallGainAmt>");
 });
 
-Deno.test("Form 8582: overall rental gain releases prior loss without Part II", () => {
+test("Form 8582: overall rental gain releases prior loss without Part II", () => {
   const xml = buildWithFiledPriorOperating({
     ...singleRental,
     activities: [{
@@ -1248,7 +1249,7 @@ const otherPassive = {
   filing_status: "single",
 };
 
-Deno.test("Form 8582: other passive rental loss uses Part V without special allowance", () => {
+test("Form 8582: other passive rental loss uses Part V without special allowance", () => {
   const xml = buildWithCurrentScheduleE(otherPassive);
   assertStringIncludes(
     xml,
@@ -1270,7 +1271,7 @@ Deno.test("Form 8582: other passive rental loss uses Part V without special allo
   assertEquals(xml.includes("<RentalRealtyLossLimitAmt>"), false);
 });
 
-Deno.test("Form 8582: other passive profit releases another rental's current and prior loss", () => {
+test("Form 8582: other passive profit releases another rental's current and prior loss", () => {
   const xml = buildWithFiledPriorOperating({
     ...otherPassive,
     activities: [
@@ -1313,7 +1314,7 @@ Deno.test("Form 8582: other passive profit releases another rental's current and
   );
 });
 
-Deno.test("Form 8582: mixed Part IV and V gives special allowance only to active rental", () => {
+test("Form 8582: mixed Part IV and V gives special allowance only to active rental", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     activities: [
@@ -1353,7 +1354,7 @@ Deno.test("Form 8582: mixed Part IV and V gives special allowance only to active
   assertEquals(xml.match(/<WrkshtLossGrp>/g)?.length, 1);
 });
 
-Deno.test("Form 8582: mixed losses share passive income and remaining suspension", () => {
+test("Form 8582: mixed losses share passive income and remaining suspension", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     activities: [
@@ -1397,7 +1398,7 @@ Deno.test("Form 8582: mixed losses share passive income and remaining suspension
   assertEquals(xml.match(/<WrkshtLossGrp>/g)?.length, 2);
 });
 
-Deno.test("Form 8582: active rental profit cannot give Part V loss a special allowance", () => {
+test("Form 8582: active rental profit cannot give Part V loss a special allowance", () => {
   const xml = buildWithCurrentScheduleE({
     ...singleRental,
     activities: [
@@ -1423,7 +1424,7 @@ Deno.test("Form 8582: active rental profit cannot give Part V loss a special all
   assertEquals(xml.includes("<ParentWrkshtAllowanceGrp>"), false);
 });
 
-Deno.test("Form 8582: other passive overall gain releases prior loss", () => {
+test("Form 8582: other passive overall gain releases prior loss", () => {
   const xml = buildWithFiledPriorOperating({
     ...otherPassive,
     activities: [{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -27,7 +28,7 @@ const filer: FilerIdentity = {
   },
 };
 
-Deno.test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 schema order", () => {
+test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 schema order", () => {
   const source = {
     requests: [
       {
@@ -72,7 +73,7 @@ Deno.test("Schedule LEP emits separate taxpayer and spouse requests in TY2025 sc
   assertEquals(buildPending(executed.pending).schedule_lep, source);
 });
 
-Deno.test("Schedule LEP rejects duplicate persons, invalid codes, and spouse on a nonjoint return", () => {
+test("Schedule LEP rejects duplicate persons, invalid codes, and spouse on a nonjoint return", () => {
   assertEquals(
     inputSchema.safeParse({
       requests: [
@@ -137,7 +138,7 @@ Deno.test("Schedule LEP rejects duplicate persons, invalid codes, and spouse on 
   );
 });
 
-Deno.test("Schedule LEP cancellation requires a confirmed request and prior election record", () => {
+test("Schedule LEP cancellation requires a confirmed request and prior election record", () => {
   assertEquals(
     inputSchema.safeParse({
       requests: [{

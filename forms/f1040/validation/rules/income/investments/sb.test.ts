@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "../../../../../../core/validation/context.ts";
 import { FIELD_REGISTRY } from "../../../field-registry.ts";
@@ -14,7 +15,7 @@ function check(ruleNumber: string, fields: Record<string, unknown>): boolean {
   return rule.check(context);
 }
 
-Deno.test("Schedule B FBAR business rules use MeF booleans and nonempty countries", () => {
+test("Schedule B FBAR business rules use MeF booleans and nonempty countries", () => {
   assertEquals(
     check("SB-F1040-006-02", {
       fincen_form114_required: true,

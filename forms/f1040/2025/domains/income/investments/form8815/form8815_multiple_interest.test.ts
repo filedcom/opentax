@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { createHash } from "node:crypto";
 import { f1040_2025 } from "../../../../index.ts";
@@ -79,7 +82,7 @@ function sources(joint = false): any {
 }
 const hash = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 for (const joint of [false, true]) {
-  Deno.test(`Form8815 ${joint ? "joint" : "single"} distinct redeemed bonds and bank/noneligible Treasury interest reach full native/PDF packet`, async () => {
+  test(`Form8815 ${joint ? "joint" : "single"} distinct redeemed bonds and bank/noneligible Treasury interest reach full native/PDF packet`, async () => {
     const inputs = sources(joint);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -105,13 +108,13 @@ for (const joint of [false, true]) {
     const root = `.state/research/form8815-multiple-interest-oct6/${
       joint ? "joint" : "single"
     }`;
-    await Deno.mkdir(root, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(root, { recursive: true });
+    await fs.writeFile(
       `${root}/source-pending.json`,
       JSON.stringify({ inputs, filer, pending }, null, 2),
     );
-    await Deno.writeTextFile(`${root}/return.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/return.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -134,12 +137,12 @@ for (const joint of [false, true]) {
       "schedule_b",
       "form8815",
     ]);
-    await Deno.writeFile(`${root}/return.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/return.pdf`, pdf);
+    await fs.writeFile(
       `${root}/origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/manifest.json`,
       JSON.stringify(
         {
@@ -156,7 +159,7 @@ for (const joint of [false, true]) {
     );
   });
 }
-Deno.test("Form8815 multiple interest references reject unmatched, duplicate, owner and adjustment conflicts in full export", async () => {
+test("Form8815 multiple interest references reject unmatched, duplicate, owner and adjustment conflicts in full export", async () => {
   const changes: ((input: any) => void)[] = [
     (x) => delete x.form8815.bond_interest_source_references,
     (x) => x.form8815.bond_interest_source_references.push("redeemed-ee-copy"),

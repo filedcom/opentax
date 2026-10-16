@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   policyInventoryCases,
@@ -36,7 +38,7 @@ const expected: Record<
   "below-wage-base": [4259, 1737, 57943, 1589, 2508, 4628],
 };
 for (const c of policyInventoryCases) {
-  Deno.test(`Independent health policy inventory through complete return: ${c.id}`, async () => {
+  test(`Independent health policy inventory through complete return: ${c.id}`, async () => {
     const input = policyInventoryInput(c), r = f1040_2025.executeReturn(input);
     assertEquals(r.diagnostics, []);
     const filer = extractFilerIdentity(r.pending.f1040);
@@ -89,11 +91,11 @@ for (const c of policyInventoryCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM7206_POLICY_EVIDENCE");
+      root = process.env.FORM7206_POLICY_EVIDENCE;
     } catch { /* optional private evidence */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -108,12 +110,12 @@ for (const c of policyInventoryCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
     }
   });
 }
-Deno.test("Independent Schedule C health rejects mismatched public policy and payment records", () => {
+test("Independent Schedule C health rejects mismatched public policy and payment records", () => {
   for (const change of sourceChanges) {
     const input = policyInventoryInput(policyInventoryCases[0]);
     change(input.form7206.independent_schedule_c_plans);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -19,7 +20,7 @@ export {
   bonusFilerFixture,
 } from "./form8911_bonus_fixture.ts";
 
-Deno.test("Form 8911 business credit and reduced bonus basis reach the prepared return together", async () => {
+test("Form 8911 business credit and reduced bonus basis reach the prepared return together", async () => {
   for (
     const [cost, credit, allowed] of [[10000, 600, 600], [100000, 6000, 3875]]
   ) {
@@ -58,7 +59,7 @@ Deno.test("Form 8911 business credit and reduced bonus basis reach the prepared 
   }
 });
 
-Deno.test("Form 8911/4562 filing rejects conflicting basis, source, deduction and document links", async () => {
+test("Form 8911/4562 filing rejects conflicting basis, source, deduction and document links", async () => {
   const { pending } = f1040_2025.executeReturn(bonusCreditInput());
   for (
     const patch of [
@@ -98,7 +99,7 @@ Deno.test("Form 8911/4562 filing rejects conflicting basis, source, deduction an
   );
 });
 
-Deno.test("Form 4562 bonus eligibility rejects cutoff, election and ADS conflicts", () => {
+test("Form 4562 bonus eligibility rejects cutoff, election and ADS conflicts", () => {
   const asset = bonusCreditInput().form4562.bonus_asset;
   for (
     const patch of [
@@ -116,7 +117,7 @@ Deno.test("Form 4562 bonus eligibility rejects cutoff, election and ADS conflict
   }
 });
 
-Deno.test("Form 4562 single bonus asset also reconciles without a property credit", async () => {
+test("Form 4562 single bonus asset also reconciles without a property credit", async () => {
   const source = bonusCreditInput();
   const { f8911: _credit, ...withoutCredit } = source;
   const result = f1040_2025.executeReturn({

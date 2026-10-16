@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { GraphNode } from "../../core/runtime/graph.ts";
 import { catalog } from "../../catalog.ts";
@@ -22,20 +23,20 @@ function captureLog(fn: () => void): string {
 // nodeListCommand
 // ---------------------------------------------------------------------------
 
-Deno.test("nodeListCommand: includes count header", () => {
+test("nodeListCommand: includes count header", () => {
   const out = captureLog(() => nodeListCommand());
   const expected = `Registered Nodes (${Object.keys(registry).length})`;
   assertStringIncludes(out, expected);
 });
 
-Deno.test("nodeListCommand: includes every registered node type", () => {
+test("nodeListCommand: includes every registered node type", () => {
   const out = captureLog(() => nodeListCommand());
   for (const nodeType of Object.keys(registry)) {
     assertStringIncludes(out, nodeType);
   }
 });
 
-Deno.test("nodeListCommand: output is sorted alphabetically", () => {
+test("nodeListCommand: output is sorted alphabetically", () => {
   const out = captureLog(() => nodeListCommand());
   const types = Object.keys(registry).sort();
   const firstType = types[0];
@@ -49,7 +50,7 @@ Deno.test("nodeListCommand: output is sorted alphabetically", () => {
 // nodeInspectCommand — unknown node
 // ---------------------------------------------------------------------------
 
-Deno.test("nodeInspectCommand: unknown nodeType throws with message", () => {
+test("nodeInspectCommand: unknown nodeType throws with message", () => {
   assertThrows(
     () => nodeInspectCommand({ nodeType: "nonexistent", json: false }),
     Error,
@@ -61,21 +62,21 @@ Deno.test("nodeInspectCommand: unknown nodeType throws with message", () => {
 // nodeInspectCommand — text output (w2)
 // ---------------------------------------------------------------------------
 
-Deno.test("nodeInspectCommand: prints node name header", () => {
+test("nodeInspectCommand: prints node name header", () => {
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "w2", json: false })
   );
   assertStringIncludes(out, "Node: w2");
 });
 
-Deno.test("nodeInspectCommand: prints Input Schema section", () => {
+test("nodeInspectCommand: prints Input Schema section", () => {
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "w2", json: false })
   );
   assertStringIncludes(out, "Input Schema:");
 });
 
-Deno.test("nodeInspectCommand: prints schema fields from w2 inputSchema", () => {
+test("nodeInspectCommand: prints schema fields from w2 inputSchema", () => {
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "w2", json: false })
   );
@@ -84,7 +85,7 @@ Deno.test("nodeInspectCommand: prints schema fields from w2 inputSchema", () => 
   assertStringIncludes(out, "box1_wages");
 });
 
-Deno.test("nodeInspectCommand: expands refined array item fields for 1099-NEC and K-1 nodes", () => {
+test("nodeInspectCommand: expands refined array item fields for 1099-NEC and K-1 nodes", () => {
   for (
     const [nodeType, arrayName, fields] of [
       ["f1099nec", "f1099necs", [
@@ -109,7 +110,7 @@ Deno.test("nodeInspectCommand: expands refined array item fields for 1099-NEC an
   }
 });
 
-Deno.test("nodeInspectCommand: prints Output Nodes section", () => {
+test("nodeInspectCommand: prints Output Nodes section", () => {
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "w2", json: false })
   );
@@ -117,7 +118,7 @@ Deno.test("nodeInspectCommand: prints Output Nodes section", () => {
   assertStringIncludes(out, "f1040");
 });
 
-Deno.test("nodeInspectCommand: output node count matches node.outputNodeTypes", () => {
+test("nodeInspectCommand: output node count matches node.outputNodeTypes", () => {
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "w2", json: false })
   );
@@ -129,7 +130,7 @@ Deno.test("nodeInspectCommand: output node count matches node.outputNodeTypes", 
 // nodeInspectCommand — leaf node (no outputs)
 // ---------------------------------------------------------------------------
 
-Deno.test("nodeInspectCommand: leaf output node shows (none) for outputs", () => {
+test("nodeInspectCommand: leaf output node shows (none) for outputs", () => {
   // f1040 is an output node with no downstream outputs
   const f1040 = registry["f1040"];
   assertEquals(f1040.outputNodeTypes.length, 0);
@@ -143,7 +144,7 @@ Deno.test("nodeInspectCommand: leaf output node shows (none) for outputs", () =>
 // nodeInspectCommand — JSON output
 // ---------------------------------------------------------------------------
 
-Deno.test("nodeInspectCommand: json=true prints valid JSON to stdout", () => {
+test("nodeInspectCommand: json=true prints valid JSON to stdout", () => {
   const lines: string[] = [];
   const original = console.log;
   console.log = (...args: unknown[]) => lines.push(args.join(" "));
@@ -158,7 +159,7 @@ Deno.test("nodeInspectCommand: json=true prints valid JSON to stdout", () => {
   assertEquals(Array.isArray(parsed.outputNodes), true);
 });
 
-Deno.test("nodeInspectCommand: json=true includes all outputNodeTypes", () => {
+test("nodeInspectCommand: json=true includes all outputNodeTypes", () => {
   const lines: string[] = [];
   const original = console.log;
   console.log = (...args: unknown[]) => lines.push(args.join(" "));
@@ -172,7 +173,7 @@ Deno.test("nodeInspectCommand: json=true includes all outputNodeTypes", () => {
   assertEquals(parsed.outputNodes, expected);
 });
 
-Deno.test("nodeInspectCommand: json=true includes implemented flag", () => {
+test("nodeInspectCommand: json=true includes implemented flag", () => {
   const lines: string[] = [];
   const original = console.log;
   console.log = (...args: unknown[]) => lines.push(args.join(" "));
@@ -185,7 +186,7 @@ Deno.test("nodeInspectCommand: json=true includes implemented flag", () => {
   assertEquals(typeof parsed.implemented, "boolean");
 });
 
-Deno.test("nodeInspectCommand: JSON schema includes 1099-NEC item routing fields", () => {
+test("nodeInspectCommand: JSON schema includes 1099-NEC item routing fields", () => {
   const parsed = JSON.parse(
     captureLog(() => nodeInspectCommand({ nodeType: "f1099nec", json: true })),
   );
@@ -198,7 +199,7 @@ Deno.test("nodeInspectCommand: JSON schema includes 1099-NEC item routing fields
 // node graph — formatMermaid
 // ---------------------------------------------------------------------------
 
-Deno.test("formatMermaid: renders flat tree with --> edges", () => {
+test("formatMermaid: renders flat tree with --> edges", () => {
   const tree: GraphNode = {
     nodeType: "start",
     depth: 0,
@@ -227,7 +228,7 @@ Deno.test("formatMermaid: renders flat tree with --> edges", () => {
   assertStringIncludes(output, "w2 --> line_01z_wages");
 });
 
-Deno.test("formatMermaid: deduplicates edges for diamond patterns", () => {
+test("formatMermaid: deduplicates edges for diamond patterns", () => {
   const shared: GraphNode = {
     nodeType: "shared",
     depth: 2,
@@ -251,7 +252,7 @@ Deno.test("formatMermaid: deduplicates edges for diamond patterns", () => {
   assertEquals(lines.filter((l) => l.includes("b --> shared")).length, 1);
 });
 
-Deno.test("formatMermaid: marks unregistered nodes with label and red style", () => {
+test("formatMermaid: marks unregistered nodes with label and red style", () => {
   const tree: GraphNode = {
     nodeType: "parent",
     depth: 0,
@@ -273,7 +274,7 @@ Deno.test("formatMermaid: marks unregistered nodes with label and red style", ()
   assertStringIncludes(output, "parent --> nonexistent");
 });
 
-Deno.test("formatMermaid: renders leaf-only graph with just the root node", () => {
+test("formatMermaid: renders leaf-only graph with just the root node", () => {
   const tree: GraphNode = {
     nodeType: "leaf",
     depth: 0,
@@ -292,7 +293,7 @@ Deno.test("formatMermaid: renders leaf-only graph with just the root node", () =
 // node graph — graphViewCommand
 // ---------------------------------------------------------------------------
 
-Deno.test("graphViewCommand: json=false prints Mermaid diagram to stdout", () => {
+test("graphViewCommand: json=false prints Mermaid diagram to stdout", () => {
   const logged: string[] = [];
   const originalLog = console.log;
   console.log = (msg: string) => {
@@ -312,7 +313,7 @@ Deno.test("graphViewCommand: json=false prints Mermaid diagram to stdout", () =>
   assertStringIncludes(combined, "w2");
 });
 
-Deno.test("graphViewCommand: json=true returns GraphNode object", () => {
+test("graphViewCommand: json=true returns GraphNode object", () => {
   const result = graphViewCommand({
     nodeType: "start",
     depth: Infinity,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm8582CR,
@@ -39,7 +40,7 @@ const rentalCredit = {
   publicly_traded_partnership: false,
 };
 
-Deno.test("Form 8582-CR: absent or empty credits emit no document", () => {
+test("Form 8582-CR: absent or empty credits emit no document", () => {
   assertEquals(form8582cr.build({}), "");
   assertEquals(
     form8582cr.build({
@@ -51,7 +52,7 @@ Deno.test("Form 8582-CR: absent or empty credits emit no document", () => {
   );
 });
 
-Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", () => {
+test("Form 8582-CR rejects passive K-1 evidence without activity facts", () => {
   for (
     const field of [
       "required_orphan_drug_k1_credits",
@@ -76,7 +77,7 @@ Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", ()
   }
 });
 
-Deno.test("Form 8582-CR self-earned New Markets source matches attached Form 8874", () => {
+test("Form 8582-CR self-earned New Markets source matches attached Form 8874", () => {
   const investment = withReviewedForm8874A(
     {
       cde_name: "Community Development Entity",
@@ -159,7 +160,7 @@ Deno.test("Form 8582-CR self-earned New Markets source matches attached Form 887
   );
 });
 
-Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () => {
+test("Form 8582-CR: Part I preserves current and prior other credits", () => {
   const xml = form8582cr.build({
     credit_sources: [otherCredit],
     regular_tax_all_income: 10_000,
@@ -182,7 +183,7 @@ Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () =
   assertEquals(xml.includes("<SpecialAllowActiveGrp>"), false);
 });
 
-Deno.test("Form 8582-CR requires the same business sources on attached Form 3800", () => {
+test("Form 8582-CR requires the same business sources on attached Form 3800", () => {
   const input = {
     credit_sources: [otherCredit],
     regular_tax_all_income: 10_000,
@@ -225,7 +226,7 @@ Deno.test("Form 8582-CR requires the same business sources on attached Form 3800
   );
 });
 
-Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () => {
+test("Form 8582-CR passive orphan-drug credit matches the current K-1", () => {
   const source = {
     ...otherCredit,
     source_origin: {
@@ -288,7 +289,7 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
   );
 });
 
-Deno.test("Form 8582-CR passive New Markets Credit matches the K-1 code ZZ statement", () => {
+test("Form 8582-CR passive New Markets Credit matches the K-1 code ZZ statement", () => {
   const source = {
     ...otherCredit,
     source_form: "Form 8874",
@@ -349,7 +350,7 @@ Deno.test("Form 8582-CR passive New Markets Credit matches the K-1 code ZZ state
   );
 });
 
-Deno.test("Form 8582-CR rejects estate K-1 code M as orphan-drug credit", () => {
+test("Form 8582-CR rejects estate K-1 code M as orphan-drug credit", () => {
   const source = {
     ...otherCredit,
     source_origin: {
@@ -372,7 +373,7 @@ Deno.test("Form 8582-CR rejects estate K-1 code M as orphan-drug credit", () => 
   );
 });
 
-Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source evidence", () => {
+test("Form 8582-CR passive disabled-access credit matches K-1 source evidence", () => {
   for (
     const entry of [
       {
@@ -529,7 +530,7 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
   }
 });
 
-Deno.test("Form 8582-CR reconciles one K-1 credit split across two activities", () => {
+test("Form 8582-CR reconciles one K-1 credit split across two activities", () => {
   for (
     const credit of [
       {
@@ -592,7 +593,7 @@ Deno.test("Form 8582-CR reconciles one K-1 credit split across two activities", 
   }
 });
 
-Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", () => {
+test("Form 8582-CR: active rental Part II serializes the tax limitation", () => {
   const xml = form8582cr.build({
     credit_sources: [rentalCredit],
     regular_tax_all_income: 10_000,
@@ -623,7 +624,7 @@ Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", (
   assertStringIncludes(xml, "<AllowedCreditsAmt>1000</AllowedCreditsAmt>");
 });
 
-Deno.test("Form 8582-CR: MFS lived-with rental credit appears in other credits", () => {
+test("Form 8582-CR: MFS lived-with rental credit appears in other credits", () => {
   const xml = form8582cr.build({
     credit_sources: [rentalCredit],
     regular_tax_all_income: 10_000,
@@ -637,7 +638,7 @@ Deno.test("Form 8582-CR: MFS lived-with rental credit appears in other credits",
   assertEquals(xml.includes("<SpecialAllowActiveGrp>"), false);
 });
 
-Deno.test("Form 8582-CR: Part III and IV serialize separate tax limits", () => {
+test("Form 8582-CR: Part III and IV serialize separate tax limits", () => {
   const xml = form8582cr.build({
     credit_sources: [{
       ...otherCredit,
@@ -665,7 +666,7 @@ Deno.test("Form 8582-CR: Part III and IV serialize separate tax limits", () => {
   assertStringIncludes(xml, "<AllowedCreditsAmt>3000</AllowedCreditsAmt>");
 });
 
-Deno.test("Form 8582-CR: missing worksheet tax stops XML generation", () => {
+test("Form 8582-CR: missing worksheet tax stops XML generation", () => {
   assertThrows(
     () =>
       form8582cr.build({
@@ -684,7 +685,7 @@ Deno.test("Form 8582-CR: missing worksheet tax stops XML generation", () => {
   );
 });
 
-Deno.test("Form 8582-CR: Form 8834 credit does not export without its filing route", () => {
+test("Form 8582-CR: Form 8834 credit does not export without its filing route", () => {
   assertThrows(
     () =>
       form8582cr.build({

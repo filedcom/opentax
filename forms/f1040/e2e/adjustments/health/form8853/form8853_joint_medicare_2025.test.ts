@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertExists,
@@ -150,7 +153,7 @@ for (
     ["both qualified zero", bothQualified, 0, 0],
   ] as const
 ) {
-  Deno.test(`Joint Medicare ${name}: public source→1040→controlling form/statements→full XSD/PDF`, async () => {
+  test(`Joint Medicare ${name}: public source→1040→controlling form/statements→full XSD/PDF`, async () => {
     const result = run(ledgers);
     assertEquals(result.diagnostics, []);
     assertEquals(
@@ -214,17 +217,17 @@ for (
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" }),
-      pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" }),
+      pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const valid = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const valid = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
       assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-      await Deno.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
-      const extracted = await new Deno.Command("pdftotext", {
+      await fs.writeFile(pdfPath, await buildPdfBytes(result.pending, filer));
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-layout", pdfPath, "-"],
         stdout: "piped",
       }).output();
@@ -266,12 +269,12 @@ for (
         lines.map((l) => l.line13a),
       );
     } finally {
-      await Deno.remove(xmlPath);
-      await Deno.remove(pdfPath);
+      await sys.remove(xmlPath);
+      await sys.remove(pdfPath);
     }
   });
 }
-Deno.test("Joint Medicare rejects duplicate ownership/distributions/medical sources, wrong owner and tampered totals at actual XML/PDF export", async () => {
+test("Joint Medicare rejects duplicate ownership/distributions/medical sources, wrong owner and tampered totals at actual XML/PDF export", async () => {
   const result = run(mixedPrior);
   const filer = extractFilerIdentity(result.pending.f1040)!;
   const invalids: MedicareHolderLedger[][] = [];

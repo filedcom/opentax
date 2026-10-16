@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8881, f8881, PlanType } from "./index.ts";
 
@@ -60,7 +61,7 @@ const militarySpouses = {
   }],
 } as const;
 
-Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
+test("Form 8881 startup cap follows eligible non-HCE count", () => {
   const three = calculateForm8881({
     schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
@@ -77,7 +78,7 @@ Deno.test("Form 8881 startup cap follows eligible non-HCE count", () => {
   assertEquals(twenty.line5, 5_000);
 });
 
-Deno.test("Form 8881 larger employer startup rate and $500 floor", () => {
+test("Form 8881 larger employer startup rate and $500 floor", () => {
   const lines = calculateForm8881({
     schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Simple,
@@ -93,7 +94,7 @@ Deno.test("Form 8881 larger employer startup rate and $500 floor", () => {
   assertEquals(lines.line5, 500);
 });
 
-Deno.test("Form 8881 contribution, auto-enrollment, and military spouse parts stay separate", () => {
+test("Form 8881 contribution, auto-enrollment, and military spouse parts stay separate", () => {
   const source = {
     schedule_c_business_reference: "PLAN-BUSINESS-1",
     plan_type: PlanType.Plan401k,
@@ -133,7 +134,7 @@ Deno.test("Form 8881 contribution, auto-enrollment, and military spouse parts st
   }]);
 });
 
-Deno.test("Form 8881 rejects unsupported or unproven source facts", () => {
+test("Form 8881 rejects unsupported or unproven source facts", () => {
   assertEquals(
     f8881.inputSchema.safeParse({
       plan_type: PlanType.Plan401k,

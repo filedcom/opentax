@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { z } from "zod";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -164,7 +166,7 @@ function account(
   };
 }
 for (const item of cases) {
-  Deno.test(`self-employed ABLE ${item.name} complete return`, async () => {
+  test(`self-employed ABLE ${item.name} complete return`, async () => {
     const rows: Business[] = item.businesses.map((profit, i) => ({
       ref: `${item.name}-${i}`,
       kind: item.farm || (item.name === "joint-mixed-c-f" && i === 1)
@@ -520,10 +522,10 @@ for (const item of cases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
-    const dir = Deno.env.get("FORM8880_ABLE_SELF_EMPLOYMENT_EVIDENCE");
+    const dir = process.env.FORM8880_ABLE_SELF_EMPLOYMENT_EVIDENCE;
     if (dir) {
       const out = `${dir}/${item.name}`;
-      await Deno.mkdir(out, { recursive: true });
+      await fs.mkdir(out, { recursive: true });
       for (
         const [name, data] of [
           ["source", inputs],
@@ -531,18 +533,18 @@ for (const item of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${out}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
-      await Deno.writeTextFile(`${out}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${out}/return.pdf`, pdf);
+      await fs.writeFile(`${out}/return.xml`, bundle.xml);
+      await fs.writeFile(`${out}/return.pdf`, pdf);
     }
   });
 }
 
-Deno.test("ABLE compensation loss does not consume wages; unsupported and incomplete reviews reject", () => {
+test("ABLE compensation loss does not consume wages; unsupported and incomplete reviews reject", () => {
   const w = w2ItemSchema.parse({
     employee_ssn: "111223333",
     employer_ein: "123456789",

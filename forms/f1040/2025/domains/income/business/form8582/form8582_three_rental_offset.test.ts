@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -60,7 +61,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two passive rental profits offset a third rental loss through Form 8582 and final return", () => {
+test("two passive rental profits offset a third rental loss through Form 8582 and final return", () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 3_000);
   assertEquals(result.pending.form8582.current_loss, 5_000);
@@ -98,7 +99,7 @@ Deno.test("two passive rental profits offset a third rental loss through Form 85
   assertEquals(schedulePdf.property_2_line22, 3_000);
 });
 
-Deno.test("three-rental passive offset rejects changed source and final return", () => {
+test("three-rental passive offset rejects changed source and final return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const altered = [
     {
@@ -149,7 +150,7 @@ function twoLossReturn() {
   return result;
 }
 
-Deno.test("one rental profit offsets two identified losses and leaves two 2026 ledger rows", () => {
+test("one rental profit offsets two identified losses and leaves two 2026 ledger rows", () => {
   const result = twoLossReturn();
   assertEquals(result.pending.form8582.current_income, 2_000);
   assertEquals(result.pending.form8582.current_loss, 6_000);
@@ -245,7 +246,7 @@ Deno.test("one rental profit offsets two identified losses and leaves two 2026 l
   );
 });
 
-Deno.test("two-loss rental packet rejects changed activity and final return", () => {
+test("two-loss rental packet rejects changed activity and final return", () => {
   const pending = normalizeAllPending(twoLossReturn().pending);
   for (
     const changed of [{

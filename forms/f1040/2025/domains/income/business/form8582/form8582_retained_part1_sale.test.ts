@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
@@ -79,7 +80,7 @@ function filedReturn() {
   return result.pending as MefFormsPending;
 }
 
-Deno.test("retained long-held sale calculates section 1231 gain and PAL but needs authenticated prior return to export", () => {
+test("retained long-held sale calculates section 1231 gain and PAL but needs authenticated prior return to export", () => {
   const pending = filedReturn();
   assertEquals(
     (pending.form8582?.current_4797_sale_gains as
@@ -109,7 +110,7 @@ Deno.test("retained long-held sale calculates section 1231 gain and PAL but need
   assertEquals(partI.pdf_section_1231_line9, 7_000);
 });
 
-Deno.test("retained Part I filing rejects changed sale, lookback, and PAL amounts", () => {
+test("retained Part I filing rejects changed sale, lookback, and PAL amounts", () => {
   const pending = filedReturn();
   assertThrows(() =>
     form8582.build(pending.form8582!, {

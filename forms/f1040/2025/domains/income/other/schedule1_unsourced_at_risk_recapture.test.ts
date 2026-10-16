@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { FilingStatus } from "../../../../mef/header.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
@@ -18,7 +19,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule 1 line 8z rejects at-risk recapture without activity-level proof", async () => {
+test("Schedule 1 line 8z rejects at-risk recapture without activity-level proof", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,
@@ -43,7 +44,7 @@ Deno.test("Schedule 1 line 8z rejects at-risk recapture without activity-level p
   );
 });
 
-Deno.test("Schedule 1 line 8z rejects direct at-risk loss add-back without a Schedule C or F activity", async () => {
+test("Schedule 1 line 8z rejects direct at-risk loss add-back without a Schedule C or F activity", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,

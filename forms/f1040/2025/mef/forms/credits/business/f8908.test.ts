@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
@@ -133,7 +134,7 @@ function pwaContext(source: {
   };
 }
 
-Deno.test("staged IRS8908 and official PDF project all six classes, certifiers, and addresses", () => {
+test("staged IRS8908 and official PDF project all six classes, certifiers, and addresses", () => {
   const source = sixClassSource();
   const xml = form8908.build(source, {
     pending: { f8908: source, f3800: credit },
@@ -172,7 +173,7 @@ Deno.test("staged IRS8908 and official PDF project all six classes, certifiers, 
   );
 });
 
-Deno.test("staged IRS8908 preserves an individual certifier in native and PDF output", () => {
+test("staged IRS8908 preserves an individual certifier in native and PDF output", () => {
   const original = sixClassSource();
   const source = {
     f8908s: original.f8908s.map((home, index) =>
@@ -222,7 +223,7 @@ Deno.test("staged IRS8908 preserves an individual certifier in native and PDF ou
   );
 });
 
-Deno.test("staged Form 8908 projections reject missing or altered Form 3800 credit", () => {
+test("staged Form 8908 projections reject missing or altered Form 3800 credit", () => {
   const source = sixClassSource();
   assertThrows(
     () => form8908.build(source, { pending: { f8908: source } }),
@@ -262,7 +263,7 @@ Deno.test("staged Form 8908 projections reject missing or altered Form 3800 cred
   );
 });
 
-Deno.test("staged Form 8908 rejects certifiers beyond the 38-row paper inventory", () => {
+test("staged Form 8908 rejects certifiers beyond the 38-row paper inventory", () => {
   const base = sixClassSource().f8908s[0];
   const many = {
     f8908s: Array.from({ length: 39 }, (_, index) => ({
@@ -293,7 +294,7 @@ Deno.test("staged Form 8908 rejects certifiers beyond the 38-row paper inventory
   );
 });
 
-Deno.test("staged Form 8908 lists only the first twenty qualified-home addresses", () => {
+test("staged Form 8908 lists only the first twenty qualified-home addresses", () => {
   const base = sixClassSource().f8908s[0];
   const many = {
     f8908s: Array.from({ length: 21 }, (_, index) => ({

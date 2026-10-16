@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ownedScheduleSE } from "./owner-calculation.ts";
 const source = {
@@ -35,7 +36,7 @@ const source = {
     },
   ],
 };
-Deno.test("owned SE nets each proprietor's businesses and applies only that owner's wage cap", () => {
+test("owned SE nets each proprietor's businesses and applies only that owner's wage cap", () => {
   const result = ownedScheduleSE(source, 176100);
   assertEquals(
     result.instances.map((
@@ -56,7 +57,7 @@ Deno.test("owned SE nets each proprietor's businesses and applies only that owne
   assertEquals(result.tax, 15864);
   assertEquals(result.deduction, 7933);
 });
-Deno.test("owned SE does not let one spouse's loss erase the other's earnings or minimum threshold", () => {
+test("owned SE does not let one spouse's loss erase the other's earnings or minimum threshold", () => {
   const copy = structuredClone(source);
   copy.businesses[0].net_profit = -5000;
   copy.businesses[1].net_profit = 0;
@@ -68,7 +69,7 @@ Deno.test("owned SE does not let one spouse's loss erase the other's earnings or
   assertEquals(result.instances[0].line12, 70);
   assertEquals(result.instances[0].line13, 35);
 });
-Deno.test("owned SE combines a proprietor's subthreshold farm and business before the 400 test", () => {
+test("owned SE combines a proprietor's subthreshold farm and business before the 400 test", () => {
   const copy = structuredClone(source);
   copy.businesses = [
     {
@@ -89,7 +90,7 @@ Deno.test("owned SE combines a proprietor's subthreshold farm and business befor
   assertEquals(result.instances.length, 1);
   assertEquals(result.instances[0].line12, 70);
 });
-Deno.test("owned SE rejects third-party wages, duplicate records and false spouse identity", () => {
+test("owned SE rejects third-party wages, duplicate records and false spouse identity", () => {
   for (
     const mutate of [
       (copy: typeof source) => {
@@ -112,7 +113,7 @@ Deno.test("owned SE rejects third-party wages, duplicate records and false spous
     assertThrows(() => ownedScheduleSE(copy, 176100));
   }
 });
-Deno.test("owned farm optional method uses the separate proprietor's gross income and cap", () => {
+test("owned farm optional method uses the separate proprietor's gross income and cap", () => {
   const result = ownedScheduleSE({
     ...source,
     wages: [],
@@ -138,7 +139,7 @@ Deno.test("owned farm optional method uses the separate proprietor's gross incom
   assertEquals(result.instances[1].line13, 306);
 });
 
-Deno.test("owner source order is deterministic across independent farm/business/W2 graph arrival", () => {
+test("owner source order is deterministic across independent farm/business/W2 graph arrival", () => {
   const reversed = structuredClone(source);
   reversed.businesses.reverse();
   reversed.wages.reverse();

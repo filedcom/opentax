@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { calculateForm8994, f8994, inputSchema } from "./index.ts";
 import { form8994DirectEmployer } from "./fixture.ts";
 
-Deno.test("Form 8994 direct employer computes reviewed 75% and 100% leave rates", () => {
+test("Form 8994 direct employer computes reviewed 75% and 100% leave rates", () => {
   const lines = calculateForm8994(form8994DirectEmployer);
   assertEquals(lines.employeeCredits.map((row) => row.applicable_rate), [
     0.1875,
@@ -22,7 +23,7 @@ Deno.test("Form 8994 direct employer computes reviewed 75% and 100% leave rates"
   );
 });
 
-Deno.test("Form 8994 rejects unsupported or tampered policy and payroll facts", () => {
+test("Form 8994 rejects unsupported or tampered policy and payroll facts", () => {
   const [employee] = form8994DirectEmployer.employees;
   for (
     const candidate of [

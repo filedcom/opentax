@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -135,7 +138,7 @@ export function registerSstbServiceCases<
   evidenceVariable: string,
 ) {
   for (const c of cases) {
-    Deno.test(`SSTB ${c.name}: reviewed service revenue through complete native and PDF return`, async () => {
+    test(`SSTB ${c.name}: reviewed service revenue through complete native and PDF return`, async () => {
       const input = fixture(c);
       const result = f1040_2025.executeReturn(input);
       assertEquals(result.diagnostics, []);
@@ -150,23 +153,17 @@ export function registerSstbServiceCases<
       const filer = extractFilerIdentity(f)!;
       const prepared = await f1040_2025.prepareReturn(result.pending, filer);
       const pending: Row = prepared.bundle.pending;
-      const permission = await Deno.permissions.query({
-        name: "env",
-        variable: evidenceVariable,
-      });
-      const root = permission.state === "granted"
-        ? Deno.env.get(evidenceVariable)
-        : undefined;
-      const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-      await Deno.mkdir(dir, { recursive: true });
+      const root = process.env[evidenceVariable];
+      const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+      await fs.mkdir(dir, { recursive: true });
       try {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/source.json`,
           JSON.stringify({ input, filer, pending }, null, 2),
         );
-        await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+        await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
         const origins: Parameters<typeof buildPdfBytes>[4] = [];
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/return.pdf`,
           await buildPdfBytes(
             pending,
@@ -176,7 +173,7 @@ export function registerSstbServiceCases<
             origins,
           ),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/origins.json`,
           JSON.stringify(origins, null, 2),
         );
@@ -185,7 +182,7 @@ export function registerSstbServiceCases<
             `<PrincipalBusinessActivityCd>${c.code}</PrincipalBusinessActivityCd>`,
           ),
         );
-        const xsd = await new Deno.Command("xmllint", {
+        const xsd = await new sys.Command("xmllint", {
           args: [
             "--noout",
             "--schema",
@@ -198,7 +195,7 @@ export function registerSstbServiceCases<
           stdout: "piped",
           stderr: "piped",
         }).output();
-        await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+        await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
         assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
         const publicOutcomes: {
           kind: string;
@@ -267,7 +264,7 @@ export function registerSstbServiceCases<
               diagnostics: invalid.diagnostics,
             });
             if (root) {
-              await Deno.writeTextFile(
+              await fs.writeFile(
                 `${dir}/deferred161-${kind}.xml`,
                 invalidPrepared.bundle.xml,
               );
@@ -280,7 +277,7 @@ export function registerSstbServiceCases<
           }
         }
         if (root) {
-          await Deno.writeTextFile(
+          await fs.writeFile(
             `${dir}/public-outcomes.json`,
             JSON.stringify(publicOutcomes, null, 2),
           );
@@ -306,7 +303,7 @@ export function registerSstbServiceCases<
           ],
         );
       } finally {
-        if (!root) await Deno.remove(dir, { recursive: true });
+        if (!root) await sys.remove(dir, { recursive: true });
       }
     });
   }

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { IncomeCategory } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import { buildScheduleCProjection } from "./f1116_schedule_c.ts";
@@ -188,7 +189,7 @@ function balancedMixedDirectionCase() {
   };
 }
 
-Deno.test("Form 1116 Schedule C stages a sourced refund in native Parts II-IV", () => {
+test("Form 1116 Schedule C stages a sourced refund in native Parts II-IV", () => {
   const { ledger, evidence } = stagedCase();
   const xml = buildScheduleCProjection(ledger, evidence);
   for (
@@ -207,7 +208,7 @@ Deno.test("Form 1116 Schedule C stages a sourced refund in native Parts II-IV", 
   ) assertStringIncludes(xml, fragment);
 });
 
-Deno.test("Form 1116 Schedule C PDF candidate maps the same refund and affected-year tax", () => {
+test("Form 1116 Schedule C PDF candidate maps the same refund and affected-year tax", () => {
   const { ledger, evidence } = stagedCase();
   const pdf = projectScheduleCPdfCandidate(ledger, evidence);
   const field = (key: string) =>
@@ -235,7 +236,7 @@ Deno.test("Form 1116 Schedule C PDF candidate maps the same refund and affected-
   }
 });
 
-Deno.test("Form 1116 Schedule C PDF candidate maps accrued increase and deemed refund to separate parts", () => {
+test("Form 1116 Schedule C PDF candidate maps accrued increase and deemed refund to separate parts", () => {
   const increased = stagedCase(
     IncomeCategory.General,
     "additional_accrued_tax",
@@ -271,7 +272,7 @@ Deno.test("Form 1116 Schedule C PDF candidate maps accrued increase and deemed r
   }
 });
 
-Deno.test("Form 1116 Schedule C stages an accrued increase in native Parts I, III and IV", () => {
+test("Form 1116 Schedule C stages an accrued increase in native Parts I, III and IV", () => {
   const { ledger, evidence } = stagedCase(
     IncomeCategory.General,
     "additional_accrued_tax",
@@ -288,7 +289,7 @@ Deno.test("Form 1116 Schedule C stages an accrued increase in native Parts I, II
   ) assertStringIncludes(xml, fragment);
 });
 
-Deno.test("Form 1116 Schedule C marks a 24-month deemed refund", () => {
+test("Form 1116 Schedule C marks a 24-month deemed refund", () => {
   const { ledger, evidence } = stagedCase(
     IncomeCategory.Passive,
     "accrued_tax_unpaid_after_24_months",
@@ -300,7 +301,7 @@ Deno.test("Form 1116 Schedule C marks a 24-month deemed refund", () => {
   );
 });
 
-Deno.test("Form 1116 Schedule C stages three distinct payors with year subtotals", () => {
+test("Form 1116 Schedule C stages three distinct payors with year subtotals", () => {
   const { ledger, evidence } = multiPayorCase(2);
   const xml = buildScheduleCProjection(ledger, evidence);
   assertStringIncludes(
@@ -325,7 +326,7 @@ Deno.test("Form 1116 Schedule C stages three distinct payors with year subtotals
   );
 });
 
-Deno.test("Form 1116 Schedule C staged payor rows reject extra or duplicate payors", () => {
+test("Form 1116 Schedule C staged payor rows reject extra or duplicate payors", () => {
   const { ledger, evidence } = multiPayorCase(3);
   assertThrows(
     () => buildScheduleCProjection(ledger, evidence),
@@ -350,7 +351,7 @@ Deno.test("Form 1116 Schedule C staged payor rows reject extra or duplicate payo
   );
 });
 
-Deno.test("Form 1116 Schedule C stages mixed Part I and II changes with net Part III and IV", () => {
+test("Form 1116 Schedule C stages mixed Part I and II changes with net Part III and IV", () => {
   const { ledger, evidence } = mixedDirectionCase();
   const xml = buildScheduleCProjection(ledger, evidence);
   const part1 = xml.indexOf("<IncrAmtFrgnTaxesAccruedDtl>");
@@ -384,7 +385,7 @@ Deno.test("Form 1116 Schedule C stages mixed Part I and II changes with net Part
   }
 });
 
-Deno.test("Form 1116 Schedule C keeps Part III and omits Part IV when balanced redeterminations leave U.S. tax unchanged", () => {
+test("Form 1116 Schedule C keeps Part III and omits Part IV when balanced redeterminations leave U.S. tax unchanged", () => {
   const { ledger, evidence } = balancedMixedDirectionCase();
   const xml = buildScheduleCProjection(ledger, evidence);
   assertStringIncludes(xml, "<IncrAmtFrgnTaxesAccruedDtl>");
@@ -409,7 +410,7 @@ Deno.test("Form 1116 Schedule C keeps Part III and omits Part IV when balanced r
   }
 });
 
-Deno.test("Form 1116 Schedule C mixed rows reject an unreconciled revised liability", () => {
+test("Form 1116 Schedule C mixed rows reject an unreconciled revised liability", () => {
   const { ledger, evidence } = mixedDirectionCase();
   assertThrows(
     () =>
@@ -425,7 +426,7 @@ Deno.test("Form 1116 Schedule C mixed rows reject an unreconciled revised liabil
   );
 });
 
-Deno.test("Form 1116 Schedule C staged projection rejects additional affected years", () => {
+test("Form 1116 Schedule C staged projection rejects additional affected years", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -444,7 +445,7 @@ Deno.test("Form 1116 Schedule C staged projection rejects additional affected ye
   );
 });
 
-Deno.test("Form 1116 Schedule C staged projection rejects a liability not matching the filed 1040", () => {
+test("Form 1116 Schedule C staged projection rejects a liability not matching the filed 1040", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -460,7 +461,7 @@ Deno.test("Form 1116 Schedule C staged projection rejects a liability not matchi
   );
 });
 
-Deno.test("Form 1116 Schedule C rejects an unsupported filed-year FTC carryover or excess", () => {
+test("Form 1116 Schedule C rejects an unsupported filed-year FTC carryover or excess", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -473,7 +474,7 @@ Deno.test("Form 1116 Schedule C rejects an unsupported filed-year FTC carryover 
   );
 });
 
-Deno.test("Form 1116 Schedule C rejects inconsistent filed Form 1040 total tax", () => {
+test("Form 1116 Schedule C rejects inconsistent filed Form 1040 total tax", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -486,7 +487,7 @@ Deno.test("Form 1116 Schedule C rejects inconsistent filed Form 1040 total tax",
   );
 });
 
-Deno.test("Form 1116 Schedule C rejects a ledger revised credit not derived from filed lines", () => {
+test("Form 1116 Schedule C rejects a ledger revised credit not derived from filed lines", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -502,7 +503,7 @@ Deno.test("Form 1116 Schedule C rejects a ledger revised credit not derived from
   );
 });
 
-Deno.test("Form 1116 Schedule C rejects a revised Schedule 3 or Form 1040 line not backed by the redetermination", () => {
+test("Form 1116 Schedule C rejects a revised Schedule 3 or Form 1040 line not backed by the redetermination", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>
@@ -530,7 +531,7 @@ Deno.test("Form 1116 Schedule C rejects a revised Schedule 3 or Form 1040 line n
   );
 });
 
-Deno.test("Form 1116 Schedule C rejects missing filed Schedule 3 evidence", () => {
+test("Form 1116 Schedule C rejects missing filed Schedule 3 evidence", () => {
   const { ledger, evidence } = stagedCase();
   assertThrows(
     () =>

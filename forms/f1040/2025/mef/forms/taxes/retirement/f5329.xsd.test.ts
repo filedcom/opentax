@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -15,7 +18,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // IRS schema bundle is optional in CI.
@@ -32,12 +35,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name: "XSD: Form 5329 Parts I-VIII validate against TY2025 return schema",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 5329 Parts I-VIII validate against TY2025 return schema", async () => {
   const owner_entries = [{
     owner: TS.T,
     early_distribution: 10_000,
@@ -82,27 +80,21 @@ Deno.test({
     schedule2: { line8_form5329_tax: 1180 },
   }, filer);
   assertStringIncludes(xml, "<IRS5329 ");
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: two 1099-R early distributions aggregate through Form 5329 and Schedule 2",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: two 1099-R early distributions aggregate through Form 5329 and Schedule 2", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -154,16 +146,16 @@ Deno.test({
     "<EarlyDistributionsAmt>10000</EarlyDistributionsAmt>",
   );
   assertStringIncludes(xml, "<TaxOnIRAsAmt>1000</TaxOnIRAsAmt>");
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

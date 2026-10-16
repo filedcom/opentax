@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 // Black-box tests for intermediate node: form2441
 // Sources: nodes/2025/f1040/intermediate/form2441/research/context.md
 // These tests define IRS-correct behavior. If a test fails, fix the implementation — not the test.
@@ -27,16 +28,16 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input validation
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441: negative dep_care_benefits throws", () => {
+test("form2441: negative dep_care_benefits throws", () => {
   assertThrows(() => compute({ dep_care_benefits: -1 }), Error);
 });
 
-Deno.test("form2441: zero dep_care_benefits produces no outputs", () => {
+test("form2441: zero dep_care_benefits produces no outputs", () => {
   const result = compute({ dep_care_benefits: 0 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: absent dep_care_benefits produces no outputs", () => {
+test("form2441: absent dep_care_benefits produces no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
@@ -45,19 +46,19 @@ Deno.test("form2441: absent dep_care_benefits produces no outputs", () => {
 // 2. Per-field calculation — taxable excess routing
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441: benefits below $5000 produce no f1040 output", () => {
+test("form2441: benefits below $5000 produce no f1040 output", () => {
   const result = compute({ dep_care_benefits: 3000 });
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: benefits exactly at $5000 produce no f1040 output", () => {
+test("form2441: benefits exactly at $5000 produce no f1040 output", () => {
   const result = compute({ dep_care_benefits: 5000 });
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e", () => {
+test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e", () => {
   const result = compute({ dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -65,7 +66,7 @@ Deno.test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e
   assertEquals(input.line1e_taxable_dep_care, 1);
 });
 
-Deno.test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () => {
+test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () => {
   const result = compute({ dep_care_benefits: 6000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -73,7 +74,7 @@ Deno.test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () 
   assertEquals(input.line1e_taxable_dep_care, 1000);
 });
 
-Deno.test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", () => {
+test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", () => {
   const result = compute({ dep_care_benefits: 10000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -85,17 +86,17 @@ Deno.test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", ()
 // 3. Thresholds — exclusion limit boundary tests
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441: benefits of $4999 (just below limit) produce no output", () => {
+test("form2441: benefits of $4999 (just below limit) produce no output", () => {
   const result = compute({ dep_care_benefits: 4999 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: benefits of $5000 (at limit) produce no output", () => {
+test("form2441: benefits of $5000 (at limit) produce no output", () => {
   const result = compute({ dep_care_benefits: 5000 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: benefits of $5001 (just above limit) route $1 to f1040", () => {
+test("form2441: benefits of $5001 (just above limit) route $1 to f1040", () => {
   const result = compute({ dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -107,14 +108,14 @@ Deno.test("form2441: benefits of $5001 (just above limit) route $1 to f1040", ()
 // 4. Output routing — field names and nodeTypes
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441: output nodeType is 'f1040' when taxable excess exists", () => {
+test("form2441: output nodeType is 'f1040' when taxable excess exists", () => {
   const result = compute({ dep_care_benefits: 6000 });
   assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
   assertEquals(result.outputs[1].nodeType, "agi_aggregator");
 });
 
-Deno.test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
+test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
   const result = compute({ dep_care_benefits: 7500 });
   const fields = fieldsOf(result.outputs, f1040)!;
   const keys = Object.keys(fields);
@@ -122,7 +123,7 @@ Deno.test("form2441: output field is line1e_taxable_dep_care (not another field)
   assertEquals(fields.line1e_taxable_dep_care, 2500);
 });
 
-Deno.test("form2441: no schedule3 output is emitted (credit not computed here)", () => {
+test("form2441: no schedule3 output is emitted (credit not computed here)", () => {
   const result = compute({ dep_care_benefits: 10000 });
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
@@ -131,7 +132,7 @@ Deno.test("form2441: no schedule3 output is emitted (credit not computed here)",
 // 5. Edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441: very large benefits route correct taxable excess", () => {
+test("form2441: very large benefits route correct taxable excess", () => {
   // $100,000 - $5,000 exclusion = $95,000 taxable
   const result = compute({ dep_care_benefits: 100000 });
   const out = findOutput(result, "f1040");
@@ -140,12 +141,12 @@ Deno.test("form2441: very large benefits route correct taxable excess", () => {
   assertEquals(input.line1e_taxable_dep_care, 95000);
 });
 
-Deno.test("form2441: fractional benefits handled correctly (below limit)", () => {
+test("form2441: fractional benefits handled correctly (below limit)", () => {
   const result = compute({ dep_care_benefits: 4999.99 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form2441: fractional benefits above limit route correct decimal excess", () => {
+test("form2441: fractional benefits above limit route correct decimal excess", () => {
   const result = compute({ dep_care_benefits: 5000.01 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -158,7 +159,7 @@ Deno.test("form2441: fractional benefits above limit route correct decimal exces
 // 6. Smoke test
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f1040 line1e", () => {
+test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f1040 line1e", () => {
   // $7,500 employer dep care benefits
   // Exclusion: min($7,500, $5,000) = $5,000
   // Taxable: $7,500 - $5,000 = $2,500
@@ -179,7 +180,7 @@ Deno.test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f10
 // 7. IRC §21 child and dependent care credit
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441 §21: 1 qualifying person, AGI ≤ $15k → 35% rate, $3000 cap", () => {
+test("form2441 §21: 1 qualifying person, AGI ≤ $15k → 35% rate, $3000 cap", () => {
   // qualifying_expenses=$4,000, but capped at $3,000 for 1 person
   // AGI=$10,000 → rate 35%
   // credit = $3,000 × 0.35 = $1,050
@@ -194,7 +195,7 @@ Deno.test("form2441 §21: 1 qualifying person, AGI ≤ $15k → 35% rate, $3000 
   assertEquals(s3?.line2_childcare_credit, 1_050);
 });
 
-Deno.test("form2441 §21: 2 qualifying persons, AGI ≤ $15k → 35% rate, $6000 cap", () => {
+test("form2441 §21: 2 qualifying persons, AGI ≤ $15k → 35% rate, $6000 cap", () => {
   // qualifying_expenses=$7,000, capped at $6,000 for 2+ persons
   // AGI=$12,000 → rate 35%
   // credit = $6,000 × 0.35 = $2,100
@@ -209,7 +210,7 @@ Deno.test("form2441 §21: 2 qualifying persons, AGI ≤ $15k → 35% rate, $6000
   assertEquals(s3?.line2_childcare_credit, 2_100);
 });
 
-Deno.test("form2441 §21: AGI $43,001+ → 20% minimum rate", () => {
+test("form2441 §21: AGI $43,001+ → 20% minimum rate", () => {
   // AGI=$50,000 → 15 steps over $15k → rate = max(0.20, 0.35 - 0.15) = 0.20
   // 1 person, $3,000 cap, expenses=$3,000
   // credit = $3,000 × 0.20 = $600
@@ -224,7 +225,7 @@ Deno.test("form2441 §21: AGI $43,001+ → 20% minimum rate", () => {
   assertEquals(s3?.line2_childcare_credit, 600);
 });
 
-Deno.test("form2441 §21: AGI $25,000 → 25% rate (5 steps over $15k)", () => {
+test("form2441 §21: AGI $25,000 → 25% rate (5 steps over $15k)", () => {
   // 5 steps × $2,000 = $10,000 over threshold → rate = 0.35 - 5*0.01 = 0.30
   // Wait: AGI=$25,000, over threshold=$10,000, ceil(10000/2000)=5, rate=0.35-0.05=0.30
   // 1 person, expenses=$3,000
@@ -240,7 +241,7 @@ Deno.test("form2441 §21: AGI $25,000 → 25% rate (5 steps over $15k)", () => {
   assertEquals(s3?.line2_childcare_credit, 900);
 });
 
-Deno.test("form2441 §21: employer benefits reduce qualifying expense base", () => {
+test("form2441 §21: employer benefits reduce qualifying expense base", () => {
   // dep_care_benefits=$3,000 excluded from $5,000 limit = $3,000 excluded
   // 1 person cap=$3,000, reduced by excluded benefits: $3,000-$3,000=$0
   // No credit
@@ -255,7 +256,7 @@ Deno.test("form2441 §21: employer benefits reduce qualifying expense base", () 
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
-Deno.test("form2441 §21: employer benefits partially reduce expense base", () => {
+test("form2441 §21: employer benefits partially reduce expense base", () => {
   // dep_care_benefits=$2,000 excluded; 1 person cap=$3,000 reduced to $1,000
   // AGI=$15,000 → rate 35%
   // qualifying_expenses=$3,000, capped at $1,000 after employer offset
@@ -272,7 +273,7 @@ Deno.test("form2441 §21: employer benefits partially reduce expense base", () =
   assertEquals(s3?.line2_childcare_credit, 350);
 });
 
-Deno.test("form2441 §21: MFJ — credit limited to lower spouse earned income", () => {
+test("form2441 §21: MFJ — credit limited to lower spouse earned income", () => {
   // taxpayer_earned=$50,000, spouse_earned=$2,000 → earned cap = $2,000
   // 1 person, expenses=$3,000, capped at min($3,000, $2,000) = $2,000
   // AGI=$60,000 → rate 20%
@@ -289,7 +290,7 @@ Deno.test("form2441 §21: MFJ — credit limited to lower spouse earned income",
   assertEquals(s3?.line2_childcare_credit, 400);
 });
 
-Deno.test("form2441 §21: no credit when no qualifying persons", () => {
+test("form2441 §21: no credit when no qualifying persons", () => {
   const result = compute({
     qualifying_expenses: 3_000,
     qualifying_persons: 0,
@@ -303,7 +304,7 @@ Deno.test("form2441 §21: no credit when no qualifying persons", () => {
 // 8. MFS employer exclusion cap ($2,500 per IRC §129(a)(2))
 // ---------------------------------------------------------------------------
 
-Deno.test("form2441 MFS: employer exclusion capped at $2,500", () => {
+test("form2441 MFS: employer exclusion capped at $2,500", () => {
   // MFS filer with $3,500 dep care benefits
   // Exclusion: min($3,500, $2,500) = $2,500
   // Taxable excess: $3,500 - $2,500 = $1,000 → routes to f1040 line1e
@@ -315,7 +316,7 @@ Deno.test("form2441 MFS: employer exclusion capped at $2,500", () => {
   assertEquals(f1040Fields?.line1e_taxable_dep_care, 1_000);
 });
 
-Deno.test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
+test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
   const result = compute({
     dep_care_benefits: 2_500,
     filing_status: FilingStatus.MFS,
@@ -323,7 +324,7 @@ Deno.test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("form2441 non-MFS: employer exclusion still $5,000", () => {
+test("form2441 non-MFS: employer exclusion still $5,000", () => {
   const result = compute({
     dep_care_benefits: 4_999,
     filing_status: FilingStatus.Single,

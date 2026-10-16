@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -67,7 +68,7 @@ const policies = correctionMonths.map((month, policyIndex) => {
   };
 });
 
-Deno.test("three sequential same-state corrected policies reach Form 1040, MeF and PDF", async () => {
+test("three sequential same-state corrected policies reach Form 1040, MeF and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     w2: [w2],

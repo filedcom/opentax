@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -79,7 +80,7 @@ function jointReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two spouses' full-share NUA elections remain separate through Form 1040, native, and PDF", () => {
+test("two spouses' full-share NUA elections remain separate through Form 1040, native, and PDF", () => {
   const result = jointReturn();
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
@@ -111,7 +112,7 @@ Deno.test("two spouses' full-share NUA elections remain separate through Form 10
   );
 });
 
-Deno.test("two spouse NUA forms reject changed source, plan, printed line, and combined tax", () => {
+test("two spouse NUA forms reject changed source, plan, printed line, and combined tax", () => {
   const pending = jointReturn().pending;
   const changedSource = {
     ...pending,

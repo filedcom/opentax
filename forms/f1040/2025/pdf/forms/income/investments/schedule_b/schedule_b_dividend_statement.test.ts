@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/types.ts";
@@ -13,7 +14,7 @@ const filer = {
   originator: { efin: "123456", originatorType: "ERO" as const },
 };
 
-Deno.test("Schedule B adds a continuation page after 15 dividend payers", async () => {
+test("Schedule B adds a continuation page after 15 dividend payers", async () => {
   const document = await PDFDocument.create();
   document.addPage([612, 792]);
   await appendScheduleBDividendStatement(document, {
@@ -27,7 +28,7 @@ Deno.test("Schedule B adds a continuation page after 15 dividend payers", async 
   assertEquals(document.getPageCount(), 2);
 });
 
-Deno.test("Schedule B does not add a page for exactly 15 dividend payers", async () => {
+test("Schedule B does not add a page for exactly 15 dividend payers", async () => {
   const document = await PDFDocument.create();
   document.addPage([612, 792]);
   await appendScheduleBDividendStatement(document, {
@@ -41,7 +42,7 @@ Deno.test("Schedule B does not add a page for exactly 15 dividend payers", async
   assertEquals(document.getPageCount(), 1);
 });
 
-Deno.test("Schedule B dividend continuation uses gross line 5 with a nominee reduction", async () => {
+test("Schedule B dividend continuation uses gross line 5 with a nominee reduction", async () => {
   const document = await PDFDocument.create();
   document.addPage([612, 792]);
   await appendScheduleBDividendStatement(document, {

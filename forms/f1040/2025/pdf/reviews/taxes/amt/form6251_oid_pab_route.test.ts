@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -34,7 +35,7 @@ const oid = {
   pab_review_reference: "2025-OID-PAB-REVIEW",
 };
 
-Deno.test("issued 1099-OID private-activity-bond source reaches Form 6251 line 2g and the final return", async () => {
+test("issued 1099-OID private-activity-bond source reaches Form 6251 line 2g and the final return", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

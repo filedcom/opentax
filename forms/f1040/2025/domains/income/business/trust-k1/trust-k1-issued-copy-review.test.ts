@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -55,7 +56,7 @@ async function fixture() {
   };
 }
 
-Deno.test("trust K-1 code B review binds exact PDF bytes but leaves printed content unverified", async () => {
+test("trust K-1 code B review binds exact PDF bytes but leaves printed content unverified", async () => {
   const { source, bytes } = await fixture();
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
@@ -97,7 +98,7 @@ Deno.test("trust K-1 code B review binds exact PDF bytes but leaves printed cont
   );
 });
 
-Deno.test("trust K-1 code B copy review rejects another beneficiary or altered amount", async () => {
+test("trust K-1 code B copy review rejects another beneficiary or altered amount", async () => {
   const { source, bytes } = await fixture();
   const document = [{ reference: "family-trust-issued-k1.pdf", bytes }];
   await assertRejects(

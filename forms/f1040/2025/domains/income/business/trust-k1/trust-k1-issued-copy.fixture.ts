@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -25,16 +27,16 @@ export async function fixture(change?: (pdf: PDFDocument) => void) {
   const path = ".pdf-cache/form1041sk1-2025.pdf";
   let template: Uint8Array;
   try {
-    template = await Deno.readFile(path);
+    template = await sys.readBytes(path);
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    if (!(sys.isNotFound(error))) throw error;
     const response = await fetch(
       "https://www.irs.gov/pub/irs-prior/f1041sk1--2025.pdf",
     );
     if (!response.ok) throw Error(`Trust K-1 template HTTP ${response.status}`);
     template = new Uint8Array(await response.arrayBuffer());
-    await Deno.mkdir(".pdf-cache", { recursive: true });
-    await Deno.writeFile(path, template);
+    await fs.mkdir(".pdf-cache", { recursive: true });
+    await fs.writeFile(path, template);
   }
   assertEquals(
     await sha256Hex(template),

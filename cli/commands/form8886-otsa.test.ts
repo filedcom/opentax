@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { ExportRejectedError } from "./export.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
@@ -109,8 +112,8 @@ async function fixture(subsequent = false) {
   };
 }
 
-Deno.test("OTSA command writes separate owned copies with matching hashes and preserves existing exports", async () => {
-  const dir = await Deno.makeTempDir();
+test("OTSA command writes separate owned copies with matching hashes and preserves existing exports", async () => {
+  const dir = await sys.makeTempDir();
   try {
     const { inputs, requests } = await fixture();
     const { returnId } = await createReturnCommand({
@@ -124,7 +127,7 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
     }
     await appendInput(returnPath, "f8886", inputs.f8886);
     const requestsPath = join(dir, "requests.json");
-    await Deno.writeTextFile(requestsPath, JSON.stringify(requests));
+    await fs.writeFile(requestsPath, JSON.stringify(requests));
     const args = {
       returnId,
       baseDir: dir,
@@ -136,10 +139,10 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       () => exportForm8886OtsaCommand({ ...args, force: false }),
       ExportRejectedError,
     );
-    await assertRejects(() => Deno.stat(args.outputDir), Deno.errors.NotFound);
+    await assertRejects(() => sys.stat(args.outputDir), Deno.errors.NotFound);
     const result = await exportForm8886OtsaCommand(args);
     assertEquals(result.delivered, false);
-    const manifestText = await Deno.readTextFile(result.manifestPath);
+    const manifestText = await fs.readFile(result.manifestPath, "utf8");
     const manifest = JSON.parse(manifestText);
     assertEquals(manifest.status, "prepared_not_sent");
     assertEquals(manifest.delivery_recorded, false);
@@ -157,25 +160,25 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
     );
     for (const [name, hash] of Object.entries(manifest.file_sha256)) {
       assertEquals(
-        await sha256Hex(await Deno.readFile(join(result.outputDir, name))),
+        await sha256Hex(await sys.readBytes(join(result.outputDir, name))),
         hash,
       );
     }
     assertEquals(
       (await PDFDocument.load(
-        await Deno.readFile(join(result.outputDir, "disclosure-001-fax.pdf")),
+        await sys.readBytes(join(result.outputDir, "disclosure-001-fax.pdf")),
       )).getPageCount(),
       3,
     );
     assertEquals(
       (await PDFDocument.load(
-        await Deno.readFile(join(result.outputDir, "disclosure-001.pdf")),
+        await sys.readBytes(join(result.outputDir, "disclosure-001.pdf")),
       )).getPageCount(),
       2,
     );
     assertEquals(
       (await PDFDocument.load(
-        await Deno.readFile(join(result.outputDir, "disclosure-002.pdf")),
+        await sys.readBytes(join(result.outputDir, "disclosure-002.pdf")),
       )).getPageCount(),
       2,
     );
@@ -183,7 +186,7 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       () => exportForm8886OtsaCommand(args),
       Deno.errors.AlreadyExists,
     );
-    assertEquals(await Deno.readTextFile(result.manifestPath), manifestText);
+    assertEquals(await fs.readFile(result.manifestPath, "utf8"), manifestText);
     await assertRejects(
       () => exportForm8886OtsaCommand({ ...args, draft: true }),
       Error,
@@ -194,7 +197,7 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
     );
     const evidencePath = join(dir, "fax-log.txt");
     const recordPath = join(dir, "delivery-request.json");
-    await Deno.writeFile(evidencePath, evidence);
+    await fs.writeFile(evidencePath, evidence);
     const copy = manifest.copies[0];
     const deliveryRequest = {
       disclosure_id: copy.disclosure_id,
@@ -213,7 +216,7 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
         reviewer_reference: "Synthetic reviewer",
       },
     };
-    await Deno.writeTextFile(recordPath, JSON.stringify(deliveryRequest));
+    await fs.writeFile(recordPath, JSON.stringify(deliveryRequest));
     const deliveryArgs = {
       ...args,
       exportDir: result.outputDir,
@@ -222,7 +225,7 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       evidencePath,
     };
     const receiptResult = await recordForm8886OtsaDeliveryCommand(deliveryArgs);
-    const receiptText = await Deno.readTextFile(receiptResult.receiptPath);
+    const receiptText = await fs.readFile(receiptResult.receiptPath, "utf8");
     const receipt = JSON.parse(receiptText);
     assertEquals(receipt.status, "reviewed_delivery_recorded");
     assertEquals(receipt.irs_acceptance, false);
@@ -232,16 +235,16 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       await sha256Hex(new TextEncoder().encode(manifestText)),
     );
     assertEquals(
-      await Deno.readFile(join(deliveryArgs.outputDir, "evidence.bin")),
+      await sys.readBytes(join(deliveryArgs.outputDir, "evidence.bin")),
       evidence,
     );
-    assertEquals(await Deno.readTextFile(result.manifestPath), manifestText);
+    assertEquals(await fs.readFile(result.manifestPath, "utf8"), manifestText);
     await assertRejects(
       () => recordForm8886OtsaDeliveryCommand(deliveryArgs),
       Deno.errors.AlreadyExists,
     );
     assertEquals(
-      await Deno.readTextFile(receiptResult.receiptPath),
+      await fs.readFile(receiptResult.receiptPath, "utf8"),
       receiptText,
     );
     const rejectedArgs = {
@@ -271,26 +274,26 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
         },
       ]
     ) {
-      await Deno.writeTextFile(recordPath, JSON.stringify(changed));
+      await fs.writeFile(recordPath, JSON.stringify(changed));
       await assertRejects(() =>
         recordForm8886OtsaDeliveryCommand(rejectedArgs)
       );
       await assertRejects(
-        () => Deno.stat(rejectedArgs.outputDir),
+        () => sys.stat(rejectedArgs.outputDir),
         Deno.errors.NotFound,
       );
     }
-    await Deno.writeTextFile(recordPath, JSON.stringify(deliveryRequest));
+    await fs.writeFile(recordPath, JSON.stringify(deliveryRequest));
     const faxPath = join(result.outputDir, copy.handoff_file);
-    const faxBytes = await Deno.readFile(faxPath);
-    await Deno.writeTextFile(faxPath, "altered fax bytes");
+    const faxBytes = await sys.readBytes(faxPath);
+    await fs.writeFile(faxPath, "altered fax bytes");
     await assertRejects(
       () => recordForm8886OtsaDeliveryCommand(rejectedArgs),
       Error,
       "differs from its prepared digest",
     );
-    await Deno.writeFile(faxPath, faxBytes);
-    await Deno.writeTextFile(
+    await fs.writeFile(faxPath, faxBytes);
+    await fs.writeFile(
       result.manifestPath,
       manifestText.replace('"prepared_not_sent"', '"sent"'),
     );
@@ -299,25 +302,25 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       Error,
       "manifest differs",
     );
-    await Deno.writeTextFile(result.manifestPath, manifestText);
+    await fs.writeFile(result.manifestPath, manifestText);
     const changedRequests = structuredClone(requests);
     changedRequests.requests[0].handoff.sender_name = "Changed sender";
-    await Deno.writeTextFile(requestsPath, JSON.stringify(changedRequests));
+    await fs.writeFile(requestsPath, JSON.stringify(changedRequests));
     await assertRejects(
       () => recordForm8886OtsaDeliveryCommand(rejectedArgs),
       Error,
       "manifest differs",
     );
-    await Deno.writeTextFile(requestsPath, JSON.stringify(requests));
+    await fs.writeFile(requestsPath, JSON.stringify(requests));
     await assertRejects(
-      () => Deno.stat(rejectedArgs.outputDir),
+      () => sys.stat(rejectedArgs.outputDir),
       Deno.errors.NotFound,
     );
     await assertRejects(
-      () => Deno.stat(rejectedArgs.outputDir),
+      () => sys.stat(rejectedArgs.outputDir),
       Deno.errors.NotFound,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       requestsPath,
       JSON.stringify({ requests: requests.requests.slice(0, 1) }),
     );
@@ -331,15 +334,15 @@ Deno.test("OTSA command writes separate owned copies with matching hashes and pr
       "every prepared disclosure",
     );
     await assertRejects(
-      () => Deno.stat(join(dir, "incomplete")),
+      () => sys.stat(join(dir, "incomplete")),
       Deno.errors.NotFound,
     );
   } finally {
-    await Deno.remove(dir, { recursive: true });
+    await sys.remove(dir, { recursive: true });
   }
 });
 
-Deno.test("OTSA artifact preparation rejects changed native bytes and forged copies and retains not-required decisions", async () => {
+test("OTSA artifact preparation rejects changed native bytes and forged copies and retains not-required decisions", async () => {
   const { inputs, requests } = await fixture(true);
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
@@ -401,7 +404,7 @@ Deno.test("OTSA artifact preparation rejects changed native bytes and forged cop
   );
 });
 
-Deno.test("OTSA mail delivery binds the spouse copy and rejects forged, unknown and not-required handoffs", async () => {
+test("OTSA mail delivery binds the spouse copy and rejects forged, unknown and not-required handoffs", async () => {
   const { inputs, requests } = await fixture();
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);

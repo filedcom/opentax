@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { w2gPdf } from "./w2g.ts";
@@ -8,7 +9,7 @@ const fixture = pdfReviewFixtures.find((item) =>
 if (!fixture) throw new Error("Missing withheld W-2G fixture");
 const source = { w2gs: fixture.inputs.w2g };
 
-Deno.test("W-2G PDF prints one recipient copy from each withheld source", () => {
+test("W-2G PDF prints one recipient copy from each withheld source", () => {
   const copies = w2gPdf.instances?.(source, fixture.filer, {
     f1040: { line25c_total: 2_400 },
   });
@@ -20,7 +21,7 @@ Deno.test("W-2G PDF prints one recipient copy from each withheld source", () => 
   assertEquals(w2gPdf.pageIndices?.(copies![0]), [2]);
 });
 
-Deno.test("W-2G PDF omits the payer copy when no tax was withheld", () => {
+test("W-2G PDF omits the payer copy when no tax was withheld", () => {
   const item = (fixture.inputs.w2g as Array<Record<string, unknown>>)[0];
   assertEquals(w2gPdf.instances?.({}, fixture.filer, {}), []);
   assertEquals(
@@ -35,7 +36,7 @@ Deno.test("W-2G PDF omits the payer copy when no tax was withheld", () => {
   );
 });
 
-Deno.test("W-2G PDF requires the native source facts and reconciled withholding", () => {
+test("W-2G PDF requires the native source facts and reconciled withholding", () => {
   assertThrows(
     () =>
       w2gPdf.instances?.(source, fixture.filer, {
@@ -61,7 +62,7 @@ Deno.test("W-2G PDF requires the native source facts and reconciled withholding"
   );
 });
 
-Deno.test("W-2G PDF creates one copy per distinct withheld payer form", () => {
+test("W-2G PDF creates one copy per distinct withheld payer form", () => {
   const item = (fixture.inputs.w2g as Array<Record<string, unknown>>)[0];
   const copies = w2gPdf.instances?.(
     {

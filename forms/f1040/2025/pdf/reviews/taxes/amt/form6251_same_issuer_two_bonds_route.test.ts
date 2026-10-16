@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -35,7 +36,7 @@ const bonds = [1, 2].map((index) => ({
   },
 }));
 
-Deno.test("two distinct bonds from one PAB issuer reach Form 6251, Schedule 2, Form 1040, native and PDF", async () => {
+test("two distinct bonds from one PAB issuer reach Form 6251, Schedule 2, Form 1040, native and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

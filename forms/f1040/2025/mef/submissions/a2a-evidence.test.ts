@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
@@ -48,8 +51,8 @@ function packageFor(id = submissionId) {
   };
 }
 
-Deno.test("A2A Send record and reopen reject a changed local ZIP CRC", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send record and reopen reject a changed local ZIP CRC", async () => {
+  const root = await sys.makeTempDir();
   try {
     const source = packageFor();
     const validInner =
@@ -94,11 +97,11 @@ Deno.test("A2A Send record and reopen reject a changed local ZIP CRC", async () 
       recordedAt: new Date("2026-09-26T10:00:00Z"),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -110,8 +113,8 @@ Deno.test("A2A Send record and reopen reject a changed local ZIP CRC", async () 
       Error,
       "physical ZIP entries",
     );
-    await Deno.writeFile(`${root}/requests/${key}/container.zip`, changedOuter);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/requests/${key}/container.zip`, changedOuter);
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -124,12 +127,12 @@ Deno.test("A2A Send record and reopen reject a changed local ZIP CRC", async () 
       "container physical ZIP entries",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send record and reopen reject matching but false ZIP payload CRCs", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send record and reopen reject matching but false ZIP payload CRCs", async () => {
+  const root = await sys.makeTempDir();
   try {
     const source = packageFor();
     const changeBothCrcs = (original: Uint8Array): Uint8Array => {
@@ -185,11 +188,11 @@ Deno.test("A2A Send record and reopen reject matching but false ZIP payload CRCs
       recordedAt: new Date("2026-09-26T10:00:00Z"),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -202,12 +205,12 @@ Deno.test("A2A Send record and reopen reject matching but false ZIP payload CRCs
       "physical ZIP entries",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send evidence preserves request and container submission order", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send evidence preserves request and container submission order", async () => {
+  const root = await sys.makeTempDir();
   try {
     const secondId = "1234562026269abcdefh";
     const first = packageFor(submissionId);
@@ -241,11 +244,11 @@ Deno.test("A2A Send evidence preserves request and container submission order", 
       "body and container Submission IDs differ",
     );
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/request.xml`,
       swappedBody,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -258,12 +261,12 @@ Deno.test("A2A Send evidence preserves request and container submission order", 
       "body and container Submission IDs differ",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send evidence rejects a false request root or commented Submission ID", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send evidence rejects a false request root or commented Submission ID", async () => {
+  const root = await sys.makeTempDir();
   try {
     const source = packageFor();
     for (
@@ -313,12 +316,12 @@ Deno.test("A2A Send evidence rejects a false request root or commented Submissio
       );
     }
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission ID day", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send rejects absent or mismatched EFIN and impossible Submission ID day", async () => {
+  const root = await sys.makeTempDir();
   try {
     const impossibleDayId = "1234562026999abcdefg";
     for (
@@ -354,12 +357,12 @@ Deno.test("A2A Send rejects absent or mismatched EFIN and impossible Submission 
       );
     }
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send evidence requires manifest identity in direct IRS manifest fields", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send evidence requires manifest identity in direct IRS manifest fields", async () => {
+  const root = await sys.makeTempDir();
   try {
     const source = packageFor();
     const archive = unzipSync(
@@ -412,11 +415,11 @@ Deno.test("A2A Send evidence requires manifest identity in direct IRS manifest f
       }),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -429,12 +432,12 @@ Deno.test("A2A Send evidence requires manifest identity in direct IRS manifest f
       "manifest or taxpayer differs",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send evidence requires PrimarySSN on the archived Form 1040", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send evidence requires PrimarySSN on the archived Form 1040", async () => {
+  const root = await sys.makeTempDir();
   try {
     const source = packageFor();
     const archive = unzipSync(
@@ -469,11 +472,11 @@ Deno.test("A2A Send evidence requires PrimarySSN on the archived Form 1040", asy
       recordedAt: new Date("2026-09-26T10:00:00Z"),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...recorded,
@@ -486,12 +489,12 @@ Deno.test("A2A Send evidence requires PrimarySSN on the archived Form 1040", asy
       "manifest or taxpayer differs",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A outbound evidence binds one archived Submission ID to exact XML and taxpayer", async () => {
+  const root = await sys.makeTempDir();
   try {
     const manifest = encoder.encode(
       `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt><TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt><TIN>111223333</TIN></IRSSubmissionManifest>`,
@@ -539,7 +542,7 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
       "taxpayer, or XML digest differs",
     );
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       zipSync({
         [`${submissionId}.zip`]: encoder.encode("substituted archive"),
@@ -551,12 +554,12 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
       "Send evidence integrity",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP parity", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A archived outbound evidence rejects broken document and PDF ZIP parity", async () => {
+  const root = await sys.makeTempDir();
   try {
     const manifest = encoder.encode(
       `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt><TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt><TIN>111223333</TIN></IRSSubmissionManifest>`,
@@ -788,11 +791,11 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       }),
     });
     const key = await digest(encoder.encode(validSendId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...validRecord,
@@ -805,12 +808,12 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       "not a complete PDF",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send record and reopen reject reordered inner ZIP entries", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send record and reopen reject reordered inner ZIP entries", async () => {
+  const root = await sys.makeTempDir();
   try {
     const packageData = packageFor();
     const original = await recordA2aSendPackage(root, {
@@ -842,11 +845,11 @@ Deno.test("A2A Send record and reopen reject reordered inner ZIP entries", async
       "document inventory, references, or PDF attachments",
     );
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...original,
@@ -870,12 +873,12 @@ Deno.test("A2A Send record and reopen reject reordered inner ZIP entries", async
       "document inventory, references, or PDF attachments",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send reopen rejects a duplicate attachment reference in stored XML", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send reopen rejects a duplicate attachment reference in stored XML", async () => {
+  const root = await sys.makeTempDir();
   try {
     const request = packageFor();
     const send = await recordA2aSendPackage(root, {
@@ -895,11 +898,11 @@ Deno.test("A2A Send reopen rejects a duplicate attachment reference in stored XM
       [`${submissionId}.zip`]: zipSync(inner),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...send,
@@ -923,12 +926,12 @@ Deno.test("A2A Send reopen rejects a duplicate attachment reference in stored XM
       "document inventory, references, or PDF attachments",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send read and inbound evidence reject a changed inner document inventory", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send read and inbound evidence reject a changed inner document inventory", async () => {
+  const root = await sys.makeTempDir();
   try {
     const request = packageFor();
     const send = await recordA2aSendPackage(root, {
@@ -946,11 +949,11 @@ Deno.test("A2A Send read and inbound evidence reject a changed inner document in
       [`${submissionId}.zip`]: zipSync(inner),
     });
     const key = await digest(encoder.encode(messageId));
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/requests/${key}/container.zip`,
       changedContainer,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/requests/${key}/record.json`,
       JSON.stringify({
         ...send,
@@ -976,12 +979,12 @@ Deno.test("A2A Send read and inbound evidence reject a changed inner document in
       "document inventory, references, or PDF attachments",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A evidence stores exact Send and raw acknowledgment bytes with stable correlation", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A evidence stores exact Send and raw acknowledgment bytes with stable correlation", async () => {
+  const root = await sys.makeTempDir();
   try {
     const request = await recordA2aSendPackage(root, {
       messageId,
@@ -1004,12 +1007,12 @@ Deno.test("A2A evidence stores exact Send and raw acknowledgment bytes with stab
     assertEquals(stored.rawPayload, rawPayload);
     assertEquals("status" in stored.record, false);
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A evidence rejects mismatched package, RelatesTo, and Submission ID", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A evidence rejects mismatched package, RelatesTo, and Submission ID", async () => {
+  const root = await sys.makeTempDir();
   try {
     await assertRejects(
       () =>
@@ -1054,12 +1057,12 @@ Deno.test("A2A evidence rejects mismatched package, RelatesTo, and Submission ID
       "Submission ID is not unique in the Send package",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A Send evidence refuses corrupt or misidentified inner submission ZIPs", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A Send evidence refuses corrupt or misidentified inner submission ZIPs", async () => {
+  const root = await sys.makeTempDir();
   try {
     const request = packageFor();
     for (
@@ -1096,12 +1099,12 @@ Deno.test("A2A Send evidence refuses corrupt or misidentified inner submission Z
       );
     }
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A evidence detects altered stored acknowledgment bytes", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A evidence detects altered stored acknowledgment bytes", async () => {
+  const root = await sys.makeTempDir();
   try {
     await recordA2aSendPackage(root, {
       messageId,
@@ -1116,7 +1119,7 @@ Deno.test("A2A evidence detects altered stored acknowledgment bytes", async () =
       receivedAt: new Date("2026-09-26T11:00:00Z"),
       rawPayload: encoder.encode("original"),
     });
-    await Deno.writeFile(
+    await fs.writeFile(
       `${root}/inbound/${inbound.recordId}/payload.bin`,
       encoder.encode("altered"),
     );
@@ -1126,12 +1129,12 @@ Deno.test("A2A evidence detects altered stored acknowledgment bytes", async () =
       "integrity or record ID mismatch",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A evidence replays Send and inbound correlation after stored metadata changes", async () => {
-  const root = await Deno.makeTempDir();
+test("A2A evidence replays Send and inbound correlation after stored metadata changes", async () => {
+  const root = await sys.makeTempDir();
   try {
     const send = await recordA2aSendPackage(root, {
       messageId,
@@ -1141,7 +1144,7 @@ Deno.test("A2A evidence replays Send and inbound correlation after stored metada
     });
     const sendKey = await digest(encoder.encode(messageId));
     const sendPath = `${root}/requests/${sendKey}/record.json`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       sendPath,
       JSON.stringify({
         ...send,
@@ -1153,7 +1156,7 @@ Deno.test("A2A evidence replays Send and inbound correlation after stored metada
       Error,
       "body and container Submission IDs differ",
     );
-    await Deno.writeTextFile(sendPath, JSON.stringify(send));
+    await fs.writeFile(sendPath, JSON.stringify(send));
 
     const inbound = await recordA2aInboundPayload(root, {
       kind: "send_response",
@@ -1164,7 +1167,7 @@ Deno.test("A2A evidence replays Send and inbound correlation after stored metada
       rawPayload: encoder.encode("response bytes"),
     });
     const inboundPath = `${root}/inbound/${inbound.recordId}/record.json`;
-    await Deno.writeTextFile(
+    await fs.writeFile(
       inboundPath,
       JSON.stringify({
         ...inbound,
@@ -1176,7 +1179,7 @@ Deno.test("A2A evidence replays Send and inbound correlation after stored metada
       Error,
       "payload integrity or record ID mismatch",
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       inboundPath,
       JSON.stringify({
         ...inbound,
@@ -1189,11 +1192,11 @@ Deno.test("A2A evidence replays Send and inbound correlation after stored metada
       "payload integrity or record ID mismatch",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("A2A evidence rejects an inbound record ID before path construction", async () => {
+test("A2A evidence rejects an inbound record ID before path construction", async () => {
   await assertRejects(
     () => readA2aInboundPayload("/unused", "../requests"),
     Error,

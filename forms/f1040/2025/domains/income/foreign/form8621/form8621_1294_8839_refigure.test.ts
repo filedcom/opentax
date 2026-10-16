@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -77,21 +80,21 @@ async function retainAndValidatePacket(
   pdf: Uint8Array,
   origins: readonly PdfPageOrigin[],
 ): Promise<void> {
-  const root = Deno.env.get("FORM8621_ADOPTION_EVIDENCE_DIR") ??
+  const root = process.env.FORM8621_ADOPTION_EVIDENCE_DIR ??
     ".state/research/form8621-qef-adoption";
   const dir = kind === "full" ? root : `${root}/${kind}`;
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     `${dir}/source-pending.json`,
     JSON.stringify({ input, pending }, null, 2),
   );
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(`${dir}/return.xml`, xml);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${dir}/return.pdf`, pdf);
+  await fs.writeFile(`${dir}/return.xml`, xml);
+  await fs.writeFile(
     `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  const xsd = await new Deno.Command("xmllint", {
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -103,7 +106,7 @@ async function retainAndValidatePacket(
   assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
 }
 
-Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in both tax runs", async () => {
+test("Form 8621 Election B composes the reviewed Form 8839 staged return in both tax runs", async () => {
   const input = { ...base.inputs, f8621: [holding] };
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -190,7 +193,7 @@ Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in
   );
 });
 
-Deno.test("Form 8621 Election B keeps an actual fully used adoption credit when only its shadow has a carryforward", async () => {
+test("Form 8621 Election B keeps an actual fully used adoption credit when only its shadow has a carryforward", async () => {
   const originalW2 = (base.inputs.w2 as Record<string, unknown>[])[0];
   const wage = {
     ...originalW2,
@@ -277,7 +280,7 @@ Deno.test("Form 8621 Election B keeps an actual fully used adoption credit when 
   );
 });
 
-Deno.test("Form 8621 Election B records zero deferred tax when the full-return tax is unchanged", async () => {
+test("Form 8621 Election B records zero deferred tax when the full-return tax is unchanged", async () => {
   const smallHolding = {
     ...holding,
     qef_ordinary_income: 1,
@@ -351,7 +354,7 @@ const secondHolding = {
   },
 };
 
-Deno.test("two independent Election B holdings reconcile per-fund tax to the full adoption return", async () => {
+test("two independent Election B holdings reconcile per-fund tax to the full adoption return", async () => {
   const inputs = { ...base.inputs, f8621: [holding, secondHolding] };
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
@@ -425,7 +428,7 @@ Deno.test("two independent Election B holdings reconcile per-fund tax to the ful
   );
 });
 
-Deno.test("nonadditive simultaneous Election B differences stay guarded", () => {
+test("nonadditive simultaneous Election B differences stay guarded", () => {
   const originalW2 = (base.inputs.w2 as Record<string, unknown>[])[0];
   const wage = {
     ...originalW2,
@@ -512,7 +515,7 @@ const thirdHolding = {
   },
 };
 
-Deno.test("three independent Election B holdings retain separate sourced copies", async () => {
+test("three independent Election B holdings retain separate sourced copies", async () => {
   const inputs = {
     ...base.inputs,
     f8621: [holding, secondHolding, thirdHolding],

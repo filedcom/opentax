@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -53,15 +54,15 @@ function printableParts(partV: number, partVI: number): Form3800DocumentParts {
   };
 }
 
-Deno.test("Form 3800 nine-page printable capacity accepts all 15 Part V and 35 Part VI slots", () => {
+test("Form 3800 nine-page printable capacity accepts all 15 Part V and 35 Part VI slots", () => {
   assertForm3800PrintableDetailCapacity(printableParts(15, 35));
 });
 
-Deno.test("Form 3800 printable capacity permits Part V and Part VI continuations", () => {
+test("Form 3800 printable capacity permits Part V and Part VI continuations", () => {
   assertForm3800PrintableDetailCapacity(printableParts(46, 71));
 });
 
-Deno.test("Form 3800 printable capacity rejects a missing aggregate source before output", () => {
+test("Form 3800 printable capacity rejects a missing aggregate source before output", () => {
   const parts = printableParts(2, 0);
   assertThrows(
     () =>

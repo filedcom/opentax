@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -9,7 +10,7 @@ import { irs1040Pdf } from "../../2025/pdf/forms/general/return-assembly/f1040.t
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction and refund", () => {
+test("ATS 1040 Scenario 8: source-backed return calculates age deduction and refund", () => {
   const result = execute(plan, registry, scenario104008Input(), {
     taxYear: 2025,
     formType: "f1040",
@@ -44,7 +45,7 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   assertEquals(scheduleD.build(result.pending.schedule_d), "");
 });
 
-Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security taxability", () => {
+test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security taxability", () => {
   const input = scenario104008Input();
   (input.general as Record<string, unknown>).mfs_spouse_lived_with_taxpayer =
     true;
@@ -57,7 +58,7 @@ Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security 
   assertEquals(result.pending.f1040?.mfs_spouse_lived_with_taxpayer, true);
 });
 
-Deno.test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but code Q does not prove QCD", () => {
+test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but code Q does not prove QCD", () => {
   const facts = SCENARIO_1040_08_FACTS;
   assertEquals(facts.form1040.line4aBlank, true);
   assertEquals(facts.form1040.line4cQcdChecked, true);
@@ -78,7 +79,7 @@ Deno.test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but cod
   assertEquals(forms[1].box2a_taxable_amount, 10_300);
 });
 
-Deno.test("ATS 1040 Scenario 8: source-backed PDF QCD state conflicts with printed packet", () => {
+test("ATS 1040 Scenario 8: source-backed PDF QCD state conflicts with printed packet", () => {
   const result = execute(plan, registry, scenario104008Input(), {
     taxYear: 2025,
     formType: "f1040",

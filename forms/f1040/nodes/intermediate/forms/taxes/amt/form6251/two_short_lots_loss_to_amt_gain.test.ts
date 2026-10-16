@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -74,7 +75,7 @@ function filedCase() {
   return { filed, pending };
 }
 
-Deno.test("two short-term lots with one regular loss becoming AMT gain reconcile", () => {
+test("two short-term lots with one regular loss becoming AMT gain reconcile", () => {
   const { filed, pending } = filedCase();
   assertEquals(filed.line2k_disposition, 1_500);
   assertEquals(filed.net_capital_gain, 0);
@@ -90,7 +91,7 @@ Deno.test("two short-term lots with one regular loss becoming AMT gain reconcile
   );
 });
 
-Deno.test("two short-term AMT lots reject omitted, altered and final-return facts", () => {
+test("two short-term AMT lots reject omitted, altered and final-return facts", () => {
   const { filed, pending } = filedCase();
   for (
     const changed of [

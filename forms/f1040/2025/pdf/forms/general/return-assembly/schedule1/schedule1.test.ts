@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule1Pdf } from "./schedule1.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -6,14 +7,14 @@ import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner
 import { registry } from "../../../../../registry.ts";
 import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
 
-Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
+test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
     "nameShownOnForm1040",
     "primarySSN",
   ]);
 });
 
-Deno.test("Schedule 1 PDF rejects bare disallowed business interest income", () => {
+test("Schedule 1 PDF rejects bare disallowed business interest income", () => {
   assertThrows(
     () => schedule1Pdf.instances?.({ biz_interest_disallowed_add_back: 300 }),
     Error,
@@ -21,7 +22,7 @@ Deno.test("Schedule 1 PDF rejects bare disallowed business interest income", () 
   );
 });
 
-Deno.test("Schedule 1 PDF marks only sourced Form 4797 on line 4", () => {
+test("Schedule 1 PDF marks only sourced Form 4797 on line 4", () => {
   // 2025 Schedule 1: https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
   // 2025 Form 4684 instructions: https://www.irs.gov/instructions/i4684
   // Form 4684 line 31 uses its own box only when Form 4797 is otherwise
@@ -58,7 +59,7 @@ Deno.test("Schedule 1 PDF marks only sourced Form 4797 on line 4", () => {
   assertEquals(projected?.print_line4_form4684, undefined);
 });
 
-Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repayment", () => {
+test("Schedule 1 PDF line 7 shows the retained same-year unemployment repayment", () => {
   const byKey = (key: string) =>
     schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
   assertEquals(
@@ -132,7 +133,7 @@ Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repay
   );
 });
 
-Deno.test("fully repaid unemployment alone still creates Schedule 1 and its PDF repayment annotation", () => {
+test("fully repaid unemployment alone still creates Schedule 1 and its PDF repayment annotation", () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-w2-refund"
   )!;
@@ -156,7 +157,7 @@ Deno.test("fully repaid unemployment alone still creates Schedule 1 and its PDF 
   assertEquals(projected?.line7_unemployment_repayment, 5_000);
 });
 
-Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {
+test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {
   const field = (key: string) =>
     schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
   assertEquals(
@@ -189,7 +190,7 @@ Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation 
   );
 });
 
-Deno.test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer source", () => {
+test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer source", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "TEST TAXPAYER",
@@ -245,14 +246,14 @@ Deno.test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer sou
   );
 });
 
-Deno.test("Schedule 1 PDF puts Form 2106 deductions on line 12", () => {
+test("Schedule 1 PDF puts Form 2106 deductions on line 12", () => {
   const line12 = schedule1Pdf.fields.find((entry) =>
     entry.domainKey === "line12_business_expenses"
   );
   assertEquals(line12?.pdfField, "topmostSubform[0].Page2[0].f2_02[0]");
 });
 
-Deno.test("Schedule 1 PDF uses 2025 fields after the Form 1099-K entry", () => {
+test("Schedule 1 PDF uses 2025 fields after the Form 1099-K entry", () => {
   const at = (key: string) =>
     schedule1Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
   assertEquals(at("line1_state_refund"), "topmostSubform[0].Page1[0].f1_04[0]");
@@ -292,7 +293,7 @@ Deno.test("Schedule 1 PDF uses 2025 fields after the Form 1099-K entry", () => {
   );
 });
 
-Deno.test("Schedule 1 PDF maps W-2G winnings to line 8b, not line 8z", () => {
+test("Schedule 1 PDF maps W-2G winnings to line 8b, not line 8z", () => {
   const line8b = schedule1Pdf.fields.find((entry) =>
     entry.domainKey === "line8b_gambling_winnings"
   );
@@ -303,7 +304,7 @@ Deno.test("Schedule 1 PDF maps W-2G winnings to line 8b, not line 8z", () => {
   assertEquals(line8z?.pdfField, "topmostSubform[0].Page1[0].f1_36[0]");
 });
 
-Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
+test("Schedule 1 PDF combines identified line 8z sources once", () => {
   const projected = schedule1Pdf.instances?.({
     line8z_taxable_grants: 300,
     f1099g_taxable_grant_sources: [{
@@ -337,7 +338,7 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
   );
 });
 
-Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals", () => {
+test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals", () => {
   const filer = {
     primarySSN: "111223333",
     filingStatus: FilingStatus.Single,
@@ -474,7 +475,7 @@ Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals
   );
 });
 
-Deno.test("Schedule 1 PDF rejects an untyped generic line 8z amount", () => {
+test("Schedule 1 PDF rejects an untyped generic line 8z amount", () => {
   assertThrows(
     () => schedule1Pdf.instances?.({ line8z_other: 100 }),
     Error,
@@ -482,7 +483,7 @@ Deno.test("Schedule 1 PDF rejects an untyped generic line 8z amount", () => {
   );
 });
 
-Deno.test("Schedule 1 PDF combines 1099-K and 1099-NEC activity income on line 8j", () => {
+test("Schedule 1 PDF combines 1099-K and 1099-NEC activity income on line 8j", () => {
   const projected = schedule1Pdf.instances?.({
     line8j_f1099k_hobby_income: 100,
     f1099nec_nonbusiness_sources: [{

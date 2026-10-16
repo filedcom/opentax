@@ -1,10 +1,13 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema as f1099rInputSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 
-Deno.test("IRA frozen-deposit explanation prints on the PDF statement", async () => {
+test("IRA frozen-deposit explanation prints on the PDF statement", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-ira-late-frozen-deposit"
   )!;
@@ -13,10 +16,10 @@ Deno.test("IRA frozen-deposit explanation prints on the PDF statement", async ()
   await appendIraDistributionStatement(document, source, fixture.filer);
   assertEquals(document.getPageCount(), 1);
 
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, await document.save());
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -28,6 +31,6 @@ Deno.test("IRA frozen-deposit explanation prints on the PDF statement", async ()
     assertStringIncludes(text, "2025-09-30");
     assertEquals(text.includes("synthetic-"), false);
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

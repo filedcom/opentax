@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -56,7 +57,7 @@ function filing(source: RentedHomeSource, proprietor?: TS.T) {
   }, context);
 }
 
-Deno.test("Form 8829 precedes Schedule C and downstream 1040 nodes without a cycle", () => {
+test("Form 8829 precedes Schedule C and downstream 1040 nodes without a cycle", () => {
   const position = (name: string) =>
     plan.findIndex((step) => step.nodeType === name);
   for (
@@ -73,7 +74,7 @@ Deno.test("Form 8829 precedes Schedule C and downstream 1040 nodes without a cyc
   }
 });
 
-Deno.test("Form 8829 rented home reaches Schedule C, SE, QBI, AGI, and final 1040", () => {
+test("Form 8829 rented home reaches Schedule C, SE, QBI, AGI, and final 1040", () => {
   const result = filing(rentedHome, TS.T);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form_8829?.line36, 2_900);
@@ -92,7 +93,7 @@ Deno.test("Form 8829 rented home reaches Schedule C, SE, QBI, AGI, and final 104
   assert((result.pending.f1040?.line13_qbi_deduction as number) > 0);
 });
 
-Deno.test("Form 8829 mismatch and ambiguous owner fail closed at Schedule C", () => {
+test("Form 8829 mismatch and ambiguous owner fail closed at Schedule C", () => {
   const mismatched = filing({
     ...rentedHome,
     schedule_c_line29_tentative_profit: 50_001,
@@ -115,7 +116,7 @@ Deno.test("Form 8829 mismatch and ambiguous owner fail closed at Schedule C", ()
   assertEquals(unspecified.pending.schedule1?.line3_schedule_c, undefined);
 });
 
-Deno.test("Form 8829 direct repairs reach Schedule C, SE, QBI, and 1040", () => {
+test("Form 8829 direct repairs reach Schedule C, SE, QBI, and 1040", () => {
   const result = filing({ ...rentedHome, repairs_direct: 700 }, TS.T);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form_8829?.line20a, 700);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -75,7 +76,7 @@ function combinedCase() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("partial beneficiary NUA and estate tax use recipient capital tax and full Part III estate tax", () => {
+test("partial beneficiary NUA and estate tax use recipient capital tax and full Part III estate tax", () => {
   const { outputs, fields, pending } = combinedCase();
   assertEquals(fields.line6_nua_capital_gain, 800);
   assertEquals(fields.line6, 4_600);
@@ -106,7 +107,7 @@ Deno.test("partial beneficiary NUA and estate tax use recipient capital tax and 
   assertEquals(printed?.line30, fields.line30);
 });
 
-Deno.test("partial beneficiary combined NUA/estate election rejects changed allocation, source, or tax", () => {
+test("partial beneficiary combined NUA/estate election rejects changed allocation, source, or tax", () => {
   const { election, fields, pending } = combinedCase();
   assertThrows(() =>
     calculator.compute(

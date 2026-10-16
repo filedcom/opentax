@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -87,7 +88,7 @@ function caseData() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("partial death exclusion and annuity Part III join Form 1040, native, and PDF", () => {
+test("partial death exclusion and annuity Part III join Form 1040, native, and PDF", () => {
   const { outputs, fields, pending } = caseData();
   assertEquals(fields.line8, 40_000);
   assertEquals(fields.line9, 5_000);
@@ -117,7 +118,7 @@ Deno.test("partial death exclusion and annuity Part III join Form 1040, native, 
   assertEquals(pdf.line30, pending.f1040.form4972_tax);
 });
 
-Deno.test("partial death and annuity route rejects allocation, source, lines, and tax drift", () => {
+test("partial death and annuity route rejects allocation, source, lines, and tax drift", () => {
   const { election, fields, pending } = caseData();
   assertThrows(() =>
     calculator.compute(

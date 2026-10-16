@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { SCENARIO_1040_12_FACTS } from "../../../../../e2e/ats/ty2025_cases.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -117,7 +118,7 @@ const liquidatingAllocation = {
   ],
 };
 
-Deno.test("Form 7217 native and PDF preserve section 732(c) liquidating property basis", () => {
+test("Form 7217 native and PDF preserve section 732(c) liquidating property basis", () => {
   const [xml] = form7217.build({ form7217s: [liquidatingAllocation] }, {
     filer,
   });
@@ -163,7 +164,7 @@ Deno.test("Form 7217 native and PDF preserve section 732(c) liquidating property
   );
 });
 
-Deno.test("Form 7217 nonliquidating basis decrease reaches native and PDF with exact property bases", () => {
+test("Form 7217 nonliquidating basis decrease reaches native and PDF with exact property bases", () => {
   const source = form7217NonliquidatingDecrease;
   const [xml] = form7217.build({ form7217s: [source] }, { filer });
   assertStringIncludes(
@@ -200,7 +201,7 @@ Deno.test("Form 7217 nonliquidating basis decrease reaches native and PDF with e
   assertThrows(() => form7217Pdf.instances({ form7217s: [tampered] }, filer));
 });
 
-Deno.test("Form 7217 section 731 cash gain matches the filed Form 8949 row in MeF and PDF", () => {
+test("Form 7217 section 731 cash gain matches the filed Form 8949 row in MeF and PDF", () => {
   const transaction = section731Form8949Transaction(gainItem);
   const pending = { form8949: [transaction] };
   const [xml] = form7217.build({ form7217s: [gainItem] }, { filer, pending });
@@ -228,7 +229,7 @@ Deno.test("Form 7217 section 731 cash gain matches the filed Form 8949 row in Me
   );
 });
 
-Deno.test("Form 7217 gain rejects a wrong K-1 owner or tampered Form 8949 row", () => {
+test("Form 7217 gain rejects a wrong K-1 owner or tampered Form 8949 row", () => {
   const transaction = section731Form8949Transaction(gainItem)!;
   assertThrows(
     () =>
@@ -255,7 +256,7 @@ Deno.test("Form 7217 gain rejects a wrong K-1 owner or tampered Form 8949 row", 
   );
 });
 
-Deno.test("Form 7217 emits a reconciled variant of the ATS Scenario 12 distribution", () => {
+test("Form 7217 emits a reconciled variant of the ATS Scenario 12 distribution", () => {
   const [xml] = form7217.build({ form7217s: [fileableItem] }, { filer });
   assertStringIncludes(xml, "<PartnerPersonNm>Sam Gardenia</PartnerPersonNm>");
   assertStringIncludes(
@@ -287,7 +288,7 @@ Deno.test("Form 7217 emits a reconciled variant of the ATS Scenario 12 distribut
   );
 });
 
-Deno.test("Form 7217 produces one MeF document per distinct distribution date", () => {
+test("Form 7217 produces one MeF document per distinct distribution date", () => {
   const xml = buildMefXml({
     f7217: {
       form7217s: [fileableItem, {
@@ -301,7 +302,7 @@ Deno.test("Form 7217 produces one MeF document per distinct distribution date", 
   assertStringIncludes(xml, '<IRS7217 documentId="IRS72172">');
 });
 
-Deno.test("Form 7217 native output reconciles section 731(c) security FMV to line 5b", () => {
+test("Form 7217 native output reconciles section 731(c) security FMV to line 5b", () => {
   const security = {
     ...fileableItem,
     marketable_securities_fmv: 2_000,
@@ -329,7 +330,7 @@ Deno.test("Form 7217 native output reconciles section 731(c) security FMV to lin
   );
 });
 
-Deno.test("Form 7217 direct MeF export rejects incomplete or duplicate date records", () => {
+test("Form 7217 direct MeF export rejects incomplete or duplicate date records", () => {
   assertThrows(
     () => form7217.build({ form7217s: [item] }, { filer }),
     Error,
@@ -343,7 +344,7 @@ Deno.test("Form 7217 direct MeF export rejects incomplete or duplicate date reco
   );
 });
 
-Deno.test("Form 7217 omits absent input and requires identity", () => {
+test("Form 7217 omits absent input and requires identity", () => {
   assertEquals(form7217.build({}), []);
   assertThrows(
     () => form7217.build({ form7217s: [fileableItem] }),

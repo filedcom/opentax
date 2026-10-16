@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { TS } from "../../../../../types.ts";
 import { inputNodes } from "../../../../../../2025/inputs.ts";
@@ -34,14 +35,14 @@ export const rentedHome: RentedHomeSource = {
   direct_repairs_business_area_only_verified: true,
 };
 
-Deno.test("2025 Form 8829 rented-home input is registered", () => {
+test("2025 Form 8829 rented-home input is registered", () => {
   assertEquals(
     inputNodes.some((entry) => entry.node.nodeType === "form_8829"),
     true,
   );
 });
 
-Deno.test("2025 Form 8829 sends one business-linked line 36 claim to Schedule C", () => {
+test("2025 Form 8829 sends one business-linked line 36 claim to Schedule C", () => {
   const lines = calculateRentedHomeForm8829(rentedHome);
   assertEquals(lines.line3, 0.2);
   assertEquals(lines.line23b, 14_000);
@@ -67,7 +68,7 @@ Deno.test("2025 Form 8829 sends one business-linked line 36 claim to Schedule C"
   );
 });
 
-Deno.test("2025 Form 8829 retains operating carryover when current deduction is zero", () => {
+test("2025 Form 8829 retains operating carryover when current deduction is zero", () => {
   const source = { ...rentedHome, schedule_c_line29_tentative_profit: 0 };
   const lines = calculateRentedHomeForm8829(source);
   assertEquals(lines.line36, 0);
@@ -85,7 +86,7 @@ Deno.test("2025 Form 8829 retains operating carryover when current deduction is 
   );
 });
 
-Deno.test("2025 Form 8829 applies direct business-area repairs without area proration", () => {
+test("2025 Form 8829 applies direct business-area repairs without area proration", () => {
   const lines = calculateRentedHomeForm8829({
     ...rentedHome,
     repairs_direct: 700,
@@ -106,7 +107,7 @@ Deno.test("2025 Form 8829 applies direct business-area repairs without area pror
   );
 });
 
-Deno.test("2025 Form 8829 rejects area overflow and old flat calculation inputs", () => {
+test("2025 Form 8829 rejects area overflow and old flat calculation inputs", () => {
   assertThrows(
     () =>
       calculateRentedHomeForm8829({ ...rentedHome, business_area_sqft: 1_001 }),

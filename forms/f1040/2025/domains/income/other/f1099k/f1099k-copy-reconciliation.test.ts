@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { testFiler } from "../../../../mef/execution/test-filer.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 
-Deno.test("one identified 1099-K account cannot replay changed income in native or PDF export", async () => {
+test("one identified 1099-K account cannot replay changed income in native or PDF export", async () => {
   const issued = {
     pse_name: "Payment processor",
     pse_tin: "12-3456789",
@@ -43,7 +44,7 @@ Deno.test("one identified 1099-K account cannot replay changed income in native 
   );
 });
 
-Deno.test("one issued 1099-K reference cannot replay changed income without an account", async () => {
+test("one issued 1099-K reference cannot replay changed income without an account", async () => {
   const issued = {
     pse_name: "Payment processor",
     recipient_tin: "123-45-6789",
@@ -79,7 +80,7 @@ Deno.test("one issued 1099-K reference cannot replay changed income without an a
   );
 });
 
-Deno.test("one issued 1099-K reference cannot replay under a changed processor and account", async () => {
+test("one issued 1099-K reference cannot replay under a changed processor and account", async () => {
   const issued = {
     pse_name: "Payment processor",
     pse_tin: "12-3456789",
@@ -120,7 +121,7 @@ Deno.test("one issued 1099-K reference cannot replay under a changed processor a
   );
 });
 
-Deno.test("ambiguous processor copies reject in native and PDF export", async () => {
+test("ambiguous processor copies reject in native and PDF export", async () => {
   const issued = {
     pse_name: "Payment processor",
     pse_tin: "12-3456789",

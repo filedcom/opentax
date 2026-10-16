@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import {
   filedDependentsFromGeneral,
@@ -29,7 +30,7 @@ const general = generalInputSchema.parse({
   }],
 });
 
-Deno.test("retained general dependents project only claimed Form 1040 rows", () => {
+test("retained general dependents project only claimed Form 1040 rows", () => {
   const rows = filedDependentsFromGeneral(general);
   assertGeneral1040DependentSource({
     general,

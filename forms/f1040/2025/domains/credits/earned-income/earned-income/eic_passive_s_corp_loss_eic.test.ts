@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -33,7 +34,7 @@ for (
   ]
 ) {
   for (const investment of [11950, 11951]) {
-    Deno.test(`Passive source EIC filing validator replays basis ${cash}/income ${income} at ${investment}`, () => {
+    test(`Passive source EIC filing validator replays basis ${cash}/income ${income} at ${investment}`, () => {
       const r = f1040_2025.executeReturn(
         passiveSCorpLossReturnInputs(cash, income, investment),
       );
@@ -80,7 +81,7 @@ for (
     }],
   ] as const
 ) {
-  Deno.test(`Passive EIC filing validator rejects ${label}`, () => {
+  test(`Passive EIC filing validator rejects ${label}`, () => {
     const p = f1040_2025.executeReturn(passiveSCorpLossReturnInputs(1000, 3000))
       .pending;
     mutate(p);
@@ -90,7 +91,7 @@ for (
 
 for (const spouseOwned of [false, true]) {
   for (const investment of [11950, 11951]) {
-    Deno.test(`Passive EIC actual joint ${spouseOwned ? "spouse" : "primary"} loss source at ${investment}`, () => {
+    test(`Passive EIC actual joint ${spouseOwned ? "spouse" : "primary"} loss source at ${investment}`, () => {
       const r = f1040_2025.executeReturn(
         passiveSCorpJointLossReturnInputs(spouseOwned, investment),
       );
@@ -113,7 +114,7 @@ for (const spouseOwned of [false, true]) {
   }
 }
 for (const investment of [11950, 11951]) {
-  Deno.test(`Passive EIC filing validator combines taxable/exempt interest and dividends at ${investment}`, () => {
+  test(`Passive EIC filing validator combines taxable/exempt interest and dividends at ${investment}`, () => {
     const i = passiveSCorpLossReturnInputs(1000, 3000, investment);
     i.f1099int[0].box8 -= 5;
     i.f1099int[0].box1 = 3;

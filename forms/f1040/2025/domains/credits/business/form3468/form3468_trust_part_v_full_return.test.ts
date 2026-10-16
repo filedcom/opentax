@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -16,7 +17,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-trust-clean-electricity-investment-credit"
 )!;
 
-Deno.test("trust K-1 box 14 code M reaches Form 3468, Form 3800, Schedule 3, Form 1040, native and PDF", async () => {
+test("trust K-1 box 14 code M reaches Form 3468, Form 3800, Schedule 3, Form 1040, native and PDF", async () => {
   const result = f1040_2025.executeReturn({ ...fixture.inputs });
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -68,7 +69,7 @@ Deno.test("trust K-1 box 14 code M reaches Form 3468, Form 3800, Schedule 3, For
   await prepared.renderPdf();
 });
 
-Deno.test("trust Form 3468 PDF rejects altered Form 3800 source, document ID, and tax use", async () => {
+test("trust Form 3468 PDF rejects altered Form 3800 source, document ID, and tax use", async () => {
   const result = f1040_2025.executeReturn({ ...fixture.inputs });
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -148,7 +149,7 @@ Deno.test("trust Form 3468 PDF rejects altered Form 3800 source, document ID, an
   );
 });
 
-Deno.test("trust Part V full return rejects altered independent review and wrong K-1 box", async () => {
+test("trust Part V full return rejects altered independent review and wrong K-1 box", async () => {
   const result = f1040_2025.executeReturn({ ...fixture.inputs });
   assertEquals(result.diagnostics, []);
   const source = normalizeAllPending(result.pending);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -61,7 +62,7 @@ function item(overrides: Record<string, unknown> = {}) {
   };
 }
 
-Deno.test("Form 8912: Part III, Part IV 70% bond, and carryforward remain distinct", () => {
+test("Form 8912: Part III, Part IV 70% bond, and carryforward remain distinct", () => {
   const lines = calculateForm8912SourceLines(
     [{
       bondType: "CREB",
@@ -85,7 +86,7 @@ Deno.test("Form 8912: Part III, Part IV 70% bond, and carryforward remain distin
   assertEquals(lines.line4, 300);
 });
 
-Deno.test("Form 8912: direct-payment election cannot be claimed by holder", () => {
+test("Form 8912: direct-payment election cannot be claimed by holder", () => {
   assertThrows(
     () =>
       calculateForm8912SourceLines(
@@ -103,7 +104,7 @@ Deno.test("Form 8912: direct-payment election cannot be claimed by holder", () =
   );
 });
 
-Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", () => {
+test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", () => {
   const bab = {
     ...unreported,
     bond_type: BondType.BAB,
@@ -171,7 +172,7 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
   );
 });
 
-Deno.test("Form 8912: Part IV source identity follows the bond type", () => {
+test("Form 8912: Part IV source identity follows the bond type", () => {
   assertEquals(
     f8912.inputSchema.safeParse({
       f8912s: [item({
@@ -200,7 +201,7 @@ Deno.test("Form 8912: Part IV source identity follows the bond type", () => {
   );
 });
 
-Deno.test("Form 8912: multiple Part IV line 18 rows contribute to line 20", () => {
+test("Form 8912: multiple Part IV line 18 rows contribute to line 20", () => {
   const parsed = itemSchema.parse(item({
     reported_bonds: [],
     unreported_bonds: [{
@@ -231,7 +232,7 @@ Deno.test("Form 8912: multiple Part IV line 18 rows contribute to line 20", () =
   );
 });
 
-Deno.test("Form 8912: Part IV disposition kind is required with its date", () => {
+test("Form 8912: Part IV disposition kind is required with its date", () => {
   assertEquals(
     itemSchema.safeParse(item({
       reported_bonds: [],
@@ -255,7 +256,7 @@ Deno.test("Form 8912: Part IV disposition kind is required with its date", () =>
   );
 });
 
-Deno.test("Form 8912: only eligible bond credits carry forward", () => {
+test("Form 8912: only eligible bond credits carry forward", () => {
   const current = itemSchema.parse(item({
     carryforwards: [{
       bond_type: BondType.QECB,
@@ -280,7 +281,7 @@ Deno.test("Form 8912: only eligible bond credits carry forward", () => {
   );
 });
 
-Deno.test("Form 8912: carryforward does not duplicate current-year deemed interest", () => {
+test("Form 8912: carryforward does not duplicate current-year deemed interest", () => {
   const parsed = itemSchema.parse(item({
     reported_bonds: [{
       ...reported,
@@ -308,7 +309,7 @@ Deno.test("Form 8912: carryforward does not duplicate current-year deemed intere
   );
 });
 
-Deno.test("Form 8912: annual Form 1097-BTC box 1 reconciles to monthly credits", () => {
+test("Form 8912: annual Form 1097-BTC box 1 reconciles to monthly credits", () => {
   assertEquals(
     itemSchema.safeParse(item({
       reported_bonds: [{
@@ -335,7 +336,7 @@ Deno.test("Form 8912: annual Form 1097-BTC box 1 reconciles to monthly credits",
   );
 });
 
-Deno.test("Form 8912: Form 1097-BTC issuer and identifier cannot be claimed twice", () => {
+test("Form 8912: Form 1097-BTC issuer and identifier cannot be claimed twice", () => {
   assertEquals(
     itemSchema.safeParse(item({
       reported_bonds: [reported, { ...reported }],
@@ -355,7 +356,7 @@ Deno.test("Form 8912: Form 1097-BTC issuer and identifier cannot be claimed twic
   );
 });
 
-Deno.test("Form 8912: CUSIP credit reported on 1097-BTC cannot also enter Part IV", () => {
+test("Form 8912: CUSIP credit reported on 1097-BTC cannot also enter Part IV", () => {
   const reportedCusip = {
     ...reported,
     bond_type: BondType.QECB,
@@ -403,7 +404,7 @@ Deno.test("Form 8912: CUSIP credit reported on 1097-BTC cannot also enter Part I
   );
 });
 
-Deno.test("Form 8912: Form 1097-BTC box 2b identifier has the IRS length and characters", () => {
+test("Form 8912: Form 1097-BTC box 2b identifier has the IRS length and characters", () => {
   assertEquals(
     itemSchema.safeParse(item({
       reported_bonds: [{ ...reported, unique_identifier: "BOND-1" }],
@@ -428,7 +429,7 @@ Deno.test("Form 8912: Form 1097-BTC box 2b identifier has the IRS length and cha
   );
 });
 
-Deno.test("Form 8912: taxable interest stays paired with its bond issuer", () => {
+test("Form 8912: taxable interest stays paired with its bond issuer", () => {
   const parsed = itemSchema.parse(item({
     unreported_bonds: [{ ...unreported, issuer_name: "Other bond issuer" }],
   }));
@@ -440,7 +441,7 @@ Deno.test("Form 8912: taxable interest stays paired with its bond issuer", () =>
   assertEquals(rows.map((row) => row.interest.taxableInterest), [100, 175]);
 });
 
-Deno.test("Form 8912: unreported pass-through CREB retains its separate limit flag", () => {
+test("Form 8912: unreported pass-through CREB retains its separate limit flag", () => {
   const parsed = itemSchema.parse(item({
     reported_bonds: [],
     unreported_bonds: [{
@@ -463,7 +464,7 @@ Deno.test("Form 8912: unreported pass-through CREB retains its separate limit fl
   );
 });
 
-Deno.test("Form 8912: post-2017 issues are ineligible", () => {
+test("Form 8912: post-2017 issues are ineligible", () => {
   assertEquals(
     f8912.inputSchema.safeParse({
       f8912s: [
@@ -474,7 +475,7 @@ Deno.test("Form 8912: post-2017 issues are ineligible", () => {
   );
 });
 
-Deno.test("Form 8912: issue date must exist and match the bond program", () => {
+test("Form 8912: issue date must exist and match the bond program", () => {
   assertEquals(
     f8912.inputSchema.safeParse({
       f8912s: [item({
@@ -497,7 +498,7 @@ Deno.test("Form 8912: issue date must exist and match the bond program", () => {
   );
 });
 
-Deno.test("Form 8912: positive source credit does not bypass its Part II limit", () => {
+test("Form 8912: positive source credit does not bypass its Part II limit", () => {
   const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
     f8912s: [item()],
   });
@@ -536,14 +537,14 @@ Deno.test("Form 8912: positive source credit does not bypass its Part II limit",
   );
 });
 
-Deno.test("Form 8912: zero source credit contributes no Schedule 3 output", () => {
+test("Form 8912: zero source credit contributes no Schedule 3 output", () => {
   const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
     f8912s: [item({ reported_bonds: [], unreported_bonds: [] })],
   });
   assertEquals(result.outputs, []);
 });
 
-Deno.test("Form 8912: sale accrued interest reaches Schedule B on a zero-credit return", () => {
+test("Form 8912: sale accrued interest reaches Schedule B on a zero-credit return", () => {
   const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
     f8912s: [item({
       unreported_bonds: [],
@@ -562,7 +563,7 @@ Deno.test("Form 8912: sale accrued interest reaches Schedule B on a zero-credit 
   }]);
 });
 
-Deno.test("Form 8912: interest already reported by another source is not deposited twice", () => {
+test("Form 8912: interest already reported by another source is not deposited twice", () => {
   const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
     f8912s: [item({
       unreported_bonds: [],
@@ -593,7 +594,7 @@ Deno.test("Form 8912: interest already reported by another source is not deposit
   );
 });
 
-Deno.test("Form 8912: graph carries taxable interest and defers credit without tax", () => {
+test("Form 8912: graph carries taxable interest and defers credit without tax", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: { filing_status: FilingStatus.Single },
     f8912: [item({
@@ -611,7 +612,7 @@ Deno.test("Form 8912: graph carries taxable interest and defers credit without t
   assertEquals(result.pending.f8912?.unused_credit, 100);
 });
 
-Deno.test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line 2b", () => {
+test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line 2b", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: { filing_status: FilingStatus.Single },
     f8912: [item({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { SCENARIO_1040_05_FACTS } from "../../../../../e2e/ats/ty2025_cases.ts";
 import type { F8862Input } from "../../../../../nodes/inputs/credits/individual/f8862/index.ts";
@@ -130,7 +131,7 @@ const form8862 = {
   },
 };
 
-Deno.test("Form 8862 native filing rejects claims absent from the finalized return", () => {
+test("Form 8862 native filing rejects claims absent from the finalized return", () => {
   assertThrows(
     () =>
       nativeForm8862.build({
@@ -199,7 +200,7 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
   );
 });
 
-Deno.test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice facts", () => {
+test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice facts", () => {
   assertThrows(
     () =>
       nativeForm8862.build(scenarioInput, {
@@ -247,7 +248,7 @@ Deno.test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice fa
   );
 });
 
-Deno.test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS notice", () => {
+test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS notice", () => {
   assertThrows(
     () => form8862.build(scenarioInput),
     Error,
@@ -255,7 +256,7 @@ Deno.test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS n
   );
 });
 
-Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
+test("Form 8862 CTC names must match filed dependent credit rows", () => {
   assertThrows(
     () =>
       nativeForm8862.build(scenarioInput, {
@@ -276,7 +277,7 @@ Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
   );
 });
 
-Deno.test("Form 8862 Part III must list every filed CTC and ODC dependent", () => {
+test("Form 8862 Part III must list every filed CTC and ODC dependent", () => {
   assertThrows(
     () =>
       nativeForm8862.build({
@@ -289,7 +290,7 @@ Deno.test("Form 8862 Part III must list every filed CTC and ODC dependent", () =
   );
 });
 
-Deno.test("Form 8862 Part IV must list every filed AOTC student", () => {
+test("Form 8862 Part IV must list every filed AOTC student", () => {
   assertThrows(
     () =>
       nativeForm8862.build(scenarioInput, {
@@ -308,7 +309,7 @@ Deno.test("Form 8862 Part IV must list every filed AOTC student", () => {
   );
 });
 
-Deno.test("Form 8862 EITC child names must match finalized Schedule EIC", () => {
+test("Form 8862 EITC child names must match finalized Schedule EIC", () => {
   assertThrows(
     () =>
       nativeForm8862.build(scenarioInput, {
@@ -328,7 +329,7 @@ Deno.test("Form 8862 EITC child names must match finalized Schedule EIC", () => 
   );
 });
 
-Deno.test("Form 8862 childless EITC keeps source checks before the notice authentication gate", () => {
+test("Form 8862 childless EITC keeps source checks before the notice authentication gate", () => {
   assertThrows(
     () =>
       form8862.build({
@@ -349,7 +350,7 @@ Deno.test("Form 8862 childless EITC keeps source checks before the notice authen
   );
 });
 
-Deno.test("Form 8862 rejects childless EITC with fewer than 183 US-home days", () => {
+test("Form 8862 rejects childless EITC with fewer than 183 US-home days", () => {
   const childless = {
     claim_eitc: true,
     ...priorEicEvidence,
@@ -405,7 +406,7 @@ Deno.test("Form 8862 rejects childless EITC with fewer than 183 US-home days", (
   );
 });
 
-Deno.test("Form 8862 income-reporting-only EITC also stops at notice authentication", () => {
+test("Form 8862 income-reporting-only EITC also stops at notice authentication", () => {
   assertThrows(
     () =>
       form8862.build({
@@ -429,7 +430,7 @@ Deno.test("Form 8862 income-reporting-only EITC also stops at notice authenticat
   );
 });
 
-Deno.test("Form 8862 rejects missing detail rather than filing an incomplete form", () => {
+test("Form 8862 rejects missing detail rather than filing an incomplete form", () => {
   assertEquals(form8862.build({}), "");
   assertEquals(form8862.build({ claim_eitc: false }), "");
   assertThrows(

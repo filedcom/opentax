@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -22,7 +23,7 @@ function retained(recipient_tin: string) {
   };
 }
 
-Deno.test("positive 1099-MISC rent owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-MISC rent owner is checked by native and PDF Form 1040", () => {
   const source = retained("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -39,7 +40,7 @@ Deno.test("positive 1099-MISC rent owner is checked by native and PDF Form 1040"
   );
 });
 
-Deno.test("joint spouse 1099-MISC belongs on MFJ return only", () => {
+test("joint spouse 1099-MISC belongs on MFJ return only", () => {
   const source = retained("444556666");
   const joint = {
     ...filed,
@@ -62,7 +63,7 @@ Deno.test("joint spouse 1099-MISC belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("positive other-income and federal-withholding copies also need filed owner", () => {
+test("positive other-income and federal-withholding copies also need filed owner", () => {
   for (
     const boxes of [
       {
@@ -96,7 +97,7 @@ Deno.test("positive other-income and federal-withholding copies also need filed 
   }
 });
 
-Deno.test("positive 1099-MISC withholding needs a nonblank payer name in both Form 1040 exports", () => {
+test("positive 1099-MISC withholding needs a nonblank payer name in both Form 1040 exports", () => {
   const pending = {
     f1099m: {
       f1099ms: [{

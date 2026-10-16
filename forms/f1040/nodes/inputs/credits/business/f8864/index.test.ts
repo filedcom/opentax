@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
@@ -5,7 +6,7 @@ import { f3800 } from "../f3800/index.ts";
 import { calculateForm8864, f8864, inputSchema } from "./index.ts";
 import { directAgriBiodieselSource } from "./fixture.ts";
 
-Deno.test("Form 8864 computes the dated 2025 small producer credit", () => {
+test("Form 8864 computes the dated 2025 small producer credit", () => {
   assertEquals(calculateForm8864(directAgriBiodieselSource), {
     line7_gallons: 0,
     line7_rate: 0.10,
@@ -36,7 +37,7 @@ Deno.test("Form 8864 computes the dated 2025 small producer credit", () => {
   );
 });
 
-Deno.test("Form 8864 rejects old gallon shortcuts, missing registration and ineligible fuel", () => {
+test("Form 8864 rejects old gallon shortcuts, missing registration and ineligible fuel", () => {
   const lot = directAgriBiodieselSource.lots[0];
   for (
     const candidate of [

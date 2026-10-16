@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
@@ -69,7 +70,7 @@ function fixture() {
   };
 }
 
-Deno.test("Form 8908 source calculator retains all six printed credit classes", () => {
+test("Form 8908 source calculator retains all six printed credit classes", () => {
   const lines = calculateForm8908Source(fixture());
   assertEquals(lines.counts, [1, 1, 1, 1, 1, 1]);
   assertEquals(lines.credits, [2500, 5000, 2500, 5000, 500, 1000]);
@@ -81,7 +82,7 @@ Deno.test("Form 8908 source calculator retains all six printed credit classes", 
   assertEquals(lines.first20HomeAddresses.length, 6);
 });
 
-Deno.test("Form 8908 rejects Form 7220 taxpayer and wage review gaps", () => {
+test("Form 8908 rejects Form 7220 taxpayer and wage review gaps", () => {
   const wrongTaxpayer = fixture();
   wrongTaxpayer.homes[2].form7220!.reviewed_record.taxpayer_tin = "999887777";
   assertThrows(
@@ -94,7 +95,7 @@ Deno.test("Form 8908 rejects Form 7220 taxpayer and wage review gaps", () => {
   assertThrows(() => calculateForm8908Source(missingWages));
 });
 
-Deno.test("Form 8908 keeps a person and business with the same name distinct", () => {
+test("Form 8908 keeps a person and business with the same name distinct", () => {
   const original = fixture();
   const source = {
     ...original,
@@ -116,7 +117,7 @@ Deno.test("Form 8908 keeps a person and business with the same name distinct", (
   assertEquals(lines.certifiers[0].kind, "person");
 });
 
-Deno.test("Form 8908 rejects duplicate, late-certified, and unsupported PWA facts", () => {
+test("Form 8908 rejects duplicate, late-certified, and unsupported PWA facts", () => {
   const duplicate = fixture();
   duplicate.homes[1].street = duplicate.homes[0].street;
   assertThrows(() => calculateForm8908Source(duplicate), Error, "same home");

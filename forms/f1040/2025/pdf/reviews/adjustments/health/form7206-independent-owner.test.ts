@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -130,7 +133,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`actual independent owner health ${c.id} source/1040/native/XSD/filledPDF`, async () => {
+  test(`actual independent owner health ${c.id} source/1040/native/XSD/filledPDF`, async () => {
     const f = independentHealthFamily(
         c.premium,
         c.excludedT,
@@ -261,25 +264,25 @@ for (const c of cases) {
       xml,
       `<AdjustedGrossIncomeAmt>${c.agi}</AdjustedGrossIncomeAmt>`,
     );
-    const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+    const tmp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(tmp, xml);
-      const v = await new Deno.Command("xmllint", {
+      await fs.writeFile(tmp, xml);
+      const v = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, tmp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
     } finally {
-      await Deno.remove(tmp);
+      await sys.remove(tmp);
     }
     const pdf = await prepared.renderPdf(), doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), 15 + c.copies);
     assertEquals(doc.getForm().getFields().length, 0);
-    const tmpPdf = await Deno.makeTempFile({ suffix: ".pdf" });
+    const tmpPdf = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(tmpPdf, pdf);
-      const t = await new Deno.Command("pdftotext", {
+      await fs.writeFile(tmpPdf, pdf);
+      const t = await new sys.Command("pdftotext", {
         args: [tmpPdf, "-"],
         stdout: "piped",
       }).output();
@@ -294,21 +297,21 @@ for (const c of cases) {
       assertStringIncludes(text, "Alex Design");
       assertStringIncludes(text, "Casey Photography");
     } finally {
-      await Deno.remove(tmpPdf);
+      await sys.remove(tmpPdf);
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-independent-spouse-health-plans-evidence";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${c.id}-source-input.json`,
         JSON.stringify({ inputs: f.inputs, filer: f.filer }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/${c.id}-full-return.xml`, xml);
-      await Deno.writeFile(`${dir}/${c.id}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${c.id}-full-return.xml`, xml);
+      await fs.writeFile(`${dir}/${c.id}-filled-return.pdf`, pdf);
     }
   });
 }
-Deno.test("independent health plans reject borrowed owner profit SE receipts inventory payments and filed deductions", async () => {
+test("independent health plans reject borrowed owner profit SE receipts inventory payments and filed deductions", async () => {
   const f = independentHealthFamily(),
     family = (p: any) => p.form7206.independent_schedule_c_plans;
   const sourceMutations: Array<(p: any) => void> = [
@@ -401,7 +404,7 @@ Deno.test("independent health plans reject borrowed owner profit SE receipts inv
     form7206Pdf.instances!(f.pending.form7206, owner, f.pending)
   );
 });
-Deno.test("independent health public source cannot supply income scalars or merge plan routes and reconciles other-owner W2 changes", () => {
+test("independent health public source cannot supply income scalars or merge plan routes and reconciles other-owner W2 changes", () => {
   for (
     const mutate of [
       (i: any) =>

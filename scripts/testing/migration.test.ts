@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertMigrationActualSources,
@@ -46,7 +47,7 @@ function proof(): MigrationProof {
   };
 }
 
-Deno.test("migration replays path edits while retaining source, resources and test inventory", () => {
+test("migration replays path edits while retaining source, resources and test inventory", () => {
   assertEquals(
     assertMigrationProof(proof(), {
       modules: [{ specifier: "file:///repo/b.ts" }],
@@ -61,13 +62,13 @@ Deno.test("migration replays path edits while retaining source, resources and te
   );
 });
 
-Deno.test("migration rejects a disappearing test even when the remaining graph is healthy", () => {
+test("migration rejects a disappearing test even when the remaining graph is healthy", () => {
   const value = proof();
   value.testModules.after = [];
   assertThrows(() => assertMigrationProof(value), Error, "Zero test modules");
 });
 
-Deno.test("migration rejects a tax value change outside path edits", () => {
+test("migration rejects a tax value change outside path edits", () => {
   const value = proof();
   value.files[0].afterSource = value.files[0].afterSource.replace("100", "200");
   assertThrows(
@@ -77,7 +78,7 @@ Deno.test("migration rejects a tax value change outside path edits", () => {
   );
 });
 
-Deno.test("migration rejects a successful graph command's embedded dependency failure", () => {
+test("migration rejects a successful graph command's embedded dependency failure", () => {
   assertThrows(
     () =>
       assertMigrationProof(proof(), {
@@ -91,7 +92,7 @@ Deno.test("migration rejects a successful graph command's embedded dependency fa
   );
 });
 
-Deno.test("migration rejects a moved cache or fixture resource target", () => {
+test("migration rejects a moved cache or fixture resource target", () => {
   const value = proof();
   value.resources[0].afterResolved = "file:///repo/credits/.pdf-cache/x.pdf";
   assertThrows(
@@ -101,7 +102,7 @@ Deno.test("migration rejects a moved cache or fixture resource target", () => {
   );
 });
 
-Deno.test("migration rejects duplicate destinations and missing retained files", () => {
+test("migration rejects duplicate destinations and missing retained files", () => {
   const duplicate = proof();
   duplicate.moves.push({ old: "b.ts", new: "credits/a.test.ts" });
   assertThrows(
@@ -114,7 +115,7 @@ Deno.test("migration rejects duplicate destinations and missing retained files",
   assertThrows(() => assertMigrationProof(missing), Error, "not bijective");
 });
 
-Deno.test("migration rejects incorrect and overlapping source spans", () => {
+test("migration rejects incorrect and overlapping source spans", () => {
   const incorrect = proof();
   incorrect.files[0].edits[0].before = "nope.ts";
   assertThrows(() => assertMigrationProof(incorrect), Error, "does not match");
@@ -133,7 +134,7 @@ Deno.test("migration rejects incorrect and overlapping source spans", () => {
   );
 });
 
-Deno.test("migration graph coverage rejects a healthy partial graph", () => {
+test("migration graph coverage rejects a healthy partial graph", () => {
   const graph = { modules: [{ specifier: "file:///repo/b.ts" }] };
   assertThrows(
     () => assertMigrationGraphCoverage(proof(), graph, "/repo"),
@@ -148,7 +149,7 @@ Deno.test("migration graph coverage rejects a healthy partial graph", () => {
   }, "/repo");
 });
 
-Deno.test("migration resources can follow an explicitly moved internal fixture", () => {
+test("migration resources can follow an explicitly moved internal fixture", () => {
   const value = proof();
   value.moves.push({ old: "fixtures/x.json", new: "credits/fixtures/x.json" });
   value.files.push({
@@ -180,7 +181,7 @@ Deno.test("migration resources can follow an explicitly moved internal fixture",
   );
 });
 
-Deno.test("migration rejects forged recorded resolution for an incorrect path literal", () => {
+test("migration rejects forged recorded resolution for an incorrect path literal", () => {
   const value = proof();
   value.resources[0].beforeLiteral = "../.pdf-cache/x.pdf";
   value.resources[0].afterLiteral = "./.pdf-cache/x.pdf";
@@ -193,7 +194,7 @@ Deno.test("migration rejects forged recorded resolution for an incorrect path li
   );
 });
 
-Deno.test("migration rejects a test hidden from both claimed test inventories", () => {
+test("migration rejects a test hidden from both claimed test inventories", () => {
   const value = proof();
   value.inventory!.before.push("hidden.test.ts");
   value.inventory!.after.push("hidden.test.ts");
@@ -204,7 +205,7 @@ Deno.test("migration rejects a test hidden from both claimed test inventories", 
   );
 });
 
-Deno.test("migration rejects a numeric tax edit mislabeled as an import", () => {
+test("migration rejects a numeric tax edit mislabeled as an import", () => {
   const value = proof();
   const start = value.files[0].beforeSource.indexOf("100");
   value.files[0].edits.push({
@@ -218,7 +219,7 @@ Deno.test("migration rejects a numeric tax edit mislabeled as an import", () => 
   assertThrows(() => assertMigrationProof(value), Error, "Non-path edit");
 });
 
-Deno.test("migration preserves directory URL trailing slash semantics", () => {
+test("migration preserves directory URL trailing slash semantics", () => {
   const value = proof();
   value.resources[0].beforeLiteral = "../fixtures/";
   value.resources[0].afterLiteral = "../fixtures/";
@@ -233,7 +234,7 @@ Deno.test("migration preserves directory URL trailing slash semantics", () => {
   );
 });
 
-Deno.test("migration independently catches dynamic filenames missed by the static graph", () => {
+test("migration independently catches dynamic filenames missed by the static graph", () => {
   const value = proof();
   value.files[0].afterSource = value.files[0].beforeSource;
   value.files[0].edits = [];
@@ -268,7 +269,7 @@ Deno.test("migration independently catches dynamic filenames missed by the stati
   assertEquals(assertMigrationLiteralPaths(value), 1);
 });
 
-Deno.test("migration rejects a stale source proof after the actual source changes", async () => {
+test("migration rejects a stale source proof after the actual source changes", async () => {
   const value = proof();
   const actual = new Map([[value.files[0].new, value.files[0].afterSource]]);
   assertEquals(await assertMigrationActualSources(value, actual), 0);
@@ -286,7 +287,7 @@ Deno.test("migration rejects a stale source proof after the actual source change
   assertEquals(rejected, true);
 });
 
-Deno.test("migration refuses an intentional exemption for changed tax source", async () => {
+test("migration refuses an intentional exemption for changed tax source", async () => {
   const value = proof();
   value.intentionalChanges = [{
     path: value.files[0].new,
@@ -303,7 +304,7 @@ Deno.test("migration refuses an intentional exemption for changed tax source", a
   assertEquals(rejected, true);
 });
 
-Deno.test("migration requires exact bytes even for an explicitly reviewed generator change", async () => {
+test("migration requires exact bytes even for an explicitly reviewed generator change", async () => {
   const value = proof();
   const path = "scripts/maintenance/parse-rules.ts";
   value.files[0].new = path;
@@ -337,7 +338,7 @@ Deno.test("migration requires exact bytes even for an explicitly reviewed genera
   assertEquals(rejected, true);
 });
 
-Deno.test("migration rejects a numeric edit in an untouched original tax module", async () => {
+test("migration rejects a numeric edit in an untouched original tax module", async () => {
   const value = proof();
   const hash = async (source: string) => {
     const digest = await crypto.subtle.digest(
@@ -371,7 +372,7 @@ Deno.test("migration rejects a numeric edit in an untouched original tax module"
   assertEquals(rejected, true);
 });
 
-Deno.test("reviewed prerequisite patch rejects hidden assertion or numeric changes", () => {
+test("reviewed prerequisite patch rejects hidden assertion or numeric changes", () => {
   const beforeSource = "\n".repeat(29) + "    return;\nconst expected = 100;\n";
   const afterSource = beforeSource.replace(
     "    return;\n",
@@ -421,7 +422,7 @@ Deno.test("reviewed prerequisite patch rejects hidden assertion or numeric chang
   );
 });
 
-Deno.test("reviewed conditional and leaf guards preserve assertions exactly", () => {
+test("reviewed conditional and leaf guards preserve assertions exactly", () => {
   const cases = [
     {
       file:
@@ -483,7 +484,7 @@ Deno.test("reviewed conditional and leaf guards preserve assertions exactly", ()
   }
 });
 
-Deno.test("guard approval remains bound to original unchanged test source", async () => {
+test("guard approval remains bound to original unchanged test source", async () => {
   const hash = async (source: string) =>
     Array.from(
       new Uint8Array(

@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { scheduleR } from "./schedule_r.ts";
@@ -29,13 +32,13 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test("Schedule R emits the bounded 65-plus single-taxpayer form", () => {
+test("Schedule R emits the bounded 65-plus single-taxpayer form", () => {
   const xml = scheduleR.build({}, { pending });
   assertStringIncludes(xml, "<Primary65OrOlderInd>X</Primary65OrOlderInd>");
   assertStringIncludes(xml, "<FilingStatusAmt>5000</FilingStatusAmt>");
@@ -54,31 +57,26 @@ Deno.test("Schedule R emits the bounded 65-plus single-taxpayer form", () => {
   );
 });
 
-Deno.test({
-  name: "XSD: Schedule R sourced single age-65 credit",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule R sourced single age-65 credit", async () => {
   const xml = scheduleR.build({}, { pending }).replace(
     "<IRS1040ScheduleR>",
     '<IRS1040ScheduleR xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleR1">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Schedule R rejects missing age evidence, wrong AGI, and a tax-limited credit", () => {
+test("Schedule R rejects missing age evidence, wrong AGI, and a tax-limited credit", () => {
   assertThrows(
     () =>
       scheduleR.build({}, {
@@ -114,7 +112,7 @@ Deno.test("Schedule R rejects missing age evidence, wrong AGI, and a tax-limited
   );
 });
 
-Deno.test("Schedule R age-only status boxes retain their distinct bases and thresholds", () => {
+test("Schedule R age-only status boxes retain their distinct bases and thresholds", () => {
   const cases = [
     {
       status: FilingStatus.HOH,
@@ -191,12 +189,7 @@ Deno.test("Schedule R age-only status boxes retain their distinct bases and thre
   }
 });
 
-Deno.test({
-  name: "XSD: Schedule R age-only joint and all-year-apart MFS boxes",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule R age-only joint and all-year-apart MFS boxes", async () => {
   for (
     const [status, ageBox, base, threshold] of [
       [FilingStatus.MFJ, "BothSpouses65OrOlderInd", 7_500, 10_000],
@@ -234,22 +227,22 @@ Deno.test({
       '<IRS1040ScheduleR xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleR1">',
     );
     assertStringIncludes(xml, `<${ageBox}>X</${ageBox}>`);
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", XSD_PATH, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });
 
-Deno.test("Schedule R MFS age route rejects missing all-year separation evidence", () => {
+test("Schedule R MFS age route rejects missing all-year separation evidence", () => {
   const separated = {
     ...pending,
     schedule_r: {
@@ -274,7 +267,7 @@ Deno.test("Schedule R MFS age route rejects missing all-year separation evidence
   );
 });
 
-Deno.test("Schedule R line 13b needs qualifying nontaxable pension classification", () => {
+test("Schedule R line 13b needs qualifying nontaxable pension classification", () => {
   const withPension = {
     ...pending,
     schedule_r: {
@@ -306,7 +299,7 @@ Deno.test("Schedule R line 13b needs qualifying nontaxable pension classificatio
   );
 });
 
-Deno.test("Schedule R leaves a zero-credit age-65 source unfiled", () => {
+test("Schedule R leaves a zero-credit age-65 source unfiled", () => {
   assertEquals(
     scheduleR.build({}, {
       pending: {
@@ -317,7 +310,7 @@ Deno.test("Schedule R leaves a zero-credit age-65 source unfiled", () => {
   );
 });
 
-Deno.test("Schedule R ties nontaxable Social Security to filed 1040 lines 6a and 6b", () => {
+test("Schedule R ties nontaxable Social Security to filed 1040 lines 6a and 6b", () => {
   const withBenefits = {
     ...pending,
     schedule_r: {
@@ -364,7 +357,7 @@ const disabilityEvidence = {
   physician_or_va_statement_signed_verified: true as const,
 };
 
-Deno.test("Schedule R disability boxes 2/4/5/6/9 use their distinct line 11 amounts", () => {
+test("Schedule R disability boxes 2/4/5/6/9 use their distinct line 11 amounts", () => {
   const cases = [
     {
       status: FilingStatus.Single,
@@ -486,7 +479,7 @@ Deno.test("Schedule R disability boxes 2/4/5/6/9 use their distinct line 11 amou
   }
 });
 
-Deno.test("Schedule R disability path requires physician and taxable-income evidence", () => {
+test("Schedule R disability path requires physician and taxable-income evidence", () => {
   const candidate = {
     ...pending,
     schedule_r: {
@@ -550,12 +543,7 @@ Deno.test("Schedule R disability path requires physician and taxable-income evid
   );
 });
 
-Deno.test({
-  name: "XSD: Schedule R box 6 disability and prior-year statement",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule R box 6 disability and prior-year statement", async () => {
   const candidate = {
     schedule_r: {
       filing_status: FilingStatus.MFJ,
@@ -586,16 +574,16 @@ Deno.test({
     "<IRS1040ScheduleR>",
     '<IRS1040ScheduleR xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleR1">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

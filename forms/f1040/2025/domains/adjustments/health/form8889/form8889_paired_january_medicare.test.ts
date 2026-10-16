@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   CoverageType,
@@ -59,7 +60,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("January Medicare onset routes one owner's zero limit and excess through both filing outputs", () => {
+test("January Medicare onset routes one owner's zero limit and excess through both filing outputs", () => {
   const pending = preparedReturn().pending;
   const forms = pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],
@@ -100,7 +101,7 @@ Deno.test("January Medicare onset routes one owner's zero limit and excess throu
   );
 });
 
-Deno.test("January Medicare route rejects onset, source, owner excess, and return tampering", () => {
+test("January Medicare route rejects onset, source, owner excess, and return tampering", () => {
   const pending = preparedReturn().pending;
   const forms = pending.form8889.forms as Extract<
     Parameters<typeof form8889.build>[0],

@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -13,7 +16,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // IRS schema bundle is optional in CI.
@@ -32,7 +35,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test("Form 982 QPRI cap must agree with the return filing status", () => {
+test("Form 982 QPRI cap must agree with the return filing status", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -54,13 +57,7 @@ Deno.test("Form 982 QPRI cap must agree with the return filing status", () => {
   );
 });
 
-Deno.test({
-  name:
-    "XSD: 1099-C QPRI exclusion reaches Form 982 and Schedule 1 through graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: 1099-C QPRI exclusion reaches Form 982 and Schedule 1 through graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -102,16 +99,16 @@ Deno.test({
     xml,
     "<DebtCancellationAmt>150000</DebtCancellationAmt>",
   );
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

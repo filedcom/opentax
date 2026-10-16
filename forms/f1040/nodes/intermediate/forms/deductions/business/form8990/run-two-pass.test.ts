@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { form8990 as form8990Mef } from "../../../../../../2025/mef/forms/deductions/business/f8990.ts";
 import { form8990Pdf } from "../../../../../../2025/pdf/forms/deductions/business/f8990.ts";
@@ -5,7 +6,7 @@ import { reconcileBoundedForm8990FinalReturn } from "./final-reconciliation.ts";
 import { form8990LinesSchema } from "./index.ts";
 import { runBoundedForm8990TwoPass } from "./run-two-pass.ts";
 
-Deno.test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced disallowance", () => {
+test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced disallowance", () => {
   const result = runBoundedForm8990TwoPass({
     returnInputs: {
       general: { filing_status: "single", taxpayer_ssn: "123456789" },

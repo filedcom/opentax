@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1098 } from "../../../../../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import {
@@ -69,7 +70,7 @@ function filedCase() {
   return { filed, pending };
 }
 
-Deno.test("second-home houseboat interest is added back on AMT line 3", () => {
+test("second-home houseboat interest is added back on AMT line 3", () => {
   const { filed, pending } = filedCase();
   assertEquals(filed.line3_houseboat_interest_addback, 30_000);
   assertEquals(filed.amti, 230_000);
@@ -84,7 +85,7 @@ Deno.test("second-home houseboat interest is added back on AMT line 3", () => {
   );
 });
 
-Deno.test("houseboat AMT addback rejects changed 1098, Schedule A, and return facts", () => {
+test("houseboat AMT addback rejects changed 1098, Schedule A, and return facts", () => {
   const { filed, pending } = filedCase();
   const changed1098 = {
     ...pending,

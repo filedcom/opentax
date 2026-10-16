@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { IncidentType, f14039 } from "./index.ts";
 
@@ -9,7 +10,7 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Validation — required fields and type constraints
 // =============================================================================
 
-Deno.test("f14039.inputSchema: valid filing_disruption incident passes", () => {
+test("f14039.inputSchema: valid filing_disruption incident passes", () => {
   const parsed = f14039.inputSchema.safeParse({
     incident_type: IncidentType.FilingDisruption,
     identity_theft_description: "Someone filed a fraudulent return using my SSN",
@@ -18,7 +19,7 @@ Deno.test("f14039.inputSchema: valid filing_disruption incident passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f14039.inputSchema: valid other incident type passes", () => {
+test("f14039.inputSchema: valid other incident type passes", () => {
   const parsed = f14039.inputSchema.safeParse({
     incident_type: IncidentType.Other,
     identity_theft_description: "My SSN was used to open a fraudulent bank account",
@@ -26,7 +27,7 @@ Deno.test("f14039.inputSchema: valid other incident type passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f14039.inputSchema: with optional police_report_number passes", () => {
+test("f14039.inputSchema: with optional police_report_number passes", () => {
   const parsed = f14039.inputSchema.safeParse({
     incident_type: IncidentType.FilingDisruption,
     identity_theft_description: "Fraudulent return filed",
@@ -36,14 +37,14 @@ Deno.test("f14039.inputSchema: with optional police_report_number passes", () =>
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f14039.inputSchema: missing incident_type fails", () => {
+test("f14039.inputSchema: missing incident_type fails", () => {
   const parsed = f14039.inputSchema.safeParse({
     identity_theft_description: "Description here",
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f14039.inputSchema: invalid incident_type fails", () => {
+test("f14039.inputSchema: invalid incident_type fails", () => {
   const parsed = f14039.inputSchema.safeParse({
     incident_type: "bad_type",
     identity_theft_description: "Description here",
@@ -51,14 +52,14 @@ Deno.test("f14039.inputSchema: invalid incident_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f14039.inputSchema: missing identity_theft_description fails", () => {
+test("f14039.inputSchema: missing identity_theft_description fails", () => {
   const parsed = f14039.inputSchema.safeParse({
     incident_type: IncidentType.FilingDisruption,
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f14039.inputSchema: all IncidentType enum values are valid", () => {
+test("f14039.inputSchema: all IncidentType enum values are valid", () => {
   for (const incidentType of Object.values(IncidentType)) {
     const parsed = f14039.inputSchema.safeParse({
       incident_type: incidentType,
@@ -72,7 +73,7 @@ Deno.test("f14039.inputSchema: all IncidentType enum values are valid", () => {
 // 2. Compute — always returns no outputs (informational only)
 // =============================================================================
 
-Deno.test("f14039.compute: filing_disruption incident returns no outputs", () => {
+test("f14039.compute: filing_disruption incident returns no outputs", () => {
   const result = compute({
     incident_type: IncidentType.FilingDisruption,
     identity_theft_description: "Someone filed a fraudulent return using my SSN",
@@ -81,7 +82,7 @@ Deno.test("f14039.compute: filing_disruption incident returns no outputs", () =>
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f14039.compute: other incident type returns no outputs", () => {
+test("f14039.compute: other incident type returns no outputs", () => {
   const result = compute({
     incident_type: IncidentType.Other,
     identity_theft_description: "My SSN was used for employment fraud",
@@ -89,7 +90,7 @@ Deno.test("f14039.compute: other incident type returns no outputs", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f14039.compute: all incident types produce no outputs", () => {
+test("f14039.compute: all incident types produce no outputs", () => {
   for (const incidentType of Object.values(IncidentType)) {
     const result = compute({
       incident_type: incidentType,
@@ -99,7 +100,7 @@ Deno.test("f14039.compute: all incident types produce no outputs", () => {
   }
 });
 
-Deno.test("f14039.compute: with police_report_number returns no outputs", () => {
+test("f14039.compute: with police_report_number returns no outputs", () => {
   const result = compute({
     incident_type: IncidentType.FilingDisruption,
     identity_theft_description: "Fraud alert",
@@ -113,26 +114,26 @@ Deno.test("f14039.compute: with police_report_number returns no outputs", () => 
 // 3. Hard validation rules
 // =============================================================================
 
-Deno.test("f14039.compute: throws on missing incident_type", () => {
+test("f14039.compute: throws on missing incident_type", () => {
   assertThrows(() => compute({
     identity_theft_description: "Description",
   }), Error);
 });
 
-Deno.test("f14039.compute: throws on missing identity_theft_description", () => {
+test("f14039.compute: throws on missing identity_theft_description", () => {
   assertThrows(() => compute({
     incident_type: IncidentType.FilingDisruption,
   }), Error);
 });
 
-Deno.test("f14039.compute: throws on invalid incident_type", () => {
+test("f14039.compute: throws on invalid incident_type", () => {
   assertThrows(() => compute({
     incident_type: "not_a_valid_type",
     identity_theft_description: "Description",
   }), Error);
 });
 
-Deno.test("f14039.compute: throws on empty input", () => {
+test("f14039.compute: throws on empty input", () => {
   assertThrows(() => compute({}), Error);
 });
 
@@ -140,7 +141,7 @@ Deno.test("f14039.compute: throws on empty input", () => {
 // 4. Smoke test — full population
 // =============================================================================
 
-Deno.test("f14039.compute: smoke test — all fields populated returns empty outputs", () => {
+test("f14039.compute: smoke test — all fields populated returns empty outputs", () => {
   const result = compute({
     incident_type: IncidentType.FilingDisruption,
     identity_theft_description: "I received a notice that a tax return was filed using my SSN before I filed my own return. I did not file the prior return.",

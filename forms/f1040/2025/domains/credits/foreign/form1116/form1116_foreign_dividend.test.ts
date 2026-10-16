@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -86,7 +87,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("one ordinary foreign 1099-DIV reaches Form 1116, Schedule 3, Form 1040, native and PDF", () => {
+test("one ordinary foreign 1099-DIV reaches Form 1116, Schedule 3, Form 1040, native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -109,7 +110,7 @@ Deno.test("one ordinary foreign 1099-DIV reaches Form 1116, Schedule 3, Form 104
   );
 });
 
-Deno.test("foreign dividend native and PDF replay reject source, holding and return tampering", () => {
+test("foreign dividend native and PDF replay reject source, holding and return tampering", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);

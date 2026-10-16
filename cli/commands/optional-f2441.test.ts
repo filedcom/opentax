@@ -1,10 +1,12 @@
+import { test } from "bun:test";
+import * as sys from "../../scripts/support/sys.ts";
 import { assert, assertEquals } from "@std/assert";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import { appendInput, deleteInput, loadInputs } from "../store/store.ts";
 import { f2441 } from "../../forms/f1040/nodes/inputs/credits/individual/f2441/index.ts";
 import { FilingStatus } from "../../forms/f1040/nodes/types.ts";
 
-Deno.test("f2441 AGI context without source items is inactive, not malformed", () => {
+test("f2441 AGI context without source items is inactive, not malformed", () => {
   const parsed = f2441.inputSchema.safeParse({ agi: 85000 });
   assert(parsed.success);
   assertEquals(
@@ -20,8 +22,8 @@ Deno.test("f2441 AGI context without source items is inactive, not malformed", (
   }
 });
 
-Deno.test("deleting the last f2441 source entry restores an inactive optional form", async () => {
-  const baseDir = await Deno.makeTempDir();
+test("deleting the last f2441 source entry restores an inactive optional form", async () => {
+  const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturnCommand({ year: 2025, baseDir });
     const path = `${baseDir}/${returnId}`;
@@ -45,13 +47,13 @@ Deno.test("deleting the last f2441 source entry restores an inactive optional fo
     );
     assertEquals(result.summary.line11_agi, 85000);
   } finally {
-    await Deno.remove(baseDir, { recursive: true });
+    await sys.remove(baseDir, { recursive: true });
   }
 });
 
 for (const malformed of [false, true]) {
-  Deno.test(`W-2 optional f2441 activation, malformed source=${malformed}`, async () => {
-    const baseDir = await Deno.makeTempDir();
+  test(`W-2 optional f2441 activation, malformed source=${malformed}`, async () => {
+    const baseDir = await sys.makeTempDir();
     try {
       const { returnId } = await createReturnCommand({ year: 2025, baseDir });
       const path = `${baseDir}/${returnId}`;
@@ -76,7 +78,7 @@ for (const malformed of [false, true]) {
         assertEquals(result.summary.line11_agi, 85000);
       }
     } finally {
-      await Deno.remove(baseDir, { recursive: true });
+      await sys.remove(baseDir, { recursive: true });
     }
   });
 }

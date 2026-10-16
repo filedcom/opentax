@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -8,7 +9,7 @@ import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
 import { registry } from "../../../registry.ts";
 import { assertQualifiedDividendSubset } from "../../../return-processing/return-wide-arithmetic.ts";
 
-Deno.test("qualified dividends are a subset of ordinary dividends at final export", async () => {
+test("qualified dividends are a subset of ordinary dividends at final export", async () => {
   assertQualifiedDividendSubset({
     line3a_qualified_dividends: 100,
     line3b_ordinary_dividends: 100,

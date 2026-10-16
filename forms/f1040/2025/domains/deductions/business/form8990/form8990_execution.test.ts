@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8990 } from "../../../../mef/forms/deductions/business/f8990.ts";
 import { form8990Pdf } from "../../../../pdf/forms/deductions/business/f8990.ts";
@@ -73,7 +74,7 @@ const sourceRecords = {
   },
 };
 
-Deno.test("2025 Form 1040 Form 8990 has reconciled native projections and an unfiled carryforward", () => {
+test("2025 Form 1040 Form 8990 has reconciled native projections and an unfiled carryforward", () => {
   const result = f1040_2025.executeReturn({
     ...baseInputs,
     form8990: sourceRecords,
@@ -109,7 +110,7 @@ Deno.test("2025 Form 1040 Form 8990 has reconciled native projections and an unf
   assertEquals(projected.nextYearCarryforward.status, "unfiled-workpaper");
 });
 
-Deno.test("2025 Form 8990 native projections reject changed lines, carryforward, and final return", () => {
+test("2025 Form 8990 native projections reject changed lines, carryforward, and final return", () => {
   const result = f1040_2025.executeReturn({
     ...baseInputs,
     form8990: sourceRecords,
@@ -269,7 +270,7 @@ Deno.test("2025 Form 8990 native projections reject changed lines, carryforward,
   );
 });
 
-Deno.test("2025 Form 1040 rejects legacy asserted Form 8990 input without a fallback", () => {
+test("2025 Form 1040 rejects legacy asserted Form 8990 input without a fallback", () => {
   assertThrows(
     () =>
       f1040_2025.executeReturn({
@@ -280,7 +281,7 @@ Deno.test("2025 Form 1040 rejects legacy asserted Form 8990 input without a fall
   );
 });
 
-Deno.test("2025 Form 8990 needs distinct filed Schedule C and Form 8990 source records", () => {
+test("2025 Form 8990 needs distinct filed Schedule C and Form 8990 source records", () => {
   assertThrows(
     () =>
       f1040_2025.executeReturn({

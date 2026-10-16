@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -7,7 +8,7 @@ import { CoverageType } from "../../../nodes/intermediate/forms/adjustments/heal
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("TY2025 HSA prior excess reaches Form 8889, Form 5329, and Schedule 2 once", () => {
+test("TY2025 HSA prior excess reaches Form 8889, Form 5329, and Schedule 2 once", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -65,7 +66,7 @@ Deno.test("TY2025 HSA prior excess reaches Form 8889, Form 5329, and Schedule 2 
   assertEquals(result.pending.agi_aggregator?.line13_hsa_deduction, 4_300);
 });
 
-Deno.test("TY2025 paired HSA excess retains two owner balances and one Schedule 2 total", () => {
+test("TY2025 paired HSA excess retains two owner balances and one Schedule 2 total", () => {
   const primary = {
     beneficiary_identity: { owner: "T", name: "Jane Doe", ssn: "123456789" },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),

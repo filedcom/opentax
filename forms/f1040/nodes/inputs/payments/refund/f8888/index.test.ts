@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { AccountType, f8888 } from "./index.ts";
 
@@ -12,12 +13,12 @@ function compute(input: Record<string, unknown>) {
 // 1. Schema Validation
 // =============================================================================
 
-Deno.test("f8888.inputSchema: negative account amount rejected", () => {
+test("f8888.inputSchema: negative account amount rejected", () => {
   const parsed = f8888.inputSchema.safeParse({ account_1: { amount: -1 } });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8888.inputSchema: obsolete 2025 savings-bond fields reject instead of disappearing", () => {
+test("f8888.inputSchema: obsolete 2025 savings-bond fields reject instead of disappearing", () => {
   for (
     const fields of [
       { savings_bond_amount: 100 },
@@ -29,7 +30,7 @@ Deno.test("f8888.inputSchema: obsolete 2025 savings-bond fields reject instead o
   }
 });
 
-Deno.test("f8888.inputSchema: invalid account_type rejected", () => {
+test("f8888.inputSchema: invalid account_type rejected", () => {
   const parsed = f8888.inputSchema.safeParse({
     account_1: { account_type: "INVALID" },
   });
@@ -40,11 +41,11 @@ Deno.test("f8888.inputSchema: invalid account_type rejected", () => {
 // 2. Metadata Form — Always Zero Outputs
 // =============================================================================
 
-Deno.test("f8888.compute: rejects an incomplete allocation", () => {
+test("f8888.compute: rejects an incomplete allocation", () => {
   assertThrows(() => compute({}), Error);
 });
 
-Deno.test("f8888.compute: all 3 accounts set — no tax outputs", () => {
+test("f8888.compute: all 3 accounts set — no tax outputs", () => {
   const result = compute({
     account_1: {
       routing_number: "021000021",
@@ -75,11 +76,11 @@ Deno.test("f8888.compute: all 3 accounts set — no tax outputs", () => {
 // 3. Hard Validation
 // =============================================================================
 
-Deno.test("f8888.compute: throws on negative account amount", () => {
+test("f8888.compute: throws on negative account amount", () => {
   assertThrows(() => compute({ account_1: { amount: -1 } }), Error);
 });
 
-Deno.test("f8888.compute: obsolete savings-bond request rejects", () => {
+test("f8888.compute: obsolete savings-bond request rejects", () => {
   assertThrows(() => compute({ savings_bond_amount: 50 }), Error);
 });
 
@@ -87,7 +88,7 @@ Deno.test("f8888.compute: obsolete savings-bond request rejects", () => {
 // 4. Smoke Test — Refund Split Across 3 Accounts
 // =============================================================================
 
-Deno.test("f8888.compute: refund split across 3 accounts — amounts accepted, no outputs", () => {
+test("f8888.compute: refund split across 3 accounts — amounts accepted, no outputs", () => {
   const account1Amount = 1000;
   const account2Amount = 500;
   const account3Amount = 250;

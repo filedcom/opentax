@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form3800CarryforwardStatement } from "./f3800_carryforward_statement.ts";
 
@@ -37,13 +40,13 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test("Form 3800 native carryforward computation preserves origin and each use", () => {
+test("Form 3800 native carryforward computation preserves origin and each use", () => {
   const pending = {
     f3800: {
       carryforward_vintages: [{
@@ -87,7 +90,7 @@ Deno.test("Form 3800 native carryforward computation preserves origin and each u
   );
 });
 
-Deno.test("Form 3800 native carryforward computation rejects a changed source year-end date", () => {
+test("Form 3800 native carryforward computation rejects a changed source year-end date", () => {
   assertThrows(
     () =>
       form3800CarryforwardStatement.build(undefined, {
@@ -111,10 +114,7 @@ Deno.test("Form 3800 native carryforward computation rejects a changed source ye
   );
 });
 
-Deno.test({
-  name: "Form 3800 carryforward computation validates against TY2025 v5.4 XSD",
-  ignore: !xsdAvailable,
-  async fn() {
+test.skipIf(!xsdAvailable)("Form 3800 carryforward computation validates against TY2025 v5.4 XSD", async () => {
     const [fragment] = form3800CarryforwardStatement.build(undefined, {
       pending: {
         f3800: {
@@ -129,17 +129,16 @@ Deno.test({
       "<CarryforwardGeneralBusinessCr>",
       '<CarryforwardGeneralBusinessCr xmlns="http://www.irs.gov/efile" documentId="CarryforwardGeneralBusinessCr1">',
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", XSD_PATH, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
-  },
-});
+  });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -77,7 +78,7 @@ function finalized() {
   return result.pending;
 }
 
-Deno.test("Form 4972 unequal beneficiary share reconciles full exclusion to Form 1040, native, and PDF", () => {
+test("Form 4972 unequal beneficiary share reconciles full exclusion to Form 1040, native, and PDF", () => {
   const pending = finalized();
   const form = (pending.form4972?.forms as Record<string, unknown>[])[0];
   assertEquals(form.line6, 1_750);
@@ -105,7 +106,7 @@ Deno.test("Form 4972 unequal beneficiary share reconciles full exclusion to Form
   assertEquals(pdf?.[0].line30, form.line30);
 });
 
-Deno.test("Form 4972 unequal beneficiary allocation rejects schedule, box, identity, and return tampering", () => {
+test("Form 4972 unequal beneficiary allocation rejects schedule, box, identity, and return tampering", () => {
   const pending = finalized();
   const changed = (form4972: Record<string, unknown>) =>
     mef.build(form4972, { filer, pending: { ...pending, form4972 } });

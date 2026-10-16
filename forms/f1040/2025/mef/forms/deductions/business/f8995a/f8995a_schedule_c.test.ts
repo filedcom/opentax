@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -97,7 +98,7 @@ const pending = {
 };
 const context = { filer, pending };
 
-Deno.test("Form 8995-A Schedule C: current gain and loss net to the sourced parent and native companion", () => {
+test("Form 8995-A Schedule C: current gain and loss net to the sourced parent and native companion", () => {
   const parsed = inputSchema.parse(input);
   const calculated = calculateScheduleCLossLines(parsed);
   assertEquals(calculated.schedule.line3, 800);
@@ -143,7 +144,7 @@ Deno.test("Form 8995-A Schedule C: current gain and loss net to the sourced pare
   assertEquals(parentPdf?.line39, 40);
 });
 
-Deno.test("Form 8995-A Schedule C: altered source, companion, parent line, and unsupported loss reject", () => {
+test("Form 8995-A Schedule C: altered source, companion, parent line, and unsupported loss reject", () => {
   assertThrows(
     () =>
       parent.build(input, {
@@ -227,7 +228,7 @@ Deno.test("Form 8995-A Schedule C: altered source, companion, parent line, and u
   );
 });
 
-Deno.test("Form 8995-A Schedule C rejects a detached Schedule 1 business total, QBI adjustment, or Form 1040 income", () => {
+test("Form 8995-A Schedule C rejects a detached Schedule 1 business total, QBI adjustment, or Form 1040 income", () => {
   for (
     const changed of [
       {
@@ -258,7 +259,7 @@ Deno.test("Form 8995-A Schedule C rejects a detached Schedule 1 business total, 
   }
 });
 
-Deno.test("Form 8995-A Schedule C: offsetting businesses do not disappear at the QBI routing node", () => {
+test("Form 8995-A Schedule C: offsetting businesses do not disappear at the QBI routing node", () => {
   const result = form8995.compute({ taxYear: 2025, formType: "f1040" }, {
     qbi_from_schedule_c: 0,
     w2_wages: 100,

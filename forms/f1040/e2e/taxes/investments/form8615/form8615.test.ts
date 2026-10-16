@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -35,7 +36,7 @@ const parent = {
   parent_net_capital_gain: 0,
 };
 
-Deno.test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
+test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
   const result = execute(plan, registry, {
     general: child,
     schedule_b_part_iii: {
@@ -53,7 +54,7 @@ Deno.test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
   assertEquals(result.pending.f1040?.line16_income_tax, 412);
 });
 
-Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
+test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
   const result = execute(plan, registry, {
     general: child,
     schedule_b_part_iii: {
@@ -77,7 +78,7 @@ Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
   assertEquals(result.pending.f1040?.line16_income_tax, 66);
 });
 
-Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income sources", () => {
+test("E2E: Form 8615 rejects line 1 that disagrees with the child's income sources", () => {
   const result = execute(plan, registry, {
     general: child,
     schedule_b_part_iii: {
@@ -95,7 +96,7 @@ Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income 
   );
 });
 
-Deno.test("E2E: Form 8615 qualified dividends use Tax Table worksheet comparisons", () => {
+test("E2E: Form 8615 qualified dividends use Tax Table worksheet comparisons", () => {
   const result = execute(plan, registry, {
     general: child,
     schedule_b_part_iii: {

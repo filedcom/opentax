@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   AccountType as HeaderAccountType,
@@ -44,7 +47,7 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -66,7 +69,7 @@ function build(
   return form8888.build(input, context);
 }
 
-Deno.test("Form 8888 emits two ordered direct-deposit groups and matching line 5", () => {
+test("Form 8888 emits two ordered direct-deposit groups and matching line 5", () => {
   const xml = build();
   assertEquals((xml.match(/<DirectDepositInfoGroup>/g) ?? []).length, 2);
   assertStringIncludes(
@@ -83,12 +86,7 @@ Deno.test("Form 8888 emits two ordered direct-deposit groups and matching line 5
   assertEquals(xml.includes("RefundByCheckAmt"), false);
 });
 
-Deno.test({
-  name: "XSD: Form 8888 two- and three-account refund allocations",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8888 two- and three-account refund allocations", async () => {
   for (
     const [input, refund] of [
       [source, 1000],
@@ -113,22 +111,22 @@ Deno.test({
       "<IRS8888>",
       '<IRS8888 xmlns="http://www.irs.gov/efile" documentId="IRS8888-1">',
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const result = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", XSD_PATH, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });
 
-Deno.test("Form 8888 emits three accounts but no obsolete savings-bond branch", () => {
+test("Form 8888 emits three accounts but no obsolete savings-bond branch", () => {
   const xml = build(
     {
       ...source,
@@ -149,7 +147,7 @@ Deno.test("Form 8888 emits three accounts but no obsolete savings-bond branch", 
   assertEquals(xml.includes("RefundByCheckAmt"), false);
 });
 
-Deno.test("Form 8888 rejects incomplete account fields or a zero allocation", () => {
+test("Form 8888 rejects incomplete account fields or a zero allocation", () => {
   assertThrows(
     () =>
       build({ account_1: { ...first, routing_number: "" }, account_2: second }),
@@ -161,7 +159,7 @@ Deno.test("Form 8888 rejects incomplete account fields or a zero allocation", ()
   );
 });
 
-Deno.test("Form 8888 native document rejects a checksum-invalid routing number", () => {
+test("Form 8888 native document rejects a checksum-invalid routing number", () => {
   assertThrows(
     () =>
       build({
@@ -173,7 +171,7 @@ Deno.test("Form 8888 native document rejects a checksum-invalid routing number",
   );
 });
 
-Deno.test("Form 8888 rejects duplicate or unowned deposit accounts", () => {
+test("Form 8888 rejects duplicate or unowned deposit accounts", () => {
   assertThrows(
     () =>
       build({
@@ -194,7 +192,7 @@ Deno.test("Form 8888 rejects duplicate or unowned deposit accounts", () => {
   );
 });
 
-Deno.test("Form 8888 spouse-owned deposit requires a joint return", () => {
+test("Form 8888 spouse-owned deposit requires a joint return", () => {
   const spouse = {
     ssn: "111223333",
     firstName: "John",
@@ -237,7 +235,7 @@ Deno.test("Form 8888 spouse-owned deposit requires a joint return", () => {
   );
 });
 
-Deno.test("Form 8888 rejects a refund mismatch or missing final refund", () => {
+test("Form 8888 rejects a refund mismatch or missing final refund", () => {
   assertThrows(
     () =>
       build(source, {
@@ -263,7 +261,7 @@ Deno.test("Form 8888 rejects a refund mismatch or missing final refund", () => {
   );
 });
 
-Deno.test("Form 8888 rejects single-deposit overlap, injured spouse, or tax due", () => {
+test("Form 8888 rejects single-deposit overlap, injured spouse, or tax due", () => {
   assertThrows(
     () =>
       build(source, {

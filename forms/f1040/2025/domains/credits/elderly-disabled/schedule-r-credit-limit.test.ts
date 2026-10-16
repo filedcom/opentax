@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import cases from "./schedule-r-credit-limit.fixture.json" with {
   type: "json",
@@ -9,7 +10,7 @@ import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import { scheduleRPdf } from "../../../pdf/forms/credits/individual/schedule_r.ts";
 import { inputSchema } from "../../../../nodes/inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 
-Deno.test("Schedule R public returns settle zero and partial limits before retirement credits", async () => {
+test("Schedule R public returns settle zero and partial limits before retirement credits", async () => {
   for (const [id, c] of Object.entries(cases)) {
     const held = structuredClone(c.inputs);
     const result = f1040_2025.executeReturn(c.inputs);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PartyType, f8594 } from "./index.ts";
 
@@ -9,7 +10,7 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Validation — required fields and type constraints
 // =============================================================================
 
-Deno.test("f8594.inputSchema: minimal valid seller input passes", () => {
+test("f8594.inputSchema: minimal valid seller input passes", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -18,7 +19,7 @@ Deno.test("f8594.inputSchema: minimal valid seller input passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8594.inputSchema: missing party_type fails", () => {
+test("f8594.inputSchema: missing party_type fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     sale_date: "2025-06-15",
     total_sale_price: 500000,
@@ -26,7 +27,7 @@ Deno.test("f8594.inputSchema: missing party_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: invalid party_type fails", () => {
+test("f8594.inputSchema: invalid party_type fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: "unknown_party",
     sale_date: "2025-06-15",
@@ -35,7 +36,7 @@ Deno.test("f8594.inputSchema: invalid party_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: all PartyType enum values are accepted", () => {
+test("f8594.inputSchema: all PartyType enum values are accepted", () => {
   for (const partyType of Object.values(PartyType)) {
     const parsed = f8594.inputSchema.safeParse({
       party_type: partyType,
@@ -46,7 +47,7 @@ Deno.test("f8594.inputSchema: all PartyType enum values are accepted", () => {
   }
 });
 
-Deno.test("f8594.inputSchema: missing sale_date fails", () => {
+test("f8594.inputSchema: missing sale_date fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     total_sale_price: 500000,
@@ -54,7 +55,7 @@ Deno.test("f8594.inputSchema: missing sale_date fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: missing total_sale_price fails", () => {
+test("f8594.inputSchema: missing total_sale_price fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -62,7 +63,7 @@ Deno.test("f8594.inputSchema: missing total_sale_price fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: negative total_sale_price fails", () => {
+test("f8594.inputSchema: negative total_sale_price fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -71,7 +72,7 @@ Deno.test("f8594.inputSchema: negative total_sale_price fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: negative class allocation fails", () => {
+test("f8594.inputSchema: negative class allocation fails", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -81,7 +82,7 @@ Deno.test("f8594.inputSchema: negative class allocation fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8594.inputSchema: full allocation with all 7 classes passes", () => {
+test("f8594.inputSchema: full allocation with all 7 classes passes", () => {
   const parsed = f8594.inputSchema.safeParse({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -101,7 +102,7 @@ Deno.test("f8594.inputSchema: full allocation with all 7 classes passes", () => 
 // 2. Informational form — always produces no outputs regardless of inputs
 // =============================================================================
 
-Deno.test("f8594.compute: seller party returns no outputs (informational form only)", () => {
+test("f8594.compute: seller party returns no outputs (informational form only)", () => {
   const result = compute({
     party_type: PartyType.Seller,
     sale_date: "2025-01-15",
@@ -110,7 +111,7 @@ Deno.test("f8594.compute: seller party returns no outputs (informational form on
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8594.compute: buyer party returns no outputs (informational form only)", () => {
+test("f8594.compute: buyer party returns no outputs (informational form only)", () => {
   const result = compute({
     party_type: PartyType.Buyer,
     sale_date: "2025-01-15",
@@ -119,7 +120,7 @@ Deno.test("f8594.compute: buyer party returns no outputs (informational form onl
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8594.compute: all 7 class allocations present — no outputs", () => {
+test("f8594.compute: all 7 class allocations present — no outputs", () => {
   const result = compute({
     party_type: PartyType.Seller,
     sale_date: "2025-06-15",
@@ -139,28 +140,28 @@ Deno.test("f8594.compute: all 7 class allocations present — no outputs", () =>
 // 3. Hard validation rules
 // =============================================================================
 
-Deno.test("f8594.compute: throws on missing party_type", () => {
+test("f8594.compute: throws on missing party_type", () => {
   assertThrows(() => compute({
     sale_date: "2025-01-01",
     total_sale_price: 100000,
   }), Error);
 });
 
-Deno.test("f8594.compute: throws on missing sale_date", () => {
+test("f8594.compute: throws on missing sale_date", () => {
   assertThrows(() => compute({
     party_type: PartyType.Seller,
     total_sale_price: 100000,
   }), Error);
 });
 
-Deno.test("f8594.compute: throws on missing total_sale_price", () => {
+test("f8594.compute: throws on missing total_sale_price", () => {
   assertThrows(() => compute({
     party_type: PartyType.Buyer,
     sale_date: "2025-01-01",
   }), Error);
 });
 
-Deno.test("f8594.compute: throws on invalid party_type", () => {
+test("f8594.compute: throws on invalid party_type", () => {
   assertThrows(() => compute({
     party_type: "neither",
     sale_date: "2025-01-01",
@@ -172,7 +173,7 @@ Deno.test("f8594.compute: throws on invalid party_type", () => {
 // 4. Smoke test — full population
 // =============================================================================
 
-Deno.test("f8594.compute: smoke test — full seller allocation with all 7 classes returns empty outputs", () => {
+test("f8594.compute: smoke test — full seller allocation with all 7 classes returns empty outputs", () => {
   const result = compute({
     party_type: PartyType.Seller,
     sale_date: "2025-07-01",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { f1040_2025 } from "../../2025/index.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { scheduleA } from "../../2025/mef/forms/deductions/itemized/schedule_a.ts";
@@ -16,7 +17,7 @@ import {
 } from "./scenario_1040_02_input.ts";
 import { SCENARIO_1040_02_FACTS } from "./ty2025_cases.ts";
 
-Deno.test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", async () => {
+test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", async () => {
   const input = scenario104002Input();
   const forms = input.w2 as Array<Record<string, unknown>>;
   const business = (input.schedule_c as Array<Record<string, unknown>>)[0];
@@ -98,7 +99,7 @@ Deno.test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", a
   assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
 });
 
-Deno.test("ATS 1040 Scenario 2 retains missing return and attachment evidence", () => {
+test("ATS 1040 Scenario 2 retains missing return and attachment evidence", () => {
   const input = scenario104002Input();
   const general = input.general as Record<string, unknown>;
   assertEquals(Object.keys(input).sort(), [
@@ -114,7 +115,7 @@ Deno.test("ATS 1040 Scenario 2 retains missing return and attachment evidence", 
   assertEquals(SCENARIO_1040_02_RECONCILIATION.missing.length, 5);
 });
 
-Deno.test("ATS 1040 Scenario 2 retains its printed below-standard itemizing election and interest entries", () => {
+test("ATS 1040 Scenario 2 retains its printed below-standard itemizing election and interest entries", () => {
   const result = f1040_2025.executeReturn(scenario104002Input());
   assertEquals(result.diagnostics, []);
   const p = result.pending;

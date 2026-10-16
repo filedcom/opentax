@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040 } from "./index.ts";
 import { FilingStatus } from "../../../../types.ts";
@@ -34,7 +35,7 @@ function input(tax: number, foreign: number, care: number, adjustment: number) {
 }
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("Schedule R final limit subtracts exactly the three priority worksheet lines", () => {
+test("Schedule R final limit subtracts exactly the three priority worksheet lines", () => {
   for (
     const [tax, foreign, care, adjustment, expected] of [
       [0, 0, 0, 0, 0],
@@ -57,7 +58,7 @@ Deno.test("Schedule R final limit subtracts exactly the three priority worksheet
   }
 });
 
-Deno.test("Schedule R replay retains tentative source for a changed tax counterfactual", () => {
+test("Schedule R replay retains tentative source for a changed tax counterfactual", () => {
   const first = f1040.compute(ctx, input(500, 100, 50, 25));
   const replay = f1040.inputSchema.parse(first.replayInput);
   const second = f1040.compute(ctx, { ...replay, line16_income_tax: 1000 });
@@ -68,7 +69,7 @@ Deno.test("Schedule R replay retains tentative source for a changed tax counterf
   );
 });
 
-Deno.test("Schedule R rejects conflicting tentative amounts and source AGI or status", () => {
+test("Schedule R rejects conflicting tentative amounts and source AGI or status", () => {
   const valid = input(500, 100, 50, 25);
   for (
     const bad of [

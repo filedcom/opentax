@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -7,7 +8,7 @@ import { testFiler } from "../../../execution/test-filer.ts";
 import { form8941 } from "./f8941.ts";
 import { buildForm3800NonpassiveParts } from "../business/f3800/f3800_nonpassive.ts";
 
-Deno.test("staged IRS8941 and official PDF project the same direct credit", () => {
+test("staged IRS8941 and official PDF project the same direct credit", () => {
   const filed = form8941FiledFixture();
   const filer = {
     ...testFiler(),
@@ -41,7 +42,7 @@ Deno.test("staged IRS8941 and official PDF project the same direct credit", () =
   assertEquals(pdf.prior_year_shop_no, true);
 });
 
-Deno.test("Form 8941 line 16 has one specified Form 3800 line 4h and Part V source", () => {
+test("Form 8941 line 16 has one specified Form 3800 line 4h and Part V source", () => {
   const parts = buildForm3800NonpassiveParts({
     tax: {
       filingStatus: FilingStatus.Single,
@@ -107,7 +108,7 @@ Deno.test("Form 8941 line 16 has one specified Form 3800 line 4h and Part V sour
   );
 });
 
-Deno.test("Form 8941 printable copy binds Form 3800 line 4h document and final credit", () => {
+test("Form 8941 printable copy binds Form 3800 line 4h document and final credit", () => {
   const filed = form8941FiledFixture();
   const pending = {
     ...filed,
@@ -171,7 +172,7 @@ Deno.test("Form 8941 printable copy binds Form 3800 line 4h document and final c
   );
 });
 
-Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and source tampering", () => {
+test("staged Form 8941 rejects Schedule C payroll, deduction, owner and source tampering", () => {
   const filed = form8941FiledFixture();
   const filer = {
     ...testFiler(),

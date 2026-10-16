@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -77,7 +78,7 @@ function age65Case() {
   return { source, forms, pending };
 }
 
-Deno.test("single-owner age-65 exception reconciles two 1099-SA sources in MeF and PDF", () => {
+test("single-owner age-65 exception reconciles two 1099-SA sources in MeF and PDF", () => {
   const { forms, pending } = age65Case();
   const xml = form8889.build({ forms }, { filer, pending }).join("");
   assertStringIncludes(xml, "<TaxableHSADistributionAmt>900</TaxableHSADistributionAmt>");
@@ -88,7 +89,7 @@ Deno.test("single-owner age-65 exception reconciles two 1099-SA sources in MeF a
   assertEquals(pdf?.print_line17b_penalty, 80);
 });
 
-Deno.test("single-owner age-65 exception rejects unsourced and altered owner or 1099-SA evidence", () => {
+test("single-owner age-65 exception rejects unsourced and altered owner or 1099-SA evidence", () => {
   const { source, forms, pending } = age65Case();
   assertThrows(
     () => form8889.build({ forms }, { filer }),

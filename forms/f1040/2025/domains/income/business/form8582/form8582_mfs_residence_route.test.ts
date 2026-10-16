@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -43,7 +44,7 @@ const rental = {
   form_1099_payments_made: false,
 };
 
-Deno.test("MFS full-year separate residences route the $7,500 rental allowance through Form 1040, MeF, and PDF", () => {
+test("MFS full-year separate residences route the $7,500 rental allowance through Form 1040, MeF, and PDF", () => {
   const result = f1040_2025.executeReturn({
     general,
     w2: [{ box1_wages: 60_000, box2_fed_withheld: 8_000 }],
@@ -95,7 +96,7 @@ Deno.test("MFS full-year separate residences route the $7,500 rental allowance t
   );
 });
 
-Deno.test("MFS rental allowance rejects a missing month of separate-residence records", () => {
+test("MFS rental allowance rejects a missing month of separate-residence records", () => {
   const result = f1040_2025.executeReturn({
     general: {
       ...general,

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -97,7 +99,7 @@ const cases = [
 ];
 
 for (const expected of cases) {
-  Deno.test(`MFS rental MAGI ${expected.wages}: residence, allowance, ledger boundary and complete packet`, async () => {
+  test(`MFS rental MAGI ${expected.wages}: residence, allowance, ledger boundary and complete packet`, async () => {
     const input = source(expected.wages);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -141,13 +143,13 @@ for (const expected of cases) {
       origins.length,
     );
     assertEquals(origins.filter((p) => p.formKey === "form8582").length, 3);
-    const root = Deno.env.get("OPENTAX_FORM8582_MFS_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8582_MFS_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
+      await fs.mkdir(root, { recursive: true });
       const path = `${root}/mfs-${expected.wages}`;
-      await Deno.writeFile(`${path}.pdf`, bytes);
-      await Deno.writeTextFile(`${path}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${path}.pdf`, bytes);
+      await fs.writeFile(`${path}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${path}.json`,
         JSON.stringify(
           {

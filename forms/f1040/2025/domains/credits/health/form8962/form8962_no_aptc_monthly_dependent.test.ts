@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as InputFilingStatus } from "../../../../../nodes/types.ts";
@@ -147,7 +150,7 @@ function filedReturn(
   });
 }
 
-Deno.test("Form 8962 monthly no-APTC policy with a required-filing dependent reaches final credit, native and PDF", async () => {
+test("Form 8962 monthly no-APTC policy with a required-filing dependent reaches final credit, native and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -172,7 +175,7 @@ Deno.test("Form 8962 monthly no-APTC policy with a required-filing dependent rea
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 one family policy caps excess APTC for a single filer with one dependent", async () => {
+test("Form 8962 one family policy caps excess APTC for a single filer with one dependent", async () => {
   const aptcPolicy = positiveAptcPolicy;
   const result = filedReturn(aptcPolicy);
   assertEquals(result.diagnostics, []);
@@ -196,10 +199,10 @@ Deno.test("Form 8962 one family policy caps excess APTC for a single filer with 
     prepared.bundle.xml,
     "<AdditionalTaxLimitationAmt>975</AdditionalTaxLimitationAmt>",
   );
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -210,7 +213,7 @@ Deno.test("Form 8962 one family policy caps excess APTC for a single filer with 
       new TextDecoder().decode(validated.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   await prepared.renderPdf();
 
@@ -241,7 +244,7 @@ for (
     { label: "exactly 400%", parentWages: 65_760, income: 81_760, pct: 400, cap: undefined },
   ] as const
 ) {
-  Deno.test(`Form 8962 two-person family policy applies Single Table 5 at ${tier.label}`, async () => {
+  test(`Form 8962 two-person family policy applies Single Table 5 at ${tier.label}`, async () => {
     const result = filedReturn(positiveAptcPolicy, tier.parentWages);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -265,10 +268,10 @@ for (
       prepared.bundle.xml.includes("<AdditionalTaxLimitationAmt>"),
       tier.cap !== undefined,
     );
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-      const validated = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, prepared.bundle.xml);
+      const validated = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsdPath, xmlPath],
         stdout: "piped",
         stderr: "piped",
@@ -279,7 +282,7 @@ for (
         new TextDecoder().decode(validated.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     await prepared.renderPdf();
     await assertRejects(() =>
@@ -294,7 +297,7 @@ for (
   });
 }
 
-Deno.test("Form 8962 dependent no-APTC monthly filing rejects source identity, SLCSP and final credit tampering", async () => {
+test("Form 8962 dependent no-APTC monthly filing rejects source identity, SLCSP and final credit tampering", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const source = f1095aInputSchema.parse(pending.f1095a);
@@ -452,7 +455,7 @@ const interestDividendDependent = {
   },
 };
 
-Deno.test("Form 8962 ordinary-dividend dependent joins monthly policy, final credit, native and PDF", async () => {
+test("Form 8962 ordinary-dividend dependent joins monthly policy, final credit, native and PDF", async () => {
   const result = dividendReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -468,7 +471,7 @@ Deno.test("Form 8962 ordinary-dividend dependent joins monthly policy, final cre
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 ordinary-dividend dependent rejects threshold, owner, filed-line and document drift", async () => {
+test("Form 8962 ordinary-dividend dependent rejects threshold, owner, filed-line and document drift", async () => {
   const result = dividendReturn();
   const pending = normalizeAllPending(result.pending);
   const changed = (ptcTaxReturn: typeof dividendDependent.ptc_tax_return) => ({
@@ -533,7 +536,7 @@ Deno.test("Form 8962 ordinary-dividend dependent rejects threshold, owner, filed
   );
 });
 
-Deno.test("Form 8962 W-2 plus ordinary-dividend dependent reaches monthly native and PDF credit", async () => {
+test("Form 8962 W-2 plus ordinary-dividend dependent reaches monthly native and PDF credit", async () => {
   const result = dividendReturn(mixedDividendDependent);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -549,7 +552,7 @@ Deno.test("Form 8962 W-2 plus ordinary-dividend dependent reaches monthly native
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 mixed W-2 and dividend dependent rejects threshold, owner and filed return drift", async () => {
+test("Form 8962 mixed W-2 and dividend dependent rejects threshold, owner and filed return drift", async () => {
   const result = dividendReturn(mixedDividendDependent);
   const pending = normalizeAllPending(result.pending);
   const changed = (
@@ -619,7 +622,7 @@ Deno.test("Form 8962 mixed W-2 and dividend dependent rejects threshold, owner a
   );
 });
 
-Deno.test("Form 8962 taxable and tax-exempt interest plus dividends joins monthly credit, native and PDF", async () => {
+test("Form 8962 taxable and tax-exempt interest plus dividends joins monthly credit, native and PDF", async () => {
   const result = dividendReturn(interestDividendDependent);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -635,7 +638,7 @@ Deno.test("Form 8962 taxable and tax-exempt interest plus dividends joins monthl
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 interest and dividend dependent rejects threshold, source and tax-exempt drift", async () => {
+test("Form 8962 interest and dividend dependent rejects threshold, source and tax-exempt drift", async () => {
   const result = dividendReturn(interestDividendDependent);
   const pending = normalizeAllPending(result.pending);
   const changed = (

@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { alternativeCompensationStatementId } from "./f1116_alternative_compensation_source.ts";
 
-Deno.test("Form 1116 line 1b requires its native statement ID even without a document map", () => {
+test("Form 1116 line 1b requires its native statement ID even without a document map", () => {
   assertThrows(
     () => alternativeCompensationStatementId(1, undefined),
     Error,
@@ -25,7 +26,7 @@ Deno.test("Form 1116 line 1b requires its native statement ID even without a doc
   );
 });
 
-Deno.test("Form 1116 line 1b accepts exactly one linked native statement", () => {
+test("Form 1116 line 1b accepts exactly one linked native statement", () => {
   assertEquals(
     alternativeCompensationStatementId(1, {
       documentIdsByPendingKey: {

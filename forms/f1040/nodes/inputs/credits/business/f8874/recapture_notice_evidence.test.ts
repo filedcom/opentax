@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { withReviewedForm8874A } from "./issuance_fixture.ts";
 import { calculateForm8874Recapture } from "./recapture_node.ts";
@@ -85,7 +86,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 8874-B event joins issuance, recapture source and Schedule 2", () => {
+test("Form 8874-B event joins issuance, recapture source and Schedule 2", () => {
   const result = reconcileForm8874BReportedEvent(notice, issuance, pending);
   assertEquals(
     result.schedule2Line17a,
@@ -97,7 +98,7 @@ Deno.test("Form 8874-B event joins issuance, recapture source and Schedule 2", (
   );
 });
 
-Deno.test("Form 8874-B native and PDF Schedule 2 preflight the reviewed event", () => {
+test("Form 8874-B native and PDF Schedule 2 preflight the reviewed event", () => {
   const fields = {
     line17a_new_markets_credit_recapture:
       pending.schedule2.line17a_new_markets_credit_recapture,
@@ -139,7 +140,7 @@ Deno.test("Form 8874-B native and PDF Schedule 2 preflight the reviewed event", 
   );
 });
 
-Deno.test("Form 8874-B rejects absent, late or tampered event evidence", () => {
+test("Form 8874-B rejects absent, late or tampered event evidence", () => {
   for (
     const changed of [
       { ...notice, cde_official_signed_notice_confirmed: false },

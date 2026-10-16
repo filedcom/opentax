@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { atsSourceReconciliation } from "./ty2025-source-reconciliation.ts";
 import {
   ATS_RETIREMENT_TARGETS,
@@ -603,6 +604,6 @@ export async function replayAtsChecks() {
 }
 if (import.meta.main) {
   const report = JSON.stringify(await replayAtsChecks(), null, 2) + "\n";
-  if (Deno.args[0]) await Deno.writeTextFile(Deno.args[0], report);
+  if (process.argv.slice(2)[0]) await fs.writeFile(process.argv.slice(2)[0], report);
   else console.log(report);
 }

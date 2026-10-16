@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -27,7 +30,7 @@ const expected: Record<string, number[]> = {
   "qss-rpe-4": [66250, 70234, 0, 70234, 60234],
 };
 for (const c of aggregationStatusCases) {
-  Deno.test(`aggregation ${c.name}: source owner, nonjoint QBI threshold and complete packet`, async () => {
+  test(`aggregation ${c.name}: source owner, nonjoint QBI threshold and complete packet`, async () => {
     const input = await aggregationStatusFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -89,17 +92,11 @@ for (const c of aggregationStatusCases) {
         ),
       );
     }
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "AGGREGATION_STATUS_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("AGGREGATION_STATUS_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.AGGREGATION_STATUS_EVIDENCE;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/source.json`,
         JSON.stringify(
           { input, filer, pending: prepared.bundle.pending },
@@ -107,9 +104,9 @@ for (const c of aggregationStatusCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, xml);
+      await fs.writeFile(`${dir}/return.xml`, xml);
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -119,21 +116,21 @@ for (const c of aggregationStatusCases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/annual.pdf`,
         prepared.bundle.attachments[0].bytes,
       );
       if (c.kind === "rpe") {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/issued.pdf`,
           prepared.bundle.attachments[1].bytes,
         );
       }
-      const xsd = await new Deno.Command("xmllint", {
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -146,7 +143,7 @@ for (const c of aggregationStatusCases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const kinds = [
         "owner",
@@ -201,7 +198,7 @@ for (const c of aggregationStatusCases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
     for (
       const kind of c.status === "mfs"

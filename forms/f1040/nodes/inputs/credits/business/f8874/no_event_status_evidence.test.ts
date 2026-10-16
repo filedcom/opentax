@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { withReviewedForm8874A } from "./issuance_fixture.ts";
 import {
@@ -60,7 +61,7 @@ const evidenceBytes = {
   issuanceNotice: issuanceBytes,
 };
 
-Deno.test("Form 8874 affirmative CDE no-event statement binds distinct issuance and status bytes", async () => {
+test("Form 8874 affirmative CDE no-event statement binds distinct issuance and status bytes", async () => {
   const result = await reconcileForm8874NoEventStatus(
     status,
     issuance,
@@ -71,7 +72,7 @@ Deno.test("Form 8874 affirmative CDE no-event statement binds distinct issuance 
   assertEquals(result.reviewedForm8874BHistory, []);
 });
 
-Deno.test("Form 8874 no-event path rejects silence, altered bytes and mismatched source facts", async () => {
+test("Form 8874 no-event path rejects silence, altered bytes and mismatched source facts", async () => {
   for (
     const changed of [
       undefined,
@@ -112,7 +113,7 @@ Deno.test("Form 8874 no-event path rejects silence, altered bytes and mismatched
   );
 });
 
-Deno.test("Form 8874 no-event statement rejects conflicting Form 8874-B history", async () => {
+test("Form 8874 no-event statement rejects conflicting Form 8874-B history", async () => {
   const notice = {
     notice_document_reference: "2025 CDE Form 8874-B event",
     cde_name: issuance.cde_name,

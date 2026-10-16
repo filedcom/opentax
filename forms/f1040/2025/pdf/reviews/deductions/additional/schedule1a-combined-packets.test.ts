@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
@@ -151,17 +153,17 @@ function inputsFor(entry: typeof cases[number]) {
 }
 
 for (const entry of cases) {
-  Deno.test(`Schedule 1-A combined full-return sources: ${entry.id}`, async () => {
+  test(`Schedule 1-A combined full-return sources: ${entry.id}`, async () => {
     const inputs = inputsFor(entry);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
     const filer = extractFilerIdentity(pending.f1040);
     assertExists(filer);
-    const root = Deno.env.get("OPENTAX_SCHEDULE1A_COMBINED_PROOF_DIR");
+    const root = process.env.OPENTAX_SCHEDULE1A_COMBINED_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -211,7 +213,7 @@ for (const entry of cases) {
         "vehicle interest deduction does not reconcile",
       );
       if (root) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${root}/${entry.id}-blocked.json`,
           JSON.stringify(
             {
@@ -266,9 +268,9 @@ for (const entry of cases) {
     );
     assertEquals((prepared.bundle.xml.match(/<IRSW2\b/g) ?? []).length, 4);
     if (root) {
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(
         `${root}/${entry.id}-expected.json`,
         JSON.stringify({ expected, origins }, null, 2),
       );

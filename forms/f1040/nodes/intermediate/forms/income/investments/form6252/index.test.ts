@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertAlmostEquals, assertEquals, assertThrows } from "@std/assert";
 import { form6252 } from "./index.ts";
 
@@ -19,7 +20,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Smoke Tests ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke — no payments returns no installment income", () => {
+test("smoke — no payments returns no installment income", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 40_000,
@@ -29,7 +30,7 @@ Deno.test("smoke — no payments returns no installment income", () => {
   assertEquals(sd, undefined);
 });
 
-Deno.test("smoke — zero payments produces no schedule_d output", () => {
+test("smoke — zero payments produces no schedule_d output", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 40_000,
@@ -41,7 +42,7 @@ Deno.test("smoke — zero payments produces no schedule_d output", () => {
 
 // ─── Gross Profit Ratio Calculation ──────────────────────────────────────────
 
-Deno.test("GPR — basic calculation: $40k profit / $100k contract = 40%", () => {
+test("GPR — basic calculation: $40k profit / $100k contract = 40%", () => {
   // $20k payments × 40% GPR = $8k installment income
   const result = compute({
     selling_price: 100_000,
@@ -53,7 +54,7 @@ Deno.test("GPR — basic calculation: $40k profit / $100k contract = 40%", () =>
   assertAlmostEquals(sd?.fields.line_11_form2439 as number, 8_000, 0.01);
 });
 
-Deno.test("GPR — 100% ratio: full payment received in first year", () => {
+test("GPR — 100% ratio: full payment received in first year", () => {
   const result = compute({
     selling_price: 50_000,
     gross_profit: 50_000,
@@ -64,7 +65,7 @@ Deno.test("GPR — 100% ratio: full payment received in first year", () => {
   assertEquals(sd?.fields.line_11_form2439, 50_000);
 });
 
-Deno.test("GPR — zero gross profit: no taxable income", () => {
+test("GPR — zero gross profit: no taxable income", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 0,
@@ -75,7 +76,7 @@ Deno.test("GPR — zero gross profit: no taxable income", () => {
   assertEquals(sd, undefined);
 });
 
-Deno.test("GPR — partial payment in year", () => {
+test("GPR — partial payment in year", () => {
   // Gross profit $60k / contract $100k = 60% GPR
   // Year 1 payment $10k × 60% = $6k installment income
   const result = compute({
@@ -90,7 +91,7 @@ Deno.test("GPR — partial payment in year", () => {
 
 // ─── Depreciation Recapture ───────────────────────────────────────────────────
 
-Deno.test("depreciation recapture — retains Form 6252 line 12 source", () => {
+test("depreciation recapture — retains Form 6252 line 12 source", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 40_000,
@@ -102,7 +103,7 @@ Deno.test("depreciation recapture — retains Form 6252 line 12 source", () => {
   assertEquals(f4797?.fields.recapture_form6252, 15_000);
 });
 
-Deno.test("depreciation recapture + installment income — both outputs", () => {
+test("depreciation recapture + installment income — both outputs", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 40_000,
@@ -118,7 +119,7 @@ Deno.test("depreciation recapture + installment income — both outputs", () => 
 
 // ─── Capital Asset vs §1231 Routing ──────────────────────────────────────────
 
-Deno.test("capital asset (default) — long-term routes to schedule_d line_11 with exact income", () => {
+test("capital asset (default) — long-term routes to schedule_d line_11 with exact income", () => {
   // GPR = 50,000 / 100,000 = 50%; income = 50% × 20,000 = $10,000
   const result = compute({
     selling_price: 100_000,
@@ -130,7 +131,7 @@ Deno.test("capital asset (default) — long-term routes to schedule_d line_11 wi
   assertEquals(sd?.fields.line_11_form2439, 10_000);
 });
 
-Deno.test("capital asset short-term — routes to Schedule D line 4", () => {
+test("capital asset short-term — routes to Schedule D line 4", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 50_000,
@@ -143,7 +144,7 @@ Deno.test("capital asset short-term — routes to Schedule D line 4", () => {
   assertEquals(sd?.fields.gain_form6252_st, 10_000);
 });
 
-Deno.test("sale facts drive line 20 excess mortgage and line 24 income", () => {
+test("sale facts drive line 20 excess mortgage and line 24 income", () => {
   const result = compute({
     property_description: "Vacant land",
     date_acquired: "2020-01-01",
@@ -164,7 +165,7 @@ Deno.test("sale facts drive line 20 excess mortgage and line 24 income", () => {
   );
 });
 
-Deno.test("sale facts reject stale aggregate gross profit", () => {
+test("sale facts reject stale aggregate gross profit", () => {
   assertThrows(
     () =>
       compute({
@@ -181,7 +182,7 @@ Deno.test("sale facts reject stale aggregate gross profit", () => {
   );
 });
 
-Deno.test("multiple sales aggregate their destinations without losing source amounts", () => {
+test("multiple sales aggregate their destinations without losing source amounts", () => {
   const result = computeSales([
     {
       property_description: "Land A",
@@ -217,7 +218,7 @@ Deno.test("multiple sales aggregate their destinations without losing source amo
   assertEquals(business?.fields.section_1231_gain, 10_000);
 });
 
-Deno.test("section 1231 property — routes to form4797 section_1231_gain", () => {
+test("section 1231 property — routes to form4797 section_1231_gain", () => {
   const result = compute({
     selling_price: 100_000,
     gross_profit: 50_000,
@@ -231,7 +232,7 @@ Deno.test("section 1231 property — routes to form4797 section_1231_gain", () =
 
 // ─── Edge Cases ───────────────────────────────────────────────────────────────
 
-Deno.test("negative gross profit cannot use the installment method", () => {
+test("negative gross profit cannot use the installment method", () => {
   assertThrows(
     () =>
       compute({
@@ -245,7 +246,7 @@ Deno.test("negative gross profit cannot use the installment method", () => {
   );
 });
 
-Deno.test("payments cannot be allocated without a contract price", () => {
+test("payments cannot be allocated without a contract price", () => {
   assertThrows(
     () =>
       compute({

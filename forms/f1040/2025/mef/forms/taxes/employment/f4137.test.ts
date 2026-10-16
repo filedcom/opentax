@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
@@ -29,11 +30,11 @@ const baseW2 = {
   box3_ss_wages: 30_000,
 };
 
-Deno.test("Form 4137 emits no document without tip activity", () => {
+test("Form 4137 emits no document without tip activity", () => {
   assertEquals(form4137.build({}, { filer: testFiler() }), []);
 });
 
-Deno.test("Form 4137 emits identity, employer detail and calculated lines in XSD order", () => {
+test("Form 4137 emits identity, employer detail and calculated lines in XSD order", () => {
   const [xml] = form4137.build(base, {
     filer: testFiler(),
     pending: { w2: { w2s: [baseW2] } },
@@ -60,7 +61,7 @@ Deno.test("Form 4137 emits identity, employer detail and calculated lines in XSD
   );
 });
 
-Deno.test("Form 4137 MeF reconciles tip sources with W-2 documents", () => {
+test("Form 4137 MeF reconciles tip sources with W-2 documents", () => {
   assertThrows(
     () => form4137.build(base, { filer: testFiler() }),
     Error,
@@ -90,7 +91,7 @@ Deno.test("Form 4137 MeF reconciles tip sources with W-2 documents", () => {
   );
 });
 
-Deno.test("Form 4137 supports applied-for EIN and Medicare-only government tips", () => {
+test("Form 4137 supports applied-for EIN and Medicare-only government tips", () => {
   const [xml] = form4137.build({
     forms: [{
       recipient: "taxpayer",
@@ -134,7 +135,7 @@ Deno.test("Form 4137 supports applied-for EIN and Medicare-only government tips"
   );
 });
 
-Deno.test("Form 4137 refuses allocated tips without employer detail", () => {
+test("Form 4137 refuses allocated tips without employer detail", () => {
   assertThrows(
     () =>
       form4137.build({
@@ -148,7 +149,7 @@ Deno.test("Form 4137 refuses allocated tips without employer detail", () => {
   );
 });
 
-Deno.test("Form 4137 refuses a spouse form without spouse identity", () => {
+test("Form 4137 refuses a spouse form without spouse identity", () => {
   assertThrows(
     () =>
       form4137.build({
@@ -173,7 +174,7 @@ Deno.test("Form 4137 refuses a spouse form without spouse identity", () => {
   );
 });
 
-Deno.test("Form 4137 emits separate taxpayer and spouse documents", () => {
+test("Form 4137 emits separate taxpayer and spouse documents", () => {
   const filer = {
     ...testFiler(),
     filingStatus: FilingStatus.MarriedFilingJointly,

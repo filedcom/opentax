@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects } from "@std/assert";
 import {
@@ -13,7 +15,7 @@ import { preparedSourceSha256 } from "../../../../return-processing/prepared-sou
 import { scheduleEPdf } from "../../../../pdf/forms/income/rental-passthrough/schedule_e.ts";
 
 for (const c of separateIncomeCases) {
-  Deno.test(`Separate K-1 rental income and credit inventory: ${c.id}`, async () => {
+  test(`Separate K-1 rental income and credit inventory: ${c.id}`, async () => {
     const { id, input, expected } = separateIncomeFixture(c);
     const count = input.form8582cr.credit_sources.length;
     const result = f1040_2025.executeReturn(input);
@@ -154,11 +156,11 @@ for (const c of separateIncomeCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8582CR_SEPARATE_INCOME_EVIDENCE");
+      root = process.env.FORM8582CR_SEPARATE_INCOME_EVIDENCE;
     } catch { /* Optional local evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -178,8 +180,8 @@ for (const c of separateIncomeCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-      if (pdf) await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+      if (pdf) await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
   });
 }

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm8801Mtcnol,
@@ -65,7 +66,7 @@ function facts() {
     },
   };
 }
-Deno.test("MTCNOL separate vintage history derives the 2024 carry amount without regular NOL substitution", () => {
+test("MTCNOL separate vintage history derives the 2024 carry amount without regular NOL substitution", () => {
   const r = calculateForm8801Mtcnol(history(), context);
   assertEquals(
     r.vintages.map((v) => [v.origin_year, v.prior_used, v.available_to_2024]),
@@ -79,7 +80,7 @@ Deno.test("MTCNOL separate vintage history derives the 2024 carry amount without
     r.filingReady,
   ], [false, false, false, false]);
 });
-Deno.test("MTCNOL history rejects overused origin and permits a fully consumed vintage", () => {
+test("MTCNOL history rejects overused origin and permits a fully consumed vintage", () => {
   const h = history();
   h.vintages[0].uses_before_2024[2].amount = 25000;
   assertEquals(
@@ -89,7 +90,7 @@ Deno.test("MTCNOL history rejects overused origin and permits a fully consumed v
   h.vintages[0].uses_before_2024[2].amount++;
   assertThrows(() => calculateForm8801Mtcnol(h, context), Error, "uses exceed");
 });
-Deno.test("MTCNOL history rejects repeated vintage owners and duplicate source items", () => {
+test("MTCNOL history rejects repeated vintage owners and duplicate source items", () => {
   const h = history();
   h.vintages.push(structuredClone(h.vintages[0]));
   assertThrows(
@@ -104,7 +105,7 @@ Deno.test("MTCNOL history rejects repeated vintage owners and duplicate source i
     "Duplicate MTCNOL",
   );
 });
-Deno.test("MTCNOL year checks reject own-year losses and reversed carry direction", () => {
+test("MTCNOL year checks reject own-year losses and reversed carry direction", () => {
   for (
     const [direction, origin_year] of [
       ["carryforward", 2024],
@@ -119,7 +120,7 @@ Deno.test("MTCNOL year checks reject own-year losses and reversed carry directio
     assertThrows(() => calculateForm8801Mtcnol(h, context), Error, "direction");
   }
 });
-Deno.test("MTCNOL earlier-use history rejects duplicate, reversed and origin-ineligible years", () => {
+test("MTCNOL earlier-use history rejects duplicate, reversed and origin-ineligible years", () => {
   for (
     const years of [[2020, 2020, 2023], [2021, 2020, 2023], [2019, 2021, 2023]]
   ) {
@@ -132,7 +133,7 @@ Deno.test("MTCNOL earlier-use history rejects duplicate, reversed and origin-ine
     );
   }
 });
-Deno.test("MTCNOL spouse vintages require a reviewed joint owner and workpaper identity", () => {
+test("MTCNOL spouse vintages require a reviewed joint owner and workpaper identity", () => {
   const h = history();
   h.vintages[1].owner_ssn = "444556666";
   assertThrows(() => calculateForm8801Mtcnol(h, context), Error, "owner");
@@ -151,7 +152,7 @@ Deno.test("MTCNOL spouse vintages require a reviewed joint owner and workpaper i
     "taxpayer differs",
   );
 });
-Deno.test("MTCNOL calculated history binds Form 8801 line 3 and rejects changed aggregate", () => {
+test("MTCNOL calculated history binds Form 8801 line 3 and rejects changed aggregate", () => {
   const f = {
     ...facts(),
     current_return: {
@@ -176,7 +177,7 @@ Deno.test("MTCNOL calculated history binds Form 8801 line 3 and rejects changed 
     "differs from vintage",
   );
 });
-Deno.test("MTCNOL canonical review rejects method/history omission and unexpected acceptance fields", async () => {
+test("MTCNOL canonical review rejects method/history omission and unexpected acceptance fields", async () => {
   for (
     const patch of [{ method: "reviewed_vintage_history" }, {
       vintage_history: history(),
@@ -200,7 +201,7 @@ Deno.test("MTCNOL canonical review rejects method/history omission and unexpecte
     );
   }
 });
-Deno.test("MTCNOL canonical source history joins current Schedule 3 and tax while source eligibility stays unproved", async () => {
+test("MTCNOL canonical source history joins current Schedule 3 and tax while source eligibility stays unproved", async () => {
   const f = await fixture(facts());
   f.inputs.w2[0].box1_wages = 30000;
   const r = await stageForm8801SettledReturn(f.inputs, f.binding, f.documents);
@@ -217,7 +218,7 @@ Deno.test("MTCNOL canonical source history joins current Schedule 3 and tax whil
     r.workpaperAuthenticityVerified,
   ], [false, false, false]);
 });
-Deno.test("MTCNOL total above AMTI stops exclusion tax without fabricating a same-year origin", async () => {
+test("MTCNOL total above AMTI stops exclusion tax without fabricating a same-year origin", async () => {
   const h = history();
   h.vintages[0].origin_exclusion_only_nol.amount = 160000;
   const f = await fixture({

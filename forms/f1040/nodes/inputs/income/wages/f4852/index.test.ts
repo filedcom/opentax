@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import type { NodeOutput } from "../../../../../../../core/types/tax-node.ts";
@@ -44,7 +45,7 @@ function f1040Fields(result: ReturnType<typeof compute>) {
   return (findOutput(result, "f1040")?.fields ?? {}) as Record<string, unknown>;
 }
 
-Deno.test("Form 4852 withholding does not become an uncalculated Schedule 3 excess credit", () => {
+test("Form 4852 withholding does not become an uncalculated Schedule 3 excess credit", () => {
   const result = compute([
     w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
     w2Item({ social_security_wages: 100_000, social_security_withheld: 6_200 }),
@@ -52,7 +53,7 @@ Deno.test("Form 4852 withholding does not become an uncalculated Schedule 3 exce
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
-Deno.test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () => {
+test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () => {
   const result = compute([w2Item({
     wages: 220_000,
     medicare_wages: 220_000,
@@ -69,7 +70,7 @@ Deno.test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () 
   );
 });
 
-Deno.test("f4852: Medicare withholding needs substitute W-2 Medicare wages", () => {
+test("f4852: Medicare withholding needs substitute W-2 Medicare wages", () => {
   assertEquals(
     itemSchema.safeParse(w2Item({ medicare_withheld: 1_450 })).success,
     false,
@@ -80,13 +81,13 @@ Deno.test("f4852: Medicare withholding needs substitute W-2 Medicare wages", () 
 // 1. Schema validation
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: empty array throws (min 1 required)", () => {
+test("f4852: empty array throws (min 1 required)", () => {
   assertThrows(() =>
     f4852.compute({ taxYear: 2025, formType: "f1040" }, { f4852s: [] })
   );
 });
 
-Deno.test("f4852: missing form_type throws", () => {
+test("f4852: missing form_type throws", () => {
   assertThrows(() =>
     f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
@@ -101,7 +102,7 @@ Deno.test("f4852: missing form_type throws", () => {
   );
 });
 
-Deno.test("f4852: missing payer_name throws", () => {
+test("f4852: missing payer_name throws", () => {
   assertThrows(() =>
     f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
@@ -116,7 +117,7 @@ Deno.test("f4852: missing payer_name throws", () => {
   );
 });
 
-Deno.test("f4852: W2 type with no wages or federal_withheld throws", () => {
+test("f4852: W2 type with no wages or federal_withheld throws", () => {
   assertThrows(() =>
     f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
@@ -134,14 +135,14 @@ Deno.test("f4852: W2 type with no wages or federal_withheld throws", () => {
 // 2. Part I: Substitute W-2 — wages and withholding to f1040
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: Part I W2 substitute → wages to line1a, withheld to line25a_w2_withheld", () => {
+test("f4852: Part I W2 substitute → wages to line1a, withheld to line25a_w2_withheld", () => {
   const result = compute([w2Item({ wages: 50000, federal_withheld: 8000 })]);
   const fields = f1040Fields(result);
   assertEquals(fields["line1a_wages"], 50000);
   assertEquals(fields["line25a_w2_withheld"], 8000);
 });
 
-Deno.test("f4852: substitute type cannot silently discard the other form's fields", () => {
+test("f4852: substitute type cannot silently discard the other form's fields", () => {
   const wrongW2Fields: Array<Partial<Item>> = [
     { gross_distribution: 2_000 },
     { taxable_amount: 1_500 },
@@ -172,7 +173,7 @@ Deno.test("f4852: substitute type cannot silently discard the other form's field
   }
 });
 
-Deno.test("f4852: Part I W2 substitute with only wages (no withholding)", () => {
+test("f4852: Part I W2 substitute with only wages (no withholding)", () => {
   const result = compute([w2Item({ wages: 40000, federal_withheld: 0 })]);
   const fields = f1040Fields(result);
   assertEquals(fields["line1a_wages"], 40000);
@@ -180,7 +181,7 @@ Deno.test("f4852: Part I W2 substitute with only wages (no withholding)", () => 
   assertEquals(fields["line25a_w2_withheld"], undefined);
 });
 
-Deno.test("f4852: Part I W2 substitute with no wages but withholding (edge)", () => {
+test("f4852: Part I W2 substitute with no wages but withholding (edge)", () => {
   const result = compute([w2Item({ wages: 0, federal_withheld: 500 })]);
   const fields = f1040Fields(result);
   assertEquals(fields["line1a_wages"], undefined);
@@ -191,7 +192,7 @@ Deno.test("f4852: Part I W2 substitute with no wages but withholding (edge)", ()
 // 3. Part II: Substitute 1099-R — pension and withholding to f1040
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: Part II 1099-R pension → line5a/5b, withheld to line25b", () => {
+test("f4852: Part II 1099-R pension → line5a/5b, withheld to line25b", () => {
   const result = compute([
     r1099Item({
       gross_distribution: 20000,
@@ -205,7 +206,7 @@ Deno.test("f4852: Part II 1099-R pension → line5a/5b, withheld to line25b", ()
   assertEquals(fields["line25b_withheld_1099"], 2000);
 });
 
-Deno.test("f4852: Part II 1099-R pension, taxable_amount omitted → defaults to gross", () => {
+test("f4852: Part II 1099-R pension, taxable_amount omitted → defaults to gross", () => {
   const result = compute([
     r1099Item({ gross_distribution: 15000, federal_withheld: 1500 }),
   ]);
@@ -215,7 +216,7 @@ Deno.test("f4852: Part II 1099-R pension, taxable_amount omitted → defaults to
   assertEquals(fields["line25b_withheld_1099"], 1500);
 });
 
-Deno.test("f4852: Part II taxable amount includes basis once", () => {
+test("f4852: Part II taxable amount includes basis once", () => {
   const stated = f1040Fields(compute([r1099Item({
     gross_distribution: 20_000,
     taxable_amount: 18_000,
@@ -244,7 +245,7 @@ Deno.test("f4852: Part II taxable amount includes basis once", () => {
   );
 });
 
-Deno.test("f4852: undetermined 1099-R taxable amount cannot enter a calculated return", () => {
+test("f4852: undetermined 1099-R taxable amount cannot enter a calculated return", () => {
   const item = r1099Item({
     gross_distribution: 20_000,
     employee_contributions: 2_000,
@@ -258,7 +259,7 @@ Deno.test("f4852: undetermined 1099-R taxable amount cannot enter a calculated r
   );
 });
 
-Deno.test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to line25b", () => {
+test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to line25b", () => {
   const result = compute([
     r1099Item({
       gross_distribution: 10000,
@@ -276,7 +277,7 @@ Deno.test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to lin
   assertEquals(fields["line5b_pension_taxable"], undefined);
 });
 
-Deno.test("f4852: Part II 1099-R pension with no withholding", () => {
+test("f4852: Part II 1099-R pension with no withholding", () => {
   const result = compute([
     r1099Item({ gross_distribution: 12000, federal_withheld: 0 }),
   ]);
@@ -290,7 +291,7 @@ Deno.test("f4852: Part II 1099-R pension with no withholding", () => {
 // 4. Both parts populated in one call
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: Part I + Part II both populated → merged f1040 output", () => {
+test("f4852: Part I + Part II both populated → merged f1040 output", () => {
   const result = compute([
     w2Item({ wages: 60000, federal_withheld: 10000 }),
     r1099Item({
@@ -316,7 +317,7 @@ Deno.test("f4852: Part I + Part II both populated → merged f1040 output", () =
 // 5. Multiple 4852 forms (multiple employers/payers)
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: multiple W2 substitutes → wages and withholding summed", () => {
+test("f4852: multiple W2 substitutes → wages and withholding summed", () => {
   const result = compute([
     w2Item({ wages: 30000, federal_withheld: 5000 }),
     w2Item({
@@ -330,7 +331,7 @@ Deno.test("f4852: multiple W2 substitutes → wages and withholding summed", () 
   assertEquals(fields["line25a_w2_withheld"], 8000);
 });
 
-Deno.test("f4852: multiple 1099-R substitutes → pension amounts summed", () => {
+test("f4852: multiple 1099-R substitutes → pension amounts summed", () => {
   const result = compute([
     r1099Item({
       gross_distribution: 10000,
@@ -350,7 +351,7 @@ Deno.test("f4852: multiple 1099-R substitutes → pension amounts summed", () =>
   assertEquals(fields["line25b_withheld_1099"], 2500);
 });
 
-Deno.test("f4852: multiple mixed forms (W2 + R_1099 + IRA) → all fields correct", () => {
+test("f4852: multiple mixed forms (W2 + R_1099 + IRA) → all fields correct", () => {
   const result = compute([
     w2Item({ wages: 40000, federal_withheld: 6000 }),
     r1099Item({
@@ -380,7 +381,7 @@ Deno.test("f4852: multiple mixed forms (W2 + R_1099 + IRA) → all fields correc
 // 6. Edge: single R_1099 item with no withholding produces no line25b
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: R_1099 item zero withholding → no line25b in output", () => {
+test("f4852: R_1099 item zero withholding → no line25b in output", () => {
   const result = compute([
     r1099Item({ gross_distribution: 5000, federal_withheld: 0 }),
   ]);
@@ -388,7 +389,7 @@ Deno.test("f4852: R_1099 item zero withholding → no line25b in output", () => 
   assertEquals(fields["line25b_withheld_1099"], undefined);
 });
 
-Deno.test("f4852: code-1 substitute identifies the recipient of Form 5329", () => {
+test("f4852: code-1 substitute identifies the recipient of Form 5329", () => {
   const result = compute([r1099Item({
     gross_distribution: 5_000,
     taxable_amount: 4_000,
@@ -402,7 +403,7 @@ Deno.test("f4852: code-1 substitute identifies the recipient of Form 5329", () =
   assertEquals(owned[0]?.owner, TS.S);
 });
 
-Deno.test("f4852: code-1 substitute without a recipient fails closed", () => {
+test("f4852: code-1 substitute without a recipient fails closed", () => {
   assertThrows(
     () =>
       compute([r1099Item({
@@ -418,6 +419,6 @@ Deno.test("f4852: code-1 substitute without a recipient fails closed", () => {
 // 7. W2 item with all zeros → schema rejects (requires nonzero wages or withheld)
 // ---------------------------------------------------------------------------
 
-Deno.test("f4852: W2 item with wages=0 and federal_withheld=0 → schema throws", () => {
+test("f4852: W2 item with wages=0 and federal_withheld=0 → schema throws", () => {
   assertThrows(() => compute([w2Item({ wages: 0, federal_withheld: 0 })]));
 });

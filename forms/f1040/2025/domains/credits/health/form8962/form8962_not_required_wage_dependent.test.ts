@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as InputFilingStatus } from "../../../../../nodes/types.ts";
@@ -149,7 +150,7 @@ function filedReturn(interestOnly = false) {
   });
 }
 
-Deno.test("Form 8962 monthly policy excludes reviewed below-threshold dependent interest through final return, native and PDF", async () => {
+test("Form 8962 monthly policy excludes reviewed below-threshold dependent interest through final return, native and PDF", async () => {
   const result = filedReturn(true);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -171,7 +172,7 @@ Deno.test("Form 8962 monthly policy excludes reviewed below-threshold dependent 
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 excluded dependent interest rejects threshold, identity, review, and final-return tampering", async () => {
+test("Form 8962 excluded dependent interest rejects threshold, identity, review, and final-return tampering", async () => {
   const result = filedReturn(true);
   const pending = normalizeAllPending(result.pending);
   const changed = (source: unknown) => ({
@@ -237,7 +238,7 @@ Deno.test("Form 8962 excluded dependent interest rejects threshold, identity, re
   );
 });
 
-Deno.test("Form 8962 monthly no-APTC policy excludes reviewed below-threshold dependent wages through final return, native and PDF", async () => {
+test("Form 8962 monthly no-APTC policy excludes reviewed below-threshold dependent wages through final return, native and PDF", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -262,7 +263,7 @@ Deno.test("Form 8962 monthly no-APTC policy excludes reviewed below-threshold de
   await prepared.renderPdf();
 });
 
-Deno.test("Form 8962 excluded dependent monthly filing rejects threshold, source identity, policy and final credit tampering", async () => {
+test("Form 8962 excluded dependent monthly filing rejects threshold, source identity, policy and final credit tampering", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   const source = f1095aInputSchema.parse(pending.f1095a);

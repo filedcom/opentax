@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form5471SchedulePPdf } from "./f5471_schedule_p.ts";
 
-Deno.test("Schedule P PDF maps functional PTEP and U.S. dollar basis", () => {
+test("Schedule P PDF maps functional PTEP and U.S. dollar basis", () => {
   const [fields] = form5471SchedulePPdf.instances?.(
     {},
     form8992Filer,

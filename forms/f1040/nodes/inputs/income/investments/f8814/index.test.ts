@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8814,
@@ -35,11 +36,11 @@ function field(
     ?.fields[key];
 }
 
-Deno.test("f8814: empty election emits nothing", () => {
+test("f8814: empty election emits nothing", () => {
   assertEquals(compute([]).outputs, []);
 });
 
-Deno.test("f8814: eligibility and identity facts are required", () => {
+test("f8814: eligibility and identity facts are required", () => {
   assertEquals(
     f8814.inputSchema.safeParse({ f8814s: [{ interest_income: 2000 }] })
       .success,
@@ -53,7 +54,7 @@ Deno.test("f8814: eligibility and identity facts are required", () => {
   );
 });
 
-Deno.test("f8814: exactly $1,350 has no child tax or transferred income", () => {
+test("f8814: exactly $1,350 has no child tax or transferred income", () => {
   const lines = calculateForm8814({ ...child, interest_income: 1350 });
   assertEquals(lines.line14, 0);
   assertEquals(lines.line15, 0);
@@ -62,19 +63,19 @@ Deno.test("f8814: exactly $1,350 has no child tax or transferred income", () => 
   assertThrows(() => compute([{ ...child, interest_income: 1350 }]));
 });
 
-Deno.test("f8814: $2,000 has $65 child tax but no income transfer", () => {
+test("f8814: $2,000 has $65 child tax but no income transfer", () => {
   const result = compute([{ ...child, interest_income: 2000 }]);
   assertEquals(field(result, "income_tax_calculation", "form8814_tax"), 65);
   assertEquals(field(result, "schedule1", "line8z_form8814"), undefined);
 });
 
-Deno.test("f8814: $2,700 has $135 tax and no transferred income", () => {
+test("f8814: $2,700 has $135 tax and no transferred income", () => {
   const lines = calculateForm8814({ ...child, dividend_income: 2700 });
   assertEquals(lines.line6, 0);
   assertEquals(lines.line15, 135);
 });
 
-Deno.test("f8814: $3,700 interest transfers only $1,000 to Schedule 1", () => {
+test("f8814: $3,700 interest transfers only $1,000 to Schedule 1", () => {
   const result = compute([{ ...child, interest_income: 3700 }]);
   assertEquals(field(result, "schedule1", "line8z_form8814"), 1000);
   assertEquals(field(result, "agi_aggregator", "line8z_form8814"), 1000);
@@ -82,7 +83,7 @@ Deno.test("f8814: $3,700 interest transfers only $1,000 to Schedule 1", () => {
   assertEquals(field(result, "income_tax_calculation", "form8814_tax"), 135);
 });
 
-Deno.test("f8814: qualified dividend and capital gain allocations reconcile", () => {
+test("f8814: qualified dividend and capital gain allocations reconcile", () => {
   const item = {
     ...child,
     interest_income: 1000,
@@ -111,14 +112,14 @@ Deno.test("f8814: qualified dividend and capital gain allocations reconcile", ()
   );
 });
 
-Deno.test("f8814: Alaska PFD is ordinary dividend, not qualified dividend", () => {
+test("f8814: Alaska PFD is ordinary dividend, not qualified dividend", () => {
   const lines = calculateForm8814({ ...child, alaska_pfd: 3200 });
   assertEquals(lines.line2a, 3200);
   assertEquals(lines.line9, 0);
   assertEquals(lines.line12, 500);
 });
 
-Deno.test("f8814: Alaska PFD share is excluded from Form 8960 line 7", () => {
+test("f8814: Alaska PFD share is excluded from Form 8960 line 7", () => {
   const item = { ...child, interest_income: 4000, alaska_pfd: 2000 };
   const lines = calculateForm8814(item);
   assertEquals(lines.line12, 3300);
@@ -134,7 +135,7 @@ Deno.test("f8814: Alaska PFD share is excluded from Form 8960 line 7", () => {
   );
 });
 
-Deno.test("f8814: Pub. 596 Worksheet 2 removes only the Alaska PFD share of line 12", () => {
+test("f8814: Pub. 596 Worksheet 2 removes only the Alaska PFD share of line 12", () => {
   const line = calculateForm8814({
     ...child,
     interest_income: 9_000,
@@ -151,15 +152,15 @@ Deno.test("f8814: Pub. 596 Worksheet 2 removes only the Alaska PFD share of line
   assertEquals(field(result, "agi_aggregator", "form8814_eic_line4"), 6_791);
 });
 
-Deno.test("f8814: $13,500 income must use a child return", () => {
+test("f8814: $13,500 income must use a child return", () => {
   assertThrows(() => calculateForm8814({ ...child, interest_income: 13_500 }));
 });
 
-Deno.test("f8814: duplicate child is rejected", () => {
+test("f8814: duplicate child is rejected", () => {
   assertThrows(() => compute([child, child]));
 });
 
-Deno.test("f8814: multiple children aggregate tax and retain separate forms", () => {
+test("f8814: multiple children aggregate tax and retain separate forms", () => {
   const result = compute([
     { ...child, interest_income: 3000 },
     {
@@ -173,7 +174,7 @@ Deno.test("f8814: multiple children aggregate tax and retain separate forms", ()
   assertEquals((field(result, "form8814", "items") as unknown[]).length, 2);
 });
 
-Deno.test("f8814: PTC worksheet special amount includes tax-exempt interest and nontaxable Social Security", () => {
+test("f8814: PTC worksheet special amount includes tax-exempt interest and nontaxable Social Security", () => {
   const lines = calculateForm8814({
     ...child,
     interest_income: 3000,
@@ -183,7 +184,7 @@ Deno.test("f8814: PTC worksheet special amount includes tax-exempt interest and 
   assertEquals(lines.dependentPtcMagi, 3600);
 });
 
-Deno.test("f8814: interest adjustments do not add back to taxable interest", () => {
+test("f8814: interest adjustments do not add back to taxable interest", () => {
   const result = compute([{
     ...child,
     interest_income: 3000,
@@ -199,7 +200,7 @@ Deno.test("f8814: interest adjustments do not add back to taxable interest", () 
   assertEquals(line.line12, 300);
 });
 
-Deno.test("f8814: nominee dividends and capital gains stay outside income", () => {
+test("f8814: nominee dividends and capital gains stay outside income", () => {
   const item = {
     ...child,
     dividend_income: 2000,
@@ -213,7 +214,7 @@ Deno.test("f8814: nominee dividends and capital gains stay outside income", () =
   assertEquals(lines.line6, 300);
 });
 
-Deno.test("f8814: child's private-activity-bond interest enters parent AMT", () => {
+test("f8814: child's private-activity-bond interest enters parent AMT", () => {
   const result = compute([{
     ...child,
     interest_income: 3000,
@@ -234,7 +235,7 @@ Deno.test("f8814: child's private-activity-bond interest enters parent AMT", () 
   );
 });
 
-Deno.test("f8814: child's foreign account and trust trigger Schedule B", () => {
+test("f8814: child's foreign account and trust trigger Schedule B", () => {
   const result = compute([{
     ...child,
     interest_income: 3000,

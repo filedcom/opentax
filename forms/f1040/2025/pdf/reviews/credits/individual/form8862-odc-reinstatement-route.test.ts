@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -53,7 +54,7 @@ function standaloneOdcPending() {
   return buildPending(result.pending);
 }
 
-Deno.test("reviewed ODC credit calculates, but unauthenticated notice blocks both exports", async () => {
+test("reviewed ODC credit calculates, but unauthenticated notice blocks both exports", async () => {
   const pending = standaloneOdcPending();
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
@@ -77,7 +78,7 @@ Deno.test("reviewed ODC credit calculates, but unauthenticated notice blocks bot
   );
 });
 
-Deno.test("standalone ODC rejects altered Schedule 8812, dependent TIN, and Form 1040 amounts in both exports", () => {
+test("standalone ODC rejects altered Schedule 8812, dependent TIN, and Form 1040 amounts in both exports", () => {
   const pending = standaloneOdcPending();
   const general = pending.general!;
   const sourceDependents = general.dependents!;

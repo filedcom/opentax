@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8801,
@@ -50,7 +51,7 @@ function fixture(): Form8801CalculationInput {
   };
 }
 
-Deno.test("Form 8801 exclusion AMT, credit ordering and carry differ from the old preview", () => {
+test("Form 8801 exclusion AMT, credit ordering and carry differ from the old preview", () => {
   const r = calculateForm8801(fixture());
   assertEquals(r.lines, {
     1: 100_000,
@@ -88,7 +89,7 @@ Deno.test("Form 8801 exclusion AMT, credit ordering and carry differ from the ol
   ], [false, false, false, false]);
 });
 
-Deno.test("Form 8801 negative deferral amount offsets carry and stops at nonpositive line 21", () => {
+test("Form 8801 negative deferral amount offsets carry and stops at nonpositive line 21", () => {
   const v = fixture();
   v.prior_form6251.line10 = 0;
   const r = calculateForm8801(v);
@@ -100,7 +101,7 @@ Deno.test("Form 8801 negative deferral amount offsets carry and stops at nonposi
   assertEquals(r.schedule3_line6b, 0);
 });
 
-Deno.test("Form 8801 prior MFS adjustment reproduces IRS 895950 example and cap", () => {
+test("Form 8801 prior MFS adjustment reproduces IRS 895950 example and cap", () => {
   for (
     const [entered, expected] of [[875_950, 875_950], [895_950, 900_950], [
       1_142_550,
@@ -115,7 +116,7 @@ Deno.test("Form 8801 prior MFS adjustment reproduces IRS 895950 example and cap"
   }
 });
 
-Deno.test("Form 8801 all five prior statuses use 2024 exemption and phaseout", () => {
+test("Form 8801 all five prior statuses use 2024 exemption and phaseout", () => {
   for (
     const [status, exemption, threshold] of [
       ["single", 85_700, 609_350],
@@ -137,7 +138,7 @@ Deno.test("Form 8801 all five prior statuses use 2024 exemption and phaseout", (
   }
 });
 
-Deno.test("Form 8801 separate MTCNOL and signed exclusion inventory can skip Part I tax", () => {
+test("Form 8801 separate MTCNOL and signed exclusion inventory can skip Part I tax", () => {
   const v = fixture();
   v.prior_form6251.line2e = -1_000;
   v.additional_exclusion_items = [{
@@ -160,7 +161,7 @@ Deno.test("Form 8801 separate MTCNOL and signed exclusion inventory can skip Par
   assertEquals(r.lines[21], 6_100);
 });
 
-Deno.test("Form 8801 positive available credit files even with zero current capacity", () => {
+test("Form 8801 positive available credit files even with zero current capacity", () => {
   const v = fixture();
   v.current_return.form6251_line9 = 30_000;
   const r = calculateForm8801(v);
@@ -191,7 +192,7 @@ function capitalFixture(): Form8801CalculationInput {
   return v;
 }
 
-Deno.test("Form 8801 preferential tax computes 15%, 20%, zero and ordinary caps", () => {
+test("Form 8801 preferential tax computes 15%, 20%, zero and ordinary caps", () => {
   const v = capitalFixture();
   let r = calculateForm8801(v);
   assertEquals(r.lines[27], 100_000);
@@ -212,7 +213,7 @@ Deno.test("Form 8801 preferential tax computes 15%, 20%, zero and ordinary caps"
   assertEquals(r.lines[55], 24_800);
 });
 
-Deno.test("Form 8801 Schedule D unrecaptured gain uses separate 25% component", () => {
+test("Form 8801 Schedule D unrecaptured gain uses separate 25% component", () => {
   const v = capitalFixture();
   v.capital_rate_workpaper = {
     ...v.capital_rate_workpaper!,
@@ -227,7 +228,7 @@ Deno.test("Form 8801 Schedule D unrecaptured gain uses separate 25% component", 
   assertEquals(r.lines[55], 23_700);
 });
 
-Deno.test("Form 8801 foreign-income worksheet subtracts tax on excluded-income stack", () => {
+test("Form 8801 foreign-income worksheet subtracts tax on excluded-income stack", () => {
   const v = fixture();
   v.foreign_earned_income = {
     reference: "2024-2555",
@@ -250,7 +251,7 @@ Deno.test("Form 8801 foreign-income worksheet subtracts tax on excluded-income s
   assertEquals(calculateForm8801(v).lines[15], 1_104);
 });
 
-Deno.test("Form 8801 foreign and preferential workpapers coexist without omitting stack", () => {
+test("Form 8801 foreign and preferential workpapers coexist without omitting stack", () => {
   const v = capitalFixture();
   v.foreign_earned_income = {
     reference: "2024-2555",
@@ -264,7 +265,7 @@ Deno.test("Form 8801 foreign and preferential workpapers coexist without omittin
   assertEquals(r.lines[11], 23_800);
 });
 
-Deno.test("Form 8801 strict workpapers reject wrong years, dates, duplicates, detached lines and unsafe values", () => {
+test("Form 8801 strict workpapers reject wrong years, dates, duplicates, detached lines and unsafe values", () => {
   const v = fixture();
   for (
     const altered of [

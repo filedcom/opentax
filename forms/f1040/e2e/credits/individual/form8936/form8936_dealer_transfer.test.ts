@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -6,7 +7,7 @@ import { FilingStatus } from "../../../../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("E2E: ineligible dealer-transferred new clean vehicle reaches Schedule 2, not Schedule 3", () => {
+test("E2E: ineligible dealer-transferred new clean vehicle reaches Schedule 2, not Schedule 3", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -56,7 +59,7 @@ const cases = [
   },
 ];
 
-Deno.test("fractional QBI percentage and wage products file rounded monetary lines through full returns", async () => {
+test("fractional QBI percentage and wage products file rounded monetary lines through full returns", async () => {
   for (const c of cases) {
     const inputs = {
       ...base.inputs,
@@ -98,10 +101,10 @@ Deno.test("fractional QBI percentage and wage products file rounded monetary lin
         `<QualifiedBusinessIncomeDedAmt>${c.deduction}</QualifiedBusinessIncomeDedAmt>`,
       );
     }
-    const xml = await Deno.makeTempFile({ suffix: ".xml" });
+    const xml = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xml, prepared.bundle.xml);
-      const validated = await new Deno.Command("xmllint", {
+      await fs.writeFile(xml, prepared.bundle.xml);
+      const validated = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -120,7 +123,7 @@ Deno.test("fractional QBI percentage and wage products file rounded monetary lin
         new TextDecoder().decode(validated.stderr),
       );
     } finally {
-      await Deno.remove(xml);
+      await sys.remove(xml);
     }
     const origins: Parameters<typeof buildPdfBytes>[4] = [];
     const pdf = await buildPdfBytes(
@@ -159,13 +162,13 @@ Deno.test("fractional QBI percentage and wage products file rounded monetary lin
         buildPdfBytes(altered, base.filer, ".pdf-cache")
       );
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = `/tmp/opentax-8995a-fractional-parent-final-oct6/${c.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(`${dir}/origins.json`, JSON.stringify(origins));
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${dir}/origins.json`, JSON.stringify(origins));
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify({
           inputs,

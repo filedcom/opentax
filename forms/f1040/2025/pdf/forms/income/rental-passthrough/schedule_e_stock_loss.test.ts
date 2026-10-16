@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { scheduleEStockLossPdf } from "./schedule_e_stock_loss.ts";
@@ -50,7 +51,7 @@ const pending = {
   f1040: { line8_additional_income: -3_000 },
 };
 
-Deno.test("stock-only Schedule E PDF maps official TY2025 page 2 row and totals", () => {
+test("stock-only Schedule E PDF maps official TY2025 page 2 row and totals", () => {
   assertEquals(scheduleEStockLossPdf.printedFormKey, "schedule_e");
   const instance = scheduleEStockLossPdf.instances?.(raw, filer, pending)?.[0];
   assertEquals(scheduleEStockLossPdf.pageIndices?.(instance ?? {}), [1]);
@@ -73,7 +74,7 @@ Deno.test("stock-only Schedule E PDF maps official TY2025 page 2 row and totals"
   assertEquals(field("line41"), "topmostSubform[0].Page2[0].f2_78[0]");
 });
 
-Deno.test("stock-only Schedule E PDF rejects another Schedule E activity", () => {
+test("stock-only Schedule E PDF rejects another Schedule E activity", () => {
   assertThrows(
     () =>
       scheduleEStockLossPdf.instances?.(raw, filer, {
@@ -85,6 +86,6 @@ Deno.test("stock-only Schedule E PDF rejects another Schedule E activity", () =>
   );
 });
 
-Deno.test("stock-only Schedule E PDF emits no instance without Form 7203", () => {
+test("stock-only Schedule E PDF emits no instance without Form 7203", () => {
   assertEquals(scheduleEStockLossPdf.instances?.({}, filer, pending), []);
 });

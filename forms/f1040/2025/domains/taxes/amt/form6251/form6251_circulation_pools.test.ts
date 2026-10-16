@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { TS } from "../../../../../nodes/types.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -7,7 +8,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { circulationPoolFixtures } from "./form6251_circulation_pools.fixture.ts";
 
 for (const fixture of circulationPoolFixtures) {
-  Deno.test(`owned circulation pools reconcile the complete return: ${fixture.id}`, async () => {
+  test(`owned circulation pools reconcile the complete return: ${fixture.id}`, async () => {
     const result = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(result.diagnostics, []);
     const p = buildPending(result.pending), f = p.f1040!, a = p.form6251!;

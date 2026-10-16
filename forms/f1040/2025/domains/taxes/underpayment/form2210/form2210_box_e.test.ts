@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm2210BoxEPage1,
@@ -44,7 +45,7 @@ function source(): Form2210BoxEInput {
   };
 }
 
-Deno.test("Form 2210 box E staged page 1 calculates lines 1-9 from two prior separate returns", () => {
+test("Form 2210 box E staged page 1 calculates lines 1-9 from two prior separate returns", () => {
   assertEquals(calculateForm2210BoxEPage1(source()), {
     box_e: true,
     line1: 10_000,
@@ -59,7 +60,7 @@ Deno.test("Form 2210 box E staged page 1 calculates lines 1-9 from two prior sep
   });
 });
 
-Deno.test("Form 2210 box E still needs page 1 when withholding exceeds line 9", () => {
+test("Form 2210 box E still needs page 1 when withholding exceeds line 9", () => {
   const lines = calculateForm2210BoxEPage1({
     ...source(),
     current_withholding_taxes: 6_000,
@@ -68,7 +69,7 @@ Deno.test("Form 2210 box E still needs page 1 when withholding exceeds line 9", 
   assertEquals(lines.line9, 5_000);
 });
 
-Deno.test("Form 2210 box E rejects duplicate prior-return evidence and 110% branch", () => {
+test("Form 2210 box E rejects duplicate prior-return evidence and 110% branch", () => {
   const input = source();
   assertThrows(() =>
     calculateForm2210BoxEPage1({
@@ -94,7 +95,7 @@ Deno.test("Form 2210 box E rejects duplicate prior-return evidence and 110% bran
   );
 });
 
-Deno.test("Form 2210 box E rejects cases not requiring a page-1 attachment", () => {
+test("Form 2210 box E rejects cases not requiring a page-1 attachment", () => {
   const input = source();
   assertThrows(() =>
     calculateForm2210BoxEPage1({
@@ -119,7 +120,7 @@ Deno.test("Form 2210 box E rejects cases not requiring a page-1 attachment", () 
   );
 });
 
-Deno.test("Form 2210 box E page 1 binds current tax and withholding to finalized Form 1040", () => {
+test("Form 2210 box E page 1 binds current tax and withholding to finalized Form 1040", () => {
   const final1040 = {
     filing_status: "mfj",
     line22_tax_after_credits: 10_000,

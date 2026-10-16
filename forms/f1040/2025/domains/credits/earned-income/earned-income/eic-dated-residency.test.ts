@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -72,7 +75,7 @@ export function datedResidencyInputs(split = false, dependent = false) {
   };
 }
 
-Deno.test("dated EIC residence distinguishes183 from182days and prints7 while preserving6actualmonths", () => {
+test("dated EIC residence distinguishes183 from182days and prints7 while preserving6actualmonths", () => {
   assertEquals(reviewedEicDatedResidence(child), true);
   assertEquals(scheduleEicLine6Months(child), 7);
   for (
@@ -109,7 +112,7 @@ Deno.test("dated EIC residence distinguishes183 from182days and prints7 while pr
 
 for (const dependent of [false, true]) {
   for (const split of [false, true]) {
-    Deno.test(`dated EIC actual full native return ${dependent ? "dependent" : "custodial-release"}/${split ? "split" : "continuous"}`, async () => {
+    test(`dated EIC actual full native return ${dependent ? "dependent" : "custodial-release"}/${split ? "split" : "continuous"}`, async () => {
       const result = f1040_2025.executeReturn(
         datedResidencyInputs(split, dependent),
       );
@@ -131,17 +134,17 @@ for (const dependent of [false, true]) {
         xml,
         "<MonthsChildLivedWithYouCnt>07</MonthsChildLivedWithYouCnt>",
       );
-      const path = await Deno.makeTempFile({
+      const path = await sys.makeTempFile({
         prefix: "opentax-eic-dated-",
         suffix: ".xml",
       });
-      await Deno.writeTextFile(path, xml);
+      await fs.writeFile(path, xml);
       console.log(`EIC_DATED_XML ${path}`);
       const schema = new URL(
         "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         import.meta.url,
       ).pathname;
-      const validation = await new Deno.Command("xmllint", {
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
         stdout: "piped",
         stderr: "piped",

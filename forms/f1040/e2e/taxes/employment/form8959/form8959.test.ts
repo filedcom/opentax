@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -8,7 +9,7 @@ import { Box12Code } from "../../../../nodes/inputs/income/wages/w2/index.ts";
 const plan = buildExecutionPlan(registry);
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("four Form CT-2 quarters reach Form 8959 and Form 1040 withholding", () => {
+test("four Form CT-2 quarters reach Form 8959 and Form 1040 withholding", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -71,7 +72,7 @@ Deno.test("four Form CT-2 quarters reach Form 8959 and Form 1040 withholding", (
   assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 180);
 });
 
-Deno.test("uncollected W-2 Medicare tax restores Form 8959 regular withholding", () => {
+test("uncollected W-2 Medicare tax restores Form 8959 regular withholding", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -99,7 +100,7 @@ Deno.test("uncollected W-2 Medicare tax restores Form 8959 regular withholding",
   assertEquals(result.pending.schedule2?.line11_additional_medicare, 90);
 });
 
-Deno.test("W-2, substitute W-2, and household Medicare wages reach one Form 8959", () => {
+test("W-2, substitute W-2, and household Medicare wages reach one Form 8959", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -136,7 +137,7 @@ Deno.test("W-2, substitute W-2, and household Medicare wages reach one Form 8959
   assertEquals(result.pending.form8959?.line24_total_withheld, 0);
 });
 
-Deno.test("W-2 box 5 drives Form 8959 when it exceeds box 1", () => {
+test("W-2 box 5 drives Form 8959 when it exceeds box 1", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -162,7 +163,7 @@ Deno.test("W-2 box 5 drives Form 8959 when it exceeds box 1", () => {
   assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 180);
 });
 
-Deno.test("qualifying surviving spouse uses the $200,000 Medicare threshold", () => {
+test("qualifying surviving spouse uses the $200,000 Medicare threshold", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.QSS,
@@ -186,7 +187,7 @@ Deno.test("qualifying surviving spouse uses the $200,000 Medicare threshold", ()
   assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 45);
 });
 
-Deno.test("a single W-2 above $200,000 keeps Form 8959 on a joint return with zero tax", () => {
+test("a single W-2 above $200,000 keeps Form 8959 on a joint return with zero tax", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.MFJ,
@@ -216,7 +217,7 @@ Deno.test("a single W-2 above $200,000 keeps Form 8959 on a joint return with ze
   assertEquals(result.pending.schedule2?.line11_additional_medicare, undefined);
 });
 
-Deno.test("a single RRTA W-2 above $200,000 keeps Form 8959 on a joint return", () => {
+test("a single RRTA W-2 above $200,000 keeps Form 8959 on a joint return", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.MFJ,

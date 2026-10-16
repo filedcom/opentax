@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { TargetGroup } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
@@ -36,7 +37,7 @@ const source = {
   }],
 };
 
-Deno.test("Form 5884 PDF maps the official wage and credit widgets", () => {
+test("Form 5884 PDF maps the official wage and credit widgets", () => {
   const names = Object.fromEntries(
     form5884Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -51,7 +52,7 @@ Deno.test("Form 5884 PDF maps the official wage and credit widgets", () => {
   assertEquals(names.line4, "topmostSubform[0].Page1[0].f1_11[0]");
 });
 
-Deno.test("Form 5884 PDF omits pass-through-only credit and prints mixed line 3", () => {
+test("Form 5884 PDF omits pass-through-only credit and prints mixed line 3", () => {
   const passThrough = {
     source_type: "partnership" as const,
     entity_ein: "123456789",
@@ -79,7 +80,7 @@ Deno.test("Form 5884 PDF omits pass-through-only credit and prints mixed line 3"
   assertEquals(projected.line4, 3_650);
 });
 
-Deno.test("Form 5884 PDF projects source credit and requires Form 3800 reconciliation", () => {
+test("Form 5884 PDF projects source credit and requires Form 3800 reconciliation", () => {
   const pending = {
     f3800: {
       f5884_credit: {
@@ -109,7 +110,7 @@ Deno.test("Form 5884 PDF projects source credit and requires Form 3800 reconcili
   );
 });
 
-Deno.test("Form 5884 PDF prints controlled-group share and appends its calculation", async () => {
+test("Form 5884 PDF prints controlled-group share and appends its calculation", async () => {
   const groupSource = {
     ...source,
     controlled_group: {

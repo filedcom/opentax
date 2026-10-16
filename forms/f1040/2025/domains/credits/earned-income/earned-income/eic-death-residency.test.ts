@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -92,7 +95,7 @@ export function deathResidencyInputs(index: number) {
     },
   };
 }
-Deno.test("death source conserves inclusive lifetime and rejects invalid or conflicting residence", () => {
+test("death source conserves inclusive lifetime and rejects invalid or conflicting residence", () => {
   for (const c of deathResidencyCases) {
     assertEquals(reviewedEicDeathResidence(facts(c)), true);
     assertEquals(scheduleEicLine6Months(facts(c)), 12);
@@ -147,7 +150,7 @@ Deno.test("death source conserves inclusive lifetime and rejects invalid or conf
   );
 });
 for (let index = 0; index < deathResidencyCases.length; index++) {
-  Deno.test(`deceased child complete native/source joins ${deathResidencyCases[index].id}`, async () => {
+  test(`deceased child complete native/source joins ${deathResidencyCases[index].id}`, async () => {
     const result = f1040_2025.executeReturn(deathResidencyInputs(index));
     assertEquals(result.diagnostics, []);
     const pending = buildPending(result.pending),
@@ -171,17 +174,17 @@ for (let index = 0; index < deathResidencyCases.length; index++) {
       xml,
       "<MonthsChildLivedWithYouCnt>12</MonthsChildLivedWithYouCnt>",
     );
-    const path = await Deno.makeTempFile({
+    const path = await sys.makeTempFile({
       prefix: "opentax-eic-death-",
       suffix: ".xml",
     });
-    await Deno.writeTextFile(path, xml);
+    await fs.writeFile(path, xml);
     console.log(`EIC_DEATH_XML ${path}`);
     const schema = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",

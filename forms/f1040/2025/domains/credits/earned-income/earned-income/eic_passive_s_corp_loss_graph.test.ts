@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { passiveK1Item } from "./eic_passive_k1.fixture.ts";
@@ -20,7 +21,7 @@ for (
   ]
 ) {
   for (const investment of [11950, 11951]) {
-    Deno.test(`Calculation-only passive S-corp basis ${c.cash}/income ${c.income}/investment ${investment} reaches AGI and EIC after PAL/QBI`, () => {
+    test(`Calculation-only passive S-corp basis ${c.cash}/income ${c.income}/investment ${investment} reaches AGI and EIC after PAL/QBI`, () => {
       const i = inputs(c.cash, c.income, investment);
       const r = f1040_2025.executeReturn(i), p = r.pending;
       assertEquals(r.diagnostics, []);
@@ -56,7 +57,7 @@ for (
   }
 }
 
-Deno.test("Calculation-only passive loss rejects ambiguous ownership, other K1 items and unsupported return combinations", () => {
+test("Calculation-only passive loss rejects ambiguous ownership, other K1 items and unsupported return combinations", () => {
   const badOwner = inputs(1000, 3000);
   badOwner.general.taxpayer_ssn = "555667777";
   assertThrows(() => f1040_2025.executeReturn(badOwner));
@@ -78,7 +79,7 @@ Deno.test("Calculation-only passive loss rejects ambiguous ownership, other K1 i
 });
 
 for (const spouseOwned of [false, true]) {
-  Deno.test(`Calculation-only passive S-corp ${spouseOwned ? "spouse" : "primary"} loss shares joint passive income while keeping owned carryovers`, () => {
+  test(`Calculation-only passive S-corp ${spouseOwned ? "spouse" : "primary"} loss shares joint passive income while keeping owned carryovers`, () => {
     const i = passiveSCorpJointLossReturnInputs(spouseOwned);
     const owner = i.k1_s_corp[0].recipient_tin;
     const r = f1040_2025.executeReturn(i);
@@ -96,7 +97,7 @@ for (const spouseOwned of [false, true]) {
 }
 
 for (const investment of [11950, 11951]) {
-  Deno.test(`Calculation-only passive loss combines taxable interest, exempt interest and dividends at ${investment}`, () => {
+  test(`Calculation-only passive loss combines taxable interest, exempt interest and dividends at ${investment}`, () => {
     const i = inputs(1000, 3000, investment);
     i.f1099int[0].box8 -= 5;
     i.f1099int[0].box1 = 3;
@@ -122,7 +123,7 @@ for (const investment of [11950, 11951]) {
   });
 }
 
-Deno.test("Passive source cannot export native or PDF by deleting required basis, QBI or K1 copies", async () => {
+test("Passive source cannot export native or PDF by deleting required basis, QBI or K1 copies", async () => {
   const r = f1040_2025.executeReturn(inputs(1000, 3000));
   for (const key of ["form7203", "form8995", "k1_s_corp"]) {
     const p = buildPending(r.pending) as any;

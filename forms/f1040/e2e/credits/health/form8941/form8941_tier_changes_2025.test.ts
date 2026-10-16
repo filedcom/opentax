@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -38,12 +41,7 @@ for (
     210000,
   ]] as const
 ) {
-  Deno.test({
-    name:
-      `TY2025 Form8941 actual multi-QHP tier changes ${name}: full XSD and PDF`,
-    sanitizeResources: false,
-    sanitizeOps: false,
-    async fn() {
+  test(`TY2025 Form8941 actual multi-QHP tier changes ${name}: full XSD and PDF`, async () => {
       const input = form8941TierChangeInputs(receipts);
       const result = execute(plan, registry, input, {
         taxYear: 2025,
@@ -138,8 +136,8 @@ for (
         bundle.xml,
         `<SumSmllrAmtAndCreditForHIPAmt>${lines.line16}</SumSmllrAmtAndCreditForHIPAmt>`,
       );
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         dir + name + ".json",
         JSON.stringify(
           { input, lines, pending: result.pending, worksheet },
@@ -147,13 +145,13 @@ for (
           2,
         ),
       );
-      await Deno.writeTextFile(dir + name + ".xml", bundle.xml);
-      const xml = await new Deno.Command("xmllint", {
+      await fs.writeFile(dir + name + ".xml", bundle.xml);
+      const xml = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, dir + name + ".xml"],
         stderr: "piped",
       }).output();
       assertEquals(xml.code, 0, new TextDecoder().decode(xml.stderr));
-      await Deno.writeFile(
+      await fs.writeFile(
         dir + name + ".pdf",
         await buildPdfBytes(
           bundle.pending,
@@ -162,19 +160,18 @@ for (
           bundle,
         ),
       );
-      const extraction = await new Deno.Command("pdftotext", {
+      const extraction = await new sys.Command("pdftotext", {
         args: ["-layout", dir + name + ".pdf", "-"],
         stdout: "piped",
       }).output();
       assertEquals(extraction.code, 0);
       const packet = new TextDecoder().decode(extraction.stdout);
-      await Deno.writeTextFile(dir + name + ".txt", packet);
+      await fs.writeFile(dir + name + ".txt", packet);
       assertStringIncludes(packet, "Small Employer Health Insurance");
       assertStringIncludes(packet, String(lines.line16));
       assertStringIncludes(packet, String(benefits));
       assert(packet.split("\f").filter((p) => p.trim()).length >= 23);
-    },
-  });
+    });
 }
 
 const mutations: readonly [string, (source: any) => void][] = [
@@ -265,7 +262,7 @@ const mutations: readonly [string, (source: any) => void][] = [
   ["annual-premium-differs", (s) => s.employees[1].tax_year_shop_premium -= 1],
 ];
 for (const [name, mutate] of mutations) {
-  Deno.test(`TY2025 Form8941 tier changes reject ${name}`, () => {
+  test(`TY2025 Form8941 tier changes reject ${name}`, () => {
     const source: any = structuredClone(form8941TierChangeSource());
     mutate(source);
     assertThrows(() => calculateForm8941(inputSchema.parse(source)));

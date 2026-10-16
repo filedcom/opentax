@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -102,7 +103,7 @@ function pairedCode2Case() {
   return { source, forms, pending, context };
 }
 
-Deno.test("paired Form 8889 carries one owner's code-2 return and earnings once", () => {
+test("paired Form 8889 carries one owner's code-2 return and earnings once", () => {
   const { forms, pending, context } = pairedCode2Case();
   assertEquals(forms[0]?.print_line14b_excluded_distributions, 1_000);
   assertEquals(forms[0]?.print_line13_deduction, 4_300);
@@ -128,7 +129,7 @@ Deno.test("paired Form 8889 carries one owner's code-2 return and earnings once"
   );
 });
 
-Deno.test("paired Form 8889 rejects changed code-2 earnings and another owner's distribution", () => {
+test("paired Form 8889 rejects changed code-2 earnings and another owner's distribution", () => {
   const { source, forms, pending, context } = pairedCode2Case();
   assertThrows(
     () =>
@@ -181,7 +182,7 @@ Deno.test("paired Form 8889 rejects changed code-2 earnings and another owner's 
   );
 });
 
-Deno.test("paired Form 8889 attributes a spouse-owned code-2 return to the spouse copy", () => {
+test("paired Form 8889 attributes a spouse-owned code-2 return to the spouse copy", () => {
   const original = pairedCode2Case().source;
   const source = inputSchema.parse({
     ...original,
@@ -241,7 +242,7 @@ Deno.test("paired Form 8889 attributes a spouse-owned code-2 return to the spous
   assertEquals(pdf?.[1]?.print_line14b_excluded_distributions, 1_000);
 });
 
-Deno.test("both spouses' timely code-2 returns reconcile separate Form 8889 copies and combined return", async () => {
+test("both spouses' timely code-2 returns reconcile separate Form 8889 copies and combined return", async () => {
   const base = pdfReviewFixtures.find((item) =>
     item.id === "joint-two-hsa-owners"
   )!;

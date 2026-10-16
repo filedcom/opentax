@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
@@ -32,7 +33,7 @@ const baseW2 = {
   box7_ss_tips: 5_000,
 };
 
-Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund", () => {
+test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund", () => {
   const result = run(
     {
       filing_status: "single",
@@ -67,7 +68,7 @@ Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund
   assertEquals(f1040.line35a_refund, 1_572);
 });
 
-Deno.test("qualified tips: no occupation code leaves taxable income unchanged", () => {
+test("qualified tips: no occupation code leaves taxable income unchanged", () => {
   const result = run(
     { filing_status: "single", taxpayer_ssn: "111-22-3333" },
     baseW2,
@@ -77,7 +78,7 @@ Deno.test("qualified tips: no occupation code leaves taxable income unchanged", 
   assertEquals(finalValue(result.pending.f1040.line15_taxable_income), 14_250);
 });
 
-Deno.test("qualified tips: no taxpayer SSN leaves taxable income unchanged", () => {
+test("qualified tips: no taxpayer SSN leaves taxable income unchanged", () => {
   const result = run(
     { filing_status: "single" },
     { ...baseW2, box14b_tipped_code: "102" },
@@ -87,7 +88,7 @@ Deno.test("qualified tips: no taxpayer SSN leaves taxable income unchanged", () 
   assertEquals(finalValue(result.pending.f1040.line15_taxable_income), 14_250);
 });
 
-Deno.test("qualified tips: MFS filer does not receive the deduction", () => {
+test("qualified tips: MFS filer does not receive the deduction", () => {
   const result = run(
     { filing_status: "mfs", taxpayer_ssn: "111-22-3333" },
     { ...baseW2, box14b_tipped_code: "102" },
@@ -97,7 +98,7 @@ Deno.test("qualified tips: MFS filer does not receive the deduction", () => {
   assertEquals(finalValue(result.pending.f1040.line15_taxable_income), 14_250);
 });
 
-Deno.test("qualified tips: a joint filer's eligible spouse can deduct their own W-2 tips", () => {
+test("qualified tips: a joint filer's eligible spouse can deduct their own W-2 tips", () => {
   const result = run(
     {
       filing_status: "mfj",
@@ -114,7 +115,7 @@ Deno.test("qualified tips: a joint filer's eligible spouse can deduct their own 
   assertEquals(result.pending.f1040.line13b_additional_deductions, 5_000);
 });
 
-Deno.test("qualified tips: an employment-invalid taxpayer SSN cannot use their own tips", () => {
+test("qualified tips: an employment-invalid taxpayer SSN cannot use their own tips", () => {
   const result = run(
     {
       filing_status: "single",

@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
 import { ruleFormPrefix } from "../../core/validation/rule-builder.ts";
@@ -10,7 +11,7 @@ import {
 } from "../../cli/commands/export.ts";
 import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
-const evidenceDir = Deno.args[0];
+const evidenceDir = process.argv.slice(2)[0];
 if (!evidenceDir) {
   throw new Error(
     "Usage: audit-joint-submission-rules.ts <archive-evidence-directory>",
@@ -20,10 +21,10 @@ const evidencePath = (name: string) => `${evidenceDir}/${name}`;
 const results = [];
 for (let i = 0; i < 5; i++) {
   const { pending: rawPending, filer } = JSON.parse(
-    await Deno.readTextFile(evidencePath(`${i}.json`)),
+    await fs.readFile(evidencePath(`${i}.json`), "utf8"),
   );
   const pending = normalizeAllPending(rawPending);
-  const xml = await Deno.readTextFile(evidencePath(`${i}.xml`));
+  const xml = await fs.readFile(evidencePath(`${i}.xml`), "utf8");
   const scope = emittedValidationScope(xml);
   const ctx = createReturnContext(
     pending,
@@ -88,7 +89,7 @@ for (let i = 0; i < 5; i++) {
     exportResult,
   });
 }
-await Deno.writeTextFile(
+await fs.writeFile(
   evidencePath("business-rule-results.json"),
   JSON.stringify(results, null, 2) + "\n",
 );

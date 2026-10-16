@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { computeRegularMethodPenalty } from "./calculation.ts";
 
-Deno.test("regular method: four unpaid installments accrue through filing day", () => {
+test("regular method: four unpaid installments accrue through filing day", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 37_067,
@@ -12,7 +13,7 @@ Deno.test("regular method: four unpaid installments accrue through filing day", 
   );
 });
 
-Deno.test("regular method: timely quarterly payments avoid a penalty", () => {
+test("regular method: timely quarterly payments avoid a penalty", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,
@@ -25,7 +26,7 @@ Deno.test("regular method: timely quarterly payments avoid a penalty", () => {
   );
 });
 
-Deno.test("regular method: a late catch-up payment still leaves an earlier penalty", () => {
+test("regular method: a late catch-up payment still leaves an earlier penalty", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,
@@ -35,7 +36,7 @@ Deno.test("regular method: a late catch-up payment still leaves an earlier penal
   );
 });
 
-Deno.test("regular method: withholding is treated evenly across installments", () => {
+test("regular method: withholding is treated evenly across installments", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,
@@ -45,7 +46,7 @@ Deno.test("regular method: withholding is treated evenly across installments", (
   );
 });
 
-Deno.test("regular method: less than $1,000 due after withholding has no penalty", () => {
+test("regular method: less than $1,000 due after withholding has no penalty", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,
@@ -55,7 +56,7 @@ Deno.test("regular method: less than $1,000 due after withholding has no penalty
   );
 });
 
-Deno.test("regular method: explicit penalty remains authoritative", () => {
+test("regular method: explicit penalty remains authoritative", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,
@@ -65,7 +66,7 @@ Deno.test("regular method: explicit penalty remains authoritative", () => {
   );
 });
 
-Deno.test("regular method: waiver suppresses an explicit penalty", () => {
+test("regular method: waiver suppresses an explicit penalty", () => {
   assertEquals(
     computeRegularMethodPenalty({
       current_year_tax: 10_000,

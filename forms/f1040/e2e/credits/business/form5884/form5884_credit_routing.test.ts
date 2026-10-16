@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertGreater } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -57,7 +58,7 @@ const business = {
   }],
 };
 
-Deno.test("Form 5884 source reaches Form 3800 but posts no credit without tax", () => {
+test("Form 5884 source reaches Form 3800 but posts no credit without tax", () => {
   const result = execute(plan, registry, {
     general,
     f5884: source,
@@ -80,7 +81,7 @@ Deno.test("Form 5884 source reaches Form 3800 but posts no credit without tax", 
   assertEquals(result.diagnostics, []);
 });
 
-Deno.test("Form 5884 allowed credit reaches Schedule 3 after Form 3800 Part II", () => {
+test("Form 5884 allowed credit reaches Schedule 3 after Form 3800 Part II", () => {
   const result = execute(plan, registry, {
     general,
     w2: [{
@@ -106,7 +107,7 @@ Deno.test("Form 5884 allowed credit reaches Schedule 3 after Form 3800 Part II",
   assertEquals(result.pending.f3800?.specified_credit_allowed, allowed);
 });
 
-Deno.test("pass-through-only work opportunity credit reaches Form 3800 without employer wages", () => {
+test("pass-through-only work opportunity credit reaches Form 3800 without employer wages", () => {
   const result = execute(plan, registry, {
     general,
     f5884: {
@@ -131,7 +132,7 @@ Deno.test("pass-through-only work opportunity credit reaches Form 3800 without e
   assertEquals(result.diagnostics, []);
 });
 
-Deno.test("Form 5884 line 2 reduces Schedule F labor even when credit is tax-limited", () => {
+test("Form 5884 line 2 reduces Schedule F labor even when credit is tax-limited", () => {
   const result = execute(plan, registry, {
     general,
     f5884: {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { buildForm8874Document, form8874 } from "./f8874.ts";
 import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
@@ -32,7 +33,7 @@ const filer = {
   taxpayer_ssn: "111223333",
 };
 
-Deno.test("Form 8874 MeF records an identified investment and 5 percent credit", () => {
+test("Form 8874 MeF records an identified investment and 5 percent credit", () => {
   const xml = buildForm8874Document(source, 0);
   assertStringIncludes(xml, "<IRS8874>");
   assertStringIncludes(
@@ -52,7 +53,7 @@ Deno.test("Form 8874 MeF records an identified investment and 5 percent credit",
   assertStringIncludes(xml, "<TotalCreditAmt>50000</TotalCreditAmt>");
 });
 
-Deno.test("Form 8874 MeF requires matching linked Form 3800", () => {
+test("Form 8874 MeF requires matching linked Form 3800", () => {
   assertThrows(
     () => form8874.build(source, { pending: { f8874: source, f1040: filer } }),
     Error,
@@ -92,7 +93,7 @@ Deno.test("Form 8874 MeF requires matching linked Form 3800", () => {
   );
 });
 
-Deno.test("Form 8874 MeF reconciles passive and direct investments separately", () => {
+test("Form 8874 MeF reconciles passive and direct investments separately", () => {
   const passive = {
     ...source.investments[0],
     subject_to_passive_activity_limit: true,
@@ -171,7 +172,7 @@ Deno.test("Form 8874 MeF reconciles passive and direct investments separately", 
   );
 });
 
-Deno.test("Form 8874 line 2 includes filed partnership and S-corporation credits", () => {
+test("Form 8874 line 2 includes filed partnership and S-corporation credits", () => {
   const pending = {
     f1040: filer,
     f3800: {
@@ -237,7 +238,7 @@ Deno.test("Form 8874 line 2 includes filed partnership and S-corporation credits
   );
 });
 
-Deno.test("Form 8874 line 2 reconciles a passive partnership credit", () => {
+test("Form 8874 line 2 reconciles a passive partnership credit", () => {
   const activity = {
     activity_reference: "Community partnership activity",
     source_form: "Form 8874",

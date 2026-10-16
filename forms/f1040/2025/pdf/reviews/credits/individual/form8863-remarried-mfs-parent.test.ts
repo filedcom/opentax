@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -19,7 +22,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 for (const stepHigher of [false, true]) {
-  Deno.test(`actual remarried MFS ${stepHigher ? "step-higher spouse-itemizes" : "custodian-higher standard"} full owned parents and sibling tax packets`, async () => {
+  test(`actual remarried MFS ${stepHigher ? "step-higher spouse-itemizes" : "custodian-higher standard"} full owned parents and sibling tax packets`, async () => {
     const f = separateFamily(stepHigher);
     const a = f.parents[0].pending, p = f.parents[1].pending;
     assertEquals([
@@ -106,25 +109,25 @@ for (const stepHigher of [false, true]) {
           `<SSN>${stepHigher ? "999887777" : "111223333"}</SSN>`,
         );
       }
-      const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+      const tmp = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(tmp, b.bundle.xml);
-        const q = await new Deno.Command("xmllint", {
+        await fs.writeFile(tmp, b.bundle.xml);
+        const q = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, tmp],
           stdout: "piped",
           stderr: "piped",
         }).output();
         assertEquals(q.code, 0, new TextDecoder().decode(q.stderr));
       } finally {
-        await Deno.remove(tmp);
+        await sys.remove(tmp);
       }
       const pdf = await b.renderPdf(), doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), r.pages);
       assertEquals(doc.getForm().getFields().length, 0);
-      const pt = await Deno.makeTempFile({ suffix: ".pdf" });
+      const pt = await sys.makeTempFile({ suffix: ".pdf" });
       try {
-        await Deno.writeFile(pt, pdf);
-        const q = await new Deno.Command("pdftotext", {
+        await fs.writeFile(pt, pdf);
+        const q = await new sys.Command("pdftotext", {
           args: [pt, "-"],
           stdout: "piped",
         }).output();
@@ -138,28 +141,28 @@ for (const stepHigher of [false, true]) {
           assertStringIncludes(text, r.stem.startsWith("Sam") ? "569" : "431");
         }
       } finally {
-        await Deno.remove(pt);
+        await sys.remove(pt);
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-remarried-mfs-parent-evidence",
           stem = `${
             stepHigher ? "step-higher-itemized" : "custodian-higher-standard"
           }-${r.stem}`;
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${stem}-source-input.json`,
           JSON.stringify({ inputs: r.inputs, filer: r.filer }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${stem}-full-return.xml`,
           b.bundle.xml,
         );
-        await Deno.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
       }
     }
   });
 }
-Deno.test("remarried MFS source and child native/PDF reject selected lower parent, deduction owner conflicts and child-credit leaks", async () => {
+test("remarried MFS source and child native/PDF reject selected lower parent, deduction owner conflicts and child-credit leaks", async () => {
   const f = separateFamily(true), c = f.children[0];
   const changes: Array<(p: any) => void> = [
     (p) => p.form8615.parent_ssn = "111223333",
@@ -234,7 +237,7 @@ Deno.test("remarried MFS source and child native/PDF reject selected lower paren
     await assertRejects(() => f1040_2025.prepareReturn(p, c.childFiler));
   }
 });
-Deno.test("actual independent MFS parent exports reject detached owned deductions, spouse itemization, family inventory and credits", async () => {
+test("actual independent MFS parent exports reject detached owned deductions, spouse itemization, family inventory and credits", async () => {
   const f = separateFamily(true), r = f.parents[0];
   const changes: Array<(p: any) => void> = [
     (p) => p.schedule_a.line_5b_real_estate_tax = 19000,
@@ -260,7 +263,7 @@ Deno.test("actual independent MFS parent exports reject detached owned deduction
   p.general.mfs_spouse_itemizing = false;
   await assertRejects(() => f1040_2025.prepareReturn(p, step.filer));
 });
-Deno.test("actual MFS education eligibility rejects claimed AOC even with valid owned students and parent payment sources", async () => {
+test("actual MFS education eligibility rejects claimed AOC even with valid owned students and parent payment sources", async () => {
   const f = separateFamily(false),
     old = family(false),
     r = f.parents[0],
@@ -284,7 +287,7 @@ Deno.test("actual MFS education eligibility rejects claimed AOC even with valid 
   assertThrows(() => form8863Pdf.instances!(p.f8863, r.filer, p));
   await assertRejects(() => f1040_2025.prepareReturn(p, r.filer));
 });
-Deno.test("public remarried MFS source calculation rejects detached receipt, parent ownership, custody and spouse itemization sources", () => {
+test("public remarried MFS source calculation rejects detached receipt, parent ownership, custody and spouse itemization sources", () => {
   const f = separateFamily(true), c = f.children[0];
   const changes: Array<(p: any) => void> = [
     (p) =>

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { testFiler } from "../../../../mef/execution/test-filer.ts";
 import { form9465AttachedPdf } from "./f9465_attached.ts";
@@ -38,7 +39,7 @@ const pending = {
   f1040: { line37_amount_owed: 7_201 },
 };
 
-Deno.test("Form 9465 staged PDF maps page-one balance, terms, and return identity", () => {
+test("Form 9465 staged PDF maps page-one balance, terms, and return identity", () => {
   assertEquals(form9465AttachedPdf.pageIndices?.(source), [0]);
   const projected = form9465AttachedPdf.instances?.(source, filer, pending);
   assertEquals(projected, [{
@@ -68,7 +69,7 @@ Deno.test("Form 9465 staged PDF maps page-one balance, terms, and return identit
   );
 });
 
-Deno.test("Form 9465 staged PDF rejects return mismatch and foreign address", () => {
+test("Form 9465 staged PDF rejects return mismatch and foreign address", () => {
   assertThrows(() =>
     form9465AttachedPdf.instances?.(source, filer, {
       ...pending,

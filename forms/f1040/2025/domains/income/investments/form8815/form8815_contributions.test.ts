@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import type { Form8815Input } from "../../../../../nodes/intermediate/forms/income/investments/form8815/index.ts";
 import { institutionInputs } from "./form8815_institutions.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
@@ -13,7 +15,7 @@ import {
 } from "./form8815_contributions.fixture.ts";
 
 for (const kind of contributionCases) {
-  Deno.test(`Form 8815 contribution source through final tax and packet: ${kind}`, async () => {
+  test(`Form 8815 contribution source through final tax and packet: ${kind}`, async () => {
     const inputs = contributionInputs(kind);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -63,12 +65,12 @@ for (const kind of contributionCases) {
       origins,
     );
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-    const root = Deno.env.get("OPENTAX_FORM8815_CONTRIBUTION_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8815_CONTRIBUTION_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${kind}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${kind}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${kind}.pdf`, pdf);
+      await fs.writeFile(`${root}/${kind}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${kind}.json`,
         JSON.stringify(
           { inputs, pending, filer, origins, acceptanceVerified: false },

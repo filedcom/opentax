@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172FarmingCarryHistory } from "./form172_farming_carry_history.ts";
 function origin() {
@@ -158,7 +159,7 @@ function history(rows: ReturnType<typeof annual>[], waiver = false) {
     annual_reviews: rows,
   };
 }
-Deno.test("Form 172 mixed history applies farm carryback then nonfarm-first forward capacity", () => {
+test("Form 172 mixed history applies farm carryback then nonfarm-first forward capacity", () => {
   const { o, v } = mixed();
   const r = calculateForm172FarmingCarryHistory(
     o,
@@ -178,7 +179,7 @@ Deno.test("Form 172 mixed history applies farm carryback then nonfarm-first forw
   assertEquals(r.portionCarryHistoriesReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 mixed waived history shares capacity without carrying nonfarm back", () => {
+test("Form 172 mixed waived history shares capacity without carrying nonfarm back", () => {
   const { o, v } = mixed();
   const r = calculateForm172FarmingCarryHistory(
     o,
@@ -190,7 +191,7 @@ Deno.test("Form 172 mixed waived history shares capacity without carrying nonfar
   assertEquals(r.annualResults[0].farmDeduction, 30000);
   assertEquals(r.openingLoss, 20000);
 });
-Deno.test("Form 172 mixed deduction and absorption allocations preserve capital addbacks", () => {
+test("Form 172 mixed deduction and absorption allocations preserve capital addbacks", () => {
   const { o, v } = mixed(2023, 100000);
   const a = annual(2024, 50000);
   a.capital_loss_deduction.amount = 3000;
@@ -202,7 +203,7 @@ Deno.test("Form 172 mixed deduction and absorption allocations preserve capital 
   assertEquals(y.farmAbsorbed, 33000);
   assertEquals(r.openingLoss, 57000);
 });
-Deno.test("Form 172 mixed 2018–2020 history uses five carryback years for both portions", () => {
+test("Form 172 mixed 2018–2020 history uses five carryback years for both portions", () => {
   const { o, v } = mixed(2019);
   const years = [2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022, 2023, 2024];
   const r = calculateForm172FarmingCarryHistory(
@@ -217,7 +218,7 @@ Deno.test("Form 172 mixed 2018–2020 history uses five carryback years for both
   assertEquals(r.nonfarmingOpeningLoss, 0);
   assertEquals(r.farmingOpeningLoss, 50000);
 });
-Deno.test("Form 172 historic mixed history uses five farm years and two general nonfarm years", () => {
+test("Form 172 historic mixed history uses five farm years and two general nonfarm years", () => {
   const o = legacy();
   o.inventory.noncapital_deductions[0].amount = 60000;
   o.inventory.noncapital_deductions.push({
@@ -267,7 +268,7 @@ Deno.test("Form 172 historic mixed history uses five farm years and two general 
   assertEquals(r.openingLoss, 30000);
   assertEquals(r.expiresAfterTaxYear, 2037);
 });
-Deno.test("Form 172 mixed history requires all annual sources even after full exhaustion", () => {
+test("Form 172 mixed history requires all annual sources even after full exhaustion", () => {
   const { o, v } = mixed();
   const h = history([annual(2021, 100000), annual(2022), annual(2024, 100000)]);
   const r = calculateForm172FarmingCarryHistory(o, v, h);
@@ -284,7 +285,7 @@ Deno.test("Form 172 mixed history requires all annual sources even after full ex
     );
   }
 });
-Deno.test("Form 172 mixed history rejects caller prior-use balances and conflicting owners", () => {
+test("Form 172 mixed history rejects caller prior-use balances and conflicting owners", () => {
   const { o, v } = mixed();
   const h = history([annual(2024, 100000)], true);
   for (

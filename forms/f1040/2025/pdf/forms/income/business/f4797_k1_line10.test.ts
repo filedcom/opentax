@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form4797Pdf } from "./f4797.ts";
@@ -15,7 +16,7 @@ const rows = ["111111111", "222222222", "333333333", "444444444"].map(
   }),
 );
 
-Deno.test("Form 4797 PDF fills all four K-1 ordinary line 10 rows", () => {
+test("Form 4797 PDF fills all four K-1 ordinary line 10 rows", () => {
   const fields = form4797Pdf.projectFields?.(
     { k1_box11_line10_rows: rows },
     {},
@@ -41,7 +42,7 @@ Deno.test("Form 4797 PDF fills all four K-1 ordinary line 10 rows", () => {
   );
 });
 
-Deno.test("Form 4797 PDF appends and reconciles K-1 line 10 source rows after four", async () => {
+test("Form 4797 PDF appends and reconciles K-1 line 10 source rows after four", async () => {
   const all = [...rows, {
     ...rows[0],
     partnership_ein: "555555555",

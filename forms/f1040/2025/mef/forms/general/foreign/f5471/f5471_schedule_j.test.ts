@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   form8992Cfc,
@@ -12,12 +14,12 @@ const xsd = new URL(
 ).pathname;
 let schemaAvailable = false;
 try {
-  schemaAvailable = Deno.statSync(xsd).isFile;
+  schemaAvailable = sys.statSync(xsd).isFile;
 } catch {
   // Research schema bundle is optional in another workspace.
 }
 
-Deno.test("Schedule J reconciles E&P, section 951A and subpart F PTEP", () => {
+test("Schedule J reconciles E&P, section 951A and subpart F PTEP", () => {
   const xml = form5471ScheduleJ.build({}, {
     filer: form8992Filer,
     pending: form8992Pending,
@@ -57,12 +59,7 @@ Deno.test("Schedule J reconciles E&P, section 951A and subpart F PTEP", () => {
     }), Error);
 });
 
-Deno.test({
-  name: "Schedule J bounded native XML satisfies TY2025 v5.4 XSD",
-  ignore: !schemaAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
+test.skipIf(!schemaAvailable)("Schedule J bounded native XML satisfies TY2025 v5.4 XSD", async () => {
     const xml = form5471ScheduleJ.build({}, {
       filer: form8992Filer,
       pending: form8992Pending,
@@ -70,7 +67,7 @@ Deno.test({
       /^<IRS5471ScheduleJ/,
       '<IRS5471ScheduleJ xmlns="http://www.irs.gov/efile" documentId="IRS5471ScheduleJTest1"',
     );
-    const command = new Deno.Command("xmllint", {
+    const command = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -81,5 +78,4 @@ Deno.test({
     await writer.close();
     const result = await command.output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
-  },
-});
+  });

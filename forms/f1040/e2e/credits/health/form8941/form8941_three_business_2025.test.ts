@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -88,29 +91,29 @@ async function packet(thirdReceipts: number, name: string) {
     "<SmllEmplrHIPFTEEmplForTaxYrCnt>13</SmllEmplrHIPFTEEmplForTaxYrCnt>",
   );
   assertEquals((bundle.xml.match(/<Form8941CYCreditsGrp /g) ?? []).length, 1);
-  await Deno.mkdir(dir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
   const prefix = dir + name;
-  await Deno.writeTextFile(
+  await fs.writeFile(
     prefix + ".json",
     JSON.stringify({ input, expected, pending: result.pending }, null, 2),
   );
-  await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-  const validation = await new Deno.Command("xmllint", {
+  await fs.writeFile(prefix + ".xml", bundle.xml);
+  const validation = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, prefix + ".xml"],
     stderr: "piped",
   }).output();
   assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
-  await Deno.writeFile(
+  await fs.writeFile(
     prefix + ".pdf",
     await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
   );
-  const extracted = await new Deno.Command("pdftotext", {
+  const extracted = await new sys.Command("pdftotext", {
     args: ["-layout", prefix + ".pdf", "-"],
     stdout: "piped",
   }).output();
   assertEquals(extracted.code, 0);
   const text = new TextDecoder().decode(extracted.stdout);
-  await Deno.writeTextFile(prefix + ".txt", text);
+  await fs.writeFile(prefix + ".txt", text);
   assertStringIncludes(text, "Jane Third Retail Shop");
   assertStringIncludes(text, String(expected.lines.line16));
   assertStringIncludes(
@@ -120,12 +123,7 @@ async function packet(thirdReceipts: number, name: string) {
   return { input, expected, filer, result, bundle, form3800 };
 }
 
-Deno.test({
-  name:
-    "2025 three real same-owner SHOP businesses aggregate one 8941, cap shared worker and reduce each Schedule C before current use",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 three real same-owner SHOP businesses aggregate one 8941, cap shared worker and reduce each Schedule C before current use", async () => {
     const { input, expected, form3800 } = await packet(
       150000,
       "same-owner-three-businesses-partial",
@@ -151,15 +149,9 @@ Deno.test({
       17,
       14,
     ]);
-  },
-});
+  });
 
-Deno.test({
-  name:
-    "2025 three-business group full current use keeps one native and PDF 8941",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 three-business group full current use keeps one native and PDF 8941", async () => {
     const { expected, form3800, result } = await packet(
       240000,
       "same-owner-three-businesses-full",
@@ -169,8 +161,7 @@ Deno.test({
       result.pending.f1040.line20_nonrefundable_credits,
       expected.lines.line16,
     );
-  },
-});
+  });
 
 type Mutation = readonly [string, (source: any) => void];
 const mutations: readonly Mutation[] = [
@@ -210,12 +201,7 @@ const mutations: readonly Mutation[] = [
   }],
 ];
 
-Deno.test({
-  name:
-    "2025 third business inventory, identity, coverage, payroll and native/PDF conflicts reject",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("2025 third business inventory, identity, coverage, payroll and native/PDF conflicts reject", async () => {
     const { input, filer, bundle } = await packet(
       150000,
       "three-business-negative-base",
@@ -295,5 +281,4 @@ Deno.test({
         name,
       );
     }
-  },
-});
+  });

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099int } from "../../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { f1099oid } from "../../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
@@ -50,7 +51,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 limits sourced K-1 code H expense against 1099-INT income", () => {
+test("Form 4952 limits sourced K-1 code H expense against 1099-INT income", () => {
   const fromInterest = f1099int.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1099int,
@@ -76,7 +77,7 @@ Deno.test("Form 4952 limits sourced K-1 code H expense against 1099-INT income",
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 limits K-1 code H expense against plain box 3 Treasury interest", () => {
+test("Form 4952 limits K-1 code H expense against plain box 3 Treasury interest", () => {
   const treasury = {
     ...payer,
     box1: 0,
@@ -119,7 +120,7 @@ Deno.test("Form 4952 limits K-1 code H expense against plain box 3 Treasury inte
   );
 });
 
-Deno.test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone or with 1099-INT", () => {
+test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone or with 1099-INT", () => {
   const oidPayer = {
     payer_name: "Taxable OID Bond",
     box1_oid: 500,
@@ -201,7 +202,7 @@ Deno.test("Form 4952 reconciles K-1 code H against plain 1099-OID box 1, alone o
   );
 });
 
-Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts", () => {
+test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts", () => {
   assertThrows(
     () =>
       build(fields, {
@@ -256,7 +257,7 @@ Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts",
   );
 });
 
-Deno.test("Form 4952 mixed route matches several K-1 and 1099-INT amounts without relying on source order", () => {
+test("Form 4952 mixed route matches several K-1 and 1099-INT amounts without relying on source order", () => {
   const secondPayer = {
     ...payer,
     payer_name: "Second Investment Bank",

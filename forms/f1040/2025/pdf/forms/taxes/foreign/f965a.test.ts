@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form8992Filer } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
@@ -35,7 +36,7 @@ const source = {
   transfer_agreements: [],
 };
 
-Deno.test("Form 965-A 2018 liability projects to Schedule 2, native MeF, and matching PDF row", () => {
+test("Form 965-A 2018 liability projects to Schedule 2, native MeF, and matching PDF row", () => {
   const parsed = inputSchema.parse(source);
   const result = f965.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -68,7 +69,7 @@ Deno.test("Form 965-A 2018 liability projects to Schedule 2, native MeF, and mat
   );
 });
 
-Deno.test("Form 965-A PDF uses the preprinted 2017 row for a sourced late payment", () => {
+test("Form 965-A PDF uses the preprinted 2017 row for a sourced late payment", () => {
   const late = {
     ...source,
     f965s: [{ ...source.f965s[0], tax_year_of_inclusion: 2017 }],
@@ -83,7 +84,7 @@ Deno.test("Form 965-A PDF uses the preprinted 2017 row for a sourced late paymen
   assertEquals(pdf.year2_net_liability, undefined);
 });
 
-Deno.test("Form 965-A PDF rejects changed payment, missing source, and unsupported branches", () => {
+test("Form 965-A PDF rejects changed payment, missing source, and unsupported branches", () => {
   assertThrows(
     () => form965aPdf.instances!(source, form8992Filer),
     Error,

@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form5471ScheduleI1Pdf } from "./f5471_schedule_i1.ts";
 
-Deno.test("Schedule I-1 PDF has complete single-CFC line projection", () => {
+test("Schedule I-1 PDF has complete single-CFC line projection", () => {
   const [fields] = form5471ScheduleI1Pdf.instances?.(
     {},
     form8992Filer,

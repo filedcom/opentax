@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -92,7 +94,7 @@ function returnCase(changedElection = election) {
   return { pending: result.pending, filer: extractFilerIdentity(general) };
 }
 
-Deno.test("partial beneficiary combines NUA, death exclusion, and estate tax", async () => {
+test("partial beneficiary combines NUA, death exclusion, and estate tax", async () => {
   const { pending, filer } = returnCase();
   const form = (pending.form4972?.forms as Record<string, unknown>[])[0];
   assertEquals(form.line6_nua_capital_gain, 800);
@@ -124,24 +126,18 @@ Deno.test("partial beneficiary combines NUA, death exclusion, and estate tax", a
   assertEquals((prepared.bundle.xml.match(/<IRS4972\b/g) ?? []).length, 1);
   const pdf = await prepared.renderPdf();
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
-  const evidencePermission = await Deno.permissions.query({
-    name: "env",
-    variable: "FORM4972_EVIDENCE_DIR",
-  });
-  const evidenceDir = evidencePermission.state === "granted"
-    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
-    : undefined;
+  const evidenceDir = process.env.FORM4972_EVIDENCE_DIR;
   if (evidenceDir) {
-    await Deno.mkdir(evidenceDir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(evidenceDir, { recursive: true });
+    await fs.writeFile(
       `${evidenceDir}/full-return.xml`,
       prepared.bundle.xml,
     );
-    await Deno.writeFile(`${evidenceDir}/filled-return.pdf`, pdf);
+    await fs.writeFile(`${evidenceDir}/filled-return.pdf`, pdf);
   }
 });
 
-Deno.test("combined beneficiary route rejects allocation, issued-copy, and tax changes", () => {
+test("combined beneficiary route rejects allocation, issued-copy, and tax changes", () => {
   const { pending, filer } = returnCase();
   assertThrows(() =>
     returnCase({

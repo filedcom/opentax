@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { ScheduleCItem } from "../../../../../nodes/inputs/income/business/schedule_c/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
@@ -30,7 +31,7 @@ function item(overrides: Partial<ScheduleCItem> = {}): ScheduleCItem {
   };
 }
 
-Deno.test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
+test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
   const fields = {
     schedule_cs: [item()],
     line1_gross_receipts: 5_000,
@@ -42,7 +43,7 @@ Deno.test("Schedule C MeF rejects an unlinked top-level receipt total", () => {
   );
 });
 
-Deno.test("Schedule C MeF rejects top-level amounts that its business items do not carry", () => {
+test("Schedule C MeF rejects top-level amounts that its business items do not carry", () => {
   const cases = [
     ["line_30_home_office", "home-office deduction"],
     ["statutory_wages", "statutory wages"],
@@ -58,7 +59,7 @@ Deno.test("Schedule C MeF rejects top-level amounts that its business items do n
   }
 });
 
-Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
+test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [
       item({ business_reference: "DESIGN", line_1_gross_receipts: 20_000 }),
@@ -110,7 +111,7 @@ Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and exp
   assertStringIncludes(xml, "<NetProfitOrLossAmt>22000</NetProfitOrLossAmt>");
 });
 
-Deno.test("Schedule C emits sourced income and expense totals as its own MeF document", () => {
+test("Schedule C emits sourced income and expense totals as its own MeF document", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
       line_15_insurance: 550,
@@ -130,7 +131,7 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
   assertStringIncludes(xml, "<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>");
 });
 
-Deno.test("Schedule C MeF projects both simplified home-office areas before profit", () => {
+test("Schedule C MeF projects both simplified home-office areas before profit", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
       home_office_method: "simplified",
@@ -150,7 +151,7 @@ Deno.test("Schedule C MeF projects both simplified home-office areas before prof
   assertStringIncludes(xml, "<NetProfitOrLossAmt>34235</NetProfitOrLossAmt>");
 });
 
-Deno.test("Schedule C uses the spouse proprietor identity on a joint return", () => {
+test("Schedule C uses the spouse proprietor identity on a joint return", () => {
   const jointFiler: FilerIdentity = {
     ...filer,
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -181,7 +182,7 @@ Deno.test("Schedule C uses the spouse proprietor identity on a joint return", ()
   );
 });
 
-Deno.test("Schedule C line 31 retains the loss before Form 6198 limits Schedule 1", () => {
+test("Schedule C line 31 retains the loss before Form 6198 limits Schedule 1", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
       line_1_gross_receipts: 0,
@@ -201,7 +202,7 @@ Deno.test("Schedule C line 31 retains the loss before Form 6198 limits Schedule 
   );
 });
 
-Deno.test("Schedule C MeF wages match gross payroll less employment credits", () => {
+test("Schedule C MeF wages match gross payroll less employment credits", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
       business_reference: "CONSULTING",
@@ -220,7 +221,7 @@ Deno.test("Schedule C MeF wages match gross payroll less employment credits", ()
   assertStringIncludes(xml, "<NetProfitOrLossAmt>28135</NetProfitOrLossAmt>");
 });
 
-Deno.test("Schedule C rejects an unsourced WOTC wage reduction in a return bundle", () => {
+test("Schedule C rejects an unsourced WOTC wage reduction in a return bundle", () => {
   const fields = {
     schedule_cs: [item({
       business_reference: "CONSULTING",
@@ -239,7 +240,7 @@ Deno.test("Schedule C rejects an unsourced WOTC wage reduction in a return bundl
   );
 });
 
-Deno.test("Schedule C interest without section 163(j) exemption fails closed", () => {
+test("Schedule C interest without section 163(j) exemption fails closed", () => {
   const fields = {
     schedule_cs: [item({
       business_reference: "C-1",
@@ -253,7 +254,7 @@ Deno.test("Schedule C interest without section 163(j) exemption fails closed", (
   );
 });
 
-Deno.test("Schedule C MeF accepts documented small-business-exempt interest", () => {
+test("Schedule C MeF accepts documented small-business-exempt interest", () => {
   const fields = {
     schedule_cs: [item({
       line_16b_interest_other: 8_000,
@@ -279,7 +280,7 @@ Deno.test("Schedule C MeF accepts documented small-business-exempt interest", ()
   );
 });
 
-Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
+test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
     schedule1: { line3_schedule_c: 29_853 },
     schedule_c: {
@@ -314,7 +315,7 @@ Deno.test("Schedule C emits inventory, cost of goods sold, and separate document
   assertStringIncludes(xml, "<TotalExpensesAmt>8197</TotalExpensesAmt>");
 });
 
-Deno.test("Schedule C emits the vehicle substantiation fields", () => {
+test("Schedule C emits the vehicle substantiation fields", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
       line_44b_business_miles: 665,
@@ -339,7 +340,7 @@ Deno.test("Schedule C emits the vehicle substantiation fields", () => {
   );
 });
 
-Deno.test("Schedule C MeF rejects answers to inapplicable follow-up boxes", () => {
+test("Schedule C MeF rejects answers to inapplicable follow-up boxes", () => {
   for (const trigger of [false, undefined]) {
     for (const answer of [true, false]) {
       assertThrows(
@@ -381,7 +382,7 @@ Deno.test("Schedule C MeF rejects answers to inapplicable follow-up boxes", () =
   assertStringIncludes(xml, "<EvidenceWrittenInd>false</EvidenceWrittenInd>");
 });
 
-Deno.test("Schedule C emits a structured business address and rejects missing statements", () => {
+test("Schedule C emits a structured business address and rejects missing statements", () => {
   const [addressXml] = scheduleC.build({
     schedule_cs: [item({
       line_e_business_address: {

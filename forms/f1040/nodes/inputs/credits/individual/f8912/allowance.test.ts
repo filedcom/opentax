@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8912AllowancePercentage } from "./allowance.ts";
 
@@ -8,7 +9,7 @@ const qecb = {
   maturityDate: "2030-12-31",
 };
 
-Deno.test("Form 8912 allowance: only quarterly dates held by the taxpayer count", () => {
+test("Form 8912 allowance: only quarterly dates held by the taxpayer count", () => {
   assertEquals(
     form8912AllowancePercentage(qecb, {
       allowanceDates: ["2025-06-15", "2025-09-15"],
@@ -25,7 +26,7 @@ Deno.test("Form 8912 allowance: only quarterly dates held by the taxpayer count"
   );
 });
 
-Deno.test("Form 8912 allowance: bond maturity prorates the final quarter", () => {
+test("Form 8912 allowance: bond maturity prorates the final quarter", () => {
   assertEquals(
     form8912AllowancePercentage({
       ...qecb,
@@ -38,7 +39,7 @@ Deno.test("Form 8912 allowance: bond maturity prorates the final quarter", () =>
   );
 });
 
-Deno.test("Form 8912 allowance: year-end maturity can add a fifth partial date", () => {
+test("Form 8912 allowance: year-end maturity can add a fifth partial date", () => {
   assertEquals(
     form8912AllowancePercentage({
       ...qecb,
@@ -57,7 +58,7 @@ Deno.test("Form 8912 allowance: year-end maturity can add a fifth partial date",
   );
 });
 
-Deno.test("Form 8912 allowance: sale is not an extra allowance date", () => {
+test("Form 8912 allowance: sale is not an extra allowance date", () => {
   assertThrows(
     () =>
       form8912AllowancePercentage({
@@ -71,7 +72,7 @@ Deno.test("Form 8912 allowance: sale is not an extra allowance date", () => {
   );
 });
 
-Deno.test("Form 8912 allowance: redemption is a prorated final allowance date", () => {
+test("Form 8912 allowance: redemption is a prorated final allowance date", () => {
   assertEquals(
     form8912AllowancePercentage({
       ...qecb,
@@ -85,7 +86,7 @@ Deno.test("Form 8912 allowance: redemption is a prorated final allowance date", 
   );
 });
 
-Deno.test("Form 8912 allowance: BAB uses its actual interest payment date", () => {
+test("Form 8912 allowance: BAB uses its actual interest payment date", () => {
   const bab = {
     bondType: "BAB" as const,
     issueDate: "2010-01-01",
@@ -110,7 +111,7 @@ Deno.test("Form 8912 allowance: BAB uses its actual interest payment date", () =
   );
 });
 
-Deno.test("Form 8912 allowance: pre-October 2008 QZAB has an annual date", () => {
+test("Form 8912 allowance: pre-October 2008 QZAB has an annual date", () => {
   assertEquals(
     form8912AllowancePercentage({
       bondType: "QZAB",

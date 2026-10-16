@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import {
@@ -58,8 +61,8 @@ for (
     },
   ]
 ) {
-  Deno.test(`durable passive S-corporation ledger ${c.id} preserves basis-limited source and rejects stale next-year rows`, async () => {
-    const base = await Deno.makeTempDir({
+  test(`durable passive S-corporation ledger ${c.id} preserves basis-limited source and rejects stale next-year rows`, async () => {
+    const base = await sys.makeTempDir({
       prefix: "opentax-passive-s-ledger-",
     });
     const facts = await createReturn(2025, base), inputs = c.inputs();
@@ -123,12 +126,12 @@ for (
       record.recordId,
     );
     assertEquals(
-      JSON.parse(await Deno.readTextFile(join(path, "source.json"))),
+      JSON.parse(await fs.readFile(join(path, "source.json"), "utf8")),
       before,
     );
     for (const file of ["source.json", "form8582.xml", "record.json"]) {
       if (Deno.build.os !== "windows") {
-        assertEquals((await Deno.stat(join(path, file))).mode! & 0o777, 0o600);
+        assertEquals((await sys.stat(join(path, file))).mode! & 0o777, 0o600);
       }
     }
     const opening = {
@@ -183,7 +186,7 @@ for (
           reference,
         )
       );}
-    const bytes = await Deno.readFile(join(path, "source.json"));
+    const bytes = await sys.readBytes(join(path, "source.json"));
     const changed = structuredClone(inputs);
     changed.k1_s_corp[0].first_year_passive_loss_source.stock_subscription
       .cash_payment.corporate_bank_credit++;
@@ -196,12 +199,12 @@ for (
         reference,
       )
     );
-    assertEquals(await Deno.readFile(join(path, "source.json")), bytes);
+    assertEquals(await sys.readBytes(join(path, "source.json")), bytes);
     console.log(`Retained passive ledger candidate: ${path}`);
   });
 }
 
-Deno.test("current passive K1 ledger rejects lost first-year provenance and invented opening or activity types", () => {
+test("current passive K1 ledger rejects lost first-year provenance and invented opening or activity types", () => {
   const original =
     f1040_2025.executeReturn(passiveSCorpCombinedLossReturnInputs(1000, 500))
       .pending.form8582;

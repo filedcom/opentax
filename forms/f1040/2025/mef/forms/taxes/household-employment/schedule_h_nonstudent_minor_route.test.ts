@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   inputSchema,
@@ -62,7 +63,7 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule H nonstudent minor principal-work route joins calculation, native, PDF and Schedule 2", () => {
+test("Schedule H nonstudent minor principal-work route joins calculation, native, PDF and Schedule 2", () => {
   const filedSource = inputSchema.parse(source);
   const result = schedule_h.compute(
     { taxYear: 2025, formType: "f1040" },

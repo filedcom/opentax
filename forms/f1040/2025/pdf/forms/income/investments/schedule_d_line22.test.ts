@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertMatch, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -11,7 +14,7 @@ const trustLoss = pdfReviewFixtures.find((item) =>
   item.id === "single-final-trust-k1-long-term-capital-loss"
 )!;
 
-Deno.test("Schedule D loss answers line 22 from filed Form 1040 qualified dividends", async () => {
+test("Schedule D loss answers line 22 from filed Form 1040 qualified dividends", async () => {
   const checkboxPaths = scheduleDPdf.fields.filter((field) =>
     field.domainKey === "print_line22_qualified_dividends"
   ).map((field) => field.pdfField);
@@ -64,10 +67,10 @@ Deno.test("Schedule D loss answers line 22 from filed Form 1040 qualified divide
     );
     if (!bytes) throw new Error("Schedule D loss was not rendered");
     assertEquals((await PDFDocument.load(bytes)).getPageCount(), 2);
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(path, bytes);
-      const extracted = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, bytes);
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-f", "2", "-l", "2", "-layout", path, "-"],
       }).output();
       assertEquals(extracted.code, 0);
@@ -79,7 +82,7 @@ Deno.test("Schedule D loss answers line 22 from filed Form 1040 qualified divide
         qualifiedDividends ? /✔\s+Yes\./ : /✔\s+No\./,
       );
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });

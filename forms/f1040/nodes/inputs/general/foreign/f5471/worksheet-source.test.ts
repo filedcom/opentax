@@ -1,8 +1,10 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateOwnedCfcWorksheets } from "./worksheet-source.ts";
 import { ownedCfcWorksheetSource } from "./worksheet-source.fixture.ts";
 
-Deno.test("Owned invoices and foreign property ledger derive actual WorksheetA sales and zero WorksheetB US property", () => {
+test("Owned invoices and foreign property ledger derive actual WorksheetA sales and zero WorksheetB US property", () => {
   const r = calculateOwnedCfcWorksheets(ownedCfcWorksheetSource(false));
   assertEquals(r.worksheet_a["3"], 10000);
   assertEquals(r.worksheet_a["8"], 3200);
@@ -19,7 +21,7 @@ Deno.test("Owned invoices and foreign property ledger derive actual WorksheetA s
   assertEquals(r.ep_rollforward.section956_ptep_reclassified, 0);
   assertEquals(r.filing_authority, "unverified_no_export");
 });
-Deno.test("Retained2percent shareholder note preserves raw ledger diagnosis and flags unsettled7872/482 filing status", () => {
+test("Retained2percent shareholder note preserves raw ledger diagnosis and flags unsettled7872/482 filing status", () => {
   const r = calculateOwnedCfcWorksheets(ownedCfcWorksheetSource(true));
   assertEquals(r.worksheet_a["1a"], 1200);
   assertEquals(r.settlement_status, "unsettled_related_note_7872_482");
@@ -44,7 +46,7 @@ Deno.test("Retained2percent shareholder note preserves raw ledger diagnosis and 
   assertEquals(r.books.investments_end, 60000);
   assertEquals(r.ep_rollforward.untaxed_closing, 9840);
 });
-Deno.test("Worksheet owner/property/quarter/issuer/expense/prior-history conflicts reject", () => {
+test("Worksheet owner/property/quarter/issuer/expense/prior-history conflicts reject", () => {
   const source = ownedCfcWorksheetSource(true);
   const clone = () => structuredClone(source);
   const mutations = [
@@ -105,7 +107,7 @@ const form8992Filer = {
   },
 };
 
-Deno.test("Filed CFC operands derive owned WorksheetsA/B and reject changed scalar/source joins", () => {
+test("Filed CFC operands derive owned WorksheetsA/B and reject changed scalar/source joins", () => {
   for (const withUS of [false, true]) {
     const item = ownedCfcWorksheetItem(withUS, withUS);
     const pending = ownedCfcWorksheetPending(withUS, withUS);
@@ -124,7 +126,7 @@ Deno.test("Filed CFC operands derive owned WorksheetsA/B and reject changed scal
     assertThrows(() => inputSchema.parse({ f5471s: [originalInterest] }));
   }
 });
-Deno.test("Owned passive source produces GEN/PAS/TOTAL native category copies, never general-tested interest", () => {
+test("Owned passive source produces GEN/PAS/TOTAL native category copies, never general-tested interest", () => {
   const pending = ownedCfcWorksheetPending(true, true);
   for (
     const form of [
@@ -167,7 +169,7 @@ Deno.test("Owned passive source produces GEN/PAS/TOTAL native category copies, n
   }
 });
 
-Deno.test("Supported owned category documents validate canonical XSD; US-source Q unit explicitly remains guarded", async () => {
+test("Supported owned category documents validate canonical XSD; US-source Q unit explicitly remains guarded", async () => {
   const { buildOwned5471Schedule } = await import(
     "../../../../../2025/mef/forms/general/foreign/f5471/f5471-owned-schedules.ts"
   );
@@ -201,7 +203,7 @@ Deno.test("Supported owned category documents validate canonical XSD; US-source 
           `<${tag}`,
           `<${tag} xmlns="http://www.irs.gov/efile" documentId="${tag}${category}"`,
         );
-      const child = new Deno.Command("xmllint", {
+      const child = new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -225,7 +227,7 @@ Deno.test("Supported owned category documents validate canonical XSD; US-source 
   }
 });
 
-Deno.test("Separate unrelated-note diagnostic preserves sixteen category obligations; original shareholder-note native operands remain guarded", async () => {
+test("Separate unrelated-note diagnostic preserves sixteen category obligations; original shareholder-note native operands remain guarded", async () => {
   const { form5471 } = await import("../../../../../2025/mef/forms/general/foreign/f5471/f5471.ts");
   const { form5471ScheduleH } = await import(
     "../../../../../2025/mef/forms/general/foreign/f5471/f5471_schedule_h.ts"
@@ -315,7 +317,7 @@ Deno.test("Separate unrelated-note diagnostic preserves sixteen category obligat
         documentId(f.tag, fragments.indexOf(f))
       }"`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", base + path, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -329,7 +331,7 @@ Deno.test("Separate unrelated-note diagnostic preserves sixteen category obligat
   }
 });
 
-Deno.test("Owned worksheet public income reaches actual Schedule1/AGI/1040 while unresolved filing authority still blocks exports", async () => {
+test("Owned worksheet public income reaches actual Schedule1/AGI/1040 while unresolved filing authority still blocks exports", async () => {
   const { ownedCfcWorksheetPublicInputs } = await import(
     "./worksheet-source.fixture.ts"
   );
@@ -374,7 +376,7 @@ Deno.test("Owned worksheet public income reaches actual Schedule1/AGI/1040 while
   }
 });
 
-Deno.test("Actual unrelated domestic corporate obligation is excluded under956c2F, while coupon remains passive", () => {
+test("Actual unrelated domestic corporate obligation is excluded under956c2F, while coupon remains passive", () => {
   const r = calculateOwnedCfcWorksheets(ownedCfcWorksheetSource(true, true));
   assertEquals(r.worksheet_a["53"], 1145);
   assertEquals(r.worksheet_b["3"], 0);
@@ -382,7 +384,7 @@ Deno.test("Actual unrelated domestic corporate obligation is excluded under956c2
   assertEquals(r.ep_rollforward.section956_ptep_reclassified, 0);
 });
 
-Deno.test("Initial modified-gross-income prerequisite retains paid cents and rejects detached owner/year/method/consent authority", () => {
+test("Initial modified-gross-income prerequisite retains paid cents and rejects detached owner/year/method/consent authority", () => {
   for (const withUS of [false, true]) {
     const source = ownedCfcWorksheetSource(withUS);
     const r = calculateOwnedCfcWorksheets(source);
@@ -440,7 +442,7 @@ Deno.test("Initial modified-gross-income prerequisite retains paid cents and rej
   }
 });
 
-Deno.test("Source bank/property/title/withholding records reject unchanged-total cross-owner and altered ledger evidence", () => {
+test("Source bank/property/title/withholding records reject unchanged-total cross-owner and altered ledger evidence", () => {
   const source = ownedCfcWorksheetSource(true);
   for (
     const change of [
@@ -494,7 +496,7 @@ Deno.test("Source bank/property/title/withholding records reject unchanged-total
   }
 });
 
-Deno.test("Original2percent debt cannot become public/native/PDF finalized operands through an attached raw source", async () => {
+test("Original2percent debt cannot become public/native/PDF finalized operands through an attached raw source", async () => {
   const { ownedCfcWorksheetPublicInputs } = await import(
     "./worksheet-source.fixture.ts"
   );
@@ -558,7 +560,7 @@ Deno.test("Original2percent debt cannot become public/native/PDF finalized opera
   }
 });
 
-Deno.test("US passive paper unit is confined to its actual income group and remains distinct from foreign tested/sales units", async () => {
+test("US passive paper unit is confined to its actual income group and remains distinct from foreign tested/sales units", async () => {
   const { owned5471PdfValues } = await import(
     "../../../../../2025/pdf/forms/general/foreign/f5471/f5471-owned-values.ts"
   );
@@ -578,7 +580,7 @@ Deno.test("US passive paper unit is confined to its actual income group and rema
   assertEquals(passive.tested_gross, 0);
 });
 
-Deno.test("Owned invoice/payment/receipt dates reject normalized impossible calendar days before cash reconciliation", () => {
+test("Owned invoice/payment/receipt dates reject normalized impossible calendar days before cash reconciliation", () => {
   for (
     const invalid of [
       "2025-02-29",

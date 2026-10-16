@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { passivePropertyInputs } from "../../forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
@@ -88,8 +91,8 @@ async function source(base: string, rent = 2000, farmIncome = true) {
   return { ...returned, inputs, entry };
 }
 
-Deno.test("durable Form 8582 candidates preserve original characters and private source/XML bytes without marking acceptance", async () => {
-  const base = await Deno.makeTempDir();
+test("durable Form 8582 candidates preserve original characters and private source/XML bytes without marking acceptance", async () => {
+  const base = await sys.makeTempDir();
   try {
     for (
       const c of [
@@ -128,33 +131,33 @@ Deno.test("durable Form 8582 candidates preserve original characters and private
       const root = join(facts.returnPath, "form8582-ledger-candidates");
       const path = join(root, record.recordId);
       const archivedSource = JSON.parse(
-        await Deno.readTextFile(join(path, "source.json")),
+        await fs.readFile(join(path, "source.json"), "utf8"),
       );
       assertEquals(archivedSource, before);
       assert(
-        (await Deno.readTextFile(join(path, "form8582.xml"))).includes(
+        (await fs.readFile(join(path, "form8582.xml"), "utf8")).includes(
           "<TotalLossesAllowedAmt>",
         ),
       );
       if (Deno.build.os !== "windows") {
         for (const directory of [root, path]) {
-          assertEquals((await Deno.stat(directory)).mode! & 0o777, 0o700);
+          assertEquals((await sys.stat(directory)).mode! & 0o777, 0o700);
         }
         for (const file of ["record.json", "source.json", "form8582.xml"]) {
           assertEquals(
-            (await Deno.stat(join(path, file))).mode! & 0o777,
+            (await sys.stat(join(path, file))).mode! & 0o777,
             0o600,
           );
         }
       }
     }
   } finally {
-    await Deno.remove(base, { recursive: true });
+    await sys.remove(base, { recursive: true });
   }
 });
 
-Deno.test("Form 8582 candidate rejects byte corruption, coherent ledger forgery, changed reference and source edits with unchanged PAL totals", async () => {
-  const base = await Deno.makeTempDir();
+test("Form 8582 candidate rejects byte corruption, coherent ledger forgery, changed reference and source edits with unchanged PAL totals", async () => {
+  const base = await sys.makeTempDir();
   try {
     const facts = await source(base);
     const record = await archiveForm8582LedgerCandidate(
@@ -183,14 +186,14 @@ Deno.test("Form 8582 candidate rejects byte corruption, coherent ledger forgery,
       )
     );
     for (const name of ["source.json", "form8582.xml"]) {
-      const original = await Deno.readFile(join(path, name));
-      await Deno.writeTextFile(join(path, name), "corrupt");
+      const original = await sys.readBytes(join(path, name));
+      await fs.writeFile(join(path, name), "corrupt");
       await assertRejects(
         read,
         Error,
         "differs from archived or current sources",
       );
-      await Deno.writeFile(join(path, name), original);
+      await fs.writeFile(join(path, name), original);
     }
     const forged = structuredClone(record);
     const [operating, ordinary] = forged.ledger.activities[0].lines;
@@ -198,21 +201,21 @@ Deno.test("Form 8582 candidate rejects byte corruption, coherent ledger forgery,
     operating.ending_unallowed_loss += 1;
     ordinary.allowed_loss += 1;
     ordinary.ending_unallowed_loss -= 1;
-    await Deno.writeTextFile(join(path, "record.json"), JSON.stringify(forged));
+    await fs.writeFile(join(path, "record.json"), JSON.stringify(forged));
     await assertRejects(
       read,
       Error,
       "differs from archived or current sources",
     );
-    await Deno.writeTextFile(join(path, "record.json"), JSON.stringify(record));
+    await fs.writeFile(join(path, "record.json"), JSON.stringify(record));
     const falselyAccepted = { ...record, status: "accepted" };
-    await Deno.writeTextFile(
+    await fs.writeFile(
       join(path, "record.json"),
       JSON.stringify(falselyAccepted),
     );
     await assertRejects(read);
-    await Deno.writeTextFile(join(path, "record.json"), JSON.stringify(record));
-    const prior = await Deno.readFile(join(path, "source.json"));
+    await fs.writeFile(join(path, "record.json"), JSON.stringify(record));
+    const prior = await sys.readBytes(join(path, "source.json"));
     facts.inputs.w2[0].employer_name = "Edited employer source";
     await updateInput(facts.returnPath, facts.entry.id, facts.inputs);
     await assertRejects(
@@ -220,14 +223,14 @@ Deno.test("Form 8582 candidate rejects byte corruption, coherent ledger forgery,
       Error,
       "differs from archived or current sources",
     );
-    assertEquals(await Deno.readFile(join(path, "source.json")), prior);
+    assertEquals(await sys.readBytes(join(path, "source.json")), prior);
   } finally {
-    await Deno.remove(base, { recursive: true });
+    await sys.remove(base, { recursive: true });
   }
 });
 
-Deno.test("Form 8582 candidate concurrent snapshots do not overwrite and reject foreign identity, unsupported year and unresolved sources", async () => {
-  const base = await Deno.makeTempDir();
+test("Form 8582 candidate concurrent snapshots do not overwrite and reject foreign identity, unsupported year and unresolved sources", async () => {
+  const base = await sys.makeTempDir();
   try {
     const facts = await source(base);
     const records = await Promise.all([
@@ -238,7 +241,7 @@ Deno.test("Form 8582 candidate concurrent snapshots do not overwrite and reject 
     assertEquals(records[0].sourceSha256, records[1].sourceSha256);
     const root = join(facts.returnPath, "form8582-ledger-candidates");
     const names = [];
-    for await (const entry of Deno.readDir(root)) names.push(entry.name);
+    for await (const entry of sys.readDir(root)) names.push(entry.name);
     assertEquals(names.sort(), records.map((r) => r.recordId).sort());
     const other = await source(base);
     const otherRecord = await archiveForm8582LedgerCandidate(
@@ -247,7 +250,7 @@ Deno.test("Form 8582 candidate concurrent snapshots do not overwrite and reject 
       reference,
     );
     const path = join(root, records[0].recordId, "record.json");
-    await Deno.writeTextFile(path, JSON.stringify(otherRecord));
+    await fs.writeFile(path, JSON.stringify(otherRecord));
     await assertRejects(() =>
       readForm8582LedgerCandidate(
         base,
@@ -270,18 +273,18 @@ Deno.test("Form 8582 candidate concurrent snapshots do not overwrite and reject 
       archiveForm8582LedgerCandidate(base, facts.returnId, reference)
     );
     const after = [];
-    for await (const entry of Deno.readDir(root)) after.push(entry.name);
+    for await (const entry of sys.readDir(root)) after.push(entry.name);
     assertEquals(after.sort(), names.sort());
     await assertRejects(() =>
       archiveForm8582LedgerCandidate(base, "../escape", reference)
     );
   } finally {
-    await Deno.remove(base, { recursive: true });
+    await sys.remove(base, { recursive: true });
   }
 });
 
-Deno.test("durable first-year rental sale ledgers retain allowed operating character and zero closing balance for an entire overall gain", async () => {
-  const base = await Deno.makeTempDir();
+test("durable first-year rental sale ledgers retain allowed operating character and zero closing balance for an entire overall gain", async () => {
+  const base = await sys.makeTempDir();
   try {
     for (const active of [false, true]) {
       for (const entire of [false, true]) {
@@ -385,13 +388,13 @@ Deno.test("durable first-year rental sale ledgers retain allowed operating chara
       }
     }
   } finally {
-    await Deno.remove(base, { recursive: true });
+    await sys.remove(base, { recursive: true });
   }
 });
 
-Deno.test("first-year sale ledger sources produce complete native and prepared PDF packets", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("first-year sale ledger sources produce complete native and prepared PDF packets", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   const schema = new URL(
     "../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
@@ -431,10 +434,10 @@ Deno.test("first-year sale ledger sources produce complete native and prepared P
     assertEquals(pending.schedule1.line5_schedule_e, c.entire ? -5000 : -2000);
     assertEquals(pending.f1040.line11_agi, c.entire ? 163000 : 160000);
     assertEquals(pending, before);
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const validated = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const validated = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, temp],
         stderr: "piped",
       }).output();
@@ -444,20 +447,20 @@ Deno.test("first-year sale ledger sources produce complete native and prepared P
         new TextDecoder().decode(validated.stderr),
       );
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     if (output) {
       const dir = join(output, c.id);
-      await Deno.mkdir(dir, { mode: 0o700 });
-      await Deno.writeFile(join(dir, "return.pdf"), bytes, {
+      await fs.mkdir(dir, { mode: 0o700 });
+      await sys.writeBytes(join(dir, "return.pdf"), bytes, {
         createNew: true,
         mode: 0o600,
       });
-      await Deno.writeTextFile(join(dir, "return.xml"), bundle.xml, {
+      await sys.writeText(join(dir, "return.xml"), bundle.xml, {
         createNew: true,
         mode: 0o600,
       });
-      await Deno.writeTextFile(
+      await sys.writeText(
         join(dir, "source-pending.json"),
         JSON.stringify(
           {

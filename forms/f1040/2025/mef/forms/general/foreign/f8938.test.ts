@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form8938Fixture } from "./f8938.fixture.ts";
 import { form8938 } from "./f8938.ts";
 
-Deno.test("staged Form 8938 MeF projects Parts I-VI and Part IV exception", () => {
+test("staged Form 8938 MeF projects Parts I-VI and Part IV exception", () => {
   const xml = form8938.build(form8938Fixture());
   assertStringIncludes(xml, "<IRS8938>");
   assertStringIncludes(xml, "<CalendarYr>2025</CalendarYr>");
@@ -47,7 +48,7 @@ Deno.test("staged Form 8938 MeF projects Parts I-VI and Part IV exception", () =
   assertEquals(xml.includes("PFIC1"), false); // Part IV only, not repeated detail
 });
 
-Deno.test("staged Form 8938 MeF classifies a nonentity counterparty", () => {
+test("staged Form 8938 MeF classifies a nonentity counterparty", () => {
   const source = form8938Fixture();
   const xml = form8938.build({
     ...source,
@@ -69,7 +70,7 @@ Deno.test("staged Form 8938 MeF classifies a nonentity counterparty", () => {
   assertStringIncludes(xml, "<ForeignPersonInd>true</ForeignPersonInd>");
 });
 
-Deno.test("staged Form 8938 MeF rejects tampered source and mismatched return status", () => {
+test("staged Form 8938 MeF rejects tampered source and mismatched return status", () => {
   const source = form8938Fixture();
   assertThrows(() =>
     form8938.build({

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -27,7 +28,7 @@ function retained(item: Record<string, unknown>) {
   };
 }
 
-Deno.test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291 totals", () => {
+test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291 totals", () => {
   const base = {
     company_name: "Offshore Fund Ltd",
     company_ein_or_ref: "FUND001",
@@ -104,7 +105,7 @@ Deno.test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291
   );
 });
 
-Deno.test("Schedule 1 Form 8621 income needs retained PFIC source at both exports", async () => {
+test("Schedule 1 Form 8621 income needs retained PFIC source at both exports", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

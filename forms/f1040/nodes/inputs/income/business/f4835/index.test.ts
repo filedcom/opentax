@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm4835AtRiskNet,
@@ -20,12 +21,12 @@ function compute(items: ReturnType<typeof item>[]) {
   return f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: items });
 }
 
-Deno.test("Form 4835 requires at least one and at most four farms", () => {
+test("Form 4835 requires at least one and at most four farms", () => {
   assertThrows(() => compute([]));
   assertThrows(() => compute(Array.from({ length: 5 }, () => item())));
 });
 
-Deno.test("Form 4835 uses taxable columns, not gross payment columns", () => {
+test("Form 4835 uses taxable columns, not gross payment columns", () => {
   const parsed = itemSchema.parse(item({
     livestock_crop_income: 100,
     cooperative_distributions_gross: 500,
@@ -42,7 +43,7 @@ Deno.test("Form 4835 uses taxable columns, not gross payment columns", () => {
   assertEquals(calculateForm4835Lines(parsed).gross, 1475);
 });
 
-Deno.test("Form 4835 rejects taxable income exceeding gross receipts", () => {
+test("Form 4835 rejects taxable income exceeding gross receipts", () => {
   assertThrows(
     () => compute([item({ agricultural_program_payments_taxable: 1 })]),
     Error,
@@ -59,7 +60,7 @@ Deno.test("Form 4835 rejects taxable income exceeding gross receipts", () => {
   );
 });
 
-Deno.test("Form 4835 subtracts named and other expenses, net of 263A capitalization", () => {
+test("Form 4835 subtracts named and other expenses, net of 263A capitalization", () => {
   const parsed = itemSchema.parse(item({
     livestock_crop_income: 10000,
     expense_feed: 1000,
@@ -75,7 +76,7 @@ Deno.test("Form 4835 subtracts named and other expenses, net of 263A capitalizat
   assertThrows(() => compute([item({ expense_capitalized_263a: 1 })]), Error);
 });
 
-Deno.test("Form 4835 income routes to Schedule E rather than Schedule 1 directly", () => {
+test("Form 4835 income routes to Schedule E rather than Schedule 1 directly", () => {
   const result = compute([item({ livestock_crop_income: 5000 })]);
   assertEquals(result.outputs, [{
     nodeType: "schedule_e",
@@ -101,7 +102,7 @@ Deno.test("Form 4835 income routes to Schedule E rather than Schedule 1 directly
   );
 });
 
-Deno.test("Form 4835 passes each preliminary farm result for passive allocation", () => {
+test("Form 4835 passes each preliminary farm result for passive allocation", () => {
   const result = compute([
     item({ livestock_crop_income: 3000 }),
     item({
@@ -132,7 +133,7 @@ Deno.test("Form 4835 passes each preliminary farm result for passive allocation"
   });
 });
 
-Deno.test("Form 4835 loss requires at-risk facts and does not trust a supplied deduction", () => {
+test("Form 4835 loss requires at-risk facts and does not trust a supplied deduction", () => {
   assertThrows(() => compute([item({ expense_feed: 2000 })]), Error);
   assertEquals(
     compute([
@@ -168,7 +169,7 @@ Deno.test("Form 4835 loss requires at-risk facts and does not trust a supplied d
   );
 });
 
-Deno.test("Form 4835 limits each farm loss to its computed Form 6198 amount at risk", () => {
+test("Form 4835 limits each farm loss to its computed Form 6198 amount at risk", () => {
   const farm = itemSchema.parse(item({
     activity_id: "farm-at-risk",
     expense_feed: 2000,
@@ -204,7 +205,7 @@ Deno.test("Form 4835 limits each farm loss to its computed Form 6198 amount at r
   );
 });
 
-Deno.test("Form 4835 retains prior passive losses by farm and checks participation history", () => {
+test("Form 4835 retains prior passive losses by farm and checks participation history", () => {
   const result = compute([item({
     livestock_crop_income: 1000,
     prior_unallowed_passive_operating: 1500,
@@ -267,7 +268,7 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
   }]);
 });
 
-Deno.test("Form 4835 CCC election needs loan details matching line 4a", () => {
+test("Form 4835 CCC election needs loan details matching line 4a", () => {
   assertThrows(
     () => compute([item({ ccc_loans_reported_election: 100 })]),
     Error,
@@ -298,11 +299,11 @@ Deno.test("Form 4835 CCC election needs loan details matching line 4a", () => {
   });
 });
 
-Deno.test("Form 4835 still refuses crop-insurance deferral without its statement", () => {
+test("Form 4835 still refuses crop-insurance deferral without its statement", () => {
   assertThrows(() => compute([item({ defer_crop_insurance: true })]), Error);
 });
 
-Deno.test("Form 4835 defers eligible crop insurance but taxes current and prior-year amounts", () => {
+test("Form 4835 defers eligible crop insurance but taxes current and prior-year amounts", () => {
   const details = {
     cash_method: true,
     normal_practice_next_year_percent: 80,
@@ -365,7 +366,7 @@ Deno.test("Form 4835 defers eligible crop insurance but taxes current and prior-
   );
 });
 
-Deno.test("Form 4835 rejects old override and withholding shortcuts", () => {
+test("Form 4835 rejects old override and withholding shortcuts", () => {
   assertThrows(() => compute([item({ net_farm_rental_income: 100 })]), Error);
   assertThrows(() => compute([item({ federal_withheld: 100 })]), Error);
   assertThrows(() => compute([item({ gross_farm_rental_income: 100 })]), Error);

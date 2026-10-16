@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import {
   inputSchema as jobInputSchema,
@@ -14,7 +16,7 @@ import { isSupportedForm2106Route } from "./form2106_staged.ts";
 import { cases, fixture } from "./form2106_fee_basis.fixture.ts";
 
 for (const c of cases) {
-  Deno.test(`Form 2106 ${c.name} keeps every owned job through native and PDF export`, async () => {
+  test(`Form 2106 ${c.name} keeps every owned job through native and PDF export`, async () => {
     const inputs = fixture(c);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -163,9 +165,9 @@ for (const c of cases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = `.state/research/form2106-multiple-jobs-2026-10-09/${c.name}`;
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       for (
         const [name, data] of [
           ["source", inputs],
@@ -179,18 +181,18 @@ for (const c of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
   });
 }
 
-Deno.test("fee-basis filing inventory respects four-document XSD capacity", () => {
+test("fee-basis filing inventory respects four-document XSD capacity", () => {
   const source = fixture(cases[4]);
   assertEquals(isSupportedForm2106Route({ f2106s: source.f2106 }), true);
   const first = source.f2106[0];

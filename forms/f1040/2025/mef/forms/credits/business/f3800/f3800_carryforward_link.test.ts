@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -154,13 +157,13 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test("Form 3800 links source-specific carryforward computations to native and printable lines", () => {
+test("Form 3800 links source-specific carryforward computations to native and printable lines", () => {
   const xml = buildIRS3800Document(parts);
   assertStringIncludes(xml, "<CYGeneralBusCrCarryforwardAmt");
   assertStringIncludes(
@@ -183,7 +186,7 @@ Deno.test("Form 3800 links source-specific carryforward computations to native a
   assertEquals(printable[form3800PartIAndIIFields.line34], 300);
 });
 
-Deno.test("Form 3800 rejects unlinked or changed carryforward source rows", () => {
+test("Form 3800 rejects unlinked or changed carryforward source rows", () => {
   assertThrows(
     () =>
       buildIRS3800Document({
@@ -222,7 +225,7 @@ Deno.test("Form 3800 rejects unlinked or changed carryforward source rows", () =
   );
 });
 
-Deno.test("Form 3800 Part VI prints and serializes each nonpassive carryforward vintage", () => {
+test("Form 3800 Part VI prints and serializes each nonpassive carryforward vintage", () => {
   const xml = buildIRS3800Document(aggregateParts);
   assertEquals((xml.match(/Frm8874CYCyovCrAggrgtGrp/g) ?? []).length, 4);
   const printed = projectForm3800PartVIFields(aggregateParts);
@@ -269,7 +272,7 @@ Deno.test("Form 3800 Part VI prints and serializes each nonpassive carryforward 
   );
 });
 
-Deno.test("Form 3800 native carryover rejects unreconciled Part IV and VI tax use", () => {
+test("Form 3800 native carryover rejects unreconciled Part IV and VI tax use", () => {
   assertThrows(
     () =>
       buildIRS3800Document({
@@ -313,30 +316,25 @@ Deno.test("Form 3800 native carryover rejects unreconciled Part IV and VI tax us
   );
 });
 
-Deno.test({
-  name:
-    "Form 3800 linked carryforward lines and Part IV/VI rows validate against TY2025 v5.4 XSD",
-  ignore: !xsdAvailable,
-  async fn() {
+test.skipIf(!xsdAvailable)("Form 3800 linked carryforward lines and Part IV/VI rows validate against TY2025 v5.4 XSD", async () => {
     for (const documentParts of [parts, aggregateParts]) {
-      const path = await Deno.makeTempFile({ suffix: ".xml" });
+      const path = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           path,
           buildIRS3800Document(documentParts).replace(
             "<IRS3800>",
             '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
           ),
         );
-        const checked = await new Deno.Command("xmllint", {
+        const checked = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", XSD_PATH, path],
           stdout: "piped",
           stderr: "piped",
         }).output();
         assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
       } finally {
-        await Deno.remove(path);
+        await sys.remove(path);
       }
     }
-  },
-});
+  });

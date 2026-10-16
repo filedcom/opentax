@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { z } from "zod";
 import {
@@ -39,11 +40,11 @@ function buildQpri(raw: QpriInput): string {
   return form982.build(raw, { pending: sourceForQpri(raw) });
 }
 
-Deno.test("Form 982 absent input emits no document", () => {
+test("Form 982 absent input emits no document", () => {
   assertEquals(form982.build({}), "");
 });
 
-Deno.test("Form 982 cannot omit an original excluded 1099-C", () => {
+test("Form 982 cannot omit an original excluded 1099-C", () => {
   const source = sourceForQpri({
     line2_excluded_cod: 100_000,
     exclusion_type: ExclusionType.Qpri,
@@ -76,7 +77,7 @@ Deno.test("Form 982 cannot omit an original excluded 1099-C", () => {
   );
 });
 
-Deno.test("Form 982 QPRI disposed residence emits line 1e and capped line 2", () => {
+test("Form 982 QPRI disposed residence emits line 1e and capped line 2", () => {
   const xml = buildQpri({
     line2_excluded_cod: 900_000,
     exclusion_type: ExclusionType.Qpri,
@@ -100,7 +101,7 @@ Deno.test("Form 982 QPRI disposed residence emits line 1e and capped line 2", ()
   assertEquals(xml.includes("<ExcludedToReducePrinResAmt>"), false);
 });
 
-Deno.test("Form 982 retained home reduces basis by no more than excluded debt", () => {
+test("Form 982 retained home reduces basis by no more than excluded debt", () => {
   const xml = buildQpri({
     line2_excluded_cod: 300_000,
     exclusion_type: ExclusionType.Qpri,
@@ -124,7 +125,7 @@ Deno.test("Form 982 retained home reduces basis by no more than excluded debt", 
   );
 });
 
-Deno.test("Form 982 QPRI MFS cap is $375,000", () => {
+test("Form 982 QPRI MFS cap is $375,000", () => {
   const xml = buildQpri({
     line2_excluded_cod: 500_000,
     exclusion_type: ExclusionType.Qpri,
@@ -143,7 +144,7 @@ Deno.test("Form 982 QPRI MFS cap is $375,000", () => {
   );
 });
 
-Deno.test("Form 982 line 2 excludes only discharged qualified debt from a mixed-use loan", () => {
+test("Form 982 line 2 excludes only discharged qualified debt from a mixed-use loan", () => {
   const xml = buildQpri({
     line2_excluded_cod: 120_000,
     exclusion_type: ExclusionType.Qpri,
@@ -167,7 +168,7 @@ Deno.test("Form 982 line 2 excludes only discharged qualified debt from a mixed-
   );
 });
 
-Deno.test("Form 982 refuses unverified exclusion details", () => {
+test("Form 982 refuses unverified exclusion details", () => {
   assertThrows(() => form982.build({ line2_excluded_cod: 5_000 }), Error);
   assertThrows(
     () =>
@@ -201,7 +202,7 @@ Deno.test("Form 982 refuses unverified exclusion details", () => {
   );
 });
 
-Deno.test("Form 982 QPRI native and PDF reconcile one original 1099-C", () => {
+test("Form 982 QPRI native and PDF reconcile one original 1099-C", () => {
   const raw: QpriInput = {
     line2_excluded_cod: 300_000,
     exclusion_type: ExclusionType.Qpri,
@@ -278,7 +279,7 @@ Deno.test("Form 982 QPRI native and PDF reconcile one original 1099-C", () => {
   );
 });
 
-Deno.test("Form 982 PDF keeps line 10b blank for a disposed home and prints zero retained basis", () => {
+test("Form 982 PDF keeps line 10b blank for a disposed home and prints zero retained basis", () => {
   const raw: QpriInput = {
     line2_excluded_cod: 100_000,
     exclusion_type: ExclusionType.Qpri,

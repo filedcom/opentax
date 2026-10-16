@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -38,7 +41,7 @@ const expected = {
   gold_exploration: [20000, 10000, 1, 10000, 40000],
 };
 for (const kind of Object.keys(expected) as ResourceCase[]) {
-  Deno.test(`2025 owned natural-resource gift ${kind} public full packet`, async () => {
+  test(`2025 owned natural-resource gift ${kind} public full packet`, async () => {
     const source = await reviewedNaturalResourceGift(kind),
       want = expected[kind];
     assertEquals([
@@ -132,7 +135,7 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
       });
     assertEquals((bundle.xml.match(/<IRS8283\b/g) ?? []).length, 1);
     assertEquals(bundle.xml.includes("IRS4797"), false);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -157,10 +160,10 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
       origins,
     );
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-    const printedPath = await Deno.makeTempFile({ suffix: ".pdf" });
+    const printedPath = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(printedPath, pdf);
-      const printed = await new Deno.Command("pdftotext", {
+      await fs.writeFile(printedPath, pdf);
+      const printed = await new sys.Command("pdftotext", {
         args: [printedPath, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -176,7 +179,7 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         );
       }
     } finally {
-      await Deno.remove(printedPath);
+      await sys.remove(printedPath);
     }
 
     if (
@@ -461,10 +464,10 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         );
       }
     }
-    const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+    const root = process.env.FORM8283_EVIDENCE_DIR;
     if (root) {
       const dir = `${root}/${kind}`;
-      await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+      await fs.mkdir(`${dir}/attachments`, { recursive: true });
       for (
         const [name, value] of Object.entries({
           source: { inputs: source.inputs, filer: source.filer },
@@ -475,15 +478,15 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
           attachments: source.attachments.map(({ bytes, ...row }) => row),
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
       for (const attachment of source.attachments) {
-        await Deno.writeFile(
+        await fs.writeFile(
           `${dir}/attachments/${attachment.fileName}`,
           attachment.bytes,
         );
@@ -491,7 +494,7 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
     }
   });
 }
-Deno.test("Natural-resource original owned annual-account calculation conflicts", () => {
+test("Natural-resource original owned annual-account calculation conflicts", () => {
   for (const kind of Object.keys(expected) as ResourceCase[]) {
     const source = naturalResourceSource(kind);
     if (kind.startsWith("producing_")) {
@@ -535,7 +538,7 @@ Deno.test("Natural-resource original owned annual-account calculation conflicts"
   }
 });
 
-Deno.test("Owned175 recapture holding anniversaries and gain-limited ordinary amount", () => {
+test("Owned175 recapture holding anniversaries and gain-limited ordinary amount", () => {
   for (
     const [acquired, donated, percentage] of [
       ["2020-01-15", "2025-01-15", 1],
@@ -575,7 +578,7 @@ Deno.test("Owned175 recapture holding anniversaries and gain-limited ordinary am
   }
 });
 
-Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves current return and independent signed copies", async () => {
+test("Owned1252/legacy617/current1254 real-estate inventory preserves current return and independent signed copies", async () => {
   const sources = await Promise.all([
     reviewedNaturalResourceGift("active_idc_oil"),
     reviewedNaturalResourceGift("soil_water"),
@@ -624,7 +627,7 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
   const pending = buildPending(result.pending),
     bundle = await buildMefBundle(pending, { filer, attachments });
   assertEquals((bundle.xml.match(/<IRS8283\b/g) ?? []).length, 3);
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -699,10 +702,10 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
       label,
     );
   }
-  const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+  const root = process.env.FORM8283_EVIDENCE_DIR;
   if (root) {
     const dir = `${root}/mixed`;
-    await Deno.mkdir(`${dir}/attachments`, { recursive: true });
+    await fs.mkdir(`${dir}/attachments`, { recursive: true });
     for (
       const [name, value] of Object.entries({
         source: { inputs, filer },
@@ -712,20 +715,20 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
         attachments: attachments.map(({ bytes, ...row }) => row),
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/${name}.json`,
         JSON.stringify(value, null, 2),
       );
     }
-    await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-    await Deno.writeFile(`${dir}/return.pdf`, pdf);
+    await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+    await fs.writeFile(`${dir}/return.pdf`, pdf);
     for (const row of attachments) {
-      await Deno.writeFile(`${dir}/attachments/${row.fileName}`, row.bytes);
+      await fs.writeFile(`${dir}/attachments/${row.fileName}`, row.bytes);
     }
   }
 });
 
-Deno.test("Legacy1254 derives productiveIDC depletion offsets and rejects conflicting owned accounts", () => {
+test("Legacy1254 derives productiveIDC depletion offsets and rejects conflicting owned accounts", () => {
   const source = naturalResourceSource("legacy_oil");
   for (
     const [label, mutate] of [

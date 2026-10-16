@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -8,7 +10,7 @@ import {
   k1PortfolioInputs,
 } from "./form4952_k1_portfolio.fixture.ts";
 for (const entry of k1PortfolioCases) {
-  Deno.test(`K-1 code H joins the complete interest and dividend portfolio: ${entry.id}`, async () => {
+  test(`K-1 code H joins the complete interest and dividend portfolio: ${entry.id}`, async () => {
     const inputs = await k1PortfolioInputs(entry);
     const wages = entry.joint ? 200000 : 160000;
     const mortgage = inputs.f1098[0];
@@ -48,16 +50,16 @@ for (const entry of k1PortfolioCases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_K1_PORTFOLIO_PROOF_DIR");
+    const root = process.env.OPENTAX_K1_PORTFOLIO_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(
         `${root}/${entry.id}-source.pdf`,
         mortgage.issuer_copy.bytes,
       );
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { agi_aggregator } from "../../../../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 const ctx = { taxYear: 2025, formType: "f1040" };
@@ -12,7 +13,7 @@ function fields(
     ).map((o) => o.fields),
   );
 }
-Deno.test("NOL internal AGI projection reduces total income exactly once", () => {
+test("NOL internal AGI projection reduces total income exactly once", () => {
   const v = { line1a_wages: [30000, 20000], line8a_nol_deduction: 27400 };
   assertEquals(fields(v, "f1040").line11_agi, 22600);
   assertEquals(fields(v, "f1040").line8_additional_income, -27400);
@@ -22,7 +23,7 @@ Deno.test("NOL internal AGI projection reduces total income exactly once", () =>
     -1000,
   );
 });
-Deno.test("NOL internal AGI projection refigures student loan phaseout", () => {
+test("NOL internal AGI projection refigures student loan phaseout", () => {
   const v = {
     filing_status: "single",
     line1a_wages: 95000,
@@ -33,7 +34,7 @@ Deno.test("NOL internal AGI projection refigures student loan phaseout", () => {
   assertEquals(fields(after, "schedule1").line21_student_loan_interest, 2500);
   assertEquals(fields(after, "f1040").line11_agi, 72500);
 });
-Deno.test("NOL internal AGI projection refigures taxable Social Security", () => {
+test("NOL internal AGI projection refigures taxable Social Security", () => {
   const v = {
     filing_status: "single",
     line1a_wages: 30000,
@@ -45,7 +46,7 @@ Deno.test("NOL internal AGI projection refigures taxable Social Security", () =>
     10000,
   );
 });
-Deno.test("NOL internal AGI projection rejects negative fractional and duplicated deductions", () => {
+test("NOL internal AGI projection rejects negative fractional and duplicated deductions", () => {
   for (const n of [-1, 1.5, [1, 2]]) {
     assertThrows(() =>
       agi_aggregator.compute(
@@ -61,7 +62,7 @@ Deno.test("NOL internal AGI projection rejects negative fractional and duplicate
 
 import { form6251 } from "../../../../../nodes/intermediate/forms/taxes/amt/form6251/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-Deno.test("NOL tentative AMT adds regular deduction once without supplying an ATNOLD", () => {
+test("NOL tentative AMT adds regular deduction once without supplying an ATNOLD", () => {
   const input = form6251.inputSchema.parse({
     filing_status: FilingStatus.Single,
     regular_tax_income: 190250,
@@ -78,7 +79,7 @@ Deno.test("NOL tentative AMT adds regular deduction once without supplying an AT
   assertEquals(amti.nol_adjustment, undefined);
   assertEquals(amti.line11_amt, 0);
 });
-Deno.test("NOL tentative AMT preserves before-exemption AMTI even when no tax is owed", () => {
+test("NOL tentative AMT preserves before-exemption AMTI even when no tax is owed", () => {
   const input = form6251.inputSchema.parse({
     filing_status: FilingStatus.Single,
     regular_tax_income: 6850,
@@ -104,7 +105,7 @@ Deno.test("NOL tentative AMT preserves before-exemption AMTI even when no tax is
   );
 });
 
-Deno.test("NOL tentative AMT records the filed component sum before MFS line4 addition", () => {
+test("NOL tentative AMT records the filed component sum before MFS line4 addition", () => {
   const input = form6251.inputSchema.parse({
     filing_status: FilingStatus.MFS,
     regular_tax_income: 990250.4,

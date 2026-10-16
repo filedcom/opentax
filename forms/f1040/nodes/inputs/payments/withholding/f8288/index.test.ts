@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8288, WithholdingRate } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -24,38 +25,38 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8288.inputSchema: valid minimal item passes", () => {
+test("f8288.inputSchema: valid minimal item passes", () => {
   const parsed = f8288.inputSchema.safeParse({ f8288s: [minimalItem()] });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8288.inputSchema: empty array fails (min 1)", () => {
+test("f8288.inputSchema: empty array fails (min 1)", () => {
   const parsed = f8288.inputSchema.safeParse({ f8288s: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: negative gross_sales_price fails", () => {
+test("f8288.inputSchema: negative gross_sales_price fails", () => {
   const parsed = f8288.inputSchema.safeParse({
     f8288s: [minimalItem({ gross_sales_price: -100000 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: negative amount_withheld fails", () => {
+test("f8288.inputSchema: negative amount_withheld fails", () => {
   const parsed = f8288.inputSchema.safeParse({
     f8288s: [minimalItem({ amount_withheld: -5000 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: invalid withholding_rate fails", () => {
+test("f8288.inputSchema: invalid withholding_rate fails", () => {
   const parsed = f8288.inputSchema.safeParse({
     f8288s: [minimalItem({ withholding_rate: "RATE_20" })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: all valid withholding rates pass", () => {
+test("f8288.inputSchema: all valid withholding rates pass", () => {
   for (const rate of Object.values(WithholdingRate)) {
     const parsed = f8288.inputSchema.safeParse({
       f8288s: [minimalItem({ withholding_rate: rate })],
@@ -64,28 +65,28 @@ Deno.test("f8288.inputSchema: all valid withholding rates pass", () => {
   }
 });
 
-Deno.test("f8288.inputSchema: missing property_address fails", () => {
+test("f8288.inputSchema: missing property_address fails", () => {
   const item = minimalItem();
   delete (item as Record<string, unknown>).property_address;
   const parsed = f8288.inputSchema.safeParse({ f8288s: [item] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: missing buyer_name fails", () => {
+test("f8288.inputSchema: missing buyer_name fails", () => {
   const item = minimalItem();
   delete (item as Record<string, unknown>).buyer_name;
   const parsed = f8288.inputSchema.safeParse({ f8288s: [item] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: missing buyer_tin fails", () => {
+test("f8288.inputSchema: missing buyer_tin fails", () => {
   const item = minimalItem();
   delete (item as Record<string, unknown>).buyer_tin;
   const parsed = f8288.inputSchema.safeParse({ f8288s: [item] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8288.inputSchema: missing disposition_date fails", () => {
+test("f8288.inputSchema: missing disposition_date fails", () => {
   const item = minimalItem();
   delete (item as Record<string, unknown>).disposition_date;
   const parsed = f8288.inputSchema.safeParse({ f8288s: [item] });
@@ -96,7 +97,7 @@ Deno.test("f8288.inputSchema: missing disposition_date fails", () => {
 // 2. Per-Field Routing
 // =============================================================================
 
-Deno.test("f8288.compute: 15% rate — amount_withheld routes to f1040 line25c", () => {
+test("f8288.compute: 15% rate — amount_withheld routes to f1040 line25c", () => {
   const result = compute([
     minimalItem({
       withholding_rate: WithholdingRate.RATE_15,
@@ -107,7 +108,7 @@ Deno.test("f8288.compute: 15% rate — amount_withheld routes to f1040 line25c",
   assertEquals(fields.line25c_other_withheld, 75000);
 });
 
-Deno.test("f8288.compute: 10% rate — amount_withheld routes to f1040 line25c", () => {
+test("f8288.compute: 10% rate — amount_withheld routes to f1040 line25c", () => {
   const result = compute([
     minimalItem({
       withholding_rate: WithholdingRate.RATE_10,
@@ -119,7 +120,7 @@ Deno.test("f8288.compute: 10% rate — amount_withheld routes to f1040 line25c",
   assertEquals(fields.line25c_other_withheld, 80000);
 });
 
-Deno.test("f8288.compute: 0% rate, amount_withheld = 0 — no output", () => {
+test("f8288.compute: 0% rate, amount_withheld = 0 — no output", () => {
   const result = compute([
     minimalItem({
       withholding_rate: WithholdingRate.RATE_0,
@@ -130,7 +131,7 @@ Deno.test("f8288.compute: 0% rate, amount_withheld = 0 — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8288.compute: amount_withheld = 0 — no output", () => {
+test("f8288.compute: amount_withheld = 0 — no output", () => {
   const result = compute([minimalItem({ amount_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -139,7 +140,7 @@ Deno.test("f8288.compute: amount_withheld = 0 — no output", () => {
 // 3. Aggregation — multiple items
 // =============================================================================
 
-Deno.test("f8288.compute: multiple properties — withheld amounts summed", () => {
+test("f8288.compute: multiple properties — withheld amounts summed", () => {
   const result = compute([
     minimalItem({ amount_withheld: 75000 }),
     minimalItem({
@@ -151,7 +152,7 @@ Deno.test("f8288.compute: multiple properties — withheld amounts summed", () =
   assertEquals(fields.line25c_other_withheld, 105000);
 });
 
-Deno.test("f8288.compute: multiple properties, one zero — only positive amounts count", () => {
+test("f8288.compute: multiple properties, one zero — only positive amounts count", () => {
   const result = compute([
     minimalItem({ amount_withheld: 50000 }),
     minimalItem({
@@ -168,7 +169,7 @@ Deno.test("f8288.compute: multiple properties, one zero — only positive amount
 // 4. Thresholds
 // =============================================================================
 
-Deno.test("f8288.compute: gross_sales_price < 300000 with 0% rate, zero withheld — no output", () => {
+test("f8288.compute: gross_sales_price < 300000 with 0% rate, zero withheld — no output", () => {
   const result = compute([minimalItem({
     gross_sales_price: 299999,
     withholding_rate: WithholdingRate.RATE_0,
@@ -177,7 +178,7 @@ Deno.test("f8288.compute: gross_sales_price < 300000 with 0% rate, zero withheld
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8288.compute: gross_sales_price at exactly 1000000 with 10% rate — routes", () => {
+test("f8288.compute: gross_sales_price at exactly 1000000 with 10% rate — routes", () => {
   const result = compute([minimalItem({
     gross_sales_price: 1000000,
     withholding_rate: WithholdingRate.RATE_10,
@@ -187,7 +188,7 @@ Deno.test("f8288.compute: gross_sales_price at exactly 1000000 with 10% rate —
   assertEquals(fields.line25c_other_withheld, 100000);
 });
 
-Deno.test("f8288.compute: gross_sales_price above 1000000 with 15% rate — routes", () => {
+test("f8288.compute: gross_sales_price above 1000000 with 15% rate — routes", () => {
   const result = compute([minimalItem({
     gross_sales_price: 2000000,
     withholding_rate: WithholdingRate.RATE_15,
@@ -201,21 +202,21 @@ Deno.test("f8288.compute: gross_sales_price above 1000000 with 15% rate — rout
 // 5. Hard Validation
 // =============================================================================
 
-Deno.test("f8288.compute: throws on negative amount_withheld", () => {
+test("f8288.compute: throws on negative amount_withheld", () => {
   assertThrows(
     () => compute([minimalItem({ amount_withheld: -1000 })]),
     Error,
   );
 });
 
-Deno.test("f8288.compute: throws on negative gross_sales_price", () => {
+test("f8288.compute: throws on negative gross_sales_price", () => {
   assertThrows(
     () => compute([minimalItem({ gross_sales_price: -500000 })]),
     Error,
   );
 });
 
-Deno.test("f8288.compute: zero amount_withheld does not throw and produces no outputs", () => {
+test("f8288.compute: zero amount_withheld does not throw and produces no outputs", () => {
   const result = compute([minimalItem({ amount_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -224,13 +225,13 @@ Deno.test("f8288.compute: zero amount_withheld does not throw and produces no ou
 // 6. Edge Cases
 // =============================================================================
 
-Deno.test("f8288.compute: single item with minimum withheld (1) — routes", () => {
+test("f8288.compute: single item with minimum withheld (1) — routes", () => {
   const result = compute([minimalItem({ amount_withheld: 1 })]);
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line25c_other_withheld, 1);
 });
 
-Deno.test("f8288.compute: only one schedule1 output not emitted (routes to f1040 only)", () => {
+test("f8288.compute: only one schedule1 output not emitted (routes to f1040 only)", () => {
   const result = compute([minimalItem({ amount_withheld: 50000 })]);
   const schedule1Out = result.outputs.find((o) => o.nodeType === "schedule1");
   assertEquals(schedule1Out, undefined);
@@ -240,7 +241,7 @@ Deno.test("f8288.compute: only one schedule1 output not emitted (routes to f1040
 // 7. Smoke Test
 // =============================================================================
 
-Deno.test("f8288.compute: smoke test — two properties, different rates, correct sum", () => {
+test("f8288.compute: smoke test — two properties, different rates, correct sum", () => {
   const result = compute([
     minimalItem({
       property_address: "100 Sunset Blvd, Los Angeles, CA 90028",

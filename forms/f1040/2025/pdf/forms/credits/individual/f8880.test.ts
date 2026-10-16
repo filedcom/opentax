@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8880Pdf } from "./f8880.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { calculateForm8880 } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/calculation.ts";
 
-Deno.test("Form 8880 PDF replays retained W-2 box 12 deferrals", () => {
+test("Form 8880 PDF replays retained W-2 box 12 deferrals", () => {
   const source = {
     taxpayer_ssn: "123456789",
     spouse_ssn: "987654321",
@@ -128,7 +129,7 @@ Deno.test("Form 8880 PDF replays retained W-2 box 12 deferrals", () => {
   );
 });
 
-Deno.test("Form 8880 PDF line 11 agrees with finalized credit-limit worksheet", () => {
+test("Form 8880 PDF line 11 agrees with finalized credit-limit worksheet", () => {
   const fields = {
     ira_contributions_taxpayer: 1_000,
     elective_deferrals_taxpayer: 600,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { f1040_2025 } from "../../../../index.ts";
@@ -74,7 +75,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("active first-year retained sale above the allowance phaseout preserves its activity loss", () => {
+test("active first-year retained sale above the allowance phaseout preserves its activity loss", () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
   assertEquals(result.carryforwards.suspended_pal_8582, 3_000);
@@ -112,7 +113,7 @@ Deno.test("active first-year retained sale above the allowance phaseout preserve
   );
 });
 
-Deno.test("active first-year retained sale rejects changed acquisition, phaseout and return", () => {
+test("active first-year retained sale rejects changed acquisition, phaseout and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const altered: Array<typeof pending> = [
     {

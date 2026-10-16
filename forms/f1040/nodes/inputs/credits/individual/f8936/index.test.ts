@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   businessUsePercentage,
@@ -115,7 +116,7 @@ function amount(input: F8936Input, field: string): number | undefined {
   }, undefined);
 }
 
-Deno.test("Form 8936: MAGI is a return-level current/prior-year breakdown", () => {
+test("Form 8936: MAGI is a return-level current/prior-year breakdown", () => {
   const input = source([newVehicle], {
     current_year_magi: {
       adjusted_gross_income: 140_000,
@@ -129,7 +130,7 @@ Deno.test("Form 8936: MAGI is a return-level current/prior-year breakdown", () =
   assertEquals(amount(input, "line6f_clean_vehicle_credit"), 7_500);
 });
 
-Deno.test("Form 8936: both MAGI years and both filing statuses are required", () => {
+test("Form 8936: both MAGI years and both filing statuses are required", () => {
   const valid = source([newVehicle]);
   assertEquals(f8936.inputSchema.safeParse(valid).success, true);
   assertEquals(
@@ -151,7 +152,7 @@ Deno.test("Form 8936: both MAGI years and both filing statuses are required", ()
   );
 });
 
-Deno.test("Form 8936: empty vehicle array has no outputs", () => {
+test("Form 8936: empty vehicle array has no outputs", () => {
   assertEquals(compute(source([])).outputs, []);
 });
 
@@ -162,7 +163,7 @@ for (
     ["business_use_pct", 1.01],
   ] as const
 ) {
-  Deno.test(`Form 8936: invalid ${field} ${value} is rejected`, () => {
+  test(`Form 8936: invalid ${field} ${value} is rejected`, () => {
     assertEquals(
       f8936.inputSchema.safeParse(source([{ ...newVehicle, [field]: value }]))
         .success,
@@ -207,7 +208,7 @@ for (
     ],
   ] as const
 ) {
-  Deno.test(`Form 8936: ${name} cannot award a new credit`, () => {
+  test(`Form 8936: ${name} cannot award a new credit`, () => {
     assertThrows(
       () => compute(source([{ ...newVehicle, ...changes }])),
       Error,
@@ -216,7 +217,7 @@ for (
   });
 }
 
-Deno.test("Form 8936: acquired after September 30 is ineligible", () => {
+test("Form 8936: acquired after September 30 is ineligible", () => {
   assertEquals(
     compute(source([{ ...newVehicle, acquisition_date: "2025-10-01" }]))
       .outputs,
@@ -235,7 +236,7 @@ for (
     ["acquired for resale", { acquired_for_use_not_resale: false }],
   ] as const
 ) {
-  Deno.test(`Form 8936: ${name} is ineligible`, () => {
+  test(`Form 8936: ${name} is ineligible`, () => {
     assertEquals(compute(source([{ ...newVehicle, ...changes }])).outputs, []);
   });
 }
@@ -247,7 +248,7 @@ for (
     ["capped", 10_000, 7_500],
   ] as const
 ) {
-  Deno.test(`Form 8936: ${name} new-vehicle credit`, () => {
+  test(`Form 8936: ${name} new-vehicle credit`, () => {
     assertEquals(
       amount(
         source([{ ...newVehicle, credit_amount: credit }]),
@@ -265,7 +266,7 @@ for (
     [FilingStatus.MFJ, 300_000],
   ] as const
 ) {
-  Deno.test(`Form 8936: new-vehicle ${status} MAGI threshold`, () => {
+  test(`Form 8936: new-vehicle ${status} MAGI threshold`, () => {
     assertEquals(
       amount(
         source([newVehicle], {
@@ -293,7 +294,7 @@ for (
   });
 }
 
-Deno.test("Form 8936: prior-year status uses its own limit", () => {
+test("Form 8936: prior-year status uses its own limit", () => {
   assertEquals(
     amount(
       source([newVehicle], {
@@ -316,7 +317,7 @@ for (
     ["suv_van_truck", 80_001, undefined],
   ] as const
 ) {
-  Deno.test(`Form 8936: ${type} MSRP ${msrp}`, () => {
+  test(`Form 8936: ${type} MSRP ${msrp}`, () => {
     assertEquals(
       amount(
         source([{ ...newVehicle, vehicle_type: type, msrp }]),
@@ -333,7 +334,7 @@ for (
     undefined,
   ]] as const
 ) {
-  Deno.test(`Form 8936: ${businessUse * 100}% business use`, () => {
+  test(`Form 8936: ${businessUse * 100}% business use`, () => {
     assertEquals(
       amount(
         source([{
@@ -348,7 +349,7 @@ for (
   });
 }
 
-Deno.test("Form 8936: new vehicle business and personal shares reconcile after rounding", () => {
+test("Form 8936: new vehicle business and personal shares reconcile after rounding", () => {
   const vehicle = {
     ...newVehicle,
     credit_amount: 1_001,
@@ -374,7 +375,7 @@ Deno.test("Form 8936: new vehicle business and personal shares reconcile after r
   );
 });
 
-Deno.test("Form 8936: business credit needs a nonpassive source classification", () => {
+test("Form 8936: business credit needs a nonpassive source classification", () => {
   const vehicle = { ...newVehicle, business_use: mileageUse(1_000) };
   assertThrows(
     () => compute(source([vehicle])),
@@ -402,7 +403,7 @@ Deno.test("Form 8936: business credit needs a nonpassive source classification",
   );
 });
 
-Deno.test("Form 8936: business mileage excludes commuting and prorates conversions", () => {
+test("Form 8936: business mileage excludes commuting and prorates conversions", () => {
   const converted = {
     ...newVehicle,
     business_use: {
@@ -455,7 +456,7 @@ for (
     [FilingStatus.MFJ, 150_000],
   ] as const
 ) {
-  Deno.test(`Form 8936: previously owned ${status} MAGI threshold`, () => {
+  test(`Form 8936: previously owned ${status} MAGI threshold`, () => {
     assertEquals(
       amount(
         source([usedVehicle], {
@@ -497,7 +498,7 @@ for (
     ["price over $25,000", { sale_price: 25_001 }],
   ] as const
 ) {
-  Deno.test(`Form 8936: previously owned ${name} is ineligible`, () => {
+  test(`Form 8936: previously owned ${name} is ineligible`, () => {
     assertEquals(compute(source([{ ...usedVehicle, ...changes }])).outputs, []);
   });
 }
@@ -508,7 +509,7 @@ for (
     4_000,
   ]] as const
 ) {
-  Deno.test(`Form 8936: previously owned price ${price} computes credit`, () => {
+  test(`Form 8936: previously owned price ${price} computes credit`, () => {
     assertEquals(
       amount(
         source([{ ...usedVehicle, sale_price: price }]),
@@ -519,7 +520,7 @@ for (
   });
 }
 
-Deno.test("Form 8936: previously owned credit is not reduced by business-use percentage", () => {
+test("Form 8936: previously owned credit is not reduced by business-use percentage", () => {
   assertEquals(
     amount(
       source([{ ...usedVehicle, business_use: mileageUse(250) }]),
@@ -529,7 +530,7 @@ Deno.test("Form 8936: previously owned credit is not reduced by business-use per
   );
 });
 
-Deno.test("Form 8936: transferred dealer amount is not claimed again on Schedule 3", () => {
+test("Form 8936: transferred dealer amount is not claimed again on Schedule 3", () => {
   assertEquals(
     compute(source([{
       ...newVehicle,
@@ -540,7 +541,7 @@ Deno.test("Form 8936: transferred dealer amount is not claimed again on Schedule
   );
 });
 
-Deno.test("Form 8936: disqualified transferred new credit is repaid on Schedule 2 line 1b", () => {
+test("Form 8936: disqualified transferred new credit is repaid on Schedule 2 line 1b", () => {
   const result = compute(source([{
     ...newVehicle,
     transferred_to_dealer: true,
@@ -555,7 +556,7 @@ Deno.test("Form 8936: disqualified transferred new credit is repaid on Schedule 
   }]);
 });
 
-Deno.test("Form 8936: disqualified transferred used credit is repaid on Schedule 2 line 1c", () => {
+test("Form 8936: disqualified transferred used credit is repaid on Schedule 2 line 1c", () => {
   const result = compute(source([{
     ...usedVehicle,
     transferred_to_dealer: true,
@@ -570,7 +571,7 @@ Deno.test("Form 8936: disqualified transferred used credit is repaid on Schedule
   }]);
 });
 
-Deno.test("Form 8936: multiple vehicles share one return-level MAGI test", () => {
+test("Form 8936: multiple vehicles share one return-level MAGI test", () => {
   const result = compute(source([newVehicle, usedVehicle], {
     current_year_magi: { adjusted_gross_income: 100_000 },
     prior_year_magi: { adjusted_gross_income: 100_000 },
@@ -579,7 +580,7 @@ Deno.test("Form 8936: multiple vehicles share one return-level MAGI test", () =>
   assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
 });
 
-Deno.test("Form 8936: two qualifying vehicles route to their separate Schedule 3 lines", () => {
+test("Form 8936: two qualifying vehicles route to their separate Schedule 3 lines", () => {
   const result = compute(source([newVehicle, usedVehicle]));
   assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
@@ -589,7 +590,7 @@ Deno.test("Form 8936: two qualifying vehicles route to their separate Schedule 3
   );
 });
 
-Deno.test("Form 8936: commercial light EV uses the 2025 $7,500 incremental-cost safe harbor", () => {
+test("Form 8936: commercial light EV uses the 2025 $7,500 incremental-cost safe harbor", () => {
   const lines = computeCommercialVehicleCreditLines(commercialVehicle);
   assertEquals(lines.line22BasisPercentage, 18_000);
   assertEquals(lines.line23IncrementalCost, 7_500);
@@ -602,7 +603,7 @@ Deno.test("Form 8936: commercial light EV uses the 2025 $7,500 incremental-cost 
   });
 });
 
-Deno.test("Form 8936: commercial PHEV uses 15% basis after Section 179", () => {
+test("Form 8936: commercial PHEV uses 15% basis after Section 179", () => {
   const vehicle: F8936Item = {
     ...commercialVehicle,
     commercial: {
@@ -626,7 +627,7 @@ Deno.test("Form 8936: commercial PHEV uses 15% basis after Section 179", () => {
   assertEquals(lines.line26Credit, 6_000);
 });
 
-Deno.test("Form 8936: commercial heavy vehicle uses the $40,000 cap", () => {
+test("Form 8936: commercial heavy vehicle uses the $40,000 cap", () => {
   const vehicle: F8936Item = {
     ...commercialVehicle,
     commercial: {
@@ -653,7 +654,7 @@ Deno.test("Form 8936: commercial heavy vehicle uses the $40,000 cap", () => {
   );
 });
 
-Deno.test("Form 8936: commercial vehicle rejects unsupported safe harbor and too-small battery", () => {
+test("Form 8936: commercial vehicle rejects unsupported safe harbor and too-small battery", () => {
   assertThrows(
     () =>
       computeCommercialVehicleCreditLines({
@@ -693,7 +694,7 @@ Deno.test("Form 8936: commercial vehicle rejects unsupported safe harbor and too
   );
 });
 
-Deno.test("Form 8936: commercial vehicle cannot claim a duplicate VIN or a new-vehicle credit for the same VIN", () => {
+test("Form 8936: commercial vehicle cannot claim a duplicate VIN or a new-vehicle credit for the same VIN", () => {
   assertEquals(
     f8936.inputSchema.safeParse(source([newVehicle, {
       ...commercialVehicle,
@@ -715,7 +716,7 @@ Deno.test("Form 8936: commercial vehicle cannot claim a duplicate VIN or a new-v
   );
 });
 
-Deno.test("Form 8936: commercial credit needs nonpassive source classification", () => {
+test("Form 8936: commercial credit needs nonpassive source classification", () => {
   assertThrows(
     () =>
       compute(source([{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
@@ -80,7 +81,7 @@ for (
     [SectionBPropertyType.Equipment, 18_000, 12_000, "purchased_inventory"],
   ] as const
 ) {
-  Deno.test(`Section B ${reason} ${propertyType} source routing and reviewed native/PDF`, async () => {
+  test(`Section B ${reason} ${propertyType} source routing and reviewed native/PDF`, async () => {
     const acquiredDate = reason === "purchased_inventory"
       ? "2023-01-15"
       : "2025-01-15";

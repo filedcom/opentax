@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -11,7 +14,7 @@ import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f720
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of spouseOwnedDebtCases) {
-  Deno.test(`MFJ owned direct debt ${c.id}: independent basis, required copies, full XML/PDF`, async () => {
+  test(`MFJ owned direct debt ${c.id}: independent basis, required copies, full XML/PDF`, async () => {
     const { inputs, filer } = spouseOwnedDebtInputs(c),
       r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, []);
@@ -100,7 +103,7 @@ for (const c of spouseOwnedDebtCases) {
       ),
       doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), c.pages);
-    const textCommand = new Deno.Command("pdftotext", {
+    const textCommand = new sys.Command("pdftotext", {
       args: ["-layout", "-", "-"],
       stdin: "piped",
       stdout: "piped",
@@ -128,7 +131,7 @@ for (const c of spouseOwnedDebtCases) {
       origins.filter((o) => o.formKey === "form7203").map((o) => o.formCopy),
       c.owners.length === 2 ? [1, 1, 2, 2] : [1, 1],
     );
-    const cmd = new Deno.Command("xmllint", {
+    const cmd = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -140,13 +143,9 @@ for (const c of spouseOwnedDebtCases) {
     const checked = await cmd.output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_SPOUSE_DEBT_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_SPOUSE_DEBT_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [suffix, value] of Object.entries({
@@ -158,17 +157,17 @@ for (const c of spouseOwnedDebtCases) {
           expected: c,
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${suffix}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
-Deno.test("MFJ owned sources reject wrong claimant, shared issuer/source, bank and direct-note conflicts", () => {
+test("MFJ owned sources reject wrong claimant, shared issuer/source, bank and direct-note conflicts", () => {
   const mutations: [string, (i: any) => void][] = [
     ["wrong actual spouse", (i) => i.general.spouse_ssn = "345-67-8901"],
     ["nonjoint actual return", (i) => i.general.filing_status = "single"],
@@ -214,7 +213,7 @@ Deno.test("MFJ owned sources reject wrong claimant, shared issuer/source, bank a
     assertEquals(rejected, true, label);
   }
 });
-Deno.test("MFJ native and PDF reject omitted shareholder copy, pooled loss, owner and finalized-QBI conflicts", async () => {
+test("MFJ native and PDF reject omitted shareholder copy, pooled loss, owner and finalized-QBI conflicts", async () => {
   const { inputs, filer } = spouseOwnedDebtInputs(spouseOwnedDebtCases[5]),
     r = f1040_2025.executeReturn(inputs),
     base: any = buildPending(r.pending);

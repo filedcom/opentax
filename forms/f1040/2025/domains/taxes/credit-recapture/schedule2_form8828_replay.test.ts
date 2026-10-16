@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { FilingStatus } from "../../../../mef/header.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
@@ -20,7 +21,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule 2 line 17b rejects bare mortgage subsidy recapture", async () => {
+test("Schedule 2 line 17b rejects bare mortgage subsidy recapture", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,
@@ -43,7 +44,7 @@ Deno.test("Schedule 2 line 17b rejects bare mortgage subsidy recapture", async (
   }
 });
 
-Deno.test("Schedule 2 line 17b replays reviewed Form 8828 gift recapture before attachment gate", async () => {
+test("Schedule 2 line 17b replays reviewed Form 8828 gift recapture before attachment gate", async () => {
   const property = {
     line1: "14 Main St",
     city: "Boise",

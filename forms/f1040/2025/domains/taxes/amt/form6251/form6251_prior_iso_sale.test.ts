@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -24,7 +25,7 @@ const general = {
   address_zip: "78701",
 };
 
-Deno.test("prior ISO sale replays 2024 lot and 2025 Form 8949 into native/PDF Form 6251", () => {
+test("prior ISO sale replays 2024 lot and 2025 Form 8949 into native/PDF Form 6251", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
     ...priorIsoSaleFixture(general.taxpayer_ssn),
@@ -108,7 +109,7 @@ Deno.test("prior ISO sale replays 2024 lot and 2025 Form 8949 into native/PDF Fo
   );
 });
 
-Deno.test("prior ISO lot rejects a mismatched 2024 AMT spread and disqualifying sale date", () => {
+test("prior ISO lot rejects a mismatched 2024 AMT spread and disqualifying sale date", () => {
   const source = priorIsoSaleFixture();
   const review = source.form6251_prior_iso_sale.prior_iso_sale_review;
   const row = {
@@ -140,7 +141,7 @@ Deno.test("prior ISO lot rejects a mismatched 2024 AMT spread and disqualifying 
   );
 });
 
-Deno.test("prior ISO loss sale caps regular and AMT Schedule D losses separately", () => {
+test("prior ISO loss sale caps regular and AMT Schedule D losses separately", () => {
   const source = priorIsoSaleLossFixture(general.taxpayer_ssn);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,

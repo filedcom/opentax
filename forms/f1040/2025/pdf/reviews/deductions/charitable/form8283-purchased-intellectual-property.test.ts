@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
@@ -78,7 +80,7 @@ const cases = [
   { id: "mixed-six-joint", kinds, joint: true },
 ];
 for (const entry of cases) {
-  Deno.test(`Form 8283 purchased intellectual property full return: ${entry.id}`, async () => {
+  test(`Form 8283 purchased intellectual property full return: ${entry.id}`, async () => {
     const items = entry.kinds.map((kind, i) =>
       gift(kind, entry.joint && i % 2 === 1)
     );
@@ -155,10 +157,10 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_FORM8283_IP_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8283_IP_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -181,8 +183,8 @@ for (const entry of cases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
     }
     const retained = giftSchema.parse(pending.f8283);
     assertExists(retained.section_a_items);
@@ -284,7 +286,7 @@ for (const entry of cases) {
     }
   });
 }
-Deno.test("Form 8283 copyright and software need their specific statutory exclusion reviews", () => {
+test("Form 8283 copyright and software need their specific statutory exclusion reviews", () => {
   for (const kind of [Kind.Copyright, Kind.Software]) {
     const item = gift(kind);
     const source = {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -17,7 +18,7 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule B adjustment statement documents the gross-to-net calculation", async () => {
+test("Schedule B adjustment statement documents the gross-to-net calculation", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBInterestAdjustmentsStatement(document, {
     interest_line1_subtotal: 2_000,
@@ -34,7 +35,7 @@ Deno.test("Schedule B adjustment statement documents the gross-to-net calculatio
   );
 });
 
-Deno.test("Schedule B adjustment statement rejects a nonreconciling net", async () => {
+test("Schedule B adjustment statement rejects a nonreconciling net", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>

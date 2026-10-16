@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -67,7 +68,7 @@ const current: Form3800DocumentParts = {
   passiveCarryoverDetails: [],
 };
 
-Deno.test("Form 3800 Part V prints both facility sources, sale, tax use, and carryforward", () => {
+test("Form 3800 Part V prints both facility sources, sale, tax use, and carryforward", () => {
   const fields = projectForm3800PartVFields(current);
   const first = form3800PartVFields(1);
   const second = form3800PartVFields(2);
@@ -83,7 +84,7 @@ Deno.test("Form 3800 Part V prints both facility sources, sale, tax use, and car
   assertEquals(fields[second.k], 50);
 });
 
-Deno.test("Form 3800 Part V rejects an omitted aggregate source or impossible sale", () => {
+test("Form 3800 Part V rejects an omitted aggregate source or impossible sale", () => {
   assertThrows(
     () =>
       projectForm3800PartVFields({
@@ -148,7 +149,7 @@ const withCarryover: Form3800DocumentParts = {
   passiveCarryoverDetails: carryover.partVI,
 };
 
-Deno.test("Form 3800 Part V preserves a passive source beside nonpassive facilities", () => {
+test("Form 3800 Part V preserves a passive source beside nonpassive facilities", () => {
   const passive = {
     ...partnership,
     sourceKey: "partnership-2025",
@@ -185,7 +186,7 @@ Deno.test("Form 3800 Part V preserves a passive source beside nonpassive facilit
   assertEquals(fields[third.k], 40);
 });
 
-Deno.test("Form 3800 Part VI prints each source year, EIN, passive allowance, and unused credit", () => {
+test("Form 3800 Part VI prints each source year, EIN, passive allowance, and unused credit", () => {
   const fields = projectForm3800PartVIFields(withCarryover);
   const first = form3800PartVIFields(1);
   const second = form3800PartVIFields(2);
@@ -200,7 +201,7 @@ Deno.test("Form 3800 Part VI prints each source year, EIN, passive allowance, an
   assertEquals(fields[second.i], 50);
 });
 
-Deno.test("Form 3800 Part VI rejects a missing or reordered vintage", () => {
+test("Form 3800 Part VI rejects a missing or reordered vintage", () => {
   assertThrows(
     () =>
       projectForm3800PartVIFields({
@@ -225,7 +226,7 @@ Deno.test("Form 3800 Part VI rejects a missing or reordered vintage", () => {
   );
 });
 
-Deno.test("Form 3800 Part V validates all continuation rows before returning any pages", () => {
+test("Form 3800 Part V validates all continuation rows before returning any pages", () => {
   const rows = Array.from({ length: 31 }, (_, index) => ({
     ...current.currentDetails[1],
     credit: index + 1,

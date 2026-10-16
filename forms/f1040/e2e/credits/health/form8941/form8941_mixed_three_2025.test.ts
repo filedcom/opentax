@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -42,12 +45,7 @@ for (
     ["zero", 85000, 145000, 140000, 0],
   ] as const
 ) {
-  Deno.test({
-    name:
-      `TY2025 two retail and one farm controlled SHOP ${name} current use: actual sources, XSD, all PDF pages`,
-    sanitizeResources: false,
-    sanitizeOps: false,
-    async fn() {
+  test(`TY2025 two retail and one farm controlled SHOP ${name} current use: actual sources, XSD, all PDF pages`, async () => {
       const input = form8941MixedThreeInputs(agriculture, first, second);
       const group = commonControlForm8941Shares(input.f8941);
       assertEquals([
@@ -103,19 +101,19 @@ for (
         bundle.xml,
         "<SumSmllrAmtAndCreditForHIPAmt>26735</SumSmllrAmtAndCreditForHIPAmt>",
       );
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const prefix = dir + `two-c-one-f-${name}`;
-      await Deno.writeTextFile(
+      await fs.writeFile(
         prefix + ".json",
         JSON.stringify({ input, group, pending: p }, null, 2),
       );
-      await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-      const valid = await new Deno.Command("xmllint", {
+      await fs.writeFile(prefix + ".xml", bundle.xml);
+      const valid = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, prefix + ".xml"],
         stderr: "piped",
       }).output();
       assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-      await Deno.writeFile(
+      await fs.writeFile(
         prefix + ".pdf",
         await buildPdfBytes(
           bundle.pending,
@@ -124,13 +122,13 @@ for (
           bundle,
         ),
       );
-      const extraction = await new Deno.Command("pdftotext", {
+      const extraction = await new sys.Command("pdftotext", {
         args: ["-layout", prefix + ".pdf", "-"],
         stdout: "piped",
       }).output();
       assertEquals(extraction.code, 0);
       const packet = new TextDecoder().decode(extraction.stdout);
-      await Deno.writeTextFile(prefix + ".txt", packet);
+      await fs.writeFile(prefix + ".txt", packet);
       for (
         const value of [
           "Jane Retail Shop",
@@ -142,16 +140,10 @@ for (
           "19868",
         ]
       ) assertStringIncludes(packet, value);
-    },
-  });
+    });
 }
 
-Deno.test({
-  name:
-    "TY2025 mixed C/C/F SHOP rejects shared-worker, ownership, payroll, receipts, allocation and direct native/PDF conflicts",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 mixed C/C/F SHOP rejects shared-worker, ownership, payroll, receipts, allocation and direct native/PDF conflicts", async () => {
     const input = form8941MixedThreeInputs();
     const result = execute(plan, registry, input, {
       taxYear: 2025,
@@ -281,5 +273,4 @@ Deno.test({
         name,
       );
     }
-  },
-});
+  });

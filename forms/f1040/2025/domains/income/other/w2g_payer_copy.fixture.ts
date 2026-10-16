@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { w2gPdf } from "../../../pdf/forms/income/other/w2g.ts";
 
@@ -10,16 +12,16 @@ export async function w2gPayerCopyFixture(
   }.pdf`;
   let bytes: Uint8Array;
   try {
-    bytes = await Deno.readFile(cache);
+    bytes = await sys.readBytes(cache);
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    if (!(sys.isNotFound(error))) throw error;
     const response = await fetch(w2gPdf.pdfUrl);
     if (!response.ok) {
       throw new Error(`W-2G official template: ${response.status}`);
     }
     bytes = new Uint8Array(await response.arrayBuffer());
-    await Deno.mkdir(".pdf-cache", { recursive: true });
-    await Deno.writeFile(cache, bytes);
+    await fs.mkdir(".pdf-cache", { recursive: true });
+    await fs.writeFile(cache, bytes);
   }
   const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
   const form = pdf.getForm();

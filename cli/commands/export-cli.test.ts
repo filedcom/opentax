@@ -1,11 +1,14 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 
-Deno.test("CLI force and draft cannot export an empty return with invented identity", async () => {
-  const cwd = await Deno.makeTempDir();
+test("CLI force and draft cannot export an empty return with invented identity", async () => {
+  const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
-    new Deno.Command("deno", {
+    new sys.Command("deno", {
       args: [
         "run",
         "--frozen",
@@ -56,15 +59,15 @@ Deno.test("CLI force and draft cannot export an empty return with invented ident
       "needs the identified taxpayer's SSN",
     );
   } finally {
-    await Deno.remove(cwd, { recursive: true });
+    await sys.remove(cwd, { recursive: true });
   }
 });
 
-Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force", async () => {
-  const cwd = await Deno.makeTempDir();
+test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force", async () => {
+  const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
-    new Deno.Command("deno", {
+    new sys.Command("deno", {
       args: [
         "run",
         "--frozen",
@@ -154,10 +157,10 @@ Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without f
       ),
     );
     try {
-      await Deno.stat(schema);
+      await sys.stat(schema);
       const xmlPath = `${cwd}/return.xml`;
-      await Deno.writeTextFile(xmlPath, xml);
-      const validated = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const validated = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, xmlPath],
         stdout: "piped",
         stderr: "piped",
@@ -182,10 +185,10 @@ Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without f
       pdfPath,
     );
     assertEquals(pdf.code, 0, new TextDecoder().decode(pdf.stderr));
-    const bytes = await Deno.readFile(pdfPath);
+    const bytes = await sys.readBytes(pdfPath);
     assertEquals(new TextDecoder().decode(bytes.subarray(0, 5)), "%PDF-");
     assertEquals(bytes.length > 10_000, true);
   } finally {
-    await Deno.remove(cwd, { recursive: true });
+    await sys.remove(cwd, { recursive: true });
   }
 });

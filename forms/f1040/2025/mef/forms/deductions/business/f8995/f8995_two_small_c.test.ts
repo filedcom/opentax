@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
@@ -61,7 +62,7 @@ function settled(secondProfit = 210) {
   );
 }
 
-Deno.test("two small Schedule C businesses occupy distinct Form 8995 native and PDF rows", () => {
+test("two small Schedule C businesses occupy distinct Form 8995 native and PDF rows", () => {
   const result = settled();
   assertEquals(result.diagnostics, []);
   const { pending } = result;
@@ -143,7 +144,7 @@ Deno.test("two small Schedule C businesses occupy distinct Form 8995 native and 
   }
 });
 
-Deno.test("Form 8995 two-business route rejects profits entering Schedule SE", () => {
+test("Form 8995 two-business route rejects profits entering Schedule SE", () => {
   const result = settled(260);
   assertEquals(result.diagnostics, []);
   assertThrows(

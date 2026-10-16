@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -18,7 +19,7 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "mfs-w2-lived-apart-all-year-social-security-box"
 )!;
 
-Deno.test("signed MFS joint estimated payment reaches line 26 without a former-spouse mark", async () => {
+test("signed MFS joint estimated payment reaches line 26 without a former-spouse mark", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

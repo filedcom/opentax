@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -183,7 +186,7 @@ async function validate(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: ["--noout", "--schema", schema, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -195,7 +198,7 @@ async function validate(xml: string) {
   const result = await child.output();
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
 }
-Deno.test("owned multi-payer investment income combines with multi-business QBI, losses, SE and preferential tax", async () => {
+test("owned multi-payer investment income combines with multi-business QBI, losses, SE and preferential tax", async () => {
   for (const scenario of cases) {
     const result = f1040_2025.executeReturn(inputsFor(scenario));
     assertEquals(result.diagnostics, [], scenario.id);
@@ -269,15 +272,15 @@ Deno.test("owned multi-payer investment income combines with multi-business QBI,
     assertStringIncludes(prepared.bundle.xml, `<TaxAmt>${tax}</TaxAmt>`);
     const pdf = await prepared.renderPdf();
     assert(pdf.length > 0);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         `../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-investment/${scenario.id}/`,
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-      await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+      await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${directory}calculation.json`,
         JSON.stringify(
           {
@@ -292,7 +295,7 @@ Deno.test("owned multi-payer investment income combines with multi-business QBI,
     }
   }
 });
-Deno.test("multi-business investment exports reject altered ownership, copies, payers, holdings, totals and tax", () => {
+test("multi-business investment exports reject altered ownership, copies, payers, holdings, totals and tax", () => {
   const result = f1040_2025.executeReturn(inputsFor(cases[1]));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -400,7 +403,7 @@ Deno.test("multi-business investment exports reject altered ownership, copies, p
   }
 });
 
-Deno.test("multi-business QBI line 12 adds entered qualified dividend and distribution totals separately", async () => {
+test("multi-business QBI line 12 adds entered qualified dividend and distribution totals separately", async () => {
   const scenario = {
     ...cases[0],
     qualified: [1200.25, 600.24],

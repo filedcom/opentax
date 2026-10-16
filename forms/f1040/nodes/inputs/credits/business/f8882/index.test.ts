@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8882Fixture } from "./fixture.ts";
 import { calculateForm8882, f8882, inputSchema } from "./index.ts";
 
-Deno.test("f8882: direct Schedule C credit routes to typed Form 3800", () => {
+test("f8882: direct Schedule C credit routes to typed Form 3800", () => {
   const source = inputSchema.parse(form8882Fixture());
   assertEquals(calculateForm8882(source), {
     line1: 40_000,
@@ -25,7 +26,7 @@ Deno.test("f8882: direct Schedule C credit routes to typed Form 3800", () => {
   });
 });
 
-Deno.test("f8882: referral-only direct route calculates 10 percent", () => {
+test("f8882: referral-only direct route calculates 10 percent", () => {
   const source = form8882Fixture();
   assertEquals(
     calculateForm8882(inputSchema.parse({
@@ -36,7 +37,7 @@ Deno.test("f8882: referral-only direct route calculates 10 percent", () => {
   );
 });
 
-Deno.test("f8882: rejects unsupported legacy totals, missing contracts, and false qualification", () => {
+test("f8882: rejects unsupported legacy totals, missing contracts, and false qualification", () => {
   const source = form8882Fixture();
   assertThrows(() =>
     inputSchema.parse({ qualified_childcare_expenses: 40_000 })
@@ -78,7 +79,7 @@ Deno.test("f8882: rejects unsupported legacy totals, missing contracts, and fals
   );
 });
 
-Deno.test("f8882: unsupported cap allocation and fractional line credit fail closed", () => {
+test("f8882: unsupported cap allocation and fractional line credit fail closed", () => {
   const source = form8882Fixture();
   assertThrows(() =>
     inputSchema.parse({

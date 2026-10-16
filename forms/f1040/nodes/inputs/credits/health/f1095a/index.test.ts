@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8962 as form8962Mef } from "../../../../../2025/mef/forms/credits/health/f8962/f8962.ts";
 import { form8962Pdf } from "../../../../../2025/pdf/forms/credits/health/f8962.ts";
@@ -43,14 +44,14 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
-Deno.test("empty array throws", () => {
+test("empty array throws", () => {
   assertThrows(
     () => f1095a.compute({ taxYear: 2025, formType: "f1040" }, { f1095as: [] }),
     Error,
   );
 });
 
-Deno.test("missing issuer_name throws", () => {
+test("missing issuer_name throws", () => {
   assertThrows(
     () =>
       f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -62,21 +63,21 @@ Deno.test("missing issuer_name throws", () => {
   );
 });
 
-Deno.test("negative annual_premium throws", () => {
+test("negative annual_premium throws", () => {
   assertThrows(
     () => compute([minimalItem({ annual_premium: -1 })]),
     Error,
   );
 });
 
-Deno.test("negative annual_slcsp throws", () => {
+test("negative annual_slcsp throws", () => {
   assertThrows(
     () => compute([minimalItem({ annual_slcsp: -50 })]),
     Error,
   );
 });
 
-Deno.test("negative annual_aptc throws", () => {
+test("negative annual_aptc throws", () => {
   assertThrows(
     () => compute([minimalItem({ annual_aptc: -100 })]),
     Error,
@@ -85,31 +86,31 @@ Deno.test("negative annual_aptc throws", () => {
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
 
-Deno.test("annual_premium routes to form8962", () => {
+test("annual_premium routes to form8962", () => {
   const result = compute([minimalItem({ annual_premium: 1200 })]);
   const out = findOutput(result, "form8962");
   assertEquals(out?.fields.annual_premium, 1200);
 });
 
-Deno.test("annual_slcsp routes to form8962", () => {
+test("annual_slcsp routes to form8962", () => {
   const result = compute([minimalItem({ annual_slcsp: 1500 })]);
   const out = findOutput(result, "form8962");
   assertEquals(out?.fields.annual_slcsp, 1500);
 });
 
-Deno.test("annual_aptc routes to form8962", () => {
+test("annual_aptc routes to form8962", () => {
   const result = compute([minimalItem({ annual_aptc: 800 })]);
   const out = findOutput(result, "form8962");
   assertEquals(out?.fields.annual_aptc, 800);
 });
 
-Deno.test("zero annual values does not route to form8962", () => {
+test("zero annual values does not route to form8962", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form8962");
   assertEquals(out, undefined);
 });
 
-Deno.test("monthly premiums route to form8962", () => {
+test("monthly premiums route to form8962", () => {
   const result = compute([
     minimalItem({
       monthly_premiums: [
@@ -133,7 +134,7 @@ Deno.test("monthly premiums route to form8962", () => {
   assertEquals((out?.fields.monthly_premiums as number[])[0], 100);
 });
 
-Deno.test("monthly slcsp routes to form8962", () => {
+test("monthly slcsp routes to form8962", () => {
   const result = compute([
     minimalItem({
       monthly_slcsps: [
@@ -157,7 +158,7 @@ Deno.test("monthly slcsp routes to form8962", () => {
   assertEquals((out?.fields.monthly_slcsps as number[])[0], 120);
 });
 
-Deno.test("monthly aptc routes to form8962", () => {
+test("monthly aptc routes to form8962", () => {
   const result = compute([
     minimalItem({
       monthly_aptcs: [60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60],
@@ -168,7 +169,7 @@ Deno.test("monthly aptc routes to form8962", () => {
   assertEquals((out?.fields.monthly_aptcs as number[])[5], 60);
 });
 
-Deno.test("identified spouse policy carries corrected 1095-A rows to marriage worksheet", () => {
+test("identified spouse policy carries corrected 1095-A rows to marriage worksheet", () => {
   const monthlyPremiums = Array(12).fill(500);
   const monthlySlcsps = Array(12).fill(600);
   const correctedSlcsps = [650, ...Array(11).fill(600)];
@@ -208,7 +209,7 @@ Deno.test("identified spouse policy carries corrected 1095-A rows to marriage wo
   );
 });
 
-Deno.test("marriage policy source requires unique identity and monthly columns", () => {
+test("marriage policy source requires unique identity and monthly columns", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -233,7 +234,7 @@ Deno.test("marriage policy source requires unique identity and monthly columns",
   );
 });
 
-Deno.test("same-state spouses add separate SLCSP through wedding month, then dedupe", () => {
+test("same-state spouses add separate SLCSP through wedding month, then dedupe", () => {
   const policy = (owner: "primary" | "spouse", number: string) =>
     minimalItem({
       policy_number: number,
@@ -300,7 +301,7 @@ Deno.test("same-state spouses add separate SLCSP through wedding month, then ded
   );
 });
 
-Deno.test("marriage source month is required and cannot contradict Part V", () => {
+test("marriage source month is required and cannot contradict Part V", () => {
   const policy = minimalItem({
     policy_number: "PRIMARY-1095A",
     alternative_marriage_owner: "primary",
@@ -326,7 +327,7 @@ Deno.test("marriage source month is required and cannot contradict Part V", () =
   );
 });
 
-Deno.test("issuer_name alone does not produce form8962 output", () => {
+test("issuer_name alone does not produce form8962 output", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form8962");
   assertEquals(out, undefined);
@@ -334,7 +335,7 @@ Deno.test("issuer_name alone does not produce form8962 output", () => {
 
 // ── 3. Aggregation across multiple policies ────────────────────────────────────
 
-Deno.test("annual_premium sums across multiple policies", () => {
+test("annual_premium sums across multiple policies", () => {
   const result = compute([
     minimalItem({ annual_premium: 600 }),
     minimalItem({ issuer_name: "Second Plan", annual_premium: 400 }),
@@ -343,7 +344,7 @@ Deno.test("annual_premium sums across multiple policies", () => {
   assertEquals(out?.fields.annual_premium, 1000);
 });
 
-Deno.test("annual_slcsp sums across multiple policies", () => {
+test("annual_slcsp sums across multiple policies", () => {
   const result = compute([
     minimalItem({ annual_slcsp: 700 }),
     minimalItem({ issuer_name: "Plan B", annual_slcsp: 300 }),
@@ -352,7 +353,7 @@ Deno.test("annual_slcsp sums across multiple policies", () => {
   assertEquals(out?.fields.annual_slcsp, 1000);
 });
 
-Deno.test("annual_aptc sums across multiple policies", () => {
+test("annual_aptc sums across multiple policies", () => {
   const result = compute([
     minimalItem({ annual_aptc: 500 }),
     minimalItem({ issuer_name: "Plan B", annual_aptc: 250 }),
@@ -363,7 +364,7 @@ Deno.test("annual_aptc sums across multiple policies", () => {
 
 // ── 7. Informational fields ───────────────────────────────────────────────────
 
-Deno.test("policy_number does not produce tax output", () => {
+test("policy_number does not produce tax output", () => {
   const withoutPolicyNumber = compute([minimalItem()]);
   const withPolicyNumber = compute([minimalItem({ policy_number: "POL123" })]);
   assertEquals(
@@ -372,7 +373,7 @@ Deno.test("policy_number does not produce tax output", () => {
   );
 });
 
-Deno.test("policy-numbered monthly premiums and APTC retain Pub 974 source identity", () => {
+test("policy-numbered monthly premiums and APTC retain Pub 974 source identity", () => {
   const result = compute([minimalItem({
     policy_number: "SEHI-2025",
     monthly_premiums: [800, ...Array(11).fill(0)],
@@ -392,7 +393,7 @@ Deno.test("policy-numbered monthly premiums and APTC retain Pub 974 source ident
 
 // ── 8. Edge cases ─────────────────────────────────────────────────────────────
 
-Deno.test("all-zero monthly arrays does not route to form8962", () => {
+test("all-zero monthly arrays does not route to form8962", () => {
   const result = compute([
     minimalItem({
       monthly_premiums: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -404,7 +405,7 @@ Deno.test("all-zero monthly arrays does not route to form8962", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("no APTC paid routes annual premium and slcsp to form8962", () => {
+test("no APTC paid routes annual premium and slcsp to form8962", () => {
   const result = compute([
     minimalItem({ annual_premium: 1200, annual_slcsp: 1500, annual_aptc: 0 }),
   ]);
@@ -413,7 +414,7 @@ Deno.test("no APTC paid routes annual premium and slcsp to form8962", () => {
   assertEquals(out?.fields.annual_slcsp, 1500);
 });
 
-Deno.test("an explicit zero monthly APTC column stays with covered months", () => {
+test("an explicit zero monthly APTC column stays with covered months", () => {
   const result = compute([minimalItem({
     monthly_premiums: Array(12).fill(500),
     monthly_slcsps: Array(12).fill(600),
@@ -428,7 +429,7 @@ Deno.test("an explicit zero monthly APTC column stays with covered months", () =
   assertEquals(out?.fields.annual_line11_eligible, true);
 });
 
-Deno.test("changed monthly premiums require Form 8962 monthly rows", () => {
+test("changed monthly premiums require Form 8962 monthly rows", () => {
   const result = compute([minimalItem({
     monthly_premiums: [500, ...Array(11).fill(600)],
     monthly_slcsps: Array(12).fill(700),
@@ -440,7 +441,7 @@ Deno.test("changed monthly premiums require Form 8962 monthly rows", () => {
   );
 });
 
-Deno.test("annual 1095-A total cannot disagree with its monthly column", () => {
+test("annual 1095-A total cannot disagree with its monthly column", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -452,7 +453,7 @@ Deno.test("annual 1095-A total cannot disagree with its monthly column", () => {
   );
 });
 
-Deno.test("same issuer and policy month cannot be counted twice", () => {
+test("same issuer and policy month cannot be counted twice", () => {
   assertThrows(
     () =>
       compute([
@@ -472,7 +473,7 @@ Deno.test("same issuer and policy month cannot be counted twice", () => {
   );
 });
 
-Deno.test("same policy can have separate statements for disjoint months", () => {
+test("same policy can have separate statements for disjoint months", () => {
   const firstMonths = [...Array(6).fill(500), ...Array(6).fill(0)];
   const secondMonths = [...Array(6).fill(0), ...Array(6).fill(600)];
   const result = compute([
@@ -502,7 +503,7 @@ Deno.test("same policy can have separate statements for disjoint months", () => 
   ]);
 });
 
-Deno.test("repeated policy with annual-only statements cannot establish disjoint months", () => {
+test("repeated policy with annual-only statements cannot establish disjoint months", () => {
   assertThrows(
     () =>
       compute([
@@ -514,7 +515,7 @@ Deno.test("repeated policy with annual-only statements cannot establish disjoint
   );
 });
 
-Deno.test("different policy identities can aggregate annual premiums", () => {
+test("different policy identities can aggregate annual premiums", () => {
   const result = compute([
     minimalItem({ policy_number: "POLICY-123", annual_premium: 6_000 }),
     minimalItem({ policy_number: "POLICY-456", annual_premium: 6_500 }),
@@ -522,7 +523,7 @@ Deno.test("different policy identities can aggregate annual premiums", () => {
   assertEquals(findOutput(result, "form8962")?.fields.annual_premium, 12_500);
 });
 
-Deno.test("different issuers may use the same policy number", () => {
+test("different issuers may use the same policy number", () => {
   const result = compute([
     minimalItem({ policy_number: "POLICY-123", annual_premium: 6_000 }),
     minimalItem({
@@ -534,7 +535,7 @@ Deno.test("different issuers may use the same policy number", () => {
   assertEquals(findOutput(result, "form8962")?.fields.annual_premium, 12_500);
 });
 
-Deno.test("multiple policies aggregate monthly arrays", () => {
+test("multiple policies aggregate monthly arrays", () => {
   const result = compute([
     minimalItem({
       coverage_state: "TX",
@@ -564,7 +565,7 @@ Deno.test("multiple policies aggregate monthly arrays", () => {
   assertEquals(premiums[6], 200);
 });
 
-Deno.test("same-state policies use one SLCSP while premiums and APTC add", () => {
+test("same-state policies use one SLCSP while premiums and APTC add", () => {
   const result = compute([
     minimalItem({
       coverage_state: "TX",
@@ -586,7 +587,7 @@ Deno.test("same-state policies use one SLCSP while premiums and APTC add", () =>
   assertEquals(fields?.annual_line11_eligible, true);
 });
 
-Deno.test("overlapping same-state 1095-A line 33 SLCSP is selected once, not summed", () => {
+test("overlapping same-state 1095-A line 33 SLCSP is selected once, not summed", () => {
   const result = compute([
     minimalItem({
       policy_number: "POLICY-1",
@@ -618,7 +619,7 @@ Deno.test("overlapping same-state 1095-A line 33 SLCSP is selected once, not sum
   assertEquals(fields?.annual_aptc, 1_800);
 });
 
-Deno.test("different-state policies add their SLCSP amounts", () => {
+test("different-state policies add their SLCSP amounts", () => {
   const result = compute([
     minimalItem({
       coverage_state: "TX",
@@ -651,7 +652,7 @@ Deno.test("different-state policies add their SLCSP amounts", () => {
   );
 });
 
-Deno.test("multiple covered policies reject missing state or conflicting same-state SLCSP", () => {
+test("multiple covered policies reject missing state or conflicting same-state SLCSP", () => {
   const first = minimalItem({
     coverage_state: "TX",
     monthly_premiums: Array(12).fill(300),
@@ -699,7 +700,7 @@ Deno.test("multiple covered policies reject missing state or conflicting same-st
   );
 });
 
-Deno.test("monthly policy cannot silently omit an annual-only policy", () => {
+test("monthly policy cannot silently omit an annual-only policy", () => {
   assertThrows(
     () =>
       compute([
@@ -727,7 +728,7 @@ Deno.test("monthly policy cannot silently omit an annual-only policy", () => {
 
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke test — full 1095-A with all major fields", () => {
+test("smoke test — full 1095-A with all major fields", () => {
   const result = compute([
     minimalItem({
       policy_number: "MP-2025-001",
@@ -788,7 +789,7 @@ Deno.test("smoke test — full 1095-A with all major fields", () => {
   assertEquals((out?.fields.monthly_premiums as number[]).length, 12);
 });
 
-Deno.test("shared MFS exception allocates half premium and APTC but uses family SLCSP", () => {
+test("shared MFS exception allocates half premium and APTC but uses family SLCSP", () => {
   const result = compute([minimalItem({
     policy_number: "POLICY-2025-123456",
     monthly_premiums: Array(12).fill(1_200),
@@ -818,7 +819,7 @@ Deno.test("shared MFS exception allocates half premium and APTC but uses family 
   }]);
 });
 
-Deno.test("shared MFS no-exception allocates only half APTC", () => {
+test("shared MFS no-exception allocates only half APTC", () => {
   const result = compute([minimalItem({
     policy_number: "MFS-POLICY-1",
     monthly_premiums: Array(12).fill(1_200),
@@ -845,7 +846,7 @@ Deno.test("shared MFS no-exception allocates only half APTC", () => {
   }]);
 });
 
-Deno.test("shared MFS source rejects coverage outside allocation and missing family SLCSP", () => {
+test("shared MFS source rejects coverage outside allocation and missing family SLCSP", () => {
   const base = {
     policy_number: "MFS-POLICY-1",
     monthly_premiums: Array(12).fill(1_200),
@@ -882,7 +883,7 @@ Deno.test("shared MFS source rejects coverage outside allocation and missing fam
   );
 });
 
-Deno.test("divorced taxpayers use the same agreed share for all three policy amounts", () => {
+test("divorced taxpayers use the same agreed share for all three policy amounts", () => {
   const result = compute([minimalItem({
     policy_number: "DIV-POLICY-1",
     monthly_premiums: [1_200, ...Array(11).fill(0)],
@@ -914,7 +915,7 @@ Deno.test("divorced taxpayers use the same agreed share for all three policy amo
   }]);
 });
 
-Deno.test("divorce without agreement uses the statutory 50 percent share", () => {
+test("divorce without agreement uses the statutory 50 percent share", () => {
   const result = compute([minimalItem({
     policy_number: "DIVORCE-POLICY-2",
     monthly_premiums: [1_201, ...Array(11).fill(0)],
@@ -940,7 +941,7 @@ Deno.test("divorce without agreement uses the statutory 50 percent share", () =>
   );
 });
 
-Deno.test("other shared family agreement preserves a zero-percent Part IV row", () => {
+test("other shared family agreement preserves a zero-percent Part IV row", () => {
   const result = compute([minimalItem({
     policy_number: "OTHER-POLICY-1",
     monthly_premiums: [1_200, ...Array(11).fill(0)],
@@ -966,7 +967,7 @@ Deno.test("other shared family agreement preserves a zero-percent Part IV row", 
   );
 });
 
-Deno.test("agreed allocation rejects percentages beyond two decimal places", () => {
+test("agreed allocation rejects percentages beyond two decimal places", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -988,7 +989,7 @@ Deno.test("agreed allocation rejects percentages beyond two decimal places", () 
   );
 });
 
-Deno.test("Situation 3 uses exact family SLCSP ratio for dollars and rounded Part IV percent", () => {
+test("Situation 3 uses exact family SLCSP ratio for dollars and rounded Part IV percent", () => {
   const result = compute([minimalItem({
     policy_number: "NO-APTC-POLICY",
     monthly_premiums: [15_000, ...Array(11).fill(0)],
@@ -1021,7 +1022,7 @@ Deno.test("Situation 3 uses exact family SLCSP ratio for dollars and rounded Par
   }]);
 });
 
-Deno.test("Situation 4 without agreement uses enrollee ratio for dollars", () => {
+test("Situation 4 without agreement uses enrollee ratio for dollars", () => {
   const result = compute([minimalItem({
     policy_number: "OTHER-POLICY-2",
     monthly_premiums: [15_000, ...Array(11).fill(0)],
@@ -1067,7 +1068,7 @@ Deno.test("Situation 4 without agreement uses enrollee ratio for dollars", () =>
   }]);
 });
 
-Deno.test("one policy can have separate Part IV percentages across two periods", () => {
+test("one policy can have separate Part IV percentages across two periods", () => {
   const first = {
     basis: "other_agreed",
     situations_1_to_3_reviewed_and_inapplicable: true,
@@ -1129,7 +1130,7 @@ Deno.test("one policy can have separate Part IV percentages across two periods",
   );
 });
 
-Deno.test("shared months and family-only months on one policy use separate SLCSPs", () => {
+test("shared months and family-only months on one policy use separate SLCSPs", () => {
   const result = compute([minimalItem({
     policy_number: "MIXED-POLICY",
     monthly_premiums: Array(12).fill(1_200),
@@ -1174,7 +1175,7 @@ Deno.test("shared months and family-only months on one policy use separate SLCSP
   );
 });
 
-Deno.test("family-only periods cannot replace a required shared allocation", () => {
+test("family-only periods cannot replace a required shared allocation", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -1194,7 +1195,7 @@ Deno.test("family-only periods cannot replace a required shared allocation", () 
   );
 });
 
-Deno.test("five Part IV periods remain separate source allocations", () => {
+test("five Part IV periods remain separate source allocations", () => {
   const result = compute([minimalItem({
     policy_number: "FIVE-PERIODS",
     monthly_premiums: [...Array(5).fill(1_200), ...Array(7).fill(0)],
@@ -1215,7 +1216,7 @@ Deno.test("five Part IV periods remain separate source allocations", () => {
   assertEquals(rows.map((row) => row.premium_pct), [0.1, 0.2, 0.3, 0.4, 0.5]);
 });
 
-Deno.test("coverage-family change replaces reported SLCSP for affected months", () => {
+test("coverage-family change replaces reported SLCSP for affected months", () => {
   // IRS Form 8962 instructions, line 10, Example 3: MEC eligibility starts
   // in August, but Form 1095-A column B still reflects the old family.
   const result = compute([minimalItem({
@@ -1267,7 +1268,7 @@ Deno.test("coverage-family change replaces reported SLCSP for affected months", 
   );
 });
 
-Deno.test("reported SLCSP does not substitute for Marketplace determination in no-APTC months", () => {
+test("reported SLCSP does not substitute for Marketplace determination in no-APTC months", () => {
   const source = {
     monthly_premiums: [600, ...Array(11).fill(0)],
     monthly_slcsps: [750, ...Array(11).fill(0)],
@@ -1293,7 +1294,7 @@ Deno.test("reported SLCSP does not substitute for Marketplace determination in n
   ]);
 });
 
-Deno.test("unreported coverage-family period requires every covered month's determination", () => {
+test("unreported coverage-family period requires every covered month's determination", () => {
   const source = {
     monthly_premiums: Array(12).fill(800),
     monthly_slcsps: Array(12).fill(850),
@@ -1347,7 +1348,7 @@ Deno.test("unreported coverage-family period requires every covered month's dete
   );
 });
 
-Deno.test("unreported move with no APTC requires the move basis and a determined SLCSP", () => {
+test("unreported move with no APTC requires the move basis and a determined SLCSP", () => {
   const source = {
     monthly_premiums: [600, ...Array(11).fill(0)],
     monthly_slcsps: [750, ...Array(11).fill(0)],
@@ -1388,7 +1389,7 @@ Deno.test("unreported move with no APTC requires the move basis and a determined
   );
 });
 
-Deno.test("missing column B can be supplied for every covered no-APTC month", () => {
+test("missing column B can be supplied for every covered no-APTC month", () => {
   const result = compute([minimalItem({
     monthly_premiums: [600, 600, ...Array(10).fill(0)],
     monthly_aptcs: Array(12).fill(0),
@@ -1406,7 +1407,7 @@ Deno.test("missing column B can be supplied for every covered no-APTC month", ()
   ]);
 });
 
-Deno.test("missing column B cannot leave a covered month uncorrected", () => {
+test("missing column B cannot leave a covered month uncorrected", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -1424,7 +1425,7 @@ Deno.test("missing column B cannot leave a covered month uncorrected", () => {
   );
 });
 
-Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions", () => {
+test("SLCSP corrections reject duplicate months and no-APTC contradictions", () => {
   const source = {
     monthly_premiums: Array(12).fill(600),
     monthly_slcsps: Array(12).fill(700),
@@ -1487,7 +1488,7 @@ Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions"
   );
 });
 
-Deno.test("protected partial no-APTC premium adjusts only its covered month", () => {
+test("protected partial no-APTC premium adjusts only its covered month", () => {
   const premiums = Array(12).fill(800);
   const payment = {
     status: "protected_partial",

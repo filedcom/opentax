@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   inputSchema as scheduleEInput,
@@ -61,7 +62,7 @@ const form4797Pending = form4797Input.parse({
   passive_property_sales: [sale],
 });
 
-Deno.test("complete passive disposition with overall loss releases sourced PAL on normal Schedule E and Form 4797", () => {
+test("complete passive disposition with overall loss releases sourced PAL on normal Schedule E and Form 4797", () => {
   const eResult = scheduleENode.compute(
     { taxYear: 2025, formType: "f1040" },
     scheduleEInput.parse(scheduleEPending),
@@ -130,7 +131,7 @@ Deno.test("complete passive disposition with overall loss releases sourced PAL o
   );
 });
 
-Deno.test("complete disposition requires unrelated fully taxable buyer, filed PAL and overall loss", () => {
+test("complete disposition requires unrelated fully taxable buyer, filed PAL and overall loss", () => {
   for (
     const changedSale of [
       { ...sale, buyer_unrelated: false },

@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { form8997 } from "./index.ts";
 
-Deno.test("legacy form8997 cannot report asserted QOF inclusion as Form 2439 gain", () => {
+test("legacy form8997 cannot report asserted QOF inclusion as Form 2439 gain", () => {
   assertThrows(
     () =>
       form8997.compute(
@@ -20,7 +21,7 @@ Deno.test("legacy form8997 cannot report asserted QOF inclusion as Form 2439 gai
   );
 });
 
-Deno.test("legacy form8997 cannot silently omit a holding-only annual attachment", () => {
+test("legacy form8997 cannot silently omit a holding-only annual attachment", () => {
   assertThrows(
     () =>
       form8997.compute(

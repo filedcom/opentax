@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { f1095a } from "../../../../../../nodes/inputs/credits/health/f1095a/index.ts";
@@ -70,7 +71,7 @@ const context = {
   },
 };
 
-Deno.test("agreed Situation 4 shared policy files sourced monthly amounts and Part IV", () => {
+test("agreed Situation 4 shared policy files sourced monthly amounts and Part IV", () => {
   const xml = form8962.build(calculated, context);
   assertStringIncludes(xml, "<MonthlyPremiumAmt>250</MonthlyPremiumAmt>");
   assertStringIncludes(
@@ -98,7 +99,7 @@ Deno.test("agreed Situation 4 shared policy files sourced monthly amounts and Pa
   );
 });
 
-Deno.test("agreed shared policy carries a net credit to finalized Schedule 3", () => {
+test("agreed shared policy carries a net credit to finalized Schedule 3", () => {
   const creditFields = form8962Calculation.compute(
     nodeContext,
     form8962InputSchema.parse({
@@ -129,7 +130,7 @@ Deno.test("agreed shared policy carries a net credit to finalized Schedule 3", (
   assertStringIncludes(xml, "<SharedPolicyAllocationGrp>");
 });
 
-Deno.test("shared-policy filing rejects allocation and covered-person drift", () => {
+test("shared-policy filing rejects allocation and covered-person drift", () => {
   assertThrows(
     () =>
       form8962.build({
@@ -163,7 +164,7 @@ Deno.test("shared-policy filing rejects allocation and covered-person drift", ()
   );
 });
 
-Deno.test("shared-policy filing rejects source dollars and finalized repayment drift", () => {
+test("shared-policy filing rejects source dollars and finalized repayment drift", () => {
   assertThrows(
     () => form8962.build({ ...calculated, total_advance_ptc: 1_201 }, context),
     Error,
@@ -183,7 +184,7 @@ Deno.test("shared-policy filing rejects source dollars and finalized repayment d
   );
 });
 
-Deno.test("shared-policy PDF uses the same source and return reconciliation", () => {
+test("shared-policy PDF uses the same source and return reconciliation", () => {
   const projected = form8962Pdf.projectFields?.(
     calculated,
     context.pending,

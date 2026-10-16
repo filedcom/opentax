@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -69,7 +70,7 @@ function pending(tax: number) {
   };
 }
 
-Deno.test("Form 4972 shared-beneficiary estate tax reaches native line 18 and PDF", () => {
+test("Form 4972 shared-beneficiary estate tax reaches native line 18 and PDF", () => {
   const fields = calculated();
   const allPending = pending(fields.line30 as number);
   const xml = buildIRS4972(fields, { filer, pending: allPending });
@@ -86,7 +87,7 @@ Deno.test("Form 4972 shared-beneficiary estate tax reaches native line 18 and PD
   assertEquals(pdf?.line29, 1_955);
 });
 
-Deno.test("Form 4972 shared-beneficiary estate tax rejects altered lines and final tax", () => {
+test("Form 4972 shared-beneficiary estate tax rejects altered lines and final tax", () => {
   const fields = calculated();
   const allPending = pending(fields.line30 as number);
   assertThrows(

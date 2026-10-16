@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -8,7 +9,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { registry } from "../../../../registry.ts";
 
-Deno.test("retained 1099-DIV income survives native and PDF export", async () => {
+test("retained 1099-DIV income survives native and PDF export", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-form4952-interest-and-dividends"
   )!;
@@ -41,7 +42,7 @@ Deno.test("retained 1099-DIV income survives native and PDF export", async () =>
   );
 });
 
-Deno.test("nominee distributions are excluded from sourced 1099-DIV minimum", () => {
+test("nominee distributions are excluded from sourced 1099-DIV minimum", () => {
   const pending = {
     f1099div: {
       f1099divs: [{
@@ -69,7 +70,7 @@ Deno.test("nominee distributions are excluded from sourced 1099-DIV minimum", ()
   );
 });
 
-Deno.test("three K-1 issuer families add to the 1099-DIV minimum without box 6c", () => {
+test("three K-1 issuer families add to the 1099-DIV minimum without box 6c", () => {
   const pending = {
     f1099div: {
       f1099divs: [{ isNominee: false, box11: false, box1a: 100, box1b: 40 }],
@@ -122,7 +123,7 @@ Deno.test("three K-1 issuer families add to the 1099-DIV minimum without box 6c"
   );
 });
 
-Deno.test("partnership K-1 dividends survive both final exporters", async () => {
+test("partnership K-1 dividends survive both final exporters", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;

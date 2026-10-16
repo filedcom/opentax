@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -73,7 +74,7 @@ function partialNuaEstateCase() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("Form 4972 partial NUA and estate election reaches Form 1040, native and PDF", () => {
+test("Form 4972 partial NUA and estate election reaches Form 1040, native and PDF", () => {
   const { outputs, fields, pending } = partialNuaEstateCase();
   assertEquals(fields.line6_nua_capital_gain, 800);
   assertEquals(fields.line6, 4_600);
@@ -101,7 +102,7 @@ Deno.test("Form 4972 partial NUA and estate election reaches Form 1040, native a
   assertEquals(pdf?.line7, 920);
 });
 
-Deno.test("Form 4972 partial NUA estate election rejects source and final-tax tampering", () => {
+test("Form 4972 partial NUA estate election rejects source and final-tax tampering", () => {
   const { election, fields, pending } = partialNuaEstateCase();
   assertThrows(() =>
     form4972Node.compute(

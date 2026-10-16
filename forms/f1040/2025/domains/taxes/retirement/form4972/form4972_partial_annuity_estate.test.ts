@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { DistributionCode } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
@@ -82,7 +83,7 @@ function partialAnnuityEstateCase() {
   return { election, outputs, fields, pending };
 }
 
-Deno.test("partial beneficiary annuity and estate tax reconcile to Form 1040, native, and PDF", () => {
+test("partial beneficiary annuity and estate tax reconcile to Form 1040, native, and PDF", () => {
   const { fields, outputs, pending } = partialAnnuityEstateCase();
   assertEquals(fields.line8, 40_000);
   assertEquals(fields.line11, 12_000);
@@ -111,7 +112,7 @@ Deno.test("partial beneficiary annuity and estate tax reconcile to Form 1040, na
   assertEquals(pdf.line30, pending.f1040.form4972_tax);
 });
 
-Deno.test("partial annuity and estate route rejects source, allocation, form, and return drift", () => {
+test("partial annuity and estate route rejects source, allocation, form, and return drift", () => {
   const { election, fields, pending } = partialAnnuityEstateCase();
   assertThrows(() =>
     calculator.compute(

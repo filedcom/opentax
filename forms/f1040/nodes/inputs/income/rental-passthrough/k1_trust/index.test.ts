@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { k1_trust } from "./index.ts";
 
@@ -19,7 +20,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("trust K-1 codeB combines cents once in other-form withholding without changing income", () => {
+test("trust K-1 codeB combines cents once in other-form withholding without changing income", () => {
   const result = compute([
     minimalItem({ box13_code_b_backup_withholding: 0.1 }),
     minimalItem({
@@ -34,7 +35,7 @@ Deno.test("trust K-1 codeB combines cents once in other-form withholding without
   assertEquals(compute([minimalItem()]).outputs, []);
 });
 
-Deno.test("trust K-1 codeB rejects a combined amount beyond safe cent precision", () => {
+test("trust K-1 codeB rejects a combined amount beyond safe cent precision", () => {
   assertThrows(
     () =>
       compute([
@@ -49,7 +50,7 @@ Deno.test("trust K-1 codeB rejects a combined amount beyond safe cent precision"
   );
 });
 
-Deno.test("trust K-1 box 11 code A sums distinct final K-1 deductions for Schedule 1 and AGI", () => {
+test("trust K-1 box 11 code A sums distinct final K-1 deductions for Schedule 1 and AGI", () => {
   const source = {
     box11_code_a_statement_reference: "Final-year deduction statement",
     box11_final_k1: true,
@@ -80,7 +81,7 @@ Deno.test("trust K-1 box 11 code A sums distinct final K-1 deductions for Schedu
   }
 });
 
-Deno.test("trust K-1 box 11 code A requires final-year beneficiary evidence", () => {
+test("trust K-1 box 11 code A requires final-year beneficiary evidence", () => {
   const source = {
     estate_trust_ein: "123456789",
     source_document_reference: "K-1 A",
@@ -109,7 +110,7 @@ Deno.test("trust K-1 box 11 code A requires final-year beneficiary evidence", ()
   );
 });
 
-Deno.test("trust K-1 box 11 code C reaches Schedule D line 5 as a loss", () => {
+test("trust K-1 box 11 code C reaches Schedule D line 5 as a loss", () => {
   const item = minimalItem({
     estate_trust_ein: "123456789",
     source_document_reference: "Final K-1",
@@ -141,7 +142,7 @@ Deno.test("trust K-1 box 11 code C reaches Schedule D line 5 as a loss", () => {
   );
 });
 
-Deno.test("trust K-1 box 11 code C requires final-year beneficiary evidence", () => {
+test("trust K-1 box 11 code C requires final-year beneficiary evidence", () => {
   const item = minimalItem({
     box11_code_c_short_term_capital_loss_carryover: 700,
   });
@@ -158,7 +159,7 @@ Deno.test("trust K-1 box 11 code C requires final-year beneficiary evidence", ()
   );
 });
 
-Deno.test("trust K-1 box 11 code D reaches Schedule D line 12 as a loss", () => {
+test("trust K-1 box 11 code D reaches Schedule D line 12 as a loss", () => {
   const item = minimalItem({
     estate_trust_ein: "123456789",
     source_document_reference: "Final K-1",
@@ -179,7 +180,7 @@ Deno.test("trust K-1 box 11 code D reaches Schedule D line 12 as a loss", () => 
   );
 });
 
-Deno.test("trust K-1 box 11 code D requires final-year beneficiary evidence", () => {
+test("trust K-1 box 11 code D requires final-year beneficiary evidence", () => {
   assertThrows(() =>
     compute([
       minimalItem({ box11_code_d_long_term_capital_loss_carryover: 900 }),
@@ -187,7 +188,7 @@ Deno.test("trust K-1 box 11 code D requires final-year beneficiary evidence", ()
   );
 });
 
-Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", () => {
+test("trust K-1 box 12 code A routes signed line 2j amounts per source", () => {
   const source = {
     estate_trust_ein: "123456789",
     source_document_reference: "2025 K-1 box 12",
@@ -204,7 +205,7 @@ Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", ()
   ]);
 });
 
-Deno.test("trust K-1 rejects uncoded or incomplete box 12 AMT source", () => {
+test("trust K-1 rejects uncoded or incomplete box 12 AMT source", () => {
   assertThrows(() => compute([minimalItem({ box12_amt: 500 })]));
   assertThrows(() =>
     compute([minimalItem({
@@ -223,7 +224,7 @@ Deno.test("trust K-1 rejects uncoded or incomplete box 12 AMT source", () => {
   );
 });
 
-Deno.test("trust K-1 uses issued portfolio income for affirmed Form 4952 source", () => {
+test("trust K-1 uses issued portfolio income for affirmed Form 4952 source", () => {
   const item = minimalItem({
     box1_interest: 200,
     box2a_ordinary_dividends: 400,
@@ -242,7 +243,7 @@ Deno.test("trust K-1 uses issued portfolio income for affirmed Form 4952 source"
   ]);
 });
 
-Deno.test("estate/trust K-1 code M cannot enter an unsupported credit route", () => {
+test("estate/trust K-1 code M cannot enter an unsupported credit route", () => {
   for (const entity_type of ["estate", "trust"] as const) {
     const identity = {
       entity_type,
@@ -276,7 +277,7 @@ Deno.test("estate/trust K-1 code M cannot enter an unsupported credit route", ()
   }
 });
 
-Deno.test("estate/trust K-1 code ZZ New Markets Credit needs its statement", () => {
+test("estate/trust K-1 code ZZ New Markets Credit needs its statement", () => {
   assertThrows(() =>
     compute([minimalItem({
       box13_code_zz_new_markets_credit: 1_250,
@@ -330,7 +331,7 @@ Deno.test("estate/trust K-1 code ZZ New Markets Credit needs its statement", () 
   }
 });
 
-Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement", () => {
+test("estate or trust K-1 disabled-access code ZZ needs its named statement", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_zz_disabled_access_credit: 500 })])
   );
@@ -356,7 +357,7 @@ Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement
   );
 });
 
-Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 3800 with both references", () => {
+test("estate and trust K-1 nonpassive disabled-access credits enter Form 3800 with both references", () => {
   for (const entity_type of ["estate", "trust"] as const) {
     const item = minimalItem({
       entity_type,
@@ -411,7 +412,7 @@ Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 38
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
-Deno.test("empty array throws", () => {
+test("empty array throws", () => {
   assertThrows(
     () =>
       k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [] }),
@@ -419,7 +420,7 @@ Deno.test("empty array throws", () => {
   );
 });
 
-Deno.test("missing estate_trust_name throws", () => {
+test("missing estate_trust_name throws", () => {
   assertThrows(
     () =>
       k1_trust.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -431,18 +432,18 @@ Deno.test("missing estate_trust_name throws", () => {
   );
 });
 
-Deno.test("negative box1_interest throws", () => {
+test("negative box1_interest throws", () => {
   assertThrows(() => compute([minimalItem({ box1_interest: -1 })]), Error);
 });
 
-Deno.test("negative box2a_ordinary_dividends throws", () => {
+test("negative box2a_ordinary_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box2a_ordinary_dividends: -5 })]),
     Error,
   );
 });
 
-Deno.test("negative box2b_qualified_dividends throws", () => {
+test("negative box2b_qualified_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box2b_qualified_dividends: -10 })]),
     Error,
@@ -451,63 +452,63 @@ Deno.test("negative box2b_qualified_dividends throws", () => {
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
 
-Deno.test("box1_interest routes to schedule_b taxable_interest_net", () => {
+test("box1_interest routes to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1_interest: 500 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.taxable_interest_net, 500);
 });
 
-Deno.test("zero box1_interest does not route to schedule_b", () => {
+test("zero box1_interest does not route to schedule_b", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out, undefined);
 });
 
-Deno.test("box2a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
+test("box2a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
   const result = compute([minimalItem({ box2a_ordinary_dividends: 800 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.ordinaryDividends, 800);
 });
 
-Deno.test("box2b_qualified_dividends routes to f1040 line3a", () => {
+test("box2b_qualified_dividends routes to f1040 line3a", () => {
   const result = compute([minimalItem({ box2b_qualified_dividends: 300 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line3a_qualified_dividends, 300);
 });
 
-Deno.test("zero box2b does not route to f1040", () => {
+test("zero box2b does not route to f1040", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "f1040");
   assertEquals(out, undefined);
 });
 
-Deno.test("box3_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
+test("box3_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
   const result = compute([minimalItem({ box3_net_st_cap_gain: 1000 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_5_k1_st, 1000);
 });
 
-Deno.test("negative box3 belongs to final-year capital loss carryover code", () => {
+test("negative box3 belongs to final-year capital loss carryover code", () => {
   assertThrows(() => compute([minimalItem({ box3_net_st_cap_gain: -400 })]));
 });
 
-Deno.test("zero box3 does not route to schedule_d", () => {
+test("zero box3 does not route to schedule_d", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out, undefined);
 });
 
-Deno.test("box4a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
+test("box4a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
   const result = compute([minimalItem({ box4a_net_lt_cap_gain: 2000 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_12_k1_lt, 2000);
 });
 
-Deno.test("negative box4a belongs to final-year capital loss carryover code", () => {
+test("negative box4a belongs to final-year capital loss carryover code", () => {
   assertThrows(() => compute([minimalItem({ box4a_net_lt_cap_gain: -600 })]));
 });
 
-Deno.test("box 5 creates a sourced Schedule E Part III row", () => {
+test("box 5 creates a sourced Schedule E Part III row", () => {
   const result = compute([minimalItem({
     estate_trust_ein: "123456789",
     source_document_reference: "K1-2025-A",
@@ -523,7 +524,7 @@ Deno.test("box 5 creates a sourced Schedule E Part III row", () => {
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("boxes 6 through 8 require matching activity statements", () => {
+test("boxes 6 through 8 require matching activity statements", () => {
   for (
     const field of [
       "box6_ordinary_business",
@@ -539,7 +540,7 @@ Deno.test("boxes 6 through 8 require matching activity statements", () => {
   }
 });
 
-Deno.test("positive boxes 6 through 8 reach Schedule E passive income", () => {
+test("positive boxes 6 through 8 reach Schedule E passive income", () => {
   const result = compute([minimalItem({
     estate_trust_ein: "123456789",
     source_document_reference: "K1-2025-A",
@@ -575,7 +576,7 @@ Deno.test("positive boxes 6 through 8 reach Schedule E passive income", () => {
   }]);
 });
 
-Deno.test("box 9 still needs activity deduction character", () => {
+test("box 9 still needs activity deduction character", () => {
   assertThrows(
     () => compute([minimalItem({ box9_directly_apportioned_deductions: 100 })]),
     Error,
@@ -583,7 +584,7 @@ Deno.test("box 9 still needs activity deduction character", () => {
   );
 });
 
-Deno.test("box14_foreign_tax routes to form_1116", () => {
+test("box14_foreign_tax routes to form_1116", () => {
   const result = compute([minimalItem({
     box14_foreign_tax: 150,
     box14_foreign_income: 750,
@@ -603,7 +604,7 @@ Deno.test("box14_foreign_tax routes to form_1116", () => {
   assertEquals(taxItem.tax_credit_method, "paid");
 });
 
-Deno.test("zero box14 does not route to form_1116", () => {
+test("zero box14 does not route to form_1116", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form_1116");
   assertEquals(out, undefined);
@@ -611,7 +612,7 @@ Deno.test("zero box14 does not route to form_1116", () => {
 
 // ── 3. Aggregation across multiple K-1s ──────────────────────────────────────
 
-Deno.test("box1_interest from multiple K-1s produces separate per-payer schedule_b entries", () => {
+test("box1_interest from multiple K-1s produces separate per-payer schedule_b entries", () => {
   const result = compute([
     minimalItem({ box1_interest: 300 }),
     minimalItem({ estate_trust_name: "Second Trust", box1_interest: 200 }),
@@ -624,7 +625,7 @@ Deno.test("box1_interest from multiple K-1s produces separate per-payer schedule
   assertEquals(amounts, [200, 300]);
 });
 
-Deno.test("box2b_qualified_dividends sums across K-1s to f1040", () => {
+test("box2b_qualified_dividends sums across K-1s to f1040", () => {
   const result = compute([
     minimalItem({ box2b_qualified_dividends: 200 }),
     minimalItem({
@@ -636,7 +637,7 @@ Deno.test("box2b_qualified_dividends sums across K-1s to f1040", () => {
   assertEquals(out?.fields.line3a_qualified_dividends, 500);
 });
 
-Deno.test("box3 STCG sums across K-1s to schedule_d", () => {
+test("box3 STCG sums across K-1s to schedule_d", () => {
   const result = compute([
     minimalItem({ box3_net_st_cap_gain: 1000 }),
     minimalItem({ estate_trust_name: "Trust B", box3_net_st_cap_gain: 500 }),
@@ -645,7 +646,7 @@ Deno.test("box3 STCG sums across K-1s to schedule_d", () => {
   assertEquals(out?.fields.line_5_k1_st, 1500);
 });
 
-Deno.test("box 5 retains distinct Schedule E rows across K-1s", () => {
+test("box 5 retains distinct Schedule E rows across K-1s", () => {
   const result = compute([
     minimalItem({
       estate_trust_ein: "123456789",
@@ -677,7 +678,7 @@ Deno.test("box 5 retains distinct Schedule E rows across K-1s", () => {
   ]);
 });
 
-Deno.test("negative box 5 cannot appear on an issued K-1", () => {
+test("negative box 5 cannot appear on an issued K-1", () => {
   assertThrows(
     () => compute([minimalItem({ box5_other_portfolio: -500 })]),
     Error,
@@ -685,7 +686,7 @@ Deno.test("negative box 5 cannot appear on an issued K-1", () => {
   );
 });
 
-Deno.test("box4a LTCG sums across K-1s to schedule_d", () => {
+test("box4a LTCG sums across K-1s to schedule_d", () => {
   const result = compute([
     minimalItem({ box4a_net_lt_cap_gain: 1500 }),
     minimalItem({ estate_trust_name: "Trust B", box4a_net_lt_cap_gain: 2500 }),
@@ -696,12 +697,12 @@ Deno.test("box4a LTCG sums across K-1s to schedule_d", () => {
 
 // ── 7. Informational fields ───────────────────────────────────────────────────
 
-Deno.test("estate_trust_name does not produce tax output alone", () => {
+test("estate_trust_name does not produce tax output alone", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("uncoded special gain and deduction claims reject", () => {
+test("uncoded special gain and deduction claims reject", () => {
   for (
     const field of [
       "box4b_28pct_rate_gain",
@@ -718,7 +719,7 @@ Deno.test("uncoded special gain and deduction claims reject", () => {
   }
 });
 
-Deno.test("box 13 residual credit and uncategorized foreign tax reject", () => {
+test("box 13 residual credit and uncategorized foreign tax reject", () => {
   assertThrows(
     () => compute([minimalItem({ box13_credits: 100 })]),
     Error,
@@ -733,12 +734,12 @@ Deno.test("box 13 residual credit and uncategorized foreign tax reject", () => {
 
 // ── 8. Edge cases ─────────────────────────────────────────────────────────────
 
-Deno.test("all-zero K-1 produces no outputs", () => {
+test("all-zero K-1 produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("K-1 with both STCG and LTCG produces single merged schedule_d output", () => {
+test("K-1 with both STCG and LTCG produces single merged schedule_d output", () => {
   const result = compute([
     minimalItem({ box3_net_st_cap_gain: 500, box4a_net_lt_cap_gain: 1000 }),
   ]);
@@ -750,7 +751,7 @@ Deno.test("K-1 with both STCG and LTCG produces single merged schedule_d output"
 
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke test — K-1 with all major boxes", () => {
+test("smoke test — K-1 with all major boxes", () => {
   const result = compute([
     minimalItem({
       box1_interest: 500,
@@ -789,7 +790,7 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
 
 // ── 10. Fiduciary-allocated K-1 amounts ──────────────────────────────────────
 
-Deno.test("trust K-1 reports its issued beneficiary share without a second DNI cap", () => {
+test("trust K-1 reports its issued beneficiary share without a second DNI cap", () => {
   const result = compute([minimalItem({
     box1_interest: 4_000,
     box2a_ordinary_dividends: 6_000,
@@ -804,7 +805,7 @@ Deno.test("trust K-1 reports its issued beneficiary share without a second DNI c
   assertEquals(dividends?.fields.ordinaryDividends, 6_000);
 });
 
-Deno.test("trust K-1 rejects a beneficiary-side DNI cap", () => {
+test("trust K-1 rejects a beneficiary-side DNI cap", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -816,7 +817,7 @@ Deno.test("trust K-1 rejects a beneficiary-side DNI cap", () => {
   );
 });
 
-Deno.test("trust K-1 boxes 1 through 8 reject negative reported amounts", () => {
+test("trust K-1 boxes 1 through 8 reject negative reported amounts", () => {
   for (
     const field of [
       "box1_interest",

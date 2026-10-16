@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -17,7 +20,7 @@ import { replayOpenAccount } from "../../../../../nodes/intermediate/forms/incom
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of openAccountCases) {
-  Deno.test(`owned open-account ${c.id}: public basis/netting/QBI/full native/XSD/PDF`, async () => {
+  test(`owned open-account ${c.id}: public basis/netting/QBI/full native/XSD/PDF`, async () => {
     const { inputs, filer } = openAccountInputs(c),
       r = f1040_2025.executeReturn(inputs as any),
       p: any = buildPending(r.pending),
@@ -112,7 +115,7 @@ for (const c of openAccountCases) {
       xml,
       `<TotQlfyBusLossCarryforwardAmt>${c.allowed}</TotQlfyBusLossCarryforwardAmt>`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -139,13 +142,9 @@ for (const c of openAccountCases) {
       sources.flatMap((_: unknown, i: number) => [i + 1, i + 1]),
     );
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_OPEN_ACCOUNT_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_OPEN_ACCOUNT_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [ext, value] of Object.entries({
@@ -164,17 +163,17 @@ for (const c of openAccountCases) {
           },
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${ext}`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
-Deno.test("open-account rejects detached direct funding/repayment/history/issued and owner source", () => {
+test("open-account rejects detached direct funding/repayment/history/issued and owner source", () => {
   const mutate: [string, (k: any) => void][] = [
     [
       "no written instrument false",
@@ -302,7 +301,7 @@ Deno.test("open-account rejects detached direct funding/repayment/history/issued
     .amount++;
   assertEquals(f1040_2025.executeReturn(inputs).diagnostics.length > 0, true);
 });
-Deno.test("open-account export rejects altered source, omitted owner copies and basis/QBI/tax conflicts", async () => {
+test("open-account export rejects altered source, omitted owner copies and basis/QBI/tax conflicts", async () => {
   const { inputs, filer } = openAccountInputs(
       openAccountCases.find((c) => c.id === "spouse_accounts")!,
     ),

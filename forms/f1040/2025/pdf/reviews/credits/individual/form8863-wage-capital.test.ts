@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   claimantRefundRestriction,
@@ -274,7 +276,7 @@ function source(item: typeof cases[number]) {
 }
 
 for (const item of cases) {
-  Deno.test(`W-2/material-capital AOTC ${item.name} reconciles complete return`, async () => {
+  test(`W-2/material-capital AOTC ${item.name} reconciles complete return`, async () => {
     const s = source(item);
     if (s.review.kind !== "under_24") {
       throw new Error("Expected young claimant");
@@ -361,10 +363,10 @@ for (const item of cases) {
       );
       await assertRejects(() => buildPdfBytes(changed, filer, ".pdf-cache"));
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir =
         `.state/research/form8863-wage-capital-2026-10-09/${item.name}`;
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       for (
         const [name, data] of [
           ["source", s.inputs],
@@ -373,13 +375,13 @@ for (const item of cases) {
           ["expected", s],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(data, null, 2),
         );
       }
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
     }
   });
 }

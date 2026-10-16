@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
   assertEquals,
@@ -190,7 +191,7 @@ async function reviewedSource(
   };
 }
 
-Deno.test("Form 8839 direct reviewed child settles Schedule 3/1040 and prepares native attachment bundle", async () => {
+test("Form 8839 direct reviewed child settles Schedule 3/1040 and prepares native attachment bundle", async () => {
   const { result, pending, filer, attachments } = await reviewedSource();
   assertEquals(result.diagnostics, []);
   assertEquals(pending.schedule3?.line6c_adoption_credit, 6_000);
@@ -216,7 +217,7 @@ Deno.test("Form 8839 direct reviewed child settles Schedule 3/1040 and prepares 
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
-Deno.test("Form 8839 direct route rejects changed evidence, orphan credit, and standalone PDF", async () => {
+test("Form 8839 direct route rejects changed evidence, orphan credit, and standalone PDF", async () => {
   const { pending, filer, attachments } = await reviewedSource();
   await assertRejects(
     () => buildMefBundle(pending, { filer, attachments: [] }),
@@ -270,7 +271,7 @@ Deno.test("Form 8839 direct route rejects changed evidence, orphan credit, and s
   );
 });
 
-Deno.test("Form 8839 unused current credit retains a source-owned five-year balance through both exporters", async () => {
+test("Form 8839 unused current credit retains a source-owned five-year balance through both exporters", async () => {
   const { result, pending, filer, attachments } = await reviewedSource(
     10_000,
     0,
@@ -319,7 +320,7 @@ Deno.test("Form 8839 unused current credit retains a source-owned five-year bala
   }
 });
 
-Deno.test("Form 8839 partially used current credit survives retained JSON without consuming the carryforward", async () => {
+test("Form 8839 partially used current credit survives retained JSON without consuming the carryforward", async () => {
   const { result, pending, filer, attachments } = await reviewedSource(
     50_000,
     4_000,
@@ -339,7 +340,7 @@ Deno.test("Form 8839 partially used current credit survives retained JSON withou
   await buildPdfBytes(retained, filer, ".pdf-cache", bundle);
 });
 
-Deno.test("Form 8839 fully refundable current credit does not invent a carryforward", async () => {
+test("Form 8839 fully refundable current credit does not invent a carryforward", async () => {
   const { result, pending, filer, attachments } = await reviewedSource(
     10_000,
     0,
@@ -361,7 +362,7 @@ for (
     [40_000, 3_000, 2_675, 0, 2_675, 3_325],
   ] as const
 ) {
-  Deno.test(`Form 8839 saver-credit boundary at wages ${wages}`, async () => {
+  test(`Form 8839 saver-credit boundary at wages ${wages}`, async () => {
     if (retirement > 0) {
       // Deferred product-board item 95: retain the observed public-route block.
       // A rejection is not successful credit ordering or an export pass.

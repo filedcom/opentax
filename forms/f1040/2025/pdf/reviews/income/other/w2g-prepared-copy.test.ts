@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { w2gPayerCopyFixture } from "../../../../domains/income/other/w2g_payer_copy.fixture.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -11,7 +12,7 @@ import { buildPdfBytes } from "../../../builder.ts";
 import { w2gPdf } from "../../../forms/income/other/w2g.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
-Deno.test("prepared PDF rechecks W-2G payer-copy content after attachment digests change", async () => {
+test("prepared PDF rechecks W-2G payer-copy content after attachment digests change", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-withheld-w2g"
   );

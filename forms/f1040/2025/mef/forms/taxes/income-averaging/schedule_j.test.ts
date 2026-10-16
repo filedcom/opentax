@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { buildMefXml } from "../../../builder.ts";
@@ -39,7 +42,7 @@ const pending = {
   },
 };
 
-Deno.test("Schedule J maps every native line in TY2025 schema order", () => {
+test("Schedule J maps every native line in TY2025 schema order", () => {
   const xml = scheduleJ.build(lines, { pending });
   const tags = [
     "TaxableIncomeAmt",
@@ -73,7 +76,7 @@ Deno.test("Schedule J maps every native line in TY2025 schema order", () => {
   assertEquals((xml.match(/<TotalTaxTableAmt>/g) ?? []).length, 1);
 });
 
-Deno.test("Schedule J rejects incomplete, inconsistent, or unfiled lines", () => {
+test("Schedule J rejects incomplete, inconsistent, or unfiled lines", () => {
   assertEquals(scheduleJ.build([], { pending }), "");
   assertThrows(
     () =>
@@ -113,7 +116,7 @@ Deno.test("Schedule J rejects incomplete, inconsistent, or unfiled lines", () =>
   assertThrows(() => scheduleJ.build(lines), Error, "finalized Form 1040");
 });
 
-Deno.test("Schedule J native tax joins Form 4972 without changing its own line 23", () => {
+test("Schedule J native tax joins Form 4972 without changing its own line 23", () => {
   const joint = {
     ...pending,
     f1040: { ...pending.f1040, line16_income_tax: 13_500, form4972_tax: 500 },
@@ -148,7 +151,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -164,24 +167,19 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test({
-  name: "XSD: Schedule J native document follows H and precedes LEP",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Schedule J native document follows H and precedes LEP", async () => {
   const xml = buildMefXml({ ...pending, schedule_j: lines }, filer);
   assertStringIncludes(xml, "<IRS1040ScheduleJ documentId=");
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

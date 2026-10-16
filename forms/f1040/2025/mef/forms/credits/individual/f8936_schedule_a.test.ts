@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { form8936ScheduleA } from "./f8936_schedule_a.ts";
@@ -22,7 +23,7 @@ const taxpayer = {
   prior_year_filing_status: FilingStatus.Single,
 };
 
-Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service date, and personal amount", () => {
+test("Form 8936 Schedule A: one new-vehicle document carries VIN, service date, and personal amount", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -61,7 +62,7 @@ Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service d
   );
 });
 
-Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own document", () => {
+test("Form 8936 Schedule A: fully business-use vehicle still has its own document", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -87,7 +88,7 @@ Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own do
   assertEquals(xml[0].includes("<PrsnlUseNewCleanVehicleCrAmt>"), false);
 });
 
-Deno.test("Form 8936 Schedule A: commercial Part V includes source-backed basis and incremental cost", () => {
+test("Form 8936 Schedule A: commercial Part V includes source-backed basis and incremental cost", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -141,7 +142,7 @@ Deno.test("Form 8936 Schedule A: commercial Part V includes source-backed basis 
   );
 });
 
-Deno.test("Form 8936 Schedule A: odd-dollar business split stays additive", () => {
+test("Form 8936 Schedule A: odd-dollar business split stays additive", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -169,7 +170,7 @@ Deno.test("Form 8936 Schedule A: odd-dollar business split stays additive", () =
   );
 });
 
-Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", () => {
+test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -192,7 +193,7 @@ Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", (
   );
 });
 
-Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () => {
+test("Form 8936 Schedule A: dealer transfer retains filing document", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
@@ -210,7 +211,7 @@ Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () =>
   assertStringIncludes(xml[0], "<CrTrnsfrDlrSaleAmt>7500</CrTrnsfrDlrSaleAmt>");
 });
 
-Deno.test("Form 8936 Schedule A: ineligible dealer transfer marks the directed repayment box", () => {
+test("Form 8936 Schedule A: ineligible dealer transfer marks the directed repayment box", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     current_year_magi: { adjusted_gross_income: 200_000 },
@@ -240,7 +241,7 @@ Deno.test("Form 8936 Schedule A: ineligible dealer transfer marks the directed r
   );
 });
 
-Deno.test("Form 8936 Schedule A: post-cutoff acquisition with no transfer emits no document", () => {
+test("Form 8936 Schedule A: post-cutoff acquisition with no transfer emits no document", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{

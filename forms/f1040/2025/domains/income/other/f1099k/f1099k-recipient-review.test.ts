@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { assertSchedule1KSourceIdentity } from "../../../general/return-assembly/filer-source-reconciliation.ts";
@@ -62,7 +63,7 @@ function check(recipient_tin: string | undefined, recipient_name: string) {
   }, filer);
 }
 
-Deno.test("1099-K reviewed name must belong to the owner identified by its TIN", () => {
+test("1099-K reviewed name must belong to the owner identified by its TIN", () => {
   check("444556666", "Sam Example");
   check("111223333", "Alex Example");
   check(undefined, "Sam Example");

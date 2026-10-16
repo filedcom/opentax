@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -16,7 +19,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-direct-pension-rollover"
 )!;
 
-Deno.test("positive 1099-R payer identity rejects blank name and malformed EIN in both exports", async () => {
+test("positive 1099-R payer identity rejects blank name and malformed EIN in both exports", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -52,7 +55,7 @@ Deno.test("positive 1099-R payer identity rejects blank name and malformed EIN i
   }
 });
 
-Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF return", async () => {
+test("altered 1099-R source reaches nonstandard TY2025 native and PDF return", async () => {
   const [original] = fixture.inputs.f1099r as Record<string, unknown>[];
   const result = execute(buildExecutionPlan(registry), registry, {
     ...fixture.inputs,
@@ -77,10 +80,10 @@ Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF retur
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -90,13 +93,13 @@ Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF retur
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, fixture.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -105,7 +108,7 @@ Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF retur
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
   const changed = structuredClone(pending);
   const source = (changed.f1099r as unknown as {
@@ -124,7 +127,7 @@ Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF retur
   );
 });
 
-Deno.test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF", async () => {
+test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF", async () => {
   const [original] = fixture.inputs.f1099r as Record<string, unknown>[];
   const reference = "2025 typed pension copy";
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -154,10 +157,10 @@ Deno.test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF",
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -167,13 +170,13 @@ Deno.test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, fixture.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -182,6 +185,6 @@ Deno.test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF",
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 });

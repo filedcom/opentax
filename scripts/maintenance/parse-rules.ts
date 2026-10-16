@@ -1,4 +1,6 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write
+#!/usr/bin/env bun
+import * as fs from "node:fs/promises";
+import * as sys from "../support/sys.ts";
 /**
  * IRS MeF Business Rules CSV → TypeScript rule files generator.
  *
@@ -45,7 +47,7 @@ interface GeneratedRule {
 // ─── CSV Parsing ────────────────────────────────────────
 
 async function loadRules(): Promise<CsvRule[]> {
-  const raw = await Deno.readFile(new URL(CSV_PATH));
+  const raw = await sys.readBytes(new URL(CSV_PATH));
   // CSV is latin-1 encoded
   const text = new TextDecoder("latin1").decode(raw);
   const rows = parse(text, { skipFirstRow: true });
@@ -308,7 +310,7 @@ async function main() {
   let totalStub = 0;
   const prefixes: string[] = [];
 
-  await Deno.mkdir(new URL(RULES_DIR), { recursive: true });
+  await fs.mkdir(new URL(RULES_DIR), { recursive: true });
 
   for (const [prefix, rules] of byPrefix) {
     prefixes.push(prefix);
@@ -329,8 +331,8 @@ async function main() {
     const code = generateRuleFile(prefix, generated);
     const fileName = ruleRelativePath(prefixToFileName(prefix));
     const filePath = new URL(fileName, RULES_DIR);
-    await Deno.mkdir(new URL("./", filePath), { recursive: true });
-    await Deno.writeTextFile(filePath, code);
+    await fs.mkdir(new URL("./", filePath), { recursive: true });
+    await fs.writeFile(filePath, code);
     const implCount = generated.filter((r) => r.checkCode).length;
     console.log(
       `  ${prefix.padEnd(10)} → ${fileName.padEnd(20)} (${rules.length} rules, ${implCount} auto-implemented)`,
@@ -339,7 +341,7 @@ async function main() {
 
   // Generate index
   const indexCode = generateIndex(prefixes);
-  await Deno.writeTextFile(new URL("index.ts", RULES_DIR), indexCode);
+  await fs.writeFile(new URL("index.ts", RULES_DIR), indexCode);
 
   console.log("");
   console.log(`Done! Generated ${prefixes.length} rule files.`);

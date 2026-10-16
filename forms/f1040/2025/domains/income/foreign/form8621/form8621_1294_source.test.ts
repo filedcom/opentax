@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8621QefSourceInputs } from "./form8621_qef.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
@@ -25,7 +28,7 @@ function copy(document_id: string, content: string) {
   };
 }
 
-Deno.test("Form 8621 Part VI allocates prior elections newest first and checks acceptance bytes", () => {
+test("Form 8621 Part VI allocates prior elections newest first and checks acceptance bytes", () => {
   const election = (year: number, earnings: number, tax: number) => ({
     election_tax_year: year,
     remaining_undistributed_earnings_usd: earnings,
@@ -199,7 +202,7 @@ Deno.test("Form 8621 Part VI allocates prior elections newest first and checks a
   );
 });
 
-Deno.test("Form 8621 Election B refigures the current return tax from QEF income", async () => {
+test("Form 8621 Election B refigures the current return tax from QEF income", async () => {
   const sourceInputs = form8621QefSourceInputs(base.inputs);
   const result = f1040_2025.executeReturn(sourceInputs);
   assertEquals(result.diagnostics, []);
@@ -239,8 +242,8 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
     origins.filter((origin) => origin.formKey === "form8621").length,
     2,
   );
-  const reviewPdf = Deno.env.get("FORM8621_REVIEW_PDF");
-  if (reviewPdf) await Deno.writeFile(reviewPdf, pdf);
+  const reviewPdf = process.env.FORM8621_REVIEW_PDF;
+  if (reviewPdf) await fs.writeFile(reviewPdf, pdf);
   for (
     const mutation of [
       (p: Record<string, any>) =>
@@ -260,10 +263,10 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
       "Form 8621 section 1294",
     );
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -278,7 +281,7 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
   const medicalInputs = {
     ...sourceInputs,
@@ -321,10 +324,10 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
     );
   }
   const medicalXml = buildMefXml(medicalPending, base.filer);
-  const medicalXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const medicalXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(medicalXmlPath, medicalXml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(medicalXmlPath, medicalXml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -339,7 +342,7 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(medicalXmlPath);
+    await sys.remove(medicalXmlPath);
   }
   const medicalOrigins: PdfPageOrigin[] = [];
   const medicalPdf = await buildPdfBytes(
@@ -353,8 +356,8 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
     (await PDFDocument.load(medicalPdf)).getPageCount(),
     medicalOrigins.length,
   );
-  const medicalReviewPdf = Deno.env.get("FORM8621_AGI_REVIEW_PDF");
-  if (medicalReviewPdf) await Deno.writeFile(medicalReviewPdf, medicalPdf);
+  const medicalReviewPdf = process.env.FORM8621_AGI_REVIEW_PDF;
+  if (medicalReviewPdf) await fs.writeFile(medicalReviewPdf, medicalPdf);
   const changedMedical = structuredClone(medicalPending) as Record<string, any>;
   changedMedical.form8621_1294_refigure.source_inputs.schedule_a
     .line_1_medical++;
@@ -416,10 +419,10 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
     );
   }
   const seniorXml = buildMefXml(seniorPending, base.filer);
-  const seniorXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const seniorXmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(seniorXmlPath, seniorXml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(seniorXmlPath, seniorXml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -434,7 +437,7 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(seniorXmlPath);
+    await sys.remove(seniorXmlPath);
   }
   const seniorOrigins: PdfPageOrigin[] = [];
   const seniorPdf = await buildPdfBytes(
@@ -448,11 +451,11 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
     (await PDFDocument.load(seniorPdf)).getPageCount(),
     seniorOrigins.length,
   );
-  const seniorReviewPdf = Deno.env.get("FORM8621_SENIOR_REVIEW_PDF");
-  if (seniorReviewPdf) await Deno.writeFile(seniorReviewPdf, seniorPdf);
+  const seniorReviewPdf = process.env.FORM8621_SENIOR_REVIEW_PDF;
+  if (seniorReviewPdf) await fs.writeFile(seniorReviewPdf, seniorPdf);
 });
 
-Deno.test("Form 8621 retains one filing and two distinct Part V continuation pages", async () => {
+test("Form 8621 retains one filing and two distinct Part V continuation pages", async () => {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     f8621: [{
@@ -527,7 +530,7 @@ Deno.test("Form 8621 retains one filing and two distinct Part V continuation pag
   );
 });
 
-Deno.test("Form 8621 continuing QEF Part VI joins Schedule 2 and prints page 4", async () => {
+test("Form 8621 continuing QEF Part VI joins Schedule 2 and prints page 4", async () => {
   const prior = {
     election_tax_year: 2024,
     remaining_undistributed_earnings_usd: 2000,
@@ -668,15 +671,15 @@ Deno.test("Form 8621 continuing QEF Part VI joins Schedule 2 and prints page 4",
     canceledLine17z,
     '<TotalAnyOtherTaxesAmt referenceDocumentId="other-taxes-1" referenceDocumentName="AnyOtherTaxesStatement">0</TotalAnyOtherTaxesAmt>',
   );
-  const reviewPdf = Deno.env.get("FORM8621_PARTVI_REVIEW_PDF");
-  if (reviewPdf) await Deno.writeFile(reviewPdf, pdf);
+  const reviewPdf = process.env.FORM8621_PARTVI_REVIEW_PDF;
+  if (reviewPdf) await fs.writeFile(reviewPdf, pdf);
   const changed = structuredClone(pending) as Record<string, any>;
   changed.schedule2.line17z_form8621_1294_deferred_tax++;
   assertThrows(() => buildMefXml(changed, base.filer), Error);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -691,12 +694,12 @@ Deno.test("Form 8621 continuing QEF Part VI joins Schedule 2 and prints page 4",
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
 // A seventh outstanding election requires a second physical Part VI page.
-Deno.test("Form 8621 Part VI continues a seventh sourced election on page 4", async () => {
+test("Form 8621 Part VI continues a seventh sourced election on page 4", async () => {
   const sourceInputs: Parameters<typeof f1040_2025.executeReturn>[0] = {
     ...base.inputs,
     f8621: [{
@@ -795,10 +798,10 @@ Deno.test("Form 8621 Part VI continues a seventh sourced election on page 4", as
   const pending = buildPending(result.pending);
   const xml = buildMefXml(pending, base.filer);
   assertEquals((xml.match(/<ElectionStatus>/g) ?? []).length, 7);
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -813,7 +816,7 @@ Deno.test("Form 8621 Part VI continues a seventh sourced election on page 4", as
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const origins: PdfPageOrigin[] = [];
   const pdf = await buildPdfBytes(
@@ -828,11 +831,11 @@ Deno.test("Form 8621 Part VI continues a seventh sourced election on page 4", as
     origins.filter((origin) => origin.formKey === "form8621").length,
     4,
   );
-  const reviewPdf = Deno.env.get("FORM8621_PARTVI_CONTINUATION_REVIEW_PDF");
-  if (reviewPdf) await Deno.writeFile(reviewPdf, pdf);
+  const reviewPdf = process.env.FORM8621_PARTVI_CONTINUATION_REVIEW_PDF;
+  if (reviewPdf) await fs.writeFile(reviewPdf, pdf);
 });
 
-Deno.test("Form 8621 multiple MTM dispositions keep sale sources and separate net gains and losses", async () => {
+test("Form 8621 multiple MTM dispositions keep sale sources and separate net gains and losses", async () => {
   const sale = (
     id: string,
     value: number,
@@ -926,8 +929,8 @@ Deno.test("Form 8621 multiple MTM dispositions keep sale sources and separate ne
     origins.filter((origin) => origin.formKey === "form8621").length,
     3,
   );
-  const reviewPdf = Deno.env.get("FORM8621_MTM_REVIEW_PDF");
-  if (reviewPdf) await Deno.writeFile(reviewPdf, pdf);
+  const reviewPdf = process.env.FORM8621_MTM_REVIEW_PDF;
+  if (reviewPdf) await fs.writeFile(reviewPdf, pdf);
   const line = (pending.form8621 as any).items[0];
   const manyLine = {
     ...line,
@@ -948,10 +951,10 @@ Deno.test("Form 8621 multiple MTM dispositions keep sale sources and separate ne
   if (manyPages.getPageCount() < 2) {
     throw new Error("Form 8621 MTM statement did not continue across pages");
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -966,11 +969,11 @@ Deno.test("Form 8621 multiple MTM dispositions keep sale sources and separate ne
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Form 8621 line 14c residual capital loss routes through sourced Form 8949", async () => {
+test("Form 8621 line 14c residual capital loss routes through sourced Form 8949", async () => {
   const sale = {
     transaction_id: "mtm-capital-loss",
     disposition_date: "2025-10-01",
@@ -1074,15 +1077,15 @@ Deno.test("Form 8621 line 14c residual capital loss routes through sourced Form 
     origins.filter((origin) => origin.formKey === "form8621").length,
     2,
   );
-  const reviewPdf = Deno.env.get("FORM8621_14C_REVIEW_PDF");
-  if (reviewPdf) await Deno.writeFile(reviewPdf, pdf);
+  const reviewPdf = process.env.FORM8621_14C_REVIEW_PDF;
+  if (reviewPdf) await fs.writeFile(reviewPdf, pdf);
   const changed = structuredClone(pending) as Record<string, any>;
   changed.form8949[0].gain_loss--;
   assertThrows(() => buildMefXml(changed, base.filer), Error);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const validation = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -1097,6 +1100,6 @@ Deno.test("Form 8621 line 14c residual capital loss routes through sourced Form 
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

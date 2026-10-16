@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EmployeeType, VehicleMethod } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import {
@@ -45,7 +46,7 @@ function feeJob() {
   };
 }
 
-Deno.test("staged Form 2106 XML and PDF project the same line 10", () => {
+test("staged Form 2106 XML and PDF project the same line 10", () => {
   const job = feeJob();
   const prepared = prepareForm2106(job);
   const xml = buildStagedIRS2106(job);
@@ -71,7 +72,7 @@ Deno.test("staged Form 2106 XML and PDF project the same line 10", () => {
   );
 });
 
-Deno.test("staged Form 2106 impairment contributes to Schedule A, never Schedule 1", () => {
+test("staged Form 2106 impairment contributes to Schedule A, never Schedule 1", () => {
   const job = feeJob();
   const impairment = {
     ...job,
@@ -92,7 +93,7 @@ Deno.test("staged Form 2106 impairment contributes to Schedule A, never Schedule
   );
 });
 
-Deno.test("staged Form 2106 standard mileage uses MeF fractional ratio and printed PDF percent", () => {
+test("staged Form 2106 standard mileage uses MeF fractional ratio and printed PDF percent", () => {
   const job = feeJob();
   const withVehicle = {
     ...job,
@@ -133,7 +134,7 @@ Deno.test("staged Form 2106 standard mileage uses MeF fractional ratio and print
   ]);
 });
 
-Deno.test("staged Form 2106 refuses reimbursement excess without Form 1040 line 1a reconciliation", () => {
+test("staged Form 2106 refuses reimbursement excess without Form 1040 line 1a reconciliation", () => {
   const job = feeJob();
   const excess = {
     ...job,
@@ -162,7 +163,7 @@ function feePending(job = feeJob()) {
   };
 }
 
-Deno.test("staged Form 2106 joins every job to finalized filer and Schedule 1 / 1040", () => {
+test("staged Form 2106 joins every job to finalized filer and Schedule 1 / 1040", () => {
   const pending = feePending();
   assertEquals(reconcileStagedForm2106Return(pending).schedule1Total, 1_200);
   assertThrows(
@@ -185,7 +186,7 @@ Deno.test("staged Form 2106 joins every job to finalized filer and Schedule 1 / 
   );
 });
 
-Deno.test("staged Form 2106 impairment requires exact Schedule A and itemized Form 1040 join", () => {
+test("staged Form 2106 impairment requires exact Schedule A and itemized Form 1040 join", () => {
   const fee = feeJob();
   const impairment = {
     ...fee,

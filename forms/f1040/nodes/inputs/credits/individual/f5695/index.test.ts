@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { f5695 } from "./index.ts";
 
@@ -13,12 +14,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Schema Validation
 // =============================================================================
 
-Deno.test("f5695: empty object is valid — all fields optional", () => {
+test("f5695: empty object is valid — all fields optional", () => {
   const parsed = f5695.inputSchema.safeParse({});
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f5695: negative solar_electric_cost rejected", () => {
+test("f5695: negative solar_electric_cost rejected", () => {
   const parsed = f5695.inputSchema.safeParse({ solar_electric_cost: -1 });
   assertEquals(parsed.success, false);
 });
@@ -27,13 +28,13 @@ Deno.test("f5695: negative solar_electric_cost rejected", () => {
 // 2. Routing — always produces exactly one form5695 output
 // =============================================================================
 
-Deno.test("f5695: empty input produces one form5695 output (pass-through)", () => {
+test("f5695: empty input produces one form5695 output (pass-through)", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "form5695");
 });
 
-Deno.test("f5695: solar cost routes to form5695 with correct value", () => {
+test("f5695: solar cost routes to form5695 with correct value", () => {
   const result = compute({ solar_electric_cost: 20_000 });
   const out = findOutput(result, "form5695");
   assertEquals(
@@ -46,7 +47,7 @@ Deno.test("f5695: solar cost routes to form5695 with correct value", () => {
 // 3. Part I field pass-through — all fields forwarded with exact values
 // =============================================================================
 
-Deno.test("f5695: all Part I fields route to form5695 with exact values", () => {
+test("f5695: all Part I fields route to form5695 with exact values", () => {
   const result = compute({
     solar_electric_cost: 10_000,
     solar_water_heater_cost: 5_000,
@@ -77,7 +78,7 @@ Deno.test("f5695: all Part I fields route to form5695 with exact values", () => 
 // 4. Part II field pass-through — all fields forwarded with exact values
 // =============================================================================
 
-Deno.test("f5695: all Part II fields route to form5695 with exact values", () => {
+test("f5695: all Part II fields route to form5695 with exact values", () => {
   const result = compute({
     windows_cost: 2_000,
     exterior_doors_cost: 1_000,
@@ -110,7 +111,7 @@ Deno.test("f5695: all Part II fields route to form5695 with exact values", () =>
   assertEquals(fields.energy_audit_cost, 600);
 });
 
-Deno.test("f5695: itemized Section A facts reach the calculation node", () => {
+test("f5695: itemized Section A facts reach the calculation node", () => {
   const section = {
     main_home_in_us: true,
     original_user: true,
@@ -129,7 +130,7 @@ Deno.test("f5695: itemized Section A facts reach the calculation node", () => {
   assertEquals(fields.part_ii_section_a, section);
 });
 
-Deno.test("f5695: itemized Section B facts reach the calculation node", () => {
+test("f5695: itemized Section B facts reach the calculation node", () => {
   const section = {
     home_in_us: true,
     originally_placed_in_service: true,
@@ -146,7 +147,7 @@ Deno.test("f5695: itemized Section B facts reach the calculation node", () => {
   assertEquals(fields.part_ii_section_b, section);
 });
 
-Deno.test("f5695: qualified audit facts reach the calculation node", () => {
+test("f5695: qualified audit facts reach the calculation node", () => {
   const audit = {
     cost: 600,
     main_home_in_us: true,
@@ -162,7 +163,7 @@ Deno.test("f5695: qualified audit facts reach the calculation node", () => {
 // 5. Selective pass-through — undefined fields omitted, provided fields exact
 // =============================================================================
 
-Deno.test("f5695: only provided fields forwarded — undefined fields absent", () => {
+test("f5695: only provided fields forwarded — undefined fields absent", () => {
   const result = compute({ solar_electric_cost: 5_000 });
   const fields = findOutput(result, "form5695")!.fields as Record<
     string,
@@ -174,7 +175,7 @@ Deno.test("f5695: only provided fields forwarded — undefined fields absent", (
   assertEquals(fields.heat_pump_cost, undefined);
 });
 
-Deno.test("f5695: prior_year_carryforward forwarded exactly", () => {
+test("f5695: prior_year_carryforward forwarded exactly", () => {
   const result = compute({ prior_year_carryforward: 750 });
   const fields = findOutput(result, "form5695")!.fields as Record<
     string,
@@ -183,7 +184,7 @@ Deno.test("f5695: prior_year_carryforward forwarded exactly", () => {
   assertEquals(fields.prior_year_carryforward, 750);
 });
 
-Deno.test("f5695: battery_storage_kwh_capacity forwarded for eligibility check downstream", () => {
+test("f5695: battery_storage_kwh_capacity forwarded for eligibility check downstream", () => {
   // Below 3 kWh threshold — input node forwards the value; form5695 applies the eligibility rule
   const result = compute({
     battery_storage_cost: 2_000,
@@ -197,7 +198,7 @@ Deno.test("f5695: battery_storage_kwh_capacity forwarded for eligibility check d
   assertEquals(fields.battery_storage_kwh_capacity, 1.5);
 });
 
-Deno.test("f5695: fuel_cell_kw_capacity forwarded for cap computation downstream", () => {
+test("f5695: fuel_cell_kw_capacity forwarded for cap computation downstream", () => {
   const home = {
     line1: "1 Test Way",
     city: "Austin",
@@ -224,7 +225,7 @@ Deno.test("f5695: fuel_cell_kw_capacity forwarded for cap computation downstream
   assertEquals(fields.fuel_cell_total_joint_occupants_paid, undefined);
 });
 
-Deno.test("f5695: joint-occupancy total reaches the calculation node", () => {
+test("f5695: joint-occupancy total reaches the calculation node", () => {
   const result = compute({
     fuel_cell_cost: 12_000,
     fuel_cell_kw_capacity: 5,
@@ -239,7 +240,7 @@ Deno.test("f5695: joint-occupancy total reaches the calculation node", () => {
 // 6. Output count — exactly one output per compute call
 // =============================================================================
 
-Deno.test("f5695: always produces exactly one output regardless of fields provided", () => {
+test("f5695: always produces exactly one output regardless of fields provided", () => {
   assertEquals(compute({}).outputs.length, 1);
   assertEquals(compute({ solar_electric_cost: 1_000 }).outputs.length, 1);
   assertEquals(compute({ heat_pump_cost: 5_000 }).outputs.length, 1);

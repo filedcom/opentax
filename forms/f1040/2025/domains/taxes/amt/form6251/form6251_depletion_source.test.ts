@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm6251DepletionSource } from "./form6251_depletion_source.ts";
 
@@ -20,7 +21,7 @@ const business = {
   },
 };
 
-Deno.test("Form 6251 line 2d replays retained Schedule C property depletion", () => {
+test("Form 6251 line 2d replays retained Schedule C property depletion", () => {
   const fields = { line2d_depletion: 400, line11_amt: 100 };
   const pending = {
     schedule_c: { schedule_cs: [business] },

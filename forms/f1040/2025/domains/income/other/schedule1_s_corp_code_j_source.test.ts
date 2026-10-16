@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -65,7 +67,7 @@ function filing(k1_s_corps: Record<string, unknown>[] = issued) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("two S corporation code J sources reach line 8z, 1040, native statement and PDF", async () => {
+test("two S corporation code J sources reach line 8z, 1040, native statement and PDF", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -92,7 +94,7 @@ Deno.test("two S corporation code J sources reach line 8z, 1040, native statemen
   assertEquals(projected.line8z_other, 1_000);
   assertEquals(projected.line8z_description, "SEE STATEMENT");
   const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
-  const extraction = new Deno.Command("pdftotext", {
+  const extraction = new sys.Command("pdftotext", {
     args: ["-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -108,7 +110,7 @@ Deno.test("two S corporation code J sources reach line 8z, 1040, native statemen
   assertStringIncludes(text, "987654321");
 });
 
-Deno.test("S corporation code J rejects changed rows, K-1 copy, total and owner", async () => {
+test("S corporation code J rejects changed rows, K-1 copy, total and owner", async () => {
   const result = filing();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

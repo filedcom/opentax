@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertExists,
@@ -13,15 +15,10 @@ import { calculateLtcLedger } from "../../../../../nodes/intermediate/forms/adju
 import { ltcInsured, ltcPackets } from "./form8853_ltc.fixture.ts";
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM8853_LTC_DIR");
-  } catch (e) {
-    if (e instanceof Deno.errors.NotCapable) return undefined;
-    throw e;
-  }
+  return process.env.FORM8853_LTC_DIR;
 }
 for (const entry of ltcPackets) {
-  Deno.test(`Form 8853 LTC source, allocation, tax and complete packet: ${entry.id}`, async () => {
+  test(`Form 8853 LTC source, allocation, tax and complete packet: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
@@ -124,10 +121,10 @@ for (const entry of ltcPackets) {
     }
     const root = evidenceRoot();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -154,7 +151,7 @@ for (const entry of ltcPackets) {
   });
 }
 
-Deno.test("Form 8853 LTC source guards reject incomplete and inconsistent source inventories", () => {
+test("Form 8853 LTC source guards reject incomplete and inconsistent source inventories", () => {
   const base = ltcPackets.find((p) => p.id === "taxable-per-diem")!.inputs;
   const mutations: Array<(i: ReturnType<typeof ltcInsured>) => void> = [
     (i) => {
@@ -207,7 +204,7 @@ Deno.test("Form 8853 LTC source guards reject incomplete and inconsistent source
   }
 });
 
-Deno.test("Form 8853 LTC cannot omit a current-return recipient from a joint source inventory", () => {
+test("Form 8853 LTC cannot omit a current-return recipient from a joint source inventory", () => {
   const base =
     ltcPackets.find((p) => p.id === "joint-return-spouse-owner")!.inputs;
   const ledger = structuredClone(
@@ -227,7 +224,7 @@ Deno.test("Form 8853 LTC cannot omit a current-return recipient from a joint sou
   );
 });
 
-Deno.test("Form 8853 LTC multiple insureds calculate but cannot fabricate native Section C copies", async () => {
+test("Form 8853 LTC multiple insureds calculate but cannot fabricate native Section C copies", async () => {
   const base = ltcPackets.find((p) => p.id === "taxable-per-diem")!.inputs;
   const another = ltcInsured();
   another.insured = {

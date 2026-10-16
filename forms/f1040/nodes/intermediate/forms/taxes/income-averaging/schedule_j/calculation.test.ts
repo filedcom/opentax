@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import {
@@ -44,7 +45,7 @@ function input(): ScheduleJOrdinaryIncomeInput {
   };
 }
 
-Deno.test("Schedule J ordinary path fills all 2025 form lines and uses each year's rates", () => {
+test("Schedule J ordinary path fills all 2025 form lines and uses each year's rates", () => {
   assertEquals(calculateScheduleJOrdinaryIncome(input()), {
     line1: 50_000,
     line2a: 15_000,
@@ -74,7 +75,7 @@ Deno.test("Schedule J ordinary path fills all 2025 form lines and uses each year
   });
 });
 
-Deno.test("Schedule J uses the last filed averaging schedule and floors only line 7", () => {
+test("Schedule J uses the last filed averaging schedule and floors only line 7", () => {
   const source = input();
   source.base_year_source = {
     latest_averaging_year: 2024,
@@ -98,7 +99,7 @@ Deno.test("Schedule J uses the last filed averaging schedule and floors only lin
   );
 });
 
-Deno.test("Schedule J rounds one-third once for every base year", () => {
+test("Schedule J rounds one-third once for every base year", () => {
   const source = input();
   source.elected_farm_income = 1_001;
   const lines = calculateScheduleJOrdinaryIncome(source);
@@ -106,7 +107,7 @@ Deno.test("Schedule J rounds one-third once for every base year", () => {
   assertEquals([lines.line7, lines.line11, lines.line15], [10_334, 10_334, 10_334]);
 });
 
-Deno.test("Schedule J ordinary branch rejects unsupported tax methods and election excess", () => {
+test("Schedule J ordinary branch rejects unsupported tax methods and election excess", () => {
   const excess = input();
   excess.elected_farm_income = 50_001;
   assertThrows(() => calculateScheduleJOrdinaryIncome(excess));
@@ -124,7 +125,7 @@ Deno.test("Schedule J ordinary branch rejects unsupported tax methods and electi
   }
 });
 
-Deno.test("Schedule J rejects negative or non-whole-dollar line 23 sources", () => {
+test("Schedule J rejects negative or non-whole-dollar line 23 sources", () => {
   const source = input();
   source.base_year_source.base_returns.year2022.section1_tax_from_line16 = 9_000;
   source.base_year_source.base_returns.year2022.filed_line16_tax = 9_000;

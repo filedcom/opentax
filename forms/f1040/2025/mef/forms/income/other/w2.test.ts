@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type W2Item, w2ItemSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -39,7 +40,7 @@ function item(overrides: Partial<W2Item> = {}): W2Item {
   };
 }
 
-Deno.test("w2 builds one IRSW2 document per wage statement", () => {
+test("w2 builds one IRSW2 document per wage statement", () => {
   const result = w2.build({
     w2s: [item(), item({ employer_ein: "98-7654321" })],
   }, {
@@ -51,7 +52,7 @@ Deno.test("w2 builds one IRSW2 document per wage statement", () => {
   assertStringIncludes(result[1], "<EmployerEIN>987654321</EmployerEIN>");
 });
 
-Deno.test("w2 emits required identity, address, wage, and withholding fields in XSD order", () => {
+test("w2 emits required identity, address, wage, and withholding fields in XSD order", () => {
   const [result] = w2.build({ w2s: [item()] }, { filer: filer() });
   const tags = [
     "<EmployeeSSN>",
@@ -86,7 +87,7 @@ Deno.test("w2 emits required identity, address, wage, and withholding fields in 
   );
 });
 
-Deno.test("reviewed nonstandard W-2 emits code N only for its identified copy", () => {
+test("reviewed nonstandard W-2 emits code N only for its identified copy", () => {
   const review = {
     kind: "handwritten" as const,
     source_document_reference: "2025 handwritten W-2 copy",
@@ -128,7 +129,7 @@ Deno.test("reviewed nonstandard W-2 emits code N only for its identified copy", 
   );
 });
 
-Deno.test("W-2 MeF retains RRTA box 14 compensation and Additional Medicare Tax", () => {
+test("W-2 MeF retains RRTA box 14 compensation and Additional Medicare Tax", () => {
   const [xml] = w2.build({
     w2s: [item({
       box3_ss_wages: undefined,
@@ -160,7 +161,7 @@ Deno.test("W-2 MeF retains RRTA box 14 compensation and Additional Medicare Tax"
   assertEquals(xml.includes("<MedicareWagesAndTipsAmt>"), false);
 });
 
-Deno.test("w2 refuses a finalized document with missing employer filing data", () => {
+test("w2 refuses a finalized document with missing employer filing data", () => {
   assertThrows(
     () =>
       w2.build({ w2s: [item({ employer_address_line1: undefined })] }, {
@@ -171,7 +172,7 @@ Deno.test("w2 refuses a finalized document with missing employer filing data", (
   );
 });
 
-Deno.test("w2 refuses an Applied For employer EIN that IRSW2 cannot export", () => {
+test("w2 refuses an Applied For employer EIN that IRSW2 cannot export", () => {
   assertThrows(
     () =>
       w2.build({ w2s: [item({ employer_ein: "Applied For" })] }, {
@@ -182,7 +183,7 @@ Deno.test("w2 refuses an Applied For employer EIN that IRSW2 cannot export", () 
   );
 });
 
-Deno.test("w2 refuses a finalized document without filer identity", () => {
+test("w2 refuses a finalized document without filer identity", () => {
   assertThrows(
     () => w2.build({ w2s: [item()] }),
     Error,
@@ -190,7 +191,7 @@ Deno.test("w2 refuses a finalized document without filer identity", () => {
   );
 });
 
-Deno.test("W-2 MeF binds an explicit employee SSN to the return owner", () => {
+test("W-2 MeF binds an explicit employee SSN to the return owner", () => {
   const jointFiler: FilerIdentity = {
     ...filer(),
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -228,7 +229,7 @@ Deno.test("W-2 MeF binds an explicit employee SSN to the return owner", () => {
   );
 });
 
-Deno.test("W2 native business-name formatting preserves legal source spelling, EIN and name control", () => {
+test("W2 native business-name formatting preserves legal source spelling, EIN and name control", () => {
   const source = item({
     employer_name: "Harbor Retail Inc.",
     employer_ein: "34-5678901",

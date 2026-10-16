@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { withHealthPolicyRecords } from "../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -13,7 +16,7 @@ import { form7206Pdf } from "../../../../2025/pdf/forms/adjustments/health/f7206
 import { form7206 as form7206Mef } from "../../../../2025/mef/forms/adjustments/health/f7206.ts";
 import { scheduleSePdf } from "../../../../2025/pdf/forms/taxes/self-employment/schedule_se.ts";
 
-Deno.test("Form 7206 export rejects retained identity without computed lines", () => {
+test("Form 7206 export rejects retained identity without computed lines", () => {
   assertEquals(form7206Mef.build({}), "");
   assertEquals(form7206Pdf.projectFields?.({}, {}), {});
   const ambient = { schedule_se_source: { line13_deduction: 0 } };
@@ -108,20 +111,20 @@ async function validateXml(xml: string) {
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, xmlPath],
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("one Schedule C health plan reaches Form 7206 and the full return", async () => {
+test("one Schedule C health plan reaches Form 7206 and the full return", async () => {
   const result = execute(buildExecutionPlan(registry), registry, sources, {
     taxYear: 2025,
     formType: "f1040",
@@ -160,12 +163,12 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   await validateXml(xml);
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 12);
-  await Deno.mkdir(".state/research", { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(".state/research", { recursive: true });
+  await fs.writeFile(
     ".state/research/ty2025-form7206-full-return.xml",
     xml,
   );
-  await Deno.writeFile(".state/research/ty2025-form7206-full-return.pdf", pdf);
+  await fs.writeFile(".state/research/ty2025-form7206-full-return.pdf", pdf);
 
   const changed = structuredClone(result.pending);
   const plan = changed.form7206?.single_schedule_c_plan as {
@@ -178,7 +181,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   assertThrows(() => buildMefXml(changedQbi, filer), Error);
 });
 
-Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects identity changes", () => {
+test("one Schedule C spouse policy reaches joint Form 7206 and rejects identity changes", () => {
   const spouseSources = {
     ...sources,
     general: {
@@ -277,7 +280,7 @@ Deno.test("one Schedule C spouse policy reaches joint Form 7206 and rejects iden
   );
 });
 
-Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner through Form 7206 and QBI", () => {
+test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner through Form 7206 and QBI", () => {
   const spouseSources = {
     ...sources,
     general: {
@@ -395,7 +398,7 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
   assertThrows(() => buildMefXml(changedQbiOwner, filer), Error);
 });
 
-Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joint return", () => {
+test("one Schedule C policy with taxpayer and spouse months reaches the joint return", () => {
   const mixedSources = {
     ...sources,
     general: {

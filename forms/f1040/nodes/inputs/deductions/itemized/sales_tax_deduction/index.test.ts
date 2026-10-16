@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { sales_tax_deduction } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -15,7 +16,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Validation
 // =============================================================================
 
-Deno.test("sales_tax_deduction.inputSchema: actual method with amount passes", () => {
+test("sales_tax_deduction.inputSchema: actual method with amount passes", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "actual",
     actual_sales_tax_paid: 1500,
@@ -23,7 +24,7 @@ Deno.test("sales_tax_deduction.inputSchema: actual method with amount passes", (
   assertEquals(parsed.success, true);
 });
 
-Deno.test("sales_tax_deduction.inputSchema: table method with amount passes", () => {
+test("sales_tax_deduction.inputSchema: table method with amount passes", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "table",
     table_amount: 1200,
@@ -31,7 +32,7 @@ Deno.test("sales_tax_deduction.inputSchema: table method with amount passes", ()
   assertEquals(parsed.success, true);
 });
 
-Deno.test("sales_tax_deduction.inputSchema: invalid method fails", () => {
+test("sales_tax_deduction.inputSchema: invalid method fails", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "invalid",
     actual_sales_tax_paid: 1000,
@@ -39,7 +40,7 @@ Deno.test("sales_tax_deduction.inputSchema: invalid method fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("sales_tax_deduction.inputSchema: negative actual_sales_tax_paid fails", () => {
+test("sales_tax_deduction.inputSchema: negative actual_sales_tax_paid fails", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "actual",
     actual_sales_tax_paid: -100,
@@ -47,7 +48,7 @@ Deno.test("sales_tax_deduction.inputSchema: negative actual_sales_tax_paid fails
   assertEquals(parsed.success, false);
 });
 
-Deno.test("sales_tax_deduction.inputSchema: negative table_amount fails", () => {
+test("sales_tax_deduction.inputSchema: negative table_amount fails", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "table",
     table_amount: -500,
@@ -55,7 +56,7 @@ Deno.test("sales_tax_deduction.inputSchema: negative table_amount fails", () => 
   assertEquals(parsed.success, false);
 });
 
-Deno.test("sales_tax_deduction.inputSchema: negative major_purchase_tax fails", () => {
+test("sales_tax_deduction.inputSchema: negative major_purchase_tax fails", () => {
   const parsed = sales_tax_deduction.inputSchema.safeParse({
     method: "table",
     table_amount: 1000,
@@ -68,18 +69,18 @@ Deno.test("sales_tax_deduction.inputSchema: negative major_purchase_tax fails", 
 // 2. Actual method routing
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: actual method routes to schedule_a.line_5a_sales_tax", () => {
+test("sales_tax_deduction.compute: actual method routes to schedule_a.line_5a_sales_tax", () => {
   const result = compute({ method: "actual", actual_sales_tax_paid: 1500 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 1500);
 });
 
-Deno.test("sales_tax_deduction.compute: actual method — zero amount produces no output", () => {
+test("sales_tax_deduction.compute: actual method — zero amount produces no output", () => {
   const result = compute({ method: "actual", actual_sales_tax_paid: 0 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("sales_tax_deduction.compute: actual method — missing actual_sales_tax_paid treated as zero, no output", () => {
+test("sales_tax_deduction.compute: actual method — missing actual_sales_tax_paid treated as zero, no output", () => {
   const result = compute({ method: "actual" });
   assertEquals(result.outputs.length, 0);
 });
@@ -88,13 +89,13 @@ Deno.test("sales_tax_deduction.compute: actual method — missing actual_sales_t
 // 3. Table method routing
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: table method routes table_amount to schedule_a", () => {
+test("sales_tax_deduction.compute: table method routes table_amount to schedule_a", () => {
   const result = compute({ method: "table", table_amount: 1200 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 1200);
 });
 
-Deno.test("sales_tax_deduction.compute: table method — zero table_amount produces no output", () => {
+test("sales_tax_deduction.compute: table method — zero table_amount produces no output", () => {
   const result = compute({ method: "table", table_amount: 0 });
   assertEquals(result.outputs.length, 0);
 });
@@ -103,19 +104,19 @@ Deno.test("sales_tax_deduction.compute: table method — zero table_amount produ
 // 4. Major purchase add-on (table method only)
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: table method + major_purchase_tax adds to total", () => {
+test("sales_tax_deduction.compute: table method + major_purchase_tax adds to total", () => {
   const result = compute({ method: "table", table_amount: 1200, major_purchase_tax: 800 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 2000);
 });
 
-Deno.test("sales_tax_deduction.compute: table method with zero major_purchase_tax — only table amount", () => {
+test("sales_tax_deduction.compute: table method with zero major_purchase_tax — only table amount", () => {
   const result = compute({ method: "table", table_amount: 1200, major_purchase_tax: 0 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 1200);
 });
 
-Deno.test("sales_tax_deduction.compute: actual method ignores major_purchase_tax field", () => {
+test("sales_tax_deduction.compute: actual method ignores major_purchase_tax field", () => {
   // For actual method, major_purchase_tax is already included in actual_sales_tax_paid
   const result = compute({ method: "actual", actual_sales_tax_paid: 2000, major_purchase_tax: 500 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
@@ -127,13 +128,13 @@ Deno.test("sales_tax_deduction.compute: actual method ignores major_purchase_tax
 // 5. Output routing — routes to schedule_a
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: routes to schedule_a with correct amount", () => {
+test("sales_tax_deduction.compute: routes to schedule_a with correct amount", () => {
   const result = compute({ method: "actual", actual_sales_tax_paid: 1000 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 1000);
 });
 
-Deno.test("sales_tax_deduction.compute: produces exactly one output", () => {
+test("sales_tax_deduction.compute: produces exactly one output", () => {
   const result = compute({ method: "table", table_amount: 1000, major_purchase_tax: 200 });
   assertEquals(result.outputs.length, 1);
 });
@@ -142,11 +143,11 @@ Deno.test("sales_tax_deduction.compute: produces exactly one output", () => {
 // 6. Hard validation
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: throws on invalid method", () => {
+test("sales_tax_deduction.compute: throws on invalid method", () => {
   assertThrows(() => compute({ method: "invalid", actual_sales_tax_paid: 1000 }), Error);
 });
 
-Deno.test("sales_tax_deduction.compute: throws on negative actual_sales_tax_paid", () => {
+test("sales_tax_deduction.compute: throws on negative actual_sales_tax_paid", () => {
   assertThrows(() => compute({ method: "actual", actual_sales_tax_paid: -500 }), Error);
 });
 
@@ -154,7 +155,7 @@ Deno.test("sales_tax_deduction.compute: throws on negative actual_sales_tax_paid
 // 7. Edge cases
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: table method with only major_purchase_tax (no table_amount) — routes major purchase only", () => {
+test("sales_tax_deduction.compute: table method with only major_purchase_tax (no table_amount) — routes major purchase only", () => {
   const result = compute({ method: "table", table_amount: 0, major_purchase_tax: 600 });
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_5a_sales_tax, 600);
@@ -164,7 +165,7 @@ Deno.test("sales_tax_deduction.compute: table method with only major_purchase_ta
 // 8. Smoke test
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: smoke test — table method with major purchase", () => {
+test("sales_tax_deduction.compute: smoke test — table method with major purchase", () => {
   const result = compute({
     method: "table",
     table_amount: 1400,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, rate_28_gain_worksheet } from "./index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
@@ -15,12 +16,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Zero / empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("zero input: no outputs", () => {
+test("zero input: no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("explicit zeros: no outputs", () => {
+test("explicit zeros: no outputs", () => {
   const result = compute({ collectibles_gain_from_8949: 0, collectibles_gain: 0 });
   assertEquals(result.outputs.length, 0);
 });
@@ -29,7 +30,7 @@ Deno.test("explicit zeros: no outputs", () => {
 // 2. Collectibles gain from Form 8949 (schedule_d) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
+test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 5_000 });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
@@ -37,7 +38,7 @@ Deno.test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
   assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 5_000);
 });
 
-Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
+test("collectibles_gain_from_8949 only: no schedule_d output", () => {
   const result = compute({ collectibles_gain_from_8949: 3_000 });
   const out = findOutput(result, "schedule_d");
   assertEquals(out, undefined);
@@ -47,7 +48,7 @@ Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
 // 3. Collectibles gain from 1099-DIV (f1099div box 2d) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles_gain only: routes to qdcgtw", () => {
+test("collectibles_gain only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain: 1_200 });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
@@ -55,7 +56,7 @@ Deno.test("collectibles_gain only: routes to qdcgtw", () => {
   assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 1_200);
 });
 
-Deno.test("collectibles_gain only: no schedule_d output", () => {
+test("collectibles_gain only: no schedule_d output", () => {
   const result = compute({ collectibles_gain: 750 });
   const out = findOutput(result, "schedule_d");
   assertEquals(out, undefined);
@@ -65,7 +66,7 @@ Deno.test("collectibles_gain only: no schedule_d output", () => {
 // 4. Combined collectibles + 1202 (both sources) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("combined gains: routes to qdcgtw with summed line18", () => {
+test("combined gains: routes to qdcgtw with summed line18", () => {
   const result = compute({ collectibles_gain_from_8949: 4_000, collectibles_gain: 1_500 });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
@@ -73,7 +74,7 @@ Deno.test("combined gains: routes to qdcgtw with summed line18", () => {
   assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 5_500);
 });
 
-Deno.test("combined gains: no schedule_d output", () => {
+test("combined gains: no schedule_d output", () => {
   const result = compute({ collectibles_gain_from_8949: 4_000, collectibles_gain: 1_500 });
   const out = findOutput(result, "schedule_d");
   assertEquals(out, undefined);
@@ -83,7 +84,7 @@ Deno.test("combined gains: no schedule_d output", () => {
 // 5. Net gain is zero or negative — no positive output
 // ---------------------------------------------------------------------------
 
-Deno.test("both sources zero: no outputs", () => {
+test("both sources zero: no outputs", () => {
   const result = compute({ collectibles_gain_from_8949: 0, collectibles_gain: 0 });
   assertEquals(result.outputs.length, 0);
 });
@@ -92,15 +93,15 @@ Deno.test("both sources zero: no outputs", () => {
 // 6. Validation — invalid inputs rejected
 // ---------------------------------------------------------------------------
 
-Deno.test("negative collectibles_gain_from_8949: throws", () => {
+test("negative collectibles_gain_from_8949: throws", () => {
   assertThrows(() => compute({ collectibles_gain_from_8949: -100 }));
 });
 
-Deno.test("negative collectibles_gain: throws", () => {
+test("negative collectibles_gain: throws", () => {
   assertThrows(() => compute({ collectibles_gain: -50 }));
 });
 
-Deno.test("non-numeric input: throws", () => {
+test("non-numeric input: throws", () => {
   assertThrows(() => compute({ collectibles_gain_from_8949: "not-a-number" }));
 });
 
@@ -108,7 +109,7 @@ Deno.test("non-numeric input: throws", () => {
 // 7. Output field precision
 // ---------------------------------------------------------------------------
 
-Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
+test("fractional cents: routes to qdcgtw with correct value", () => {
   const result = compute({ collectibles_gain_from_8949: 1234.56, collectibles_gain: 78.90 });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
@@ -116,7 +117,7 @@ Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
   assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 1313.46);
 });
 
-Deno.test("rate 28 worksheet forwards through qdcgtw exactly once", () => {
+test("rate 28 worksheet forwards through qdcgtw exactly once", () => {
   const result = compute({ collectibles_gain_from_8949: 5_000 });
   assertEquals(result.outputs.length, 1);
   assertEquals(findOutput(result, "income_tax_calculation"), undefined);
@@ -127,7 +128,7 @@ Deno.test("rate 28 worksheet forwards through qdcgtw exactly once", () => {
 // 8. Smoke test — large gain
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: large collectibles gain routes to qdcgtw", () => {
+test("smoke: large collectibles gain routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 100_000, collectibles_gain: 25_000 });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");

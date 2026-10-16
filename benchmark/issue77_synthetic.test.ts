@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals } from "@std/assert";
 import variants from "./reference/2025/issue77-synthetic.json" with {
   type: "json",
@@ -9,8 +11,8 @@ import { FilingStatus } from "../forms/f1040/nodes/types.ts";
 const context = { taxYear: 2025, formType: "f1040" };
 async function input(name: string) {
   return JSON.parse(
-    await Deno.readTextFile(
-      new URL(`./cases/f1040/2025/${name}/input.json`, import.meta.url),
+    await fs.readFile(
+      new URL(`./cases/f1040/2025/${name}/input.json`, import.meta.url), "utf8",
     ),
   ) as {
     forms: { node_type: string; data: Record<string, unknown> }[];
@@ -20,7 +22,7 @@ async function input(name: string) {
 // Every added identity/review below is synthetic. Financial boxes and employer
 // IDs come from the archived scenario; none of its source files are modified.
 for (const variant of variants.ownership) {
-  Deno.test(`synthetic issue77 ${variant.case}: ${variant.owners.join("/")}`, async () => {
+  test(`synthetic issue77 ${variant.case}: ${variant.owners.join("/")}`, async () => {
     const source = await input(variant.case);
     const rows = source.forms.filter((f) => f.node_type === "w2");
     assertEquals(rows.length, variant.owners.length);
@@ -49,7 +51,7 @@ for (const variant of variants.ownership) {
 }
 
 for (const variant of variants.childless_eic) {
-  Deno.test(`synthetic issue77 case78 childless EIC at age ${variant.age}`, () => {
+  test(`synthetic issue77 case78 childless EIC at age ${variant.age}`, () => {
     const result = eitc.compute(context, {
       filing_status: FilingStatus.Single,
       earned_income: 7212,

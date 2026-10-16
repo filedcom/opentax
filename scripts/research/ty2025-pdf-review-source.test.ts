@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertReviewSourceFileContents,
@@ -6,7 +7,7 @@ import {
 import type { PdfReviewFixture } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
 
-Deno.test("source replay rejects extra unsupported fields despite matching manifest hash", () => {
+test("source replay rejects extra unsupported fields despite matching manifest hash", () => {
   const filer = { primarySSN: "111223333" } as FilerIdentity;
   const fixture = {
     id: "case-one",
@@ -44,7 +45,7 @@ Deno.test("source replay rejects extra unsupported fields despite matching manif
   );
 });
 
-Deno.test("source replay binds exact optional reviewed attachment bytes", () => {
+test("source replay binds exact optional reviewed attachment bytes", () => {
   const filer = { primarySSN: "111223333" } as FilerIdentity;
   const fixture = {
     id: "adoption-case",
@@ -83,7 +84,7 @@ Deno.test("source replay binds exact optional reviewed attachment bytes", () => 
   );
 });
 
-Deno.test("source replay binds retained custodian document identity and exact bytes", () => {
+test("source replay binds retained custodian document identity and exact bytes", () => {
   const filer = { primarySSN: "111223333" } as FilerIdentity;
   const fixture: PdfReviewFixture = {
     id: "retained-substitute-case",

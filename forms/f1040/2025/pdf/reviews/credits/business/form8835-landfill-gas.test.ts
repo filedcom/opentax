@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -72,7 +73,7 @@ function landfill(): F8835Item {
   };
 }
 
-Deno.test("landfill gas Form 8835 line 1g reconciles source, Form 3800, native and PDF", async () => {
+test("landfill gas Form 8835 line 1g reconciles source, Form 3800, native and PDF", async () => {
   const source = landfill();
   const result = f1040_2025.executeReturn({ ...base.inputs, f8835: [source] });
   assertEquals(result.diagnostics, []);

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8826, f8826 } from "../../../../../nodes/inputs/credits/business/f8826/index.ts";
 import { f3800 } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
@@ -11,7 +14,7 @@ const source = {
   subject_to_passive_activity_limit: false,
 };
 
-Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", () => {
+test("Form 8826 draft: source credit, numbered lines, and XML reconcile", () => {
   const lines = calculateForm8826(source);
   assertEquals(lines, {
     line1: 20_000,
@@ -55,7 +58,7 @@ Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", (
   );
 });
 
-Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 bundle", () => {
+test("Form 8826 descriptor emits a self-earned form only with a Form 3800 bundle", () => {
   const sourced = {
     ...source,
     self_source_evidence: {
@@ -137,7 +140,7 @@ Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 b
   );
 });
 
-Deno.test("pass-through-only Form 8826 requires matching K-1 code K and Form 3800", () => {
+test("pass-through-only Form 8826 requires matching K-1 code K and Form 3800", () => {
   const passThrough = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,
@@ -187,7 +190,7 @@ Deno.test("pass-through-only Form 8826 requires matching K-1 code K and Form 380
   );
 });
 
-Deno.test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap", () => {
+test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap", () => {
   const mixed = {
     ...source,
     eligible_expenditures: 5_000,
@@ -227,7 +230,7 @@ Deno.test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap",
   ]);
 });
 
-Deno.test("Form 8826 draft: pass-through-only source goes to Form 3800 without Form 8826", () => {
+test("Form 8826 draft: pass-through-only source goes to Form 3800 without Form 8826", () => {
   const passThroughOnly = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,
@@ -254,7 +257,7 @@ Deno.test("Form 8826 draft: pass-through-only source goes to Form 3800 without F
   );
 });
 
-Deno.test("Form 8826 draft: passive K-1 credit needs activity facts and ineligible self-credit stops", () => {
+test("Form 8826 draft: passive K-1 credit needs activity facts and ineligible self-credit stops", () => {
   const passThrough = {
     entity_type: "partnership" as const,
     entity_ein: "123456789",
@@ -302,7 +305,7 @@ Deno.test("Form 8826 draft: passive K-1 credit needs activity facts and ineligib
   );
 });
 
-Deno.test("Form 8826 draft: passive self-earned source retains its own document", () => {
+test("Form 8826 draft: passive self-earned source retains its own document", () => {
   const passive = {
     ...source,
     eligible_expenditures: 6_250,
@@ -327,7 +330,7 @@ Deno.test("Form 8826 draft: passive self-earned source retains its own document"
   );
 });
 
-Deno.test("Form 8826 draft: absent eligibility facts or non-creditable expenses stop", () => {
+test("Form 8826 draft: absent eligibility facts or non-creditable expenses stop", () => {
   assertThrows(
     () => buildForm8826Document({ eligible_expenditures: 5_000 }),
   );
@@ -356,13 +359,13 @@ Deno.test("Form 8826 draft: absent eligibility facts or non-creditable expenses 
   );
 });
 
-Deno.test("Form 8826 draft: local TY2025 MeF source schema", async () => {
+test("Form 8826 draft: local TY2025 MeF source schema", async () => {
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8826/IRS8826.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -386,17 +389,17 @@ Deno.test("Form 8826 draft: local TY2025 MeF source schema", async () => {
       "<IRS8826>",
       '<IRS8826 xmlns="http://www.irs.gov/efile" documentId="IRS8826-1">',
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });

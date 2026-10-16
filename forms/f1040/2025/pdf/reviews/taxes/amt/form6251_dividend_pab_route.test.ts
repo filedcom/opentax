@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -49,7 +50,7 @@ function filed() {
   return { form, pending: result.pending };
 }
 
-Deno.test("one reviewed 1099-DIV box 13 payer reaches Form 6251 line 2g, native XML, and PDF", async () => {
+test("one reviewed 1099-DIV box 13 payer reaches Form 6251 line 2g, native XML, and PDF", async () => {
   const { form, pending } = filed();
   assertEquals(form.private_activity_bond_interest, 300_000);
   assertEquals(pending.f1040.line2a_tax_exempt, 300_000);
@@ -78,7 +79,7 @@ Deno.test("one reviewed 1099-DIV box 13 payer reaches Form 6251 line 2g, native 
   );
 });
 
-Deno.test("Form 6251 rejects changed dividend copy, review, line 2a, and AMT totals", () => {
+test("Form 6251 rejects changed dividend copy, review, line 2a, and AMT totals", () => {
   const { form, pending } = filed();
   const tampered = [
     { ...pending, f1099div: { f1099divs: [{ ...payer, box13: 299_999 }] } },

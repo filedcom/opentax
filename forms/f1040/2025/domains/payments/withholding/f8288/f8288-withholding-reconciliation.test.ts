@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -31,7 +32,7 @@ const source = {
 };
 const pending = { f8288: source };
 
-Deno.test("final line 25c rejects unsupported excess and accepts the sourced total", () => {
+test("final line 25c rejects unsupported excess and accepts the sourced total", () => {
   assertOtherFormsWithholding({ line25c_total: 75_000 }, pending, true);
   assertOtherFormsWithholding({}, {}, true);
   assertThrows(
@@ -46,7 +47,7 @@ Deno.test("final line 25c rejects unsupported excess and accepts the sourced tot
   );
 });
 
-Deno.test("native and PDF final export reject unsourced line 25c withholding", async () => {
+test("native and PDF final export reject unsourced line 25c withholding", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;
@@ -74,7 +75,7 @@ Deno.test("native and PDF final export reject unsourced line 25c withholding", a
   );
 });
 
-Deno.test("Form 8288-A withholding is other-forms line 25c, not 1099 line 25b", () => {
+test("Form 8288-A withholding is other-forms line 25c, not 1099 line 25b", () => {
   const result = f8288.compute(
     { taxYear: 2025, formType: "f1040" },
     source,
@@ -93,7 +94,7 @@ Deno.test("Form 8288-A withholding is other-forms line 25c, not 1099 line 25b", 
   );
 });
 
-Deno.test("Form 8288-A source must fit inside filed line 25c in native and PDF", () => {
+test("Form 8288-A source must fit inside filed line 25c in native and PDF", () => {
   for (
     const fields of [
       { line25b_withheld_1099: 75_000 },
@@ -113,7 +114,7 @@ Deno.test("Form 8288-A source must fit inside filed line 25c in native and PDF",
   }
 });
 
-Deno.test("Form 8288-A and W-2G withholding both fit in Form 1040 line 25c", () => {
+test("Form 8288-A and W-2G withholding both fit in Form 1040 line 25c", () => {
   const combined = {
     ...pending,
     w2g: {
@@ -158,7 +159,7 @@ Deno.test("Form 8288-A and W-2G withholding both fit in Form 1040 line 25c", () 
   );
 });
 
-Deno.test("full return graph preserves the two-source line 25c sum at native and PDF projection", () => {
+test("full return graph preserves the two-source line 25c sum at native and PDF projection", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -212,7 +213,7 @@ Deno.test("full return graph preserves the two-source line 25c sum at native and
   );
 });
 
-Deno.test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () => {
+test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () => {
   const allSources = {
     ...pending,
     w2g: {
@@ -258,7 +259,7 @@ Deno.test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () =
   );
 });
 
-Deno.test("other-form withholding replay includes every trust codeB copy alongside 8288-A, W-2G, 8805 and 8959", () => {
+test("other-form withholding replay includes every trust codeB copy alongside 8288-A, W-2G, 8805 and 8959", () => {
   const combined = {
     ...pending,
     w2g: {

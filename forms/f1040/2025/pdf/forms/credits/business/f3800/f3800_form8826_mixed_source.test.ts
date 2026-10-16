@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -116,7 +117,7 @@ const ids = {
   form6251: ["IRS6251_1"],
 };
 
-Deno.test("combined Form 8826 source reaches Form 3800 and final Form 1040", () => {
+test("combined Form 8826 source reaches Form 3800 and final Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -154,7 +155,7 @@ Deno.test("combined Form 8826 source reaches Form 3800 and final Form 1040", () 
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 3_625);
 });
 
-Deno.test("Form 3800 line 1e retains one self and one S corporation Form 8826 source through native, PDF, and final tax", () => {
+test("Form 3800 line 1e retains one self and one S corporation Form 8826 source through native, PDF, and final tax", () => {
   const prepared = prepareForm3800DocumentParts(form3800, {
     pending,
     documentIdsByPendingKey: ids,
@@ -249,7 +250,7 @@ Deno.test("Form 3800 line 1e retains one self and one S corporation Form 8826 so
   );
 });
 
-Deno.test("Form 8826 printable copy binds the prepared self and K-1 details", () => {
+test("Form 8826 printable copy binds the prepared self and K-1 details", () => {
   const prepared = prepareForm3800DocumentParts(form3800, {
     pending,
     documentIdsByPendingKey: ids,

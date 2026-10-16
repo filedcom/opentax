@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form4797 } from "../../../../mef/forms/income/business/f4797.ts";
@@ -43,7 +44,7 @@ function filedReturn() {
   return buildPending(result.pending);
 }
 
-Deno.test("mixed full and partial investment recapture reaches Schedule 1, D, Form 1040 and Form 4797 outputs", () => {
+test("mixed full and partial investment recapture reaches Schedule 1, D, Form 1040 and Form 4797 outputs", () => {
   const pending = filedReturn();
   assertEquals(pending.schedule1!.line4_other_gains, 8_000);
   assertEquals(pending.schedule_d!.print_line16_combined, 3_000);
@@ -67,7 +68,7 @@ Deno.test("mixed full and partial investment recapture reaches Schedule 1, D, Fo
   assertEquals(pdf.pdf_investment_line32, 3_000);
 });
 
-Deno.test("mixed investment recapture rejects property and final-return tampering in MeF and PDF", () => {
+test("mixed investment recapture rejects property and final-return tampering in MeF and PDF", () => {
   const pending = filedReturn();
   const changed = [{
     ...pending,

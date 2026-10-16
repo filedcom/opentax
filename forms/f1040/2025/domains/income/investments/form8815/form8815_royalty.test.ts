@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   royaltyBondCases as cases,
   royaltyBondInputs as inputsFor,
@@ -10,7 +12,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 
 for (const entry of cases) {
-  Deno.test(`Bond MAGI refigures royalty interest before and after exclusion: ${entry.id}`, async () => {
+  test(`Bond MAGI refigures royalty interest before and after exclusion: ${entry.id}`, async () => {
     const inputs = inputsFor(entry);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -47,12 +49,12 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_BOND_ROYALTY_PROOF_DIR");
+    const root = process.env.OPENTAX_BOND_ROYALTY_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -164,7 +166,7 @@ for (const entry of cases) {
   });
 }
 
-Deno.test("Combined royalty/bond review rejects source omissions at public preparation", async () => {
+test("Combined royalty/bond review rejects source omissions at public preparation", async () => {
   const base = inputsFor(cases[2]);
   const worksheet = base.form8815.line9_worksheet;
   const variants = [

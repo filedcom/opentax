@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import {
@@ -6,7 +7,7 @@ import {
 } from "./form8911_profit_fixture.ts";
 import { bonusFilerFixture } from "./form8911_bonus_fixture.ts";
 
-Deno.test("Profitable refueling assets reconcile depreciation, SE, QBI, credit limits and overflow through full return", async () => {
+test("Profitable refueling assets reconcile depreciation, SE, QBI, credit limits and overflow through full return", async () => {
   for (const scenario of profitableBonusCases) {
     const result = f1040_2025.executeReturn(profitableBonusInput(scenario));
     assertEquals(result.diagnostics, [], scenario.id);
@@ -52,7 +53,7 @@ Deno.test("Profitable refueling assets reconcile depreciation, SE, QBI, credit l
   }
 });
 
-Deno.test("Profitable asset filing rejects changed SE/QBI/credit final joins and missing allocation review", async () => {
+test("Profitable asset filing rejects changed SE/QBI/credit final joins and missing allocation review", async () => {
   const input = profitableBonusInput(profitableBonusCases[1]);
   const { pending } = f1040_2025.executeReturn(input);
   const variations = [

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form4797,
@@ -18,17 +19,17 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke: empty input returns no outputs", () => {
+test("smoke: empty input returns no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("smoke: disposed_properties alone produces no outputs (indicator only)", () => {
+test("smoke: disposed_properties alone produces no outputs (indicator only)", () => {
   const result = compute({ disposed_properties: 2 });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("investment section 1245 recapture and excess gain take separate return paths", () => {
+test("investment section 1245 recapture and excess gain take separate return paths", () => {
   const result = compute({
     investment_1245_dispositions: [{
       property_id: "investment-1245-1",
@@ -64,7 +65,7 @@ Deno.test("investment section 1245 recapture and excess gain take separate retur
 
 // ─── Part I — Section 1231 long-term gain ─────────────────────────────────────
 
-Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () => {
+test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () => {
   const result = compute({ section_1231_gain: 10_000 });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_11_form2439, 10_000);
@@ -74,7 +75,7 @@ Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () =
   );
 });
 
-Deno.test("EIC Form 4797 exclusion uses line 9 after prior section 1231 loss recapture", () => {
+test("EIC Form 4797 exclusion uses line 9 after prior section 1231 loss recapture", () => {
   const input = { section_1231_gain: 10_000, nonrecaptured_1231_loss: 4_000 };
   assertEquals(
     findOutput(compute(input), "schedule_d")?.fields.line_11_form2439,
@@ -83,7 +84,7 @@ Deno.test("EIC Form 4797 exclusion uses line 9 after prior section 1231 loss rec
   assertEquals(form4797EicCapitalExclusion(input), 6_000);
 });
 
-Deno.test("passive property sale source routes dated Part I and Part II gains", () => {
+test("passive property sale source routes dated Part I and Part II gains", () => {
   const result = compute({
     passive_property_sales: [
       {
@@ -127,7 +128,7 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
   );
 });
 
-Deno.test("Form 4797 carries the retained-activity fact with a Part II sale gain", () => {
+test("Form 4797 carries the retained-activity fact with a Part II sale gain", () => {
   const result = compute({
     passive_property_sales: [{
       activity_id: "rental-retained",
@@ -153,7 +154,7 @@ Deno.test("Form 4797 carries the retained-activity fact with a Part II sale gain
   ]);
 });
 
-Deno.test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", () => {
+test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", () => {
   const activity = {
     activity_id: "entire-gain-rental",
     name: "Entire gain rental",
@@ -211,7 +212,7 @@ Deno.test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", 
   );
 });
 
-Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () => {
+test("mixed retained passive sale nets prior Part I and II PAL once", () => {
   const activity = {
     activity_id: "id-Land rental",
     name: "Land rental",
@@ -290,7 +291,7 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
   ]);
 });
 
-Deno.test("active rental sale defers Part I and II PAL until modified AGI is known", () => {
+test("active rental sale defers Part I and II PAL until modified AGI is known", () => {
   const input = {
     passive_activity_sources: [{
       activity_id: "id-Rental house",
@@ -389,7 +390,7 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
   );
 });
 
-Deno.test("the same sale from Schedule E and direct Form 4797 cannot be counted twice", () => {
+test("the same sale from Schedule E and direct Form 4797 cannot be counted twice", () => {
   const sale = {
     activity_id: "id-Rental house",
     activity_name: "Rental house",
@@ -409,7 +410,7 @@ Deno.test("the same sale from Schedule E and direct Form 4797 cannot be counted 
   );
 });
 
-Deno.test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
+test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
   const sale = {
     activity_id: "id-Land rental",
     activity_name: "Land rental",
@@ -439,7 +440,7 @@ Deno.test("passive property sale source rejects duplicate aggregate and unsuppor
   );
 });
 
-Deno.test("Part I: K-1 and Form 6252 section 1231 gains accumulate", () => {
+test("Part I: K-1 and Form 6252 section 1231 gains accumulate", () => {
   const result = compute({
     section_1231_gain: [4_000, 10_000],
     gain_form6252: 10_000,
@@ -454,7 +455,7 @@ Deno.test("Part I: K-1 and Form 6252 section 1231 gains accumulate", () => {
   );
 });
 
-Deno.test("Part I: §1231 gain with no prior losses goes entirely to schedule_d", () => {
+test("Part I: §1231 gain with no prior losses goes entirely to schedule_d", () => {
   const result = compute({
     section_1231_gain: 5_000,
     nonrecaptured_1231_loss: 0,
@@ -463,7 +464,7 @@ Deno.test("Part I: §1231 gain with no prior losses goes entirely to schedule_d"
   assertEquals(sd?.fields.line_11_form2439, 5_000);
 });
 
-Deno.test("Part I: §1231 gain partially offset by prior nonrecaptured loss → reduced LT gain + ordinary income", () => {
+test("Part I: §1231 gain partially offset by prior nonrecaptured loss → reduced LT gain + ordinary income", () => {
   // §1231 gain = 10,000; prior loss recapture = 3,000
   // → net LT gain = 7,000 to schedule_d; ordinary gain from recapture = 3,000 to schedule1
   const result = compute({
@@ -476,7 +477,7 @@ Deno.test("Part I: §1231 gain partially offset by prior nonrecaptured loss → 
   assertEquals(s1?.fields.line4_other_gains, 3_000);
 });
 
-Deno.test("Part I: §1231 gain fully offset by prior losses → all ordinary income, no schedule_d output", () => {
+test("Part I: §1231 gain fully offset by prior losses → all ordinary income, no schedule_d output", () => {
   const result = compute({
     section_1231_gain: 5_000,
     nonrecaptured_1231_loss: 5_000,
@@ -487,7 +488,7 @@ Deno.test("Part I: §1231 gain fully offset by prior losses → all ordinary inc
   assertEquals(s1?.fields.line4_other_gains, 5_000);
 });
 
-Deno.test("Part I: §1231 gain less than prior losses → all gain is ordinary, no schedule_d output", () => {
+test("Part I: §1231 gain less than prior losses → all gain is ordinary, no schedule_d output", () => {
   const result = compute({
     section_1231_gain: 3_000,
     nonrecaptured_1231_loss: 8_000,
@@ -498,7 +499,7 @@ Deno.test("Part I: §1231 gain less than prior losses → all gain is ordinary, 
   assertEquals(s1?.fields.line4_other_gains, 3_000);
 });
 
-Deno.test("Part I: zero §1231 gain produces no schedule_d output", () => {
+test("Part I: zero §1231 gain produces no schedule_d output", () => {
   const result = compute({ section_1231_gain: 0 });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd, undefined);
@@ -506,7 +507,7 @@ Deno.test("Part I: zero §1231 gain produces no schedule_d output", () => {
 
 // ─── Part I — §1231 net LOSS → ordinary income (IRC §1231(a)(2)) ──────────────
 
-Deno.test("Part I: §1231 net loss routes to schedule1 as ordinary loss — NOT schedule_d", () => {
+test("Part I: §1231 net loss routes to schedule1 as ordinary loss — NOT schedule_d", () => {
   // IRC §1231(a)(2): net §1231 losses are ordinary, fully deductible, no $3k cap
   const result = compute({ section_1231_gain: -4_000 });
   const sd = findOutput(result, "schedule_d");
@@ -515,7 +516,7 @@ Deno.test("Part I: §1231 net loss routes to schedule1 as ordinary loss — NOT 
   assertEquals(s1?.fields.line4_other_gains, -4_000); // ordinary loss
 });
 
-Deno.test("Part I: §1231 loss combined with ordinary gain → single schedule1 output", () => {
+test("Part I: §1231 loss combined with ordinary gain → single schedule1 output", () => {
   // §1231 loss -3,000 + Part II ordinary gain 1,000 = net -2,000 ordinary
   const result = compute({ section_1231_gain: -3_000, ordinary_gain: 1_000 });
   const sd = findOutput(result, "schedule_d");
@@ -524,7 +525,7 @@ Deno.test("Part I: §1231 loss combined with ordinary gain → single schedule1 
   assertEquals(s1?.fields.line4_other_gains, -2_000);
 });
 
-Deno.test("Part I: §1231 loss also routes to agi_aggregator", () => {
+test("Part I: §1231 loss also routes to agi_aggregator", () => {
   const result = compute({ section_1231_gain: -5_000 });
   const agi = findOutput(result, "agi_aggregator");
   assertEquals(agi?.fields.line4_other_gains, -5_000);
@@ -532,25 +533,25 @@ Deno.test("Part I: §1231 loss also routes to agi_aggregator", () => {
 
 // ─── Part II — Ordinary gains ─────────────────────────────────────────────────
 
-Deno.test("Part II: ordinary_gain routes to schedule1 line4_other_gains", () => {
+test("Part II: ordinary_gain routes to schedule1 line4_other_gains", () => {
   const result = compute({ ordinary_gain: 8_000 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line4_other_gains, 8_000);
 });
 
-Deno.test("Part II: ordinary_gain of zero produces no schedule1 output", () => {
+test("Part II: ordinary_gain of zero produces no schedule1 output", () => {
   const result = compute({ ordinary_gain: 0 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
 });
 
-Deno.test("Part II: negative ordinary_gain (loss) routes to schedule1", () => {
+test("Part II: negative ordinary_gain (loss) routes to schedule1", () => {
   const result = compute({ ordinary_gain: -2_000 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line4_other_gains, -2_000);
 });
 
-Deno.test("Part II: Form 4684 line 38a loss remains a distinct Form 4797 source", () => {
+test("Part II: Form 4684 line 38a loss remains a distinct Form 4797 source", () => {
   const result = compute({ ordinary_gain_form4684: -20_000 });
   assertEquals(
     findOutput(result, "schedule1")?.fields.line4_other_gains,
@@ -562,7 +563,7 @@ Deno.test("Part II: Form 4684 line 38a loss remains a distinct Form 4797 source"
   );
 });
 
-Deno.test("Part III: Form 6252 line 12 recapture remains a distinct source", () => {
+test("Part III: Form 6252 line 12 recapture remains a distinct source", () => {
   const result = compute({ recapture_form6252: 15_000 });
   assertEquals(
     findOutput(result, "schedule1")?.fields.line4_other_gains,
@@ -576,7 +577,7 @@ Deno.test("Part III: Form 6252 line 12 recapture remains a distinct source", () 
 
 // ─── Part III — §1245/§1250 recapture (flows into ordinary_gain) ─────────────
 
-Deno.test("Part III: §1245 recapture alone produces schedule1 ordinary gain output", () => {
+test("Part III: §1245 recapture alone produces schedule1 ordinary gain output", () => {
   // §1245 recapture is ordinary income; it is included in Part II
   // The user provides ordinary_gain which already includes Part III recapture
   const result = compute({ ordinary_gain: 15_000, recapture_1245: 15_000 });
@@ -584,7 +585,7 @@ Deno.test("Part III: §1245 recapture alone produces schedule1 ordinary gain out
   assertEquals(s1?.fields.line4_other_gains, 15_000);
 });
 
-Deno.test("Part III: §1250 recapture included in ordinary gain", () => {
+test("Part III: §1250 recapture included in ordinary gain", () => {
   const result = compute({ ordinary_gain: 5_000, recapture_1250: 5_000 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line4_other_gains, 5_000);
@@ -592,7 +593,7 @@ Deno.test("Part III: §1250 recapture included in ordinary gain", () => {
 
 // ─── Unrecaptured §1250 gain → Schedule D line 19 (25% rate tier) ─────────────
 
-Deno.test("unrecaptured §1250 gain routes to schedule_d line19_unrecaptured_1250", () => {
+test("unrecaptured §1250 gain routes to schedule_d line19_unrecaptured_1250", () => {
   // §1231 gain of 50,000 with 20,000 of unrecaptured §1250 gain
   const result = compute({
     section_1231_gain: 50_000,
@@ -607,7 +608,7 @@ Deno.test("unrecaptured §1250 gain routes to schedule_d line19_unrecaptured_125
   assertEquals(unrecapturedOut?.fields.line19_unrecaptured_1250, 20_000);
 });
 
-Deno.test("unrecaptured §1250 gain routes to schedule_d even without §1231 gain", () => {
+test("unrecaptured §1250 gain routes to schedule_d even without §1231 gain", () => {
   const result = compute({
     ordinary_gain: 10_000,
     unrecaptured_section_1250_gain: 8_000,
@@ -616,7 +617,7 @@ Deno.test("unrecaptured §1250 gain routes to schedule_d even without §1231 gai
   assertEquals(sdOut?.fields.line19_unrecaptured_1250, 8_000);
 });
 
-Deno.test("zero unrecaptured §1250 gain produces no schedule_d line19 output", () => {
+test("zero unrecaptured §1250 gain produces no schedule_d line19 output", () => {
   const result = compute({
     section_1231_gain: 10_000,
     unrecaptured_section_1250_gain: 0,
@@ -630,7 +631,7 @@ Deno.test("zero unrecaptured §1250 gain produces no schedule_d line19 output", 
 
 // ─── Combined scenarios ────────────────────────────────────────────────────────
 
-Deno.test("combined: §1231 gain + ordinary gain routes to both schedule_d and schedule1", () => {
+test("combined: §1231 gain + ordinary gain routes to both schedule_d and schedule1", () => {
   const result = compute({ section_1231_gain: 20_000, ordinary_gain: 6_000 });
   const sd = findOutput(result, "schedule_d");
   const s1 = findOutput(result, "schedule1");
@@ -638,7 +639,7 @@ Deno.test("combined: §1231 gain + ordinary gain routes to both schedule_d and s
   assertEquals(s1?.fields.line4_other_gains, 6_000);
 });
 
-Deno.test("combined: §1231 gain with partial prior loss recapture + additional ordinary gain", () => {
+test("combined: §1231 gain with partial prior loss recapture + additional ordinary gain", () => {
   // §1231 gain = 12,000; prior §1231 loss recapture = 4,000; separate ordinary gain = 3,000
   // → LT gain to Sch D = 8,000; ordinary to schedule1 = 4,000 (recaptured) + 3,000 = 7,000
   const result = compute({
@@ -652,7 +653,7 @@ Deno.test("combined: §1231 gain with partial prior loss recapture + additional 
   assertEquals(s1?.fields.line4_other_gains, 7_000); // 4,000 recaptured + 3,000 ordinary
 });
 
-Deno.test("combined: disposed_properties + sale data both present", () => {
+test("combined: disposed_properties + sale data both present", () => {
   const result = compute({ disposed_properties: 1, section_1231_gain: 5_000 });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_11_form2439, 5_000);
@@ -660,15 +661,15 @@ Deno.test("combined: disposed_properties + sale data both present", () => {
 
 // ─── Holding period / schema validation ──────────────────────────────────────
 
-Deno.test("schema: negative nonrecaptured_1231_loss is rejected", () => {
+test("schema: negative nonrecaptured_1231_loss is rejected", () => {
   assertThrows(() => compute({ nonrecaptured_1231_loss: -1_000 }));
 });
 
-Deno.test("schema: negative disposed_properties is rejected", () => {
+test("schema: negative disposed_properties is rejected", () => {
   assertThrows(() => compute({ disposed_properties: -1 }));
 });
 
-Deno.test("schema: unknown fields are stripped without error", () => {
+test("schema: unknown fields are stripped without error", () => {
   const result = compute({ section_1231_gain: 5_000, unknown_field: "foo" });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_11_form2439, 5_000);

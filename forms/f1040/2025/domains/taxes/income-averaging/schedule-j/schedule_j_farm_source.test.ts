@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { reconcileScheduleJFarmOnlyElection } from "./schedule_j_farm_source.ts";
 
@@ -28,21 +29,21 @@ const source = {
   elected_farm_income: 30_000,
 };
 
-Deno.test("Schedule J farm-only election reconciles Schedule F and attributable SE deduction", () => {
+test("Schedule J farm-only election reconciles Schedule F and attributable SE deduction", () => {
   assertEquals(reconcileScheduleJFarmOnlyElection(source), {
     elected_farm_income: 30_000,
     taxable_farm_income: 56_000,
   });
 });
 
-Deno.test("Schedule J farm-only election refuses more than taxable income", () => {
+test("Schedule J farm-only election refuses more than taxable income", () => {
   assertThrows(() => reconcileScheduleJFarmOnlyElection({
     ...source,
     elected_farm_income: 40_001,
   }), Error, "exceeds sourced farming or taxable income");
 });
 
-Deno.test("Schedule J farm-only election refuses unlinked other taxable income", () => {
+test("Schedule J farm-only election refuses unlinked other taxable income", () => {
   assertThrows(() => reconcileScheduleJFarmOnlyElection({
     ...source,
     form1040: {
@@ -54,7 +55,7 @@ Deno.test("Schedule J farm-only election refuses unlinked other taxable income",
   }), Error, "does not reconcile");
 });
 
-Deno.test("Schedule J farm-only election refuses a net profit inconsistent with Schedule F", () => {
+test("Schedule J farm-only election refuses a net profit inconsistent with Schedule F", () => {
   assertThrows(() => reconcileScheduleJFarmOnlyElection({
     ...source,
     schedule1: {

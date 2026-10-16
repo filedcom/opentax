@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
@@ -20,7 +21,7 @@ async function noticePdf(title: string): Promise<Uint8Array> {
   return document.save();
 }
 
-Deno.test("Form 8862 binds each reviewed credit notice to its retained PDF bytes", async () => {
+test("Form 8862 binds each reviewed credit notice to its retained PDF bytes", async () => {
   const ctcBytes = await noticePdf("CTC synthetic notice");
   const aotcBytes = await noticePdf("AOTC synthetic notice");
   const reviews = [{

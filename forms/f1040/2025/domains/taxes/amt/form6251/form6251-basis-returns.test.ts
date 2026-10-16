@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -20,7 +21,7 @@ import { form6251Pdf } from "../../../../pdf/forms/taxes/amt/f6251.ts";
 // Source-derived expectations use separate capital-loss caps, the official
 // regular/AMT rate worksheets and the NIIT threshold; no engine-derived oracle.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`ISO and basis sources reconcile through final tax: ${id}`, async () => {
+  test(`ISO and basis sources reconcile through final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input), e = expected[id];
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -62,7 +63,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     assertEquals(input, held);
   });
 }
-Deno.test("ISO/basis exports reject changed adjustments and final-return joins", async () => {
+test("ISO/basis exports reject changed adjustments and final-return joins", async () => {
   let count = 0, pdfCount = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

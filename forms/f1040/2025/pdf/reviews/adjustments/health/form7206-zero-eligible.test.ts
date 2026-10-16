@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -36,7 +39,7 @@ for (
     refund: 0,
   }]
 ) {
-  Deno.test(`all actual Medicare months employer-eligible ${scenario.id} source/native/XSD/PDF without7206`, async () => {
+  test(`all actual Medicare months employer-eligible ${scenario.id} source/native/XSD/PDF without7206`, async () => {
     const f = spouseMedicareFamily(scenario.wages, 12),
       p = f.pending,
       h = p.form7206,
@@ -109,25 +112,25 @@ for (
       xml,
       "<QlfyBusinessIncomeOrLossAmt>4646</QlfyBusinessIncomeOrLossAmt>",
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, xml);
-      const v = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, xml);
+      const v = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     const pdf = await prepared.renderPdf(), doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), 11);
     assertEquals(doc.getForm().getFields().length, 0);
-    const tmpPdf = await Deno.makeTempFile({ suffix: ".pdf" });
+    const tmpPdf = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(tmpPdf, pdf);
-      const t = await new Deno.Command("pdftotext", {
+      await fs.writeFile(tmpPdf, pdf);
+      const t = await new sys.Command("pdftotext", {
         args: [tmpPdf, "-"],
         stdout: "piped",
       }).output();
@@ -139,21 +142,21 @@ for (
       assertStringIncludes(text, "Casey Photography");
       assertStringIncludes(text, "4646");
     } finally {
-      await Deno.remove(tmpPdf);
+      await sys.remove(tmpPdf);
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const dir = "/tmp/opentax-medicare-zero-eligible-evidence";
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
         `${dir}/${scenario.id}-source-input.json`,
         JSON.stringify({ inputs: f.inputs, filer: f.filer }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/${scenario.id}-full-return.xml`, xml);
-      await Deno.writeFile(`${dir}/${scenario.id}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${dir}/${scenario.id}-full-return.xml`, xml);
+      await fs.writeFile(`${dir}/${scenario.id}-filled-return.pdf`, pdf);
     }
   });
 }
-Deno.test("zero health filing suppression still rejects source eligibility ownership and filed-income tampering", async () => {
+test("zero health filing suppression still rejects source eligibility ownership and filed-income tampering", async () => {
   const f = spouseMedicareFamily(50000, 12);
   const mutations: Array<(p: any) => void> = [
     (p) =>

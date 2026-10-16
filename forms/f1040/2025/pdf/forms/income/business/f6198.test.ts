@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6198 as form6198Mef } from "../../../../mef/forms/income/business/f6198.ts";
 import { form4835AtRisk } from "../../../../mef/forms/income/business/f4835_at_risk.ts";
@@ -18,7 +19,7 @@ function instances(pending: Record<string, Record<string, unknown>>) {
   return form6198Pdf.instances?.(projected ?? {}) ?? [];
 }
 
-Deno.test("Form 6198 PDF creates separate source-backed Schedule C and F copies", () => {
+test("Form 6198 PDF creates separate source-backed Schedule C and F copies", () => {
   const pending = {
     schedule_c: {
       schedule_cs: [{
@@ -61,7 +62,7 @@ Deno.test("Form 6198 PDF creates separate source-backed Schedule C and F copies"
   assertStringIncludes(xml[1], "<DeductibleLossAmt>-900</DeductibleLossAmt>");
 });
 
-Deno.test("Form 6198 PDF includes the same source-backed Form 4835 activity as MeF", () => {
+test("Form 6198 PDF includes the same source-backed Form 4835 activity as MeF", () => {
   const pending = {
     f4835: {
       f4835s: [{
@@ -88,7 +89,7 @@ Deno.test("Form 6198 PDF includes the same source-backed Form 4835 activity as M
   assertStringIncludes(xml, "<DeductibleLossAmt>-600</DeductibleLossAmt>");
 });
 
-Deno.test("Form 6198 PDF rejects an incomplete Form 4835 at-risk loss", () => {
+test("Form 6198 PDF rejects an incomplete Form 4835 at-risk loss", () => {
   assertThrows(
     () => instances({
       f4835: {
@@ -105,7 +106,7 @@ Deno.test("Form 6198 PDF rejects an incomplete Form 4835 at-risk loss", () => {
   );
 });
 
-Deno.test("Form 4835 at-risk native document rejects manual pending fields", () => {
+test("Form 4835 at-risk native document rejects manual pending fields", () => {
   assertThrows(
     () => form4835AtRisk.build({ deductible_loss: -500 }, {
       pending: {
@@ -125,7 +126,7 @@ Deno.test("Form 4835 at-risk native document rejects manual pending fields", () 
   );
 });
 
-Deno.test("Form 6198 PDF uses the printed line 1, 10b, 20, and 21 widgets", () => {
+test("Form 6198 PDF uses the printed line 1, 10b, 20, and 21 widgets", () => {
   const byKey = Object.fromEntries(
     form6198Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
@@ -148,7 +149,7 @@ Deno.test("Form 6198 PDF uses the printed line 1, 10b, 20, and 21 widgets", () =
   );
 });
 
-Deno.test("Form 6198 PDF refuses aggregate loss fields and incomplete source facts", () => {
+test("Form 6198 PDF refuses aggregate loss fields and incomplete source facts", () => {
   assertThrows(
     () => instances({ form6198: { schedule_c_loss: -100 } }),
     Error,
@@ -174,7 +175,7 @@ Deno.test("Form 6198 PDF refuses aggregate loss fields and incomplete source fac
   );
 });
 
-Deno.test("Form 6198 MeF and PDF use linked Form 5884 wage reductions", () => {
+test("Form 6198 MeF and PDF use linked Form 5884 wage reductions", () => {
   const pending = {
     schedule_c: {
       schedule_cs: [{
@@ -205,7 +206,7 @@ Deno.test("Form 6198 MeF and PDF use linked Form 5884 wage reductions", () => {
   assertStringIncludes(xml, "<DeductibleLossAmt>-1500</DeductibleLossAmt>");
 });
 
-Deno.test("Form 6198 MeF and PDF use linked Form 5884 farm labor reduction", () => {
+test("Form 6198 MeF and PDF use linked Form 5884 farm labor reduction", () => {
   const pending = {
     schedule_f: {
       schedule_fs: [{
@@ -232,7 +233,7 @@ Deno.test("Form 6198 MeF and PDF use linked Form 5884 farm labor reduction", () 
   );
 });
 
-Deno.test("Form 6198 MeF and PDF reject home-office-only at-risk loss", () => {
+test("Form 6198 MeF and PDF reject home-office-only at-risk loss", () => {
   const pending = {
     schedule_c: {
       schedule_cs: [{
@@ -268,7 +269,7 @@ Deno.test("Form 6198 MeF and PDF reject home-office-only at-risk loss", () => {
   );
 });
 
-Deno.test("Form 6198 rejects an unreconciled Form 5884 reduction in both serializers", () => {
+test("Form 6198 rejects an unreconciled Form 5884 reduction in both serializers", () => {
   const pending = {
     schedule_c: {
       schedule_cs: [{

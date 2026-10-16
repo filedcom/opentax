@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { form172AmtTentativeLines } from "./form172_amt_annual_limit.ts";
 import { stageForm172AmtReviewSource } from "./form172_amt_review_source.ts";
@@ -111,7 +112,7 @@ async function source() {
   };
   return { binding, documents };
 }
-Deno.test("Form 172 three retained review packages reproduce AMT origin and tentative annual cap", async () => {
+test("Form 172 three retained review packages reproduce AMT origin and tentative annual cap", async () => {
   const { binding, documents } = await source();
   const r = await stageForm172AmtReviewSource(binding, documents);
   assertEquals(r.originAmtNol, 80000);
@@ -136,7 +137,7 @@ Deno.test("Form 172 three retained review packages reproduce AMT origin and tent
     ]
   ) assertEquals(flag, false);
 });
-Deno.test("Form 172 AMT retained review rejects tampering missing extra and duplicate documents", async () => {
+test("Form 172 AMT retained review rejects tampering missing extra and duplicate documents", async () => {
   const { binding, documents } = await source();
   for (const i of [0, 1, 2]) {
     const changed = documents.map((d) => ({
@@ -154,7 +155,7 @@ Deno.test("Form 172 AMT retained review rejects tampering missing extra and dupl
     ], [...documents, { reference: "extra", bytes: documents[0].bytes }]]
   ) await assertRejects(() => stageForm172AmtReviewSource(binding, docs));
 });
-Deno.test("Form 172 AMT retained review rejects binding owner year and reference conflicts", async () => {
+test("Form 172 AMT retained review rejects binding owner year and reference conflicts", async () => {
   const { binding, documents } = await source();
   for (
     const patch of [
@@ -171,7 +172,7 @@ Deno.test("Form 172 AMT retained review rejects binding owner year and reference
     );
   }
 });
-Deno.test("Form 172 AMT retained review recomputes totals despite matching replacement digests", async () => {
+test("Form 172 AMT retained review recomputes totals despite matching replacement digests", async () => {
   const { binding, documents } = await source();
   const changed = amt();
   changed.reviewed_amt.amti_before_atnold = -1;
@@ -195,7 +196,7 @@ Deno.test("Form 172 AMT retained review recomputes totals despite matching repla
     }])
   );
 });
-Deno.test("Form 172 AMT retained review rejects BOM duplicate keys whitespace and invalid UTF8", async () => {
+test("Form 172 AMT retained review rejects BOM duplicate keys whitespace and invalid UTF8", async () => {
   const { binding, documents } = await source();
   const text = new TextDecoder().decode(documents[2].bytes);
   const inputs = [
@@ -218,7 +219,7 @@ Deno.test("Form 172 AMT retained review rejects BOM duplicate keys whitespace an
     );
   }
 });
-Deno.test("Form 172 AMT retained review owns all source bytes and bindings before hashing", async () => {
+test("Form 172 AMT retained review owns all source bytes and bindings before hashing", async () => {
   const { binding, documents } = await source();
   const pending = stageForm172AmtReviewSource(binding, documents);
   binding.taxpayer_ssn = "999887777";
@@ -234,7 +235,7 @@ Deno.test("Form 172 AMT retained review owns all source bytes and bindings befor
   assertEquals(r.taxpayerSsn, "111223333");
 });
 
-Deno.test("Form172 retained 2025 AMT package binds line1b and the current senior deduction operands", async () => {
+test("Form172 retained 2025 AMT package binds line1b and the current senior deduction operands", async () => {
   const { binding, documents } = await source();
   const a = {
     ...annual(),

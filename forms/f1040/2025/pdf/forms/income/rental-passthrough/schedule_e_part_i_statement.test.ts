@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { appendScheduleEPartIStatement } from "./schedule_e_part_i_statement.ts";
 
-Deno.test("Schedule E property detail attachment paginates long source descriptions", async () => {
+test("Schedule E property detail attachment paginates long source descriptions", async () => {
   const pdf = await PDFDocument.create();
   const rows = Array.from({ length: 30 }, (_, index) => ({
     copy: Math.floor(index / 3) + 1,

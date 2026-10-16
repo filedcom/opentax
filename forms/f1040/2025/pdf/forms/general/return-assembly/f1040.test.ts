@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { AccountType, buildReturnHeader } from "../../../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
@@ -12,22 +13,22 @@ import {
 // Descriptor structure
 // ---------------------------------------------------------------------------
 
-Deno.test("irs1040Pdf: pendingKey is 'f1040'", () => {
+test("irs1040Pdf: pendingKey is 'f1040'", () => {
   assertEquals(irs1040Pdf.pendingKey, "f1040");
 });
 
-Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
+test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
   assertEquals(
     irs1040Pdf.pdfUrl,
     "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   );
 });
 
-Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
+test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
 });
 
-Deno.test("Form 1040 PDF line 27c checks the canonical opt-out box from retained source", () => {
+test("Form 1040 PDF line 27c checks the canonical opt-out box from retained source", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "print_do_not_claim_eic"
   );
@@ -66,7 +67,7 @@ Deno.test("Form 1040 PDF line 27c checks the canonical opt-out box from retained
   );
 });
 
-Deno.test("Form 1040 PDF maps retained IP PIN, contact, and address source to exact widgets", () => {
+test("Form 1040 PDF maps retained IP PIN, contact, and address source to exact widgets", () => {
   const source = {
     filing_status: "mfj",
     taxpayer_ssn: "111223333",
@@ -162,7 +163,7 @@ Deno.test("Form 1040 PDF maps retained IP PIN, contact, and address source to ex
   );
 });
 
-Deno.test("Form 1040 German foreign address keeps the IRS GM code in MeF and Germany on paper", () => {
+test("Form 1040 German foreign address keeps the IRS GM code in MeF and Germany on paper", () => {
   const source = {
     filing_status: "single",
     taxpayer_ssn: "111223333",
@@ -182,7 +183,7 @@ Deno.test("Form 1040 German foreign address keeps the IRS GM code in MeF and Ger
   );
 });
 
-Deno.test("Form 1040 PDF and shared header preflight reject retained deceased facts", () => {
+test("Form 1040 PDF and shared header preflight reject retained deceased facts", () => {
   const fields = { filing_status: "single", digital_assets: false };
   const general = { taxpayer_deceased: true };
   assertThrows(
@@ -209,7 +210,7 @@ Deno.test("Form 1040 PDF and shared header preflight reject retained deceased fa
   );
 });
 
-Deno.test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", () => {
+test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", () => {
   const mapped = irs1040Pdf.fields.find((entry) =>
     entry.domainKey === "print_do_not_claim_actc"
   );
@@ -236,7 +237,7 @@ Deno.test("Form 1040 PDF line 28 projects the sourced ACTC opt-out checkbox", ()
   );
 });
 
-Deno.test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", () => {
+test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", () => {
   const mapped = irs1040Pdf.fields.find((entry) =>
     entry.domainKey === "print_line1h_type"
   );
@@ -327,7 +328,7 @@ Deno.test("Form 1040 PDF line 1h prints FEC only for reconciled foreign wages", 
   );
 });
 
-Deno.test("Form 1040 PDF line 1h labels reviewed W-2 code D excess deferrals", () => {
+test("Form 1040 PDF line 1h labels reviewed W-2 code D excess deferrals", () => {
   const wage = (ein: string, reference: string) => ({
     employer_ein: ein,
     employee_ssn: "111223333",
@@ -373,7 +374,7 @@ Deno.test("Form 1040 PDF line 1h labels reviewed W-2 code D excess deferrals", (
   );
 });
 
-Deno.test("Form 1040 PDF line 1h labels only an identified code-8 corrective plan distribution", () => {
+test("Form 1040 PDF line 1h labels only an identified code-8 corrective plan distribution", () => {
   const source = {
     f1099r: {
       f1099rs: [{
@@ -467,7 +468,7 @@ Deno.test("Form 1040 PDF line 1h labels only an identified code-8 corrective pla
   );
 });
 
-Deno.test("Form 1040 PDF maps the separated-spouse mark and MFS spouse name", () => {
+test("Form 1040 PDF maps the separated-spouse mark and MFS spouse name", () => {
   const mapped = new Map(
     irs1040Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -489,7 +490,7 @@ Deno.test("Form 1040 PDF maps the separated-spouse mark and MFS spouse name", ()
   );
 });
 
-Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkboxes", () => {
+test("Form 1040 PDF prints filed dependent identity and the correct checkboxes", () => {
   const child = {
     first_name: "Jamie",
     last_name: "Example",
@@ -541,7 +542,7 @@ Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkbo
 // fields array structure
 // ---------------------------------------------------------------------------
 
-Deno.test("irs1040Pdf.fields: all entries have kind, domainKey, pdfField", () => {
+test("irs1040Pdf.fields: all entries have kind, domainKey, pdfField", () => {
   for (const entry of irs1040Pdf.fields) {
     assertEquals(typeof entry.kind, "string");
     assertEquals(typeof entry.domainKey, "string");
@@ -549,7 +550,7 @@ Deno.test("irs1040Pdf.fields: all entries have kind, domainKey, pdfField", () =>
   }
 });
 
-Deno.test("irs1040Pdf.fields: all PDF field names are fully qualified AcroForm paths", () => {
+test("irs1040Pdf.fields: all PDF field names are fully qualified AcroForm paths", () => {
   for (const entry of irs1040Pdf.fields) {
     assertMatch(
       entry.pdfField,
@@ -559,7 +560,7 @@ Deno.test("irs1040Pdf.fields: all PDF field names are fully qualified AcroForm p
   }
 });
 
-Deno.test("irs1040Pdf.fields: contains expected income line fields", () => {
+test("irs1040Pdf.fields: contains expected income line fields", () => {
   const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [
     "line1a_wages",
@@ -575,7 +576,7 @@ Deno.test("irs1040Pdf.fields: contains expected income line fields", () => {
   }
 });
 
-Deno.test("2025 Form 1040 PDF line 12e prints the selected deduction once", () => {
+test("2025 Form 1040 PDF line 12e prints the selected deduction once", () => {
   const entries = irs1040Pdf.fields.filter((field) =>
     field.pdfField === "topmostSubform[0].Page2[0].f2_02[0]"
   );
@@ -619,7 +620,7 @@ Deno.test("2025 Form 1040 PDF line 12e prints the selected deduction once", () =
   );
 });
 
-Deno.test("2025 Form 1040 PDF line 16 identifies Form 4972 in box 2", () => {
+test("2025 Form 1040 PDF line 16 identifies Form 4972 in box 2", () => {
   const line16Checks = irs1040Pdf.fields.filter((field) =>
     field.domainKey === "print_form8814_tax_box" ||
     field.domainKey === "print_form4972_tax_box"
@@ -653,7 +654,7 @@ Deno.test("2025 Form 1040 PDF line 16 identifies Form 4972 in box 2", () => {
   );
 });
 
-Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () => {
+test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "line4c_ira_rollover"
   );
@@ -709,7 +710,7 @@ Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () 
   );
 });
 
-Deno.test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with code-G source", () => {
+test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with code-G source", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "line5c_pension_rollover"
   );
@@ -743,7 +744,7 @@ Deno.test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with co
   );
 });
 
-Deno.test("irs1040Pdf: full pension rollover prints zero taxable amount", () => {
+test("irs1040Pdf: full pension rollover prints zero taxable amount", () => {
   const source = {
     f1099r: {
       f1099rs: [{
@@ -767,7 +768,7 @@ Deno.test("irs1040Pdf: full pension rollover prints zero taxable amount", () => 
   );
 });
 
-Deno.test("irs1040Pdf: QCD and PSO source rows mark the 2025 line 4c and 5c boxes", () => {
+test("irs1040Pdf: QCD and PSO source rows mark the 2025 line 4c and 5c boxes", () => {
   const byKey = new Map(irs1040Pdf.fields.map((field) => [
     field.domainKey,
     field.pdfField,
@@ -827,7 +828,7 @@ Deno.test("irs1040Pdf: QCD and PSO source rows mark the 2025 line 4c and 5c boxe
   );
 });
 
-Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
+test("irs1040Pdf.fields: contains expected payment fields", () => {
   const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [
     "line25a_w2_withheld",
@@ -839,7 +840,7 @@ Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
   }
 });
 
-Deno.test("2025 Form 1040 single-account refund uses the finalized filer bank account on lines 35b–d", () => {
+test("2025 Form 1040 single-account refund uses the finalized filer bank account on lines 35b–d", () => {
   const bankFields = irs1040Pdf.filerFields?.filter((entry) =>
     entry.domainKey.startsWith("bankAccount.")
   );
@@ -876,7 +877,7 @@ Deno.test("2025 Form 1040 single-account refund uses the finalized filer bank ac
   );
 });
 
-Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
+test("Form 1040 line 35a marks an attached Form 8888", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "print_form8888_attached"
   );
@@ -906,7 +907,7 @@ Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
   }
 });
 
-Deno.test("Form 1040 page 2 prints spouse-itemization and age/blindness boxes", () => {
+test("Form 1040 page 2 prints spouse-itemization and age/blindness boxes", () => {
   for (
     const [key, field] of [
       ["mfs_spouse_itemizing", "c2_3[0]"],
@@ -927,7 +928,7 @@ Deno.test("Form 1040 page 2 prints spouse-itemization and age/blindness boxes", 
   );
 });
 
-Deno.test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {
+test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {
   for (const entry of irs1040Pdf.fields) {
     assertEquals(entry.domainKey.length > 0, true, "Empty domain key found");
     assertEquals(entry.pdfField.length > 0, true, "Empty PDF field name found");
@@ -938,7 +939,7 @@ Deno.test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {
 // filerFields structure
 // ---------------------------------------------------------------------------
 
-Deno.test("irs1040Pdf.filerFields: present and contains expected keys", () => {
+test("irs1040Pdf.filerFields: present and contains expected keys", () => {
   const filerFields = irs1040Pdf.filerFields ?? [];
   const domainKeys = new Set(filerFields.map((e) => e.domainKey));
   const expected = [

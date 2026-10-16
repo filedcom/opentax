@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -15,7 +18,7 @@ import { form8582Pdf } from "./f8582.ts";
 import { form8582 as nativeForm8582 } from "../../../../mef/forms/income/business/f8582/f8582.ts";
 import { scheduleEPdf } from "../rental-passthrough/schedule_e.ts";
 
-Deno.test("first-year entire-sale gain prints Part V from the same Schedule E and Form 4797 activity", () => {
+test("first-year entire-sale gain prints Part V from the same Schedule E and Form 4797 activity", () => {
   const sale = {
     activity_id: "first-year-entire-gain",
     activity_name: "First year rental",
@@ -135,7 +138,7 @@ Deno.test("first-year entire-sale gain prints Part V from the same Schedule E an
   );
 });
 
-Deno.test("active rental entire-sale gain reconciles Form 8582 Part IV, Schedule E, and Form 4797", () => {
+test("active rental entire-sale gain reconciles Form 8582 Part IV, Schedule E, and Form 4797", () => {
   const sale = {
     activity_id: "active-entire-gain",
     activity_name: "Active entire rental",
@@ -249,7 +252,7 @@ Deno.test("active rental entire-sale gain reconciles Form 8582 Part IV, Schedule
   );
 });
 
-Deno.test("active retained-sale PAL projects Part IV and special allowance without releasing all loss", () => {
+test("active retained-sale PAL projects Part IV and special allowance without releasing all loss", () => {
   const sale = {
     activity_id: "active-retained",
     activity_name: "Active retained rental",
@@ -408,7 +411,7 @@ const rentalPending = {
   },
 };
 
-Deno.test("Form 8582 PDF projects Parts I–VIII from the native activity worksheet", () => {
+test("Form 8582 PDF projects Parts I–VIII from the native activity worksheet", () => {
   const fields = form8582Pdf.projectFields!(rentalFields, rentalPending);
   assertEquals(fields.line1b, "20000");
   assertEquals(fields.line1d, "-20000");
@@ -428,7 +431,7 @@ Deno.test("Form 8582 PDF projects Parts I–VIII from the native activity worksh
   assertEquals(fields.part9_name, undefined);
 });
 
-Deno.test("Form 8582 PDF projects rounded odd-dollar MFS Part II allowance", () => {
+test("Form 8582 PDF projects rounded odd-dollar MFS Part II allowance", () => {
   const fields = form8582Pdf.projectFields!(
     { ...rentalFields, modified_agi: 60_003 },
     rentalPending,
@@ -444,7 +447,7 @@ Deno.test("Form 8582 PDF projects rounded odd-dollar MFS Part II allowance", () 
   assertEquals(fields.partVIII_1_allowed, "7499");
 });
 
-Deno.test("Form 8582 native and PDF retain a filed prior active-rental operating PAL", () => {
+test("Form 8582 native and PDF retain a filed prior active-rental operating PAL", () => {
   const prior = {
     tax_year: 2024 as const,
     activity_id: "rental-home",
@@ -548,7 +551,7 @@ Deno.test("Form 8582 native and PDF retain a filed prior active-rental operating
   );
 });
 
-Deno.test("Form 8582 PDF keeps other-passive Part V separate from rental Part IV", () => {
+test("Form 8582 PDF keeps other-passive Part V separate from rental Part IV", () => {
   const fields = form8582Pdf.projectFields!({
     activities: [{ ...rental, activity_type: "B", current_net: -4_000 }],
     current_loss: 4_000,
@@ -570,7 +573,7 @@ Deno.test("Form 8582 PDF keeps other-passive Part V separate from rental Part IV
   assertEquals(fields.part7_1_unallowed, "4000");
 });
 
-Deno.test("Form 8582 PDF keeps activity rows stable when Schedule E source order changes", () => {
+test("Form 8582 PDF keeps activity rows stable when Schedule E source order changes", () => {
   const lossB = {
     ...rental,
     activity_id: "loss-b",
@@ -605,7 +608,7 @@ Deno.test("Form 8582 PDF keeps activity rows stable when Schedule E source order
   assertEquals(projected.part7_2_name, "Loss A");
 });
 
-Deno.test("Form 8582 PDF field map targets all three actual 2025 pages", () => {
+test("Form 8582 PDF field map targets all three actual 2025 pages", () => {
   const entries = form8582Pdf.fields;
   assertEquals(
     entries.find((entry) => entry.domainKey === "line1b")?.pdfField,
@@ -625,7 +628,7 @@ Deno.test("Form 8582 PDF field map targets all three actual 2025 pages", () => {
   );
 });
 
-Deno.test("Form 8582 PDF preserves the native source and MFS guards", () => {
+test("Form 8582 PDF preserves the native source and MFS guards", () => {
   assertThrows(
     () => form8582Pdf.projectFields!({ current_loss: 8_000 }, {}),
     Error,
@@ -698,7 +701,7 @@ const continuationFiler: FilerIdentity = {
   },
 };
 
-Deno.test("Form 8582 continuation preserves every native overflow row in multiple pages", async () => {
+test("Form 8582 continuation preserves every native overflow row in multiple pages", async () => {
   for (const active of [false, true]) {
     const { source, pending } = overflowSource(22, active);
     const projected = form8582Pdf.projectFields!(source, pending);
@@ -719,10 +722,10 @@ Deno.test("Form 8582 continuation preserves every native overflow row in multipl
     );
     // 17 overflow rows occupy three pages per emitted worksheet part.
     assertEquals(document.getPageCount(), active ? 12 : 9);
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(path, await document.save());
-      const output = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, await document.save());
+      const output = await new sys.Command("pdftotext", {
         args: ["-raw", path, "-"],
       }).output();
       assertEquals(output.code, 0);
@@ -738,12 +741,12 @@ Deno.test("Form 8582 continuation preserves every native overflow row in multipl
       assertStringIncludes(text, "Rows 22-22; continuation page 3 of 3");
       assertStringIncludes(text, "22000");
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
   }
 });
 
-Deno.test("Form 8582 continuation rejects tampered worksheet, totals and identity", async () => {
+test("Form 8582 continuation rejects tampered worksheet, totals and identity", async () => {
   const { source, pending } = overflowSource(6);
   const projected = form8582Pdf.projectFields!(source, pending);
   for (
@@ -788,7 +791,7 @@ Deno.test("Form 8582 continuation rejects tampered worksheet, totals and identit
   );
 });
 
-Deno.test("Form 8582 five-row boundary adds no continuation pages", async () => {
+test("Form 8582 five-row boundary adds no continuation pages", async () => {
   const { source, pending } = overflowSource(5);
   const projected = form8582Pdf.projectFields!(source, pending);
   assertEquals(projected.pdf_continuation, undefined);
@@ -802,11 +805,11 @@ Deno.test("Form 8582 five-row boundary adds no continuation pages", async () => 
   assertEquals(document.getPageCount(), 0);
 });
 
-Deno.test("Form 8582 PDF does not print an empty form", () => {
+test("Form 8582 PDF does not print an empty form", () => {
   assertEquals(form8582Pdf.projectFields!({ modified_agi: 80_000 }, {}), {});
 });
 
-Deno.test("Form 8582 Part IX retains a second native activity block on its own schedule", async () => {
+test("Form 8582 Part IX retains a second native activity block on its own schedule", async () => {
   const activities = [1, 2].map((i) => ({
     activity_id: `passive-ix-${i}`,
     name: `Passive rental ${i}`,
@@ -871,10 +874,10 @@ Deno.test("Form 8582 Part IX retains a second native activity block on its own s
     pending,
   );
   assertEquals(document.getPageCount(), 1);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, await document.save());
-    const output = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const output = await new sys.Command("pdftotext", {
       args: ["-raw", path, "-"],
     }).output();
     assertEquals(output.code, 0);
@@ -885,11 +888,11 @@ Deno.test("Form 8582 Part IX retains a second native activity block on its own s
     assertStringIncludes(text, "Form 4797, Part II");
     assertStringIncludes(text, "Rows 1-3");
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Form 8582 public return graph retains 22 active and other-passive rentals in the full packet", async () => {
+test("Form 8582 public return graph retains 22 active and other-passive rentals in the full packet", async () => {
   const general = {
     "filing_status": "single",
     "taxpayer_first_name": "Alex",
@@ -985,10 +988,10 @@ Deno.test("Form 8582 public return graph retains 22 active and other-passive ren
     );
     assertEquals(origins.length, active ? 27 : 22);
     assertEquals(origins.filter((o) => o.formKey === "schedule_e").length, 8);
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(path, pdf);
-      const output = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, pdf);
+      const output = await new sys.Command("pdftotext", {
         args: ["-raw", path, "-"],
       }).output();
       assertEquals(output.code, 0);
@@ -1002,7 +1005,7 @@ Deno.test("Form 8582 public return graph retains 22 active and other-passive ren
       assertStringIncludes(text, active ? "21467" : "22667");
       assertStringIncludes(text, active ? "1467" : "2667");
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
     const changed = structuredClone(result.pending);
     (changed.schedule_e.schedule_es as Record<string, unknown>[])[3]

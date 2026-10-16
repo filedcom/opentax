@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -72,7 +73,7 @@ function filedReturn() {
   );
 }
 
-Deno.test("primary HSA pays the other spouse's medical receipt through both owner forms and final return", async () => {
+test("primary HSA pays the other spouse's medical receipt through both owner forms and final return", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const forms = result.pending.form8889.forms as Record<string, unknown>[];
@@ -101,7 +102,7 @@ Deno.test("primary HSA pays the other spouse's medical receipt through both owne
   assert(pdf.length > 0);
 });
 
-Deno.test("paired HSA spouse-patient route rejects wrong or missing patient and final tax drift", async () => {
+test("paired HSA spouse-patient route rejects wrong or missing patient and final tax drift", async () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -181,7 +182,7 @@ function dependentReturn() {
   );
 }
 
-Deno.test("spouse HSA pays claimed child's medical receipt through paired Form 8889 and final return", async () => {
+test("spouse HSA pays claimed child's medical receipt through paired Form 8889 and final return", async () => {
   const result = dependentReturn();
   assertEquals(result.diagnostics, []);
   const forms = result.pending.form8889.forms as Record<string, unknown>[];
@@ -206,7 +207,7 @@ Deno.test("spouse HSA pays claimed child's medical receipt through paired Form 8
   assert(pdf.length > 0);
 });
 
-Deno.test("paired dependent HSA receipt rejects changed, unclaimed, or missing patient", async () => {
+test("paired dependent HSA receipt rejects changed, unclaimed, or missing patient", async () => {
   const result = dependentReturn();
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);

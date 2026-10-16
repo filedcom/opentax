@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   calculateScheduleCLossLines,
   inputSchema as qbiInputSchema,
@@ -53,7 +56,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`Form8995A proportional losses ${c.id} reconcile full XML and PDF`, async () => {
+  test(`Form8995A proportional losses ${c.id} reconcile full XML and PDF`, async () => {
     const rows = [
       {
         ...sourceRows[0],
@@ -219,30 +222,24 @@ for (const c of cases) {
         `<QBIComponentAmt>${c.deductions[i] ?? 0}</QBIComponentAmt>`,
       );
     }
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_PROPORTIONAL_LOSSES_DIR",
-    });
-    const retained = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_PROPORTIONAL_LOSSES_DIR")
-      : undefined;
-    const dir = retained ? `${retained}/${c.id}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const retained = process.env.FORM8995A_PROPORTIONAL_LOSSES_DIR;
+    const dir = retained ? `${retained}/${c.id}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/input.json`,
         JSON.stringify(inputs, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/pending.json`,
         JSON.stringify(prepared.bundle.pending, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/projection.json`,
         JSON.stringify({ parent, companion }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      const xsd = await new Deno.Command("xmllint", {
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -255,10 +252,10 @@ for (const c of cases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -268,7 +265,7 @@ for (const c of cases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
@@ -303,12 +300,12 @@ for (const c of cases) {
         );
       }
     } finally {
-      if (!retained) await Deno.remove(dir, { recursive: true });
+      if (!retained) await sys.remove(dir, { recursive: true });
     }
   });
 }
 
-Deno.test("Form8995A proportional allocation conserves tied and fully used dollars in every source order", () => {
+test("Form8995A proportional allocation conserves tied and fully used dollars in every source order", () => {
   for (const loss of [1701, 2000, 2100]) {
     const rows = [
       {

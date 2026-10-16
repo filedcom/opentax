@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -87,7 +88,7 @@ function caseData() {
   return { outputs, forms, pending };
 }
 
-Deno.test("one December 2024 IRA funding transfer recaptures on 2025 Form 8889 line 19", () => {
+test("one December 2024 IRA funding transfer recaptures on 2025 Form 8889 line 19", () => {
   const { outputs, forms, pending } = caseData();
   assertEquals(forms[0]?.print_line18, 0);
   assertEquals(forms[0]?.print_line19, 1_000);
@@ -101,7 +102,7 @@ Deno.test("one December 2024 IRA funding transfer recaptures on 2025 Form 8889 l
   assertEquals(form8889Pdf.instances?.({ forms }, filer, pending)?.length, 1);
 });
 
-Deno.test("December funding route rejects changed trustee, filed line, printed line, and final return", () => {
+test("December funding route rejects changed trustee, filed line, printed line, and final return", () => {
   const { forms, pending } = caseData();
   const changed = [
     {

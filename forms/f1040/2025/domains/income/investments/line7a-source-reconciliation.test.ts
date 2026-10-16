@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertDirectCapitalGainDistributionSource } from "./line7a-source-reconciliation.ts";
 import { irs1040 } from "../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
 
-Deno.test("direct Form 1040 capital-gain distributions replay retained payer and child rows", () => {
+test("direct Form 1040 capital-gain distributions replay retained payer and child rows", () => {
   const pending = {
     f1099div: {
       f1099divs: [
@@ -68,7 +69,7 @@ Deno.test("direct Form 1040 capital-gain distributions replay retained payer and
   );
 });
 
-Deno.test("native and PDF Form 1040 reject a changed direct capital-gain distribution", () => {
+test("native and PDF Form 1040 reject a changed direct capital-gain distribution", () => {
   const pending = {
     f1099div: {
       f1099divs: [{
@@ -101,7 +102,7 @@ Deno.test("native and PDF Form 1040 reject a changed direct capital-gain distrib
   );
 });
 
-Deno.test("native and PDF Form 1040 reject an omitted sourced capital-gain distribution", () => {
+test("native and PDF Form 1040 reject an omitted sourced capital-gain distribution", () => {
   const pending = {
     f1099div: {
       f1099divs: [{

@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -132,7 +134,7 @@ function fixture(count: number, passiveCount = 0) {
 }
 
 for (const count of [35, 36, 70, 71]) {
-  Deno.test(`Form 3800 Part VI preserves ${count} source histories across page boundaries`, () => {
+  test(`Form 3800 Part VI preserves ${count} source histories across page boundaries`, () => {
     const { parts, total } = fixture(count);
     const pages = projectForm3800PartVIPages(parts);
     assertEquals(pages.length, Math.ceil(count / 35));
@@ -207,7 +209,7 @@ for (const count of [35, 36, 70, 71]) {
   });
 }
 
-Deno.test("Form 3800 mixed Part VI component prints 71 rows and one history attachment", async () => {
+test("Form 3800 mixed Part VI component prints 71 rows and one history attachment", async () => {
   const { parts, all, entries, total } = fixture(71, 35);
   const filer = pdfReviewFixtures[0].filer;
   const instances = form3800Pdf.instances!(all.f3800, filer, all, parts);
@@ -273,16 +275,12 @@ Deno.test("Form 3800 mixed Part VI component prints 71 rows and one history atta
   const reopened = await PDFDocument.load(bytes);
   assertEquals(reopened.getForm().getFields().length, 0);
   let root: string | undefined;
-  try {
-    root = Deno.env.get("FORM3800_PART_VI_EVIDENCE");
-  } catch (e) {
-    if (!(e instanceof Deno.errors.NotCapable)) throw e;
-  }
+  root = process.env.FORM3800_PART_VI_EVIDENCE;
   if (root) {
-    await Deno.mkdir(root, { recursive: true });
-    await Deno.writeFile(`${root}/mixed-71-component.pdf`, bytes);
-    await Deno.writeTextFile(`${root}/mixed-71-component.xml`, xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(root, { recursive: true });
+    await fs.writeFile(`${root}/mixed-71-component.pdf`, bytes);
+    await fs.writeFile(`${root}/mixed-71-component.xml`, xml);
+    await fs.writeFile(
       `${root}/mixed-71-component.json`,
       JSON.stringify(
         {

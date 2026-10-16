@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -81,7 +84,7 @@ const xsd = new URL(
 ).pathname;
 const root = "/tmp/opentax-owner-health-senior-source-evidence";
 for (const mode of ownerHealthSeniorModes) {
-  Deno.test(`actual owner health ${mode} senior eligibility and QBI cap source/native/XSD/PDF`, async () => {
+  test(`actual owner health ${mode} senior eligibility and QBI cap source/native/XSD/PDF`, async () => {
     const inputs = ownerHealthSeniorInputs(mode),
       r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, []);
@@ -142,32 +145,32 @@ for (const mode of ownerHealthSeniorModes) {
       xml,
       `<EnhancedSeniorDeductionAmt>${senior}</EnhancedSeniorDeductionAmt>`,
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(path, xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(path, xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, path],
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
     const pdf = await prepared.renderPdf(), doc = await PDFDocument.load(pdf);
     assertEquals(doc.getForm().getFields().length, 0);
-    if (Deno.args.includes("--write-review-artifacts")) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${mode}-source-input.json`,
         JSON.stringify({ inputs, pending: p }, null, 2),
       );
-      await Deno.writeTextFile(`${root}/${mode}-full-return.xml`, xml);
-      await Deno.writeFile(`${root}/${mode}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${root}/${mode}-full-return.xml`, xml);
+      await fs.writeFile(`${root}/${mode}-filled-return.pdf`, pdf);
     }
     console.log(mode, doc.getPageCount(), "review pages");
   });
 }
-Deno.test("owner health senior claims reject missing eligibility, changed source plans and actual QBI cap", async () => {
+test("owner health senior claims reject missing eligibility, changed source plans and actual QBI cap", async () => {
   // Official day-before-birthday rule derives both deductions from the public DOB.
   for (
     const [dob, senior, standard] of [["1961-01-01", 6000, 33100], [

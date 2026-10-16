@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { mixedCfLossHealthFixtures } from "../../../../pdf/reviews/general/composed-returns/review-mixed-cf-loss-health.fixture.ts";
@@ -23,7 +25,7 @@ const expected = [
   [192587, 288799.37, 0, 2400, 52346],
   [0, 481386.37, 17548, 2400, 97374],
 ];
-Deno.test("actual mixed C/F loss-owner established plans settle source SE health QBI current credit full XSD PDF", async () => {
+test("actual mixed C/F loss-owner established plans settle source SE health QBI current credit full XSD PDF", async () => {
   assertEquals(fixtures.length, 6);
   for (const [index, f] of fixtures.entries()) {
     const r = f1040_2025.executeReturn(f.inputs),
@@ -79,7 +81,7 @@ Deno.test("actual mixed C/F loss-owner established plans settle source SE health
         true,
       );
     }
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -103,7 +105,7 @@ Deno.test("actual mixed C/F loss-owner established plans settle source SE health
     assertEquals((await prep.renderPdf()).length > 0, true);
   }
 });
-Deno.test("mixed C/F loss-owner source capacities and retained source records reject public native PDF conflicts", async () => {
+test("mixed C/F loss-owner source capacities and retained source records reject public native PDF conflicts", async () => {
   for (const f of [fixtures[0], fixtures[3]]) {
     for (
       const mutate of [

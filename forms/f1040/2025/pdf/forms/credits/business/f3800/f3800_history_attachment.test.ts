@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -86,7 +89,7 @@ const all = {
   f1040: { line20_nonrefundable_credits: 1_000 },
 };
 
-Deno.test("Form 3800 PDF hook appends source-linked history after its nine pages", async () => {
+test("Form 3800 PDF hook appends source-linked history after its nine pages", async () => {
   buildIRS3800Document(parts);
   const filer = pdfReviewFixtures[0].filer;
   assertEquals(form3800Pdf.instances!(all.f3800, filer, all, parts).length, 1);
@@ -100,10 +103,10 @@ Deno.test("Form 3800 PDF hook appends source-linked history after its nine pages
     parts,
   );
   assertEquals(document.getPageCount(), 10);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, await document.save());
-    const result = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const result = await new sys.Command("pdftotext", {
       args: ["-f", "10", "-l", "10", path, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -114,11 +117,11 @@ Deno.test("Form 3800 PDF hook appends source-linked history after its nine pages
     assertEquals(text.includes("2022 partnership K-1 code AD"), true);
     assertEquals(text.includes("123456789"), true);
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("Form 3800 PDF hook rejects history that differs from prepared MeF", async () => {
+test("Form 3800 PDF hook rejects history that differs from prepared MeF", async () => {
   const document = await PDFDocument.create();
   const filer = pdfReviewFixtures[0].filer;
   await assertRejects(

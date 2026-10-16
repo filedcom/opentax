@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   currentPropertyQbiRows,
@@ -20,9 +23,9 @@ const xsd = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
-Deno.test("owned current passive property ordinary gains join actual farm PAL and qualified allowed-source QBI", async () => {
-  const arg = Deno.args.indexOf("--write-review-artifacts"),
-    out = arg < 0 ? undefined : Deno.args[arg + 1];
+test("owned current passive property ordinary gains join actual farm PAL and qualified allowed-source QBI", async () => {
+  const arg = process.argv.slice(2).indexOf("--write-review-artifacts"),
+    out = arg < 0 ? undefined : process.argv.slice(2)[arg + 1];
   for (const c of passivePropertyCases) {
     const inputs = c.inputs(),
       r = f1040_2025.executeReturn(inputs),
@@ -72,20 +75,20 @@ Deno.test("owned current passive property ordinary gains join actual farm PAL an
         bundle,
         origins,
       ),
-      path = await Deno.makeTempFile({ suffix: ".xml" });
-    await Deno.writeTextFile(path, bundle.xml);
-    const v = await new Deno.Command("xmllint", {
+      path = await sys.makeTempFile({ suffix: ".xml" });
+    await fs.writeFile(path, bundle.xml);
+    const v = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stderr: "piped",
     }).output();
     assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
-    await Deno.remove(path);
+    await sys.remove(path);
     if (out) {
       const dir = `${out}/${c.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify(
           {
@@ -111,7 +114,7 @@ Deno.test("owned current passive property ordinary gains join actual farm PAL an
     }
   }
 });
-Deno.test("current property gain owner, asset, sale, activity, PAL and QBI export conflicts reject", async () => {
+test("current property gain owner, asset, sale, activity, PAL and QBI export conflicts reject", async () => {
   const r = f1040_2025.executeReturn(passivePropertyInputs()),
     p = normalizeAllPending(r.pending),
     filer = extractFilerIdentity(r.pending.f1040)!;
@@ -301,7 +304,7 @@ Deno.test("current property gain owner, asset, sale, activity, PAL and QBI expor
   assertEquals(f1040_2025.executeReturn(wrong).diagnostics.length > 0, true);
 });
 
-Deno.test("current property source rejects repeated economic records and requires an owned retained lease", () => {
+test("current property source rejects repeated economic records and requires an owned retained lease", () => {
   const valid = passivePropertyInputs();
   const source = valid.schedule_e[0].current_property_source;
   // Same actual instrument legitimately covers two distinct parcels.
@@ -353,7 +356,7 @@ Deno.test("current property source rejects repeated economic records and require
   }
 });
 
-Deno.test("current property inventory rejects relabeled duplicate economics across activities", async () => {
+test("current property inventory rejects relabeled duplicate economics across activities", async () => {
   const inputs = passivePropertyInputs();
   const first = inputs.schedule_e[0].current_property_source;
   const rename = (value: any): any => {

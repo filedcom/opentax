@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -100,7 +101,7 @@ function priorAge55Case() {
   return { filed, forms, pending };
 }
 
-Deno.test("married age-55 prior mixed coverage recaptures into Form 8889 and the final return", () => {
+test("married age-55 prior mixed coverage recaptures into Form 8889 and the final return", () => {
   const { filed, forms, pending } = priorAge55Case();
   assertEquals(filed.print_line18, 2_337);
   assertEquals(filed.print_line20, 2_337);
@@ -112,7 +113,7 @@ Deno.test("married age-55 prior mixed coverage recaptures into Form 8889 and the
   assertEquals(form8889Pdf.instances?.({ forms }, filer, pending)?.length, 1);
 });
 
-Deno.test("married age-55 prior mixed coverage rejects altered source, print, and return", () => {
+test("married age-55 prior mixed coverage rejects altered source, print, and return", () => {
   const { filed, forms, pending } = priorAge55Case();
   const altered = [
     {

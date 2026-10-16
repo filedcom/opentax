@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { TS } from "../../../../../nodes/types.ts";
 import { assertThrows } from "@std/assert";
 import { assertForm6251CirculationSource } from "./form6251_circulation_source.ts";
@@ -48,7 +49,7 @@ function retained(items = [item]) {
     },
   };
 }
-Deno.test("Form 6251 line 2o replays reviewed deductions and their regular expense", () => {
+test("Form 6251 line 2o replays reviewed deductions and their regular expense", () => {
   const fields = { line2o_circulation_costs: -2_000 };
   const base = retained();
   assertForm6251CirculationSource(fields, base);
@@ -69,7 +70,7 @@ Deno.test("Form 6251 line 2o replays reviewed deductions and their regular expen
   assertThrows(() => assertForm6251CirculationSource(fields, undefined));
   assertThrows(() => assertForm6251CirculationSource({}, base));
 });
-Deno.test("Form 6251 circulation cannot claim an unjoined, reused or changed expense", () => {
+test("Form 6251 circulation cannot claim an unjoined, reused or changed expense", () => {
   const base = retained(), fields = { line2o_circulation_costs: -2_000 };
   for (
     const changed of [
@@ -157,7 +158,7 @@ Deno.test("Form 6251 circulation cannot claim an unjoined, reused or changed exp
     })
   );
 });
-Deno.test("Form 6251 zero-net circulation still validates every regular expense", () => {
+test("Form 6251 zero-net circulation still validates every regular expense", () => {
   assertForm6251CirculationSource({}, undefined);
   const offsetting = {
     ...item,
@@ -196,7 +197,7 @@ Deno.test("Form 6251 zero-net circulation still validates every regular expense"
   );
 });
 
-Deno.test("circulation expense follows the spouse proprietor on a joint return", () => {
+test("circulation expense follows the spouse proprietor on a joint return", () => {
   const base = retained();
   const identity = {
     ...general,

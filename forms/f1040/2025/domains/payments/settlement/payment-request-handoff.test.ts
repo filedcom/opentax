@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../nodes/inputs/payments/settlement/payment_request/index.ts";
 import { f1040_2025 } from "../../../index.ts";
@@ -10,7 +11,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-w2-refund"
 )!;
 
-Deno.test("each payment-request kind stays in pending and stops both final exports", async () => {
+test("each payment-request kind stays in pending and stops both final exports", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   for (
@@ -50,7 +51,7 @@ Deno.test("each payment-request kind stays in pending and stops both final expor
   }
 });
 
-Deno.test("malformed retained payment intent cannot be silently omitted", async () => {
+test("malformed retained payment intent cannot be silently omitted", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   const pending = {
@@ -67,7 +68,7 @@ Deno.test("malformed retained payment intent cannot be silently omitted", async 
   );
 });
 
-Deno.test("payment-request intake rejects duplicate identity and invalid date", () => {
+test("payment-request intake rejects duplicate identity and invalid date", () => {
   const request = {
     kind: "future_estimated_tax" as const,
     amount: 100,

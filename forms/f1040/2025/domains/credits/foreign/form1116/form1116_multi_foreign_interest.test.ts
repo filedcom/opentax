@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -96,7 +97,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("three same-country foreign interest payers aggregate through Form 1116 native and PDF", () => {
+test("three same-country foreign interest payers aggregate through Form 1116 native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -127,7 +128,7 @@ Deno.test("three same-country foreign interest payers aggregate through Form 111
   );
 });
 
-Deno.test("multiple foreign payer source, country, review and return tampering rejects native and PDF", () => {
+test("multiple foreign payer source, country, review and return tampering rejects native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -174,7 +175,7 @@ Deno.test("multiple foreign payer source, country, review and return tampering r
   }
 });
 
-Deno.test("multi_foreign_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+test("multi_foreign_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
   await verifyPassive1116Packet(
     filedReturn().pending,
     "multi_foreign_interest",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { createHash } from "node:crypto";
@@ -75,7 +76,7 @@ function copy(document_id: string, contents: string) {
   };
 }
 
-Deno.test("Form 8621 parent facts reconcile across source, native, and staged page 1", () => {
+test("Form 8621 parent facts reconcile across source, native, and staged page 1", () => {
   const source = projectForm8621ParentSource(item);
   assertEquals(source.share_classes[0].year_end_shares, 100);
   const [native] = form8621.build({ items: [{ item, excessEvents: [] }] });
@@ -96,7 +97,7 @@ Deno.test("Form 8621 parent facts reconcile across source, native, and staged pa
   assertEquals(page["topmostSubform[0].Page1[0].f1_27[0]"], undefined);
 });
 
-Deno.test("Form 8621 QEF and MTM parent pages use calculated Part III/IV amounts", () => {
+test("Form 8621 QEF and MTM parent pages use calculated Part III/IV amounts", () => {
   const qef = itemSchema.parse({
     ...item,
     regime: PficRegime.QEF,
@@ -161,7 +162,7 @@ Deno.test("Form 8621 QEF and MTM parent pages use calculated Part III/IV amounts
   );
 });
 
-Deno.test("Form 8621 printable source checks retained issuer, QEF, MTM, and prior election copies", () => {
+test("Form 8621 printable source checks retained issuer, QEF, MTM, and prior election copies", () => {
   const issuer = copy("issuer-2025-001", "Fund annual report, 2025");
   const qefStatement = {
     ...copy(
@@ -247,7 +248,7 @@ Deno.test("Form 8621 printable source checks retained issuer, QEF, MTM, and prio
   );
 });
 
-Deno.test("Form 8621 staged parent creates a distinct Part V and statement for each source event", async () => {
+test("Form 8621 staged parent creates a distinct Part V and statement for each source event", async () => {
   const source = {
     kind: ExcessEventKind.Distribution as const,
     holding_period_start: "2024-01-01",
@@ -429,7 +430,7 @@ Deno.test("Form 8621 staged parent creates a distinct Part V and statement for e
   );
 });
 
-Deno.test("Form 8621 prints Part V only for excess distributions in a mixed block", () => {
+test("Form 8621 prints Part V only for excess distributions in a mixed block", () => {
   const mixedSource = {
     kind: ExcessEventKind.Distribution as const,
     holding_period_start: "2024-01-01",
@@ -492,7 +493,7 @@ Deno.test("Form 8621 prints Part V only for excess distributions in a mixed bloc
   assertEquals(packet.forms[0].partV.length, 1);
 });
 
-Deno.test("Form 8621 parent source rejects changed shares, election, and acquisition facts", () => {
+test("Form 8621 parent source rejects changed shares, election, and acquisition facts", () => {
   assertThrows(
     () => projectForm8621ParentSource({ ...item, shares_owned: 101 }),
     Error,

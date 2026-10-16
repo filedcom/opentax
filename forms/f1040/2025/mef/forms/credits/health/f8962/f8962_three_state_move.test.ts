@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { general } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -110,7 +111,7 @@ const pending = {
   f1040: { line11_agi: 75_300, line17_additional_taxes: 1_596 },
 };
 
-Deno.test("Form 8962 three reported interstate moves use Alaska FPL and three sourced policies through return, MeF, and PDF", () => {
+test("Form 8962 three reported interstate moves use Alaska FPL and three sourced policies through return, MeF, and PDF", () => {
   const residence = general.compute(
     { taxYear: 2025, formType: "f1040" },
     general.inputSchema.parse(pending.general),
@@ -155,7 +156,7 @@ Deno.test("Form 8962 three reported interstate moves use Alaska FPL and three so
   assertEquals(form8962Pdf.instances?.(pdf, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 three-state move rejects unreviewed arrival, policy-state conflict, and return drift", () => {
+test("Form 8962 three-state move rejects unreviewed arrival, policy-state conflict, and return drift", () => {
   assertThrows(
     () =>
       form8962.build(fields, {

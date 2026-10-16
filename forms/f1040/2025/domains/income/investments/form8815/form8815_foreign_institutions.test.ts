@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertRejects,
@@ -17,7 +19,7 @@ import {
 } from "./form8815_foreign_institutions.fixture.ts";
 
 for (const kind of institutionCases) {
-  Deno.test(`Form 8815 foreign institution addresses and tax: ${kind}`, async () => {
+  test(`Form 8815 foreign institution addresses and tax: ${kind}`, async () => {
     const inputs = foreignInstitutionInputs(kind);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
@@ -95,12 +97,12 @@ for (const kind of institutionCases) {
       origins.filter((row) => row.formKey === "form8815").length,
       pages - 3,
     );
-    const root = Deno.env.get("OPENTAX_FORM8815_FOREIGN_PROOF_DIR");
+    const root = process.env.OPENTAX_FORM8815_FOREIGN_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${kind}.pdf`, bytes);
-      await Deno.writeTextFile(`${root}/${kind}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${kind}.pdf`, bytes);
+      await fs.writeFile(`${root}/${kind}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${kind}.json`,
         JSON.stringify(
           { inputs, pending, filer, origins, acceptanceVerified: false },

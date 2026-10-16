@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertThrows } from "@std/assert";
 import tables from "./reference/2025/irs-tables.json" with { type: "json" };
 import changes from "./reference/2025/issue77-changes.json" with {
@@ -11,7 +13,7 @@ import {
 import { lookupEic2025 } from "../forms/f1040/nodes/intermediate/forms/credits/earned-income/eitc/table_2025.ts";
 import { benchmarkExpectedSchema, benchmarkSourceIssues } from "./harness.ts";
 
-Deno.test("issue 77: all 8248 published Tax Table cells match engine at both interval ends", () => {
+test("issue 77: all 8248 published Tax Table cells match engine at both interval ends", () => {
   assertEquals(tables.tax_year, 2025);
   assertEquals(tables.tax_table.length, 2062);
   const statuses = [
@@ -36,7 +38,7 @@ Deno.test("issue 77: all 8248 published Tax Table cells match engine at both int
   }
 });
 
-Deno.test("issue 77: published nonterminal EIC rows agree at both interval ends", () => {
+test("issue 77: published nonterminal EIC rows agree at both interval ends", () => {
   assertEquals(tables.eic_nonterminal_rows.length, 1362);
   for (const [low, high, ...credits] of tables.eic_nonterminal_rows) {
     for (let column = 0; column < 8; column++) {
@@ -52,7 +54,7 @@ Deno.test("issue 77: published nonterminal EIC rows agree at both interval ends"
   }
 });
 
-Deno.test("issue 77: high-income proposed correction must satisfy IRS worksheet", () => {
+test("issue 77: high-income proposed correction must satisfy IRS worksheet", () => {
   // Case 95: Schedule D Exception 1 gives net capital gain $30,045.
   // Taxable $957,087 - preferential $73,282 = ordinary $883,805.
   // Worksheet tax $284,028 plus preferential tax $14,656.40 rounds to $298,684.
@@ -66,14 +68,14 @@ Deno.test("issue 77: high-income proposed correction must satisfy IRS worksheet"
   );
 });
 
-Deno.test("issue 77: corrected fixture balances and audit amounts stay consistent", async () => {
+test("issue 77: corrected fixture balances and audit amounts stay consistent", async () => {
   for (const record of changes) {
     const fixture = JSON.parse(
-      await Deno.readTextFile(
+      await fs.readFile(
         new URL(
           `./cases/f1040/2025/${record.case}/correct.json`,
           import.meta.url,
-        ),
+        ), "utf8",
       ),
     );
     const values = benchmarkExpectedSchema.parse(fixture);
@@ -100,7 +102,7 @@ Deno.test("issue 77: corrected fixture balances and audit amounts stay consisten
   }
 });
 
-Deno.test("issue 77: unresolved source facts cannot become successful oracles", () => {
+test("issue 77: unresolved source facts cannot become successful oracles", () => {
   assertEquals(benchmarkSourceIssues({ correct: {} }), []);
   assertEquals(
     benchmarkSourceIssues({
@@ -113,13 +115,13 @@ Deno.test("issue 77: unresolved source facts cannot become successful oracles", 
   );
 });
 
-Deno.test("issue77 case95 direct-sale source columns support the revised worksheet", async () => {
+test("issue77 case95 direct-sale source columns support the revised worksheet", async () => {
   const fixture = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         "./cases/f1040/2025/95-single-w2-k1-1099r-1099int-1099div-1099b/input.json",
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   const direct = fixture.forms.filter((

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { IraOwner } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
@@ -29,11 +30,11 @@ const partI = {
   },
 };
 
-Deno.test("Form 8606: absent pending produces no document", () => {
+test("Form 8606: absent pending produces no document", () => {
   assertEquals(form8606.build([]), "");
 });
 
-Deno.test("Form 8606: taxpayer-owned no-activity Part I uses native ordered fields", () => {
+test("Form 8606: taxpayer-owned no-activity Part I uses native ordered fields", () => {
   const xml = form8606.build(partI, { filer });
   assert(typeof xml === "string");
   assertStringIncludes(
@@ -63,7 +64,7 @@ Deno.test("Form 8606: taxpayer-owned no-activity Part I uses native ordered fiel
   assertEquals(xml.includes("NondeductibleContriAmt"), false);
 });
 
-Deno.test("Form 8606: flat legacy and explicit empty records cannot file", () => {
+test("Form 8606: flat legacy and explicit empty records cannot file", () => {
   const emptyRecord: unknown = {};
   const legacyRecord: unknown = { nondeductible_contributions: 6_000 };
   assertThrows(
@@ -79,7 +80,7 @@ Deno.test("Form 8606: flat legacy and explicit empty records cannot file", () =>
   );
 });
 
-Deno.test("Form 8606: spouse owner and joint return reject instead of guessing", () => {
+test("Form 8606: spouse owner and joint return reject instead of guessing", () => {
   assertThrows(
     () =>
       form8606.build({
@@ -99,7 +100,7 @@ Deno.test("Form 8606: spouse owner and joint return reject instead of guessing",
   );
 });
 
-Deno.test("Form 8606: distributions, conversions, and Roth activity reject", () => {
+test("Form 8606: distributions, conversions, and Roth activity reject", () => {
   for (
     const sourceField of [
       "source_traditional_distributions",
@@ -117,7 +118,7 @@ Deno.test("Form 8606: distributions, conversions, and Roth activity reject", () 
   }
 });
 
-Deno.test("Form 8606: line arithmetic and owner source confirmations are required", () => {
+test("Form 8606: line arithmetic and owner source confirmations are required", () => {
   assertThrows(
     () =>
       form8606.build({ ...partI, print_line14_remaining_basis: 10_000 }, {

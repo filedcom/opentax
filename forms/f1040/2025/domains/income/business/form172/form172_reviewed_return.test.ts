@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { stageForm172ReviewedReturnCalculation } from "./form172_reviewed_return.ts";
 import { passiveK1Inputs } from "../../../credits/earned-income/earned-income/eic_passive_k1.fixture.ts";
@@ -236,7 +237,7 @@ async function fixture(mixedKind = false) {
   };
   return { inputs, binding, documents, currentReview };
 }
-Deno.test("Form172 current workpaper matches public wages deduction and retained finalizer", async () => {
+test("Form172 current workpaper matches public wages deduction and retained finalizer", async () => {
   for (const mixedKind of [false, true]) {
     const f = await fixture(mixedKind);
     const r = await stageForm172ReviewedReturnCalculation(
@@ -254,7 +255,7 @@ Deno.test("Form172 current workpaper matches public wages deduction and retained
     assertEquals(r.filingReady, false);
   }
 });
-Deno.test("Form172 current workpaper rejects public income identity status and detached sources", async () => {
+test("Form172 current workpaper rejects public income identity status and detached sources", async () => {
   const f = await fixture();
   const template = passiveK1Inputs();
   for (
@@ -277,7 +278,7 @@ Deno.test("Form172 current workpaper rejects public income identity status and d
     );
   }
 });
-Deno.test("Form172 current workpaper rejects internally valid source amounts differing from actual deductions", async () => {
+test("Form172 current workpaper rejects internally valid source amounts differing from actual deductions", async () => {
   const f = await fixture();
   for (
     const patch of [
@@ -311,7 +312,7 @@ Deno.test("Form172 current workpaper rejects internally valid source amounts dif
     );
   }
 });
-Deno.test("Form172 current return owns public input and source bytes during digest awaits", async () => {
+test("Form172 current return owns public input and source bytes during digest awaits", async () => {
   const f = await fixture();
   const pending = stageForm172ReviewedReturnCalculation(
     f.inputs,

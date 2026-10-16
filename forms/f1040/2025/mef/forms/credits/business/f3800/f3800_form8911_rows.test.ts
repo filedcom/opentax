@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   projectForm3800PartIAndIIFields,
   projectForm3800PartIIIFields,
@@ -43,7 +44,7 @@ function sourceParts(appliedCredit = 400, documentId = "IRS8911-1") {
   };
 }
 
-Deno.test("Form 3800 places a property-derived Form 8911 credit on line 1s with limited use", () => {
+test("Form 3800 places a property-derived Form 8911 credit on line 1s with limited use", () => {
   const input = sourceParts();
   const rows = form3800NonpassiveCreditUseRows({
     form8911Credit: input.form8911.credit,
@@ -83,7 +84,7 @@ Deno.test("Form 3800 places a property-derived Form 8911 credit on line 1s with 
   );
 });
 
-Deno.test("Form 3800 refueling row rejects missing documents and tax-use mismatches", () => {
+test("Form 3800 refueling row rejects missing documents and tax-use mismatches", () => {
   assertThrows(
     () => buildForm3800NonpassiveParts(sourceParts(400, "")),
     Error,

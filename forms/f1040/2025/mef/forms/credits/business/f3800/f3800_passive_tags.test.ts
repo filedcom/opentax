@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   form3800SpecifiedCreditLineSchema,
@@ -13,7 +14,7 @@ import {
   planForm3800PassiveXmlRows,
 } from "./f3800_passive_tags.ts";
 
-Deno.test("Form 3800 passive XML tags cover every source credit line", () => {
+test("Form 3800 passive XML tags cover every source credit line", () => {
   assertEquals(
     Object.keys(form3800PassiveXmlTags).sort(),
     [
@@ -61,7 +62,7 @@ Deno.test("Form 3800 passive XML tags cover every source credit line", () => {
   );
 });
 
-Deno.test("Form 3800 passive XML plan keeps one carryover group with source detail", () => {
+test("Form 3800 passive XML plan keeps one carryover group with source detail", () => {
   const source = (year: number, before: number, after: number) => ({
     activityReference: "Clinical activity",
     sourceForm: "Form 8820",
@@ -119,7 +120,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
   );
 });
 
-Deno.test("Form 3800 passive XML summary year survives same-year sources", () => {
+test("Form 3800 passive XML summary year survives same-year sources", () => {
   const planned = planForm3800PassiveXmlRows(
     groupForm3800PassiveCreditVintages([
       {

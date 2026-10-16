@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -17,7 +20,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -66,7 +69,7 @@ function retainedChildInterest(amount: number) {
   };
 }
 
-Deno.test("Form 8615 MeF keeps preferential worksheet indicators before their tax amounts", () => {
+test("Form 8615 MeF keeps preferential worksheet indicators before their tax amounts", () => {
   const xml = form8615.build({
     parent_name: "Jane Parent",
     parent_name_control: "PARE",
@@ -94,12 +97,7 @@ Deno.test("Form 8615 MeF keeps preferential worksheet indicators before their ta
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8615 line 18 replaces dependent Form 1040 line 16",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8615 line 18 replaces dependent Form 1040 line 16", async () => {
   // Exact TY2025 Tax Table amounts for the low-income serialization case.
   const calculation = {
     fields: {
@@ -150,26 +148,21 @@ Deno.test({
   assertStringIncludes(xml, "<ParentNm>Jane Parent</ParentNm>");
   assertStringIncludes(xml, "<KiddieTaxAmt>412</KiddieTaxAmt>");
   assertEquals(xml.includes("ChildNetUnearnedIncomeAmt"), false);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: Form 8615 stops at line 3 and leaves later fields blank",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8615 stops at line 3 and leaves later fields blank", async () => {
   const calculation = calculateForm8615({
     eligibility_confirmed: true,
     parent_name: "Jane Parent",
@@ -219,16 +212,16 @@ Deno.test({
   );
   assertEquals(xml.includes("ChildTaxableIncomeAmt"), false);
   assertEquals(xml.includes("ChildNetInvestmentIncomeAmt"), false);
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

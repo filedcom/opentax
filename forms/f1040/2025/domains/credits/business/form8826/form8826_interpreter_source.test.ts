@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -9,9 +12,9 @@ import { inputSchema as cSchema } from "../../../../../nodes/inputs/income/busin
 import { inputSchema as creditSchema } from "../../../../../nodes/inputs/credits/business/f8826/index.ts";
 import { inputSchema as parentSchema } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
 
-Deno.test("actual interpreter invoice and full expense reduction reconcile full partial zero credit packets", async () => {
+test("actual interpreter invoice and full expense reduction reconcile full partial zero credit packets", async () => {
   const root = ".state/research/2026-10-06-form8826-interpreter-source";
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   for (
     const [id, receipts] of [["full", 80000], ["partial", 22000], [
       "zero",
@@ -64,23 +67,23 @@ Deno.test("actual interpreter invoice and full expense reduction reconcile full 
       "<ShareOfCreditAmt>2375</ShareOfCreditAmt>",
     );
     const xmlFile = `${root}/${id}.xml`;
-    await Deno.writeTextFile(xmlFile, prepared.bundle.xml);
+    await fs.writeFile(xmlFile, prepared.bundle.xml);
     const xsd =
       ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlFile],
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     const pdf = await prepared.renderPdf();
-    await Deno.writeFile(`${root}/${id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${id}.json`,
       JSON.stringify({ inputs, pending }, null, 2),
     );
     const parsed = await PDFDocument.load(pdf);
     assertEquals(parsed.getForm().getFields().length, 0);
-    const text = await new Deno.Command("pdftotext", {
+    const text = await new sys.Command("pdftotext", {
       args: ["-layout", `${root}/${id}.pdf`, "-"],
       stdout: "piped",
     }).output();
@@ -101,7 +104,7 @@ Deno.test("actual interpreter invoice and full expense reduction reconcile full 
   }
 });
 
-Deno.test("interpreter source conflicts reject native and direct printable exports", async () => {
+test("interpreter source conflicts reject native and direct printable exports", async () => {
   const inputs = form8826InterpreterInputs();
   const result = f1040_2025.executeReturn(inputs);
   const filer = extractFilerIdentity(inputs.general)!;

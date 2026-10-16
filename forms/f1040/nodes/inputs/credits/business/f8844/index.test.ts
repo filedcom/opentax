@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8844, f8844, inputSchema } from "./index.ts";
 
@@ -22,7 +23,7 @@ const source = {
   f8844s: [employee],
 };
 
-Deno.test("Form 8844 direct employer calculates qualified wages after WOTC exclusion", () => {
+test("Form 8844 direct employer calculates qualified wages after WOTC exclusion", () => {
   const lines = calculateForm8844(source);
   assertEquals(lines.line1, 10_000);
   assertEquals(lines.line2, 2_000);
@@ -38,7 +39,7 @@ Deno.test("Form 8844 direct employer calculates qualified wages after WOTC exclu
   });
 });
 
-Deno.test("Form 8844 direct employer enforces per-employee $15,000 cap and same-zone evidence", () => {
+test("Form 8844 direct employer enforces per-employee $15,000 cap and same-zone evidence", () => {
   assertEquals(
     calculateForm8844({
       ...source,
@@ -65,7 +66,7 @@ Deno.test("Form 8844 direct employer enforces per-employee $15,000 cap and same-
   );
 });
 
-Deno.test("Form 8844 rejects duplicate payroll and unfounded precision", () => {
+test("Form 8844 rejects duplicate payroll and unfounded precision", () => {
   assertEquals(
     inputSchema.safeParse({
       ...source,

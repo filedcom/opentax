@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertGreater } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -70,7 +71,7 @@ const filingDetails = {
   amt_line2b_disallowed_deductions_and_exclusions: 0,
 };
 
-Deno.test("a filed Form 2555 removes the EIC in the full computation graph", () => {
+test("a filed Form 2555 removes the EIC in the full computation graph", () => {
   const baseInputs = { general, w2: [w2] };
   const context = { taxYear: 2025, formType: "f1040" };
   const without2555 = execute(plan, registry, baseInputs, context);

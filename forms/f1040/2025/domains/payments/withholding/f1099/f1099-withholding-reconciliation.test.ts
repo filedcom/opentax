@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -25,7 +26,7 @@ const filer: FilerIdentity = {
   },
 };
 
-Deno.test("changed identified INT, DIV, and OID copies reject direct native and PDF export", async () => {
+test("changed identified INT, DIV, and OID copies reject direct native and PDF export", async () => {
   const cases = [
     {
       f1099int: {
@@ -194,7 +195,7 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
   }
 });
 
-Deno.test("mixed payer TIN OID copies cannot double interest in native or PDF export", async () => {
+test("mixed payer TIN OID copies cannot double interest in native or PDF export", async () => {
   const pending = {
     f1099oid: {
       f1099oids: [
@@ -227,7 +228,7 @@ Deno.test("mixed payer TIN OID copies cannot double interest in native or PDF ex
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("1099 payer-name variants cannot double an unidentified copy", async () => {
+test("1099 payer-name variants cannot double an unidentified copy", async () => {
   const cases = [
     {
       pending: {
@@ -357,7 +358,7 @@ Deno.test("1099 payer-name variants cannot double an unidentified copy", async (
   }
 });
 
-Deno.test("final exports reject a 1099-INT duplicate with only one payer TIN", async () => {
+test("final exports reject a 1099-INT duplicate with only one payer TIN", async () => {
   const pending = {
     f1099int: {
       f1099ints: [
@@ -381,7 +382,7 @@ Deno.test("final exports reject a 1099-INT duplicate with only one payer TIN", a
   await assertRejects(() => buildPdfBytes(pending, filer), Error, reason);
 });
 
-Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
+test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
   const issued = {
     payer_name: "Payer",
     payer_tin: "123456789",
@@ -402,7 +403,7 @@ Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export",
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("unidentified repeated 1099-INT and OID copies reject native and PDF export", async () => {
+test("unidentified repeated 1099-INT and OID copies reject native and PDF export", async () => {
   const cases = [
     {
       pending: {
@@ -439,7 +440,7 @@ Deno.test("unidentified repeated 1099-INT and OID copies reject native and PDF e
   }
 });
 
-Deno.test("1099-DIV repeated issued copy without payer TIN rejects native and PDF export", async () => {
+test("1099-DIV repeated issued copy without payer TIN rejects native and PDF export", async () => {
   const pending = {
     f1099div: {
       f1099divs: [
@@ -474,7 +475,7 @@ Deno.test("1099-DIV repeated issued copy without payer TIN rejects native and PD
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("multiple positive 1099-DIV copies without references reject native and PDF export", async () => {
+test("multiple positive 1099-DIV copies without references reject native and PDF export", async () => {
   const first = {
     recipient_tin: filer.primarySSN,
     isNominee: false,
@@ -515,7 +516,7 @@ Deno.test("multiple positive 1099-DIV copies without references reject native an
   await assertRejects(() => buildPdfBytes(mixed, filer), Error, message);
 });
 
-Deno.test("unidentified repeated 1099-G copies reject native and PDF export", async () => {
+test("unidentified repeated 1099-G copies reject native and PDF export", async () => {
   const issued = {
     payer_name: "State Agency",
     payer_tin: "123456789",
@@ -537,7 +538,7 @@ Deno.test("unidentified repeated 1099-G copies reject native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {
+test("changed identified 1099-G and 1099-MISC copies reject direct native and PDF export", async () => {
   const cases = [
     {
       f1099g: {
@@ -600,7 +601,7 @@ Deno.test("changed identified 1099-G and 1099-MISC copies reject direct native a
   }
 });
 
-Deno.test("reused 1099-G and MISC issued-copy references reject across changed payers and accounts", async () => {
+test("reused 1099-G and MISC issued-copy references reject across changed payers and accounts", async () => {
   const cases = [
     {
       pending: {
@@ -665,7 +666,7 @@ Deno.test("reused 1099-G and MISC issued-copy references reject across changed p
   }
 });
 
-Deno.test("1099-family box withholding replays once across distinct taxpayer and joint-spouse copies", () => {
+test("1099-family box withholding replays once across distinct taxpayer and joint-spouse copies", () => {
   const pending = {
     f1099int: { f1099ints: [{ payer_name: "Bank", box4: 10 }] },
     f1099g: {
@@ -747,7 +748,7 @@ Deno.test("1099-family box withholding replays once across distinct taxpayer and
   );
 });
 
-Deno.test("1099-B and Form 8949 cannot claim the same identified broker withholding twice", () => {
+test("1099-B and Form 8949 cannot claim the same identified broker withholding twice", () => {
   const sale = {
     part: "A" as const,
     description: "Stock",
@@ -775,7 +776,7 @@ Deno.test("1099-B and Form 8949 cannot claim the same identified broker withhold
   );
 });
 
-Deno.test("direct Form 8949 cannot create Form 1040 withholding without an issued broker source", async () => {
+test("direct Form 8949 cannot create Form 1040 withholding without an issued broker source", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-short-and-long-form8949-sales"
   );
@@ -814,7 +815,7 @@ Deno.test("direct Form 8949 cannot create Form 1040 withholding without an issue
   );
 });
 
-Deno.test("corrected 1099-B source references cannot repeat one identified broker transaction at native or PDF export", async () => {
+test("corrected 1099-B source references cannot repeat one identified broker transaction at native or PDF export", async () => {
   const sale = {
     recipient_ssn: filer.primarySSN,
     payer_tin: "123456789",
@@ -903,7 +904,7 @@ Deno.test("corrected 1099-B source references cannot repeat one identified broke
   );
 });
 
-Deno.test("positive 1099-R withholding needs an identified recipient on a joint return", () => {
+test("positive 1099-R withholding needs an identified recipient on a joint return", () => {
   const pending = {
     f1099r: {
       f1099rs: [{
@@ -934,7 +935,7 @@ Deno.test("positive 1099-R withholding needs an identified recipient on a joint 
   );
 });
 
-Deno.test("repeated 1099-R issued copy without account rejects native and PDF export", async () => {
+test("repeated 1099-R issued copy without account rejects native and PDF export", async () => {
   const issued = {
     payer_name: "Plan",
     payer_ein: "123456789",
@@ -964,7 +965,7 @@ Deno.test("repeated 1099-R issued copy without account rejects native and PDF ex
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("unidentified repeated 1099-R copies reject native and PDF export", async () => {
+test("unidentified repeated 1099-R copies reject native and PDF export", async () => {
   const issued = {
     payer_name: "Plan",
     payer_ein: "123456789",
@@ -987,7 +988,7 @@ Deno.test("unidentified repeated 1099-R copies reject native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("1099-R punctuation-only payer variant cannot bypass native and PDF copy guard", async () => {
+test("1099-R punctuation-only payer variant cannot bypass native and PDF copy guard", async () => {
   const issued = {
     payer_name: "Plan Trust, Inc.",
     payer_ein: "123456789",
@@ -1014,7 +1015,7 @@ Deno.test("1099-R punctuation-only payer variant cannot bypass native and PDF co
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
+test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
   assertThrows(
     () =>
       assert1099WithholdingSource({

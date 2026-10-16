@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
@@ -135,7 +136,7 @@ function mixedReturn() {
   });
 }
 
-Deno.test("mixed work opportunity and commercial vehicle credits reach both Form 3800 PDF classes", async () => {
+test("mixed work opportunity and commercial vehicle credits reach both Form 3800 PDF classes", async () => {
   const result = mixedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -167,7 +168,7 @@ Deno.test("mixed work opportunity and commercial vehicle credits reach both Form
   assertEquals(printed[form3800PartIAndIIFields.line38], 5_400);
 });
 
-Deno.test("mixed Form 3800 PDF rejects either source, prepared row, or final-credit drift", async () => {
+test("mixed Form 3800 PDF rejects either source, prepared row, or final-credit drift", async () => {
   const result = mixedReturn();
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);

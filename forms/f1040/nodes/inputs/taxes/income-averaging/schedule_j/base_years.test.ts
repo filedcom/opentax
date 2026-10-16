@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   baseYearSourceSchema,
@@ -32,7 +33,7 @@ const base_returns = {
   },
 };
 
-Deno.test("Schedule J selects direct filed-return base lines with no prior averaging", () => {
+test("Schedule J selects direct filed-return base lines with no prior averaging", () => {
   assertEquals(selectScheduleJBaseYearLines({
     latest_averaging_year: "none",
     base_returns,
@@ -46,7 +47,7 @@ Deno.test("Schedule J selects direct filed-return base lines with no prior avera
   });
 });
 
-Deno.test("Schedule J selects only the latest prior Schedule J worksheet lines", () => {
+test("Schedule J selects only the latest prior Schedule J worksheet lines", () => {
   assertEquals(selectScheduleJBaseYearLines({
     latest_averaging_year: 2022,
     base_returns,
@@ -103,7 +104,7 @@ Deno.test("Schedule J selects only the latest prior Schedule J worksheet lines",
   });
 });
 
-Deno.test("Schedule J prior averaging cannot be asserted without its filed schedule", () => {
+test("Schedule J prior averaging cannot be asserted without its filed schedule", () => {
   assertEquals(baseYearSourceSchema.safeParse({
     latest_averaging_year: 2024,
     base_returns,
@@ -125,7 +126,7 @@ Deno.test("Schedule J prior averaging cannot be asserted without its filed sched
   }).success, false);
 });
 
-Deno.test("Schedule J does not treat zero filed taxable income as a completed base-year worksheet", () => {
+test("Schedule J does not treat zero filed taxable income as a completed base-year worksheet", () => {
   assertThrows(() => selectScheduleJBaseYearLines({
     latest_averaging_year: "none",
     base_returns: {
@@ -157,7 +158,7 @@ function zeroYear(
   };
 }
 
-Deno.test("Schedule J reproduces the IRS 2022 through 2024 negative-income worksheet examples", () => {
+test("Schedule J reproduces the IRS 2022 through 2024 negative-income worksheet examples", () => {
   assertEquals(selectScheduleJBaseYearLines({
     latest_averaging_year: "none",
     base_returns: {
@@ -180,7 +181,7 @@ Deno.test("Schedule J reproduces the IRS 2022 through 2024 negative-income works
   });
 });
 
-Deno.test("Schedule J requires evidence when a positive filed base year becomes negative", () => {
+test("Schedule J requires evidence when a positive filed base year becomes negative", () => {
   const withUnreferencedAdjustment = {
     latest_averaging_year: "none",
     base_returns: {
@@ -195,7 +196,7 @@ Deno.test("Schedule J requires evidence when a positive filed base year becomes 
   assertEquals(baseYearSourceSchema.safeParse(withUnreferencedAdjustment).success, false);
 });
 
-Deno.test("Schedule J refuses an irreconcilable zero-income worksheet", () => {
+test("Schedule J refuses an irreconcilable zero-income worksheet", () => {
   const source = {
     latest_averaging_year: "none",
     base_returns: {

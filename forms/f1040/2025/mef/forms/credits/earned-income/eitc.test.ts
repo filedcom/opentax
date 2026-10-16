@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { eitc } from "./eitc.ts";
 
@@ -15,7 +16,7 @@ const child = {
   ip_pin: "123456",
 };
 
-Deno.test("Schedule EIC serializes qualifying child identity and IRS line answers", () => {
+test("Schedule EIC serializes qualifying child identity and IRS line answers", () => {
   const xml = eitc.build({
     credit_amount: 2_000,
     qualifying_children: 2,
@@ -56,7 +57,7 @@ Deno.test("Schedule EIC serializes qualifying child identity and IRS line answer
   );
 });
 
-Deno.test("Schedule EIC line 6 prints U.S. months when home months are greater", () => {
+test("Schedule EIC line 6 prints U.S. months when home months are greater", () => {
   const xml = eitc.build({
     credit_amount: 2_000,
     qualifying_children: 1,
@@ -71,11 +72,11 @@ Deno.test("Schedule EIC line 6 prints U.S. months when home months are greater",
   );
 });
 
-Deno.test("childless EITC does not create Schedule EIC", () => {
+test("childless EITC does not create Schedule EIC", () => {
   assertEquals(eitc.build({ credit_amount: 649, qualifying_children: 0 }), "");
 });
 
-Deno.test("unclaimed EITC does not create Schedule EIC", () => {
+test("unclaimed EITC does not create Schedule EIC", () => {
   assertEquals(
     eitc.build({
       credit_amount: 0,
@@ -86,7 +87,7 @@ Deno.test("unclaimed EITC does not create Schedule EIC", () => {
   );
 });
 
-Deno.test("Schedule EIC rejects a child count without matching rows", () => {
+test("Schedule EIC rejects a child count without matching rows", () => {
   assertThrows(
     () => eitc.build({ credit_amount: 1_000, qualifying_children: 1 }),
     Error,
@@ -94,7 +95,7 @@ Deno.test("Schedule EIC rejects a child count without matching rows", () => {
   );
 });
 
-Deno.test("Schedule EIC rejects duplicate SSNs and invalid residence", () => {
+test("Schedule EIC rejects duplicate SSNs and invalid residence", () => {
   assertThrows(
     () =>
       eitc.build({
@@ -121,7 +122,7 @@ Deno.test("Schedule EIC rejects duplicate SSNs and invalid residence", () => {
   );
 });
 
-Deno.test("Schedule EIC rejects an employment-invalid SSN", () => {
+test("Schedule EIC rejects an employment-invalid SSN", () => {
   assertThrows(
     () =>
       eitc.build({

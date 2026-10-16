@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -47,7 +50,7 @@ const inputs = {
   schedule1a: { form2555_exclusion_review: review },
 };
 
-Deno.test("full-year Form 2555 plus domestic W-2 overtime uses Part I MAGI across Form 1040, MeF, and PDF", async () => {
+test("full-year Form 2555 plus domestic W-2 overtime uses Part I MAGI across Form 1040, MeF, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
     taxYear: 2025,
     formType: "f1040",
@@ -94,17 +97,17 @@ Deno.test("full-year Form 2555 plus domestic W-2 overtime uses Part I MAGI acros
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlFile = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlFile = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlFile, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlFile, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlFile],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlFile);
+    await sys.remove(xmlFile);
   }
 
   const pageOrigins: PdfPageOrigin[] = [];
@@ -120,8 +123,8 @@ Deno.test("full-year Form 2555 plus domestic W-2 overtime uses Part I MAGI acros
     pageOrigins.filter((origin) => origin.formKey === "schedule1a").length,
     2,
   );
-  const reviewPdfPath = Deno.env.get("OPENTAX_SCHEDULE1A_FEIE_REVIEW_PDF");
-  if (reviewPdfPath) await Deno.writeFile(reviewPdfPath, pdf);
+  const reviewPdfPath = process.env.OPENTAX_SCHEDULE1A_FEIE_REVIEW_PDF;
+  if (reviewPdfPath) await fs.writeFile(reviewPdfPath, pdf);
 
   const changed = {
     ...pending,

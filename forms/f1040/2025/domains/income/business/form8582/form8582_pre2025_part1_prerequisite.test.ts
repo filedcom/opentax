@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   inputSchema as scheduleEInputSchema,
@@ -82,7 +83,7 @@ const proposed8582 = {
   }],
 };
 
-Deno.test("pre-2025 Part I candidate reconciles sale character and operating loss but remains unfileable", () => {
+test("pre-2025 Part I candidate reconciles sale character and operating loss but remains unfileable", () => {
   assertEquals(reviewPre2025PartIEntireGainCandidate(parsed(property)), {
     activity_id: sale.activity_id,
     part: "I",
@@ -125,7 +126,7 @@ Deno.test("pre-2025 Part I candidate reconciles sale character and operating los
   );
 });
 
-Deno.test("pre-2025 Part I candidate rejects purchase, prior activity, closing, and lookback tampering", () => {
+test("pre-2025 Part I candidate rejects purchase, prior activity, closing, and lookback tampering", () => {
   for (
     const changed of [
       { ...property, pre2025_part1_entire_disposition_source: undefined },
@@ -159,7 +160,7 @@ Deno.test("pre-2025 Part I candidate rejects purchase, prior activity, closing, 
   }
 });
 
-Deno.test("a 2025 purchase and sale cannot be a direct section 1231 Part I transaction", () => {
+test("a 2025 purchase and sale cannot be a direct section 1231 Part I transaction", () => {
   assertThrows(
     () =>
       passivePropertySaleSchema.parse({

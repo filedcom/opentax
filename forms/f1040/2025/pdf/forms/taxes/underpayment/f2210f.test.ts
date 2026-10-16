@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm2210FBoxB } from "../../../../domains/taxes/underpayment/form2210f/form2210f_box_b.ts";
 import { form2210fPdf } from "./f2210f.ts";
@@ -50,11 +51,11 @@ function source() {
   };
 }
 
-Deno.test("Form 2210-F PDF omits an absent form", () => {
+test("Form 2210-F PDF omits an absent form", () => {
   assertEquals(form2210fPdf.projectFields?.({}, {}), {});
 });
 
-Deno.test("Form 2210-F PDF maps box B and printed line 14 date, leaving reserved line 5 blank", () => {
+test("Form 2210-F PDF maps box B and printed line 14 date, leaving reserved line 5 blank", () => {
   const facts = source();
   const lines = calculateForm2210FBoxB(facts);
   const pending = {
@@ -84,7 +85,7 @@ Deno.test("Form 2210-F PDF maps box B and printed line 14 date, leaving reserved
   );
 });
 
-Deno.test("Form 2210-F PDF maps every printed amount to its canonical widget", () => {
+test("Form 2210-F PDF maps every printed amount to its canonical widget", () => {
   const widgets = new Map(form2210fPdf.fields.map((field) => [
     field.domainKey,
     field.pdfField,
@@ -114,7 +115,7 @@ Deno.test("Form 2210-F PDF maps every printed amount to its canonical widget", (
   assertEquals(widgets.size, expected.length + 1);
 });
 
-Deno.test("Form 2210-F PDF rejects changed 1040 tax and unsourced filed lines", () => {
+test("Form 2210-F PDF rejects changed 1040 tax and unsourced filed lines", () => {
   const facts = source();
   const lines = calculateForm2210FBoxB(facts);
   const pending = {

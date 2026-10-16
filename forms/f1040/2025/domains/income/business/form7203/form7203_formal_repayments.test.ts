@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import {
   ownedDebtInputs,
@@ -11,7 +13,7 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 for (const second of [false, true]) {
-  Deno.test(`Form7203 dated repayment inventories on ${second ? "two" : "one"} formal notes`, async () => {
+  test(`Form7203 dated repayment inventories on ${second ? "two" : "one"} formal notes`, async () => {
     const first =
       k1Schema.parse({ k1_s_corps: [ownedDebtSource([400], second, false)] })
         .k1_s_corps[0];
@@ -100,17 +102,12 @@ for (const second of [false, true]) {
       origins,
     );
     const root = (() => {
-        try {
-          return Deno.env.get("FORM7203_REPAYMENT_INVENTORY_DIR");
-        } catch (error) {
-          if (error instanceof Deno.errors.NotCapable) return undefined;
-          throw error;
-        }
+        return process.env.FORM7203_REPAYMENT_INVENTORY_DIR;
       })(),
       id = second ? "two-formal" : "one-formal";
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -127,8 +124,8 @@ for (const second of [false, true]) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
     const altered = {
       ...pending,

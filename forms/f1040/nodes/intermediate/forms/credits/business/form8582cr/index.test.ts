@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8582CR,
@@ -52,7 +53,7 @@ function rental(current: number, prior = 0, activity = "Rental house") {
   return source(PassiveCreditCategory.ActiveRental, current, prior, activity);
 }
 
-Deno.test("Form 8582-CR rejects estate and trust orphan-drug K-1 claims", () => {
+test("Form 8582-CR rejects estate and trust orphan-drug K-1 claims", () => {
   for (
     const kind of [
       PassiveCreditSourceOrigin.Estate,
@@ -89,7 +90,7 @@ Deno.test("Form 8582-CR rejects estate and trust orphan-drug K-1 claims", () => 
   }
 });
 
-Deno.test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity sources", () => {
+test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity sources", () => {
   const evidence = {
     source_type: "partnership" as const,
     source_ein: "123456789",
@@ -146,7 +147,7 @@ Deno.test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity 
   );
 });
 
-Deno.test("Form 8582-CR requires passive New Markets K-1 activity and statement identity", () => {
+test("Form 8582-CR requires passive New Markets K-1 activity and statement identity", () => {
   const evidence = {
     source_type: "trust" as const,
     source_ein: "123456789",
@@ -202,7 +203,7 @@ Deno.test("Form 8582-CR requires passive New Markets K-1 activity and statement 
   );
 });
 
-Deno.test("Form 8582-CR matches each self-earned passive New Markets activity", () => {
+test("Form 8582-CR matches each self-earned passive New Markets activity", () => {
   const activity = {
     ...other(500, 0, "Community venture"),
     source_form: "Form 8874",
@@ -244,7 +245,7 @@ Deno.test("Form 8582-CR matches each self-earned passive New Markets activity", 
   );
 });
 
-Deno.test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits", () => {
+test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits", () => {
   const evidence = {
     source_type: "partnership" as const,
     source_ein: "123456789",
@@ -296,7 +297,7 @@ Deno.test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits"
   );
 });
 
-Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN reason", () => {
+test("Form 8582-CR source origin requires pass-through EIN or missing-EIN reason", () => {
   assertEquals(
     creditSourceSchema.safeParse({
       ...other(100),
@@ -360,7 +361,7 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
   );
 });
 
-Deno.test("Form 8582-CR estate and trust disabled-access sources identify their code ZZ statement", () => {
+test("Form 8582-CR estate and trust disabled-access sources identify their code ZZ statement", () => {
   for (
     const kind of [
       PassiveCreditSourceOrigin.Estate,
@@ -402,7 +403,7 @@ function allowed(result: ReturnType<typeof compute>): number {
   ) ?? 0;
 }
 
-Deno.test("Form 8582-CR identifies each current and prior credit source", () => {
+test("Form 8582-CR identifies each current and prior credit source", () => {
   const parsed = inputSchema.parse({
     credit_sources: [other(1_000, 500)],
     regular_tax_all_income: 10_000,
@@ -545,7 +546,7 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
   );
 });
 
-Deno.test("Form 8582-CR sends business credits to Form 3800, not Schedule 3", () => {
+test("Form 8582-CR sends business credits to Form 3800, not Schedule 3", () => {
   const result = compute({
     credit_sources: [other(1_000, 500)],
     regular_tax_all_income: 10_000,
@@ -555,7 +556,7 @@ Deno.test("Form 8582-CR sends business credits to Form 3800, not Schedule 3", ()
   assertEquals(allowed(result), 1_000);
 });
 
-Deno.test("Form 8582-CR Part I keeps the four IRS categories and prior credits separate", () => {
+test("Form 8582-CR Part I keeps the four IRS categories and prior credits separate", () => {
   const lines = calculateForm8582CRPartI(inputSchema.parse({
     credit_sources: [
       rental(100, 20),
@@ -585,7 +586,7 @@ Deno.test("Form 8582-CR Part I keeps the four IRS categories and prior credits s
   assertEquals([lines.line5, lines.line6, lines.line7], [1_140, 500, 640]);
 });
 
-Deno.test("Form 8582-CR rejects negative tax inputs", () => {
+test("Form 8582-CR rejects negative tax inputs", () => {
   const base = {
     credit_sources: [other(1_000)],
     regular_tax_all_income: 10_000,
@@ -607,7 +608,7 @@ Deno.test("Form 8582-CR rejects negative tax inputs", () => {
   );
 });
 
-Deno.test("Form 8582-CR emits no credit for an empty source list", () => {
+test("Form 8582-CR emits no credit for an empty source list", () => {
   const result = compute({
     credit_sources: [],
     regular_tax_all_income: 10_000,
@@ -616,7 +617,7 @@ Deno.test("Form 8582-CR emits no credit for an empty source list", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("Form 8582-CR limits credits to tax on net passive income", () => {
+test("Form 8582-CR limits credits to tax on net passive income", () => {
   assertEquals(
     allowed(compute({
       credit_sources: [other(2_000)],
@@ -642,7 +643,7 @@ Deno.test("Form 8582-CR limits credits to tax on net passive income", () => {
   );
 });
 
-Deno.test("Form 8582-CR Part II converts the dollar rental allowance to tax", () => {
+test("Form 8582-CR Part II converts the dollar rental allowance to tax", () => {
   const result = compute({
     credit_sources: [rental(3_000)],
     regular_tax_all_income: 10_000,
@@ -678,7 +679,7 @@ Deno.test("Form 8582-CR Part II converts the dollar rental allowance to tax", ()
   );
 });
 
-Deno.test("Form 8582-CR Part II subtracts the Form 8582 loss allowance", () => {
+test("Form 8582-CR Part II subtracts the Form 8582 loss allowance", () => {
   const result = compute({
     credit_sources: [rental(3_000)],
     regular_tax_all_income: 10_000,
@@ -690,7 +691,7 @@ Deno.test("Form 8582-CR Part II subtracts the Form 8582 loss allowance", () => {
   assertEquals(allowed(result), 0);
 });
 
-Deno.test("Form 8582-CR MFS Part II requires lived-apart facts", () => {
+test("Form 8582-CR MFS Part II requires lived-apart facts", () => {
   const base = {
     credit_sources: [rental(3_000)],
     regular_tax_all_income: 10_000,
@@ -717,7 +718,7 @@ Deno.test("Form 8582-CR MFS Part II requires lived-apart facts", () => {
   );
 });
 
-Deno.test("Form 8582-CR Part II needs the tax on income less line 14", () => {
+test("Form 8582-CR Part II needs the tax on income less line 14", () => {
   assertThrows(
     () =>
       compute({
@@ -733,7 +734,7 @@ Deno.test("Form 8582-CR Part II needs the tax on income less line 14", () => {
   );
 });
 
-Deno.test("Form 8582-CR professional status cannot reclassify all activities", () => {
+test("Form 8582-CR professional status cannot reclassify all activities", () => {
   assertThrows(
     () =>
       compute({
@@ -748,7 +749,7 @@ Deno.test("Form 8582-CR professional status cannot reclassify all activities", (
   );
 });
 
-Deno.test("Form 8582-CR Part III limits rehabilitation credit by tax on allowance", () => {
+test("Form 8582-CR Part III limits rehabilitation credit by tax on allowance", () => {
   const result = compute({
     credit_sources: [source(
       PassiveCreditCategory.RehabilitationOrPre1990Housing,
@@ -766,7 +767,7 @@ Deno.test("Form 8582-CR Part III limits rehabilitation credit by tax on allowanc
   assertEquals(allowed(result), 3_000);
 });
 
-Deno.test("Form 8582-CR Part IV limits post-1989 housing credit by remaining allowance tax", () => {
+test("Form 8582-CR Part IV limits post-1989 housing credit by remaining allowance tax", () => {
   const result = compute({
     credit_sources: [source(
       PassiveCreditCategory.LowIncomeHousing,
@@ -785,7 +786,7 @@ Deno.test("Form 8582-CR Part IV limits post-1989 housing credit by remaining all
   assertEquals(result.carryforwards?.suspended_pac_8582cr, 2_000);
 });
 
-Deno.test("Form 8582-CR orders active rental, rehabilitation, then housing allowances", () => {
+test("Form 8582-CR orders active rental, rehabilitation, then housing allowances", () => {
   const input = {
     credit_sources: [
       rental(1_000),
@@ -818,7 +819,7 @@ Deno.test("Form 8582-CR orders active rental, rehabilitation, then housing allow
   );
 });
 
-Deno.test("Form 8582-CR requires Part III and IV worksheet taxes when used", () => {
+test("Form 8582-CR requires Part III and IV worksheet taxes when used", () => {
   const base = {
     regular_tax_all_income: 10_000,
     regular_tax_without_passive: 10_000,
@@ -848,7 +849,7 @@ Deno.test("Form 8582-CR requires Part III and IV worksheet taxes when used", () 
   );
 });
 
-Deno.test("Form 8582-CR MFS lived with spouse skips all three special allowances", () => {
+test("Form 8582-CR MFS lived with spouse skips all three special allowances", () => {
   const result = compute({
     credit_sources: [
       rental(1_000),
@@ -877,7 +878,7 @@ Deno.test("Form 8582-CR MFS lived with spouse skips all three special allowances
   );
 });
 
-Deno.test("Form 8582-CR separates prior rental credit without origin-year participation", () => {
+test("Form 8582-CR separates prior rental credit without origin-year participation", () => {
   const lines = calculateForm8582CRPartI(inputSchema.parse({
     credit_sources: [
       rental(100),
@@ -901,7 +902,7 @@ Deno.test("Form 8582-CR separates prior rental credit without origin-year partic
   assertEquals(lines.other, { current: 0, prior: 500, total: 500 });
 });
 
-Deno.test("Form 8582-CR combines different activity credits before the tax limit", () => {
+test("Form 8582-CR combines different activity credits before the tax limit", () => {
   const result = compute({
     credit_sources: [rental(5_000), other(2_000)],
     regular_tax_all_income: 12_000,
@@ -915,7 +916,7 @@ Deno.test("Form 8582-CR combines different activity credits before the tax limit
   assertEquals(result.carryforwards?.suspended_pac_8582cr, 1_000);
 });
 
-Deno.test("Form 8582-CR worksheets 5 and 8 allocate special and suspended credit by source", () => {
+test("Form 8582-CR worksheets 5 and 8 allocate special and suspended credit by source", () => {
   const lines = calculateForm8582CR(inputSchema.parse({
     credit_sources: [
       rental(1_000, 0, "Rental A"),
@@ -949,7 +950,7 @@ Deno.test("Form 8582-CR worksheets 5 and 8 allocate special and suspended credit
   );
 });
 
-Deno.test("Form 8582-CR allocation preserves exact dollars and source identity", () => {
+test("Form 8582-CR allocation preserves exact dollars and source identity", () => {
   const lines = calculateForm8582CR(inputSchema.parse({
     credit_sources: [other(1, 0, "A"), other(1, 0, "B"), other(1, 0, "C")],
     regular_tax_all_income: 10_000,
@@ -974,7 +975,7 @@ Deno.test("Form 8582-CR allocation preserves exact dollars and source identity",
   );
 });
 
-Deno.test("Form 8582-CR keeps carryover vintages on their activity source", () => {
+test("Form 8582-CR keeps carryover vintages on their activity source", () => {
   const lines = calculateForm8582CR(inputSchema.parse({
     credit_sources: [{
       ...other(0, 0, "Clinical activity"),
@@ -1002,7 +1003,7 @@ Deno.test("Form 8582-CR keeps carryover vintages on their activity source", () =
   );
 });
 
-Deno.test("Form 8582-CR keeps allowed credits in their explicit filing routes", () => {
+test("Form 8582-CR keeps allowed credits in their explicit filing routes", () => {
   const lines = calculateForm8582CR(inputSchema.parse({
     credit_sources: [
       other(200, 0, "Standard credit"),
@@ -1028,7 +1029,7 @@ Deno.test("Form 8582-CR keeps allowed credits in their explicit filing routes", 
   });
 });
 
-Deno.test("Form 8582-CR does not send Form 8834 allowed credit to Schedule 3 line 6a", () => {
+test("Form 8582-CR does not send Form 8834 allowed credit to Schedule 3 line 6a", () => {
   const { form3800_credit_line: _line, ...creditSource } = other(100);
   assertThrows(
     () =>

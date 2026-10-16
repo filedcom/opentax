@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { verifyCarryoverPacket } from "./f1116_carry_packet.fixture.ts";
 import {
   assert,
@@ -112,7 +113,7 @@ function calculated() {
   });
 }
 
-Deno.test("Form 1116 public review joins one sourced interest tax, standard deduction, and current excess Schedule B", () => {
+test("Form 1116 public review joins one sourced interest tax, standard deduction, and current excess Schedule B", () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const parent = result.pending.form_1116;
@@ -149,7 +150,7 @@ Deno.test("Form 1116 public review joins one sourced interest tax, standard dedu
   );
 });
 
-Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native and PDF", async () => {
+test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native and PDF", async () => {
   const source = inputs();
   const filer =
     pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
@@ -295,7 +296,7 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
   }
 });
 
-Deno.test("Form 1116 apportions standard deduction across foreign box 1 and domestic Treasury box 3", () => {
+test("Form 1116 apportions standard deduction across foreign box 1 and domestic Treasury box 3", () => {
   const source = inputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
@@ -356,7 +357,7 @@ Deno.test("Form 1116 apportions standard deduction across foreign box 1 and dome
   );
 });
 
-Deno.test("Form 1116 public PDF route rejects mixed income, wrong worldwide gross, and other deductions", () => {
+test("Form 1116 public PDF route rejects mixed income, wrong worldwide gross, and other deductions", () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const parent = result.pending.form_1116;
@@ -390,7 +391,7 @@ Deno.test("Form 1116 public PDF route rejects mixed income, wrong worldwide gros
   );
 });
 
-Deno.test("Form 1116 public PDF route rejects unreviewed or mismatched interest and foreign tax", () => {
+test("Form 1116 public PDF route rejects unreviewed or mismatched interest and foreign tax", () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const parent = result.pending.form_1116;
@@ -433,7 +434,7 @@ Deno.test("Form 1116 public PDF route rejects unreviewed or mismatched interest 
   );
 });
 
-Deno.test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradict the sole-income review", () => {
+test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradict the sole-income review", () => {
   const result = calculated();
   assertEquals(result.diagnostics, []);
   const parent = result.pending.form_1116;
@@ -464,7 +465,7 @@ Deno.test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradi
   }
 });
 
-Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", async () => {
+test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
@@ -561,7 +562,7 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
   );
 });
 
-Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identity at native and PDF export", async () => {
+test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identity at native and PDF export", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
@@ -687,7 +688,7 @@ Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding id
   );
 });
 
-Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column through native and PDF", async () => {
+test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column through native and PDF", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
@@ -802,7 +803,7 @@ Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding c
   }
 });
 
-Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PDF Schedule B", async () => {
+test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PDF Schedule B", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
@@ -997,7 +998,7 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
   );
 });
 
-Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
+test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const filedScheduleB = {
     income_category: "passive",

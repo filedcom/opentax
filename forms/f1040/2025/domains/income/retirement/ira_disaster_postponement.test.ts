@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -40,7 +43,7 @@ const latePayer = {
   },
 };
 
-Deno.test("MO-2025-02 IRA disaster postponement reaches Form 1040, MeF, and PDF", async () => {
+test("MO-2025-02 IRA disaster postponement reaches Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -71,10 +74,10 @@ Deno.test("MO-2025-02 IRA disaster postponement reaches Form 1040, MeF, and PDF"
   );
   assertEquals(projected?.line4c_ira_rollover, true);
   assertEquals(projected?.line4b_ira_taxable, "0");
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, pdfBytes);
-    const rendered = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, pdfBytes);
+    const rendered = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
     }).output();
     assertEquals(rendered.code, 0);
@@ -86,27 +89,27 @@ Deno.test("MO-2025-02 IRA disaster postponement reaches Form 1040, MeF, and PDF"
       false,
     );
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 
   const xsd = new URL(
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  await Deno.stat(xsd);
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  await sys.stat(xsd);
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 });
 
-Deno.test("MO-2025-02 source and deadline contradictions reject calculation and exports", async () => {
+test("MO-2025-02 source and deadline contradictions reject calculation and exports", async () => {
   for (
     const bad of [
       {

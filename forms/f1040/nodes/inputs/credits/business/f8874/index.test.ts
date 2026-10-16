@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { f3800 } from "../f3800/index.ts";
 import { calculateForm8874, f8874 } from "./index.ts";
@@ -26,7 +27,7 @@ const investment = withReviewedForm8874A(
   "111223333",
 );
 
-Deno.test("Form 8874 computes each identified current-year credit allowance date", () => {
+test("Form 8874 computes each identified current-year credit allowance date", () => {
   const lines = calculateForm8874({
     investments: [
       investment,
@@ -60,7 +61,7 @@ Deno.test("Form 8874 computes each identified current-year credit allowance date
   );
 });
 
-Deno.test("Form 8874 rejects duplicate direct and precomputed legacy amounts", () => {
+test("Form 8874 rejects duplicate direct and precomputed legacy amounts", () => {
   assertEquals(
     f8874.inputSchema.safeParse({
       investments: [investment],
@@ -70,7 +71,7 @@ Deno.test("Form 8874 rejects duplicate direct and precomputed legacy amounts", (
   );
 });
 
-Deno.test("Form 8874 requires a matching reviewed Form 8874-A for every direct QEI", () => {
+test("Form 8874 requires a matching reviewed Form 8874-A for every direct QEI", () => {
   const { reviewed_form8874a: _removed, ...withoutNotice } = investment;
   for (
     const changed of [
@@ -106,7 +107,7 @@ Deno.test("Form 8874 requires a matching reviewed Form 8874-A for every direct Q
   }
 });
 
-Deno.test("Form 8874 CDE identity fits the native MeF name and street limits", () => {
+test("Form 8874 CDE identity fits the native MeF name and street limits", () => {
   const atLimit = withReviewedForm8874A(
     {
       ...investment,
@@ -136,7 +137,7 @@ Deno.test("Form 8874 CDE identity fits the native MeF name and street limits", (
   }
 });
 
-Deno.test("Form 8874 requires allowance-date and qualification evidence", () => {
+test("Form 8874 requires allowance-date and qualification evidence", () => {
   for (
     const source of [
       { ...investment, credit_allowance_date: "2024-04-15" },
@@ -156,7 +157,7 @@ Deno.test("Form 8874 requires allowance-date and qualification evidence", () => 
   }
 });
 
-Deno.test("Form 8874 rejects a duplicated investment notice", () => {
+test("Form 8874 rejects a duplicated investment notice", () => {
   assertEquals(
     f8874.inputSchema.safeParse({
       investments: [investment, investment],
@@ -165,7 +166,7 @@ Deno.test("Form 8874 rejects a duplicated investment notice", () => {
   );
 });
 
-Deno.test("Form 8874 splits self-earned passive and nonpassive investments", () => {
+test("Form 8874 splits self-earned passive and nonpassive investments", () => {
   const passive = {
     ...investment,
     subject_to_passive_activity_limit: true,
@@ -210,7 +211,7 @@ Deno.test("Form 8874 splits self-earned passive and nonpassive investments", () 
   assertEquals(passiveOnly[0].nodeType, "form8582cr");
 });
 
-Deno.test("Form 8874 passive investment requires distinct whole-dollar activity evidence", () => {
+test("Form 8874 passive investment requires distinct whole-dollar activity evidence", () => {
   const passive = {
     ...investment,
     subject_to_passive_activity_limit: true,

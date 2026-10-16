@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -53,7 +54,7 @@ const election = {
   elect_10yr_averaging: true,
 };
 
-Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through Form 1040, native, and PDF", async () => {
+test("two same-plan 1099-R copies aggregate exact NUA worksheet through Form 1040, native, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

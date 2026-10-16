@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -49,9 +52,9 @@ const source = {
   },
 } as const;
 
-Deno.test("Schedule H under-21 child source retains family FICA/FUTA exclusions through full return and packet", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts"),
-    root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+test("Schedule H under-21 child source retains family FICA/FUTA exclusions through full return and packet", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts"),
+    root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   for (
     const [id, birth] of [["age20", "2005-01-01"], ["turns18", "2007-06-15"], [
       "age17",
@@ -94,17 +97,17 @@ Deno.test("Schedule H under-21 child source retains family FICA/FUTA exclusions 
         origins,
       );
     assertEquals(origins.filter((x) => x.formKey === "schedule_h").length, 1);
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     const changed = structuredClone(payroll);
     if (
@@ -131,8 +134,8 @@ Deno.test("Schedule H under-21 child source retains family FICA/FUTA exclusions 
       }, { filer, attachments: [] })
     );
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -147,12 +150,12 @@ Deno.test("Schedule H under-21 child source retains family FICA/FUTA exclusions 
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, bundle.xml);
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, bundle.xml);
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
   }
 });
-Deno.test("Schedule H child source rejects 21-year-old, impossible date and source conflicts", () => {
+test("Schedule H child source rejects 21-year-old, impossible date and source conflicts", () => {
   for (const birth of ["2004-12-31", "2025-01-01"]) {
     const raw: any = structuredClone(source);
     raw.family_withholding_only_payroll.employee.birth_date = birth;

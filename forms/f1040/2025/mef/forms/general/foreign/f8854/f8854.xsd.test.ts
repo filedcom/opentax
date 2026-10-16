@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -28,7 +31,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The IRS schema bundle is local-only.
@@ -321,21 +324,21 @@ function withNamespace(xml: string): string {
 }
 
 async function validate8854(xml: string): Promise<void> {
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, withNamespace(xml));
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, withNamespace(xml));
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("noncovered initial Form 8854 is attached to the Form 1040 return", () => {
+test("noncovered initial Form 8854 is attached to the Form 1040 return", () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: noncoveredInput,
@@ -347,7 +350,7 @@ Deno.test("noncovered initial Form 8854 is attached to the Form 1040 return", ()
   );
 });
 
-Deno.test("registered Form 8854 path refuses covered cases without Section C", () => {
+test("registered Form 8854 path refuses covered cases without Section C", () => {
   assertThrows(
     () =>
       form8854.build({
@@ -365,7 +368,7 @@ Deno.test("registered Form 8854 path refuses covered cases without Section C", (
   );
 });
 
-Deno.test("covered Form 8854 with reconciled Form 8949 property reaches full return", () => {
+test("covered Form 8854 with reconciled Form 8949 property reaches full return", () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: coveredCapitalInput,
@@ -385,7 +388,7 @@ Deno.test("covered Form 8854 with reconciled Form 8949 property reaches full ret
   );
 });
 
-Deno.test("covered Form 8854 and deemed sale reach the return through the calculation graph", () => {
+test("covered Form 8854 and deemed sale reach the return through the calculation graph", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -410,7 +413,7 @@ Deno.test("covered Form 8854 and deemed sale reach the return through the calcul
   assertStringIncludes(xml, "<CapitalGainLossAmt>10000</CapitalGainLossAmt>");
 });
 
-Deno.test("covered Form 8854 filing rejects absent or unmatched Form 8949 rows", () => {
+test("covered Form 8854 filing rejects absent or unmatched Form 8949 rows", () => {
   for (
     const form8949 of [
       undefined,
@@ -427,7 +430,7 @@ Deno.test("covered Form 8854 filing rejects absent or unmatched Form 8949 rows",
   }
 });
 
-Deno.test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
+test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
   assertThrows(
     () =>
       form8854.build({
@@ -465,7 +468,7 @@ Deno.test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
   );
 });
 
-Deno.test("covered Form 8854 Section D links only its actual PDF bundle attachments", async () => {
+test("covered Form 8854 Section D links only its actual PDF bundle attachments", async () => {
   const pending = {
     f1040: { filing_status: "single" },
     f8854: coveredDeferralInput,
@@ -501,7 +504,7 @@ Deno.test("covered Form 8854 Section D links only its actual PDF bundle attachme
   }
 });
 
-Deno.test("covered Form 8854 Section D reaches a PDF-backed bundle through the graph", async () => {
+test("covered Form 8854 Section D reaches a PDF-backed bundle through the graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -528,7 +531,7 @@ Deno.test("covered Form 8854 Section D reaches a PDF-backed bundle through the g
   assertStringIncludes(bundle.xml, "<DeferredPropertyTaxElectStmt documentId=");
 });
 
-Deno.test("noncovered Form 8854 links its actual native statements in schema order", () => {
+test("noncovered Form 8854 links its actual native statements in schema order", () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: statementInput,
@@ -549,7 +552,7 @@ Deno.test("noncovered Form 8854 links its actual native statements in schema ord
   );
 });
 
-Deno.test("Form 8854 linking refuses a changed native statement set", () => {
+test("Form 8854 linking refuses a changed native statement set", () => {
   assertThrows(
     () =>
       form8854.build(statementInput, {
@@ -561,7 +564,7 @@ Deno.test("Form 8854 linking refuses a changed native statement set", () => {
   );
 });
 
-Deno.test("annual Form 8854 no-activity certification is attached to Form 1040", () => {
+test("annual Form 8854 no-activity certification is attached to Form 1040", () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854_annual: annualNoActivityInput,
@@ -575,7 +578,7 @@ Deno.test("annual Form 8854 no-activity certification is attached to Form 1040",
   assertStringIncludes(xml, "<NongrantorTrustStatement documentId=");
 });
 
-Deno.test("Form 8854 MeF rejects initial and annual nonresident or dual-status filings", () => {
+test("Form 8854 MeF rejects initial and annual nonresident or dual-status filings", () => {
   for (
     const pending of [
       {
@@ -602,7 +605,7 @@ Deno.test("Form 8854 MeF rejects initial and annual nonresident or dual-status f
   }
 });
 
-Deno.test("annual Form 8854 source reaches the filed return through the graph", () => {
+test("annual Form 8854 source reaches the filed return through the graph", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -623,7 +626,7 @@ Deno.test("annual Form 8854 source reaches the filed return through the graph", 
   assertStringIncludes(xml, "<AnnualExptrtStmtBfrSpcfdYrGrp>");
 });
 
-Deno.test("annual Form 8854 descriptor refuses an unreported disposition", () => {
+test("annual Form 8854 descriptor refuses an unreported disposition", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -635,7 +638,7 @@ Deno.test("annual Form 8854 descriptor refuses an unreported disposition", () =>
   );
 });
 
-Deno.test("annual Form 8854 capital disposition requires its payment PDF and filed sale", async () => {
+test("annual Form 8854 capital disposition requires its payment PDF and filed sale", async () => {
   const pending = {
     f1040: { filing_status: "single" },
     f8854_annual: annualCapitalDispositionInput,
@@ -662,7 +665,7 @@ Deno.test("annual Form 8854 capital disposition requires its payment PDF and fil
   assertStringIncludes(bundle.xml, "<BinaryAttachment documentId=");
 });
 
-Deno.test("annual Form 8854 capital disposition reaches the PDF-backed return through the graph", async () => {
+test("annual Form 8854 capital disposition reaches the PDF-backed return through the graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -689,7 +692,7 @@ Deno.test("annual Form 8854 capital disposition reaches the PDF-backed return th
   assertStringIncludes(bundle.xml, "<DispositionDt>2025-05-20</DispositionDt>");
 });
 
-Deno.test("Form 8854 refuses ambiguous initial and annual statements for one filer", () => {
+test("Form 8854 refuses ambiguous initial and annual statements for one filer", () => {
   assertThrows(
     () =>
       buildMefXml({
@@ -702,12 +705,7 @@ Deno.test("Form 8854 refuses ambiguous initial and annual statements for one fil
   );
 });
 
-Deno.test({
-  name: "XSD: noncovered initial Form 8854 in a full Form 1040 return",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: noncovered initial Form 8854 in a full Form 1040 return", async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: noncoveredInput,
@@ -716,26 +714,21 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: noncovered Form 8854 with linked native statements",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: noncovered Form 8854 with linked native statements", async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: statementInput,
@@ -744,26 +737,21 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: initial Form 8854 with identified Form 8949 deemed sale",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: initial Form 8854 with identified Form 8949 deemed sale", async () => {
   const input = initialSchema.parse({
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
@@ -843,21 +831,11 @@ Deno.test({
   await validate8854(bundle.formXml);
 });
 
-Deno.test({
-  name: "XSD: annual Form 8854 with prior deferred property",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: annual Form 8854 with prior deferred property", async () => {
   await validate8854(buildForm8854Annual(annualNoActivityInput));
 });
 
-Deno.test({
-  name: "XSD: covered initial Form 8854 with filed Form 8949 property",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: covered initial Form 8854 with filed Form 8949 property", async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: coveredCapitalInput,
@@ -868,26 +846,21 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: covered Form 8854 Section D bundle with three linked PDFs",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: covered Form 8854 Section D bundle with three linked PDFs", async () => {
   const bundle = await buildMefBundle({
     f1040: { filing_status: "single" },
     f8854: coveredDeferralInput,
@@ -898,26 +871,21 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, bundle.xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: annual no-activity Form 8854 in a full Form 1040 return",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: annual no-activity Form 8854 in a full Form 1040 return", async () => {
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854_annual: annualNoActivityInput,
@@ -926,26 +894,21 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test({
-  name: "XSD: annual Form 8854 capital disposition with linked payment PDF",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: annual Form 8854 capital disposition with linked payment PDF", async () => {
   const bundle = await buildMefBundle({
     f1040: { filing_status: "single" },
     f8854_annual: annualCapitalDispositionInput,
@@ -956,16 +919,16 @@ Deno.test({
     "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, bundle.xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, bundle.xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

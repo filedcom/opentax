@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   jointAptcCases,
@@ -17,7 +18,7 @@ import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits
 for (
   const id of Object.keys(jointAptcCases) as Array<keyof typeof jointAptcCases>
 ) {
-  Deno.test(`Joint APTC received policy to repayment/net credit and final return: ${id}`, async () => {
+  test(`Joint APTC received policy to repayment/net credit and final return: ${id}`, async () => {
     const c = jointAptcCases[id], e = expected[id];
     const inputs = jointAptcInputs(
       c.wages,
@@ -55,7 +56,7 @@ for (
   });
 }
 
-Deno.test("Joint APTC native and PDF filing reject edited source, eligibility, cap and return totals", async () => {
+test("Joint APTC native and PDF filing reject edited source, eligibility, cap and return totals", async () => {
   for (const wages of [30000, 92400]) {
     const input = jointAptcInputs(wages, 900);
     const result = f1040_2025.executeReturn(input);
@@ -118,7 +119,7 @@ Deno.test("Joint APTC native and PDF filing reject edited source, eligibility, c
   }
 });
 
-Deno.test("Joint APTC public source refuses unpaid, premature, duplicate and disqualified coverage reviews", () => {
+test("Joint APTC public source refuses unpaid, premature, duplicate and disqualified coverage reviews", () => {
   const base = jointAptcInputs(30000, 100);
   const changes: Array<(x: typeof base) => void> = [
     (x) => {

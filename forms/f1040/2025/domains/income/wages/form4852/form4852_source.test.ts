@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { form4852NativeSources } from "./form4852_native_source.ts";
 import { w2 } from "../../../../mef/forms/income/other/w2.ts";
 import { f1099r } from "../../../../mef/forms/income/retirement/f1099r.ts";
@@ -62,7 +63,7 @@ function fixture() {
     })),
   };
 }
-Deno.test("4852 retained source contract binds owner, reviewed facts and exact document bytes", () => {
+test("4852 retained source contract binds owner, reviewed facts and exact document bytes", () => {
   const { pending, documents } = fixture();
   assertEquals(
     assertForm4852RetainedBytes(pending, filer, documents).f4852s[0].wages,
@@ -107,7 +108,7 @@ Deno.test("4852 retained source contract binds owner, reviewed facts and exact d
     )
   );
 });
-Deno.test("4852 rejects duplicate substitute and original-source double counting", () => {
+test("4852 rejects duplicate substitute and original-source double counting", () => {
   const { pending } = fixture();
   const both = {
     ...pending,
@@ -136,7 +137,7 @@ Deno.test("4852 rejects duplicate substitute and original-source double counting
     "duplicate owner/payer",
   );
 });
-Deno.test("4852 1099-R original ownership and joint same-payer substitutes use distinct owners", () => {
+test("4852 1099-R original ownership and joint same-payer substitutes use distinct owners", () => {
   const { pending } = fixture();
   const w2 = pending.f4852.f4852s[0];
   const spouse = {
@@ -222,7 +223,7 @@ Deno.test("4852 1099-R original ownership and joint same-payer substitutes use d
   );
 });
 
-Deno.test("4852 derived W2 native copy preserves nonstandard owner amounts without mutating calculation sources", () => {
+test("4852 derived W2 native copy preserves nonstandard owner amounts without mutating calculation sources", () => {
   const { pending } = fixture();
   const before = structuredClone(pending);
   const derived = form4852NativeSources(pending, filer);
@@ -244,7 +245,7 @@ Deno.test("4852 derived W2 native copy preserves nonstandard owner amounts witho
     "known nine-digit payer EIN",
   );
 });
-Deno.test("4852 derived pension native copy retains net taxable basis and distinct state/local withholding", () => {
+test("4852 derived pension native copy retains net taxable basis and distinct state/local withholding", () => {
   const { pending } = fixture();
   const { wages: _wages, ...facts } = pending.f4852.f4852s[0];
   const item = {

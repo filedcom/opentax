@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -30,7 +31,7 @@ function filing(items: readonly Record<string, unknown>[]) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("non-IRA code-8 taxable correction reaches line 1h and one native statement", () => {
+test("non-IRA code-8 taxable correction reaches line 1h and one native statement", () => {
   const result = filing([corrective]);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -51,7 +52,7 @@ Deno.test("non-IRA code-8 taxable correction reaches line 1h and one native stat
   assertStringIncludes(xml, "<TaxableAmt>1000</TaxableAmt>");
 });
 
-Deno.test("code-8 correction rejects a wrong 1099-R recipient at native export", () => {
+test("code-8 correction rejects a wrong 1099-R recipient at native export", () => {
   const result = filing([{ ...corrective, recipient_ssn: "444556666" }]);
   assertEquals(result.diagnostics, []);
   assertThrows(
@@ -61,7 +62,7 @@ Deno.test("code-8 correction rejects a wrong 1099-R recipient at native export",
   );
 });
 
-Deno.test("IRA code 8 and ordinary pension code 7 do not become corrective line 1h", () => {
+test("IRA code 8 and ordinary pension code 7 do not become corrective line 1h", () => {
   const ira = filing([{
     ...corrective,
     box7_ira_simple_indicator: true,
@@ -85,14 +86,14 @@ Deno.test("IRA code 8 and ordinary pension code 7 do not become corrective line 
   );
 });
 
-Deno.test("code-8 correction rejects missing taxable evidence and duplicate source references", () => {
+test("code-8 correction rejects missing taxable evidence and duplicate source references", () => {
   const missing = filing([{ ...corrective, box2a_taxable_amount: undefined }]);
   assertEquals(missing.diagnostics.length > 0, true);
   const duplicate = filing([corrective, corrective]);
   assertEquals(duplicate.diagnostics.length > 0, true);
 });
 
-Deno.test("two distinct code-8 copies aggregate only their taxable amounts", () => {
+test("two distinct code-8 copies aggregate only their taxable amounts", () => {
   const result = filing([corrective, {
     ...corrective,
     source_document_reference: "2025 corrective Form 1099-R B",
@@ -108,7 +109,7 @@ Deno.test("two distinct code-8 copies aggregate only their taxable amounts", () 
   assertStringIncludes(xml, "<WagesNotShownAmt>1600</WagesNotShownAmt>");
 });
 
-Deno.test("code-8 correction cannot mask a second line 1h wage source", () => {
+test("code-8 correction cannot mask a second line 1h wage source", () => {
   const fecFixture = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-standalone-fec-line1h"
   )!;

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form8882PreparedFixture } from "./f8882.fixture.ts";
@@ -8,7 +9,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 } as FilerIdentity;
 
-Deno.test("staged Form 8882 native XML projects direct employer lines 1-7", () => {
+test("staged Form 8882 native XML projects direct employer lines 1-7", () => {
   const { source, pending } = form8882PreparedFixture();
   const discovery = form8882.build(source, {
     phase: "discovery",
@@ -52,7 +53,7 @@ Deno.test("staged Form 8882 native XML projects direct employer lines 1-7", () =
   }
 });
 
-Deno.test("staged Form 8882 refuses tampered Schedule C deduction and owner", () => {
+test("staged Form 8882 refuses tampered Schedule C deduction and owner", () => {
   const { source, pending } = form8882PreparedFixture();
   assertThrows(() =>
     form8882.build(source, {

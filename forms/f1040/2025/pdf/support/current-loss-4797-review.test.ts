@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
@@ -6,9 +9,9 @@ import { normalizeAllPending } from "../../return-processing/pending.ts";
 import { form4797Pdf } from "../forms/income/business/f4797.ts";
 import { buildCurrentLoss4797ReviewPdf } from "./current-loss-4797-review.ts";
 
-Deno.test("current ordinary loss Form 4797 review prints allowed amounts and omits fully suspended deductions", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("current ordinary loss Form 4797 review prints allowed amounts and omits fully suspended deductions", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       { id: "mixed-allowed", farm: true, rent: 2000, amount: -1500, pal: true },
@@ -66,10 +69,10 @@ Deno.test("current ordinary loss Form 4797 review prints allowed amounts and omi
     assertEquals(review.fields.pdf_line17, c.amount);
     assertEquals(review.fields.ordinary_gain, c.amount);
     assertEquals((await PDFDocument.load(review.bytes!)).getPageCount(), 1);
-    const temp = await Deno.makeTempFile({ suffix: ".pdf" });
+    const temp = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(temp, review.bytes!);
-      const extracted = await new Deno.Command("pdftotext", {
+      await fs.writeFile(temp, review.bytes!);
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-layout", temp, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -81,15 +84,15 @@ Deno.test("current ordinary loss Form 4797 review prints allowed amounts and omi
       assertStringIncludes(text, String(c.amount));
       assertStringIncludes(text, "6000");
       if (output) {
-        await Deno.writeFile(`${output}/${c.id}-4797.pdf`, review.bytes!, {
+        await sys.writeBytes(`${output}/${c.id}-4797.pdf`, review.bytes!, {
           createNew: true,
           mode: 0o600,
         });
-        await Deno.writeTextFile(`${output}/${c.id}-4797.txt`, text, {
+        await sys.writeText(`${output}/${c.id}-4797.txt`, text, {
           createNew: true,
           mode: 0o600,
         });
-        await Deno.writeTextFile(
+        await sys.writeText(
           `${output}/${c.id}-4797.json`,
           JSON.stringify(
             {
@@ -107,7 +110,7 @@ Deno.test("current ordinary loss Form 4797 review prints allowed amounts and omi
         );
       }
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
   }
 });

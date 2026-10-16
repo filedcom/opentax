@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -29,7 +30,7 @@ function pdfContext(pending: ReturnType<typeof buildPending>) {
   };
 }
 
-Deno.test("Schedule H remarried spouse care periods and later recovery reach native and PDF filing", async () => {
+test("Schedule H remarried spouse care periods and later recovery reach native and PDF filing", async () => {
   for (const c of parentRemarriageCareCases) {
     const inputs = parentRemarriageCareInput(c), held = structuredClone(inputs);
     const result = f1040_2025.executeReturn(inputs);
@@ -74,7 +75,7 @@ Deno.test("Schedule H remarried spouse care periods and later recovery reach nat
   }
 });
 
-Deno.test("Schedule H remarried spouse care rejects short, cross-quarter, prior-marriage and source conflicts", async () => {
+test("Schedule H remarried spouse care rejects short, cross-quarter, prior-marriage and source conflicts", async () => {
   const inputs = parentRemarriageCareInput(parentRemarriageCareCases[1]);
   const result = f1040_2025.executeReturn(inputs),
     pending = buildPending(result.pending);

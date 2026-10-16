@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -75,7 +76,7 @@ const inputs = {
   },
 };
 
-Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 line 5, but export remains closed", async () => {
+test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 line 5, but export remains closed", async () => {
   const result = execute(buildExecutionPlan(registry), registry, inputs, {
     taxYear: 2025,
     formType: "f1040",
@@ -166,7 +167,7 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
   );
 });
 
-Deno.test("code B royalty K-1 and separate box 5/code H K-1 reconcile their retained sources without opening export", () => {
+test("code B royalty K-1 and separate box 5/code H K-1 reconcile their retained sources without opening export", () => {
   const secondK1 = {
     partnership_name: "Bond Partnership",
     partnership_ein: "987654321",

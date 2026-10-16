@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -44,7 +47,7 @@ function filing() {
   return buildPending(result.pending);
 }
 
-Deno.test("foreign employer wages and separate W-2 excess deferrals join Form 1040 line 1h, native statement, and PDF", async () => {
+test("foreign employer wages and separate W-2 excess deferrals join Form 1040 line 1h, native statement, and PDF", async () => {
   const pending = filing();
   assertEquals(pending.f1040?.line1h_other_earned, 6_500);
   const xml = buildMefXml(pending, base.filer);
@@ -85,12 +88,9 @@ Deno.test("foreign employer wages and separate W-2 excess deferrals join Form 10
   );
 });
 
-Deno.test({
-  name:
-    "foreign employer wages plus W-2 excess validates against the 2025 MeF XSD",
-  ignore: !(() => {
+test.skipIf(!(() => {
     try {
-      Deno.statSync(
+      sys.statSync(
         new URL(
           "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
           import.meta.url,
@@ -100,22 +100,21 @@ Deno.test({
     } catch {
       return false;
     }
-  })(),
-}, async () => {
+  })())("foreign employer wages plus W-2 excess validates against the 2025 MeF XSD", async () => {
   const xml = buildMefXml(filing(), base.filer);
   const xsd = new URL(
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

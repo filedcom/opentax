@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import type { ExecuteResult } from "../../../../../../../../core/runtime/executor.ts";
 import { calculateBoundedProvisionalATI } from "./provisional-ati.ts";
@@ -59,7 +60,7 @@ function provisionalResult(): ExecuteResult {
   };
 }
 
-Deno.test("2025 Form 8990 provisional ATI reconciles signed taxable income and sourced receipts", () => {
+test("2025 Form 8990 provisional ATI reconciles signed taxable income and sourced receipts", () => {
   const ati = calculateBoundedProvisionalATI({
     provisional,
     returnInputs,
@@ -75,7 +76,7 @@ Deno.test("2025 Form 8990 provisional ATI reconciles signed taxable income and s
   assertEquals(ati.line23CurrentYearBusinessInterestIncome, 0);
 });
 
-Deno.test("2025 Form 8990 provisional ATI subtracts ledger-linked business interest income", () => {
+test("2025 Form 8990 provisional ATI subtracts ledger-linked business interest income", () => {
   const ati = calculateBoundedProvisionalATI({
     provisional,
     returnInputs,
@@ -94,7 +95,7 @@ Deno.test("2025 Form 8990 provisional ATI subtracts ledger-linked business inter
   assertEquals(ati.line22AdjustedTaxableIncome, agi + 16_000);
 });
 
-Deno.test("2025 Form 8990 provisional ATI rejects unknown or unreconciled inputs", () => {
+test("2025 Form 8990 provisional ATI rejects unknown or unreconciled inputs", () => {
   assertThrows(
     () =>
       calculateBoundedProvisionalATI({

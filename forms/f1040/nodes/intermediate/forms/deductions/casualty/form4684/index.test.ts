@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { form4684 } from "./index.ts";
 
@@ -11,14 +12,14 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Smoke Tests ─────────────────────────────────────────────────────────────
 
-Deno.test("smoke — empty input returns no outputs", () => {
+test("smoke — empty input returns no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── Personal Loss — Federal Disaster Requirement ────────────────────────────
 
-Deno.test("personal loss — not federal disaster → no deduction", () => {
+test("personal loss — not federal disaster → no deduction", () => {
   const result = compute({
     personal_fmv_before: 50_000,
     personal_fmv_after: 30_000,
@@ -30,7 +31,7 @@ Deno.test("personal loss — not federal disaster → no deduction", () => {
   assertEquals(findOutput(result, "schedule_a"), undefined);
 });
 
-Deno.test("personal loss — is_federal_disaster=undefined → no deduction", () => {
+test("personal loss — is_federal_disaster=undefined → no deduction", () => {
   const result = compute({
     personal_fmv_before: 50_000,
     personal_fmv_after: 30_000,
@@ -41,7 +42,7 @@ Deno.test("personal loss — is_federal_disaster=undefined → no deduction", ()
   assertEquals(findOutput(result, "schedule_a"), undefined);
 });
 
-Deno.test("personal loss — federal disaster qualifies", () => {
+test("personal loss — federal disaster qualifies", () => {
   // FMV decline: $20,000, basis: $60,000, loss = min($20,000, $60,000) = $20,000
   // After $100 floor: $19,900
   // AGI = $50,000 → 10% = $5,000
@@ -59,7 +60,7 @@ Deno.test("personal loss — federal disaster qualifies", () => {
 
 // ─── $100 Per-Event Floor ─────────────────────────────────────────────────────
 
-Deno.test("$100 per-event floor applies before 10% AGI floor", () => {
+test("$100 per-event floor applies before 10% AGI floor", () => {
   // FMV decline: $500, basis: $1,000, insurance $0
   // Loss = min($500, $1,000) = $500
   // After $100 floor: $400
@@ -77,7 +78,7 @@ Deno.test("$100 per-event floor applies before 10% AGI floor", () => {
   assertEquals(sa?.fields.line_15_casualty_theft_loss, 300);
 });
 
-Deno.test("loss of exactly $100 → eliminated by per-event floor", () => {
+test("loss of exactly $100 → eliminated by per-event floor", () => {
   // FMV decline: $100, loss = min($100, $1000) = $100
   // After $100 floor: $0
   const result = compute({
@@ -93,7 +94,7 @@ Deno.test("loss of exactly $100 → eliminated by per-event floor", () => {
 
 // ─── 10% AGI Floor ───────────────────────────────────────────────────────────
 
-Deno.test("10% AGI floor eliminates small loss", () => {
+test("10% AGI floor eliminates small loss", () => {
   // Loss after $100 floor: $400
   // AGI = $5,000, 10% = $500
   // Net: $400 - $500 = -$100 → $0
@@ -110,7 +111,7 @@ Deno.test("10% AGI floor eliminates small loss", () => {
 
 // ─── Insurance Reimbursement ─────────────────────────────────────────────────
 
-Deno.test("insurance reimbursement reduces loss", () => {
+test("insurance reimbursement reduces loss", () => {
   // FMV decline: $20,000, basis: $60,000, insurance $15,000
   // Loss = min($20,000, $60,000) - $15,000 = $5,000
   // After $100 floor: $4,900
@@ -128,7 +129,7 @@ Deno.test("insurance reimbursement reduces loss", () => {
   assertEquals(sa?.fields.line_15_casualty_theft_loss, 3_900);
 });
 
-Deno.test("insurance fully covers loss → no deduction", () => {
+test("insurance fully covers loss → no deduction", () => {
   // Loss $20,000, insurance $20,000 → net loss = $0
   const result = compute({
     personal_fmv_before: 50_000,
@@ -143,7 +144,7 @@ Deno.test("insurance fully covers loss → no deduction", () => {
 
 // ─── Loss Capped at Lesser of FMV Decline or Basis ───────────────────────────
 
-Deno.test("loss capped at FMV decline when less than basis", () => {
+test("loss capped at FMV decline when less than basis", () => {
   // FMV decline: $10,000, basis: $100,000
   // Deductible loss = $10,000 (FMV decline < basis)
   const result = compute({
@@ -159,7 +160,7 @@ Deno.test("loss capped at FMV decline when less than basis", () => {
   assertEquals(sa?.fields.line_15_casualty_theft_loss, 9_900);
 });
 
-Deno.test("loss capped at basis when less than FMV decline", () => {
+test("loss capped at basis when less than FMV decline", () => {
   // FMV decline: $60,000 (total loss), basis: $40,000
   // Deductible = min($60,000, $40,000) = $40,000
   const result = compute({
@@ -177,7 +178,7 @@ Deno.test("loss capped at basis when less than FMV decline", () => {
 
 // ─── Business Property Losses ────────────────────────────────────────────────
 
-Deno.test("business §1231 property loss routes to form4797", () => {
+test("business §1231 property loss routes to form4797", () => {
   // Business property FMV decline: $30,000, basis: $50,000, no insurance
   // Loss = min($30,000, $50,000) = $30,000
   const result = compute({
@@ -192,7 +193,7 @@ Deno.test("business §1231 property loss routes to form4797", () => {
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("business investment property loss routes to schedule_d", () => {
+test("business investment property loss routes to schedule_d", () => {
   const result = compute({
     business_fmv_before: 50_000,
     business_fmv_after: 30_000,
@@ -204,7 +205,7 @@ Deno.test("business investment property loss routes to schedule_d", () => {
   assertEquals(findOutput(result, "form4797"), undefined);
 });
 
-Deno.test("business loss reduced by insurance", () => {
+test("business loss reduced by insurance", () => {
   // Decline: $30,000, basis: $50,000, insurance: $10,000
   // Net loss = $30,000 - $10,000 = $20,000
   const result = compute({
@@ -220,7 +221,7 @@ Deno.test("business loss reduced by insurance", () => {
 
 // ─── Personal + Business Combined ────────────────────────────────────────────
 
-Deno.test("personal federal disaster loss + business §1231 loss combined", () => {
+test("personal federal disaster loss + business §1231 loss combined", () => {
   // Personal: FMV decline $20k, basis $60k → loss $20k, after $100 floor $19,900, AGI $50k → 10%=$5k → net $14,900
   // Business: FMV decline $30k, basis $50k → loss $30k
   const result = compute({
@@ -244,7 +245,7 @@ Deno.test("personal federal disaster loss + business §1231 loss combined", () =
 
 // ─── Output Field Routing ─────────────────────────────────────────────────────
 
-Deno.test("spec_scenario: FMV_loss=15000, AGI=60000 → deductible=max(0,15000-100-6000)=8900", () => {
+test("spec_scenario: FMV_loss=15000, AGI=60000 → deductible=max(0,15000-100-6000)=8900", () => {
   // FMV before=$15,000, after=$0, basis=$15,000 → loss=min($15,000,$15,000)=$15,000
   // After $100 floor: $14,900
   // AGI=$60,000, 10%=$6,000

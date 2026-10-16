@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
   assertEquals,
@@ -122,7 +125,7 @@ async function filing(interestPayers?: Parameters<typeof filingInputs>[0]) {
   );
 }
 
-Deno.test("traced loan, royalty, and taxable interest reach the full native and filled PDF return", async () => {
+test("traced loan, royalty, and taxable interest reach the full native and filled PDF return", async () => {
   const result = await filing();
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_e.royalty_income, 800);
@@ -159,34 +162,34 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = "/tmp/opentax-form4952-royalty-interest-review";
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}/filled-return.pdf`, pdf);
-    await Deno.writeTextFile(`${directory}/return.xml`, bundle.xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}/filled-return.pdf`, pdf);
+    await fs.writeFile(`${directory}/return.xml`, bundle.xml);
+    await fs.writeFile(
       `${directory}/pending.json`,
       JSON.stringify(pending, null, 2),
     );
   }
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 7, true);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -196,7 +199,7 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
     assertStringIncludes(pages, "4a               1300");
     assertStringIncludes(pages, "300");
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   for (
@@ -261,7 +264,7 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
   }
 });
 
-Deno.test("royalty and multiple owned interest payers reconcile individually through Schedule B and full return", async () => {
+test("royalty and multiple owned interest payers reconcile individually through Schedule B and full return", async () => {
   const payers = [500, 750, 600].map((box1, i) => ({
     payer_name: `Investment Bank ${i + 1}`,
     payer_tin: `22233444${i}`,
@@ -293,33 +296,33 @@ Deno.test("royalty and multiple owned interest payers reconcile individually thr
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, prepared.bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await prepared.renderPdf();
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const dir = "/tmp/opentax-form4952-royalty-multi-interest-review";
-    await Deno.mkdir(dir, { recursive: true });
-    await Deno.writeFile(`${dir}/filled-return.pdf`, pdf);
-    await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(`${dir}/filled-return.pdf`, pdf);
+    await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+    await fs.writeFile(
       `${dir}/pending.json`,
       JSON.stringify(result.pending, null, 2),
     );
   }
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -333,7 +336,7 @@ Deno.test("royalty and multiple owned interest payers reconcile individually thr
     assertStringIncludes(formText, "2650");
     assertMatch(formText, /\b7\s+0\b/);
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
   const raw = normalizeAllPending(result.pending);
   for (
@@ -359,7 +362,7 @@ Deno.test("royalty and multiple owned interest payers reconcile individually thr
   }
 });
 
-Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing", async () => {
+test("Form4952 source cents reconcile before native/PDF whole-dollar filing", async () => {
   const debt = {
     ...trace,
     borrowed_principal: 10000.49,
@@ -398,16 +401,16 @@ Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing
     bundle.xml,
     "<InvestmentInterestExpDeductAmt>301</InvestmentInterestExpDeductAmt>",
   );
-  const root = Deno.args.includes("--write-review-artifacts")
+  const root = process.argv.slice(2).includes("--write-review-artifacts")
     ? "/tmp/opentax-form4952-source-cents-proof-v5-oct6"
-    : await Deno.makeTempDir({ prefix: "opentax-4952-source-cents-" });
-  await Deno.mkdir(root, { recursive: true });
-  await Deno.writeTextFile(`${root}/return.xml`, bundle.xml);
+    : await sys.makeTempDir({ prefix: "opentax-4952-source-cents-" });
+  await fs.mkdir(root, { recursive: true });
+  await fs.writeFile(`${root}/return.xml`, bundle.xml);
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const checked = await new Deno.Command("xmllint", {
+  const checked = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, `${root}/return.xml`],
     stdout: "piped",
     stderr: "piped",
@@ -421,7 +424,7 @@ Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing
     bundle,
     origins,
   );
-  await Deno.writeFile(`${root}/filled-return.pdf`, pdf);
+  await fs.writeFile(`${root}/filled-return.pdf`, pdf);
   for (
     const [name, value] of Object.entries({
       source: { inputs, filer: base.filer },
@@ -429,7 +432,7 @@ Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing
       origins,
     })
   ) {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${name}.json`,
       JSON.stringify(value, null, 2),
     );
@@ -456,7 +459,7 @@ Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing
     );
     await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
   }
-  if (!Deno.args.includes("--write-review-artifacts")) {
-    await Deno.remove(root, { recursive: true });
+  if (!process.argv.slice(2).includes("--write-review-artifacts")) {
+    await sys.remove(root, { recursive: true });
   }
 });

@@ -1,8 +1,10 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-Deno.test("actual identified Single business retains zero-income-limit QBI source filing", async () => {
+test("actual identified Single business retains zero-income-limit QBI source filing", async () => {
   const fixture = pdfReviewFixtures.find((f) => f.id === "single-schedule-c")!;
   const inputs: any = structuredClone(fixture.inputs);
   inputs.schedule_c[0].line_1_gross_receipts = 6000.50;
@@ -20,7 +22,7 @@ Deno.test("actual identified Single business retains zero-income-limit QBI sourc
   assertEquals(p.form8995.qbi_deduction, 0);
   const prepared = await f1040_2025.prepareReturn(r.pending, fixture.filer);
   assertStringIncludes(prepared.bundle.xml, "<IRS8995 ");
-  const validation = new Deno.Command("xmllint", {
+  const validation = new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",

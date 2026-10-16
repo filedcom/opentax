@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -81,7 +82,7 @@ function source() {
   });
 }
 
-Deno.test("one owner post-disability code-3 rollover reconciles Form 8889 and the final return", async () => {
+test("one owner post-disability code-3 rollover reconciles Form 8889 and the final return", async () => {
   const hsa = source();
   const result = f1040_2025.executeReturn({ ...base.inputs, form8889: hsa });
   assertEquals(result.diagnostics, []);
@@ -124,7 +125,7 @@ Deno.test("one owner post-disability code-3 rollover reconciles Form 8889 and th
   );
 });
 
-Deno.test("post-disability rollover rejects pre-disability code 3, paired owner, and altered allocation", () => {
+test("post-disability rollover rejects pre-disability code 3, paired owner, and altered allocation", () => {
   const original = source();
   const calculate = (raw: unknown) =>
     form8889Node.compute(

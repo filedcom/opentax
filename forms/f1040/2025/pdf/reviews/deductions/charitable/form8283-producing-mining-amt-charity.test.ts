@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -39,7 +42,7 @@ const expectations = {
   },
 };
 for (const kind of producingMiningAmtCharityCases) {
-  Deno.test(`Producing617 ${kind} owned AMT charity line3 and distinct carry full packet`, async () => {
+  test(`Producing617 ${kind} owned AMT charity line3 and distinct carry full packet`, async () => {
     const source = await reviewedProducingMiningAmtCharityGift(kind);
     const want = expectations[kind];
     const r = f1040_2025.executeReturn(source.inputs);
@@ -129,11 +132,11 @@ for (const kind of producingMiningAmtCharityCases) {
       origins,
     );
     assertEquals(origins.filter((o) => o.formKey === "form8995a").length, 2);
-    const dir = (Deno.env.get("FORM8283_AMT_CHARITY_EVIDENCE_DIR") ??
+    const dir = (process.env.FORM8283_AMT_CHARITY_EVIDENCE_DIR ??
       ".state/research/form8283-producing617-amt-charity") + "/" + kind;
-    await Deno.mkdir(dir + "/attachments", { recursive: true });
-    await Deno.writeFile(dir + "/return.pdf", pdf);
-    await Deno.writeTextFile(dir + "/return.xml", bundle.xml);
+    await fs.mkdir(dir + "/attachments", { recursive: true });
+    await fs.writeFile(dir + "/return.pdf", pdf);
+    await fs.writeFile(dir + "/return.xml", bundle.xml);
     for (
       const [name, value] of Object.entries({
         source: { inputs: source.inputs, filer: source.filer },
@@ -143,7 +146,7 @@ for (const kind of producingMiningAmtCharityCases) {
         calculation: source.calc,
       })
     ) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         dir + "/" + name + ".json",
         JSON.stringify(value, null, 2),
       );
@@ -152,13 +155,13 @@ for (const kind of producingMiningAmtCharityCases) {
     for (const attachment of source.attachments) {
       const { bytes, ...record } = attachment;
       metadata.push(record);
-      await Deno.writeFile(dir + "/attachments/" + attachment.fileName, bytes);
+      await fs.writeFile(dir + "/attachments/" + attachment.fileName, bytes);
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       dir + "/attachments.json",
       JSON.stringify(metadata, null, 2),
     );
-    const x = await new Deno.Command("xmllint", {
+    const x = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

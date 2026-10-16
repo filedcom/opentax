@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -90,7 +91,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two-country passive Form 1116 joins foreign and U.S. Treasury interest on one issued 1099-INT", () => {
+test("two-country passive Form 1116 joins foreign and U.S. Treasury interest on one issued 1099-INT", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -134,7 +135,7 @@ Deno.test("two-country passive Form 1116 joins foreign and U.S. Treasury interes
   );
 });
 
-Deno.test("two-country same-issuer Treasury route rejects changed box 3, source identity, tax, review, and final return", () => {
+test("two-country same-issuer Treasury route rejects changed box 3, source identity, tax, review, and final return", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);

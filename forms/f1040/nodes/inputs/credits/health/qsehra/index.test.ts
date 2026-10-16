@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { qsehra } from "./index.ts";
 
@@ -23,26 +24,26 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("qsehra.inputSchema: valid minimal item passes", () => {
+test("qsehra.inputSchema: valid minimal item passes", () => {
   const parsed = qsehra.inputSchema.safeParse(minimalItem());
   assertEquals(parsed.success, true);
 });
 
-Deno.test("qsehra.inputSchema: negative qsehra_amount_offered fails", () => {
+test("qsehra.inputSchema: negative qsehra_amount_offered fails", () => {
   const parsed = qsehra.inputSchema.safeParse(
     minimalItem({ qsehra_amount_offered: -100 }),
   );
   assertEquals(parsed.success, false);
 });
 
-Deno.test("qsehra.inputSchema: negative qsehra_amount_received fails", () => {
+test("qsehra.inputSchema: negative qsehra_amount_received fails", () => {
   const parsed = qsehra.inputSchema.safeParse(
     minimalItem({ qsehra_amount_received: -50 }),
   );
   assertEquals(parsed.success, false);
 });
 
-Deno.test("qsehra.inputSchema: valid full item passes", () => {
+test("qsehra.inputSchema: valid full item passes", () => {
   const parsed = qsehra.inputSchema.safeParse(minimalItem({
     qsehra_amount_offered: 6350,
     qsehra_amount_received: 5000,
@@ -52,7 +53,7 @@ Deno.test("qsehra.inputSchema: valid full item passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("qsehra.inputSchema: family coverage (is_self_only_coverage=false) passes", () => {
+test("qsehra.inputSchema: family coverage (is_self_only_coverage=false) passes", () => {
   const parsed = qsehra.inputSchema.safeParse(minimalItem({
     qsehra_amount_offered: 12800,
     qsehra_amount_received: 10000,
@@ -66,7 +67,7 @@ Deno.test("qsehra.inputSchema: family coverage (is_self_only_coverage=false) pas
 // 2. Routing with MEC — routes to form8962
 // =============================================================================
 
-Deno.test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes offered amount to form8962", () => {
+test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes offered amount to form8962", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 5000,
     qsehra_amount_received: 5000,
@@ -76,7 +77,7 @@ Deno.test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes offered 
   assertEquals(out!.fields.qsehra_amount_offered, 5000);
 });
 
-Deno.test("qsehra.compute: forwards written-notice monthly facts for Form 8962", () => {
+test("qsehra.compute: forwards written-notice monthly facts for Form 8962", () => {
   const monthlyFacts = [
     {
       self_only_slcsp: 500,
@@ -95,7 +96,7 @@ Deno.test("qsehra.compute: forwards written-notice monthly facts for Form 8962",
   );
 });
 
-Deno.test("qsehra.compute: has_mec=true → does NOT route to f1040 as income", () => {
+test("qsehra.compute: has_mec=true → does NOT route to f1040 as income", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 5000,
     qsehra_amount_received: 5000,
@@ -109,7 +110,7 @@ Deno.test("qsehra.compute: has_mec=true → does NOT route to f1040 as income", 
 // 3. Routing without MEC — routes to f1040 as income
 // =============================================================================
 
-Deno.test("qsehra.compute: has_mec=false + received > 0 → routes received amount to f1040 as income", () => {
+test("qsehra.compute: has_mec=false + received > 0 → routes received amount to f1040 as income", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 6000,
     qsehra_amount_received: 4500,
@@ -119,7 +120,7 @@ Deno.test("qsehra.compute: has_mec=false + received > 0 → routes received amou
   assertEquals(out!.fields.line1a_wages, 4500);
 });
 
-Deno.test("qsehra.compute: has_mec=false → does NOT route to form8962", () => {
+test("qsehra.compute: has_mec=false → does NOT route to form8962", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 6000,
     qsehra_amount_received: 4500,
@@ -133,7 +134,7 @@ Deno.test("qsehra.compute: has_mec=false → does NOT route to form8962", () => 
 // 4. Zero Amounts — No Output
 // =============================================================================
 
-Deno.test("qsehra.compute: all zeros → no output", () => {
+test("qsehra.compute: all zeros → no output", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 0,
     qsehra_amount_received: 0,
@@ -142,7 +143,7 @@ Deno.test("qsehra.compute: all zeros → no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("qsehra.compute: has_mec=false + received=0 → no output", () => {
+test("qsehra.compute: has_mec=false + received=0 → no output", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 5000,
     qsehra_amount_received: 0,
@@ -151,7 +152,7 @@ Deno.test("qsehra.compute: has_mec=false + received=0 → no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("qsehra.compute: has_mec=true + offered=0 → no output", () => {
+test("qsehra.compute: has_mec=true + offered=0 → no output", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 0,
     qsehra_amount_received: 0,
@@ -164,7 +165,7 @@ Deno.test("qsehra.compute: has_mec=true + offered=0 → no output", () => {
 // 5. Thresholds — Self-Only vs Family Limits (TY2025)
 // =============================================================================
 
-Deno.test("qsehra.compute: self-only at limit ($6,350) with MEC → routes full amount to form8962", () => {
+test("qsehra.compute: self-only at limit ($6,350) with MEC → routes full amount to form8962", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 6350,
     qsehra_amount_received: 6350,
@@ -175,7 +176,7 @@ Deno.test("qsehra.compute: self-only at limit ($6,350) with MEC → routes full 
   assertEquals(out!.fields.qsehra_amount_offered, 6350);
 });
 
-Deno.test("qsehra.compute: family at limit ($12,800) with MEC → routes full amount to form8962", () => {
+test("qsehra.compute: family at limit ($12,800) with MEC → routes full amount to form8962", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 12800,
     qsehra_amount_received: 12800,
@@ -190,14 +191,14 @@ Deno.test("qsehra.compute: family at limit ($12,800) with MEC → routes full am
 // 6. Hard Validation
 // =============================================================================
 
-Deno.test("qsehra.compute: throws on negative qsehra_amount_offered", () => {
+test("qsehra.compute: throws on negative qsehra_amount_offered", () => {
   assertThrows(
     () => compute(minimalItem({ qsehra_amount_offered: -500 })),
     Error,
   );
 });
 
-Deno.test("qsehra.compute: zero qsehra_amount_offered with mec — no output", () => {
+test("qsehra.compute: zero qsehra_amount_offered with mec — no output", () => {
   const result = compute(
     minimalItem({
       qsehra_amount_offered: 0,
@@ -211,7 +212,7 @@ Deno.test("qsehra.compute: zero qsehra_amount_offered with mec — no output", (
 // 7. Edge Cases
 // =============================================================================
 
-Deno.test("qsehra.compute: is_self_only_coverage is informational for routing — does not change output destination", () => {
+test("qsehra.compute: is_self_only_coverage is informational for routing — does not change output destination", () => {
   const selfOnly = compute(minimalItem({
     qsehra_amount_offered: 4000,
     has_minimum_essential_coverage: true,
@@ -229,7 +230,7 @@ Deno.test("qsehra.compute: is_self_only_coverage is informational for routing �
   );
 });
 
-Deno.test("qsehra.compute: offered > received with MEC — routes offered amount (not received) to form8962", () => {
+test("qsehra.compute: offered > received with MEC — routes offered amount (not received) to form8962", () => {
   // PTC reduction uses offered amount, per IRC §36B(c)(2)(C)(iv)
   const result = compute(minimalItem({
     qsehra_amount_offered: 6000,
@@ -244,7 +245,7 @@ Deno.test("qsehra.compute: offered > received with MEC — routes offered amount
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("qsehra.compute: smoke test — self-only with MEC, full annual amount", () => {
+test("qsehra.compute: smoke test — self-only with MEC, full annual amount", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 6350,
     qsehra_amount_received: 5200,

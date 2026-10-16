@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
 import { bindForm8814PlainInterestIssuerCopies } from "./issuer_byte_binding.ts";
@@ -30,7 +31,7 @@ const item = {
   },
 };
 
-Deno.test("Form 8814 binds the exact two-issuer plain-interest packet to retained bytes", async () => {
+test("Form 8814 binds the exact two-issuer plain-interest packet to retained bytes", async () => {
   const packet = {
     packet_reference: "child-interest-packet",
     issuers: [{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -132,7 +133,7 @@ function mixedDependentPolicy(
 }
 
 for (const aptc of [600, 4_800] as const) {
-  Deno.test(`Form 8962 mixed W-2 and 1099-INT dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
+  test(`Form 8962 mixed W-2 and 1099-INT dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = mixedDependentPolicy(aptc);
     assertEquals(fields.dependents_modified_agi, 15_100);
     assertEquals(fields.household_income, 85_100);
@@ -176,7 +177,7 @@ const twoEmployerMixedDependent = {
 };
 
 for (const aptc of [600, 4_800] as const) {
-  Deno.test(`Form 8962 two-W-2 and 1099-INT dependent reaches annual native/PDF at APTC ${aptc}`, () => {
+  test(`Form 8962 two-W-2 and 1099-INT dependent reaches annual native/PDF at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = mixedDependentPolicy(
       aptc,
       twoEmployerMixedDependent,
@@ -197,7 +198,7 @@ for (const aptc of [600, 4_800] as const) {
   });
 }
 
-Deno.test("Form 8962 two-W-2 plus interest rejects source, threshold, MAGI and return tampering", () => {
+test("Form 8962 two-W-2 plus interest rejects source, threshold, MAGI and return tampering", () => {
   const { fields, pending } = mixedDependentPolicy(
     600,
     twoEmployerMixedDependent,
@@ -273,7 +274,7 @@ Deno.test("Form 8962 two-W-2 plus interest rejects source, threshold, MAGI and r
   );
 });
 
-Deno.test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return tampering", () => {
+test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return tampering", () => {
   const { fields, pending } = mixedDependentPolicy(600);
   const changed = (overrides: Record<string, unknown>) => ({
     ...pending,

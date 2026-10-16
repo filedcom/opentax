@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { prepareForm3800DocumentParts } from "../../../../../mef/forms/credits/business/f3800/f3800.ts";
@@ -87,7 +88,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 3800 PDF binds line 1v and Part V to reviewed trust Form 3468", () => {
+test("Form 3800 PDF binds line 1v and Part V to reviewed trust Form 3468", () => {
   const prepared = prepareForm3800DocumentParts(f3800, {
     pending,
     documentIdsByPendingKey: {

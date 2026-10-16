@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8949, Form8949Part } from "./index.ts";
 
@@ -29,25 +30,25 @@ function minimalTransaction(overrides: Record<string, unknown> = {}) {
 
 // ─── 1. Input schema validation ──────────────────────────────────────────────
 
-Deno.test("schema: empty transaction array is rejected", () => {
+test("schema: empty transaction array is rejected", () => {
   assertThrows(() => compute({ transaction: [] }), Error);
 });
 
-Deno.test("schema: missing required fields on transaction is rejected", () => {
+test("schema: missing required fields on transaction is rejected", () => {
   assertThrows(
     () => compute({ transaction: { part: "A", description: "XYZ" } }),
     Error,
   );
 });
 
-Deno.test("schema: invalid part value is rejected", () => {
+test("schema: invalid part value is rejected", () => {
   assertThrows(
     () => compute({ transaction: minimalTransaction({ part: "Z" }) }),
     Error,
   );
 });
 
-Deno.test("Form 8949 rejects a column (h) amount that omits column (g)", () => {
+test("Form 8949 rejects a column (h) amount that omits column (g)", () => {
   assertThrows(
     () => compute({ transaction: minimalTransaction({
       adjustment_codes: "D",
@@ -59,7 +60,7 @@ Deno.test("Form 8949 rejects a column (h) amount that omits column (g)", () => {
   );
 });
 
-Deno.test("section 1202 exclusion rows stop until Schedule D and Form 6251 are sourced", () => {
+test("section 1202 exclusion rows stop until Schedule D and Form 6251 are sourced", () => {
   for (const transaction of [
     minimalTransaction({
       part: Form8949Part.D,
@@ -91,14 +92,14 @@ Deno.test("section 1202 exclusion rows stop until Schedule D and Form 6251 are s
 
 // ─── 2. Zero transactions — no output ────────────────────────────────────────
 
-Deno.test("zero transactions: no transaction field returns empty outputs", () => {
+test("zero transactions: no transaction field returns empty outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── 3. Short-term gain: exact arithmetic ────────────────────────────────────
 
-Deno.test("short-term gain: proceeds=$10k basis=$7k adj=$0 → gain=$3k", () => {
+test("short-term gain: proceeds=$10k basis=$7k adj=$0 → gain=$3k", () => {
   const result = compute({
     transaction: minimalTransaction({
       part: Form8949Part.A,
@@ -116,7 +117,7 @@ Deno.test("short-term gain: proceeds=$10k basis=$7k adj=$0 → gain=$3k", () => 
   assertEquals(tx?.is_long_term, false);
 });
 
-Deno.test("short-term gain: part A routes to schedule_d with is_long_term=false", () => {
+test("short-term gain: part A routes to schedule_d with is_long_term=false", () => {
   const result = compute({
     transaction: minimalTransaction({ part: "A", proceeds: 1000, cost_basis: 800, gain_loss: 200, is_long_term: false }),
   });
@@ -135,7 +136,7 @@ Deno.test("short-term gain: part A routes to schedule_d with is_long_term=false"
 
 // ─── 4. Short-term loss: exact arithmetic ────────────────────────────────────
 
-Deno.test("short-term loss: proceeds=$500 basis=$800 → loss=$-300", () => {
+test("short-term loss: proceeds=$500 basis=$800 → loss=$-300", () => {
   const result = compute({
     transaction: minimalTransaction({ proceeds: 500, cost_basis: 800, gain_loss: -300, is_long_term: false }),
   });
@@ -147,7 +148,7 @@ Deno.test("short-term loss: proceeds=$500 basis=$800 → loss=$-300", () => {
 
 // ─── 5. Long-term gain: exact arithmetic ─────────────────────────────────────
 
-Deno.test("long-term gain: proceeds=$5k basis=$3k → gain=$2k routed as long-term", () => {
+test("long-term gain: proceeds=$5k basis=$3k → gain=$2k routed as long-term", () => {
   const result = compute({
     transaction: minimalTransaction({
       part: Form8949Part.D,
@@ -163,7 +164,7 @@ Deno.test("long-term gain: proceeds=$5k basis=$3k → gain=$2k routed as long-te
   assertEquals(tx?.is_long_term, true);
 });
 
-Deno.test("long-term loss: proceeds=$2k basis=$5k → loss=$-3k", () => {
+test("long-term loss: proceeds=$2k basis=$5k → loss=$-3k", () => {
   const result = compute({
     transaction: minimalTransaction({ part: "D", proceeds: 2000, cost_basis: 5000, gain_loss: -3000, is_long_term: true }),
   });
@@ -177,7 +178,7 @@ Deno.test("long-term loss: proceeds=$2k basis=$5k → loss=$-3k", () => {
 // Wash sale: proceeds=$500, basis=$800, loss=$-300 disallowed by code W
 // adjustment_amount=$300 added back → adjusted gain_loss=$0
 
-Deno.test("wash sale: code W with disallowed loss adjustment passes through to schedule_d", () => {
+test("wash sale: code W with disallowed loss adjustment passes through to schedule_d", () => {
   const result = compute({
     transaction: minimalTransaction({
       proceeds: 500,
@@ -198,7 +199,7 @@ Deno.test("wash sale: code W with disallowed loss adjustment passes through to s
   assertEquals(tx?.cost_basis, 800);
 });
 
-Deno.test("wash sale: partial disallowance — only portion added back", () => {
+test("wash sale: partial disallowance — only portion added back", () => {
   // proceeds $600, basis $1000, loss $-400; only $200 disallowed → adjusted gain_loss=$-200
   const result = compute({
     transaction: minimalTransaction({
@@ -218,7 +219,7 @@ Deno.test("wash sale: partial disallowance — only portion added back", () => {
 
 // ─── 7. Basis adjustment code B ──────────────────────────────────────────────
 
-Deno.test("basis adjustment: code B with negative adjustment reduces gain", () => {
+test("basis adjustment: code B with negative adjustment reduces gain", () => {
   const result = compute({
     transaction: minimalTransaction({
       proceeds: 1000,
@@ -237,7 +238,7 @@ Deno.test("basis adjustment: code B with negative adjustment reduces gain", () =
 
 // ─── 8. Multiple transactions ─────────────────────────────────────────────────
 
-Deno.test("multiple transactions: each routes separately to schedule_d", () => {
+test("multiple transactions: each routes separately to schedule_d", () => {
   const result = compute({
     transaction: [
       minimalTransaction({ part: "A", proceeds: 1000, cost_basis: 750, gain_loss: 250, is_long_term: false }),
@@ -254,7 +255,7 @@ Deno.test("multiple transactions: each routes separately to schedule_d", () => {
   assertEquals(ltTx.is_long_term, true);
 });
 
-Deno.test("multiple transactions: short-term loss and long-term gain computed separately", () => {
+test("multiple transactions: short-term loss and long-term gain computed separately", () => {
   const result = compute({
     transaction: [
       minimalTransaction({ part: "B", proceeds: 300, cost_basis: 500, gain_loss: -200, is_long_term: false }),
@@ -270,7 +271,7 @@ Deno.test("multiple transactions: short-term loss and long-term gain computed se
   assertEquals(ltTx.gain_loss, 4000);
 });
 
-Deno.test("three transactions: each output carries exact proceeds/basis/gain", () => {
+test("three transactions: each output carries exact proceeds/basis/gain", () => {
   const result = compute({
     transaction: [
       minimalTransaction({ part: "A", proceeds: 1000, cost_basis: 750, gain_loss: 250, is_long_term: false }),
@@ -288,7 +289,7 @@ Deno.test("three transactions: each output carries exact proceeds/basis/gain", (
 
 // ─── 9. Flat-field input ──────────────────────────────────────────────────────
 
-Deno.test("flat fields: all transaction fields on input root route to schedule_d", () => {
+test("flat fields: all transaction fields on input root route to schedule_d", () => {
   const result = compute({
     part: "D",
     description: "200 sh ABC Corp",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
@@ -27,7 +28,7 @@ const partialPolicyFixture = pdfReviewFixtures.find((item) =>
   item.id === "single-two-sequential-no-aptc-policies-protected-partial"
 )!;
 
-Deno.test("two sequential no-APTC policies reduce one protected partial premium through Form 1040, MeF, and PDF", async () => {
+test("two sequential no-APTC policies reduce one protected partial premium through Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -150,7 +151,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`four sourced sequential no-APTC policies reconcile ${variant.coveredMonths} covered months to Form 1040, MeF, and PDF`, async () => {
+  test(`four sourced sequential no-APTC policies reconcile ${variant.coveredMonths} covered months to Form 1040, MeF, and PDF`, async () => {
     const policyFixture = pdfReviewFixtures.find((item) =>
       item.id === variant.id
     )!;
@@ -357,7 +358,7 @@ for (
     },
   ]
 ) {
-  Deno.test(`${variant.policyCount} sourced sequential no-APTC policies reconcile every month to Form 1040, MeF, and PDF`, async () => {
+  test(`${variant.policyCount} sourced sequential no-APTC policies reconcile every month to Form 1040, MeF, and PDF`, async () => {
     const policyFixture = pdfReviewFixtures.find((item) =>
       item.id === variant.id
     )!;
@@ -493,7 +494,7 @@ for (
     },
   ] as const
 ) {
-  Deno.test(`${variant.policyCount} sequential no-APTC policies support every possible uncovered-month count`, async () => {
+  test(`${variant.policyCount} sequential no-APTC policies support every possible uncovered-month count`, async () => {
     const sparseFixture = pdfReviewFixtures.find((item) =>
       item.id === variant.id
     )!;
@@ -640,7 +641,7 @@ for (
   });
 }
 
-Deno.test("three sequential no-APTC policies leave four sourced months uncovered at 200% FPL", async () => {
+test("three sequential no-APTC policies leave four sourced months uncovered at 200% FPL", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -752,7 +753,7 @@ Deno.test("three sequential no-APTC policies leave four sourced months uncovered
   );
 });
 
-Deno.test("three sequential no-APTC policies leave three sourced months uncovered at 200% FPL", async () => {
+test("three sequential no-APTC policies leave three sourced months uncovered at 200% FPL", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -892,7 +893,7 @@ for (
     },
   ] as const
 ) {
-  Deno.test(`${variant.policyCount} no-APTC policies leave one sourced month uncovered with zero PTC`, async () => {
+  test(`${variant.policyCount} no-APTC policies leave one sourced month uncovered with zero PTC`, async () => {
     const gapFixture = pdfReviewFixtures.find((item) =>
       item.id === variant.id
     )!;
@@ -1022,7 +1023,7 @@ for (
   });
 }
 
-Deno.test("two sequential no-APTC policies at 200% FPL reconcile every paid month through Form 8962, Schedule 3, Form 1040, MeF, and PDF", async () => {
+test("two sequential no-APTC policies at 200% FPL reconcile every paid month through Form 8962, Schedule 3, Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -1116,7 +1117,7 @@ Deno.test("two sequential no-APTC policies at 200% FPL reconcile every paid mont
   );
 });
 
-Deno.test("three sequential no-APTC policies at 200% FPL reconcile their own reviewed months through the complete return", async () => {
+test("three sequential no-APTC policies at 200% FPL reconcile their own reviewed months through the complete return", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

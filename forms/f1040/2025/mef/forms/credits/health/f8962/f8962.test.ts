@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -80,7 +81,7 @@ const matchedContext = {
   },
 };
 
-Deno.test("Form 8962 does not file solely because AGI and family context exist", () => {
+test("Form 8962 does not file solely because AGI and family context exist", () => {
   assertEquals(
     form8962.build({
       household_size: 1,
@@ -91,7 +92,7 @@ Deno.test("Form 8962 does not file solely because AGI and family context exist",
   );
 });
 
-Deno.test("Form 8962 rejects positive totals without 1095-A policy source", () => {
+test("Form 8962 rejects positive totals without 1095-A policy source", () => {
   assertThrows(
     () => form8962.build({ total_advance_ptc: 1_000 }),
     Error,
@@ -104,7 +105,7 @@ Deno.test("Form 8962 rejects positive totals without 1095-A policy source", () =
   );
 });
 
-Deno.test("Form 8962 rejects empty or all-zero monthly rows and incomplete calculations", () => {
+test("Form 8962 rejects empty or all-zero monthly rows and incomplete calculations", () => {
   assertThrows(
     () => form8962.build({ ...monthlyRepayment, monthly_ptc_rows: [] }),
     Error,
@@ -136,7 +137,7 @@ Deno.test("Form 8962 rejects empty or all-zero monthly rows and incomplete calcu
   );
 });
 
-Deno.test("Form 8962 emits sourced policy months and reconciled repayment", () => {
+test("Form 8962 emits sourced policy months and reconciled repayment", () => {
   const xml = form8962.build(monthlyRepayment, matchedContext);
   assertStringIncludes(xml, "<IRS8962>");
   assertStringIncludes(xml, "<MonthlyPremiumAmt>500</MonthlyPremiumAmt>");
@@ -157,7 +158,7 @@ Deno.test("Form 8962 emits sourced policy months and reconciled repayment", () =
   assertEquals(xml.includes("<AnnualPTCCalculationGrp>"), false);
 });
 
-Deno.test("Form 8962 monthly one-person policy binds its covered person to the filer", () => {
+test("Form 8962 monthly one-person policy binds its covered person to the filer", () => {
   const policy = matchedContext.pending.f1095a.f1095as[0];
   for (
     const covered_individual_ssns of [
@@ -257,7 +258,7 @@ const noAptcContext = {
   },
 };
 
-Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid premiums", () => {
+test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid premiums", () => {
   const xml = form8962.build(
     { ...noAptcFields, annual_slcsp: 9_000 },
     noAptcContext,
@@ -288,7 +289,7 @@ Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid pre
   );
 });
 
-Deno.test("Form 8962 no-APTC at 200% FPL uses Table 2 for monthly credit and PDF", () => {
+test("Form 8962 no-APTC at 200% FPL uses Table 2 for monthly credit and PDF", () => {
   const credit = 8_400;
   const fields = {
     ...noAptcFields,
@@ -357,7 +358,7 @@ Deno.test("Form 8962 no-APTC at 200% FPL uses Table 2 for monthly credit and PDF
   );
 });
 
-Deno.test("Form 8962 no-APTC at 200% FPL uses annual line 11 when SLCSP is unchanged", () => {
+test("Form 8962 no-APTC at 200% FPL uses annual line 11 when SLCSP is unchanged", () => {
   const credit = 7_798;
   const policy = {
     ...noAptcContext.pending.f1095a.f1095as[0],
@@ -433,7 +434,7 @@ Deno.test("Form 8962 no-APTC at 200% FPL uses annual line 11 when SLCSP is uncha
   );
 });
 
-Deno.test("Form 8962 no-APTC full-year unchanged policy uses sourced annual line 11", () => {
+test("Form 8962 no-APTC full-year unchanged policy uses sourced annual line 11", () => {
   const policy = {
     ...noAptcContext.pending.f1095a.f1095as[0],
     slcsp_corrections: noAptcCorrections.map((item) => ({
@@ -573,7 +574,7 @@ Deno.test("Form 8962 no-APTC full-year unchanged policy uses sourced annual line
   );
 });
 
-Deno.test("Form 8962 no-APTC partial-year claim omits an uncovered month after reconciling each covered month", () => {
+test("Form 8962 no-APTC partial-year claim omits an uncovered month after reconciling each covered month", () => {
   const uncovered = 3; // April, zero-based.
   const partialRows = noAptcRows.map((row, index) =>
     index === uncovered
@@ -670,7 +671,7 @@ Deno.test("Form 8962 no-APTC partial-year claim omits an uncovered month after r
   );
 });
 
-Deno.test("Form 8962 two no-APTC policies reconcile two uncovered months to source, return, MeF, and PDF", () => {
+test("Form 8962 two no-APTC policies reconcile two uncovered months to source, return, MeF, and PDF", () => {
   const gaps = new Set([3, 8]); // April and September, zero-based.
   const covered = (index: number) => !gaps.has(index);
   const policies = [
@@ -797,7 +798,7 @@ Deno.test("Form 8962 two no-APTC policies reconcile two uncovered months to sour
   );
 });
 
-Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evidence", () => {
+test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evidence", () => {
   const policy = noAptcContext.pending.f1095a.f1095as[0];
   const withPolicy = (changed: Partial<typeof policy>) => ({
     ...noAptcContext,
@@ -896,7 +897,7 @@ Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evid
   );
 });
 
-Deno.test("Form 8962 annual line 11 reconciles one unchanged full-year policy", () => {
+test("Form 8962 annual line 11 reconciles one unchanged full-year policy", () => {
   const annualPolicy = {
     ...matchedContext.pending.f1095a.f1095as[0],
     annual_premium: 6_000,
@@ -1025,7 +1026,7 @@ Deno.test("Form 8962 annual line 11 reconciles one unchanged full-year policy", 
   );
 });
 
-Deno.test("Form 8962 annual line 11 selects one same-state SLCSP across two full-year family policies", () => {
+test("Form 8962 annual line 11 selects one same-state SLCSP across two full-year family policies", () => {
   const dependent = {
     first_name: "Casey",
     last_name: "Test",
@@ -1220,7 +1221,7 @@ Deno.test("Form 8962 annual line 11 selects one same-state SLCSP across two full
   );
 });
 
-Deno.test("Form 8962 annual line 11 reconciles a required-filing dependent's Worksheet 1-2 MAGI", () => {
+test("Form 8962 annual line 11 reconciles a required-filing dependent's Worksheet 1-2 MAGI", () => {
   const dependent = {
     first_name: "Casey",
     last_name: "Test",
@@ -1362,7 +1363,7 @@ Deno.test("Form 8962 annual line 11 reconciles a required-filing dependent's Wor
   );
 });
 
-Deno.test("Form 8962 monthly one-policy dependent MAGI reconciles source through MeF and PDF", () => {
+test("Form 8962 monthly one-policy dependent MAGI reconciles source through MeF and PDF", () => {
   const dependent = {
     first_name: "Casey",
     last_name: "Test",
@@ -1490,7 +1491,7 @@ Deno.test("Form 8962 monthly one-policy dependent MAGI reconciles source through
   );
 });
 
-Deno.test("Form 8962 reconciles a same-state midyear policy switch without doubling SLCSP", () => {
+test("Form 8962 reconciles a same-state midyear policy switch without doubling SLCSP", () => {
   const policies = [
     { policy_number: "POLICY-1", start: 0, end: 6 },
     { policy_number: "POLICY-2", start: 6, end: 12 },
@@ -1642,7 +1643,7 @@ Deno.test("Form 8962 reconciles a same-state midyear policy switch without doubl
   );
 });
 
-Deno.test("Form 8962 keeps overlapping same-state policies out of the one-person filing route", () => {
+test("Form 8962 keeps overlapping same-state policies out of the one-person filing route", () => {
   const policies = [
     { policy_number: "POLICY-1", premium: 300, aptc: 100 },
     { policy_number: "POLICY-2", premium: 200, aptc: 100 },
@@ -1669,7 +1670,7 @@ Deno.test("Form 8962 keeps overlapping same-state policies out of the one-person
   );
 });
 
-Deno.test("Form 8962 files sourced partial-year and separated one-policy months", () => {
+test("Form 8962 files sourced partial-year and separated one-policy months", () => {
   const partialPolicy = {
     ...matchedContext.pending.f1095a.f1095as[0],
     monthly_premiums: monthlyPremiums.map((value, month) =>
@@ -1785,7 +1786,7 @@ Deno.test("Form 8962 files sourced partial-year and separated one-policy months"
   }
 });
 
-Deno.test("Form 8962 emits net PTC only when Schedule 3 and Form 1040 agree", () => {
+test("Form 8962 emits net PTC only when Schedule 3 and Form 1040 agree", () => {
   const creditFields = {
     ...monthlyRepayment,
     monthly_ptc_rows: rows.map((row) => ({ ...row, aptc: 50 })),
@@ -1829,7 +1830,7 @@ Deno.test("Form 8962 emits net PTC only when Schedule 3 and Form 1040 agree", ()
   );
 });
 
-Deno.test("Form 8962 rejects a monthly amount differing from Form 1095-A", () => {
+test("Form 8962 rejects a monthly amount differing from Form 1095-A", () => {
   assertThrows(
     () =>
       form8962.build({
@@ -1854,7 +1855,7 @@ Deno.test("Form 8962 rejects a monthly amount differing from Form 1095-A", () =>
   );
 });
 
-Deno.test("Form 8962 rejects calculated totals or finalized Schedule 2/1040 mismatches", () => {
+test("Form 8962 rejects calculated totals or finalized Schedule 2/1040 mismatches", () => {
   assertThrows(
     () =>
       form8962.build({
@@ -1890,7 +1891,7 @@ Deno.test("Form 8962 rejects calculated totals or finalized Schedule 2/1040 mism
   );
 });
 
-Deno.test("Form 8962 rejects altered AGI or missing final return facts", () => {
+test("Form 8962 rejects altered AGI or missing final return facts", () => {
   assertThrows(
     () =>
       form8962.build(monthlyRepayment, {
@@ -1914,7 +1915,7 @@ Deno.test("Form 8962 rejects altered AGI or missing final return facts", () => {
   );
 });
 
-Deno.test("Form 8962 rejects dependent MAGI without verified dependent returns", () => {
+test("Form 8962 rejects dependent MAGI without verified dependent returns", () => {
   assertThrows(
     () =>
       form8962.build({
@@ -1928,7 +1929,7 @@ Deno.test("Form 8962 rejects dependent MAGI without verified dependent returns",
   );
 });
 
-Deno.test("Form 8962 rejects annual and special positive routes without bounded source reconciliation", () => {
+test("Form 8962 rejects annual and special positive routes without bounded source reconciliation", () => {
   assertThrows(
     () =>
       form8962.build({

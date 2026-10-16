@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -18,7 +21,7 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
 
-Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, and PDF", async () => {
+test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, and PDF", async () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
   const firstIssued = { ...first, source_document_reference: "issued-copy-A" };
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -46,10 +49,10 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -59,13 +62,13 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
     }).output();
     assertEquals(extracted.code, 0);
@@ -74,7 +77,7 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const changedBox1 = structuredClone(pending);
@@ -121,7 +124,7 @@ Deno.test("two W-2 box 1 copies replay to Form 1040 line 1a, AGI, native XML, an
   );
 });
 
-Deno.test("the graph rejects a repeated identified W-2 issued copy before totaling wages", () => {
+test("the graph rejects a repeated identified W-2 issued copy before totaling wages", () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
   const issued = { ...first, source_document_reference: "issued-copy-A" };
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -137,7 +140,7 @@ Deno.test("the graph rejects a repeated identified W-2 issued copy before totali
   );
 });
 
-Deno.test("same employer and employee need distinct issued W-2 references", async () => {
+test("same employer and employee need distinct issued W-2 references", async () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
   const duplicate = { ...first, source_document_reference: undefined };
   const result = execute(buildExecutionPlan(registry), registry, {
@@ -182,7 +185,7 @@ Deno.test("same employer and employee need distinct issued W-2 references", asyn
   );
 });
 
-Deno.test("one W-2 issued reference cannot replay under a changed employer", async () => {
+test("one W-2 issued reference cannot replay under a changed employer", async () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
   const firstIssued = { ...first, source_document_reference: "issued-copy-A" };
   const secondIssued = {
@@ -228,7 +231,7 @@ Deno.test("one W-2 issued reference cannot replay under a changed employer", asy
   );
 });
 
-Deno.test("Form 4852 W-2 replacement wages retain their line 1a total", () => {
+test("Form 4852 W-2 replacement wages retain their line 1a total", () => {
   assertLine1aWageSource({
     f4852: {
       f4852s: [{

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   currentYearDistributionLines,
@@ -36,12 +37,12 @@ function compute(input: Parameters<typeof f8915f.compute>[1]) {
   return f8915f.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-Deno.test("Form 8915-F absent and empty source make no claim", () => {
+test("Form 8915-F absent and empty source make no claim", () => {
   assertEquals(compute({}).outputs, []);
   assertEquals(compute({ f8915fs: [] }).outputs, []);
 });
 
-Deno.test("Form 8915-F calculates one current-year fully taxable plan distribution", () => {
+test("Form 8915-F calculates one current-year fully taxable plan distribution", () => {
   const lines = currentYearDistributionLines(
     itemSchema.parse(reviewed2025Plan),
     { planGross: 0, iraGross: 0 },
@@ -53,7 +54,7 @@ Deno.test("Form 8915-F calculates one current-year fully taxable plan distributi
   assertEquals(lines.line15_form1040_line5b, 20_000);
 });
 
-Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", () => {
+test("Form 8915-F spreads a new 2025 plan distribution over three years", () => {
   const lines = currentYearDistributionLines(
     itemSchema.parse({
       ...reviewed2025Plan,
@@ -66,7 +67,7 @@ Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", (
   assertEquals(lines.line15_form1040_line5b, 6_667);
 });
 
-Deno.test("Form 8915-F bounds repayment to income and the reviewed filing deadline", () => {
+test("Form 8915-F bounds repayment to income and the reviewed filing deadline", () => {
   const repayment = {
     kind: "timely",
     amount: 1_000,
@@ -188,7 +189,7 @@ Deno.test("Form 8915-F bounds repayment to income and the reviewed filing deadli
   );
 });
 
-Deno.test("Form 8915-F traditional IRA path needs reviewed no-basis history", () => {
+test("Form 8915-F traditional IRA path needs reviewed no-basis history", () => {
   assertEquals(
     itemSchema.safeParse({
       ...reviewed2025Plan,
@@ -211,11 +212,11 @@ Deno.test("Form 8915-F traditional IRA path needs reviewed no-basis history", ()
   assertEquals(lines.line26_form1040_line4b, 6_667);
 });
 
-Deno.test("Form 8915-F retains the reviewed source for native and PDF export", () => {
+test("Form 8915-F retains the reviewed source for native and PDF export", () => {
   assertEquals(compute({ f8915fs: [reviewed2025Plan] }).outputs, []);
 });
 
-Deno.test("Form 8915-F rejects the old amount-only source", () => {
+test("Form 8915-F rejects the old amount-only source", () => {
   assertEquals(
     itemSchema.safeParse({
       distribution_year: 2025,
@@ -234,7 +235,7 @@ Deno.test("Form 8915-F rejects the old amount-only source", () => {
   assertEquals(itemSchema.safeParse(oldPlan).success, false);
 });
 
-Deno.test("Form 8915-F enforces the disaster limit and distribution window", () => {
+test("Form 8915-F enforces the disaster limit and distribution window", () => {
   assertEquals(
     itemSchema.safeParse({ ...reviewed2025Plan, gross_distribution: 22_001 })
       .success,
@@ -270,7 +271,7 @@ Deno.test("Form 8915-F enforces the disaster limit and distribution window", () 
   );
 });
 
-Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
+test("Form 8915-F matches one issued 1099-R and recipient", () => {
   const filer = {
     primarySSN: "111223333",
     nameLine1: "EXAMPLE ALEX",

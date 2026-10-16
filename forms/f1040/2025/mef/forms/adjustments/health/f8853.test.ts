@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { MsaOwner } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
@@ -27,11 +28,11 @@ const source = {
 
 const context = { filer, pending: {} };
 
-Deno.test("Form 8853: absent pending produces no document", () => {
+test("Form 8853: absent pending produces no document", () => {
   assertEquals(form8853.build([]), "");
 });
 
-Deno.test("Form 8853: fully qualified Archer distribution emits native group even with zero tax", () => {
+test("Form 8853: fully qualified Archer distribution emits native group even with zero tax", () => {
   const xml = form8853.build(source, context);
   assertStringIncludes(xml, "<IRS8853><ArcherMSAAndMedcrAdvntgMSAGrp>");
   assertStringIncludes(xml, "<MSAHolderSSN>123456789</MSAHolderSSN>");
@@ -59,7 +60,7 @@ Deno.test("Form 8853: fully qualified Archer distribution emits native group eve
   assertEquals(xml.includes("EmployerArcherMSAContriAmt"), false);
 });
 
-Deno.test("Form 8853: flat source and explicit empty records reject", () => {
+test("Form 8853: flat source and explicit empty records reject", () => {
   assertThrows(() => form8853.build({}), Error, "empty pending record");
   assertThrows(
     () => form8853.build({ employer_archer_msa: 3_650 }, context),
@@ -68,7 +69,7 @@ Deno.test("Form 8853: flat source and explicit empty records reject", () => {
   );
 });
 
-Deno.test("Form 8853: missing source attestations and owner reject", () => {
+test("Form 8853: missing source attestations and owner reject", () => {
   assertThrows(
     () =>
       form8853.build({
@@ -92,7 +93,7 @@ Deno.test("Form 8853: missing source attestations and owner reject", () => {
   );
 });
 
-Deno.test("Form 8853: unconfirmed taxable medical use, rollover, and exception paths reject", () => {
+test("Form 8853: unconfirmed taxable medical use, rollover, and exception paths reject", () => {
   assertThrows(
     () =>
       form8853.build(
@@ -114,7 +115,7 @@ Deno.test("Form 8853: unconfirmed taxable medical use, rollover, and exception p
   );
 });
 
-Deno.test("Form 8853: contribution, Medicare, and LTC activity reject", () => {
+test("Form 8853: contribution, Medicare, and LTC activity reject", () => {
   assertThrows(
     () =>
       form8853.build(
@@ -140,7 +141,7 @@ Deno.test("Form 8853: contribution, Medicare, and LTC activity reject", () => {
   );
 });
 
-Deno.test("Form 8853: joint header and conflicting schedules reject", () => {
+test("Form 8853: joint header and conflicting schedules reject", () => {
   assertThrows(
     () =>
       form8853.build(source, {
@@ -166,7 +167,7 @@ Deno.test("Form 8853: joint header and conflicting schedules reject", () => {
   );
 });
 
-Deno.test("Form 8853: normal partial medical use emits taxable distribution and additional tax", () => {
+test("Form 8853: normal partial medical use emits taxable distribution and additional tax", () => {
   const partial = {
     ...source,
     archer_msa_qualified_expenses: 2_000,

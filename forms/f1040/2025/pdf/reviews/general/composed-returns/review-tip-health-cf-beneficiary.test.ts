@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -37,7 +40,7 @@ const titles: Record<string, string> = {
   form8995a: "Qualified Business Income Deduction",
   form4972: "Tax on Lump-Sum Distributions",
 };
-const replay = Deno.args.includes("--replay-reviewed");
+const replay = process.argv.slice(2).includes("--replay-reviewed");
 const output = "/tmp/opentax-reviewed-18-catalog-evidence";
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
@@ -55,7 +58,7 @@ function setPath(value: any, path: string, next: unknown): void {
   parent[parts.at(-1)!] = next;
 }
 async function renderedPage(pdf: string, page: number): Promise<Uint8Array> {
-  const result = await new Deno.Command("pdftoppm", {
+  const result = await new sys.Command("pdftoppm", {
     args: [
       "-f",
       String(page),
@@ -89,7 +92,7 @@ function canonical(value: unknown): string {
         : v,
   );
 }
-Deno.test("catalog adds eighteen reviewed public packets with frozen copy inventory and no input aliases", () => {
+test("catalog adds eighteen reviewed public packets with frozen copy inventory and no input aliases", () => {
   assertEquals(fixtures.length, 18);
   assertEquals(metadata.reduce((n, r) => n + r.pageCount, 0), 375);
   assertEquals(metadata.reduce((n, r) => n + r.ownerCopies.length, 0), 77);
@@ -113,7 +116,7 @@ Deno.test("catalog adds eighteen reviewed public packets with frozen copy invent
   );
 });
 for (const row of metadata) {
-  Deno.test(`review catalog ${row.id} actual sources/filer/owner copies/native/fullXSD/PDF/page origins`, async () => {
+  test(`review catalog ${row.id} actual sources/filer/owner copies/native/fullXSD/PDF/page origins`, async () => {
     const fixture = fixtures.find((f) => f.id === row.id)!;
     assertEquals(
       await hash(new TextEncoder().encode(canonical(fixture.inputs))),
@@ -166,17 +169,17 @@ for (const row of metadata) {
       await hash(pdf),
       correction?.currentPdfSha256 ?? row.originalPdfSha256,
     );
-    const path = await Deno.makeTempFile({ suffix: ".pdf" });
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const path = await sys.makeTempFile({ suffix: ".pdf" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeFile(path, pdf);
-      await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+      await fs.writeFile(path, pdf);
+      await fs.writeFile(xmlPath, prepared.bundle.xml);
       const firstPages = origins.filter((o, i) =>
         i === 0 || o.formKey !== origins[i - 1].formKey ||
         o.formCopy !== origins[i - 1].formCopy
       );
       for (const first of firstPages) {
-        const text = await new Deno.Command("pdftotext", {
+        const text = await new sys.Command("pdftotext", {
           args: [
             "-f",
             String(first.pageNumber),
@@ -195,7 +198,7 @@ for (const row of metadata) {
         );
       }
       for (const owner of row.ownerCopies) {
-        const text = await new Deno.Command("pdftotext", {
+        const text = await new sys.Command("pdftotext", {
           args: [
             "-f",
             String(owner.pageNumber),
@@ -214,7 +217,7 @@ for (const row of metadata) {
       }
       let available = false;
       try {
-        await Deno.stat(xsd);
+        await sys.stat(xsd);
         available = true;
       } catch { /* local schema cache is optional outside held proof */ }
       if (replay) {
@@ -226,7 +229,7 @@ for (const row of metadata) {
       }
       assertEquals(available, true, "Missing verification prerequisite: complete local XSD");
       if (available) {
-        const checked = await new Deno.Command("xmllint", {
+        const checked = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, xmlPath],
           stderr: "piped",
         }).output();
@@ -234,10 +237,10 @@ for (const row of metadata) {
       }
       if (replay) {
         const root = roots[row.artifactGroup];
-        const originalSource = await Deno.readFile(
+        const originalSource = await sys.readBytes(
           `${root}/${row.originalSourceName}`,
         );
-        const originalPdf = await Deno.readFile(
+        const originalPdf = await sys.readBytes(
           `${root}/${row.originalPdfName}`,
         );
         assertEquals(await hash(originalSource), row.originalSourceSha256);
@@ -306,13 +309,13 @@ for (const row of metadata) {
             "form6251",
           ]);
         }
-        await Deno.mkdir(output, { recursive: true });
-        await Deno.writeFile(`${output}/${row.id}.pdf`, pdf);
-        await Deno.writeTextFile(
+        await fs.mkdir(output, { recursive: true });
+        await fs.writeFile(`${output}/${row.id}.pdf`, pdf);
+        await fs.writeFile(
           `${output}/${row.id}.xml`,
           prepared.bundle.xml,
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${row.id}.json`,
           JSON.stringify(
             {
@@ -327,13 +330,13 @@ for (const row of metadata) {
         );
       }
     } finally {
-      await Deno.remove(path);
-      await Deno.remove(xmlPath);
+      await sys.remove(path);
+      await sys.remove(xmlPath);
     }
   });
 }
 
-Deno.test("review metadata binds source owners and rejects missing copies or changed page origins", () => {
+test("review metadata binds source owners and rejects missing copies or changed page origins", () => {
   for (const row of metadata) {
     const source: any = tipHealthCfBeneficiaryReviewFixtures().find((f) =>
       f.id === row.id

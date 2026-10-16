@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -106,7 +108,7 @@ function jointReturn() {
   return { pending: result.pending, filer: extractFilerIdentity(general) };
 }
 
-Deno.test("both spouses independently elect NUA capital gain and ten-year tax", async () => {
+test("both spouses independently elect NUA capital gain and ten-year tax", async () => {
   const { pending, filer } = jointReturn();
   const forms = pending.form4972?.forms as Record<string, unknown>[];
   assertEquals(forms.map((form) => form.recipient), ["T", "S"]);
@@ -139,24 +141,18 @@ Deno.test("both spouses independently elect NUA capital gain and ten-year tax", 
   assertEquals((prepared.bundle.xml.match(/<IRS4972\b/g) ?? []).length, 2);
   const filledPdf = await prepared.renderPdf();
   assertEquals(new TextDecoder().decode(filledPdf.slice(0, 5)), "%PDF-");
-  const evidencePermission = await Deno.permissions.query({
-    name: "env",
-    variable: "FORM4972_EVIDENCE_DIR",
-  });
-  const evidenceDir = evidencePermission.state === "granted"
-    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
-    : undefined;
+  const evidenceDir = process.env.FORM4972_EVIDENCE_DIR;
   if (evidenceDir) {
-    await Deno.mkdir(evidenceDir, { recursive: true });
-    await Deno.writeTextFile(
+    await fs.mkdir(evidenceDir, { recursive: true });
+    await fs.writeFile(
       `${evidenceDir}/full-return.xml`,
       prepared.bundle.xml,
     );
-    await Deno.writeFile(`${evidenceDir}/filled-return.pdf`, filledPdf);
+    await fs.writeFile(`${evidenceDir}/filled-return.pdf`, filledPdf);
   }
 });
 
-Deno.test("two NUA capital elections reject one owner's changed source or combined tax", () => {
+test("two NUA capital elections reject one owner's changed source or combined tax", () => {
   const { pending, filer } = jointReturn();
   const changed = [
     {

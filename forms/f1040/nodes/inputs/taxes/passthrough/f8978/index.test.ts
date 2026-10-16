@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8978, type Form8978Input, Form8978Source } from "./index.ts";
 import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
@@ -29,7 +30,7 @@ function compute(input: Parameters<typeof f8978.compute>[1]) {
   return f8978.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-Deno.test("f8978 routes the positive tax-liability difference to line 16 calculation", () => {
+test("f8978 routes the positive tax-liability difference to line 16 calculation", () => {
   const result = compute({ filings: [filing()] });
   const form = result.outputs.find((output) => output.nodeType === "f8978");
   const tax = result.outputs.find((output) =>
@@ -43,7 +44,7 @@ Deno.test("f8978 routes the positive tax-liability difference to line 16 calcula
   );
 });
 
-Deno.test("f8978 sums signed affected-year differences across filings", () => {
+test("f8978 sums signed affected-year differences across filings", () => {
   const result = compute({ filings: [filing(), filing(1_200, 900)] });
   assertEquals(
     result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
@@ -51,7 +52,7 @@ Deno.test("f8978 sums signed affected-year differences across filings", () => {
   );
 });
 
-Deno.test("f8978 does not invent a tax rate from an adjustment amount", () => {
+test("f8978 does not invent a tax rate from an adjustment amount", () => {
   const result = compute({ filings: [filing(1_500, 1_500)] });
   assertEquals(
     result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
@@ -65,7 +66,7 @@ Deno.test("f8978 does not invent a tax rate from an adjustment amount", () => {
   );
 });
 
-Deno.test("f8978 sends negative line 14 to the reporting-year and AMT worksheets", () => {
+test("f8978 sends negative line 14 to the reporting-year and AMT worksheets", () => {
   const result = compute({ filings: [filing(1_500, 1_000)] });
   assertEquals(
     result.outputs.find((output) =>
@@ -87,7 +88,7 @@ Deno.test("f8978 sends negative line 14 to the reporting-year and AMT worksheets
   );
 });
 
-Deno.test("f8978 requires source adjustment detail and a prior affected year", () => {
+test("f8978 requires source adjustment detail and a prior affected year", () => {
   const noRows = filing();
   noRows.columns[0].income_adjustments = [];
   assertThrows(
@@ -105,7 +106,7 @@ Deno.test("f8978 requires source adjustment detail and a prior affected year", (
   );
 });
 
-Deno.test("f8978 schema limits each filing to four affected years", () => {
+test("f8978 schema limits each filing to four affected years", () => {
   const one = filing();
   assertEquals(
     f8978.inputSchema.safeParse({
@@ -115,7 +116,7 @@ Deno.test("f8978 schema limits each filing to four affected years", () => {
   );
 });
 
-Deno.test("f8978 uses explicitly recomputed taxable income and tax liability", () => {
+test("f8978 uses explicitly recomputed taxable income and tax liability", () => {
   const adjusted = filing();
   adjusted.columns[0].corrected_taxable_income = 14_500;
   adjusted.columns[0].corrected_taxable_income_explanation =
@@ -136,7 +137,7 @@ Deno.test("f8978 uses explicitly recomputed taxable income and tax liability", (
   );
 });
 
-Deno.test("f8978 requires separate statements for nonarithmetic lines 5 and 11", () => {
+test("f8978 requires separate statements for nonarithmetic lines 5 and 11", () => {
   const adjusted = filing();
   adjusted.columns[0].corrected_taxable_income = 14_500;
   assertThrows(
@@ -162,7 +163,7 @@ Deno.test("f8978 requires separate statements for nonarithmetic lines 5 and 11",
   );
 });
 
-Deno.test("f8978 requires explanations for penalties and interest", () => {
+test("f8978 requires explanations for penalties and interest", () => {
   const withPenalty = filing();
   withPenalty.columns[0].penalty = 10;
   assertEquals(
@@ -184,7 +185,7 @@ Deno.test("f8978 requires explanations for penalties and interest", () => {
   );
 });
 
-Deno.test("f8978 orders AAR forms before BBA audit forms", () => {
+test("f8978 orders AAR forms before BBA audit forms", () => {
   const aar = filing();
   aar.source = Form8978Source.Aar;
   assertThrows(

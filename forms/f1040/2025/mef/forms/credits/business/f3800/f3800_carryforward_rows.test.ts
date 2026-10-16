@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   allocateForm3800CreditUse,
@@ -87,7 +90,7 @@ const parts: Form3800DocumentParts = {
   passiveCarryoverDetails: [],
 };
 
-Deno.test("Form 3800 ledger vintages assemble into FIFO Part IV/VI and computation links", () => {
+test("Form 3800 ledger vintages assemble into FIFO Part IV/VI and computation links", () => {
   assertEquals(useRows.map((row) => row.sourceKey), [
     "carryforward:2022-new-markets",
     "carryforward:2024-partnership-new-markets",
@@ -117,7 +120,7 @@ Deno.test("Form 3800 ledger vintages assemble into FIFO Part IV/VI and computati
   assertEquals(printed[form3800PartVIFields(2).i], 200);
 });
 
-Deno.test("Form 3800 carryforward assembly rejects unbound computation and tax-use sources", () => {
+test("Form 3800 carryforward assembly rejects unbound computation and tax-use sources", () => {
   assertThrows(
     () => buildForm3800CarryforwardRows(entries, ["OnlyOne"], allocated),
     Error,
@@ -148,7 +151,7 @@ Deno.test("Form 3800 carryforward assembly rejects unbound computation and tax-u
   );
 });
 
-Deno.test("Form 3800 Part VI orders vintages by year without changing their reserved document links", () => {
+test("Form 3800 Part VI orders vintages by year without changing their reserved document links", () => {
   const reversed = [...entries].reverse();
   const use = allocateForm3800CreditUse(
     form3800CarryforwardCreditUseRows(reversed),
@@ -180,34 +183,29 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test({
-  name:
-    "Form 3800 assembled carryforward parent validates against TY2025 v5.4 XSD",
-  ignore: !xsdAvailable,
-  async fn() {
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
+test.skipIf(!xsdAvailable)("Form 3800 assembled carryforward parent validates against TY2025 v5.4 XSD", async () => {
+    const path = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         path,
         buildIRS3800Document(parts).replace(
           "<IRS3800>",
           '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
         ),
       );
-      const result = await new Deno.Command("xmllint", {
+      const result = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", XSD_PATH, path],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
     } finally {
-      await Deno.remove(path);
+      await sys.remove(path);
     }
-  },
-});
+  });

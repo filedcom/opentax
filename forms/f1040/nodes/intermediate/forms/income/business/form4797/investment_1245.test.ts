@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertFullyRecapturedInvestment1245Return,
@@ -22,7 +23,7 @@ const sale = {
   depreciation_schedule_reference: "DEPR-2025-1",
 };
 
-Deno.test("investment section 1245 property separates ordinary recapture and excess gain", () => {
+test("investment section 1245 property separates ordinary recapture and excess gain", () => {
   const result = calculateInvestment1245Disposition(sale);
   assertEquals(result.adjustedBasis, 7_000);
   assertEquals(result.totalGain, 3_000);
@@ -37,7 +38,7 @@ Deno.test("investment section 1245 property separates ordinary recapture and exc
   assertEquals(excess.excessCapitalGain, 3_000);
 });
 
-Deno.test("fully recaptured investment sale preserves unrelated income, adjustments, and capital rows", () => {
+test("fully recaptured investment sale preserves unrelated income, adjustments, and capital rows", () => {
   const calculated = [calculateInvestment1245Disposition(sale)];
   assertInvestment1245FilingLinks(
     calculated,
@@ -75,7 +76,7 @@ Deno.test("fully recaptured investment sale preserves unrelated income, adjustme
   );
 });
 
-Deno.test("investment section 1245 source rejects short holding and impossible depreciation", () => {
+test("investment section 1245 source rejects short holding and impossible depreciation", () => {
   assertEquals(
     investment1245DispositionSchema.safeParse({
       ...sale,

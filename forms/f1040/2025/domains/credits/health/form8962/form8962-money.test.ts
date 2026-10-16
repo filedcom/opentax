@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1095a } from "../../../../../nodes/inputs/credits/health/f1095a/index.ts";
 import { roundForm8962Amounts } from "./form8962-money.ts";
 
-Deno.test("Form 8962 adds exact cents before rounding a three-policy half-dollar", () => {
+test("Form 8962 adds exact cents before rounding a three-policy half-dollar", () => {
   assertEquals(500 + 300.08 + 200.42 < 1_000.5, true);
   assertEquals(roundForm8962Amounts([500, 300.08, 200.42]), 1_001);
   assertEquals(roundForm8962Amounts([500.26, 300.26]), 801);
@@ -13,7 +14,7 @@ Deno.test("Form 8962 adds exact cents before rounding a three-policy half-dollar
   );
 });
 
-Deno.test("three 1095-A policy premiums keep a half dollar through source aggregation", () => {
+test("three 1095-A policy premiums keep a half dollar through source aggregation", () => {
   const policies = [500, 300.08, 200.42].map((premium, index) => ({
     issuer_name: "Texas Marketplace",
     policy_number: `POLICY-${index + 1}`,

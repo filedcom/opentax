@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { z } from "zod";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
@@ -136,7 +138,7 @@ function account(
   };
 }
 for (const item of cases) {
-  Deno.test(`reviewed ABLE beneficiary contribution ${item.name} reaches complete filing`, async () => {
+  test(`reviewed ABLE beneficiary contribution ${item.name} reaches complete filing`, async () => {
     const review = ableContributionReviewSchema.parse({
       tax_year: 2025,
       reviewed_by: "Retirement Reviewer",
@@ -359,10 +361,10 @@ for (const item of cases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
-    const dir = Deno.env.get("FORM8880_ABLE_EVIDENCE");
+    const dir = process.env.FORM8880_ABLE_EVIDENCE;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
+      await fs.mkdir(output, { recursive: true });
       for (
         const [name, value] of [
           ["source", inputs],
@@ -370,17 +372,17 @@ for (const item of cases) {
           ["origins", origins],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${output}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }
-Deno.test("ABLE source review excludes unsupported contributions and classifications", () => {
+test("ABLE source review excludes unsupported contributions and classifications", () => {
   const base = account(false, 1500, cases[0]);
   const review = {
     tax_year: 2025,

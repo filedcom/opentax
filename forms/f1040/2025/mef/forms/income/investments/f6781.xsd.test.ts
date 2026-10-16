@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -12,7 +15,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // IRS schema bundle is optional in CI.
@@ -29,7 +32,7 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-Deno.test("Form 6781 requires Part I account rows for MeF", () => {
+test("Form 6781 requires Part I account rows for MeF", () => {
   assertThrows(
     () => buildMefXml({ form6781: { net_section_1256_gain: 100 } }, filer),
     Error,
@@ -37,12 +40,7 @@ Deno.test("Form 6781 requires Part I account rows for MeF", () => {
   );
 });
 
-Deno.test({
-  name: "XSD: Form 6781 Part I gain and loss rows validate in TY2025 return",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 6781 Part I gain and loss rows validate in TY2025 return", async () => {
   const xml = buildMefXml({
     form6781: {
       accounts: [
@@ -66,27 +64,21 @@ Deno.test({
     xml,
     "<LongTermCapitalGainAmt>6000</LongTermCapitalGainAmt>",
   );
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });
 
-Deno.test({
-  name:
-    "XSD: Form 6781 account inputs reach Schedule D lines 4 and 11 through the graph",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  ignore: !xsdAvailable,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 6781 account inputs reach Schedule D lines 4 and 11 through the graph", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -128,16 +120,16 @@ Deno.test({
     xml,
     "<LTGainOrLossFromFormsAmt>6000</LTGainOrLossFromFormsAmt>",
   );
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 });

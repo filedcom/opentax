@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -83,7 +84,7 @@ const w2 = {
   box6_medicare_withheld: 0,
 };
 
-Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2, native and PDF", () => {
+test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2, native and PDF", () => {
   const filed = inputSchema.parse(source);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,
@@ -135,7 +136,7 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
   );
 });
 
-Deno.test("Schedule H spouse source and export reject marriage, W-2, spouse identity and return drift", () => {
+test("Schedule H spouse source and export reject marriage, W-2, spouse identity and return drift", () => {
   const filed = inputSchema.parse(source);
   const result = execute(buildExecutionPlan(registry), registry, {
     general,

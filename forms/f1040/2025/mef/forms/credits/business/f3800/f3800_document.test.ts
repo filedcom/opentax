@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
@@ -45,7 +46,7 @@ const currentRows = [{
   xml: buildForm3800CurrentCreditRowXml(currentAmounts[0], metadata),
 }];
 
-Deno.test("Form 3800 document orders all six parts with filed tax-use reconciliation", () => {
+test("Form 3800 document orders all six parts with filed tax-use reconciliation", () => {
   const xml = buildIRS3800Document({
     lines,
     transferStatementIds: [],
@@ -73,7 +74,7 @@ Deno.test("Form 3800 document orders all six parts with filed tax-use reconcilia
   assertStringIncludes(xml, "<TotGenBusCYCreditAmtGrp>");
 });
 
-Deno.test("Form 3800 document accepts a passive carryover without a current-year row", () => {
+test("Form 3800 document accepts a passive carryover without a current-year row", () => {
   const carryoverLines = calculateForm3800Nonpassive(
     { ...tax, standardCredit: 0 },
     { ...ZERO_FORM3800_PASSIVE_ACTIVITY, line2: 30, line3: 30 },
@@ -110,7 +111,7 @@ Deno.test("Form 3800 document accepts a passive carryover without a current-year
   assertStringIncludes(xml, "<Tot8844OthSpcfdGBCOrESBCAmtGrp>");
 });
 
-Deno.test("Form 3800 document emits all Part V sources only for an aggregate line", () => {
+test("Form 3800 document emits all Part V sources only for an aggregate line", () => {
   const detail = [
     {
       line: "1h" as const,
@@ -182,7 +183,7 @@ Deno.test("Form 3800 document emits all Part V sources only for an aggregate lin
   );
 });
 
-Deno.test("Form 3800 document rejects missing source rows or unreconciled tax use", () => {
+test("Form 3800 document rejects missing source rows or unreconciled tax use", () => {
   const parts = {
     lines,
     transferStatementIds: [],

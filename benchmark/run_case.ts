@@ -1,4 +1,5 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
+#!/usr/bin/env bun
+import * as fs from "node:fs/promises";
 /**
  * Run a single benchmark case through the tax engine and save output.json.
  * Usage: deno run --allow-read --allow-write --allow-run benchmark/run_case.ts <case_dir>
@@ -19,12 +20,12 @@ import {
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR = join(SCRIPT_DIR, "..");
 
-const caseDir = Deno.args[0];
+const caseDir = process.argv.slice(2)[0];
 if (!caseDir) {
   console.error(
     "Usage: deno run --allow-read --allow-write --allow-run run_case.ts <case_dir>",
   );
-  Deno.exit(1);
+  process.exit(1);
 }
 
 async function tax(...args: string[]): Promise<string> {
@@ -33,7 +34,7 @@ async function tax(...args: string[]): Promise<string> {
 
 const inputFile = join(caseDir, "input.json");
 const caseData = benchmarkInputSchema.parse(
-  JSON.parse(await Deno.readTextFile(inputFile)),
+  JSON.parse(await fs.readFile(inputFile, "utf8")),
 );
 
 console.log(`Running: ${basename(caseDir)}`);
@@ -62,7 +63,7 @@ console.log("  Computing result...");
 const result = await tax("return", "get", "--returnId", rid, "--json");
 benchmarkReturnSchema.parse(JSON.parse(result));
 const outputFile = join(caseDir, "output.json");
-await Deno.writeTextFile(outputFile, result);
+await fs.writeFile(outputFile, result);
 console.log(`  Saved: ${outputFile}`);
 
 console.log(JSON.stringify(JSON.parse(result).summary, null, 2));

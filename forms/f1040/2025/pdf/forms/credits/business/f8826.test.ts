@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -92,7 +93,7 @@ const pending = {
   },
 };
 
-Deno.test("sourced interpreter expense and reduced Schedule C deduction reach Form 1040", () => {
+test("sourced interpreter expense and reduced Schedule C deduction reach Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -125,7 +126,7 @@ Deno.test("sourced interpreter expense and reduced Schedule C deduction reach Fo
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 2_375);
 });
 
-Deno.test("Form 8826 self-only printable copy binds its prepared Form 3800 document", () => {
+test("Form 8826 self-only printable copy binds its prepared Form 3800 document", () => {
   const prepared = prepareForm3800DocumentParts(parent, {
     pending,
     documentIdsByPendingKey: {
@@ -141,7 +142,7 @@ Deno.test("Form 8826 self-only printable copy binds its prepared Form 3800 docum
   ]);
 });
 
-Deno.test("self-earned Form 8826 prints the same source credit as native Form 3800 and final tax", () => {
+test("self-earned Form 8826 prints the same source credit as native Form 3800 and final tax", () => {
   const native = form8826.build(source, {
     pending,
     documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
@@ -301,7 +302,7 @@ Deno.test("self-earned Form 8826 prints the same source credit as native Form 38
   );
 });
 
-Deno.test("Form 8826 PDF omits an absent self claim but validates a claimed credit", () => {
+test("Form 8826 PDF omits an absent self claim but validates a claimed credit", () => {
   assertEquals(form8826Pdf.includeWhen!({}), false);
   assertEquals(form8826Pdf.projectFields!({}, pending), {});
   assertThrows(
@@ -310,7 +311,7 @@ Deno.test("Form 8826 PDF omits an absent self claim but validates a claimed cred
   );
 });
 
-Deno.test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K-1, and final tax", () => {
+test("mixed sourced Form 8826 line 7 and line 8 reconcile to native, PDF, K-1, and final tax", () => {
   const passThrough = {
     entity_type: "s_corporation" as const,
     entity_ein: "987654321",

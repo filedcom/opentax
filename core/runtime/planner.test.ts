@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import type { NodeRegistry } from "../types/node-registry.ts";
@@ -56,7 +57,7 @@ class MockStartNode extends TaxNode<typeof startInputSchema> {
 
 // --- Tests ---
 
-Deno.test("planner: single node (start only, no outputs) produces [start]", () => {
+test("planner: single node (start only, no outputs) produces [start]", () => {
   const emptyStartSchema = z.object({});
   class EmptyStartNode extends TaxNode<typeof emptyStartSchema> {
     readonly nodeType = "start";
@@ -73,7 +74,7 @@ Deno.test("planner: single node (start only, no outputs) produces [start]", () =
   assertEquals(plan[0].nodeType, "start");
 });
 
-Deno.test("planner: linear chain (start -> mock_w2 -> mock_leaf) produces correct topo order", () => {
+test("planner: linear chain (start -> mock_w2 -> mock_leaf) produces correct topo order", () => {
   const registry: NodeRegistry = {
     start: new MockStartNode(),
     mock_w2: mockW2Node,
@@ -92,7 +93,7 @@ Deno.test("planner: linear chain (start -> mock_w2 -> mock_leaf) produces correc
   assertEquals(w2Idx < leafIdx, true);
 });
 
-Deno.test("planner: each nodeType fires exactly once regardless of input count", () => {
+test("planner: each nodeType fires exactly once regardless of input count", () => {
   // Even with 5 W-2s in inputs, mock_w2 appears exactly once in the plan
   const registry: NodeRegistry = {
     start: new MockStartNode(),
@@ -105,7 +106,7 @@ Deno.test("planner: each nodeType fires exactly once regardless of input count",
   assertEquals(w2Steps.length, 1);
 });
 
-Deno.test("planner: step ID equals nodeType (no numeric suffixes)", () => {
+test("planner: step ID equals nodeType (no numeric suffixes)", () => {
   const registry: NodeRegistry = {
     start: new MockStartNode(),
     mock_w2: mockW2Node,
@@ -118,7 +119,7 @@ Deno.test("planner: step ID equals nodeType (no numeric suffixes)", () => {
   }
 });
 
-Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid topo order", () => {
+test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid topo order", () => {
   const bInputSchema = z.object({ x: z.number() });
   const cInputSchema = z.object({ y: z.number() });
   const dInputSchema = z.object({ result: z.number().optional() });
@@ -193,7 +194,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
   assertEquals(cIdx < dIdx, true);
 });
 
-Deno.test("planner: all nodes in registry appear in plan (optional nodes included — executor skips them)", () => {
+test("planner: all nodes in registry appear in plan (optional nodes included — executor skips them)", () => {
   // Optional nodes (e.g. schedule_c) are included in the plan even when inputs
   // contain no schedule_c data. The executor silently skips them via Zod parse fail.
   const optionalSchema = z.object({ required_field: z.string() });

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { inputSchema as qbiInputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -38,7 +41,7 @@ const cases = [
   },
 ];
 for (const c of cases) {
-  Deno.test(`Form8995A three businesses ${c.id} reconcile full XML and PDF`, async () => {
+  test(`Form8995A three businesses ${c.id} reconcile full XML and PDF`, async () => {
     const rows = [
       { ...sourceRows[0], line_1_gross_receipts: c.profit + 100 },
       {
@@ -130,30 +133,24 @@ for (const c of cases) {
       prepared.bundle.xml,
       `<QualifiedBusinessIncomeDedAmt>${c.deduction}</QualifiedBusinessIncomeDedAmt>`,
     );
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "FORM8995A_THREE_BUSINESSES_DIR",
-    });
-    const retained = permission.state === "granted"
-      ? Deno.env.get("FORM8995A_THREE_BUSINESSES_DIR")
-      : undefined;
-    const dir = retained ? `${retained}/${c.id}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const retained = process.env.FORM8995A_THREE_BUSINESSES_DIR;
+    const dir = retained ? `${retained}/${c.id}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/input.json`,
         JSON.stringify(inputs, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/pending.json`,
         JSON.stringify(prepared.bundle.pending, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/projection.json`,
         JSON.stringify({ parent, companion }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      const xsd = await new Deno.Command("xmllint", {
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -166,10 +163,10 @@ for (const c of cases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           prepared.bundle.pending,
@@ -179,7 +176,7 @@ for (const c of cases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
@@ -214,7 +211,7 @@ for (const c of cases) {
         );
       }
     } finally {
-      if (!retained) await Deno.remove(dir, { recursive: true });
+      if (!retained) await sys.remove(dir, { recursive: true });
     }
   });
 }

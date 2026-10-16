@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { inputSchema as form8283InputSchema } from "../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
@@ -35,7 +36,7 @@ async function sha256(bytes: Uint8Array): Promise<string> {
 }
 
 for (const reduced of [false, true]) {
-  Deno.test(`two similar Section B art gifts${reduced ? " with one short-term reduction" : ""} reconcile Schedule A, Form 1040, MeF, and PDF`, async () => {
+  test(`two similar Section B art gifts${reduced ? " with one short-term reduction" : ""} reconcile Schedule A, Form 1040, MeF, and PDF`, async () => {
     const address = {
       line1: "1 Main St",
       city: "Austin",

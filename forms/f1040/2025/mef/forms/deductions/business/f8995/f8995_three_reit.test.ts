@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -59,7 +60,7 @@ function filedReturn() {
   return result.pending;
 }
 
-Deno.test("three separately reviewed REIT issuers reconcile Form 8995, Form 1040, native MeF and PDF", () => {
+test("three separately reviewed REIT issuers reconcile Form 8995, Form 1040, native MeF and PDF", () => {
   const pending = filedReturn();
   const fields = pending.form8995;
   assert(fields);
@@ -88,7 +89,7 @@ Deno.test("three separately reviewed REIT issuers reconcile Form 8995, Form 1040
   assertEquals(pdf.line15, pending.f1040?.line13_qbi_deduction);
 });
 
-Deno.test("three-issuer Form 8995 route rejects changed copies, identity, holding, totals and prepared lines", () => {
+test("three-issuer Form 8995 route rejects changed copies, identity, holding, totals and prepared lines", () => {
   const pending = filedReturn();
   const fields = pending.form8995;
   assert(fields);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -99,7 +100,7 @@ function threeSourceReturn(pairOwner: "T" | "S") {
 }
 
 for (const pairOwner of ["T", "S"] as const) {
-  Deno.test(`Form 4972 joint ${pairOwner} two-copy plan and other spouse one-copy plan`, () => {
+  test(`Form 4972 joint ${pairOwner} two-copy plan and other spouse one-copy plan`, () => {
     const result = threeSourceReturn(pairOwner);
     assertEquals(result.diagnostics, []);
     const pending = result.pending;
@@ -151,7 +152,7 @@ for (const pairOwner of ["T", "S"] as const) {
   });
 }
 
-Deno.test("Form 4972 joint return combines two copies for each spouse", () => {
+test("Form 4972 joint return combines two copies for each spouse", () => {
   const result = execute(plan, registry, {
     general,
     f1099r: [
@@ -199,7 +200,7 @@ Deno.test("Form 4972 joint return combines two copies for each spouse", () => {
   );
 });
 
-Deno.test("Form 4972 joint mixed capital-gain and ten-year spouse elections", () => {
+test("Form 4972 joint mixed capital-gain and ten-year spouse elections", () => {
   const result = execute(plan, registry, {
     general,
     f1099r: [

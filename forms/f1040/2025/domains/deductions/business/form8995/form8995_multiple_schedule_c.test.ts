@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { multipleScheduleCInputs } from "../../../../pdf/reviews/general/composed-returns/review-8995-multiple.fixture.ts";
 import {
   assert,
@@ -31,7 +34,7 @@ async function validate(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: ["--noout", "--schema", schema, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -43,7 +46,7 @@ async function validate(xml: string) {
   const result = await child.output();
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
 }
-Deno.test("multiple Schedule C full returns file shared SE allocation, signed loss rows, cents and overflow", async () => {
+test("multiple Schedule C full returns file shared SE allocation, signed loss rows, cents and overflow", async () => {
   for (
     const scenario of [
       {
@@ -142,18 +145,18 @@ Deno.test("multiple Schedule C full returns file shared SE allocation, signed lo
     await validate(prepared.bundle.xml);
     const pdf = await prepared.renderPdf();
     assert(pdf.length > 0);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         `../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-multiple/${scenario.id}/`,
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-      await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+      await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
     }
   }
 });
-Deno.test("multiple Schedule C exporter rejects source, shared SE, allocation, row and settled return tampering", () => {
+test("multiple Schedule C exporter rejects source, shared SE, allocation, row and settled return tampering", () => {
   const result = f1040_2025.executeReturn(
     inputFor([80_000.50, 20_000.49, -15_000.49], true),
   );
@@ -243,7 +246,7 @@ Deno.test("multiple Schedule C exporter rejects source, shared SE, allocation, r
     assertThrows(() => form8995Pdf.projectFields!(changed.form8995, changed));
   }
 });
-Deno.test("Form 8995 business continuation paginates every additional row", async () => {
+test("Form 8995 business continuation paginates every additional row", async () => {
   const document = await PDFDocument.create();
   const rows = Array.from(
     { length: 41 },
@@ -257,7 +260,7 @@ Deno.test("Form 8995 business continuation paginates every additional row", asyn
   assertEquals(document.getPageCount(), 3);
 });
 
-Deno.test("multiple Schedule C uses combined SE tax after the wage base and retains entered row rounding", async () => {
+test("multiple Schedule C uses combined SE tax after the wage base and retains entered row rounding", async () => {
   const result = f1040_2025.executeReturn(inputFor([90_000, 60_000], true));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);

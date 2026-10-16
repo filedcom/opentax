@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertAlmostEquals, assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { CoverageType, form8889, inputSchema } from "./index.ts";
@@ -138,7 +139,7 @@ function rolloverEvidence(amount: number, reportedGross = amount) {
   };
 }
 
-Deno.test("Form 8889 spouse-only account retains beneficiary and Form 5329 owner", () => {
+test("Form 8889 spouse-only account retains beneficiary and Form 5329 owner", () => {
   const result = compute({
     beneficiary_identity: {
       owner: "S",
@@ -161,7 +162,7 @@ Deno.test("Form 8889 spouse-only account retains beneficiary and Form 5329 owner
   assertEquals(entries?.[0]?.hsa_part_vii?.line47_current_year_excess, 700);
 });
 
-Deno.test("Form 8889 two spouse HSAs allocate the family limit and combine Schedule 1", () => {
+test("Form 8889 two spouse HSAs allocate the family limit and combine Schedule 1", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T",
@@ -287,7 +288,7 @@ function paired2024RecaptureInput() {
   };
 }
 
-Deno.test("Form 8889 paired 2024 family election redetermines each owner's 2025 recapture", () => {
+test("Form 8889 paired 2024 family election redetermines each owner's 2025 recapture", () => {
   const result = compute(paired2024RecaptureInput());
   const forms = findOutput(result, "form8889")?.fields.forms as Array<
     Record<string, unknown>
@@ -306,7 +307,7 @@ Deno.test("Form 8889 paired 2024 family election redetermines each owner's 2025 
   );
 });
 
-Deno.test("Form 8889 paired 2024 recapture requires both filed forms and equal allocation", () => {
+test("Form 8889 paired 2024 recapture requires both filed forms and equal allocation", () => {
   const source = paired2024RecaptureInput();
   assertThrows(
     () =>
@@ -383,7 +384,7 @@ Deno.test("Form 8889 paired 2024 recapture requires both filed forms and equal a
   );
 });
 
-Deno.test("Form 8889 two full-year self-only HSAs keep separate owner limits", () => {
+test("Form 8889 two full-year self-only HSAs keep separate owner limits", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -473,7 +474,7 @@ Deno.test("Form 8889 two full-year self-only HSAs keep separate owner limits", (
   );
 });
 
-Deno.test("Form 8889 paired self-only HSAs prorate each owner's distinct eligible months", () => {
+test("Form 8889 paired self-only HSAs prorate each owner's distinct eligible months", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -550,7 +551,7 @@ Deno.test("Form 8889 paired self-only HSAs prorate each owner's distinct eligibl
   );
 });
 
-Deno.test("Form 8889 two spouse HSAs prorate matching partial-year family coverage", () => {
+test("Form 8889 two spouse HSAs prorate matching partial-year family coverage", () => {
   const coverage = Array.from(
     { length: 12 },
     (_, month) => month < 6 ? CoverageType.Family : null,
@@ -620,7 +621,7 @@ Deno.test("Form 8889 two spouse HSAs prorate matching partial-year family covera
   );
 });
 
-Deno.test("Form 8889 allocates shared family months when one spouse enters Medicare", () => {
+test("Form 8889 allocates shared family months when one spouse enters Medicare", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T",
@@ -695,7 +696,7 @@ Deno.test("Form 8889 allocates shared family months when one spouse enters Medic
   );
 });
 
-Deno.test("Form 8889 paired mixed coverage adds each owner's self-only limit and age-55 catch-up", () => {
+test("Form 8889 paired mixed coverage adds each owner's self-only limit and age-55 catch-up", () => {
   const coverage = [
     ...Array(5).fill(CoverageType.Family),
     ...Array(7).fill(CoverageType.SelfOnly),
@@ -757,7 +758,7 @@ Deno.test("Form 8889 paired mixed coverage adds each owner's self-only limit and
   );
 });
 
-Deno.test("Form 8889 deems both eligible spouses family-covered when either has family HDHP", () => {
+test("Form 8889 deems both eligible spouses family-covered when either has family HDHP", () => {
   const primaryCoverage = [
     ...Array(3).fill(CoverageType.Family),
     ...Array(9).fill(CoverageType.SelfOnly),
@@ -828,7 +829,7 @@ Deno.test("Form 8889 deems both eligible spouses family-covered when either has 
   );
 });
 
-Deno.test("Form 8889 two spouse HSAs reject unsupported excess and missing allocation", () => {
+test("Form 8889 two spouse HSAs reject unsupported excess and missing allocation", () => {
   const account = {
     beneficiary_identity: {
       owner: "T",
@@ -878,7 +879,7 @@ Deno.test("Form 8889 two spouse HSAs reject unsupported excess and missing alloc
   );
 });
 
-Deno.test("Form 8889 paired partial-year family coverage cannot elect the last-month rule without owner recapture provenance", () => {
+test("Form 8889 paired partial-year family coverage cannot elect the last-month rule without owner recapture provenance", () => {
   const coverage = [
     ...Array(6).fill(null),
     ...Array(6).fill(CoverageType.Family),
@@ -922,7 +923,7 @@ Deno.test("Form 8889 paired partial-year family coverage cannot elect the last-m
   );
 });
 
-Deno.test("Form 8889 paired HSA excess preserves each owner's Part VII source", () => {
+test("Form 8889 paired HSA excess preserves each owner's Part VII source", () => {
   const primary = {
     beneficiary_identity: {
       owner: "T",
@@ -1005,14 +1006,14 @@ Deno.test("Form 8889 paired HSA excess preserves each owner's Part VII source", 
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("smoke: no contributions, no distributions → no outputs", () => {
+test("smoke: no contributions, no distributions → no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── Part I: Contribution Deduction ──────────────────────────────────────────
 
-Deno.test("part1: self_only personal contribution → schedule1 line13_hsa_deduction", () => {
+test("part1: self_only personal contribution → schedule1 line13_hsa_deduction", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 3000,
@@ -1020,7 +1021,7 @@ Deno.test("part1: self_only personal contribution → schedule1 line13_hsa_deduc
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
 });
 
-Deno.test("part1: family personal contribution → schedule1 line13_hsa_deduction", () => {
+test("part1: family personal contribution → schedule1 line13_hsa_deduction", () => {
   const result = compute({
     ...uniformFamily,
     taxpayer_hsa_contributions: 5000,
@@ -1028,7 +1029,7 @@ Deno.test("part1: family personal contribution → schedule1 line13_hsa_deductio
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5000);
 });
 
-Deno.test("part1: total contributions capped at annual limit (self_only 4300)", () => {
+test("part1: total contributions capped at annual limit (self_only 4300)", () => {
   // employer 2000 + taxpayer 2500 = total 4500 > limit 4300 → excess = 200.
   // Line 13 deduction covers only the taxpayer's own contributions, capped at
   // the limit remaining after employer contributions: min(2500, 4300-2000) = 2300.
@@ -1047,7 +1048,7 @@ Deno.test("part1: total contributions capped at annual limit (self_only 4300)", 
   );
 });
 
-Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpayer excess to form5329", () => {
+test("part1: employer fills entire limit → no taxpayer deduction, taxpayer excess to form5329", () => {
   // employer 4300 fills the self_only limit entirely; taxpayer adds 500 on top → excess = 500.
   // No limit remains for the taxpayer's own contributions → line 13 deduction = 0.
   // (Employer contributions are excluded from W-2 box 1, not deducted again.)
@@ -1065,7 +1066,7 @@ Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpaye
   );
 });
 
-Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
+test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
   // limit = 4300 + 1000 = 5300; contribute 5300 → fully deductible
   const result = compute({
     ...uniformSelfOnly,
@@ -1075,7 +1076,7 @@ Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5300);
 });
 
-Deno.test("part1: age 55+ catch-up adds $1000 to family limit", () => {
+test("part1: age 55+ catch-up adds $1000 to family limit", () => {
   // limit = 8550 + 1000 = 9550; contribute 9550 → fully deductible
   const result = compute({
     ...uniformFamily,
@@ -1085,7 +1086,7 @@ Deno.test("part1: age 55+ catch-up adds $1000 to family limit", () => {
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 9550);
 });
 
-Deno.test("part1: contribution at exact limit → fully deductible, no excess", () => {
+test("part1: contribution at exact limit → fully deductible, no excess", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 4300,
@@ -1095,7 +1096,7 @@ Deno.test("part1: contribution at exact limit → fully deductible, no excess", 
   assertEquals(f5329, undefined);
 });
 
-Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8889 line 13", () => {
+test("part1: filed prior-year HSA excess uses current unused room on Form 8889 line 13", () => {
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
@@ -1128,7 +1129,7 @@ Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8
   });
 });
 
-Deno.test("part1: prior excess can supply line 13 without a current contribution", () => {
+test("part1: prior excess can supply line 13 without a current contribution", () => {
   const result = compute({
     ...uniformSelfOnly,
     prior_year_hsa_excess: {
@@ -1152,7 +1153,7 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
   );
 });
 
-Deno.test("part1: prior excess rejects a different filed Form 5329 owner", () => {
+test("part1: prior excess rejects a different filed Form 5329 owner", () => {
   assertThrows(
     () =>
       compute({
@@ -1170,7 +1171,7 @@ Deno.test("part1: prior excess rejects a different filed Form 5329 owner", () =>
   );
 });
 
-Deno.test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", () => {
+test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 3_800,
@@ -1189,7 +1190,7 @@ Deno.test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", (
 
 // ─── Part I: Excess Contributions → form5329 ─────────────────────────────────
 
-Deno.test("part1: excess contributions route to form5329 line 47", () => {
+test("part1: excess contributions route to form5329 line 47", () => {
   // self_only limit 4300; taxpayer contributes 5000 → excess = 700
   const result = compute({
     ...uniformSelfOnly,
@@ -1209,7 +1210,7 @@ Deno.test("part1: excess contributions route to form5329 line 47", () => {
   );
 });
 
-Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
+test("part1: combined employer+taxpayer excess routes to form5329", () => {
   // family limit 8550; employer 4000, taxpayer 5000 → total 9000, excess = 450
   const result = compute({
     ...uniformFamily,
@@ -1224,7 +1225,7 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
   );
 });
 
-Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contribution room", () => {
+test("part1: direct IRA-to-HSA funding transfer reduces line 12 contribution room", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 2500,
@@ -1253,7 +1254,7 @@ Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contributio
   );
 });
 
-Deno.test("part1: a funding transfer needs eligible coverage in its transfer month", () => {
+test("part1: a funding transfer needs eligible coverage in its transfer month", () => {
   assertThrows(
     () =>
       compute({
@@ -1279,7 +1280,7 @@ Deno.test("part1: a funding transfer needs eligible coverage in its transfer mon
   );
 });
 
-Deno.test("part1: a funding-only Form 8889 prints line 10 without a deduction", () => {
+test("part1: a funding-only Form 8889 prints line 10 without a deduction", () => {
   const result = compute({
     ...uniformSelfOnly,
     qualified_hsa_funding_distributions: {
@@ -1304,7 +1305,7 @@ Deno.test("part1: a funding-only Form 8889 prints line 10 without a deduction", 
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("part1: later family coverage permits a second sourced IRA-to-HSA transfer", () => {
+test("part1: later family coverage permits a second sourced IRA-to-HSA transfer", () => {
   const result = compute({
     ...uniformSelfOnly,
     eligible_hdhp_coverage_by_month: [
@@ -1338,7 +1339,7 @@ Deno.test("part1: later family coverage permits a second sourced IRA-to-HSA tran
   assertEquals(printed?.print_line12, 550);
 });
 
-Deno.test("part1: second IRA-to-HSA transfer must follow self-only coverage in a later family month", () => {
+test("part1: second IRA-to-HSA transfer must follow self-only coverage in a later family month", () => {
   assertThrows(
     () =>
       compute({
@@ -1368,7 +1369,7 @@ Deno.test("part1: second IRA-to-HSA transfer must follow self-only coverage in a
   );
 });
 
-Deno.test("part1: two IRA-to-HSA transfers cannot exceed the family contribution limit", () => {
+test("part1: two IRA-to-HSA transfers cannot exceed the family contribution limit", () => {
   assertThrows(
     () =>
       compute({
@@ -1403,7 +1404,7 @@ Deno.test("part1: two IRA-to-HSA transfers cannot exceed the family contribution
   );
 });
 
-Deno.test("part1: employer funding above the contribution limit needs income treatment", () => {
+test("part1: employer funding above the contribution limit needs income treatment", () => {
   assertThrows(
     () =>
       compute({
@@ -1415,7 +1416,7 @@ Deno.test("part1: employer funding above the contribution limit needs income tre
   );
 });
 
-Deno.test("part1: employer contribution worksheet removes prior-year W-2 amounts and adds next-year deposits", () => {
+test("part1: employer contribution worksheet removes prior-year W-2 amounts and adds next-year deposits", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 3000,
@@ -1431,7 +1432,7 @@ Deno.test("part1: employer contribution worksheet removes prior-year W-2 amounts
   assertEquals(printed?.print_line13_deduction, 500);
 });
 
-Deno.test("part1: a 2026 deposit designated for 2025 reaches Form 8889 line 9 without 2025 W-2 code W", () => {
+test("part1: a 2026 deposit designated for 2025 reaches Form 8889 line 9 without 2025 W-2 code W", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_contribution_years: {
@@ -1449,7 +1450,7 @@ Deno.test("part1: a 2026 deposit designated for 2025 reaches Form 8889 line 9 wi
   );
 });
 
-Deno.test("part1: employer year worksheet cannot subtract more prior-year deposits than W-2 code W", () => {
+test("part1: employer year worksheet cannot subtract more prior-year deposits than W-2 code W", () => {
   assertThrows(
     () =>
       compute({
@@ -1465,7 +1466,7 @@ Deno.test("part1: employer year worksheet cannot subtract more prior-year deposi
   );
 });
 
-Deno.test("part1: W-2 code W requires year-allocation facts", () => {
+test("part1: W-2 code W requires year-allocation facts", () => {
   assertThrows(
     () =>
       compute({
@@ -1478,7 +1479,7 @@ Deno.test("part1: W-2 code W requires year-allocation facts", () => {
   );
 });
 
-Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other income and Form 5329", () => {
+test("part1: retained employer excess omitted from W-2 box 1 reaches other income and Form 5329", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1511,7 +1512,7 @@ Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other 
   );
 });
 
-Deno.test("part1: retained employer excess already in W-2 box 1 is not other income again", () => {
+test("part1: retained employer excess already in W-2 box 1 is not other income again", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1529,7 +1530,7 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
   );
 });
 
-Deno.test("part1: employer excess only partly included in W-2 box 1 reports the remainder", () => {
+test("part1: employer excess only partly included in W-2 box 1 reports the remainder", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1550,7 +1551,7 @@ Deno.test("part1: employer excess only partly included in W-2 box 1 reports the 
   );
 });
 
-Deno.test("part1: W-2 box 1 inclusion cannot exceed employer excess", () => {
+test("part1: W-2 box 1 inclusion cannot exceed employer excess", () => {
   assertThrows(
     () =>
       compute({
@@ -1567,7 +1568,7 @@ Deno.test("part1: W-2 box 1 inclusion cannot exceed employer excess", () => {
   );
 });
 
-Deno.test("part1: no eligible HDHP month leaves a zero limit and routes employer excess", () => {
+test("part1: no eligible HDHP month leaves a zero limit and routes employer excess", () => {
   const result = compute({
     ...uniformSelfOnly,
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
@@ -1594,7 +1595,7 @@ Deno.test("part1: no eligible HDHP month leaves a zero limit and routes employer
   );
 });
 
-Deno.test("part1: an excess HSA needs its December 31 value", () => {
+test("part1: an excess HSA needs its December 31 value", () => {
   assertThrows(
     () => compute({ ...uniformSelfOnly, taxpayer_hsa_contributions: 5000 }),
     Error,
@@ -1602,7 +1603,7 @@ Deno.test("part1: an excess HSA needs its December 31 value", () => {
   );
 });
 
-Deno.test("part1: timely 2025 employer-excess withdrawal excludes principal from Form 5329 and includes earnings", () => {
+test("part1: timely 2025 employer-excess withdrawal excludes principal from Form 5329 and includes earnings", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1638,7 +1639,7 @@ Deno.test("part1: timely 2025 employer-excess withdrawal excludes principal from
   );
 });
 
-Deno.test("part1: employer excess paid to owner needs its exact code-2 source", () => {
+test("part1: employer excess paid to owner needs its exact code-2 source", () => {
   const source = {
     ...uniformSelfOnly,
     employer_hsa_contributions: 5_000,
@@ -1695,7 +1696,7 @@ Deno.test("part1: employer excess paid to owner needs its exact code-2 source", 
   );
 });
 
-Deno.test("part1: timely 2026 employer-excess withdrawal stays off 2025 distribution and earnings lines", () => {
+test("part1: timely 2026 employer-excess withdrawal stays off 2025 distribution and earnings lines", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1724,7 +1725,7 @@ Deno.test("part1: timely 2026 employer-excess withdrawal stays off 2025 distribu
   );
 });
 
-Deno.test("part1: partial timely employer withdrawal leaves only the retained excess on Form 5329", () => {
+test("part1: partial timely employer withdrawal leaves only the retained excess on Form 5329", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
@@ -1761,7 +1762,7 @@ Deno.test("part1: partial timely employer withdrawal leaves only the retained ex
   );
 });
 
-Deno.test("part1: timely employer withdrawal cannot exceed employer excess", () => {
+test("part1: timely employer withdrawal cannot exceed employer excess", () => {
   assertThrows(
     () =>
       compute({
@@ -1784,7 +1785,7 @@ Deno.test("part1: timely employer withdrawal cannot exceed employer excess", () 
 
 // ─── Part II: Distributions ───────────────────────────────────────────────────
 
-Deno.test("part2: fully qualified distribution → no income, no penalty", () => {
+test("part2: fully qualified distribution → no income, no penalty", () => {
   const result = compute({
     ...ordinary1099Sa(2000),
     qualified_medical_expenses: 2000,
@@ -1795,7 +1796,7 @@ Deno.test("part2: fully qualified distribution → no income, no penalty", () =>
   assertEquals(s2, undefined);
 });
 
-Deno.test("part2: positive line 14a needs owner-matched Form 1099-SA sources", () => {
+test("part2: positive line 14a needs owner-matched Form 1099-SA sources", () => {
   assertThrows(
     () =>
       compute({
@@ -1831,7 +1832,7 @@ Deno.test("part2: positive line 14a needs owner-matched Form 1099-SA sources", (
   );
 });
 
-Deno.test("part2: two distinct Forms 1099-SA sum to one owner line 14a", () => {
+test("part2: two distinct Forms 1099-SA sum to one owner line 14a", () => {
   const result = compute({
     hsa_distributions: 500,
     form1099_sa_distributions: [
@@ -1850,7 +1851,7 @@ Deno.test("part2: two distinct Forms 1099-SA sum to one owner line 14a", () => {
   assertEquals(firstForm(result)?.print_line16_taxable, 0);
 });
 
-Deno.test("part2: non-qualified distribution → schedule1 line8f HSA income", () => {
+test("part2: non-qualified distribution → schedule1 line8f HSA income", () => {
   // distribute 3000, qualified 1000 → taxable 2000
   const result = compute({
     ...ordinary1099Sa(3000),
@@ -1860,7 +1861,7 @@ Deno.test("part2: non-qualified distribution → schedule1 line8f HSA income", (
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8f_hsa_income, 2000);
 });
 
-Deno.test("part2: taxable distribution needs an explicit penalty exception amount", () => {
+test("part2: taxable distribution needs an explicit penalty exception amount", () => {
   assertThrows(
     () =>
       compute({
@@ -1872,7 +1873,7 @@ Deno.test("part2: taxable distribution needs an explicit penalty exception amoun
   );
 });
 
-Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17c_hsa_penalty", () => {
+test("part2: non-qualified distribution → 20% penalty on schedule2 line17c_hsa_penalty", () => {
   // distribute 3000, qualified 1000 → taxable 2000 → penalty 400
   const result = compute({
     ...ordinary1099Sa(3000),
@@ -1882,7 +1883,7 @@ Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 400);
 });
 
-Deno.test("part2: fully non-qualified distribution → income + 20% penalty", () => {
+test("part2: fully non-qualified distribution → income + 20% penalty", () => {
   // distribute 1000, no qualified expenses → taxable 1000 → penalty 200
   const result = compute({
     ...ordinary1099Sa(1000),
@@ -1892,7 +1893,7 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
 });
 
-Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
+test("part2: line 14b rollover reduces taxable net distributions", () => {
   const result = compute({
     ...ordinary1099Sa(5000),
     hsa_excluded_distributions: { rollover: rolloverEvidence(3000, 5000) },
@@ -1925,7 +1926,7 @@ Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
   );
 });
 
-Deno.test("part2: HSA rollover line 14b needs supported redeposit evidence", () => {
+test("part2: HSA rollover line 14b needs supported redeposit evidence", () => {
   const base = rolloverEvidence(500);
   const source = (rollover: Record<string, unknown>) =>
     inputSchema.parse({
@@ -2017,7 +2018,7 @@ Deno.test("part2: HSA rollover line 14b needs supported redeposit evidence", () 
   );
 });
 
-Deno.test("part2: line 14b and line 15 cannot exceed their source distribution", () => {
+test("part2: line 14b and line 15 cannot exceed their source distribution", () => {
   assertThrows(
     () =>
       compute({
@@ -2039,7 +2040,7 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
   );
 });
 
-Deno.test("part2: timely excess-withdrawal earnings reach Schedule 1 other income", () => {
+test("part2: timely excess-withdrawal earnings reach Schedule 1 other income", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 5200,
@@ -2082,7 +2083,7 @@ Deno.test("part2: timely excess-withdrawal earnings reach Schedule 1 other incom
   assertEquals(fieldsOf(result.outputs, form5329), undefined);
 });
 
-Deno.test("part2: code-2 timely excess requires exact box 1, box 2, and document identity", () => {
+test("part2: code-2 timely excess requires exact box 1, box 2, and document identity", () => {
   const record = {
     tax_year: 2025,
     recipient_ssn: "123456789",
@@ -2137,7 +2138,7 @@ Deno.test("part2: code-2 timely excess requires exact box 1, box 2, and document
   }
 });
 
-Deno.test("part2: timely personal withdrawal cannot exceed its 2025 contribution excess", () => {
+test("part2: timely personal withdrawal cannot exceed its 2025 contribution excess", () => {
   assertThrows(
     () =>
       compute({
@@ -2167,7 +2168,7 @@ Deno.test("part2: timely personal withdrawal cannot exceed its 2025 contribution
   );
 });
 
-Deno.test("part2: timely 2026 personal excess withdrawal reduces 2025 Form 5329 without 2025 distribution income", () => {
+test("part2: timely 2026 personal excess withdrawal reduces 2025 Form 5329 without 2025 distribution income", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 5000,
@@ -2190,7 +2191,7 @@ Deno.test("part2: timely 2026 personal excess withdrawal reduces 2025 Form 5329 
   );
 });
 
-Deno.test("part2: excluded withdrawal earnings cannot exceed its distribution", () => {
+test("part2: excluded withdrawal earnings cannot exceed its distribution", () => {
   assertThrows(
     () =>
       compute({
@@ -2218,7 +2219,7 @@ Deno.test("part2: excluded withdrawal earnings cannot exceed its distribution", 
   );
 });
 
-Deno.test("part2: fully excepted distribution keeps income but has no 20% tax", () => {
+test("part2: fully excepted distribution keeps income but has no 20% tax", () => {
   // distribute 2000, qualified 500 → taxable 1500; exception → no penalty
   const result = compute({
     hsa_distributions: 2000,
@@ -2248,7 +2249,7 @@ Deno.test("part2: fully excepted distribution keeps income but has no 20% tax", 
   assertEquals(s2, undefined); // no penalty
 });
 
-Deno.test("part2: a partly excepted distribution taxes only the remaining amount", () => {
+test("part2: a partly excepted distribution taxes only the remaining amount", () => {
   const result = compute({
     hsa_distributions: 3000,
     form1099_sa_distributions: [{
@@ -2290,7 +2291,7 @@ Deno.test("part2: a partly excepted distribution taxes only the remaining amount
   );
 });
 
-Deno.test("part2: a leap-day beneficiary attains age 65 on February 28, 2025", () => {
+test("part2: a leap-day beneficiary attains age 65 on February 28, 2025", () => {
   const result = compute({
     hsa_distributions: 2000,
     form1099_sa_distributions: [{
@@ -2326,7 +2327,7 @@ Deno.test("part2: a leap-day beneficiary attains age 65 on February 28, 2025", (
   assertEquals(firstForm(result)?.print_line17b_penalty, 200);
 });
 
-Deno.test("part2: age-65 exception rejects bare, early, or unreconciled distribution claims", () => {
+test("part2: age-65 exception rejects bare, early, or unreconciled distribution claims", () => {
   const base = {
     hsa_distributions: 2000,
     form1099_sa_distributions: [{
@@ -2403,7 +2404,7 @@ Deno.test("part2: age-65 exception rejects bare, early, or unreconciled distribu
   }
 });
 
-Deno.test("part2: age-65 transactions reconcile by Form 1099-SA, not just annual total", () => {
+test("part2: age-65 transactions reconcile by Form 1099-SA, not just annual total", () => {
   const source = {
     hsa_distributions: 2000,
     form1099_sa_distributions: [
@@ -2468,7 +2469,7 @@ Deno.test("part2: age-65 transactions reconcile by Form 1099-SA, not just annual
   );
 });
 
-Deno.test("part2: sourced rollover and age-65 exception allocate separate dollars", () => {
+test("part2: sourced rollover and age-65 exception allocate separate dollars", () => {
   const rollover = {
     ...rolloverEvidence(1000),
     distribution_source_reference: "May trustee transaction",
@@ -2553,7 +2554,7 @@ Deno.test("part2: sourced rollover and age-65 exception allocate separate dollar
   );
 });
 
-Deno.test("part2: the excepted portion cannot exceed taxable distributions", () => {
+test("part2: the excepted portion cannot exceed taxable distributions", () => {
   assertThrows(
     () =>
       compute({
@@ -2568,7 +2569,7 @@ Deno.test("part2: the excepted portion cannot exceed taxable distributions", () 
 
 // ─── Combined: contributions + distributions ──────────────────────────────────
 
-Deno.test("combined: deduction + non-qualified distribution both present", () => {
+test("combined: deduction + non-qualified distribution both present", () => {
   // self_only, contribute 3000, distribute 1000 non-qualified
   const result = compute({
     ...uniformSelfOnly,
@@ -2581,7 +2582,7 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
 });
 
-Deno.test("part3: 2024 last-month-rule coverage and filed contributions reconstruct 2025 line 18", () => {
+test("part3: 2024 last-month-rule coverage and filed contributions reconstruct 2025 line 18", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -2614,7 +2615,7 @@ Deno.test("part3: 2024 last-month-rule coverage and filed contributions reconstr
   );
 });
 
-Deno.test("part3: married 2024 family last-month rule includes own age-55 catch-up", () => {
+test("part3: married 2024 family last-month rule includes own age-55 catch-up", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -2645,7 +2646,7 @@ Deno.test("part3: married 2024 family last-month rule includes own age-55 catch-
   );
 });
 
-Deno.test("part3: married one-HSA 2024 self-only last-month rule uses filed self-only lines", () => {
+test("part3: married one-HSA 2024 self-only last-month rule uses filed self-only lines", () => {
   const evidence = {
     ...prior2024MarriedFamily,
     eligible_hdhp_coverage_by_month: [
@@ -2715,7 +2716,7 @@ Deno.test("part3: married one-HSA 2024 self-only last-month rule uses filed self
   );
 });
 
-Deno.test("part3: married age-55 one-HSA family-to-self-only recapture uses separate line 7", () => {
+test("part3: married age-55 one-HSA family-to-self-only recapture uses separate line 7", () => {
   const evidence = {
     ...prior2024MarriedFamily,
     eligible_hdhp_coverage_by_month: [
@@ -2773,7 +2774,7 @@ Deno.test("part3: married age-55 one-HSA family-to-self-only recapture uses sepa
   }
 });
 
-Deno.test("part3: married one-HSA 2024 family-to-self-only election uses the greater filed limit", () => {
+test("part3: married one-HSA 2024 family-to-self-only election uses the greater filed limit", () => {
   const evidence = {
     ...prior2024MarriedFamily,
     eligible_hdhp_coverage_by_month: [
@@ -2826,7 +2827,7 @@ Deno.test("part3: married one-HSA 2024 family-to-self-only election uses the gre
   );
 });
 
-Deno.test("part3: married one-HSA 2024 family-to-self-only worksheet can exceed December limit", () => {
+test("part3: married one-HSA 2024 family-to-self-only worksheet can exceed December limit", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -2855,7 +2856,7 @@ Deno.test("part3: married one-HSA 2024 family-to-self-only worksheet can exceed 
   assertEquals(firstForm(result), undefined);
 });
 
-Deno.test("part3: married 2024 family months redetermine the no-catch-up limit", () => {
+test("part3: married 2024 family months redetermine the no-catch-up limit", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -2886,7 +2887,7 @@ Deno.test("part3: married 2024 family months redetermine the no-catch-up limit",
   );
 });
 
-Deno.test("part3: married 2024 last-month evidence cannot guess spouse allocation", () => {
+test("part3: married 2024 last-month evidence cannot guess spouse allocation", () => {
   const failure = {
     last_month_rule_evidence: prior2024MarriedFamily,
     qualified_funding_distribution_amount: 0,
@@ -2939,7 +2940,7 @@ Deno.test("part3: married 2024 last-month evidence cannot guess spouse allocatio
   );
 });
 
-Deno.test("part3: married one-HSA 2024 mixed coverage uses each actual month for recapture", () => {
+test("part3: married one-HSA 2024 mixed coverage uses each actual month for recapture", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -2975,7 +2976,7 @@ Deno.test("part3: married one-HSA 2024 mixed coverage uses each actual month for
   );
 });
 
-Deno.test("part3: mixed 2024 coverage rejects a filed limit inconsistent with December family HDHP", () => {
+test("part3: mixed 2024 coverage rejects a filed limit inconsistent with December family HDHP", () => {
   assertThrows(
     () =>
       compute({
@@ -3000,7 +3001,7 @@ Deno.test("part3: mixed 2024 coverage rejects a filed limit inconsistent with De
   );
 });
 
-Deno.test("part3: last-month rule produces no recapture when 2024 contributions fit the monthly limit", () => {
+test("part3: last-month rule produces no recapture when 2024 contributions fit the monthly limit", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
@@ -3021,7 +3022,7 @@ Deno.test("part3: last-month rule produces no recapture when 2024 contributions 
   );
 });
 
-Deno.test("part3: unsupported or contradictory 2024 last-month-rule records stop", () => {
+test("part3: unsupported or contradictory 2024 last-month-rule records stop", () => {
   const failure = {
     last_month_rule_evidence: prior2024LastMonth,
     qualified_funding_distribution_amount: 0,
@@ -3076,7 +3077,7 @@ Deno.test("part3: unsupported or contradictory 2024 last-month-rule records stop
   );
 });
 
-Deno.test("part3: 2024 last-month rule and prior-year IRA funding need separate reconciliation", () => {
+test("part3: 2024 last-month rule and prior-year IRA funding need separate reconciliation", () => {
   assertThrows(
     () =>
       compute({
@@ -3107,7 +3108,7 @@ Deno.test("part3: 2024 last-month rule and prior-year IRA funding need separate 
   );
 });
 
-Deno.test("part3: only prior-year transfers still in testing on first ineligible month reach line 19", () => {
+test("part3: only prior-year transfers still in testing on first ineligible month reach line 19", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: [
       ...Array(5).fill(CoverageType.Family),
@@ -3148,7 +3149,7 @@ Deno.test("part3: only prior-year transfers still in testing on first ineligible
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1_000);
 });
 
-Deno.test("part3: expired prior-year transfer cannot be recaptured on line 19", () => {
+test("part3: expired prior-year transfer cannot be recaptured on line 19", () => {
   assertThrows(
     () =>
       compute({
@@ -3181,7 +3182,7 @@ Deno.test("part3: expired prior-year transfer cannot be recaptured on line 19", 
   );
 });
 
-Deno.test("part3: prior-year funding transfer requires sourced monthly eligibility", () => {
+test("part3: prior-year funding transfer requires sourced monthly eligibility", () => {
   const transferEvidence = {
     transfer_year: 2024,
     transfers: [{
@@ -3258,7 +3259,7 @@ Deno.test("part3: prior-year funding transfer requires sourced monthly eligibili
   assertEquals(firstForm(result)?.print_line19, 800);
 });
 
-Deno.test("part3: a positive line 19 cannot use only a free-text source", () => {
+test("part3: a positive line 19 cannot use only a free-text source", () => {
   assertThrows(
     () =>
       compute({
@@ -3273,7 +3274,7 @@ Deno.test("part3: a positive line 19 cannot use only a free-text source", () => 
   );
 });
 
-Deno.test("part3: current-year line 19 must match the Part I funding transfer", () => {
+test("part3: current-year line 19 must match the Part I funding transfer", () => {
   const sourceReference = "March 2025 Roth IRA trustee confirmation";
   const result = compute({
     ...uniformSelfOnly,
@@ -3315,7 +3316,7 @@ Deno.test("part3: current-year line 19 must match the Part I funding transfer", 
   );
 });
 
-Deno.test("part3: distribution and testing-period income share line 8f but keep both taxes", () => {
+test("part3: distribution and testing-period income share line 8f but keep both taxes", () => {
   const result = compute({
     ...ordinary1099Sa(1000),
     qualified_medical_expenses: 400,
@@ -3340,7 +3341,7 @@ Deno.test("part3: distribution and testing-period income share line 8f but keep 
   );
 });
 
-Deno.test("part1: married family catch-up prints on line 7, not line 3", () => {
+test("part1: married family catch-up prints on line 7, not line 3", () => {
   const result = compute({
     ...uniformFamily,
     married_at_year_end: true,
@@ -3359,7 +3360,7 @@ Deno.test("part1: married family catch-up prints on line 7, not line 3", () => {
   );
 });
 
-Deno.test("part1: separate spouse HSA answer needs both owner sources", () => {
+test("part1: separate spouse HSA answer needs both owner sources", () => {
   assertThrows(
     () =>
       compute({
@@ -3405,7 +3406,7 @@ Deno.test("part1: separate spouse HSA answer needs both owner sources", () => {
   );
 });
 
-Deno.test("part1: missing monthly coverage and last-month-rule answers stop", () => {
+test("part1: missing monthly coverage and last-month-rule answers stop", () => {
   assertThrows(
     () =>
       compute({
@@ -3427,7 +3428,7 @@ Deno.test("part1: missing monthly coverage and last-month-rule answers stop", ()
   );
 });
 
-Deno.test("part1: mixed full-year coverage uses the larger worksheet or December limit", () => {
+test("part1: mixed full-year coverage uses the larger worksheet or December limit", () => {
   const result = compute({
     ...uniformFamily,
     eligible_hdhp_coverage_by_month: [
@@ -3447,7 +3448,7 @@ Deno.test("part1: mixed full-year coverage uses the larger worksheet or December
   assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 8000);
 });
 
-Deno.test("part1: mixed coverage with December self-only keeps the larger worksheet", () => {
+test("part1: mixed coverage with December self-only keeps the larger worksheet", () => {
   const result = compute({
     ...uniformFamily,
     eligible_hdhp_coverage_by_month: [
@@ -3466,7 +3467,7 @@ Deno.test("part1: mixed coverage with December self-only keeps the larger worksh
   );
 });
 
-Deno.test("part1: partial-year coverage uses the twelve-month worksheet", () => {
+test("part1: partial-year coverage uses the twelve-month worksheet", () => {
   const result = compute({
     ...uniformSelfOnly,
     eligible_hdhp_coverage_by_month: [
@@ -3481,7 +3482,7 @@ Deno.test("part1: partial-year coverage uses the twelve-month worksheet", () => 
   );
 });
 
-Deno.test("part1: elected last-month rule uses December family coverage for the year", () => {
+test("part1: elected last-month rule uses December family coverage for the year", () => {
   const result = compute({
     ...uniformFamily,
     eligible_hdhp_coverage_by_month: [
@@ -3498,7 +3499,7 @@ Deno.test("part1: elected last-month rule uses December family coverage for the 
   assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 8000);
 });
 
-Deno.test("part1: elected last-month rule prints December self-only coverage", () => {
+test("part1: elected last-month rule prints December self-only coverage", () => {
   const result = compute({
     ...uniformFamily,
     eligible_hdhp_coverage_by_month: [
@@ -3519,7 +3520,7 @@ Deno.test("part1: elected last-month rule prints December self-only coverage", (
   );
 });
 
-Deno.test("part1: married age-55 family catch-up uses eligible months on line 7", () => {
+test("part1: married age-55 family catch-up uses eligible months on line 7", () => {
   const result = compute({
     ...uniformFamily,
     eligible_hdhp_coverage_by_month: [
@@ -3541,7 +3542,7 @@ Deno.test("part1: married age-55 family catch-up uses eligible months on line 7"
   );
 });
 
-Deno.test("part1: last-month rule requires December eligibility", () => {
+test("part1: last-month rule requires December eligibility", () => {
   assertThrows(
     () =>
       compute({
@@ -3560,7 +3561,7 @@ Deno.test("part1: last-month rule requires December eligibility", () => {
 
 // ─── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: obsolete singular IRA-to-HSA transfer key is rejected", () => {
+test("validation: obsolete singular IRA-to-HSA transfer key is rejected", () => {
   assertEquals(
     inputSchema.safeParse({
       ...uniformSelfOnly,
@@ -3575,7 +3576,7 @@ Deno.test("validation: obsolete singular IRA-to-HSA transfer key is rejected", (
   );
 });
 
-Deno.test("validation: a W-2 HSA contribution does not imply self-only coverage", () => {
+test("validation: a W-2 HSA contribution does not imply self-only coverage", () => {
   assertThrows(
     () =>
       compute({
@@ -3590,7 +3591,7 @@ Deno.test("validation: a W-2 HSA contribution does not imply self-only coverage"
   );
 });
 
-Deno.test("validation: negative contributions throw", () => {
+test("validation: negative contributions throw", () => {
   assertThrows(() =>
     compute({
       taxpayer_hsa_contributions: -100,
@@ -3598,7 +3599,7 @@ Deno.test("validation: negative contributions throw", () => {
   );
 });
 
-Deno.test("validation: negative distributions throw", () => {
+test("validation: negative distributions throw", () => {
   assertThrows(() =>
     compute({
       hsa_distributions: -500,

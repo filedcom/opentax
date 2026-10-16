@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { FilingStatus } from "../../../../mef/header.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
@@ -18,7 +19,7 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule 1 line 8z cannot state excess golden parachute income without a source", async () => {
+test("Schedule 1 line 8z cannot state excess golden parachute income without a source", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,

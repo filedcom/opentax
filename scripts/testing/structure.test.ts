@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals } from "@std/assert";
 import { dirname, fromFileUrl } from "@std/path";
 import { z } from "zod";
@@ -46,7 +47,7 @@ function definition(
 const hatch = "forms/f1040/2025/domains/general/filing/form8886/public-node.ts";
 const registryFile = "forms/f1040/2025/registry.ts";
 
-Deno.test("canonical node paths and the year's start node pass", () => {
+test("canonical node paths and the year's start node pass", () => {
   for (
     const path of [
       "forms/f1040/nodes/inputs/income/investments/f1099int/index.ts",
@@ -62,7 +63,7 @@ Deno.test("canonical node paths and the year's start node pass", () => {
   ) assert(nodePlacement(path).ok, path);
 });
 
-Deno.test("the TY2026 branch's flat node files and main's escape hatches fail with the expected path", () => {
+test("the TY2026 branch's flat node files and main's escape hatches fail with the expected path", () => {
   for (
     const path of [
       "forms/f1040/2026/inputs/w2.ts",
@@ -88,12 +89,12 @@ Deno.test("the TY2026 branch's flat node files and main's escape hatches fail wi
   }
 });
 
-Deno.test("node sources are detected by their base class, not their file name", () => {
+test("node sources are detected by their base class, not their file name", () => {
   assert(isNodeSource("class W2Node extends TaxNode<typeof inputSchema> {"));
   assert(!isNodeSource("export const w2 = new W2Node();"));
 });
 
-Deno.test("a registry key that is not the node type is reported, because the executor resolves by node type", () => {
+test("a registry key that is not the node type is reported, because the executor resolves by node type", () => {
   const annual = new FakeNode("f8854_annual");
   const problems = registryKeyProblems([
     definition({ f8854Annual: annual, w2: new FakeNode("w2") }),
@@ -106,7 +107,7 @@ Deno.test("a registry key that is not the node type is reported, because the exe
   assert(problems[0].fix.includes("f8854_annual: f8854Annual"));
 });
 
-Deno.test("a node class on disk that no registry holds is reported with the registration fix", () => {
+test("a node class on disk that no registry holds is reported with the registration fix", () => {
   const w2 = new FakeNode("w2");
   const graph = graphOf([definition({ w2 })]);
   const path = "forms/f1040/nodes/inputs/general/filing/f911/index.ts";
@@ -123,7 +124,7 @@ Deno.test("a node class on disk that no registry holds is reported with the regi
   assertEquals(unregisteredNodeProblems(new Map([[path, [w2]]]), graph), []);
 });
 
-Deno.test("a registered node is reachable when it is a CLI input or a routing target, else reported", () => {
+test("a registered node is reachable when it is a CLI input or a routing target, else reported", () => {
   const leaf = new FakeNode("form6198");
   const routed = new FakeNode("schedule_e");
   const feeder = new FakeNode("k1_partnership", [routed]);
@@ -144,7 +145,7 @@ Deno.test("a registered node is reachable when it is a CLI input or a routing ta
   assert(problems[0].fix.includes("forms/f1040/2025/inputs.ts"));
 });
 
-Deno.test("a node registered under an input key counts as a CLI input", () => {
+test("a node registered under an input key counts as a CLI input", () => {
   const review = new FakeNode("form6251_prior_iso_sale_review");
   const def = definition({ form6251_prior_iso_sale_review: review }, [{
     node: review,
@@ -155,7 +156,7 @@ Deno.test("a node registered under an input key counts as a CLI input", () => {
   assertEquals(unreachableProblems([def], graphOf([def])), []);
 });
 
-Deno.test("baseline exceptions allow a problem until they expire, and go stale once it is gone", () => {
+test("baseline exceptions allow a problem until they expire, and go stale once it is gone", () => {
   const raw = placementProblems([hatch]);
   const entry = {
     path: hatch,
@@ -176,7 +177,7 @@ Deno.test("baseline exceptions allow a problem until they expire, and go stale o
   ]);
 });
 
-Deno.test("a baseline entry for a registry problem is matched by path and node type", () => {
+test("a baseline entry for a registry problem is matched by path and node type", () => {
   const raw = registryKeyProblems([
     definition({ f8854Annual: new FakeNode("f8854_annual") }),
   ]);
@@ -196,7 +197,7 @@ Deno.test("a baseline entry for a registry problem is matched by path and node t
   );
 });
 
-Deno.test("the checkout satisfies the contract, and the baseline covers exactly main's recorded mistakes", async () => {
+test("the checkout satisfies the contract, and the baseline covers exactly main's recorded mistakes", async () => {
   const { catalog } = await import("../../catalog.ts");
   const definitions = Object.values(catalog);
   const clean = await structureReport(root, definitions, "2026-10-16");
@@ -219,7 +220,7 @@ Deno.test("the checkout satisfies the contract, and the baseline covers exactly 
   ]);
 });
 
-Deno.test("dropping a CLI input that nothing routes to reproduces the silently-ignored miss on the real graph", async () => {
+test("dropping a CLI input that nothing routes to reproduces the silently-ignored miss on the real graph", async () => {
   const { catalog } = await import("../../catalog.ts");
   const definitions = Object.values(catalog);
   const graph = graphOf(definitions);

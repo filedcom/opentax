@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -13,7 +16,7 @@ import {
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of [...mixedDebtCases, mixedFamilyCase]) {
-  Deno.test(`mixed ${c.id}: public source/basis/QBI/native/fullXSD/PDF`, async () => {
+  test(`mixed ${c.id}: public source/basis/QBI/native/fullXSD/PDF`, async () => {
     const { inputs, filer } = c.owner === "both"
         ? mixedFamilyInputs()
         : mixedDebtInputs(c),
@@ -136,7 +139,7 @@ for (const c of [...mixedDebtCases, mixedFamilyCase]) {
       xml,
       `<TotQlfyBusLossCarryforwardAmt>${c.allowed}</TotQlfyBusLossCarryforwardAmt>`,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -163,13 +166,9 @@ for (const c of [...mixedDebtCases, mixedFamilyCase]) {
       c.owner === "both" ? [1, 1, 2, 2] : [1, 1],
     );
     let dir: string | undefined;
-    try {
-      dir = Deno.env.get("FORM7203_MIXED_DEBT_EVIDENCE_DIR");
-    } catch (e) {
-      if (!(e instanceof Deno.errors.NotCapable)) throw e;
-    }
+    dir = process.env.FORM7203_MIXED_DEBT_EVIDENCE_DIR;
     if (dir) {
-      await Deno.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true });
       const stem = `${dir}/${c.id}`;
       for (
         const [ext, value] of Object.entries({
@@ -188,18 +187,18 @@ for (const c of [...mixedDebtCases, mixedFamilyCase]) {
           },
         })
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${stem}.${ext}`,
           JSON.stringify(value, null, 2),
         );
       }
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
 
-Deno.test("mixed current debt rejects incomplete/cross-owned/borrowed basis and cash sources", () => {
+test("mixed current debt rejects incomplete/cross-owned/borrowed basis and cash sources", () => {
   const mutations: [string, (k: any) => void][] = [
     [
       "missing corporate cash",
@@ -318,7 +317,7 @@ Deno.test("mixed current debt rejects incomplete/cross-owned/borrowed basis and 
     );
   }
 });
-Deno.test("mixed native/PDF reject altered debt totals/owner/QBI and duplicate copies", async () => {
+test("mixed native/PDF reject altered debt totals/owner/QBI and duplicate copies", async () => {
   const { inputs, filer } = mixedDebtInputs(mixedDebtCases[0]),
     r = f1040_2025.executeReturn(inputs as any);
   assertEquals(r.diagnostics, []);
@@ -355,7 +354,7 @@ Deno.test("mixed native/PDF reject altered debt totals/owner/QBI and duplicate c
   }
 });
 
-Deno.test("legacy shared source cannot acquire unrelated corporate credit without reviewed mixed contract", async () => {
+test("legacy shared source cannot acquire unrelated corporate credit without reviewed mixed contract", async () => {
   const { multiOwnedDebtInputs, multiOwnedDebtCases } = await import(
     "./form7203_multi_owned_debt.fixture.ts"
   );
@@ -399,7 +398,7 @@ function addPhantomMixedFunding(n: any) {
   formal.repayments.forEach(shift);
   s.complete_current_shareholder_debt_inventory[1].transactions.forEach(shift);
 }
-Deno.test("mixed complete cash inventory rejects synchronized unowned phantom funding through public/native/directPDF", async () => {
+test("mixed complete cash inventory rejects synchronized unowned phantom funding through public/native/directPDF", async () => {
   const { inputs, filer } = mixedDebtInputs(mixedDebtCases[0]);
   addPhantomMixedFunding(inputs.k1_s_corp[0].form7203_debt_evidence);
   const rejected = f1040_2025.executeReturn(inputs as any);

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import fixtures from "./form8962-large-family.fixture.json" with {
   type: "json",
@@ -17,7 +18,7 @@ import { inputSchema as policySchema } from "../../../../../nodes/inputs/credits
 // Expected amounts come from the independent source/Decimal and IRS Tax Table
 // replay documented in the family source proof, not the return under test.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`Larger-family public return reconciles PTC, ODC and final tax: ${id}`, async () => {
+  test(`Larger-family public return reconciles PTC, ODC and final tax: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -64,7 +65,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("Larger-family returns reject changed source, review and final totals in native and PDF", async () => {
+test("Larger-family returns reject changed source, review and final totals in native and PDF", async () => {
   let variants = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

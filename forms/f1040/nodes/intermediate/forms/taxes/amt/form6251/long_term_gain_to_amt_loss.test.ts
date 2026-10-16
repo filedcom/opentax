@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 as mef6251 } from "../../../../../../2025/mef/forms/taxes/amt/f6251.ts";
 import { form6251Pdf } from "../../../../../../2025/pdf/forms/taxes/amt/f6251.ts";
@@ -129,7 +130,7 @@ function twoLotCase() {
   return { filed, pending, schedule2Amount };
 }
 
-Deno.test("one long-term regular gain becomes fully deductible AMT loss on line 2k", () => {
+test("one long-term regular gain becomes fully deductible AMT loss on line 2k", () => {
   const { filed, pending, schedule2Amount } = gainToLossCase();
   assertEquals(filed.line2k_disposition, -1_500);
   assertEquals(filed.amti, 198_500);
@@ -146,7 +147,7 @@ Deno.test("one long-term regular gain becomes fully deductible AMT loss on line 
   );
 });
 
-Deno.test("gain-to-AMT-loss route rejects changed basis, tax join and excess AMT loss", () => {
+test("gain-to-AMT-loss route rejects changed basis, tax join and excess AMT loss", () => {
   const { filed, pending } = gainToLossCase();
   assertThrows(
     () =>
@@ -221,7 +222,7 @@ Deno.test("gain-to-AMT-loss route rejects changed basis, tax join and excess AMT
   );
 });
 
-Deno.test("two long-term lots net regular gain against a deductible AMT loss", () => {
+test("two long-term lots net regular gain against a deductible AMT loss", () => {
   const { filed, pending, schedule2Amount } = twoLotCase();
   assertEquals(filed.line2k_disposition, -2_700);
   assertEquals(filed.amti, 197_300);
@@ -238,7 +239,7 @@ Deno.test("two long-term lots net regular gain against a deductible AMT loss", (
   );
 });
 
-Deno.test("two-lot gain-to-AMT-loss route rejects changed second lot and return", () => {
+test("two-lot gain-to-AMT-loss route rejects changed second lot and return", () => {
   const { filed, pending } = twoLotCase();
   assertThrows(
     () =>
@@ -301,7 +302,7 @@ const thirdLoss = {
   amt_gain: -600,
 };
 
-Deno.test("three audited long-term lots reconcile regular gain and deductible AMT loss", () => {
+test("three audited long-term lots reconcile regular gain and deductible AMT loss", () => {
   const lots = [...twoLots, thirdLoss];
   const result = form6251.compute(
     { taxYear: 2025, formType: "f1040" },

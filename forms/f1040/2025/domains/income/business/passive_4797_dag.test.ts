@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assert, assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../registry.ts";
 
-Deno.test("active-rental PAL stages remain acyclic and finalize after Form 8582", () => {
+test("active-rental PAL stages remain acyclic and finalize after Form 8582", () => {
   const plan = buildExecutionPlan(registry);
   const position = (name: string) =>
     plan.findIndex((step) => step.nodeType === name);
@@ -24,7 +25,7 @@ Deno.test("active-rental PAL stages remain acyclic and finalize after Form 8582"
   assert(position("schedule_d_final") < position("agi_final"));
 });
 
-Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", () => {
+test("public Schedule E sale reaches Form 4797 and final Form 1040 once", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",

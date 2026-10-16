@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../index.ts";
 import { passivePropertyInputs } from "../../domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
@@ -23,26 +26,26 @@ function currentLoss(farmIncome: boolean, rent: number) {
 }
 
 async function validateXml(xml: string, root: string, schema: string) {
-  const temp = await Deno.makeTempFile({ suffix: ".xml" });
+  const temp = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       temp,
       xml.replace(
         `<${root}>`,
         `<${root} documentId="${root}Review" xmlns="http://www.irs.gov/efile">`,
       ),
     );
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, temp],
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(temp);
+    await sys.remove(temp);
   }
 }
 
-Deno.test("current loss original-form native reviews reconcile original deductions and validate three reporting schemas", async () => {
+test("current loss original-form native reviews reconcile original deductions and validate three reporting schemas", async () => {
   const cache = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/",
     import.meta.url,
@@ -53,8 +56,8 @@ Deno.test("current loss original-form native reviews reconcile original deductio
       `${cache}IndividualIncomeTax/Common/IRS1040ScheduleE/IRS1040ScheduleE.xsd`,
     IRS4835: `${cache}IndividualIncomeTax/Common/IRS4835/IRS4835.xsd`,
   };
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -145,7 +148,7 @@ Deno.test("current loss original-form native reviews reconcile original deductio
     );
     assertEquals(source.pending, before);
     if (output) {
-      await Deno.writeTextFile(
+      await sys.writeText(
         `${output}/${c.id}-original-forms.json`,
         JSON.stringify({ ...source, review }, null, 2),
         { createNew: true, mode: 0o600 },
@@ -157,7 +160,7 @@ Deno.test("current loss original-form native reviews reconcile original deductio
         ], ["IRS4835", review.farmRows[0].xml]]
       ) {
         if (xml) {
-          await Deno.writeTextFile(
+          await sys.writeText(
             `${output}/${c.id}-${root}.xml`,
             xml.replace(
               `<${root}>`,
@@ -171,7 +174,7 @@ Deno.test("current loss original-form native reviews reconcile original deductio
   }
 });
 
-Deno.test("original-form loss review rejects changed basis, farm costs, source reference and final reporting totals", () => {
+test("original-form loss review rejects changed basis, farm costs, source reference and final reporting totals", () => {
   const original = currentLoss(true, 2000).pending;
   for (
     const mutate of [

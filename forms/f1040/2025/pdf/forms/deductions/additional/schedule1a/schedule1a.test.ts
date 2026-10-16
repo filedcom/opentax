@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -39,7 +42,7 @@ const overtimeW2 = (amount: number, box1Wages: number) => ({
   }],
 });
 
-Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero employee line", () => {
+test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero employee line", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-1099nec-trade-business-tips-schedule1a"
   )!;
@@ -65,7 +68,7 @@ Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero empl
   );
 });
 
-Deno.test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and Form 1040", () => {
+test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and Form 1040", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-two-employer-form4137-tips-schedule1a"
   )!;
@@ -184,7 +187,7 @@ Deno.test("2025 Schedule 1-A PDF joins two Form 4137 employers, worksheet, and F
   );
 });
 
-Deno.test("2025 two-employer Form 4137 tips build one prepared filled return PDF", async () => {
+test("2025 two-employer Form 4137 tips build one prepared filled return PDF", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-two-employer-form4137-tips-schedule1a"
   )!;
@@ -240,7 +243,7 @@ const return1040 = {
   spouse_tin_issued_by_due_date: true,
 };
 
-Deno.test("Schedule 1-A PDF does not silently omit a positive senior source without Part I review", () => {
+test("Schedule 1-A PDF does not silently omit a positive senior source without Part I review", () => {
   assertThrows(
     () =>
       schedule1aPdf.projectFields?.(
@@ -252,7 +255,7 @@ Deno.test("Schedule 1-A PDF does not silently omit a positive senior source with
   );
 });
 
-Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", () => {
+test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", () => {
   const map = new Map(schedule1aPdf.fields.map((entry) => [
     entry.domainKey,
     entry.pdfField,
@@ -285,7 +288,7 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   );
 });
 
-Deno.test("2025 Schedule 1-A PDF fills senior and overtime parts together", () => {
+test("2025 Schedule 1-A PDF fills senior and overtime parts together", () => {
   const mixed = {
     ...source,
     qualified_w2_overtime: [{
@@ -309,7 +312,7 @@ Deno.test("2025 Schedule 1-A PDF fills senior and overtime parts together", () =
   assertEquals(projected?.line38_total, 14_800);
 });
 
-Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", async () => {
+test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", async () => {
   const loan = {
     vin: "1HGCM82633A004352",
     borrower_ssn: "111223333",
@@ -436,10 +439,10 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
     } as never,
   );
   assertEquals(document.getPageCount(), 1);
-  const statementPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const statementPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(statementPath, await document.save());
-    const rendered = await new Deno.Command("pdftotext", {
+    await fs.writeFile(statementPath, await document.save());
+    const rendered = await new sys.Command("pdftotext", {
       args: ["-layout", statementPath, "-"],
     }).output();
     assertEquals(rendered.code, 0);
@@ -448,7 +451,7 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
     assertFalse(printed.includes("EXAMPLE ALEX B"));
     assertStringIncludes(printed, "Attached VINs 2-3: 3,000");
   } finally {
-    await Deno.remove(statementPath);
+    await sys.remove(statementPath);
   }
   await assertRejects(async () =>
     await schedule1aPdf.appendSupplementalPages?.(
@@ -512,7 +515,7 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   assertEquals(multipage.getPageCount(), 2);
 });
 
-Deno.test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
+test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
   assertThrows(
     () =>
       schedule1aPdf.projectFields?.({
@@ -553,7 +556,7 @@ Deno.test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
   );
 });
 
-Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () => {
+test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () => {
   const tipSource = {
     filing_status: FilingStatus.Single,
     magi: 30_000,
@@ -612,7 +615,7 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
   assertEquals(projected?.line38_total, 5_000);
 });
 
-Deno.test("2025 Schedule 1-A PDF maps reviewed W-2 overtime to Part III", () => {
+test("2025 Schedule 1-A PDF maps reviewed W-2 overtime to Part III", () => {
   const overtimeSource = {
     filing_status: FilingStatus.Single,
     magi: 80_000,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form1116, IncomeCategory, priorYearCarryoverSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
@@ -32,7 +33,7 @@ function credit(input: Parameters<typeof form1116.compute>[1]): number {
   return fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit ?? 0;
 }
 
-Deno.test("form1116: no foreign tax items produces no output", () => {
+test("form1116: no foreign tax items produces no output", () => {
   assertEquals(
     form1116.compute(ctx, { worldwide_taxable_income: 50_000 }).outputs,
     [],
@@ -45,7 +46,7 @@ Deno.test("form1116: no foreign tax items produces no output", () => {
   );
 });
 
-Deno.test("form1116: sourced Schedule K-3 line 12 reduces the credit and current excess, not Part II tax", () => {
+test("form1116: sourced Schedule K-3 line 12 reduces the credit and current excess, not Part II tax", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 500,
@@ -80,7 +81,7 @@ Deno.test("form1116: sourced Schedule K-3 line 12 reduces the credit and current
   );
 });
 
-Deno.test("form1116: Schedule K-3 line 12 cannot exceed its sourced tax", () => {
+test("form1116: Schedule K-3 line 12 cannot exceed its sourced tax", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {
@@ -101,7 +102,7 @@ Deno.test("form1116: Schedule K-3 line 12 cannot exceed its sourced tax", () => 
   );
 });
 
-Deno.test("form1116: line 1b source split must agree with line 1a", () => {
+test("form1116: line 1b source split must agree with line 1a", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {
@@ -135,7 +136,7 @@ Deno.test("form1116: line 1b source split must agree with line 1a", () => {
   );
 });
 
-Deno.test("form1116: disclosed 2025 foreign tax redetermination fails before credit or carryover", () => {
+test("form1116: disclosed 2025 foreign tax redetermination fails before credit or carryover", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {
@@ -162,7 +163,7 @@ Deno.test("form1116: disclosed 2025 foreign tax redetermination fails before cre
   );
 });
 
-Deno.test("form1116: changed affected-year liability names the missing amendment receipt", () => {
+test("form1116: changed affected-year liability names the missing amendment receipt", () => {
   const ledger = scheduleCLedger();
   assertThrows(
     () =>
@@ -180,7 +181,7 @@ Deno.test("form1116: changed affected-year liability names the missing amendment
   );
 });
 
-Deno.test("form1116: an unpaid-accrual event cannot disappear when the current-year credit is zero", () => {
+test("form1116: an unpaid-accrual event cannot disappear when the current-year credit is zero", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {
@@ -196,7 +197,7 @@ Deno.test("form1116: an unpaid-accrual event cannot disappear when the current-y
   );
 });
 
-Deno.test("form1116: missing return limitation inputs fail closed", () => {
+test("form1116: missing return limitation inputs fail closed", () => {
   assertThrows(
     () =>
       credit({
@@ -211,7 +212,7 @@ Deno.test("form1116: missing return limitation inputs fail closed", () => {
   );
 });
 
-Deno.test("form1116: line 18 adds back only Schedule 1-A senior deduction", () => {
+test("form1116: line 18 adds back only Schedule 1-A senior deduction", () => {
   const result = form1116.compute(ctx, {
     carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
@@ -265,7 +266,7 @@ const zeroForeignPreference = {
   no_amt_liability_verified: true as const,
 };
 
-Deno.test("form1116: sourced QDCGT worksheet adjusts line 18, not ordinary foreign numerator", () => {
+test("form1116: sourced QDCGT worksheet adjusts line 18, not ordinary foreign numerator", () => {
   const result = form1116.compute(ctx, {
     carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
@@ -287,7 +288,7 @@ Deno.test("form1116: sourced QDCGT worksheet adjusts line 18, not ordinary forei
   assertEquals(summary[0].foreignTaxableIncome, 10_000);
 });
 
-Deno.test("form1116: preferential denominator fails closed without source review or on special tax routes", () => {
+test("form1116: preferential denominator fails closed without source review or on special tax routes", () => {
   const base = {
     foreign_tax_items: [{
       foreign_tax_paid: 2_000,
@@ -354,7 +355,7 @@ Deno.test("form1116: preferential denominator fails closed without source review
   );
 });
 
-Deno.test("form1116: documented all-asset method puts vehicle interest on line 4b", () => {
+test("form1116: documented all-asset method puts vehicle interest on line 4b", () => {
   const result = form1116.compute(ctx, {
     carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
@@ -401,7 +402,7 @@ Deno.test("form1116: documented all-asset method puts vehicle interest on line 4
   );
 });
 
-Deno.test("form1116: vehicle-interest claim without complete asset facts fails closed", () => {
+test("form1116: vehicle-interest claim without complete asset facts fails closed", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {
@@ -420,7 +421,7 @@ Deno.test("form1116: vehicle-interest claim without complete asset facts fails c
   );
 });
 
-Deno.test("form1116: line 18 floors the signed return amount after the senior addback", () => {
+test("form1116: line 18 floors the signed return amount after the senior addback", () => {
   const result = form1116.compute(ctx, {
     carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
@@ -439,7 +440,7 @@ Deno.test("form1116: line 18 floors the signed return amount after the senior ad
   assertEquals(fieldsOf(result.outputs, schedule3), undefined);
 });
 
-Deno.test("form1116: applies taxable-income ratio", () => {
+test("form1116: applies taxable-income ratio", () => {
   assertEquals(
     credit({
       carryover_reviews: [zeroPriorPassive],
@@ -456,7 +457,7 @@ Deno.test("form1116: applies taxable-income ratio", () => {
   );
 });
 
-Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line 10", () => {
+test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line 10", () => {
   const result = form1116.compute(ctx, {
     carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
@@ -478,7 +479,7 @@ Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line
   );
 });
 
-Deno.test("form1116: directly allocable deductions reduce the limit", () => {
+test("form1116: directly allocable deductions reduce the limit", () => {
   assertEquals(
     credit({
       carryover_reviews: [zeroPriorPassive],
@@ -495,7 +496,7 @@ Deno.test("form1116: directly allocable deductions reduce the limit", () => {
   );
 });
 
-Deno.test("form1116: computes passive and general category limits separately", () => {
+test("form1116: computes passive and general category limits separately", () => {
   assertEquals(
     credit({
       carryover_reviews: [zeroPriorPassive],
@@ -518,7 +519,7 @@ Deno.test("form1116: computes passive and general category limits separately", (
   );
 });
 
-Deno.test("form1116: excluded wages reduce eligible income and credit", () => {
+test("form1116: excluded wages reduce eligible income and credit", () => {
   assertEquals(
     credit({
       carryover_reviews: [zeroPriorGeneral],
@@ -535,7 +536,7 @@ Deno.test("form1116: excluded wages reduce eligible income and credit", () => {
   );
 });
 
-Deno.test("form1116: same-category items aggregate before applying the limit", () => {
+test("form1116: same-category items aggregate before applying the limit", () => {
   assertEquals(
     credit({
       carryover_reviews: [zeroPriorPassive],
@@ -558,7 +559,7 @@ Deno.test("form1116: same-category items aggregate before applying the limit", (
   );
 });
 
-Deno.test("form1116: current-year excess needs a sourced prior-year review", () => {
+test("form1116: current-year excess needs a sourced prior-year review", () => {
   const base = {
     foreign_tax_items: [{
       foreign_tax_paid: 500,
@@ -615,7 +616,7 @@ Deno.test("form1116: current-year excess needs a sourced prior-year review", () 
   assertEquals(scheduleB?.category, IncomeCategory.Passive);
 });
 
-Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax", () => {
+test("form1116: sourced 2024 carryover is used only after 2025 foreign tax", () => {
   const base = {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -670,7 +671,7 @@ Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax"
   assertEquals(fullyUsedScheduleB?.remaining_prior_year_carryover, 0);
 });
 
-Deno.test("form1116: reviewed passive 2016-2020 origins feed the 2025 limitation and Schedule B", () => {
+test("form1116: reviewed passive 2016-2020 origins feed the 2025 limitation and Schedule B", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -731,7 +732,7 @@ Deno.test("form1116: reviewed passive 2016-2020 origins feed the 2025 limitation
   assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
 });
 
-Deno.test("form1116: unused 2015 passive balance expires after oldest-first 2025 use", () => {
+test("form1116: unused 2015 passive balance expires after oldest-first 2025 use", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -771,7 +772,7 @@ Deno.test("form1116: unused 2015 passive balance expires after oldest-first 2025
   );
 });
 
-Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", () => {
+test("form1116: sourced 2023 carryover feeds the credit and Schedule B", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -819,7 +820,7 @@ Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", ()
   assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
 });
 
-Deno.test("form1116: two sourced vintages use the oldest balance first", () => {
+test("form1116: two sourced vintages use the oldest balance first", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -863,7 +864,7 @@ Deno.test("form1116: two sourced vintages use the oldest balance first", () => {
   );
 });
 
-Deno.test("form1116: rejects unmodeled older, mixed, or unreviewed carryover vintages", () => {
+test("form1116: rejects unmodeled older, mixed, or unreviewed carryover vintages", () => {
   const base = {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -935,7 +936,7 @@ Deno.test("form1116: rejects unmodeled older, mixed, or unreviewed carryover vin
   );
 });
 
-Deno.test("form1116: reviewed 2021-2024 vintages feed one oldest-first credit", () => {
+test("form1116: reviewed 2021-2024 vintages feed one oldest-first credit", () => {
   const result = form1116.compute(ctx, {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -987,7 +988,7 @@ Deno.test("form1116: reviewed 2021-2024 vintages feed one oldest-first credit", 
   );
 });
 
-Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", () => {
+test("form1116: 2024 carryover rejects mixed categories and 2025 excess", () => {
   const prior = {
     income_category: IncomeCategory.Passive,
     vintages: [{
@@ -1037,7 +1038,7 @@ Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", (
   );
 });
 
-Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => {
+test("form1116: Part IV caps combined category credits at U.S. tax", () => {
   assertEquals(
     credit({
       foreign_tax_items: [
@@ -1059,7 +1060,7 @@ Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => 
   );
 });
 
-Deno.test("form1116: unsupported separate categories cannot send a credit to Schedule 3", () => {
+test("form1116: unsupported separate categories cannot send a credit to Schedule 3", () => {
   for (
     const category of [
       IncomeCategory.Section951A,
@@ -1085,7 +1086,7 @@ Deno.test("form1116: unsupported separate categories cannot send a credit to Sch
   }
 });
 
-Deno.test("form1116: unsupported category cannot ride alongside a supported basket", () => {
+test("form1116: unsupported category cannot ride alongside a supported basket", () => {
   assertThrows(
     () =>
       form1116.compute(ctx, {

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
@@ -10,7 +11,7 @@ const partnership = {
   new_markets_credit_subject_to_passive_activity_limit: false,
 };
 
-Deno.test("mixed Form 8874 direct QEI and K-1 credit stays outside prepared PDF assembly", async () => {
+test("mixed Form 8874 direct QEI and K-1 credit stays outside prepared PDF assembly", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-new-markets-business-credit"
   )!;

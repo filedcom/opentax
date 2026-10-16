@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { AccountType, f114 } from "./index.ts";
 
@@ -9,12 +10,12 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Validation — required fields and type constraints
 // =============================================================================
 
-Deno.test("f114.inputSchema: minimal valid input passes (has_foreign_accounts=false)", () => {
+test("f114.inputSchema: minimal valid input passes (has_foreign_accounts=false)", () => {
   const parsed = f114.inputSchema.safeParse({ has_foreign_accounts: false });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f114.inputSchema: has_foreign_accounts=true with no accounts passes", () => {
+test("f114.inputSchema: has_foreign_accounts=true with no accounts passes", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: true,
     max_aggregate_value: 25000,
@@ -23,21 +24,21 @@ Deno.test("f114.inputSchema: has_foreign_accounts=true with no accounts passes",
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f114.inputSchema: missing has_foreign_accounts fails", () => {
+test("f114.inputSchema: missing has_foreign_accounts fails", () => {
   const parsed = f114.inputSchema.safeParse({
     max_aggregate_value: 25000,
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f114.inputSchema: non-boolean has_foreign_accounts fails", () => {
+test("f114.inputSchema: non-boolean has_foreign_accounts fails", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: "yes",
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f114.inputSchema: negative max_aggregate_value fails", () => {
+test("f114.inputSchema: negative max_aggregate_value fails", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: true,
     max_aggregate_value: -100,
@@ -45,7 +46,7 @@ Deno.test("f114.inputSchema: negative max_aggregate_value fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f114.inputSchema: negative account_count fails", () => {
+test("f114.inputSchema: negative account_count fails", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: true,
     account_count: -1,
@@ -53,7 +54,7 @@ Deno.test("f114.inputSchema: negative account_count fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f114.inputSchema: valid account with all fields passes", () => {
+test("f114.inputSchema: valid account with all fields passes", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: true,
     max_aggregate_value: 50000,
@@ -68,7 +69,7 @@ Deno.test("f114.inputSchema: valid account with all fields passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f114.inputSchema: invalid account_type fails", () => {
+test("f114.inputSchema: invalid account_type fails", () => {
   const parsed = f114.inputSchema.safeParse({
     has_foreign_accounts: true,
     accounts: [{
@@ -81,7 +82,7 @@ Deno.test("f114.inputSchema: invalid account_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f114.inputSchema: all account_type enum values are valid", () => {
+test("f114.inputSchema: all account_type enum values are valid", () => {
   for (const acctType of Object.values(AccountType)) {
     const parsed = f114.inputSchema.safeParse({
       has_foreign_accounts: true,
@@ -98,12 +99,12 @@ Deno.test("f114.inputSchema: all account_type enum values are valid", () => {
 // 2. Compute — no foreign accounts
 // =============================================================================
 
-Deno.test("f114.compute: has_foreign_accounts=false returns no outputs", () => {
+test("f114.compute: has_foreign_accounts=false returns no outputs", () => {
   const result = compute({ has_foreign_accounts: false });
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: has_foreign_accounts=true returns no outputs (informational only)", () => {
+test("f114.compute: has_foreign_accounts=true returns no outputs (informational only)", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 25000,
@@ -119,7 +120,7 @@ Deno.test("f114.compute: has_foreign_accounts=true returns no outputs (informati
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: multiple accounts return no outputs", () => {
+test("f114.compute: multiple accounts return no outputs", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 100000,
@@ -132,7 +133,7 @@ Deno.test("f114.compute: multiple accounts return no outputs", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: securities account type returns no outputs", () => {
+test("f114.compute: securities account type returns no outputs", () => {
   const result = compute({
     has_foreign_accounts: true,
     accounts: [{ account_type: AccountType.Securities, max_value: 15000 }],
@@ -140,7 +141,7 @@ Deno.test("f114.compute: securities account type returns no outputs", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: other account type returns no outputs", () => {
+test("f114.compute: other account type returns no outputs", () => {
   const result = compute({
     has_foreign_accounts: true,
     accounts: [{ account_type: AccountType.Other, max_value: 12000 }],
@@ -152,7 +153,7 @@ Deno.test("f114.compute: other account type returns no outputs", () => {
 // 3. Threshold tests — $10,000 aggregate filing requirement
 // =============================================================================
 
-Deno.test("f114.compute: aggregate below $10,000 threshold — no outputs", () => {
+test("f114.compute: aggregate below $10,000 threshold — no outputs", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 9999,
@@ -160,7 +161,7 @@ Deno.test("f114.compute: aggregate below $10,000 threshold — no outputs", () =
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: aggregate at $10,000 threshold — no outputs (informational)", () => {
+test("f114.compute: aggregate at $10,000 threshold — no outputs (informational)", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 10000,
@@ -168,7 +169,7 @@ Deno.test("f114.compute: aggregate at $10,000 threshold — no outputs (informat
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f114.compute: aggregate above $10,000 threshold — no outputs (informational)", () => {
+test("f114.compute: aggregate above $10,000 threshold — no outputs (informational)", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 10001,
@@ -180,15 +181,15 @@ Deno.test("f114.compute: aggregate above $10,000 threshold — no outputs (infor
 // 4. Hard validation rules
 // =============================================================================
 
-Deno.test("f114.compute: throws on missing has_foreign_accounts", () => {
+test("f114.compute: throws on missing has_foreign_accounts", () => {
   assertThrows(() => compute({}), Error);
 });
 
-Deno.test("f114.compute: throws on non-boolean has_foreign_accounts", () => {
+test("f114.compute: throws on non-boolean has_foreign_accounts", () => {
   assertThrows(() => compute({ has_foreign_accounts: "yes" }), Error);
 });
 
-Deno.test("f114.compute: throws on negative max_aggregate_value", () => {
+test("f114.compute: throws on negative max_aggregate_value", () => {
   assertThrows(() => compute({ has_foreign_accounts: true, max_aggregate_value: -1 }), Error);
 });
 
@@ -196,7 +197,7 @@ Deno.test("f114.compute: throws on negative max_aggregate_value", () => {
 // 5. Smoke test — full population
 // =============================================================================
 
-Deno.test("f114.compute: smoke test — all fields populated returns empty outputs", () => {
+test("f114.compute: smoke test — all fields populated returns empty outputs", () => {
   const result = compute({
     has_foreign_accounts: true,
     max_aggregate_value: 250000,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule3Pdf } from "./schedule3.ts";
 
@@ -26,7 +27,7 @@ const fuelSource = {
   }],
 };
 
-Deno.test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines", () => {
+test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines", () => {
   const fields = new Map(
     schedule3Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -48,7 +49,7 @@ Deno.test("2025 Schedule 3 PDF maps DC, bond, and fuel credits to printed lines"
   );
 });
 
-Deno.test("finalized Schedule 3 PDF rejects omitted and changed subtotals", () => {
+test("finalized Schedule 3 PDF rejects omitted and changed subtotals", () => {
   assertThrows(
     () =>
       schedule3Pdf.projectFields?.(
@@ -103,7 +104,7 @@ Deno.test("finalized Schedule 3 PDF rejects omitted and changed subtotals", () =
   );
 });
 
-Deno.test("finalized Schedule 3 PDF rejects unsourced premium, extension, and excess SS payments", () => {
+test("finalized Schedule 3 PDF rejects unsourced premium, extension, and excess SS payments", () => {
   for (
     const line of [
       "line9_premium_tax_credit",
@@ -123,7 +124,7 @@ Deno.test("finalized Schedule 3 PDF rejects unsourced premium, extension, and ex
   }
 });
 
-Deno.test("finalized Schedule 3 PDF line 11 replays W-2 source", () => {
+test("finalized Schedule 3 PDF line 11 replays W-2 source", () => {
   const w2 = {
     w2s: [
       {
@@ -158,7 +159,7 @@ Deno.test("finalized Schedule 3 PDF line 11 replays W-2 source", () => {
   );
 });
 
-Deno.test("finalized Schedule 3 PDF replays Form 8962 and extension payments", () => {
+test("finalized Schedule 3 PDF replays Form 8962 and extension payments", () => {
   const fields = {
     line9_premium_tax_credit: 100,
     line10_amount_paid_extension: 100,
@@ -202,7 +203,7 @@ Deno.test("finalized Schedule 3 PDF replays Form 8962 and extension payments", (
   );
 });
 
-Deno.test("Schedule 3 PDF line 12 rejects a bare Form 4136 credit", () => {
+test("Schedule 3 PDF line 12 rejects a bare Form 4136 credit", () => {
   assertThrows(
     () => schedule3Pdf.projectFields?.({ line12_fuel_tax_credit: 125 }, {}),
     Error,
@@ -228,7 +229,7 @@ Deno.test("Schedule 3 PDF line 12 rejects a bare Form 4136 credit", () => {
   );
 });
 
-Deno.test("Schedule 3 PDF line 13a requires matching Form 2439 box 2 sources", () => {
+test("Schedule 3 PDF line 13a requires matching Form 2439 box 2 sources", () => {
   const fields = {
     line13a_total: 2_250,
     line14_total: 2_250,

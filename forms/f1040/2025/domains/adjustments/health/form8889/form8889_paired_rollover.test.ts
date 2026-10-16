@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
@@ -98,7 +99,7 @@ function pairedRolloverCase() {
   return { source, forms, pending, context };
 }
 
-Deno.test("paired Form 8889 links one owner's rollover through MeF, PDF, and return totals", () => {
+test("paired Form 8889 links one owner's rollover through MeF, PDF, and return totals", () => {
   const { forms, pending, context } = pairedRolloverCase();
   assertEquals(forms[0]?.print_line14b_excluded_distributions, 600);
   assertEquals(forms[0]?.print_line16_taxable, 400);
@@ -127,7 +128,7 @@ Deno.test("paired Form 8889 links one owner's rollover through MeF, PDF, and ret
   );
 });
 
-Deno.test("paired Form 8889 rejects an unlinked or unsupported second rollover", () => {
+test("paired Form 8889 rejects an unlinked or unsupported second rollover", () => {
   const { source, forms, pending, context } = pairedRolloverCase();
   assertThrows(
     () =>
@@ -184,7 +185,7 @@ Deno.test("paired Form 8889 rejects an unlinked or unsupported second rollover",
   );
 });
 
-Deno.test("paired Form 8889 reconciles distinct rollovers for both HSA owners", () => {
+test("paired Form 8889 reconciles distinct rollovers for both HSA owners", () => {
   const { source } = pairedRolloverCase();
   const pairedSource = inputSchema.parse({
     ...source,

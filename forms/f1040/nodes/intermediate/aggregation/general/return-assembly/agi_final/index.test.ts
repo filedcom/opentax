@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   agi_aggregator,
@@ -7,7 +8,7 @@ import { agi_final } from "./index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 
-Deno.test("active-rental MAGI is provisional while AGI uses final Form 8582 PAL", () => {
+test("active-rental MAGI is provisional while AGI uses final Form 8582 PAL", () => {
   const provisionalInput = agiInputSchema.parse({
     line1a_wages: 200_000,
     line7_capital_gain: -2_000,

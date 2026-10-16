@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assert,
   assertEquals,
@@ -173,7 +175,7 @@ for (const kind of ["partnership", "corporation"] as const) {
       },
     ]
   ) {
-    Deno.test(`Form 1116 ${kind} K-3 public review boundary and native amounts: ${example.id}`, async () => {
+    test(`Form 1116 ${kind} K-3 public review boundary and native amounts: ${example.id}`, async () => {
       const input = sources(kind, example.gross, example.reduction);
       const blocked = f1040_2025.executeReturn(input);
       // Deferred109: public review has not adopted the K-3 review union.
@@ -197,10 +199,10 @@ for (const kind of ["partnership", "corporation"] as const) {
       const pending = normalizeAllPending(result.pending);
       const filer = extractFilerIdentity(pending.f1040);
       const id = `${kind}-${example.id}`;
-      const root = Deno.env.get("OPENTAX_FORM1116_K3_PROOF_DIR");
+      const root = process.env.OPENTAX_FORM1116_K3_PROOF_DIR;
       if (root) {
-        await Deno.mkdir(root, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(root, { recursive: true });
+        await fs.writeFile(
           `${root}/${id}.json`,
           JSON.stringify(
             {
@@ -249,7 +251,7 @@ for (const kind of ["partnership", "corporation"] as const) {
         "without an affirmative source inventory",
       );
       if (root) {
-        await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
+        await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
       }
       for (
         const changed of [

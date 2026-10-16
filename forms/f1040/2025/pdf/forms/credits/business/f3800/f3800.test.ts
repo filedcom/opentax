@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -107,7 +109,7 @@ function pending() {
   };
 }
 
-Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization", async () => {
+test("Form 3800 PDF uses the exact parts captured during MeF serialization", async () => {
   const source = pending();
   const filer = {
     ...testFiler(),
@@ -170,7 +172,7 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
     Error,
     "same prepared MeF return",
   );
-  const cacheDir = await Deno.makeTempDir();
+  const cacheDir = await sys.makeTempDir();
   try {
     const pdf = await buildPdfBytes(source, filer, cacheDir, bundle);
     assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 9, true);
@@ -239,11 +241,11 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
       "PDF source differs from the prepared MeF return",
     );
   } finally {
-    await Deno.remove(cacheDir, { recursive: true });
+    await sys.remove(cacheDir, { recursive: true });
   }
 });
 
-Deno.test("prepared return prints the graph's geothermal credit on all nine Form 3800 pages", async () => {
+test("prepared return prints the graph's geothermal credit on all nine Form 3800 pages", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-general-business-credit"
   )!;
@@ -262,7 +264,7 @@ Deno.test("prepared return prints the graph's geothermal credit on all nine Form
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 16);
 });
 
-Deno.test("two geothermal facilities print two Form 8835 copies and distinct Form 3800 Part V sources", async () => {
+test("two geothermal facilities print two Form 8835 copies and distinct Form 3800 Part V sources", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-two-geothermal-business-credits"
   )!;
@@ -306,7 +308,7 @@ Deno.test("two geothermal facilities print two Form 8835 copies and distinct For
   );
 });
 
-Deno.test("wind and geothermal facilities keep separate Form 8835 lines and Form 3800 sources", async () => {
+test("wind and geothermal facilities keep separate Form 8835 lines and Form 3800 sources", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-wind-and-geothermal-business-credits"
   )!;
@@ -360,7 +362,7 @@ const unverifiedNewMarketsFixtureIds = [
 ] as const;
 
 for (const id of unverifiedNewMarketsFixtureIds) {
-  Deno.test(`${id} blocks PDF export until direct QEI authentication exists`, async () => {
+  test(`${id} blocks PDF export until direct QEI authentication exists`, async () => {
     const fixture = pdfReviewFixtures.find((item) => item.id === id)!;
     const result = f1040_2025.executeReturn({ ...fixture.inputs });
     assertEquals(result.diagnostics, []);
@@ -372,7 +374,7 @@ for (const id of unverifiedNewMarketsFixtureIds) {
   });
 }
 
-Deno.test("orphan-drug and unverified direct QEI cannot enter the printable packet", async () => {
+test("orphan-drug and unverified direct QEI cannot enter the printable packet", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-and-new-markets-credits"
   )!;
@@ -402,7 +404,7 @@ Deno.test("orphan-drug and unverified direct QEI cannot enter the printable pack
   );
 });
 
-Deno.test("one self-earned orphan-drug credit reconciles Form 3800 native and PDF", async () => {
+test("one self-earned orphan-drug credit reconciles Form 3800 native and PDF", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-and-new-markets-credits"
   )!;
@@ -504,7 +506,7 @@ Deno.test("one self-earned orphan-drug credit reconciles Form 3800 native and PD
   );
 });
 
-Deno.test("orphan-drug ordinary and geothermal specified credits keep separate Form 3800 limits", async () => {
+test("orphan-drug ordinary and geothermal specified credits keep separate Form 3800 limits", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-and-new-markets-credits"
   )!;

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099oid } from "../../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
 import { f1099int } from "../../../../../../nodes/inputs/income/investments/f1099int/index.ts";
@@ -48,7 +49,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 reconciles plain 1099-OID with ordinary 1099-DIV", () => {
+test("Form 4952 reconciles plain 1099-OID with ordinary 1099-DIV", () => {
   const source = f1099oid.compute(
     { taxYear: 2025, formType: "f1040" },
     { f1099oids: [oid] },
@@ -65,7 +66,7 @@ Deno.test("Form 4952 reconciles plain 1099-OID with ordinary 1099-DIV", () => {
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 reconciles 1099-INT, 1099-OID, and 1099-DIV together", () => {
+test("Form 4952 reconciles 1099-INT, 1099-OID, and 1099-DIV together", () => {
   const mixedInputs = {
     ...inputs,
     source_1099_interest: [500, 250],
@@ -92,7 +93,7 @@ Deno.test("Form 4952 reconciles 1099-INT, 1099-OID, and 1099-DIV together", () =
   );
 });
 
-Deno.test("Form 4952 reconciles Treasury box 3, plain OID box 1, and ordinary dividends", () => {
+test("Form 4952 reconciles Treasury box 3, plain OID box 1, and ordinary dividends", () => {
   const treasury = {
     payer_name: "U.S. Treasury",
     box3: 500,
@@ -169,7 +170,7 @@ Deno.test("Form 4952 reconciles Treasury box 3, plain OID box 1, and ordinary di
   );
 });
 
-Deno.test("Form 4952 OID/dividend route rejects adjusted and mismatched sources", () => {
+test("Form 4952 OID/dividend route rejects adjusted and mismatched sources", () => {
   for (
     const changed of [
       { ...oid, box6_acquisition_premium: 25, box6_applies_to: "taxable_oid" },

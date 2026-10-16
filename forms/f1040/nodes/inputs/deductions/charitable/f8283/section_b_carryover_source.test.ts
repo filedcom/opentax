@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -31,7 +32,7 @@ const filedReturnXmlBytes = new TextEncoder().encode(
   '<Return xmlns="http://www.irs.gov/efile"><ReturnHeader><TaxYr>2024</TaxYr><ReturnTypeCd>1040</ReturnTypeCd><Filer><PrimarySSN>123456789</PrimarySSN></Filer></ReturnHeader><ReturnData><IRS1040/><IRS1040ScheduleA><OtherThanByCashOrCheckAmt>15000</OtherThanByCashOrCheckAmt></IRS1040ScheduleA><IRS8283><ArtWorthAtLeast20000DollarsInd>X</ArtWorthAtLeast20000DollarsInd><PropertyInformation><DonatedPropertyDesc>Purchased oil painting</DonatedPropertyDesc><DonatedPropertyPhysicalCondTxt>Excellent</DonatedPropertyPhysicalCondTxt><AppraisedFairMarketValueAmt>30000</AppraisedFairMarketValueAmt><DonorAcquiredDt>2022-10</DonorAcquiredDt><DonorAcquisitionDesc>Purchase</DonorAcquisitionDesc><DonorCostOrAdjustedBasisAmt>20000</DonorCostOrAdjustedBasisAmt><DeductionClaimedAmt>30000</DeductionClaimedAmt></PropertyInformation><AppraiserName><PersonFirstNm>Alex</PersonFirstNm><PersonLastNm>Valuer</PersonLastNm></AppraiserName><AppraiserSignedDt>2024-12-15</AppraiserSignedDt><AppraiserUSAddress><AddressLine1Txt>10 Art Street</AddressLine1Txt><CityNm>Boston</CityNm><StateAbbreviationCd>MA</StateAbbreviationCd><ZIPCd>02108</ZIPCd></AppraiserUSAddress><AppraiserEIN>123456789</AppraiserEIN><ReceivedDt>2024-12-01</ReceivedDt><UsePropertyForUnrelatedUseInd>false</UsePropertyForUnrelatedUseInd><DoneeName><BusinessNameLine1Txt>Public Art Museum</BusinessNameLine1Txt></DoneeName><DoneeEIN>987654321</DoneeEIN><DoneeUSAddress><AddressLine1Txt>1 Museum Way</AddressLine1Txt><CityNm>Boston</CityNm><StateAbbreviationCd>MA</StateAbbreviationCd><ZIPCd>02108</ZIPCd></DoneeUSAddress></IRS8283></ReturnData></Return>',
 );
 
-Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to one carryover", async () => {
+test("Form 8283 binds a prior Section B artwork and required appraisal to one carryover", async () => {
   const source = {
     contribution_id: "artwork-2024-1",
     contribution_year: 2024,

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -16,7 +19,7 @@ const expected: Record<string, number[]> = {
   "qss-owner-only": [3726, 202824, 34449, 35536, 14464],
 };
 for (const c of sstbStatusCases) {
-  Deno.test(`SSTB ${c.name}: household source, Schedule A and complete return`, async () => {
+  test(`SSTB ${c.name}: household source, Schedule A and complete return`, async () => {
     const input = sstbStatusFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -31,26 +34,20 @@ for (const c of sstbStatusCases) {
     const filer = extractFilerIdentity(f)!;
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
     const p: Row = prepared.bundle.pending;
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "SSTB_STATUS_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("SSTB_STATUS_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.SSTB_STATUS_EVIDENCE;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/source.json`,
         JSON.stringify({ input, filer, pending: p }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
-      await Deno.writeFile(
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(p, filer, ".pdf-cache", prepared.bundle),
       );
-      const xsd = await new Deno.Command("xmllint", {
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -63,7 +60,7 @@ for (const c of sstbStatusCases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       for (
         const kind of [
@@ -119,7 +116,7 @@ for (const c of sstbStatusCases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
     for (const kind of ["owner", "payroll", "review", "household"]) {
       const invalid = structuredClone(input);

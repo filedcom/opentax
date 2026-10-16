@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -31,28 +34,28 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(schema);
+    await sys.stat(schema);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
+    if (sys.isNotFound(error)) {
       throw new Error(`Missing verification prerequisite: ${schema}`);
     }
     throw error;
   }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 
-Deno.test("two 1099-NEC payers reconcile to a reviewed Schedule C and Form 1040", async () => {
+test("two 1099-NEC payers reconcile to a reviewed Schedule C and Form 1040", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -114,7 +117,7 @@ Deno.test("two 1099-NEC payers reconcile to a reviewed Schedule C and Form 1040"
   assertEquals(pdf.getPageCount() >= 4, true);
 });
 
-Deno.test("1099-NEC export rejects a recipient who differs from the business proprietor", async () => {
+test("1099-NEC export rejects a recipient who differs from the business proprietor", async () => {
   const pending = buildPending({
     schedule1: { line3_schedule_c: 5_000 },
     f1099nec: {
@@ -158,7 +161,7 @@ Deno.test("1099-NEC export rejects a recipient who differs from the business pro
   );
 });
 
-Deno.test("1099-NEC and 1099-MISC receipts cannot exceed one business's gross receipts", async () => {
+test("1099-NEC and 1099-MISC receipts cannot exceed one business's gross receipts", async () => {
   const pending = buildPending({
     schedule1: { line3_schedule_c: 5_000 },
     f1099nec: {

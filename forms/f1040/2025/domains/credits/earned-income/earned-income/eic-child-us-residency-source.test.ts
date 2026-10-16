@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -26,7 +27,7 @@ if (!threeChildFixture) {
   throw new Error("Missing three-child EIC source fixture");
 }
 
-Deno.test("Schedule EIC US residency survives calculation and both export preflights", async () => {
+test("Schedule EIC US residency survives calculation and both export preflights", async () => {
   const result = execute(plan, registry, { ...fixture.inputs }, {
     taxYear: 2025,
     formType: "f1040",
@@ -66,7 +67,7 @@ Deno.test("Schedule EIC US residency survives calculation and both export prefli
   );
 });
 
-Deno.test("Schedule EIC line 6 uses exact U.S. months through calculation, native and PDF", async () => {
+test("Schedule EIC line 6 uses exact U.S. months through calculation, native and PDF", async () => {
   const general = fixture.inputs.general as Record<string, unknown>;
   const [childSource] = general.dependents as Array<Record<string, unknown>>;
   if (!childSource) throw new Error("Missing EIC child source");
@@ -113,7 +114,7 @@ Deno.test("Schedule EIC line 6 uses exact U.S. months through calculation, nativ
   );
 });
 
-Deno.test("reviewed December birth survives three-child source, native XML, and filled PDF", async () => {
+test("reviewed December birth survives three-child source, native XML, and filled PDF", async () => {
   const result = execute(plan, registry, { ...threeChildFixture.inputs }, {
     taxYear: 2025,
     formType: "f1040",
@@ -160,7 +161,7 @@ Deno.test("reviewed December birth survives three-child source, native XML, and 
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
-Deno.test("reviewed partial-life birth prints 12 on Schedule EIC in native and PDF", async () => {
+test("reviewed partial-life birth prints 12 on Schedule EIC in native and PDF", async () => {
   const general = threeChildFixture.inputs.general as Record<string, unknown>;
   const dependents = general.dependents as Array<Record<string, unknown>>;
   const partiallyResident = {
@@ -264,7 +265,7 @@ Deno.test("reviewed partial-life birth prints 12 on Schedule EIC in native and P
   );
 });
 
-Deno.test("Schedule EIC rejects repeated identity and unsupported birth residence", () => {
+test("Schedule EIC rejects repeated identity and unsupported birth residence", () => {
   const input = threeChildFixture.inputs;
   const general = input.general as Record<string, unknown>;
   const deps = general.dependents as Array<Record<string, unknown>>;
@@ -308,7 +309,7 @@ Deno.test("Schedule EIC rejects repeated identity and unsupported birth residenc
   );
 });
 
-Deno.test("Schedule EIC export rejects a changed birth review after calculation", async () => {
+test("Schedule EIC export rejects a changed birth review after calculation", async () => {
   const result = execute(plan, registry, { ...threeChildFixture.inputs }, {
     taxYear: 2025,
     formType: "f1040",

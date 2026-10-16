@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 // deno-lint-ignore-file no-explicit-any
 import {
   assertEquals,
@@ -37,7 +39,7 @@ const cases = [
   },
 ];
 for (const scenario of cases) {
-  Deno.test(`SHOP ${scenario.state}/${scenario.county} table reaches complete native and PDF projection`, async () => {
+  test(`SHOP ${scenario.state}/${scenario.county} table reaches complete native and PDF projection`, async () => {
     const original = scenario.inputs() as any;
     const priorRows = "monthly_plan_arrangements" in original.f8941
       ? multiplePlanWorksheet(original.f8941).rows
@@ -94,15 +96,15 @@ for (const scenario of cases) {
     assertEquals(projected.line16, lines.line16);
     let evidence: string | undefined;
     try {
-      evidence = Deno.env.get("FORM8941_RATING_EVIDENCE");
+      evidence = process.env.FORM8941_RATING_EVIDENCE;
     } catch { /* Optional evidence only. */ }
     if (evidence) {
-      await Deno.mkdir(evidence, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(evidence, { recursive: true });
+      await fs.writeFile(
         `${evidence}/${scenario.state}.xml`,
         prepared.bundle.xml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${scenario.state}.json`,
         JSON.stringify({ inputs, filer, pending, lines, projected }, null, 2),
       );

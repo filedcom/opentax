@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertGreater,
@@ -35,7 +38,7 @@ const mockFiler: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("PDF final export rejects non-withheld W-2G winnings for another winner", async () => {
+test("PDF final export rejects non-withheld W-2G winnings for another winner", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -58,7 +61,7 @@ Deno.test("PDF final export rejects non-withheld W-2G winnings for another winne
   );
 });
 
-Deno.test("PDF final export rejects non-withheld W-2G without TY2025 source year", async () => {
+test("PDF final export rejects non-withheld W-2G without TY2025 source year", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -80,7 +83,7 @@ Deno.test("PDF final export rejects non-withheld W-2G without TY2025 source year
   );
 });
 
-Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-assets answer", async () => {
+test("Form 1040 PDF rejects missing printed identity, status, or digital-assets answer", async () => {
   const complete = {
     f1040: {
       line1a_wages: 75_000,
@@ -116,7 +119,7 @@ Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-as
   );
 });
 
-Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async () => {
+test("Form 1040 PDF rejects source TINs that differ from the filer", async () => {
   const fields = {
     filing_status: "single",
     digital_assets: false,
@@ -141,7 +144,7 @@ Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async 
   );
 });
 
-Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", async () => {
+test("Form 1040 PDF rejects a changed retained digital-assets answer", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -153,7 +156,7 @@ Deno.test("Form 1040 PDF rejects a changed retained digital-assets answer", asyn
   );
 });
 
-Deno.test("Form 1040 PDF rejects a digital-assets answer absent from retained general source", async () => {
+test("Form 1040 PDF rejects a digital-assets answer absent from retained general source", async () => {
   for (const filedAnswer of [true, false]) {
     await assertRejects(
       () =>
@@ -167,7 +170,7 @@ Deno.test("Form 1040 PDF rejects a digital-assets answer absent from retained ge
   }
 });
 
-Deno.test("Form 1040 PDF rejects No with a digital Form 8949 sale", async () => {
+test("Form 1040 PDF rejects No with a digital Form 8949 sale", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -179,7 +182,7 @@ Deno.test("Form 1040 PDF rejects No with a digital Form 8949 sale", async () => 
   );
 });
 
-Deno.test("Form 1040 PDF rejects a dependent omitted after general source projection", async () => {
+test("Form 1040 PDF rejects a dependent omitted after general source projection", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -202,7 +205,7 @@ Deno.test("Form 1040 PDF rejects a dependent omitted after general source projec
   );
 });
 
-Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
+test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -217,7 +220,7 @@ Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => 
   );
 });
 
-Deno.test("Form 1040 PDF rejects positive 1099-K with no income classification", async () => {
+test("Form 1040 PDF rejects positive 1099-K with no income classification", async () => {
   await assertRejects(
     () =>
       buildPdfBytes({
@@ -235,7 +238,7 @@ Deno.test("Form 1040 PDF rejects positive 1099-K with no income classification",
   );
 });
 
-Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
+test("Form 8949 PDF cannot export without Schedule D", async () => {
   await assertRejects(
     () => buildPdfBytes({ form8949: [{ part: "B" }] }, undefined),
     Error,
@@ -243,7 +246,7 @@ Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
   );
 });
 
-Deno.test("Form 8949 PDF rows must match calculated Schedule D sales", async () => {
+test("Form 8949 PDF rows must match calculated Schedule D sales", async () => {
   const sale = {
     part: "B",
     description: "Broker shares",
@@ -273,7 +276,7 @@ Deno.test("Form 8949 PDF rows must match calculated Schedule D sales", async () 
   }
 });
 
-Deno.test("PDF export rejects active attachments without complete PDF maps", () => {
+test("PDF export rejects active attachments without complete PDF maps", () => {
   const active: Array<[Record<string, Record<string, unknown>>, string]> = [
     [{ f8997: { investment_lots: [{}] } }, "Form 8997"],
     [{ f8958: { state: "CA" } }, "Form 8958"],
@@ -379,16 +382,16 @@ async function makeMinimalF1040Pdf(
  * of fetching from IRS.
  */
 async function seedCache(cacheDir: string, url: string, pdfBytes: Uint8Array) {
-  await Deno.mkdir(cacheDir, { recursive: true });
-  await Deno.writeFile(join(cacheDir, cacheSlug(url)), pdfBytes);
+  await fs.mkdir(cacheDir, { recursive: true });
+  await fs.writeFile(join(cacheDir, cacheSlug(url)), pdfBytes);
 }
 
 // ---------------------------------------------------------------------------
 // buildPdfBytes
 // ---------------------------------------------------------------------------
 
-Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: fills wage field and returns valid PDF bytes", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const stubPdf = await makeMinimalF1040Pdf([
       "topmostSubform[0].Page1[0].f1_47[0]", // line1a_wages
@@ -403,12 +406,12 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     assertEquals(header, "%PDF-");
     assertGreater(result.length, 100);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("prepared PDF accepts retained native XML after clock drift and rejects a changed answer with a fresh digest", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("prepared PDF accepts retained native XML after clock drift and rejects a changed answer with a fresh digest", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await seedCache(tmpDir, F1040_PDF_URL, await makeMinimalF1040Pdf([]));
     const pending = { f1040: printable1040({}) };
@@ -439,12 +442,12 @@ Deno.test("prepared PDF accepts retained native XML after clock drift and reject
       "Prepared MeF XML differs from its retained source projection",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: the same filled IRS form has stable bytes across builds", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: the same filled IRS form has stable bytes across builds", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await seedCache(
       tmpDir,
@@ -460,12 +463,12 @@ Deno.test("buildPdfBytes: the same filled IRS form has stable bytes across build
     assertEquals(first, second);
     assertEquals((await PDFDocument.load(second)).getPageCount(), 1);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: a missing AcroForm field stops the export", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await seedCache(
       tmpDir,
@@ -483,12 +486,12 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
       'failed to fill field "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[0]"',
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf validates an unselected Form 1040 checkbox field", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf validates an unselected Form 1040 checkbox field", async () => {
+  const tmpDir = await sys.makeTempDir();
   const missingBox = "topmostSubform[0].Page1[0].c1_8[1]";
   const descriptor = {
     pendingKey: "f1040",
@@ -530,12 +533,12 @@ Deno.test("fillFormPdf validates an unselected Form 1040 checkbox field", async 
     );
     assertEquals(filled instanceof Uint8Array, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf validates present blank-zero text fields and extra fields", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf validates present blank-zero text fields and extra fields", async () => {
+  const tmpDir = await sys.makeTempDir();
   const descriptor = {
     pendingKey: "f1040",
     pdfUrl: F1040_PDF_URL,
@@ -601,12 +604,12 @@ Deno.test("fillFormPdf validates present blank-zero text fields and extra fields
     );
     assertEquals(filled instanceof Uint8Array, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf rejects populated fields on discarded IRS pages", async () => {
+  const tmpDir = await sys.makeTempDir();
   const fieldName = "topmostSubform[0].Page2[0].f2_01[0]";
   const document = await PDFDocument.create();
   document.addPage([612, 792]);
@@ -642,12 +645,12 @@ Deno.test("fillFormPdf rejects populated fields on discarded IRS pages", async (
     );
     assertEquals(retained instanceof Uint8Array, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf rejects filer and row fields on discarded IRS pages", async () => {
+  const tmpDir = await sys.makeTempDir();
   const document = await PDFDocument.create();
   const first = document.addPage([612, 792]);
   const second = document.addPage([612, 792]);
@@ -764,12 +767,12 @@ Deno.test("fillFormPdf rejects filer and row fields on discarded IRS pages", asy
     );
     assertEquals(retained instanceof Uint8Array, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", async () => {
+  const tmpDir = await sys.makeTempDir();
   const wageField = "topmostSubform[0].Page1[0].f1_47[0]";
   const descriptor = {
     pendingKey: "f1040",
@@ -822,12 +825,12 @@ Deno.test("fillFormPdf rejects nonfinite Form 1040 and schedule row amounts", as
     );
     assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf rejects objects, arrays, and booleans in text widgets", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf rejects objects, arrays, and booleans in text widgets", async () => {
+  const tmpDir = await sys.makeTempDir();
   const descriptor = {
     pendingKey: "sample_rows",
     pdfUrl: F1040_PDF_URL,
@@ -900,12 +903,12 @@ Deno.test("fillFormPdf rejects objects, arrays, and booleans in text widgets", a
     );
     assertEquals((await PDFDocument.load(filled!)).getPageCount(), 1);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf requires boolean checkbox values", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf requires boolean checkbox values", async () => {
+  const tmpDir = await sys.makeTempDir();
   const document = await PDFDocument.create();
   const page = document.addPage([612, 792]);
   const form = document.getForm();
@@ -974,12 +977,12 @@ Deno.test("fillFormPdf requires boolean checkbox values", async () => {
     );
     assertEquals(valid instanceof Uint8Array, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     await seedCache(
       tmpDir,
@@ -1011,11 +1014,11 @@ Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async ()
       'failed to fill row 1 field "missing_row_field"',
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("fillFormPdf: row overflow stops export before truncating the form", async () => {
+test("fillFormPdf: row overflow stops export before truncating the form", async () => {
   await assertRejects(
     () =>
       fillFormPdf(
@@ -1042,8 +1045,8 @@ Deno.test("fillFormPdf: row overflow stops export before truncating the form", a
   );
 });
 
-Deno.test("fillFormPdf: required all-zero Form 6251 is retained but an unrequired blank is omitted", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("fillFormPdf: required all-zero Form 6251 is retained but an unrequired blank is omitted", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const widgets = form6251Pdf.fields.map((field) => field.pdfField);
     await seedCache(
@@ -1069,12 +1072,12 @@ Deno.test("fillFormPdf: required all-zero Form 6251 is retained but an unrequire
     );
     assertEquals(notRequired, undefined);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: filled wage value is readable from output PDF", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: filled wage value is readable from output PDF", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const fieldName = "topmostSubform[0].Page1[0].f1_47[0]";
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
@@ -1090,12 +1093,12 @@ Deno.test("buildPdfBytes: filled wage value is readable from output PDF", async 
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 1000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: skips forms with no pending data", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const stubPdf = await makeMinimalF1040Pdf([
       "topmostSubform[0].Page1[0].f1_47[0]",
@@ -1108,12 +1111,12 @@ Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
     const header = new TextDecoder().decode(result.slice(0, 5));
     assertEquals(header, "%PDF-");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: numeric values are rounded to integers", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const stubPdf = await makeMinimalF1040Pdf([]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
@@ -1123,12 +1126,12 @@ Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
     const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 100);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: throws when no forms generate output", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: throws when no forms generate output", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     // Pass pending with no f1040 data — builder should throw
     await assertRejects(
@@ -1137,12 +1140,12 @@ Deno.test("buildPdfBytes: throws when no forms generate output", async () => {
       "No PDF forms were generated",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: caches IRS PDF after first call", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const fieldName = "topmostSubform[0].Page1[0].f1_47[0]";
     const stubPdf = await makeMinimalF1040Pdf([fieldName]);
@@ -1155,15 +1158,15 @@ Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
 
     // Cache file must exist
     const cacheFile = join(tmpDir, cacheSlug(F1040_PDF_URL));
-    const stat = await Deno.stat(cacheFile);
+    const stat = await sys.stat(cacheFile);
     assertEquals(stat.isFile, true);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const stubPdf = await makeMinimalF1040Pdf([
       "topmostSubform[0].Page1[0].Table_Part1_LinesI-1a[0].Line1a[0].Line1a_Text[0].f1_07[0]",
@@ -1198,12 +1201,12 @@ Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source
         tmpDir,
       ), Error);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("shared PDF headers retain both joint names and require spouse identity", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("shared PDF headers retain both joint names and require spouse identity", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const doc = await PDFDocument.create();
     const page = doc.addPage();
@@ -1241,8 +1244,8 @@ Deno.test("shared PDF headers retain both joint names and require spouse identit
     };
     const bytes = await fillFormPdf(descriptor, { amount: 1 }, joint, tmpDir);
     const output = join(tmpDir, "joint.pdf");
-    await Deno.writeFile(output, bytes!);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(output, bytes!);
+    const extracted = await new sys.Command("pdftotext", {
       args: [output, "-"],
       stdout: "piped",
     }).output();
@@ -1265,6 +1268,6 @@ Deno.test("shared PDF headers retain both joint names and require spouse identit
       "needs the identified spouse first and last names",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });

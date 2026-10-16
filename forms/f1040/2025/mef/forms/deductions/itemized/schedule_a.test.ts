@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { scheduleA } from "./schedule_a.ts";
@@ -10,7 +11,7 @@ const descriptorCopy = {
   bytes: new Uint8Array(),
 };
 
-Deno.test("Schedule A native line 8a requires a retained Form 1098", () => {
+test("Schedule A native line 8a requires a retained Form 1098", () => {
   assertThrows(
     () =>
       scheduleA.build(
@@ -22,7 +23,7 @@ Deno.test("Schedule A native line 8a requires a retained Form 1098", () => {
   );
 });
 
-Deno.test("Schedule A native line 8a equals retained Form 1098 box 1 interest", () => {
+test("Schedule A native line 8a equals retained Form 1098 box 1 interest", () => {
   const source = {
     f1098s: [{
       lender_name: "Home Lender",
@@ -51,7 +52,7 @@ Deno.test("Schedule A native line 8a equals retained Form 1098 box 1 interest", 
   }
 });
 
-Deno.test("Schedule A native replays purchase points and the second mortgage", () => {
+test("Schedule A native replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {
     f1098s: fixture.f1098.map((item) => ({
@@ -121,7 +122,7 @@ const pointsSource = {
   }],
 };
 
-Deno.test("Schedule A native box 6 points require matching recipient and filed amount", () => {
+test("Schedule A native box 6 points require matching recipient and filed amount", () => {
   const fields = { line_8a_mortgage_interest_1098: 20_400 };
   const context = { filer: pointsFiler, pending: { f1098: pointsSource } };
   assertStringIncludes(
@@ -150,25 +151,25 @@ Deno.test("Schedule A native box 6 points require matching recipient and filed a
 
 const itemized = { line_5a_state_income_tax: 8_000 };
 
-Deno.test("Schedule A XML is omitted when finalized Form 1040 uses standard deduction", () => {
+test("Schedule A XML is omitted when finalized Form 1040 uses standard deduction", () => {
   const xml = scheduleA.build(itemized, {
     pending: { f1040: { line12a_standard_deduction: 15_750 } },
   });
   assertEquals(xml, "");
 });
 
-Deno.test("Schedule A XML is present when finalized Form 1040 itemizes", () => {
+test("Schedule A XML is present when finalized Form 1040 itemizes", () => {
   const xml = scheduleA.build(itemized, {
     pending: { f1040: { line12e_itemized_deductions: 20_000 } },
   });
   assertStringIncludes(xml, "<IRS1040ScheduleA>");
 });
 
-Deno.test("standalone Schedule A descriptor retains its form-level rendering", () => {
+test("standalone Schedule A descriptor retains its form-level rendering", () => {
   assertStringIncludes(scheduleA.build(itemized), "<IRS1040ScheduleA>");
 });
 
-Deno.test("Schedule A XML keeps elected capital-gain property fail-closed until Form 8283 filing is complete", () => {
+test("Schedule A XML keeps elected capital-gain property fail-closed until Form 8283 filing is complete", () => {
   assertThrows(
     () =>
       scheduleA.build({
@@ -182,7 +183,7 @@ Deno.test("Schedule A XML keeps elected capital-gain property fail-closed until 
   );
 });
 
-Deno.test("Schedule A refuses a prior noncash carryover without its carryover-year Form 8283 source", () => {
+test("Schedule A refuses a prior noncash carryover without its carryover-year Form 8283 source", () => {
   const carryovers = [{
     contribution_id: "2024-land",
     contribution_year: 2024,
@@ -218,7 +219,7 @@ Deno.test("Schedule A refuses a prior noncash carryover without its carryover-ye
   );
 });
 
-Deno.test("Schedule A deducts the full Form 8396 line 3 even when the allowed credit is smaller", () => {
+test("Schedule A deducts the full Form 8396 line 3 even when the allowed credit is smaller", () => {
   const fields = {
     line_8a_mortgage_interest_1098: 15_000,
     form8396_interest_credit_reduction: 2_000,

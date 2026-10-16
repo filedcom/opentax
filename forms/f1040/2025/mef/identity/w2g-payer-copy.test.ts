@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import {
   type PDFDict,
@@ -63,7 +64,7 @@ function copy(changed: Record<string, string> = {}): Promise<Uint8Array> {
   return w2gPayerCopyFixture({ ...projected, ...changed });
 }
 
-Deno.test("W-2G bundle matches readable payer-copy contents to source", async () => {
+test("W-2G bundle matches readable payer-copy contents to source", async () => {
   const bytes = await copy();
   await assertW2GPayerCopyContents(pending, filer, [{
     fileName: "IssuedW2G.pdf",
@@ -82,7 +83,7 @@ Deno.test("W-2G bundle matches readable payer-copy contents to source", async ()
   );
 });
 
-Deno.test("W-2G rejects field metadata without printable recipient widgets", async () => {
+test("W-2G rejects field metadata without printable recipient widgets", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const projected = w2gPdf.instances!({ w2gs: [item] }, filer, {
@@ -108,7 +109,7 @@ Deno.test("W-2G rejects field metadata without printable recipient widgets", asy
   );
 });
 
-Deno.test("W-2G rejects hidden, offpage, stale, missing and forged-font normal appearances", async () => {
+test("W-2G rejects hidden, offpage, stale, missing and forged-font normal appearances", async () => {
   const name =
     w2gPdf.fields.find((f) => f.domainKey === "box4_federal_withheld")!
       .pdfField;

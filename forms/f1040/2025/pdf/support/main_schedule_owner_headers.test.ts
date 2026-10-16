@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertFalse,
@@ -33,11 +36,11 @@ const source = {
 const filer = extractFilerIdentity(source);
 if (!filer) throw new Error("Missing retained Form 1040 filer");
 
-Deno.test("official main schedules print the Form 1040 display-name order", async () => {
+test("official main schedules print the Form 1040 display-name order", async () => {
   assertF1040FinalHeader(source, filer);
   assertEquals(returnHeaderNameLine1(filer), "EXAMPLE<ALEX<B");
   assertEquals(filer.nameLine1, "EXAMPLE ALEX B");
-  const temp = await Deno.makeTempDir();
+  const temp = await sys.makeTempDir();
   try {
     for (
       const [descriptor, fields, page] of [
@@ -67,8 +70,8 @@ Deno.test("official main schedules print the Form 1040 display-name order", asyn
       );
       if (!bytes) throw new Error(`${descriptor.pendingKey} was not rendered`);
       const path = join(temp, `${descriptor.pendingKey}-${page}-owner.pdf`);
-      await Deno.writeFile(path, bytes);
-      const result = await new Deno.Command("pdftotext", {
+      await fs.writeFile(path, bytes);
+      const result = await new sys.Command("pdftotext", {
         args: ["-f", String(page), "-l", String(page), "-layout", path, "-"],
       }).output();
       if (!result.success) {
@@ -91,6 +94,6 @@ Deno.test("official main schedules print the Form 1040 display-name order", asyn
       "name shown on Form 1040 needs the identified first-name field and last name",
     );
   } finally {
-    await Deno.remove(temp, { recursive: true });
+    await sys.remove(temp, { recursive: true });
   }
 });

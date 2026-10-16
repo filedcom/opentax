@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateReviewedLossYear } from "./reviewed_loss_year.ts";
 
@@ -46,7 +47,7 @@ function fixture() {
   };
 }
 
-Deno.test("Form 172 source inventory agrees with the existing simple 2024 business-loss review", () => {
+test("Form 172 source inventory agrees with the existing simple 2024 business-loss review", () => {
   const result = calculateReviewedLossYear(fixture());
   assertEquals(result.lines[1], -64_600);
   assertEquals(result.lines[6], 14_600);
@@ -60,7 +61,7 @@ Deno.test("Form 172 source inventory agrees with the existing simple 2024 busine
   assertEquals(result.filingReady, false);
 });
 
-Deno.test("Form 172 wages offset business loss while interest and IRA deductions receive nonbusiness treatment", () => {
+test("Form 172 wages offset business loss while interest and IRA deductions receive nonbusiness treatment", () => {
   const v = fixture();
   v.noncapital_income.push(
     item("wages", 20_000, true),
@@ -79,7 +80,7 @@ Deno.test("Form 172 wages offset business loss while interest and IRA deductions
   assertEquals(result.regularNol, 33_000);
 });
 
-Deno.test("Form 172 removes nonbusiness capital loss deductions using the MFS limit", () => {
+test("Form 172 removes nonbusiness capital loss deductions using the MFS limit", () => {
   for (
     const [status, limit] of [["single", 3000], [
       "married_filing_separately",
@@ -100,7 +101,7 @@ Deno.test("Form 172 removes nonbusiness capital loss deductions using the MFS li
   }
 });
 
-Deno.test("Form 172 full business/nonbusiness capital inventory reconciles a mixed gain/loss return", () => {
+test("Form 172 full business/nonbusiness capital inventory reconciles a mixed gain/loss return", () => {
   const v = fixture();
   v.capital_gains.push({
     ...item("investment-gain", 10_000, false),
@@ -117,7 +118,7 @@ Deno.test("Form 172 full business/nonbusiness capital inventory reconciles a mix
   assertEquals(result.regularNol, 50_000);
 });
 
-Deno.test("Form 172 restores section 1202 even when Schedule D has no loss", () => {
+test("Form 172 restores section 1202 even when Schedule D has no loss", () => {
   const v = fixture();
   v.capital_gains.push({
     ...item("qsbs", 10_000, false),
@@ -132,7 +133,7 @@ Deno.test("Form 172 restores section 1202 even when Schedule D has no loss", () 
   assertEquals(result.regularNol, 50_000);
 });
 
-Deno.test("Form 172 section 1202 and Schedule D loss interact on lines 18 through 22", () => {
+test("Form 172 section 1202 and Schedule D loss interact on lines 18 through 22", () => {
   const v = fixture();
   v.capital_gains.push({
     ...item("qsbs", 20_000, false),
@@ -150,7 +151,7 @@ Deno.test("Form 172 section 1202 and Schedule D loss interact on lines 18 throug
   assertEquals(result.regularNol, 40_000);
 });
 
-Deno.test("Form 172 prior NOL deductions do not create a second origin loss", () => {
+test("Form 172 prior NOL deductions do not create a second origin loss", () => {
   const v = fixture();
   v.prior_nol_deductions.push({
     item_id: "old-nol",
@@ -164,7 +165,7 @@ Deno.test("Form 172 prior NOL deductions do not create a second origin loss", ()
   assertEquals(result.regularNol, 50_000);
 });
 
-Deno.test("Form 172 joint source inventory includes distinct spouse without claiming allocation", () => {
+test("Form 172 joint source inventory includes distinct spouse without claiming allocation", () => {
   const v = {
     ...fixture(),
     filing_status: "married_filing_jointly",
@@ -190,7 +191,7 @@ Deno.test("Form 172 joint source inventory includes distinct spouse without clai
   assertEquals(result.carryAvailabilityVerified, false);
 });
 
-Deno.test("Form 172 positive income produces no NOL and cannot be imported as carry", () => {
+test("Form 172 positive income produces no NOL and cannot be imported as carry", () => {
   const v = fixture();
   v.noncapital_income[0].amount = 80_000;
   v.reviewed_form1040.line11_agi = 20_000;
@@ -200,7 +201,7 @@ Deno.test("Form 172 positive income produces no NOL and cannot be imported as ca
   assertEquals(result.carryAvailabilityVerified, false);
 });
 
-Deno.test("Form 172 rejects unreconciled return, duplicate sources, wrong owners and invalid exclusions", () => {
+test("Form 172 rejects unreconciled return, duplicate sources, wrong owners and invalid exclusions", () => {
   const original = fixture();
   const inputs = [
     {
@@ -282,7 +283,7 @@ Deno.test("Form 172 rejects unreconciled return, duplicate sources, wrong owners
   }
 });
 
-Deno.test("Form 172 reviewed copy reconciles every calculated Part I amount, including skipped zeros", () => {
+test("Form 172 reviewed copy reconciles every calculated Part I amount, including skipped zeros", () => {
   const v = fixture();
   const lines = {
     "1": -64_600,

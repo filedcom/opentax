@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -71,7 +72,7 @@ function run(inputs: Record<string, unknown>) {
   }, ctx);
 }
 
-Deno.test("Form 4952 limits the reported Schedule A deduction and carries excess", () => {
+test("Form 4952 limits the reported Schedule A deduction and carries excess", () => {
   const result = run({
     f1099int: [{
       payer_name: "Example Bank",
@@ -108,7 +109,7 @@ Deno.test("Form 4952 limits the reported Schedule A deduction and carries excess
   );
 });
 
-Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax", () => {
+test("Form 8960 receives allowed interest and taxpayer-allocated state tax", () => {
   const result = run({
     w2: [{
       box1_wages: 300_000,
@@ -164,7 +165,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
   );
 });
 
-Deno.test("Form 8960 does not deduct investment interest when standard deduction wins", () => {
+test("Form 8960 does not deduct investment interest when standard deduction wins", () => {
   const result = run({
     f1099int: [{
       payer_name: "Example Bank",
@@ -178,7 +179,7 @@ Deno.test("Form 8960 does not deduct investment interest when standard deduction
   assertEquals(result.pending.form8960.line17_niit, 76);
 });
 
-Deno.test("Form 4952 uses prior carryforward and an explicit qualified-dividend election", () => {
+test("Form 4952 uses prior carryforward and an explicit qualified-dividend election", () => {
   const result = run({
     f1099div: [{
       payerName: "Broker",
@@ -255,7 +256,7 @@ Deno.test("Form 4952 uses prior carryforward and an explicit qualified-dividend 
   assertEquals(result.pending.form6251.qualified_dividends, 10_000);
 });
 
-Deno.test("Form 4952 subtracts investment expenses before limiting interest", () => {
+test("Form 4952 subtracts investment expenses before limiting interest", () => {
   const result = run({
     f1099int: [{
       payer_name: "Example Bank",
@@ -279,7 +280,7 @@ Deno.test("Form 4952 subtracts investment expenses before limiting interest", ()
   assertEquals(result.carryforwards.investment_interest_excess_4952, 4_500);
 });
 
-Deno.test("Form 4952 pools interest and nonqualified dividends without counting qualified amounts", () => {
+test("Form 4952 pools interest and nonqualified dividends without counting qualified amounts", () => {
   const result = run({
     f1099int: [{
       payer_name: "Bank",
@@ -316,7 +317,7 @@ Deno.test("Form 4952 pools interest and nonqualified dividends without counting 
   assertEquals(result.carryforwards.investment_interest_excess_4952, 1_000);
 });
 
-Deno.test("Form 8960 rejects a tax allocation above the deductible tax", () => {
+test("Form 8960 rejects a tax allocation above the deductible tax", () => {
   const result = run({
     w2: [{
       box1_wages: 300_000,
@@ -335,7 +336,7 @@ Deno.test("Form 8960 rejects a tax allocation above the deductible tax", () => {
   );
 });
 
-Deno.test("Form 8960 line 9b cannot be backed by property tax", () => {
+test("Form 8960 line 9b cannot be backed by property tax", () => {
   const result = run({
     schedule_a: {
       line_5b_real_estate_tax: 10_000,

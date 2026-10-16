@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 // Black-box tests for intermediate node: form8880
 // Sources: nodes/2025/f1040/intermediate/form8880/research/context.md
 // These tests define IRS-correct behavior. If a test fails, fix the implementation — not the test.
@@ -81,7 +82,7 @@ function assertCalculatedZero(result: ReturnType<typeof compute>) {
   }]);
 }
 
-Deno.test("form8880: early node carries source without claiming Schedule 3 line 4", () => {
+test("form8880: early node carries source without claiming Schedule 3 line 4", () => {
   const result = form8880.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -97,7 +98,7 @@ Deno.test("form8880: early node carries source without claiming Schedule 3 line 
   );
 });
 
-Deno.test("form8880: a manual tax-capacity source rejects", () => {
+test("form8880: a manual tax-capacity source rejects", () => {
   assertThrows(
     () =>
       form8880.inputSchema.parse({
@@ -110,7 +111,7 @@ Deno.test("form8880: a manual tax-capacity source rejects", () => {
   );
 });
 
-Deno.test("form8880: pre-tax and designated Roth W-2 deferrals share line 2 without losing ownership", () => {
+test("form8880: pre-tax and designated Roth W-2 deferrals share line 2 without losing ownership", () => {
   const result = compute({
     taxpayer_ssn: "123456789",
     spouse_ssn: "987654321",
@@ -139,7 +140,7 @@ Deno.test("form8880: pre-tax and designated Roth W-2 deferrals share line 2 with
   );
 });
 
-Deno.test("form8880: positive claim requires contributor eligibility facts", () => {
+test("form8880: positive claim requires contributor eligibility facts", () => {
   assertThrows(
     () =>
       calculateForm8880(
@@ -156,7 +157,7 @@ Deno.test("form8880: positive claim requires contributor eligibility facts", () 
   );
 });
 
-Deno.test("form8880: joint distribution cannot be subtracted from only one spouse column", () => {
+test("form8880: joint distribution cannot be subtracted from only one spouse column", () => {
   assertThrows(
     () =>
       compute({
@@ -170,7 +171,7 @@ Deno.test("form8880: joint distribution cannot be subtracted from only one spous
   );
 });
 
-Deno.test("form8880: positive joint credit requires a complete reviewed distribution ledger", () => {
+test("form8880: positive joint credit requires a complete reviewed distribution ledger", () => {
   assertThrows(
     () =>
       compute({
@@ -183,7 +184,7 @@ Deno.test("form8880: positive joint credit requires a complete reviewed distribu
   );
 });
 
-Deno.test("form8880: reviewed 2025 spouse distribution reduces both joint columns", () => {
+test("form8880: reviewed 2025 spouse distribution reduces both joint columns", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     ira_contributions_taxpayer: 2_000,
@@ -208,7 +209,7 @@ Deno.test("form8880: reviewed 2025 spouse distribution reduces both joint column
   assertEquals(lines.print_line12_credit, 500);
 });
 
-Deno.test("form8880: 2023 nonjoint spouse distribution reduces only spouse column", () => {
+test("form8880: 2023 nonjoint spouse distribution reduces only spouse column", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     ira_contributions_taxpayer: 2_000,
@@ -236,7 +237,7 @@ Deno.test("form8880: 2023 nonjoint spouse distribution reduces only spouse colum
   assertEquals(lines.print_line12_credit, 1_500);
 });
 
-Deno.test("form8880: 2024 joint distribution reduces both columns", () => {
+test("form8880: 2024 joint distribution reduces both columns", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     ira_contributions_taxpayer: 2_000,
@@ -262,7 +263,7 @@ Deno.test("form8880: 2024 joint distribution reduces both columns", () => {
   assertEquals(lines.print_line12_credit, 1_500);
 });
 
-Deno.test("form8880: combined review rejects conflicting joint status", () => {
+test("form8880: combined review rejects conflicting joint status", () => {
   const prior = {
     filing_due_date: "2026-04-15" as const,
     reviewed_distribution_sources_ref: "2023-2026 IRA and plan review",
@@ -313,7 +314,7 @@ Deno.test("form8880: combined review rejects conflicting joint status", () => {
   assertEquals(lines.print_line4b_distributions, 200);
 });
 
-Deno.test("form8880: prefiling 2026 distributions use the documented joint-return plan", () => {
+test("form8880: prefiling 2026 distributions use the documented joint-return plan", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     ira_contributions_taxpayer: 2_000,
@@ -339,7 +340,7 @@ Deno.test("form8880: prefiling 2026 distributions use the documented joint-retur
   assertEquals(lines.print_line4b_distributions, 500);
 });
 
-Deno.test("form8880: combined distribution review rejects outside-due-date entries", () => {
+test("form8880: combined distribution review rejects outside-due-date entries", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.MFJ,
@@ -362,7 +363,7 @@ Deno.test("form8880: combined distribution review rejects outside-due-date entri
   );
 });
 
-Deno.test("form8880: extended distribution window needs an extension reference", () => {
+test("form8880: extended distribution window needs an extension reference", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.MFJ,
@@ -378,7 +379,7 @@ Deno.test("form8880: extended distribution window needs an extension reference",
   );
 });
 
-Deno.test("form8880: old partial joint-distribution shapes explicitly reject", () => {
+test("form8880: old partial joint-distribution shapes explicitly reject", () => {
   assertThrows(() =>
     compute({
       filing_status: FilingStatus.MFJ,
@@ -392,7 +393,7 @@ Deno.test("form8880: old partial joint-distribution shapes explicitly reject", (
   );
 });
 
-Deno.test("form8880: prior-year distribution needs its filed-return source", () => {
+test("form8880: prior-year distribution needs its filed-return source", () => {
   assertThrows(
     () =>
       compute({
@@ -423,7 +424,7 @@ for (
     { taxpayer_claimed_as_dependent: true },
   ]
 ) {
-  Deno.test(`form8880: ineligible contributor cannot claim with ${JSON.stringify(facts)}`, () => {
+  test(`form8880: ineligible contributor cannot claim with ${JSON.stringify(facts)}`, () => {
     assertThrows(
       () =>
         compute({
@@ -438,7 +439,7 @@ for (
   });
 }
 
-Deno.test("form8880: January 1, 2008 birth is within the statutory cutoff", () => {
+test("form8880: January 1, 2008 birth is within the statutory cutoff", () => {
   const result = compute({
     ira_contributions_taxpayer: 1_000,
     agi: 20_000,
@@ -457,7 +458,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input validation
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: negative ira_contributions_taxpayer throws", () => {
+test("form8880: negative ira_contributions_taxpayer throws", () => {
   assertThrows(
     () =>
       compute({
@@ -469,7 +470,7 @@ Deno.test("form8880: negative ira_contributions_taxpayer throws", () => {
   );
 });
 
-Deno.test("form8880: negative AGI is accepted but zero tax liability permits no credit", () => {
+test("form8880: negative AGI is accepted but zero tax liability permits no credit", () => {
   assertCalculatedZero(compute({
     ira_contributions_taxpayer: 1000,
     agi: -1,
@@ -478,12 +479,12 @@ Deno.test("form8880: negative AGI is accepted but zero tax liability permits no 
   }));
 });
 
-Deno.test("form8880: no contributions produces no output", () => {
+test("form8880: no contributions produces no output", () => {
   const result = compute({ agi: 20000, filing_status: "single" });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("form8880: zero contributions produces no output", () => {
+test("form8880: zero contributions produces no output", () => {
   const result = compute({
     ira_contributions_taxpayer: 0,
     agi: 20000,
@@ -496,7 +497,7 @@ Deno.test("form8880: zero contributions produces no output", () => {
 // 2. Credit rate — Single / 50%
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: single AGI=$20,000 receives the 50% credit rate", () => {
+test("form8880: single AGI=$20,000 receives the 50% credit rate", () => {
   // $2,000 contribution × 50% = $1,000
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -509,7 +510,7 @@ Deno.test("form8880: single AGI=$20,000 receives the 50% credit rate", () => {
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: single AGI=$23,750 is the 50% ceiling", () => {
+test("form8880: single AGI=$23,750 is the 50% ceiling", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 23750,
@@ -523,7 +524,7 @@ Deno.test("form8880: single AGI=$23,750 is the 50% ceiling", () => {
 // 3. Credit rate — Single / 20%
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: single AGI=$23,751 enters the 20% bracket", () => {
+test("form8880: single AGI=$23,751 enters the 20% bracket", () => {
   // $2,000 × 20% = $400
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -534,7 +535,7 @@ Deno.test("form8880: single AGI=$23,751 enters the 20% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
-Deno.test("form8880: single AGI=$25,500 is the 20% ceiling", () => {
+test("form8880: single AGI=$25,500 is the 20% ceiling", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 25500,
@@ -548,7 +549,7 @@ Deno.test("form8880: single AGI=$25,500 is the 20% ceiling", () => {
 // 4. Credit rate — Single / 10%
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: single AGI=$25,501 enters the 10% bracket", () => {
+test("form8880: single AGI=$25,501 enters the 10% bracket", () => {
   // $2,000 × 10% = $200
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -559,7 +560,7 @@ Deno.test("form8880: single AGI=$25,501 enters the 10% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
-Deno.test("form8880: single AGI=$39,500 is the 10% ceiling", () => {
+test("form8880: single AGI=$39,500 is the 10% ceiling", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 39500,
@@ -573,7 +574,7 @@ Deno.test("form8880: single AGI=$39,500 is the 10% ceiling", () => {
 // 5. Credit rate — Single / 0% (above limit)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: single AGI=$39,501 is above the credit limit", () => {
+test("form8880: single AGI=$39,501 is above the credit limit", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 39501,
@@ -582,7 +583,7 @@ Deno.test("form8880: single AGI=$39,501 is above the credit limit", () => {
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: single AGI=$50,000 (well above limit) → no output", () => {
+test("form8880: single AGI=$50,000 (well above limit) → no output", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 50000,
@@ -595,7 +596,7 @@ Deno.test("form8880: single AGI=$50,000 (well above limit) → no output", () =>
 // 6. Credit rate — HOH filing status
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: HOH AGI=$35,625 is the 50% ceiling", () => {
+test("form8880: HOH AGI=$35,625 is the 50% ceiling", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 35625,
@@ -605,7 +606,7 @@ Deno.test("form8880: HOH AGI=$35,625 is the 50% ceiling", () => {
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: HOH AGI=$35,626 enters the 20% bracket", () => {
+test("form8880: HOH AGI=$35,626 enters the 20% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 35626,
@@ -615,7 +616,7 @@ Deno.test("form8880: HOH AGI=$35,626 enters the 20% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
-Deno.test("form8880: HOH AGI=$38,251 enters the 10% bracket", () => {
+test("form8880: HOH AGI=$38,251 enters the 10% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 38251,
@@ -625,7 +626,7 @@ Deno.test("form8880: HOH AGI=$38,251 enters the 10% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
-Deno.test("form8880: HOH AGI=$59,251 is above the credit limit", () => {
+test("form8880: HOH AGI=$59,251 is above the credit limit", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 59251,
@@ -634,7 +635,7 @@ Deno.test("form8880: HOH AGI=$59,251 is above the credit limit", () => {
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: HOH AGI=$59,250 is still in the 10% bracket", () => {
+test("form8880: HOH AGI=$59,250 is still in the 10% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2_000,
     agi: 59_250,
@@ -650,7 +651,7 @@ Deno.test("form8880: HOH AGI=$59,250 is still in the 10% bracket", () => {
 // 7. Credit rate — MFJ filing status
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: MFJ AGI=$47,500 is the 50% ceiling", () => {
+test("form8880: MFJ AGI=$47,500 is the 50% ceiling", () => {
   // Only taxpayer contributes $2,000 → $2,000 × 50% = $1,000
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -662,7 +663,7 @@ Deno.test("form8880: MFJ AGI=$47,500 is the 50% ceiling", () => {
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: MFJ AGI=$47,501 enters the 20% bracket", () => {
+test("form8880: MFJ AGI=$47,501 enters the 20% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 47501,
@@ -673,7 +674,7 @@ Deno.test("form8880: MFJ AGI=$47,501 enters the 20% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
-Deno.test("form8880: MFJ AGI=$51,001 enters the 10% bracket", () => {
+test("form8880: MFJ AGI=$51,001 enters the 10% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 51001,
@@ -689,7 +690,7 @@ Deno.test("form8880: MFJ AGI=$51,001 enters the 10% bracket", () => {
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
-Deno.test("form8880: MFJ AGI=$79,001 is above the credit limit", () => {
+test("form8880: MFJ AGI=$79,001 is above the credit limit", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 79001,
@@ -698,7 +699,7 @@ Deno.test("form8880: MFJ AGI=$79,001 is above the credit limit", () => {
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: sourced foreign exclusion is added back for line 8 and the credit rate", () => {
+test("form8880: sourced foreign exclusion is added back for line 8 and the credit rate", () => {
   const result = compute({
     ira_contributions_taxpayer: 2_000,
     agi: 20_000,
@@ -711,7 +712,7 @@ Deno.test("form8880: sourced foreign exclusion is added back for line 8 and the 
   assertEquals(lines.print_line12_credit, 400);
 });
 
-Deno.test("form8880: foreign addback can remove an otherwise positive credit", () => {
+test("form8880: foreign addback can remove an otherwise positive credit", () => {
   const result = compute({
     ira_contributions_taxpayer: 2_000,
     agi: 20_000,
@@ -721,7 +722,7 @@ Deno.test("form8880: foreign addback can remove an otherwise positive credit", (
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: MFJ AGI=$79,000 is still in the 10% bracket", () => {
+test("form8880: MFJ AGI=$79,000 is still in the 10% bracket", () => {
   const result = compute({
     ira_contributions_taxpayer: 2_000,
     agi: 79_000,
@@ -739,7 +740,7 @@ Deno.test("form8880: MFJ AGI=$79,000 is still in the 10% bracket", () => {
   );
 });
 
-Deno.test("form8880: qualifying surviving spouse uses single rate table", () => {
+test("form8880: qualifying surviving spouse uses single rate table", () => {
   const result = compute({
     ira_contributions_taxpayer: 2_000,
     agi: 40_000,
@@ -761,7 +762,7 @@ Deno.test("form8880: qualifying surviving spouse uses single rate table", () => 
 // 8. $2,000 per-person contribution cap
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: contributions above $2,000 are capped at $2,000", () => {
+test("form8880: contributions above $2,000 are capped at $2,000", () => {
   // $5,000 contribution capped to $2,000; at 50% → $1,000
   const result = compute({
     ira_contributions_taxpayer: 5000,
@@ -772,7 +773,7 @@ Deno.test("form8880: contributions above $2,000 are capped at $2,000", () => {
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: exactly $2,000 contribution at 50% → $1,000 credit", () => {
+test("form8880: exactly $2,000 contribution at 50% → $1,000 credit", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -782,7 +783,7 @@ Deno.test("form8880: exactly $2,000 contribution at 50% → $1,000 credit", () =
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: $1,000 contribution at 50% → $500 credit", () => {
+test("form8880: $1,000 contribution at 50% → $500 credit", () => {
   const result = compute({
     ira_contributions_taxpayer: 1000,
     agi: 20000,
@@ -796,7 +797,7 @@ Deno.test("form8880: $1,000 contribution at 50% → $500 credit", () => {
 // 9. MFJ both spouses contributing
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: MFJ both spouses $2,000 each at 50% → $2,000 credit", () => {
+test("form8880: MFJ both spouses $2,000 each at 50% → $2,000 credit", () => {
   // taxpayer: $2,000 + spouse: $2,000 = $4,000 × 50% = $2,000
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -809,7 +810,7 @@ Deno.test("form8880: MFJ both spouses $2,000 each at 50% → $2,000 credit", () 
   assertEquals(input.line4_retirement_savings_credit, 2000);
 });
 
-Deno.test("form8880: MFJ both spouses, contributions capped individually at $2,000", () => {
+test("form8880: MFJ both spouses, contributions capped individually at $2,000", () => {
   // taxpayer: $3,000 capped to $2,000 + spouse: $3,000 capped to $2,000 = $4,000 × 50%
   const result = compute({
     ira_contributions_taxpayer: 3000,
@@ -822,7 +823,7 @@ Deno.test("form8880: MFJ both spouses, contributions capped individually at $2,0
   assertEquals(input.line4_retirement_savings_credit, 2000);
 });
 
-Deno.test("form8880: MFJ spouse only contributes, taxpayer does not", () => {
+test("form8880: MFJ spouse only contributes, taxpayer does not", () => {
   const result = compute({
     ira_contributions_spouse: 2000,
     agi: 40000,
@@ -837,7 +838,7 @@ Deno.test("form8880: MFJ spouse only contributes, taxpayer does not", () => {
 // 10. Elective deferrals from W-2 (Box 12 D/E; G needs an employee-only split)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: taxpayer W-2 deferral belongs in taxpayer line 2", () => {
+test("form8880: taxpayer W-2 deferral belongs in taxpayer line 2", () => {
   const result = compute({
     taxpayer_ssn: "123-45-6789",
     w2_deferral_entries: [{
@@ -856,7 +857,7 @@ Deno.test("form8880: taxpayer W-2 deferral belongs in taxpayer line 2", () => {
   );
 });
 
-Deno.test("form8880: MFJ W-2 deferrals remain with each spouse across multiple employers", () => {
+test("form8880: MFJ W-2 deferrals remain with each spouse across multiple employers", () => {
   const result = compute({
     taxpayer_ssn: "123-45-6789",
     spouse_ssn: "987654321",
@@ -888,7 +889,7 @@ Deno.test("form8880: MFJ W-2 deferrals remain with each spouse across multiple e
   );
 });
 
-Deno.test("form8880: combined legacy W-2 deferrals are rejected", () => {
+test("form8880: combined legacy W-2 deferrals are rejected", () => {
   assertThrows(
     () =>
       compute({
@@ -900,7 +901,7 @@ Deno.test("form8880: combined legacy W-2 deferrals are rejected", () => {
   );
 });
 
-Deno.test("form8880: raw code G source entry is rejected", () => {
+test("form8880: raw code G source entry is rejected", () => {
   assertThrows(() =>
     compute({
       taxpayer_ssn: "123456789",
@@ -914,7 +915,7 @@ Deno.test("form8880: raw code G source entry is rejected", () => {
     }), Error);
 });
 
-Deno.test("form8880: reviewed governmental code G counts employee election, not employer amount", () => {
+test("form8880: reviewed governmental code G counts employee election, not employer amount", () => {
   const result = compute({
     taxpayer_ssn: "123456789",
     w2_deferral_entries: [{
@@ -938,7 +939,7 @@ Deno.test("form8880: reviewed governmental code G counts employee election, not 
   );
 });
 
-Deno.test("form8880: nongovernmental code G is not a qualified employee deferral", () => {
+test("form8880: nongovernmental code G is not a qualified employee deferral", () => {
   assertThrows(() =>
     compute({
       taxpayer_ssn: "123456789",
@@ -954,7 +955,7 @@ Deno.test("form8880: nongovernmental code G is not a qualified employee deferral
     }), Error);
 });
 
-Deno.test("form8880: W-2 deferral without return identity is rejected", () => {
+test("form8880: W-2 deferral without return identity is rejected", () => {
   assertThrows(
     () =>
       compute({
@@ -971,7 +972,7 @@ Deno.test("form8880: W-2 deferral without return identity is rejected", () => {
   );
 });
 
-Deno.test("form8880: unrelated W-2 employee SSN is rejected", () => {
+test("form8880: unrelated W-2 employee SSN is rejected", () => {
   assertThrows(
     () =>
       compute({
@@ -990,7 +991,7 @@ Deno.test("form8880: unrelated W-2 employee SSN is rejected", () => {
   );
 });
 
-Deno.test("form8880: spouse W-2 deferral cannot claim a nonjoint spouse column", () => {
+test("form8880: spouse W-2 deferral cannot claim a nonjoint spouse column", () => {
   assertThrows(
     () =>
       compute({
@@ -1009,7 +1010,7 @@ Deno.test("form8880: spouse W-2 deferral cannot claim a nonjoint spouse column",
   );
 });
 
-Deno.test("form8880: direct taxpayer amount cannot duplicate W-2-owned amount", () => {
+test("form8880: direct taxpayer amount cannot duplicate W-2-owned amount", () => {
   assertThrows(
     () =>
       compute({
@@ -1028,7 +1029,7 @@ Deno.test("form8880: direct taxpayer amount cannot duplicate W-2-owned amount", 
   );
 });
 
-Deno.test("form8880: elective_deferrals_taxpayer and ira_contributions_taxpayer combine (capped at $2,000)", () => {
+test("form8880: elective_deferrals_taxpayer and ira_contributions_taxpayer combine (capped at $2,000)", () => {
   // $1,500 deferrals + $1,000 IRA = $2,500, capped to $2,000 × 50% = $1,000
   const result = compute({
     elective_deferrals_taxpayer: 1500,
@@ -1044,7 +1045,7 @@ Deno.test("form8880: elective_deferrals_taxpayer and ira_contributions_taxpayer 
 // 11. Distributions reduce eligible contributions
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: distributions offset contributions — partial reduction", () => {
+test("form8880: distributions offset contributions — partial reduction", () => {
   // $2,000 contribution - $500 distributions = $1,500 eligible × 50% = $750
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -1056,7 +1057,7 @@ Deno.test("form8880: distributions offset contributions — partial reduction", 
   assertEquals(input.line4_retirement_savings_credit, 750);
 });
 
-Deno.test("form8880: distributions >= contributions → eligible = 0, no output", () => {
+test("form8880: distributions >= contributions → eligible = 0, no output", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     distributions_taxpayer: 2000,
@@ -1066,7 +1067,7 @@ Deno.test("form8880: distributions >= contributions → eligible = 0, no output"
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: distributions exceed contributions → eligible = 0, no output", () => {
+test("form8880: distributions exceed contributions → eligible = 0, no output", () => {
   const result = compute({
     ira_contributions_taxpayer: 1000,
     distributions_taxpayer: 1500,
@@ -1080,7 +1081,7 @@ Deno.test("form8880: distributions exceed contributions → eligible = 0, no out
 // 12. Income tax liability limit
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: credit limited by income_tax_liability", () => {
+test("form8880: credit limited by income_tax_liability", () => {
   // $2,000 × 50% = $1,000 credit, but only $600 tax liability → credit = $600
   const result = compute({
     ira_contributions_taxpayer: 2000,
@@ -1092,7 +1093,7 @@ Deno.test("form8880: credit limited by income_tax_liability", () => {
   assertEquals(input.line4_retirement_savings_credit, 600);
 });
 
-Deno.test("form8880: income_tax_liability = 0 → no output", () => {
+test("form8880: income_tax_liability = 0 → no output", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1102,7 +1103,7 @@ Deno.test("form8880: income_tax_liability = 0 → no output", () => {
   assertCalculatedZero(result);
 });
 
-Deno.test("form8880: income_tax_liability >= credit → full credit passes through", () => {
+test("form8880: income_tax_liability >= credit → full credit passes through", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1117,7 +1118,7 @@ Deno.test("form8880: income_tax_liability >= credit → full credit passes throu
 // 13. Output routing — field names and nodeTypes
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: early source routes to Schedule 3 without a credit amount", () => {
+test("form8880: early source routes to Schedule 3 without a credit amount", () => {
   const result = form8880.compute({ taxYear: 2025, formType: "f1040" }, {
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1131,7 +1132,7 @@ Deno.test("form8880: early source routes to Schedule 3 without a credit amount",
   );
 });
 
-Deno.test("form8880: output field is typed source, not asserted capacity", () => {
+test("form8880: output field is typed source, not asserted capacity", () => {
   const result = form8880.compute({ taxYear: 2025, formType: "f1040" }, {
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1140,7 +1141,7 @@ Deno.test("form8880: output field is typed source, not asserted capacity", () =>
   assertEquals(Object.keys(result.outputs[0].fields), ["form8880_source"]);
 });
 
-Deno.test("form8880: no f1040 output is emitted", () => {
+test("form8880: no f1040 output is emitted", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1153,7 +1154,7 @@ Deno.test("form8880: no f1040 output is emitted", () => {
 // 14. MFS filing status (same thresholds as single)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: MFS AGI=$22,000 uses the single 50% band", () => {
+test("form8880: MFS AGI=$22,000 uses the single 50% band", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 22000,
@@ -1167,7 +1168,7 @@ Deno.test("form8880: MFS AGI=$22,000 uses the single 50% band", () => {
 // 15. QSS filing status (2025 form places QSS with Single/MFS)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: QSS AGI=$20,000 receives the 50% rate", () => {
+test("form8880: QSS AGI=$20,000 receives the 50% rate", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 20000,
@@ -1177,7 +1178,7 @@ Deno.test("form8880: QSS AGI=$20,000 receives the 50% rate", () => {
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
-Deno.test("form8880: QSS AGI=$39,500 is at the single/QSS 10% ceiling", () => {
+test("form8880: QSS AGI=$39,500 is at the single/QSS 10% ceiling", () => {
   const result = compute({
     ira_contributions_taxpayer: 2000,
     agi: 39500,
@@ -1191,7 +1192,7 @@ Deno.test("form8880: QSS AGI=$39,500 is at the single/QSS 10% ceiling", () => {
 // 16. Smoke test
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credit", () => {
+test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credit", () => {
   // Taxpayer: $2,000 IRA + $500 deferrals = $2,500 → capped to $2,000
   // Spouse: $1,500 IRA → $1,500 eligible
   // Total eligible: $2,000 + $1,500 = $3,500

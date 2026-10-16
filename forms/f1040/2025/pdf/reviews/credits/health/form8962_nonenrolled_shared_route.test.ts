@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -14,7 +15,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-situation4-nonenrolled-other-taxpayer"
 )!;
 
-Deno.test("Situation 4 binds a nonenrolled other taxpayer's covered dependent through Form 8962, Schedule 3, Form 1040, MeF, and PDF", async () => {
+test("Situation 4 binds a nonenrolled other taxpayer's covered dependent through Form 8962, Schedule 3, Form 1040, MeF, and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

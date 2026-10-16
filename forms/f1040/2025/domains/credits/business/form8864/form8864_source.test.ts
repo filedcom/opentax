@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   directAgriBiodieselPending,
@@ -9,7 +10,7 @@ import {
 } from "./form8864_source.ts";
 import { assertForm6251Form8864Source } from "../../../taxes/amt/form6251/form6251_form8864_source.ts";
 
-Deno.test("Form 8864 direct producer joins Schedule C and its line 9 income", () => {
+test("Form 8864 direct producer joins Schedule C and its line 9 income", () => {
   assertEquals(
     reconcileForm8864DirectProducer(
       directAgriBiodieselSource,
@@ -19,7 +20,7 @@ Deno.test("Form 8864 direct producer joins Schedule C and its line 9 income", ()
   );
 });
 
-Deno.test("Form 8864 refuses mismatched producer, EIN and income inclusion", () => {
+test("Form 8864 refuses mismatched producer, EIN and income inclusion", () => {
   const business = directAgriBiodieselPending.schedule_c.schedule_cs[0];
   assertThrows(
     () =>
@@ -72,7 +73,7 @@ Deno.test("Form 8864 refuses mismatched producer, EIN and income inclusion", () 
   );
 });
 
-Deno.test("Form 8864 direct credit joins Form 3800 and signed AMT income exclusion", () => {
+test("Form 8864 direct credit joins Form 3800 and signed AMT income exclusion", () => {
   assertEquals(
     reconcileForm8864DocumentSource(
       directAgriBiodieselSource,
@@ -86,7 +87,7 @@ Deno.test("Form 8864 direct credit joins Form 3800 and signed AMT income exclusi
   );
 });
 
-Deno.test("Form 8864 rejects an altered credit or missing AMT exclusion", () => {
+test("Form 8864 rejects an altered credit or missing AMT exclusion", () => {
   assertThrows(
     () =>
       reconcileForm8864DocumentSource(directAgriBiodieselSource, {

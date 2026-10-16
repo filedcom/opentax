@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { stageForm172HistoricalAmtHistorySource } from "./form172_amt_historical_history_source.ts";
 import { calculateForm172HistoricalAmtHistory } from "./form172_amt_historical_history.ts";
 import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historical_absorption.ts";
@@ -174,7 +175,7 @@ function fixture() {
     losses: [loss(2008, 200, "ordinary"), loss(2009, 100, "whbaa")],
   };
 }
-Deno.test("Historical AMT cap separately computes ordinary and WHBAA aggregate components", () => {
+test("Historical AMT cap separately computes ordinary and WHBAA aggregate components", () => {
   const r = calculateForm172HistoricalAmtCap(fixture());
   assertEquals(r.ordinaryCapComponent, 90);
   assertEquals(r.whbaaCapComponent, 10);
@@ -187,7 +188,7 @@ Deno.test("Historical AMT cap separately computes ordinary and WHBAA aggregate c
   assertEquals(r.finalAtnoldReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT cap keeps chronology without treating category subtotals as consumption", () => {
+test("Historical AMT cap keeps chronology without treating category subtotals as consumption", () => {
   const f = fixture();
   f.losses[0].category = "whbaa";
   f.losses[0].whbaa_election_reference = "election-2008";
@@ -200,7 +201,7 @@ Deno.test("Historical AMT cap keeps chronology without treating category subtota
   assertEquals(r.whbaaCapComponent, 10);
   assertEquals(r.chronologicalAbsorptionReconciled, false);
 });
-Deno.test("Historical AMT cap restores DPAD and retains negative-base and scarcity bounds", () => {
+test("Historical AMT cap restores DPAD and retains negative-base and scarcity bounds", () => {
   const f = fixture();
   f.annual_review.section199_deduction.amount = 20;
   let r = calculateForm172HistoricalAmtCap(f);
@@ -214,7 +215,7 @@ Deno.test("Historical AMT cap restores DPAD and retains negative-base and scarci
   r = calculateForm172HistoricalAmtCap(f);
   assertEquals(r.aggregateHistoricalCap, 0);
 });
-Deno.test("Historical AMT cap independently handles ordinary-only and WHBAA-only inventories", () => {
+test("Historical AMT cap independently handles ordinary-only and WHBAA-only inventories", () => {
   const f = fixture();
   const ordinary = calculateForm172HistoricalAmtCap({
     ...f,
@@ -240,7 +241,7 @@ Deno.test("Historical AMT cap independently handles ordinary-only and WHBAA-only
     })
   );
 });
-Deno.test("Historical AMT cap rejects duplicate origins, missing inventory and asserted totals", () => {
+test("Historical AMT cap rejects duplicate origins, missing inventory and asserted totals", () => {
   const f = fixture();
   assertThrows(() =>
     calculateForm172HistoricalAmtCap({
@@ -259,7 +260,7 @@ Deno.test("Historical AMT cap rejects duplicate origins, missing inventory and a
   );
   assertThrows(() => calculateForm172HistoricalAmtCap({ ...f, losses: [] }));
 });
-Deno.test("Historical AMT cap rejects unsupported years, excessive opening and election conflicts", () => {
+test("Historical AMT cap rejects unsupported years, excessive opening and election conflicts", () => {
   const f = fixture();
   assertThrows(() =>
     calculateForm172HistoricalAmtCap({
@@ -275,7 +276,7 @@ Deno.test("Historical AMT cap rejects unsupported years, excessive opening and e
   delete f.losses[1].whbaa_election_reference;
   assertThrows(() => calculateForm172HistoricalAmtCap(f));
 });
-Deno.test("Historical AMT cap rejects regular-origin substitution, owner mismatch and fractional amounts", () => {
+test("Historical AMT cap rejects regular-origin substitution, owner mismatch and fractional amounts", () => {
   const f = fixture();
   f.losses[0].amt_origin.regular_origin_reference = "wrong";
   assertThrows(() => calculateForm172HistoricalAmtCap(f));
@@ -287,7 +288,7 @@ Deno.test("Historical AMT cap rejects regular-origin substitution, owner mismatc
   assertThrows(() => calculateForm172HistoricalAmtCap(h));
 });
 
-Deno.test("Historical AMT deduction chronology preserves the ordinary ninety and later WHBAA ten split", () => {
+test("Historical AMT deduction chronology preserves the ordinary ninety and later WHBAA ten split", () => {
   const r = calculateForm172HistoricalAmtDeductionAllocation(fixture());
   assertEquals(
     r.chronologicalDeductionAllocations.map((
@@ -303,7 +304,7 @@ Deno.test("Historical AMT deduction chronology preserves the ordinary ninety and
   assertEquals(r.priorAcceptanceVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("An earlier WHBAA deduction is not restricted to the WHBAA cap component", () => {
+test("An earlier WHBAA deduction is not restricted to the WHBAA cap component", () => {
   const f = fixture();
   f.losses[0].category = "whbaa";
   f.losses[0].whbaa_election_reference = "election-2008";
@@ -319,7 +320,7 @@ Deno.test("An earlier WHBAA deduction is not restricted to the WHBAA cap compone
     [[2008, 100], [2009, 0]],
   );
 });
-Deno.test("An earlier partial WHBAA deduction leaves actual remaining capacity for a later ordinary vintage", () => {
+test("An earlier partial WHBAA deduction leaves actual remaining capacity for a later ordinary vintage", () => {
   const f = fixture();
   f.losses[0].category = "whbaa";
   f.losses[0].whbaa_election_reference = "election-2008";
@@ -334,7 +335,7 @@ Deno.test("An earlier partial WHBAA deduction leaves actual remaining capacity f
     [50, 50],
   );
 });
-Deno.test("Historical deduction chronology cannot spend the ordinary limit twice across ordinary vintages", () => {
+test("Historical deduction chronology cannot spend the ordinary limit twice across ordinary vintages", () => {
   const f = fixture();
   const { old, alternative } = historicalSources(2007);
   f.losses.push({
@@ -352,7 +353,7 @@ Deno.test("Historical deduction chronology cannot spend the ordinary limit twice
     [[2007, 40], [2008, 50], [2009, 10]],
   );
 });
-Deno.test("Historical deduction allocation keeps scarce, negative-base, zero-opening and DPAD cases bounded", () => {
+test("Historical deduction allocation keeps scarce, negative-base, zero-opening and DPAD cases bounded", () => {
   const f = fixture();
   f.losses[0].reviewed_opening_amt_nol = 20;
   f.losses[1].reviewed_opening_amt_nol = 5;
@@ -383,7 +384,7 @@ Deno.test("Historical deduction allocation keeps scarce, negative-base, zero-ope
     [108, 12],
   );
 });
-Deno.test("Historical deduction allocation recomputes origins and rejects asserted deduction results", () => {
+test("Historical deduction allocation recomputes origins and rejects asserted deduction results", () => {
   const f = fixture();
   assertThrows(() =>
     calculateForm172HistoricalAmtDeductionAllocation({
@@ -443,7 +444,7 @@ function modifiedReview(f = fixture()) {
     }[],
   };
 }
-Deno.test("Historical AMT modified income separates deduction cap from capital and medical refigures", () => {
+test("Historical AMT modified income separates deduction cap from capital and medical refigures", () => {
   const f = fixture();
   f.losses[0].reviewed_opening_amt_nol = 80000;
   f.losses[1].reviewed_opening_amt_nol = 0;
@@ -470,7 +471,7 @@ Deno.test("Historical AMT modified income separates deduction cap from capital a
   assertEquals(r.survivingCarryVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT modified income restores only section1202 exclusion not already in AMTI", () => {
+test("Historical AMT modified income restores only section1202 exclusion not already in AMTI", () => {
   const f = fixture();
   f.annual_review.components.find((row) => row.line === "13")!.amount = 7;
   const v = modifiedReview(f);
@@ -493,7 +494,7 @@ Deno.test("Historical AMT modified income restores only section1202 exclusion no
     "preference differs",
   );
 });
-Deno.test("Historical AMT modified income uses AMT capital netting and MFS limit", () => {
+test("Historical AMT modified income uses AMT capital netting and MFS limit", () => {
   const f = fixture();
   const v = modifiedReview(f);
   v.filing_status = "married_filing_separately";
@@ -532,7 +533,7 @@ Deno.test("Historical AMT modified income uses AMT capital netting and MFS limit
     "wrong owners",
   );
 });
-Deno.test("Historical AMT modified income restores refigured DPAD and preserves negative signed base", () => {
+test("Historical AMT modified income restores refigured DPAD and preserves negative signed base", () => {
   const f = fixture();
   f.annual_review.components[0].amount = -5000;
   f.annual_review.section199_deduction.amount = 100;
@@ -548,7 +549,7 @@ Deno.test("Historical AMT modified income restores refigured DPAD and preserves 
     "section199 original",
   );
 });
-Deno.test("Historical AMT modified income rejects incomplete stale duplicate or asserted operands", () => {
+test("Historical AMT modified income rejects incomplete stale duplicate or asserted operands", () => {
   const f = fixture();
   const good = modifiedReview(f);
   for (
@@ -629,7 +630,7 @@ function vintageReview(f = fixture()) {
     vintages: earlier,
   };
 }
-Deno.test("Historical AMT vintage workpapers use independent refigures and earlier deductions once", () => {
+test("Historical AMT vintage workpapers use independent refigures and earlier deductions once", () => {
   const f = fixture();
   const v = vintageReview(f);
   v.vintages[1].modified_review.components[0].refigured_amount = 120;
@@ -656,7 +657,7 @@ Deno.test("Historical AMT vintage workpapers use independent refigures and earli
     0,
   );
 });
-Deno.test("Historical AMT vintage workpapers reject lost duplicated stale and reused contexts", () => {
+test("Historical AMT vintage workpapers reject lost duplicated stale and reused contexts", () => {
   const f = fixture();
   const good = vintageReview(f);
   for (
@@ -706,7 +707,7 @@ Deno.test("Historical AMT vintage workpapers reject lost duplicated stale and re
   );
 });
 
-Deno.test("Historical AMT absorption reproduces ordinary ninety and WHBAA ten without accepted carry", () => {
+test("Historical AMT absorption reproduces ordinary ninety and WHBAA ten without accepted carry", () => {
   const f = fixture();
   const v = vintageReview(f);
   const r = calculateForm172HistoricalAmtAbsorption(f, v);
@@ -722,7 +723,7 @@ Deno.test("Historical AMT absorption reproduces ordinary ninety and WHBAA ten wi
   assertEquals(r.survivingAcceptedCarryVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT absorption preserves early WHBAA consumption and its later ordinary remainder", () => {
+test("Historical AMT absorption preserves early WHBAA consumption and its later ordinary remainder", () => {
   const f = fixture();
   f.losses[0].category = "whbaa";
   f.losses[0].whbaa_election_reference = "election-2008";
@@ -747,7 +748,7 @@ Deno.test("Historical AMT absorption preserves early WHBAA consumption and its l
     [[50, 0], [50, 50]],
   );
 });
-Deno.test("Historical AMT absorption spends a shared ordinary ninety capacity only once", () => {
+test("Historical AMT absorption spends a shared ordinary ninety capacity only once", () => {
   const f = fixture();
   f.losses[0].reviewed_opening_amt_nol = 40;
   f.losses[1].category = "ordinary";
@@ -766,7 +767,7 @@ Deno.test("Historical AMT absorption spends a shared ordinary ninety capacity on
     50,
   );
 });
-Deno.test("Historical AMT absorption differs from actual deduction after capital and medical modifications", () => {
+test("Historical AMT absorption differs from actual deduction after capital and medical modifications", () => {
   const f = fixture();
   f.losses[0].reviewed_opening_amt_nol = 80000;
   f.losses[1].reviewed_opening_amt_nol = 0;
@@ -804,7 +805,7 @@ Deno.test("Historical AMT absorption differs from actual deduction after capital
     "earlier deductions differ",
   );
 });
-Deno.test("Historical AMT absorption floors shrinking vintage bases and rejects missing reviews", () => {
+test("Historical AMT absorption floors shrinking vintage bases and rejects missing reviews", () => {
   const f = fixture();
   const v = vintageReview(f);
   v.vintages[1].modified_review.components[0].refigured_amount = -20;
@@ -869,7 +870,7 @@ function historyFixture(startYear = 2014) {
     annual_applications: applications,
   };
 }
-Deno.test("Historical AMT history conserves separate vintages through consecutive annual absorption", () => {
+test("Historical AMT history conserves separate vintages through consecutive annual absorption", () => {
   const f = historyFixture();
   const r = calculateForm172HistoricalAmtHistory(f);
   assertEquals(
@@ -893,7 +894,7 @@ Deno.test("Historical AMT history conserves separate vintages through consecutiv
   assertEquals(r.carrybackDispositionVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT history rejects missing years changed openings origins elections and owners", () => {
+test("Historical AMT history rejects missing years changed openings origins elections and owners", () => {
   const good = historyFixture();
   for (
     const mutate of [
@@ -938,7 +939,7 @@ Deno.test("Historical AMT history rejects missing years changed openings origins
     calculateForm172HistoricalAmtHistory({ ...good, ending_carry: 100 })
   );
 });
-Deno.test("Historical AMT history rejects unused entry declarations and preserves single-year scope", () => {
+test("Historical AMT history rejects unused entry declarations and preserves single-year scope", () => {
   const f = historyFixture();
   f.end_year = 2014;
   f.annual_applications = [f.annual_applications[0]];
@@ -960,7 +961,7 @@ Deno.test("Historical AMT history rejects unused entry declarations and preserve
   );
 });
 
-Deno.test("Historical AMT history admits a newly originating loss only with its preceding annual loss-year join", () => {
+test("Historical AMT history admits a newly originating loss only with its preceding annual loss-year join", () => {
   const f = historyFixture();
   const first = f.annual_applications[0];
   first.cap_workpaper.annual_review.components[0].amount = -83000;
@@ -1065,7 +1066,7 @@ async function boundHistory() {
     documents: [{ reference: history.reference, bytes }],
   };
 }
-Deno.test("Historical AMT retained history recomputes every year without admitting accepted carry", async () => {
+test("Historical AMT retained history recomputes every year without admitting accepted carry", async () => {
   const f = await boundHistory();
   const r = await stageForm172HistoricalAmtHistorySource(
     f.binding,
@@ -1084,7 +1085,7 @@ Deno.test("Historical AMT retained history recomputes every year without admitti
   assertEquals(r.packetAdmissionVerified, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Historical AMT retained history rejects changed bytes and rehashed continuity conflicts", async () => {
+test("Historical AMT retained history rejects changed bytes and rehashed continuity conflicts", async () => {
   const f = await boundHistory();
   f.documents[0].bytes[0] ^= 1;
   await assertRejects(() =>
@@ -1117,7 +1118,7 @@ Deno.test("Historical AMT retained history rejects changed bytes and rehashed co
     );
   }
 });
-Deno.test("Historical AMT retained history rejects mismatched span owner and document inventory", async () => {
+test("Historical AMT retained history rejects mismatched span owner and document inventory", async () => {
   const f = await boundHistory();
   for (
     const patch of [{ end_tax_year: 2015 }, { start_tax_year: 2013 }, {
@@ -1150,7 +1151,7 @@ Deno.test("Historical AMT retained history rejects mismatched span owner and doc
     }])
   );
 });
-Deno.test("Historical AMT retained history rejects noncanonical duplicate-key BOM and invalid UTF8 packages", async () => {
+test("Historical AMT retained history rejects noncanonical duplicate-key BOM and invalid UTF8 packages", async () => {
   const f = await boundHistory();
   const text = new TextDecoder().decode(f.documents[0].bytes);
   for (
@@ -1178,7 +1179,7 @@ Deno.test("Historical AMT retained history rejects noncanonical duplicate-key BO
     );
   }
 });
-Deno.test("Historical AMT retained history snapshots caller binding and every byte before first await", async () => {
+test("Historical AMT retained history snapshots caller binding and every byte before first await", async () => {
   const f = await boundHistory();
   const digest = f.binding.history.sha256;
   const promise = stageForm172HistoricalAmtHistorySource(
@@ -1197,7 +1198,7 @@ Deno.test("Historical AMT retained history snapshots caller binding and every by
   assertEquals(r.taxpayerSsn, "111223333");
 });
 
-Deno.test("Historical AMT history source covers2010–2012 and rejects refiguring a reserved line", async () => {
+test("Historical AMT history source covers2010–2012 and rejects refiguring a reserved line", async () => {
   const history = historyFixture(2010);
   const bytes = new TextEncoder().encode(JSON.stringify(history));
   const binding = {
@@ -1229,7 +1230,7 @@ Deno.test("Historical AMT history source covers2010–2012 and rejects refigurin
   );
 });
 
-Deno.test("Historical AMT history source retains all eight2010–2017 years including exhausted vintages", async () => {
+test("Historical AMT history source retains all eight2010–2017 years including exhausted vintages", async () => {
   const history = historyFixture(2010);
   history.end_year = 2017;
   const template = history.annual_applications[2];
@@ -1320,7 +1321,7 @@ function earlyLayoutFixture(year: number) {
     : 2005;
   return { f, v };
 }
-Deno.test("Historical AMT2008 and2009 use their physical ATNOLD refund and regularNOL lines", () => {
+test("Historical AMT2008 and2009 use their physical ATNOLD refund and regularNOL lines", () => {
   for (const year of [2008, 2009]) {
     const { f, v } = earlyLayoutFixture(year);
     const layout = form172HistoricalAmtLayout(year);
@@ -1350,7 +1351,7 @@ Deno.test("Historical AMT2008 and2009 use their physical ATNOLD refund and regul
     assertThrows(() => calculateForm172HistoricalAmtCap(bad));
   }
 });
-Deno.test("Historical AMT2009 section1202 restores the exclusion on physical line14 only once", () => {
+test("Historical AMT2009 section1202 restores the exclusion on physical line14 only once", () => {
   const { f, v } = earlyLayoutFixture(2009);
   f.annual_review.components.find((c) => c.line === "14")!.amount = 7;
   v.vintages.forEach((row) => {
@@ -1377,7 +1378,7 @@ Deno.test("Historical AMT2009 section1202 restores the exclusion on physical lin
   assertEquals(r.filingReady, false);
 });
 
-Deno.test("Historical AMT retained history traverses all ten2008–2017 years across physical layouts", async () => {
+test("Historical AMT retained history traverses all ten2008–2017 years across physical layouts", async () => {
   const openings = [
     [200, 100],
     [110, 100],
@@ -1449,7 +1450,7 @@ Deno.test("Historical AMT retained history traverses all ten2008–2017 years ac
   assertEquals(r.filingReady, false);
 });
 
-Deno.test("Historical AMT2005–2007 exclude ATNOLD27 and AMTI28 and keep investment interest signed", () => {
+test("Historical AMT2005–2007 exclude ATNOLD27 and AMTI28 and keep investment interest signed", () => {
   for (const year of [2005, 2006, 2007]) {
     const { f, v } = earlyLayoutFixture(year);
     for (
@@ -1491,7 +1492,7 @@ Deno.test("Historical AMT2005–2007 exclude ATNOLD27 and AMTI28 and keep invest
   }
 });
 
-Deno.test("Historical AMT2007 restores section1202 on line12 and refigures section199 separately", () => {
+test("Historical AMT2007 restores section1202 on line12 and refigures section199 separately", () => {
   const { f, v } = earlyLayoutFixture(2007);
   f.annual_review.components.find((c) => c.line === "12")!.amount = 7;
   f.annual_review.section199_deduction.amount = 20;
@@ -1518,7 +1519,7 @@ Deno.test("Historical AMT2007 restores section1202 on line12 and refigures secti
   assertEquals(r.filingReady, false);
 });
 
-Deno.test("Historical AMT2005–2007 canonical history binds reviewed carryback openings without eligibility claims", async () => {
+test("Historical AMT2005–2007 canonical history binds reviewed carryback openings without eligibility claims", async () => {
   const openings = [[200, 100], [110, 100], [20, 100]];
   const annual_applications = openings.map((opening, index) => {
     const year = 2005 + index;
@@ -1577,7 +1578,7 @@ Deno.test("Historical AMT2005–2007 canonical history binds reviewed carryback 
   assertThrows(() => calculateForm172HistoricalAmtCap(unsupported));
 });
 
-Deno.test("Historical AMT2003–2005 canonical history binds reviewed carryback openings without eligibility claims", async () => {
+test("Historical AMT2003–2005 canonical history binds reviewed carryback openings without eligibility claims", async () => {
   const openings = [[200, 100], [110, 100], [20, 100]];
   const annual_applications = openings.map((opening, index) => {
     const year = 2003 + index;
@@ -1636,7 +1637,7 @@ Deno.test("Historical AMT2003–2005 canonical history binds reviewed carryback 
   assertThrows(() => calculateForm172HistoricalAmtCap(unsupported));
 });
 
-Deno.test("Historical AMT2003–2004 require explicit zero section199 original and refigured reviews", () => {
+test("Historical AMT2003–2004 require explicit zero section199 original and refigured reviews", () => {
   for (const year of [2003, 2004]) {
     const { f, v } = earlyLayoutFixture(year);
     const r = calculateForm172HistoricalAmtAbsorption(f, v);
@@ -1676,7 +1677,7 @@ Deno.test("Historical AMT2003–2004 require explicit zero section199 original a
   }
 });
 
-Deno.test("Historical AMT2003 and2004 restore reviewed42 and7 section1202 preferences without double counting", () => {
+test("Historical AMT2003 and2004 restore reviewed42 and7 section1202 preferences without double counting", () => {
   for (
     const [year, preference, deduction] of [[2003, 42, 128], [2004, 7, 96]]
   ) {
@@ -1723,7 +1724,7 @@ function whbaaAmtFifthFixture(year = 2004, modifiedBase = 120) {
     .refigured_amount = modifiedBase;
   return { f, v };
 }
-Deno.test("Historical AMT WHBAA fifth-year deduction and absorption use separate original and modified AMTI", () => {
+test("Historical AMT WHBAA fifth-year deduction and absorption use separate original and modified AMTI", () => {
   const { f, v } = whbaaAmtFifthFixture();
   const cap = calculateForm172HistoricalAmtCap(f);
   assertEquals(cap.preFifthYearAggregateCap, 100);
@@ -1745,7 +1746,7 @@ Deno.test("Historical AMT WHBAA fifth-year deduction and absorption use separate
     100,
   );
 });
-Deno.test("Historical AMT WHBAA fifth-year fifty limit follows earlier actual deduction and shared absorption", () => {
+test("Historical AMT WHBAA fifth-year fifty limit follows earlier actual deduction and shared absorption", () => {
   const raw = earlyLayoutFixture(2004);
   const f = {
     ...raw.f,
@@ -1781,7 +1782,7 @@ Deno.test("Historical AMT WHBAA fifth-year fifty limit follows earlier actual de
   ]);
   assertEquals(r.chronologicalReviewedApplications[1].whbaaFifthYearLimit, 15);
 });
-Deno.test("Historical AMT WHBAA carryback rejects missing periods earlier years and ordinary election claims", () => {
+test("Historical AMT WHBAA carryback rejects missing periods earlier years and ordinary election claims", () => {
   const { f } = whbaaAmtFifthFixture();
   const missing = structuredClone(f) as unknown as {
     losses: { whbaa_carryback_period?: number }[];
@@ -1800,7 +1801,7 @@ Deno.test("Historical AMT WHBAA carryback rejects missing periods earlier years 
     })
   );
 });
-Deno.test("Historical AMT retained fifth-year history carries modified absorption and preserves period identity", async () => {
+test("Historical AMT retained fifth-year history carries modified absorption and preserves period identity", async () => {
   const first = whbaaAmtFifthFixture();
   const next = whbaaAmtFifthFixture(2005);
   next.f.losses[0].reviewed_opening_amt_nol = 40;

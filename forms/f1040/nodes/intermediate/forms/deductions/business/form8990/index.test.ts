@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputNodes } from "../../../../../../2025/inputs.ts";
 import { form8990, publicInputSchema } from "./index.ts";
@@ -44,7 +45,7 @@ const sourceRecords = {
   },
 };
 
-Deno.test("2025 Form 8990 has one public source-record shape", () => {
+test("2025 Form 8990 has one public source-record shape", () => {
   assertEquals(
     inputNodes.some((entry) => entry.node.nodeType === "form8990"),
     true,
@@ -81,7 +82,7 @@ Deno.test("2025 Form 8990 has one public source-record shape", () => {
   );
 });
 
-Deno.test("2025 Form 8990 ordinary one-pass node rejects active source records", () => {
+test("2025 Form 8990 ordinary one-pass node rejects active source records", () => {
   assertEquals(
     form8990.compute({ taxYear: 2025, formType: "f1040" }, {}),
     { outputs: [] },

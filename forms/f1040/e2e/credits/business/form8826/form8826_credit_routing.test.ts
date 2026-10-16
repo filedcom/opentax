@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertGreater } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -6,7 +7,7 @@ import { FilingStatus } from "../../../../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("Form 8826 credit reaches Form 3800 and posts zero when no tax is available", () => {
+test("Form 8826 credit reaches Form 3800 and posts zero when no tax is available", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -37,7 +38,7 @@ Deno.test("Form 8826 credit reaches Form 3800 and posts zero when no tax is avai
   assertEquals(result.diagnostics, []);
 });
 
-Deno.test("pass-through-only disabled-access credit reaches Form 3800 without self eligibility facts", () => {
+test("pass-through-only disabled-access credit reaches Form 3800 without self eligibility facts", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -81,7 +82,7 @@ Deno.test("pass-through-only disabled-access credit reaches Form 3800 without se
   assertEquals(result.diagnostics, []);
 });
 
-Deno.test("Form 8826 allowed credit reaches Schedule 3 only after Form 3800 Part II", () => {
+test("Form 8826 allowed credit reaches Schedule 3 only after Form 3800 Part II", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

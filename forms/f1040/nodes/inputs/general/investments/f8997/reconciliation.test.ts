@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -53,7 +54,7 @@ const form8949Inputs = [{
   adjustment_amount: -20_000,
 }];
 
-Deno.test("Form 8997 reconciles code Z to actual executor Form 8949 and Schedule D rows", () => {
+test("Form 8997 reconciles code Z to actual executor Form 8949 and Schedule D rows", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

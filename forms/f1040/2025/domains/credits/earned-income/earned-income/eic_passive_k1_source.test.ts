@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -18,9 +21,9 @@ const xsd = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
-Deno.test("source-backed passive K1 income releases actual farm/rental PAL through complete EIC returns", async () => {
-  const index = Deno.args.indexOf("--write-review-artifacts"),
-    output = index < 0 ? undefined : Deno.args[index + 1];
+test("source-backed passive K1 income releases actual farm/rental PAL through complete EIC returns", async () => {
+  const index = process.argv.slice(2).indexOf("--write-review-artifacts"),
+    output = index < 0 ? undefined : process.argv.slice(2)[index + 1];
   for (const c of passiveK1Cases) {
     const inputs = c.inputs(), r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, [], c.id);
@@ -78,20 +81,20 @@ Deno.test("source-backed passive K1 income releases actual farm/rental PAL throu
       bundle,
       origins,
     );
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
-    await Deno.writeTextFile(path, bundle.xml);
-    const v = await new Deno.Command("xmllint", {
+    const path = await sys.makeTempFile({ suffix: ".xml" });
+    await fs.writeFile(path, bundle.xml);
+    const v = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stderr: "piped",
     }).output();
     assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
-    await Deno.remove(path);
+    await sys.remove(path);
     if (output) {
       const dir = `${output}/${c.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify(
           {
@@ -118,7 +121,7 @@ Deno.test("source-backed passive K1 income releases actual farm/rental PAL throu
     }
   }
 });
-Deno.test("passive K1 source inventory rejects owner/issuer/current/prior/PTP and forged PAL/EIC joins", async () => {
+test("passive K1 source inventory rejects owner/issuer/current/prior/PTP and forged PAL/EIC joins", async () => {
   const r = f1040_2025.executeReturn(passiveK1Inputs()),
     p = buildPending(r.pending),
     filer = extractFilerIdentity(r.pending.f1040)!;
@@ -261,7 +264,7 @@ Deno.test("passive K1 source inventory rejects owner/issuer/current/prior/PTP an
   }
 });
 
-Deno.test("public passive K1 income retains corrected economics and guards missing/contradictory source records", async () => {
+test("public passive K1 income retains corrected economics and guards missing/contradictory source records", async () => {
   const classified = passiveK1Inputs();
   delete classified.k1_partnership[0].passive_income_source;
   const calculated = f1040_2025.executeReturn(classified);

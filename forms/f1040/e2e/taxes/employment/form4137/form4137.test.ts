@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -7,7 +8,7 @@ import { FilingStatus } from "../../../../nodes/types.ts";
 const plan = buildExecutionPlan(registry);
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("W-2 allocated tips are reconciled to Form 4137 and actual tip income enters AGI once", () => {
+test("W-2 allocated tips are reconciled to Form 4137 and actual tip income enters AGI once", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: "single",
@@ -50,7 +51,7 @@ Deno.test("W-2 allocated tips are reconciled to Form 4137 and actual tip income 
   assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 230);
 });
 
-Deno.test("daily tip records support less unreported income than W-2 box 8", () => {
+test("daily tip records support less unreported income than W-2 box 8", () => {
   const input = {
     general: {
       filing_status: FilingStatus.Single,
@@ -108,7 +109,7 @@ Deno.test("daily tip records support less unreported income than W-2 box 8", () 
   assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 38);
 });
 
-Deno.test("W-2 allocated tips without Form 4137 employer records fail calculation", () => {
+test("W-2 allocated tips without Form 4137 employer records fail calculation", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: "single",
@@ -132,7 +133,7 @@ Deno.test("W-2 allocated tips without Form 4137 employer records fail calculatio
   );
 });
 
-Deno.test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate", () => {
+test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.MFJ,
@@ -210,7 +211,7 @@ Deno.test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate"
   ]);
 });
 
-Deno.test("Form 4137 rejects a W-2 employee SSN outside the filed return", () => {
+test("Form 4137 rejects a W-2 employee SSN outside the filed return", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -248,7 +249,7 @@ Deno.test("Form 4137 rejects a W-2 employee SSN outside the filed return", () =>
   );
 });
 
-Deno.test("Form 4137 rejects an allocated-tip employer absent from line 1", () => {
+test("Form 4137 rejects an allocated-tip employer absent from line 1", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -286,7 +287,7 @@ Deno.test("Form 4137 rejects an allocated-tip employer absent from line 1", () =
   );
 });
 
-Deno.test("Form 4137 line 1 matches a W-2 employer when box 8 is blank", () => {
+test("Form 4137 line 1 matches a W-2 employer when box 8 is blank", () => {
   const general = {
     filing_status: FilingStatus.Single,
     taxpayer_first_name: "Alex",
@@ -334,7 +335,7 @@ Deno.test("Form 4137 line 1 matches a W-2 employer when box 8 is blank", () => {
   );
 });
 
-Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax", () => {
+test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -378,7 +379,7 @@ Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax
   assertEquals(result.pending.schedule2?.line11_additional_medicare, 18);
 });
 
-Deno.test("RRTA compensation caps Form 4137 line 8 but remains uncapped on Form 8959", () => {
+test("RRTA compensation caps Form 4137 line 8 but remains uncapped on Form 8959", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

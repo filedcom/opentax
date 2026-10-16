@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { disabledAccessLimit } from "../../../../../nodes/intermediate/forms/credits/business/disabled_access_limit/index.ts";
 import {
@@ -41,7 +42,7 @@ const raw = {
   }],
 };
 
-Deno.test("MeF disabled-access ledger preserves gross K-1 amounts while checking capped rows", () => {
+test("MeF disabled-access ledger preserves gross K-1 amounts while checking capped rows", () => {
   const calculated = disabledAccessLimit.compute(
     { taxYear: 2025, formType: "f1040" },
     disabledAccessLimit.inputSchema.parse(raw),
@@ -89,7 +90,7 @@ Deno.test("MeF disabled-access ledger preserves gross K-1 amounts while checking
   );
 });
 
-Deno.test("MeF disabled-access ledger checks a K-1 even when its cap share rounds to zero", () => {
+test("MeF disabled-access ledger checks a K-1 even when its cap share rounds to zero", () => {
   const tinySource = {
     credit_sources: [{
       activity_reference: "Self-earned passive access",
@@ -148,7 +149,7 @@ Deno.test("MeF disabled-access ledger checks a K-1 even when its cap share round
   );
 });
 
-Deno.test("MeF disabled-access ledger ties a passive self-earned source to Form 8826", () => {
+test("MeF disabled-access ledger ties a passive self-earned source to Form 8826", () => {
   const selfForm = {
     eligible_expenditures: 6_250,
     prior_year_gross_receipts: 500_000,
@@ -201,7 +202,7 @@ Deno.test("MeF disabled-access ledger ties a passive self-earned source to Form 
   );
 });
 
-Deno.test("MeF disabled-access ledger ties passive pass-through evidence to Form 8826", () => {
+test("MeF disabled-access ledger ties passive pass-through evidence to Form 8826", () => {
   const form8826 = {
     eligible_expenditures: 0,
     subject_to_passive_activity_limit: false,

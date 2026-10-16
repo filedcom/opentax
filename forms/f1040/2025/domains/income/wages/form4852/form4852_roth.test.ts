@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { printSchema as form8606PrintSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { createHash } from "node:crypto";
@@ -12,8 +15,8 @@ const root = ".state/research/form4852-roth-source-checkbox-corrected";
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
-Deno.test("retained Form4852 Roth J/T account contribution and age records derive full1040/8606/5329 native XSD PDF returns", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("retained Form4852 Roth J/T account contribution and age records derive full1040/8606/5329 native XSD PDF returns", async () => {
+  await fs.mkdir(root, { recursive: true });
   for (const [index, row] of rothCases.entries()) {
     const source = await rothReturnSource(row, 101 + index);
     const result = f1040_2025.executeReturn(source.inputs);
@@ -54,8 +57,8 @@ Deno.test("retained Form4852 Roth J/T account contribution and age records deriv
       qualified ? 0 : 1,
     );
     assertStringIncludes(prepared.bundle.xml, "<StandardOrNonStandardCd>N</");
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, `${root}/${row.id}.xml`],
     }).output();
     assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
@@ -67,12 +70,12 @@ Deno.test("retained Form4852 Roth J/T account contribution and age records deriv
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${root}/${row.id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${row.id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify(
         { inputs: source.inputs, filer: source.filer, pending },
@@ -80,18 +83,18 @@ Deno.test("retained Form4852 Roth J/T account contribution and age records deriv
         2,
       ),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const documents = [];
     for (const [index, document] of source.retained.documents.entries()) {
       const path = `${row.id}-retained/document-${index + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, document.bytes);
+      await fs.writeFile(`${root}/${path}`, document.bytes);
       documents.push({
         document_reference: document.document_reference,
         path,
         sha256: createHash("sha256").update(document.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(documents, null, 2),
     );
@@ -186,7 +189,7 @@ Deno.test("retained Form4852 Roth J/T account contribution and age records deriv
   }
 });
 
-Deno.test("Roth public source rejects incomplete historical inventory, conversions, owner/account/code/date and copy conflicts", async () => {
+test("Roth public source rejects incomplete historical inventory, conversions, owner/account/code/date and copy conflicts", async () => {
   const source = await rothReturnSource(rothCases[1], 150);
   for (
     const mutate of [

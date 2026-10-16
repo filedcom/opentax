@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -13,7 +14,7 @@ import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import { registry } from "../registry.ts";
 import { assertFinalBalanceProjection } from "./return-wide-arithmetic.ts";
 
-Deno.test("final exporters require the calculated refund and overpayment", async () => {
+test("final exporters require the calculated refund and overpayment", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;
@@ -51,7 +52,7 @@ Deno.test("final exporters require the calculated refund and overpayment", async
   );
 });
 
-Deno.test("final amount owed includes a reported estimated-tax penalty", () => {
+test("final amount owed includes a reported estimated-tax penalty", () => {
   const fields = {
     line24_total_tax: 1_000,
     line33_total_payments: 800,
@@ -77,7 +78,7 @@ Deno.test("final amount owed includes a reported estimated-tax penalty", () => {
   });
 });
 
-Deno.test("calculated refund and line 38 penalty stay reconciled through native and PDF export", async () => {
+test("calculated refund and line 38 penalty stay reconciled through native and PDF export", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-w2-refund"
   )!;

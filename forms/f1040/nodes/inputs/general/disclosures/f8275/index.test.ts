@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { DisclosureType, f8275 } from "./index.ts";
 
@@ -9,17 +10,17 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8275.inputSchema: empty input passes (all fields optional)", () => {
+test("f8275.inputSchema: empty input passes (all fields optional)", () => {
   const parsed = f8275.inputSchema.safeParse({});
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8275.inputSchema: invalid disclosure_type fails", () => {
+test("f8275.inputSchema: invalid disclosure_type fails", () => {
   const parsed = f8275.inputSchema.safeParse({ disclosure_type: "other" });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8275.inputSchema: negative amount fails", () => {
+test("f8275.inputSchema: negative amount fails", () => {
   const parsed = f8275.inputSchema.safeParse({ amount: -100 });
   assertEquals(parsed.success, false);
 });
@@ -28,12 +29,12 @@ Deno.test("f8275.inputSchema: negative amount fails", () => {
 // 2. Administrative Form — No Tax Outputs
 // =============================================================================
 
-Deno.test("f8275.compute: empty input produces no outputs", () => {
+test("f8275.compute: empty input produces no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: position disclosure — no tax outputs", () => {
+test("f8275.compute: position disclosure — no tax outputs", () => {
   const result = compute({
     disclosure_type: DisclosureType.Position,
     form_or_schedule: "Schedule C",
@@ -44,7 +45,7 @@ Deno.test("f8275.compute: position disclosure — no tax outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: regulation disclosure — no tax outputs", () => {
+test("f8275.compute: regulation disclosure — no tax outputs", () => {
   const result = compute({
     disclosure_type: DisclosureType.Regulation,
     revenue_ruling: "Treas. Reg. §1.162-5",
@@ -54,7 +55,7 @@ Deno.test("f8275.compute: regulation disclosure — no tax outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: large amount with summary — no tax outputs", () => {
+test("f8275.compute: large amount with summary — no tax outputs", () => {
   // Confirms that even significant disclosed amounts do not produce tax credits or deductions
   const result = compute({
     disclosure_type: DisclosureType.Position,
@@ -68,15 +69,15 @@ Deno.test("f8275.compute: large amount with summary — no tax outputs", () => {
 // 3. Hard Validation (schema boundary)
 // =============================================================================
 
-Deno.test("f8275.compute: throws on negative amount", () => {
+test("f8275.compute: throws on negative amount", () => {
   assertThrows(() => compute({ amount: -500 }), Error);
 });
 
-Deno.test("f8275.compute: throws on invalid disclosure_type", () => {
+test("f8275.compute: throws on invalid disclosure_type", () => {
   assertThrows(() => compute({ disclosure_type: "invalid" }), Error);
 });
 
-Deno.test("f8275.compute: zero amount does not throw and produces no outputs", () => {
+test("f8275.compute: zero amount does not throw and produces no outputs", () => {
   const result = compute({ amount: 0 });
   assertEquals(result.outputs.length, 0);
 });
@@ -85,7 +86,7 @@ Deno.test("f8275.compute: zero amount does not throw and produces no outputs", (
 // 4. Smoke Test
 // =============================================================================
 
-Deno.test("f8275.compute: full Form 8275 disclosure produces no outputs", () => {
+test("f8275.compute: full Form 8275 disclosure produces no outputs", () => {
   const result = compute({
     disclosure_type: DisclosureType.Position,
     form_or_schedule: "Schedule C",
@@ -98,7 +99,7 @@ Deno.test("f8275.compute: full Form 8275 disclosure produces no outputs", () => 
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: full Form 8275-R regulation disclosure produces no outputs", () => {
+test("f8275.compute: full Form 8275-R regulation disclosure produces no outputs", () => {
   const result = compute({
     disclosure_type: DisclosureType.Regulation,
     form_or_schedule: "1040",

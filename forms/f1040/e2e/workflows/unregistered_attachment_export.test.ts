@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -20,7 +21,7 @@ const filer: FilerIdentity = {
 // graph routing where a complete source exists; otherwise feed the normalized
 // pending shape to the export gate so a rejected input cannot mask a missing
 // attachment guard.
-Deno.test("QOF holding-only Form 8997 source cannot disappear from MeF", () => {
+test("QOF holding-only Form 8997 source cannot disappear from MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -68,7 +69,7 @@ Deno.test("QOF holding-only Form 8997 source cannot disappear from MeF", () => {
   );
 });
 
-Deno.test("community-property Form 8958 allocation cannot disappear from MeF", () => {
+test("community-property Form 8958 allocation cannot disappear from MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -139,7 +140,7 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
   );
 });
 
-Deno.test("positive employee-business deduction cannot file without Form 2106", () => {
+test("positive employee-business deduction cannot file without Form 2106", () => {
   const pending = buildPending({
     f2106: { f2106s: [{ other_expenses: 200 }] },
   });
@@ -151,7 +152,7 @@ Deno.test("positive employee-business deduction cannot file without Form 2106", 
   );
 });
 
-Deno.test("Form 2210 waiver request cannot vanish while a plain penalty remains optional", () => {
+test("Form 2210 waiver request cannot vanish while a plain penalty remains optional", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -167,7 +168,7 @@ Deno.test("Form 2210 waiver request cannot vanish while a plain penalty remains 
   );
 });
 
-Deno.test("automatic accounting-method change cannot file without Form 3115", () => {
+test("automatic accounting-method change cannot file without Form 3115", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -190,7 +191,7 @@ Deno.test("automatic accounting-method change cannot file without Form 3115", ()
   );
 });
 
-Deno.test("active-duty move cannot file without Form 3903", () => {
+test("active-duty move cannot file without Form 3903", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -212,7 +213,7 @@ Deno.test("active-duty move cannot file without Form 3903", () => {
   );
 });
 
-Deno.test("direct credit and disclosure sources require their missing native documents", () => {
+test("direct credit and disclosure sources require their missing native documents", () => {
   for (
     const [key, fields, reason] of [
       [
@@ -264,7 +265,7 @@ Deno.test("direct credit and disclosure sources require their missing native doc
   }
 });
 
-Deno.test("incomplete recapture and employer-credit sources cannot export", () => {
+test("incomplete recapture and employer-credit sources cannot export", () => {
   for (
     const [key, fields, reason] of [
       [
@@ -340,7 +341,7 @@ Deno.test("incomplete recapture and employer-credit sources cannot export", () =
   }
 });
 
-Deno.test("refund, dependent, allocation, and foreign-corporation sources cannot vanish", () => {
+test("refund, dependent, allocation, and foreign-corporation sources cannot vanish", () => {
   for (
     const [key, fields, reason] of [
       [
@@ -393,7 +394,7 @@ Deno.test("refund, dependent, allocation, and foreign-corporation sources cannot
   }
 });
 
-Deno.test("NOL carryforward cannot lower AGI from asserted loss and taxable-income amounts", () => {
+test("NOL carryforward cannot lower AGI from asserted loss and taxable-income amounts", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -418,7 +419,7 @@ Deno.test("NOL carryforward cannot lower AGI from asserted loss and taxable-inco
   );
 });
 
-Deno.test("Form 8082 inconsistent K-1 notice cannot disappear from the filed return", () => {
+test("Form 8082 inconsistent K-1 notice cannot disappear from the filed return", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -443,7 +444,7 @@ Deno.test("Form 8082 inconsistent K-1 notice cannot disappear from the filed ret
   );
 });
 
-Deno.test("Form 8697 interest owed/refund source rejects before a wrong Schedule 1 route", () => {
+test("Form 8697 interest owed/refund source rejects before a wrong Schedule 1 route", () => {
   for (const net_interest of [300, -200, 0]) {
     const result = execute(
       buildExecutionPlan(registry),
@@ -463,7 +464,7 @@ Deno.test("Form 8697 interest owed/refund source rejects before a wrong Schedule
   }
 });
 
-Deno.test("Form 8866 income-forecast look-back source rejects before wrong Schedule 1 route", () => {
+test("Form 8866 income-forecast look-back source rejects before wrong Schedule 1 route", () => {
   for (const interest_owed_or_due of [300, -200, 0]) {
     const result = execute(
       buildExecutionPlan(registry),
@@ -490,7 +491,7 @@ Deno.test("Form 8866 income-forecast look-back source rejects before wrong Sched
   }
 });
 
-Deno.test("paid-preparer Form 8867 source cannot disappear from MeF", () => {
+test("paid-preparer Form 8867 source cannot disappear from MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -511,7 +512,7 @@ Deno.test("paid-preparer Form 8867 source cannot disappear from MeF", () => {
   );
 });
 
-Deno.test("Form 8873 asserted extraterritorial exclusion cannot file without attachment", () => {
+test("Form 8873 asserted extraterritorial exclusion cannot file without attachment", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -532,7 +533,7 @@ Deno.test("Form 8873 asserted extraterritorial exclusion cannot file without att
   );
 });
 
-Deno.test("Form 8896 small-refiner credit cannot file without attachment", () => {
+test("Form 8896 small-refiner credit cannot file without attachment", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -550,7 +551,7 @@ Deno.test("Form 8896 small-refiner credit cannot file without attachment", () =>
   );
 });
 
-Deno.test("Form 970 sole-proprietor LIFO election cannot disappear from MeF", () => {
+test("Form 970 sole-proprietor LIFO election cannot disappear from MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

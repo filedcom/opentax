@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8882PreparedFixture } from "../../../../mef/forms/credits/business/f8882.fixture.ts";
 import { prepareForm3800DocumentParts } from "../../../../mef/forms/credits/business/f3800/f3800.ts";
 import { form8882Pdf } from "./f8882.ts";
 
-Deno.test("staged Form 8882 PDF projects inspected AcroForm fields", () => {
+test("staged Form 8882 PDF projects inspected AcroForm fields", () => {
   const { source, pending } = form8882PreparedFixture();
   const fields = form8882Pdf.projectFields!(source, pending);
   assertEquals(form8882Pdf.pageIndices!(fields), [0]);
@@ -24,7 +25,7 @@ Deno.test("staged Form 8882 PDF projects inspected AcroForm fields", () => {
   );
 });
 
-Deno.test("staged Form 8882 PDF refuses changed filed source", () => {
+test("staged Form 8882 PDF refuses changed filed source", () => {
   const { source, pending } = form8882PreparedFixture();
   assertThrows(() =>
     form8882Pdf.projectFields!(source, {
@@ -40,7 +41,7 @@ Deno.test("staged Form 8882 PDF refuses changed filed source", () => {
   );
 });
 
-Deno.test("Form 8882 printable copy binds Form 3800 line 1k document and final Form 1040 credit", () => {
+test("Form 8882 printable copy binds Form 3800 line 1k document and final Form 1040 credit", () => {
   const { source, pending: base } = form8882PreparedFixture();
   const pending = {
     ...base,

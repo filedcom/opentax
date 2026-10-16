@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../nodes/inputs/general/filing/amendment_request/index.ts";
 import { f1040_2025 } from "../../../index.ts";
@@ -10,7 +11,7 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-w2-refund"
 )!;
 
-Deno.test("amendment intent stays separate from the original return graph", async () => {
+test("amendment intent stays separate from the original return graph", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   const source = {
@@ -40,7 +41,7 @@ Deno.test("amendment intent stays separate from the original return graph", asyn
   );
 });
 
-Deno.test("amendment intake requires one confirmed request per affected year", () => {
+test("amendment intake requires one confirmed request per affected year", () => {
   const request = {
     affected_tax_year: 2024,
     correction_summary: "Reviewed correction",
@@ -63,7 +64,7 @@ Deno.test("amendment intake requires one confirmed request per affected year", (
   );
 });
 
-Deno.test("malformed retained amendment intent cannot disappear", async () => {
+test("malformed retained amendment intent cannot disappear", async () => {
   const baseline = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(baseline.diagnostics, []);
   const pending = {

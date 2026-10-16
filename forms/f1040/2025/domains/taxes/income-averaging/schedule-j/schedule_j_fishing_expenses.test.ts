@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
@@ -12,7 +14,7 @@ import {
 import { retainedFishingProfit } from "./schedule_j_source_return.ts";
 
 for (const kind of fishingExpenseCases) {
-  Deno.test(`Schedule J sourced insurance, repairs and utilities: ${kind}`, async () => {
+  test(`Schedule J sourced insurance, repairs and utilities: ${kind}`, async () => {
     const { input, ledger } = fishingExpenseInput(kind);
     const joint = kind.startsWith("joint-");
     const lower = kind === "lower-profit";
@@ -90,12 +92,12 @@ for (const kind of fishingExpenseCases) {
       (await PDFDocument.load(bytes)).getPageCount(),
       origins.length,
     );
-    const root = Deno.env.get("OPENTAX_SCHEDULE_J_EXPENSE_PROOF_DIR");
+    const root = process.env.OPENTAX_SCHEDULE_J_EXPENSE_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${kind}.pdf`, bytes);
-      await Deno.writeTextFile(`${root}/${kind}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${kind}.pdf`, bytes);
+      await fs.writeFile(`${root}/${kind}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${kind}.json`,
         JSON.stringify(
           { input, ledger, pending, filer, origins, acceptanceVerified: false },
@@ -130,7 +132,7 @@ for (const kind of fishingExpenseCases) {
   });
 }
 
-Deno.test("Schedule J rejects rehashed paid-expense qualification and receipt conflicts", () => {
+test("Schedule J rejects rehashed paid-expense qualification and receipt conflicts", () => {
   const { input, ledger } = fishingExpenseInput("mixed-one-farm");
   const [insurance, repair, repair2, utilities] = ledger.expenses;
   const variants = [

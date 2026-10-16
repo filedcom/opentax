@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
@@ -62,10 +65,10 @@ function child(second = false): F8814Item {
   };
 }
 
-Deno.test("Form8814 mixed child sources recalculate native/PDF lines and full-return owner copies", async () => {
-  const artifactFlag = Deno.args.indexOf("--write-review-artifacts");
+test("Form8814 mixed child sources recalculate native/PDF lines and full-return owner copies", async () => {
+  const artifactFlag = process.argv.slice(2).indexOf("--write-review-artifacts");
   const artifactRoot = artifactFlag >= 0
-    ? Deno.args[artifactFlag + 1]
+    ? process.argv.slice(2)[artifactFlag + 1]
     : undefined;
   for (const multiple of [false, true]) {
     const items = multiple ? [child(), child(true)] : [child()];
@@ -127,17 +130,17 @@ Deno.test("Form8814 mixed child sources recalculate native/PDF lines and full-re
       origins.filter((x) => x.formKey === "form8814").length,
       multiple ? 3 : 1,
     );
-    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    const temp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(temp, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.writeFile(temp, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, temp],
         stdout: "piped",
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
     for (
       const key of [
@@ -183,10 +186,10 @@ Deno.test("Form8814 mixed child sources recalculate native/PDF lines and full-re
       const path = `${artifactRoot}/${
         multiple ? "mixed_two_children" : "mixed_single_child"
       }`;
-      await Deno.mkdir(path, { recursive: true });
-      await Deno.writeFile(`${path}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${path}/return.xml`, bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(path, { recursive: true });
+      await fs.writeFile(`${path}/return.pdf`, pdf);
+      await fs.writeFile(`${path}/return.xml`, bundle.xml);
+      await fs.writeFile(
         `${path}/source-pending.json`,
         JSON.stringify(
           {

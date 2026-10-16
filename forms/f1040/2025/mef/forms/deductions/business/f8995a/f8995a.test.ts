@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -38,11 +39,11 @@ const context = {
   pending: { f1040: { line13_qbi_deduction: 10_000 } },
 };
 
-Deno.test("Form 8995-A: absent pending produces no document", () => {
+test("Form 8995-A: absent pending produces no document", () => {
   assertEquals(form8995a.build([]), "");
 });
 
-Deno.test("Form 8995-A: one identified business emits native row and Part IV in XSD order", () => {
+test("Form 8995-A: one identified business emits native row and Part IV in XSD order", () => {
   const xml = form8995a.build(oneBusiness, context);
   assertStringIncludes(xml, "<IRS8995A><QBIDeductionInformationGrp>");
   assertStringIncludes(
@@ -86,7 +87,7 @@ Deno.test("Form 8995-A: one identified business emits native row and Part IV in 
   assertEquals(xml.includes("<PhaseInPct>"), false);
 });
 
-Deno.test("Form 8995-A: aggregate-only legacy shape and explicit empty record reject", () => {
+test("Form 8995-A: aggregate-only legacy shape and explicit empty record reject", () => {
   assertThrows(
     () => form8995a.build({} as typeof oneBusiness),
     Error,
@@ -99,7 +100,7 @@ Deno.test("Form 8995-A: aggregate-only legacy shape and explicit empty record re
   );
 });
 
-Deno.test("Form 8995-A: missing business identity or lower income rejects", () => {
+test("Form 8995-A: missing business identity or lower income rejects", () => {
   assertThrows(
     () =>
       form8995a.build(
@@ -121,7 +122,7 @@ Deno.test("Form 8995-A: missing business identity or lower income rejects", () =
   );
 });
 
-Deno.test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
+test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
   assertThrows(
     () => form8995a.build({ ...oneBusiness, sstb_qbi: 10_000 }, context),
     Error,
@@ -165,7 +166,7 @@ Deno.test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
   );
 });
 
-Deno.test("Form 8995-A: Form 1040 mismatch and concurrent Form 8995 reject", () => {
+test("Form 8995-A: Form 1040 mismatch and concurrent Form 8995 reject", () => {
   assertThrows(
     () =>
       form8995a.build(oneBusiness, {
@@ -189,7 +190,7 @@ Deno.test("Form 8995-A: Form 1040 mismatch and concurrent Form 8995 reject", () 
   );
 });
 
-Deno.test("Form 8995-A: fractional source that XML would round rejects", () => {
+test("Form 8995-A: fractional source that XML would round rejects", () => {
   assertThrows(
     () =>
       form8995a.build({

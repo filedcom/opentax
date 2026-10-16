@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   assertDocumentationPatch,
@@ -21,11 +22,11 @@ function patch(): DocumentationPatch {
   };
 }
 
-Deno.test("finite documentation accepts exact reviewed category bytes", async () => {
+test("finite documentation accepts exact reviewed category bytes", async () => {
   assertEquals(await assertDocumentationPatch(patch()), patch());
 });
 
-Deno.test("finite documentation rejects production, board, unknown and escaped paths", async () => {
+test("finite documentation rejects production, board, unknown and escaped paths", async () => {
   for (
     const path of [
       "forms/f1040/2025/tax.ts",
@@ -42,7 +43,7 @@ Deno.test("finite documentation rejects production, board, unknown and escaped p
   }
 });
 
-Deno.test("finite documentation rejects forged baseline, changed prose and hashes", async () => {
+test("finite documentation rejects forged baseline, changed prose and hashes", async () => {
   for (
     const change of [
       { beforeSource: "unreviewed original" },
@@ -59,7 +60,7 @@ Deno.test("finite documentation rejects forged baseline, changed prose and hashe
   }
 });
 
-Deno.test("finite documentation rejects missing addition, duplicate and incomplete inventory", async () => {
+test("finite documentation rejects missing addition, duplicate and incomplete inventory", async () => {
   const p = patch();
   const context = {
     files: [],
@@ -84,7 +85,7 @@ Deno.test("finite documentation rejects missing addition, duplicate and incomple
   );
 });
 
-Deno.test("finite documentation rejects stale disk and falsely declared creation", async () => {
+test("finite documentation rejects stale disk and falsely declared creation", async () => {
   const p = patch();
   const context = {
     files: [],
@@ -112,7 +113,7 @@ Deno.test("finite documentation rejects stale disk and falsely declared creation
   );
 });
 
-Deno.test("finite documentation rejects omission of every patch from the reviewed final layout", async () => {
+test("finite documentation rejects omission of every patch from the reviewed final layout", async () => {
   await assertRejects(
     () =>
       assertMigrationDocuments([], {
@@ -125,7 +126,7 @@ Deno.test("finite documentation rejects omission of every patch from the reviewe
   );
 });
 
-Deno.test("unchanged original STRUCTURE requires its exact reviewed baseline and original inventory membership", async () => {
+test("unchanged original STRUCTURE requires its exact reviewed baseline and original inventory membership", async () => {
   const document: DocumentationPatch = {
     "path": "docs/architecture/STRUCTURE.md",
     "beforeSource":

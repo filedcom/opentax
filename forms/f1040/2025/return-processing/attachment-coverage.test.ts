@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 
-Deno.test("entered Form 4547 election cannot disappear from either export", () => {
+test("entered Form 4547 election cannot disappear from either export", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () =>
@@ -17,7 +18,7 @@ import { form8992Pending } from "../domains/income/foreign/form8992/form8992.fix
 import { form8882Fixture } from "../../nodes/inputs/credits/business/f8882/fixture.ts";
 import { form8941FiledFixture } from "../../nodes/inputs/credits/health/f8941/fixture.ts";
 
-Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
+test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () => assertAttachmentCoverage(form8992Pending, kind),
@@ -27,7 +28,7 @@ Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both 
   }
 });
 
-Deno.test("only a trust K-1 with box 13 code B needs the unregistered attachment", () => {
+test("only a trust K-1 with box 13 code B needs the unregistered attachment", () => {
   const ordinary = { estate_trust_name: "First Trust", box1_interest: 100 };
   const backup = {
     estate_trust_name: "Second Trust",
@@ -47,7 +48,7 @@ Deno.test("only a trust K-1 with box 13 code B needs the unregistered attachment
   }
 });
 
-Deno.test("native attachment preflight blocks unfiled public inputs", () => {
+test("native attachment preflight blocks unfiled public inputs", () => {
   for (
     const pending of [
       { clergy: { clergys: [{ ministerial_wages: 50_000 }] } },
@@ -119,7 +120,7 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   );
 });
 
-Deno.test("Form 8882 guard admits only its sourced direct employer contract", () => {
+test("Form 8882 guard admits only its sourced direct employer contract", () => {
   const source = form8882Fixture();
   for (const kind of ["mef", "pdf"] as const) {
     assertAttachmentCoverage({ f8882: source }, kind);
@@ -127,7 +128,7 @@ Deno.test("Form 8882 guard admits only its sourced direct employer contract", ()
   }
 });
 
-Deno.test("Form 8941 guard binds source, allowed credit, and Schedule C", () => {
+test("Form 8941 guard binds source, allowed credit, and Schedule C", () => {
   const pending = form8941FiledFixture();
   for (const kind of ["mef", "pdf"] as const) {
     assertAttachmentCoverage(pending, kind);
@@ -140,7 +141,7 @@ Deno.test("Form 8941 guard binds source, allowed credit, and Schedule C", () => 
   }
 });
 
-Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => {
+test("QOF code Z/Y rows cannot export without the annual Form 8997", () => {
   for (const code of ["Z", "Y"]) {
     const row = {
       source_transaction_id: `qof-${code}`,
@@ -167,7 +168,7 @@ Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => 
   }
 });
 
-Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
+test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
   // This is a raw attachment-coverage negative fixture, not a filed 1099-B:
   // no recipient/filer is supplied because the reportable-transaction gate
   // must reject before a source-owner claim is made.
@@ -198,7 +199,7 @@ Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in
   }
 });
 
-Deno.test("Form 8886 review blocks a $2 million Form 4684 business casualty before netting", () => {
+test("Form 8886 review blocks a $2 million Form 4684 business casualty before netting", () => {
   const casualty = {
     business_fmv_before: 3_000_000,
     business_fmv_after: 500_000,
@@ -221,7 +222,7 @@ Deno.test("Form 8886 review blocks a $2 million Form 4684 business casualty befo
   }
 });
 
-Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
+test("PDF-only coverage gaps do not suppress a native MeF form", () => {
   const pending = { f8863: { f8863s: [{}] } };
   assertAttachmentCoverage(pending, "mef");
   // The Form 8863 PDF is registered; its descriptor checks supported rows.
@@ -281,7 +282,7 @@ Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
   );
 });
 
-Deno.test("active native-only taxpayer forms cannot disappear from the PDF packet", () => {
+test("active native-only taxpayer forms cannot disappear from the PDF packet", () => {
   const active = [
     { f965: { f965s: [{}] } },
     { form8582cr: { credit_sources: [{}] } },
@@ -337,7 +338,7 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
   assertAttachmentCoverage({ f8854_annual: {} }, "pdf");
 });
 
-Deno.test("Form 8862 requires an explicit ban status and routes active-ban appeals to paper", () => {
+test("Form 8862 requires an explicit ban status and routes active-ban appeals to paper", () => {
   const claim = { claim_eitc: true };
   assertThrows(
     () => assertAttachmentCoverage({ f8862: claim }, "mef"),

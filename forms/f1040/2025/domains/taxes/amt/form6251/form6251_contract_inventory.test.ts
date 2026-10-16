@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertExists, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -7,7 +9,7 @@ import { withSyntheticForm1098Copy } from "../../../../pdf/reviews/deductions/mo
 import { contractInventoryCases } from "./form6251_contract_inventory.fixture.ts";
 
 for (const entry of contractInventoryCases) {
-  Deno.test(`Complete first-year AMT contract inventory: ${entry.id}`, async () => {
+  test(`Complete first-year AMT contract inventory: ${entry.id}`, async () => {
     const inputs = {
       ...entry.inputs,
       ...(entry.inputs.f1098
@@ -52,16 +54,11 @@ for (const entry of contractInventoryCases) {
       origins,
     );
     const root = (() => {
-      try {
-        return Deno.env.get("FORM6251_CONTRACT_INVENTORY_DIR");
-      } catch (error) {
-        if (error instanceof Deno.errors.NotCapable) return undefined;
-        throw error;
-      }
+      return process.env.FORM6251_CONTRACT_INVENTORY_DIR;
     })();
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -82,11 +79,11 @@ for (const entry of contractInventoryCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
       for (const source of inputs.f1098 ?? []) {
         assertExists(source.issuer_copy);
-        await Deno.writeFile(
+        await fs.writeFile(
           `${root}/${entry.id}-source-1098.pdf`,
           source.issuer_copy.bytes,
         );

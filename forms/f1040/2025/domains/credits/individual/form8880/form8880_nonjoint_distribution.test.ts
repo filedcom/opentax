@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertNonjointSaverDistributionCopies } from "./form8880_distribution_sources.ts";
 import { z } from "zod";
 import {
@@ -47,7 +49,7 @@ const source = {
 };
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("nonjoint ledger applies every reviewed line-4 exception and all nonjoint rates", () => {
+test("nonjoint ledger applies every reviewed line-4 exception and all nonjoint rates", () => {
   for (const treatment of Object.values(Treatment)) {
     const calculated = calculateForm8880(ctx, {
       ...source,
@@ -76,7 +78,7 @@ Deno.test("nonjoint ledger applies every reviewed line-4 exception and all nonjo
   }
 });
 
-Deno.test("nonjoint ledger rejects incomplete, duplicate, wrong-owner and out-of-window records", () => {
+test("nonjoint ledger rejects incomplete, duplicate, wrong-owner and out-of-window records", () => {
   for (
     const changed of [
       { ...review, complete_distribution_inventory_confirmed: false },
@@ -245,7 +247,7 @@ cases.push({
   },
 });
 for (const item of cases) {
-  Deno.test(`public nonjoint distribution ledger ${item.name} reconciles complete exports`, async () => {
+  test(`public nonjoint distribution ledger ${item.name} reconciles complete exports`, async () => {
     const pensionIncome = (item.copies ?? []).reduce(
       (sum, copy) => sum + (copy.box2a_taxable_amount ?? 0),
       0,
@@ -386,30 +388,30 @@ for (const item of cases) {
       }
     }
     const dir = item.copies
-      ? Deno.env.get("FORM8880_CURRENT_EVIDENCE")
+      ? process.env.FORM8880_CURRENT_EVIDENCE
       : undefined;
     if (dir) {
       const output = `${dir}/${item.name}`;
-      await Deno.mkdir(output, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(output, { recursive: true });
+      await fs.writeFile(
         `${output}/source.json`,
         JSON.stringify(inputs, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${output}/pending.json`,
         JSON.stringify(result.pending, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${output}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      await Deno.writeTextFile(`${output}/return.xml`, bundle.xml);
-      await Deno.writeFile(`${output}/return.pdf`, pdf);
+      await fs.writeFile(`${output}/return.xml`, bundle.xml);
+      await fs.writeFile(`${output}/return.pdf`, pdf);
     }
   });
 }
 
-Deno.test("current-year reviewed copies reject missing metadata and contradictory code D treatment", () => {
+test("current-year reviewed copies reject missing metadata and contradictory code D treatment", () => {
   assertThrows(() =>
     nonjointDistributionReviewSchema.parse({
       ...review,

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -77,7 +80,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("Form 8995-A Schedule C nets two businesses to a positive limited deduction", () => {
+test("Form 8995-A Schedule C nets two businesses to a positive limited deduction", () => {
   const result = preparedReturn();
   assertEquals(result.pending.f1040.line13_qbi_deduction, 50);
   assertEquals(result.pending.schedule1.line3_schedule_c, 300);
@@ -117,7 +120,7 @@ Deno.test("Form 8995-A Schedule C nets two businesses to a positive limited dedu
   assertEquals(schedulePdf.line6, 0);
 });
 
-Deno.test("positive Schedule C loss-netting packet rejects extra Schedule B and changed final deduction", () => {
+test("positive Schedule C loss-netting packet rejects extra Schedule B and changed final deduction", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
   const altered: Record<string, Record<string, unknown>>[] = [{
     ...pending,
@@ -176,7 +179,7 @@ Deno.test("positive Schedule C loss-netting packet rejects extra Schedule B and 
   }
 });
 
-Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, XSD and filled PDF", async () => {
+test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, XSD and filled PDF", async () => {
   const base = pdfReviewFixtures.find((fixture) =>
     fixture.id === "single-form8995a-two-business-loss-netting"
   )!;
@@ -247,7 +250,7 @@ Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, 
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -260,10 +263,10 @@ Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, 
   assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
   const pdf = await prepared.renderPdf();
   assert(pdf.length > 0);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, pdf);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, pdf);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -279,16 +282,16 @@ Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, 
     );
     assert(/40\s*\(\s*0\s*\)/.test(text));
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995a-cent-loss/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-    await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
   }
 });
 
@@ -298,7 +301,7 @@ for (
     [304.51, -100.49, 305, -100, 205, 41],
   ] as const
 ) {
-  Deno.test(`Form 8995-A Schedule C rounds signed business cents ${gainQbi}/${lossQbi} before line totals`, () => {
+  test(`Form 8995-A Schedule C rounds signed business cents ${gainQbi}/${lossQbi} before line totals`, () => {
     const base = pdfReviewFixtures.find((fixture) =>
       fixture.id === "single-form8995a-two-business-loss-netting"
     )!;

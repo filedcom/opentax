@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -99,7 +100,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("one same-country 1099-INT and ordinary 1099-DIV reconcile Form 1116, Schedule 3, Form 1040, native and PDF", () => {
+test("one same-country 1099-INT and ordinary 1099-DIV reconcile Form 1116, Schedule 3, Form 1040, native and PDF", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -142,7 +143,7 @@ Deno.test("one same-country 1099-INT and ordinary 1099-DIV reconcile Form 1116, 
   );
 });
 
-Deno.test("mixed Form 1116 rejects source, holding, review and return tampering at both exports", () => {
+test("mixed Form 1116 rejects source, holding, review and return tampering at both exports", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);

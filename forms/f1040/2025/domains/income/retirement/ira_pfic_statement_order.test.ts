@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createHash } from "node:crypto";
 import { f1040_2025 } from "../../../index.ts";
@@ -21,7 +24,7 @@ function copy(document_id: string, content: string) {
     bytes_base64: btoa(String.fromCharCode(...bytes)),
   };
 }
-Deno.test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions reconcile in one full-XSD packet", async () => {
+test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions reconcile in one full-XSD packet", async () => {
   const sale = (
     id: string,
     value: number,
@@ -155,10 +158,10 @@ Deno.test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions re
   assertStringIncludes(prepared.bundle.xml, "<IRARecharacterizationStmt");
   assertStringIncludes(prepared.bundle.xml, "<GainOrLossMrktToMrktElectStmt");
   const out = ".state/research/ira-pfic-statement-order";
-  await Deno.mkdir(out, { recursive: true });
+  await fs.mkdir(out, { recursive: true });
   const xmlFile = `${out}/return.xml`;
-  await Deno.writeTextFile(xmlFile, prepared.bundle.xml);
-  const xsd = await new Deno.Command("xmllint", {
+  await fs.writeFile(xmlFile, prepared.bundle.xml);
+  const xsd = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -176,12 +179,12 @@ Deno.test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions re
     prepared.bundle,
     origins,
   );
-  await Deno.writeFile(`${out}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${out}/return.pdf`, pdf);
+  await fs.writeFile(
     `${out}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${out}/source-pending.json`,
     JSON.stringify(
       { inputs, filer: form4852Filer, pending: prepared.bundle.pending },
@@ -189,11 +192,11 @@ Deno.test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions re
       2,
     ),
   );
-  await Deno.mkdir(`${out}/retained`, { recursive: true });
+  await fs.mkdir(`${out}/retained`, { recursive: true });
   for (const d of retained.documents) {
-    await Deno.writeFile(`${out}/retained/${d.document_reference}`, d.bytes);
+    await fs.writeFile(`${out}/retained/${d.document_reference}`, d.bytes);
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${out}/documents.json`,
     JSON.stringify(
       retained.documents.map((d) => ({

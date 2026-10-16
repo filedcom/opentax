@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { ownedScheduleSeInputs } from "../../../../pdf/reviews/taxes/self-employment/review-schedule-se-owner.fixture.ts";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -19,7 +22,7 @@ const single = pdfReviewFixtures.find((f) => f.id === "single-schedule-c")!;
 function inputsFor(profits: number[], wageOwners: ("T" | "S")[]) {
   return ownedScheduleSeInputs(single, joint, profits, wageOwners);
 }
-Deno.test("public joint owners calculate separate SE and prepare distinct native/PDF copies", () => {
+test("public joint owners calculate separate SE and prepare distinct native/PDF copies", () => {
   const result = f1040_2025.executeReturn(inputsFor([60000, 40000], ["S"]));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -50,7 +53,7 @@ Deno.test("public joint owners calculate separate SE and prepare distinct native
     8478,
   ], ["444556666", 1071]]);
 });
-Deno.test("public joint owner loss cannot erase other spouse's SE or small separate business", () => {
+test("public joint owner loss cannot erase other spouse's SE or small separate business", () => {
   const result = f1040_2025.executeReturn(inputsFor([-100, 500], []));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -59,7 +62,7 @@ Deno.test("public joint owner loss cannot erase other spouse's SE or small separ
   assertEquals(owned.instances[0].recipient, "S");
   assertEquals(owned.tax, 70);
 });
-Deno.test("owned SE native/PDF source replay rejects synchronized source-row and identity tampering", () => {
+test("owned SE native/PDF source replay rejects synchronized source-row and identity tampering", () => {
   const result = f1040_2025.executeReturn(inputsFor([60000, 40000], ["S"]));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -89,9 +92,9 @@ Deno.test("owned SE native/PDF source replay rejects synchronized source-row and
   }
 });
 
-Deno.test("public joint owner SE and attributable QBI file complete XSD/PDF returns", async () => {
+test("public joint owner SE and attributable QBI file complete XSD/PDF returns", async () => {
   const root = ".state/research/2026-10-06-owned-schedule-se";
-  await Deno.mkdir(root, { recursive: true });
+  await fs.mkdir(root, { recursive: true });
   for (
     const scenario of [
       {
@@ -141,7 +144,7 @@ Deno.test("public joint owner SE and attributable QBI file complete XSD/PDF retu
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: ["--noout", "--schema", schema, "-"],
       stdin: "piped",
       stdout: "piped",
@@ -159,16 +162,16 @@ Deno.test("public joint owner SE and attributable QBI file complete XSD/PDF retu
       pdf.getPages().flatMap((p) => p.node.Annots()?.asArray() ?? []).length,
       0,
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${scenario.id}-inputs.json`,
       JSON.stringify(inputs, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${scenario.id}-pending.json`,
       JSON.stringify(result.pending, null, 2),
     );
-    await Deno.writeTextFile(`${root}/${scenario.id}-return.xml`, xml);
-    await Deno.writeFile(`${root}/${scenario.id}-return.pdf`, bytes);
+    await fs.writeFile(`${root}/${scenario.id}-return.xml`, xml);
+    await fs.writeFile(`${root}/${scenario.id}-return.pdf`, bytes);
     console.log(
       `${scenario.id}: ${pdf.getPageCount()} pages, SE ${owned.tax}, halfSE ${owned.deduction}, QBI ${
         pending.f1040.line13_qbi_deduction ?? 0
@@ -177,7 +180,7 @@ Deno.test("public joint owner SE and attributable QBI file complete XSD/PDF retu
   }
 });
 
-Deno.test("joint owner QBI rejects source, attributed deduction, rows and filed total conflicts in both exports", async () => {
+test("joint owner QBI rejects source, attributed deduction, rows and filed total conflicts in both exports", async () => {
   const result = f1040_2025.executeReturn(inputsFor([60000, 40000], ["S"]));
   assertEquals(result.diagnostics, []);
   const settled = normalizeAllPending(result.pending);
@@ -226,7 +229,7 @@ Deno.test("joint owner QBI rejects source, attributed deduction, rows and filed 
   }
 });
 
-Deno.test("joint owner source cents cross filed rounding boundaries consistently", async () => {
+test("joint owner source cents cross filed rounding boundaries consistently", async () => {
   for (const cents of [.49, .50]) {
     const result = f1040_2025.executeReturn(
       inputsFor([60000 + cents, 40000 + cents], ["S"]),

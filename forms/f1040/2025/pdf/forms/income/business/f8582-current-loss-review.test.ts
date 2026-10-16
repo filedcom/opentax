@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -6,9 +9,9 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { form8582Pdf, projectCurrentPropertyLoss8582Review } from "./f8582.ts";
 import { buildCurrentPropertyLoss8582ReviewPdf } from "./f8582-current-loss-review.ts";
 
-Deno.test("current property loss review prints source-bound Parts V VII VIII IX on the three actual IRS pages", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts");
-  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+test("current property loss review prints source-bound Parts V VII VIII IX on the three actual IRS pages", async () => {
+  const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : process.argv.slice(2)[flag + 1];
   for (
     const c of [
       {
@@ -88,10 +91,10 @@ Deno.test("current property loss review prints source-bound Parts V VII VIII IX 
     assertThrows(() => projectCurrentPropertyLoss8582Review(changed));
     assertEquals(pending, before);
     assertEquals((await PDFDocument.load(review.bytes)).getPageCount(), 3);
-    const temp = await Deno.makeTempFile({ suffix: ".pdf" });
+    const temp = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(temp, review.bytes);
-      const extracted = await new Deno.Command("pdftotext", {
+      await fs.writeFile(temp, review.bytes);
+      const extracted = await new sys.Command("pdftotext", {
         args: ["-layout", temp, "-"],
         stdout: "piped",
         stderr: "piped",
@@ -103,15 +106,15 @@ Deno.test("current property loss review prints source-bound Parts V VII VIII IX 
       assertStringIncludes(text, "Current farm");
       if (!c.nonpassive) assertStringIncludes(text, "Form 4797, Part II");
       if (output) {
-        await Deno.writeFile(`${output}/${c.id}.pdf`, review.bytes, {
+        await sys.writeBytes(`${output}/${c.id}.pdf`, review.bytes, {
           createNew: true,
           mode: 0o600,
         });
-        await Deno.writeTextFile(`${output}/${c.id}.txt`, text, {
+        await sys.writeText(`${output}/${c.id}.txt`, text, {
           createNew: true,
           mode: 0o600,
         });
-        await Deno.writeTextFile(
+        await sys.writeText(
           `${output}/${c.id}.json`,
           JSON.stringify(
             {
@@ -128,7 +131,7 @@ Deno.test("current property loss review prints source-bound Parts V VII VIII IX 
         );
       }
     } finally {
-      await Deno.remove(temp);
+      await sys.remove(temp);
     }
   }
 });

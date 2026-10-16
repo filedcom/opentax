@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { reconcileForm8582CR2024OpeningCandidate } from "./prior_year_opening.ts";
 
@@ -85,7 +86,7 @@ const current = {
 };
 const general = { taxpayer_ssn: "111-22-3333" };
 
-Deno.test("two distinct 2023/2024 activity vintages reconcile prior lines and Worksheet 9 into a 2025 opening candidate", () => {
+test("two distinct 2023/2024 activity vintages reconcile prior lines and Worksheet 9 into a 2025 opening candidate", () => {
   const opening = reconcileForm8582CR2024OpeningCandidate(
     candidate,
     current,
@@ -111,7 +112,7 @@ Deno.test("two distinct 2023/2024 activity vintages reconcile prior lines and Wo
   );
 });
 
-Deno.test("two-vintage opening candidate rejects changed prior totals, row, activity, year and taxpayer", () => {
+test("two-vintage opening candidate rejects changed prior totals, row, activity, year and taxpayer", () => {
   const changed = [
     [{ ...candidate, taxpayer_tin: "999887777" }, current],
     [{

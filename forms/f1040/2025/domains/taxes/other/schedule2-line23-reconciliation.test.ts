@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { irs1040 } from "../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -19,7 +20,7 @@ const pending = {
 };
 const filed = { line23_other_taxes: 660 };
 
-Deno.test("Schedule 2 Part II less Form 8978 equals filed Form 1040 line 23 in native and PDF", () => {
+test("Schedule 2 Part II less Form 8978 equals filed Form 1040 line 23 in native and PDF", () => {
   assertSchedule2Line23(filed, pending);
   assertStringIncludes(
     irs1040.build(filed, { pending }),
@@ -28,7 +29,7 @@ Deno.test("Schedule 2 Part II less Form 8978 equals filed Form 1040 line 23 in n
   irs1040Pdf.projectFields?.(filed, pending);
 });
 
-Deno.test("Schedule 2 line 23 replay rejects changed sources, worksheet, or filed amount", () => {
+test("Schedule 2 line 23 replay rejects changed sources, worksheet, or filed amount", () => {
   for (
     const changed of [
       { ...pending, schedule2: { ...schedule2, line4_se_tax: 501 } },

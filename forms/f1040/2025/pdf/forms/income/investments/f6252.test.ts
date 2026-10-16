@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/types.ts";
 import { form6252Pdf } from "./f6252.ts";
@@ -52,7 +53,7 @@ function mapped(key: string): string | undefined {
   return form6252Pdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
 }
 
-Deno.test("2025 Form 6252 PDF maps the canonical identity, dates, and every Part I/II line", () => {
+test("2025 Form 6252 PDF maps the canonical identity, dates, and every Part I/II line", () => {
   assertEquals(form6252Pdf.pageIndices?.({}), [0]);
   assertEquals(
     form6252Pdf.filerFields?.map((entry) => entry.pdfField),
@@ -95,7 +96,7 @@ Deno.test("2025 Form 6252 PDF maps the canonical identity, dates, and every Part
   );
 });
 
-Deno.test("2025 Form 6252 PDF derives all sale lines and the exact five-decimal ratio", () => {
+test("2025 Form 6252 PDF derives all sale lines and the exact five-decimal ratio", () => {
   const [instance] = form6252Pdf.instances?.(
     { f6252s: [sale] },
     filer,
@@ -116,7 +117,7 @@ Deno.test("2025 Form 6252 PDF derives all sale lines and the exact five-decimal 
   assertEquals(instance?.line26, 12_000);
 });
 
-Deno.test("2025 Form 6252 PDF emits one page per sale and reconciles aggregate destination", () => {
+test("2025 Form 6252 PDF emits one page per sale and reconciles aggregate destination", () => {
   const second = {
     ...sale,
     property_description: "Second parcel",
@@ -134,7 +135,7 @@ Deno.test("2025 Form 6252 PDF emits one page per sale and reconciles aggregate d
   assertEquals(instances?.[1].line26, 6_000);
 });
 
-Deno.test("2025 Form 6252 PDF retains later-year zero and business-property destination", () => {
+test("2025 Form 6252 PDF retains later-year zero and business-property destination", () => {
   const [later] = form6252Pdf.instances?.(
     {
       f6252s: [{
@@ -180,7 +181,7 @@ Deno.test("2025 Form 6252 PDF retains later-year zero and business-property dest
   assertEquals(business?.line26, 12_000);
 });
 
-Deno.test("2025 Form 6252 PDF closes incomplete source and unsupported filing paths", () => {
+test("2025 Form 6252 PDF closes incomplete source and unsupported filing paths", () => {
   assertThrows(
     () => form6252Pdf.instances?.({ f6252s: [sale] }),
     Error,

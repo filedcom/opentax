@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { projectedFields } from "../../../../pdf/forms/taxes/retirement/f4972.ts";
 import { reconcileForm4972Collection } from "./form4972_collection_reconciliation.ts";
@@ -14,9 +17,9 @@ import expectations from "./form4972_participant_collection.expected.json" with 
   type: "json",
 };
 
-Deno.test("complete recipient/participant collections retain independent elections and full source/native/PDF parity", async () => {
-  const evidence = Deno.args[0];
-  if (evidence) await Deno.mkdir(evidence, { recursive: true });
+test("complete recipient/participant collections retain independent elections and full source/native/PDF parity", async () => {
+  const evidence = process.argv.slice(2)[0];
+  if (evidence) await fs.mkdir(evidence, { recursive: true });
   for (const id of participantCollectionCases) {
     const input = participantCollectionInputs(id);
     const result = f1040_2025.executeReturn(input);
@@ -66,7 +69,7 @@ Deno.test("complete recipient/participant collections retain independent electio
         "at most two participant documents",
       );
       if (evidence) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${evidence}/${id}.staged.json`,
           JSON.stringify(
             {
@@ -99,7 +102,7 @@ Deno.test("complete recipient/participant collections retain independent electio
       (prepared.bundle.xml.match(/<IRS1099R\b/g) ?? []).length,
       input.f1099r.length,
     );
-    const dir = evidence ?? await Deno.makeTempDir();
+    const dir = evidence ?? await sys.makeTempDir();
     const origins: PdfPageOrigin[] = [];
     const bytes = await buildPdfBytes(
       f1040_2025.buildPending!(result.pending),
@@ -117,8 +120,8 @@ Deno.test("complete recipient/participant collections retain independent electio
       ).size,
       expected.forms.length,
     );
-    await Deno.writeTextFile(`${dir}/${id}.xml`, prepared.bundle.xml);
-    const xsd = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${dir}/${id}.xml`, prepared.bundle.xml);
+    const xsd = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -129,8 +132,8 @@ Deno.test("complete recipient/participant collections retain independent electio
     }).output();
     assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
     if (evidence) {
-      await Deno.writeFile(`${dir}/${id}.pdf`, bytes);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${dir}/${id}.pdf`, bytes);
+      await fs.writeFile(
         `${dir}/${id}.json`,
         JSON.stringify(
           {
@@ -146,7 +149,7 @@ Deno.test("complete recipient/participant collections retain independent electio
           2,
         ),
       );
-    } else await Deno.remove(dir, { recursive: true });
+    } else await sys.remove(dir, { recursive: true });
     for (
       const mutate of [
         (p: any) => p.form4972.forms[0].line30++,
@@ -205,7 +208,7 @@ Deno.test("complete recipient/participant collections retain independent electio
   }
 });
 
-Deno.test("participant collection rejects contradictory eligibility, reviewed inventory and issued owner facts", () => {
+test("participant collection rejects contradictory eligibility, reviewed inventory and issued owner facts", () => {
   for (
     const mutate of [
       (p: any) => delete p.form4972.elections[0].participant_collection_review,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4797Pdf } from "./f4797.ts";
 
@@ -31,7 +32,7 @@ const row = {
   is_long_term: true,
 };
 
-Deno.test("Form 4797 PDF projects the sourced investment recapture property column", () => {
+test("Form 4797 PDF projects the sourced investment recapture property column", () => {
   const projected = form4797Pdf.projectFields?.(fields, {
     form4797: fields,
     form8949: { transaction: row },
@@ -51,7 +52,7 @@ Deno.test("Form 4797 PDF projects the sourced investment recapture property colu
   );
 });
 
-Deno.test("Form 4797 PDF rejects aggregate recapture without Part III property", () => {
+test("Form 4797 PDF rejects aggregate recapture without Part III property", () => {
   assertThrows(
     () => form4797Pdf.projectFields?.({ recapture_1245: 5_000 }, {}),
     Error,

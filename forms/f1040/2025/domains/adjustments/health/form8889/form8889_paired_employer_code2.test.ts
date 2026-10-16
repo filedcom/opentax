@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { Buffer } from "node:buffer";
@@ -167,7 +168,7 @@ function pairedEmployerCode2Case(employerOwner: "T" | "S" = "T") {
 }
 
 for (const employerOwner of ["T", "S"] as const) {
-  Deno.test(`paired ${employerOwner} employer excess code-2 reaches its Form 8889 and the filed return`, () => {
+  test(`paired ${employerOwner} employer excess code-2 reaches its Form 8889 and the filed return`, () => {
     const { forms, pending, employerIndex } = pairedEmployerCode2Case(
       employerOwner,
     );

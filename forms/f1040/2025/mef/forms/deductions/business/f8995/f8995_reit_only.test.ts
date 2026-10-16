@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -78,7 +79,7 @@ const threeReits = [
   },
 ];
 
-Deno.test("three separately reviewed REIT issuers without business QBI reach Form 8995 native and PDF", () => {
+test("three separately reviewed REIT issuers without business QBI reach Form 8995 native and PDF", () => {
   const pending = filedReturn(threeReits);
   const fields = pending.form8995;
   assertEquals(pending.f1040.line3b_ordinary_dividends, 1_300);
@@ -97,7 +98,7 @@ Deno.test("three separately reviewed REIT issuers without business QBI reach For
   assertEquals(pdf.line15, pending.f1040.line13_qbi_deduction);
 });
 
-Deno.test("REIT-only three-issuer native and PDF reject payer, holding, source and total tampering", () => {
+test("REIT-only three-issuer native and PDF reject payer, holding, source and total tampering", () => {
   const pending = filedReturn(threeReits);
   const fields = pending.form8995;
   const changed = (rows: typeof threeReits) => ({
@@ -138,7 +139,7 @@ Deno.test("REIT-only three-issuer native and PDF reject payer, holding, source a
   }
 });
 
-Deno.test("one reviewed REIT dividend without business QBI reaches Form 8995, Form 1040, native and PDF", () => {
+test("one reviewed REIT dividend without business QBI reaches Form 8995, Form 1040, native and PDF", () => {
   const pending = filedReturn();
   const fields = pending.form8995;
   assertEquals(pending.f1040.line3b_ordinary_dividends, 1_000);
@@ -165,7 +166,7 @@ Deno.test("one reviewed REIT dividend without business QBI reaches Form 8995, Fo
   assertEquals(pdf.line15, 200);
 });
 
-Deno.test("REIT-only Form 8995 rejects changed issued copy, holding, other QBI and return totals", () => {
+test("REIT-only Form 8995 rejects changed issued copy, holding, other QBI and return totals", () => {
   const pending = filedReturn();
   const fields = pending.form8995;
   const changedCopy = (copy: Record<string, unknown>) => ({

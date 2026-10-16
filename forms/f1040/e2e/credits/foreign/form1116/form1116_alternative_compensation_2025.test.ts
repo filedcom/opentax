@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import { verifyEmployerPacket } from "./form1116_employer_packet.fixture.ts";
 import {
   assertEquals,
@@ -126,7 +129,7 @@ function withIssuedForeignEmployerFacts<
   };
 }
 
-Deno.test("one foreign employer alternative allocation reaches full return, MeF attachment and PDF", async () => {
+test("one foreign employer alternative allocation reaches full return, MeF attachment and PDF", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -176,10 +179,10 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -189,7 +192,7 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
@@ -255,7 +258,7 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
   );
 });
 
-Deno.test("two owner-matched foreign employers establish worldwide compensation for one alternative wage item", async () => {
+test("two owner-matched foreign employers establish worldwide compensation for one alternative wage item", async () => {
   const secondWageReference = "2025 second foreign employer wage ledger";
   const twoEmployerInputs = {
     ...inputs,
@@ -334,7 +337,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
   );
 });
 
-Deno.test("three owner-matched foreign-employer wage records support one alternative compensation item", async () => {
+test("three owner-matched foreign-employer wage records support one alternative compensation item", async () => {
   const threeEmployerInputs = {
     ...inputs,
     fec: [{
@@ -454,7 +457,7 @@ for (
     [14_000, 14_000, 14_000, 14_000, 14_000, 14_000, 16_000],
   ]
 ) {
-  Deno.test(`${additionalWages.length + 1} distinct same-owner foreign employers reconcile alternative compensation`, async () => {
+  test(`${additionalWages.length + 1} distinct same-owner foreign employers reconcile alternative compensation`, async () => {
     const owner = "111-22-3333";
     const employerInputs = {
       ...inputs,

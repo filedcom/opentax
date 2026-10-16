@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm8814,
@@ -44,7 +45,7 @@ const reviewed = (item: F8814Item): F8814Item => ({
   },
 });
 
-Deno.test("Form 8814 MeF: line 12, line 14, and line 15 follow 2025 form", () => {
+test("Form 8814 MeF: line 12, line 14, and line 15 follow 2025 form", () => {
   const xml = form8814.build({ items: [calculateForm8814(reviewed(child))] }, { filer });
   assertEquals(xml.length, 1);
   assertStringIncludes(
@@ -62,7 +63,7 @@ Deno.test("Form 8814 MeF: line 12, line 14, and line 15 follow 2025 form", () =>
   assertEquals(xml[0].includes("MultipleForm8814Ind"), false);
 });
 
-Deno.test("Form 8814 MeF: multiple children emit separate documents with line C", () => {
+test("Form 8814 MeF: multiple children emit separate documents with line C", () => {
   const xml = form8814.build({
     items: [
       calculateForm8814(reviewed(child)),
@@ -74,7 +75,7 @@ Deno.test("Form 8814 MeF: multiple children emit separate documents with line C"
   assertStringIncludes(xml[1], "<MultipleForm8814Ind>X</MultipleForm8814Ind>");
 });
 
-Deno.test("Form 8814 MeF requires reviewed child income and electing-parent ownership", () => {
+test("Form 8814 MeF requires reviewed child income and electing-parent ownership", () => {
   assertThrows(
     () => form8814.build({ items: [calculateForm8814(child)] }, { filer }),
     Error,

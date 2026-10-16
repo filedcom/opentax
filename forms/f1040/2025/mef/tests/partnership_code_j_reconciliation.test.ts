@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -25,7 +26,7 @@ function prepared() {
   return buildPending(result.pending);
 }
 
-Deno.test("partnership code J export rejects a changed recovery source", async () => {
+test("partnership code J export rejects a changed recovery source", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -46,7 +47,7 @@ Deno.test("partnership code J export rejects a changed recovery source", async (
   );
 });
 
-Deno.test("partnership code J export rejects another recipient", async () => {
+test("partnership code J export rejects another recipient", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;

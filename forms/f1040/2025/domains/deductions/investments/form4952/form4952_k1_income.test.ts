@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import {
   k1PortfolioCases,
@@ -82,7 +84,7 @@ const cases = [
   },
 ];
 for (const entry of cases) {
-  Deno.test(`K-1 investment income and expenses reconcile across filed sources: ${entry.id}`, async () => {
+  test(`K-1 investment income and expenses reconcile across filed sources: ${entry.id}`, async () => {
     const base = await k1PortfolioInputs({
       ...k1PortfolioCases[0],
       joint: entry.joint,
@@ -168,16 +170,16 @@ for (const entry of cases) {
       prepared.bundle,
       origins,
     );
-    const root = Deno.env.get("OPENTAX_K1_INCOME_PROOF_DIR");
+    const root = process.env.OPENTAX_K1_INCOME_PROOF_DIR;
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
-      await Deno.writeFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(
         `${root}/${entry.id}-source.pdf`,
         base.f1098[0].issuer_copy.bytes,
       );
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {

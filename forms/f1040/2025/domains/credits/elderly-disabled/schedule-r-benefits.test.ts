@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -13,7 +14,7 @@ import { scheduleRPdf } from "../../../pdf/forms/credits/individual/schedule_r.t
 import { inputSchema } from "../../../../nodes/inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 
 for (const [id, c] of Object.entries(cases)) {
-  Deno.test(`Schedule R benefits and single disability: ${id}`, async () => {
+  test(`Schedule R benefits and single disability: ${id}`, async () => {
     const held = structuredClone(c.inputs);
     const result = f1040_2025.executeReturn(c.inputs);
     assertEquals(result.diagnostics, []);
@@ -65,7 +66,7 @@ for (const [id, c] of Object.entries(cases)) {
   });
 }
 
-Deno.test("Schedule R benefit exports reject missing reviews and conflicting finalized SSA", async () => {
+test("Schedule R benefit exports reject missing reviews and conflicting finalized SSA", async () => {
   const result = f1040_2025.executeReturn(cases["mfs-mixed-benefits"].inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending),

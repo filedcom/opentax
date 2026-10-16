@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8995Pdf } from "../../../../../pdf/forms/deductions/business/f8995/f8995.ts";
 import { form8995 } from "./f8995.ts";
@@ -15,10 +18,10 @@ const return1040Xsd = new URL(
 ).pathname;
 
 async function assertReturnXsd(xml: string): Promise<void> {
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", return1040Xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
@@ -29,11 +32,11 @@ async function assertReturnXsd(xml: string): Promise<void> {
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF and PDF", () => {
+test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF and PDF", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -75,7 +78,7 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
   );
 });
 
-Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line 12 and both filed outputs", () => {
+test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line 12 and both filed outputs", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -147,7 +150,7 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
   );
 });
 
-Deno.test("one Schedule C combines separate qualified and held REIT dividend issuers", () => {
+test("one Schedule C combines separate qualified and held REIT dividend issuers", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -237,7 +240,7 @@ Deno.test("one Schedule C combines separate qualified and held REIT dividend iss
   assertThrows(() => form8995Pdf.projectFields?.(fields, changedReturn), Error);
 });
 
-Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
+test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -337,7 +340,7 @@ Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and
   );
 });
 
-Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 1040, native MeF, and PDF", async () => {
+test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 1040, native MeF, and PDF", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
   );
@@ -451,7 +454,7 @@ Deno.test("two distinct held REIT dividend issuers reconcile to Form 8995, Form 
   );
 });
 
-Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
+test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -580,7 +583,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
     }), Error);
 });
 
-Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
+test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -631,7 +634,7 @@ Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and fu
   await assertReturnXsd(xml);
 });
 
-Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", async () => {
+test("single-filer farm without EIN uses the sourced SSN on Form 8995", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -697,7 +700,7 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
   );
 });
 
-Deno.test("sole Schedule C business without EIN uses the filed taxpayer SSN", () => {
+test("sole Schedule C business without EIN uses the filed taxpayer SSN", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -744,7 +747,7 @@ Deno.test("sole Schedule C business without EIN uses the filed taxpayer SSN", ()
   );
 });
 
-Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {
+test("Form 8995 omits no-claim tracking fields in both exports", () => {
   assertEquals(form8995.build({}), "");
   assertEquals(form8995.build({ qbi_deduction: 0 }), "");
   assertEquals(form8995.build({ qbi_from_schedule_c: 50_000 }), "");
@@ -755,7 +758,7 @@ Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {
   );
 });
 
-Deno.test("Form 8995 zero deduction cannot discard a REIT/PTP loss carryforward", () => {
+test("Form 8995 zero deduction cannot discard a REIT/PTP loss carryforward", () => {
   const unfiled = {
     qbi_deduction: 0,
     line6_sec199a_dividends: 3_000,
@@ -784,7 +787,7 @@ Deno.test("Form 8995 zero deduction cannot discard a REIT/PTP loss carryforward"
   );
 });
 
-Deno.test("Form 8995 zero deduction cannot discard a business QBI loss carryforward", () => {
+test("Form 8995 zero deduction cannot discard a business QBI loss carryforward", () => {
   const unfiled = {
     qbi_deduction: 0,
     qbi_from_schedule_c: [-4_000, 1_000],
@@ -805,7 +808,7 @@ Deno.test("Form 8995 zero deduction cannot discard a business QBI loss carryforw
   assertEquals(form8995Pdf.projectFields?.(absorbed, {}), {});
 });
 
-Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports", () => {
+test("Form 8995 rejects a positive aggregate-only QBI claim in both exports", () => {
   const fields = {
     qbi_from_schedule_c: 50_000,
     qbi: 50_000,
@@ -825,7 +828,7 @@ Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports
   );
 });
 
-Deno.test("Form 8995 rejects a positive deduction even without other source fields", () => {
+test("Form 8995 rejects a positive deduction even without other source fields", () => {
   assertThrows(
     () => form8995.build({ qbi_deduction: 1 }),
     Error,
@@ -906,7 +909,7 @@ function oneBusinessClaim(qbi = 300) {
   return { fields, pending };
 }
 
-Deno.test("Form 8995 emits all 17 lines and the identified Schedule C native group", () => {
+test("Form 8995 emits all 17 lines and the identified Schedule C native group", () => {
   const { fields, pending } = oneBusinessClaim();
   const xml = form8995.build(fields, { pending });
   assertEquals(
@@ -935,7 +938,7 @@ Deno.test("Form 8995 emits all 17 lines and the identified Schedule C native gro
   assertEquals(projected?.line17, 0);
 });
 
-Deno.test("Form 8995 blocks a source or final-return change after calculation", () => {
+test("Form 8995 blocks a source or final-return change after calculation", () => {
   const { fields, pending } = oneBusinessClaim();
   for (
     const altered of [
@@ -1000,7 +1003,7 @@ Deno.test("Form 8995 blocks a source or final-return change after calculation", 
   );
 });
 
-Deno.test("Form 8995 files whole-dollar line 15 for a fractional 20% calculation", () => {
+test("Form 8995 files whole-dollar line 15 for a fractional 20% calculation", () => {
   const { fields, pending } = oneBusinessClaim(301);
   const xml = form8995.build(fields, { pending });
   assertEquals(fields.qbi_deduction, 60);
@@ -1013,7 +1016,7 @@ Deno.test("Form 8995 files whole-dollar line 15 for a fractional 20% calculation
   assertEquals(form8995Pdf.projectFields?.(fields, pending)?.line15, 60);
 });
 
-Deno.test("Form 8995 rejects malformed claimed deductions rather than omitting them", () => {
+test("Form 8995 rejects malformed claimed deductions rather than omitting them", () => {
   for (const value of ["100", -1, Number.NaN, Number.POSITIVE_INFINITY]) {
     assertThrows(
       () => form8995.build({ qbi_deduction: value as number }),

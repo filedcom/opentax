@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -29,21 +32,21 @@ async function assertTy2025Xsd(xml: string): Promise<void> {
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validated = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
 }
 
-Deno.test("Schedule 2 line 13 rejects unsourced W-2 FICA amount at final export", async () => {
+test("Schedule 2 line 13 rejects unsourced W-2 FICA amount at final export", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,
@@ -64,7 +67,7 @@ Deno.test("Schedule 2 line 13 rejects unsourced W-2 FICA amount at final export"
   );
 });
 
-Deno.test("Schedule 2 retains W-2 line 13 and 17k taxes in native and PDF export", async () => {
+test("Schedule 2 retains W-2 line 13 and 17k taxes in native and PDF export", async () => {
   const pending = {
     w2: {
       w2s: [{
@@ -139,7 +142,7 @@ Deno.test("Schedule 2 retains W-2 line 13 and 17k taxes in native and PDF export
   );
 });
 
-Deno.test("Schedule 2 line 17k rejects a bare W-2 code K tax", async () => {
+test("Schedule 2 line 17k rejects a bare W-2 code K tax", async () => {
   const pending = {
     f1040: {
       filing_status: "single" as const,
@@ -160,7 +163,7 @@ Deno.test("Schedule 2 line 17k rejects a bare W-2 code K tax", async () => {
   );
 });
 
-Deno.test("Schedule 2 line 17k rejects a changed W-2 code K amount", async () => {
+test("Schedule 2 line 17k rejects a changed W-2 code K amount", async () => {
   const pending = {
     w2: {
       w2s: [{
@@ -195,7 +198,7 @@ Deno.test("Schedule 2 line 17k rejects a changed W-2 code K amount", async () =>
   );
 });
 
-Deno.test("Schedule 2 line 17h rejects bare W-2 code Z and 1099-MISC box 15 tax", async () => {
+test("Schedule 2 line 17h rejects bare W-2 code Z and 1099-MISC box 15 tax", async () => {
   for (
     const schedule2 of [
       { section409a_excise: 200 },
@@ -223,7 +226,7 @@ Deno.test("Schedule 2 line 17h rejects bare W-2 code Z and 1099-MISC box 15 tax"
   }
 });
 
-Deno.test("Schedule 2 line 17h replays distinct W-2 and 1099-MISC sources", async () => {
+test("Schedule 2 line 17h replays distinct W-2 and 1099-MISC sources", async () => {
   const pending = {
     w2: {
       w2s: [{

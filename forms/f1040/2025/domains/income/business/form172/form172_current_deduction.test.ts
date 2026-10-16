@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm172CurrentDeduction } from "./form172_current_deduction.ts";
 function origin() {
@@ -166,7 +167,7 @@ function current(kind = "regular", base = 20000) {
     annual_review: annual(2025, base),
   };
 }
-Deno.test("Form 172 current deduction derives opening from complete ordinary history", () => {
+test("Form 172 current deduction derives opening from complete ordinary history", () => {
   const h = history([
     annual(2020),
     annual(2021, 50000),
@@ -184,7 +185,7 @@ Deno.test("Form 172 current deduction derives opening from complete ordinary his
   assertEquals(r.amtNolReconciled, false);
   assertEquals(r.filingReady, false);
 });
-Deno.test("Form 172 current mixed deduction uses nonfarm first after prior farm carrybacks", () => {
+test("Form 172 current mixed deduction uses nonfarm first after prior farm carrybacks", () => {
   const { o, v } = mixed();
   const h = history([
     annual(2021, 10000),
@@ -203,7 +204,7 @@ Deno.test("Form 172 current mixed deduction uses nonfarm first after prior farm 
   assertEquals(r.deduction, 24000);
   assertEquals(r.carryTo2026, 12000);
 });
-Deno.test("Form 172 current deduction keeps capital absorption distinct from deductible use", () => {
+test("Form 172 current deduction keeps capital absorption distinct from deductible use", () => {
   const h = history([
     annual(2020),
     annual(2021, 50000),
@@ -218,7 +219,7 @@ Deno.test("Form 172 current deduction keeps capital absorption distinct from ded
   assertEquals(r.nonfarmingAbsorbed, 19000);
   assertEquals(r.carryTo2026, 25000);
 });
-Deno.test("Form 172 current oldest legacy loss expires after the twentieth forward year", () => {
+test("Form 172 current oldest legacy loss expires after the twentieth forward year", () => {
   const o = legacy();
   o.tax_year = 2005;
   o.reviewed_form1040.tax_year = 2005;
@@ -233,7 +234,7 @@ Deno.test("Form 172 current oldest legacy loss expires after the twentieth forwa
   assertEquals(r.expiredLoss, 80000);
   assertEquals(r.carryTo2026, 0);
 });
-Deno.test("Form 172 current deduction keeps exhausted history explicit without a negative zero", () => {
+test("Form 172 current deduction keeps exhausted history explicit without a negative zero", () => {
   const h = history([
     annual(2020, 100000),
     annual(2021),
@@ -246,7 +247,7 @@ Deno.test("Form 172 current deduction keeps exhausted history explicit without a
   assertEquals(r.proposedSchedule1Line8a, 0);
   assertEquals(r.carryTo2026, 0);
 });
-Deno.test("Form 172 current deduction rejects year owner asserted balance and reused-source conflicts", () => {
+test("Form 172 current deduction rejects year owner asserted balance and reused-source conflicts", () => {
   const h = history([
     annual(2020),
     annual(2021),

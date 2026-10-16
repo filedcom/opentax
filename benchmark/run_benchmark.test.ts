@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import {
@@ -6,7 +9,7 @@ import {
   taxCommandOutputOrThrow,
 } from "./run_benchmark.ts";
 
-Deno.test("compareExpectedNumericLines checks every expected numeric line, not just refund", () => {
+test("compareExpectedNumericLines checks every expected numeric line, not just refund", () => {
   const failures = compareExpectedNumericLines(
     {
       line11_agi: 40_000,
@@ -28,7 +31,7 @@ Deno.test("compareExpectedNumericLines checks every expected numeric line, not j
   ]);
 });
 
-Deno.test("compareExpectedNumericLines rejects missing and nonfinite actual values", () => {
+test("compareExpectedNumericLines rejects missing and nonfinite actual values", () => {
   const failures = compareExpectedNumericLines(
     {
       line11_agi: Number.NaN,
@@ -42,7 +45,7 @@ Deno.test("compareExpectedNumericLines rejects missing and nonfinite actual valu
   assertEquals(failures.map((f) => f.reason), ["nonfinite", "missing"]);
 });
 
-Deno.test("compareExpectedNumericLines rejects multi-entry actual values", () => {
+test("compareExpectedNumericLines rejects multi-entry actual values", () => {
   const failures = compareExpectedNumericLines(
     {
       line33_total_payments: [1000, 2000],
@@ -63,7 +66,7 @@ Deno.test("compareExpectedNumericLines rejects multi-entry actual values", () =>
   ]);
 });
 
-Deno.test("compareExpectedNumericLines applies the documented rounding tolerance", () => {
+test("compareExpectedNumericLines applies the documented rounding tolerance", () => {
   const failures = compareExpectedNumericLines(
     {
       line24_total_tax: 1004.99,
@@ -78,7 +81,7 @@ Deno.test("compareExpectedNumericLines applies the documented rounding tolerance
   assertEquals(failures.map((f) => f.line), ["line35a_refund"]);
 });
 
-Deno.test("taxCommandOutputOrThrow rejects command failures", () => {
+test("taxCommandOutputOrThrow rejects command failures", () => {
   assertThrows(
     () =>
       taxCommandOutputOrThrow(2, "stdout detail", "stderr detail", [
@@ -90,7 +93,7 @@ Deno.test("taxCommandOutputOrThrow rejects command failures", () => {
   );
 });
 
-Deno.test("scoring rejects invalid expected values and empty numeric expectations", () => {
+test("scoring rejects invalid expected values and empty numeric expectations", () => {
   for (const value of [NaN, Infinity, -Infinity]) {
     assertThrows(() =>
       compareExpectedNumericLines({ line11_agi: 0 }, { line11_agi: value })
@@ -102,7 +105,7 @@ Deno.test("scoring rejects invalid expected values and empty numeric expectation
   );
 });
 
-Deno.test("scoring rejects null, undefined, strings and empty actual arrays", () => {
+test("scoring rejects null, undefined, strings and empty actual arrays", () => {
   for (const value of [null, undefined, "0", [], [Infinity], [0, NaN]]) {
     assertEquals(
       compareExpectedNumericLines({ line11_agi: value }, { line11_agi: 0 })
@@ -112,12 +115,12 @@ Deno.test("scoring rejects null, undefined, strings and empty actual arrays", ()
   }
 });
 
-Deno.test("run_benchmark exits nonzero for an empty runnable case set", async () => {
+test("run_benchmark exits nonzero for an empty runnable case set", async () => {
   const form = `__empty_${crypto.randomUUID()}`;
   const casesDir = join("benchmark", "cases", form, "2025");
-  await Deno.mkdir(casesDir, { recursive: true });
+  await fs.mkdir(casesDir, { recursive: true });
   try {
-    const command = new Deno.Command("deno", {
+    const command = new sys.Command("deno", {
       args: [
         "run",
         "--allow-read=benchmark",
@@ -142,11 +145,11 @@ Deno.test("run_benchmark exits nonzero for an empty runnable case set", async ()
       true,
     );
   } finally {
-    await Deno.remove(join("benchmark", "cases", form), { recursive: true });
+    await sys.remove(join("benchmark", "cases", form), { recursive: true });
   }
 });
 
-Deno.test("only provably inactive CLI balances become zero", () => {
+test("only provably inactive CLI balances become zero", () => {
   assertEquals(benchmarkActualLines({}, { line37_amount_owed: 10 }), {
     line37_amount_owed: 10,
     line35a_refund: 0,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form461, inputSchema } from "./index.ts";
 
@@ -22,7 +23,7 @@ function fields(result: ReturnType<typeof compute>) {
   return result.outputs.find((item) => item.nodeType === "form461")?.fields;
 }
 
-Deno.test("Form 461 combines signed C and F losses before one single threshold", () => {
+test("Form 461 combines signed C and F losses before one single threshold", () => {
   const result = compute({
     filing_status: "single",
     line2_schedule_c: -200_000,
@@ -40,7 +41,7 @@ Deno.test("Form 461 combines signed C and F losses before one single threshold",
   assertEquals(result.carryforwards?.excess_business_loss_nol_origin, 87_000);
 });
 
-Deno.test("Form 461 offsets a C loss with F profit before the threshold", () => {
+test("Form 461 offsets a C loss with F profit before the threshold", () => {
   const result = compute({
     filing_status: "single",
     line2_schedule_c: -400_000,
@@ -60,7 +61,7 @@ Deno.test("Form 461 offsets a C loss with F profit before the threshold", () => 
   );
 });
 
-Deno.test("Form 461 MFJ uses one $626,000 threshold, not one per source", () => {
+test("Form 461 MFJ uses one $626,000 threshold, not one per source", () => {
   const result = compute({
     filing_status: "mfj",
     line2_schedule_c: -400_000,
@@ -75,7 +76,7 @@ Deno.test("Form 461 MFJ uses one $626,000 threshold, not one per source", () => 
   assertEquals(fields(result)?.line16_excess_business_loss, -74_000);
 });
 
-Deno.test("Form 461 per-line $156,500 trigger applies to MFJ without an addback", () => {
+test("Form 461 per-line $156,500 trigger applies to MFJ without an addback", () => {
   const result = compute({
     filing_status: "mfj",
     line2_schedule_c: -156_501,
@@ -90,7 +91,7 @@ Deno.test("Form 461 per-line $156,500 trigger applies to MFJ without an addback"
   assertEquals(fields(result)?.line16_excess_business_loss, 626_000);
 });
 
-Deno.test("Form 461 omits the form at the exact per-line and net thresholds", () => {
+test("Form 461 omits the form at the exact per-line and net thresholds", () => {
   assertEquals(
     fields(compute({
       filing_status: "single",
@@ -106,7 +107,7 @@ Deno.test("Form 461 omits the form at the exact per-line and net thresholds", ()
   );
 });
 
-Deno.test("Form 461 rejects C/F source data without a sourced scope review", () => {
+test("Form 461 rejects C/F source data without a sourced scope review", () => {
   assertThrows(() =>
     compute({
       filing_status: "single",
@@ -143,14 +144,14 @@ Deno.test("Form 461 rejects C/F source data without a sourced scope review", () 
   );
 });
 
-Deno.test("Form 461 rejects old precomputed excess input and missing status", () => {
+test("Form 461 rejects old precomputed excess input and missing status", () => {
   assertThrows(() => compute({ excess_business_loss: 87_000 }));
   assertThrows(() =>
     compute({ line2_schedule_c: -400_000, scope_review: review })
   );
 });
 
-Deno.test("Form 461 rejects unresolved passive losses before filing", () => {
+test("Form 461 rejects unresolved passive losses before filing", () => {
   assertThrows(() =>
     compute({
       filing_status: "single",

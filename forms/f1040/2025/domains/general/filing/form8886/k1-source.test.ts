@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { inputSchema as partnershipInputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { box11CodeSSourceSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_s.ts";
 import { assertEquals, assertRejects } from "@std/assert";
@@ -167,7 +168,7 @@ async function disclosure(
   });
 }
 
-Deno.test("Form 8886 K-1 links retain all three issuers, each owner and capital character through actual Schedule D and Form 1040", async () => {
+test("Form 8886 K-1 links retain all three issuers, each owner and capital character through actual Schedule D and Form 1040", async () => {
   const result = execute();
   assertEquals(result.diagnostics, []);
   const disclosures = await Promise.all([
@@ -207,7 +208,7 @@ Deno.test("Form 8886 K-1 links retain all three issuers, each owner and capital 
   assertEquals(result.pending.f1040.line7_capital_gain, -3000);
   assertEquals(JSON.stringify({ source, result }), before);
 });
-Deno.test("Form 8886 K-1 proof rejects changed amounts even after recalculating valid Schedule D", async () => {
+test("Form 8886 K-1 proof rejects changed amounts even after recalculating valid Schedule D", async () => {
   const source = await disclosure(0);
   const result = f1040_2025.executeReturn({
     general,
@@ -220,7 +221,7 @@ Deno.test("Form 8886 K-1 proof rejects changed amounts even after recalculating 
     "changed after disclosure review",
   );
 });
-Deno.test("Form 8886 K-1 proof requires matching recipient, source year, EIN, name, entity type and received copy", async () => {
+test("Form 8886 K-1 proof requires matching recipient, source year, EIN, name, entity type and received copy", async () => {
   for (const index of [0, 1, 2]) {
     const result = execute(), source = await disclosure(index);
     for (const change of ["owner", "ein", "name", "type", "copy"] as const) {
@@ -262,7 +263,7 @@ Deno.test("Form 8886 K-1 proof requires matching recipient, source year, EIN, na
   // A yearless retained row must fail before its stale fingerprint is checked.
 });
 const disclosureSource = await disclosure(0);
-Deno.test("Form 8886 K-1 proof rejects duplicate rows, repeated components and independent calculation join changes", async () => {
+test("Form 8886 K-1 proof rejects duplicate rows, repeated components and independent calculation join changes", async () => {
   const source = await disclosure(0), result = execute();
   const duplicate = structuredClone(result);
   duplicate.pending.k1_partnership.k1_partnerships = [
@@ -307,7 +308,7 @@ Deno.test("Form 8886 K-1 proof rejects duplicate rows, repeated components and i
     "K-1 source",
   );
 });
-Deno.test("Form 8886 K-1 proof isolates caller mutations before hashing and rejects a zero linked component", async () => {
+test("Form 8886 K-1 proof isolates caller mutations before hashing and rejects a zero linked component", async () => {
   const source = await disclosure(0),
     result = execute(),
     identity = structuredClone(filer);
@@ -340,7 +341,7 @@ Deno.test("Form 8886 K-1 proof isolates caller mutations before hashing and reje
   );
 });
 
-Deno.test("Form 8886 trust capital receipts separate inherited final-year losses from current gains", async () => {
+test("Form 8886 trust capital receipts separate inherited final-year losses from current gains", async () => {
   const row = {
     ...trust,
     box11_final_k1: true as const,
@@ -390,7 +391,7 @@ Deno.test("Form 8886 trust capital receipts separate inherited final-year losses
   }
   assertEquals(result.pending.f1040.line7_capital_gain, -3000);
 });
-Deno.test("Form 8886 partnership capital receipts retain code S statement amounts and reject altered native-source metadata", async () => {
+test("Form 8886 partnership capital receipts retain code S statement amounts and reject altered native-source metadata", async () => {
   const row = {
     ...partnership,
     box11_code_s_nonportfolio_capital: {
@@ -437,7 +438,7 @@ Deno.test("Form 8886 partnership capital receipts retain code S statement amount
   );
 });
 
-Deno.test("Form 8886 source contract rejects absent K-1 character and capital components on other source kinds", async () => {
+test("Form 8886 source contract rejects absent K-1 character and capital components on other source kinds", async () => {
   const valid = await disclosure(0);
   const missing = structuredClone(valid);
   delete missing.disclosures[0].current_return_links![0].source_component;

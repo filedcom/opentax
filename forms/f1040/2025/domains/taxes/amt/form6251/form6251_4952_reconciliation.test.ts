@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -12,7 +13,7 @@ import {
   form6251Form4952TwoPayerFixture,
 } from "./form6251_4952.fixture.ts";
 
-Deno.test("Form 6251 line 2c replays distinct regular and AMT Form 4952 carryforwards", () => {
+test("Form 6251 line 2c replays distinct regular and AMT Form 4952 carryforwards", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -74,7 +75,7 @@ Deno.test("Form 6251 line 2c replays distinct regular and AMT Form 4952 carryfor
   );
 });
 
-Deno.test("Form 6251 line 2c reconciles two investment-interest payers and distinct AMT carryforward", () => {
+test("Form 6251 line 2c reconciles two investment-interest payers and distinct AMT carryforward", () => {
   const source = form6251Form4952TwoPayerFixture();
   const result = execute(
     buildExecutionPlan(registry),

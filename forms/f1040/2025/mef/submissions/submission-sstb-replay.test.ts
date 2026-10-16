@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { unzipSync, zipSync } from "fflate";
 import { XMLParser } from "fast-xml-parser";
@@ -59,15 +61,9 @@ function remap<T>(value: T, primary: string, spouse: string): T {
   });
 }
 
-Deno.test("SSTB saved returns preserve all 68 source packets in mixed submission archives", async () => {
-  const permission = await Deno.permissions.query({
-    name: "env",
-    variable: "SSTB_SUBMISSION_EVIDENCE",
-  });
-  const evidence = permission.state === "granted"
-    ? Deno.env.get("SSTB_SUBMISSION_EVIDENCE")
-    : undefined;
-  if (evidence) await Deno.mkdir(evidence, { recursive: true });
+test("SSTB saved returns preserve all 68 source packets in mixed submission archives", async () => {
+  const evidence = process.env.SSTB_SUBMISSION_EVIDENCE;
+  if (evidence) await fs.mkdir(evidence, { recursive: true });
   const cases = [
     ...sstbStatusCases.map((c) => ({
       name: `status-${c.name}`,
@@ -275,13 +271,13 @@ Deno.test("SSTB saved returns preserve all 68 source packets in mixed submission
       }
     }
     if (evidence) {
-      await Deno.writeFile(`${evidence}/${c.name}.zip`, archive.bytes);
-      await Deno.writeTextFile(`${evidence}/${c.name}.xml`, archive.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.writeFile(`${evidence}/${c.name}.zip`, archive.bytes);
+      await fs.writeFile(`${evidence}/${c.name}.xml`, archive.bundle.xml);
+      await fs.writeFile(
         `${evidence}/${c.name}-manifest.xml`,
         archive.manifestXml,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${c.name}.json`,
         JSON.stringify(
           {
@@ -333,11 +329,11 @@ Deno.test("SSTB saved returns preserve all 68 source packets in mixed submission
       );
     }
     if (evidence) {
-      await Deno.writeFile(
+      await fs.writeFile(
         `${evidence}/${label}.zip`,
         transmission.containerZipBytes,
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${evidence}/${label}.xml`,
         transmission.sendSubmissionsRequestXml,
       );
@@ -404,7 +400,7 @@ Deno.test("SSTB saved returns preserve all 68 source packets in mixed submission
   assertEquals(sourceRejected, 411);
   assertEquals(archiveRejected, 505);
   if (evidence) {
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${evidence}/checks.json`,
       JSON.stringify(
         {

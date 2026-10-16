@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8881 } from "./f8881.ts";
 import { form8881Pdf } from "../../../../pdf/forms/credits/business/f8881.ts";
@@ -38,7 +39,7 @@ const form3800 = {
   },
 };
 
-Deno.test("Form 8881 discovers its document before stable Form 3800 IDs exist", () => {
+test("Form 8881 discovers its document before stable Form 3800 IDs exist", () => {
   const pending = {
     f8881: source,
     f3800: form3800,
@@ -64,7 +65,7 @@ Deno.test("Form 8881 discovers its document before stable Form 3800 IDs exist", 
   );
 });
 
-Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts", () => {
+test("staged IRS8881 XML and paper fields agree with source Form 3800 parts", () => {
   const xml = form8881.build(source, {
     pending: {
       f8881: source,
@@ -125,7 +126,7 @@ Deno.test("staged IRS8881 XML and paper fields agree with source Form 3800 parts
   );
 });
 
-Deno.test("staged IRS8881 XML and paper reject a missing or altered Form 3800 claim", () => {
+test("staged IRS8881 XML and paper reject a missing or altered Form 3800 claim", () => {
   assertThrows(
     () =>
       form8881.build(source, {

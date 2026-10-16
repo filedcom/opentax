@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8990Pdf, PART_I_FIELD_MAP } from "./f8990.ts";
 
-Deno.test("2025 Form 8990 PDF Part I uses canonical 2025 AcroForm fields", () => {
+test("2025 Form 8990 PDF Part I uses canonical 2025 AcroForm fields", () => {
   const byKey = new Map(
     form8990Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
@@ -20,7 +21,7 @@ Deno.test("2025 Form 8990 PDF Part I uses canonical 2025 AcroForm fields", () =>
   assertEquals(form8990Pdf.pageIndices?.({}), [0, 1]);
 });
 
-Deno.test("2025 Form 8990 PDF keeps active calculated-looking payloads blocked", () => {
+test("2025 Form 8990 PDF keeps active calculated-looking payloads blocked", () => {
   assertThrows(
     () =>
       form8990Pdf.projectFields?.({

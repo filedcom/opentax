@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 /**
  * E2E scenarios — 10 common TY2025 returns.
  *
@@ -134,7 +135,7 @@ function w2Item(wages: number, withheld: number) {
 // 2025 Tax Table row $59,250–$59,300, Single: $7,955
 // Refund: $11,000 − $7,955 = $3,045
 
-Deno.test("Scenario 1: Single, W-2 $75K — refund $3,045", () => {
+test("Scenario 1: Single, W-2 $75K — refund $3,045", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(75_000, 11_000)],
@@ -167,7 +168,7 @@ Deno.test("Scenario 1: Single, W-2 $75K — refund $3,045", () => {
 // 2025 Tax Table row $88,500–$88,550, MFJ: $10,146
 // Refund: $13,000 − $10,146 = $2,854
 
-Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,854", () => {
+test("Scenario 2: MFJ, W-2 $120K — refund $2,854", () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [w2Item(120_000, 13_000)],
@@ -193,7 +194,7 @@ Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,854", () => {
 // Tax (22% bracket): $11,157 + ($118,500 − $96,950) × 0.22 = $15,898
 // Refund: $18,000 − $15,898 = $2,102
 
-Deno.test("Scenario 3: MFJ, dual W-2s $150K — refund $2,102", () => {
+test("Scenario 3: MFJ, dual W-2s $150K — refund $2,102", () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [
@@ -231,7 +232,7 @@ Deno.test("Scenario 3: MFJ, dual W-2s $150K — refund $2,102", () => {
 // 2025 Tax Table row $50,450–$50,500, Single: $6,019
 // Refund: $8,000 − $6,019 = $1,981
 
-Deno.test("Scenario 4: Single, W-2 + interest — refund $1,981", () => {
+test("Scenario 4: Single, W-2 + interest — refund $1,981", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(65_000, 8_000)],
@@ -272,7 +273,7 @@ Deno.test("Scenario 4: Single, W-2 + interest — refund $1,981", () => {
 //
 // Refund: $9,000 − $7,340 = $1,660
 
-Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,660", () => {
+test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,660", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(70_000, 9_000)],
@@ -315,7 +316,7 @@ Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,
 // Tax (12% bracket): $1,700 + ($28,375 − $17,000) × 0.12 = $3,065
 // Refund: $4,200 − $3,065 = $1,135
 
-Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
+test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
   const result = runReturn({
     general: hohGeneral(),
     w2: [w2Item(52_000, 4_200)],
@@ -349,7 +350,7 @@ Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
 // Total tax (income + SE): $5,387 + $11,304 = $16,691
 // Amount owed on whole-dollar return: $16,691
 
-Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691", () => {
+test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691", () => {
   const result = runReturn({
     general: singleGeneral(),
     schedule_c: [
@@ -405,7 +406,7 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
 //
 // Note: W-2 box3 SS wages capped at $176,100 (wage base).
 
-Deno.test("Scenario 8: MFJ, W-2 $200K — refund $5,102", () => {
+test("Scenario 8: MFJ, W-2 $200K — refund $5,102", () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [w2Item(200_000, 32_000)],
@@ -431,7 +432,7 @@ Deno.test("Scenario 8: MFJ, W-2 $200K — refund $5,102", () => {
 // 2025 Tax Table row $64,250–$64,300, MFS: $9,055
 // Refund: $10,400 − $9,055 = $1,345
 
-Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,345", () => {
+test("Scenario 9: MFS, W-2 $80K — refund $1,345", () => {
   const result = runReturn({
     general: mfsGeneral(),
     w2: [w2Item(80_000, 10_400)],
@@ -457,7 +458,7 @@ Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,345", () => {
 // Tax (24% bracket): $17,651 + ($124,250 − $103,350) × 0.24 = $22,667
 // Refund: $24,000 − $22,667 = $1,333
 
-Deno.test("Scenario 10: Single, W-2 $140K (24% bracket) — refund $1,333", () => {
+test("Scenario 10: Single, W-2 $140K (24% bracket) — refund $1,333", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(140_000, 24_000)],
@@ -487,7 +488,7 @@ Deno.test("Scenario 10: Single, W-2 $140K (24% bracket) — refund $1,333", () =
 //   = $17,651 + $63,650 × 0.24 = $17,651 + $15,276 = $32,927
 // Refund: $40,000 − $32,927 = $7,073
 
-Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $7,073", () => {
+test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $7,073", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(200_000, 40_000)],
@@ -552,7 +553,7 @@ Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $
 // Total tax = $29,094
 // Amount owed = $29,094 − $18,000 = $11,094
 
-Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $11,094", () => {
+test("Scenario 12: Single, AMT via PAB interest $100K — owes $11,094", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 18_000)],
@@ -620,7 +621,7 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $11,094", ()
 // Total tax = $0 (income tax $838 − CTC $838)
 // Refund = $12,264 − $0 = $12,264
 
-Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,225", () => {
+test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,225", () => {
   const result = runReturn({
     general: {
       ...hohGeneral(),
@@ -704,7 +705,7 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
-Deno.test("Schedule 8812 cannot claim a child absent from Form 1040 dependents", () => {
+test("Schedule 8812 cannot claim a child absent from Form 1040 dependents", () => {
   const result = runReturn({
     general: singleGeneral(),
     f8812: [{
@@ -753,7 +754,7 @@ Deno.test("Schedule 8812 cannot claim a child absent from Form 1040 dependents",
 //   Total payments = $8,000 + $654 = $8,654
 //   Refund = $8,654
 
-Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,654", () => {
+test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,654", () => {
   const result = runReturn({
     general: {
       ...mfjGeneral(),
@@ -876,7 +877,7 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,654", ()
 // Income limit: 20% × $207,903 = $41,580.60 — does not bind
 // QBI deduction: $27,880.60  |  Taxable income: $180,022.40
 
-Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the SE deduction", () => {
+test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the SE deduction", () => {
   const result = runReturn({
     general: mfjGeneral(),
     f1099int: [{ payer_name: "Test Bank", box1: 100_000 }],
@@ -932,7 +933,7 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
 // Income limit: 20% × ($161,435 − $100,000) = $12,287 — binds
 // QBI deduction: $12,287  |  Taxable income: $149,148
 
-Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit binds net of cap gain", () => {
+test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit binds net of cap gain", () => {
   const result = runReturn({
     general: mfjGeneral(),
     f1099div: [
@@ -981,7 +982,7 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
   );
 });
 
-Deno.test("age derived from birth date limits Form 8995 deduction across the return", () => {
+test("age derived from birth date limits Form 8995 deduction across the return", () => {
   const result = runReturn({
     general: {
       ...singleGeneral(),

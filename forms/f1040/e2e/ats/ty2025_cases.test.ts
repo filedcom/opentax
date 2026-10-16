@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertMatch } from "@std/assert";
 import { fieldsOf } from "../../../../core/test-utils/output.ts";
 import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
@@ -47,7 +48,7 @@ const EXPECTED_IDS = [
   "4868-07",
 ];
 
-Deno.test("TY2025 ATS inventory includes every IRS-listed scenario once", () => {
+test("TY2025 ATS inventory includes every IRS-listed scenario once", () => {
   assertEquals(TY2025_ATS_CASES.map((testCase) => testCase.id), EXPECTED_IDS);
   assertEquals(
     new Set(TY2025_ATS_CASES.map((testCase) => testCase.id)).size,
@@ -63,7 +64,7 @@ Deno.test("TY2025 ATS inventory includes every IRS-listed scenario once", () => 
   }
 });
 
-Deno.test("TY2025 ATS source-fact capture is not mistaken for transmission readiness", () => {
+test("TY2025 ATS source-fact capture is not mistaken for transmission readiness", () => {
   assertEquals(
     TY2025_ATS_CASES.filter((testCase) => testCase.capture === "partial-facts")
       .map((testCase) => testCase.id),
@@ -92,7 +93,7 @@ Deno.test("TY2025 ATS source-fact capture is not mistaken for transmission readi
   );
 });
 
-Deno.test("1040-NR Scenario 4 retains clean-vehicle and identity source entries", () => {
+test("1040-NR Scenario 4 retains clean-vehicle and identity source entries", () => {
   const facts = SCENARIO_1040_NR_04_FACTS;
   assertEquals(facts.taxpayer.ssn, "123005555");
   assertEquals(facts.taxpayer.spouseDeathDatePrinted, "2024-02-18");
@@ -112,7 +113,7 @@ Deno.test("1040-NR Scenario 4 retains clean-vehicle and identity source entries"
   assertEquals(facts.binaryAttachmentNames.length, 2);
 });
 
-Deno.test("1040-NR Scenario 3 retains wages, donation attachments, and refund split", () => {
+test("1040-NR Scenario 3 retains wages, donation attachments, and refund split", () => {
   const facts = SCENARIO_1040_NR_03_FACTS;
   assertEquals(facts.taxpayer.ssn, "123004444");
   assertEquals(facts.w2.box1Wages, 72_102);
@@ -131,7 +132,7 @@ Deno.test("1040-NR Scenario 3 retains wages, donation attachments, and refund sp
   assertEquals(facts.refundAllocation.remainderToChecking, true);
 });
 
-Deno.test("1040-NR Scenario 3 keeps printed Form 8283 vehicle value distinct from basis", () => {
+test("1040-NR Scenario 3 keeps printed Form 8283 vehicle value distinct from basis", () => {
   const vehicle = SCENARIO_1040_NR_03_FACTS.form8283;
   assertEquals(vehicle.sectionBVehicleChecked, true);
   assertEquals(vehicle.rowA.description, "2005 Mercedes Benz");
@@ -141,7 +142,7 @@ Deno.test("1040-NR Scenario 3 keeps printed Form 8283 vehicle value distinct fro
   assertEquals(vehicle.rowA.claimedDeduction, null);
 });
 
-Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () => {
+test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () => {
   const facts = SCENARIO_1040_NR_02_FACTS;
   assertEquals(facts.taxpayer.ssn, "123003333");
   assertEquals(facts.w2.box1Wages, 25_988);
@@ -154,7 +155,7 @@ Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () 
   assertEquals(facts.schedule1.printedLine5SupplementalIncome, 500);
 });
 
-Deno.test("1040-NR Scenario 2 traces printed partnership passive income to Schedule 1", () => {
+test("1040-NR Scenario 2 traces printed partnership passive income to Schedule 1", () => {
   const facts = SCENARIO_1040_NR_02_FACTS;
   assertEquals(facts.scheduleE.partnershipRowA, {
     name: "Sarah's Vegan Bakery",
@@ -171,7 +172,7 @@ Deno.test("1040-NR Scenario 2 traces printed partnership passive income to Sched
   assertEquals(facts.scheduleE.scheduleK1IncludedInPacket, false);
 });
 
-Deno.test("1040-NR Scenario 1 keeps conflicting IRA values separate", () => {
+test("1040-NR Scenario 1 keeps conflicting IRA values separate", () => {
   const facts = SCENARIO_1040_NR_01_FACTS;
   assertEquals(facts.taxpayer.ssn, "123001111");
   assertEquals(facts.ira.coverSheetMinimumDistribution, 10_000);
@@ -186,7 +187,7 @@ Deno.test("1040-NR Scenario 1 keeps conflicting IRA values separate", () => {
   assertEquals(facts.administrative.form4361OnFile, true);
 });
 
-Deno.test("1040-NR Scenario 12 retains partnership transfer and printed deduction", () => {
+test("1040-NR Scenario 12 retains partnership transfer and printed deduction", () => {
   const facts = SCENARIO_1040_NR_12_FACTS;
   assertEquals(facts.taxpayer.ssn, "123001112");
   assertEquals(facts.taxpayer.address.country, "AUSTRALIA");
@@ -210,7 +211,7 @@ Deno.test("1040-NR Scenario 12 retains partnership transfer and printed deductio
   );
 });
 
-Deno.test("1040-SS Scenario 6 preserves Puerto Rico wages, children, and business entries", () => {
+test("1040-SS Scenario 6 preserves Puerto Rico wages, children, and business entries", () => {
   const facts = SCENARIO_1040_SS_06_FACTS;
   assertEquals(facts.taxpayer.ssn, "400001041");
   assertEquals(facts.taxpayer.dateOfBirth, "1987-02-07");
@@ -240,7 +241,7 @@ Deno.test("1040-SS Scenario 6 preserves Puerto Rico wages, children, and busines
   );
 });
 
-Deno.test("1040-SS Scenario 6 W-2PR withholding supplies Part II line 13a only", () => {
+test("1040-SS Scenario 6 W-2PR withholding supplies Part II line 13a only", () => {
   const facts = SCENARIO_1040_SS_06_FACTS;
   const line13aWithheldSocialSecurityAndMedicare =
     facts.form499R2W2PR.socialSecurityTaxWithheld +
@@ -253,7 +254,7 @@ Deno.test("1040-SS Scenario 6 W-2PR withholding supplies Part II line 13a only",
   assertEquals("printedNetProfit" in facts.scheduleC, false);
 });
 
-Deno.test("4868 Scenario 7 keeps payment instructions distinct from blank form lines", () => {
+test("4868 Scenario 7 keeps payment instructions distinct from blank form lines", () => {
   const facts = SCENARIO_4868_07_FACTS;
   const form = facts.printedForm4868;
   assertEquals(facts.taxpayer.ssn, "400001042");
@@ -277,7 +278,7 @@ Deno.test("4868 Scenario 7 keeps payment instructions distinct from blank form l
   );
 });
 
-Deno.test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
+test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
   const facts = SCENARIO_1040_01_FACTS;
   assertMatch(facts.taxpayer.ssn, /^\d{3}00\d{4}$/);
   assertEquals(facts.w2.reduce((sum, item) => sum + item.box1Wages, 0), 42_470);
@@ -325,7 +326,7 @@ Deno.test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
   );
 });
 
-Deno.test("1040 Scenario 1 W-2s route sourced wages and withholding to 1040", () => {
+test("1040 Scenario 1 W-2s route sourced wages and withholding to 1040", () => {
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -343,7 +344,7 @@ Deno.test("1040 Scenario 1 W-2s route sourced wages and withholding to 1040", ()
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 2_713);
 });
 
-Deno.test("1040 Scenario 2 source entries remain distinct from computed totals", () => {
+test("1040 Scenario 2 source entries remain distinct from computed totals", () => {
   const facts = SCENARIO_1040_02_FACTS;
   assertEquals(facts.printedFilingStatus.marriedFilingJointlyChecked, true);
   assertEquals(facts.printedFilingStatus.qualifyingSurvivingSpouseChecked, false);
@@ -370,7 +371,7 @@ Deno.test("1040 Scenario 2 source entries remain distinct from computed totals",
   assertEquals(facts.dependent.fullTimeHighSchoolStudent, true);
 });
 
-Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", () => {
+test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", () => {
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -402,7 +403,7 @@ Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", ()
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 1_164);
 });
 
-Deno.test("1040 Scenario 3 1099-R routes sourced pension and withholding amounts", () => {
+test("1040 Scenario 3 1099-R routes sourced pension and withholding amounts", () => {
   const form = SCENARIO_1040_03_FACTS.form1099R;
   const result = f1099r.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -424,7 +425,7 @@ Deno.test("1040 Scenario 3 1099-R routes sourced pension and withholding amounts
   assertEquals(fields?.line25b_withheld_1099, 3_405);
 });
 
-Deno.test("1040 Scenario 4 preserves the sourced credits and vehicle details", () => {
+test("1040 Scenario 4 preserves the sourced credits and vehicle details", () => {
   const facts = SCENARIO_1040_04_FACTS;
   assertEquals(facts.taxpayer.ssn, "400001037");
   assertEquals(facts.w2.box1Wages, 36_014);
@@ -450,7 +451,7 @@ Deno.test("1040 Scenario 4 preserves the sourced credits and vehicle details", (
   );
 });
 
-Deno.test("1040 Scenario 4 W-2 routes sourced wages and withholding to 1040", () => {
+test("1040 Scenario 4 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_04_FACTS.w2;
   assertEquals(form.employeeSsn, SCENARIO_1040_04_FACTS.taxpayer.ssn);
   const result = w2.compute(
@@ -471,7 +472,7 @@ Deno.test("1040 Scenario 4 W-2 routes sourced wages and withholding to 1040", ()
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 4_581);
 });
 
-Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inputs", () => {
+test("1040 Scenario 5 preserves dependent, care, education, and opt-out inputs", () => {
   const facts = SCENARIO_1040_05_FACTS;
   assertEquals(facts.taxpayer.ssn, "400001039");
   assertEquals(facts.taxpayer.blind, true);
@@ -517,7 +518,7 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
   assertEquals(facts.optOutOfAdditionalChildTaxCredit, true);
 });
 
-Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-credit amounts", () => {
+test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-credit amounts", () => {
   const facts = SCENARIO_1040_05_FACTS;
   assertEquals(facts.form2441.providers, [
     {
@@ -575,7 +576,7 @@ Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-cred
   assertEquals(facts.form2441.printedCredit, null);
 });
 
-Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
+test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_05_FACTS.w2;
   assertEquals(form.employeeSsn, SCENARIO_1040_05_FACTS.taxpayer.ssn);
   const result = w2.compute(
@@ -596,7 +597,7 @@ Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", ()
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 1_754);
 });
 
-Deno.test("1040 Scenario 12 printed return totals stay distinct from current tax rules", () => {
+test("1040 Scenario 12 printed return totals stay distinct from current tax rules", () => {
   const facts = SCENARIO_1040_12_FACTS;
   const printed = facts.printedForm1040;
   assertEquals(facts.w2.box1Wages, 100_836);
@@ -642,7 +643,7 @@ Deno.test("1040 Scenario 12 printed return totals stay distinct from current tax
   );
 });
 
-Deno.test("1040 Scenario 12 Schedule C computes its printed net profit", () => {
+test("1040 Scenario 12 Schedule C computes its printed net profit", () => {
   const form = SCENARIO_1040_12_FACTS.scheduleC;
   const result = scheduleC.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -668,7 +669,7 @@ Deno.test("1040 Scenario 12 Schedule C computes its printed net profit", () => {
   assertEquals(fieldsOf(result.outputs, schedule1)?.line3_schedule_c, 24_328);
 });
 
-Deno.test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", () => {
+test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_12_FACTS.w2;
   assertEquals(form.employeeSsn, SCENARIO_1040_12_FACTS.taxpayer.ssn);
   const result = w2.compute(
@@ -689,7 +690,7 @@ Deno.test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", (
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 14_444);
 });
 
-Deno.test("1040 Scenario 12 Schedule SE adds filed whole-dollar tax components", () => {
+test("1040 Scenario 12 Schedule SE adds filed whole-dollar tax components", () => {
   const facts = SCENARIO_1040_12_FACTS;
   const result = schedule_se.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -722,7 +723,7 @@ Deno.test("1040 Scenario 12 Schedule SE adds filed whole-dollar tax components",
   );
 });
 
-Deno.test("1040 Scenario 13 preserves the charger credit limit and printed return", () => {
+test("1040 Scenario 13 preserves the charger credit limit and printed return", () => {
   const facts = SCENARIO_1040_13_FACTS;
   const printed = facts.printedForm1040;
   assertEquals(facts.taxpayer.ssn, "400001313");
@@ -765,7 +766,7 @@ Deno.test("1040 Scenario 13 preserves the charger credit limit and printed retur
   assertEquals(STANDARD_DEDUCTION_BASE_2025[FilingStatus.MFJ], 31_500);
 });
 
-Deno.test("1040 Scenario 13 W-2 routes sourced wages and withholding to 1040", () => {
+test("1040 Scenario 13 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_13_FACTS.w2;
   const result = w2.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -784,7 +785,7 @@ Deno.test("1040 Scenario 13 W-2 routes sourced wages and withholding to 1040", (
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 609);
 });
 
-Deno.test("1040 Scenario 8 preserves each 1099-R's code and taxable amount", () => {
+test("1040 Scenario 8 preserves each 1099-R's code and taxable amount", () => {
   const facts = SCENARIO_1040_08_FACTS;
   assertMatch(facts.taxpayer.ssn, /^\d{3}00\d{4}$/);
   assertEquals(
@@ -817,7 +818,7 @@ Deno.test("1040 Scenario 8 preserves each 1099-R's code and taxable amount", () 
   assertEquals(facts.taxpayer.address.zip, "89101");
 });
 
-Deno.test("1040 Scenario 8 code-G 1099-R retains its stated taxable amount", () => {
+test("1040 Scenario 8 code-G 1099-R retains its stated taxable amount", () => {
   const form = SCENARIO_1040_08_FACTS.form1099R[1];
   const result = f1099r.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -838,7 +839,7 @@ Deno.test("1040 Scenario 8 code-G 1099-R retains its stated taxable amount", () 
   assertEquals(fields?.line25b_withheld_1099, 2_555);
 });
 
-Deno.test("1040 Scenario 8 capital gain distribution does not require Schedule D", () => {
+test("1040 Scenario 8 capital gain distribution does not require Schedule D", () => {
   const result = schedule_d.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -853,7 +854,7 @@ Deno.test("1040 Scenario 8 capital gain distribution does not require Schedule D
   );
 });
 
-Deno.test("capital gain distribution with another capital gain still uses Schedule D", () => {
+test("capital gain distribution with another capital gain still uses Schedule D", () => {
   const result = schedule_d.compute(
     { taxYear: 2025, formType: "f1040" },
     { line13_cap_gain_distrib: 7_500, line_4_other_st: 100 },

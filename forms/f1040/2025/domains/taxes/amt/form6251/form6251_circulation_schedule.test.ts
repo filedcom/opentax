@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -15,7 +16,7 @@ for (
     [2024, true, 0, 93750],
   ] as const
 ) {
-  Deno.test(`circulation cost schedule reaches final return: ${year}/${elected}`, async () => {
+  test(`circulation cost schedule reaches final return: ${year}/${elected}`, async () => {
     const result = f1040_2025.executeReturn(
       circulationScheduleInputs(year, elected),
     );

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -87,7 +88,7 @@ const pending = {
   f1040: { line11_agi: 75_300, line17_additional_taxes: 1_596 },
 };
 
-Deno.test("Form 1095-A calculation combines alternating same-state policy months once", () => {
+test("Form 1095-A calculation combines alternating same-state policy months once", () => {
   const result = f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
     f1095as: policies,
   });
@@ -97,7 +98,7 @@ Deno.test("Form 1095-A calculation combines alternating same-state policy months
   assertEquals(output?.fields.monthly_aptcs, Array(12).fill(200));
 });
 
-Deno.test("Form 8962 native and PDF reconcile a full-year A-B-A policy sequence", () => {
+test("Form 8962 native and PDF reconcile a full-year A-B-A policy sequence", () => {
   const xml = form8962.build(fields, { filer, pending });
   assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 12);
   assertStringIncludes(xml, "<TotalAdvancedPTCAmt>2400</TotalAdvancedPTCAmt>");
@@ -109,7 +110,7 @@ Deno.test("Form 8962 native and PDF reconcile a full-year A-B-A policy sequence"
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 same-state A-B-A policies reconcile one evidenced Marketplace SLCSP correction", () => {
+test("Form 8962 same-state A-B-A policies reconcile one evidenced Marketplace SLCSP correction", () => {
   const correction = {
     month: 7,
     basis: "marketplace_error" as const,
@@ -210,7 +211,7 @@ Deno.test("Form 8962 same-state A-B-A policies reconcile one evidenced Marketpla
   );
 });
 
-Deno.test("Form 8962 same-state A-B-A route reconciles two evidenced SLCSP corrections", () => {
+test("Form 8962 same-state A-B-A route reconciles two evidenced SLCSP corrections", () => {
   const corrections = [
     {
       month: 7,
@@ -328,7 +329,7 @@ Deno.test("Form 8962 same-state A-B-A route reconciles two evidenced SLCSP corre
   );
 });
 
-Deno.test("Form 8962 corrects every covered month of one alternating policy and rejects duplicate or missing evidence", () => {
+test("Form 8962 corrects every covered month of one alternating policy and rejects duplicate or missing evidence", () => {
   const corrections = [5, 6, 7, 8].map((month) => ({
     month,
     basis: "marketplace_error" as const,
@@ -459,7 +460,7 @@ Deno.test("Form 8962 corrects every covered month of one alternating policy and 
   );
 });
 
-Deno.test("Form 8962 reconciles independent SLCSP determinations on both alternating policies", () => {
+test("Form 8962 reconciles independent SLCSP determinations on both alternating policies", () => {
   const firstCorrection = {
     month: 1,
     basis: "marketplace_error" as const,
@@ -589,7 +590,7 @@ Deno.test("Form 8962 reconciles independent SLCSP determinations on both alterna
   );
 });
 
-Deno.test("Form 8962 one monthly policy reconciles one evidenced Marketplace SLCSP correction", () => {
+test("Form 8962 one monthly policy reconciles one evidenced Marketplace SLCSP correction", () => {
   const correction = {
     month: 7,
     basis: "marketplace_error" as const,
@@ -694,7 +695,7 @@ Deno.test("Form 8962 one monthly policy reconciles one evidenced Marketplace SLC
   );
 });
 
-Deno.test("Form 8962 reconciles four sequential same-state policies for one filer", () => {
+test("Form 8962 reconciles four sequential same-state policies for one filer", () => {
   const sequential = [0, 1, 2, 3].map((owner) =>
     policy(
       `TX-${owner + 1}`,
@@ -749,7 +750,7 @@ Deno.test("Form 8962 reconciles four sequential same-state policies for one file
   );
 });
 
-Deno.test("Form 8962 reconciles twelve one-month policies with separate Marketplace SLCSP determinations", () => {
+test("Form 8962 reconciles twelve one-month policies with separate Marketplace SLCSP determinations", () => {
   const sequential = months.map((_, owner) => ({
     ...policy(
       `TX-CORRECTED-${owner + 1}`,
@@ -842,7 +843,7 @@ Deno.test("Form 8962 reconciles twelve one-month policies with separate Marketpl
   );
 });
 
-Deno.test("Form 8962 two sequential policies at 200% FPL apply the single-filer repayment cap", () => {
+test("Form 8962 two sequential policies at 200% FPL apply the single-filer repayment cap", () => {
   const lowerIncomePolicies = [0, 1].map((owner) => {
     const active = months.map((_, index) => Math.floor(index / 6) === owner);
     return {
@@ -952,7 +953,7 @@ Deno.test("Form 8962 two sequential policies at 200% FPL apply the single-filer 
   );
 });
 
-Deno.test("Form 8962 alternating policies reject month, identity, state, and final-return drift", () => {
+test("Form 8962 alternating policies reject month, identity, state, and final-return drift", () => {
   const overlap = {
     ...policies[1],
     monthly_premiums: policies[1].monthly_premiums.map((value, index) =>
@@ -1041,7 +1042,7 @@ Deno.test("Form 8962 alternating policies reject month, identity, state, and fin
   );
 });
 
-Deno.test("Form 8962 partial-year A-B-A policies leave a sourced gap month blank", () => {
+test("Form 8962 partial-year A-B-A policies leave a sourced gap month blank", () => {
   const second = {
     ...policies[1],
     monthly_premiums: policies[1].monthly_premiums.map((value, index) =>

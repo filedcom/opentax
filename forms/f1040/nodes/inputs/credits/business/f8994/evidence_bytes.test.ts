@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   form8994DirectEmployer,
@@ -9,7 +10,7 @@ const source = form8994DirectEmployer;
 const evidence = source.reviewed_evidence;
 const attachments = form8994EvidenceFixtureDocuments;
 
-Deno.test("Form 8994 source carries one exact reviewed policy and payroll byte contract", async () => {
+test("Form 8994 source carries one exact reviewed policy and payroll byte contract", async () => {
   const reviewed = await reconcileForm8994EvidenceBytes(source, attachments);
   assertEquals(reviewed.source.employees.length, 2);
   assertEquals(reviewed.evidence.employee_records.length, 2);
@@ -22,7 +23,7 @@ Deno.test("Form 8994 source carries one exact reviewed policy and payroll byte c
   ]);
 });
 
-Deno.test("Form 8994 evidence rejects policy, employee, wage and source tampering", async () => {
+test("Form 8994 evidence rejects policy, employee, wage and source tampering", async () => {
   const first = evidence.employee_records[0];
   for (
     const changedEvidence of [
@@ -107,7 +108,7 @@ Deno.test("Form 8994 evidence rejects policy, employee, wage and source tamperin
   }
 });
 
-Deno.test("Form 8994 export evidence rejects changed, missing or duplicated validated attachments", async () => {
+test("Form 8994 export evidence rejects changed, missing or duplicated validated attachments", async () => {
   await assertRejects(
     () =>
       reconcileForm8994EvidenceBytes(

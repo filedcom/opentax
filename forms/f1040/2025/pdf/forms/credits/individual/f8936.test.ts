@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { form8936Pdf } from "./f8936.ts";
@@ -33,7 +34,7 @@ const pending = {
   schedule3: { line6f_total: 5_000, line6m_total: 0 },
 };
 
-Deno.test("Form 8936 PDF: printed lines distinguish tentative and allowed credit", () => {
+test("Form 8936 PDF: printed lines distinguish tentative and allowed credit", () => {
   const fields = form8936Pdf.projectFields!(source, pending);
   assertEquals(fields.line1a, 50_000);
   assertEquals(fields.line5, "S");
@@ -49,7 +50,7 @@ Deno.test("Form 8936 PDF: printed lines distinguish tentative and allowed credit
   );
 });
 
-Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II and III facts", () => {
+test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II and III facts", () => {
   const projected = form8936ScheduleAPdf.projectFields!(source, pending);
   const instances = form8936ScheduleAPdf.instances!(projected);
   assertEquals(instances.length, 1);
@@ -63,7 +64,7 @@ Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II 
   assertEquals(form8936ScheduleAPdf.includeWhen?.(instances[0], {}), true);
 });
 
-Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II fields", () => {
+test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II fields", () => {
   const business = {
     ...source,
     f8936s: [{
@@ -84,7 +85,7 @@ Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II 
   assertEquals(instances[0].new_personal_credit, undefined);
 });
 
-Deno.test("Form 8936 PDF: parent Part II business fields match Form 3800 source", () => {
+test("Form 8936 PDF: parent Part II business fields match Form 3800 source", () => {
   const business = {
     ...source,
     f8936s: [{
@@ -114,7 +115,7 @@ Deno.test("Form 8936 PDF: parent Part II business fields match Form 3800 source"
   assertEquals(fields.line9, undefined);
 });
 
-Deno.test("Form 8936 PDF: commercial Part V fields match Form 3800 line 1aa", () => {
+test("Form 8936 PDF: commercial Part V fields match Form 3800 line 1aa", () => {
   const commercial = {
     ...vehicle,
     credit_kind: "qualified_commercial_clean_vehicle",
@@ -171,7 +172,7 @@ Deno.test("Form 8936 PDF: commercial Part V fields match Form 3800 line 1aa", ()
   assertEquals(instances[0].commercial_credit, 6_000);
 });
 
-Deno.test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned Part IV", () => {
+test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned Part IV", () => {
   const used = {
     ...vehicle,
     vin: "5YJSA1E26HF000337",
@@ -198,7 +199,7 @@ Deno.test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned
   assertEquals(instances[1].used_personal_credit, 4_000);
 });
 
-Deno.test("Form 8936 PDF: ineligible dealer transfer prints MAGI and Schedule A repayment facts, not a claimed credit", () => {
+test("Form 8936 PDF: ineligible dealer transfer prints MAGI and Schedule A repayment facts, not a claimed credit", () => {
   const transfer = {
     ...source,
     current_year_magi: { adjusted_gross_income: 200_000 },

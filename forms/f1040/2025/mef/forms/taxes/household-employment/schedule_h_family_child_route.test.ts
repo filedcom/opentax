@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   inputSchema,
@@ -54,7 +55,7 @@ const source = {
   },
 } as const;
 
-Deno.test("Schedule H sourced child withholding joins Schedule 2, native, and PDF without FICA or FUTA", () => {
+test("Schedule H sourced child withholding joins Schedule 2, native, and PDF without FICA or FUTA", () => {
   const filedSource = inputSchema.parse(source);
   const result = schedule_h.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -94,7 +95,7 @@ Deno.test("Schedule H sourced child withholding joins Schedule 2, native, and PD
   assertEquals(scheduleHPdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Schedule H child source and export reject age, W-2, owner, and return tampering", () => {
+test("Schedule H child source and export reject age, W-2, owner, and return tampering", () => {
   const filedSource = inputSchema.parse(source);
   const pending = {
     schedule_h: filedSource,

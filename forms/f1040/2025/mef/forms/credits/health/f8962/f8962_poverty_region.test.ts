@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../../nodes/types.ts";
@@ -87,7 +88,7 @@ for (
   };
   const context = { filer, pending };
 
-  Deno.test(`Form 8962 ${state} monthly policy uses its 2025 poverty table in MeF and PDF`, () => {
+  test(`Form 8962 ${state} monthly policy uses its 2025 poverty table in MeF and PDF`, () => {
     const xml = form8962.build(fields, context);
     assertStringIncludes(
       xml,
@@ -102,7 +103,7 @@ for (
     assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
   });
 
-  Deno.test(`Form 8962 ${state} full-year annual line 11 reconciles its poverty table`, () => {
+  test(`Form 8962 ${state} full-year annual line 11 reconciles its poverty table`, () => {
     const annualFields = {
       ...fields,
       monthly_ptc_rows: undefined,
@@ -134,7 +135,7 @@ for (
     );
   });
 
-  Deno.test(`Form 8962 ${state} rejects mismatched table, amount, residence, and policy state`, () => {
+  test(`Form 8962 ${state} rejects mismatched table, amount, residence, and policy state`, () => {
     assertThrows(
       () => form8962.build({ ...fields, fpl_region: "contiguous" }, context),
       Error,

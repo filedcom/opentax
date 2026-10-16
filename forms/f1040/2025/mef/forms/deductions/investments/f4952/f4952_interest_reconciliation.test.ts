@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099int } from "../../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { f1099oid } from "../../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
@@ -38,7 +39,7 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 sources one 1099-INT box 1 payer through MeF and PDF", () => {
+test("Form 4952 sources one 1099-INT box 1 payer through MeF and PDF", () => {
   const source = f1099int.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ints: [interest],
   });
@@ -70,7 +71,7 @@ Deno.test("Form 4952 sources one 1099-INT box 1 payer through MeF and PDF", () =
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
-Deno.test("Form 4952 sources taxable 1099-INT box 3 interest", () => {
+test("Form 4952 sources taxable 1099-INT box 3 interest", () => {
   const treasury = {
     payer_name: "Treasury Interest Payer",
     box3: 500,
@@ -123,7 +124,7 @@ Deno.test("Form 4952 sources taxable 1099-INT box 3 interest", () => {
   );
 });
 
-Deno.test("Form 4952 reconciles mixed box 1, box 3, and OID payers", () => {
+test("Form 4952 reconciles mixed box 1, box 3, and OID payers", () => {
   const treasury = {
     payer_name: "Treasury Interest Payer",
     box3: 250,
@@ -175,7 +176,7 @@ Deno.test("Form 4952 reconciles mixed box 1, box 3, and OID payers", () => {
   );
 });
 
-Deno.test("Form 4952 matches one 1099-INT payer containing both boxes 1 and 3", () => {
+test("Form 4952 matches one 1099-INT payer containing both boxes 1 and 3", () => {
   const payer = {
     payer_name: "Investment Bond Payer",
     box1: 200,
@@ -203,7 +204,7 @@ Deno.test("Form 4952 matches one 1099-INT payer containing both boxes 1 and 3", 
   assertEquals(form4952Pdf.projectFields?.(fields, payerPending), fields);
 });
 
-Deno.test("Form 4952 sources plain taxable 1099-OID box 1 through MeF and PDF", () => {
+test("Form 4952 sources plain taxable 1099-OID box 1 through MeF and PDF", () => {
   const oid = {
     payer_name: "Investment Bond Issuer",
     box1_oid: 500,
@@ -233,7 +234,7 @@ Deno.test("Form 4952 sources plain taxable 1099-OID box 1 through MeF and PDF", 
   assertEquals(form4952Pdf.projectFields?.(fields, oidPending), fields);
 });
 
-Deno.test("Form 4952 OID route rejects adjusted and tax-exempt sources", () => {
+test("Form 4952 OID route rejects adjusted and tax-exempt sources", () => {
   const oid = {
     payer_name: "Investment Bond Issuer",
     box1_oid: 500,
@@ -268,7 +269,7 @@ Deno.test("Form 4952 OID route rejects adjusted and tax-exempt sources", () => {
   }
 });
 
-Deno.test("Form 4952 combines plain 1099-INT and 1099-OID investment interest", () => {
+test("Form 4952 combines plain 1099-INT and 1099-OID investment interest", () => {
   const oid = {
     payer_name: "Investment Bond Issuer",
     box1_oid: 250,
@@ -332,7 +333,7 @@ Deno.test("Form 4952 combines plain 1099-INT and 1099-OID investment interest", 
   );
 });
 
-Deno.test("Form 4952 matches every plain 1099-OID payer before export", () => {
+test("Form 4952 matches every plain 1099-OID payer before export", () => {
   const oidPayers = [
     {
       payer_name: "First Bond Issuer",
@@ -369,7 +370,7 @@ Deno.test("Form 4952 matches every plain 1099-OID payer before export", () => {
   );
 });
 
-Deno.test("Form 4952 interest route rejects foreign-tax and adjusted-interest branches", () => {
+test("Form 4952 interest route rejects foreign-tax and adjusted-interest branches", () => {
   assertStringIncludes(
     form4952.build(fields, {
       pending: {
@@ -416,7 +417,7 @@ Deno.test("Form 4952 interest route rejects foreign-tax and adjusted-interest br
   );
 });
 
-Deno.test("Form 4952 reconciles multiple ordinary investment-interest payers", () => {
+test("Form 4952 reconciles multiple ordinary investment-interest payers", () => {
   const sources = [interest, {
     ...interest,
     payer_name: "Second Bank",
@@ -460,7 +461,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-interest payers", (
   );
 });
 
-Deno.test("Form 4952 interest route rejects absent, conflicting, and mixed source facts", () => {
+test("Form 4952 interest route rejects absent, conflicting, and mixed source facts", () => {
   assertThrows(
     () => form4952.build(fields),
     Error,

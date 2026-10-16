@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../mef/types.ts";
 import { scheduleBPdf } from "./schedule_b.ts";
 
-Deno.test("Schedule B PDF maps both answers for every Part III question", () => {
+test("Schedule B PDF maps both answers for every Part III question", () => {
   const find = (key: string, value: string) =>
     scheduleBPdf.fields.find((entry) =>
       entry.kind === "checkboxWhen" && entry.domainKey === key &&
@@ -35,7 +36,7 @@ Deno.test("Schedule B PDF maps both answers for every Part III question", () => 
   );
 });
 
-Deno.test("Schedule B PDF includes a Part III-only filing", () => {
+test("Schedule B PDF includes a Part III-only filing", () => {
   assertEquals(
     scheduleBPdf.includeWhen?.({ foreign_accounts_question: true }),
     true,
@@ -50,7 +51,7 @@ Deno.test("Schedule B PDF includes a Part III-only filing", () => {
   );
 });
 
-Deno.test("Schedule B PDF includes seller-financed and adjustment filings below $1,500", () => {
+test("Schedule B PDF includes seller-financed and adjustment filings below $1,500", () => {
   assertEquals(
     scheduleBPdf.includeWhen?.({
       seller_financed_rows: [{ buyer: {}, amount: 900 }],
@@ -61,7 +62,7 @@ Deno.test("Schedule B PDF includes seller-financed and adjustment filings below 
   assertEquals(scheduleBPdf.includeWhen?.({ dividend_nominee: 100 }), true);
 });
 
-Deno.test("Schedule B PDF uses separate strict $1,500 thresholds", () => {
+test("Schedule B PDF uses separate strict $1,500 thresholds", () => {
   assertEquals(
     scheduleBPdf.includeWhen?.({
       print_line4_total: 800,
@@ -76,7 +77,7 @@ Deno.test("Schedule B PDF uses separate strict $1,500 thresholds", () => {
   assertEquals(scheduleBPdf.includeWhen?.({ ee_bond_exclusion: 500 }), true);
 });
 
-Deno.test("Schedule B PDF prints two countries or appends a longer list", async () => {
+test("Schedule B PDF prints two countries or appends a longer list", async () => {
   const short = scheduleBPdf.projectFields?.({
     foreign_country_names: ["Canada", "France"],
   }, {});

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildPending } from "../../../execution/pending.ts";
 import { scheduleB } from "./schedule_b.ts";
@@ -14,7 +17,7 @@ function assertNotIncludes(actual: string, expected: string) {
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: empty object returns empty string", () => {
+test("schedule_b: empty object returns empty string", () => {
   assertEquals(scheduleB.build({}), "");
 });
 
@@ -22,7 +25,7 @@ Deno.test("schedule_b: empty object returns empty string", () => {
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: all unknown keys returns empty string", () => {
+test("schedule_b: all unknown keys returns empty string", () => {
   assertEquals(
     scheduleB.build({ junk: 999, foo: "bar", payer_name: "Bank" }),
     "",
@@ -33,7 +36,7 @@ Deno.test("schedule_b: all unknown keys returns empty string", () => {
 // Section 3: Below-threshold input
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: zero taxable interest does not file the form", () => {
+test("schedule_b: zero taxable interest does not file the form", () => {
   const result = scheduleB.build({ taxable_interest_net: 0 });
   assertEquals(result, "");
 });
@@ -42,7 +45,7 @@ Deno.test("schedule_b: zero taxable interest does not file the form", () => {
 // Section 4: Per-field mapping (one test per field, 3 fields)
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt", () => {
+test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt", () => {
   const result = scheduleB.build({
     taxable_interest_net: 3000,
     foreign_accounts_question: false,
@@ -54,7 +57,7 @@ Deno.test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt",
   );
 });
 
-Deno.test("schedule_b: gross interest and adjustment lines reconcile to line 2", () => {
+test("schedule_b: gross interest and adjustment lines reconcile to line 2", () => {
   const xml = scheduleB.build({
     interest_rows: [{ payerName: "Bond Bank", amount: 2_000 }],
     interest_line1_subtotal: 2_000,
@@ -102,7 +105,7 @@ Deno.test("schedule_b: gross interest and adjustment lines reconcile to line 2",
   );
 });
 
-Deno.test("schedule_b: seller-financed buyer row precedes ordinary interest", () => {
+test("schedule_b: seller-financed buyer row precedes ordinary interest", () => {
   const seller = {
     buyer: {
       address_type: "us" as const,
@@ -146,7 +149,7 @@ Deno.test("schedule_b: seller-financed buyer row precedes ordinary interest", ()
   );
 });
 
-Deno.test("schedule_b: foreign seller-financed buyer uses the foreign address choice", () => {
+test("schedule_b: foreign seller-financed buyer uses the foreign address choice", () => {
   const xml = scheduleB.build({
     seller_financed_rows: [{
       buyer: {
@@ -174,7 +177,7 @@ Deno.test("schedule_b: foreign seller-financed buyer uses the foreign address ch
   assertNotIncludes(xml, "<SellerFinancedAddressUS>");
 });
 
-Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {
+test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {
   assertThrows(() => scheduleB.build({ taxable_interest_net: 1_501 }));
   assertThrows(() =>
     scheduleB.build({
@@ -184,7 +187,7 @@ Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions
   );
 });
 
-Deno.test("schedule_b: ee_bond_exclusion maps to ExcludableSavingsBondIntAmt", () => {
+test("schedule_b: ee_bond_exclusion maps to ExcludableSavingsBondIntAmt", () => {
   const result = scheduleB.build({
     taxable_interest_net: 1_000,
     ee_bond_exclusion: 500,
@@ -197,12 +200,12 @@ Deno.test("schedule_b: ee_bond_exclusion maps to ExcludableSavingsBondIntAmt", (
   );
 });
 
-Deno.test("schedule_b: below-threshold ordinary dividends do not file the form", () => {
+test("schedule_b: below-threshold ordinary dividends do not file the form", () => {
   const result = scheduleB.build({ ordinaryDividends: 1200 });
   assertEquals(result, "");
 });
 
-Deno.test("schedule_b: nominee dividends reconcile gross line 5 to net line 6", () => {
+test("schedule_b: nominee dividends reconcile gross line 5 to net line 6", () => {
   const xml = scheduleB.build({
     dividend_rows: [{ payerName: "Fund", amount: 1_000 }],
     dividend_line5_subtotal: 1_000,
@@ -235,7 +238,7 @@ Deno.test("schedule_b: nominee dividends reconcile gross line 5 to net line 6", 
   );
 });
 
-Deno.test("schedule_b: combined parent and Form 8814 dividends include payer rows", () => {
+test("schedule_b: combined parent and Form 8814 dividends include payer rows", () => {
   const xml = scheduleB.build({
     dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
     form8814_dividends: 500,
@@ -261,7 +264,7 @@ Deno.test("schedule_b: combined parent and Form 8814 dividends include payer row
   );
 });
 
-Deno.test("schedule_b: all 16 dividend payer rows enter native MeF", () => {
+test("schedule_b: all 16 dividend payer rows enter native MeF", () => {
   const xml = scheduleB.build({
     dividend_rows: Array.from({ length: 16 }, (_, index) => ({
       payerName: `Fund ${index + 1}`,
@@ -282,7 +285,7 @@ Deno.test("schedule_b: all 16 dividend payer rows enter native MeF", () => {
   );
 });
 
-Deno.test("schedule_b: information-only below-threshold dividends do not file the form", () => {
+test("schedule_b: information-only below-threshold dividends do not file the form", () => {
   assertEquals(
     scheduleB.build({
       dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
@@ -292,7 +295,7 @@ Deno.test("schedule_b: information-only below-threshold dividends do not file th
   );
 });
 
-Deno.test("schedule_b: No foreign answers do not force a below-threshold filing", () => {
+test("schedule_b: No foreign answers do not force a below-threshold filing", () => {
   assertEquals(
     scheduleB.build({
       dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
@@ -304,7 +307,7 @@ Deno.test("schedule_b: No foreign answers do not force a below-threshold filing"
   );
 });
 
-Deno.test("schedule_b: $1,500 income thresholds are separate and strict", () => {
+test("schedule_b: $1,500 income thresholds are separate and strict", () => {
   assertEquals(
     scheduleB.build({
       taxable_interest_net: 800,
@@ -332,7 +335,7 @@ Deno.test("schedule_b: $1,500 income thresholds are separate and strict", () => 
   );
 });
 
-Deno.test("schedule_b: savings bond exclusion requires enough line 2 interest", () => {
+test("schedule_b: savings bond exclusion requires enough line 2 interest", () => {
   assertThrows(() => scheduleB.build({ ee_bond_exclusion: 1 }));
   assertThrows(() =>
     scheduleB.build({
@@ -349,7 +352,7 @@ Deno.test("schedule_b: savings bond exclusion requires enough line 2 interest", 
   );
 });
 
-Deno.test("schedule_b: Part III No answers alone do not create a document", () => {
+test("schedule_b: Part III No answers alone do not create a document", () => {
   assertEquals(
     scheduleB.build({
       foreign_accounts_question: false,
@@ -359,7 +362,7 @@ Deno.test("schedule_b: Part III No answers alone do not create a document", () =
   );
 });
 
-Deno.test("schedule_b: Form 8814 foreign-account and trust answers file Part III", () => {
+test("schedule_b: Form 8814 foreign-account and trust answers file Part III", () => {
   const xml = scheduleB.build({
     form8814_foreign_account: true,
     foreign_accounts_question: true,
@@ -383,7 +386,7 @@ Deno.test("schedule_b: Form 8814 foreign-account and trust answers file Part III
   );
 });
 
-Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
+test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
   const xml = scheduleB.build({
     foreign_accounts_question: true,
     fincen_form114_required: true,
@@ -401,7 +404,7 @@ Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
   );
 });
 
-Deno.test("schedule_b: native MeF rejects codes outside TY2025 CountryType", () => {
+test("schedule_b: native MeF rejects codes outside TY2025 CountryType", () => {
   const facts = {
     foreign_accounts_question: true,
     fincen_form114_required: true,
@@ -424,7 +427,7 @@ Deno.test("schedule_b: native MeF rejects codes outside TY2025 CountryType", () 
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: single income category emits only its elements", () => {
+test("schedule_b: single income category emits only its elements", () => {
   const result = scheduleB.build({
     taxable_interest_net: 1_600,
     foreign_accounts_question: false,
@@ -450,13 +453,13 @@ const allFields = {
   foreign_trust_question: false,
 };
 
-Deno.test("schedule_b: all 3 fields present: output wrapped in IRS1040ScheduleB tag", () => {
+test("schedule_b: all 3 fields present: output wrapped in IRS1040ScheduleB tag", () => {
   const result = scheduleB.build(allFields);
   assertStringIncludes(result, "<IRS1040ScheduleB>");
   assertStringIncludes(result, "</IRS1040ScheduleB>");
 });
 
-Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
+test("schedule_b: all 3 fields present: all elements emitted", () => {
   const result = scheduleB.build(allFields);
   assertStringIncludes(
     result,
@@ -476,7 +479,7 @@ Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
 // Section 7: Source-backed interest rows
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: payer name and amount emit an IRS interest row", () => {
+test("schedule_b: payer name and amount emit an IRS interest row", () => {
   const result = scheduleB.build({
     payer_name: "Bank of America",
     taxable_interest_net: 3000,
@@ -499,7 +502,7 @@ Deno.test("schedule_b: payer name and amount emit an IRS interest row", () => {
   );
 });
 
-Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () => {
+test("schedule_b: multiple source interest rows reconcile to line 2", () => {
   const xml = scheduleB.build({
     payer_name: ["Bank A", "Bond issuer"],
     taxable_interest_net: [100, 275],
@@ -526,7 +529,7 @@ Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () =>
   );
 });
 
-Deno.test("schedule_b: normalized graph output keeps every source interest row", () => {
+test("schedule_b: normalized graph output keeps every source interest row", () => {
   const pending = buildPending({
     schedule_b: {
       payer_name: ["Bank A", "Bond issuer"],
@@ -547,13 +550,13 @@ Deno.test("schedule_b: normalized graph output keeps every source interest row",
   assertStringIncludes(xml, "<InterestAmt>275</InterestAmt>");
 });
 
-Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", async () => {
+test("schedule_b: source interest detail follows the IRS 2025 schema", async () => {
   const xsd = new URL(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040ScheduleB/IRS1040ScheduleB.xsd",
     import.meta.url,
   ).pathname;
   try {
-    await Deno.stat(xsd);
+    await sys.stat(xsd);
   } catch {
     throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
@@ -566,16 +569,16 @@ Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", asyn
     "<IRS1040ScheduleB>",
     '<IRS1040ScheduleB xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleB1">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });

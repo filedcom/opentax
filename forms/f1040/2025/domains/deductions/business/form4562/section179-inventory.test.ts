@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -15,7 +16,7 @@ import {
   section179InventoryInput,
 } from "./section179-inventory.fixture.ts";
 
-Deno.test("Section 179 inventories join credit reduction, bonus, MACRS, business allocations and final tax", async () => {
+test("Section 179 inventories join credit reduction, bonus, MACRS, business allocations and final tax", async () => {
   for (const scenario of section179Cases) {
     const input = section179InventoryInput(scenario);
     const before = JSON.stringify(input);
@@ -68,7 +69,7 @@ Deno.test("Section 179 inventories join credit reduction, bonus, MACRS, business
   }
 });
 
-Deno.test("Section 179 inventory limits use all eligible costs and reject unreviewed or excess allocations", () => {
+test("Section 179 inventory limits use all eligible costs and reject unreviewed or excess allocations", () => {
   const inventory = section179InventoryInput(section179Cases[0]).form4562
     .current_year_inventory;
   const review = inventory.section179_election;
@@ -146,7 +147,7 @@ Deno.test("Section 179 inventory limits use all eligible costs and reject unrevi
   );
 });
 
-Deno.test("Section 179 election changes the mid-quarter basis before bonus", () => {
+test("Section 179 election changes the mid-quarter basis before bonus", () => {
   const source = section179InventoryInput(section179Cases[0]).form4562
     .current_year_inventory;
   const { form8911_property_reference: _p, ...asset } = source.assets[0];
@@ -185,7 +186,7 @@ Deno.test("Section 179 election changes the mid-quarter basis before bonus", () 
   );
 });
 
-Deno.test("Section 179 income, property credit, and filed allocation conflicts reject", async () => {
+test("Section 179 income, property credit, and filed allocation conflicts reject", async () => {
   const input = section179InventoryInput(section179Cases[2]);
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);

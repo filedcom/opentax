@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -8,7 +10,7 @@ import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inpu
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 async function validate(xml: string) {
-  const p = new Deno.Command("xmllint", {
+  const p = new sys.Command("xmllint", {
     args: ["--noout", "--schema", schema, "-"],
     stdin: "piped",
     stderr: "piped",
@@ -26,7 +28,7 @@ for (
     { id: "single-seven-new-markets-investments", credit: 3500 },
   ]
 ) {
-  Deno.test(`Form8874 public investment inventory retains source-authentication export block: ${c.id}`, async () => {
+  test(`Form8874 public investment inventory retains source-authentication export block: ${c.id}`, async () => {
     const fixture = pdfReviewFixtures.find((f) => f.id === c.id)!;
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
@@ -83,7 +85,7 @@ function recapture(id: number) {
   }, "Alex Example");
 }
 for (const count of [1, 2]) {
-  Deno.test(`Form8874 public reported recapture through final tax and exports: ${count} investments`, async () => {
+  test(`Form8874 public reported recapture through final tax and exports: ${count} investments`, async () => {
     const r = f1040_2025.executeReturn({
       ...base.inputs,
       f8874_recapture: {

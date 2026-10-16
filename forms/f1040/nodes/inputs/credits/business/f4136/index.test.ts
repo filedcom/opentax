@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f4136, type Form4136Input, inputSchema } from "./index.ts";
 
@@ -54,7 +55,7 @@ function parseInput(input: Record<string, unknown>) {
   });
 }
 
-Deno.test("Form 4136: qualified business gasoline and diesel route to refundable Schedule 3 line 12", () => {
+test("Form 4136: qualified business gasoline and diesel route to refundable Schedule 3 line 12", () => {
   const result = compute({
     business,
     claims: [
@@ -83,7 +84,7 @@ Deno.test("Form 4136: qualified business gasoline and diesel route to refundable
   );
 });
 
-Deno.test("Form 4136: registered vendor government diesel sales reconcile to line 6a", () => {
+test("Form 4136: registered vendor government diesel sales reconcile to line 6a", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Fuel Vendor",
@@ -176,7 +177,7 @@ Deno.test("Form 4136: registered vendor government diesel sales reconcile to lin
   );
 });
 
-Deno.test("Form 4136: registered blender line 15a uses taxed input diesel gallons", () => {
+test("Form 4136: registered blender line 15a uses taxed input diesel gallons", () => {
   const blenderBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Emulsion Blender",
@@ -252,7 +253,7 @@ Deno.test("Form 4136: registered blender line 15a uses taxed input diesel gallon
   );
 });
 
-Deno.test("Form 4136: registered vendor line 6b reconciles bus sales and Model Waiver N", () => {
+test("Form 4136: registered vendor line 6b reconciles bus sales and Model Waiver N", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Bus Fuel Vendor",
@@ -386,7 +387,7 @@ Deno.test("Form 4136: registered vendor line 6b reconciles bus sales and Model W
   );
 });
 
-Deno.test("Form 4136: registered kerosene vendors use distinct line 7 source routes", () => {
+test("Form 4136: registered kerosene vendors use distinct line 7 source routes", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Kerosene Vendor",
@@ -523,7 +524,7 @@ Deno.test("Form 4136: registered kerosene vendors use distinct line 7 source rou
   );
 });
 
-Deno.test("Form 4136: commercial aviation vendor lines 8a and 8b require Model Waiver L", () => {
+test("Form 4136: commercial aviation vendor lines 8a and 8b require Model Waiver L", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Aviation Vendor",
@@ -638,7 +639,7 @@ Deno.test("Form 4136: commercial aviation vendor lines 8a and 8b require Model W
   }
 });
 
-Deno.test("Form 4136: nonexempt noncommercial aviation line 8c requires Certificate Q", () => {
+test("Form 4136: nonexempt noncommercial aviation line 8c requires Certificate Q", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Aviation Vendor",
@@ -758,7 +759,7 @@ Deno.test("Form 4136: nonexempt noncommercial aviation line 8c requires Certific
   }
 });
 
-Deno.test("Form 4136: noncommercial aviation lines 8d and 8e separate Waiver L from government Certificate P", () => {
+test("Form 4136: noncommercial aviation lines 8d and 8e separate Waiver L from government Certificate P", () => {
   const vendorBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Aviation Vendor",
@@ -992,7 +993,7 @@ Deno.test("Form 4136: noncommercial aviation lines 8d and 8e separate Waiver L f
   );
 });
 
-Deno.test("Form 4136: registered card issuer lines 13a-13c require matched government purchases and Certificate R", () => {
+test("Form 4136: registered card issuer lines 13a-13c require matched government purchases and Certificate R", () => {
   const issuerBusiness = {
     qualifying_business_activity: true,
     business_name: "Example Card Issuer",
@@ -1202,7 +1203,7 @@ Deno.test("Form 4136: registered card issuer lines 13a-13c require matched gover
   );
 });
 
-Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
+test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],
     ["1b", undefined, 18.3],
@@ -1267,7 +1268,7 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   }
 });
 
-Deno.test("Form 4136: diesel-water emulsion use and export require distinct source facts", () => {
+test("Form 4136: diesel-water emulsion use and export require distinct source facts", () => {
   const useClaim = {
     ...certifications,
     line: "14a" as const,
@@ -1314,7 +1315,7 @@ Deno.test("Form 4136: diesel-water emulsion use and export require distinct sour
   );
 });
 
-Deno.test("Form 4136: exporter line 16 distinguishes dyed fuel and gasoline blendstock", () => {
+test("Form 4136: exporter line 16 distinguishes dyed fuel and gasoline blendstock", () => {
   const exporterBusiness = {
     ...business,
     claimant_is_ultimate_purchaser: undefined,
@@ -1377,7 +1378,7 @@ Deno.test("Form 4136: exporter line 16 distinguishes dyed fuel and gasoline blen
   );
 });
 
-Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require distinct proof", () => {
+test("Form 4136: kerosene bus, export, and reduced-tax claims require distinct proof", () => {
   const claim = {
     ...certifications,
     line: "4e" as const,
@@ -1428,7 +1429,7 @@ Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require disti
   );
 });
 
-Deno.test("Form 4136: diesel train, bus, and export claims require distinct proof", () => {
+test("Form 4136: diesel train, bus, and export claims require distinct proof", () => {
   const claim = {
     ...certifications,
     line: "3c" as const,
@@ -1478,7 +1479,7 @@ Deno.test("Form 4136: diesel train, bus, and export claims require distinct proo
   );
 });
 
-Deno.test("Form 4136: commercial aviation, export, and foreign-trade LUST facts are required", () => {
+test("Form 4136: commercial aviation, export, and foreign-trade LUST facts are required", () => {
   const claim = {
     ...certifications,
     line: "2a" as const,
@@ -1521,7 +1522,7 @@ Deno.test("Form 4136: commercial aviation, export, and foreign-trade LUST facts 
   );
 });
 
-Deno.test("Form 4136: other-use and exported gasoline require their source confirmations", () => {
+test("Form 4136: other-use and exported gasoline require their source confirmations", () => {
   const claim = {
     ...certifications,
     line: "1c" as const,
@@ -1576,7 +1577,7 @@ Deno.test("Form 4136: other-use and exported gasoline require their source confi
   );
 });
 
-Deno.test("Form 4136: gasoline motorboat and aviation propulsion exclusions are enforced", () => {
+test("Form 4136: gasoline motorboat and aviation propulsion exclusions are enforced", () => {
   const gasoline = {
     ...certifications,
     line: "1a" as const,
@@ -1613,7 +1614,7 @@ Deno.test("Form 4136: gasoline motorboat and aviation propulsion exclusions are 
   );
 });
 
-Deno.test("Form 4136: exported claims require an identifiable IRS-accepted proof record", () => {
+test("Form 4136: exported claims require an identifiable IRS-accepted proof record", () => {
   const claim = {
     ...certifications,
     line: "1d" as const,
@@ -1655,7 +1656,7 @@ Deno.test("Form 4136: exported claims require an identifiable IRS-accepted proof
   );
 });
 
-Deno.test("Form 4136: aviation kerosene requires rate, use, and no-waiver proof", () => {
+test("Form 4136: aviation kerosene requires rate, use, and no-waiver proof", () => {
   const claim = {
     ...certifications,
     line: "5a" as const,
@@ -1703,7 +1704,7 @@ Deno.test("Form 4136: aviation kerosene requires rate, use, and no-waiver proof"
   );
 });
 
-Deno.test("Form 4136: credit rounds to cents", () => {
+test("Form 4136: credit rounds to cents", () => {
   assertEquals(
     compute({
       business,
@@ -1719,7 +1720,7 @@ Deno.test("Form 4136: credit rounds to cents", () => {
   );
 });
 
-Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are required", () => {
+test("Form 4136: eligibility, costs, use codes, and duplicate claims are required", () => {
   const claim = {
     ...certifications,
     line: "3a",
@@ -1793,7 +1794,7 @@ Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are re
   );
 });
 
-Deno.test("Form 4136: aviation claims require no-waiver and credit-card certifications", () => {
+test("Form 4136: aviation claims require no-waiver and credit-card certifications", () => {
   const aviation = {
     ...certifications,
     line: "2b" as const,
@@ -1838,7 +1839,7 @@ Deno.test("Form 4136: aviation claims require no-waiver and credit-card certific
   );
 });
 
-Deno.test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
+test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
   const claim = {
     ...certifications,
     line: "11c" as const,
@@ -1865,7 +1866,7 @@ Deno.test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
   );
 });
 
-Deno.test("Form 4136: line 11 bus claims use reduced rates and required units", () => {
+test("Form 4136: line 11 bus claims use reduced rates and required units", () => {
   const cases = [
     ["11a", "GGE", 10.9],
     ["11b", "gallons", 11],
@@ -1904,7 +1905,7 @@ Deno.test("Form 4136: line 11 bus claims use reduced rates and required units", 
   }
 });
 
-Deno.test("Form 4136: separate business activities combine credit without merging claim validation", () => {
+test("Form 4136: separate business activities combine credit without merging claim validation", () => {
   const claim = {
     ...certifications,
     line: "1a" as const,
@@ -1944,7 +1945,7 @@ Deno.test("Form 4136: separate business activities combine credit without mergin
   );
 });
 
-Deno.test("Form 4136: claim cents on separate Schedules A add to the parent credit", () => {
+test("Form 4136: claim cents on separate Schedules A add to the parent credit", () => {
   const claim = {
     ...certifications,
     line: "1a" as const,
@@ -1969,7 +1970,7 @@ Deno.test("Form 4136: claim cents on separate Schedules A add to the parent cred
   );
 });
 
-Deno.test("Form 4136: primary activity is selected by credit, not gallons", () => {
+test("Form 4136: primary activity is selected by credit, not gallons", () => {
   const gasoline = {
     ...certifications,
     line: "1a" as const,
@@ -2008,7 +2009,7 @@ Deno.test("Form 4136: primary activity is selected by credit, not gallons", () =
   );
 });
 
-Deno.test("Form 4136: a combined fuel line rejects mixed units without conversion", () => {
+test("Form 4136: a combined fuel line rejects mixed units without conversion", () => {
   const claim = {
     ...certifications,
     line: "11a" as const,
@@ -2032,7 +2033,7 @@ Deno.test("Form 4136: a combined fuel line rejects mixed units without conversio
   );
 });
 
-Deno.test("Form 4136: home heating kerosene follows the nonbusiness exception", () => {
+test("Form 4136: home heating kerosene follows the nonbusiness exception", () => {
   const input = {
     claimant_context: "home_kerosene" as const,
     claimant_is_ultimate_purchaser: true as const,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
@@ -43,7 +44,7 @@ function filing(election: number) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("E2E: Form 4952 election changes tax rate without changing dividend income or interest deduction", () => {
+test("E2E: Form 4952 election changes tax rate without changing dividend income or interest deduction", () => {
   const ordinary = filing(0);
   const elected = filing(1_000);
   assertEquals(ordinary.diagnostics, []);

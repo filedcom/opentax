@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertFalse,
@@ -7,7 +10,7 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { appendSchedule1ATipsWorksheet } from "./schedule1a_tips_worksheet.ts";
 
-Deno.test("Schedule 1-A employer tips worksheet paginates and reconciles", async () => {
+test("Schedule 1-A employer tips worksheet paginates and reconciles", async () => {
   const rows = Array.from({ length: 6 }, (_, index) => ({
     employee_ssn: "111223333",
     employer_ein: String(123456780 + index),
@@ -34,10 +37,10 @@ Deno.test("Schedule 1-A employer tips worksheet paginates and reconciles", async
   const document = await PDFDocument.create();
   await appendSchedule1ATipsWorksheet(document, fields, filer);
   assertEquals(document.getPageCount(), 2);
-  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  const path = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(path, await document.save());
-    const rendered = await new Deno.Command("pdftotext", {
+    await fs.writeFile(path, await document.save());
+    const rendered = await new sys.Command("pdftotext", {
       args: ["-layout", path, "-"],
     }).output();
     assertEquals(rendered.code, 0);
@@ -46,7 +49,7 @@ Deno.test("Schedule 1-A employer tips worksheet paginates and reconciles", async
     assertFalse(printed.includes("EXAMPLE ALEX B"));
     assertStringIncludes(printed, "Line 2: 6,000 to Schedule 1-A line 4c");
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
   await assertRejects(async () =>
     await appendSchedule1ATipsWorksheet(
@@ -57,7 +60,7 @@ Deno.test("Schedule 1-A employer tips worksheet paginates and reconciles", async
   );
 });
 
-Deno.test("Schedule 1-A employer worksheet prints greater W-2 or Form 4137 amount", async () => {
+test("Schedule 1-A employer worksheet prints greater W-2 or Form 4137 amount", async () => {
   const document = await PDFDocument.create();
   await appendSchedule1ATipsWorksheet(document, {
     pdf_tip_sources: [

@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -225,22 +228,22 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 async function validateXml(xml: string) {
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 }
 for (const credit of ["aoc", "llc"] as const) {
   for (const reason of ["required", "scholarship"] as const) {
-    Deno.test(`mixed two-school ${credit} ${reason} source calculation/native/PDF/full XSD packet`, async () => {
+    test(`mixed two-school ${credit} ${reason} source calculation/native/PDF/full XSD packet`, async () => {
       const source = fixture(credit, reason);
       const result = f1040_2025.executeReturn(source.inputs);
       assertEquals(result.diagnostics, []);
@@ -321,10 +324,10 @@ for (const credit of ["aoc", "llc"] as const) {
       const doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), scholarship ? 7 : 5);
       assertEquals(doc.getForm().getFields().length, 0);
-      const path = await Deno.makeTempFile({ suffix: ".pdf" });
+      const path = await sys.makeTempFile({ suffix: ".pdf" });
       try {
-        await Deno.writeFile(path, pdf);
-        const output = await new Deno.Command("pdftotext", {
+        await fs.writeFile(path, pdf);
+        const output = await new sys.Command("pdftotext", {
           args: ["-layout", path, "-"],
           stdout: "piped",
           stderr: "piped",
@@ -335,21 +338,21 @@ for (const credit of ["aoc", "llc"] as const) {
         assertStringIncludes(text, second.name);
         assertEquals(new RegExp(`19\\s+${nonrefundable}`).test(text), true);
       } finally {
-        await Deno.remove(path);
+        await sys.remove(path);
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-mixed-evidence";
-        await Deno.mkdir(dir, { recursive: true });
+        await fs.mkdir(dir, { recursive: true });
         const prefix = `${dir}/${credit}-${reason}`;
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${prefix}-source-input.json`,
           JSON.stringify({ inputs: source.inputs, filer: filer }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${prefix}-full-return.xml`,
           prepared.bundle.xml,
         );
-        await Deno.writeFile(`${prefix}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${prefix}-filled-return.pdf`, pdf);
       }
       const reversed = f1040_2025.executeReturn({
         ...source.inputs,
@@ -374,7 +377,7 @@ for (const credit of ["aoc", "llc"] as const) {
   }
 }
 
-Deno.test("mixed-school source identities, payment/aid ledgers, exception and income joins reject crossed sources", async () => {
+test("mixed-school source identities, payment/aid ledgers, exception and income joins reject crossed sources", async () => {
   const source = fixture("aoc", "scholarship");
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);
@@ -560,7 +563,7 @@ Deno.test("mixed-school source identities, payment/aid ledgers, exception and in
   }
 });
 
-Deno.test("mixed required missing school retains its own request, payment and enrollment conditions", async () => {
+test("mixed required missing school retains its own request, payment and enrollment conditions", async () => {
   const source = fixture("llc", "required");
   const result = f1040_2025.executeReturn(source.inputs);
   assertEquals(result.diagnostics, []);

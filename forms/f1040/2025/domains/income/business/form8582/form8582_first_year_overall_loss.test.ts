@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -87,7 +88,7 @@ function returnWithFirstYearLoss() {
   return result.pending;
 }
 
-Deno.test("first-year entire passive disposition releases overall loss on Schedule E and Form 4797", async () => {
+test("first-year entire passive disposition releases overall loss on Schedule E and Form 4797", async () => {
   const pending = returnWithFirstYearLoss();
   assertEquals(pending.form8582, { filing_status: "single" });
   assertEquals(pending.schedule1?.line5_schedule_e, -5_000);
@@ -116,7 +117,7 @@ Deno.test("first-year entire passive disposition releases overall loss on Schedu
   assert((await prepared.renderPdf()).length > 0);
 });
 
-Deno.test("first-year overall-loss export rejects changed purchase and closing evidence", async () => {
+test("first-year overall-loss export rejects changed purchase and closing evidence", async () => {
   const pending = returnWithFirstYearLoss();
   const changedPurchase = {
     ...pending,

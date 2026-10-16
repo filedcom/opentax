@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   passiveInventoryCases,
@@ -11,7 +13,7 @@ import { inputSchema as form8582crInputSchema } from "../../../../../nodes/inter
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
 
 for (const c of passiveInventoryCases) {
-  Deno.test(`Complete passive credit inventory and continuations: ${c.count}`, async () => {
+  test(`Complete passive credit inventory and continuations: ${c.count}`, async () => {
     const { id, input, expected } = passiveInventoryFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -75,11 +77,11 @@ for (const c of passiveInventoryCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8582CR_OVERFLOW_EVIDENCE");
+      root = process.env.FORM8582CR_OVERFLOW_EVIDENCE;
     } catch { /* Optional local evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${id}.json`,
         JSON.stringify(
           {
@@ -95,8 +97,8 @@ for (const c of passiveInventoryCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${id}.pdf`, pdf);
     }
   });
 }

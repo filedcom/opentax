@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateSection453aInterest, f453a_interest } from "./index.ts";
 import { twoObligation453aFixture } from "./fixture.ts";
 
-Deno.test("section 453A two-obligation workpaper fixes origin percentage and deposits Schedule 2 line 15", () => {
+test("section 453A two-obligation workpaper fixes origin percentage and deposits Schedule 2 line 15", () => {
   const amount = calculateSection453aInterest(twoObligation453aFixture);
   assertEquals(amount, 11_317);
   const result = f453a_interest.compute(
@@ -15,7 +16,7 @@ Deno.test("section 453A two-obligation workpaper fixes origin percentage and dep
   }]);
 });
 
-Deno.test("section 453A later-year obligation keeps the origin percentage after payments", () => {
+test("section 453A later-year obligation keeps the origin percentage after payments", () => {
   const prior = {
     ...twoObligation453aFixture,
     origin_year_workpapers: [{
@@ -33,7 +34,7 @@ Deno.test("section 453A later-year obligation keeps the origin percentage after 
   assertEquals(calculateSection453aInterest(prior), 5_250);
 });
 
-Deno.test("section 453A excludes dealer, farm, and individual personal-use rows from the origin aggregate", () => {
+test("section 453A excludes dealer, farm, and individual personal-use rows from the origin aggregate", () => {
   const excluded = {
     ...twoObligation453aFixture,
     obligations: [
@@ -57,7 +58,7 @@ Deno.test("section 453A excludes dealer, farm, and individual personal-use rows 
   assertEquals(calculateSection453aInterest(excluded), 11_317);
 });
 
-Deno.test("section 453A excludes 1988 personal property but retains 1988 real property", () => {
+test("section 453A excludes 1988 personal property but retains 1988 real property", () => {
   const old = {
     ...twoObligation453aFixture,
     origin_year_workpapers: [{
@@ -83,7 +84,7 @@ Deno.test("section 453A excludes 1988 personal property but retains 1988 real pr
   assertEquals(calculateSection453aInterest(old), 11_317);
 });
 
-Deno.test("section 453A rejects altered origin face, percentage, and unrecognized gain", () => {
+test("section 453A rejects altered origin face, percentage, and unrecognized gain", () => {
   assertThrows(
     () =>
       calculateSection453aInterest({

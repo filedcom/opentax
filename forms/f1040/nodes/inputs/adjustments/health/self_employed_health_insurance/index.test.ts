@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, self_employed_health_insurance } from "./index.ts";
 
@@ -10,7 +11,7 @@ function compute(items: { premiums_paid: number }[]) {
   });
 }
 
-Deno.test("requires explicit Marketplace overlap review before routing", () => {
+test("requires explicit Marketplace overlap review before routing", () => {
   assertThrows(
     () => inputSchema.parse({ items: [{ premiums_paid: 1_000 }] }),
     Error,
@@ -27,7 +28,7 @@ Deno.test("requires explicit Marketplace overlap review before routing", () => {
   );
 });
 
-Deno.test("premium-only claims cannot bypass the Form 7206 business limit", () => {
+test("premium-only claims cannot bypass the Form 7206 business limit", () => {
   assertThrows(
     () => compute([{ premiums_paid: 1_000 }]),
     Error,
@@ -40,7 +41,7 @@ Deno.test("premium-only claims cannot bypass the Form 7206 business limit", () =
   );
 });
 
-Deno.test("returns empty outputs when premiums_paid is zero", () => {
+test("returns empty outputs when premiums_paid is zero", () => {
   const result = compute([{ premiums_paid: 0 }]);
   assertEquals(result.outputs.length, 0);
 });

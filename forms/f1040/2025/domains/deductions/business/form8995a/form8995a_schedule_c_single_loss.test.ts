@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
@@ -63,7 +64,7 @@ function preparedReturn() {
   return result;
 }
 
-Deno.test("one sourced QBI loss files Schedule C and carries it forward with no current deduction", () => {
+test("one sourced QBI loss files Schedule C and carries it forward with no current deduction", () => {
   const result = preparedReturn();
   assertEquals(result.pending.f1040.line13_qbi_deduction, 0);
   assertEquals(result.pending.schedule1.line3_schedule_c, -1_200);
@@ -91,7 +92,7 @@ Deno.test("one sourced QBI loss files Schedule C and carries it forward with no 
   assertEquals(schedulePdf.line6, 1_200);
 });
 
-Deno.test("one-business QBI loss rejects changed source, return, and companion", () => {
+test("one-business QBI loss rejects changed source, return, and companion", () => {
   const pending = normalizeAllPending(preparedReturn().pending);
   const changed: Array<typeof pending> = [{
     ...pending,

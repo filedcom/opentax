@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { calculateOwnerForms } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
@@ -21,7 +22,7 @@ const filer = {
   },
 };
 
-Deno.test("Form 5329 PDF instances keep each owner's identity and Part VII", () => {
+test("Form 5329 PDF instances keep each owner's identity and Part VII", () => {
   const owner_entries = [
     { owner: TS.T, early_distribution: 5_000 },
     {
@@ -83,7 +84,7 @@ Deno.test("Form 5329 PDF instances keep each owner's identity and Part VII", () 
   );
 });
 
-Deno.test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and rejects owner drift", () => {
+test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and rejects owner drift", () => {
   const owner_entries = [{
     owner: TS.S,
     hsa_part_vii: {
@@ -136,7 +137,7 @@ Deno.test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and reject
   );
 });
 
-Deno.test("Form 5329 PDF prints Part I and II taxes on their own lines", () => {
+test("Form 5329 PDF prints Part I and II taxes on their own lines", () => {
   const owner_entries = [{
     owner: TS.T,
     early_distribution: [4_000, 6_000],
@@ -169,7 +170,7 @@ Deno.test("Form 5329 PDF prints Part I and II taxes on their own lines", () => {
   );
 });
 
-Deno.test("Form 5329 PDF retains Page 2 for every printable Part VII line", () => {
+test("Form 5329 PDF retains Page 2 for every printable Part VII line", () => {
   for (let line = 42; line <= 49; line++) {
     assertEquals(form5329Pdf.pageIndices?.({ [`print_hsa_line${line}`]: 1 }), [
       0,
@@ -196,7 +197,7 @@ Deno.test("Form 5329 PDF retains Page 2 for every printable Part VII line", () =
   assertEquals(form5329Pdf.pageIndices?.({ print_hsa_line42: 0.49 }), [0]);
 });
 
-Deno.test("Form 5329 filed PDF selects only populated pages", async () => {
+test("Form 5329 filed PDF selects only populated pages", async () => {
   const owner_entries = [{ owner: TS.T, early_distribution: 10_000 }];
   const owner_forms = calculateOwnerForms({ owner_entries }).forms;
   const [copy] = form5329Pdf.instances?.(
@@ -219,7 +220,7 @@ Deno.test("Form 5329 filed PDF selects only populated pages", async () => {
   assertEquals(packet.getPageCount(), 1);
 });
 
-Deno.test("Form 5329 PDF stops an excess-IRA packet without worksheet vintages", () => {
+test("Form 5329 PDF stops an excess-IRA packet without worksheet vintages", () => {
   const owner_entries = [{
     owner: TS.T,
     excess_traditional_ira: 1_000,

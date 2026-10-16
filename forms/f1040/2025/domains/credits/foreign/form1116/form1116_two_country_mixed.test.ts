@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -103,7 +104,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two-country interest and ordinary dividends reconcile the return, native Form 1116, and PDF columns", () => {
+test("two-country interest and ordinary dividends reconcile the return, native Form 1116, and PDF columns", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -137,7 +138,7 @@ Deno.test("two-country interest and ordinary dividends reconcile the return, nat
   );
 });
 
-Deno.test("two-country mixed credit rejects changed source, review, holding and return at both exports", () => {
+test("two-country mixed credit rejects changed source, review, holding and return at both exports", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
@@ -220,7 +221,7 @@ Deno.test("two-country mixed credit rejects changed source, review, holding and 
   }
 });
 
-Deno.test("two_country_mixed complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+test("two_country_mixed complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
   await verifyPassive1116Packet(filedReturn().pending, "two_country_mixed", {
     "interest": 20000,
     "dividends": 30000,

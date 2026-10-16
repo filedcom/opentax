@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8949, inputSchema, QsbsCode } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -35,7 +36,7 @@ function compute(items: Record<string, unknown>[]) {
   };
 }
 
-Deno.test("direct Form 8949 input deposits an identified transaction for MeF before Schedule D", () => {
+test("direct Form 8949 input deposits an identified transaction for MeF before Schedule D", () => {
   const source = f8949.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({
@@ -53,7 +54,7 @@ Deno.test("direct Form 8949 input deposits an identified transaction for MeF bef
   assertEquals(transaction.source_transaction_id, "deemed-sale-1");
 });
 
-Deno.test("direct Form 8949 retains reviewed recipient/contract identity without letting alternate references hide a repeated sale", () => {
+test("direct Form 8949 retains reviewed recipient/contract identity without letting alternate references hide a repeated sale", () => {
   const sale = {
     part: "F",
     description: "Reviewed property sale",
@@ -97,7 +98,7 @@ Deno.test("direct Form 8949 retains reviewed recipient/contract identity without
   );
 });
 
-Deno.test("direct Form 8949 rejects a repeated identified sale on one statement", () => {
+test("direct Form 8949 rejects a repeated identified sale on one statement", () => {
   const sale = minimalItem({
     source_transaction_id: "sale-42",
     broker_statement_reference: "broker-2025-statement",
@@ -117,7 +118,7 @@ Deno.test("direct Form 8949 rejects a repeated identified sale on one statement"
   );
 });
 
-Deno.test("Form 8949 market discount prints code D and reaches taxable interest", () => {
+test("Form 8949 market discount prints code D and reaches taxable interest", () => {
   const source = f8949.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({
@@ -150,7 +151,7 @@ Deno.test("Form 8949 market discount prints code D and reaches taxable interest"
   );
 });
 
-Deno.test("Form 8949 rejects unsourced recapture and unpaired market discount", () => {
+test("Form 8949 rejects unsourced recapture and unpaired market discount", () => {
   assertThrows(
     () => compute([minimalItem({ ordinary_income_portion: 200 })]),
     Error,
@@ -180,15 +181,15 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("schema: rejects empty array", () => {
+test("schema: rejects empty array", () => {
   assertThrows(() => compute([]), Error);
 });
 
-Deno.test("schema: rejects invalid part value 'Z'", () => {
+test("schema: rejects invalid part value 'Z'", () => {
   assertThrows(() => compute([minimalItem({ part: "Z" })]), Error);
 });
 
-Deno.test("schema: zero proceeds (worthless security) — gain_loss equals negative cost_basis", () => {
+test("schema: zero proceeds (worthless security) — gain_loss equals negative cost_basis", () => {
   const result = compute([minimalItem({ proceeds: 0, cost_basis: 1000 })]);
   const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
     string,
@@ -197,7 +198,7 @@ Deno.test("schema: zero proceeds (worthless security) — gain_loss equals negat
   assertEquals(tx.gain_loss, -1000);
 });
 
-Deno.test("schema: zero cost_basis (written option expired) — gain_loss equals proceeds", () => {
+test("schema: zero cost_basis (written option expired) — gain_loss equals proceeds", () => {
   const result = compute([minimalItem({ proceeds: 500, cost_basis: 0 })]);
   const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
     string,
@@ -210,7 +211,7 @@ Deno.test("schema: zero cost_basis (written option expired) — gain_loss equals
 // 2. Per-Box Routing — Part I (Short-Term: A, B, C)
 // ---------------------------------------------------------------------------
 
-Deno.test("routing: part A routes to schedule_d with is_long_term=false", () => {
+test("routing: part A routes to schedule_d with is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "A" })]).outputs,
     schedule_d,
@@ -219,7 +220,7 @@ Deno.test("routing: part A routes to schedule_d with is_long_term=false", () => 
   assertEquals(tx.part, "A");
 });
 
-Deno.test("routing: part B routes to schedule_d with is_long_term=false", () => {
+test("routing: part B routes to schedule_d with is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "B" })]).outputs,
     schedule_d,
@@ -228,7 +229,7 @@ Deno.test("routing: part B routes to schedule_d with is_long_term=false", () => 
   assertEquals(tx.part, "B");
 });
 
-Deno.test("routing: part C routes to schedule_d with is_long_term=false", () => {
+test("routing: part C routes to schedule_d with is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "C" })]).outputs,
     schedule_d,
@@ -241,7 +242,7 @@ Deno.test("routing: part C routes to schedule_d with is_long_term=false", () => 
 // 2. Per-Box Routing — Part II (Long-Term: D, E, F)
 // ---------------------------------------------------------------------------
 
-Deno.test("routing: part D routes to schedule_d with is_long_term=true", () => {
+test("routing: part D routes to schedule_d with is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "D", date_acquired: "2023-01-01" })]).outputs,
     schedule_d,
@@ -250,7 +251,7 @@ Deno.test("routing: part D routes to schedule_d with is_long_term=true", () => {
   assertEquals(tx.part, "D");
 });
 
-Deno.test("routing: part E routes to schedule_d with is_long_term=true", () => {
+test("routing: part E routes to schedule_d with is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "E", date_acquired: "2023-06-01" })]).outputs,
     schedule_d,
@@ -259,7 +260,7 @@ Deno.test("routing: part E routes to schedule_d with is_long_term=true", () => {
   assertEquals(tx.part, "E");
 });
 
-Deno.test("routing: part F routes to schedule_d with is_long_term=true", () => {
+test("routing: part F routes to schedule_d with is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "F", date_acquired: "2020-05-01" })]).outputs,
     schedule_d,
@@ -269,7 +270,7 @@ Deno.test("routing: part F routes to schedule_d with is_long_term=true", () => {
 });
 
 // Digital asset short-term parts G, H, I
-Deno.test("routing: part G (digital asset, basis reported, short-term) is_long_term=false", () => {
+test("routing: part G (digital asset, basis reported, short-term) is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "G" })]).outputs,
     schedule_d,
@@ -277,7 +278,7 @@ Deno.test("routing: part G (digital asset, basis reported, short-term) is_long_t
   assertEquals(tx.is_long_term, false);
 });
 
-Deno.test("routing: part H (digital asset, basis not reported, short-term) is_long_term=false", () => {
+test("routing: part H (digital asset, basis not reported, short-term) is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "H" })]).outputs,
     schedule_d,
@@ -285,7 +286,7 @@ Deno.test("routing: part H (digital asset, basis not reported, short-term) is_lo
   assertEquals(tx.is_long_term, false);
 });
 
-Deno.test("routing: part I (no 1099-DA, short-term digital asset) is_long_term=false", () => {
+test("routing: part I (no 1099-DA, short-term digital asset) is_long_term=false", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "I" })]).outputs,
     schedule_d,
@@ -294,7 +295,7 @@ Deno.test("routing: part I (no 1099-DA, short-term digital asset) is_long_term=f
 });
 
 // Digital asset long-term parts J, K, L
-Deno.test("routing: part J (digital asset, basis reported, long-term) is_long_term=true", () => {
+test("routing: part J (digital asset, basis reported, long-term) is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "J", date_acquired: "2022-01-01" })]).outputs,
     schedule_d,
@@ -302,7 +303,7 @@ Deno.test("routing: part J (digital asset, basis reported, long-term) is_long_te
   assertEquals(tx.is_long_term, true);
 });
 
-Deno.test("routing: part K (digital asset, basis not reported, long-term) is_long_term=true", () => {
+test("routing: part K (digital asset, basis not reported, long-term) is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "K", date_acquired: "2022-03-01" })]).outputs,
     schedule_d,
@@ -310,7 +311,7 @@ Deno.test("routing: part K (digital asset, basis not reported, long-term) is_lon
   assertEquals(tx.is_long_term, true);
 });
 
-Deno.test("routing: part L (no 1099-DA, long-term digital asset) is_long_term=true", () => {
+test("routing: part L (no 1099-DA, long-term digital asset) is_long_term=true", () => {
   const tx = fieldsOf(
     compute([minimalItem({ part: "L", date_acquired: "2022-06-01" })]).outputs,
     schedule_d,
@@ -319,7 +320,7 @@ Deno.test("routing: part L (no 1099-DA, long-term digital asset) is_long_term=tr
 });
 
 // Zero gain/loss still routes to schedule_d
-Deno.test("routing: zero gain (proceeds = cost_basis, no adjustment) still routes to schedule_d with gain_loss=0", () => {
+test("routing: zero gain (proceeds = cost_basis, no adjustment) still routes to schedule_d with gain_loss=0", () => {
   const tx = fieldsOf(
     compute([minimalItem({ proceeds: 1000, cost_basis: 1000 })]).outputs,
     schedule_d,
@@ -331,7 +332,7 @@ Deno.test("routing: zero gain (proceeds = cost_basis, no adjustment) still route
 // 3. Gain / Loss Calculation (col_h = proceeds − cost_basis ± adjustment_amount)
 // ---------------------------------------------------------------------------
 
-Deno.test("gain_loss: simple gain (no adjustment)", () => {
+test("gain_loss: simple gain (no adjustment)", () => {
   const result = compute([
     minimalItem({ proceeds: 5000, cost_basis: 3000 }),
   ]);
@@ -342,7 +343,7 @@ Deno.test("gain_loss: simple gain (no adjustment)", () => {
   assertEquals(tx.gain_loss, 2000);
 });
 
-Deno.test("gain_loss: simple loss (no adjustment)", () => {
+test("gain_loss: simple loss (no adjustment)", () => {
   const result = compute([
     minimalItem({ proceeds: 3000, cost_basis: 5000 }),
   ]);
@@ -353,7 +354,7 @@ Deno.test("gain_loss: simple loss (no adjustment)", () => {
   assertEquals(tx.gain_loss, -2000);
 });
 
-Deno.test("gain_loss: positive adjustment_amount increases col_h (wash sale W code)", () => {
+test("gain_loss: positive adjustment_amount increases col_h (wash sale W code)", () => {
   // Wash sale: proceeds=4000, basis=4500, disallowed loss=200 positive adj
   // col_h = 4000 - 4500 + 200 = -300 (reduced loss)
   const result = compute([
@@ -371,7 +372,7 @@ Deno.test("gain_loss: positive adjustment_amount increases col_h (wash sale W co
   assertEquals(tx.gain_loss, -300);
 });
 
-Deno.test("gain_loss: negative adjustment_amount decreases col_h (home exclusion H code)", () => {
+test("gain_loss: negative adjustment_amount decreases col_h (home exclusion H code)", () => {
   // Home exclusion: proceeds=600000, basis=100000, excluded gain = -250000 adj
   // col_h = 600000 - 100000 + (-250000) = 250000
   const result = compute([
@@ -390,7 +391,7 @@ Deno.test("gain_loss: negative adjustment_amount decreases col_h (home exclusion
   assertEquals(tx.gain_loss, 250000);
 });
 
-Deno.test("gain_loss: zero adjustment_amount has no effect", () => {
+test("gain_loss: zero adjustment_amount has no effect", () => {
   const result = compute([
     minimalItem({
       proceeds: 8000,
@@ -405,7 +406,7 @@ Deno.test("gain_loss: zero adjustment_amount has no effect", () => {
   assertEquals(tx.gain_loss, 3000);
 });
 
-Deno.test("gain_loss: no adjustment_amount field defaults to zero", () => {
+test("gain_loss: no adjustment_amount field defaults to zero", () => {
   const result = compute([
     minimalItem({ proceeds: 7000, cost_basis: 4000 }),
   ]);
@@ -420,7 +421,7 @@ Deno.test("gain_loss: no adjustment_amount field defaults to zero", () => {
 // 4. Aggregation — multiple items produce multiple schedule_d outputs
 // ---------------------------------------------------------------------------
 
-Deno.test("aggregation: two items produce two separate schedule_d outputs", () => {
+test("aggregation: two items produce two separate schedule_d outputs", () => {
   const result = compute([
     minimalItem({ part: "A", proceeds: 5000, cost_basis: 3000 }),
     minimalItem({
@@ -434,7 +435,7 @@ Deno.test("aggregation: two items produce two separate schedule_d outputs", () =
   assertEquals(sdOutputs.length, 2);
 });
 
-Deno.test("aggregation: short-term item has is_long_term=false, long-term has is_long_term=true in same call", () => {
+test("aggregation: short-term item has is_long_term=false, long-term has is_long_term=true in same call", () => {
   const result = compute([
     minimalItem({ part: "A", proceeds: 5000, cost_basis: 3000 }),
     minimalItem({
@@ -453,7 +454,7 @@ Deno.test("aggregation: short-term item has is_long_term=false, long-term has is
   assertEquals(txD.is_long_term, true);
 });
 
-Deno.test("aggregation: three items each produce independent schedule_d outputs with correct gain_loss", () => {
+test("aggregation: three items each produce independent schedule_d outputs with correct gain_loss", () => {
   const result = compute([
     minimalItem({ part: "A", proceeds: 1000, cost_basis: 800 }), // gain 200
     minimalItem({ part: "B", proceeds: 2000, cost_basis: 2500 }), // loss -500
@@ -473,7 +474,7 @@ Deno.test("aggregation: three items each produce independent schedule_d outputs 
   assertEquals(gains[2], 1500);
 });
 
-Deno.test("aggregation: federal_withheld sums correctly across multiple items", () => {
+test("aggregation: federal_withheld sums correctly across multiple items", () => {
   const result = compute([
     minimalItem({ proceeds: 5000, cost_basis: 3000, federal_withheld: 300 }),
     minimalItem({ proceeds: 8000, cost_basis: 5000, federal_withheld: 500 }),
@@ -492,12 +493,12 @@ Deno.test("aggregation: federal_withheld sums correctly across multiple items", 
 // 5. Federal Withholding Routing
 // ---------------------------------------------------------------------------
 
-Deno.test("federal_withheld: positive value routes to f1040 line25b_withheld_1099", () => {
+test("federal_withheld: positive value routes to f1040 line25b_withheld_1099", () => {
   const result = compute([minimalItem({ federal_withheld: 400 })]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 400);
 });
 
-Deno.test("federal_withheld: zero value does NOT emit f1040 output", () => {
+test("federal_withheld: zero value does NOT emit f1040 output", () => {
   const result = compute([
     minimalItem({ federal_withheld: 0 }),
   ]);
@@ -505,7 +506,7 @@ Deno.test("federal_withheld: zero value does NOT emit f1040 output", () => {
   assertEquals(f1040Out, undefined);
 });
 
-Deno.test("federal_withheld: absent field does NOT emit f1040 output", () => {
+test("federal_withheld: absent field does NOT emit f1040 output", () => {
   const result = compute([minimalItem()]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out, undefined);
@@ -515,7 +516,7 @@ Deno.test("federal_withheld: absent field does NOT emit f1040 output", () => {
 // 6. Transaction Fields Forwarded to schedule_d
 // ---------------------------------------------------------------------------
 
-Deno.test("forwarding: all core transaction fields forwarded to schedule_d", () => {
+test("forwarding: all core transaction fields forwarded to schedule_d", () => {
   const result = compute([
     minimalItem({
       part: "C",
@@ -546,7 +547,7 @@ Deno.test("forwarding: all core transaction fields forwarded to schedule_d", () 
 // 7. Adjustment Codes — Pass-Through Behaviour
 // ---------------------------------------------------------------------------
 
-Deno.test("adjustment_codes: wash sale code W — positive adjustment reduces loss", () => {
+test("adjustment_codes: wash sale code W — positive adjustment reduces loss", () => {
   // Sold at loss -500, disallowed wash sale 300, effective loss -200
   const result = compute([
     minimalItem({
@@ -563,7 +564,7 @@ Deno.test("adjustment_codes: wash sale code W — positive adjustment reduces lo
   assertEquals(tx.gain_loss, -200); // 1000 - 1500 + 300
 });
 
-Deno.test("adjustment_codes: code H (home exclusion) — negative adjustment reduces gain", () => {
+test("adjustment_codes: code H (home exclusion) — negative adjustment reduces gain", () => {
   // Full partial exclusion of home gain
   const result = compute([
     minimalItem({
@@ -581,7 +582,7 @@ Deno.test("adjustment_codes: code H (home exclusion) — negative adjustment red
   assertEquals(tx.gain_loss, 250000); // 800000 - 300000 + (-250000)
 });
 
-Deno.test("adjustment_codes: code L (loss not allowed) — positive adjustment zeroes loss", () => {
+test("adjustment_codes: code L (loss not allowed) — positive adjustment zeroes loss", () => {
   // Related-party sale, loss disallowed; adjustment_amount = |loss|
   const result = compute([
     minimalItem({
@@ -598,7 +599,7 @@ Deno.test("adjustment_codes: code L (loss not allowed) — positive adjustment z
   assertEquals(tx.gain_loss, 0); // 2000 - 3000 + 1000
 });
 
-Deno.test("adjustment_codes: code E (selling expenses) — negative adjustment reduces proceeds", () => {
+test("adjustment_codes: code E (selling expenses) — negative adjustment reduces proceeds", () => {
   // Broker shows gross proceeds; selling expenses $200 not subtracted
   const result = compute([
     minimalItem({
@@ -615,7 +616,7 @@ Deno.test("adjustment_codes: code E (selling expenses) — negative adjustment r
   assertEquals(tx.gain_loss, 1800); // 5000 - 3000 + (-200)
 });
 
-Deno.test("adjustment_codes: code Z (QOF deferral) — negative adjustment defers gain to zero", () => {
+test("adjustment_codes: code Z (QOF deferral) — negative adjustment defers gain to zero", () => {
   // Gain of 10000 deferred into QOF; col_h should be 0
   const result = compute([
     minimalItem({
@@ -638,7 +639,7 @@ Deno.test("adjustment_codes: code Z (QOF deferral) — negative adjustment defer
 // 8. Special Cases — INHERITED date_acquired
 // ---------------------------------------------------------------------------
 
-Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=true", () => {
+test("inherited: INHERITED date_acquired with Part II part is_long_term=true", () => {
   // INHERITED always forces Part II (long-term)
   const result = compute([
     minimalItem({
@@ -657,7 +658,7 @@ Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=tru
   assertEquals(tx.gain_loss, 100000);
 });
 
-Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
+test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
   const result = compute([
     minimalItem({
       part: "B",
@@ -675,7 +676,7 @@ Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
 // 9. Collectibles — collectibles checkbox routes to 28% rate worksheet (pending)
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles: long-term Part D still produces schedule_d with correct gain_loss", () => {
+test("collectibles: long-term Part D still produces schedule_d with correct gain_loss", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -696,7 +697,7 @@ Deno.test("collectibles: long-term Part D still produces schedule_d with correct
 // 10. AMT Cost Basis — identified positive LT gain routes to Form 6251 line 2k
 // ---------------------------------------------------------------------------
 
-Deno.test("amt_cost_basis: identified LT gain routes reconciled bases to Form 6251 line 2k", () => {
+test("amt_cost_basis: identified LT gain routes reconciled bases to Form 6251 line 2k", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -721,7 +722,7 @@ Deno.test("amt_cost_basis: identified LT gain routes reconciled bases to Form 62
   );
 });
 
-Deno.test("amt_cost_basis: identified short-term gain routes to Form 6251 line 2k", () => {
+test("amt_cost_basis: identified short-term gain routes to Form 6251 line 2k", () => {
   const result = compute([minimalItem({
     part: "A",
     source_transaction_id: "broker-st-1",
@@ -743,7 +744,7 @@ Deno.test("amt_cost_basis: identified short-term gain routes to Form 6251 line 2
   );
 });
 
-Deno.test("amt_cost_basis: identified short-term loss routes signed bases to Form 6251", () => {
+test("amt_cost_basis: identified short-term loss routes signed bases to Form 6251", () => {
   const result = compute([minimalItem({
     part: "A",
     source_transaction_id: "broker-st-loss",
@@ -765,7 +766,7 @@ Deno.test("amt_cost_basis: identified short-term loss routes signed bases to For
   );
 });
 
-Deno.test("amt_cost_basis: short-term regular loss can become an AMT gain", () => {
+test("amt_cost_basis: short-term regular loss can become an AMT gain", () => {
   const result = compute([minimalItem({
     part: "A",
     source_transaction_id: "broker-st-mfs-crossover",
@@ -787,7 +788,7 @@ Deno.test("amt_cost_basis: short-term regular loss can become an AMT gain", () =
   );
 });
 
-Deno.test("amt_cost_basis: identified long-term loss routes signed bases to Form 6251", () => {
+test("amt_cost_basis: identified long-term loss routes signed bases to Form 6251", () => {
   const result = compute([minimalItem({
     part: "D",
     source_transaction_id: "broker-lt-loss",
@@ -809,7 +810,7 @@ Deno.test("amt_cost_basis: identified long-term loss routes signed bases to Form
   );
 });
 
-Deno.test("amt_cost_basis: unsupported loss and digital cases fail closed", () => {
+test("amt_cost_basis: unsupported loss and digital cases fail closed", () => {
   for (
     const row of [
       { part: "G", source_transaction_id: "digital-st" },
@@ -831,7 +832,7 @@ Deno.test("amt_cost_basis: unsupported loss and digital cases fail closed", () =
   }
 });
 
-Deno.test("amt_cost_basis: equals cost_basis produces no form6251 output", () => {
+test("amt_cost_basis: equals cost_basis produces no form6251 output", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -845,7 +846,7 @@ Deno.test("amt_cost_basis: equals cost_basis produces no form6251 output", () =>
   assertEquals(form6251Out, undefined);
 });
 
-Deno.test("amt_cost_basis: absent produces no form6251 output", () => {
+test("amt_cost_basis: absent produces no form6251 output", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -858,7 +859,7 @@ Deno.test("amt_cost_basis: absent produces no form6251 output", () => {
   assertEquals(form6251Out, undefined);
 });
 
-Deno.test("wash_sale_loss: auto-creates W code and sets adjustment_amount", () => {
+test("wash_sale_loss: auto-creates W code and sets adjustment_amount", () => {
   const result = compute([
     minimalItem({
       proceeds: 4000,
@@ -875,7 +876,7 @@ Deno.test("wash_sale_loss: auto-creates W code and sets adjustment_amount", () =
   assertEquals(tx.gain_loss, -200); // 4000 - 5000 + 800
 });
 
-Deno.test("wash_sale_loss: appends W to existing adjustment_codes", () => {
+test("wash_sale_loss: appends W to existing adjustment_codes", () => {
   const result = compute([
     minimalItem({
       proceeds: 4000,
@@ -891,7 +892,7 @@ Deno.test("wash_sale_loss: appends W to existing adjustment_codes", () => {
   assertEquals(tx.adjustment_codes, "BW");
 });
 
-Deno.test("loss_not_allowed: auto-creates L code and zeroes the loss", () => {
+test("loss_not_allowed: auto-creates L code and zeroes the loss", () => {
   const result = compute([
     minimalItem({
       proceeds: 2000,
@@ -907,7 +908,7 @@ Deno.test("loss_not_allowed: auto-creates L code and zeroes the loss", () => {
   assertEquals(tx.gain_loss, 0);
 });
 
-Deno.test("QSBS source cannot bypass Form 6251 preference and Schedule D exclusion", () => {
+test("QSBS source cannot bypass Form 6251 preference and Schedule D exclusion", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -923,7 +924,7 @@ Deno.test("QSBS source cannot bypass Form 6251 preference and Schedule D exclusi
   );
 });
 
-Deno.test("state_tax_withheld: accepted by schema, does not route to f1040, schedule_d still present", () => {
+test("state_tax_withheld: accepted by schema, does not route to f1040, schedule_d still present", () => {
   const result = compute([
     minimalItem({ proceeds: 5000, cost_basis: 3000, state_tax_withheld: 200 }),
   ]);
@@ -942,7 +943,7 @@ Deno.test("state_tax_withheld: accepted by schema, does not route to f1040, sche
 // 11. Worthless Securities — proceeds = 0, loss = full cost_basis
 // ---------------------------------------------------------------------------
 
-Deno.test("worthless: proceeds=0, gain_loss = negative cost_basis", () => {
+test("worthless: proceeds=0, gain_loss = negative cost_basis", () => {
   const result = compute([
     minimalItem({
       part: "B",
@@ -964,7 +965,7 @@ Deno.test("worthless: proceeds=0, gain_loss = negative cost_basis", () => {
 // 12. Nonbusiness Bad Debt — always Part I (short-term), proceeds=0
 // ---------------------------------------------------------------------------
 
-Deno.test("nonbusiness bad debt: Part C, proceeds=0, short-term loss", () => {
+test("nonbusiness bad debt: Part C, proceeds=0, short-term loss", () => {
   const result = compute([
     minimalItem({
       part: "C",
@@ -987,13 +988,13 @@ Deno.test("nonbusiness bad debt: Part C, proceeds=0, short-term loss", () => {
 // 13. Edge Cases
 // ---------------------------------------------------------------------------
 
-Deno.test("edge: single item — exactly one schedule_d output emitted", () => {
+test("edge: single item — exactly one schedule_d output emitted", () => {
   const result = compute([minimalItem()]);
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
   assertEquals(sdOutputs.length, 1);
 });
 
-Deno.test("edge: proceeds = cost_basis and no adjustment — gain_loss = 0", () => {
+test("edge: proceeds = cost_basis and no adjustment — gain_loss = 0", () => {
   const result = compute([
     minimalItem({ proceeds: 3000, cost_basis: 3000 }),
   ]);
@@ -1004,7 +1005,7 @@ Deno.test("edge: proceeds = cost_basis and no adjustment — gain_loss = 0", () 
   assertEquals(tx.gain_loss, 0);
 });
 
-Deno.test("edge: large numbers — no overflow or truncation", () => {
+test("edge: large numbers — no overflow or truncation", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -1020,7 +1021,7 @@ Deno.test("edge: large numbers — no overflow or truncation", () => {
   assertEquals(tx.gain_loss, 9_900_000);
 });
 
-Deno.test("edge: multiple adjustment codes in adjustment_codes string are forwarded", () => {
+test("edge: multiple adjustment codes in adjustment_codes string are forwarded", () => {
   const result = compute([
     minimalItem({
       part: "A",
@@ -1038,7 +1039,7 @@ Deno.test("edge: multiple adjustment codes in adjustment_codes string are forwar
   assertEquals(tx.gain_loss, 1100); // 5000 - 4000 + 100
 });
 
-Deno.test("edge: short sale — date_acquired after date_sold still produces correct gain_loss", () => {
+test("edge: short sale — date_acquired after date_sold still produces correct gain_loss", () => {
   // Short sales: date_acquired can be after date_sold when closing property acquired after short opened
   const result = compute([
     minimalItem({
@@ -1062,7 +1063,7 @@ Deno.test("edge: short sale — date_acquired after date_sold still produces cor
 // 14. Smoke Test — all major boxes populated
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: comprehensive transaction with adjustment, withholding, long-term", () => {
+test("smoke: comprehensive transaction with adjustment, withholding, long-term", () => {
   const result = compute([
     {
       part: "D",
@@ -1098,7 +1099,7 @@ Deno.test("smoke: comprehensive transaction with adjustment, withholding, long-t
   assertEquals(result.outputs.length, 2);
 });
 
-Deno.test("smoke: mixed short-term and long-term transactions in one call", () => {
+test("smoke: mixed short-term and long-term transactions in one call", () => {
   const result = compute([
     // Short-term gain
     minimalItem({ part: "A", proceeds: 10000, cost_basis: 7000 }),

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { scheduleD } from "../../2025/mef/forms/income/investments/schedule_d.ts";
 import { scheduleDPdf } from "../../2025/pdf/forms/income/investments/schedule_d.ts";
 import { f1040_2025 } from "../../2025/index.ts";
@@ -24,7 +25,7 @@ import {
   SCENARIO_1040_03_SOURCE,
 } from "./scenario_1040_03_input.ts";
 
-Deno.test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source facts", () => {
+test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source facts", () => {
   const input = scenario104003Input();
   const general = input.general as Record<string, unknown>;
   const form1099R = (input.f1099r as Record<string, unknown>[])[0];
@@ -59,7 +60,7 @@ Deno.test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source
   ]);
 });
 
-Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed totals", () => {
+test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed totals", () => {
   const source = SCENARIO_1040_03_SOURCE;
   const recon = SCENARIO_1040_03_RECONCILIATION;
   const shortGain = source.scheduleD.shortTermLine1aProceeds -
@@ -94,7 +95,7 @@ Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed
   );
 });
 
-Deno.test("ATS 1040 Scenario 3 retains issued Form 4835 entries without filling blank totals", () => {
+test("ATS 1040 Scenario 3 retains issued Form 4835 entries without filling blank totals", () => {
   const rental = SCENARIO_1040_03_SOURCE.form4835;
   assertEquals(rental, {
     activelyParticipated: true,
@@ -128,7 +129,7 @@ Deno.test("ATS 1040 Scenario 3 retains issued Form 4835 entries without filling 
   );
 });
 
-Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the farm optional method", () => {
+test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the farm optional method", () => {
   const input = scenario104003Input();
   const farmInput = input.schedule_f as {
     farm_optional_method_elected: boolean;
@@ -171,7 +172,7 @@ Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the 
   assertEquals(seFields("form8959")?.se_income, 8_111 * 2 / 3);
 });
 
-Deno.test("ATS 1040 Scenario 3 farm source matches native and printable Schedule F and SE", async () => {
+test("ATS 1040 Scenario 3 farm source matches native and printable Schedule F and SE", async () => {
   const input = scenario104003Input();
   const farmInput = schedule_f.inputSchema.parse(input.schedule_f);
   const farmResult = schedule_f.compute(
@@ -248,7 +249,7 @@ Deno.test("ATS 1040 Scenario 3 farm source matches native and printable Schedule
   assertEquals(filledSe.getPageCount(), 2);
 });
 
-Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targets", () => {
+test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targets", () => {
   const recon = SCENARIO_1040_03_RECONCILIATION;
   assertEquals(
     recon.printedSource.scheduleFGrossSales <=
@@ -272,7 +273,7 @@ Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing
   );
 });
 
-Deno.test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 1040 without adding SE earnings", () => {
+test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 1040 without adding SE earnings", () => {
   const result = f1040_2025.executeReturn(scenario104003Input());
   assertEquals(result.diagnostics, []);
   const p = result.pending;
@@ -318,7 +319,7 @@ Deno.test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 
   assertEquals(eCopy.farm_line42, 17_035);
 });
 
-Deno.test("ATS 1040 Scenario 3 aggregate basis-reported gains reach native, PDF and Form1040 without fabricated sales", () => {
+test("ATS 1040 Scenario 3 aggregate basis-reported gains reach native, PDF and Form1040 without fabricated sales", () => {
   const input = scenario104003Input();
   assertEquals(input.f1099b, undefined);
   assertEquals(input.f8949, undefined);

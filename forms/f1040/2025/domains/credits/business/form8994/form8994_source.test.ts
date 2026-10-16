@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form8994DirectEmployer,
@@ -5,7 +6,7 @@ import {
 } from "../../../../../nodes/inputs/credits/business/f8994/fixture.ts";
 import { reconcileForm8994DirectEmployer } from "./form8994_source.ts";
 
-Deno.test("Form 8994 source joins proprietor, employer EIN and Schedule C wage reduction", () => {
+test("Form 8994 source joins proprietor, employer EIN and Schedule C wage reduction", () => {
   assertEquals(
     reconcileForm8994DirectEmployer(
       form8994DirectEmployer,
@@ -15,7 +16,7 @@ Deno.test("Form 8994 source joins proprietor, employer EIN and Schedule C wage r
   );
 });
 
-Deno.test("Form 8994 rejects prepared-return and wage deduction tampering", () => {
+test("Form 8994 rejects prepared-return and wage deduction tampering", () => {
   const business = form8994MatchedPending.schedule_c.schedule_cs[0];
   assertThrows(
     () =>

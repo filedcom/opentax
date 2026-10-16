@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -35,12 +38,7 @@ const xsd = new URL(
 ).pathname;
 const plan = buildExecutionPlan(registry);
 
-Deno.test({
-  name:
-    "TY2025 controlled Schedule C and cash Schedule F SHOP: actual group, deductions, partial credit, full XSD/PDF",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 controlled Schedule C and cash Schedule F SHOP: actual group, deductions, partial credit, full XSD/PDF", async () => {
     const input = form8941MixedCfInputs();
     const group = commonControlForm8941Shares(input.f8941);
     assertEquals(group.memberPremiums, [39245, 26555]);
@@ -104,29 +102,29 @@ Deno.test({
       bundle.xml,
       "<SumSmllrAmtAndCreditForHIPAmt>24017</SumSmllrAmtAndCreditForHIPAmt>",
     );
-    await Deno.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
     const prefix = dir + "same-owner-c-f-partial-use";
-    await Deno.writeTextFile(
+    await fs.writeFile(
       prefix + ".json",
       JSON.stringify({ input, group, lines, pending: p }, null, 2),
     );
-    await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-    const valid = await new Deno.Command("xmllint", {
+    await fs.writeFile(prefix + ".xml", bundle.xml);
+    const valid = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, prefix + ".xml"],
       stderr: "piped",
     }).output();
     assertEquals(valid.code, 0, new TextDecoder().decode(valid.stderr));
-    await Deno.writeFile(
+    await fs.writeFile(
       prefix + ".pdf",
       await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
     );
-    const extraction = await new Deno.Command("pdftotext", {
+    const extraction = await new sys.Command("pdftotext", {
       args: ["-layout", prefix + ".pdf", "-"],
       stdout: "piped",
     }).output();
     assertEquals(extraction.code, 0);
     const packet = new TextDecoder().decode(extraction.stdout);
-    await Deno.writeTextFile(prefix + ".txt", packet);
+    await fs.writeFile(prefix + ".txt", packet);
     for (
       const value of [
         "Jane Retail Shop",
@@ -138,14 +136,9 @@ Deno.test({
         "85629",
       ]
     ) assertStringIncludes(packet, value);
-  },
-});
+  });
 
-Deno.test({
-  name: "TY2025 mixed C/F SHOP source and direct native/PDF conflicts reject",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  async fn() {
+test("TY2025 mixed C/F SHOP source and direct native/PDF conflicts reject", async () => {
     const input = form8941MixedCfInputs();
     const result = execute(plan, registry, input, {
       taxYear: 2025,
@@ -282,10 +275,9 @@ Deno.test({
         name,
       );
     }
-  },
-});
+  });
 
-Deno.test("mixed C/F SHOP QBI uses actual sourced senior deduction in its income cap", async () => {
+test("mixed C/F SHOP QBI uses actual sourced senior deduction in its income cap", async () => {
   const base = form8941MixedCfInputs();
   const input = {
     ...base,
@@ -326,18 +318,18 @@ Deno.test("mixed C/F SHOP QBI uses actual sourced senior deduction in its income
     attachments: [],
   });
   const prefix = dir + "same-owner-c-f-senior-income-cap";
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
     prefix + ".json",
     JSON.stringify({ input, pending: p }, null, 2),
   );
-  await Deno.writeTextFile(prefix + ".xml", bundle.xml);
-  const x = await new Deno.Command("xmllint", {
+  await fs.writeFile(prefix + ".xml", bundle.xml);
+  const x = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, prefix + ".xml"],
     stderr: "piped",
   }).output();
   assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
-  await Deno.writeFile(
+  await fs.writeFile(
     prefix + ".pdf",
     await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
   );

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8873 } from "./index.ts";
 
@@ -6,7 +7,7 @@ const claim = {
   extraterritorial_income_excluded: 10_000,
 };
 
-Deno.test("Form 8873 intake validates the reported exclusion", () => {
+test("Form 8873 intake validates the reported exclusion", () => {
   assertEquals(f8873.inputSchema.safeParse({ f8873s: [claim] }).success, true);
   assertEquals(
     f8873.inputSchema.safeParse({
@@ -16,7 +17,7 @@ Deno.test("Form 8873 intake validates the reported exclusion", () => {
   );
 });
 
-Deno.test("Form 8873 rejects populated input before a line 8z reduction", () => {
+test("Form 8873 rejects populated input before a line 8z reduction", () => {
   for (const excluded of [0, 10_000]) {
     assertThrows(
       () =>

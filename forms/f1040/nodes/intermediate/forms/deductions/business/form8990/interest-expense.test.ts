@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { reconcileBusinessInterestExpenseRecords } from "./interest-expense.ts";
 import { stageProvisionalScheduleCInterest } from "./two-stage.ts";
@@ -36,7 +37,7 @@ const traced = {
   line16b_business_interest_amount: 100_000,
 };
 
-Deno.test("2025 Form 8990 interest records reconcile to one nonexcepted Schedule C", () => {
+test("2025 Form 8990 interest records reconcile to one nonexcepted Schedule C", () => {
   assertEquals(
     reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
       {
@@ -55,7 +56,7 @@ Deno.test("2025 Form 8990 interest records reconcile to one nonexcepted Schedule
   );
 });
 
-Deno.test("2025 Form 8990 traces all borrowed proceeds to two documented business uses", () => {
+test("2025 Form 8990 traces all borrowed proceeds to two documented business uses", () => {
   const record = {
     ...traced,
     debt_proceeds_trace: {
@@ -116,7 +117,7 @@ Deno.test("2025 Form 8990 traces all borrowed proceeds to two documented busines
   }
 });
 
-Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tracing", () => {
+test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tracing", () => {
   assertThrows(
     () => reconcileBusinessInterestExpenseRecords(provisional, "123456789", []),
   );
@@ -171,7 +172,7 @@ Deno.test("2025 Form 8990 rejects missing, duplicate, and unmatched interest tra
   );
 });
 
-Deno.test("2025 Form 8990 rejects untraced or excepted interest classifications", () => {
+test("2025 Form 8990 rejects untraced or excepted interest classifications", () => {
   assertThrows(
     () =>
       reconcileBusinessInterestExpenseRecords(provisional, "123456789", [
@@ -206,7 +207,7 @@ Deno.test("2025 Form 8990 rejects untraced or excepted interest classifications"
   );
 });
 
-Deno.test("2025 Form 8990 binds traced debt to the filer and one account/workpaper pair", () => {
+test("2025 Form 8990 binds traced debt to the filer and one account/workpaper pair", () => {
   assertThrows(
     () =>
       reconcileBusinessInterestExpenseRecords(provisional, "123456789", [

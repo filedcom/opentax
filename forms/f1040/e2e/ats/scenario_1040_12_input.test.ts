@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../2025/index.ts";
@@ -14,7 +15,7 @@ import {
 } from "./scenario_1040_12_input.ts";
 import { SCENARIO_1040_12_FACTS } from "./ty2025_cases.ts";
 
-Deno.test("ATS 1040 Scenario 12 public wage and business inputs reconcile Schedule C and SE with Form 1040", async () => {
+test("ATS 1040 Scenario 12 public wage and business inputs reconcile Schedule C and SE with Form 1040", async () => {
   const result = f1040_2025.executeReturn(scenario104012PartialInput());
   assertEquals(result.diagnostics, []);
   const p = result.pending;
@@ -62,7 +63,7 @@ Deno.test("ATS 1040 Scenario 12 public wage and business inputs reconcile Schedu
   assertEquals((await PDFDocument.load(sePdf!)).getPageCount(), 2);
 });
 
-Deno.test("ATS 1040 Scenario 12 income fixture does not resolve contradictory printed deduction or distribution basis", () => {
+test("ATS 1040 Scenario 12 income fixture does not resolve contradictory printed deduction or distribution basis", () => {
   const facts = SCENARIO_1040_12_FACTS;
   assertEquals(Object.keys(scenario104012PartialInput()).sort(), [
     "general",

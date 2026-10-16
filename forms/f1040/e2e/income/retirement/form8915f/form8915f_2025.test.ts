@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -73,7 +76,7 @@ for (
     ["traditional_ira", "plan"],
   ] as const
 ) {
-  Deno.test(`Form 8915-F ${qualifiedKind} plus ordinary ${otherKind} 1099-R reaches both exports`, async () => {
+  test(`Form 8915-F ${qualifiedKind} plus ordinary ${otherKind} 1099-R reaches both exports`, async () => {
     const ordinary = {
       ...inputs.f1099r[0],
       payer_name: "Other Plan",
@@ -161,7 +164,7 @@ for (
 }
 
 for (const sourceKind of ["plan", "traditional_ira"] as const) {
-  Deno.test(`2025 Form 8915-F ${sourceKind} repayment reaches Form 1040 and attached worksheet`, async () => {
+  test(`2025 Form 8915-F ${sourceKind} repayment reaches Form 1040 and attached worksheet`, async () => {
     const repaymentInputs = {
       ...inputs,
       f1099r: [{
@@ -232,10 +235,10 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, bundle.xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, bundle.xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -245,7 +248,7 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(result.pending, filer);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
@@ -274,7 +277,7 @@ for (
     }],
   ] as const
 ) {
-  Deno.test(`2026 timely ${sourceKind} repayment reduces the 2025 return with a worksheet`, async () => {
+  test(`2026 timely ${sourceKind} repayment reduces the 2025 return with a worksheet`, async () => {
     const result = execute(plan, registry, {
       ...inputs,
       f1099r: [{
@@ -329,10 +332,10 @@ for (
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, bundle.xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, bundle.xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -342,14 +345,14 @@ for (
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(result.pending, filer);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
   });
 }
 
-Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and PDF return", async () => {
+test("reviewed 2025 Form 8915-F plan distribution reaches full native and PDF return", async () => {
   const result = execute(plan, registry, inputs, {
     taxYear: 2025,
     formType: "f1040",
@@ -369,10 +372,10 @@ Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and P
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -382,7 +385,7 @@ Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and P
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 6, true);
@@ -398,7 +401,7 @@ Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and P
   );
 });
 
-Deno.test("2025 Form 8915-F three-year election reports only the first-year pension share", async () => {
+test("2025 Form 8915-F three-year election reports only the first-year pension share", async () => {
   const spreadInputs = {
     ...inputs,
     f1099r: [{ ...inputs.f1099r[0], form8915f_treatment: "three_years" }],
@@ -426,10 +429,10 @@ Deno.test("2025 Form 8915-F three-year election reports only the first-year pens
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -439,7 +442,7 @@ Deno.test("2025 Form 8915-F three-year election reports only the first-year pens
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
@@ -462,7 +465,7 @@ for (
     [false, 6_667],
   ] as const
 ) {
-  Deno.test(`2025 Form 8915-F traditional IRA ${fullInclusion ? "full" : "spread"} route reaches full return`, async () => {
+  test(`2025 Form 8915-F traditional IRA ${fullInclusion ? "full" : "spread"} route reaches full return`, async () => {
     const iraInputs = {
       ...inputs,
       f1099r: [{
@@ -504,10 +507,10 @@ for (
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -517,7 +520,7 @@ for (
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(result.pending, filer);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
@@ -538,7 +541,7 @@ for (
   });
 }
 
-Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", async () => {
+test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", async () => {
   const spouseInputs = {
     ...inputs,
     general: {
@@ -584,10 +587,10 @@ Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", asyn
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, xml);
-    const validation = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, xml);
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -597,14 +600,14 @@ Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", asyn
       new TextDecoder().decode(validation.stderr),
     );
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
 });
 
 for (const sourceKind of ["plan", "traditional_ira"] as const) {
-  Deno.test(`code 1 ${sourceKind} qualified disaster distribution avoids Form 5329`, async () => {
+  test(`code 1 ${sourceKind} qualified disaster distribution avoids Form 5329`, async () => {
     const earlyInputs = {
       ...inputs,
       f1099r: [{
@@ -645,10 +648,10 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
       "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(xmlPath, xml);
-      const validation = await new Deno.Command("xmllint", {
+      await fs.writeFile(xmlPath, xml);
+      const validation = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, xmlPath],
         stderr: "piped",
       }).output();
@@ -658,7 +661,7 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
         new TextDecoder().decode(validation.stderr),
       );
     } finally {
-      await Deno.remove(xmlPath);
+      await sys.remove(xmlPath);
     }
     const pdf = await buildPdfBytes(result.pending, filer);
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);

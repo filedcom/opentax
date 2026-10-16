@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { form2441Pdf } from "./f2441.ts";
@@ -10,7 +11,7 @@ const pending = {
   schedule3: { line2_childcare_credit: 500 },
 };
 
-Deno.test("Form 2441 PDF prints sourced care rows and the limited credit", () => {
+test("Form 2441 PDF prints sourced care rows and the limited credit", () => {
   const fields = form2441Pdf.projectFields!(source, pending);
   assertEquals(form2441Pdf.includeWhen!(fields, pending), true);
   assertEquals(form2441Pdf.pageIndices!(fields), [0]);
@@ -25,7 +26,7 @@ Deno.test("Form 2441 PDF prints sourced care rows and the limited credit", () =>
   );
 });
 
-Deno.test("Form 2441 PDF holds benefit and credit-mismatch claims", () => {
+test("Form 2441 PDF holds benefit and credit-mismatch claims", () => {
   assertThrows(
     () =>
       form2441Pdf.projectFields!(

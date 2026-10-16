@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm2106Lines,
@@ -22,13 +23,13 @@ function source() {
   }
   return { item, qualification: item.qualification };
 }
-Deno.test("Reservist expense form retains 838 while federal caps allow 633", () => {
+test("Reservist expense form retains 838 while federal caps allow 633", () => {
   const { item } = source();
   const lines = calculateForm2106Lines(item);
   assertEquals(lines.line10_deduction, 838);
   assertEquals(form2106Contribution(item, lines), 633);
 });
-Deno.test("Reservist 100-mile boundary excludes the whole near trip", () => {
+test("Reservist 100-mile boundary excludes the whole near trip", () => {
   const { qualification: q } = source();
   for (const distance of [100, 100.01]) {
     const trips = reservistTripsSchema.parse(
@@ -40,7 +41,7 @@ Deno.test("Reservist 100-mile boundary excludes the whole near trip", () => {
     );
   }
 });
-Deno.test("Reservist records reconcile to each Form 2106 expense category", () => {
+test("Reservist records reconcile to each Form 2106 expense category", () => {
   const { item } = source();
   assertThrows(
     () =>
@@ -61,7 +62,7 @@ Deno.test("Reservist records reconcile to each Form 2106 expense category", () =
     "trip totals",
   );
 });
-Deno.test("Reservist trip days reject gaps, impossible dates and return-night lodging", () => {
+test("Reservist trip days reject gaps, impossible dates and return-night lodging", () => {
   const { qualification: q } = source();
   const trip = q.trips[0];
   for (
@@ -78,7 +79,7 @@ Deno.test("Reservist trip days reject gaps, impossible dates and return-night lo
     );
   }
 });
-Deno.test("Reservist rate review changes fiscal year at October 1", () => {
+test("Reservist rate review changes fiscal year at October 1", () => {
   const { qualification: q } = source();
   const trip = q.trips[0];
   const dates = ["2025-09-30", "2025-10-01", "2025-10-02"];
@@ -102,7 +103,7 @@ Deno.test("Reservist rate review changes fiscal year at October 1", () => {
     false,
   );
 });
-Deno.test("Reservist jobs for one owner cannot reuse the same travel dates", () => {
+test("Reservist jobs for one owner cannot reuse the same travel dates", () => {
   const { item } = source();
   assertEquals(
     inputSchema.safeParse({
@@ -118,7 +119,7 @@ Deno.test("Reservist jobs for one owner cannot reuse the same travel dates", () 
     false,
   );
 });
-Deno.test("Reservist rates require reviewed locality facts and supported CONUS meal tiers", () => {
+test("Reservist rates require reviewed locality facts and supported CONUS meal tiers", () => {
   const { qualification: q } = source();
   const trip = q.trips[0];
   for (

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099g } from "../../../../../nodes/inputs/income/other/f1099g/index.ts";
 import {
@@ -71,7 +72,7 @@ function reviewedReturn() {
   };
 }
 
-Deno.test("Form 6251 line 2b reviewed refund reaches AMT, native, and PDF", () => {
+test("Form 6251 line 2b reviewed refund reaches AMT, native, and PDF", () => {
   const { fields, pending } = reviewedReturn();
   assertEquals(fields.amti, 199_000);
   assertStringIncludes(
@@ -83,7 +84,7 @@ Deno.test("Form 6251 line 2b reviewed refund reaches AMT, native, and PDF", () =
   assertEquals(printed.regular_tax_income, 200_000);
 });
 
-Deno.test("Form 6251 line 2b rejects altered source or return joins", () => {
+test("Form 6251 line 2b rejects altered source or return joins", () => {
   const { fields, pending } = reviewedReturn();
   const changed = [
     {

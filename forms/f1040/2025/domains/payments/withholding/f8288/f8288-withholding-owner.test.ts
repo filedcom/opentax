@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { WithholdingRate } from "../../../../../nodes/inputs/payments/withholding/f8288/index.ts";
@@ -27,7 +28,7 @@ const item = {
   stamped_copy_b_reference: "irs-stamped-8288a-copy-b-1",
 };
 
-Deno.test("Form 8288-A credit owner may be taxpayer or joint spouse", () => {
+test("Form 8288-A credit owner may be taxpayer or joint spouse", () => {
   assertF8288WithholdingOwner({ f8288s: [item] }, filer);
   assertF8288WithholdingOwner({
     f8288s: [{ ...item, seller_tin: "222334444" }],
@@ -51,7 +52,7 @@ Deno.test("Form 8288-A credit owner may be taxpayer or joint spouse", () => {
   }, filer);
 });
 
-Deno.test("positive Form 8288-A needs seller and stamped Copy B before export", async () => {
+test("positive Form 8288-A needs seller and stamped Copy B before export", async () => {
   for (
     const changed of [
       { seller_tin: undefined },
@@ -81,7 +82,7 @@ Deno.test("positive Form 8288-A needs seller and stamped Copy B before export", 
   }
 });
 
-Deno.test("Form 8288-A repeated stamped copy cannot claim credit twice", async () => {
+test("Form 8288-A repeated stamped copy cannot claim credit twice", async () => {
   const source = {
     f8288: { f8288s: [item, { ...item, amount_withheld: 10_000 }] },
   };

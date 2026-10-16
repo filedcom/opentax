@@ -1,8 +1,9 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { calculateForm3800Nonpassive } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 
-Deno.test("whole-dollar Form 3800 reuses rounded 75% TMT before empowerment credit tax use", () => {
+test("whole-dollar Form 3800 reuses rounded 75% TMT before empowerment credit tax use", () => {
   const tax = {
     regularTax: 40_000,
     alternativeMinimumTax: 0,

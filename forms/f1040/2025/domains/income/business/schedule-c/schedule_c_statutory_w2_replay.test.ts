@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -75,7 +77,7 @@ function run(changed: Record<string, unknown> = {}) {
   );
 }
 
-Deno.test("two statutory W-2 copies carry exact box 1 wages through Schedule C and final exports", async () => {
+test("two statutory W-2 copies carry exact box 1 wages through Schedule C and final exports", async () => {
   const result = run();
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -94,7 +96,7 @@ Deno.test("two statutory W-2 copies carry exact box 1 wages through Schedule C a
     xml,
     "<TotalAdditionalIncomeAmt>75000</TotalAdditionalIncomeAmt>",
   );
-  const validated = await new Deno.Command("xmllint", {
+  const validated = await new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -106,7 +108,7 @@ Deno.test("two statutory W-2 copies carry exact box 1 wages through Schedule C a
   const checked = await validated.output();
   assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   const pdf = await buildPdfBytes(pending, base.filer);
-  const textReader = new Deno.Command("pdftotext", {
+  const textReader = new sys.Command("pdftotext", {
     args: ["-layout", "-", "-"],
     stdin: "piped",
     stdout: "piped",
@@ -122,7 +124,7 @@ Deno.test("two statutory W-2 copies carry exact box 1 wages through Schedule C a
   assertStringIncludes(pdfText, "75000");
 });
 
-Deno.test("statutory W-2 business link and exact per-copy replay reject omissions and tampering", async () => {
+test("statutory W-2 business link and exact per-copy replay reject omissions and tampering", async () => {
   for (
     const changed of [
       {

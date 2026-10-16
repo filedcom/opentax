@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { calculateForm4952 } from "../../../../../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
 import { reconcileForm4952K1CodeBRoyaltyPath } from "./form4952_k1_code_b_reconciliation.ts";
@@ -92,11 +93,11 @@ const pending = {
   },
 };
 
-Deno.test("Form 4952 code B matches one issuer-linked code I Schedule E deduction and finalized return", () => {
+test("Form 4952 code B matches one issuer-linked code I Schedule E deduction and finalized return", () => {
   reconcileForm4952K1CodeBRoyaltyPath(fields, pending);
 });
 
-Deno.test("Form 4952 code B rejects a duplicate or tampered Schedule E deduction", () => {
+test("Form 4952 code B rejects a duplicate or tampered Schedule E deduction", () => {
   assertThrows(
     () => reconcileForm4952K1CodeBRoyaltyPath(fields, {
       ...pending,
@@ -147,7 +148,7 @@ Deno.test("Form 4952 code B rejects a duplicate or tampered Schedule E deduction
   );
 });
 
-Deno.test("Form 4952 code B rejects a changed K-1 issuer link or source amount", () => {
+test("Form 4952 code B rejects a changed K-1 issuer link or source amount", () => {
   assertThrows(
     () =>
       reconcileForm4952K1CodeBRoyaltyPath(fields, {
@@ -187,7 +188,7 @@ Deno.test("Form 4952 code B rejects a changed K-1 issuer link or source amount",
   );
 });
 
-Deno.test("Form 4952 code B rejects missing filed-line and itemization matches", () => {
+test("Form 4952 code B rejects missing filed-line and itemization matches", () => {
   assertThrows(
     () =>
       reconcileForm4952K1CodeBRoyaltyPath(fields, {

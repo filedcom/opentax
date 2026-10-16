@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -12,7 +13,7 @@ import {
 import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
 import { bonusElectionInput, electionCases } from "./elections.fixture.ts";
 
-Deno.test("Bonus elections reconcile class-wide and return-wide choices through complete returns", async () => {
+test("Bonus elections reconcile class-wide and return-wide choices through complete returns", async () => {
   for (const scenario of electionCases) {
     const input = bonusElectionInput(scenario);
     const before = JSON.stringify(input);
@@ -60,7 +61,7 @@ Deno.test("Bonus elections reconcile class-wide and return-wide choices through 
   }
 });
 
-Deno.test("Bonus election inventory rejects partial class choices, partial reduced rates and unreviewed elections", () => {
+test("Bonus election inventory rejects partial class choices, partial reduced rates and unreviewed elections", () => {
   const inventory =
     bonusElectionInput(electionCases[2]).form4562.current_year_inventory;
   for (
@@ -142,7 +143,7 @@ Deno.test("Bonus election inventory rejects partial class choices, partial reduc
   );
 });
 
-Deno.test("Election source and native statements reject stale filed rows and owner changes", async () => {
+test("Election source and native statements reject stale filed rows and owner changes", async () => {
   const result = f1040_2025.executeReturn(bonusElectionInput(electionCases[0]));
   const p = result.pending;
   const filed = filedCurrentYearSchema.parse(p.form4562);

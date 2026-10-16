@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -41,7 +42,7 @@ const source = {
   taxpayer_claimed_as_dependent: false,
 };
 
-Deno.test("Form 8880 source, Schedule 3, and Form 1040 remain in DAG order", () => {
+test("Form 8880 source, Schedule 3, and Form 1040 remain in DAG order", () => {
   const ordered = buildExecutionPlan(registry).map((step) => step.nodeType);
   assertEquals(
     ordered.indexOf("form8880") < ordered.indexOf("schedule3"),
@@ -50,7 +51,7 @@ Deno.test("Form 8880 source, Schedule 3, and Form 1040 remain in DAG order", () 
   assertEquals(ordered.indexOf("schedule3") < ordered.indexOf("f1040"), true);
 });
 
-Deno.test("public general and W-2 inputs deliver one scalar Form 8880 filing status", () => {
+test("public general and W-2 inputs deliver one scalar Form 8880 filing status", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -86,7 +87,7 @@ function run(tax: number, priority = 100) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("Form 8880 finalizes from sourced tax and prior credit without a DAG cycle", () => {
+test("Form 8880 finalizes from sourced tax and prior credit without a DAG cycle", () => {
   const result = run(800);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form8880.print_line11_tax_liability, 700);
@@ -107,7 +108,7 @@ Deno.test("Form 8880 finalizes from sourced tax and prior credit without a DAG c
   );
 });
 
-Deno.test("Form 8880 limit subtracts every higher-priority Schedule 3 worksheet line", () => {
+test("Form 8880 limit subtracts every higher-priority Schedule 3 worksheet line", () => {
   const result = execute(plan, nodes, {
     retirement: source,
     priority: {
@@ -130,7 +131,7 @@ Deno.test("Form 8880 limit subtracts every higher-priority Schedule 3 worksheet 
   assertEquals(result.pending.schedule3.line8_total, 1_000);
 });
 
-Deno.test("Form 8880 finalized zero capacity cannot claim Schedule 3 line 4", () => {
+test("Form 8880 finalized zero capacity cannot claim Schedule 3 line 4", () => {
   const result = run(100);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form8880.calculated_zero_credit, true);
@@ -141,7 +142,7 @@ Deno.test("Form 8880 finalized zero capacity cannot claim Schedule 3 line 4", ()
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 100);
 });
 
-Deno.test("Form 8880 credit enters later clean-vehicle priority once", () => {
+test("Form 8880 credit enters later clean-vehicle priority once", () => {
   const result = execute(plan, nodes, {
     retirement: source,
     priority: {
@@ -161,7 +162,7 @@ Deno.test("Form 8880 credit enters later clean-vehicle priority once", () => {
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 800);
 });
 
-Deno.test("Form 8880 rejects prefilled Schedule 3 line 4 instead of double counting", () => {
+test("Form 8880 rejects prefilled Schedule 3 line 4 instead of double counting", () => {
   const result = execute(plan, nodes, {
     retirement: source,
     priority: { line4_retirement_savings_credit: 50 },
@@ -180,7 +181,7 @@ Deno.test("Form 8880 rejects prefilled Schedule 3 line 4 instead of double count
   );
 });
 
-Deno.test("Form 8880 rejects manually asserted tax capacity at its source boundary", () => {
+test("Form 8880 rejects manually asserted tax capacity at its source boundary", () => {
   const result = execute(plan, nodes, {
     retirement: { ...source, income_tax_liability: 9_999 },
   }, { taxYear: 2025, formType: "f1040" });
@@ -190,7 +191,7 @@ Deno.test("Form 8880 rejects manually asserted tax capacity at its source bounda
   );
 });
 
-Deno.test("Form 8880 cannot finalize a positive source without line 16 tax", () => {
+test("Form 8880 cannot finalize a positive source without line 16 tax", () => {
   const result = execute(plan, nodes, {
     retirement: source,
     return: { filing_status: FilingStatus.Single, line11_agi: 20_000 },

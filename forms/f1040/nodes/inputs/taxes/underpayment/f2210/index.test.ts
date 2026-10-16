@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f2210 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -18,7 +19,7 @@ function penaltyOutput(result: ReturnType<typeof compute>) {
 // Schema Validation
 // =============================================================================
 
-Deno.test("f2210.inputSchema: rejects negative values", () => {
+test("f2210.inputSchema: rejects negative values", () => {
   assertEquals(f2210.inputSchema.safeParse({ withholding: -1 }).success, false);
   assertEquals(
     f2210.inputSchema.safeParse({ underpayment_penalty: -50 }).success,
@@ -34,11 +35,11 @@ Deno.test("f2210.inputSchema: rejects negative values", () => {
 // Hard Validation
 // =============================================================================
 
-Deno.test("f2210.compute: throws on negative withholding", () => {
+test("f2210.compute: throws on negative withholding", () => {
   assertThrows(() => compute({ withholding: -1 }), Error);
 });
 
-Deno.test("f2210.compute: throws on negative underpayment_penalty", () => {
+test("f2210.compute: throws on negative underpayment_penalty", () => {
   assertThrows(() => compute({ underpayment_penalty: -50 }), Error);
 });
 
@@ -46,16 +47,16 @@ Deno.test("f2210.compute: throws on negative underpayment_penalty", () => {
 // Penalty Routing
 // =============================================================================
 
-Deno.test("f2210.compute: explicit penalty routes to f1040 line38_underpayment_penalty", () => {
+test("f2210.compute: explicit penalty routes to f1040 line38_underpayment_penalty", () => {
   const result = compute({ underpayment_penalty: 250 });
   assertEquals(penaltyOutput(result)?.line38_underpayment_penalty, 250);
 });
 
-Deno.test("f2210.compute: zero penalty — no output", () => {
+test("f2210.compute: zero penalty — no output", () => {
   assertEquals(compute({ underpayment_penalty: 0 }).outputs, []);
 });
 
-Deno.test("f2210.compute: empty input — no outputs", () => {
+test("f2210.compute: empty input — no outputs", () => {
   assertEquals(compute({}).outputs, []);
 });
 
@@ -63,7 +64,7 @@ Deno.test("f2210.compute: empty input — no outputs", () => {
 // Safe Harbor — 100% of prior year tax (AGI ≤ $150k)
 // =============================================================================
 
-Deno.test("f2210.compute: payments meet 100% prior year tax — no penalty", () => {
+test("f2210.compute: payments meet 100% prior year tax — no penalty", () => {
   // Prior tax = $8,000; AGI = $100k → 100% rule; withholding = $8,000 ≥ $8,000
   const result = compute({
     withholding: 8000,
@@ -74,7 +75,7 @@ Deno.test("f2210.compute: payments meet 100% prior year tax — no penalty", () 
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f2210.compute: payments just below 100% prior year threshold — safe harbor not met", () => {
+test("f2210.compute: payments just below 100% prior year threshold — safe harbor not met", () => {
   // Prior tax = $8,000; withholding = $7,999; current year 90% = $9,000 → neither met
   // No explicit penalty provided → no output (engine doesn't self-compute penalty amount)
   const result = compute({
@@ -90,7 +91,7 @@ Deno.test("f2210.compute: payments just below 100% prior year threshold — safe
 // Safe Harbor — 110% of prior year tax (AGI > $150k)
 // =============================================================================
 
-Deno.test("f2210.compute: AGI > $150k triggers 110% rule — safe harbor needs 110% of prior tax", () => {
+test("f2210.compute: AGI > $150k triggers 110% rule — safe harbor needs 110% of prior tax", () => {
   // Prior AGI = $200k → 110% rule; prior tax = $10,000 → need $11,000
   // Withholding = $10,000 < $11,000; current 90% = $9,000 < $10,000
   // safe harbor = min(9000, 11000) = 9000; payments = $10,000 ≥ $9,000 → met
@@ -103,7 +104,7 @@ Deno.test("f2210.compute: AGI > $150k triggers 110% rule — safe harbor needs 1
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f2210.compute: AGI > $150k and insufficient payments computes a penalty", () => {
+test("f2210.compute: AGI > $150k and insufficient payments computes a penalty", () => {
   // current 90% = $9,000; prior 110% = $11,000; safe harbor = min = $9,000
   // withholding = $8,000 < $9,000 → not met; no penalty provided → no output
   const result = compute({
@@ -115,7 +116,7 @@ Deno.test("f2210.compute: AGI > $150k and insufficient payments computes a penal
   assertEquals(penaltyOutput(result)?.line38_underpayment_penalty, 47);
 });
 
-Deno.test("f2210.compute: AGI exactly at $150k uses 100% rule (not 110%)", () => {
+test("f2210.compute: AGI exactly at $150k uses 100% rule (not 110%)", () => {
   // AGI = $150,000 is NOT > threshold, so 100% rule applies
   // Prior tax = $10,000; withholding = $10,000 = 100% → safe harbor met
   const result = compute({
@@ -131,7 +132,7 @@ Deno.test("f2210.compute: AGI exactly at $150k uses 100% rule (not 110%)", () =>
 // Safe Harbor — 90% of current year tax
 // =============================================================================
 
-Deno.test("f2210.compute: payments meet 90% current year tax — no penalty", () => {
+test("f2210.compute: payments meet 90% current year tax — no penalty", () => {
   // Tax = $10,000; 90% = $9,000; withholding = $9,000 → safe harbor met
   const result = compute({
     withholding: 9000,
@@ -140,7 +141,7 @@ Deno.test("f2210.compute: payments meet 90% current year tax — no penalty", ()
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f2210.compute: quarterly payments contribute to 90% safe harbor", () => {
+test("f2210.compute: quarterly payments contribute to 90% safe harbor", () => {
   // $5,000 withholding + 4 × $1,000 quarterly = $9,000; current tax $10,000; 90% = $9,000 → met
   const result = compute({
     withholding: 5000,
@@ -157,12 +158,12 @@ Deno.test("f2210.compute: quarterly payments contribute to 90% safe harbor", () 
 // Waiver
 // =============================================================================
 
-Deno.test("f2210.compute: waiver_requested suppresses penalty even when penalty is provided", () => {
+test("f2210.compute: waiver_requested suppresses penalty even when penalty is provided", () => {
   const result = compute({ underpayment_penalty: 500, waiver_requested: true });
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f2210.compute: Part II B, D, and E reasons cannot be treated as a bare line 38 penalty", () => {
+test("f2210.compute: Part II B, D, and E reasons cannot be treated as a bare line 38 penalty", () => {
   for (
     const reason of [
       "partial_waiver_requested",
@@ -179,11 +180,11 @@ Deno.test("f2210.compute: Part II B, D, and E reasons cannot be treated as a bar
 // Informational Fields
 // =============================================================================
 
-Deno.test("f2210.compute: annualized_method flag alone — no outputs", () => {
+test("f2210.compute: annualized_method flag alone — no outputs", () => {
   assertEquals(compute({ annualized_method: true }).outputs, []);
 });
 
-Deno.test("f2210.compute: required annual payment routes to final calculation", () => {
+test("f2210.compute: required annual payment routes to final calculation", () => {
   const fields = penaltyOutput(compute({ required_annual_payment: 5000 }));
   assertEquals(fields?.f2210_active, true);
   assertEquals(fields?.f2210_required_annual_payment, 5000);
@@ -193,7 +194,7 @@ Deno.test("f2210.compute: required annual payment routes to final calculation", 
 // Smoke Test
 // =============================================================================
 
-Deno.test("f2210.compute: smoke — explicit penalty with full context routes to f1040", () => {
+test("f2210.compute: smoke — explicit penalty with full context routes to f1040", () => {
   const result = compute({
     withholding: 5000,
     q1_estimated_payment: 500,

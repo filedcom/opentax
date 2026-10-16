@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -7,7 +8,7 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 
-Deno.test("mixed nonbusiness income keeps Schedule 1 line 9 tied to its printed sources", async () => {
+test("mixed nonbusiness income keeps Schedule 1 line 9 tied to its printed sources", async () => {
   const fixture = pdfReviewFixtures.find((row) =>
     row.id === "single-nec-k-nonbusiness-line8j"
   );

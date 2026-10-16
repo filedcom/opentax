@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form8962 } from "../../../nodes/intermediate/forms/credits/health/form8962/index.ts";
@@ -21,7 +22,7 @@ function mappedField(
     ?.pdfField;
 }
 
-Deno.test("Form 8959 maps resolved box 5 wages and computed totals to lines 1 through 24", () => {
+test("Form 8959 maps resolved box 5 wages and computed totals to lines 1 through 24", () => {
   assertEquals(
     mappedField(form8959Pdf, "line1_medicare_wages"),
     "topmostSubform[0].Page1[0].f1_3[0]",
@@ -40,7 +41,7 @@ Deno.test("Form 8959 maps resolved box 5 wages and computed totals to lines 1 th
   );
 });
 
-Deno.test("Form 8959 PDF includes a single-W-2 filing trigger with zero tax", () => {
+test("Form 8959 PDF includes a single-W-2 filing trigger with zero tax", () => {
   assertEquals(
     form8959Pdf.includeWhen?.({
       medicare_wages: 220_000,
@@ -58,7 +59,7 @@ Deno.test("Form 8959 PDF includes a single-W-2 filing trigger with zero tax", ()
   );
 });
 
-Deno.test("Form 8959 PDF rejects a print line that differs from upstream deposits", () => {
+test("Form 8959 PDF rejects a print line that differs from upstream deposits", () => {
   const source = {
     filing_status: FilingStatus.Single,
     w2_medicare_wages: 230_000,
@@ -126,7 +127,7 @@ Deno.test("Form 8959 PDF rejects a print line that differs from upstream deposit
   );
 });
 
-Deno.test("Schedule 2 maps Additional Medicare Tax and NIIT to 2025 lines 11 and 12", () => {
+test("Schedule 2 maps Additional Medicare Tax and NIIT to 2025 lines 11 and 12", () => {
   assertEquals(
     mappedField(schedule2Pdf, "line11_additional_medicare"),
     "form1[0].Page1[0].f1_22[0]",
@@ -137,7 +138,7 @@ Deno.test("Schedule 2 maps Additional Medicare Tax and NIIT to 2025 lines 11 and
   );
 });
 
-Deno.test("Schedule 2 maps dealer-transfer repayments to 2025 lines 1b and 1c", () => {
+test("Schedule 2 maps dealer-transfer repayments to 2025 lines 1b and 1c", () => {
   assertEquals(
     mappedField(schedule2Pdf, "line1b_new_clean_vehicle_repayment"),
     "form1[0].Page1[0].f1_04[0]",
@@ -148,7 +149,7 @@ Deno.test("Schedule 2 maps dealer-transfer repayments to 2025 lines 1b and 1c", 
   );
 });
 
-Deno.test("Form 8960 maps computed NIIT through line 17", () => {
+test("Form 8960 maps computed NIIT through line 17", () => {
   assertEquals(
     mappedField(form8960Pdf, "line12_net_investment_income"),
     "topmostSubform[0].Page1[0].f1_22[0]",
@@ -159,7 +160,7 @@ Deno.test("Form 8960 maps computed NIIT through line 17", () => {
   );
 });
 
-Deno.test("Form 8960 PDF follows the MAGI filing threshold even with zero NIIT", () => {
+test("Form 8960 PDF follows the MAGI filing threshold even with zero NIIT", () => {
   assertEquals(
     form8960Pdf.includeWhen?.({
       line13_magi: 300_000,
@@ -182,14 +183,14 @@ Deno.test("Form 8960 PDF follows the MAGI filing threshold even with zero NIIT",
   );
 });
 
-Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", () => {
+test("Form 6251 maps the AMT investment-interest difference to line 2c", () => {
   assertEquals(
     mappedField(form6251Pdf, "line2c_investment_interest"),
     "topmostSubform[0].Page1[0].f1_7[0]",
   );
 });
 
-Deno.test("Form 6251 PDF attaches when line 7 exceeds line 10 despite zero AMT", () => {
+test("Form 6251 PDF attaches when line 7 exceeds line 10 despite zero AMT", () => {
   assertEquals(
     form6251Pdf.includeWhen?.({
       tentative_tax: 29_094,
@@ -212,7 +213,7 @@ Deno.test("Form 6251 PDF attaches when line 7 exceeds line 10 despite zero AMT",
   );
 });
 
-Deno.test("Form 8962 PDF includes APTC-only monthly repayment", () => {
+test("Form 8962 PDF includes APTC-only monthly repayment", () => {
   assertEquals(
     form8962Pdf.includeWhen?.({
       monthly_ptc_rows: [{ month_code: "JANUARY", aptc: 200 }],
@@ -226,14 +227,14 @@ Deno.test("Form 8962 PDF includes APTC-only monthly repayment", () => {
   );
 });
 
-Deno.test("Form 8962 PDF maps MFS exception certification to line A", () => {
+test("Form 8962 PDF maps MFS exception certification to line A", () => {
   assertEquals(
     mappedField(form8962Pdf, "mfs_exception_ind"),
     "topmostSubform[0].Page1[0].c1_1[0]",
   );
 });
 
-Deno.test("Form 8962 PDF adds the QSEHRA top-margin label to page 1", async () => {
+test("Form 8962 PDF adds the QSEHRA top-margin label to page 1", async () => {
   const document = await PDFDocument.create();
   const page = document.addPage([612, 792]);
   const blankSize = (await document.save()).length;
@@ -247,7 +248,7 @@ Deno.test("Form 8962 PDF adds the QSEHRA top-margin label to page 1", async () =
   assert(labeledSize > blankSize);
 });
 
-Deno.test("Form 8962 PDF maps its calculated lines and monthly table to page 1", () => {
+test("Form 8962 PDF maps its calculated lines and monthly table to page 1", () => {
   assertEquals(
     mappedField(form8962Pdf, "federal_poverty_line"),
     "topmostSubform[0].Page1[0].f1_7[0]",
@@ -274,7 +275,7 @@ Deno.test("Form 8962 PDF maps its calculated lines and monthly table to page 1",
   );
 });
 
-Deno.test("Form 8962 PDF projects shared policy percentages without dollar rounding", () => {
+test("Form 8962 PDF projects shared policy percentages without dollar rounding", () => {
   const allocation = {
     policy_number: "POLICY-1",
     other_taxpayer_ssn: "222334444",
@@ -317,7 +318,7 @@ Deno.test("Form 8962 PDF projects shared policy percentages without dollar round
   );
 });
 
-Deno.test("Form 8962 PDF marks line 34 No for a fifth allocation row", () => {
+test("Form 8962 PDF marks line 34 No for a fifth allocation row", () => {
   const projected = form8962Pdf.projectFields?.({
     monthly_ptc_rows: [],
     shared_policy_allocations: Array.from({ length: 5 }, (_, index) => ({
@@ -334,7 +335,7 @@ Deno.test("Form 8962 PDF marks line 34 No for a fifth allocation row", () => {
   assertEquals(projected?.pdf_allocation_5_policy_number, undefined);
 });
 
-Deno.test("Form 8962 PDF maps both Part V groups to the 2025 AcroForm", () => {
+test("Form 8962 PDF maps both Part V groups to the 2025 AcroForm", () => {
   const page2 = "topmostSubform[0].Page2[0]";
   const columns = [
     "family_size",
@@ -378,7 +379,7 @@ Deno.test("Form 8962 PDF maps both Part V groups to the 2025 AcroForm", () => {
   assertEquals(projected?.pdf_marriage_spouse_end_month, "05");
 });
 
-Deno.test("Form 8962 PDF keeps absent spouse Part V group blank", () => {
+test("Form 8962 PDF keeps absent spouse Part V group blank", () => {
   const projected = form8962Pdf.projectFields?.({
     monthly_ptc_rows: [],
     alternative_marriage_primary: {
@@ -393,7 +394,7 @@ Deno.test("Form 8962 PDF keeps absent spouse Part V group blank", () => {
   assertEquals(projected?.pdf_marriage_spouse_family_size, undefined);
 });
 
-Deno.test("Form 8962 PDF refuses incomplete Part V or missing monthly calculation", () => {
+test("Form 8962 PDF refuses incomplete Part V or missing monthly calculation", () => {
   assertThrows(
     () =>
       form8962Pdf.projectFields?.({
@@ -422,7 +423,7 @@ Deno.test("Form 8962 PDF refuses incomplete Part V or missing monthly calculatio
   );
 });
 
-Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () => {
+test("Form 8962 marriage calculation reaches printed Part V line 35", () => {
   const result = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
     filing_status: FilingStatus.MFJ,
     household_size: 2,
@@ -476,7 +477,7 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
   );
 });
 
-Deno.test("Form 8962 PDF leaves an uncovered marriage month blank", () => {
+test("Form 8962 PDF leaves an uncovered marriage month blank", () => {
   const projected = form8962Pdf.projectFields?.({
     monthly_ptc_rows: [{
       month_code: "FEBRUARY",

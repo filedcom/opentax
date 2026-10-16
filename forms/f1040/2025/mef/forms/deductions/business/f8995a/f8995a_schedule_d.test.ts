@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
@@ -68,7 +69,7 @@ const context = {
   },
 };
 
-Deno.test("Form 8995-A patron parent and distinct Schedule D both use the same nonzero reduction", () => {
+test("Form 8995-A patron parent and distinct Schedule D both use the same nonzero reduction", () => {
   const parent = form8995a.build(patron, context);
   const scheduleD = form8995aScheduleD.build(patron, context);
   assertStringIncludes(parent, "<PatronInd>X</PatronInd>");
@@ -100,7 +101,7 @@ Deno.test("Form 8995-A patron parent and distinct Schedule D both use the same n
   );
 });
 
-Deno.test("Schedule D trigger rejects a missing companion before Form 8995-A XML", () => {
+test("Schedule D trigger rejects a missing companion before Form 8995-A XML", () => {
   assertThrows(
     () =>
       form8995a.build(patron, {
@@ -116,7 +117,7 @@ Deno.test("Schedule D trigger rejects a missing companion before Form 8995-A XML
   );
 });
 
-Deno.test("Schedule D rejects a missing parent and altered line 14 source", () => {
+test("Schedule D rejects a missing parent and altered line 14 source", () => {
   assertThrows(
     () =>
       form8995aScheduleD.build(patron, {
@@ -152,7 +153,7 @@ Deno.test("Schedule D rejects a missing parent and altered line 14 source", () =
   );
 });
 
-Deno.test("Schedule D rejects Form 1040 line 13 mismatch and untriggered companion", () => {
+test("Schedule D rejects Form 1040 line 13 mismatch and untriggered companion", () => {
   assertThrows(
     () =>
       form8995aScheduleD.build(patron, {
@@ -183,7 +184,7 @@ Deno.test("Schedule D rejects Form 1040 line 13 mismatch and untriggered compani
   assertEquals(form8995aScheduleD.build([]), "");
 });
 
-Deno.test("Schedule D requires reviewed QBI and wage allocation worksheet reference", () => {
+test("Schedule D requires reviewed QBI and wage allocation worksheet reference", () => {
   assertThrows(() =>
     form8995aScheduleD.build({
       ...patron,
@@ -194,7 +195,7 @@ Deno.test("Schedule D requires reviewed QBI and wage allocation worksheet refere
     }, context), Error);
 });
 
-Deno.test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, and Form 1040", () => {
+test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, and Form 1040", () => {
   const withBox6 = {
     ...patron,
     patron_filing_details: {

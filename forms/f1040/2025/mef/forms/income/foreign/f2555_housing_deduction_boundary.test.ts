@@ -1,9 +1,10 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { schedule1 as schedule1Node } from "../../../../../nodes/outputs/general/return-assembly/schedule1/index.ts";
 import { schedule1 } from "../../general/return-assembly/schedule1/schedule1.ts";
 import { schedule1Pdf } from "../../../../pdf/forms/general/return-assembly/schedule1/schedule1.ts";
 
-Deno.test("Form 2555 housing deduction cannot be misfiled on Schedule 1 line 8d", () => {
+test("Form 2555 housing deduction cannot be misfiled on Schedule 1 line 8d", () => {
   assertThrows(
     () =>
       schedule1Node.compute(

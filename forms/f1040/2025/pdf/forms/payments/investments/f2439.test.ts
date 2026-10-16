@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form2439Pdf } from "./f2439.ts";
@@ -29,7 +30,7 @@ const source = {
   tax_period_end: "2025-12-31",
 };
 
-Deno.test("Form 2439 PDF selects one payer-issued Copy B per credit document", () => {
+test("Form 2439 PDF selects one payer-issued Copy B per credit document", () => {
   const instances = form2439Pdf.instances?.(
     { f2439s: [source, { ...source, payer_ein: "98-7654321", box2: 750 }] },
     filer,
@@ -49,7 +50,7 @@ Deno.test("Form 2439 PDF selects one payer-issued Copy B per credit document", (
   );
 });
 
-Deno.test("Form 2439 PDF includes gain-only Copy B without Schedule 3 credit", () => {
+test("Form 2439 PDF includes gain-only Copy B without Schedule 3 credit", () => {
   const copies = form2439Pdf.instances?.(
     { f2439s: [{ ...source, box2: undefined }] },
     filer,
@@ -60,7 +61,7 @@ Deno.test("Form 2439 PDF includes gain-only Copy B without Schedule 3 credit", (
   assertEquals(copies[0].box2, undefined);
 });
 
-Deno.test("Form 2439 PDF mixed gain-only and credited copies reconcile only box 2", () => {
+test("Form 2439 PDF mixed gain-only and credited copies reconcile only box 2", () => {
   const copies = form2439Pdf.instances?.(
     { f2439s: [{ ...source, box2: undefined }, { ...source, box2: 750, payer_ein: "98-7654321" }] },
     filer,
@@ -72,7 +73,7 @@ Deno.test("Form 2439 PDF mixed gain-only and credited copies reconcile only box 
   assertEquals(copies.map((copy) => copy.box2), [undefined, 750]);
 });
 
-Deno.test("Form 2439 PDF rejects mismatched Schedule 3 and masked SSN", () => {
+test("Form 2439 PDF rejects mismatched Schedule 3 and masked SSN", () => {
   assertThrows(
     () =>
       form2439Pdf.instances?.(
@@ -101,7 +102,7 @@ Deno.test("Form 2439 PDF rejects mismatched Schedule 3 and masked SSN", () => {
   );
 });
 
-Deno.test("Form 2439 PDF prints the RIC fiscal period when it is not calendar 2025", () => {
+test("Form 2439 PDF prints the RIC fiscal period when it is not calendar 2025", () => {
   const [copy] = form2439Pdf.instances?.(
     {
       f2439s: [{
@@ -123,7 +124,7 @@ Deno.test("Form 2439 PDF prints the RIC fiscal period when it is not calendar 20
   assertEquals(copy.period_end_year_suffix, "25");
 });
 
-Deno.test("Form 2439 PDF identifies the primary and spouse separately on MFJ", () => {
+test("Form 2439 PDF identifies the primary and spouse separately on MFJ", () => {
   const jointFiler: FilerIdentity = {
     ...filer,
     fullName: "Alex and Sam Taxpayer",

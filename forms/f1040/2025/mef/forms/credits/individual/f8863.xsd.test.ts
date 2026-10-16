@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   adultEducationReview,
   educationDependentReview,
@@ -24,7 +27,7 @@ const XSD_PATH = new URL(
 
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
@@ -119,21 +122,21 @@ function finalizedContext(fields: F8863Input) {
 }
 
 async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(tmpPath, xml);
-    const output = await new Deno.Command("xmllint", {
+    await fs.writeFile(tmpPath, xml);
+    const output = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, tmpPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
   } finally {
-    await Deno.remove(tmpPath);
+    await sys.remove(tmpPath);
   }
 }
 
-Deno.test("Form 8863 XML uses capped line 19 and real student detail", () => {
+test("Form 8863 XML uses capped line 19 and real student detail", () => {
   const fields = {
     claimant_review: adultEducationReview,
     f8863s: [aocStudent],
@@ -154,7 +157,7 @@ Deno.test("Form 8863 XML uses capped line 19 and real student detail", () => {
   assert(xml.includes("<EIN>123456789</EIN>"));
 });
 
-Deno.test("Form 8863 student identity must match a return filer or dependent", () => {
+test("Form 8863 student identity must match a return filer or dependent", () => {
   const fields = {
     claimant_review: adultEducationReview,
     f8863s: [aocStudent],
@@ -183,7 +186,7 @@ Deno.test("Form 8863 student identity must match a return filer or dependent", (
   );
 });
 
-Deno.test("Form 8863 native filing requires the finalized return credit lines", () => {
+test("Form 8863 native filing requires the finalized return credit lines", () => {
   const fields = {
     claimant_review: adultEducationReview,
     f8863s: [aocStudent],
@@ -209,7 +212,7 @@ Deno.test("Form 8863 native filing requires the finalized return credit lines", 
   );
 });
 
-Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
+test("Form 8863 XML rejects missing structured filing facts", () => {
   assertThrows(
     () =>
       form8863.build({
@@ -251,7 +254,7 @@ Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
   );
 });
 
-Deno.test("Form 8863 filing reconciles paid expenses, scholarships, and 1098-T receipt", () => {
+test("Form 8863 filing reconciles paid expenses, scholarships, and 1098-T receipt", () => {
   const sourced = {
     ...aocStudent,
     aoc_adjusted_expenses: 4_000,
@@ -321,7 +324,7 @@ Deno.test("Form 8863 filing reconciles paid expenses, scholarships, and 1098-T r
   );
 });
 
-Deno.test("Form 8863 XML rejects duplicate student across AOC and LLC", () => {
+test("Form 8863 XML rejects duplicate student across AOC and LLC", () => {
   assertThrows(
     () =>
       form8863.build({
@@ -343,7 +346,7 @@ Deno.test("Form 8863 XML rejects duplicate student across AOC and LLC", () => {
   );
 });
 
-Deno.test("Form 8863 LLC rejects course materials bought outside the institution", () => {
+test("Form 8863 LLC rejects course materials bought outside the institution", () => {
   assertThrows(
     () =>
       form8863.build({
@@ -366,12 +369,7 @@ Deno.test("Form 8863 LLC rejects course materials bought outside the institution
   );
 });
 
-Deno.test({
-  name: "XSD: Form 8863 AOC and LLC validate in TY2025 return",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 8863 AOC and LLC validate in TY2025 return", async () => {
   const xml = buildMefXml({
     f8863: {
       claimant_review: adultEducationReview,

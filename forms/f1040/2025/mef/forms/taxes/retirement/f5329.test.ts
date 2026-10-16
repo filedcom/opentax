@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { form5329 } from "./f5329.ts";
@@ -8,7 +9,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import type { MefBuildContext } from "../../../form-descriptor.ts";
 
-Deno.test("Form 5329 emits distinct owner documents and reconciles combined Schedule 2 tax", () => {
+test("Form 5329 emits distinct owner documents and reconciles combined Schedule 2 tax", () => {
   const owner_entries = [
     { owner: TS.T, early_distribution: 5_000 },
     {
@@ -136,11 +137,11 @@ function buildOwner(
   )[0] ?? "";
 }
 
-Deno.test("Form 5329 absent input emits no document", () => {
+test("Form 5329 absent input emits no document", () => {
   assertEquals(form5329.build({}, { filer }), []);
 });
 
-Deno.test("Form 5329 early distribution fills Parts I lines 1, 3, and 4", () => {
+test("Form 5329 early distribution fills Parts I lines 1, 3, and 4", () => {
   const xml = buildOwner({ early_distribution: 10_000 }, { filer });
   assertStringIncludes(xml, "<PersonNm>Test Taxpayer</PersonNm>");
   assertStringIncludes(xml, "<SSN>123456789</SSN>");
@@ -158,7 +159,7 @@ Deno.test("Form 5329 early distribution fills Parts I lines 1, 3, and 4", () => 
   );
 });
 
-Deno.test("Form 5329 sums regular and two-year SIMPLE IRA tax at their actual rates", () => {
+test("Form 5329 sums regular and two-year SIMPLE IRA tax at their actual rates", () => {
   const xml = buildOwner({
     early_distribution: [10_000, 5_000],
     simple_ira_early_distribution: 4_000,
@@ -173,7 +174,7 @@ Deno.test("Form 5329 sums regular and two-year SIMPLE IRA tax at their actual ra
   );
 });
 
-Deno.test("Form 5329 exception needs its IRS code", () => {
+test("Form 5329 exception needs its IRS code", () => {
   assertThrows(
     () =>
       buildOwner({
@@ -202,7 +203,7 @@ Deno.test("Form 5329 exception needs its IRS code", () => {
   );
 });
 
-Deno.test("Form 5329 education distribution fills Part II lines 5-8", () => {
+test("Form 5329 education distribution fills Part II lines 5-8", () => {
   const xml = buildOwner({
     esa_able_distribution: 5_000,
     esa_able_exception: 2_000,
@@ -225,7 +226,7 @@ Deno.test("Form 5329 education distribution fills Part II lines 5-8", () => {
   );
 });
 
-Deno.test("Form 5329 excess-contribution lines use balance-capped tax", () => {
+test("Form 5329 excess-contribution lines use balance-capped tax", () => {
   const xml = buildOwner({
     excess_traditional_ira: 2_000,
     traditional_ira_value: 1_000,
@@ -271,7 +272,7 @@ Deno.test("Form 5329 excess-contribution lines use balance-capped tax", () => {
   );
 });
 
-Deno.test("Form 5329 will not invent a required account balance", () => {
+test("Form 5329 will not invent a required account balance", () => {
   assertThrows(
     () =>
       buildOwner({
@@ -287,7 +288,7 @@ Deno.test("Form 5329 will not invent a required account balance", () => {
   );
 });
 
-Deno.test("Form 5329 MeF rejects obsolete flat HSA excess keys", () => {
+test("Form 5329 MeF rejects obsolete flat HSA excess keys", () => {
   assertThrows(
     () =>
       form5329.build(
@@ -301,7 +302,7 @@ Deno.test("Form 5329 MeF rejects obsolete flat HSA excess keys", () => {
   );
 });
 
-Deno.test("Form 5329 MeF carries prior-year HSA excess after line 43 and line 44 reductions", () => {
+test("Form 5329 MeF carries prior-year HSA excess after line 43 and line 44 reductions", () => {
   const xml = buildOwner({
     hsa_part_vii: {
       line42_prior_excess: 2_000,
@@ -321,7 +322,7 @@ Deno.test("Form 5329 MeF carries prior-year HSA excess after line 43 and line 44
   );
 });
 
-Deno.test("Form 5329 MeF rejects an owner-mismatched filed prior HSA source", () => {
+test("Form 5329 MeF rejects an owner-mismatched filed prior HSA source", () => {
   const owner_entries = [{
     owner: TS.T,
     hsa_part_vii: {
@@ -364,7 +365,7 @@ Deno.test("Form 5329 MeF rejects an owner-mismatched filed prior HSA source", ()
   );
 });
 
-Deno.test("Form 5329 for a spouse uses spouse identity, never primary identity", () => {
+test("Form 5329 for a spouse uses spouse identity, never primary identity", () => {
   const xml = buildOwner({ early_distribution: 5_000, owner: TS.S }, {
     filer: {
       ...filer,
@@ -381,7 +382,7 @@ Deno.test("Form 5329 for a spouse uses spouse identity, never primary identity",
   assertEquals(xml.includes("<SSN>123456789</SSN>"), false);
 });
 
-Deno.test("Form 5329 emits taxpayer and spouse amounts as separate documents", () => {
+test("Form 5329 emits taxpayer and spouse amounts as separate documents", () => {
   const owner_entries = [
     { owner: TS.T, early_distribution: 5_000 },
     { owner: TS.S, early_distribution: 3_000 },

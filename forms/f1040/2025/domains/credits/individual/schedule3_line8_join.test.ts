@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule3 } from "../../../mef/forms/general/return-assembly/schedule3.ts";
 import { schedule3Pdf } from "../../../pdf/forms/general/return-assembly/schedule3.ts";
@@ -18,7 +19,7 @@ const pending = {
   },
 };
 
-Deno.test("Schedule 3 native and PDF carry nonrefundable line 8 to Form 1040 line 20", () => {
+test("Schedule 3 native and PDF carry nonrefundable line 8 to Form 1040 line 20", () => {
   const xml = schedule3.build(foreignTaxCredit, { pending });
   assertStringIncludes(
     xml,
@@ -30,7 +31,7 @@ Deno.test("Schedule 3 native and PDF carry nonrefundable line 8 to Form 1040 lin
   );
 });
 
-Deno.test("Schedule 3 native and PDF reject changed or missing Form 1040 line 20", () => {
+test("Schedule 3 native and PDF reject changed or missing Form 1040 line 20", () => {
   for (const line20 of [74, undefined]) {
     const changed = {
       ...pending,
@@ -55,7 +56,7 @@ Deno.test("Schedule 3 native and PDF reject changed or missing Form 1040 line 20
   );
 });
 
-Deno.test("Schedule 3 line 8 join leaves a Part II only payment unchanged", () => {
+test("Schedule 3 line 8 join leaves a Part II only payment unchanged", () => {
   const partII = { line9_premium_tax_credit: 100, line15_total: 100 };
   const paymentPending = {
     f1040: { line31_additional_payments: 100 },

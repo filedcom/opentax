@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { DependentRelationship } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -130,7 +131,7 @@ const pending = {
   f1040: { line11_agi: 136_700, line31_additional_payments: 8_244 },
 };
 
-Deno.test("Form 8962 Alaska taxpayer and Texas dependent monthly policies join source, return, native and PDF", () => {
+test("Form 8962 Alaska taxpayer and Texas dependent monthly policies join source, return, native and PDF", () => {
   const source = f1095a.compute(
     { taxYear: 2025, formType: "f1040" },
     pending.f1095a,
@@ -157,7 +158,7 @@ Deno.test("Form 8962 Alaska taxpayer and Texas dependent monthly policies join s
   assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
 });
 
-Deno.test("Form 8962 Alaska family overlap rejects residence, owner, benchmark and final return tampering", () => {
+test("Form 8962 Alaska family overlap rejects residence, owner, benchmark and final return tampering", () => {
   for (
     const general of [
       { ...pending.general, ptc_residence_states_2025: undefined },

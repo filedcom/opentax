@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -12,7 +15,7 @@ async function literal(
   events = false,
 ): Promise<any> {
   return JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         "./fixtures/form8995a-rpe-" + count +
           (events
@@ -21,7 +24,7 @@ async function literal(
             ? "-business-shared-source.json"
             : "-business-source.json"),
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
 }
@@ -46,8 +49,8 @@ function guarded(input: any) {
   );
 }
 
-Deno.test("issued S-corp RPE aggregation keeps complete members, annual copy, wage-property limits and 1040 through native XSD/PDF", async () => {
-  const out = await Deno.makeTempDir({
+test("issued S-corp RPE aggregation keeps complete members, annual copy, wage-property limits and 1040 through native XSD/PDF", async () => {
+  const out = await sys.makeTempDir({
     prefix: "opentax-rpe-aggregation-actual-source-",
   });
   console.log("RPE aggregation actual source archive:", out);
@@ -127,7 +130,7 @@ Deno.test("issued S-corp RPE aggregation keeps complete members, annual copy, wa
       origins,
     );
     const dir = out + "/" + id;
-    await Deno.mkdir(dir);
+    await fs.mkdir(dir);
     for (
       const [name, data] of Object.entries({
         "source.json": input,
@@ -138,21 +141,21 @@ Deno.test("issued S-corp RPE aggregation keeps complete members, annual copy, wa
         "expected.json": { qbi, wages, ubia: 2000000, deduction, totalTax },
       })
     ) {
-      await Deno.writeTextFile(dir + "/" + name, JSON.stringify(data, null, 2));
+      await fs.writeFile(dir + "/" + name, JSON.stringify(data, null, 2));
     }
-    await Deno.writeFile(dir + "/return.pdf", pdf);
-    await Deno.writeFile(
+    await fs.writeFile(dir + "/return.pdf", pdf);
+    await fs.writeFile(
       dir + "/annual.pdf",
       prepared.bundle.attachments[0].bytes,
     );
-    await Deno.writeFile(
+    await fs.writeFile(
       dir + "/issued.pdf",
       prepared.bundle.attachments[1].bytes,
     );
-    await Deno.writeTextFile(dir + "/return.xml", prepared.bundle.xml);
+    await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd =
       ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-    const checked = await new Deno.Command("xmllint", {
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",
       stderr: "piped",
@@ -161,7 +164,7 @@ Deno.test("issued S-corp RPE aggregation keeps complete members, annual copy, wa
   }
 });
 
-Deno.test("RPE public source rejects missing copies, borrowed issuer/recipient, changed members and unsupported ownership/election facts", async () => {
+test("RPE public source rejects missing copies, borrowed issuer/recipient, changed members and unsupported ownership/election facts", async () => {
   const input = await literal(3);
   const edits: ((p: any) => void)[] = [
     (p) => delete p.k1_s_corp[0].rpe_aggregation_source,
@@ -241,7 +244,7 @@ Deno.test("RPE public source rejects missing copies, borrowed issuer/recipient, 
   }
 });
 
-Deno.test("RPE native and direct PDF bind actual K1, parent/companion, annual source, Schedule1 and final deduction", async () => {
+test("RPE native and direct PDF bind actual K1, parent/companion, annual source, Schedule1 and final deduction", async () => {
   const input = await literal(3), result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending: any = normalizeAllPending(result.pending),
@@ -300,7 +303,7 @@ Deno.test("RPE native and direct PDF bind actual K1, parent/companion, annual so
   );
 });
 
-Deno.test("RPE real printable issuer copy is required at native and direct PDF boundaries", async () => {
+test("RPE real printable issuer copy is required at native and direct PDF boundaries", async () => {
   const input = await literal(3);
   const bytes = new TextEncoder().encode(
     "%PDF-1.7\ninvalid reviewed issuer body\n",

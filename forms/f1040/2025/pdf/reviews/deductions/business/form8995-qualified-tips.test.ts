@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -24,7 +27,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 for (const c of qualifiedTipCases) {
-  Deno.test(`actual deducted business tips ${c.id} source/SE/QBI/1040/native/XSD/filledPDF`, async () => {
+  test(`actual deducted business tips ${c.id} source/SE/QBI/1040/native/XSD/filledPDF`, async () => {
     const inputs = c.inputs(), r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, []);
     const p: any = normalizeAllPending(r.pending),
@@ -161,23 +164,23 @@ for (const c of qualifiedTipCases) {
       xml,
       `<TotalAdditionalDeductionsAmt>${c.tips}</TotalAdditionalDeductionsAmt>`,
     );
-    const tmp = await Deno.makeTempFile({ suffix: ".xml" });
+    const tmp = await sys.makeTempFile({ suffix: ".xml" });
     try {
-      await Deno.writeTextFile(tmp, xml);
-      const check = await new Deno.Command("xmllint", {
+      await fs.writeFile(tmp, xml);
+      const check = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", xsd, tmp],
         stderr: "piped",
       }).output();
       assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
     } finally {
-      await Deno.remove(tmp);
+      await sys.remove(tmp);
     }
     const pdf = await prepared.renderPdf(), doc = await PDFDocument.load(pdf);
     assertEquals(doc.getForm().getFields().length, 0);
-    const file = await Deno.makeTempFile({ suffix: ".pdf" });
+    const file = await sys.makeTempFile({ suffix: ".pdf" });
     try {
-      await Deno.writeFile(file, pdf);
-      const t = await new Deno.Command("pdftotext", {
+      await fs.writeFile(file, pdf);
+      const t = await new sys.Command("pdftotext", {
         args: [file, "-"],
         stdout: "piped",
       }).output();
@@ -191,16 +194,16 @@ for (const c of qualifiedTipCases) {
       );
       if (c.qbi > 0) assertStringIncludes(text, String(c.qbi));
     } finally {
-      await Deno.remove(file);
+      await sys.remove(file);
     }
-    if (Deno.args.includes("--write-review-artifacts")) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${c.id}-source-input.json`,
         JSON.stringify({ inputs, pending: p }, null, 2),
       );
-      await Deno.writeTextFile(`${root}/${c.id}-full-return.xml`, xml);
-      await Deno.writeFile(`${root}/${c.id}-filled-return.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}-full-return.xml`, xml);
+      await fs.writeFile(`${root}/${c.id}-filled-return.pdf`, pdf);
     }
     console.log(
       c.id,
@@ -226,7 +229,7 @@ for (
     "advanced-event-wotc-tip-exclusion",
   ]
 ) {
-  Deno.test(`qualified tip QBI ${id} rejects borrowed deduction owner payer income cap and source omission`, async () => {
+  test(`qualified tip QBI ${id} rejects borrowed deduction owner payer income cap and source omission`, async () => {
     const c = qualifiedTipCases.find((c) => c.id === id)!,
       r = f1040_2025.executeReturn(c.inputs());
     assertEquals(r.diagnostics, []);
@@ -315,7 +318,7 @@ for (
     }
   });
 }
-Deno.test("actual specified-service owner tips cannot create224 or QBI exclusions", () => {
+test("actual specified-service owner tips cannot create224 or QBI exclusions", () => {
   const i: any = qualifiedTipCases[1].inputs();
   i.schedule_c[0].qbi_specified_service = true;
   assertEquals(f1040_2025.executeReturn(i).diagnostics.length > 0, true);

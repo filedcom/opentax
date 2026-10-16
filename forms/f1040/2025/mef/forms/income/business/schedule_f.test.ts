@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { ScheduleFItem } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
@@ -17,7 +18,7 @@ function farm(overrides: Partial<ScheduleFItem> = {}): ScheduleFItem {
   };
 }
 
-Deno.test("Schedule F native export requires line F and conditional line G answers", () => {
+test("Schedule F native export requires line F and conditional line G answers", () => {
   assertThrows(
     () =>
       scheduleF.build({
@@ -57,7 +58,7 @@ Deno.test("Schedule F native export requires line F and conditional line G answe
   );
 });
 
-Deno.test("Schedule F native header uses the named spouse proprietor", () => {
+test("Schedule F native header uses the named spouse proprietor", () => {
   const jointFiler = {
     ...testFiler(),
     filingStatus: FilingStatus.MarriedFilingJointly,
@@ -86,7 +87,7 @@ Deno.test("Schedule F native header uses the named spouse proprietor", () => {
   );
 });
 
-Deno.test("Schedule F native export rejects a blank line 32 expense description", () => {
+test("Schedule F native export rejects a blank line 32 expense description", () => {
   assertThrows(() =>
     scheduleF.build({
       schedule_fs: [farm({
@@ -96,7 +97,7 @@ Deno.test("Schedule F native export rejects a blank line 32 expense description"
   );
 });
 
-Deno.test("Schedule F native export requires a line 36 answer for a farm loss", () => {
+test("Schedule F native export requires a line 36 answer for a farm loss", () => {
   assertThrows(
     () =>
       scheduleF.build({
@@ -107,7 +108,7 @@ Deno.test("Schedule F native export requires a line 36 answer for a farm loss", 
   );
 });
 
-Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
+test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({
     schedule1: { line6_schedule_f: 20_000 },
     schedule_f: {
@@ -164,7 +165,7 @@ Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   );
 });
 
-Deno.test("Schedule F MeF labor matches gross payroll less employment credits", () => {
+test("Schedule F MeF labor matches gross payroll less employment credits", () => {
   const [xml] = scheduleF.build({
     schedule_fs: [farm({
       farm_id: "FARM-1",
@@ -184,7 +185,7 @@ Deno.test("Schedule F MeF labor matches gross payroll less employment credits", 
   );
 });
 
-Deno.test("Schedule F rejects an unsourced WOTC labor reduction in a return bundle", () => {
+test("Schedule F rejects an unsourced WOTC labor reduction in a return bundle", () => {
   const fields = {
     schedule_fs: [farm({ farm_id: "FARM-1", line22_labor_hired: 6_000 })],
     wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 2_400 }],
@@ -197,7 +198,7 @@ Deno.test("Schedule F rejects an unsourced WOTC labor reduction in a return bund
   );
 });
 
-Deno.test("Schedule F reports preliminary farm loss and links at-risk computation separately", () => {
+test("Schedule F reports preliminary farm loss and links at-risk computation separately", () => {
   const [xml] = scheduleF.build({
     schedule_fs: [farm({
       line2_sales_products_raised: 1_000,
@@ -220,7 +221,7 @@ Deno.test("Schedule F reports preliminary farm loss and links at-risk computatio
   );
 });
 
-Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral statements", () => {
+test("Schedule F links itemized CCC loans and crop-insurance deferral statements", () => {
   const xml = buildMefXml({
     schedule1: { line6_schedule_f: 2_000 },
     schedule_f: {
@@ -276,7 +277,7 @@ Deno.test("Schedule F links itemized CCC loans and crop-insurance deferral state
   );
 });
 
-Deno.test("Schedule F emits accrual Part III and links its own CCC statement", () => {
+test("Schedule F emits accrual Part III and links its own CCC statement", () => {
   const xml = buildMefXml({
     schedule1: { line6_schedule_f: 12_500 },
     schedule_f: {
@@ -325,7 +326,7 @@ Deno.test("Schedule F emits accrual Part III and links its own CCC statement", (
   assertStringIncludes(xml, "<CCCLoanDetailAccrualMethodStmt documentId=");
 });
 
-Deno.test("Schedule F rejects source facts that cannot yet produce a complete document", () => {
+test("Schedule F rejects source facts that cannot yet produce a complete document", () => {
   assertThrows(
     () =>
       scheduleF.build({
@@ -375,6 +376,6 @@ Deno.test("Schedule F rejects source facts that cannot yet produce a complete do
   );
 });
 
-Deno.test("Schedule F without farm activities emits no document", () => {
+test("Schedule F without farm activities emits no document", () => {
   assertEquals(scheduleF.build({}), []);
 });

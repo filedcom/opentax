@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   computePersonalCreditAmounts,
@@ -31,7 +32,7 @@ function compute(input: F8911Input) {
   return f8911.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-Deno.test("Form 8911 routes the limited ATS Scenario 13 credit to Schedule 3 line 6j", () => {
+test("Form 8911 routes the limited ATS Scenario 13 credit to Schedule 3 line 6j", () => {
   const result = compute(scenario13);
   assertEquals(result.outputs, [{
     nodeType: "schedule3",
@@ -42,7 +43,7 @@ Deno.test("Form 8911 routes the limited ATS Scenario 13 credit to Schedule 3 lin
   }]);
 });
 
-Deno.test("Form 8911 personal credit is capped at $1,000 before the tax limit", () => {
+test("Form 8911 personal credit is capped at $1,000 before the tax limit", () => {
   const result = compute({
     ...scenario13,
     cost: 10_000,
@@ -54,7 +55,7 @@ Deno.test("Form 8911 personal credit is capped at $1,000 before the tax limit", 
   );
 });
 
-Deno.test("Form 8911 accounts for other credits and tentative minimum tax", () => {
+test("Form 8911 accounts for other credits and tentative minimum tax", () => {
   const result = compute({
     ...scenario13,
     cost: 2_000,
@@ -69,7 +70,7 @@ Deno.test("Form 8911 accounts for other credits and tentative minimum tax", () =
   );
 });
 
-Deno.test("Form 8911 does not route a personal credit when the tax limit is zero", () => {
+test("Form 8911 does not route a personal credit when the tax limit is zero", () => {
   assertEquals(
     compute({ ...scenario13, regular_tax_before_credits: 0 }).outputs,
     [{ nodeType: "form6251", fields: { must_file_for_credit: true } }],
@@ -77,7 +78,7 @@ Deno.test("Form 8911 does not route a personal credit when the tax limit is zero
   assertEquals(compute({ ...scenario13, cost: 0 }).outputs, []);
 });
 
-Deno.test("Form 8911 rejects unsupported or unsubstantiated claims", () => {
+test("Form 8911 rejects unsupported or unsubstantiated claims", () => {
   assertThrows(
     () => compute({ ...scenario13, business_use_pct: 0.2 }),
     Error,
@@ -105,7 +106,7 @@ Deno.test("Form 8911 rejects unsupported or unsubstantiated claims", () => {
   );
 });
 
-Deno.test("Form 8911 validates credit inputs", () => {
+test("Form 8911 validates credit inputs", () => {
   assertEquals(f8911.inputSchema.safeParse({ cost: -500 }).success, false);
   assertEquals(
     f8911.inputSchema.safeParse({ cost: 500, business_use_pct: 1.5 }).success,
@@ -125,7 +126,7 @@ Deno.test("Form 8911 validates credit inputs", () => {
   }
 });
 
-Deno.test("Form 8911 rounds the aggregate credit once across cent-valued properties", () => {
+test("Form 8911 rounds the aggregate credit once across cent-valued properties", () => {
   for (
     const [cost, expected] of [[1001.49, 300], [1001.67, 301], [3333.32, 1000]]
   ) {

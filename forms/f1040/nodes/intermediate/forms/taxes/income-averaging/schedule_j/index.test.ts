@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../types.ts";
 import { schedule_j_calculation } from "./index.ts";
@@ -49,7 +50,7 @@ function source() {
   });
 }
 
-Deno.test("Schedule J sends calculated line 23 to tax and finalizes the attachment", () => {
+test("Schedule J sends calculated line 23 to tax and finalizes the attachment", () => {
   const result = schedule_j_calculation.compute(
     { taxYear: 2025, formType: "f1040" },
     source(),
@@ -62,7 +63,7 @@ Deno.test("Schedule J sends calculated line 23 to tax and finalizes the attachme
   assertEquals(result.finalizations?.[0].fields.line23, 5_708);
 });
 
-Deno.test("Schedule J source deposits without an election are a normal no-op", () => {
+test("Schedule J source deposits without an election are a normal no-op", () => {
   const result = schedule_j_calculation.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -82,7 +83,7 @@ Deno.test("Schedule J source deposits without an election are a normal no-op", (
   assertEquals(result.finalizations, undefined);
 });
 
-Deno.test("Schedule J rejects unverified farm attribution and excess election", () => {
+test("Schedule J rejects unverified farm attribution and excess election", () => {
   const unverified = { ...source(), farm_only_income_verified: false };
   assertThrows(() => schedule_j_calculation.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -95,7 +96,7 @@ Deno.test("Schedule J rejects unverified farm attribution and excess election", 
   ));
 });
 
-Deno.test("Schedule J reports the unsupported source when fishing income lacks attribution", () => {
+test("Schedule J reports the unsupported source when fishing income lacks attribution", () => {
   assertThrows(
     () => schedule_j_calculation.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -110,7 +111,7 @@ Deno.test("Schedule J reports the unsupported source when fishing income lacks a
   );
 });
 
-Deno.test("Schedule J rejects other deduction methods and unreconciled AGI", () => {
+test("Schedule J rejects other deduction methods and unreconciled AGI", () => {
   for (const changed of [
     { ...source(), taking_standard_deduction: false },
     { ...source(), additional_deductions: 1 },

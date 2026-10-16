@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { income_tax_calculation } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -31,7 +34,7 @@ for (
     [3, false, false, false, false, false, false, true],
   ] as const
 ) {
-  Deno.test(`complete reviewed8283 inventory ${count} sameDonee${sameDonee} mixed${mixed} small${smallGrouped} sectionA${withSectionA} joint${jointOwners} dividends${withDividendIncome}`, async () => {
+  test(`complete reviewed8283 inventory ${count} sameDonee${sameDonee} mixed${mixed} small${smallGrouped} sectionA${withSectionA} joint${jointOwners} dividends${withDividendIncome}`, async () => {
     const source = await reviewedGiftInventory(
       count,
       sameDonee,
@@ -151,7 +154,7 @@ for (
       ),
       source.items.map((i) => i.deduction_claimed),
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -407,7 +410,7 @@ for (
   });
 }
 
-Deno.test("complete Section A eight-reason reduction inventory preserves source FMV before AGI limits", async () => {
+test("complete Section A eight-reason reduction inventory preserves source FMV before AGI limits", async () => {
   const { sectionAReductionInventory } = await import(
     "./form8283-section-a-reduction-inventory.fixture.ts"
   );
@@ -434,7 +437,7 @@ Deno.test("complete Section A eight-reason reduction inventory preserves source 
     (bundle.xml.match(/<FairMarketValueStatement\b/g) ?? []).length,
     8,
   );
-  const checked = await new Deno.Command("xmllint", {
+  const checked = await new sys.Command("xmllint", {
     args: [
       "--noout",
       "--schema",
@@ -506,27 +509,27 @@ async function retainPacket(
   pdf: Uint8Array,
   origins: PdfPageOrigin[],
 ) {
-  const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
+  const root = process.env.FORM8283_EVIDENCE_DIR;
   if (!root) return;
   const directory = `${root}/${id}`;
-  await Deno.mkdir(`${directory}/attachments`, { recursive: true });
-  await Deno.writeTextFile(
+  await fs.mkdir(`${directory}/attachments`, { recursive: true });
+  await fs.writeFile(
     `${directory}/source.json`,
     JSON.stringify({ inputs, filer }, null, 2),
   );
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${directory}/pending.json`,
     JSON.stringify(pending, null, 2),
   );
-  await Deno.writeTextFile(`${directory}/return.xml`, xml);
-  await Deno.writeFile(`${directory}/return.pdf`, pdf);
-  await Deno.writeTextFile(
+  await fs.writeFile(`${directory}/return.xml`, xml);
+  await fs.writeFile(`${directory}/return.pdf`, pdf);
+  await fs.writeFile(
     `${directory}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
   const records = [];
   for (const attachment of attachments) {
-    await Deno.writeFile(
+    await fs.writeFile(
       `${directory}/attachments/${attachment.fileName}`,
       attachment.bytes,
     );
@@ -542,7 +545,7 @@ async function retainPacket(
       pages: (await PDFDocument.load(attachment.bytes)).getPageCount(),
     });
   }
-  await Deno.writeTextFile(
+  await fs.writeFile(
     `${directory}/attachments.json`,
     JSON.stringify(records, null, 2),
   );
@@ -554,7 +557,7 @@ for (
     false,
   ], [false, true]]
 ) {
-  Deno.test(`source reviewed creator manuscript foundation and taxidermy Section B reductions reach complete return highFmvArt${highFmvFoundationArt} highValue${highValueCreator}`, async () => {
+  test(`source reviewed creator manuscript foundation and taxidermy Section B reductions reach complete return highFmvArt${highFmvFoundationArt} highValue${highValueCreator}`, async () => {
     const { reviewedSpecialSectionBInventory } = await import(
       "./form8283-special-section-b.fixture.ts"
     );
@@ -592,7 +595,7 @@ for (
     });
     assertEquals((bundle.xml.match(/<IRS8283\b/g) ?? []).length, 4);
     assertEquals(bundle.attachments.length, 28);
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -733,7 +736,7 @@ for (
 }
 
 for (const lowValueGrouped of [false, true]) {
-  Deno.test(`actual same-donee signed ABC form and shared appraisal produce one source-bound Section B copy lowValue${lowValueGrouped}`, async () => {
+  test(`actual same-donee signed ABC form and shared appraisal produce one source-bound Section B copy lowValue${lowValueGrouped}`, async () => {
     const source = await reviewedGiftInventory(
       3,
       true,
@@ -776,7 +779,7 @@ for (const lowValueGrouped of [false, true]) {
       ),
       lowValueGrouped,
     );
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -883,7 +886,7 @@ for (const lowValueGrouped of [false, true]) {
 }
 
 for (const longHeld of [false, true]) {
-  Deno.test(`owned unreduced similar books across three donees reach complete source graph and three required copies longHeld${longHeld}`, async () => {
+  test(`owned unreduced similar books across three donees reach complete source graph and three required copies longHeld${longHeld}`, async () => {
     const { reviewedUnreducedBookGroup } = await import(
       "./form8283-unreduced-book-group.fixture.ts"
     );
@@ -915,7 +918,7 @@ for (const longHeld of [false, true]) {
         true,
       );
     }
-    const child = new Deno.Command("xmllint", {
+    const child = new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",

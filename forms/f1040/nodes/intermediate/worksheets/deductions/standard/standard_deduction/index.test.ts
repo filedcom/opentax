@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, standard_deduction } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
@@ -15,7 +16,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Base standard deduction amounts ─────────────────────────────────────────
 
-Deno.test("Single: base standard deduction $15,750", () => {
+test("Single: base standard deduction $15,750", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -24,7 +25,7 @@ Deno.test("Single: base standard deduction $15,750", () => {
   );
 });
 
-Deno.test("explicit Schedule A election files below-standard and zero deductions", () => {
+test("explicit Schedule A election files below-standard and zero deductions", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -53,7 +54,7 @@ Deno.test("explicit Schedule A election files below-standard and zero deductions
   );
 });
 
-Deno.test("MFJ: base standard deduction $31,500", () => {
+test("MFJ: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -62,7 +63,7 @@ Deno.test("MFJ: base standard deduction $31,500", () => {
   );
 });
 
-Deno.test("HOH: base standard deduction $23,625", () => {
+test("HOH: base standard deduction $23,625", () => {
   const result = compute({ filing_status: FilingStatus.HOH, agi: 50_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -71,7 +72,7 @@ Deno.test("HOH: base standard deduction $23,625", () => {
   );
 });
 
-Deno.test("MFS: base standard deduction $15,750", () => {
+test("MFS: base standard deduction $15,750", () => {
   const result = compute({ filing_status: FilingStatus.MFS, agi: 40_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -80,7 +81,7 @@ Deno.test("MFS: base standard deduction $15,750", () => {
   );
 });
 
-Deno.test("QSS: base standard deduction $31,500", () => {
+test("QSS: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.QSS, agi: 70_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -89,7 +90,7 @@ Deno.test("QSS: base standard deduction $31,500", () => {
   );
 });
 
-Deno.test("Dependent with no earned income uses the $1,350 floor", () => {
+test("Dependent with no earned income uses the $1,350 floor", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 5_000,
@@ -102,7 +103,7 @@ Deno.test("Dependent with no earned income uses the $1,350 floor", () => {
   );
 });
 
-Deno.test("Dependent earned income plus $450 is capped at the filing-status amount", () => {
+test("Dependent earned income plus $450 is capped at the filing-status amount", () => {
   const belowCap = compute({
     filing_status: FilingStatus.Single,
     agi: 5_000,
@@ -125,7 +126,7 @@ Deno.test("Dependent earned income plus $450 is capped at the filing-status amou
   );
 });
 
-Deno.test("Dependent standard deduction requires an earned-income amount", () => {
+test("Dependent standard deduction requires an earned-income amount", () => {
   assertThrows(
     () =>
       compute({
@@ -140,7 +141,7 @@ Deno.test("Dependent standard deduction requires an earned-income amount", () =>
 
 // ─── Additional deduction for age/blindness ───────────────────────────────────
 
-Deno.test("Single 65+: $15,750 + $2,000 = $17,750", () => {
+test("Single 65+: $15,750 + $2,000 = $17,750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -153,7 +154,7 @@ Deno.test("Single 65+: $15,750 + $2,000 = $17,750", () => {
   );
 });
 
-Deno.test("Single blind: $15,750 + $2,000 = $17,750", () => {
+test("Single blind: $15,750 + $2,000 = $17,750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -166,7 +167,7 @@ Deno.test("Single blind: $15,750 + $2,000 = $17,750", () => {
   );
 });
 
-Deno.test("Single 65+ and blind: $15,750 + $4,000 = $19,750", () => {
+test("Single 65+ and blind: $15,750 + $4,000 = $19,750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -180,7 +181,7 @@ Deno.test("Single 65+ and blind: $15,750 + $4,000 = $19,750", () => {
   );
 });
 
-Deno.test("MFJ both spouses 65+: $31,500 + 2×$1,600 = $34,700", () => {
+test("MFJ both spouses 65+: $31,500 + 2×$1,600 = $34,700", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     agi: 80_000,
@@ -194,7 +195,7 @@ Deno.test("MFJ both spouses 65+: $31,500 + 2×$1,600 = $34,700", () => {
   );
 });
 
-Deno.test("MFJ all four factors: $31,500 + 4×$1,600 = $37,900", () => {
+test("MFJ all four factors: $31,500 + 4×$1,600 = $37,900", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     agi: 80_000,
@@ -211,7 +212,7 @@ Deno.test("MFJ all four factors: $31,500 + 4×$1,600 = $37,900", () => {
 });
 
 // Spouse flags should be ignored for Single filers
-Deno.test("Single: spouse flags do not add additional deduction", () => {
+test("Single: spouse flags do not add additional deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -227,7 +228,7 @@ Deno.test("Single: spouse flags do not add additional deduction", () => {
 
 // ─── Taxable income routing ───────────────────────────────────────────────────
 
-Deno.test("Taxable income = AGI − standard deduction", () => {
+test("Taxable income = AGI − standard deduction", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const incTax = findOutput(result, "income_tax_calculation");
   assertEquals(
@@ -236,7 +237,7 @@ Deno.test("Taxable income = AGI − standard deduction", () => {
   );
 });
 
-Deno.test("Taxable income = AGI − standard deduction − QBI deduction", () => {
+test("Taxable income = AGI − standard deduction − QBI deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 60_000,
@@ -249,13 +250,13 @@ Deno.test("Taxable income = AGI − standard deduction − QBI deduction", () =>
   );
 });
 
-Deno.test("Taxable income floors at 0 when deductions exceed AGI", () => {
+test("Taxable income floors at 0 when deductions exceed AGI", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 5_000 });
   const incTax = findOutput(result, "income_tax_calculation");
   assertEquals((incTax!.fields as Record<string, number>).taxable_income, 0);
 });
 
-Deno.test("f1040 line15_taxable_income matches income_tax_calculation taxable_income", () => {
+test("f1040 line15_taxable_income matches income_tax_calculation taxable_income", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   // Two f1040 outputs: line12a in first, line15 in second
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
@@ -269,7 +270,7 @@ Deno.test("f1040 line15_taxable_income matches income_tax_calculation taxable_in
   );
 });
 
-Deno.test("Schedule 1-A additional deductions reduce taxable income", () => {
+test("Schedule 1-A additional deductions reduce taxable income", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 30_000,
@@ -284,7 +285,7 @@ Deno.test("Schedule 1-A additional deductions reduce taxable income", () => {
   assertEquals(taxOutput?.fields.taxable_income, 9_250);
 });
 
-Deno.test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () => {
+test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 30_000,
@@ -305,7 +306,7 @@ Deno.test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () =
   );
 });
 
-Deno.test("Form 1116 line 3b excludes Schedule 1-A vehicle interest for line 4b", () => {
+test("Form 1116 line 3b excludes Schedule 1-A vehicle interest for line 4b", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -321,14 +322,14 @@ Deno.test("Form 1116 line 3b excludes Schedule 1-A vehicle interest for line 4b"
   );
 });
 
-Deno.test("Form 6251 line 1b keeps negative income before line 15's zero floor", () => {
+test("Form 6251 line 1b keeps negative income before line 15's zero floor", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 5_000 });
   const incomeTax = findOutput(result, "income_tax_calculation");
   assertEquals(incomeTax?.fields.taxable_income, 0);
   assertEquals(incomeTax?.fields.form6251_line1b, -10_750);
 });
 
-Deno.test("Form 6251 line 2a adds back the standard deduction when it wins", () => {
+test("Form 6251 line 2a adds back the standard deduction when it wins", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -341,7 +342,7 @@ Deno.test("Form 6251 line 2a adds back the standard deduction when it wins", () 
   );
 });
 
-Deno.test("Form 6251 line 2a uses Schedule A line 7 when itemizing wins", () => {
+test("Form 6251 line 2a uses Schedule A line 7 when itemizing wins", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -354,7 +355,7 @@ Deno.test("Form 6251 line 2a uses Schedule A line 7 when itemizing wins", () => 
   );
 });
 
-Deno.test("Form 6251 line 2a rejects missing or impossible Schedule A line 7 for itemizers", () => {
+test("Form 6251 line 2a rejects missing or impossible Schedule A line 7 for itemizers", () => {
   assertThrows(
     () =>
       compute({
@@ -388,7 +389,7 @@ Deno.test("Form 6251 line 2a rejects missing or impossible Schedule A line 7 for
   );
 });
 
-Deno.test("income_tax_calculation receives filing_status", () => {
+test("income_tax_calculation receives filing_status", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const incTax = findOutput(result, "income_tax_calculation");
   assertEquals(
@@ -399,7 +400,7 @@ Deno.test("income_tax_calculation receives filing_status", () => {
 
 // ─── Standard vs itemized comparison ─────────────────────────────────────────
 
-Deno.test("Takes itemized when itemized > standard", () => {
+test("Takes itemized when itemized > standard", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 100_000,
@@ -421,7 +422,7 @@ Deno.test("Takes itemized when itemized > standard", () => {
   );
 });
 
-Deno.test("Takes standard when standard >= itemized", () => {
+test("Takes standard when standard >= itemized", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 60_000,
@@ -442,7 +443,7 @@ Deno.test("Takes standard when standard >= itemized", () => {
 
 // ─── MFS spouse itemizing rule ────────────────────────────────────────────────
 
-Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", () => {
+test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     agi: 50_000,
@@ -465,7 +466,7 @@ Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", (
 
 // ─── Output structure ─────────────────────────────────────────────────────────
 
-Deno.test("Standard deduction: produces f1040 and income_tax_calculation outputs", () => {
+test("Standard deduction: produces f1040 and income_tax_calculation outputs", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   const incTaxOutputs = result.outputs.filter((o) =>
@@ -476,7 +477,7 @@ Deno.test("Standard deduction: produces f1040 and income_tax_calculation outputs
   assertEquals(incTaxOutputs.length, 1);
 });
 
-Deno.test("Itemizing: produces f1040 line15 output and income_tax_calculation, no line12a", () => {
+test("Itemizing: produces f1040 line15 output and income_tax_calculation, no line12a", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 100_000,
@@ -497,7 +498,7 @@ Deno.test("Itemizing: produces f1040 line15 output and income_tax_calculation, n
   );
 });
 
-Deno.test("taxable income subtracts rounded Form 1040 line operands", () => {
+test("taxable income subtracts rounded Form 1040 line operands", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     agi: 502287.30,

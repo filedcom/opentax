@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { ContractType, f8697 } from "./index.ts";
 
@@ -8,7 +9,7 @@ function compute(items: Record<string, unknown>[]) {
   );
 }
 
-Deno.test("Form 8697 rejects malformed or empty source before filing review", () => {
+test("Form 8697 rejects malformed or empty source before filing review", () => {
   assertThrows(() => compute([]), Error);
   assertEquals(
     f8697.inputSchema.safeParse({ f8697s: [{ contract_type: "invalid" }] }).success,
@@ -16,7 +17,7 @@ Deno.test("Form 8697 rejects malformed or empty source before filing review", ()
   );
 });
 
-Deno.test("Form 8697 blocks interest owed instead of treating it as Schedule 1 income", () => {
+test("Form 8697 blocks interest owed instead of treating it as Schedule 1 income", () => {
   assertThrows(
     () => compute([{ contract_type: ContractType.Regular, net_interest: 1_200 }]),
     Error,
@@ -24,7 +25,7 @@ Deno.test("Form 8697 blocks interest owed instead of treating it as Schedule 1 i
   );
 });
 
-Deno.test("Form 8697 blocks interest refund instead of a Schedule 1 deduction", () => {
+test("Form 8697 blocks interest refund instead of a Schedule 1 deduction", () => {
   assertThrows(
     () => compute([{ contract_type: ContractType.Regular, net_interest: -800 }]),
     Error,
@@ -32,7 +33,7 @@ Deno.test("Form 8697 blocks interest refund instead of a Schedule 1 deduction", 
   );
 });
 
-Deno.test("Form 8697 zero, absent, and offsetting amounts cannot silently disappear", () => {
+test("Form 8697 zero, absent, and offsetting amounts cannot silently disappear", () => {
   for (const items of [
     [{ contract_type: ContractType.Regular }],
     [{ contract_type: ContractType.Regular, net_interest: 0 }],
@@ -45,7 +46,7 @@ Deno.test("Form 8697 zero, absent, and offsetting amounts cannot silently disapp
   }
 });
 
-Deno.test("Form 8697 prior-year workpaper facts remain a blocked source", () => {
+test("Form 8697 prior-year workpaper facts remain a blocked source", () => {
   assertThrows(
     () => compute([{
       contract_type: ContractType.Simplified,

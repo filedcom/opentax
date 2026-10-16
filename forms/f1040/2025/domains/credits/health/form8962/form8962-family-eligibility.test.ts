@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertForm8962FamilyEligibility,
@@ -76,7 +77,7 @@ function reviewedJointContract() {
   };
 }
 
-Deno.test("family eligibility binds reviewed month/person/policy and zero spouse sources", () => {
+test("family eligibility binds reviewed month/person/policy and zero spouse sources", () => {
   const p = reviewedJointContract();
   assertForm8962FamilyEligibility(p, "123-45-6789", "234-56-7890");
   assertEquals(
@@ -97,7 +98,7 @@ Deno.test("family eligibility binds reviewed month/person/policy and zero spouse
   assertThrows(() => assertForm8962PolicyEligibility(missing));
 });
 
-Deno.test("family review rejects missing, borrowed, premature and disqualified monthly facts", () => {
+test("family review rejects missing, borrowed, premature and disqualified monthly facts", () => {
   for (
     const edit of [
       (p: any) =>
@@ -137,7 +138,7 @@ Deno.test("family review rejects missing, borrowed, premature and disqualified m
   }
 });
 
-Deno.test("spouse inventory rejects actual source conflicts and owner/year/date omissions", () => {
+test("spouse inventory rejects actual source conflicts and owner/year/date omissions", () => {
   for (
     const edit of [
       (p: any) => delete p.general.ptc_spouse_income_review,

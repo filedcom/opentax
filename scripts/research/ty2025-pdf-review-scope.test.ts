@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { assertReviewScope, reviewScope } from "./ty2025-pdf-review-scope.ts";
 
-Deno.test("review scope declares selected cases and every exclusion in fixture order", () => {
+test("review scope declares selected cases and every exclusion in fixture order", () => {
   const scope = reviewScope(["a", "b", "c"], ["c", "a"]);
   assertEquals(scope, {
     kind: "selected",
@@ -16,7 +17,7 @@ Deno.test("review scope declares selected cases and every exclusion in fixture o
   assertThrows(() => reviewScope(["a", "b"], ["missing"]));
 });
 
-Deno.test("full review scope lists every checked-in fixture", () => {
+test("full review scope lists every checked-in fixture", () => {
   const scope = reviewScope(["a", "b"]);
   assertEquals(scope, {
     kind: "full",

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
@@ -51,7 +52,7 @@ async function matchedFixture(
   };
 }
 
-Deno.test("trust K-1 copy reconciliation joins ordinary public source through the real graph while credit/export remain guarded", async () => {
+test("trust K-1 copy reconciliation joins ordinary public source through the real graph while credit/export remain guarded", async () => {
   const { source, documents } = await matchedFixture({
     "f1_13[0]": "100",
     "f1_14[0]": "50",
@@ -111,7 +112,7 @@ Deno.test("trust K-1 copy reconciliation joins ordinary public source through th
   );
 });
 
-Deno.test("trust K-1 copy reconciliation retains all currently modeled coded facts and outstanding statement references", async () => {
+test("trust K-1 copy reconciliation retains all currently modeled coded facts and outstanding statement references", async () => {
   const { source, documents } = await matchedFixture({
     "f1_20[0]": "300",
     "f1_21[0]": "400",
@@ -209,7 +210,7 @@ for (
     ["f1_56[0]", "B"],
   ] as const
 ) {
-  Deno.test(`trust K-1 copy reconciliation rejects unreported printed fact ${key}`, async () => {
+  test(`trust K-1 copy reconciliation rejects unreported printed fact ${key}`, async () => {
     const values: Record<string, string> = { [key]: value };
     if (key === "f1_30[0]") values["f1_31[0]"] = "10";
     if (key === "f1_40[0]") values["f1_41[0]"] = "10";
@@ -232,7 +233,7 @@ for (
     ["box14", { "f1_56[0]": "E", "f1_57[0]": "10" }],
   ] as const
 ) {
-  Deno.test(`trust K-1 copy reconciliation rejects unmodeled ${box} without dropping it`, async () => {
+  test(`trust K-1 copy reconciliation rejects unmodeled ${box} without dropping it`, async () => {
     const { source, documents } = await matchedFixture(values);
     await assertRejects(
       () => reconcileTrustK1SourceCopies(source, filer, documents, [recipient]),
@@ -242,7 +243,7 @@ for (
   });
 }
 
-Deno.test("trust K-1 copy reconciliation rejects claimed amounts absent from the copy and changed trust name", async () => {
+test("trust K-1 copy reconciliation rejects claimed amounts absent from the copy and changed trust name", async () => {
   const { source, documents } = await matchedFixture();
   source.k1_trusts[0].box2a_ordinary_dividends = 10;
   await assertRejects(
@@ -259,7 +260,7 @@ Deno.test("trust K-1 copy reconciliation rejects claimed amounts absent from the
   );
 });
 
-Deno.test("trust K-1 copy reconciliation requires the claimed final-year mark", async () => {
+test("trust K-1 copy reconciliation requires the claimed final-year mark", async () => {
   const { source, documents } = await matchedFixture({
     "f1_30[0]": "A",
     "f1_31[0]": "10",
@@ -276,7 +277,7 @@ Deno.test("trust K-1 copy reconciliation requires the claimed final-year mark", 
   );
 });
 
-Deno.test("trust K-1 copy reconciliation flags entered foreign workpaper facts for statement review even without a printed tax amount", async () => {
+test("trust K-1 copy reconciliation flags entered foreign workpaper facts for statement review even without a printed tax amount", async () => {
   const { source, documents } = await matchedFixture({}, {
     box14_foreign_deductions: 5,
     box14_foreign_deductions_explanation: "Foreign expenses workpaper",

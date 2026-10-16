@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -9,7 +10,7 @@ import {
   section179JointWageInput,
 } from "./section179-joint-wages.fixture.ts";
 
-Deno.test("Section179 joint wage owners reconcile depreciation, health, SE, QBI and final credit tax", async () => {
+test("Section179 joint wage owners reconcile depreciation, health, SE, QBI and final credit tax", async () => {
   for (const scenario of section179JointWageCases) {
     const input = section179JointWageInput(scenario);
     const before = JSON.stringify(input);
@@ -66,7 +67,7 @@ Deno.test("Section179 joint wage owners reconcile depreciation, health, SE, QBI 
   }
 });
 
-Deno.test("Section179 joint income rejects unidentified owners, duplicate employer-owner pairs, wrong status and unreconciled wages", () => {
+test("Section179 joint income rejects unidentified owners, duplicate employer-owner pairs, wrong status and unreconciled wages", () => {
   const result = f1040_2025.executeReturn(
     section179JointWageInput(section179JointWageCases[2]),
   );

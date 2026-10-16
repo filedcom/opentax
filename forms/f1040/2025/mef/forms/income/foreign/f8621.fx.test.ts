@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateExcessEvents,
@@ -35,7 +36,7 @@ const item = itemSchema.parse({
   excess_events: [foreignBlock],
 });
 
-Deno.test("Form 8621 MeF keeps lines 15a to 15e(1) in EUR and line 15e(2) in USD", () => {
+test("Form 8621 MeF keeps lines 15a to 15e(1) in EUR and line 15e(2) in USD", () => {
   const calculated = calculateExcessEvents(foreignBlock);
   const [xml] = form8621.build({
     items: [{ item, excessEvents: calculated }],
@@ -67,7 +68,7 @@ Deno.test("Form 8621 MeF keeps lines 15a to 15e(1) in EUR and line 15e(2) in USD
   );
 });
 
-Deno.test("Form 8621 rejects a mixed line 15 currency on one MeF filing", () => {
+test("Form 8621 rejects a mixed line 15 currency on one MeF filing", () => {
   const foreign = calculateExcessEvents(foreignBlock)[0];
   const gbp = calculateExcessEvents({
     ...foreignBlock,
@@ -83,7 +84,7 @@ Deno.test("Form 8621 rejects a mixed line 15 currency on one MeF filing", () => 
   );
 });
 
-Deno.test("Form 8621 foreign source requires an explicit positive spot rate", () => {
+test("Form 8621 foreign source requires an explicit positive spot rate", () => {
   const invalid = {
     ...foreignBlock,
     current_year_distributions: [{
@@ -102,7 +103,7 @@ Deno.test("Form 8621 foreign source requires an explicit positive spot rate", ()
   assertEquals(excessEventSchema.safeParse(noSource).success, false);
 });
 
-Deno.test("Form 8621 holding-period statement retains the FX quote and its source", () => {
+test("Form 8621 holding-period statement retains the FX quote and its source", () => {
   const lines = [{ item, excessEvents: calculateExcessEvents(foreignBlock) }];
   const [statement] = form8621ExcessStatement.build({}, {
     pending: { form8621: { items: lines } },
@@ -111,7 +112,7 @@ Deno.test("Form 8621 holding-period statement retains the FX quote and its sourc
   assertStringIncludes(statement, "Test spot quote, 2025-12-31");
 });
 
-Deno.test("Form 8621 MeF reports translated disposition gain on line 15f", () => {
+test("Form 8621 MeF reports translated disposition gain on line 15f", () => {
   const foreignDisposition = {
     kind: ExcessEventKind.Disposition as const,
     currency_code: "EUR",

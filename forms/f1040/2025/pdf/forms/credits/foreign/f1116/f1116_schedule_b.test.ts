@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../../mef/header.ts";
 import {
@@ -90,7 +91,7 @@ const priorFields = {
   },
 };
 
-Deno.test("Form 1116 Schedule B PDF uses canonical two-page 2025 field paths", () => {
+test("Form 1116 Schedule B PDF uses canonical two-page 2025 field paths", () => {
   const byKey = new Map(form1116ScheduleBPdf.fields.map((field) => [
     field.domainKey,
     field.pdfField,
@@ -126,7 +127,7 @@ Deno.test("Form 1116 Schedule B PDF uses canonical two-page 2025 field paths", (
   );
 });
 
-Deno.test("Form 1116 Schedule B PDF projects a 2021 fourth-preceding vintage", () => {
+test("Form 1116 Schedule B PDF projects a 2021 fourth-preceding vintage", () => {
   const source = {
     ...priorFields,
     prior_year_carryover: 700,
@@ -158,7 +159,7 @@ Deno.test("Form 1116 Schedule B PDF projects a 2021 fourth-preceding vintage", (
   assertEquals(projected.line8_total, 450);
 });
 
-Deno.test("Form 1116 Schedule B PDF carries 2020 through page-1 and page-2 subtotals", () => {
+test("Form 1116 Schedule B PDF carries 2020 through page-1 and page-2 subtotals", () => {
   const source = {
     ...priorFields,
     category: IncomeCategory.General,
@@ -214,7 +215,7 @@ Deno.test("Form 1116 Schedule B PDF carries 2020 through page-1 and page-2 subto
   );
 });
 
-Deno.test("Form 1116 Schedule B PDF places 2018-2020 vintages and sums page-1 subtotals", () => {
+test("Form 1116 Schedule B PDF places 2018-2020 vintages and sums page-1 subtotals", () => {
   const source = {
     ...priorFields,
     category: IncomeCategory.General,
@@ -256,7 +257,7 @@ Deno.test("Form 1116 Schedule B PDF places 2018-2020 vintages and sums page-1 su
   assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_13[0]");
 });
 
-Deno.test("Form 1116 Schedule B PDF places passive 2017 in page-1 eighth column", () => {
+test("Form 1116 Schedule B PDF places passive 2017 in page-1 eighth column", () => {
   const source = {
     ...priorFields,
     category: IncomeCategory.Passive,
@@ -293,7 +294,7 @@ Deno.test("Form 1116 Schedule B PDF places passive 2017 in page-1 eighth column"
   assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_12[0]");
 });
 
-Deno.test("Form 1116 Schedule B PDF places passive 2016 in page-1 ninth column", () => {
+test("Form 1116 Schedule B PDF places passive 2016 in page-1 ninth column", () => {
   const source = {
     ...priorFields,
     category: IncomeCategory.Passive,
@@ -330,7 +331,7 @@ Deno.test("Form 1116 Schedule B PDF places passive 2016 in page-1 ninth column",
   assertEquals(field?.pdfField, "topmostSubform[0].Page1[0].Table_Page1[0].Line1[0].f1_11[0]");
 });
 
-Deno.test("Form 1116 Schedule B PDF prints 2015 line-5 expiry and omits it from next year", () => {
+test("Form 1116 Schedule B PDF prints 2015 line-5 expiry and omits it from next year", () => {
   const source = {
     ...priorFields,
     category: IncomeCategory.Passive,
@@ -369,7 +370,7 @@ Deno.test("Form 1116 Schedule B PDF prints 2015 line-5 expiry and omits it from 
   assertEquals(byKey.get("line5_2015"), "topmostSubform[0].Page1[0].Table_Page1[0].Line5[0].f1_85[0]");
 });
 
-Deno.test("Form 1116 Schedule B PDF prints current-year excess in column xiii and total", () => {
+test("Form 1116 Schedule B PDF prints current-year excess in column xiii and total", () => {
   const projected = form1116ScheduleBPdf.projectFields?.(currentFields, {
     form_1116: {
       category_summaries: [parentSummary(IncomeCategory.Passive, 50)],
@@ -387,7 +388,7 @@ Deno.test("Form 1116 Schedule B PDF prints current-year excess in column xiii an
   assertEquals(instances[0].filer_ssn, "123456789");
 });
 
-Deno.test("Form 1116 Schedule B PDF combines retained 2024 balance and 2025 excess", () => {
+test("Form 1116 Schedule B PDF combines retained 2024 balance and 2025 excess", () => {
   const fields = {
     case: "combined_current_excess_prior_balance" as const,
     category: IncomeCategory.Passive,
@@ -451,7 +452,7 @@ Deno.test("Form 1116 Schedule B PDF combines retained 2024 balance and 2025 exce
   );
 });
 
-Deno.test("Form 1116 Schedule B PDF allocates 2022-2024 oldest first across lines 1, 3, 4, and 8", () => {
+test("Form 1116 Schedule B PDF allocates 2022-2024 oldest first across lines 1, 3, 4, and 8", () => {
   const projected = form1116ScheduleBPdf.projectFields?.(priorFields, {
     form_1116: {
       category_summaries: [parentSummary(IncomeCategory.General, 0, 600, 250)],
@@ -481,7 +482,7 @@ Deno.test("Form 1116 Schedule B PDF allocates 2022-2024 oldest first across line
   assertEquals(projected.category, IncomeCategory.General);
 });
 
-Deno.test("Form 1116 Schedule B PDF fails closed on source and parent mismatches", () => {
+test("Form 1116 Schedule B PDF fails closed on source and parent mismatches", () => {
   assertThrows(
     () =>
       form1116ScheduleBPdf.projectFields?.(currentFields, {

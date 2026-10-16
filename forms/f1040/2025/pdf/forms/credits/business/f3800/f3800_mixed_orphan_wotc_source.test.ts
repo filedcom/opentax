@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../../index.ts";
@@ -152,7 +153,7 @@ function mixedReturn(includeCommercial = false) {
   });
 }
 
-Deno.test("self-earned orphan-drug and work-opportunity credits share Form 3800, Form 1040, native XML, and PDF", async () => {
+test("self-earned orphan-drug and work-opportunity credits share Form 3800, Form 1040, native XML, and PDF", async () => {
   const result = mixedReturn();
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -199,7 +200,7 @@ Deno.test("self-earned orphan-drug and work-opportunity credits share Form 3800,
   );
 });
 
-Deno.test("mixed orphan-drug and work-opportunity Form 3800 PDF rejects source, document, and final-tax drift", async () => {
+test("mixed orphan-drug and work-opportunity Form 3800 PDF rejects source, document, and final-tax drift", async () => {
   const result = mixedReturn();
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
@@ -256,7 +257,7 @@ Deno.test("mixed orphan-drug and work-opportunity Form 3800 PDF rejects source, 
   );
 });
 
-Deno.test("three distinct self-earned credits reconcile to Form 3800, Form 1040, native XML, and PDF", async () => {
+test("three distinct self-earned credits reconcile to Form 3800, Form 1040, native XML, and PDF", async () => {
   const result = mixedReturn(true);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -306,7 +307,7 @@ Deno.test("three distinct self-earned credits reconcile to Form 3800, Form 1040,
   );
 });
 
-Deno.test("three-source Form 3800 PDF rejects vehicle, document, and final-tax drift", async () => {
+test("three-source Form 3800 PDF rejects vehicle, document, and final-tax drift", async () => {
   const result = mixedReturn(true);
   const pending = normalizeAllPending(result.pending);
   const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);

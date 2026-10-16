@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { canonicalForm1098CopyDocument } from "../../../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -34,7 +37,7 @@ async function issuerCopy(borrowerTin = "***-**-3333"): Promise<Uint8Array> {
   return doc.save();
 }
 
-Deno.test("positive Form 1098 box 1 needs a filer-owned exact issuer copy through native and PDF Schedule A", async () => {
+test("positive Form 1098 box 1 needs a filer-owned exact issuer copy through native and PDF Schedule A", async () => {
   const bytes = await issuerCopy();
   const hash = Array.from(
     new Uint8Array(
@@ -69,17 +72,17 @@ Deno.test("positive Form 1098 box 1 needs a filer-owned exact issuer copy throug
     ),
     true,
   );
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const filled = await buildPdfBytes(
     bundle.pending,
@@ -88,10 +91,10 @@ Deno.test("positive Form 1098 box 1 needs a filer-owned exact issuer copy throug
     bundle,
   );
   assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
-  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  const pdfPath = await sys.makeTempFile({ suffix: ".pdf" });
   try {
-    await Deno.writeFile(pdfPath, filled);
-    const extracted = await new Deno.Command("pdftotext", {
+    await fs.writeFile(pdfPath, filled);
+    const extracted = await new sys.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
       stderr: "piped",
@@ -102,7 +105,7 @@ Deno.test("positive Form 1098 box 1 needs a filer-owned exact issuer copy throug
       true,
     );
   } finally {
-    await Deno.remove(pdfPath);
+    await sys.remove(pdfPath);
   }
 
   const withoutCopy = {
@@ -157,7 +160,7 @@ Deno.test("positive Form 1098 box 1 needs a filer-owned exact issuer copy throug
   );
 });
 
-Deno.test("unclaimed Form 1098 box 1 interest remains calculation-only with the standard deduction", async () => {
+test("unclaimed Form 1098 box 1 interest remains calculation-only with the standard deduction", async () => {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     f1098: [{

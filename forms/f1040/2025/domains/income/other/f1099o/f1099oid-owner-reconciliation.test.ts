@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -22,7 +23,7 @@ function retained(recipient_tin?: string) {
   };
 }
 
-Deno.test("positive 1099-OID owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-OID owner is checked by native and PDF Form 1040", () => {
   const source = retained("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -45,7 +46,7 @@ Deno.test("positive 1099-OID owner is checked by native and PDF Form 1040", () =
   }
 });
 
-Deno.test("joint spouse 1099-OID belongs on MFJ return only", () => {
+test("joint spouse 1099-OID belongs on MFJ return only", () => {
   const source = retained("444556666");
   const joint = {
     ...filed,
@@ -70,7 +71,7 @@ Deno.test("joint spouse 1099-OID belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("positive 1099-OID needs a nonblank payer name in both Form 1040 exports", () => {
+test("positive 1099-OID needs a nonblank payer name in both Form 1040 exports", () => {
   const pending = retained("111223333");
   pending.f1099oid.f1099oids[0].payer_name = "   ";
   const message = "1099-OID needs an identified payer name";
@@ -82,7 +83,7 @@ Deno.test("positive 1099-OID needs a nonblank payer name in both Form 1040 expor
   );
 });
 
-Deno.test("tax-exempt OID still requires owner at export", () => {
+test("tax-exempt OID still requires owner at export", () => {
   const pending = {
     f1099oid: {
       f1099oids: [{ payer_name: "Issuer", box11_tax_exempt_oid: 50 }],

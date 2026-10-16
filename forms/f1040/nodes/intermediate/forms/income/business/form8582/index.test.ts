@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   allocateOtherPassivePrior4797,
@@ -20,14 +21,14 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("rental allocation preserves allowed total and stable largest remainders", () => {
+test("rental allocation preserves allowed total and stable largest remainders", () => {
   assertEquals(allocateRentalLosses([10_000, 20_000], 25_000), [8_333, 16_667]);
   assertEquals(allocateRentalLosses([1, 1, 1], 2), [1, 1, 0]);
   assertEquals(allocateRentalLosses([5_000, 5_000], 0), [0, 0]);
   assertThrows(() => allocateRentalLosses([100, 200], 301));
 });
 
-Deno.test("Form 8582 joins prior operating PAL to filed 2024 Part VII by durable activity", () => {
+test("Form 8582 joins prior operating PAL to filed 2024 Part VII by durable activity", () => {
   const activity = {
     activity_id: "rental-7",
     name: "Renamed rental",
@@ -87,7 +88,7 @@ Deno.test("Form 8582 joins prior operating PAL to filed 2024 Part VII by durable
   );
 });
 
-Deno.test("Form 8582 applies a sourced prior operating PAL against one retained Part II sale", () => {
+test("Form 8582 applies a sourced prior operating PAL against one retained Part II sale", () => {
   const input = {
     activities: [{
       activity_id: "rental-retained",
@@ -142,7 +143,7 @@ Deno.test("Form 8582 applies a sourced prior operating PAL against one retained 
   );
 });
 
-Deno.test("Form 8582 Part IV limits active-rental PAL after a retained Part II property gain", () => {
+test("Form 8582 Part IV limits active-rental PAL after a retained Part II property gain", () => {
   const activity = {
     activity_id: "active-retained",
     name: "Active retained rental",
@@ -215,7 +216,7 @@ Deno.test("Form 8582 Part IV limits active-rental PAL after a retained Part II p
   }
 });
 
-Deno.test("Form 8582 allows all operating PAL on a sourced entire sale with overall gain", () => {
+test("Form 8582 allows all operating PAL on a sourced entire sale with overall gain", () => {
   const input = {
     activities: [{
       activity_id: "entire-gain-rental",
@@ -266,7 +267,7 @@ Deno.test("Form 8582 allows all operating PAL on a sourced entire sale with over
   );
 });
 
-Deno.test("Form 8582 Part IV releases an active rental operating PAL on sourced entire-sale overall gain", () => {
+test("Form 8582 Part IV releases an active rental operating PAL on sourced entire-sale overall gain", () => {
   const activity = {
     activity_id: "active-entire-gain",
     name: "Active entire rental",
@@ -320,7 +321,7 @@ Deno.test("Form 8582 Part IV releases an active rental operating PAL on sourced 
   );
 });
 
-Deno.test("Part IX keeps prior Form 4797 Parts I and II separate from Schedule E", () => {
+test("Part IX keeps prior Form 4797 Parts I and II separate from Schedule E", () => {
   assertEquals(
     allocatePartIXLosses([
       {
@@ -368,7 +369,7 @@ Deno.test("Part IX keeps prior Form 4797 Parts I and II separate from Schedule E
   );
 });
 
-Deno.test("Part IX same-part gain offsets a prior Form 4797 loss before suspension", () => {
+test("Part IX same-part gain offsets a prior Form 4797 loss before suspension", () => {
   assertEquals(
     allocatePartIXLosses([
       {
@@ -412,7 +413,7 @@ Deno.test("Part IX same-part gain offsets a prior Form 4797 loss before suspensi
   );
 });
 
-Deno.test("prior Form 4797 PAL reaches Schedule 1 line 4 while operating PAL stays on line 5", () => {
+test("prior Form 4797 PAL reaches Schedule 1 line 4 while operating PAL stays on line 5", () => {
   const input = {
     activities: [
       {
@@ -506,7 +507,7 @@ Deno.test("prior Form 4797 PAL reaches Schedule 1 line 4 while operating PAL sta
   );
 });
 
-Deno.test("one-form prior Form 4797 Part VIII loss keeps its reporting character", () => {
+test("one-form prior Form 4797 Part VIII loss keeps its reporting character", () => {
   const source = {
     tax_year: 2024 as const,
     activity_id: "rental-part-viii",
@@ -599,7 +600,7 @@ Deno.test("one-form prior Form 4797 Part VIII loss keeps its reporting character
   );
 });
 
-Deno.test("retained passive sale gain releases prior Form 4797 PAL by part", () => {
+test("retained passive sale gain releases prior Form 4797 PAL by part", () => {
   const input = {
     activities: [{
       activity_id: "id-Land rental",
@@ -643,7 +644,7 @@ Deno.test("retained passive sale gain releases prior Form 4797 PAL by part", () 
   assertThrows(() => compute(input), Error, "disposition review");
 });
 
-Deno.test("active-rental Form 4797 PAL uses pre-PAL MAGI and same-part gains", () => {
+test("active-rental Form 4797 PAL uses pre-PAL MAGI and same-part gains", () => {
   const base = {
     activities: [{
       activity_id: "id-Rental house",
@@ -698,7 +699,7 @@ Deno.test("active-rental Form 4797 PAL uses pre-PAL MAGI and same-part gains", (
   );
 });
 
-Deno.test("active-rental operating loss and property gain stay separate in Part IV", () => {
+test("active-rental operating loss and property gain stay separate in Part IV", () => {
   const ledger = allocateOtherPassivePrior4797(inputSchema.parse({
     activities: [{
       activity_id: "id-Rental house",
@@ -733,7 +734,7 @@ Deno.test("active-rental operating loss and property gain stay separate in Part 
   assertEquals(ledger.suspendedTotal, 2_000);
 });
 
-Deno.test("active-rental Part I PAL with sale needs disposition review", () => {
+test("active-rental Part I PAL with sale needs disposition review", () => {
   assertThrows(
     () =>
       compute({
@@ -767,7 +768,7 @@ Deno.test("active-rental Part I PAL with sale needs disposition review", () => {
   );
 });
 
-Deno.test("rental activity allocation offsets own profit before distributing shared allowance", () => {
+test("rental activity allocation offsets own profit before distributing shared allowance", () => {
   assertEquals(
     allocatePassiveActivityLosses([
       {
@@ -794,7 +795,7 @@ Deno.test("rental activity allocation offsets own profit before distributing sha
   );
 });
 
-Deno.test("rental activity allocation distributes unallowed loss by Part VII ratios", () => {
+test("rental activity allocation distributes unallowed loss by Part VII ratios", () => {
   assertEquals(
     allocatePassiveActivityLosses([
       {
@@ -827,7 +828,7 @@ Deno.test("rental activity allocation distributes unallowed loss by Part VII rat
   );
 });
 
-Deno.test("mixed passive allocation excludes Part V losses from special allowance", () => {
+test("mixed passive allocation excludes Part V losses from special allowance", () => {
   assertEquals(
     allocatePassiveActivityLosses([
       {
@@ -854,7 +855,7 @@ Deno.test("mixed passive allocation excludes Part V losses from special allowanc
   );
 });
 
-Deno.test("prior loss without past active participation cannot receive special allowance", () => {
+test("prior loss without past active participation cannot receive special allowance", () => {
   assertEquals(
     allocatePassiveActivityLosses([
       {
@@ -877,7 +878,7 @@ Deno.test("prior loss without past active participation cannot receive special a
 
 // ─── 1. Input Validation ──────────────────────────────────────────────────────
 
-Deno.test("valid_all_fields_pass: all valid fields present, no passive activity", () => {
+test("valid_all_fields_pass: all valid fields present, no passive activity", () => {
   compute({
     current_income: 10_000,
     rental_current_income: 0,
@@ -892,15 +893,15 @@ Deno.test("valid_all_fields_pass: all valid fields present, no passive activity"
   });
 });
 
-Deno.test("invalid_current_income_type: current_income is string '50000' throws", () => {
+test("invalid_current_income_type: current_income is string '50000' throws", () => {
   assertThrows(() => compute({ current_income: "50000" }));
 });
 
-Deno.test("invalid_current_loss_type: current_loss is string '30000' throws", () => {
+test("invalid_current_loss_type: current_loss is string '30000' throws", () => {
   assertThrows(() => compute({ current_loss: "30000" }));
 });
 
-Deno.test("Form 8582 reconciles Schedule E and Form 4835 activity totals before routing a loss", () => {
+test("Form 8582 reconciles Schedule E and Form 4835 activity totals before routing a loss", () => {
   const activities = [
     {
       activity_id: "id-Rental house",
@@ -999,7 +1000,7 @@ Deno.test("Form 8582 reconciles Schedule E and Form 4835 activity totals before 
   );
 });
 
-Deno.test("Form 8582 keeps fully suspended prior Form 4797 losses off Schedule 1", () => {
+test("Form 8582 keeps fully suspended prior Form 4797 losses off Schedule 1", () => {
   const activity = {
     activity_id: "id-Rental business",
     name: "Rental business",
@@ -1046,43 +1047,43 @@ Deno.test("Form 8582 keeps fully suspended prior Form 4797 losses off Schedule 1
   );
 });
 
-Deno.test("invalid_prior_unallowed_type: prior_unallowed is string '10000' throws", () => {
+test("invalid_prior_unallowed_type: prior_unallowed is string '10000' throws", () => {
   assertThrows(() => compute({ prior_unallowed: "10000" }));
 });
 
-Deno.test("invalid_modified_agi_type: modified_agi is string '100000' throws", () => {
+test("invalid_modified_agi_type: modified_agi is string '100000' throws", () => {
   assertThrows(() => compute({ modified_agi: "100000" }));
 });
 
-Deno.test("invalid_has_active_rental_type: has_active_rental is string 'true' throws", () => {
+test("invalid_has_active_rental_type: has_active_rental is string 'true' throws", () => {
   assertThrows(() => compute({ has_active_rental: "true" }));
 });
 
-Deno.test("invalid_active_participation_type: active_participation is string 'true' throws", () => {
+test("invalid_active_participation_type: active_participation is string 'true' throws", () => {
   assertThrows(() => compute({ active_participation: "true" }));
 });
 
-Deno.test("invalid_filing_status_value: filing_status is 'invalid_status' throws", () => {
+test("invalid_filing_status_value: filing_status is 'invalid_status' throws", () => {
   assertThrows(() => compute({ filing_status: "invalid_status" }));
 });
 
-Deno.test("negative_current_income: current_income -10000 throws (.nonnegative())", () => {
+test("negative_current_income: current_income -10000 throws (.nonnegative())", () => {
   assertThrows(() => compute({ current_income: -10_000 }));
 });
 
-Deno.test("negative_current_loss: current_loss -10000 throws (.nonnegative())", () => {
+test("negative_current_loss: current_loss -10000 throws (.nonnegative())", () => {
   assertThrows(() => compute({ current_loss: -10_000 }));
 });
 
-Deno.test("negative_prior_unallowed: prior_unallowed -10000 throws (.nonnegative())", () => {
+test("negative_prior_unallowed: prior_unallowed -10000 throws (.nonnegative())", () => {
   assertThrows(() => compute({ prior_unallowed: -10_000 }));
 });
 
-Deno.test("negative_modified_agi: modified_agi -50000 throws (.nonnegative())", () => {
+test("negative_modified_agi: modified_agi -50000 throws (.nonnegative())", () => {
   assertThrows(() => compute({ modified_agi: -50_000 }));
 });
 
-Deno.test("active rental needs an explicit rental share of passive losses", () => {
+test("active rental needs an explicit rental share of passive losses", () => {
   assertThrows(
     () =>
       compute({
@@ -1096,7 +1097,7 @@ Deno.test("active rental needs an explicit rental share of passive losses", () =
   );
 });
 
-Deno.test("active rental needs an explicit rental share of passive income", () => {
+test("active rental needs an explicit rental share of passive income", () => {
   assertThrows(
     () =>
       compute({
@@ -1112,7 +1113,7 @@ Deno.test("active rental needs an explicit rental share of passive income", () =
   );
 });
 
-Deno.test("rental profits reduce the special allowance before other passive losses", () => {
+test("rental profits reduce the special allowance before other passive losses", () => {
   const result = compute({
     current_income: 10_000,
     rental_current_income: 10_000,
@@ -1129,7 +1130,7 @@ Deno.test("rental profits reduce the special allowance before other passive loss
   assertEquals(result.carryforwards?.suspended_pal_8582, 10_000);
 });
 
-Deno.test("rental shares cannot exceed passive totals", () => {
+test("rental shares cannot exceed passive totals", () => {
   assertThrows(
     () =>
       compute({
@@ -1154,7 +1155,7 @@ Deno.test("rental shares cannot exceed passive totals", () => {
 
 // ─── 2. Per-Field Calculation ─────────────────────────────────────────────────
 
-Deno.test("no_activity_returns_empty: current_income 0, current_loss 0, prior_unallowed 0 → 0 outputs", () => {
+test("no_activity_returns_empty: current_income 0, current_loss 0, prior_unallowed 0 → 0 outputs", () => {
   const result = compute({
     current_income: 0,
     current_loss: 0,
@@ -1163,7 +1164,7 @@ Deno.test("no_activity_returns_empty: current_income 0, current_loss 0, prior_un
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("aggregate prior PAL cannot enter Form 8582 without filed activity evidence", () => {
+test("aggregate prior PAL cannot enter Form 8582 without filed activity evidence", () => {
   assertThrows(
     () =>
       compute({
@@ -1176,7 +1177,7 @@ Deno.test("aggregate prior PAL cannot enter Form 8582 without filed activity evi
   );
 });
 
-Deno.test("passive_loss_exceeds_income: pal=40000, active rental MAGI=90000 → allowed=35000 → schedule1=-35000", () => {
+test("passive_loss_exceeds_income: pal=40000, active rental MAGI=90000 → allowed=35000 → schedule1=-35000", () => {
   // pal = 50000 - 10000 = 40000. allowance = min(40000, 25000) = 25000
   // allowed = min(40000, 10000 + 25000) = 35000
   const result = compute({
@@ -1193,7 +1194,7 @@ Deno.test("passive_loss_exceeds_income: pal=40000, active rental MAGI=90000 → 
   assertEquals(s1?.fields.line5_schedule_e, -35_000);
 });
 
-Deno.test("magi_below_lower_full_allowance: MAGI=80000, loss=30000 → allowed=25000 → schedule1=-25000", () => {
+test("magi_below_lower_full_allowance: MAGI=80000, loss=30000 → allowed=25000 → schedule1=-25000", () => {
   // pal = 30000, allowance = min(30000, 25000) = 25000, allowed = min(30000, 0 + 25000) = 25000
   const result = compute({
     has_active_rental: true,
@@ -1208,7 +1209,7 @@ Deno.test("magi_below_lower_full_allowance: MAGI=80000, loss=30000 → allowed=2
   assertEquals(s1?.fields.line5_schedule_e, -25_000);
 });
 
-Deno.test("magi_at_lower_threshold: MAGI=100000, loss=30000 → full $25k allowance → schedule1=-25000", () => {
+test("magi_at_lower_threshold: MAGI=100000, loss=30000 → full $25k allowance → schedule1=-25000", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: true,
@@ -1222,7 +1223,7 @@ Deno.test("magi_at_lower_threshold: MAGI=100000, loss=30000 → full $25k allowa
   assertEquals(s1?.fields.line5_schedule_e, -25_000);
 });
 
-Deno.test("magi_above_lower_partial_allowance: MAGI=125000 → phase_out=12500, phasedAllowance=12500 → schedule1=-12500", () => {
+test("magi_above_lower_partial_allowance: MAGI=125000 → phase_out=12500, phasedAllowance=12500 → schedule1=-12500", () => {
   // phase_out = 0.5 * (125000 - 100000) = 12500, phasedAllowance = max(0, 25000 - 12500) = 12500
   // allowed = min(30000, 0 + 12500) = 12500
   const result = compute({
@@ -1238,7 +1239,7 @@ Deno.test("magi_above_lower_partial_allowance: MAGI=125000 → phase_out=12500, 
   assertEquals(s1?.fields.line5_schedule_e, -12_500);
 });
 
-Deno.test("magi_at_upper_threshold: MAGI=150000 → allowance=0 → does not route to schedule1", () => {
+test("magi_at_upper_threshold: MAGI=150000 → allowance=0 → does not route to schedule1", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: true,
@@ -1251,7 +1252,7 @@ Deno.test("magi_at_upper_threshold: MAGI=150000 → allowance=0 → does not rou
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("magi_above_upper_threshold: MAGI=160000 → allowance=0 → does not route to schedule1", () => {
+test("magi_above_upper_threshold: MAGI=160000 → allowance=0 → does not route to schedule1", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: true,
@@ -1264,7 +1265,7 @@ Deno.test("magi_above_upper_threshold: MAGI=160000 → allowance=0 → does not 
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("rental_loss_caps_allowance: loss=15000, MAGI=50000 → allowed=15000 → schedule1=-15000", () => {
+test("rental_loss_caps_allowance: loss=15000, MAGI=50000 → allowed=15000 → schedule1=-15000", () => {
   // allowance = min(15000, 25000) = 15000 (capped by actual loss)
   const result = compute({
     has_active_rental: true,
@@ -1279,7 +1280,7 @@ Deno.test("rental_loss_caps_allowance: loss=15000, MAGI=50000 → allowed=15000 
   assertEquals(s1?.fields.line5_schedule_e, -15_000);
 });
 
-Deno.test("allowance_max_25000: loss=40000, MAGI=50000 → allowance capped at 25000 → schedule1=-25000", () => {
+test("allowance_max_25000: loss=40000, MAGI=50000 → allowance capped at 25000 → schedule1=-25000", () => {
   // allowance = min(40000, 25000) = 25000
   const result = compute({
     has_active_rental: true,
@@ -1294,7 +1295,7 @@ Deno.test("allowance_max_25000: loss=40000, MAGI=50000 → allowance capped at 2
   assertEquals(s1?.fields.line5_schedule_e, -25_000);
 });
 
-Deno.test("mfs_gets_zero_allowance: MFS, active rental, MAGI=40000, loss=20000 → allowance=0 → does not route to schedule1", () => {
+test("mfs_gets_zero_allowance: MFS, active rental, MAGI=40000, loss=20000 → allowance=0 → does not route to schedule1", () => {
   // MFS ineligible for Part II → allowance = 0, allowed = min(20000, 0 + 0) = 0
   const result = compute({
     filing_status: FilingStatus.MFS,
@@ -1320,7 +1321,7 @@ const mfsSeparationSource = {
   })),
 };
 
-Deno.test("MFS lived apart all year uses the $12,500 rental allowance", () => {
+test("MFS lived apart all year uses the $12,500 rental allowance", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
@@ -1340,7 +1341,7 @@ Deno.test("MFS lived apart all year uses the $12,500 rental allowance", () => {
   assertEquals(result.carryforwards?.suspended_pal_8582, 7_500);
 });
 
-Deno.test("MFS lived-apart allowance phases out between $50,000 and $75,000", () => {
+test("MFS lived-apart allowance phases out between $50,000 and $75,000", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
@@ -1371,7 +1372,7 @@ Deno.test("MFS lived-apart allowance phases out between $50,000 and $75,000", ()
   assertEquals(findOutput(ineligible, "schedule1"), undefined);
 });
 
-Deno.test("MFS odd-dollar MAGI rounds the half-dollar Part II allowance once", () => {
+test("MFS odd-dollar MAGI rounds the half-dollar Part II allowance once", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
@@ -1391,7 +1392,7 @@ Deno.test("MFS odd-dollar MAGI rounds the half-dollar Part II allowance once", (
   assertEquals(result.carryforwards?.suspended_pal_8582, 12_501);
 });
 
-Deno.test("MFS special allowance rejects incomplete or shared residence evidence", () => {
+test("MFS special allowance rejects incomplete or shared residence evidence", () => {
   const base = {
     filing_status: FilingStatus.MFS,
     mfs_lived_apart_all_year: true,
@@ -1433,7 +1434,7 @@ Deno.test("MFS special allowance rejects incomplete or shared residence evidence
 
 // ─── 4. Hard Validation Rules ─────────────────────────────────────────────────
 
-Deno.test("mfs_ineligible_for_special_allowance: MFS gets $0 allowance, only income offsets → schedule1=-5000", () => {
+test("mfs_ineligible_for_special_allowance: MFS gets $0 allowance, only income offsets → schedule1=-5000", () => {
   // MFS → allowance = 0. pal = 20000 - 5000 = 15000. allowed = min(15000, 5000 + 0) = 5000
   const result = compute({
     filing_status: FilingStatus.MFS,
@@ -1450,7 +1451,7 @@ Deno.test("mfs_ineligible_for_special_allowance: MFS gets $0 allowance, only inc
   assertEquals(s1?.fields.line5_schedule_e, -5_000);
 });
 
-Deno.test("no_active_rental_skips_part_ii: has_active_rental=false, pal=25000, income=5000 → allowed=5000 → schedule1=-5000", () => {
+test("no_active_rental_skips_part_ii: has_active_rental=false, pal=25000, income=5000 → allowed=5000 → schedule1=-5000", () => {
   // allowance = 0 (no active rental). allowed = min(25000, 5000 + 0) = 5000
   const result = compute({
     has_active_rental: false,
@@ -1464,7 +1465,7 @@ Deno.test("no_active_rental_skips_part_ii: has_active_rental=false, pal=25000, i
   assertEquals(s1?.fields.line5_schedule_e, -5_000);
 });
 
-Deno.test("no_active_participation_skips_allowance: active_rental but no active_participation → allowance=0 → does not route", () => {
+test("no_active_participation_skips_allowance: active_rental but no active_participation → allowance=0 → does not route", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: false,
@@ -1477,7 +1478,7 @@ Deno.test("no_active_participation_skips_allowance: active_rental but no active_
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("active rental loss rejects a missing modified AGI when special allowance could apply", () => {
+test("active rental loss rejects a missing modified AGI when special allowance could apply", () => {
   assertThrows(
     () =>
       compute({
@@ -1494,7 +1495,7 @@ Deno.test("active rental loss rejects a missing modified AGI when special allowa
   );
 });
 
-Deno.test("active rental with all losses covered by passive income needs no special-allowance MAGI", () => {
+test("active rental with all losses covered by passive income needs no special-allowance MAGI", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: true,
@@ -1512,7 +1513,7 @@ Deno.test("active rental with all losses covered by passive income needs no spec
 
 // ─── 5. Output Routing ────────────────────────────────────────────────────────
 
-Deno.test("routes_allowed_loss_to_schedule1: pal=30000, MAGI=80000, allowance=25000 → schedule1=-25000", () => {
+test("routes_allowed_loss_to_schedule1: pal=30000, MAGI=80000, allowance=25000 → schedule1=-25000", () => {
   // pal = 30000 - 0 = 30000, allowance = min(30000, 25000) = 25000, allowed = min(30000, 0+25000) = 25000
   const result = compute({
     current_loss: 30_000,
@@ -1527,7 +1528,7 @@ Deno.test("routes_allowed_loss_to_schedule1: pal=30000, MAGI=80000, allowance=25
   );
 });
 
-Deno.test("schedule1_line5_is_negative: schedule1.line5_schedule_e is negative", () => {
+test("schedule1_line5_is_negative: schedule1.line5_schedule_e is negative", () => {
   const result = compute({
     current_loss: 10_000,
     has_active_rental: true,
@@ -1539,7 +1540,7 @@ Deno.test("schedule1_line5_is_negative: schedule1.line5_schedule_e is negative",
   assertEquals(s1?.fields.line5_schedule_e, -10_000);
 });
 
-Deno.test("no_output_when_no_activity: all zero inputs → does not route to schedule1", () => {
+test("no_output_when_no_activity: all zero inputs → does not route to schedule1", () => {
   const result = compute({
     current_income: 0,
     current_loss: 0,
@@ -1548,7 +1549,7 @@ Deno.test("no_output_when_no_activity: all zero inputs → does not route to sch
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("no_output_when_allowed_loss_zero: pal>0 but income=0 and no allowance → does not route to schedule1", () => {
+test("no_output_when_allowed_loss_zero: pal>0 but income=0 and no allowance → does not route to schedule1", () => {
   const result = compute({
     current_income: 0,
     current_loss: 20_000,
@@ -1559,7 +1560,7 @@ Deno.test("no_output_when_allowed_loss_zero: pal>0 but income=0 and no allowance
 
 // ─── 6. Edge Cases ────────────────────────────────────────────────────────────
 
-Deno.test("mfs_disqualifies_special_allowance: MFS, active rental, MAGI=40000, loss=20000 → allowance=0 → does not route", () => {
+test("mfs_disqualifies_special_allowance: MFS, active rental, MAGI=40000, loss=20000 → allowance=0 → does not route", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     has_active_rental: true,
@@ -1572,7 +1573,7 @@ Deno.test("mfs_disqualifies_special_allowance: MFS, active rental, MAGI=40000, l
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("magi_150k_eliminates_allowance: modified_agi=150000 with active rental → allowance=0 → does not route", () => {
+test("magi_150k_eliminates_allowance: modified_agi=150000 with active rental → allowance=0 → does not route", () => {
   const result = compute({
     has_active_rental: true,
     active_participation: true,
@@ -1584,7 +1585,7 @@ Deno.test("magi_150k_eliminates_allowance: modified_agi=150000 with active renta
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("disallowed_loss_not_routed: pal=30000, income+allowance=10000 → exactly 1 output, no second output for disallowed", () => {
+test("disallowed_loss_not_routed: pal=30000, income+allowance=10000 → exactly 1 output, no second output for disallowed", () => {
   // pal = 30000, no active rental → allowance = 0
   // income = 10000, allowed = min(30000, 10000) = 10000, disallowed = 20000
   const result = compute({
@@ -1597,7 +1598,7 @@ Deno.test("disallowed_loss_not_routed: pal=30000, income+allowance=10000 → exa
 
 // ─── 7. Smoke Tests ───────────────────────────────────────────────────────────
 
-Deno.test("magi_110k_phase_out: MAGI=110000, loss=30000 → allowance reduced by 50%×10000=5000 → allowed=20000 → schedule1=-20000", () => {
+test("magi_110k_phase_out: MAGI=110000, loss=30000 → allowance reduced by 50%×10000=5000 → allowed=20000 → schedule1=-20000", () => {
   // phase_out = 0.5 * (110000 - 100000) = 5000, phasedAllowance = max(0, 25000 - 5000) = 20000
   // allowed = min(30000, 0 + 20000) = 20000
   const result = compute({
@@ -1615,7 +1616,7 @@ Deno.test("magi_110k_phase_out: MAGI=110000, loss=30000 → allowance reduced by
   );
 });
 
-Deno.test("passive_loss_15k_income_10k_suspended_5k: $10,000 loss allowed", () => {
+test("passive_loss_15k_income_10k_suspended_5k: $10,000 loss allowed", () => {
   const result = compute({
     current_income: 10_000,
     current_loss: 15_000,

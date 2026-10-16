@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm4972AmtJoin } from "./form4972_amt_reconciliation.ts";
 import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
@@ -23,11 +24,11 @@ const filed = {
   },
 };
 
-Deno.test("Form 4972 special tax is excluded exactly once from Form 6251 line 10", () => {
+test("Form 4972 special tax is excluded exactly once from Form 6251 line 10", () => {
   assertForm4972AmtJoin(500, filed);
 });
 
-Deno.test("Form 4972 AMT join rejects altered Form 1040 and Form 6251 sources", () => {
+test("Form 4972 AMT join rejects altered Form 1040 and Form 6251 sources", () => {
   assertThrows(() => assertForm4972AmtJoin(501, filed));
   assertThrows(() =>
     assertForm4972AmtJoin(500, {
@@ -55,7 +56,7 @@ Deno.test("Form 4972 AMT join rejects altered Form 1040 and Form 6251 sources", 
   );
 });
 
-Deno.test("Form 4972 special tax remains exact with Schedule J refigured AMT tax", () => {
+test("Form 4972 special tax remains exact with Schedule J refigured AMT tax", () => {
   const scheduleJ = {
     line1: 50_000,
     line2a: 15_000,

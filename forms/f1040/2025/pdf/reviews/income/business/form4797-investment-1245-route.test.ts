@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
@@ -71,31 +74,31 @@ async function verifyInvestmentReturn(
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(xmlPath, bundle.xml);
-    const checked = await new Deno.Command("xmllint", {
+    await fs.writeFile(xmlPath, bundle.xml);
+    const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
   } finally {
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 9);
-  if (artifactId && Deno.args.includes("--write-review-artifacts")) {
+  if (artifactId && process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       `../../../../.state/research/ty2025-filled-pdf-review/2026-09-30-${artifactId}/`,
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
   }
 }
 
-Deno.test("investment section 1245 property reaches Schedule 1, Schedule D, MeF, and filled PDF", async () => {
+test("investment section 1245 property reaches Schedule 1, Schedule D, MeF, and filled PDF", async () => {
   await verifyInvestmentReturn(
     [sale],
     5_000,
@@ -104,7 +107,7 @@ Deno.test("investment section 1245 property reaches Schedule 1, Schedule D, MeF,
   );
 });
 
-Deno.test("four investment section 1245 properties fill all Part III columns", async () => {
+test("four investment section 1245 properties fill all Part III columns", async () => {
   const sales = Array.from({ length: 4 }, (_, index) => ({
     ...sale,
     property_id: `investment-1245-${index + 1}`,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   farmRentalW2,
   verifyFarmRentalPacket,
@@ -76,7 +77,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("one farm loss offsets two rental profits and retains one activity PAL", async () => {
+test("one farm loss offsets two rental profits and retains one activity PAL", async () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 3_000);
   assertEquals(result.pending.form8582.current_loss, 5_000);
@@ -121,7 +122,7 @@ Deno.test("one farm loss offsets two rental profits and retains one activity PAL
   ]);
 });
 
-Deno.test("one-farm/two-rental Form 8582 route rejects source and return tampering", () => {
+test("one-farm/two-rental Form 8582 route rejects source and return tampering", () => {
   const pending = normalizeAllPending(filedReturn().pending);
   const changed: Array<typeof pending> = [{
     ...pending,

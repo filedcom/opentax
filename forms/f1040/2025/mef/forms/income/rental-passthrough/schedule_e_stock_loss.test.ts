@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { buildReviewedStockLossScheduleE, scheduleEStockLoss } from "./schedule_e_stock_loss.ts";
@@ -45,7 +46,7 @@ function context(item = ledger) {
   };
 }
 
-Deno.test("stock-only Schedule E native Part II row and lines 29b/31/32/41 reconcile", () => {
+test("stock-only Schedule E native Part II row and lines 29b/31/32/41 reconcile", () => {
   const xml = buildReviewedStockLossScheduleE(raw, context());
   assertStringIncludes(xml, "<PartnershipOrSCorporationNm>Test S Corp</PartnershipOrSCorporationNm>");
   assertStringIncludes(xml, "<PartnershipSCorpCd>S</PartnershipSCorpCd>");
@@ -58,7 +59,7 @@ Deno.test("stock-only Schedule E native Part II row and lines 29b/31/32/41 recon
   assertEquals(xml.indexOf("<TotalNonpassiveLossAmt>") < xml.indexOf("<TotalPrtshpSCorpLossAmt>"), true);
 });
 
-Deno.test("stock-only Schedule E rejects missing material participation and another activity", () => {
+test("stock-only Schedule E rejects missing material participation and another activity", () => {
   assertThrows(() => buildReviewedStockLossScheduleE(raw, context({
     ...ledger,
     materially_participated_in_s_corporation: false,
@@ -68,6 +69,6 @@ Deno.test("stock-only Schedule E rejects missing material participation and anot
   }), Error, "cannot combine");
 });
 
-Deno.test("stock-only Schedule E descriptor emits nothing without a Form 7203 source", () => {
+test("stock-only Schedule E descriptor emits nothing without a Form 7203 source", () => {
   assertEquals(scheduleEStockLoss.build({}, context()), "");
 });

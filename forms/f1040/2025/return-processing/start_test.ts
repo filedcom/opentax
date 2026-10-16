@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { buildStartNode, inputNodes } from "./start.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -11,7 +12,7 @@ import {
   PassiveCreditSourceOrigin,
 } from "../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
 
-Deno.test("start node routes an explicit public input key to its declared node", () => {
+test("start node routes an explicit public input key to its declared node", () => {
   const startNode = buildStartNode([{
     node: form8582cr,
     inputKey: "passive_credit_facts",
@@ -36,7 +37,7 @@ Deno.test("start node routes an explicit public input key to its declared node",
   );
 });
 
-Deno.test("inputNodes has expected structure (array + singleton entries)", () => {
+test("inputNodes has expected structure (array + singleton entries)", () => {
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);
   const singletonEntries = inputNodes.filter((e) => e.isArray === false);
   // qbi_aggregation is a singleton; verify it is registered
@@ -55,18 +56,18 @@ Deno.test("inputNodes has expected structure (array + singleton entries)", () =>
   );
 });
 
-Deno.test("buildStartNode returns a node with nodeType 'start'", () => {
+test("buildStartNode returns a node with nodeType 'start'", () => {
   const startNode = buildStartNode(inputNodes);
   assertEquals(startNode.nodeType, "start");
 });
 
-Deno.test("empty input produces no outputs", () => {
+test("empty input produces no outputs", () => {
   const startNode = buildStartNode(inputNodes);
   const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("unknown top-level filing claims fail instead of disappearing", () => {
+test("unknown top-level filing claims fail instead of disappearing", () => {
   const startNode = buildStartNode(inputNodes);
   assertEquals(
     startNode.inputSchema.safeParse({
@@ -84,7 +85,7 @@ Deno.test("unknown top-level filing claims fail instead of disappearing", () => 
   assertEquals(result.diagnostics[0]?.message.includes("form4797"), true);
 });
 
-Deno.test("single w2 item routes to w2 node", () => {
+test("single w2 item routes to w2 node", () => {
   const startNode = buildStartNode(inputNodes);
   const w2Item = {
     box1_wages: 50000,
@@ -97,7 +98,7 @@ Deno.test("single w2 item routes to w2 node", () => {
   assertEquals(result.outputs[0].nodeType, "w2");
 });
 
-Deno.test("refined Form 8912 array input routes to its declared field", () => {
+test("refined Form 8912 array input routes to its declared field", () => {
   const startNode = buildStartNode(inputNodes);
   const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {
     f8912: [{}],
@@ -108,7 +109,7 @@ Deno.test("refined Form 8912 array input routes to its declared field", () => {
   }]);
 });
 
-Deno.test("singleton general entry routes to general node", () => {
+test("singleton general entry routes to general node", () => {
   const startNode = buildStartNode(inputNodes);
   const generalInput = { filing_status: "single" as const };
   const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -118,7 +119,7 @@ Deno.test("singleton general entry routes to general node", () => {
   assertEquals(result.outputs[0].nodeType, "general");
 });
 
-Deno.test("singleton Schedule F entry routes farm records to its calculation node", () => {
+test("singleton Schedule F entry routes farm records to its calculation node", () => {
   const startNode = buildStartNode(inputNodes);
   const input = {
     schedule_fs: [{
@@ -138,7 +139,7 @@ Deno.test("singleton Schedule F entry routes farm records to its calculation nod
   assertEquals(result.outputs, [{ nodeType: "schedule_f", fields: input }]);
 });
 
-Deno.test("Form 8582-CR public facts reach upstream disabled-access allocation", () => {
+test("Form 8582-CR public facts reach upstream disabled-access allocation", () => {
   const startNode = buildStartNode(inputNodes);
   const facts = {
     credit_sources: [],
@@ -155,7 +156,7 @@ Deno.test("Form 8582-CR public facts reach upstream disabled-access allocation",
   }]);
 });
 
-Deno.test("Form 8582-CR source input reaches Form 3800 in the return plan", () => {
+test("Form 8582-CR source input reaches Form 3800 in the return plan", () => {
   const source = {
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
@@ -192,7 +193,7 @@ Deno.test("Form 8582-CR source input reaches Form 3800 in the return plan", () =
   );
 });
 
-Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
+test("singleton Form 8824 exchange routes to its calculation node", () => {
   const startNode = buildStartNode(inputNodes);
   const exchange = {
     relinquished_basis: 100_000,
@@ -206,7 +207,7 @@ Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
   assertEquals(result.outputs, [{ nodeType: "form8824", fields: exchange }]);
 });
 
-Deno.test("Schedule LEP language request reaches its metadata node", () => {
+test("Schedule LEP language request reaches its metadata node", () => {
   const startNode = buildStartNode(inputNodes);
   const source = {
     requests: [{
@@ -229,7 +230,7 @@ Deno.test("Schedule LEP language request reaches its metadata node", () => {
   );
 });
 
-Deno.test("Form 4797 investment property source enters the return plan without aggregate input", () => {
+test("Form 4797 investment property source enters the return plan without aggregate input", () => {
   const startNode = buildStartNode(inputNodes);
   const sale = {
     property_id: "investment-asset-1",
@@ -298,7 +299,7 @@ Deno.test("Form 4797 investment property source enters the return plan without a
   );
 });
 
-Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", () => {
+test("singleton Form 8936 keeps one MAGI record with its vehicle array", () => {
   const startNode = buildStartNode(inputNodes);
   const form = {
     current_year_magi: { adjusted_gross_income: 90_000 },
@@ -314,7 +315,7 @@ Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", ()
   assertEquals(result.outputs, [{ nodeType: "f8936", fields: form }]);
 });
 
-Deno.test("singleton Schedule 1-A claim routes taxpayer-entered vehicle evidence", () => {
+test("singleton Schedule 1-A claim routes taxpayer-entered vehicle evidence", () => {
   const startNode = buildStartNode(inputNodes);
   const loan = {
     vin: "1HGCM82633A004352",

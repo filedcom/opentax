@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -17,7 +18,7 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 
-Deno.test("Schedule B nominee dividend statement records gross, nominee, and net", async () => {
+test("Schedule B nominee dividend statement records gross, nominee, and net", async () => {
   const document = await PDFDocument.create();
   await appendScheduleBNomineeDividendStatement(document, {
     dividend_line5_subtotal: 1_000,
@@ -31,7 +32,7 @@ Deno.test("Schedule B nominee dividend statement records gross, nominee, and net
   );
 });
 
-Deno.test("Schedule B nominee dividend statement rejects mismatched net", async () => {
+test("Schedule B nominee dividend statement rejects mismatched net", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>

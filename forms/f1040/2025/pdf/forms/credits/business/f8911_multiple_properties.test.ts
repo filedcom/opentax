@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
@@ -40,7 +41,7 @@ export const multipleChargerSource = {
   tentative_minimum_tax: original.tentative_minimum_tax,
 };
 
-Deno.test("Form 8911 caps each identified property before applying one return tax limit", () => {
+test("Form 8911 caps each identified property before applying one return tax limit", () => {
   const amounts = computePersonalCreditAmounts(multipleChargerSource)!;
   assertEquals(amounts.tentativeCredit, 1300);
   assertEquals(amounts.allowedCredit, 1300);
@@ -52,7 +53,7 @@ Deno.test("Form 8911 caps each identified property before applying one return ta
   assertEquals(limited.allowedCredit, 1100);
 });
 
-Deno.test("Form 8911 rejects duplicate references and ambiguous single/multiple source shapes", () => {
+test("Form 8911 rejects duplicate references and ambiguous single/multiple source shapes", () => {
   assertThrows(
     () => inputSchema.parse({ ...multipleChargerSource, cost: 6000 }),
     Error,
@@ -87,7 +88,7 @@ Deno.test("Form 8911 rejects duplicate references and ambiguous single/multiple 
   );
 });
 
-Deno.test("Form 8911 public return joins two native property copies to one parent and matching PDF copies", async () => {
+test("Form 8911 public return joins two native property copies to one parent and matching PDF copies", async () => {
   const inputs = { ...fixture.inputs, f8911: multipleChargerSource };
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
@@ -152,7 +153,7 @@ Deno.test("Form 8911 public return joins two native property copies to one paren
   );
 });
 
-Deno.test("Form 8911 combined property credit is limited once by the public return tax", async () => {
+test("Form 8911 combined property credit is limited once by the public return tax", async () => {
   const source = {
     ...multipleChargerSource,
     properties: [1, 2, 3, 4].map((number) => ({
@@ -197,7 +198,7 @@ Deno.test("Form 8911 combined property credit is limited once by the public retu
   assertEquals(copies.map((copy) => copy.line21), [1000, 1000, 1000, 1000]);
 });
 
-Deno.test("Form 8911 retains property cost cents until native and PDF filing amounts", async () => {
+test("Form 8911 retains property cost cents until native and PDF filing amounts", async () => {
   const source = {
     ...multipleChargerSource,
     properties: multipleChargerSource.properties.map((item) => ({
@@ -240,7 +241,7 @@ Deno.test("Form 8911 retains property cost cents until native and PDF filing amo
   ], [1001.49, 300.447, 300.447]]);
 });
 
-Deno.test("Form 8911 retains each supplied permit on its own native and PDF property copy", async () => {
+test("Form 8911 retains each supplied permit on its own native and PDF property copy", async () => {
   const permits = ["TX-EV-2025-00000000000001", "TX-EV-2025-002"];
   const source = {
     ...multipleChargerSource,
@@ -273,7 +274,7 @@ Deno.test("Form 8911 retains each supplied permit on its own native and PDF prop
   assertEquals(pending.f1040.line24_total_tax, 2575);
 });
 
-Deno.test("Form 8911 optional permit validates the IRS 25-character limit without inventing one", () => {
+test("Form 8911 optional permit validates the IRS 25-character limit without inventing one", () => {
   assertEquals(
     inputSchema.parse(original).certification_permit_number,
     undefined,
@@ -296,7 +297,7 @@ Deno.test("Form 8911 optional permit validates the IRS 25-character limit withou
   );
 });
 
-Deno.test("Form 8911 routes reviewed personal hydrogen natural gas and propane property copies", async () => {
+test("Form 8911 routes reviewed personal hydrogen natural gas and propane property copies", async () => {
   const source = {
     ...multipleChargerSource,
     properties: [FuelType.Hydrogen, FuelType.NaturalGas, FuelType.Propane].map((
@@ -358,7 +359,7 @@ Deno.test("Form 8911 routes reviewed personal hydrogen natural gas and propane p
   ]);
 });
 
-Deno.test("Form 8911 rejects unreviewed non-electric fuel composition and off-site dispensing", () => {
+test("Form 8911 rejects unreviewed non-electric fuel composition and off-site dispensing", () => {
   for (
     const fuel_type of [
       FuelType.Hydrogen,

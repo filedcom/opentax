@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import {
@@ -135,8 +138,8 @@ const expected = [
     remaining: 2566,
   },
 ];
-Deno.test("actual annual traditional paid contributions/distributions plus conversion derive complete owner PartsI/II/III and1040", async () => {
-  await Deno.mkdir(root, { recursive: true });
+test("actual annual traditional paid contributions/distributions plus conversion derive complete owner PartsI/II/III and1040", async () => {
+  await fs.mkdir(root, { recursive: true });
   for (const [n, row] of annualTraditionalCases.entries()) {
     const source = await annualTraditionalReturnSource(row, 1001 + n),
       r = f1040_2025.executeReturn(source.inputs),
@@ -260,8 +263,8 @@ Deno.test("actual annual traditional paid contributions/distributions plus conve
         false,
       );
     }
-    await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
-    const schema = await new Deno.Command("xmllint", {
+    await fs.writeFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
+    const schema = await new sys.Command("xmllint", {
       args: [
         "--noout",
         "--schema",
@@ -278,12 +281,12 @@ Deno.test("actual annual traditional paid contributions/distributions plus conve
       prepared.bundle,
       origins,
     );
-    await Deno.writeFile(`${root}/${row.id}.pdf`, pdf);
-    await Deno.writeTextFile(
+    await fs.writeFile(`${root}/${row.id}.pdf`, pdf);
+    await fs.writeFile(
       `${root}/${row.id}.origins.json`,
       JSON.stringify(origins, null, 2),
     );
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.source.json`,
       JSON.stringify(
         { inputs: source.inputs, filer: source.filer, pending: p },
@@ -291,18 +294,18 @@ Deno.test("actual annual traditional paid contributions/distributions plus conve
         2,
       ),
     );
-    await Deno.mkdir(`${root}/${row.id}-retained`, { recursive: true });
+    await fs.mkdir(`${root}/${row.id}-retained`, { recursive: true });
     const docs = [];
     for (const [j, d] of source.retained.documents.entries()) {
       const path = `${row.id}-retained/document-${j + 1}.bin`;
-      await Deno.writeFile(`${root}/${path}`, d.bytes);
+      await fs.writeFile(`${root}/${path}`, d.bytes);
       docs.push({
         document_reference: d.document_reference,
         path,
         sha256: createHash("sha256").update(d.bytes).digest("hex"),
       });
     }
-    await Deno.writeTextFile(
+    await fs.writeFile(
       `${root}/${row.id}.documents.json`,
       JSON.stringify(docs, null, 2),
     );
@@ -345,7 +348,7 @@ Deno.test("actual annual traditional paid contributions/distributions plus conve
     }
   }
 });
-Deno.test("annual traditional source declarations paid receipts and owner/lineage/retained bytes reject conflicts", async () => {
+test("annual traditional source declarations paid receipts and owner/lineage/retained bytes reject conflicts", async () => {
   const source = await annualTraditionalReturnSource(
     annualTraditionalCases[1],
     1101,
@@ -424,7 +427,7 @@ Deno.test("annual traditional source declarations paid receipts and owner/lineag
   );
 });
 
-Deno.test("annual actual concurrent Roth regular contribution rejects excessive sourced MAGI", async () => {
+test("annual actual concurrent Roth regular contribution rejects excessive sourced MAGI", async () => {
   const source = await annualTraditionalReturnSource(
     annualTraditionalCases[8],
     1201,

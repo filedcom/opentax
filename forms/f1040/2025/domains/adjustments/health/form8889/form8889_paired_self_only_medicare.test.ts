@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -92,7 +93,7 @@ function selfOnlyMedicareCase(medicareOwner: "T" | "S") {
 }
 
 for (const medicareOwner of ["T", "S"] as const) {
-  Deno.test(`paired self-only Medicare onset for ${medicareOwner} stops only that owner's monthly limit`, () => {
+  test(`paired self-only Medicare onset for ${medicareOwner} stops only that owner's monthly limit`, () => {
     const { source, forms, pending, medicareIndex } = selfOnlyMedicareCase(
       medicareOwner,
     );

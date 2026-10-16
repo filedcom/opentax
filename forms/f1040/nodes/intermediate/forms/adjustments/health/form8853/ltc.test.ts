@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateLtcLedger, ltcLedgerSchema, LtcPeriodMethod } from "./ltc.ts";
 import {
@@ -5,7 +6,7 @@ import {
   ltcSource,
 } from "../../../../../../2025/domains/adjustments/health/form8853/form8853_ltc.fixture.ts";
 
-Deno.test("LTC IRS multiple-payee example allocates the insured first and remaining exclusion proportionally", () => {
+test("LTC IRS multiple-payee example allocates the insured first and remaining exclusion proportionally", () => {
   const insured = ltcInsured();
   insured.period.start_date = "2025-07-01";
   insured.period.end_date = "2025-12-31";
@@ -26,7 +27,7 @@ Deno.test("LTC IRS multiple-payee example allocates the insured first and remain
   assertEquals(result.taxable, 0);
 });
 
-Deno.test("LTC contract periods require common-period review and valid single-day dates", () => {
+test("LTC contract periods require common-period review and valid single-day dates", () => {
   const insured = ltcInsured();
   insured.period.method = LtcPeriodMethod.Contract;
   assertThrows(
@@ -36,7 +37,7 @@ Deno.test("LTC contract periods require common-period review and valid single-da
   );
 });
 
-Deno.test("LTC source contract and illness assertions cannot be silently omitted", () => {
+test("LTC source contract and illness assertions cannot be silently omitted", () => {
   const insured = ltcInsured();
   for (
     const changed of [
@@ -72,7 +73,7 @@ Deno.test("LTC source contract and illness assertions cannot be silently omitted
   );
 });
 
-Deno.test("LTC terminal benefits cannot precede certification or mix an unsplit redesignation", () => {
+test("LTC terminal benefits cannot precede certification or mix an unsplit redesignation", () => {
   const insured = ltcInsured();
   insured.sources = [ltcSource("life-contract", undefined, 0, 0, 5000)];
   assertThrows(
@@ -99,7 +100,7 @@ Deno.test("LTC terminal benefits cannot precede certification or mix an unsplit 
   );
 });
 
-Deno.test("LTC joint insured priority needs reviewed shares of the combined exclusion", () => {
+test("LTC joint insured priority needs reviewed shares of the combined exclusion", () => {
   const insured = ltcInsured();
   insured.insured_joint_spouse = {
     ssn: "333445555",

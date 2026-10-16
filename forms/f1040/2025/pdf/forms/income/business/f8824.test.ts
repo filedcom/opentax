@@ -1,7 +1,8 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { form8824Pdf, form8824PdfFields } from "./f8824.ts";
 
-Deno.test("Form 8824 PDF derives lines and formats four dates", () => {
+test("Form 8824 PDF derives lines and formats four dates", () => {
   const fields = form8824PdfFields({
     relinquished_description: "Austin investment land",
     received_description: "Dallas investment land",
@@ -20,7 +21,7 @@ Deno.test("Form 8824 PDF derives lines and formats four dates", () => {
   assertEquals(fields.date_received_pdf, "06/01/2025");
 });
 
-Deno.test("Form 8824 PDF line fields match actual 2025 form widgets", () => {
+test("Form 8824 PDF line fields match actual 2025 form widgets", () => {
   const map = new Map(form8824Pdf.fields.map((field) => [field.domainKey, field.pdfField]));
   assertEquals(map.get("line15"), "topmostSubform[0].Page2[0].f2_8[0]");
   assertEquals(map.get("line19"), "topmostSubform[0].Page2[0].f2_16[0]");

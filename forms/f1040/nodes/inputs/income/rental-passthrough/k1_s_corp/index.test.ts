@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { k1SCorpNode } from "./index.ts";
 
@@ -53,7 +54,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-Deno.test("S corporation K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
+test("S corporation K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
   const item = minimalItem({
     box4_interest: 200,
     box5a_ordinary_dividends: 300,
@@ -72,7 +73,7 @@ Deno.test("S corporation K-1 portfolio boxes feed Form 4952 only when affirmed",
   ]);
 });
 
-Deno.test("S corporation K-1 box 12 code H routes investment interest without a generic deduction", () => {
+test("S corporation K-1 box 12 code H routes investment interest without a generic deduction", () => {
   const item = minimalItem({
     corporation_ein: "123456789",
     source_document_reference: "2025 K-1 box 12 code H",
@@ -91,7 +92,7 @@ Deno.test("S corporation K-1 box 12 code H routes investment interest without a 
   assertThrows(() => compute([{ ...item, box12_other_deductions: 375 }]));
 });
 
-Deno.test("S corporation K-1 box 13 code Z needs source identity and passive classification", () => {
+test("S corporation K-1 box 13 code Z needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_z_orphan_drug_credit: 1_250 })])
   );
@@ -103,7 +104,7 @@ Deno.test("S corporation K-1 box 13 code Z needs source identity and passive cla
   })]);
 });
 
-Deno.test("S corporation K-1 code Z reaches source-backed Form 3800", () => {
+test("S corporation K-1 code Z reaches source-backed Form 3800", () => {
   const item = minimalItem({
     corporation_ein: "123456789",
     source_document_reference: "2025 S corporation K-1",
@@ -148,7 +149,7 @@ Deno.test("S corporation K-1 code Z reaches source-backed Form 3800", () => {
   );
 });
 
-Deno.test("S corporation K-1 box 13 code AD reaches Form 3800 line 1i source", () => {
+test("S corporation K-1 box 13 code AD reaches Form 3800 line 1i source", () => {
   assertThrows(() =>
     compute([minimalItem({
       box13_code_ad_new_markets_credit: 1_250,
@@ -188,7 +189,7 @@ Deno.test("S corporation K-1 box 13 code AD reaches Form 3800 line 1i source", (
   );
 });
 
-Deno.test("S corporation K-1 box 13 code K needs source identity and passive classification", () => {
+test("S corporation K-1 box 13 code K needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_k_disabled_access_credit: 500 })])
   );
@@ -216,7 +217,7 @@ Deno.test("S corporation K-1 box 13 code K needs source identity and passive cla
   );
 });
 
-Deno.test("nonpassive S corporation K-1 code K reaches source-backed Form 3800", () => {
+test("nonpassive S corporation K-1 code K reaches source-backed Form 3800", () => {
   const result = compute([minimalItem({
     corporation_ein: "123456789",
     source_document_reference: "2025 S corporation K-1",
@@ -235,7 +236,7 @@ Deno.test("nonpassive S corporation K-1 code K reaches source-backed Form 3800",
   assertEquals(findOutput(result, "form8582cr"), undefined);
 });
 
-Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
+test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({
       corporation_name: "Corp One",
@@ -281,7 +282,7 @@ Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
-Deno.test("empty array throws", () => {
+test("empty array throws", () => {
   assertThrows(
     () =>
       k1SCorpNode.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -291,7 +292,7 @@ Deno.test("empty array throws", () => {
   );
 });
 
-Deno.test("missing corporation_name throws", () => {
+test("missing corporation_name throws", () => {
   assertThrows(
     () =>
       k1SCorpNode.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -305,18 +306,18 @@ Deno.test("missing corporation_name throws", () => {
   );
 });
 
-Deno.test("negative box4_interest throws", () => {
+test("negative box4_interest throws", () => {
   assertThrows(() => compute([minimalItem({ box4_interest: -1 })]), Error);
 });
 
-Deno.test("negative box5a_ordinary_dividends throws", () => {
+test("negative box5a_ordinary_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box5a_ordinary_dividends: -5 })]),
     Error,
   );
 });
 
-Deno.test("negative box5b_qualified_dividends throws", () => {
+test("negative box5b_qualified_dividends throws", () => {
   assertThrows(
     () => compute([minimalItem({ box5b_qualified_dividends: -10 })]),
     Error,
@@ -325,7 +326,7 @@ Deno.test("negative box5b_qualified_dividends throws", () => {
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
 
-Deno.test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
+test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 5000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 5000);
@@ -335,7 +336,7 @@ Deno.test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
   );
 });
 
-Deno.test("negative box1 (loss) routes to schedule1 line5_schedule_e", () => {
+test("negative box1 (loss) routes to schedule1 line5_schedule_e", () => {
   const result = compute([reviewedLossItem(3000, {
     box1_ordinary_business: -2000,
   })]);
@@ -343,7 +344,7 @@ Deno.test("negative box1 (loss) routes to schedule1 line5_schedule_e", () => {
   assertEquals(out?.fields.line5_schedule_e, -2000);
 });
 
-Deno.test("negative S corporation box1 without basis facts rejects before a loss can file", () => {
+test("negative S corporation box1 without basis facts rejects before a loss can file", () => {
   assertThrows(
     () => compute([minimalItem({ box1_ordinary_business: -2000 })]),
     Error,
@@ -351,85 +352,85 @@ Deno.test("negative S corporation box1 without basis facts rejects before a loss
   );
 });
 
-Deno.test("zero box1 does not route to schedule1", () => {
+test("zero box1 does not route to schedule1", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule1");
   assertEquals(out, undefined);
 });
 
-Deno.test("box2_rental_re routes to schedule1 line5_schedule_e", () => {
+test("box2_rental_re routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box2_rental_re: 3000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 3000);
 });
 
-Deno.test("box3_other_rental routes to schedule1 line5_schedule_e", () => {
+test("box3_other_rental routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box3_other_rental: 1500 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 1500);
 });
 
-Deno.test("box6_royalties routes to schedule1 line5_schedule_e", () => {
+test("box6_royalties routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box6_royalties: 800 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 800);
 });
 
-Deno.test("box4_interest routes to schedule_b taxable_interest_net", () => {
+test("box4_interest routes to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box4_interest: 400 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.taxable_interest_net, 400);
 });
 
-Deno.test("zero box4_interest does not route to schedule_b", () => {
+test("zero box4_interest does not route to schedule_b", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out, undefined);
 });
 
-Deno.test("box5a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
+test("box5a_ordinary_dividends routes to schedule_b ordinaryDividends", () => {
   const result = compute([minimalItem({ box5a_ordinary_dividends: 600 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out?.fields.ordinaryDividends, 600);
 });
 
-Deno.test("box5b_qualified_dividends routes to f1040 line3a", () => {
+test("box5b_qualified_dividends routes to f1040 line3a", () => {
   const result = compute([minimalItem({ box5b_qualified_dividends: 400 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line3a_qualified_dividends, 400);
 });
 
-Deno.test("zero box5b does not route to f1040", () => {
+test("zero box5b does not route to f1040", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "f1040");
   assertEquals(out, undefined);
 });
 
-Deno.test("box7_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
+test("box7_net_st_cap_gain routes to schedule_d line_5_k1_st", () => {
   const result = compute([minimalItem({ box7_net_st_cap_gain: 1000 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_5_k1_st, 1000);
 });
 
-Deno.test("negative box7 routes to schedule_d as loss", () => {
+test("negative box7 routes to schedule_d as loss", () => {
   const result = compute([minimalItem({ box7_net_st_cap_gain: -300 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_5_k1_st, -300);
 });
 
-Deno.test("box8a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
+test("box8a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
   const result = compute([minimalItem({ box8a_net_lt_cap_gain: 2000 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out?.fields.line_12_k1_lt, 2000);
 });
 
-Deno.test("positive box1 routes to form8995 as qbi", () => {
+test("positive box1 routes to form8995 as qbi", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 10000 })]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 10000);
 });
 
-Deno.test("negative box1 does not route to form8995", () => {
+test("negative box1 does not route to form8995", () => {
   const result = compute([reviewedLossItem(6000, {
     box1_ordinary_business: -5000,
   })]);
@@ -437,7 +438,7 @@ Deno.test("negative box1 does not route to form8995", () => {
   assertEquals(out, undefined);
 });
 
-Deno.test("box17_w2_wages routes to form8995 w2_wages", () => {
+test("box17_w2_wages routes to form8995 w2_wages", () => {
   const result = compute([
     minimalItem({ box1_ordinary_business: 10000, box17_w2_wages: 5000 }),
   ]);
@@ -445,7 +446,7 @@ Deno.test("box17_w2_wages routes to form8995 w2_wages", () => {
   assertEquals(out?.fields.w2_wages, 5000);
 });
 
-Deno.test("box14_foreign_tax routes to form_1116", () => {
+test("box14_foreign_tax routes to form_1116", () => {
   const result = compute([
     minimalItem({
       box14_foreign_tax: 200,
@@ -471,7 +472,7 @@ Deno.test("box14_foreign_tax routes to form_1116", () => {
   assertEquals(taxItem.tax_credit_method, "accrued");
 });
 
-Deno.test("zero box14_foreign_tax does not route to form_1116", () => {
+test("zero box14_foreign_tax does not route to form_1116", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form_1116");
   assertEquals(out, undefined);
@@ -479,7 +480,7 @@ Deno.test("zero box14_foreign_tax does not route to form_1116", () => {
 
 // ── 3. Aggregation across multiple K-1s ──────────────────────────────────────
 
-Deno.test("box1 sums across K-1s to schedule1 line5_schedule_e", () => {
+test("box1 sums across K-1s to schedule1 line5_schedule_e", () => {
   const result = compute([
     minimalItem({ box1_ordinary_business: 3000 }),
     minimalItem({ corporation_name: "Corp B", box1_ordinary_business: 2000 }),
@@ -488,7 +489,7 @@ Deno.test("box1 sums across K-1s to schedule1 line5_schedule_e", () => {
   assertEquals(out?.fields.line5_schedule_e, 5000);
 });
 
-Deno.test("box5b sums across K-1s to f1040 line3a", () => {
+test("box5b sums across K-1s to f1040 line3a", () => {
   const result = compute([
     minimalItem({ box5b_qualified_dividends: 300 }),
     minimalItem({ corporation_name: "Corp B", box5b_qualified_dividends: 200 }),
@@ -497,7 +498,7 @@ Deno.test("box5b sums across K-1s to f1040 line3a", () => {
   assertEquals(out?.fields.line3a_qualified_dividends, 500);
 });
 
-Deno.test("box7 STCG sums across K-1s to schedule_d", () => {
+test("box7 STCG sums across K-1s to schedule_d", () => {
   const result = compute([
     minimalItem({ box7_net_st_cap_gain: 1000 }),
     minimalItem({ corporation_name: "Corp B", box7_net_st_cap_gain: 500 }),
@@ -506,7 +507,7 @@ Deno.test("box7 STCG sums across K-1s to schedule_d", () => {
   assertEquals(out?.fields.line_5_k1_st, 1500);
 });
 
-Deno.test("box1+box2+box3+box6 combined in schedule1 line5_schedule_e", () => {
+test("box1+box2+box3+box6 combined in schedule1 line5_schedule_e", () => {
   const result = compute([
     minimalItem({
       box1_ordinary_business: 2000,
@@ -521,19 +522,19 @@ Deno.test("box1+box2+box3+box6 combined in schedule1 line5_schedule_e", () => {
 
 // ── 7. Informational fields ───────────────────────────────────────────────────
 
-Deno.test("corporation_name alone produces no outputs", () => {
+test("corporation_name alone produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
 // ── 8. Edge cases ─────────────────────────────────────────────────────────────
 
-Deno.test("all-zero K-1 produces no outputs", () => {
+test("all-zero K-1 produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
+test("STCG and LTCG produce single merged schedule_d output", () => {
   const result = compute([
     minimalItem({ box7_net_st_cap_gain: 500, box8a_net_lt_cap_gain: 1000 }),
   ]);
@@ -545,13 +546,13 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
 
 // ── 4. QBI dedicated fields (K199 screen) ─────────────────────────────────────
 
-Deno.test("qbi_amount routes to form8995 qbi (non-SSTB)", () => {
+test("qbi_amount routes to form8995 qbi (non-SSTB)", () => {
   const result = compute([minimalItem({ qbi_amount: 12000 })]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 12000);
 });
 
-Deno.test("qbi_amount overrides box1 for form8995 routing", () => {
+test("qbi_amount overrides box1 for form8995 routing", () => {
   // qbi_amount provided: use it directly instead of clamping box1
   const result = compute([
     minimalItem({ box1_ordinary_business: 5000, qbi_amount: 8000 }),
@@ -561,13 +562,13 @@ Deno.test("qbi_amount overrides box1 for form8995 routing", () => {
   assertEquals(out?.fields.qbi, 8000);
 });
 
-Deno.test("w2_wages field routes to form8995 w2_wages", () => {
+test("w2_wages field routes to form8995 w2_wages", () => {
   const result = compute([minimalItem({ qbi_amount: 5000, w2_wages: 3000 })]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.w2_wages, 3000);
 });
 
-Deno.test("ubia_qualified_property routes to form8995 unadjusted_basis", () => {
+test("ubia_qualified_property routes to form8995 unadjusted_basis", () => {
   const result = compute([
     minimalItem({ qbi_amount: 5000, ubia_qualified_property: 50000 }),
   ]);
@@ -575,7 +576,7 @@ Deno.test("ubia_qualified_property routes to form8995 unadjusted_basis", () => {
   assertEquals(out?.fields.unadjusted_basis, 50000);
 });
 
-Deno.test("sstb_indicator keeps QBI and limitation amounts in the SSTB pool", () => {
+test("sstb_indicator keeps QBI and limitation amounts in the SSTB pool", () => {
   const result = compute([minimalItem({
     qbi_amount: 10000,
     sstb_indicator: true,
@@ -589,7 +590,7 @@ Deno.test("sstb_indicator keeps QBI and limitation amounts in the SSTB pool", ()
   assertEquals(out?.fields.sstb_unadjusted_basis, 50_000);
 });
 
-Deno.test("mixed SSTB and non-SSTB amounts remain separate for Form 8995-A", () => {
+test("mixed SSTB and non-SSTB amounts remain separate for Form 8995-A", () => {
   const result = compute([
     minimalItem({
       corporation_name: "Corp A",
@@ -607,13 +608,13 @@ Deno.test("mixed SSTB and non-SSTB amounts remain separate for Form 8995-A", () 
   assertEquals(out?.fields.sstb_qbi, 5000);
 });
 
-Deno.test("negative qbi_amount does not route to form8995", () => {
+test("negative qbi_amount does not route to form8995", () => {
   const result = compute([minimalItem({ qbi_amount: -3000 })]);
   const out = findOutput(result, "form8995");
   assertEquals(out, undefined);
 });
 
-Deno.test("box17_w2_wages and w2_wages are additive in form8995", () => {
+test("box17_w2_wages and w2_wages are additive in form8995", () => {
   const result = compute([
     minimalItem({
       box1_ordinary_business: 10000,
@@ -627,25 +628,25 @@ Deno.test("box17_w2_wages and w2_wages are additive in form8995", () => {
 
 // ── 5. Form 7203 basis routing (K1S > "Basis (7203)" tab) ────────────────────
 
-Deno.test("stock_basis_beginning routes to form7203", () => {
+test("stock_basis_beginning routes to form7203", () => {
   const result = compute([minimalItem({ stock_basis_beginning: 10000 })]);
   const out = findOutput(result, "form7203");
   assertEquals(out?.fields.stock_basis_beginning, 10000);
 });
 
-Deno.test("debt_basis_beginning routes to form7203", () => {
+test("debt_basis_beginning routes to form7203", () => {
   const result = compute([minimalItem({ debt_basis_beginning: 5000 })]);
   const out = findOutput(result, "form7203");
   assertEquals(out?.fields.debt_basis_beginning, 5000);
 });
 
-Deno.test("no basis fields does not route to form7203", () => {
+test("no basis fields does not route to form7203", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 10000 })]);
   const out = findOutput(result, "form7203");
   assertEquals(out, undefined);
 });
 
-Deno.test("loss with stock basis routes ordinary_loss to form7203", () => {
+test("loss with stock basis routes ordinary_loss to form7203", () => {
   const result = compute([
     reviewedLossItem(3000, { box1_ordinary_business: -4000 }),
   ]);
@@ -655,7 +656,7 @@ Deno.test("loss with stock basis routes ordinary_loss to form7203", () => {
 
 // ── 6. Pre-2018 carryover fields ──────────────────────────────────────────────
 
-Deno.test("pre2018 basis carryover stops before an unsupported current-year add-back", () => {
+test("pre2018 basis carryover stops before an unsupported current-year add-back", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_suspended_losses: 7000 })]),
     Error,
@@ -663,7 +664,7 @@ Deno.test("pre2018 basis carryover stops before an unsupported current-year add-
   );
 });
 
-Deno.test("pre2018 at-risk carryover does not masquerade as basis carryover", () => {
+test("pre2018 at-risk carryover does not masquerade as basis carryover", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_at_risk_suspended: 2500 })]),
     Error,
@@ -671,7 +672,7 @@ Deno.test("pre2018 at-risk carryover does not masquerade as basis carryover", ()
   );
 });
 
-Deno.test("ordinary-loss stock route rejects absent ledger and debt basis", () => {
+test("ordinary-loss stock route rejects absent ledger and debt basis", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -694,7 +695,7 @@ Deno.test("ordinary-loss stock route rejects absent ledger and debt basis", () =
   );
 });
 
-Deno.test("ordinary-loss ledger EIN must match the issued K-1", () => {
+test("ordinary-loss ledger EIN must match the issued K-1", () => {
   const item = reviewedLossItem(3000, { box1_ordinary_business: -4000 });
   assertThrows(
     () =>
@@ -710,7 +711,7 @@ Deno.test("ordinary-loss ledger EIN must match the issued K-1", () => {
   );
 });
 
-Deno.test("S corporation K-1 routes a reviewed no-shares cash capital contribution to Form 7203", () => {
+test("S corporation K-1 routes a reviewed no-shares cash capital contribution to Form 7203", () => {
   const contribution = {
     amount: 500,
     contributed_date: "2025-06-01",
@@ -747,7 +748,7 @@ Deno.test("S corporation K-1 routes a reviewed no-shares cash capital contributi
   );
 });
 
-Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {
+test("ordinary-loss ledger rejects undeclared basis fields", () => {
   const item = reviewedLossItem(3000, { box1_ordinary_business: -4000 });
   assertThrows(() =>
     compute([{
@@ -760,7 +761,7 @@ Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {
   );
 });
 
-Deno.test("ordinary-loss ledger does not merge two corporations", () => {
+test("ordinary-loss ledger does not merge two corporations", () => {
   assertThrows(
     () =>
       compute([
@@ -775,7 +776,7 @@ Deno.test("ordinary-loss ledger does not merge two corporations", () => {
   );
 });
 
-Deno.test("ordinary-loss ledger is not a generic no-loss basis record", () => {
+test("ordinary-loss ledger is not a generic no-loss basis record", () => {
   assertThrows(
     () => compute([reviewedLossItem(3000)]),
     Error,
@@ -783,7 +784,7 @@ Deno.test("ordinary-loss ledger is not a generic no-loss basis record", () => {
   );
 });
 
-Deno.test("ordinary-loss stock route accepts reviewed explicit zero basis", () => {
+test("ordinary-loss stock route accepts reviewed explicit zero basis", () => {
   const result = compute([reviewedLossItem(0, {
     box1_ordinary_business: -4000,
   })]);
@@ -791,7 +792,7 @@ Deno.test("ordinary-loss stock route accepts reviewed explicit zero basis", () =
   assertEquals(findOutput(result, "form7203")?.fields.stock_basis_beginning, 0);
 });
 
-Deno.test("ordinary-loss stock route rejects a contradictory other K-1 basis item", () => {
+test("ordinary-loss stock route rejects a contradictory other K-1 basis item", () => {
   assertThrows(
     () =>
       compute([reviewedLossItem(3000, {
@@ -803,7 +804,7 @@ Deno.test("ordinary-loss stock route rejects a contradictory other K-1 basis ite
   );
 });
 
-Deno.test("misidentified box 17 distribution cannot bypass Form 7203 filing review", () => {
+test("misidentified box 17 distribution cannot bypass Form 7203 filing review", () => {
   assertThrows(
     () => compute([minimalItem({ box17_distributions: 500 })]),
     Error,
@@ -811,14 +812,14 @@ Deno.test("misidentified box 17 distribution cannot bypass Form 7203 filing revi
   );
 });
 
-Deno.test("negative pre2018_suspended_losses throws", () => {
+test("negative pre2018_suspended_losses throws", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_suspended_losses: -100 })]),
     Error,
   );
 });
 
-Deno.test("negative pre2018_at_risk_suspended throws", () => {
+test("negative pre2018_at_risk_suspended throws", () => {
   assertThrows(
     () => compute([minimalItem({ pre2018_at_risk_suspended: -50 })]),
     Error,
@@ -827,7 +828,7 @@ Deno.test("negative pre2018_at_risk_suspended throws", () => {
 
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
 
-Deno.test("untyped S-corporation box 10 is rejected, even when zero", () => {
+test("untyped S-corporation box 10 is rejected, even when zero", () => {
   for (const amount of [0, 450]) {
     assertThrows(
       () => compute([minimalItem({ box10_other_income: amount })]),
@@ -837,7 +838,7 @@ Deno.test("untyped S-corporation box 10 is rejected, even when zero", () => {
   }
 });
 
-Deno.test("box 10 code J routes only reviewed taxable recovery to line 8z and AGI", () => {
+test("box 10 code J routes only reviewed taxable recovery to line 8z and AGI", () => {
   const result = compute([minimalItem({
     corporation_ein: "123456789",
     recipient_tin: "111223333",
@@ -861,7 +862,7 @@ Deno.test("box 10 code J routes only reviewed taxable recovery to line 8z and AG
   );
 });
 
-Deno.test("box 10 code J recovery requires source and prior-year benefit review", () => {
+test("box 10 code J recovery requires source and prior-year benefit review", () => {
   const base = {
     box10_code_j_recovery: 1000,
     box10_code_j_taxable_recovery: 650,
@@ -896,7 +897,7 @@ Deno.test("box 10 code J recovery requires source and prior-year benefit review"
   );
 });
 
-Deno.test("box 10 code J taxable subset cannot exceed K-1 recovery", () => {
+test("box 10 code J taxable subset cannot exceed K-1 recovery", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -913,7 +914,7 @@ Deno.test("box 10 code J taxable subset cannot exceed K-1 recovery", () => {
   );
 });
 
-Deno.test("box 10 code J taxable recoveries aggregate without losing other Schedule E income", () => {
+test("box 10 code J taxable recoveries aggregate without losing other Schedule E income", () => {
   const result = compute([
     minimalItem({
       corporation_ein: "123456789",
@@ -964,7 +965,7 @@ Deno.test("box 10 code J taxable recoveries aggregate without losing other Sched
   );
 });
 
-Deno.test("smoke test — K-1 with all major boxes", () => {
+test("smoke test — K-1 with all major boxes", () => {
   const result = compute([
     minimalItem({
       box1_ordinary_business: 15000,

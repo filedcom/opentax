@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { sep_retirement, PlanType } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -20,19 +21,19 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("sep_retirement.inputSchema: empty array fails (min 1)", () => {
+test("sep_retirement.inputSchema: empty array fails (min 1)", () => {
   const parsed = sep_retirement.inputSchema.safeParse({ sep_retirements: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("sep_retirement.inputSchema: invalid plan_type fails", () => {
+test("sep_retirement.inputSchema: invalid plan_type fails", () => {
   const parsed = sep_retirement.inputSchema.safeParse({
     sep_retirements: [{ plan_type: "INVALID_PLAN" }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("sep_retirement.inputSchema: negative sep_contribution fails", () => {
+test("sep_retirement.inputSchema: negative sep_contribution fails", () => {
   const parsed = sep_retirement.inputSchema.safeParse({
     sep_retirements: [{ plan_type: PlanType.SEP, sep_contribution: -100 }],
   });
@@ -43,7 +44,7 @@ Deno.test("sep_retirement.inputSchema: negative sep_contribution fails", () => {
 // 2. SEP-IRA Routing and Calculation
 // =============================================================================
 
-Deno.test("sep_retirement.compute: SEP contribution within 25% limit routes to schedule1 line16", () => {
+test("sep_retirement.compute: SEP contribution within 25% limit routes to schedule1 line16", () => {
   // 25% of 100000 = 25000; contribution 20000 < 25000 → passes through unchanged
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
@@ -54,7 +55,7 @@ Deno.test("sep_retirement.compute: SEP contribution within 25% limit routes to s
   assertEquals(fields.line16_sep_simple, 20000);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution capped at 25% of net SE compensation", () => {
+test("sep_retirement.compute: SEP contribution capped at 25% of net SE compensation", () => {
   // 25% of 80000 = 20000; contribution 30000 exceeds limit → capped at 20000
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
@@ -65,7 +66,7 @@ Deno.test("sep_retirement.compute: SEP contribution capped at 25% of net SE comp
   assertEquals(fields.line16_sep_simple, 20000);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution capped at $70,000 annual limit", () => {
+test("sep_retirement.compute: SEP contribution capped at $70,000 annual limit", () => {
   // 25% of 400000 = 100000 — hard cap at 70000 applies
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
@@ -76,7 +77,7 @@ Deno.test("sep_retirement.compute: SEP contribution capped at $70,000 annual lim
   assertEquals(fields.line16_sep_simple, 70000);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution exactly at 25% boundary passes through unchanged", () => {
+test("sep_retirement.compute: SEP contribution exactly at 25% boundary passes through unchanged", () => {
   // 25% of 80000 = 20000; contribution = 20000 exactly
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
@@ -87,7 +88,7 @@ Deno.test("sep_retirement.compute: SEP contribution exactly at 25% boundary pass
   assertEquals(fields.line16_sep_simple, 20000);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution without SE compensation — only $70,000 cap applies", () => {
+test("sep_retirement.compute: SEP contribution without SE compensation — only $70,000 cap applies", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 50000,
@@ -96,7 +97,7 @@ Deno.test("sep_retirement.compute: SEP contribution without SE compensation — 
   assertEquals(fields.line16_sep_simple, 50000);
 });
 
-Deno.test("sep_retirement.compute: SEP no contribution supplies zero Form 7206 source", () => {
+test("sep_retirement.compute: SEP no contribution supplies zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     net_self_employment_compensation: 100000,
@@ -105,7 +106,7 @@ Deno.test("sep_retirement.compute: SEP no contribution supplies zero Form 7206 s
   assertEquals(findOutput(result, "form7206")?.fields.schedule1_line16_source, 0);
 });
 
-Deno.test("sep_retirement.compute: SEP zero contribution supplies zero Form 7206 source", () => {
+test("sep_retirement.compute: SEP zero contribution supplies zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 0,
@@ -119,7 +120,7 @@ Deno.test("sep_retirement.compute: SEP zero contribution supplies zero Form 7206
 // 3. SIMPLE IRA Routing and Calculation
 // =============================================================================
 
-Deno.test("sep_retirement.compute: SIMPLE employee + employer contributions summed to schedule1", () => {
+test("sep_retirement.compute: SIMPLE employee + employer contributions summed to schedule1", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 10000,
@@ -129,7 +130,7 @@ Deno.test("sep_retirement.compute: SIMPLE employee + employer contributions summ
   assertEquals(fields.line16_sep_simple, 13000);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE employee contribution capped at $16,500 when under age 50", () => {
+test("sep_retirement.compute: SIMPLE employee contribution capped at $16,500 when under age 50", () => {
   // Employee 20000 capped at 16500; employer 2000 → total 18500
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
@@ -141,7 +142,7 @@ Deno.test("sep_retirement.compute: SIMPLE employee contribution capped at $16,50
   assertEquals(fields.line16_sep_simple, 18500);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE employee catch-up limit $20,000 when age 50+", () => {
+test("sep_retirement.compute: SIMPLE employee catch-up limit $20,000 when age 50+", () => {
   // TY2025: age 50+ cap = 20000 (16500 + 3500 catch-up per Rev Proc 2024-40)
   // employee 21000 capped at 20000; employer 1000 → total 21000
   const result = compute([minimalItem({
@@ -154,7 +155,7 @@ Deno.test("sep_retirement.compute: SIMPLE employee catch-up limit $20,000 when a
   assertEquals(fields.line16_sep_simple, 21000);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE age_50_or_over omitted — uses under-50 limit of $16,500", () => {
+test("sep_retirement.compute: SIMPLE age_50_or_over omitted — uses under-50 limit of $16,500", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 18000,
@@ -163,7 +164,7 @@ Deno.test("sep_retirement.compute: SIMPLE age_50_or_over omitted — uses under-
   assertEquals(fields.line16_sep_simple, 16500);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE employee exactly at $16,500 limit passes through", () => {
+test("sep_retirement.compute: SIMPLE employee exactly at $16,500 limit passes through", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 16500,
@@ -173,7 +174,7 @@ Deno.test("sep_retirement.compute: SIMPLE employee exactly at $16,500 limit pass
   assertEquals(fields.line16_sep_simple, 16500);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE employee exactly at $19,500 age-50+ limit passes through", () => {
+test("sep_retirement.compute: SIMPLE employee exactly at $19,500 age-50+ limit passes through", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 19500,
@@ -183,7 +184,7 @@ Deno.test("sep_retirement.compute: SIMPLE employee exactly at $19,500 age-50+ li
   assertEquals(fields.line16_sep_simple, 19500);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE with only employer contribution routes correctly", () => {
+test("sep_retirement.compute: SIMPLE with only employer contribution routes correctly", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employer_contribution: 5000,
@@ -192,7 +193,7 @@ Deno.test("sep_retirement.compute: SIMPLE with only employer contribution routes
   assertEquals(fields.line16_sep_simple, 5000);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE zero contributions supply zero Form 7206 source", () => {
+test("sep_retirement.compute: SIMPLE zero contributions supply zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 0,
@@ -206,7 +207,7 @@ Deno.test("sep_retirement.compute: SIMPLE zero contributions supply zero Form 72
 // 4. Solo 401(k) Routing and Calculation
 // =============================================================================
 
-Deno.test("sep_retirement.compute: Solo 401k employee + employer contributions route to schedule1", () => {
+test("sep_retirement.compute: Solo 401k employee + employer contributions route to schedule1", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 20000,
@@ -216,7 +217,7 @@ Deno.test("sep_retirement.compute: Solo 401k employee + employer contributions r
   assertEquals(fields.line16_sep_simple, 30000);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k employee deferral capped at $23,500", () => {
+test("sep_retirement.compute: Solo 401k employee deferral capped at $23,500", () => {
   // employee 30000 capped at 23500; employer 5000 → total 28500
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
@@ -227,7 +228,7 @@ Deno.test("sep_retirement.compute: Solo 401k employee deferral capped at $23,500
   assertEquals(fields.line16_sep_simple, 28500);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k combined limit $70,000 enforced", () => {
+test("sep_retirement.compute: Solo 401k combined limit $70,000 enforced", () => {
   // employee 23500 + employer 50000 = 73500 — combined cap at 70000
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
@@ -238,7 +239,7 @@ Deno.test("sep_retirement.compute: Solo 401k combined limit $70,000 enforced", (
   assertEquals(fields.line16_sep_simple, 70000);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k exactly at $70,000 combined — passes through unchanged", () => {
+test("sep_retirement.compute: Solo 401k exactly at $70,000 combined — passes through unchanged", () => {
   // employee 23500 + employer 46500 = 70000 exactly (at the combined cap)
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
@@ -249,7 +250,7 @@ Deno.test("sep_retirement.compute: Solo 401k exactly at $70,000 combined — pas
   assertEquals(fields.line16_sep_simple, 70000);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k with only employee deferral", () => {
+test("sep_retirement.compute: Solo 401k with only employee deferral", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 15000,
@@ -258,7 +259,7 @@ Deno.test("sep_retirement.compute: Solo 401k with only employee deferral", () =>
   assertEquals(fields.line16_sep_simple, 15000);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k exactly at $23,500 employee limit passes through", () => {
+test("sep_retirement.compute: Solo 401k exactly at $23,500 employee limit passes through", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 23500,
@@ -267,7 +268,7 @@ Deno.test("sep_retirement.compute: Solo 401k exactly at $23,500 employee limit p
   assertEquals(fields.line16_sep_simple, 23500);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k zero contributions supply zero Form 7206 source", () => {
+test("sep_retirement.compute: Solo 401k zero contributions supply zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 0,
@@ -281,7 +282,7 @@ Deno.test("sep_retirement.compute: Solo 401k zero contributions supply zero Form
 // 5. Aggregation — Multiple Plans
 // =============================================================================
 
-Deno.test("sep_retirement.compute: SEP + SIMPLE in same call — deductions summed to single schedule1 output", () => {
+test("sep_retirement.compute: SEP + SIMPLE in same call — deductions summed to single schedule1 output", () => {
   const result = compute([
     minimalItem({ plan_type: PlanType.SEP, sep_contribution: 10000, net_self_employment_compensation: 100000 }),
     minimalItem({ plan_type: PlanType.SIMPLE, simple_employee_contribution: 5000, simple_employer_contribution: 1000 }),
@@ -292,7 +293,7 @@ Deno.test("sep_retirement.compute: SEP + SIMPLE in same call — deductions summ
   assertEquals(fields.line16_sep_simple, 16000);
 });
 
-Deno.test("sep_retirement.compute: SEP + Solo 401k — only one schedule1 output emitted", () => {
+test("sep_retirement.compute: SEP + Solo 401k — only one schedule1 output emitted", () => {
   const result = compute([
     minimalItem({ plan_type: PlanType.SEP, sep_contribution: 10000 }),
     minimalItem({ plan_type: PlanType.SOLO_401K, solo401k_employee_deferral: 5000 }),
@@ -307,7 +308,7 @@ Deno.test("sep_retirement.compute: SEP + Solo 401k — only one schedule1 output
 // 6. AGI Aggregator Routing (above-the-line deduction must reduce AGI)
 // =============================================================================
 
-Deno.test("sep_retirement.compute: SEP deduction routes to agi_aggregator with same amount as schedule1", () => {
+test("sep_retirement.compute: SEP deduction routes to agi_aggregator with same amount as schedule1", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 15000,
@@ -319,7 +320,7 @@ Deno.test("sep_retirement.compute: SEP deduction routes to agi_aggregator with s
   assertEquals(agiFields.line16_sep_simple, 15000);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE agi_aggregator output matches schedule1 output", () => {
+test("sep_retirement.compute: SIMPLE agi_aggregator output matches schedule1 output", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 10000,
@@ -330,7 +331,7 @@ Deno.test("sep_retirement.compute: SIMPLE agi_aggregator output matches schedule
   assertEquals(s1Fields.line16_sep_simple, agiFields.line16_sep_simple);
 });
 
-Deno.test("sep_retirement.compute: zero deduction — no agi_aggregator output", () => {
+test("sep_retirement.compute: zero deduction — no agi_aggregator output", () => {
   const result = compute([minimalItem({ plan_type: PlanType.SEP })]);
   const out = result.outputs.find((o: { nodeType: string }) => o.nodeType === "agi_aggregator");
   assertEquals(out, undefined);
@@ -340,7 +341,7 @@ Deno.test("sep_retirement.compute: zero deduction — no agi_aggregator output",
 // 7. Hard Validation
 // =============================================================================
 
-Deno.test("sep_retirement.compute: throws on negative simple_employer_contribution", () => {
+test("sep_retirement.compute: throws on negative simple_employer_contribution", () => {
   assertThrows(() => compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employer_contribution: -100,
@@ -351,7 +352,7 @@ Deno.test("sep_retirement.compute: throws on negative simple_employer_contributi
 // 8. Smoke Test
 // =============================================================================
 
-Deno.test("sep_retirement.compute: smoke test — all three plan types, limits correctly applied", () => {
+test("sep_retirement.compute: smoke test — all three plan types, limits correctly applied", () => {
   const result = compute([
     // SEP: 25% of 200000 = 50000; contribution 45000 < 50000 → 45000
     minimalItem({
@@ -381,7 +382,7 @@ Deno.test("sep_retirement.compute: smoke test — all three plan types, limits c
   assertEquals(s1Outputs.length, 1);
 });
 
-Deno.test("routes the deduction to form8995 as retirement_plan_deduction", () => {
+test("routes the deduction to form8995 as retirement_plan_deduction", () => {
   // i8995, Determining Your Qualified Business Income: the items attributable to the
   // trade or business include "contributions to qualified retirement plans".
   const result = compute([minimalItem({

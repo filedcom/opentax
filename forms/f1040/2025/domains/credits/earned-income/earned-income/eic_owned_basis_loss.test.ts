@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import {
@@ -136,9 +139,9 @@ const cases = [
   },
 ];
 
-Deno.test("EIC replays owned nonpassive basis losses without subtracting them from investment income or wages", async () => {
-  const outputIndex = Deno.args.indexOf("--write-review-artifacts");
-  const output = outputIndex < 0 ? undefined : Deno.args[outputIndex + 1];
+test("EIC replays owned nonpassive basis losses without subtracting them from investment income or wages", async () => {
+  const outputIndex = process.argv.slice(2).indexOf("--write-review-artifacts");
+  const output = outputIndex < 0 ? undefined : process.argv.slice(2)[outputIndex + 1];
   for (const c of cases) {
     const inputs = c.input();
     const result = f1040_2025.executeReturn(inputs);
@@ -161,13 +164,13 @@ Deno.test("EIC replays owned nonpassive basis losses without subtracting them fr
       bundle,
       origins,
     );
-    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-    await Deno.writeTextFile(xmlPath, bundle.xml);
+    const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
+    await fs.writeFile(xmlPath, bundle.xml);
     const xsd = new URL(
       "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
-    const validation = await new Deno.Command("xmllint", {
+    const validation = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlPath],
       stderr: "piped",
     }).output();
@@ -176,7 +179,7 @@ Deno.test("EIC replays owned nonpassive basis losses without subtracting them fr
       0,
       new TextDecoder().decode(validation.stderr),
     );
-    await Deno.remove(xmlPath);
+    await sys.remove(xmlPath);
     if (c.eic) {
       for (const key of ["form7203", "form8995"]) {
         const bad = structuredClone(bundle.pending) as any;
@@ -214,10 +217,10 @@ Deno.test("EIC replays owned nonpassive basis losses without subtracting them fr
     }
     if (output) {
       const dir = `${output}/${c.id}`;
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      await fs.writeFile(
         `${dir}/source-pending.json`,
         JSON.stringify({
           inputs,

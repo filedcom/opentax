@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
@@ -134,7 +135,7 @@ async function intake(
   };
 }
 
-Deno.test("Form 1116 reviewed 2024 PDF bytes match owner, category, and Schedule B vintage fields", async () => {
+test("Form 1116 reviewed 2024 PDF bytes match owner, category, and Schedule B vintage fields", async () => {
   const reviewed = await intake();
   const result = await reviewForm1116ScheduleBFiledDocuments(
     reviewed,
@@ -153,7 +154,7 @@ Deno.test("Form 1116 reviewed 2024 PDF bytes match owner, category, and Schedule
   assertEquals(result.export_ready, false);
 });
 
-Deno.test("Form 1116 reviewed 2024 PDFs reject changed bytes and printed source fields", async () => {
+test("Form 1116 reviewed 2024 PDFs reject changed bytes and printed source fields", async () => {
   const reviewed = await intake();
   const unreadableFields = await PDFDocument.create();
   unreadableFields.addPage();

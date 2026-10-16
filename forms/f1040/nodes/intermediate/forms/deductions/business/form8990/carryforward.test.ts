@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { proveZeroPriorForm8990Carryforward } from "./carryforward.ts";
 
@@ -8,7 +9,7 @@ const reviewed2024 = {
   filed_line31_disallowed_business_interest: 0,
 };
 
-Deno.test("2025 Form 8990 current line 2 uses reviewed filed 2024 line 31", () => {
+test("2025 Form 8990 current line 2 uses reviewed filed 2024 line 31", () => {
   const proof = proveZeroPriorForm8990Carryforward(
     reviewed2024,
     { taxpayer_ssn: "123456789" },
@@ -19,7 +20,7 @@ Deno.test("2025 Form 8990 current line 2 uses reviewed filed 2024 line 31", () =
   assertEquals(proof.targetLine2, 0);
 });
 
-Deno.test("2025 Form 8990 closes nonzero or mismatched prior carryforward", () => {
+test("2025 Form 8990 closes nonzero or mismatched prior carryforward", () => {
   assertThrows(
     () =>
       proveZeroPriorForm8990Carryforward(

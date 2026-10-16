@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -136,7 +139,7 @@ async function validate(xml: string) {
     "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const child = new Deno.Command("xmllint", {
+  const child = new sys.Command("xmllint", {
     args: ["--noout", "--schema", schema, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -240,7 +243,7 @@ const ids = [
   "broker-net-gain",
   "advanced-business-loss",
 ];
-Deno.test("distinct equal dividend and capital contributions file through simplified and advanced QBI", async () => {
+test("distinct equal dividend and capital contributions file through simplified and advanced QBI", async () => {
   for (const id of ids) {
     const result = f1040_2025.executeReturn(sourceReturn(id));
     assertEquals(result.diagnostics, [], id);
@@ -287,22 +290,22 @@ Deno.test("distinct equal dividend and capital contributions file through simpli
     }
     const pdf = await prepared.renderPdf();
     assert(pdf.length > 0);
-    if (Deno.args.includes("--write-review-artifacts")) {
+    if (process.argv.slice(2).includes("--write-review-artifacts")) {
       const directory = new URL(
         `../../../.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-distinct/${id}/`,
         import.meta.url,
       ).pathname;
-      await Deno.mkdir(directory, { recursive: true });
-      await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-      await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
-      await Deno.writeTextFile(
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+      await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
+      await fs.writeFile(
         `${directory}calculation.json`,
         JSON.stringify(pending, null, 2),
       );
     }
   }
 });
-Deno.test("distinct QBI contributions and qualified dividend reviews reject source and calendar tampering", () => {
+test("distinct QBI contributions and qualified dividend reviews reject source and calendar tampering", () => {
   for (const id of ids) {
     const result = f1040_2025.executeReturn(sourceReturn(id));
     assertEquals(result.diagnostics, []);
@@ -397,7 +400,7 @@ Deno.test("distinct QBI contributions and qualified dividend reviews reject sour
   }
 });
 
-Deno.test("qualified dividend review rejects impossible public-input calendar dates", () => {
+test("qualified dividend review rejects impossible public-input calendar dates", () => {
   for (
     const [field, date] of [
       ["ex_dividend_date", "2025-02-29"],

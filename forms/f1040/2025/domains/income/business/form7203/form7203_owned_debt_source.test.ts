@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -31,7 +34,7 @@ const expectedTax: Record<string, number> = {
   two_notes: 3527,
 };
 for (const c of ownedDebtCases) {
-  Deno.test(`owned direct-note ${c.id}: full source to basis/allowed-QBI loss and complete XML/PDF`, async () => {
+  test(`owned direct-note ${c.id}: full source to basis/allowed-QBI loss and complete XML/PDF`, async () => {
     const source = ownedDebtSource(c.repayments, c.second, c.capital);
     const r = filedReturn(source);
     assertEquals(r.diagnostics, []);
@@ -102,12 +105,7 @@ for (const c of ownedDebtCases) {
       `<TotQlfyBusLossCarryforwardAmt>${c.allowed}</TotQlfyBusLossCarryforwardAmt>`,
     );
     const dir = (() => {
-      try {
-        return Deno.env.get("FORM7203_OWNED_DEBT_EVIDENCE_DIR");
-      } catch (e) {
-        if (e instanceof Deno.errors.NotCapable) return undefined;
-        throw e;
-      }
+      return process.env.FORM7203_OWNED_DEBT_EVIDENCE_DIR;
     })();
     const stem = dir ? `${dir}/${c.id}` : undefined;
     const origins: PdfPageOrigin[] = [];
@@ -131,7 +129,7 @@ for (const c of ownedDebtCases) {
       ["form8995", 1],
     ]);
     assertEquals(doc.getPageCount(), 8);
-    const cmd = new Deno.Command("xmllint", {
+    const cmd = new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],
       stdin: "piped",
       stderr: "piped",
@@ -143,24 +141,24 @@ for (const c of ownedDebtCases) {
     const checked = await cmd.output();
     assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
     if (stem) {
-      await Deno.mkdir(dir!, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(dir!, { recursive: true });
+      await fs.writeFile(
         `${stem}.source.json`,
         JSON.stringify(ownedDebtInputs(source), null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${stem}.pending.json`,
         JSON.stringify(p, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${stem}.carry.json`,
         JSON.stringify(r.carryforwards, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${stem}.origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${stem}.expected.json`,
         JSON.stringify(
           {
@@ -174,13 +172,13 @@ for (const c of ownedDebtCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${stem}.xml`, xml);
-      await Deno.writeFile(`${stem}.pdf`, pdf);
+      await fs.writeFile(`${stem}.xml`, xml);
+      await fs.writeFile(`${stem}.pdf`, pdf);
     }
   });
 }
 
-Deno.test("owned direct debt rejects altered ownership, guarantees, funding, source stock history, issued loss and QBI records", () => {
+test("owned direct debt rejects altered ownership, guarantees, funding, source stock history, issued loss and QBI records", () => {
   const changes: [string, (s: any) => void][] = [
     [
       "missing owned records",
@@ -292,7 +290,7 @@ Deno.test("owned direct debt rejects altered ownership, guarantees, funding, sou
   }
 });
 
-Deno.test("owned basis-limited QBI loss rejects detached native/PDF carry, basis, source and finalized tax", async () => {
+test("owned basis-limited QBI loss rejects detached native/PDF carry, basis, source and finalized tax", async () => {
   const r = filedReturn(ownedDebtSource([400]));
   const base: any = buildPending(r.pending);
   const mutations: [string, (p: any) => void][] = [
@@ -350,7 +348,7 @@ Deno.test("owned basis-limited QBI loss rejects detached native/PDF carry, basis
   }
 });
 
-Deno.test("provided owned records cannot be ignored by downgrading the legacy source kind", () => {
+test("provided owned records cannot be ignored by downgrading the legacy source kind", () => {
   const s = ownedDebtSource([400]);
   s.form7203_debt_evidence.kind = "new_2025_formal_notes";
   const r = filedReturn(s);
@@ -362,7 +360,7 @@ Deno.test("provided owned records cannot be ignored by downgrading the legacy so
   assertEquals(filedReturn(s).diagnostics.length > 0, true);
 });
 
-Deno.test("owned current cash-capital source must independently match the actual contribution ledger", () => {
+test("owned current cash-capital source must independently match the actual contribution ledger", () => {
   for (const kind of ["missing", "credit", "shareholder", "date", "amount"]) {
     const s = ownedDebtSource([400], false, true),
       records = s.form7203_debt_evidence.owned_current_records;

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 // UNRESOLVED ITEMS:
 //   - section_179 $2,500,000 maximum: schema uses z.number().nonnegative() with no .max() —
 //     values above $2.5M are accepted without error; not Zod-enforced and not capped silently
@@ -38,12 +39,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── 1. Input Schema Validation ─────────────────────────────────────────────
 
-Deno.test("input validation: empty array produces no outputs", () => {
+test("input validation: empty array produces no outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("Schedule E retains a sourced prior operating PAL for a partial Part II property sale", () => {
+test("Schedule E retains a sourced prior operating PAL for a partial Part II property sale", () => {
   const sale = {
     activity_id: "rental-retained",
     activity_name: "Retained rental",
@@ -127,7 +128,7 @@ Deno.test("Schedule E retains a sourced prior operating PAL for a partial Part I
   }
 });
 
-Deno.test("Schedule E links active-rental prior PAL to a sourced retained Part II gain", () => {
+test("Schedule E links active-rental prior PAL to a sourced retained Part II gain", () => {
   const sale = {
     activity_id: "active-retained",
     activity_name: "Active retained rental",
@@ -190,7 +191,7 @@ Deno.test("Schedule E links active-rental prior PAL to a sourced retained Part I
   }
 });
 
-Deno.test("Schedule E sends a sourced overall-gain entire sale to Form 8582 Part V", () => {
+test("Schedule E sends a sourced overall-gain entire sale to Form 8582 Part V", () => {
   const sale = {
     activity_id: "entire-gain-rental",
     activity_name: "Entire gain rental",
@@ -242,7 +243,7 @@ Deno.test("Schedule E sends a sourced overall-gain entire sale to Form 8582 Part
   );
 });
 
-Deno.test("Schedule E first-year entire sale sends current loss and gain to Form 8582 Part V", () => {
+test("Schedule E first-year entire sale sends current loss and gain to Form 8582 Part V", () => {
   const sale = {
     activity_id: "first-year-entire-gain",
     activity_name: "First year rental",
@@ -318,7 +319,7 @@ Deno.test("Schedule E first-year entire sale sends current loss and gain to Form
   }
 });
 
-Deno.test("Schedule E sends an active-rental entire sale with overall gain to Form 8582 Part IV", () => {
+test("Schedule E sends an active-rental entire sale with overall gain to Form 8582 Part IV", () => {
   const sale = {
     activity_id: "active-entire-gain",
     activity_name: "Active entire rental",
@@ -373,7 +374,7 @@ Deno.test("Schedule E sends an active-rental entire sale with overall gain to Fo
   );
 });
 
-Deno.test("Schedule E routes filed Part IX Form 4797 carryovers without a current sale", () => {
+test("Schedule E routes filed Part IX Form 4797 carryovers without a current sale", () => {
   const result = compute([minimalItem({
     activity_type: "B",
     activity_id: "passive-rental-part-ix",
@@ -404,7 +405,7 @@ Deno.test("Schedule E routes filed Part IX Form 4797 carryovers without a curren
   );
 });
 
-Deno.test("royalty property with zero rental days is not a short-term home rental", () => {
+test("royalty property with zero rental days is not a short-term home rental", () => {
   const result = compute([minimalItem({
     property_type: 6,
     fair_rental_days: 0,
@@ -413,7 +414,7 @@ Deno.test("royalty property with zero rental days is not a short-term home renta
   assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 4000);
 });
 
-Deno.test("Schedule E rejects 1099-MISC royalty passthrough hidden by a property item", () => {
+test("Schedule E rejects 1099-MISC royalty passthrough hidden by a property item", () => {
   assertThrows(
     () =>
       scheduleE.compute(
@@ -430,7 +431,7 @@ Deno.test("Schedule E rejects 1099-MISC royalty passthrough hidden by a property
   );
 });
 
-Deno.test("input validation: missing required field (rent_income) throws", () => {
+test("input validation: missing required field (rent_income) throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ rent_income: undefined }),
@@ -438,7 +439,7 @@ Deno.test("input validation: missing required field (rent_income) throws", () =>
   );
 });
 
-Deno.test("input validation: form_1099_filed required when form_1099_payments_made=true", () => {
+test("input validation: form_1099_filed required when form_1099_payments_made=true", () => {
   assertThrows(() =>
     compute([
       minimalItem({
@@ -449,7 +450,7 @@ Deno.test("input validation: form_1099_filed required when form_1099_payments_ma
   );
 });
 
-Deno.test("input validation: property_type_other_desc required when property_type=8", () => {
+test("input validation: property_type_other_desc required when property_type=8", () => {
   assertThrows(() =>
     compute([
       minimalItem({
@@ -460,7 +461,7 @@ Deno.test("input validation: property_type_other_desc required when property_typ
   );
 });
 
-Deno.test("input validation: ownership_percent above 100 throws", () => {
+test("input validation: ownership_percent above 100 throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ ownership_percent: 101 }),
@@ -468,7 +469,7 @@ Deno.test("input validation: ownership_percent above 100 throws", () => {
   );
 });
 
-Deno.test("input validation: ownership_percent below 0 throws", () => {
+test("input validation: ownership_percent below 0 throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ ownership_percent: -1 }),
@@ -476,7 +477,7 @@ Deno.test("input validation: ownership_percent below 0 throws", () => {
   );
 });
 
-Deno.test("input validation: fair_rental_days=366 throws", () => {
+test("input validation: fair_rental_days=366 throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ fair_rental_days: 366 }),
@@ -484,7 +485,7 @@ Deno.test("input validation: fair_rental_days=366 throws", () => {
   );
 });
 
-Deno.test("input validation: personal_use_days=366 throws", () => {
+test("input validation: personal_use_days=366 throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ personal_use_days: 366 }),
@@ -492,7 +493,7 @@ Deno.test("input validation: personal_use_days=366 throws", () => {
   );
 });
 
-Deno.test("input validation: qbi_aggregation_number=100 throws (must be 1–99)", () => {
+test("input validation: qbi_aggregation_number=100 throws (must be 1–99)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ qbi_aggregation_number: 100 }),
@@ -500,7 +501,7 @@ Deno.test("input validation: qbi_aggregation_number=100 throws (must be 1–99)"
   );
 });
 
-Deno.test("input validation: qbi_aggregation_number=0 throws (must be 1–99)", () => {
+test("input validation: qbi_aggregation_number=0 throws (must be 1–99)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ qbi_aggregation_number: 0 }),
@@ -510,7 +511,7 @@ Deno.test("input validation: qbi_aggregation_number=0 throws (must be 1–99)", 
 
 // ─── 2. Per-Box Routing ──────────────────────────────────────────────────────
 
-Deno.test("routing: rent_income routes net to schedule1 line5", () => {
+test("routing: rent_income routes net to schedule1 line5", () => {
   const result = compute([
     minimalItem({ rent_income: 12_000 }),
   ]);
@@ -519,7 +520,7 @@ Deno.test("routing: rent_income routes net to schedule1 line5", () => {
   assertEquals(input.line5_schedule_e, 12_000);
 });
 
-Deno.test("routing: royalties_income routes net to schedule1 line5", () => {
+test("routing: royalties_income routes net to schedule1 line5", () => {
   const result = compute([
     minimalItem({
       property_type: 6,
@@ -534,7 +535,7 @@ Deno.test("routing: royalties_income routes net to schedule1 line5", () => {
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
-Deno.test("EIC royalty worksheet requires a reviewed split of mixed-property expenses", () => {
+test("EIC royalty worksheet requires a reviewed split of mixed-property expenses", () => {
   const mixed = minimalItem({
     property_type: 6,
     activity_type: "D",
@@ -582,7 +583,7 @@ Deno.test("EIC royalty worksheet requires a reviewed split of mixed-property exp
   );
 });
 
-Deno.test("routing: royalties_income=0 produces no extra output beyond schedule1", () => {
+test("routing: royalties_income=0 produces no extra output beyond schedule1", () => {
   const withRoyalties = compute([
     minimalItem({ rent_income: 10_000, royalties_income: 0 }),
   ]);
@@ -592,7 +593,7 @@ Deno.test("routing: royalties_income=0 produces no extra output beyond schedule1
   assertEquals(withRoyalties.outputs.length, withoutRoyalties.outputs.length);
 });
 
-Deno.test("routing: carry_to_8960=true routes net rental income to form8960", () => {
+test("routing: carry_to_8960=true routes net rental income to form8960", () => {
   const result = compute([
     minimalItem({ rent_income: 8_000, carry_to_8960: true }),
   ]);
@@ -603,7 +604,7 @@ Deno.test("routing: carry_to_8960=true routes net rental income to form8960", ()
   );
 });
 
-Deno.test("routing: carry_to_8960 absent produces no form8960 output", () => {
+test("routing: carry_to_8960 absent produces no form8960 output", () => {
   const result = compute([
     minimalItem({ rent_income: 8_000 }),
   ]);
@@ -611,7 +612,7 @@ Deno.test("routing: carry_to_8960 absent produces no form8960 output", () => {
   assertEquals(f8960, undefined);
 });
 
-Deno.test("routing: carry_to_8960=false produces no form8960 output", () => {
+test("routing: carry_to_8960=false produces no form8960 output", () => {
   const result = compute([
     minimalItem({ rent_income: 8_000, carry_to_8960: false }),
   ]);
@@ -619,7 +620,7 @@ Deno.test("routing: carry_to_8960=false produces no form8960 output", () => {
   assertEquals(f8960, undefined);
 });
 
-Deno.test("Schedule E at-risk property requires a per-property computation", () => {
+test("Schedule E at-risk property requires a per-property computation", () => {
   assertThrows(
     () =>
       compute([
@@ -630,7 +631,7 @@ Deno.test("Schedule E at-risk property requires a per-property computation", () 
   );
 });
 
-Deno.test("routing: some_investment_not_at_risk=false produces no form6198 output", () => {
+test("routing: some_investment_not_at_risk=false produces no form6198 output", () => {
   const result = compute([
     minimalItem({ rent_income: 5_000, some_investment_not_at_risk: false }),
   ]);
@@ -638,7 +639,7 @@ Deno.test("routing: some_investment_not_at_risk=false produces no form6198 outpu
   assertEquals(f6198, undefined);
 });
 
-Deno.test("routing: main_home_or_second_home=true routes personal interest/taxes to scheduleA", () => {
+test("routing: main_home_or_second_home=true routes personal interest/taxes to scheduleA", () => {
   const result = compute([
     minimalItem({
       rent_income: 12_000,
@@ -655,7 +656,7 @@ Deno.test("routing: main_home_or_second_home=true routes personal interest/taxes
   assertEquals(schAFields.line_8a_mortgage_interest_1098, 3_000);
 });
 
-Deno.test("routing: main_home_or_second_home=false produces no scheduleA output", () => {
+test("routing: main_home_or_second_home=false produces no scheduleA output", () => {
   const result = compute([
     minimalItem({
       rent_income: 12_000,
@@ -666,7 +667,7 @@ Deno.test("routing: main_home_or_second_home=false produces no scheduleA output"
   assertEquals(schA, undefined);
 });
 
-Deno.test("routing: qbi_trade_or_business=Y routes to form8995 with correct qbi amount", () => {
+test("routing: qbi_trade_or_business=Y routes to form8995 with correct qbi amount", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
@@ -680,7 +681,7 @@ Deno.test("routing: qbi_trade_or_business=Y routes to form8995 with correct qbi 
   assertEquals(f8995Fields.qbi, 20_000);
 });
 
-Deno.test("routing: qbi_trade_or_business=N produces no form8995 output", () => {
+test("routing: qbi_trade_or_business=N produces no form8995 output", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
@@ -691,7 +692,7 @@ Deno.test("routing: qbi_trade_or_business=N produces no form8995 output", () => 
   assertEquals(f8995, undefined);
 });
 
-Deno.test("routing: activity_type=A with net loss routes to form8582 with correct loss amount", () => {
+test("routing: activity_type=A with net loss routes to form8582 with correct loss amount", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -708,7 +709,7 @@ Deno.test("routing: activity_type=A with net loss routes to form8582 with correc
   assertEquals(f8582Fields.has_active_rental, true);
 });
 
-Deno.test("rental profit is identified separately from other passive activity amounts", () => {
+test("rental profit is identified separately from other passive activity amounts", () => {
   const result = compute([
     minimalItem({
       activity_id: "rental-profit",
@@ -745,7 +746,7 @@ Deno.test("rental profit is identified separately from other passive activity am
   assertEquals(agiFields.pal_rental_loss, 20_000);
 });
 
-Deno.test("routing: activity_type=B with net loss routes to form8582 with has_other_passive=true", () => {
+test("routing: activity_type=B with net loss routes to form8582 with has_other_passive=true", () => {
   const result = compute([
     minimalItem({
       activity_type: "B",
@@ -761,7 +762,7 @@ Deno.test("routing: activity_type=B with net loss routes to form8582 with has_ot
   assertEquals(f8582Fields.has_other_passive, true);
 });
 
-Deno.test("a passive loss cannot enter Form 8582 without a durable source activity ID", () => {
+test("a passive loss cannot enter Form 8582 without a durable source activity ID", () => {
   assertThrows(
     () =>
       compute([
@@ -772,7 +773,7 @@ Deno.test("a passive loss cannot enter Form 8582 without a durable source activi
   );
 });
 
-Deno.test("zero active rental does not reclassify another passive loss", () => {
+test("zero active rental does not reclassify another passive loss", () => {
   const result = compute([
     minimalItem({ property_description: "Empty active rental" }),
     minimalItem({
@@ -791,7 +792,7 @@ Deno.test("zero active rental does not reclassify another passive loss", () => {
   assertEquals((fields.activities as unknown[]).length, 1);
 });
 
-Deno.test("routing: activity_type=C does not route to form8582", () => {
+test("routing: activity_type=C does not route to form8582", () => {
   const result = compute([
     minimalItem({
       activity_type: "C",
@@ -803,7 +804,7 @@ Deno.test("routing: activity_type=C does not route to form8582", () => {
   assertEquals(f8582, undefined);
 });
 
-Deno.test("routing: activity_type=D does not route to form8582", () => {
+test("routing: activity_type=D does not route to form8582", () => {
   const result = compute([
     minimalItem({
       activity_type: "D",
@@ -815,7 +816,7 @@ Deno.test("routing: activity_type=D does not route to form8582", () => {
   assertEquals(f8582, undefined);
 });
 
-Deno.test("routing: disposed_of=true routes to form4797 with disposed_properties=1", () => {
+test("routing: disposed_of=true routes to form4797 with disposed_properties=1", () => {
   const result = compute([
     minimalItem({ rent_income: 10_000, disposed_of: true }),
   ]);
@@ -826,7 +827,7 @@ Deno.test("routing: disposed_of=true routes to form4797 with disposed_properties
   assertEquals(f4797Fields.disposed_properties, 1);
 });
 
-Deno.test("routing: disposed_of=false produces no form4797 output", () => {
+test("routing: disposed_of=false produces no form4797 output", () => {
   const result = compute([
     minimalItem({ rent_income: 10_000, disposed_of: false }),
   ]);
@@ -834,7 +835,7 @@ Deno.test("routing: disposed_of=false produces no form4797 output", () => {
   assertEquals(f4797, undefined);
 });
 
-Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule E property", () => {
+test("routing: a retained-activity sale reaches Form 4797 from its Schedule E property", () => {
   const sale = {
     activity_id: "rental-sale",
     activity_name: "Rental house",
@@ -869,7 +870,7 @@ Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule
   );
 });
 
-Deno.test("routing: expense_depreciation_amt routes to form6251 with correct adjustment", () => {
+test("routing: expense_depreciation_amt routes to form6251 with correct adjustment", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
@@ -884,7 +885,7 @@ Deno.test("routing: expense_depreciation_amt routes to form6251 with correct adj
   assertEquals(f6251Fields.depreciation_adjustment, 1_000);
 });
 
-Deno.test("routing: expense_depreciation_amt=0 produces no form6251 output", () => {
+test("routing: expense_depreciation_amt=0 produces no form6251 output", () => {
   const result = compute([
     minimalItem({ rent_income: 20_000, expense_depreciation: 5_000 }),
   ]);
@@ -892,7 +893,7 @@ Deno.test("routing: expense_depreciation_amt=0 produces no form6251 output", () 
   assertEquals(f6251, undefined);
 });
 
-Deno.test("routing: section_179 with activity_type=C routes to form4562 with correct deduction", () => {
+test("routing: section_179 with activity_type=C routes to form4562 with correct deduction", () => {
   const result = compute([
     minimalItem({
       activity_type: "C",
@@ -907,7 +908,7 @@ Deno.test("routing: section_179 with activity_type=C routes to form4562 with cor
   assertEquals(f4562Fields.section_179_deduction, 50_000);
 });
 
-Deno.test("routing: disallowed mortgage interest needs reviewed Form 8990 records", () => {
+test("routing: disallowed mortgage interest needs reviewed Form 8990 records", () => {
   assertThrows(
     () =>
       compute([
@@ -921,7 +922,7 @@ Deno.test("routing: disallowed mortgage interest needs reviewed Form 8990 record
   );
 });
 
-Deno.test("routing: disallowed other interest needs reviewed Form 8990 records", () => {
+test("routing: disallowed other interest needs reviewed Form 8990 records", () => {
   assertThrows(
     () =>
       compute([
@@ -935,7 +936,7 @@ Deno.test("routing: disallowed other interest needs reviewed Form 8990 records",
   );
 });
 
-Deno.test("Schedule E prior at-risk loss is not treated as a return-wide amount", () => {
+test("Schedule E prior at-risk loss is not treated as a return-wide amount", () => {
   assertThrows(
     () =>
       compute([
@@ -949,7 +950,7 @@ Deno.test("Schedule E prior at-risk loss is not treated as a return-wide amount"
   );
 });
 
-Deno.test("routing: prior_unallowed_passive_operating routes to form8582 with prior_unallowed amount", () => {
+test("routing: prior_unallowed_passive_operating routes to form8582 with prior_unallowed amount", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -972,7 +973,7 @@ Deno.test("routing: prior_unallowed_passive_operating routes to form8582 with pr
   assertEquals(f8582Fields.rental_prior_eligible_loss, 2_000);
 });
 
-Deno.test("prior rental operating loss needs prior-year participation fact", () => {
+test("prior rental operating loss needs prior-year participation fact", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -1016,7 +1017,7 @@ Deno.test("prior rental operating loss needs prior-year participation fact", () 
   assertEquals(f8582Fields.rental_prior_eligible_loss, undefined);
 });
 
-Deno.test("routing: prior_unallowed_passive_4797_part1 routes to form8582 with aggregated prior_unallowed", () => {
+test("routing: prior_unallowed_passive_4797_part1 routes to form8582 with aggregated prior_unallowed", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -1031,7 +1032,7 @@ Deno.test("routing: prior_unallowed_passive_4797_part1 routes to form8582 with a
   assertEquals(f8582Fields.prior_unallowed, 1_500);
 });
 
-Deno.test("routing: prior_unallowed_passive_4797_part2 routes to form8582 with aggregated prior_unallowed", () => {
+test("routing: prior_unallowed_passive_4797_part2 routes to form8582 with aggregated prior_unallowed", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -1046,7 +1047,7 @@ Deno.test("routing: prior_unallowed_passive_4797_part2 routes to form8582 with a
   assertEquals(f8582Fields.prior_unallowed, 1_200);
 });
 
-Deno.test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y", () => {
+test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y", () => {
   const result = compute([
     minimalItem({
       rent_income: 30_000,
@@ -1061,7 +1062,7 @@ Deno.test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y
   assertEquals(input.w2_wages, 10_000);
 });
 
-Deno.test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_business=Y", () => {
+test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_business=Y", () => {
   const result = compute([
     minimalItem({
       rent_income: 30_000,
@@ -1076,7 +1077,7 @@ Deno.test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_bu
   assertEquals(input.unadjusted_basis, 200_000);
 });
 
-Deno.test("routing: specified service rental keeps QBI, wages, and UBIA in the SSTB pool", () => {
+test("routing: specified service rental keeps QBI, wages, and UBIA in the SSTB pool", () => {
   const result = compute([
     minimalItem({
       rent_income: 30_000,
@@ -1097,7 +1098,7 @@ Deno.test("routing: specified service rental keeps QBI, wages, and UBIA in the S
   assertEquals(input.sstb_unadjusted_basis, 200_000);
 });
 
-Deno.test("routing: qbi_override routes to form8995 using override amount, ignoring computed net", () => {
+test("routing: qbi_override routes to form8995 using override amount, ignoring computed net", () => {
   const result = compute([
     minimalItem({
       rent_income: 30_000,
@@ -1115,7 +1116,7 @@ Deno.test("routing: qbi_override routes to form8995 using override amount, ignor
 
 // ─── 3. Aggregation ──────────────────────────────────────────────────────────
 
-Deno.test("aggregation: rent_income summed across two properties", () => {
+test("aggregation: rent_income summed across two properties", () => {
   const result = compute([
     minimalItem({ rent_income: 6_000 }),
     minimalItem({ rent_income: 4_000 }),
@@ -1127,7 +1128,7 @@ Deno.test("aggregation: rent_income summed across two properties", () => {
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
-Deno.test("aggregation: royalties summed across two royalty properties", () => {
+test("aggregation: royalties summed across two royalty properties", () => {
   const result = compute([
     minimalItem({ property_type: 6, rent_income: 0, royalties_income: 3_000 }),
     minimalItem({ property_type: 6, rent_income: 0, royalties_income: 2_000 }),
@@ -1139,7 +1140,7 @@ Deno.test("aggregation: royalties summed across two royalty properties", () => {
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
-Deno.test("aggregation: expenses reduce net across properties in single output", () => {
+test("aggregation: expenses reduce net across properties in single output", () => {
   const result = compute([
     minimalItem({ rent_income: 12_000, expense_repairs: 2_000 }),
     minimalItem({ rent_income: 8_000, expense_insurance: 1_000 }),
@@ -1152,7 +1153,7 @@ Deno.test("aggregation: expenses reduce net across properties in single output",
   assertEquals(input.line5_schedule_e, 17_000);
 });
 
-Deno.test("aggregation: mortgage interest totalled across all properties (reduces net)", () => {
+test("aggregation: mortgage interest totalled across all properties (reduces net)", () => {
   const result = compute([
     minimalItem({ rent_income: 20_000, expense_mortgage_interest: 4_000 }),
     minimalItem({ rent_income: 15_000, expense_mortgage_interest: 3_000 }),
@@ -1165,7 +1166,7 @@ Deno.test("aggregation: mortgage interest totalled across all properties (reduce
   assertEquals(input.line5_schedule_e, 28_000);
 });
 
-Deno.test("aggregation: depreciation totalled across all properties (reduces net)", () => {
+test("aggregation: depreciation totalled across all properties (reduces net)", () => {
   const result = compute([
     minimalItem({ rent_income: 20_000, expense_depreciation: 5_000 }),
     minimalItem({ rent_income: 15_000, expense_depreciation: 3_000 }),
@@ -1180,7 +1181,7 @@ Deno.test("aggregation: depreciation totalled across all properties (reduces net
 
 // ─── 4. Thresholds ───────────────────────────────────────────────────────────
 
-Deno.test("threshold §280A: fewer than 15 rental days without home use remains taxable", () => {
+test("threshold §280A: fewer than 15 rental days without home use remains taxable", () => {
   const result = compute([
     minimalItem({
       fair_rental_days: 14,
@@ -1192,7 +1193,7 @@ Deno.test("threshold §280A: fewer than 15 rental days without home use remains 
   assertEquals(s1?.fields.line5_schedule_e, 5_000);
 });
 
-Deno.test("threshold §280A: fair_rental_days=15 — income NOT excluded (≥ 15 days)", () => {
+test("threshold §280A: fair_rental_days=15 — income NOT excluded (≥ 15 days)", () => {
   const result = compute([
     minimalItem({
       fair_rental_days: 15,
@@ -1207,7 +1208,7 @@ Deno.test("threshold §280A: fair_rental_days=15 — income NOT excluded (≥ 15
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
-Deno.test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — no vacation home (14 ≤ 14)", () => {
+test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — no vacation home (14 ≤ 14)", () => {
   // Does not trigger vacation home rules — full loss allowed
   const result = compute([
     minimalItem({
@@ -1231,7 +1232,7 @@ Deno.test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — 
   );
 });
 
-Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — vacation home caps loss at zero", () => {
+test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — vacation home caps loss at zero", () => {
   // Vacation home: expenses limited to gross rental income — no loss allowed
   const result = compute([
     minimalItem({
@@ -1249,7 +1250,7 @@ Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — 
   assertEquals(input.line5_schedule_e, 0);
 });
 
-Deno.test("threshold §280A: personal use below 14 days is not home use even above 10%", () => {
+test("threshold §280A: personal use below 14 days is not home use even above 10%", () => {
   // FRD=10, PUD=2: the greater threshold is 14 days, not 10% of rental days.
   const result = compute([
     minimalItem({
@@ -1271,7 +1272,7 @@ Deno.test("threshold §280A: personal use below 14 days is not home use even abo
   );
 });
 
-Deno.test("threshold §280A: more than 14 days can still be below 10% of rental days", () => {
+test("threshold §280A: more than 14 days can still be below 10% of rental days", () => {
   const result = compute([minimalItem({
     fair_rental_days: 300,
     personal_use_days: 15,
@@ -1285,7 +1286,7 @@ Deno.test("threshold §280A: more than 14 days can still be below 10% of rental 
   );
 });
 
-Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation home proration", () => {
+test("threshold §280A: personal_use_days=0 — pure rental, no vacation home proration", () => {
   const result = compute([
     minimalItem({
       fair_rental_days: 365,
@@ -1300,7 +1301,7 @@ Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation ho
   assertEquals(input.line5_schedule_e, 9_000);
 });
 
-Deno.test("Schedule E positive QBI aggregation number fails closed without Schedule B member evidence", () => {
+test("Schedule E positive QBI aggregation number fails closed without Schedule B member evidence", () => {
   for (const number of [1, 99]) {
     assertThrows(
       () =>
@@ -1315,7 +1316,7 @@ Deno.test("Schedule E positive QBI aggregation number fails closed without Sched
   }
 });
 
-Deno.test("threshold §179: section_179=$2,500,000 with activity_type=C routes full amount to form4562", () => {
+test("threshold §179: section_179=$2,500,000 with activity_type=C routes full amount to form4562", () => {
   const result = compute([
     minimalItem({
       activity_type: "C",
@@ -1330,7 +1331,7 @@ Deno.test("threshold §179: section_179=$2,500,000 with activity_type=C routes f
   assertEquals(f4562Fields.section_179_deduction, 2_500_000);
 });
 
-Deno.test("threshold ownership_percent=0: all income/expenses allocated as $0 to this taxpayer", () => {
+test("threshold ownership_percent=0: all income/expenses allocated as $0 to this taxpayer", () => {
   const result = compute([
     minimalItem({ rent_income: 10_000, ownership_percent: 0 }),
   ]);
@@ -1343,7 +1344,7 @@ Deno.test("threshold ownership_percent=0: all income/expenses allocated as $0 to
   }
 });
 
-Deno.test("threshold ownership_percent=50: prorates income and expenses by 50%", () => {
+test("threshold ownership_percent=50: prorates income and expenses by 50%", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1360,7 +1361,7 @@ Deno.test("threshold ownership_percent=50: prorates income and expenses by 50%",
 
 // ─── 5. Hard Validation Rules (throws) ──────────────────────────────────────
 
-Deno.test("hard validation: property_type=8 without property_type_other_desc throws", () => {
+test("hard validation: property_type=8 without property_type_other_desc throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ property_type: 8 }),
@@ -1368,7 +1369,7 @@ Deno.test("hard validation: property_type=8 without property_type_other_desc thr
   );
 });
 
-Deno.test("hard validation: property_type=8 with property_type_other_desc does not throw", () => {
+test("hard validation: property_type=8 with property_type_other_desc does not throw", () => {
   const result = compute([
     minimalItem({
       property_type: 8,
@@ -1378,7 +1379,7 @@ Deno.test("hard validation: property_type=8 with property_type_other_desc does n
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("property type 8 retains descriptions longer than the MeF field", () => {
+test("property type 8 retains descriptions longer than the MeF field", () => {
   const result = compute([minimalItem({
     property_type: 8,
     property_type_other_desc: "Detached storage unit",
@@ -1386,7 +1387,7 @@ Deno.test("property type 8 retains descriptions longer than the MeF field", () =
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("hard validation: form_1099_payments_made=true without form_1099_filed throws", () => {
+test("hard validation: form_1099_payments_made=true without form_1099_filed throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ form_1099_payments_made: true }),
@@ -1394,7 +1395,7 @@ Deno.test("hard validation: form_1099_payments_made=true without form_1099_filed
   );
 });
 
-Deno.test("hard validation: fair_rental_days=366 throws (out of 0–365)", () => {
+test("hard validation: fair_rental_days=366 throws (out of 0–365)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ fair_rental_days: 366 }),
@@ -1402,7 +1403,7 @@ Deno.test("hard validation: fair_rental_days=366 throws (out of 0–365)", () =>
   );
 });
 
-Deno.test("hard validation: personal_use_days=366 throws (out of 0–365)", () => {
+test("hard validation: personal_use_days=366 throws (out of 0–365)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ personal_use_days: 366 }),
@@ -1410,7 +1411,7 @@ Deno.test("hard validation: personal_use_days=366 throws (out of 0–365)", () =
   );
 });
 
-Deno.test("hard validation: ownership_percent=101 throws (out of 0–100)", () => {
+test("hard validation: ownership_percent=101 throws (out of 0–100)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ ownership_percent: 101 }),
@@ -1418,7 +1419,7 @@ Deno.test("hard validation: ownership_percent=101 throws (out of 0–100)", () =
   );
 });
 
-Deno.test("hard validation: qbi_aggregation_number=100 throws (out of 1–99)", () => {
+test("hard validation: qbi_aggregation_number=100 throws (out of 1–99)", () => {
   assertThrows(() =>
     compute([
       minimalItem({ qbi_aggregation_number: 100 }),
@@ -1428,7 +1429,7 @@ Deno.test("hard validation: qbi_aggregation_number=100 throws (out of 1–99)", 
 
 // ─── 6. Warning-Only Rules (does_not_throw) ──────────────────────────────────
 
-Deno.test("warning only: form_1099_payments_made=true with form_1099_filed=false does not throw", () => {
+test("warning only: form_1099_payments_made=true with form_1099_filed=false does not throw", () => {
   const result = compute([
     minimalItem({
       form_1099_payments_made: true,
@@ -1438,7 +1439,7 @@ Deno.test("warning only: form_1099_payments_made=true with form_1099_filed=false
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning only: elect_out_biie=true does not throw", () => {
+test("warning only: elect_out_biie=true does not throw", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1448,7 +1449,7 @@ Deno.test("warning only: elect_out_biie=true does not throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning only: placed_in_service=true does not throw", () => {
+test("warning only: placed_in_service=true does not throw", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1458,7 +1459,7 @@ Deno.test("warning only: placed_in_service=true does not throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning only: disposed_of=true does not throw", () => {
+test("warning only: disposed_of=true does not throw", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1468,7 +1469,7 @@ Deno.test("warning only: disposed_of=true does not throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning only: carry_to_8960=true does not throw", () => {
+test("warning only: carry_to_8960=true does not throw", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1478,7 +1479,7 @@ Deno.test("warning only: carry_to_8960=true does not throw", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("Schedule E does not silently accept missing at-risk facts", () => {
+test("Schedule E does not silently accept missing at-risk facts", () => {
   assertThrows(
     () =>
       compute([
@@ -1494,13 +1495,13 @@ Deno.test("Schedule E does not silently accept missing at-risk facts", () => {
 
 // ─── 7. Informational Fields (output count unchanged) ────────────────────────
 
-Deno.test("informational: tsj='T' and tsj='S' produce same output count", () => {
+test("informational: tsj='T' and tsj='S' produce same output count", () => {
   const resultT = compute([minimalItem({ tsj: "T", rent_income: 10_000 })]);
   const resultS = compute([minimalItem({ tsj: "S", rent_income: 10_000 })]);
   assertEquals(resultT.outputs.length, resultS.outputs.length);
 });
 
-Deno.test("informational: street_address does not change output count", () => {
+test("informational: street_address does not change output count", () => {
   const withAddr = compute([
     minimalItem({ rent_income: 10_000, street_address: "123 Main St" }),
   ]);
@@ -1508,7 +1509,7 @@ Deno.test("informational: street_address does not change output count", () => {
   assertEquals(withAddr.outputs.length, withoutAddr.outputs.length);
 });
 
-Deno.test("informational: city/state/zip do not change output count", () => {
+test("informational: city/state/zip do not change output count", () => {
   const withFields = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1521,7 +1522,7 @@ Deno.test("informational: city/state/zip do not change output count", () => {
   assertEquals(withFields.outputs.length, withoutFields.outputs.length);
 });
 
-Deno.test("informational: foreign_country does not change output count", () => {
+test("informational: foreign_country does not change output count", () => {
   const withForeign = compute([
     minimalItem({ rent_income: 10_000, foreign_country: "Paris, France" }),
   ]);
@@ -1529,7 +1530,7 @@ Deno.test("informational: foreign_country does not change output count", () => {
   assertEquals(withForeign.outputs.length, withoutForeign.outputs.length);
 });
 
-Deno.test("informational: tax_court_method=true does not change output count", () => {
+test("informational: tax_court_method=true does not change output count", () => {
   const withTCM = compute([
     minimalItem({
       rent_income: 10_000,
@@ -1548,7 +1549,7 @@ Deno.test("informational: tax_court_method=true does not change output count", (
   assertEquals(withTCM.outputs.length, withoutTCM.outputs.length);
 });
 
-Deno.test("informational: qualified_joint_venture=true does not change output count", () => {
+test("informational: qualified_joint_venture=true does not change output count", () => {
   const withQJV = compute([
     minimalItem({ rent_income: 10_000, qualified_joint_venture: true }),
   ]);
@@ -1558,7 +1559,7 @@ Deno.test("informational: qualified_joint_venture=true does not change output co
 
 // ─── 8. Edge Cases ───────────────────────────────────────────────────────────
 
-Deno.test("edge case vacation home <15 rental days: §280A(g) excludes all income — net=0", () => {
+test("edge case vacation home <15 rental days: §280A(g) excludes all income — net=0", () => {
   // IRC §280A(g): if FRD < 15, do NOT report rental income on Schedule E
   const result = compute([
     minimalItem({
@@ -1581,7 +1582,7 @@ Deno.test("edge case vacation home <15 rental days: §280A(g) excludes all incom
   }
 });
 
-Deno.test("edge case self-rental (property_type=7): net income is nonpassive (no form8582 for income)", () => {
+test("edge case self-rental (property_type=7): net income is nonpassive (no form8582 for income)", () => {
   // Treas. Reg. §1.469-2(f)(6): net rental income recharacterized as nonpassive
   const result = compute([
     minimalItem({
@@ -1598,7 +1599,7 @@ Deno.test("edge case self-rental (property_type=7): net income is nonpassive (no
   assertEquals(s1 !== undefined, true);
 });
 
-Deno.test("edge case: multiple properties (4) in one call — all nets aggregated", () => {
+test("edge case: multiple properties (4) in one call — all nets aggregated", () => {
   const result = compute([
     minimalItem({ rent_income: 1_000 }),
     minimalItem({ rent_income: 2_000 }),
@@ -1612,7 +1613,7 @@ Deno.test("edge case: multiple properties (4) in one call — all nets aggregate
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
-Deno.test("edge case: royalty property (type=6) with no street_address does not throw", () => {
+test("edge case: royalty property (type=6) with no street_address does not throw", () => {
   // Context: for royalty property, leave Lines 1a and 2 blank
   const result = compute([
     minimalItem({
@@ -1626,7 +1627,7 @@ Deno.test("edge case: royalty property (type=6) with no street_address does not 
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("edge case: qualified_joint_venture=true does not throw and processes normally", () => {
+test("edge case: qualified_joint_venture=true does not throw and processes normally", () => {
   const result = compute([
     minimalItem({
       rent_income: 24_000,
@@ -1638,7 +1639,7 @@ Deno.test("edge case: qualified_joint_venture=true does not throw and processes 
   assertEquals(s1 !== undefined, true);
 });
 
-Deno.test("edge case: operating_expenses_carryover re-enters expense pool (reduces net)", () => {
+test("edge case: operating_expenses_carryover re-enters expense pool (reduces net)", () => {
   // Prior-year §280A disallowed expenses flow back into current-year expense pool
   const withCarryover = compute([
     minimalItem({
@@ -1661,7 +1662,7 @@ Deno.test("edge case: operating_expenses_carryover re-enters expense pool (reduc
   assertEquals(netWith < netWithout, true);
 });
 
-Deno.test("edge case: expense_other_lines with 6 rows does not throw", () => {
+test("edge case: expense_other_lines with 6 rows does not throw", () => {
   const result = compute([
     minimalItem({
       rent_income: 15_000,
@@ -1683,7 +1684,7 @@ Deno.test("edge case: expense_other_lines with 6 rows does not throw", () => {
   assertEquals(input.line5_schedule_e, 12_750);
 });
 
-Deno.test("edge case: expense_other_lines amounts reduce net income", () => {
+test("edge case: expense_other_lines amounts reduce net income", () => {
   const result = compute([
     minimalItem({
       rent_income: 12_000,
@@ -1699,7 +1700,7 @@ Deno.test("edge case: expense_other_lines amounts reduce net income", () => {
   assertEquals(input.line5_schedule_e, 10_500);
 });
 
-Deno.test("edge case: all expense lines combined reduce net correctly", () => {
+test("edge case: all expense lines combined reduce net correctly", () => {
   const result = compute([
     minimalItem({
       rent_income: 50_000,
@@ -1729,7 +1730,7 @@ Deno.test("edge case: all expense lines combined reduce net correctly", () => {
 
 // ─── 9. Smoke Test ───────────────────────────────────────────────────────────
 
-Deno.test("smoke: comprehensive test with all major boxes populated", () => {
+test("smoke: comprehensive test with all major boxes populated", () => {
   const result = compute([
     {
       tsj: "T",
@@ -1802,7 +1803,7 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
   assertEquals(schA, undefined);
 });
 
-Deno.test("edge case self-rental (property_type=7): net loss is passive — routes to form8582", () => {
+test("edge case self-rental (property_type=7): net loss is passive — routes to form8582", () => {
   // Treas. Reg. §1.469-2(f)(6): net rental LOSS on self-rental is passive (unlike income)
   const result = compute([
     minimalItem({

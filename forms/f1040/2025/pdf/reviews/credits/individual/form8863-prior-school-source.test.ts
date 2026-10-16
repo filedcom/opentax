@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
@@ -114,7 +117,7 @@ function changeWorkpaper(
   };
 }
 for (const c of cases) {
-  Deno.test(`Form 8863 prior school ${c.name}: owned 2024 box7, only 2025 costs, complete native/PDF`, async () => {
+  test(`Form 8863 prior school ${c.name}: owned 2024 box7, only 2025 costs, complete native/PDF`, async () => {
     const base = fixture(c.parent ? "parent-two" : "student-refundable");
     const students = base.inputs.f8863.map((s, i) => {
       const credit = i > 0 ? "llc" : c.credit;
@@ -208,14 +211,14 @@ for (const c of cases) {
       bundle,
       origins,
     );
-    const retained = Deno.args.includes("--write-review-artifacts");
+    const retained = process.argv.slice(2).includes("--write-review-artifacts");
     const dir = retained
       ? `.state/research/form8863-prior-school-2026-10-09/${c.name}`
-      : await Deno.makeTempDir();
+      : await sys.makeTempDir();
     try {
-      await Deno.mkdir(dir, { recursive: true });
-      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
-      const checked = await new Deno.Command("xmllint", {
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(`${dir}/return.xml`, bundle.xml);
+      const checked = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -226,7 +229,7 @@ for (const c of cases) {
         stderr: "piped",
       }).output();
       assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      await fs.writeFile(`${dir}/return.pdf`, pdf);
       for (
         const [name, value] of [
           ["source", inputs],
@@ -243,13 +246,13 @@ for (const c of cases) {
           }],
         ] as const
       ) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${name}.json`,
           JSON.stringify(value, null, 2),
         );
       }
     } finally {
-      if (!retained) await Deno.remove(dir, { recursive: true });
+      if (!retained) await sys.remove(dir, { recursive: true });
     }
     const item = pending.f8863!.f8863s[0];
     const first = item.filing_details!.institutions[0];

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -81,7 +82,7 @@ const brokerRows = [
   },
 ];
 
-Deno.test("joint return joins two broker copies through gains, withholding, native and PDF", async () => {
+test("joint return joins two broker copies through gains, withholding, native and PDF", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_d.print_line1a_gain, 300);
@@ -116,7 +117,7 @@ Deno.test("joint return joins two broker copies through gains, withholding, nati
   assert(pdf.length > 100_000);
 });
 
-Deno.test("broker sale without payer TIN or issued-copy reference rejects both final exports", async () => {
+test("broker sale without payer TIN or issued-copy reference rejects both final exports", async () => {
   const sale = { ...brokerRows[0], payer_tin: undefined };
   const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
   assertEquals(result.diagnostics, []);
@@ -126,7 +127,7 @@ Deno.test("broker sale without payer TIN or issued-copy reference rejects both f
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("identified broker sale needs a property description in both final exports", async () => {
+test("identified broker sale needs a property description in both final exports", async () => {
   const sale = { ...brokerRows[0], description: "   " };
   const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
   assertEquals(result.diagnostics, []);
@@ -136,7 +137,7 @@ Deno.test("identified broker sale needs a property description in both final exp
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("TY2025 broker sale needs a real 2025 sale date in both final exports", async () => {
+test("TY2025 broker sale needs a real 2025 sale date in both final exports", async () => {
   for (const date_sold of ["2025-02-30", "2024-12-31"]) {
     const sale = { ...brokerRows[0], date_sold };
     const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
@@ -148,7 +149,7 @@ Deno.test("TY2025 broker sale needs a real 2025 sale date in both final exports"
   }
 });
 
-Deno.test("filed broker sale needs a real ISO acquired date in both final exports", async () => {
+test("filed broker sale needs a real ISO acquired date in both final exports", async () => {
   for (const date_acquired of ["2025-02-30", "01012025", "INHERIT"]) {
     const sale = { ...brokerRows[0], date_acquired };
     const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
@@ -160,7 +161,7 @@ Deno.test("filed broker sale needs a real ISO acquired date in both final export
   }
 });
 
-Deno.test("broker VARIOUS acquisition reaches native and PDF final returns", async () => {
+test("broker VARIOUS acquisition reaches native and PDF final returns", async () => {
   const sale = {
     ...brokerRows[0],
     date_acquired: "VARIOUS",
@@ -178,7 +179,7 @@ Deno.test("broker VARIOUS acquisition reaches native and PDF final returns", asy
   assertEquals(pdf.length > 0, true);
 });
 
-Deno.test("inherited broker acquisition reaches long-term native and PDF returns", async () => {
+test("inherited broker acquisition reaches long-term native and PDF returns", async () => {
   const sale = {
     ...brokerRows[1],
     date_acquired: "INHERITED",
@@ -196,7 +197,7 @@ Deno.test("inherited broker acquisition reaches long-term native and PDF returns
   assertEquals(pdf.length > 0, true);
 });
 
-Deno.test("inherited broker acquisition cannot be filed as short term", async () => {
+test("inherited broker acquisition cannot be filed as short term", async () => {
   const sale = { ...brokerRows[0], date_acquired: "INHERITED" };
   const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
   assertEquals(result.diagnostics, []);
@@ -206,7 +207,7 @@ Deno.test("inherited broker acquisition cannot be filed as short term", async ()
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
+test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
   const sale = {
     ...brokerRows[0],
     proceeds: 500,
@@ -245,7 +246,7 @@ Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both ex
   );
 });
 
-Deno.test("final exports reject a changed Form 1040 capital gain after Schedule D", async () => {
+test("final exports reject a changed Form 1040 capital gain after Schedule D", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -265,7 +266,7 @@ Deno.test("final exports reject a changed Form 1040 capital gain after Schedule 
   );
 });
 
-Deno.test("final exports reject a changed Schedule D total even with a matching Form 1040 gain", async () => {
+test("final exports reject a changed Schedule D total even with a matching Form 1040 gain", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -290,7 +291,7 @@ Deno.test("final exports reject a changed Schedule D total even with a matching 
   );
 });
 
-Deno.test("full-return exports reject a changed direct-sale aggregate with matching totals", async () => {
+test("full-return exports reject a changed direct-sale aggregate with matching totals", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -319,7 +320,7 @@ Deno.test("full-return exports reject a changed direct-sale aggregate with match
   );
 });
 
-Deno.test("final exports replay retained broker proceeds and basis into Schedule D", async () => {
+test("final exports replay retained broker proceeds and basis into Schedule D", async () => {
   const result = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
@@ -349,7 +350,7 @@ Deno.test("final exports replay retained broker proceeds and basis into Schedule
   }
 });
 
-Deno.test("broker transaction IDs survive into Schedule D and both final exporters", async () => {
+test("broker transaction IDs survive into Schedule D and both final exporters", async () => {
   const result = f1040_2025.executeReturn({
     general,
     f1099b: [brokerRows[0]],
@@ -374,7 +375,7 @@ Deno.test("broker transaction IDs survive into Schedule D and both final exporte
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("1099-K personal sales keep zero-gain source rows in Schedule D", async () => {
+test("1099-K personal sales keep zero-gain source rows in Schedule D", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-k-personal-gain-loss"
   )!;
@@ -401,7 +402,7 @@ Deno.test("1099-K personal sales keep zero-gain source rows in Schedule D", asyn
   );
 });
 
-Deno.test("1099-K nonbusiness receipts do not require Schedule D", () => {
+test("1099-K nonbusiness receipts do not require Schedule D", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-k-blank-tin-withholding"
   )!;
@@ -410,7 +411,7 @@ Deno.test("1099-K nonbusiness receipts do not require Schedule D", () => {
   assertCapitalSaleSourceRows(buildPending(result.pending));
 });
 
-Deno.test("final exports reject a second zero-gain copy of one broker sale", async () => {
+test("final exports reject a second zero-gain copy of one broker sale", async () => {
   const result = f1040_2025.executeReturn({
     general,
     f1099b: [{
@@ -435,7 +436,7 @@ Deno.test("final exports reject a second zero-gain copy of one broker sale", asy
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("final exports retain the broker collectible character of a sale", async () => {
+test("final exports retain the broker collectible character of a sale", async () => {
   const result = f1040_2025.executeReturn({
     general,
     f1099b: [{
@@ -460,7 +461,7 @@ Deno.test("final exports retain the broker collectible character of a sale", asy
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("prepared Form 8949 cannot discard broker collectible character", async () => {
+test("prepared Form 8949 cannot discard broker collectible character", async () => {
   const result = f1040_2025.executeReturn({
     general,
     f1099b: [{
@@ -488,7 +489,7 @@ Deno.test("prepared Form 8949 cannot discard broker collectible character", asyn
   await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
-Deno.test("prepared Form 8949 cannot discard a QSBS exclusion identity", () => {
+test("prepared Form 8949 cannot discard a QSBS exclusion identity", () => {
   const calculated = {
     part: Form8949Part.F,
     description: "Qualified shares",
@@ -513,7 +514,7 @@ Deno.test("prepared Form 8949 cannot discard a QSBS exclusion identity", () => {
   }
 });
 
-Deno.test("direct sale replay retains the qualified small business stock fields", () => {
+test("direct sale replay retains the qualified small business stock fields", () => {
   const sale = {
     part: Form8949Part.F,
     description: "Qualified shares",
@@ -547,7 +548,7 @@ Deno.test("direct sale replay retains the qualified small business stock fields"
   }
 });
 
-Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async () => {
+test("final exports replay a direct Form 8949 sale into Schedule D", async () => {
   const sale = {
     part: Form8949Part.C,
     description: "Unreported shares",
@@ -580,7 +581,7 @@ Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async 
   );
 });
 
-Deno.test("final exports reject corrected direct Form 8949 rows on one identified statement", async () => {
+test("final exports reject corrected direct Form 8949 rows on one identified statement", async () => {
   const sale = {
     part: Form8949Part.A,
     description: "100 shares",
@@ -609,7 +610,7 @@ Deno.test("final exports reject corrected direct Form 8949 rows on one identifie
   );
 });
 
-Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
+test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
   const direct = {
     part: Form8949Part.A,
     description: "Alpha",
@@ -646,7 +647,7 @@ Deno.test("identified sale cannot be counted through both 1099-B and direct 8949
   );
 });
 
-Deno.test("the same sale label from separately referenced broker statements remains distinct", async () => {
+test("the same sale label from separately referenced broker statements remains distinct", async () => {
   const result = f1040_2025.executeReturn({
     general,
     f1099b: [
@@ -673,7 +674,7 @@ Deno.test("the same sale label from separately referenced broker statements rema
   assert((await buildPdfBytes(pending, filer)).length > 100_000);
 });
 
-Deno.test("broker copies reject no-1099 boxes while direct nonbroker sales keep them", async () => {
+test("broker copies reject no-1099 boxes while direct nonbroker sales keep them", async () => {
   const base = f1040_2025.executeReturn({ general, f1099b: brokerRows });
   assertEquals(base.diagnostics, []);
   for (const part of ["C", "F"] as const) {

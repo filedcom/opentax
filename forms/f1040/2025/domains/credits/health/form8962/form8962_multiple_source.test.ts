@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -12,8 +15,8 @@ import {
   form8962MultipleSourceInputs,
 } from "./form8962_multiple_source.fixture.ts";
 
-Deno.test("multiple dependent W2/INT/DIV sources reconcile all income and household MAGI through native and PDF", async () => {
-  const out = await Deno.makeTempDir({
+test("multiple dependent W2/INT/DIV sources reconcile all income and household MAGI through native and PDF", async () => {
+  const out = await sys.makeTempDir({
     prefix: "opentax-8962-multiple-dependent-source-",
   });
   console.log("Multiple dependent actual archive:", out);
@@ -63,15 +66,15 @@ Deno.test("multiple dependent W2/INT/DIV sources reconcile all income and househ
       "origins.json": origins,
     };
     const dir = out + "/" + id;
-    await Deno.mkdir(dir);
+    await fs.mkdir(dir);
     for (const [name, data] of Object.entries(files)) {
-      await Deno.writeTextFile(dir + "/" + name, JSON.stringify(data, null, 2));
+      await fs.writeFile(dir + "/" + name, JSON.stringify(data, null, 2));
     }
-    await Deno.writeFile(dir + "/return.pdf", pdf);
-    await Deno.writeTextFile(dir + "/return.xml", prepared.bundle.xml);
+    await fs.writeFile(dir + "/return.pdf", pdf);
+    await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd =
       ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
-    const validated = await new Deno.Command("xmllint", {
+    const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",
       stderr: "piped",
@@ -95,7 +98,7 @@ Deno.test("multiple dependent W2/INT/DIV sources reconcile all income and househ
     }
   }
 });
-Deno.test("dependent mixed income rejects duplicated sources, conflicting collections and borrowed filed amounts", () => {
+test("dependent mixed income rejects duplicated sources, conflicting collections and borrowed filed amounts", () => {
   const good = dependentMultipleIncomeSource();
   assertEquals(ptcDependentsModifiedAgi([dependentSchema.parse(good)]), 16_200);
   for (
@@ -119,7 +122,7 @@ Deno.test("dependent mixed income rejects duplicated sources, conflicting collec
     );
   }
 });
-Deno.test("single-dependent filing thresholds retain equality, age65 and blind increments for mixed sources", () => {
+test("single-dependent filing thresholds retain equality, age65 and blind increments for mixed sources", () => {
   const source: any = dependentMultipleIncomeSource();
   source.ptc_tax_return.wage_forms_w2 = [{
     ...source.ptc_tax_return.wage_forms_w2[0],

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import {
   compareAtsDocuments,
@@ -5,7 +6,7 @@ import {
 } from "./ty2025-document-coverage.ts";
 import { TY2025_ATS_CASES } from "./ty2025_cases.ts";
 
-Deno.test("ATS document coverage counts repeated issued copies rather than unique roots", () => {
+test("ATS document coverage counts repeated issued copies rather than unique roots", () => {
   const result = compareAtsDocuments(["1040", "W-2", "W-2"], [
     "IRS1040",
     "IRSW2",
@@ -20,7 +21,7 @@ Deno.test("ATS document coverage counts repeated issued copies rather than uniqu
     true,
   );
 });
-Deno.test("ATS blocked preparation keeps document presence unknown", () => {
+test("ATS blocked preparation keeps document presence unknown", () => {
   const result = compareAtsDocuments(["1040", "W-2"], null);
   assertEquals(result.allRequiredCopiesPresent, false);
   assertEquals(
@@ -35,7 +36,7 @@ Deno.test("ATS blocked preparation keeps document presence unknown", () => {
     DocumentCoverageResult.Missing,
   );
 });
-Deno.test("ATS unknown source forms never disappear from the completeness denominator", () => {
+test("ATS unknown source forms never disappear from the completeness denominator", () => {
   const result = compareAtsDocuments(["1040", "Future form"], [
     "IRS1040",
     "IRSFutureForm",
@@ -46,7 +47,7 @@ Deno.test("ATS unknown source forms never disappear from the completeness denomi
   assertEquals(result.allRequiredCopiesPresent, false);
   assertEquals(compareAtsDocuments([], []).allRequiredCopiesPresent, false);
 });
-Deno.test("ATS extra documents cannot substitute for a missing required form", () => {
+test("ATS extra documents cannot substitute for a missing required form", () => {
   const result = compareAtsDocuments(["1040", "Schedule 3"], [
     "IRS1040",
     "IRSW2",
@@ -56,7 +57,7 @@ Deno.test("ATS extra documents cannot substitute for a missing required form", (
   assertEquals(result.rows[1].missingCopies, 1);
   assertEquals(result.allRequiredCopiesPresent, false);
 });
-Deno.test("ATS parent and numbered Schedule A documents stay distinct", () => {
+test("ATS parent and numbered Schedule A documents stay distinct", () => {
   const result = compareAtsDocuments([
     "8911",
     "8911 Schedule A",
@@ -65,7 +66,7 @@ Deno.test("ATS parent and numbered Schedule A documents stay distinct", () => {
   ], ["IRS8911", "IRS1040ScheduleA", "IRS8936ScheduleA"]);
   assertEquals(result.rows.map((r) => r.missingCopies), [0, 1, 0, 0]);
 });
-Deno.test("All eight retained Form1040 inventories have explicit native mappings", () => {
+test("All eight retained Form1040 inventories have explicit native mappings", () => {
   const cases = TY2025_ATS_CASES.filter((s) => s.returnType === "1040");
   assertEquals(cases.length, 8);
   assertEquals(cases.reduce((sum, s) => sum + s.forms.length, 0), 56);

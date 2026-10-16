@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
@@ -45,7 +46,7 @@ const input = {
   }],
 };
 
-Deno.test("disabled-access node caps mixed current-year sources before Form 8582-CR", () => {
+test("disabled-access node caps mixed current-year sources before Form 8582-CR", () => {
   const result = disabledAccessLimit.compute(
     { taxYear: 2025, formType: "f1040" },
     disabledAccessLimit.inputSchema.parse(input),
@@ -67,7 +68,7 @@ Deno.test("disabled-access node caps mixed current-year sources before Form 8582
   assertEquals(passive?.required_disabled_access_k1_credits, undefined);
 });
 
-Deno.test("disabled-access node retains the passive K-1 gross-source check", () => {
+test("disabled-access node retains the passive K-1 gross-source check", () => {
   assertThrows(() =>
     disabledAccessLimit.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -92,7 +93,7 @@ Deno.test("disabled-access node retains the passive K-1 gross-source check", () 
   );
 });
 
-Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in the return graph", () => {
+test("mixed K-1 disabled-access amounts pass through one upstream cap in the return graph", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -148,7 +149,7 @@ Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in th
   );
 });
 
-Deno.test("passive self-earned Form 8826 and nonpassive K-1 share the upstream cap", () => {
+test("passive self-earned Form 8826 and nonpassive K-1 share the upstream cap", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -202,7 +203,7 @@ Deno.test("passive self-earned Form 8826 and nonpassive K-1 share the upstream c
   );
 });
 
-Deno.test("passive self-earned Form 8826 needs matching Form 8582-CR activity facts", () => {
+test("passive self-earned Form 8826 needs matching Form 8582-CR activity facts", () => {
   assertThrows(() =>
     disabledAccessLimit.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -235,7 +236,7 @@ Deno.test("passive self-earned Form 8826 needs matching Form 8582-CR activity fa
   );
 });
 
-Deno.test("passive Form 8826 pass-through marker shares the cap without duplicating its K-1", () => {
+test("passive Form 8826 pass-through marker shares the cap without duplicating its K-1", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -296,7 +297,7 @@ Deno.test("passive Form 8826 pass-through marker shares the cap without duplicat
   );
 });
 
-Deno.test("passive Form 8826 pass-through amount must match its activity rows", () => {
+test("passive Form 8826 pass-through amount must match its activity rows", () => {
   assertThrows(() =>
     disabledAccessLimit.compute(
       { taxYear: 2025, formType: "f1040" },

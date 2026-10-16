@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { w2g } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -27,43 +28,43 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("w2g.inputSchema: valid minimal item passes", () => {
+test("w2g.inputSchema: valid minimal item passes", () => {
   const parsed = w2g.inputSchema.safeParse({ w2gs: [{}] });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("w2g.inputSchema: negative box1_winnings fails", () => {
+test("w2g.inputSchema: negative box1_winnings fails", () => {
   const parsed = w2g.inputSchema.safeParse({ w2gs: [{ box1_winnings: -1 }] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: negative box4_federal_withheld fails", () => {
+test("w2g.inputSchema: negative box4_federal_withheld fails", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [{ box4_federal_withheld: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: negative box7_identical_wagers fails", () => {
+test("w2g.inputSchema: negative box7_identical_wagers fails", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [{ box7_identical_wagers: -50 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: negative box15_state_withheld fails", () => {
+test("w2g.inputSchema: negative box15_state_withheld fails", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [{ box15_state_withheld: -200 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: empty array fails (min 1)", () => {
+test("w2g.inputSchema: empty array fails (min 1)", () => {
   const parsed = w2g.inputSchema.safeParse({ w2gs: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: duplicate payer-issued copy reference fails", () => {
+test("w2g.inputSchema: duplicate payer-issued copy reference fails", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [
       { source_document_reference: "Casino copy 1", box1_winnings: 1000 },
@@ -73,7 +74,7 @@ Deno.test("w2g.inputSchema: duplicate payer-issued copy reference fails", () => 
   assertEquals(parsed.success, false);
 });
 
-Deno.test("w2g.inputSchema: positive winnings need an identified payer copy", () => {
+test("w2g.inputSchema: positive winnings need an identified payer copy", () => {
   assertEquals(
     w2g.inputSchema.safeParse({ w2gs: [{ box1_winnings: 1000 }] }).success,
     false,
@@ -86,7 +87,7 @@ Deno.test("w2g.inputSchema: positive winnings need an identified payer copy", ()
   assertEquals(w2g.inputSchema.safeParse({ w2gs: [{}] }).success, true);
 });
 
-Deno.test("w2g.inputSchema: an identified payer transaction cannot be entered with a new reference", () => {
+test("w2g.inputSchema: an identified payer transaction cannot be entered with a new reference", () => {
   const first = minimalItem({
     box1_winnings: 1000,
     box5_transaction: "casino-ticket-42",
@@ -104,7 +105,7 @@ Deno.test("w2g.inputSchema: an identified payer transaction cannot be entered wi
   );
 });
 
-Deno.test("w2g.inputSchema: duplicate payer-issued PDF bytes fail even with different filenames", () => {
+test("w2g.inputSchema: duplicate payer-issued PDF bytes fail even with different filenames", () => {
   const first = {
     source_document_reference: "Casino copy 1",
     payer_name: "Test Casino",
@@ -137,7 +138,7 @@ Deno.test("w2g.inputSchema: duplicate payer-issued PDF bytes fail even with diff
   );
 });
 
-Deno.test("w2g.inputSchema: valid full item passes", () => {
+test("w2g.inputSchema: valid full item passes", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [{
       box1_winnings: 1000,
@@ -158,12 +159,12 @@ Deno.test("w2g.inputSchema: valid full item passes", () => {
 // 2. Per-Box Routing
 // =============================================================================
 
-Deno.test("w2g.compute: box7 identical wagers alone do not invent box1 income", () => {
+test("w2g.compute: box7 identical wagers alone do not invent box1 income", () => {
   const result = compute([minimalItem({ box7_identical_wagers: 1500 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: box7 is not added a second time to box1", () => {
+test("w2g.compute: box7 is not added a second time to box1", () => {
   const result = compute([
     minimalItem({ box1_winnings: 2000, box7_identical_wagers: 800 }),
   ]);
@@ -171,7 +172,7 @@ Deno.test("w2g.compute: box7 is not added a second time to box1", () => {
   assertEquals(fields.line8b_gambling_winnings, 2000);
 });
 
-Deno.test("w2g.compute: box1_winnings routes to schedule1 line8b", () => {
+test("w2g.compute: box1_winnings routes to schedule1 line8b", () => {
   const result = compute([minimalItem({ box1_winnings: 2000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
@@ -179,12 +180,12 @@ Deno.test("w2g.compute: box1_winnings routes to schedule1 line8b", () => {
   assertEquals(fields.line8b_gambling_winnings, 2000);
 });
 
-Deno.test("w2g.compute: box1_winnings zero — no schedule1 output", () => {
+test("w2g.compute: box1_winnings zero — no schedule1 output", () => {
   const result = compute([minimalItem({ box1_winnings: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: box4_federal_withheld routes to f1040 line25c", () => {
+test("w2g.compute: box4_federal_withheld routes to f1040 line25c", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 500 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
@@ -192,12 +193,12 @@ Deno.test("w2g.compute: box4_federal_withheld routes to f1040 line25c", () => {
   assertEquals(fields.line25c_other_withheld, 500);
 });
 
-Deno.test("w2g.compute: box4_federal_withheld zero — no f1040 output", () => {
+test("w2g.compute: box4_federal_withheld zero — no f1040 output", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: empty item produces no outputs", () => {
+test("w2g.compute: empty item produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
@@ -206,7 +207,7 @@ Deno.test("w2g.compute: empty item produces no outputs", () => {
 // 3. Aggregation
 // =============================================================================
 
-Deno.test("w2g.compute: multiple items — box1_winnings summed to schedule1", () => {
+test("w2g.compute: multiple items — box1_winnings summed to schedule1", () => {
   const result = compute([
     minimalItem({ box1_winnings: 1000 }),
     minimalItem({ box1_winnings: 2500 }),
@@ -215,7 +216,7 @@ Deno.test("w2g.compute: multiple items — box1_winnings summed to schedule1", (
   assertEquals(fields.line8b_gambling_winnings, 3500);
 });
 
-Deno.test("w2g.compute: multiple items — box4_federal_withheld summed to f1040", () => {
+test("w2g.compute: multiple items — box4_federal_withheld summed to f1040", () => {
   const result = compute([
     minimalItem({ box4_federal_withheld: 300 }),
     minimalItem({ box4_federal_withheld: 200 }),
@@ -224,7 +225,7 @@ Deno.test("w2g.compute: multiple items — box4_federal_withheld summed to f1040
   assertEquals(fields.line25c_other_withheld, 500);
 });
 
-Deno.test("w2g.compute: winnings and withholding both route correctly", () => {
+test("w2g.compute: winnings and withholding both route correctly", () => {
   const result = compute([
     minimalItem({ box1_winnings: 5000, box4_federal_withheld: 1250 }),
   ]);
@@ -242,29 +243,29 @@ Deno.test("w2g.compute: winnings and withholding both route correctly", () => {
 // 4. Informational Fields — must NOT produce tax outputs
 // =============================================================================
 
-Deno.test("w2g.compute: box3_type_of_wager only — no outputs", () => {
+test("w2g.compute: box3_type_of_wager only — no outputs", () => {
   const result = compute([minimalItem({ box3_type_of_wager: "Lottery" })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: box13_state only — no outputs", () => {
+test("w2g.compute: box13_state only — no outputs", () => {
   const result = compute([minimalItem({ box13_state: "CA" })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: box15_state_withheld only — no federal outputs", () => {
+test("w2g.compute: box15_state_withheld only — no federal outputs", () => {
   const result = compute([minimalItem({ box15_state_withheld: 100 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: payer_name and payer_ein only — no outputs", () => {
+test("w2g.compute: payer_name and payer_ein only — no outputs", () => {
   const result = compute([
     minimalItem({ payer_name: "Casino", payer_ein: "12-3456789" }),
   ]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("w2g.compute: box2_date_won only — no outputs", () => {
+test("w2g.compute: box2_date_won only — no outputs", () => {
   const result = compute([minimalItem({ box2_date_won: "2025-05-01" })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -273,18 +274,18 @@ Deno.test("w2g.compute: box2_date_won only — no outputs", () => {
 // 5. Hard Validation Rules (schema-level)
 // =============================================================================
 
-Deno.test("w2g.compute: throws on negative box1_winnings", () => {
+test("w2g.compute: throws on negative box1_winnings", () => {
   assertThrows(() => compute([minimalItem({ box1_winnings: -1 })]), Error);
 });
 
-Deno.test("w2g.compute: throws on negative box4_federal_withheld", () => {
+test("w2g.compute: throws on negative box4_federal_withheld", () => {
   assertThrows(
     () => compute([minimalItem({ box4_federal_withheld: -100 })]),
     Error,
   );
 });
 
-Deno.test("w2g.compute: zero values do not throw", () => {
+test("w2g.compute: zero values do not throw", () => {
   const result = compute([
     minimalItem({ box1_winnings: 0, box4_federal_withheld: 0 }),
   ]);
@@ -295,19 +296,19 @@ Deno.test("w2g.compute: zero values do not throw", () => {
 // 6. Edge Cases
 // =============================================================================
 
-Deno.test("w2g.compute: only withholding no winnings — no schedule1 output, has f1040 output", () => {
+test("w2g.compute: only withholding no winnings — no schedule1 output, has f1040 output", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 250 })]);
   assertEquals(findOutput(result, "schedule1"), undefined);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25c_other_withheld, 250);
 });
 
-Deno.test("w2g.compute: only winnings no withholding — has schedule1, no f1040 output", () => {
+test("w2g.compute: only winnings no withholding — has schedule1, no f1040 output", () => {
   const result = compute([minimalItem({ box1_winnings: 1000 })]);
   assertEquals(findOutput(result, "schedule1") !== undefined, true);
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("w2g.compute: multiple items mixed — winnings summed, withholding summed", () => {
+test("w2g.compute: multiple items mixed — winnings summed, withholding summed", () => {
   const result = compute([
     minimalItem({ box1_winnings: 500 }),
     minimalItem({ box4_federal_withheld: 100 }),
@@ -323,7 +324,7 @@ Deno.test("w2g.compute: multiple items mixed — winnings summed, withholding su
 // 7. Smoke Test
 // =============================================================================
 
-Deno.test("w2g.compute: smoke test — multiple W-2Gs with all major fields", () => {
+test("w2g.compute: smoke test — multiple W-2Gs with all major fields", () => {
   const result = compute([
     minimalItem({
       box1_winnings: 5000,
@@ -350,7 +351,7 @@ Deno.test("w2g.compute: smoke test — multiple W-2Gs with all major fields", ()
   assertEquals(f.line25c_other_withheld, 1750);
 });
 
-Deno.test("w2g.inputSchema: obsolete misnumbered source boxes fail instead of being ignored", () => {
+test("w2g.inputSchema: obsolete misnumbered source boxes fail instead of being ignored", () => {
   assertEquals(
     w2g.inputSchema.safeParse({
       w2gs: [{ box7_winnings_noncash: 100 }],

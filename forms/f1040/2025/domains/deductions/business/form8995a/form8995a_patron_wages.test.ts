@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -46,7 +49,7 @@ function mirrorSources(p: Row) {
 }
 
 for (const c of patronWageCases) {
-  Deno.test(`Patron ${c.name}: owned sources, final tax and complete packet`, async () => {
+  test(`Patron ${c.name}: owned sources, final tax and complete packet`, async () => {
     const input = patronWageFixture(c);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -67,23 +70,17 @@ for (const c of patronWageCases) {
     );
     assertEquals(pending.form8995a_schedule_d, pending.form8995a);
     assert(prepared.bundle.xml.includes("<IRS8995AScheduleD "));
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "PATRON_WAGES_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("PATRON_WAGES_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${c.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.PATRON_WAGES_EVIDENCE;
+    const dir = root ? `${root}/${c.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/source.json`,
         JSON.stringify({ input, filer, pending }, null, 2),
       );
-      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml);
       const origins: Parameters<typeof buildPdfBytes>[4] = [];
-      await Deno.writeFile(
+      await fs.writeFile(
         `${dir}/return.pdf`,
         await buildPdfBytes(
           pending,
@@ -93,11 +90,11 @@ for (const c of patronWageCases) {
           origins,
         ),
       );
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/origins.json`,
         JSON.stringify(origins, null, 2),
       );
-      const xsd = await new Deno.Command("xmllint", {
+      const xsd = await new sys.Command("xmllint", {
         args: [
           "--noout",
           "--schema",
@@ -110,7 +107,7 @@ for (const c of patronWageCases) {
         stdout: "piped",
         stderr: "piped",
       }).output();
-      await Deno.writeFile(`${dir}/xsd.log`, xsd.stderr);
+      await fs.writeFile(`${dir}/xsd.log`, xsd.stderr);
       assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
       const kinds = [
         "owner-tin",
@@ -171,7 +168,7 @@ for (const c of patronWageCases) {
           `${c.name}/${kind}/pdf`,
         );
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${dir}/checks.json`,
         JSON.stringify(
           {
@@ -184,12 +181,12 @@ for (const c of patronWageCases) {
         ),
       );
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }
 
-Deno.test("patron wage collections reject one employee claimed under both spouses", () => {
+test("patron wage collections reject one employee claimed under both spouses", () => {
   for (const c of patronWageCases) {
     const input = patronWageFixture(c);
     input.qbi_patron.spouse_w2_sources = structuredClone(

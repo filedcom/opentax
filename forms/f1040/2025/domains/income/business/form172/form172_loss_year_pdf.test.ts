@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument, PDFTextField } from "pdf-lib";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
@@ -14,8 +17,8 @@ const templatePath = evidence +
   "form172-loss-year-pdf-20261008-v1/canonical.pdf";
 let available = false;
 try {
-  Deno.statSync(templatePath);
-  Deno.statSync(
+  sys.statSync(templatePath);
+  sys.statSync(
     evidence +
       "form172-loss-year-native-20261008-v1/output/ordinary/review.json",
   );
@@ -24,11 +27,11 @@ try {
 const prefix = "topmostSubform[0].Page1[0].";
 async function fixture(joint = false) {
   const v = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       evidence +
         `form172-loss-year-native-20261008-v1/output/${
           joint ? "qsbs-capital" : "ordinary"
-        }/review.json`,
+        }/review.json`, "utf8",
     ),
   );
   v.pdf_identity = {
@@ -123,7 +126,7 @@ async function verify(
   return form;
 }
 
-Deno.test("Form 172 PDF Part I map handles read-order groups and every printed line", () => {
+test("Form 172 PDF Part I map handles read-order groups and every printed line", () => {
   assertEquals([1, 5, 7, 10, 12, 24].map(form172PdfPartIField), [
     prefix + "f1_16[0]",
     prefix + "Line5_ReadOrder[0].f1_20[0]",
@@ -134,16 +137,12 @@ Deno.test("Form 172 PDF Part I map handles read-order groups and every printed l
   ]);
   for (const n of [0, 25, 1.5]) assertThrows(() => form172PdfPartIField(n));
 });
-Deno.test({
-  name:
-    "Form 172 interactive ordinary PDF preserves paper-skipped capital cells and blank Part II",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("Form 172 interactive ordinary PDF preserves paper-skipped capital cells and blank Part II", async () => {
   const f = await bound(await fixture()),
     r = await stageForm172LossYearPdfDocument(
       f.binding,
       f.documents,
-      await Deno.readFile(templatePath),
+      await sys.readBytes(templatePath),
     ),
     form = await verify(r);
   assertEquals(form.getTextField(prefix + "f1_01[0]").getText(), "2025");
@@ -169,16 +168,12 @@ Deno.test({
     )
   ) assertEquals((field as PDFTextField).getText() ?? "", "");
 });
-Deno.test({
-  name:
-    "Form 172 joint foreign-address PDF reconciles every capital line and spouse-owned prior NOL",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("Form 172 joint foreign-address PDF reconciles every capital line and spouse-owned prior NOL", async () => {
   const f = await bound(await fixture(true)),
     r = await stageForm172LossYearPdfDocument(
       f.binding,
       f.documents,
-      await Deno.readFile(templatePath),
+      await sys.readBytes(templatePath),
     ),
     form = await verify(r);
   assertEquals(r.regularNol, 34000);
@@ -206,14 +201,10 @@ Deno.test({
     );
   }
 });
-Deno.test({
-  name:
-    "Form 172 PDF rejects detached template, missing names and inconsistent spouse identity",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("Form 172 PDF rejects detached template, missing names and inconsistent spouse identity", async () => {
   const v = await fixture(),
     f = await bound(v),
-    template = await Deno.readFile(templatePath),
+    template = await sys.readBytes(templatePath),
     changed = template.slice();
   changed[10] ^= 1;
   await assertRejects(() =>
@@ -242,14 +233,10 @@ Deno.test({
     stageForm172LossYearPdfDocument(bad.binding, bad.documents, template)
   );
 });
-Deno.test({
-  name:
-    "Form 172 PDF refuses clipped names and preserves the owned template/source snapshot",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("Form 172 PDF refuses clipped names and preserves the owned template/source snapshot", async () => {
   const v = await fixture();
   v.pdf_identity.taxpayer_last_name = "Long".repeat(1000);
-  const long = await bound(v), template = await Deno.readFile(templatePath);
+  const long = await bound(v), template = await sys.readBytes(templatePath);
   await assertRejects(() =>
     stageForm172LossYearPdfDocument(long.binding, long.documents, template)
   );
@@ -262,10 +249,7 @@ Deno.test({
   await verify(r);
   assertEquals(r.regularNol, 50000);
 });
-Deno.test({
-  name: "Form 172 non-loss emits no PDF and no placeholder attachment",
-  ignore: !available,
-}, async () => {
+test.skipIf(!available)("Form 172 non-loss emits no PDF and no placeholder attachment", async () => {
   const v = await fixture();
   v.noncapital_income[0].amount = 80000;
   v.reviewed_form1040.line11_agi = 20000;
@@ -273,7 +257,7 @@ Deno.test({
     r = await stageForm172LossYearPdfDocument(
       f.binding,
       f.documents,
-      await Deno.readFile(templatePath),
+      await sys.readBytes(templatePath),
     );
   assertEquals(r.pdf_bytes, undefined);
   assertEquals(r.native_xml, undefined);

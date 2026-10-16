@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   disclosureSchema,
@@ -9,7 +10,7 @@ import {
 
 import { disclosureFixture as disclosure } from "./source.fixture.ts";
 
-Deno.test("Form 8886 retains initial participation separately from initial disclosure and total life benefits", () => {
+test("Form 8886 retains initial participation separately from initial disclosure and total life benefits", () => {
   const result = disclosureSchema.parse(disclosure);
   assertEquals(result.transactions[0].initial_participation_year, 2024);
   assertEquals(result.initial_year_filer, true);
@@ -19,7 +20,7 @@ Deno.test("Form 8886 retains initial participation separately from initial discl
   ]);
 });
 
-Deno.test("Form 8886 cannot detach a current-year benefit or fee from its identified source", () => {
+test("Form 8886 cannot detach a current-year benefit or fee from its identified source", () => {
   assertThrows(() =>
     disclosureSchema.parse({
       ...disclosure,
@@ -40,7 +41,7 @@ Deno.test("Form 8886 cannot detach a current-year benefit or fee from its identi
   );
 });
 
-Deno.test("Form 8886 requires category-specific disclosure rather than protective or generic assurances", () => {
+test("Form 8886 requires category-specific disclosure rather than protective or generic assurances", () => {
   for (
     const category of [
       ReportableCategory.Listed,
@@ -65,7 +66,7 @@ Deno.test("Form 8886 requires category-specific disclosure rather than protectiv
   );
 });
 
-Deno.test("Form 8886 grouped and repeated disclosures cannot silently reuse a transaction", () => {
+test("Form 8886 grouped and repeated disclosures cannot silently reuse a transaction", () => {
   assertThrows(() =>
     publicSourceSchema.parse({
       disclosures: [disclosure, {
@@ -85,7 +86,7 @@ Deno.test("Form 8886 grouped and repeated disclosures cannot silently reuse a tr
   );
 });
 
-Deno.test("Form 8886 subsequent disclosure requires the prior disclosure record, not the prior participation year", () => {
+test("Form 8886 subsequent disclosure requires the prior disclosure record, not the prior participation year", () => {
   assertThrows(() =>
     disclosureSchema.parse({ ...disclosure, initial_year_filer: false })
   );
@@ -100,7 +101,7 @@ Deno.test("Form 8886 subsequent disclosure requires the prior disclosure record,
   );
 });
 
-Deno.test("Form 8886 K-1 identity and receipt dates cannot contradict the disclosed parties", () => {
+test("Form 8886 K-1 identity and receipt dates cannot contradict the disclosed parties", () => {
   const entity = {
     party_id: "advisor",
     entity_type: EntityType.Partnership,
@@ -119,7 +120,7 @@ Deno.test("Form 8886 K-1 identity and receipt dates cannot contradict the disclo
   );
 });
 
-Deno.test("Form 8886 shared arrangements retain two separately reviewed participant copies", () => {
+test("Form 8886 shared arrangements retain two separately reviewed participant copies", () => {
   const primary = {
     ...disclosure,
     transactions: [{
@@ -180,7 +181,7 @@ Deno.test("Form 8886 shared arrangements retain two separately reviewed particip
   );
 });
 
-Deno.test("Form 8886 shared review cannot override conflicting issued transaction numbers", () => {
+test("Form 8886 shared review cannot override conflicting issued transaction numbers", () => {
   const primary = {
     ...disclosure,
     transactions: [{

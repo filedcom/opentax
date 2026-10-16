@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../../nodes/inputs/payments/installments/f9465/index.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
@@ -41,7 +42,7 @@ const pending = {
   f1040: { line37_amount_owed: 7_200 },
 };
 
-Deno.test("Form 9465 staged native route joins one attached 1040 balance and minimum payment", () => {
+test("Form 9465 staged native route joins one attached 1040 balance and minimum payment", () => {
   const xml = buildAttachedForm9465(source, { filer, pending });
   assertStringIncludes(
     xml,
@@ -62,7 +63,7 @@ Deno.test("Form 9465 staged native route joins one attached 1040 balance and min
   assertStringIncludes(xml, "<PaymentDueDayNum>15</PaymentDueDayNum>");
 });
 
-Deno.test("Form 9465 rejects legacy partial input, wrong mode, outside bound, and short payment", () => {
+test("Form 9465 rejects legacy partial input, wrong mode, outside bound, and short payment", () => {
   for (
     const raw of [
       { amount_owed: 7_200, monthly_payment: 100, payment_day: 15 },
@@ -79,7 +80,7 @@ Deno.test("Form 9465 rejects legacy partial input, wrong mode, outside bound, an
   }
 });
 
-Deno.test("Form 9465 staged native route rejects changed return, identity, and pending source", () => {
+test("Form 9465 staged native route rejects changed return, identity, and pending source", () => {
   assertThrows(() =>
     buildAttachedForm9465(source, {
       filer,
@@ -109,7 +110,7 @@ Deno.test("Form 9465 staged native route rejects changed return, identity, and p
   );
 });
 
-Deno.test("Form 9465 attached request remains blocked pending authorization and linked review", () => {
+test("Form 9465 attached request remains blocked pending authorization and linked review", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () => assertAttachmentCoverage(pending, kind),

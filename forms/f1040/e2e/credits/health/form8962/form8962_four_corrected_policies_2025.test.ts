@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -73,7 +74,7 @@ function filedReturn() {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-Deno.test("four sequential corrected policies reconcile Form 1095-A months, Form 8962, Form 1040, MeF and PDF", () => {
+test("four sequential corrected policies reconcile Form 1095-A months, Form 8962, Form 1040, MeF and PDF", () => {
   const result = filedReturn();
   assertEquals(result.diagnostics, []);
   const { pending } = result;
@@ -96,7 +97,7 @@ Deno.test("four sequential corrected policies reconcile Form 1095-A months, Form
   assertEquals(form8962Pdf.instances?.(fields, filer, pending)?.length, 1);
 });
 
-Deno.test("four-policy SLCSP route rejects wrong policy month, missing review and final tax drift", () => {
+test("four-policy SLCSP route rejects wrong policy month, missing review and final tax drift", () => {
   const { pending } = filedReturn();
   const filer = extractFilerIdentity(pending.f1040);
   const fields = form8962Pdf.projectFields?.(pending.form8962!, pending) ?? {};

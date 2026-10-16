@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assertEquals,
   assertRejects,
@@ -21,7 +23,7 @@ import {
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 
 for (const c of communityBocCases) {
-  Deno.test(`Form 8835 construction-date energy community complete return: ${c.id}`, async () => {
+  test(`Form 8835 construction-date energy community complete return: ${c.id}`, async () => {
     const { input, attachments, expected } = await communityBocFixture(c);
     const execution = f1040_2025.executeReturn(input);
     assertEquals(execution.diagnostics, []);
@@ -206,16 +208,16 @@ for (const c of communityBocCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_COMMUNITY_BOC_EVIDENCE_DIR");
+      root = process.env.FORM8835_COMMUNITY_BOC_EVIDENCE_DIR;
     } catch { /* optional private export */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -235,7 +237,7 @@ for (const c of communityBocCases) {
   });
 }
 
-Deno.test("Form 8835 community construction: 2023 start, expired annual status, costs and continuity", async () => {
+test("Form 8835 community construction: 2023 start, expired annual status, costs and continuity", async () => {
   const item = async (i: number) =>
     inputSchema.parse({
       f8835s: (await communityBocFixture(communityBocCases[i])).input.f8835,

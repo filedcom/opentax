@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { dirname, fromFileUrl, join } from "@std/path";
 
@@ -24,19 +27,19 @@ for (
     "source-gap",
   ] as const
 ) {
-  Deno.test(`benchmark process fails closed: ${scenario}`, async () => {
+  test(`benchmark process fails closed: ${scenario}`, async () => {
     const form = `__integrity_${crypto.randomUUID()}`;
     const caseRoot = join(root, "cases", form);
     const caseDir = join(caseRoot, "2025", "synthetic");
-    const runtime = await Deno.makeTempDir();
+    const runtime = await sys.makeTempDir();
     try {
-      await Deno.mkdir(caseDir, { recursive: true });
+      await fs.mkdir(caseDir, { recursive: true });
       const forms = scenario === "command-error"
         ? [{ node_type: "__nonexistent_node", data: {} }]
         : scenario === "executor-error"
         ? [validForms[1]]
         : validForms;
-      await Deno.writeTextFile(
+      await fs.writeFile(
         join(caseDir, "input.json"),
         JSON.stringify({ year: 2025, forms }),
       );
@@ -47,7 +50,7 @@ for (
         : scenario === "unsupported"
         ? { line1a_wages: 120000, ordinary_taxable: 123 }
         : { line1a_wages: 120000 };
-      await Deno.writeTextFile(
+      await fs.writeFile(
         join(caseDir, "correct.json"),
         JSON.stringify({
           ...(scenario === "source-gap"
@@ -66,9 +69,9 @@ for (
         }),
       );
       if (scenario === "missing-case") {
-        await Deno.mkdir(join(caseRoot, "2025", "incomplete"));
+        await fs.mkdir(join(caseRoot, "2025", "incomplete"));
       }
-      const { code, stdout, stderr } = await new Deno.Command("deno", {
+      const { code, stdout, stderr } = await new sys.Command("deno", {
         args: [
           "run",
           "--allow-read",
@@ -135,8 +138,8 @@ for (
         }
       }
     } finally {
-      await Deno.remove(caseRoot, { recursive: true });
-      await Deno.remove(runtime, { recursive: true });
+      await sys.remove(caseRoot, { recursive: true });
+      await sys.remove(runtime, { recursive: true });
     }
   });
 }

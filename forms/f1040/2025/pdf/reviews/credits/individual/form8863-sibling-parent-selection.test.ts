@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assertEquals,
   assertRejects,
@@ -18,7 +21,7 @@ const xsd = new URL(
   import.meta.url,
 ).pathname;
 for (const cohabiting of [false, true]) {
-  Deno.test(`actual sibling source allocation with ${cohabiting ? "greater-income cohabiting parent separate from education claimant" : "custodial education parent"} produces complete independent returns`, async () => {
+  test(`actual sibling source allocation with ${cohabiting ? "greater-income cohabiting parent separate from education claimant" : "custodial education parent"} produces complete independent returns`, async () => {
     const f = family(cohabiting);
     const [alex, pat] = f.parents;
     assertEquals([
@@ -119,25 +122,25 @@ for (const cohabiting of [false, true]) {
           `<OtherChildrenInvestmentIncmAmt>${p.pending.form8615.line7_other_children_income}</OtherChildrenInvestmentIncmAmt>`,
         );
       }
-      const temp = await Deno.makeTempFile({ suffix: ".xml" });
+      const temp = await sys.makeTempFile({ suffix: ".xml" });
       try {
-        await Deno.writeTextFile(temp, packet.bundle.xml);
-        const check = await new Deno.Command("xmllint", {
+        await fs.writeFile(temp, packet.bundle.xml);
+        const check = await new sys.Command("xmllint", {
           args: ["--noout", "--schema", xsd, temp],
           stdout: "piped",
           stderr: "piped",
         }).output();
         assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
       } finally {
-        await Deno.remove(temp);
+        await sys.remove(temp);
       }
       const pdf = await packet.renderPdf(), doc = await PDFDocument.load(pdf);
       assertEquals(doc.getPageCount(), p.pages);
       assertEquals(doc.getForm().getFields().length, 0);
-      const file = await Deno.makeTempFile({ suffix: ".pdf" });
+      const file = await sys.makeTempFile({ suffix: ".pdf" });
       try {
-        await Deno.writeFile(file, pdf);
-        const text = await new Deno.Command("pdftotext", {
+        await fs.writeFile(file, pdf);
+        const text = await new sys.Command("pdftotext", {
           args: [file, "-"],
           stdout: "piped",
         }).output();
@@ -152,26 +155,26 @@ for (const cohabiting of [false, true]) {
           );
         }
       } finally {
-        await Deno.remove(file);
+        await sys.remove(file);
       }
-      if (Deno.args.includes("--write-review-artifacts")) {
+      if (process.argv.slice(2).includes("--write-review-artifacts")) {
         const dir = "/tmp/opentax-f8863-sibling-parent-selection-evidence",
           stem = `${cohabiting ? "cohabiting" : "custodial"}-${p.stem}`;
-        await Deno.mkdir(dir, { recursive: true });
-        await Deno.writeTextFile(
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(
           `${dir}/${stem}-source-input.json`,
           JSON.stringify({ inputs: p.inputs, filer: p.filer }, null, 2),
         );
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${dir}/${stem}-full-return.xml`,
           packet.bundle.xml,
         );
-        await Deno.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
+        await fs.writeFile(`${dir}/${stem}-filled-return.pdf`, pdf);
       }
     }
   });
 }
-Deno.test("sibling exports reject owned source crossjoins, detached line5, reciprocal allocation and child credit leaks", async () => {
+test("sibling exports reject owned source crossjoins, detached line5, reciprocal allocation and child credit leaks", async () => {
   const f = family(true), p = f.children[0];
   const changes: Array<(x: any) => void> = [
     (x) =>
@@ -234,7 +237,7 @@ Deno.test("sibling exports reject owned source crossjoins, detached line5, recip
     await assertRejects(() => f1040_2025.prepareReturn(x, p.childFiler));
   }
 });
-Deno.test("actual cohabiting parent source selection rejects lower parent, candidate conflicts and duplicate dependency", async () => {
+test("actual cohabiting parent source selection rejects lower parent, candidate conflicts and duplicate dependency", async () => {
   const f = family(true), p = f.children[0];
   const changes: Array<(x: any) => void> = [
     (x) =>
@@ -285,7 +288,7 @@ Deno.test("actual cohabiting parent source selection rejects lower parent, candi
     assertEquals(f1040_2025.executeReturn(input).diagnostics.length > 0, true);
   }
 });
-Deno.test("both exported parents require matching complete family and source-owned child returns", async () => {
+test("both exported parents require matching complete family and source-owned child returns", async () => {
   const f = family(true);
   const changes: Array<(x: any) => void> = [
     (x) => delete x.general.dependent_kiddie_tax_family_review,
@@ -327,7 +330,7 @@ Deno.test("both exported parents require matching complete family and source-own
   );
   assertThrows(() => form8863Pdf.instances!(changed, a.filer, a.pending));
 });
-Deno.test("standalone parent and child descriptor fields cannot override unchanged settled family sources", () => {
+test("standalone parent and child descriptor fields cannot override unchanged settled family sources", () => {
   const f = family(true), a = f.parents[0], c = f.children[0];
   for (const p of [a, { pending: c.childPending, filer: c.childFiler }]) {
     const fields = { ...p.pending.f1040, line16_income_tax: 628 };
@@ -344,7 +347,7 @@ Deno.test("standalone parent and child descriptor fields cannot override unchang
     form8615Pdf.instances!(fields, c.childFiler, c.childPending)
   );
 });
-Deno.test("synchronized sibling source identities still reject reuse across distinct owned children", async () => {
+test("synchronized sibling source identities still reject reuse across distinct owned children", async () => {
   const f = family(true), p = f.children[0], own = p.review;
   const ids = [
     [

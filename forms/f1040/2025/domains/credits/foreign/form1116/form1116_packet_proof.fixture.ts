@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -68,12 +69,12 @@ export async function verifyPassive1116Packet(
     2,
   );
 
-  const root = Deno.env.get("OPENTAX_FORM1116_PROOF_DIR");
+  const root = process.env.OPENTAX_FORM1116_PROOF_DIR;
   if (root) {
-    await Deno.mkdir(root, { recursive: true });
-    await Deno.writeFile(`${root}/${id}.pdf`, bytes);
-    await Deno.writeTextFile(`${root}/${id}.xml`, xml);
-    await Deno.writeTextFile(
+    await fs.mkdir(root, { recursive: true });
+    await fs.writeFile(`${root}/${id}.pdf`, bytes);
+    await fs.writeFile(`${root}/${id}.xml`, xml);
+    await fs.writeFile(
       `${root}/${id}.json`,
       JSON.stringify({ expected, pending, filer, origins }, null, 2),
     );

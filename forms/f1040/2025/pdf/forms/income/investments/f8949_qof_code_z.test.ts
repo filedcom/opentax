@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8949Pdf } from "./f8949.ts";
 
@@ -15,7 +16,7 @@ const codeZ = {
   is_long_term: false,
 };
 
-Deno.test("Form 8949 PDF code Z leaves sale date, proceeds and basis blank", () => {
+test("Form 8949 PDF code Z leaves sale date, proceeds and basis blank", () => {
   const page = form8949Pdf.instances?.({ transaction: codeZ })?.[0];
   assertEquals(page?.pdf_part, "C");
   assertEquals(page?.pdf_page1_row1_description, "123456789");
@@ -29,7 +30,7 @@ Deno.test("Form 8949 PDF code Z leaves sale date, proceeds and basis blank", () 
   assertEquals(page?.pdf_page1_total_cost_basis, undefined);
 });
 
-Deno.test("Form 8949 PDF code Z rejects an unsupported reporting box", () => {
+test("Form 8949 PDF code Z rejects an unsupported reporting box", () => {
   assertThrows(
     () => form8949Pdf.instances?.({ transaction: { ...codeZ, part: "A" } }),
     Error,

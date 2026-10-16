@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
@@ -23,7 +25,7 @@ import { reconcileForm8835PwaPayroll } from "../../../../../nodes/inputs/credits
 import { form8835PwaFields } from "../../../../mef/forms/credits/business/f8835_pwa_statement.ts";
 
 for (const c of pwaCases) {
-  Deno.test(`Form 8835 direct PWA complete return: ${c.id}`, async () => {
+  test(`Form 8835 direct PWA complete return: ${c.id}`, async () => {
     const { input, attachments, expected } = await pwaFixture(c);
     const parsed = inputSchema.parse({ f8835s: input.f8835 });
     const payroll = reconcileForm8835PwaPayroll(parsed.f8835s[0].pwa_source!);
@@ -217,16 +219,16 @@ for (const c of pwaCases) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8835_PWA_EVIDENCE_DIR");
+      root = process.env.FORM8835_PWA_EVIDENCE_DIR;
     } catch { /* optional private export */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
       for (const a of attachments) {
-        await Deno.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
+        await fs.writeFile(`${root}/${c.id}-${a.fileName}`, a.bytes);
       }
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -248,7 +250,7 @@ for (const c of pwaCases) {
   });
 }
 
-Deno.test("Form 8835 PWA excludes overtime premiums and separately checks employer participation", async () => {
+test("Form 8835 PWA excludes overtime premiums and separately checks employer participation", async () => {
   const { input } = await pwaFixture(pwaCases[0]);
   const parsed = inputSchema.parse({ f8835s: input.f8835 });
   const s = parsed.f8835s[0].pwa_source!;

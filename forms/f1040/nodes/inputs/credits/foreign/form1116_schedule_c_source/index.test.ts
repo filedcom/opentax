@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   ForeignTaxCreditMethod,
@@ -8,13 +9,13 @@ import { scheduleCLedger } from "./test-fixture.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 
-Deno.test("Schedule C source routes a reviewed payor and filed-return ledger", () => {
+test("Schedule C source routes a reviewed payor and filed-return ledger", () => {
   const ledger = scheduleCLedger();
   const result = form1116_schedule_c_source.compute(ctx, { ledgers: [ledger] });
   assertEquals(result.outputs[0].fields.foreign_tax_redeterminations, [ledger]);
 });
 
-Deno.test("Schedule C source rejects a cash-method additional payment", () => {
+test("Schedule C source rejects a cash-method additional payment", () => {
   const ledger = scheduleCLedger(
     IncomeCategory.General,
     "additional_accrued_tax",
@@ -32,7 +33,7 @@ Deno.test("Schedule C source rejects a cash-method additional payment", () => {
   );
 });
 
-Deno.test("Schedule C source validates the two-year date and payor conversion", () => {
+test("Schedule C source validates the two-year date and payor conversion", () => {
   const ledger = scheduleCLedger(
     IncomeCategory.Passive,
     "accrued_tax_unpaid_after_24_months",
@@ -75,7 +76,7 @@ Deno.test("Schedule C source validates the two-year date and payor conversion", 
   });
 });
 
-Deno.test("Schedule C source rejects a paid-method 24-month deemed refund", () => {
+test("Schedule C source rejects a paid-method 24-month deemed refund", () => {
   const ledger = scheduleCLedger(
     IncomeCategory.Passive,
     "accrued_tax_unpaid_after_24_months",
@@ -93,7 +94,7 @@ Deno.test("Schedule C source rejects a paid-method 24-month deemed refund", () =
   );
 });
 
-Deno.test("Schedule C source requires filed/revised tax and affected-year reconciliation", () => {
+test("Schedule C source requires filed/revised tax and affected-year reconciliation", () => {
   const ledger = scheduleCLedger();
   assertThrows(
     () =>

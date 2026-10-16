@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm8962JointIncomeReview } from "./form8962-joint-income.ts";
 function source() {
@@ -71,7 +72,7 @@ function source() {
     f1040: { line1z_total_wages: 50000, line11_agi: 50000 },
   };
 }
-Deno.test("Joint inventory reconciles two actual owners and rejects substituted or omitted sources", () => {
+test("Joint inventory reconciles two actual owners and rejects substituted or omitted sources", () => {
   const valid = source();
   assertForm8962JointIncomeReview(valid.general, valid);
   const mutations: Array<(p: any) => void> = [
@@ -123,7 +124,7 @@ Deno.test("Joint inventory reconciles two actual owners and rejects substituted 
     );
   }
 });
-Deno.test("Joint inventory totals spouse interest separately and binds the complete collection", () => {
+test("Joint inventory totals spouse interest separately and binds the complete collection", () => {
   const p: any = source(),
     r = {
       recipient_tin: "234567890",

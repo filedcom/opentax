@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
@@ -10,7 +11,7 @@ function finalNumber(value: unknown): number | undefined {
   return typeof resolved === "number" ? resolved : undefined;
 }
 
-Deno.test("Schedule 1-A: DOB-derived senior deduction matches issue #36 reproduction", () => {
+test("Schedule 1-A: DOB-derived senior deduction matches issue #36 reproduction", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: "single",
@@ -39,7 +40,7 @@ Deno.test("Schedule 1-A: DOB-derived senior deduction matches issue #36 reproduc
   );
 });
 
-Deno.test("Schedule 1-A: overtime and vehicle interest flow from public input to taxable income", () => {
+test("Schedule 1-A: overtime and vehicle interest flow from public input to taxable income", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: "single",

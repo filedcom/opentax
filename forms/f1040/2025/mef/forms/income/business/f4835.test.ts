@@ -1,10 +1,11 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { testFiler } from "../../../execution/test-filer.ts";
 import { form4835 } from "./f4835.ts";
 import { scheduleE } from "../rental-passthrough/schedule_e.ts";
 
-Deno.test("Form 4835 emits each paper line in TY2025 XSD order", () => {
+test("Form 4835 emits each paper line in TY2025 XSD order", () => {
   const [xml] = form4835.build({
     f4835s: [{
       activity_name: "Farm",
@@ -48,7 +49,7 @@ Deno.test("Form 4835 emits each paper line in TY2025 XSD order", () => {
   );
 });
 
-Deno.test("Form 4835 CCC election links its itemized loan statement", () => {
+test("Form 4835 CCC election links its itemized loan statement", () => {
   const xml = buildMefXml({
     f4835: {
       f4835s: [{
@@ -81,7 +82,7 @@ Deno.test("Form 4835 CCC election links its itemized loan statement", () => {
   );
 });
 
-Deno.test("Form 4835 links separate CCC statements across farm activities", () => {
+test("Form 4835 links separate CCC statements across farm activities", () => {
   const xml = buildMefXml({
     f4835: {
       f4835s: [
@@ -118,7 +119,7 @@ Deno.test("Form 4835 links separate CCC statements across farm activities", () =
   assertStringIncludes(xml, "<LoanDesc>Wheat</LoanDesc><LoanAmt>500</LoanAmt>");
 });
 
-Deno.test("Form 4835 links each farm's crop deferral to its own statement", () => {
+test("Form 4835 links each farm's crop deferral to its own statement", () => {
   const deferral = (crop: string, amount: number) => ({
     activity_name: crop,
     livestock_crop_income: 0,
@@ -168,7 +169,7 @@ Deno.test("Form 4835 links each farm's crop deferral to its own statement", () =
   );
 });
 
-Deno.test("Form 4835 loss cannot be filed without linked limitation forms", () => {
+test("Form 4835 loss cannot be filed without linked limitation forms", () => {
   assertThrows(() =>
     form4835.build({
       f4835s: [{
@@ -181,7 +182,7 @@ Deno.test("Form 4835 loss cannot be filed without linked limitation forms", () =
   );
 });
 
-Deno.test("Form 4835 rejects unsupported elections and unchecked losses", () => {
+test("Form 4835 rejects unsupported elections and unchecked losses", () => {
   assertThrows(() =>
     form4835.build({
       f4835s: [{
@@ -202,7 +203,7 @@ Deno.test("Form 4835 rejects unsupported elections and unchecked losses", () => 
   );
 });
 
-Deno.test("Schedule E includes farm rental lines 40, 41, and 42", () => {
+test("Schedule E includes farm rental lines 40, 41, and 42", () => {
   assertEquals(
     scheduleE.build({ farm_rental_net: 600, farm_rental_gross: 1000 }, {
       pending: {

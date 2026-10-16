@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8822 } from "./index.ts";
 
@@ -9,7 +10,7 @@ function compute(input: Record<string, unknown>) {
 // 1. Schema Validation — one required-field failure is sufficient
 // =============================================================================
 
-Deno.test("f8822.inputSchema: valid domestic address passes", () => {
+test("f8822.inputSchema: valid domestic address passes", () => {
   const parsed = f8822.inputSchema.safeParse({
     taxpayer_name: "John Doe",
     old_address: "123 Old St, Springfield, IL 62701",
@@ -21,7 +22,7 @@ Deno.test("f8822.inputSchema: valid domestic address passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8822.inputSchema: missing required field fails", () => {
+test("f8822.inputSchema: missing required field fails", () => {
   const parsed = f8822.inputSchema.safeParse({
     taxpayer_name: "John Doe",
     old_address: "123 Old St",
@@ -31,7 +32,7 @@ Deno.test("f8822.inputSchema: missing required field fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8822.inputSchema: spouse fields are optional", () => {
+test("f8822.inputSchema: spouse fields are optional", () => {
   const withSpouse = f8822.inputSchema.safeParse({
     taxpayer_name: "John Doe",
     old_address: "123 Old St",
@@ -51,7 +52,7 @@ Deno.test("f8822.inputSchema: spouse fields are optional", () => {
   assertEquals(withoutSpouse.success, true);
 });
 
-Deno.test("f8822.inputSchema: foreign address (no state/zip, with country) passes", () => {
+test("f8822.inputSchema: foreign address (no state/zip, with country) passes", () => {
   const parsed = f8822.inputSchema.safeParse({
     taxpayer_name: "John Doe",
     old_address: "123 Old St, Chicago, IL 60601",
@@ -66,7 +67,7 @@ Deno.test("f8822.inputSchema: foreign address (no state/zip, with country) passe
 // 2. Compute — Administrative form, always returns empty outputs
 // =============================================================================
 
-Deno.test("f8822.compute: domestic address change returns no tax outputs", () => {
+test("f8822.compute: domestic address change returns no tax outputs", () => {
   const result = compute({
     taxpayer_name: "John Doe",
     old_address: "123 Old St",
@@ -78,7 +79,7 @@ Deno.test("f8822.compute: domestic address change returns no tax outputs", () =>
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8822.compute: joint filers with spouse returns no tax outputs", () => {
+test("f8822.compute: joint filers with spouse returns no tax outputs", () => {
   const result = compute({
     taxpayer_name: "John Doe",
     old_address: "123 Old St",
@@ -90,7 +91,7 @@ Deno.test("f8822.compute: joint filers with spouse returns no tax outputs", () =
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8822.compute: foreign address change returns no tax outputs", () => {
+test("f8822.compute: foreign address change returns no tax outputs", () => {
   const result = compute({
     taxpayer_name: "John Doe",
     old_address: "123 Old St, Chicago IL",
@@ -105,7 +106,7 @@ Deno.test("f8822.compute: foreign address change returns no tax outputs", () => 
 // 3. Hard Validation — invalid input throws
 // =============================================================================
 
-Deno.test("f8822.compute: throws on missing required field", () => {
+test("f8822.compute: throws on missing required field", () => {
   assertThrows(() =>
     compute({
       taxpayer_name: "John Doe",

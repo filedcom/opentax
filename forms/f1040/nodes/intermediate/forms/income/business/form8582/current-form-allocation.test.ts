@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { allocateCurrentPassiveForms } from "./current-form-allocation.ts";
 
@@ -23,7 +24,7 @@ const mixed = [{
   }],
 }];
 
-Deno.test("current sale and rental losses retain their reporting forms after the passive limit", () => {
+test("current sale and rental losses retain their reporting forms after the passive limit", () => {
   const r = allocateCurrentPassiveForms(mixed, 2000);
   assertEquals(r.allowed_loss, 2000);
   assertEquals(r.suspended_loss, 2000);
@@ -40,7 +41,7 @@ Deno.test("current sale and rental losses retain their reporting forms after the
   );
 });
 
-Deno.test("same-form income offsets precede Part IX allocation and keep loss character", () => {
+test("same-form income offsets precede Part IX allocation and keep loss character", () => {
   const sources = structuredClone(mixed);
   sources[0].forms[0].current_income = 800;
   sources[1].forms[0].current_income = 0;
@@ -54,7 +55,7 @@ Deno.test("same-form income offsets precede Part IX allocation and keep loss cha
   assertEquals(r.suspended_loss, 3200);
 });
 
-Deno.test("net-positive and special-allowance activities preserve gross loss origins", () => {
+test("net-positive and special-allowance activities preserve gross loss origins", () => {
   const sources = structuredClone(mixed);
   sources[0].forms[0].current_income = 5000;
   const fullyAllowed = allocateCurrentPassiveForms(sources, 4000);
@@ -72,7 +73,7 @@ Deno.test("net-positive and special-allowance activities preserve gross loss ori
   );
 });
 
-Deno.test("multiple loss activities allocate exact whole dollars without mixing Forms 4797 I and II", () => {
+test("multiple loss activities allocate exact whole dollars without mixing Forms 4797 I and II", () => {
   const r = allocateCurrentPassiveForms([
     {
       activity_id: "first",
@@ -113,7 +114,7 @@ Deno.test("multiple loss activities allocate exact whole dollars without mixing 
   assertEquals(r.by_activity[1].forms[0].allowed_loss, 1);
 });
 
-Deno.test("current loss allocation rejects duplicate origins, invented allowances, unsafe totals and prior balances", () => {
+test("current loss allocation rejects duplicate origins, invented allowances, unsafe totals and prior balances", () => {
   assertThrows(() => allocateCurrentPassiveForms([...mixed, mixed[0]], 2000));
   const duplicate = structuredClone(mixed);
   duplicate[0].forms.push(duplicate[0].forms[0]);

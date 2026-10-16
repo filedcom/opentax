@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8824 } from "./index.ts";
 
@@ -11,12 +12,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Zero / no-op cases ───────────────────────────────────────────────────────
 
-Deno.test("no exchange data — no outputs", () => {
+test("no exchange data — no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("related-party and recapture exchanges do not silently use simple-exchange math", () => {
+test("related-party and recapture exchanges do not silently use simple-exchange math", () => {
   assertThrows(() => compute({
     relinquished_basis: 100_000,
     received_fmv: 200_000,
@@ -31,7 +32,7 @@ Deno.test("related-party and recapture exchanges do not silently use simple-exch
 
 // ─── Pure exchange — no boot, gain deferred ───────────────────────────────────
 
-Deno.test("pure exchange: no boot → realized=$300k, recognized=$0, no output", () => {
+test("pure exchange: no boot → realized=$300k, recognized=$0, no output", () => {
   // Relinquished basis $200k, received FMV $500k, no cash/other boot
   // Amount realized = $500k; gain realized = $300k; boot = $0 → recognized = $0
   const result = compute({
@@ -48,7 +49,7 @@ Deno.test("pure exchange: no boot → realized=$300k, recognized=$0, no output",
 
 // ─── Boot triggers recognized gain ───────────────────────────────────────────
 
-Deno.test("cash boot: old_basis=$50k, FMV_new=$80k, boot=$5k → realized=$30k, recognized=$5k, deferred=$25k", () => {
+test("cash boot: old_basis=$50k, FMV_new=$80k, boot=$5k → realized=$30k, recognized=$5k, deferred=$25k", () => {
   // Amount realized = received_fmv $80k + cash $5k = $85k
   // Gain realized = $85k - $50k = $35k
   // Boot = $5k; recognized = min($35k, $5k) = $5k; deferred = $35k - $5k = $30k
@@ -63,7 +64,7 @@ Deno.test("cash boot: old_basis=$50k, FMV_new=$80k, boot=$5k → realized=$30k, 
   assertEquals(sd?.fields.line_11_form2439, 5_000);
 });
 
-Deno.test("cash boot equals realized gain — full gain recognized", () => {
+test("cash boot equals realized gain — full gain recognized", () => {
   // Relinquished $500k basis $200k, received $450k + $50k cash
   // Amount realized = $500k; gain realized = $300k
   // Boot = $50k; recognized = min($300k, $50k) = $50k
@@ -78,7 +79,7 @@ Deno.test("cash boot equals realized gain — full gain recognized", () => {
   assertEquals(sd?.fields.line_11_form2439, 50_000);
 });
 
-Deno.test("boot exceeds realized gain — recognized capped at realized gain", () => {
+test("boot exceeds realized gain — recognized capped at realized gain", () => {
   // Relinquished $500k basis $490k, received $450k + $50k cash
   // Amount realized = $500k; gain realized = $10k
   // Boot = $50k; recognized = min($10k, $50k) = $10k
@@ -95,7 +96,7 @@ Deno.test("boot exceeds realized gain — recognized capped at realized gain", (
 
 // ─── Loss exchange — §1031 losses not recognized ──────────────────────────────
 
-Deno.test("realized loss — not recognized, no output", () => {
+test("realized loss — not recognized, no output", () => {
   // Relinquished $400k basis $500k → realized loss $100k; §1031 defers losses
   const result = compute({
     relinquished_fmv: 400_000,
@@ -107,7 +108,7 @@ Deno.test("realized loss — not recognized, no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("realized loss with boot — still no recognized gain", () => {
+test("realized loss with boot — still no recognized gain", () => {
   // Realized loss $100k; even with $50k boot, gain realized < 0 → recognized = 0
   const result = compute({
     relinquished_fmv: 400_000,
@@ -121,7 +122,7 @@ Deno.test("realized loss with boot — still no recognized gain", () => {
 
 // ─── Liability boot ───────────────────────────────────────────────────────────
 
-Deno.test("buyer assumes mortgage: liability boot triggers recognition", () => {
+test("buyer assumes mortgage: liability boot triggers recognition", () => {
   // Received $300k property + buyer assumes $100k mortgage
   // Amount realized = $300k + $100k = $400k; basis $200k → realized = $200k
   // Boot = net_liabilities = max(0, $100k - $0) = $100k
@@ -138,7 +139,7 @@ Deno.test("buyer assumes mortgage: liability boot triggers recognition", () => {
   assertEquals(sd?.fields.line_11_form2439, 100_000);
 });
 
-Deno.test("taxpayer assumes larger liability — reduces amount realized, cash boot still recognized", () => {
+test("taxpayer assumes larger liability — reduces amount realized, cash boot still recognized", () => {
   // Received $500k + $50k cash, but taxpayer assumes $100k liability
   // Amount realized = $500k + $50k - $100k = $450k; basis $300k → realized = $150k
   // Net liability boot = max(0, $0 - $100k) = $0; cash boot = $50k
@@ -157,7 +158,7 @@ Deno.test("taxpayer assumes larger liability — reduces amount realized, cash b
 
 // ─── Other property boot ──────────────────────────────────────────────────────
 
-Deno.test("other property received as boot — FMV triggers recognition", () => {
+test("other property received as boot — FMV triggers recognition", () => {
   // Received $450k + $30k other property
   // Amount realized = $480k; basis $200k → realized = $280k
   // Boot = $30k; recognized = min($280k, $30k) = $30k
@@ -173,7 +174,7 @@ Deno.test("other property received as boot — FMV triggers recognition", () => 
 
 // ─── Routing: §1231 vs capital ────────────────────────────────────────────────
 
-Deno.test("section_1231 gain_type routes recognized gain to form4797", () => {
+test("section_1231 gain_type routes recognized gain to form4797", () => {
   const result = compute({
     relinquished_basis: 200_000,
     received_fmv: 400_000,
@@ -187,7 +188,7 @@ Deno.test("section_1231 gain_type routes recognized gain to form4797", () => {
   assertEquals(sd, undefined);
 });
 
-Deno.test("capital gain_type routes recognized gain to schedule_d line_11_form2439", () => {
+test("capital gain_type routes recognized gain to schedule_d line_11_form2439", () => {
   const result = compute({
     relinquished_basis: 200_000,
     received_fmv: 400_000,
@@ -201,7 +202,7 @@ Deno.test("capital gain_type routes recognized gain to schedule_d line_11_form24
   assertEquals(f4797, undefined);
 });
 
-Deno.test("recognized gain requires an explicit capital or section 1231 classification", () => {
+test("recognized gain requires an explicit capital or section 1231 classification", () => {
   assertThrows(() => compute({
     relinquished_basis: 200_000,
     received_fmv: 400_000,

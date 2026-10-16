@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8997Statement,
@@ -46,11 +47,11 @@ function continuingHolding(): Form8997Input {
   };
 }
 
-Deno.test("Form 8997: loose legacy Part I-IV arrays are not the public source contract", () => {
+test("Form 8997: loose legacy Part I-IV arrays are not the public source contract", () => {
   assertEquals(inputSchema.safeParse({ part_i: [] }).success, false);
 });
 
-Deno.test("Form 8997: sourced continuing holding reconciles Parts I and IV", () => {
+test("Form 8997: sourced continuing holding reconciles Parts I and IV", () => {
   const input = continuingHolding();
   const statement = calculateForm8997Statement(input);
   assertEquals(statement.part_i.totals.long_term, 50_000);
@@ -61,13 +62,13 @@ Deno.test("Form 8997: sourced continuing holding reconciles Parts I and IV", () 
   assertEquals(f8997.outputNodes.nodeTypes, []);
 });
 
-Deno.test("Form 8997: opening lot cannot differ from filed prior-year closing lot", () => {
+test("Form 8997: opening lot cannot differ from filed prior-year closing lot", () => {
   const input = continuingHolding();
   input.investment_lots[0].opening_deferred_gain.long_term = 49_000;
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: first-year code-Z deferral projects Part II but cannot calculate return yet", () => {
+test("Form 8997: first-year code-Z deferral projects Part II but cannot calculate return yet", () => {
   const input: Form8997Input = {
     ...continuingHolding(),
     prior_year: { kind: "first_year" },
@@ -99,7 +100,7 @@ Deno.test("Form 8997: first-year code-Z deferral projects Part II but cannot cal
   );
 });
 
-Deno.test("Form 8997: positive short-term deferral needs its own code-Z row", () => {
+test("Form 8997: positive short-term deferral needs its own code-Z row", () => {
   const input: Form8997Input = {
     ...continuingHolding(),
     prior_year: { kind: "first_year" },
@@ -120,7 +121,7 @@ Deno.test("Form 8997: positive short-term deferral needs its own code-Z row", ()
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: zero-character deferral cannot claim a code-Z row", () => {
+test("Form 8997: zero-character deferral cannot claim a code-Z row", () => {
   const input: Form8997Input = {
     ...continuingHolding(),
     prior_year: { kind: "first_year" },
@@ -144,7 +145,7 @@ Deno.test("Form 8997: zero-character deferral cannot claim a code-Z row", () => 
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: inclusion retains original long-term character and code-Y row", () => {
+test("Form 8997: inclusion retains original long-term character and code-Y row", () => {
   const input = continuingHolding();
   input.investment_lots[0].events = [{
     event_id: "sale-2025-1",
@@ -172,7 +173,7 @@ Deno.test("Form 8997: inclusion retains original long-term character and code-Y 
   assertThrows(() => f8997.compute(context, input), Error, "needs finalized Form 8949");
 });
 
-Deno.test("Form 8997: disposition checkbox cannot disagree with broker evidence", () => {
+test("Form 8997: disposition checkbox cannot disagree with broker evidence", () => {
   const input = continuingHolding();
   input.investment_lots[0].events = [{
     event_id: "sale-1",
@@ -195,7 +196,7 @@ Deno.test("Form 8997: disposition checkbox cannot disagree with broker evidence"
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: five-year basis adjustment needs code and workpaper", () => {
+test("Form 8997: five-year basis adjustment needs code and workpaper", () => {
   const input = continuingHolding();
   input.investment_lots[0].events = [{
     event_id: "inclusion-1",
@@ -218,13 +219,13 @@ Deno.test("Form 8997: five-year basis adjustment needs code and workpaper", () =
   assertEquals(statement.part_iii.totals.long_term, 10_000);
 });
 
-Deno.test("Form 8997: uninvested deferred gain cannot disappear from Part IV", () => {
+test("Form 8997: uninvested deferred gain cannot disappear from Part IV", () => {
   const input = continuingHolding();
   input.uninvested_deferred_gain_at_year_end.long_term = 1_000;
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: new deferral cannot claim a transfer or basis-adjustment code", () => {
+test("Form 8997: new deferral cannot claim a transfer or basis-adjustment code", () => {
   const input = continuingHolding();
   input.prior_year = { kind: "first_year" };
   input.investment_lots[0].acquired_date = "2025-03-20";
@@ -241,7 +242,7 @@ Deno.test("Form 8997: new deferral cannot claim a transfer or basis-adjustment c
   assertEquals(inputSchema.safeParse(input).success, false);
 });
 
-Deno.test("Form 8997: transfer-out needs an amount removed from the lot", () => {
+test("Form 8997: transfer-out needs an amount removed from the lot", () => {
   const input = continuingHolding();
   input.investment_lots[0].events = [{
     event_id: "transfer-1",

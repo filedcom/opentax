@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -87,7 +88,7 @@ function source() {
   });
 }
 
-Deno.test("paired code-2 return and other owner's partly medical distribution reach return, MeF, and PDF", async () => {
+test("paired code-2 return and other owner's partly medical distribution reach return, MeF, and PDF", async () => {
   const hsa = source();
   const result = f1040_2025.executeReturn({
     ...base.inputs,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
@@ -63,7 +64,7 @@ const fields = {
   ],
 };
 
-Deno.test("Form 4136 XML emits business and source-backed fuel groups", () => {
+test("Form 4136 XML emits business and source-backed fuel groups", () => {
   const xml = form4136.build(fields, {
     pending: { schedule3: { line12_fuel_tax_credit: 42.6 } },
   });
@@ -86,7 +87,7 @@ Deno.test("Form 4136 XML emits business and source-backed fuel groups", () => {
   );
 });
 
-Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
+test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
   assertThrows(
     () =>
       form4136.build(fields, {
@@ -97,7 +98,7 @@ Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
   );
 });
 
-Deno.test("Form 4136 XML separates emulsion use, reduced-rate bus use, and export", () => {
+test("Form 4136 XML separates emulsion use, reduced-rate bus use, and export", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -140,7 +141,7 @@ Deno.test("Form 4136 XML separates emulsion use, reduced-rate bus use, and expor
   );
 });
 
-Deno.test("Form 4136 XML links registered-blender line 15a to its certification", () => {
+test("Form 4136 XML links registered-blender line 15a to its certification", () => {
   const blender = {
     ...activityContext,
     business: {
@@ -212,7 +213,7 @@ Deno.test("Form 4136 XML links registered-blender line 15a to its certification"
   );
 });
 
-Deno.test("Form 4136 XML combines line 16a fuel kinds and separates dyed kerosene", () => {
+test("Form 4136 XML combines line 16a fuel kinds and separates dyed kerosene", () => {
   const exporter = {
     ...activityContext,
     business: {
@@ -268,7 +269,7 @@ Deno.test("Form 4136 XML combines line 16a fuel kinds and separates dyed kerosen
   assertStringIncludes(xml, "<TotalFuelTaxCreditAmt>3</TotalFuelTaxCreditAmt>");
 });
 
-Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a", () => {
+test("Form 4136 XML and buyer statement reconcile registered vendor line 6a", () => {
   const vendor = {
     ...activityContext,
     business: {
@@ -329,7 +330,7 @@ Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a
   assertStringIncludes(statement, "<GallonsBoughtQty>150</GallonsBoughtQty>");
 });
 
-Deno.test("Form 4136 XML maps registered vendor bus sales to line 6b", () => {
+test("Form 4136 XML maps registered vendor bus sales to line 6b", () => {
   const vendor = {
     ...activityContext,
     business: {
@@ -384,7 +385,7 @@ Deno.test("Form 4136 XML maps registered vendor bus sales to line 6b", () => {
   );
 });
 
-Deno.test("Form 4136 XML links line 7a government kerosene buyer statement", () => {
+test("Form 4136 XML links line 7a government kerosene buyer statement", () => {
   const vendor = {
     ...activityContext,
     business: {
@@ -453,7 +454,7 @@ Deno.test("Form 4136 XML links line 7a government kerosene buyer statement", () 
   );
 });
 
-Deno.test("Form 4136 XML separates line 7b blocked pump from line 7c bus sales", () => {
+test("Form 4136 XML separates line 7b blocked pump from line 7c bus sales", () => {
   const business = {
     qualifying_business_activity: true as const,
     business_name: "Example Kerosene Vendor",
@@ -545,7 +546,7 @@ Deno.test("Form 4136 XML separates line 7b blocked pump from line 7c bus sales",
   );
 });
 
-Deno.test("Form 4136 XML separates commercial aviation vendor tax rates on lines 8a and 8b", () => {
+test("Form 4136 XML separates commercial aviation vendor tax rates on lines 8a and 8b", () => {
   const vendor = {
     ...activityContext,
     business: {
@@ -611,7 +612,7 @@ Deno.test("Form 4136 XML separates commercial aviation vendor tax rates on lines
   );
 });
 
-Deno.test("Form 4136 XML emits nonexempt noncommercial aviation line 8c", () => {
+test("Form 4136 XML emits nonexempt noncommercial aviation line 8c", () => {
   const xml = form4136.build({
     ...activityContext,
     business: {
@@ -664,7 +665,7 @@ Deno.test("Form 4136 XML emits nonexempt noncommercial aviation line 8c", () => 
   );
 });
 
-Deno.test("Form 4136 XML separates noncommercial aviation vendor tax rates on lines 8d and 8e", () => {
+test("Form 4136 XML separates noncommercial aviation vendor tax rates on lines 8d and 8e", () => {
   const claims = [
     { line: "8d" as const, type_of_use: "09" as const, taxRate: 0.244 },
     { line: "8e" as const, type_of_use: "10" as const, taxRate: 0.219 },
@@ -731,7 +732,7 @@ Deno.test("Form 4136 XML separates noncommercial aviation vendor tax rates on li
   );
 });
 
-Deno.test("Form 4136 XML links line 8f LUST credit to foreign-trade line 8d sales", () => {
+test("Form 4136 XML links line 8f LUST credit to foreign-trade line 8d sales", () => {
   const base = {
     line: "8d" as const,
     type_of_use: "09",
@@ -795,7 +796,7 @@ Deno.test("Form 4136 XML links line 8f LUST credit to foreign-trade line 8d sale
   );
 });
 
-Deno.test("Form 4136 XML emits registered card issuer lines 13a-13c and linked high-rate statement", () => {
+test("Form 4136 XML emits registered card issuer lines 13a-13c and linked high-rate statement", () => {
   const claims = ["13a", "13b", "13c"].map((line, index) =>
     fuelClaimSchema.parse({
       line,
@@ -905,7 +906,7 @@ Deno.test("Form 4136 XML emits registered card issuer lines 13a-13c and linked h
   );
 });
 
-Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
+test("Form 4136 XML separates other-use and exported gasoline", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -939,7 +940,7 @@ Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   );
 });
 
-Deno.test("Form 4136 XML maps commercial, exported, and foreign-trade aviation gasoline", () => {
+test("Form 4136 XML maps commercial, exported, and foreign-trade aviation gasoline", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -964,7 +965,7 @@ Deno.test("Form 4136 XML maps commercial, exported, and foreign-trade aviation g
   );
 });
 
-Deno.test("Form 4136 XML keeps diesel train, bus, and export credits separate", () => {
+test("Form 4136 XML keeps diesel train, bus, and export credits separate", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -985,7 +986,7 @@ Deno.test("Form 4136 XML keeps diesel train, bus, and export credits separate", 
   );
 });
 
-Deno.test("Form 4136 XML separates kerosene bus, export, and reduced-tax claims", () => {
+test("Form 4136 XML separates kerosene bus, export, and reduced-tax claims", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -1013,7 +1014,7 @@ Deno.test("Form 4136 XML separates kerosene bus, export, and reduced-tax claims"
   );
 });
 
-Deno.test("Form 4136 XML separates aviation kerosene commercial and LUST claims", () => {
+test("Form 4136 XML separates aviation kerosene commercial and LUST claims", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -1039,7 +1040,7 @@ Deno.test("Form 4136 XML separates aviation kerosene commercial and LUST claims"
   );
 });
 
-Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternative fuel groups", () => {
+test("Form 4136 XML carries variable-use aviation, kerosene, and alternative fuel groups", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -1106,7 +1107,7 @@ Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternativ
   assertStringIncludes(xml, "<NontxCompressedNaturalGasGrp>");
 });
 
-Deno.test("Form 4136 XML requires the 2025 business and actual-cost facts", () => {
+test("Form 4136 XML requires the 2025 business and actual-cost facts", () => {
   assertThrows(
     () =>
       form4136.build({ claims: fields.claims }, {
@@ -1129,7 +1130,7 @@ Deno.test("Form 4136 XML requires the 2025 business and actual-cost facts", () =
   );
 });
 
-Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
+test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
   const lines = [
     "11a",
     "11b",
@@ -1172,7 +1173,7 @@ Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
   }
 });
 
-Deno.test("Form 4136 XML separates reduced-rate bus use from standard use", () => {
+test("Form 4136 XML separates reduced-rate bus use from standard use", () => {
   const xml = form4136.build({
     ...activityContext,
     business: fields.business,
@@ -1205,7 +1206,7 @@ Deno.test("Form 4136 XML separates reduced-rate bus use from standard use", () =
   );
 });
 
-Deno.test("Form 4136 XML combines two activities and links both Schedule A PDFs", () => {
+test("Form 4136 XML combines two activities and links both Schedule A PDFs", () => {
   const multi = {
     ...fields,
     business: { ...fields.business, business_ein: "123456789" },
@@ -1267,7 +1268,7 @@ Deno.test("Form 4136 XML combines two activities and links both Schedule A PDFs"
   );
 });
 
-Deno.test("Form 4136 generated Schedule A attachment bytes are stable", async () => {
+test("Form 4136 generated Schedule A attachment bytes are stable", async () => {
   const input = {
     ...fields,
     additional_activities: [{
@@ -1293,7 +1294,7 @@ Deno.test("Form 4136 generated Schedule A attachment bytes are stable", async ()
   );
 });
 
-Deno.test("Form 4136 XML omits business fields for home-use kerosene", () => {
+test("Form 4136 XML omits business fields for home-use kerosene", () => {
   const xml = form4136.build({
     claimant_context: "home_kerosene",
     claimant_is_ultimate_purchaser: true,

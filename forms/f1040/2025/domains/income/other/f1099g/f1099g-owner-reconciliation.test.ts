@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { irs1040 } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
@@ -22,7 +23,7 @@ function unemployment(recipient_tin?: string) {
   };
 }
 
-Deno.test("positive 1099-G unemployment owner is checked by native and PDF Form 1040", () => {
+test("positive 1099-G unemployment owner is checked by native and PDF Form 1040", () => {
   const source = unemployment("111223333");
   irs1040.build(filed, { pending: source });
   irs1040Pdf.projectFields?.(filed, source);
@@ -41,7 +42,7 @@ Deno.test("positive 1099-G unemployment owner is checked by native and PDF Form 
   }
 });
 
-Deno.test("positive 1099-G needs an identified payer in both Form 1040 exports", () => {
+test("positive 1099-G needs an identified payer in both Form 1040 exports", () => {
   const pending = {
     f1099g: {
       f1099gs: [{
@@ -60,7 +61,7 @@ Deno.test("positive 1099-G needs an identified payer in both Form 1040 exports",
   );
 });
 
-Deno.test("one issued 1099-G reference without an account cannot replay changed income in native or PDF", () => {
+test("one issued 1099-G reference without an account cannot replay changed income in native or PDF", () => {
   const [issued] = unemployment("111223333").f1099g.f1099gs;
   const pending = {
     f1099g: {
@@ -81,7 +82,7 @@ Deno.test("one issued 1099-G reference without an account cannot replay changed 
   }
 });
 
-Deno.test("one missing payer TIN cannot split duplicate 1099-G income in native or PDF", () => {
+test("one missing payer TIN cannot split duplicate 1099-G income in native or PDF", () => {
   const pending = {
     f1099g: {
       f1099gs: [
@@ -109,7 +110,7 @@ Deno.test("one missing payer TIN cannot split duplicate 1099-G income in native 
   );
 });
 
-Deno.test("joint spouse 1099-G belongs on MFJ return only", () => {
+test("joint spouse 1099-G belongs on MFJ return only", () => {
   const source = unemployment("444556666");
   const joint = {
     ...filed,
@@ -134,7 +135,7 @@ Deno.test("joint spouse 1099-G belongs on MFJ return only", () => {
   );
 });
 
-Deno.test("positive state refund 1099-G needs the filed recipient", () => {
+test("positive state refund 1099-G needs the filed recipient", () => {
   const source = {
     f1099g: {
       f1099gs: [{

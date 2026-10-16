@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 /** CLI regression scenarios with explicitly invented identity/eligibility facts. */
 import variants from "../../benchmark/reference/2025/issue77-synthetic.json" with {
   type: "json",
@@ -7,11 +8,11 @@ type Invoke = (...args: string[]) => Promise<string>;
 type Form = { node_type: string; data: Record<string, unknown> };
 async function source(name: string): Promise<Form[]> {
   return JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         `../../benchmark/cases/f1040/2025/${name}/input.json`,
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   ).forms;
 }
@@ -182,11 +183,11 @@ export async function smokeIssue77(invoke: Invoke): Promise<void> {
 /** Replay every completed fixture through persisted public CLI inputs. */
 export async function smokeCompletedIssue77(invoke: Invoke): Promise<void> {
   const archived = JSON.parse(
-    await Deno.readTextFile(
+    await fs.readFile(
       new URL(
         "../../benchmark/reference/2025/issue77-original-incomplete.json",
         import.meta.url,
-      ),
+      ), "utf8",
     ),
   );
   const fields = [
@@ -200,11 +201,11 @@ export async function smokeCompletedIssue77(invoke: Invoke): Promise<void> {
   ];
   for (const name of Object.keys(archived)) {
     const fixture = JSON.parse(
-      await Deno.readTextFile(
+      await fs.readFile(
         new URL(
           `../../benchmark/cases/f1040/2025/${name}/correct.json`,
           import.meta.url,
-        ),
+        ), "utf8",
       ),
     );
     const expected = fixture.correct;

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
@@ -6,7 +7,7 @@ import { FilingStatus } from "../../../../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("Form 8936 qualified commercial clean vehicle reaches Form 3800 line 1aa", () => {
+test("Form 8936 qualified commercial clean vehicle reaches Form 3800 line 1aa", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,

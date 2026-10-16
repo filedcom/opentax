@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099oid } from "./index.ts";
 
@@ -23,7 +24,7 @@ function interestDetail(result: ReturnType<typeof compute>) {
   } | undefined;
 }
 
-Deno.test("1099-OID changed issued copy cannot double interest or withholding", () => {
+test("1099-OID changed issued copy cannot double interest or withholding", () => {
   const issued = {
     payer_name: "Bond Fund",
     payer_tin: "12-3456789",
@@ -56,7 +57,7 @@ Deno.test("1099-OID changed issued copy cannot double interest or withholding", 
   );
 });
 
-Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
+test("1099-OID rejects a repeated source without payer TIN", () => {
   const issued = {
     payer_name: "Bond Fund",
     source_document_reference: "issued-oid-copy-1",
@@ -77,7 +78,7 @@ Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
   );
 });
 
-Deno.test("1099-OID cannot reuse one issued-copy reference across payers", () => {
+test("1099-OID cannot reuse one issued-copy reference across payers", () => {
   const issued = {
     payer_name: "Bond Fund A",
     payer_tin: "123456789",
@@ -106,7 +107,7 @@ Deno.test("1099-OID cannot reuse one issued-copy reference across payers", () =>
   );
 });
 
-Deno.test("1099-OID distinguishes obligations and rejects unidentified repeated copies", () => {
+test("1099-OID distinguishes obligations and rejects unidentified repeated copies", () => {
   const unidentified = { payer_name: "Bond Fund", box1_oid: 200 };
   const identified = {
     ...unidentified,
@@ -137,7 +138,7 @@ Deno.test("1099-OID distinguishes obligations and rejects unidentified repeated 
   );
 });
 
-Deno.test("1099-OID mixed payer TIN copies retain account and unidentified-copy guards", () => {
+test("1099-OID mixed payer TIN copies retain account and unidentified-copy guards", () => {
   const identified = {
     payer_name: "Bond Fund",
     payer_tin: "12-3456789",
@@ -183,7 +184,7 @@ Deno.test("1099-OID mixed payer TIN copies retain account and unidentified-copy 
   );
 });
 
-Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
+test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
   const item = {
     payer_name: "Bond Fund",
     box1_oid: 500,
@@ -210,7 +211,7 @@ Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", (
 // 1. Basic OID routing to schedule_b
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: basic OID routes to schedule_b", () => {
+test("f1099oid: basic OID routes to schedule_b", () => {
   const result = compute([{
     payer_name: "Test Corp",
     box1_oid: 500,
@@ -219,7 +220,7 @@ Deno.test("f1099oid: basic OID routes to schedule_b", () => {
   assertEquals(interestDetail(result)?.payer_name, "Test Corp");
 });
 
-Deno.test("f1099oid: acquisition premium reduces OID in schedule_b", () => {
+test("f1099oid: acquisition premium reduces OID in schedule_b", () => {
   const result = compute([{
     payer_name: "Test Corp",
     box1_oid: 1000,
@@ -231,7 +232,7 @@ Deno.test("f1099oid: acquisition premium reduces OID in schedule_b", () => {
   assertEquals(interestDetail(result)?.net, 800);
 });
 
-Deno.test("f1099oid: nominee_oid reduces OID in schedule_b", () => {
+test("f1099oid: nominee_oid reduces OID in schedule_b", () => {
   const result = compute([{
     payer_name: "Test Corp",
     box1_oid: 1000,
@@ -241,7 +242,7 @@ Deno.test("f1099oid: nominee_oid reduces OID in schedule_b", () => {
   assertEquals(interestDetail(result)?.net, 850);
 });
 
-Deno.test("f1099oid: box2 other interest added to taxable_interest_net", () => {
+test("f1099oid: box2 other interest added to taxable_interest_net", () => {
   const result = compute([{
     payer_name: "Test Corp",
     box1_oid: 300,
@@ -250,7 +251,7 @@ Deno.test("f1099oid: box2 other interest added to taxable_interest_net", () => {
   assertEquals(interestDetail(result)?.net, 400);
 });
 
-Deno.test("f1099oid: box10 reduces box2 stated interest, not Treasury box8", () => {
+test("f1099oid: box10 reduces box2 stated interest, not Treasury box8", () => {
   const result = compute([{
     payer_name: "Treasury broker",
     box8_oid_treasury: 700,
@@ -263,7 +264,7 @@ Deno.test("f1099oid: box10 reduces box2 stated interest, not Treasury box8", () 
   assertEquals(interestDetail(result)?.net, 760);
 });
 
-Deno.test("f1099oid: box5 market discount enters current interest only when elected", () => {
+test("f1099oid: box5 market discount enters current interest only when elected", () => {
   assertThrows(() =>
     compute([{
       payer_name: "Broker",
@@ -285,7 +286,7 @@ Deno.test("f1099oid: box5 market discount enters current interest only when elec
   assertEquals(interestDetail(elected)?.net, 80);
 });
 
-Deno.test("f1099oid: taxable box10 classification and amount are required", () => {
+test("f1099oid: taxable box10 classification and amount are required", () => {
   assertThrows(() =>
     compute([{
       payer_name: "Broker",
@@ -307,7 +308,7 @@ Deno.test("f1099oid: taxable box10 classification and amount are required", () =
 // 2. Federal withholding routes to f1040
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: box4 federal withheld routes to f1040 line25b", () => {
+test("f1099oid: box4 federal withheld routes to f1040 line25b", () => {
   const result = compute([{
     payer_name: "Test Corp",
     box1_oid: 500,
@@ -317,7 +318,7 @@ Deno.test("f1099oid: box4 federal withheld routes to f1040 line25b", () => {
   assertEquals(f1040?.fields?.line25b_withheld_1099, 75);
 });
 
-Deno.test("f1099oid: multiple items withholding summed to f1040", () => {
+test("f1099oid: multiple items withholding summed to f1040", () => {
   const result = compute([
     { payer_name: "Corp A", box1_oid: 200, box4_federal_withheld: 30 },
     { payer_name: "Corp B", box1_oid: 300, box4_federal_withheld: 45 },
@@ -326,7 +327,7 @@ Deno.test("f1099oid: multiple items withholding summed to f1040", () => {
   assertEquals(f1040?.fields?.line25b_withheld_1099, 75);
 });
 
-Deno.test("f1099oid: no withholding — no f1040 output", () => {
+test("f1099oid: no withholding — no f1040 output", () => {
   const result = compute([{ payer_name: "Corp", box1_oid: 500 }]);
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040, undefined);
@@ -336,7 +337,7 @@ Deno.test("f1099oid: no withholding — no f1040 output", () => {
 // 3. Tax-exempt OID (private activity bonds) routes to form6251
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: box11 tax-exempt OID reaches line 2a; only explicit PAB reaches AMT", () => {
+test("f1099oid: box11 tax-exempt OID reaches line 2a; only explicit PAB reaches AMT", () => {
   const result = compute([{
     payer_name: "Municipal Corp",
     box11_tax_exempt_oid: 250,
@@ -351,7 +352,7 @@ Deno.test("f1099oid: box11 tax-exempt OID reaches line 2a; only explicit PAB rea
   );
 });
 
-Deno.test("f1099oid: tax-exempt acquisition and bond premium reduce line 2a only", () => {
+test("f1099oid: tax-exempt acquisition and bond premium reduce line 2a only", () => {
   const result = compute([{
     payer_name: "Municipal broker",
     box11_tax_exempt_oid: 500,
@@ -366,7 +367,7 @@ Deno.test("f1099oid: tax-exempt acquisition and bond premium reduce line 2a only
   assertEquals(findOutput(result, "schedule_b"), undefined);
 });
 
-Deno.test("f1099oid: box11 needs an explicit PAB share, including zero", () => {
+test("f1099oid: box11 needs an explicit PAB share, including zero", () => {
   assertThrows(() =>
     compute([{
       payer_name: "Municipal broker",
@@ -386,7 +387,7 @@ Deno.test("f1099oid: box11 needs an explicit PAB share, including zero", () => {
   );
 });
 
-Deno.test("f1099oid: box3 early withdrawal penalty reaches Schedule 1", () => {
+test("f1099oid: box3 early withdrawal penalty reaches Schedule 1", () => {
   const result = compute([{
     payer_name: "Bank",
     box1_oid: 100,
@@ -398,7 +399,7 @@ Deno.test("f1099oid: box3 early withdrawal penalty reaches Schedule 1", () => {
   );
 });
 
-Deno.test("f1099oid: no box11 — no form6251 output", () => {
+test("f1099oid: no box11 — no form6251 output", () => {
   const result = compute([{ payer_name: "Corp", box1_oid: 500 }]);
   const f6251 = findOutput(result, "form6251");
   assertEquals(f6251, undefined);
@@ -408,7 +409,7 @@ Deno.test("f1099oid: no box11 — no form6251 output", () => {
 // 4. Multiple payers produce multiple schedule_b outputs
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: multiple payers produce multiple schedule_b outputs", () => {
+test("f1099oid: multiple payers produce multiple schedule_b outputs", () => {
   const result = compute([
     { payer_name: "Corp A", box1_oid: 100 },
     { payer_name: "Corp B", box1_oid: 200 },
@@ -421,7 +422,7 @@ Deno.test("f1099oid: multiple payers produce multiple schedule_b outputs", () =>
 // 5. Zero OID — schedule_b still emitted with 0
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: zero OID — no schedule_b emitted", () => {
+test("f1099oid: zero OID — no schedule_b emitted", () => {
   const result = compute([{ payer_name: "Corp", box1_oid: 0 }]);
   const sb = findOutput(result, "schedule_b");
   assertEquals(sb, undefined);
@@ -431,7 +432,7 @@ Deno.test("f1099oid: zero OID — no schedule_b emitted", () => {
 // 6. Acquisition premium cannot push OID below 0
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: acquisition premium exceeding OID is rejected", () => {
+test("f1099oid: acquisition premium exceeding OID is rejected", () => {
   assertThrows(() =>
     compute([{
       payer_name: "Corp",

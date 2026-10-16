@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8828 } from "./f8828.ts";
 import { form8828Pdf } from "../../../../pdf/forms/taxes/credit-recapture/f8828.ts";
@@ -221,7 +222,7 @@ function pending(total = 6_250) {
   };
 }
 
-Deno.test("staged IRS8828 and official PDF project source lines and Schedule 2 tax", () => {
+test("staged IRS8828 and official PDF project source lines and Schedule 2 tax", () => {
   const source = { f8828s: [item()] };
   const xml = buildParsed(source, { pending: pending() });
   assertEquals(xml.length, 1);
@@ -253,7 +254,7 @@ Deno.test("staged IRS8828 and official PDF project source lines and Schedule 2 t
   assertEquals(printed[0].line18, 50);
 });
 
-Deno.test("staged IRS8828 gift prints deemed FMV and requires no invented Form 8949 row", () => {
+test("staged IRS8828 gift prints deemed FMV and requires no invented Form 8949 row", () => {
   const source = { f8828s: [gift()] };
   const finalReturn = {
     f1040: { line11_agi: 105_000, line2a_tax_exempt: 1_000 },
@@ -280,7 +281,7 @@ Deno.test("staged IRS8828 gift prints deemed FMV and requires no invented Form 8
   assertEquals(printed[0].line23, 12_500);
 });
 
-Deno.test("staged IRS8828 gift rejects unsupported consideration and valuation tamper", () => {
+test("staged IRS8828 gift rejects unsupported consideration and valuation tamper", () => {
   const valid = gift();
   assertThrows(() =>
     buildParsed({
@@ -308,7 +309,7 @@ Deno.test("staged IRS8828 gift rejects unsupported consideration and valuation t
   );
 });
 
-Deno.test("staged IRS8828 joint-owner sale emits only the taxpayer share", () => {
+test("staged IRS8828 joint-owner sale emits only the taxpayer share", () => {
   const source = { f8828s: [jointOwnerSale()] };
   const finalReturn = pending(7_500);
   finalReturn.form8949.transaction.proceeds = 211_500;
@@ -339,7 +340,7 @@ Deno.test("staged IRS8828 joint-owner sale emits only the taxpayer share", () =>
   assertEquals(printed[0].line23, 7_500);
 });
 
-Deno.test("staged IRS8828 joint-owner source rejects issuer and ownership tamper", () => {
+test("staged IRS8828 joint-owner source rejects issuer and ownership tamper", () => {
   const valid = jointOwnerSale();
   const wrongIssuer = {
     ...valid,
@@ -363,7 +364,7 @@ Deno.test("staged IRS8828 joint-owner source rejects issuer and ownership tamper
   assertThrows(() => buildParsed({ f8828s: [wrongShare] }), Error);
 });
 
-Deno.test("staged IRS8828 reissued MCC keeps original loan date and final payoff on native/PDF", () => {
+test("staged IRS8828 reissued MCC keeps original loan date and final payoff on native/PDF", () => {
   const source = { f8828s: [reissuedMccSale()] };
   const xml = buildParsed(source, { pending: pending() });
   assertStringIncludes(
@@ -394,7 +395,7 @@ Deno.test("staged IRS8828 reissued MCC keeps original loan date and final payoff
   assertEquals(printed[0].line20, 100);
 });
 
-Deno.test("staged IRS8828 reissued MCC rejects certificate and payoff tamper", () => {
+test("staged IRS8828 reissued MCC rejects certificate and payoff tamper", () => {
   const valid = reissuedMccSale();
   assertThrows(() =>
     buildParsed({
@@ -418,7 +419,7 @@ Deno.test("staged IRS8828 reissued MCC rejects certificate and payoff tamper", (
     }), Error);
 });
 
-Deno.test("staged IRS8828 QMB conventional refinance uses early payoff on native and PDF", () => {
+test("staged IRS8828 QMB conventional refinance uses early payoff on native and PDF", () => {
   const source = f8828InputSchema.parse({
     f8828s: [conventionalQmbRefinanceSale()],
   });
@@ -471,7 +472,7 @@ Deno.test("staged IRS8828 QMB conventional refinance uses early payoff on native
   );
 });
 
-Deno.test("staged IRS8828 rejects mismatched conventional refinance record", () => {
+test("staged IRS8828 rejects mismatched conventional refinance record", () => {
   const sale = f8828InputSchema.parse({
     f8828s: [conventionalQmbRefinanceSale()],
   }).f8828s[0];
@@ -503,7 +504,7 @@ Deno.test("staged IRS8828 rejects mismatched conventional refinance record", () 
     }), Error);
 });
 
-Deno.test("staged IRS8828 emits each property, including required zero-tax attachment", () => {
+test("staged IRS8828 emits each property, including required zero-tax attachment", () => {
   const zero = item({
     property_address: {
       line1: "28 Hill St",
@@ -524,7 +525,7 @@ Deno.test("staged IRS8828 emits each property, including required zero-tax attac
   assertEquals(xml[1].includes("MortgSbsdyRecaptureTaxAmt"), false);
 });
 
-Deno.test("staged IRS8828 rejects mismatched return amounts and invalid address shapes", () => {
+test("staged IRS8828 rejects mismatched return amounts and invalid address shapes", () => {
   const source = { f8828s: [item()] };
   assertThrows(
     () => buildParsed(source, { pending: pending(100) }),
@@ -556,7 +557,7 @@ Deno.test("staged IRS8828 rejects mismatched return amounts and invalid address 
     }), Error);
 });
 
-Deno.test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain links", () => {
+test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain links", () => {
   const source = { f8828s: [item()] };
   const issuer = item();
   issuer.reviewed_issuer.federally_subsidized_amount = 11_000;
@@ -613,7 +614,7 @@ Deno.test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain
   );
 });
 
-Deno.test("staged IRS8828 accepts fully excluded gain only with exclusion evidence", () => {
+test("staged IRS8828 accepts fully excluded gain only with exclusion evidence", () => {
   const excluded = item({
     home_gain_included_in_gross_income: 0,
     adjusted_qualifying_income: 110_000,

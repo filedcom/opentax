@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { appendInput, buildEngineInputs, loadInputs } from "../store/store.ts";
 import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
@@ -21,8 +23,8 @@ async function makeReturn(tmpDir: string): Promise<string> {
 
 // ─── form add ────────────────────────────────────────────────────────────────
 
-Deno.test("SEHI CLI stores the Marketplace answer in the canonical singleton", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("SEHI CLI stores the Marketplace answer in the canonical singleton", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await formAddCommand({
@@ -72,12 +74,12 @@ Deno.test("SEHI CLI stores the Marketplace answer in the canonical singleton", a
       "Publication 974",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const result = await formAddCommand({
@@ -95,12 +97,12 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     assertEquals(inputs["w2"][0].id, "w2_01");
     assertEquals(inputs["w2"][0].fields["box1_wages"], 85000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("CLI retains a registered alias as a singleton start input", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("CLI retains a registered alias as a singleton start input", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const sale = {
@@ -155,12 +157,12 @@ Deno.test("CLI retains a registered alias as a singleton start input", async () 
       true,
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await formAddCommand({
@@ -181,12 +183,12 @@ Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => 
     assertEquals(inputs["w2"][0].id, "w2_01");
     assertEquals(inputs["w2"][1].id, "w2_02");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand accepts and persists normalized 1099-MISC TINs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand accepts and persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await formAddCommand({
@@ -209,12 +211,12 @@ Deno.test("formAddCommand accepts and persists normalized 1099-MISC TINs", async
     assertEquals(entry.fields.payer_tin, "133863700");
     assertEquals(entry.fields.recipient_tin, "000000000");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validation error", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand invalid data (missing box1_wages) rejects with validation error", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -229,12 +231,12 @@ Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validat
       "Validation error",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("form add rejects a misspelled W-2 field without storing the entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("form add rejects a misspelled W-2 field without storing the entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -254,12 +256,12 @@ Deno.test("form add rejects a misspelled W-2 field without storing the entry", a
     );
     assertEquals((await loadInputs(`${tmpDir}/${returnId}`))["w2"], undefined);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("form update rejects unknown fields on a refined schema without changing stored data", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("form update rejects unknown fields on a refined schema without changing stored data", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const added = await formAddCommand({
@@ -288,12 +290,12 @@ Deno.test("form update rejects unknown fields on a refined schema without changi
       { line_8a_mortgage_interest_1098: 20000 },
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand malformed JSON string rejects with Invalid JSON", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand malformed JSON string rejects with Invalid JSON", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -308,12 +310,12 @@ Deno.test("formAddCommand malformed JSON string rejects with Invalid JSON", asyn
       "Invalid JSON",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand unknown nodeType rejects with Unknown node type", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand unknown nodeType rejects with Unknown node type", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -328,12 +330,12 @@ Deno.test("formAddCommand unknown nodeType rejects with Unknown node type", asyn
       "Unknown node type",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand rejects legacy Form 2555 aggregate inputs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formAddCommand rejects legacy Form 2555 aggregate inputs", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -351,25 +353,25 @@ Deno.test("formAddCommand rejects legacy Form 2555 aggregate inputs", async () =
     const inputs = await loadInputs(`${tmpDir}/${returnId}`);
     assertEquals(inputs["form2555"], undefined);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
 // ─── form list ───────────────────────────────────────────────────────────────
 
-Deno.test("formListCommand returns empty array for fresh return", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formListCommand returns empty array for fresh return", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const result = await formListCommand({ returnId, baseDir: tmpDir });
     assertEquals(result.length, 0);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formListCommand returns all entries across node types", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formListCommand returns all entries across node types", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -386,12 +388,12 @@ Deno.test("formListCommand returns all entries across node types", async () => {
     const result = await formListCommand({ returnId, baseDir: tmpDir });
     assertEquals(result.length, 3);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formListCommand filters by nodeType", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formListCommand filters by nodeType", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -409,12 +411,12 @@ Deno.test("formListCommand filters by nodeType", async () => {
     assertEquals(result.length, 1);
     assertEquals(result[0].nodeType, "w2");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formListCommand returns entries with fields", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formListCommand returns entries with fields", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -427,14 +429,14 @@ Deno.test("formListCommand returns entries with fields", async () => {
     assertEquals(result[0].fields["box1_wages"], 85000);
     assertEquals(result[0].fields["box2_fed_withheld"], 10000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
 // ─── form get ────────────────────────────────────────────────────────────────
 
-Deno.test("formGetCommand returns correct entry by id", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formGetCommand returns correct entry by id", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -452,12 +454,12 @@ Deno.test("formGetCommand returns correct entry by id", async () => {
     assertEquals(result.nodeType, "w2");
     assertEquals(result.fields["box1_wages"], 50000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formGetCommand throws for nonexistent entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formGetCommand throws for nonexistent entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -466,12 +468,12 @@ Deno.test("formGetCommand throws for nonexistent entry", async () => {
       "Entry not found",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formGetCommand retrieves second entry correctly", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formGetCommand retrieves second entry correctly", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -491,14 +493,14 @@ Deno.test("formGetCommand retrieves second entry correctly", async () => {
     });
     assertEquals(result.fields["box1_wages"], 75000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
 // ─── form update ─────────────────────────────────────────────────────────────
 
-Deno.test("formUpdateCommand replaces entry data", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand replaces entry data", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -524,12 +526,12 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
     assertEquals(entry.fields["box1_wages"], 75000);
     assertEquals(entry.fields["box2_fed_withheld"], 8000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -559,12 +561,12 @@ Deno.test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
     assertEquals(entry.fields.payer_tin, "133863700");
     assertEquals(entry.fields.recipient_tin, "000000000");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formUpdateCommand validates against schema", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand validates against schema", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -585,12 +587,12 @@ Deno.test("formUpdateCommand validates against schema", async () => {
       "Validation error",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formUpdateCommand rejects legacy stored Form 2555 aggregate inputs", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand rejects legacy stored Form 2555 aggregate inputs", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -611,12 +613,12 @@ Deno.test("formUpdateCommand rejects legacy stored Form 2555 aggregate inputs", 
       "Validation error",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formUpdateCommand throws for nonexistent entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand throws for nonexistent entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -631,12 +633,12 @@ Deno.test("formUpdateCommand throws for nonexistent entry", async () => {
       "Entry not found",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formUpdateCommand does not affect other entries", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formUpdateCommand does not affect other entries", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -663,14 +665,14 @@ Deno.test("formUpdateCommand does not affect other entries", async () => {
     });
     assertEquals(entry2.fields["box1_wages"], 30000);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
 // ─── form delete ─────────────────────────────────────────────────────────────
 
-Deno.test("formDeleteCommand removes entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formDeleteCommand removes entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -695,12 +697,12 @@ Deno.test("formDeleteCommand removes entry", async () => {
     assertEquals(remaining.length, 1);
     assertEquals(remaining[0].id, "w2_02");
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formDeleteCommand throws for nonexistent entry", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formDeleteCommand throws for nonexistent entry", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
@@ -709,12 +711,12 @@ Deno.test("formDeleteCommand throws for nonexistent entry", async () => {
       "Entry not found",
     );
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formDeleteCommand removing all entries leaves empty list", async () => {
-  const tmpDir = await Deno.makeTempDir();
+test("formDeleteCommand removing all entries leaves empty list", async () => {
+  const tmpDir = await sys.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
@@ -728,6 +730,6 @@ Deno.test("formDeleteCommand removing all entries leaves empty list", async () =
     const remaining = await formListCommand({ returnId, baseDir: tmpDir });
     assertEquals(remaining.length, 0);
   } finally {
-    await Deno.remove(tmpDir, { recursive: true });
+    await sys.remove(tmpDir, { recursive: true });
   }
 });

@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { createHash } from "node:crypto";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { itemSchema } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
@@ -243,17 +245,17 @@ async function historicalPdf(
   const path = `.state/research/roth-consumed-history/f${type}--${year}.pdf`;
   let bytes: Uint8Array;
   try {
-    bytes = await Deno.readFile(path);
+    bytes = await sys.readBytes(path);
   } catch {
     const response = await fetch(
       `https://www.irs.gov/pub/irs-prior/f${type}--${year}.pdf`,
     );
     if (!response.ok) throw new Error(`prior${type} ${response.status}`);
     bytes = new Uint8Array(await response.arrayBuffer());
-    await Deno.mkdir(".state/research/roth-consumed-history", {
+    await fs.mkdir(".state/research/roth-consumed-history", {
       recursive: true,
     });
-    await Deno.writeFile(path, bytes);
+    await fs.writeFile(path, bytes);
   }
   const pdf = await PDFDocument.load(bytes), form = pdf.getForm();
   const field = (page: number, index: number) =>

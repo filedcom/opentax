@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -18,18 +21,12 @@ import {
 type Row = Record<string, any>;
 
 for (const endpoint of sstbZeroCases) {
-  Deno.test(`SSTB service zero ${endpoint.name}: all reviewed source classifications`, async () => {
+  test(`SSTB service zero ${endpoint.name}: all reviewed source classifications`, async () => {
     assertEquals(sstbServiceZeroSources.length, 39);
     assertEquals(new Set(sstbServiceZeroSources.map((s) => s.name)).size, 39);
-    const permission = await Deno.permissions.query({
-      name: "env",
-      variable: "SSTB_SERVICE_ZERO_EVIDENCE",
-    });
-    const root = permission.state === "granted"
-      ? Deno.env.get("SSTB_SERVICE_ZERO_EVIDENCE")
-      : undefined;
-    const dir = root ? `${root}/${endpoint.name}` : await Deno.makeTempDir();
-    await Deno.mkdir(dir, { recursive: true });
+    const root = process.env.SSTB_SERVICE_ZERO_EVIDENCE;
+    const dir = root ? `${root}/${endpoint.name}` : await sys.makeTempDir();
+    await fs.mkdir(dir, { recursive: true });
     try {
       for (const source of sstbServiceZeroSources) {
         const label = `${endpoint.name}/${source.name}`;
@@ -92,8 +89,8 @@ for (const endpoint of sstbZeroCases) {
           label,
         );
         const file = `${dir}/${source.name}`;
-        await Deno.writeTextFile(`${file}.xml`, prepared.bundle.xml);
-        await Deno.writeTextFile(
+        await fs.writeFile(`${file}.xml`, prepared.bundle.xml);
+        await fs.writeFile(
           `${file}.json`,
           JSON.stringify(
             { input, filer, pending, independentTaxDelta: delta },
@@ -101,7 +98,7 @@ for (const endpoint of sstbZeroCases) {
             2,
           ),
         );
-        const xsd = await new Deno.Command("xmllint", {
+        const xsd = await new sys.Command("xmllint", {
           args: [
             "--noout",
             "--schema",
@@ -114,7 +111,7 @@ for (const endpoint of sstbZeroCases) {
           stdout: "piped",
           stderr: "piped",
         }).output();
-        await Deno.writeFile(`${file}.xsd.log`, xsd.stderr);
+        await fs.writeFile(`${file}.xsd.log`, xsd.stderr);
         assertEquals(
           xsd.code,
           0,
@@ -181,7 +178,7 @@ for (const endpoint of sstbZeroCases) {
             `${label}/${kind}/pdf`,
           );
         }
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${file}.checks.json`,
           JSON.stringify(
             {
@@ -197,7 +194,7 @@ for (const endpoint of sstbZeroCases) {
         );
       }
     } finally {
-      if (!root) await Deno.remove(dir, { recursive: true });
+      if (!root) await sys.remove(dir, { recursive: true });
     }
   });
 }

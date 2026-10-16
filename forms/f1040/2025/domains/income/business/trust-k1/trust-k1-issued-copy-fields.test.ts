@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDict, PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
 import { extractTrustK1IssuedCopyFields } from "./trust-k1-issued-copy-fields.ts";
@@ -7,7 +9,7 @@ import { fieldName, filer, fixture } from "./trust-k1-issued-copy.fixture.ts";
 import { assertTrustK1PrintableCheckboxes } from "./trust-k1-printable-checkboxes.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 
-Deno.test("trust K-1 extraction retains every canonical field without enabling filing or authenticating issuer", async () => {
+test("trust K-1 extraction retains every canonical field without enabling filing or authenticating issuer", async () => {
   const { source, documents } = await fixture();
   const [copy] = await extractTrustK1IssuedCopyFields(source, filer, documents);
   assertEquals(Object.keys(copy.canonicalFields).length, 74);
@@ -32,7 +34,7 @@ Deno.test("trust K-1 extraction retains every canonical field without enabling f
   );
 });
 
-Deno.test("trust K-1 retains checked original IRS glyph and regenerated checkbox appearances", async () => {
+test("trust K-1 retains checked original IRS glyph and regenerated checkbox appearances", async () => {
   const { source, documents } = await fixture((pdf) => {
     // Preserve the official glyph appearance rather than regenerating it.
     pdf.getForm().getCheckBox(fieldName("c1_1[1]")).check();
@@ -45,8 +47,8 @@ Deno.test("trust K-1 retains checked original IRS glyph and regenerated checkbox
   assertEquals(copy.printedContentsVerified, false);
 });
 
-Deno.test("trust K-1 checkbox verifier accepts all six original unchecked IRS appearances", async () => {
-  const bytes = await Deno.readFile(".pdf-cache/form1041sk1-2025.pdf");
+test("trust K-1 checkbox verifier accepts all six original unchecked IRS appearances", async () => {
+  const bytes = await sys.readBytes(".pdf-cache/form1041sk1-2025.pdf");
   assertEquals(
     await sha256Hex(bytes),
     "d8d7b6eacabdf145474aee8385fcfeafe68bd2f69baaef52d9a8227ebcd45fc3",
@@ -54,7 +56,7 @@ Deno.test("trust K-1 checkbox verifier accepts all six original unchecked IRS ap
   await assertTrustK1PrintableCheckboxes(bytes);
 });
 
-Deno.test("trust K-1 checkbox verifier accepts each regenerated checked state at its official position", async () => {
+test("trust K-1 checkbox verifier accepts each regenerated checked state at its official position", async () => {
   const keys = [
     "c1_1[0]",
     "c1_1[1]",
@@ -140,7 +142,7 @@ for (
     }],
   ] as const
 ) {
-  Deno.test(`trust K-1 rejects rehashed ${label}`, async () => {
+  test(`trust K-1 rejects rehashed ${label}`, async () => {
     const { source, documents } = await fixture(change);
     await assertRejects(
       () => extractTrustK1IssuedCopyFields(source, filer, documents),
@@ -150,7 +152,7 @@ for (
   });
 }
 
-Deno.test("trust K-1 extraction uses the exact verified byte snapshot despite caller buffer mutation", async () => {
+test("trust K-1 extraction uses the exact verified byte snapshot despite caller buffer mutation", async () => {
   const { source, documents } = await fixture();
   const expectedHash =
     source.k1_trusts[0].box13_code_b_issued_copy_review.pdf_sha256;
@@ -177,7 +179,7 @@ for (
     ["f1_52[0]", "B"],
   ]
 ) {
-  Deno.test(`trust K-1 extraction rejects rehashed printed mismatch ${key}=${value}`, async () => {
+  test(`trust K-1 extraction rejects rehashed printed mismatch ${key}=${value}`, async () => {
     const { source, documents } = await fixture((pdf) => {
       const field = pdf.getForm().getTextField(fieldName(key));
       field.setText(value);
@@ -209,7 +211,7 @@ for (
     ],
   ] as const
 ) {
-  Deno.test(`trust K-1 extraction rejects rehashed ${label}`, async () => {
+  test(`trust K-1 extraction rejects rehashed ${label}`, async () => {
     const { source, documents } = await fixture(change);
     await assertRejects(() =>
       extractTrustK1IssuedCopyFields(source, filer, documents)

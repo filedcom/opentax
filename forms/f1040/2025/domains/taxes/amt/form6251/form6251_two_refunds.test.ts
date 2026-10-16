@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1099g } from "../../../../../nodes/inputs/income/other/f1099g/index.ts";
 import { form6251 as calculatedForm6251 } from "../../../../../nodes/intermediate/forms/taxes/amt/form6251/index.ts";
@@ -81,7 +82,7 @@ function twoRefundReturn() {
   };
 }
 
-Deno.test("Form 6251 two distinct 1099-G state refunds reach AMT, Schedule 2, native and PDF", () => {
+test("Form 6251 two distinct 1099-G state refunds reach AMT, Schedule 2, native and PDF", () => {
   const { fields, pending } = twoRefundReturn();
   assertEquals(fields.amti, 199_000);
   assertStringIncludes(
@@ -94,7 +95,7 @@ Deno.test("Form 6251 two distinct 1099-G state refunds reach AMT, Schedule 2, na
   );
 });
 
-Deno.test("Form 6251 two-refund export rejects duplicated or changed copies and return totals", () => {
+test("Form 6251 two-refund export rejects duplicated or changed copies and return totals", () => {
   const { fields, pending } = twoRefundReturn();
   const changed = [
     {

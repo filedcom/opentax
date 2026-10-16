@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assertEquals,
   assertRejects,
@@ -13,7 +14,7 @@ import { inputSchema as scheduleRSchema } from "../../../../nodes/inputs/credits
 import { scheduleR } from "../../../mef/forms/credits/individual/schedule_r.ts";
 import { scheduleRPdf } from "../../../pdf/forms/credits/individual/schedule_r.ts";
 
-Deno.test("Schedule R apart-all-year MFS age and disability sources reach final tax and native/PDF", async () => {
+test("Schedule R apart-all-year MFS age and disability sources reach final tax and native/PDF", async () => {
   for (const [key, source] of Object.entries(inputs)) {
     const held = structuredClone(source);
     const result = f1040_2025.executeReturn(source);
@@ -61,7 +62,7 @@ Deno.test("Schedule R apart-all-year MFS age and disability sources reach final 
   }
 });
 
-Deno.test("Schedule R full MFS return rejects missing residence and physician evidence at native/PDF export", async () => {
+test("Schedule R full MFS return rejects missing residence and physician evidence at native/PDF export", async () => {
   const result = f1040_2025.executeReturn(inputs.box9);
   const pending = buildPending(result.pending);
   const filer = extractFilerIdentity(result.pending.f1040)!;

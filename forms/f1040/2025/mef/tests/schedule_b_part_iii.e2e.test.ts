@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -23,7 +24,7 @@ const general = {
   address_zip: "78701",
 };
 
-Deno.test("Schedule B Part III taxpayer input reaches the filed return", () => {
+test("Schedule B Part III taxpayer input reaches the filed return", () => {
   assertEquals(
     inputNodes.some((entry) => entry.node.nodeType === "schedule_b_part_iii"),
     true,
@@ -53,7 +54,7 @@ Deno.test("Schedule B Part III taxpayer input reaches the filed return", () => {
   assertStringIncludes(xml, "<ForeignCountryCd>CA</ForeignCountryCd>");
 });
 
-Deno.test("Schedule B IRS Germany code reaches MeF while country name reaches PDF", () => {
+test("Schedule B IRS Germany code reaches MeF while country name reaches PDF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -83,7 +84,7 @@ Deno.test("Schedule B IRS Germany code reaches MeF while country name reaches PD
   );
 });
 
-Deno.test("Form 8814 child facts force Schedule B foreign answers and literals", () => {
+test("Form 8814 child facts force Schedule B foreign answers and literals", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -134,7 +135,7 @@ Deno.test("Form 8814 child facts force Schedule B foreign answers and literals",
   );
 });
 
-Deno.test("1099-INT adjustments reach gross Schedule B rows and MeF deductions", () => {
+test("1099-INT adjustments reach gross Schedule B rows and MeF deductions", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -186,7 +187,7 @@ Deno.test("1099-INT adjustments reach gross Schedule B rows and MeF deductions",
   );
 });
 
-Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
+test("seller-financed buyer identity reaches Schedule B MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -229,7 +230,7 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
   );
 });
 
-Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
+test("foreign seller-financed buyer reaches Schedule B MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -269,7 +270,7 @@ Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
   assertStringIncludes(xml, "<ForeignPostalCd>M5H2N2</ForeignPostalCd>");
 });
 
-Deno.test("nonresidence seller financing below $1,500 does not force Schedule B", () => {
+test("nonresidence seller financing below $1,500 does not force Schedule B", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -295,7 +296,7 @@ Deno.test("nonresidence seller financing below $1,500 does not force Schedule B"
   assertEquals(xml.includes("<IRS1040ScheduleB"), false);
 });
 
-Deno.test("nonresidence seller financing above $1,500 files an ordinary interest row", () => {
+test("nonresidence seller financing above $1,500 files an ordinary interest row", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -328,7 +329,7 @@ Deno.test("nonresidence seller financing above $1,500 files an ordinary interest
   assertEquals(xml.includes("<SellerFinancedNm>"), false);
 });
 
-Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", () => {
+test("1099-OID premiums and nominee amount reach Schedule B adjustments", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
@@ -377,7 +378,7 @@ Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", (
   );
 });
 
-Deno.test("1099-DIV nominee allocation reaches Schedule B and taxpayer-only return lines", () => {
+test("1099-DIV nominee allocation reaches Schedule B and taxpayer-only return lines", () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,

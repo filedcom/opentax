@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import {
   assert,
   assertEquals,
@@ -12,22 +14,17 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { signedSourceCases } from "./form6251_signed_sources.fixture.ts";
 
 function evidenceRoot() {
-  try {
-    return Deno.env.get("FORM6251_SIGNED_SOURCES_DIR");
-  } catch (error) {
-    if (error instanceof Deno.errors.NotCapable) return undefined;
-    throw error;
-  }
+  return process.env.FORM6251_SIGNED_SOURCES_DIR;
 }
 for (const entry of signedSourceCases) {
-  Deno.test(`Complete signed AMT source review: ${entry.id}`, async () => {
+  test(`Complete signed AMT source review: ${entry.id}`, async () => {
     const result = f1040_2025.executeReturn(entry.inputs);
     assertEquals(result.diagnostics, []);
     const pending = normalizeAllPending(result.pending);
     const filer = extractFilerIdentity(pending.f1040);
     assertExists(filer);
     const root = evidenceRoot();
-    if (root) await Deno.mkdir(root, { recursive: true });
+    if (root) await fs.mkdir(root, { recursive: true });
     const expected = {
       trust: entry.trust,
       depletion: entry.depletion,
@@ -66,7 +63,7 @@ for (const entry of signedSourceCases) {
           : "property-level AMT depletion",
       );
       if (root) {
-        await Deno.writeTextFile(
+        await fs.writeFile(
           `${root}/${entry.id}.json`,
           JSON.stringify(
             {
@@ -122,7 +119,7 @@ for (const entry of signedSourceCases) {
       origins,
     );
     if (root) {
-      await Deno.writeTextFile(
+      await fs.writeFile(
         `${root}/${entry.id}.json`,
         JSON.stringify(
           {
@@ -137,8 +134,8 @@ for (const entry of signedSourceCases) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${entry.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${entry.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${entry.id}.pdf`, pdf);
     }
     if (qualifiedBoundary) return;
     const trusts = entry.inputs.k1_trust;

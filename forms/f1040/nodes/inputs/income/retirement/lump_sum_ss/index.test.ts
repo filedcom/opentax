@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { lump_sum_ss } from "./index.ts";
 
@@ -19,26 +20,26 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("lump_sum_ss.inputSchema: valid minimal item passes", () => {
+test("lump_sum_ss.inputSchema: valid minimal item passes", () => {
   const parsed = lump_sum_ss.inputSchema.safeParse({
     lump_sum_sss: [minimalItem()],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("lump_sum_ss.inputSchema: empty array fails (min 1)", () => {
+test("lump_sum_ss.inputSchema: empty array fails (min 1)", () => {
   const parsed = lump_sum_ss.inputSchema.safeParse({ lump_sum_sss: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("lump_sum_ss.inputSchema: negative total_ss_benefits_this_year fails", () => {
+test("lump_sum_ss.inputSchema: negative total_ss_benefits_this_year fails", () => {
   const parsed = lump_sum_ss.inputSchema.safeParse({
     lump_sum_sss: [minimalItem({ total_ss_benefits_this_year: -100 })],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("lump_sum_ss.inputSchema: negative lump_sum_amount fails", () => {
+test("lump_sum_ss.inputSchema: negative lump_sum_amount fails", () => {
   const parsed = lump_sum_ss.inputSchema.safeParse({
     lump_sum_sss: [minimalItem({ lump_sum_amount: -500 })],
   });
@@ -49,7 +50,7 @@ Deno.test("lump_sum_ss.inputSchema: negative lump_sum_amount fails", () => {
 // 2. Zero Benefits — No Output
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: zero total_ss_benefits → no output", () => {
+test("lump_sum_ss.compute: zero total_ss_benefits → no output", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 0,
     lump_sum_amount: 0,
@@ -61,7 +62,7 @@ Deno.test("lump_sum_ss.compute: zero total_ss_benefits → no output", () => {
 // 3. The issued benefit statement owns line 6a
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: no lump sum does not duplicate issued box 5", () => {
+test("lump_sum_ss.compute: no lump sum does not duplicate issued box 5", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 24_000,
     lump_sum_amount: 0,
@@ -73,7 +74,7 @@ Deno.test("lump_sum_ss.compute: no lump sum does not duplicate issued box 5", ()
 // 4. Election Cannot Be Inferred from a Beneficial Flag
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: election flag alone cannot reduce line 6a", () => {
+test("lump_sum_ss.compute: election flag alone cannot reduce line 6a", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -90,7 +91,7 @@ Deno.test("lump_sum_ss.compute: election flag alone cannot reduce line 6a", () =
 // 5. Lump Sum Election — Not Beneficial
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: election not beneficial leaves issued box 5 as the source", () => {
+test("lump_sum_ss.compute: election not beneficial leaves issued box 5 as the source", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 30_000,
     lump_sum_amount: 18_000,
@@ -103,7 +104,7 @@ Deno.test("lump_sum_ss.compute: election not beneficial leaves issued box 5 as t
 // 6. Lump Sum Without Election Override
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: lump sum without election does not deposit box 5 twice", () => {
+test("lump_sum_ss.compute: lump sum without election does not deposit box 5 twice", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 24_000,
     lump_sum_amount: 12_000,
@@ -115,7 +116,7 @@ Deno.test("lump_sum_ss.compute: lump sum without election does not deposit box 5
 // 7. Validation — Lump Sum > Total (Hard Error)
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: lump_sum_amount > total_ss_benefits → throws", () => {
+test("lump_sum_ss.compute: lump_sum_amount > total_ss_benefits → throws", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -130,7 +131,7 @@ Deno.test("lump_sum_ss.compute: lump_sum_amount > total_ss_benefits → throws",
 // 8. Prior Year Benefits Array
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: prior-year payment splits alone cannot support election", () => {
+test("lump_sum_ss.compute: prior-year payment splits alone cannot support election", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -151,7 +152,7 @@ Deno.test("lump_sum_ss.compute: prior-year payment splits alone cannot support e
 // 9. Worksheet cannot create a second return source
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: has no separate f1040 output", () => {
+test("lump_sum_ss.compute: has no separate f1040 output", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 18_000,
     lump_sum_amount: 0,
@@ -159,7 +160,7 @@ Deno.test("lump_sum_ss.compute: has no separate f1040 output", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("lump_sum_ss.compute: does not route to any nodeType", () => {
+test("lump_sum_ss.compute: does not route to any nodeType", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 18_000,
     lump_sum_amount: 0,
@@ -171,7 +172,7 @@ Deno.test("lump_sum_ss.compute: does not route to any nodeType", () => {
 // 10. Aggregation — Multiple Items
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: multiple worksheet items do not duplicate line 6a", () => {
+test("lump_sum_ss.compute: multiple worksheet items do not duplicate line 6a", () => {
   const result = compute([
     minimalItem({
       total_ss_benefits_this_year: 12_000,
@@ -190,7 +191,7 @@ Deno.test("lump_sum_ss.compute: multiple worksheet items do not duplicate line 6
 // 11. Smoke Test
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: two prior-year splits still need taxable-benefit worksheets", () => {
+test("lump_sum_ss.compute: two prior-year splits still need taxable-benefit worksheets", () => {
   assertThrows(
     () =>
       compute([minimalItem({

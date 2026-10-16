@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
@@ -79,7 +80,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("Form 8582 calculates entire-sale PAL release but requires authenticated prior return to export", () => {
+test("Form 8582 calculates entire-sale PAL release but requires authenticated prior return to export", () => {
   const result = filedReturn();
   assertEquals(result.carryforwards.suspended_pal_8582, undefined);
   assertEquals(result.pending.form8582?.current_loss ?? 0, 0);
@@ -116,7 +117,7 @@ Deno.test("Form 8582 calculates entire-sale PAL release but requires authenticat
   );
 });
 
-Deno.test("zero-current entire-gain route rejects prior balance, buyer, sale identity and final amounts", () => {
+test("zero-current entire-gain route rejects prior balance, buyer, sale identity and final amounts", () => {
   const result = filedReturn();
   const pending = result.pending as MefFormsPending;
   const fields = pending.form8582!;

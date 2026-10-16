@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8805 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
@@ -18,47 +19,47 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8805.inputSchema: valid minimal item passes", () => {
+test("f8805.inputSchema: valid minimal item passes", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{ partnership_name: "ABC Partners LP" }],
   });
   assertEquals(parsed.success, true);
 });
 
-Deno.test("f8805.inputSchema: empty array fails (min 1)", () => {
+test("f8805.inputSchema: empty array fails (min 1)", () => {
   const parsed = f8805.inputSchema.safeParse({ f8805s: [] });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8805.inputSchema: missing partnership_name fails", () => {
+test("f8805.inputSchema: missing partnership_name fails", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{ section_1446_tax_withheld: 5000 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8805.inputSchema: negative section_1446_tax_withheld fails", () => {
+test("f8805.inputSchema: negative section_1446_tax_withheld fails", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{ partnership_name: "XYZ LP", section_1446_tax_withheld: -100 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8805.inputSchema: negative total_tax_withheld fails", () => {
+test("f8805.inputSchema: negative total_tax_withheld fails", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{ partnership_name: "XYZ LP", total_tax_withheld: -50 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8805.inputSchema: negative ordinary_eic_allocable fails", () => {
+test("f8805.inputSchema: negative ordinary_eic_allocable fails", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{ partnership_name: "XYZ LP", ordinary_eic_allocable: -1000 }],
   });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8805.inputSchema: valid full item passes", () => {
+test("f8805.inputSchema: valid full item passes", () => {
   const parsed = f8805.inputSchema.safeParse({
     f8805s: [{
       partnership_name: "Global Partners LP",
@@ -75,46 +76,46 @@ Deno.test("f8805.inputSchema: valid full item passes", () => {
 // 2. Per-Field Routing
 // =============================================================================
 
-Deno.test("f8805.compute: section_1446_tax_withheld present — routes to f1040", () => {
+test("f8805.compute: section_1446_tax_withheld present — routes to f1040", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 5000 })]);
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "f1040");
 });
 
-Deno.test("f8805.compute: section_1446_tax_withheld routes correct amount to f1040", () => {
+test("f8805.compute: section_1446_tax_withheld routes correct amount to f1040", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 7400 })]);
   const fields = fieldsOf(result.outputs, f1040);
   assertEquals(fields?.line25c_other_withheld, 7400);
 });
 
-Deno.test("f8805.compute: total_tax_withheld used when section_1446_tax_withheld absent", () => {
+test("f8805.compute: total_tax_withheld used when section_1446_tax_withheld absent", () => {
   const result = compute([minimalItem({ total_tax_withheld: 4000 })]);
   const fields = fieldsOf(result.outputs, f1040);
   assertEquals(fields?.line25c_other_withheld, 4000);
 });
 
-Deno.test("f8805.compute: section_1446_tax_withheld takes precedence over total_tax_withheld", () => {
+test("f8805.compute: section_1446_tax_withheld takes precedence over total_tax_withheld", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 3000, total_tax_withheld: 5000 })]);
   const fields = fieldsOf(result.outputs, f1040);
   assertEquals(fields?.line25c_other_withheld, 3000);
 });
 
-Deno.test("f8805.compute: no withholding amounts — no outputs", () => {
+test("f8805.compute: no withholding amounts — no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8805.compute: zero section_1446_tax_withheld — no outputs", () => {
+test("f8805.compute: zero section_1446_tax_withheld — no outputs", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8805.compute: zero total_tax_withheld — no outputs", () => {
+test("f8805.compute: zero total_tax_withheld — no outputs", () => {
   const result = compute([minimalItem({ total_tax_withheld: 0 })]);
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8805.compute: ordinary_eic_allocable only — no outputs (income info only)", () => {
+test("f8805.compute: ordinary_eic_allocable only — no outputs (income info only)", () => {
   const result = compute([minimalItem({ ordinary_eic_allocable: 50000 })]);
   assertEquals(result.outputs.length, 0);
 });
@@ -123,7 +124,7 @@ Deno.test("f8805.compute: ordinary_eic_allocable only — no outputs (income inf
 // 3. Aggregation — Multiple Forms 8805
 // =============================================================================
 
-Deno.test("f8805.compute: multiple items — withholding summed to f1040", () => {
+test("f8805.compute: multiple items — withholding summed to f1040", () => {
   const result = compute([
     minimalItem({ section_1446_tax_withheld: 3000 }),
     minimalItem({ partnership_name: "DEF Partners", section_1446_tax_withheld: 2000 }),
@@ -132,7 +133,7 @@ Deno.test("f8805.compute: multiple items — withholding summed to f1040", () =>
   assertEquals(fields?.line25c_other_withheld, 5000);
 });
 
-Deno.test("f8805.compute: multiple items mixed — only one f1040 output", () => {
+test("f8805.compute: multiple items mixed — only one f1040 output", () => {
   const result = compute([
     minimalItem({ section_1446_tax_withheld: 1000 }),
     minimalItem({ partnership_name: "DEF LP", section_1446_tax_withheld: 2000 }),
@@ -141,7 +142,7 @@ Deno.test("f8805.compute: multiple items mixed — only one f1040 output", () =>
   assertEquals(f1040Outputs.length, 1);
 });
 
-Deno.test("f8805.compute: one item with withholding, one without — only withheld amount routes", () => {
+test("f8805.compute: one item with withholding, one without — only withheld amount routes", () => {
   const result = compute([
     minimalItem({ section_1446_tax_withheld: 5000 }),
     minimalItem({ partnership_name: "Zero LP" }), // no withholding
@@ -150,7 +151,7 @@ Deno.test("f8805.compute: one item with withholding, one without — only withhe
   assertEquals(fields?.line25c_other_withheld, 5000);
 });
 
-Deno.test("f8805.compute: items use both section_1446 and total — sum uses section_1446 where available", () => {
+test("f8805.compute: items use both section_1446 and total — sum uses section_1446 where available", () => {
   // Item 1: section_1446=3000 (takes precedence)
   // Item 2: total_tax_withheld=2000 (fallback, no section_1446)
   const result = compute([
@@ -165,11 +166,11 @@ Deno.test("f8805.compute: items use both section_1446 and total — sum uses sec
 // 4. Hard Validation
 // =============================================================================
 
-Deno.test("f8805.compute: throws on negative section_1446_tax_withheld", () => {
+test("f8805.compute: throws on negative section_1446_tax_withheld", () => {
   assertThrows(() => compute([minimalItem({ section_1446_tax_withheld: -500 })]), Error);
 });
 
-Deno.test("f8805.compute: throws on negative total_tax_withheld", () => {
+test("f8805.compute: throws on negative total_tax_withheld", () => {
   assertThrows(() => compute([minimalItem({ total_tax_withheld: -100 })]), Error);
 });
 
@@ -177,7 +178,7 @@ Deno.test("f8805.compute: throws on negative total_tax_withheld", () => {
 // 5. Edge Cases
 // =============================================================================
 
-Deno.test("f8805.compute: partnership_ein optional — withholding still routes", () => {
+test("f8805.compute: partnership_ein optional — withholding still routes", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 7000 })]);
   const fields = fieldsOf(result.outputs, f1040);
   assertEquals(fields?.line25c_other_withheld, 7000);
@@ -187,7 +188,7 @@ Deno.test("f8805.compute: partnership_ein optional — withholding still routes"
 // 6. Smoke Test
 // =============================================================================
 
-Deno.test("f8805.compute: smoke test — multiple partnerships, mixed withholding types", () => {
+test("f8805.compute: smoke test — multiple partnerships, mixed withholding types", () => {
   const result = f8805.compute({ taxYear: 2025, formType: "f1040" }, {
     f8805s: [
       {

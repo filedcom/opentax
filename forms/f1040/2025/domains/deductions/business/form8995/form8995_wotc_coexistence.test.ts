@@ -1,3 +1,6 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import {
   assert,
   assertEquals,
@@ -22,7 +25,7 @@ async function assertFullReturnSchema(xml: string) {
     "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
-  const validator = new Deno.Command("xmllint", {
+  const validator = new sys.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
     stdin: "piped",
     stdout: "piped",
@@ -35,7 +38,7 @@ async function assertFullReturnSchema(xml: string) {
   assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
 }
 
-Deno.test("Form 5884 wage reduction reaches Schedule C, Form 8995, native XML and filled PDF", async () => {
+test("Form 5884 wage reduction reaches Schedule C, Form 8995, native XML and filled PDF", async () => {
   const original = (base.inputs.schedule_c as Record<string, unknown>[])[0];
   const result = f1040_2025.executeReturn({
     ...base.inputs,
@@ -93,14 +96,14 @@ Deno.test("Form 5884 wage reduction reaches Schedule C, Form 8995, native XML an
   await assertFullReturnSchema(prepared.bundle.xml);
   const pdf = await prepared.renderPdf();
   assert(pdf.length > 0);
-  if (Deno.args.includes("--write-review-artifacts")) {
+  if (process.argv.slice(2).includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-wotc/",
       import.meta.url,
     ).pathname;
-    await Deno.mkdir(directory, { recursive: true });
-    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
-    await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(`${directory}filled-return.pdf`, pdf);
+    await fs.writeFile(`${directory}return.xml`, prepared.bundle.xml);
   }
 
   const changed = {
@@ -155,7 +158,7 @@ Deno.test("Form 5884 wage reduction reaches Schedule C, Form 8995, native XML an
   }
 });
 
-Deno.test("tax-limited WOTC uses full line 2 for QBI before limiting Form 3800 credit", async () => {
+test("tax-limited WOTC uses full line 2 for QBI before limiting Form 3800 credit", async () => {
   const { w2: _wages, ...inputs } = base.inputs;
   for (
     const [receipts, profit, qbiDeduction, allowed] of [

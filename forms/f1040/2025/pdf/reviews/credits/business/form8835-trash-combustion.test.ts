@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -71,7 +72,7 @@ function trash(): F8835Item {
   };
 }
 
-Deno.test("trash-combustion Form 8835 line 1h reconciles source, 1040, native, and PDF", async () => {
+test("trash-combustion Form 8835 line 1h reconciles source, 1040, native, and PDF", async () => {
   const source = trash();
   const result = f1040_2025.executeReturn({ ...base.inputs, f8835: [source] });
   assertEquals(result.diagnostics, []);

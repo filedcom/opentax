@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises";
+import { test } from "bun:test";
+import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
@@ -52,13 +55,13 @@ const XSD_PATH = new URL(
 ).pathname;
 let xsdAvailable = false;
 try {
-  Deno.statSync(XSD_PATH);
+  sys.statSync(XSD_PATH);
   xsdAvailable = true;
 } catch {
   // The official IRS schema bundle is local-only.
 }
 
-Deno.test("Form 7203 descriptor emits nothing without its pending source", () => {
+test("Form 7203 descriptor emits nothing without its pending source", () => {
   assertEquals(form7203StockLoss.build({}, context()), "");
 });
 
@@ -76,7 +79,7 @@ function context(item: Record<string, unknown> = source, allowed = 3_000) {
   };
 }
 
-Deno.test("staged Form 7203 stock-only XML follows TY2025 line and group order", () => {
+test("staged Form 7203 stock-only XML follows TY2025 line and group order", () => {
   const xml = buildReviewedStockLoss7203(
     { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
     context(),
@@ -115,12 +118,7 @@ Deno.test("staged Form 7203 stock-only XML follows TY2025 line and group order",
   );
 });
 
-Deno.test({
-  name: "XSD: Form 7203 stock-only loss and suspended balance",
-  ignore: !xsdAvailable,
-  sanitizeOps: false,
-  sanitizeResources: false,
-}, async () => {
+test.skipIf(!xsdAvailable)("XSD: Form 7203 stock-only loss and suspended balance", async () => {
   const xml = buildReviewedStockLoss7203(
     { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
     context(),
@@ -128,21 +126,21 @@ Deno.test({
     "<IRS7203>",
     '<IRS7203 xmlns="http://www.irs.gov/efile" documentId="IRS7203-1">',
   );
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
-    await Deno.writeTextFile(path, xml);
-    const result = await new Deno.Command("xmllint", {
+    await fs.writeFile(path, xml);
+    const result = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", XSD_PATH, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
     assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   } finally {
-    await Deno.remove(path);
+    await sys.remove(path);
   }
 });
 
-Deno.test("staged Form 7203 rejects a pending amount or shareholder mismatch", () => {
+test("staged Form 7203 rejects a pending amount or shareholder mismatch", () => {
   assertThrows(
     () =>
       buildReviewedStockLoss7203(
@@ -169,7 +167,7 @@ Deno.test("staged Form 7203 rejects a pending amount or shareholder mismatch", (
   );
 });
 
-Deno.test("Form 7203 cash capital contribution raises stock basis and limits the sourced loss", () => {
+test("Form 7203 cash capital contribution raises stock basis and limits the sourced loss", () => {
   const contribution = {
     amount: 500,
     contributed_date: "2025-06-01",
@@ -207,7 +205,7 @@ Deno.test("Form 7203 cash capital contribution raises stock basis and limits the
   }, 3_500)), Error);
 });
 
-Deno.test("staged Form 7203 rejects mixed K-1 basis items", () => {
+test("staged Form 7203 rejects mixed K-1 basis items", () => {
   assertThrows(
     () =>
       buildReviewedStockLoss7203(
@@ -228,7 +226,7 @@ Deno.test("staged Form 7203 rejects mixed K-1 basis items", () => {
   );
 });
 
-Deno.test("staged Form 7203 zero basis skips line 10 and column c", () => {
+test("staged Form 7203 zero basis skips line 10 and column c", () => {
   const xml = buildReviewedStockLoss7203(
     { stock_basis_beginning: 0, ordinary_loss: 4_000 },
     context({
@@ -248,7 +246,7 @@ Deno.test("staged Form 7203 zero basis skips line 10 and column c", () => {
   );
 });
 
-Deno.test("staged Form 7203 rejects a filed Schedule 1/1040 loss mismatch", () => {
+test("staged Form 7203 rejects a filed Schedule 1/1040 loss mismatch", () => {
   const mismatched = context();
   assertThrows(
     () =>

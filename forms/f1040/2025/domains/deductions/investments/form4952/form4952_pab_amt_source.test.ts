@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -5,7 +7,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form4952PabAmtInputs } from "./form4952_pab_amt.fixture.ts";
 
-Deno.test("issued PAB interest refigures current Form 4952 line 8 and Form 6251 line 2c", async () => {
+test("issued PAB interest refigures current Form 4952 line 8 and Form 6251 line 2c", async () => {
   const input = form4952PabAmtInputs();
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
@@ -64,18 +66,18 @@ Deno.test("issued PAB interest refigures current Form 4952 line 8 and Form 6251 
     prepared.bundle,
     origins,
   );
-  const dir = Deno.args[0] ?? ".state/research/form4952-pab-amt-source";
-  await Deno.mkdir(dir, { recursive: true });
+  const dir = process.argv.slice(2)[0] ?? ".state/research/form4952-pab-amt-source";
+  await fs.mkdir(dir, { recursive: true });
   await Promise.all([
-    Deno.writeTextFile(`${dir}/source.json`, JSON.stringify(input, null, 2)),
-    Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(p, null, 2)),
-    Deno.writeTextFile(
+    fs.writeFile(`${dir}/source.json`, JSON.stringify(input, null, 2)),
+    fs.writeFile(`${dir}/pending.json`, JSON.stringify(p, null, 2)),
+    fs.writeFile(
       `${dir}/carry.json`,
       JSON.stringify(result.carryforwards, null, 2),
     ),
-    Deno.writeTextFile(`${dir}/origins.json`, JSON.stringify(origins, null, 2)),
-    Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml),
-    Deno.writeFile(`${dir}/return.pdf`, pdf),
+    fs.writeFile(`${dir}/origins.json`, JSON.stringify(origins, null, 2)),
+    fs.writeFile(`${dir}/return.xml`, prepared.bundle.xml),
+    fs.writeFile(`${dir}/return.pdf`, pdf),
   ]);
 
   let preparedSourceConflicts = 0;

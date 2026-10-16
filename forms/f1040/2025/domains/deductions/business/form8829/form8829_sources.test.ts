@@ -1,3 +1,5 @@
+import { test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   rentedHomeCases,
@@ -11,7 +13,7 @@ import { preparedSourceSha256 } from "../../../../return-processing/prepared-sou
 // The original business-loss case is retained in the fixture and discovery
 // evidence; its existing Form8995 loss-carryforward boundary stays deferred.
 for (const c of rentedHomeCases.filter((c) => c.id !== "business-loss")) {
-  Deno.test(`Reviewed rented-home records through full return: ${c.id}`, async () => {
+  test(`Reviewed rented-home records through full return: ${c.id}`, async () => {
     const input = rentedHomeFixture(c),
       result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -105,11 +107,11 @@ for (const c of rentedHomeCases.filter((c) => c.id !== "business-loss")) {
     }
     let root: string | undefined;
     try {
-      root = Deno.env.get("FORM8829_SOURCE_EVIDENCE");
+      root = process.env.FORM8829_SOURCE_EVIDENCE;
     } catch { /* Optional private evidence. */ }
     if (root) {
-      await Deno.mkdir(root, { recursive: true });
-      await Deno.writeTextFile(
+      await fs.mkdir(root, { recursive: true });
+      await fs.writeFile(
         `${root}/${c.id}.json`,
         JSON.stringify(
           {
@@ -125,13 +127,13 @@ for (const c of rentedHomeCases.filter((c) => c.id !== "business-loss")) {
           2,
         ),
       );
-      await Deno.writeTextFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
-      await Deno.writeFile(`${root}/${c.id}.pdf`, pdf);
+      await fs.writeFile(`${root}/${c.id}.xml`, prepared.bundle.xml);
+      await fs.writeFile(`${root}/${c.id}.pdf`, pdf);
     }
   });
 }
 
-Deno.test("Rented-home public calculation rejects conflicting reviewed records", () => {
+test("Rented-home public calculation rejects conflicting reviewed records", () => {
   const mutations: Array<(input: any) => void> = [
     (i) =>
       i.form_8829.rented_home.source_evidence.home_identifier = "Detached home",

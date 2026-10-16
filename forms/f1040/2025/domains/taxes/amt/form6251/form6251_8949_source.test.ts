@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertThrows } from "@std/assert";
 import { assertForm6251Form8949Source } from "./form6251_8949_source.ts";
 
@@ -22,7 +23,7 @@ const transaction = {
   amt_cost_basis: 2_500,
 };
 
-Deno.test("Form 6251 line 2k replays exact Form 8949 source rows", () => {
+test("Form 6251 line 2k replays exact Form 8949 source rows", () => {
   const fields = {
     line2k_8949_basis_dispositions: basis,
     line2k_disposition: -500,

@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../2025/index.ts";
 import { buildPending } from "../../../../../2025/mef/execution/pending.ts";
@@ -15,7 +16,7 @@ const request = {
   request_record_reference: "Reviewed child election intent",
 };
 
-Deno.test("entered Form 4547 intent survives intake and blocks both final exports", async () => {
+test("entered Form 4547 intent survives intake and blocks both final exports", async () => {
   const result = f1040_2025.executeReturn({
     ...base.inputs,
     f4547: { requests: [request] },
@@ -35,7 +36,7 @@ Deno.test("entered Form 4547 intent survives intake and blocks both final export
   );
 });
 
-Deno.test("Form 4547 intake rejects empty, duplicate, and unconfirmed child requests", () => {
+test("Form 4547 intake rejects empty, duplicate, and unconfirmed child requests", () => {
   const invalid = [
     { requests: [] },
     { requests: [request, request] },
@@ -70,7 +71,7 @@ Deno.test("Form 4547 intake rejects empty, duplicate, and unconfirmed child requ
   }
 });
 
-Deno.test("Form 4547 retains an existing account reference for a pilot-only election", () => {
+test("Form 4547 retains an existing account reference for a pilot-only election", () => {
   const pilotOnly = {
     ...request,
     initial_account_requested: false,

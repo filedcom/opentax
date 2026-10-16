@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import {
   assert,
   assertEquals,
@@ -21,7 +22,7 @@ import { form6251Pdf } from "../../../../pdf/forms/taxes/amt/f6251.ts";
 // Expected values are derived from the retained source/Decimal replay and
 // official tax table, independently of these public-return executions.
 for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
-  Deno.test(`PAB sources reconcile AMT and final balance due: ${id}`, async () => {
+  test(`PAB sources reconcile AMT and final balance due: ${id}`, async () => {
     const input = fixtures[id], held = structuredClone(input), e = expected[id];
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
@@ -63,7 +64,7 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
   });
 }
 
-Deno.test("PAB exports reject changed source ownership, preferences and return totals", async () => {
+test("PAB exports reject changed source ownership, preferences and return totals", async () => {
   let count = 0, pdfCount = 0;
   for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     const result = f1040_2025.executeReturn(fixtures[id]);

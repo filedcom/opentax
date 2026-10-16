@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
@@ -34,7 +35,7 @@ async function rejectsBoth(
   );
 }
 
-Deno.test("partnership code S export rejects changed K-1 identity", async () => {
+test("partnership code S export rejects changed K-1 identity", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -46,7 +47,7 @@ Deno.test("partnership code S export rejects changed K-1 identity", async () => 
   await rejectsBoth(pending, "do not match the issued K-1 facts");
 });
 
-Deno.test("partnership code S export rejects changed capital character", async () => {
+test("partnership code S export rejects changed capital character", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -67,7 +68,7 @@ Deno.test("partnership code S export rejects changed capital character", async (
   await rejectsBoth(pending, "do not match the issued K-1 facts");
 });
 
-Deno.test("partnership code S export rejects another recipient", async () => {
+test("partnership code S export rejects another recipient", async () => {
   const pending = prepared();
   const source = pending.k1_partnership as {
     k1_partnerships: Array<Record<string, unknown>>;
@@ -84,14 +85,14 @@ Deno.test("partnership code S export rejects another recipient", async () => {
   await rejectsBoth(pending, "recipient is not the filer");
 });
 
-Deno.test("partnership code S export rejects changed partnership subtotal", async () => {
+test("partnership code S export rejects changed partnership subtotal", async () => {
   const pending = prepared();
   (pending.schedule_d as Record<string, unknown>)
     .k1_partnership_line5_source_total = 401;
   await rejectsBoth(pending, "do not match its K-1 sources");
 });
 
-Deno.test("partnership code S export rejects changed filed line 5", async () => {
+test("partnership code S export rejects changed filed line 5", async () => {
   const pending = prepared();
   (pending.schedule_d as Record<string, unknown>).line_5_k1_st = 401;
   await rejectsBoth(pending, "do not match the sole partnership K-1 source");

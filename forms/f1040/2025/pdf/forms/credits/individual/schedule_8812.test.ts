@@ -1,3 +1,4 @@
+import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { schedule8812Pdf } from "./schedule_8812.ts";
@@ -34,7 +35,7 @@ const form1040 = {
   line28_actc: 1_125,
 };
 
-Deno.test("2025 Schedule 8812 PDF maps both worksheet pages from calculated lines", () => {
+test("2025 Schedule 8812 PDF maps both worksheet pages from calculated lines", () => {
   const fieldMap = new Map(schedule8812Pdf.fields.map((entry) => [
     entry.domainKey,
     entry.pdfField,
@@ -66,7 +67,7 @@ Deno.test("2025 Schedule 8812 PDF maps both worksheet pages from calculated line
   assertEquals(printed?.line27, 1_125);
 });
 
-Deno.test("2025 Schedule 8812 PDF rejects conflicting finalized return", () => {
+test("2025 Schedule 8812 PDF rejects conflicting finalized return", () => {
   assertThrows(
     () =>
       schedule8812Pdf.projectFields?.(fields, {
