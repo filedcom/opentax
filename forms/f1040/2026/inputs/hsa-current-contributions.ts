@@ -1,3 +1,4 @@
+import { reconcileHsaRollovers2026 } from "./hsa-rollover-source.ts";
 import {
   type HsaQualifiedFunding2026,
   reconcileHsaQualifiedFunding2026,
@@ -21,11 +22,16 @@ export function calculateHsaCurrentContributions2026(
   raw: HsaQualifiedFunding2026,
 ) {
   const limits = reconcileHsaQualifiedFunding2026(raw);
+  const rollovers = reconcileHsaRollovers2026(
+    limits.source_input,
+    limits.rollover_review,
+    limits.rollover_distribution_sources,
+  );
   const pending = limits.source_input.claim.accounts.flatMap((a) =>
     a.receipts.filter((r) =>
       r.received_on.startsWith("2026-") &&
       r.kind !== "personal_cash" && r.kind !== "employer_cash" &&
-      r.kind !== "ira_funding_transfer"
+      r.kind !== "ira_funding_transfer" && r.kind !== "reported_rollover"
     ).map((r) => r.record_reference)
   );
   if (pending.length) {
@@ -112,5 +118,5 @@ export function calculateHsaCurrentContributions2026(
       },
     }];
   });
-  return { ...limits, owners };
+  return { ...limits, owners, rollovers };
 }

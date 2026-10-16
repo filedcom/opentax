@@ -1,3 +1,5 @@
+import { hsaRolloverReview2026Schema } from "./hsa-rollover-source.ts";
+import { hsaDistributionSources2026Schema } from "./hsa-distribution-source.ts";
 import type { z } from "zod";
 import {
   calculateHsaContributionLimits2026,
@@ -18,6 +20,8 @@ import {
 export const hsaQualifiedFunding2026Schema = hsaContributionLimits2026Schema
   .extend({
     qualified_funding_review: review.optional(),
+    rollover_review: hsaRolloverReview2026Schema.optional(),
+    rollover_distribution_sources: hsaDistributionSources2026Schema.optional(),
   }).strict();
 export type HsaQualifiedFunding2026 = z.input<
   typeof hsaQualifiedFunding2026Schema
@@ -27,8 +31,12 @@ export type HsaQualifiedFunding2026 = z.input<
  * basis and retirement-income settlement. This is not an IRA exclusion output
  * or a completed testing-period/Part III calculation. */
 export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
-  const { qualified_funding_review: reviewed, ...source } =
-    hsaQualifiedFunding2026Schema.parse(raw);
+  const {
+    qualified_funding_review: reviewed,
+    rollover_review,
+    rollover_distribution_sources,
+    ...source
+  } = hsaQualifiedFunding2026Schema.parse(raw);
   const limits = calculateHsaContributionLimits2026(source);
   const receipts = source.claim.accounts.flatMap((a) =>
     a.receipts.flatMap((r) =>
@@ -48,6 +56,8 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
     return {
       ...limits,
       qualified_funding_review: reviewed,
+      rollover_review,
+      rollover_distribution_sources,
       qualified_funding: [],
     };
   }
@@ -89,6 +99,8 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
   return {
     ...limits,
     qualified_funding_review: reviewed,
+    rollover_review,
+    rollover_distribution_sources,
     qualified_funding: qualified,
   };
 }

@@ -62,12 +62,14 @@ export const hsaMedicalDistributions2026Schema =
           no_rollover_or_mistaken_distribution_in_payments_verified: z.literal(
             true,
           ).optional(),
+          no_mistaken_distribution_in_payments_verified: z.literal(true)
+            .optional(),
           disability,
         }).strict(),
       ).min(1).max(2),
     }).strict(),
-    // Supplied by the executed Schedule A source inventory in the eventual public
-    // bridge. Here its actual bill facts and excluded amounts must reconcile.
+    // Supplied by the executed Schedule A source inventory. Its actual bill
+    // facts and excluded amounts must reconcile.
     schedule_a_medical_sources: z.array(medicalPayment2026Schema).max(10000),
     medical_expenses: z.array(
       z.object({
@@ -137,15 +139,21 @@ export function calculateHsaMedicalDistributions2026(
     : undefined;
   const r = excess?.distribution_sources ??
     reconcileHsaDistributions2026(source);
+  const rollovers = excess?.contribution_sources.rollovers ?? [];
   for (const o of review.owners) {
+    const hasRollovers = rollovers.some((r) => r.owner_tin === o.owner_tin);
     if (
-      excess
-        ? o
-          .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
-          !o.no_rollover_or_mistaken_distribution_in_payments_verified
-        : !o
-          .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
-          o.no_rollover_or_mistaken_distribution_in_payments_verified
+      hasRollovers
+        ? !o.no_mistaken_distribution_in_payments_verified ||
+          o.no_rollover_or_mistaken_distribution_in_payments_verified ||
+          o.no_rollover_excess_return_or_mistaken_distribution_in_payments_verified
+        : o.no_mistaken_distribution_in_payments_verified || (excess
+          ? o
+            .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
+            !o.no_rollover_or_mistaken_distribution_in_payments_verified
+          : !o
+            .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
+            o.no_rollover_or_mistaken_distribution_in_payments_verified)
     ) {
       throw Error(
         "HSA distribution absence declarations must match the actual excess-return source route",
@@ -335,7 +343,24 @@ export function calculateHsaMedicalDistributions2026(
       const returned = excess?.withdrawals.find((w) =>
         w.income_tax_year === 2026 && w.payment_reference === p.record_reference
       );
-      const excluded = returned ? sourceCents(returned.gross_amount) : 0;
+      const rolled = rollovers.filter((r) =>
+        r.distribution_payment_reference === p.record_reference
+      )
+        .reduce((n, r) => n + sourceCents(r.amount), 0);
+      if (returned && rolled > 0) {
+        throw Error(
+          "HSA payment cannot be both an excess return and a rollover",
+        );
+      }
+      const excluded = (returned ? sourceCents(returned.gross_amount) : 0) +
+        rolled;
+      if (
+        rolled > 0 && excluded + p.medical_cents > sourceCents(p.gross_amount)
+      ) {
+        throw Error(
+          "HSA rollover and medical allocations cannot reuse the same distribution dollars",
+        );
+      }
       const taxable = hsaTaxableDistributions(
         sourceCents(p.gross_amount),
         excluded,
@@ -351,7 +376,9 @@ export function calculateHsaMedicalDistributions2026(
         form1099sa_source_reference: p.form1099sa_source_reference,
         distributed_on: p.distributed_on,
         gross_amount: p.gross_amount,
-        excluded_excess_return: excluded / 100,
+        excluded_excess_return:
+          (returned ? sourceCents(returned.gross_amount) : 0) / 100,
+        excluded_rollover: rolled / 100,
         qualified_medical_amount: p.medical_cents / 100,
         taxable_amount: taxable / 100,
         exception,
@@ -363,7 +390,9 @@ export function calculateHsaMedicalDistributions2026(
       0,
     );
     const excluded = rows.reduce(
-      (n, p) => n + sourceCents(p.excluded_excess_return),
+      (n, p) =>
+        n + sourceCents(p.excluded_excess_return) +
+        sourceCents(p.excluded_rollover),
       0,
     );
     const taxable = hsaTaxableDistributions(

@@ -1,3 +1,4 @@
+import { hsaRolloverGraph2026 } from "../inputs/hsa-rollover.fixture.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument, PDFName } from "pdf-lib";
 import {
@@ -236,4 +237,37 @@ Deno.test("2026 joint HSA PDF prints each beneficiary once and omits inactive ac
     ),
     false,
   );
+});
+
+Deno.test("2026 HSA rollover prints combined rollover/excess exclusion and reconciled return income", async () => {
+  for (const crossYear of [false, true]) {
+    const b = await buildDraftReturnPdf2026(
+      hsaRolloverGraph2026(crossYear, true),
+    );
+    const p = b.attachments.find((a) =>
+      a.form === "form8889:taxpayer"
+    )!.formPages[0];
+    for (
+      const [y, amount] of [
+        [372, 1000],
+        [408, 2400],
+        [444, 2630],
+        [480, 1130],
+        [492, 1500],
+        [504, 500],
+        [528, 1000],
+        [588, 200],
+      ]
+    ) {
+      assertEquals(
+        await text(b.bytes, p, [y === 372 ? 410 : 503, y, 74, 12]),
+        String(amount),
+      );
+    }
+    const s1 = b.attachments.find((a) => a.form === "schedule1")!.formPages[0];
+    assertEquals(await text(b.bytes, s1, [410, 354, 72, 12]), "1000");
+    assertEquals(b.calculation.pending.f1040.line4b_ira_taxable, 450);
+    assertEquals(b.calculation.pending.f1040.line23_other_taxes, 305);
+    await staticPdf(b.bytes);
+  }
 });

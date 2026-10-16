@@ -1,3 +1,4 @@
+import { hsaRolloverElapsedDays } from "./rollover-timing.ts";
 import { hsaTestingPeriodIncome } from "./testing-income.ts";
 import { hsaPriorExcess } from "./prior-excess.ts";
 import {
@@ -723,23 +724,11 @@ function excludedDistributions(input: Form8889Input, taxYear: number): {
   const sources = input.hsa_excluded_distributions;
   const rollover = sources?.rollover;
   if (rollover) {
-    const parseDate = (value: string): number => {
-      const timestamp = Date.parse(`${value}T00:00:00.000Z`);
-      if (
-        !Number.isFinite(timestamp) ||
-        new Date(timestamp).toISOString().slice(0, 10) !== value
-      ) {
-        throw new Error("Form 8889 HSA rollover needs valid calendar dates");
-      }
-      return timestamp;
-    };
-    const distributionDate = parseDate(rollover.distribution_date);
-    const contributionDate = parseDate(rollover.contribution_date);
-    const elapsedDays = (contributionDate - distributionDate) / 86_400_000;
-    if (
-      rollover.distribution_date.slice(0, 4) !== String(taxYear) ||
-      elapsedDays < 0 || elapsedDays > 60
-    ) {
+    hsaRolloverElapsedDays(
+      rollover.distribution_date,
+      rollover.contribution_date,
+    );
+    if (rollover.distribution_date.slice(0, 4) !== String(taxYear)) {
       throw new Error(
         "Form 8889 HSA rollover must redeposit a tax-year distribution within 60 days",
       );

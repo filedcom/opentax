@@ -616,13 +616,56 @@ failed current/prior testing periods, medical double-use rejection, Social
 Security/Marketplace MAGI, NIIT review, Form 1062 tax classification and static
 owner PDF pages. This is development validation, not IRS acceptance.
 
+## Source-reconciled HSA rollovers
+
+Current-year HSA cash payouts now reconcile to actual reported rollover receipts
+before their exclusion reaches line 14b. The ordinary 60-day validator is shared
+with the 2025 source path; original dates and contribution years remain intact.
+The public graph supplies its executed distribution inventory, preventing an
+independent substituted statement from producing an exclusion. Owner, payment,
+account, statement classification, receipt, complete review and Form 5498-SA
+box 4 totals must agree.
+
+The rollover history follows [section 223(f)(5)](https://www.law.cornell.edu/uscode/text/26/223):
+the one-year restriction follows distributions received by the beneficiary across
+all owned HSAs, including closed accounts. It does not restart on a redeposit or
+an account change. Actual prior payout/redeposit references and latest filed
+return treatment are retained; a new rollover records its next eligible payout
+date. Split redeposits of one payout are combined in source cents, but separate
+payouts cannot share that beneficiary's annual exclusion. Spouses remain separate.
+
+The source bridge supports 2026 payouts deposited within 60 days into an
+inventoried HSA in 2026 or 2027. January redeposits do not inflate the 2026
+Form 5498-SA rollover box. Eligible rollovers neither create a personal deduction
+nor consume contribution capacity. They can coexist with qualified IRA funding,
+timely excess returns and partial medical/age/disability treatment; the same
+payment dollars cannot receive overlapping exclusions or reimbursements. Prior
+excess is reduced only by the remaining taxable distribution, preserving the
+correct Form 5329 carryforward and additional tax.
+
+The existing owner PDF renderer now prints combined rollover/excess exclusions
+and revised taxable income/tax, with unchanged IRA funding and testing records.
+Current and cross-year synthetic returns were rendered and inspected, and PDF
+text checks independently reconcile the output.
+
+Validation: 507 focused HSA, retirement, IRA, land-tax and PDF tests pass,
+including the shared TY2025 HSA regressions. The changed TypeScript files pass
+formatting and lint checks, and generated runtime inventories remain current.
+
+Prior-origin payouts received in 2026, Archer MSA sources, in-kind assets,
+receiving accounts first opened in 2027, late-rollover relief and failed-rollover
+contribution settlement remain explicit source gaps. Direct trustee transfers
+and mistaken-distribution repayments still require their own reconciliation;
+reported classifications alone cannot establish their tax treatment.
+
 ## Required source integration
 
 1. Extend the reconciled account/W-2 bridge for employer recoveries, corrected
    distributions and special contribution deadlines; preserve source cents.
 2. Extend owner limits for Archer MSA sources, marriage changes, mixed last-month
    spouse choices and remaining allocation branches.
-3. Extend distribution/medical workpapers for rollovers, mistaken repayments and
+3. Extend distribution/medical workpapers for remaining rollover branches, direct
+   trustee transfers, mistaken repayments and
    remaining excess/medical branches, including reimbursed DPC fees.
 4. Extend prior-year excess, funding and recapture for remaining corrections and
    exceptions using actual contribution years; never relabel historical evidence.

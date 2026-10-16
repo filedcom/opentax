@@ -451,6 +451,10 @@ reach AGI/Schedule 1; Schedule 2 and Form 1062 reconcile distribution, testing a
 excess tax. Qualified IRA funding reaches the actual IRA exclusion and HFD
 notation. Owner Forms 8889 and combined Forms 5329 now appear in the draft bundle,
 including separate spouse pages and no attachment for inactive accounts.
+Current HSA cash rollovers now reconcile actual payouts, redeposits and
+beneficiary-wide annual history before line 14b, including January redeposits and
+separate prior-excess carryforward effects. The 60-day validator is shared with
+2025 and owner draft forms reconcile the resulting income and tax.
 Basis-depleting/Roth funding, remaining rollover/excess withdrawals, broader
 historical corrections, advanced testing histories, taxable HSA NIIT
 classification above the threshold, native MeF and complete filing support

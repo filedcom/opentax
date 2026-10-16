@@ -141,11 +141,23 @@ export function reconcileHsaExcessReturns2026(
   }
   const f = funding.source_input, d = distributions.source_input;
   if (
+    funding.rollover_distribution_sources &&
+    JSON.stringify(funding.rollover_distribution_sources) !==
+      JSON.stringify(distributions.source_input)
+  ) {
+    throw Error(
+      "HSA rollover and excess workpapers must use the same actual distribution inventory",
+    );
+  }
+
+  if (
     f.filing_status !== d.filing_status || f.taxpayer_ssn !== d.taxpayer_ssn ||
     f.spouse_ssn !== d.spouse_ssn || review.reviewed_on < f.claim.reviewed_on ||
     review.reviewed_on < d.claim.reviewed_on ||
     review.reviewed_on < review.deadline.return_due_on ||
     (input.contribution_sources.qualified_funding_review?.reviewed_on ?? "") >
+      review.reviewed_on ||
+    (input.contribution_sources.rollover_review?.reviewed_on ?? "") >
       review.reviewed_on
   ) {
     throw Error(
