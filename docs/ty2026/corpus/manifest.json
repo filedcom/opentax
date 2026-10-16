@@ -2458,6 +2458,17 @@
       "sha256": "da6f2f588b06f3f44cc7177883ce6496dc1bb247d84bc068a79277822410cb0f",
       "reviewed_on": "2026-10-16",
       "notes": "Filed 2025 HSA history for 2026 testing-period recapture: 2025 contribution and HDHP limits, spouse allocation and Part I lines. This is historical authority, not 2026 annual parameters."
+    },
+    {
+      "path": "draft/i1116.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1116--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 554717,
+      "sha256": "7581530b8d131747ebf8a04913d794e51780173263167711fc0a15891e9f9e99",
+      "year_check": "2026-present",
+      "verified_on": "2026-10-16",
+      "revision": "2026 draft dated September 28, 2026"
     }
   ]
 }

@@ -63,12 +63,13 @@ export const foreignBankInterest2026Schema = z.object({
   ).min(1).max(10000),
 }).strict();
 
-function units(value: string): [bigint, bigint] {
+export function foreignDecimalUnits(value: string): [bigint, bigint] {
   const [whole, fraction = ""] = value.split(".");
   return [BigInt(whole + fraction), 10n ** BigInt(fraction.length)];
 }
-function translatedCents(native: string, rate: string): number {
-  const [n, ns] = units(native), [r, rs] = units(rate);
+export function foreignTranslatedCents(native: string, rate: string): number {
+  const [n, ns] = foreignDecimalUnits(native),
+    [r, rs] = foreignDecimalUnits(rate);
   const denominator = ns * rs;
   const cents = (n * r * 100n * 2n + denominator) / (denominator * 2n);
   const result = Number(cents);
@@ -141,7 +142,7 @@ export function calculateForeignBankInterest2026(
     // Reconcile the original currency before any exchange-rate conversion or
     // cent rounding, so omitted receipts cannot be concealed by USD totals.
     const nativeUnits = (value: string) => {
-      const [n, scale] = units(value);
+      const [n, scale] = foreignDecimalUnits(value);
       return n * (1_000_000n / scale);
     };
     if (
@@ -183,7 +184,7 @@ export function calculateForeignBankInterest2026(
       }
       checkDocument(receipt.source_document);
       checkDocument(receipt.fx.source_document);
-      const usdCents = translatedCents(
+      const usdCents = foreignTranslatedCents(
         receipt.gross_interest_native,
         receipt.fx.usd_per_currency_unit,
       );
