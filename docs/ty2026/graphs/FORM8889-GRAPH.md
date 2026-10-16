@@ -654,9 +654,56 @@ formatting and lint checks, and generated runtime inventories remain current.
 
 Prior-origin payouts received in 2026, Archer MSA sources, in-kind assets,
 receiving accounts first opened in 2027, late-rollover relief and failed-rollover
-contribution settlement remain explicit source gaps. Direct trustee transfers
-and mistaken-distribution repayments still require their own reconciliation;
-reported classifications alone cannot establish their tax treatment.
+contribution settlement remain explicit source gaps. Direct transfers and
+mistake repayments use the separate reconciliation below; their reported
+classifications alone cannot establish tax treatment.
+
+## Direct transfers and accepted mistake repayments
+
+The current source route joins actual nonreportable account debits to their
+funding-ledger receipts before annual contribution or distribution settlement.
+It supports cash transfers between distinct, inventoried HSAs belonging to the
+same beneficiary, plus full same-account repayments of mistaken 2026 payouts.
+Both sides retain their transaction, account and source references. A matching
+amount alone is insufficient: dates, ownership, receipt classification and
+complete inventories must agree. Public intake binds the actual executed
+distribution inventory; a caller cannot substitute another ledger.
+
+The [current 1099-SA/5498-SA instructions](https://www.irs.gov/instructions/i1099sa)
+exclude these transactions from reported distributions and contributions.
+Mistake repayments require reasonable-cause evidence, the first date the owner
+knew or should have known, a beneficiary representation and custodian acceptance.
+The ordinary repayment deadline follows that knowledge year, using the
+[section 7503 weekend/holiday rule](https://uscode.house.gov/us/usc/119-118/t26/s7503/)
+and [Emancipation Day treatment](https://www.irs.gov/pub/irs-drop/rr-15-13.pdf).
+This includes 2026 discovery repaid by April 15, 2027 and timely payments after
+2027 discovery; the retained funding ledger still ends in 2027.
+
+Each debit identifies either a custodian review establishing that it was never
+reported or its actual original/current 1099-SA correction lineage. For corrected
+statements, original gross minus current gross must equal the linked debit sum
+in cents, with unchanged distribution classification and excess earnings.
+The current copy must follow the transfer or accepted repayment. Intermediate
+copies remain evidence without counting the same correction delta twice.
+
+These amounts do not enter Form 8889 line 14a or 14b, reduce prior excess as
+taxable distributions, consume rollover capacity, or create deductible
+contributions. Ordinary medical/rollover/excess-return calculations still use
+the shared source arithmetic. Mixed returns retain their IRA funding and owner
+Form 5329 results. These movements create no new Form 8889 or Form 5329 filing
+requirement; existing contribution, excess or testing obligations still apply.
+Existing draft renderers replay the reconciled source totals.
+
+Validation: 523 focused HSA, retirement, IRA, land-tax and PDF tests pass,
+including TY2025 regressions and 15 new source/return tests. Draft PDF text
+checks cover both unreported transactions and corrected statements, plus the
+absence of unnecessary owner attachments for nonreportable-only activity.
+
+Archer MSA and in-kind transfers, receiving accounts opened after 2026,
+prior-year mistaken payouts/amendments, partial or cross-account mistake
+repayments, postponed deadlines, and corrections involving additional changes
+remain source gaps. Unresolved classifications cannot be silently omitted from
+the return or treated as qualified medical reimbursements.
 
 ## Required source integration
 
@@ -664,8 +711,8 @@ reported classifications alone cannot establish their tax treatment.
    distributions and special contribution deadlines; preserve source cents.
 2. Extend owner limits for Archer MSA sources, marriage changes, mixed last-month
    spouse choices and remaining allocation branches.
-3. Extend distribution/medical workpapers for remaining rollover branches, direct
-   trustee transfers, mistaken repayments and
+3. Extend distribution/medical workpapers for remaining rollover, direct-transfer
+   and mistaken-repayment branches and
    remaining excess/medical branches, including reimbursed DPC fees.
 4. Extend prior-year excess, funding and recapture for remaining corrections and
    exceptions using actual contribution years; never relabel historical evidence.

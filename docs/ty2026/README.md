@@ -455,6 +455,10 @@ Current HSA cash rollovers now reconcile actual payouts, redeposits and
 beneficiary-wide annual history before line 14b, including January redeposits and
 separate prior-excess carryforward effects. The 60-day validator is shared with
 2025 and owner draft forms reconcile the resulting income and tax.
+Direct cash transfers and accepted mistaken-distribution repayments now join
+actual debits to receipts and reconcile any corrected 1099-SA gross before
+annual settlement. They stay out of contribution totals and Form 8889 gross
+or rollover exclusions, without creating a new owner tax-form requirement.
 Basis-depleting/Roth funding, remaining rollover/excess withdrawals, broader
 historical corrections, advanced testing histories, taxable HSA NIIT
 classification above the threshold, native MeF and complete filing support

@@ -20,6 +20,7 @@ const contributionClaim = hsaQualifiedFunding2026Schema.omit({
   ...ownerKeys,
   wage_sources: true,
   rollover_distribution_sources: true,
+  nonreportable_distribution_sources: true,
 });
 export const hsaReturnClaim2026Schema = hsaTestingPeriod2026Schema.omit({
   ...ownerKeys,
@@ -84,6 +85,17 @@ export function calculateHsaReturnSources2026(raw: HsaReturnSource2026) {
         ...claim.excess_returns.contribution_sources,
         ...owner,
         wage_sources,
+        ...(claim.excess_returns.contribution_sources.nonreportable_review ||
+            claim.claim.accounts.some((a) => a.nonreportable_payments?.length)
+          ? {
+            nonreportable_distribution_sources: {
+              ...owner,
+              taxpayer_dob: input.taxpayer_dob,
+              spouse_dob: input.spouse_dob,
+              claim: claim.claim,
+            },
+          }
+          : {}),
         ...(claim.excess_returns.contribution_sources.rollover_review
           ? {
             rollover_distribution_sources: {

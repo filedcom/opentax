@@ -140,6 +140,11 @@ export function calculateHsaMedicalDistributions2026(
   const r = excess?.distribution_sources ??
     reconcileHsaDistributions2026(source);
   const rollovers = excess?.contribution_sources.rollovers ?? [];
+  if (!excess && r.accounts.some((a) => a.nonreportable_payments?.length)) {
+    throw Error(
+      "HSA nonreportable payments require the linked annual funding workpaper",
+    );
+  }
   for (const o of review.owners) {
     const hasRollovers = rollovers.some((r) => r.owner_tin === o.owner_tin);
     if (

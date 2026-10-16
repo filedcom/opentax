@@ -1,5 +1,6 @@
 import { hsaRolloverReview2026Schema } from "./hsa-rollover-source.ts";
 import { hsaDistributionSources2026Schema } from "./hsa-distribution-source.ts";
+import { hsaNonreportableReview2026Schema } from "./hsa-nonreportable-schema.ts";
 import type { z } from "zod";
 import {
   calculateHsaContributionLimits2026,
@@ -22,6 +23,9 @@ export const hsaQualifiedFunding2026Schema = hsaContributionLimits2026Schema
     qualified_funding_review: review.optional(),
     rollover_review: hsaRolloverReview2026Schema.optional(),
     rollover_distribution_sources: hsaDistributionSources2026Schema.optional(),
+    nonreportable_review: hsaNonreportableReview2026Schema.optional(),
+    nonreportable_distribution_sources: hsaDistributionSources2026Schema
+      .optional(),
   }).strict();
 export type HsaQualifiedFunding2026 = z.input<
   typeof hsaQualifiedFunding2026Schema
@@ -35,6 +39,8 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
     qualified_funding_review: reviewed,
     rollover_review,
     rollover_distribution_sources,
+    nonreportable_review,
+    nonreportable_distribution_sources,
     ...source
   } = hsaQualifiedFunding2026Schema.parse(raw);
   const limits = calculateHsaContributionLimits2026(source);
@@ -58,6 +64,8 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
       qualified_funding_review: reviewed,
       rollover_review,
       rollover_distribution_sources,
+      nonreportable_review,
+      nonreportable_distribution_sources,
       qualified_funding: [],
     };
   }
@@ -101,6 +109,8 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
     qualified_funding_review: reviewed,
     rollover_review,
     rollover_distribution_sources,
+    nonreportable_review,
+    nonreportable_distribution_sources,
     qualified_funding: qualified,
   };
 }

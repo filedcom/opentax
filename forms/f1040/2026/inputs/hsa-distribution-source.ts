@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hsaNonreportablePayment2026Schema } from "./hsa-nonreportable-schema.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { investmentOwner2026 } from "./investment-source.ts";
 import {
@@ -58,6 +59,9 @@ export const hsaDistributionClaim2026Schema = z.object({
       complete_reportable_payment_inventory_verified: z.literal(true),
       no_unreconciled_mistaken_distribution_or_trustee_transfer_verified: z
         .literal(true),
+      nonreportable_payments: z.array(hsaNonreportablePayment2026Schema).max(
+        10000,
+      ).optional(),
       payments: z.array(
         z.object({
           record_reference: ref,
@@ -207,6 +211,22 @@ export function reconcileHsaDistributions2026(raw: HsaDistributionSources2026) {
       ) {
         throw Error(
           "HSA payment needs its actual current statement, valid date and earnings",
+        );
+      }
+    }
+    for (const p of a.nonreportable_payments ?? []) {
+      unique(p.record_reference);
+      if (transactions.has(p.custodian_transaction_identifier)) {
+        throw Error(
+          "HSA nonreportable payment duplicates a ledger transaction",
+        );
+      }
+      transactions.add(p.custodian_transaction_identifier);
+      if (
+        !p.distributed_on.startsWith("2026-") || p.distributed_on < a.opened_on
+      ) {
+        throw Error(
+          "HSA nonreportable payment needs an actual current-year account date",
         );
       }
     }

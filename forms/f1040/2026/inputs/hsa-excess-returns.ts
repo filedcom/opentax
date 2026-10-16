@@ -141,6 +141,17 @@ export function reconcileHsaExcessReturns2026(
   }
   const f = funding.source_input, d = distributions.source_input;
   if (
+    (distributions.accounts.some((a) => a.nonreportable_payments?.length) &&
+      !funding.nonreportable_distribution_sources) ||
+    (funding.nonreportable_distribution_sources &&
+      JSON.stringify(funding.nonreportable_distribution_sources) !==
+        JSON.stringify(distributions.source_input))
+  ) {
+    throw Error(
+      "HSA nonreportable workpapers must use the same actual distribution inventory",
+    );
+  }
+  if (
     funding.rollover_distribution_sources &&
     JSON.stringify(funding.rollover_distribution_sources) !==
       JSON.stringify(distributions.source_input)
@@ -158,6 +169,8 @@ export function reconcileHsaExcessReturns2026(
     (input.contribution_sources.qualified_funding_review?.reviewed_on ?? "") >
       review.reviewed_on ||
     (input.contribution_sources.rollover_review?.reviewed_on ?? "") >
+      review.reviewed_on ||
+    (input.contribution_sources.nonreportable_review?.reviewed_on ?? "") >
       review.reviewed_on
   ) {
     throw Error(

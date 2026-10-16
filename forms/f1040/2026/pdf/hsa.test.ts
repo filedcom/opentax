@@ -1,4 +1,8 @@
 import { hsaRolloverGraph2026 } from "../inputs/hsa-rollover.fixture.ts";
+import {
+  hsaNonreportableGraph2026,
+  onlyNonreportableHsaGraph2026,
+} from "../inputs/hsa-nonreportable.fixture.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument, PDFName } from "pdf-lib";
 import {
@@ -51,6 +55,45 @@ async function staticPdf(bytes: Uint8Array, pages?: number) {
     false,
   );
 }
+Deno.test("2026 HSA drafts omit reconciled trustee debits and corrected mistake repayments from filed gross", async () => {
+  for (const corrected of [false, true]) {
+    const g = hsaNonreportableGraph2026(corrected, true),
+      b = await buildDraftReturnPdf2026(g);
+    const h = b.calculation.pending.hsa_accounts.calculation_2026 as ReturnType<
+      typeof calculateHsaReturnSources2026
+    >;
+    const pdf = await buildForm8889PdfBytes2026(h.source_input, "taxpayer", h, {
+      name: "Synthetic HSA Owner",
+      ssn: g.general.taxpayer_ssn,
+    });
+    await staticPdf(pdf, 1);
+    for (
+      const [y, amount] of [
+        [408, 2400],
+        [444, 2630],
+        [480, 1130],
+        [492, 1500],
+        [504, 500],
+        [528, 1000],
+        [588, 200],
+      ]
+    ) {
+      assertEquals(await text(pdf, 1, [503, y, 74, 12]), String(amount));
+    }
+    assertEquals(
+      b.attachments.filter((a) => a.form.startsWith("form8889:")).length,
+      1,
+    );
+    assertEquals(b.calculation.pending.f1040.line23_other_taxes, 305);
+  }
+  const only = await buildDraftReturnPdf2026(onlyNonreportableHsaGraph2026());
+  assertEquals(
+    only.attachments.some((a) =>
+      a.form.startsWith("form8889:") || a.form.startsWith("form5329:")
+    ),
+    false,
+  );
+});
 Deno.test("2026 HSA bundle prints source-derived owner Form 8889, IRA HFD and combined Part I/VII", async () => {
   const g = hsaGraph2026(true), b = await buildDraftReturnPdf2026(g);
   const h = b.calculation.pending.hsa_accounts.calculation_2026 as ReturnType<

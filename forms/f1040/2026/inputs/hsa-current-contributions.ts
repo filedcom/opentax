@@ -1,4 +1,5 @@
 import { reconcileHsaRollovers2026 } from "./hsa-rollover-source.ts";
+import { reconcileHsaNonreportablePayments2026 } from "./hsa-nonreportable-source.ts";
 import {
   type HsaQualifiedFunding2026,
   reconcileHsaQualifiedFunding2026,
@@ -27,19 +28,11 @@ export function calculateHsaCurrentContributions2026(
     limits.rollover_review,
     limits.rollover_distribution_sources,
   );
-  const pending = limits.source_input.claim.accounts.flatMap((a) =>
-    a.receipts.filter((r) =>
-      r.received_on.startsWith("2026-") &&
-      r.kind !== "personal_cash" && r.kind !== "employer_cash" &&
-      r.kind !== "ira_funding_transfer" && r.kind !== "reported_rollover"
-    ).map((r) => r.record_reference)
+  const nonreportable = reconcileHsaNonreportablePayments2026(
+    limits.source_input,
+    limits.nonreportable_review,
+    limits.nonreportable_distribution_sources,
   );
-  if (pending.length) {
-    throw Error(
-      "HSA current contributions require tax-treatment reconciliation for noncash receipts: " +
-        pending.join(", "),
-    );
-  }
   const zero = hsaExactAmount(0, 1);
   const owners = limits.owners.flatMap((owner) => {
     // MFS supporting spouse accounts are not on this taxpayer's return.
@@ -118,5 +111,5 @@ export function calculateHsaCurrentContributions2026(
       },
     }];
   });
-  return { ...limits, owners, rollovers };
+  return { ...limits, owners, rollovers, nonreportable };
 }
