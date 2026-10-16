@@ -1,3 +1,4 @@
+import { adoptionAccountReview2026 } from "./adoption.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   adoptionCreditContext2026 as context,
@@ -166,6 +167,7 @@ Deno.test("2026 adoption carryforwards use oldest years first, expire after five
   s.claim.carryforward = {
     filed_2025_return_reference: "2025-return",
     parent_tin: s.taxpayer_ssn,
+    irs_2025_account_review: adoptionAccountReview2026(),
     current_filed_2025_nonrefundable_carryforward_total: 6000,
     complete_origin_history_and_no_intervening_use_verified: true,
     origins: [2021, 2023, 2025].map((tax_year) => ({
@@ -328,4 +330,78 @@ Deno.test("2026 joint adoption uses the actual spouse benefit and expense record
   assertEquals(settle(s, context()).lines.line13, 5120);
   s.filing_status = FilingStatus.Single;
   assertThrows(() => prepare(s));
+});
+
+Deno.test("2026 adoption uses the corrected IRS 2025 carryforward and consumes expiring 2020 credit first", () => {
+  const s = fixture();
+  s.claim.children = [];
+  s.claim.programs = [];
+  s.wage_sources = [];
+  s.claim.carryforward = {
+    filed_2025_return_reference: "filed-2025",
+    parent_tin: s.taxpayer_ssn,
+    current_filed_2025_nonrefundable_carryforward_total: 6000,
+    complete_origin_history_and_no_intervening_use_verified: true,
+    origins: [[2021, 1000], [2025, 5000]].map(([tax_year, amount]) => ({
+      tax_year,
+      amount,
+      origin_return_reference: `return-${tax_year}`,
+      eligible_joint_return_when_married_verified: true,
+    })),
+    irs_2025_account_review: {
+      ...adoptionAccountReview2026(),
+      outcome: {
+        kind: "adjusted",
+        notice_reference: "IRS-adjustment-notice",
+        corrected_carryforward_worksheet_reference: "corrected-2025-worksheet",
+        refundable_adoption_credit_increase: 2500,
+        original_form8839_line18_nonrefundable_used: 1000,
+        available_2025_by_origin: [[2020, 2000], [2021, 1000], [2025, 5000]]
+          .map(([tax_year, amount]) => ({
+            tax_year,
+            amount,
+            origin_return_reference: `return-${tax_year}`,
+            eligible_joint_return_when_married_verified: true,
+          })),
+        corrected_2026_carryforward_total: 4500,
+      },
+    },
+  };
+  const before = structuredClone(s), p = prepare(s), c = context();
+  assertEquals(p.carryforward_origins.map((r) => [r.tax_year, r.amount]), [[
+    2025,
+    4500,
+  ]]);
+  assertEquals(
+    p.carryforward_2025_adjustment?.original_allocations[0].expired,
+    1000,
+  );
+  assertEquals(
+    p.carryforward_2025_adjustment?.corrected_allocations[0].expired,
+    0,
+  );
+  c.form1040_line11b_agi = 500000;
+  c.form1040_line18_tax_before_credits = 4200;
+  const r = settle(s, c);
+  assertEquals([
+    r.lines.line15,
+    r.lines.line13,
+    r.lines.line18a,
+    r.lines.line18b,
+  ], [4500, 0, 2000, 2500]);
+  assertEquals(s, before);
+  const review = s.claim.carryforward.irs_2025_account_review;
+  if (review.outcome.kind !== "adjusted") throw Error();
+  review.outcome.refundable_adoption_credit_increase = 3500;
+  assertThrows(() => prepare(s), Error, "corrected carryforward worksheet");
+  review.outcome.refundable_adoption_credit_increase = 2500;
+  review.outcome.original_form8839_line18_nonrefundable_used = 2500;
+  assertThrows(() => prepare(s), Error, "filed carryforward origins");
+  review.outcome.original_form8839_line18_nonrefundable_used = 7000;
+  assertThrows(() => prepare(s), Error, "cannot exceed available credit");
+  review.outcome.original_form8839_line18_nonrefundable_used = 1000;
+  review.reviewed_on = "2026-12-31";
+  assertThrows(() => prepare(s), Error, "completed-year inventory review");
+  review.reviewed_on = "2027-04-01";
+  assertThrows(() => prepare(s), Error, "completed-year inventory review");
 });

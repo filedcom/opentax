@@ -97,10 +97,48 @@ foreign adoptions remain taxable outside Part III. Previously taxed foreign
 benefits still require affected-year recovery reconciliation and cannot enter
 this internal income path yet.
 
+The internal child-credit stage now settles adoption within the same calculation
+as CTC/ACTC and energy carryforward. It receives the retained adoption source
+and actual MAGI addbacks from AGI, verifies return owners, and uses the actual
+regular tax, Schedule 2 Part I and preceding care/education/Schedule R/saver
+credits. With qualifying children, Schedule 8812 Worksheet B line 14 reserves
+child credit before adoption; adoption uses available tax before energy, and
+both nonrefundable amounts enter Worksheet B line 15. ODC-only returns retain
+their ordinary priority; no-dependent and zero-tax adoption returns still
+calculate the refundable portion. Signed wage subtotals reach the shared child
+earned-income worksheet, whose nonpositive-total rule is preserved.
+
+Matching adoption references are required in child and energy reviews rather
+than retaining contradictory no-other-credit answers. The internal outputs
+feed Schedule 3 line 6c and Form 1040 line 30. Form 1062 replays nonrefundable
+adoption with its hypothetical tax and preceding credits, while retaining
+actual AGI and the refundable amount. It verifies both actual nonrefundable
+and refundable adoption destinations and requires the matching review inventory.
+The refundable share is excluded from regular-tax credit totals under
+[IRC 23(a)(4)](https://uscode.house.gov/us/usc/119-118/t26/s23/).
+
+### Corrected 2025 carryforward accounts
+
+The IRS's [2025 systemic-adjustment FAQ, Topic G](https://www.irs.gov/faqs/questions-and-answers-about-adoption-tax-credit-carryforward)
+requires corrected adoption carryforwards for 2026. Its special refund treatment
+applies only to 2025; it does not make 2026 prior-year balances refundable.
+Every carryforward source now includes a completed-year account review and
+transcript reference, with either no adjustment or the adjustment notice and
+corrected worksheet. Pending adjustments cannot be asserted as final balances.
+
+For an adjustment, reconstruct available 2025 credit by origin (2020–2025),
+reconcile original nonrefundable use and filed surviving origins, then allocate
+original use plus the notice's **refundable adoption credit increase** oldest
+first. The credit increase is not the cash refund or balance-due change. Retain
+2020's separate expiration so a correction consuming otherwise expired credit
+does not wrongly reduce the 2026 opening balance. The corrected worksheet total
+must match the resulting 2021–2025 balances; only those balances enter 2026
+settlement. The original filed data and both allocation workpapers are retained.
+
 These remain **internal workpapers, not a registered public adoption route**.
-General and actual W-2 source routing, SSA source-review scope, all earned-income
-consumers (including a negative wage subtotal), final credit ordering, Form 1062
-replay, public source registration, all 2026 PDF fields/continuations and native
+General and actual W-2 source routing, SSA source-review scope, the remaining
+earned-income consumers (EIC, care and education, including negative wage
+subtotals), public source registration, all 2026 PDF fields/continuations and native
 MeF remain to connect. Nonspouse allocations, combined unrelated adoption
 attempts, reimbursements of previously credited expenses, missing child
 identifiers, stronger foreign finality/history binding and the prior-benefit
@@ -116,10 +154,11 @@ rules](https://www.irs.gov/publications/p970). These publications still describe
 Fresh IRS checks on October 16 found that both the published and draft
 instruction URLs still serve **2025**. The visible 2026 draft form supplies the
 annual amounts and line destinations; the 2025 instructions are explicitly a
-method comparator. The current income/source regression run passes 156 typed
-tests, including shared 2025 AGI/adoption regressions, 2026 source workpapers,
-SSA/election calculations and signed Form 1040 income. The repository unit gate
-passes 137 tests with 3,889 modules in preflight and unchanged runtime files.
+method comparator. The current income/credit regression run passes 213 typed
+tests, including shared 2025 child/adoption regressions, 2026 source workpapers,
+corrected carryforwards, child/energy ordering, Form 1062 replay and signed
+Form 1040 income. The repository unit gate
+passes 137 tests with 3,891 modules in preflight and unchanged runtime files.
 Full public return/PDF/MeF validation remains
 required below.
 

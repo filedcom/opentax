@@ -79,11 +79,13 @@ export const form1062TaxSource2026Schema = z.object({
     line23_other_taxes: whole,
     line28_actc: whole,
     line29_refundable_aotc: whole,
+    line30_refundable_adoption: whole.default(0),
   }).strict(),
   review: z.object({
     record_reference: z.string().trim().min(1),
     no_other_regular_tax_additions_or_tax_methods: z.literal(true),
     savers_inventory_reference: z.string().trim().min(1).optional(),
+    adoption_inventory_reference: z.string().trim().min(1).optional(),
     no_credits_other_than_reviewed_sources: z.literal(true).optional(),
     no_credits_other_than_care_education_child_and_energy: z.literal(true)
       .optional(),
@@ -146,7 +148,8 @@ function replayCredits(
   const personal = (savers?.lines.line12 ?? 0) + scheduleRCredit +
     (care.lines?.line11 ?? 0) +
     (education.lines?.line19 ?? 0) +
-    (child.energy_credit?.lines.line3 ?? 0);
+    (child.energy_credit?.lines.line3 ?? 0) +
+    (child.adoption_credit?.lines.line18a ?? 0);
   const other = child.lines?.line14 ?? 0;
   return {
     care,
@@ -163,13 +166,17 @@ function replayCredits(
 export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
   const input = form1062TaxSource2026Schema.parse(raw);
   if (
-    input.savers || input.review.savers_inventory_reference ||
+    input.savers || input.child.adoption_sources_2026 ||
+    input.review.savers_inventory_reference ||
+    input.review.adoption_inventory_reference ||
     input.review.no_credits_other_than_reviewed_sources
   ) {
     if (
-      !input.savers ||
+      (!input.savers && !input.child.adoption_sources_2026) ||
       input.review.savers_inventory_reference !==
-        input.savers.claim.record_reference ||
+        input.savers?.claim.record_reference ||
+      input.review.adoption_inventory_reference !==
+        input.child.adoption_sources_2026?.claim.record_reference ||
       input.review.no_credits_other_than_reviewed_sources !== true ||
       input.review.no_credits_other_than_care_education_child_and_energy !==
         undefined ||
@@ -177,7 +184,9 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
           .no_credits_other_than_care_education_child_energy_and_schedule_r !==
         undefined
     ) {
-      throw Error("Form 1062 needs its reviewed saver credit inventory");
+      throw Error(
+        "Form 1062 needs its reviewed saver/adoption credit inventory",
+      );
     }
   } else if (input.schedule_r?.claim) {
     if (
@@ -404,7 +413,10 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
     ret.line19_child_tax_credit !== actualCredits.other ||
     ret.line20_nonrefundable_credits !== actualCredits.personal ||
     ret.line28_actc !== (actualCredits.child.lines?.line27 ?? 0) ||
-    ret.line29_refundable_aotc !== (actualCredits.education.lines?.line8 ?? 0)
+    ret.line29_refundable_aotc !==
+      (actualCredits.education.lines?.line8 ?? 0) ||
+    ret.line30_refundable_adoption !==
+      (actualCredits.child.adoption_credit?.lines.line13 ?? 0)
   ) throw new Error("Form 1062 actual credits do not reconcile to the return");
   const electedGain = gain.qualification.elected_gain;
   const taxableWithout = Math.max(0, ret.line15_taxable_income - electedGain);
@@ -427,7 +439,8 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
   // and section 529A(c)(3)(A) ABLE tax (26(b)(2)(Y)) are excluded from regular
   // tax. The other connected taxes are outside
   // chapter 1 (NIIT, SE, FICA, household and section 4999); none is line 2.
-  // Refundable ACTC and AOTC are treated as subpart C, and are not lines 4/12.
+  // Refundable ACTC, AOTC and adoption credits are treated as subpart C,
+  // and are not lines 4/12.
   const line1 = regular, line2 = 0, line3 = line1 + line2;
   const line4a = 0,
     line4b = actualCredits.personal,
@@ -461,6 +474,7 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
       other_taxes: ret.line23_other_taxes,
       refundable_actc: ret.line28_actc,
       refundable_aotc: ret.line29_refundable_aotc,
+      refundable_adoption: ret.line30_refundable_adoption,
     },
     lines: {
       line1,

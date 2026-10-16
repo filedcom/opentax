@@ -18,6 +18,7 @@ export const energyClaim2026Schema = z.object({
       .literal(true).optional(),
     schedule_r_inventory_reference: ref.optional(),
     savers_inventory_reference: ref.optional(),
+    adoption_inventory_reference: ref.optional(),
     no_nonrefundable_credits_other_than_reviewed_sources: z.literal(true)
       .optional(),
     prior_return: investmentOwner2026.extend({
@@ -43,17 +44,20 @@ export function reconcileEnergySource2026(raw: EnergySource2026) {
   const c = source.claim;
   if (
     c.savers_inventory_reference !== undefined ||
+    c.adoption_inventory_reference !== undefined ||
     c.no_nonrefundable_credits_other_than_reviewed_sources !== undefined
   ) {
     if (
-      !c.savers_inventory_reference ||
+      (!c.savers_inventory_reference && !c.adoption_inventory_reference) ||
       c.no_nonrefundable_credits_other_than_reviewed_sources !== true ||
       c.no_nonrefundable_credits_other_than_child_dependent_care_and_education !==
         undefined ||
       c.no_nonrefundable_credits_other_than_child_care_education_and_schedule_r !==
         undefined
     ) {
-      throw Error("Energy saver credit review is incomplete or contradictory");
+      throw Error(
+        "Energy saver/adoption credit review is incomplete or contradictory",
+      );
     }
   } else if (c.schedule_r_inventory_reference !== undefined) {
     if (

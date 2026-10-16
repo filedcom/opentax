@@ -114,3 +114,20 @@ and shared EIC/8812 suites. Typed business-credit/PDF tests and unit verificatio
 also passed. Twelve synthetic settlement/EIC/8812 pages were reopened without
 AcroForm or annotations and visually inspected for ordinary, statutory and joint
 loss/Additional-Medicare cases. This does not establish filing or ATS acceptance.
+
+
+## Internal adoption ordering (October 16)
+
+The AGI stage now forwards reviewed adoption sources and actual foreign addbacks.
+The child-credit stage reserves Worksheet B line 14 before adoption, calculates
+adoption before energy, and combines both allowed amounts on Worksheet B line
+15 before final CTC/ACTC. It preserves no-dependent, ODC-only, zero-tax and
+three-child payroll branches. Child and energy reviews must name the actual
+adoption inventory. Signed line 1z is accepted by the shared earned-income
+worksheet, which applies the nonpositive-total rule before ACTC.
+
+Schedule 3 receives nonrefundable adoption; Form 1040 receives its refundable
+share separately. Form 1062 replays the coordinated credits using hypothetical
+tax, preserving actual AGI and the refund. Public adoption routing, the remaining
+earned-income consumers and Form 8839 PDF/MeF remain unfinished; see the
+[adoption contract](FORM8839-GRAPH.md).

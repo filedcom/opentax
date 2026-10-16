@@ -90,3 +90,16 @@ remaining child-credit source cases. Final IRS artifacts, current MeF/business
 rules, public filing registration and ATS acceptance remain open. Scenario 1's
 $200 carryforward can use this route once the missing prior-return provenance
 is supplied; it is not evidence that the full ATS scenario is accepted.
+
+
+## Internal adoption priority (October 16)
+
+An adoption source now triggers Worksheet B alongside energy. The atomic
+resolver computes adoption using the reserved child-credit amount, then reduces
+energy capacity by the allowed nonrefundable adoption credit. Worksheet B line
+15 includes both credits; only adoption's nonrefundable share reduces this tax
+limit. Energy reviews require the matching adoption inventory and the broader
+reviewed-source answer, including zero allowed adoption cases. Form 1062 replays
+this order at hypothetical tax. The [2026 draft instructions](https://www.irs.gov/pub/irs-dft/i5695--dft.pdf)
+expressly include Schedule 3 line 6c in the energy credit limit. Public adoption
+intake and its full PDF bundle remain pending.

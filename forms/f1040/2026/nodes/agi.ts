@@ -538,6 +538,13 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           fields: {
             ...output.fields,
             wage_income_from_agi: wageIncome,
+            ...(output.nodeType === "f8812" && adoptionExclusion
+              ? {
+                adoption_sources_2026: adoptionExclusion.source_input,
+                adoption_magi_additions_from_agi:
+                  adoptionExclusion.income.magi_additions,
+              }
+              : {}),
             ...(output.nodeType === "eitc" && retirement &&
                 retirement.cents.line1h_disability_wages > 0
               ? { retirement_sources_2026: retirement.source_input }

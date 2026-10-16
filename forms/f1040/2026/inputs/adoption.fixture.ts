@@ -121,3 +121,13 @@ export function adoptionExclusionIncome2026() {
     magi_additions: adoptionCreditContext2026().magi_additions,
   };
 }
+
+export function adoptionAccountReview2026() {
+  return {
+    record_reference: "adoption-account-review",
+    reviewed_on: "2027-02-01",
+    account_transcript_reference: "2025-account-transcript",
+    no_pending_adoption_adjustment_verified: true as const,
+    outcome: { kind: "no_adjustment" as const },
+  };
+}

@@ -1180,6 +1180,9 @@ remain distinct; oldest balances are used first and expire after five years.
 The internal AGI adapter now derives exclusion MAGI from return income, computes
 Social Security with the exclusion addback, preserves signed line 1f and applies
 student-loan interest after exclusion. These workpapers are not yet public graph
-inputs. Public source routing, earned-income consumer reconciliation, final credit
-bindings, Form 1062 replay, draft forms, foreign prior-benefit recovery and native
-filing remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).
+inputs. The internal child-credit stage now coordinates adoption and energy through
+Worksheet B, emits Schedule 3 line 6c and Form 1040 line 30, and replays credits
+for Form 1062. Carryforwards reconcile any IRS 2025 systemic adjustment using
+its credit increase and corrected origin-year worksheet. Public source routing,
+remaining earned-income consumers, draft forms, foreign prior-benefit recovery
+and native filing remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).

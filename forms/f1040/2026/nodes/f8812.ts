@@ -1,3 +1,6 @@
+import { adoptionSource2026Schema } from "../inputs/adoption-source.ts";
+import { settleAdoptionCredit2026 } from "../inputs/adoption-settlement.ts";
+import { finalizedReturnCreditContextSchema } from "../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
 import {
   calculateEnergyCarryforward2026,
   energySource2026Schema,
@@ -35,6 +38,7 @@ export const childCreditClaim2026Schema = z.object({
     true,
   ).optional(),
   energy_inventory_reference: z.string().trim().min(1).optional(),
+  adoption_inventory_reference: z.string().trim().min(1).optional(),
   no_foreign_or_territory_exclusions: z.literal(true),
   not_bona_fide_puerto_rico_resident: z.literal(true),
   no_self_employment_or_statutory_employee_income: z.literal(true).optional(),
@@ -46,6 +50,9 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   taxpayer_ssn: z.string().optional(),
   spouse_ssn: z.string().optional(),
   energy_sources_2026: energySource2026Schema.optional(),
+  adoption_sources_2026: adoptionSource2026Schema.optional(),
+  adoption_magi_additions_from_agi: finalizedReturnCreditContextSchema.shape
+    .magi_additions.optional(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   auto_qualifying_children: z.number().int().nonnegative(),
   auto_other_dependents: z.number().int().nonnegative(),
@@ -84,7 +91,7 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   schedule2_line17c: amount.optional(),
   auto_earned_income: z.union([amount, z.array(amount)]).optional(),
   auto_se_earned_income: amount.optional(),
-  wage_income_from_agi: amount,
+  wage_income_from_agi: z.number().finite(),
   unsupported_earned_income_activity: z.boolean(),
   nontaxable_combat_pay_from_w2: amount.optional(),
   statutory_employee_from_w2: z.boolean().optional(),
@@ -97,6 +104,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   const children = input.auto_qualifying_children;
   const others = input.auto_other_dependents;
   const energySource = input.energy_sources_2026;
+  const adoptionSource = input.adoption_sources_2026;
   const tax = input.auto_income_tax_liability + input.schedule2_part1_tax;
   const earlierCredits = input.finalized_savers_credit +
     input.finalized_schedule_r_credit +
@@ -133,11 +141,75 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   ) {
     throw Error("Energy credit must include the actual saver credit inventory");
   }
+  if (adoptionSource) {
+    if (
+      adoptionSource.taxpayer_ssn !== input.taxpayer_ssn?.replaceAll("-", "") ||
+      adoptionSource.spouse_ssn !== input.spouse_ssn?.replaceAll("-", "") ||
+      adoptionSource.filing_status !== input.auto_filing_status ||
+      !input.adoption_magi_additions_from_agi
+    ) {
+      throw Error(
+        "Adoption credit needs the actual return owners and AGI addbacks",
+      );
+    }
+    if (
+      children + others > 0 &&
+      Object.values(input.adoption_magi_additions_from_agi).some((v) => v !== 0)
+    ) {
+      throw Error(
+        "Child and adoption credits need the foreign-income worksheet owner",
+      );
+    }
+  } else if (
+    input.adoption_magi_additions_from_agi || input.adoption_inventory_reference
+  ) {
+    throw Error("Adoption credit review needs its retained source inventory");
+  }
+  if (
+    energySource &&
+    energySource.claim.adoption_inventory_reference !==
+      adoptionSource?.claim.record_reference
+  ) {
+    throw Error("Energy credit must include the actual adoption inventory");
+  }
+  const adoptionCredit = (reserved: number, worksheetB = false) =>
+    adoptionSource
+      ? settleAdoptionCredit2026(adoptionSource, {
+        form1040_line11b_agi: input.auto_agi,
+        form1040_line18_tax_before_credits: tax,
+        magi_additions: input.adoption_magi_additions_from_agi!,
+        child_credit_priority: {
+          basis: worksheetB
+            ? "schedule8812_worksheet_b_line14"
+            : "form1040_line19",
+          amount: reserved,
+        },
+        schedule3_priority: {
+          line1: 0,
+          line2: input.finalized_dependent_care_credit,
+          line3: input.finalized_education_credit,
+          line4: input.finalized_savers_credit,
+          line5b: 0,
+          line6d: input.finalized_schedule_r_credit,
+          line6f: 0,
+          line6g: 0,
+          line6l: 0,
+          line6m: 0,
+        },
+      })
+      : undefined;
   if (children + others === 0) {
+    const adoption = adoptionCredit(0);
     return {
       source_input: input,
+      adoption_credit: adoption,
       energy_credit: energySource
-        ? calculateEnergyCarryforward2026(energySource, tax, earlierCredits, 0)
+        ? calculateEnergyCarryforward2026(
+          energySource,
+          tax,
+          earlierCredits + (adoption?.lines.line18a ?? 0),
+          0,
+        )
         : undefined,
       lines: null,
       file_schedule8812: false,
@@ -149,6 +221,20 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       key,
     ) => [key, input[key as keyof typeof input]]),
   ));
+  if (
+    adoptionSource && (
+      review.adoption_inventory_reference !==
+        adoptionSource.claim.record_reference ||
+      review.no_nonrefundable_credits_other_than_reviewed_sources !== true ||
+      review
+          .no_nonrefundable_credits_other_than_dependent_care_and_education !==
+        undefined
+    )
+  ) {
+    throw Error(
+      "Child credit needs the actual adoption inventory and an updated other-credit review",
+    );
+  }
   const scheduleRReviewed = review.schedule_r_inventory_reference !== undefined;
   const saversReviewed = review.savers_inventory_reference !== undefined;
   if (
@@ -198,7 +284,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       );
     }
   } else if (
-    (!scheduleRReviewed && !saversReviewed &&
+    (!scheduleRReviewed && !saversReviewed && !adoptionSource &&
       review
           .no_nonrefundable_credits_other_than_dependent_care_and_education !==
         true) || review.energy_inventory_reference !== undefined
@@ -368,7 +454,8 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     sharedInput,
     options,
   );
-  const worksheetBApplies = !!energySource && children > 0 && !!provisional;
+  const worksheetBApplies = !!(energySource || adoptionSource) &&
+    children > 0 && !!provisional;
   const earnedLine5 = roundWholeDollars(
     Math.max(0, calculateEarnedIncomeWorksheet(earned).line7 - 2500) * .15,
   );
@@ -386,14 +473,20 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       true,
     )
     : undefined;
+  const adoption = adoptionCredit(
+    worksheetB?.line14 ?? provisional?.line14 ?? 0,
+    worksheetBApplies,
+  );
   const energy = energySource
     ? calculateEnergyCarryforward2026(
       energySource,
       tax,
-      earlierCredits,
+      earlierCredits + (adoption?.lines.line18a ?? 0),
       worksheetB?.line14 ?? provisional?.line14 ?? 0,
     )
     : undefined;
+  const worksheetBLine15 = (adoption?.lines.line18a ?? 0) +
+    (energy?.lines.line3 ?? 0);
   const calculated = worksheetBApplies
     ? calculateSchedule8812LinesWithConfig(childCredit2026, {
       ...sharedInput,
@@ -401,7 +494,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       credit_limit_worksheet: {
         ...sharedInput.credit_limit_worksheet,
         worksheet_b_applies: true,
-        worksheet_b_line15: energy!.lines.line3,
+        worksheet_b_line15: worksheetBLine15,
       },
     }, options)
     : provisional;
@@ -414,9 +507,10 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   };
   return {
     source_input: input,
+    adoption_credit: adoption,
     energy_credit: energy,
     credit_limit_worksheet_b: worksheetB &&
-      { ...worksheetB, line15: energy!.lines.line3 },
+      { ...worksheetB, line15: worksheetBLine15 },
     earned_income_worksheet: earned,
     business_earned_income_workpaper: business,
     lines,
@@ -448,12 +542,15 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
             child: calculation.source_input,
             line19_child_tax_credit: calculation.lines?.line14 ?? 0,
             line28_actc: calculation.lines?.line27 ?? 0,
+            line30_refundable_adoption:
+              calculation.adoption_credit?.lines.line13 ?? 0,
             line20_nonrefundable_credits:
               calculation.source_input.finalized_savers_credit +
               calculation.source_input.finalized_schedule_r_credit +
               (calculation.source_input.finalized_dependent_care_credit ?? 0) +
               (calculation.source_input.finalized_education_credit ?? 0) +
-              (calculation.energy_credit?.lines.line3 ?? 0),
+              (calculation.energy_credit?.lines.line3 ?? 0) +
+              (calculation.adoption_credit?.lines.line18a ?? 0),
           },
         },
         { nodeType: "f8812", fields: { calculation_2026: calculation } },
@@ -470,6 +567,8 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
               calculation.source_input.finalized_education_credit,
             line11_excess_ss:
               calculation.source_input.finalized_excess_social_security ?? 0,
+            line6c_adoption_credit:
+              calculation.adoption_credit?.lines.line18a ?? 0,
             line5a_residential_clean_energy:
               calculation.energy_credit?.lines.line3 ?? 0,
           },
@@ -478,6 +577,8 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
           nodeType: "f1040",
           fields: {
             schedule8812_finalized: true,
+            line30_refundable_adoption:
+              calculation.adoption_credit?.lines.line13 ?? 0,
             line19_child_tax_credit: calculation.lines?.line14 ?? 0,
             line28_actc: calculation.lines?.line27 ?? 0,
             line28_declines_actc: calculation.do_not_claim_actc,

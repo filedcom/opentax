@@ -13,7 +13,8 @@ import type { ChildCreditConfig } from "../../../../config/types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 
 export const earnedIncomeWorksheetSchema = z.object({
-  form1040_line1z_wages: z.number().nonnegative(),
+  // A special-needs adoption exclusion can make printed wages negative.
+  form1040_line1z_wages: z.number().finite(),
   nontaxable_combat_pay: z.number().nonnegative(),
   schedule_c_statutory_employee_income: z.number().nonnegative(),
   nonfarm_schedule_c_and_k1_net: z.number(),

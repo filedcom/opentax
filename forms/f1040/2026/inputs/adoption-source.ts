@@ -1,3 +1,7 @@
+import {
+  adoptionCarryforward2026Schema,
+  reconcileAdoptionCarryforward2026,
+} from "./adoption-carryforward.ts";
 import { z } from "zod";
 import { investmentOwner2026 } from "./investment-source.ts";
 import { w2Item2026Schema } from "./w2-source.ts";
@@ -161,20 +165,7 @@ export const adoptionSource2026Schema = investmentOwner2026.extend({
         special_needs_program_reference: ref.optional(),
       }).strict(),
     ).max(100),
-    carryforward: z.object({
-      filed_2025_return_reference: ref,
-      parent_tin: tin,
-      current_filed_2025_nonrefundable_carryforward_total: whole,
-      complete_origin_history_and_no_intervening_use_verified: z.literal(true),
-      origins: z.array(
-        z.object({
-          tax_year: z.number().int().min(2021).max(2025),
-          amount: whole,
-          origin_return_reference: ref,
-          eligible_joint_return_when_married_verified: z.literal(true),
-        }).strict(),
-      ).max(5),
-    }).strict().optional(),
+    carryforward: adoptionCarryforward2026Schema.optional(),
   }).strict(),
 }).strict();
 export type AdoptionSource2026 = z.input<typeof adoptionSource2026Schema>;
@@ -551,22 +542,20 @@ export function prepareAdoptionSources2026(raw: AdoptionSource2026) {
   const carry = c.carryforward;
   if (carry) {
     unique(carry.filed_2025_return_reference);
-    if (
-      !owners.has(carry.parent_tin) || new Set(carry.origins.map((r) =>
-          r.tax_year
-        )).size !== carry.origins.length ||
-      carry.origins.reduce((n, r) => n + r.amount, 0) !==
-        carry.current_filed_2025_nonrefundable_carryforward_total
-    ) {
+    if (!owners.has(carry.parent_tin)) {
       throw Error(
-        "Adoption carryforward must reconcile the filed 2025 total and distinct origin years",
+        "Adoption carryforward must belong to an actual return owner",
       );
     }
   }
+  const carryforward = carry
+    ? reconcileAdoptionCarryforward2026(carry, c.reviewed_on)
+    : undefined;
   return {
     source_input: input,
     children,
-    carryforward_origins: carry?.origins ?? [],
+    carryforward_origins: carryforward?.origins ?? [],
+    carryforward_2025_adjustment: carryforward?.adjustment,
     current_code_t_benefits: sumSourceMoney(
       children.map((r) => r.current_benefits),
     ),
