@@ -16,7 +16,8 @@ A change ships with proof, not a description of it:
 
 - `deno task check:structure` and `deno task test:unit` pass.
 - `deno task bench --form <form> --year <year>` passes for every form:year the
-  change touches, with no edits under `benchmark/cases/`.
+  change touches, and `deno task check:oracle` passes: an expected value changes
+  only with a publication cited in that product's `ledger.json`.
 - The pull request says what was not verified and why.
 
 The layout the checks enforce, and which check owns each rule, is in

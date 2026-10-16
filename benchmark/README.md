@@ -81,6 +81,15 @@ automatically, or create `cases/{form}/{year}/NN-description/input.json` and
 `correct.json` manually following the formats in
 [STRUCTURE.md](../docs/architecture/STRUCTURE.md).
 
+## Changing expected values
+
+`deno task check:oracle` compares every `correct.json` with `origin/main`
+(`--base <ref>` to choose another). Each changed scored value needs an entry in
+`benchmark/cases/<form>/<year>/ledger.json` stating `case`, `line`, `before`,
+`after`, a `source` that cites a publication, `approvedBy` and `on`; a removed
+case needs an entry without `line`; a new case needs a `source`. An entry that
+cites the engine does not count.
+
 ## Tax-year references
 
 Use the

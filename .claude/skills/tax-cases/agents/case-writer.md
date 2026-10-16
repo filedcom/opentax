@@ -114,7 +114,7 @@ Only include fields the IRS publication explicitly provides. Do not calculate or
 ## Step 4 — Verify
 
 Check that:
-1. All node_types in input.json are valid (cross-reference against `benchmark/cases/` examples — if a node_type appears in existing cases, it's valid)
+1. `deno task check:cases` passes. It validates every node_type and field against the node schema the CLI applies; fix each reported field until it passes. The table above is a starting point; the schemas in `forms/{form}/{year}/inputs.ts` are the authority.
 2. `correct.json` has all three required fields
 3. `source` field is present and specific (pub name + exercise/page)
 4. The numbers in `correct.json` are consistent with each other (refund + owed can't both be nonzero; total_payments − total_tax should roughly equal refund)

@@ -83,6 +83,7 @@ expired entries, and on entries that no longer match anything.
 | Benchmark cases are complete and expected values are finite | `benchmark/harness.ts`                           |
 | Case inputs fit the node schema the CLI applies             | `benchmark/harness.ts` (`check:cases`)           |
 | A cited source is a publication, never the engine           | `benchmark/harness.ts` (`check:cases`)           |
+| Expected values change only with a cited ledger entry       | `scripts/testing/oracle.ts` (`check:oracle`)     |
 | Unmapped expected lines fail instead of passing             | `benchmark/run_benchmark.ts`                     |
 | Test modules are discovered exactly, never partially        | `scripts/testing/run.ts`                         |
 

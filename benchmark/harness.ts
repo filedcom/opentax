@@ -124,7 +124,7 @@ export function validateCaseInputs(
 }
 
 // A citation that names the engine or its output is not an independent source.
-const ENGINE_SOURCE =
+export const ENGINE_SOURCE =
   /\b(engine|output\.json|gen_correct|tax2025\.ts|reference calculator)\b/i;
 
 /** A source, when given, cites a publication; it never cites the engine. */
