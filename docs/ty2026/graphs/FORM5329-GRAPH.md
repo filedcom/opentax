@@ -143,7 +143,7 @@ footer. These files are incomplete development drafts, not filing artifacts.
    still requires source resolution; the age exception does not bypass that check.
 2. IRA basis and Roth recapture via Form 8606, indirect/partial rollovers,
    disaster distributions and repayments, and governmental 457(b) rolled-in assets.
-3. Parts II–XI: education/ABLE distributions, excess contributions, RMD shortfalls,
+3. Remaining Parts II–XI: education and advanced ABLE distributions, excess contributions, RMD shortfalls,
    Trump-account contributions and excess-contribution earnings, each with the
    applicable source forms, owner separation and prior-year carryovers.
 4. Final TY2026 form/instruction comparison, current MeF mapping/rules and ATS
@@ -187,3 +187,21 @@ this income classification remains independent of Part I exception eligibility.
 The disability source increment passed 165 typed source/shared-node/PDF/Form 1062
 checks and 137 repository unit/harness checks. Regenerated final draft pages
 matched the visually reviewed five-page bundle exactly.
+
+
+## Ordinary ABLE Part II integration
+
+The [ABLE source contract](./ABLE-CURRENT.md) now provides owner Part II lines
+5–8. A dedicated collection combines those amounts with retirement Part I on one
+form per owner and supplies the single Schedule 2 line 5 amount. When Part II
+requires a form, early-distribution owners also use printed Part I forms rather
+than the combined direct-report shortcut, so joint whole-dollar rounding agrees
+with the filed owner lines. The retirement-only shortcut is preserved.
+
+The collection replays both source inventories and checks return owners, DOBs,
+wages and business facts. Form 1062 separately reconciles the collection and
+excludes section 529A additional tax from its regular-tax deferral comparison.
+Static PDF checks read the Part I/II fields after flattening and reject stale
+Schedule 2 amounts; a representative combined form and Schedule 1 were rendered
+and visually inspected. Education-account distributions, advanced ABLE branches,
+remaining parts, final instructions and current MeF/ATS remain unfinished.

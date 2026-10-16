@@ -1,6 +1,5 @@
 import { newCodes, w2Item2026Schema } from "./w2-source.ts";
 export { w2Item2026Schema } from "./w2-source.ts";
-import { moving_expenses_2026 } from "./moving-expenses.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -30,8 +29,10 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
   override get outputNodeTypes(): readonly string[] {
     return [
       ...this.outputNodes.nodeTypes,
-      moving_expenses_2026.nodeType,
+      // Resolve by registry key: source replays must not import downstream AGI.
+      "f3903",
       "f1099r",
+      "able_accounts",
     ];
   }
 
@@ -216,6 +217,10 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "schedule_c",
       fields: { w2_sources_2026: input.w2s },
+    });
+    outputs.push({
+      nodeType: "able_accounts",
+      fields: { wage_sources: input.w2s },
     });
     outputs.push({
       nodeType: "f1099r",

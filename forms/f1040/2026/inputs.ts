@@ -1,3 +1,4 @@
+import { able_accounts_2026, ableClaimInput2026Schema } from "./inputs/able.ts";
 import {
   form8880_2026,
   saversCreditClaim2026Schema,
@@ -115,6 +116,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: able_accounts_2026,
+    isArray: false,
+    inputSchema: ableClaimInput2026Schema,
+  },
   {
     node: form8880_2026,
     isArray: false,

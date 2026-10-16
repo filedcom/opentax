@@ -1,4 +1,8 @@
 source,target,target_registered
+able_accounts,agi_aggregator,yes
+able_accounts,form5329,yes
+able_accounts,form8880,yes
+able_accounts,schedule1,yes
 agi_aggregator,agi_final,no
 agi_aggregator,eitc,yes
 agi_aggregator,f1040,yes
@@ -49,8 +53,8 @@ f1095a,form8962,yes
 f1099r,agi_aggregator,yes
 f1099r,f1040,yes
 f1099r,form2441,yes
+f1099r,form5329,yes
 f1099r,form8880,yes
-f1099r,schedule2,yes
 f1099r,schedule_a,yes
 f1099r,schedule_r,yes
 f2441,f8863,yes
@@ -87,6 +91,8 @@ form4137,schedule_se,no
 form461,agi_aggregator,yes
 form461,schedule1,yes
 form461,standard_deduction,yes
+form5329,form1062,yes
+form5329,schedule2,yes
 form6251,form1062,yes
 form6251,schedule2,yes
 form8880,f8812,yes
@@ -112,6 +118,7 @@ gambling,f1040,yes
 gambling,f8615,yes
 gambling,schedule1,yes
 gambling,schedule_a,yes
+general,able_accounts,yes
 general,agi_aggregator,yes
 general,capital_gains,yes
 general,cash_charity,yes
@@ -131,6 +138,7 @@ general,f8812,yes
 general,f8863,yes
 general,form2441,yes
 general,form4137,yes
+general,form5329,yes
 general,form6251,yes
 general,form8880,yes
 general,form8919,yes
@@ -201,6 +209,7 @@ schedule3,form8880,yes
 schedule3_final,f1040,yes
 schedule_a,form8960,yes
 schedule_a,standard_deduction,yes
+schedule_c,able_accounts,yes
 schedule_c,agi_aggregator,yes
 schedule_c,f1099r,yes
 schedule_c,form2441,yes
@@ -220,6 +229,7 @@ ssa1099,schedule_r,yes
 standard_deduction,f1040,yes
 standard_deduction,form8960,yes
 standard_deduction,income_tax_calculation,yes
+start,able_accounts,yes
 start,capital_gains,yes
 start,cash_charity,yes
 start,ct2,yes
@@ -258,6 +268,7 @@ start,vehicle_loan_interest,yes
 start,w2,yes
 student_loan_interest,agi_aggregator,yes
 vehicle_loan_interest,schedule1a,yes
+w2,able_accounts,yes
 w2,agi_aggregator,yes
 w2,eitc,yes
 w2,f1040,yes

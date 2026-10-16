@@ -28,6 +28,7 @@ export const inputSchema = z.object({
   line8e_archer_msa_dist: nonnegative.optional(),
   line8i_prizes_awards: signed.optional(),
   line8p_excess_business_loss: nonnegative.optional(),
+  line8q_able_taxable_earnings: nonnegative.int().optional(),
   line8z_rtaa: nonnegative.optional(),
   line8z_taxable_grants: nonnegative.optional(),
   line8z_family_leave: nonnegative.optional(),
@@ -142,6 +143,7 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
       (input.line8e_archer_msa_dist ?? 0) +
       (input.line8i_prizes_awards ?? 0) +
       (input.line8p_excess_business_loss ?? 0) +
+      (input.line8q_able_taxable_earnings ?? 0) +
       line8zTotal;
     const line10 = (input.line1_state_refund ?? 0) +
       (input.line2a_alimony_received ?? 0) +

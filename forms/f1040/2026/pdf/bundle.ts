@@ -4,7 +4,8 @@ import { buildForm8606PdfBytes2026 } from "./form8606.ts";
 import { buildScheduleRPdfBytes2026 } from "./schedule_r.ts";
 import { calculateScheduleR2026 } from "../inputs/schedule-r-source.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
-import { buildForm5329PdfBytes2026 } from "./form5329.ts";
+import { buildCombinedForm5329PdfBytes2026 } from "./form5329.ts";
+import { calculateForm5329Sources2026 } from "../inputs/form5329-source.ts";
 import {
   calculateRetirementSources2026,
   retirementIssuedAttachments2026,
@@ -208,6 +209,12 @@ export async function buildDraftReturnPdf2026(
   const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
     "capital_gains",
   ) ?? land?.land.loss.calculation.capital;
+  const form5329Workpaper = retained<
+    ReturnType<typeof calculateForm5329Sources2026>
+  >("form5329");
+  const form5329 = form5329Workpaper
+    ? calculateForm5329Sources2026(form5329Workpaper.source_input)
+    : undefined;
   const retirementWorkpaper = retained<
     ReturnType<typeof calculateRetirementSources2026>
   >("f1099r");
@@ -353,9 +360,11 @@ export async function buildDraftReturnPdf2026(
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
   if (
-    s2line("line5_form5329_early_tax") !== (retirement?.line5_early_tax ?? 0)
+    s2line("line5_form5329_early_tax") !== (form5329?.schedule2_line5 ?? 0)
   ) {
-    throw new Error("Schedule 2 early tax disagrees with retirement sources");
+    throw new Error(
+      "Schedule 2 additional tax disagrees with Form 5329 sources",
+    );
   }
   const parts: {
     form: string;
@@ -414,7 +423,7 @@ export async function buildDraftReturnPdf2026(
           schedule3a_line4: line("schedule2_line20"),
         },
         filer,
-        { form5329_not_required: retirement?.form5329_not_required ?? false },
+        { form5329_not_required: form5329?.form5329_not_required ?? false },
       ));
   }
   if (s3?.file_schedule3) {
@@ -607,13 +616,13 @@ export async function buildDraftReturnPdf2026(
         individual,
       ), true);
   }
-  for (const part of retirement?.early_owners ?? []) {
+  for (const part of form5329?.owners ?? []) {
     if (!part.file_form5329) continue;
     const individual = owners[part.owner];
     if (!individual) throw new Error("Form 5329 owner identity is missing");
     add(`form5329:${part.owner}`, 3, () =>
-      buildForm5329PdfBytes2026(
-        retirement!.source_input,
+      buildCombinedForm5329PdfBytes2026(
+        form5329!.source_input,
         part.owner,
         s2line("line5_form5329_early_tax"),
         individual,

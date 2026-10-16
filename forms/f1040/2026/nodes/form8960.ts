@@ -1,3 +1,7 @@
+import {
+  ableSource2026Schema,
+  calculateAbleSources2026,
+} from "../inputs/able-source.ts";
 import { landNiitExclusion2026 } from "../inputs/land-disposition-bridge.ts";
 import {
   calculateCapitalGains2026,
@@ -30,6 +34,8 @@ export const inputSchema = investmentOwner2026.extend({
     "nonresident_or_dual_status",
   ]).optional(),
   magi: z.number().finite().int().safe(),
+  able_sources_2026: ableSource2026Schema.optional(),
+  able_taxable_earnings_from_agi: money.default(0),
   foreign_earned_income_exclusion_from_agi: z.literal(0),
   other_niit_income_pending: z.literal(false),
   early_withdrawal_penalty_from_agi: money,
@@ -109,6 +115,25 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
   ) {
     throw new Error(
       "NIIT needs reviewed full-year citizen/resident status; dual-status elections need their owner",
+    );
+  }
+  const able = input.able_sources_2026
+    ? calculateAbleSources2026(input.able_sources_2026)
+    : undefined;
+  if (
+    (able?.taxable_earnings ?? 0) !== input.able_taxable_earnings_from_agi ||
+    able &&
+      (able.source_input.filing_status !== input.filing_status ||
+        able.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+        able.source_input.spouse_ssn !== input.spouse_ssn)
+  ) {
+    throw Error(
+      "NIIT ABLE sources must reconcile actual owners and AGI earnings",
+    );
+  }
+  if (able && able.taxable_earnings > 0 && input.magi > limit) {
+    throw Error(
+      "Taxable ABLE earnings above the NIIT threshold need a reviewed section 1411 classification",
     );
   }
   const gross = line1 + line2 + line5 + line5b;

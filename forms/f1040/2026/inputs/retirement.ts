@@ -17,7 +17,7 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
       "agi_aggregator",
       "f1040",
       "schedule_a",
-      "schedule2",
+      "form5329",
       "form2441",
       "schedule_r",
       "form8880",
@@ -91,12 +91,10 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
             fields: { retirement_sources_2026: r.source_input },
           }]
           : []),
-        ...(r.early_owners.length
-          ? [{
-            nodeType: "schedule2",
-            fields: { line5_form5329_early_tax: r.line5_early_tax },
-          }]
-          : []),
+        {
+          nodeType: "form5329",
+          fields: { retirement_sources_2026: r.source_input },
+        },
         ...(taxes.length
           ? [{
             nodeType: "schedule_a",

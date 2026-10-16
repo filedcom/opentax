@@ -1,4 +1,8 @@
 import {
+  calculateForm5329Sources2026,
+  form5329Source2026Schema,
+} from "./form5329-source.ts";
+import {
   calculateSaversCredit2026,
   saversCreditSource2026Schema,
 } from "./savers-credit-source.ts";
@@ -61,6 +65,7 @@ export const form1062TaxSource2026Schema = z.object({
   schedule_r: scheduleRSource2026Schema.optional(),
   savers: saversCreditSource2026Schema.optional(),
   schedule2: schedule2Schema,
+  form5329: form5329Source2026Schema.optional(),
   return_lines: z.object({
     line11b_agi: z.number().int(),
     line15_taxable_income: whole,
@@ -203,6 +208,33 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
     input.election,
   );
   const owner = gain.actual.source_input;
+  const additional5329 = input.form5329
+    ? calculateForm5329Sources2026(input.form5329)
+    : undefined;
+  if (
+    (additional5329?.schedule2_line5 ?? 0) !==
+      (input.schedule2.line5_form5329_early_tax ?? 0) ||
+    input.form5329 &&
+      (input.form5329.filing_status !== owner.filing_status ||
+        input.form5329.taxpayer_ssn !== owner.taxpayer_ssn ||
+        input.form5329.spouse_ssn !== owner.spouse_ssn ||
+        input.form5329.taxpayer_dob !==
+          input.care.benefit_source.taxpayer_dob ||
+        input.form5329.spouse_dob !== input.care.benefit_source.spouse_dob)
+  ) {
+    throw Error(
+      "Form 1062 additional tax needs reconciled Form 5329 sources and return owners",
+    );
+  }
+  if (
+    input.savers &&
+    JSON.stringify(input.savers.able_sources_2026) !==
+      JSON.stringify(input.form5329?.able_sources_2026)
+  ) {
+    throw Error(
+      "Form 1062 saver and additional tax must retain the same ABLE inventory",
+    );
+  }
   const ssn = (s: string | undefined) => s?.replaceAll("-", "");
   const students = input.education.education_context.students;
   if (
@@ -383,7 +415,8 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
     withoutAmt.lines.line11,
   );
   // AMT (26(b)(2)(A)) and the connected section 72(t) early tax (26(b)(2)(C))
-  // are excluded from regular tax. The other connected taxes are outside
+  // and section 529A(c)(3)(A) ABLE tax (26(b)(2)(Y)) are excluded from regular
+  // tax. The other connected taxes are outside
   // chapter 1 (NIIT, SE, FICA, household and section 4999); none is line 2.
   // Refundable ACTC and AOTC are treated as subpart C, and are not lines 4/12.
   const line1 = regular, line2 = 0, line3 = line1 + line2;

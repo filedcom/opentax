@@ -394,3 +394,45 @@ Deno.test("2026 saver historical exclusions retain gross evidence without reduci
   }];
   assertEquals(calculate(able).lines.line12, 500);
 });
+
+Deno.test("2026 saver ABLE binding rejects stale wages, review dates and conflicting voluntary plan payments", async () => {
+  const { ableSource2026, ableEmployment2026 } = await import(
+    "./able.fixture.ts"
+  );
+  const a = ableSource2026(), s = saverSource2026();
+  s.wage_sources = structuredClone(a.wage_sources!);
+  s.able_sources_2026 = a;
+  delete s.claim.no_able_contributions_or_current_able_distributions;
+  s.claim.able_inventory_reference = a.claim.record_reference;
+  assertEquals(calculate(s).columns[0].line1, 2000);
+  const stale = structuredClone(s);
+  stale.able_sources_2026!.wage_sources![0].box1_wages++;
+  assertThrows(() => calculate(stale), Error, "retained inventory");
+  const late = structuredClone(s);
+  late.able_sources_2026!.claim.reviewed_on = "2027-04-16";
+  assertThrows(() => calculate(late), Error, "retained inventory");
+  a.claim.accounts[0].employed_beneficiary_review = ableEmployment2026(a);
+  s.claim.voluntary_employee_contributions.push({
+    payroll: {
+      source_document_reference: "voluntary-payroll",
+      employee_tin: s.taxpayer_ssn,
+      employer_tin: "123456789",
+      tax_year: 2026,
+      employee_after_tax_paid: 500,
+      not_reported_in_box12_verified: true,
+      not_employer_contribution_or_section414h2_pickup_verified: true,
+    },
+    plan_statement: {
+      source_document_reference: "voluntary-plan",
+      participant_tin: s.taxpayer_ssn,
+      sponsoring_employer_tin: "123456789",
+      account_number: "voluntary-account",
+      tax_year: 2026,
+      qualified_under_section4974c_verified: true,
+      not_ira_or_able_verified: true,
+      voluntary_employee_contributions: 500,
+      no_returned_contributions_verified: true,
+    },
+  });
+  assertThrows(() => calculate(s), Error, "conflicts with actual voluntary");
+});

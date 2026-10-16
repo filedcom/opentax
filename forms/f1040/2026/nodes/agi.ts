@@ -1,4 +1,8 @@
 import {
+  ableSource2026Schema,
+  calculateAbleSources2026,
+} from "../inputs/able-source.ts";
+import {
   calculateMovingSources2026,
   movingSource2026Schema,
 } from "../inputs/moving-source.ts";
@@ -66,6 +70,7 @@ export const inputSchema = sharedSchema.pick({
   line8a_nol_deduction: true,
   line8b_gambling_winnings: true,
   line8p_excess_business_loss: true,
+  line8q_able_taxable_earnings: true,
   line8c_cod_income: true,
   line8d_foreign_earned_income_exclusion: true,
   line8e_archer_msa_dist: true,
@@ -89,6 +94,7 @@ export const inputSchema = sharedSchema.pick({
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
   gambling_sources_2026: gamblingSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
+  able_sources_2026: ableSource2026Schema.optional(),
   moving_sources_2026: movingSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
@@ -141,6 +147,14 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       normalized.line7a_cap_gain_distrib = undefined;
     }
     const input = inputSchema.parse(normalized);
+    const able = input.able_sources_2026
+      ? calculateAbleSources2026(input.able_sources_2026)
+      : undefined;
+    if (
+      (able?.taxable_earnings ?? 0) !==
+        (input.line8q_able_taxable_earnings ?? 0) ||
+      able && able.source_input.filing_status !== input.filing_status
+    ) throw Error("AGI ABLE earnings must reconcile retained source records");
     const retirement = input.retirement_sources_2026
       ? calculateRetirementSources2026(input.retirement_sources_2026)
       : undefined;
@@ -330,6 +344,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       business_loss_sources_2026: _lossSources,
       gambling_sources_2026,
       retirement_sources_2026: _retirementSources,
+      able_sources_2026: _ableSources,
       moving_sources_2026: _movingSources,
       government_sources_2026,
       line8z_family_leave,
@@ -460,6 +475,9 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             ...output.fields,
             foreign_earned_income_exclusion_from_agi:
               input.line8d_foreign_earned_income_exclusion ?? 0,
+            ...(able ? { able_sources_2026: able.source_input } : {}),
+            able_taxable_earnings_from_agi:
+              input.line8q_able_taxable_earnings ?? 0,
             other_niit_income_pending: [
               retirement ? 0 : input.line4b_ira_taxable,
               retirement ? 0 : input.line5b_pension_taxable,

@@ -120,6 +120,8 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "schedule_c",
       "f1095a",
       "f1099r",
+      "able_accounts",
+      "form5329",
     ];
   }
   readonly inputSchema = inputSchema;
@@ -542,6 +544,14 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           fields: { ...owner, digital_assets_answer: input.digital_assets },
         },
         { nodeType: "ssa1099", fields: owner },
+        ...["able_accounts", "form5329"].map((nodeType) => ({
+          nodeType,
+          fields: {
+            ...owner,
+            taxpayer_dob: input.taxpayer_dob,
+            ...(joint ? { spouse_dob: input.spouse_dob } : {}),
+          },
+        })),
         {
           nodeType: "f1099r",
           fields: {

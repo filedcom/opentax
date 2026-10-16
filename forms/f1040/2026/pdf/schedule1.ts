@@ -140,6 +140,7 @@ export async function buildSchedule1PdfBytes2026(
     line8e_archer_msa_dist: [1, 17],
     line8i_prizes_awards: [1, 21],
     line8p_excess_business_loss: [1, 28],
+    line8q_able_taxable_earnings: [1, 29],
     line8z_total: [1, 36],
     line9_total_other_income: [1, 37],
     line10_total_additional_income: [1, 38],

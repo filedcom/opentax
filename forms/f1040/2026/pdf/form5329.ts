@@ -5,22 +5,43 @@ import {
   StandardFonts,
   TextAlignment,
 } from "pdf-lib";
+import type { RetirementSource2026 } from "../inputs/retirement-source.ts";
 import {
-  calculateRetirementSources2026,
-  type RetirementSource2026,
-} from "../inputs/retirement-source.ts";
+  calculateForm5329Sources2026,
+  type Form5329Source2026,
+} from "../inputs/form5329-source.ts";
 import { loadPinnedDraft2026 } from "./source.ts";
 
 /** Static development attachment; source replay preserves owner-specific tax and identity. */
-export async function buildForm5329PdfBytes2026(
+export function buildForm5329PdfBytes2026(
   raw: RetirementSource2026,
   owner: "taxpayer" | "spouse",
   schedule2Line5: number,
   filer: { name: string; ssn: string },
 ): Promise<Uint8Array> {
-  const r = calculateRetirementSources2026(raw);
-  const part = r.early_owners.find((o) => o.owner === owner);
-  if (!part?.file_form5329 || schedule2Line5 !== r.line5_early_tax) {
+  return buildCombinedForm5329PdfBytes2026(
+    {
+      filing_status: raw.filing_status,
+      taxpayer_ssn: raw.taxpayer_ssn,
+      spouse_ssn: raw.spouse_ssn,
+      taxpayer_dob: raw.taxpayer_dob,
+      spouse_dob: raw.spouse_dob,
+      retirement_sources_2026: raw,
+    },
+    owner,
+    schedule2Line5,
+    filer,
+  );
+}
+export async function buildCombinedForm5329PdfBytes2026(
+  raw: Form5329Source2026,
+  owner: "taxpayer" | "spouse",
+  schedule2Line5: number,
+  filer: { name: string; ssn: string },
+): Promise<Uint8Array> {
+  const r = calculateForm5329Sources2026(raw);
+  const part = r.owners.find((o) => o.owner === owner);
+  if (!part?.file_form5329 || schedule2Line5 !== r.schedule2_line5) {
     throw new Error(
       "Form 5329 draft needs source-derived owner tax and matching Schedule 2 line 5",
     );
@@ -59,13 +80,21 @@ export async function buildForm5329PdfBytes2026(
   };
   fill(1, filer.name);
   fill(2, filer.ssn);
-  fill(11, part.line1);
-  if (part.exception_code) {
-    fill(12, part.exception_code);
-    fill(13, part.line2);
+  if (part.part1) {
+    fill(11, part.part1.line1);
+    if (part.part1.exception_code) {
+      fill(12, part.part1.exception_code);
+      fill(13, part.part1.line2);
+    }
+    fill(14, part.part1.line3);
+    fill(15, part.part1.line4);
   }
-  fill(14, part.line3);
-  fill(15, part.line4);
+  if (part.part2) {
+    fill(16, part.part2.line5);
+    fill(17, part.part2.line6);
+    fill(18, part.part2.line7);
+    fill(19, part.part2.line8);
+  }
   // Other parts and signature remain blank.
   form.updateFieldAppearances(font);
   form.flatten();

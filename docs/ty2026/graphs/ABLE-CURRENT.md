@@ -1,10 +1,9 @@
 # TY2026 ABLE source workpaper
 
-The internal `calculateAbleSources2026` workpaper validates owned ABLE accounts,
-beneficiary contribution payments, annual distributions and qualified expenses.
-It is not registered in the 2026 graph or public filing catalog. Its outputs
-prepare the remaining Form 8880, Schedule 1 and Form 5329 integration; no filed
-ABLE income, additional tax or credit is claimed by this increment.
+The registered `able_accounts` source binds actual filer DOBs, W-2s and retained
+business sources before AGI. Ordinary beneficiary contributions and distributions
+now reach income, saver credit, owner Form 5329 and the static draft bundle.
+Advanced account branches, current MeF/ATS and public filing remain open.
 
 ## Authority and annual differences
 
@@ -59,23 +58,49 @@ Form 5329 Part II lines 5-8, rounding taxable income before the 10% tax. Qualifi
 expenses above gross never create a negative taxable amount. Joint owners keep
 separate amounts and source records.
 
-## Remaining integration and coverage
+## Connected return and document paths
 
-1. Register an ABLE source producer **before AGI**. Bind general DOBs, actual
-   W-2s and retained business sources, then emit reconciled Schedule 1 line 8q
-   and retained ABLE sources. A post-tax credit node must not create income.
-2. Add the source to AGI/SSA/Marketplace and tax replay. Above-threshold taxable
-   earnings need an audited NIIT classification; income must not silently bypass
-   that owner. Current 2025 output checks also require this classification.
-3. Match the saver claim to the actual ABLE inventory and bind its line 1 cash
-   and current gross distributions. Check the employment allowance against the
-   actual voluntary employee-plan contribution review as well as W-2 facts.
-4. Merge each owner's Part II with any retirement Part I on **one Form 5329**;
-   reconcile total additional tax, PDF pages and Schedule 2. Preserve actual
-   ABLE tax during Form 1062 credit comparisons.
-5. Exercise mixed retirement/ABLE, joint owners, zero taxable distributions,
-   employment/business limits and PDF bundle scenarios. Then add native MeF and
-   current-schema validation with the wider 2026 filing product.
+- AGI independently replays taxable earnings into Schedule 1 line 8q before
+  Social Security, Marketplace income and tax. The PDF maps the pinned line 8q
+  widget, and Schedule 1 reconciles to finalized AGI totals.
+- Form 8880 requires the actual ABLE inventory reference instead of an absence
+  assertion. Beneficiary cash enters line 1; gross current withdrawals enter
+  each applicable line 4 column even when qualified expenses eliminate taxable
+  earnings. Wages, owners, DOBs and review dates must match. Employment reviews
+  reject conflicting actual voluntary employee-plan contributions.
+- The dedicated Form 5329 collection replays retirement and ABLE sources, checks
+  the same actual owners/wage/business inventories, and emits Schedule 2 line 5
+  once. Each owner has one attachment containing Part I, Part II or both. If
+  Part II requires a form, early distributions also use printed owner forms
+  instead of the return-level code-1 shortcut; the sum of printed rounded taxes
+  controls Schedule 2. Otherwise the existing direct-report shortcut survives.
+- Form 1062 retains and reconciles the collection. Section 529A(c)(3)(A) tax is
+  excluded from regular tax by [26 USC 26(b)(2)(Y)](https://uscode.house.gov/view.xhtml?req=%28title%3A26+section%3A26+edition%3Aprelim%29)
+  and remains in actual other taxes rather than the deferred tax comparison.
+  Any saver workpaper must contain the same ABLE inventory.
+- Taxable ABLE earnings with MAGI above the applicable NIIT threshold explicitly
+  require a reviewed section 1411 classification. This preserves the existing
+  2025 coverage boundary; zero taxable earnings and income at the threshold do
+  not activate this unsupported branch.
+
+Validation covers gross-versus-taxable withdrawals, source-only intake, absence
+and stale reviews, Social Security, Marketplace, NIIT boundary, combined Parts
+I/II, joint owner rounding and Form 1062 preservation. PDF tests independently
+read each Part II field and Schedule 1 line 8q after flattening, reconcile the
+bundle and reject a stale Schedule 2 total or filer. The combined owner page and
+Schedule 1 page were rendered and visually inspected. Existing retirement-only
+PDF routes remain covered, including direct-report and zero-tax exception forms.
+
+Validation for this increment: 767 source/node regression tests, 49 typed
+source/graph/PDF checks, eight inventory-tool tests and the 137-test repository
+unit gate pass. The loaded graph has 56 nodes, 294 declared edges and 16 edges
+to unregistered targets; these counts do not establish full filing coverage.
+
+## Remaining coverage
+
+Native MeF and current-schema validation must accompany the wider 2026 filing
+product. Final forms/instructions and above-threshold NIIT classification still
+require review. The source route remains limited to ordinary living beneficiaries.
 
 ABLE-to-ABLE transfers/rollovers, Trump-account rollovers, excess or returned
 contributions, beneficiary changes/death/termination, remission periods and

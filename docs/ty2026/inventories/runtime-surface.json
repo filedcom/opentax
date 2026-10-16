@@ -41,8 +41,8 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 54,
-    "declared_edges": 283,
+    "registry_nodes": 56,
+    "declared_edges": 294,
     "unregistered_target_edges": 16,
     "nodes": [
       {
@@ -50,6 +50,7 @@
         "node_type": "start",
         "implemented": true,
         "targets": [
+          "able_accounts",
           "form8880",
           "schedule_r",
           "f1099r",
@@ -133,9 +134,33 @@
           "gambling",
           "schedule_c",
           "f1095a",
-          "f1099r"
+          "f1099r",
+          "able_accounts",
+          "form5329"
         ],
         "source_module": "forms/f1040/2026/inputs/general.ts"
+      },
+      {
+        "key": "able_accounts",
+        "node_type": "able_accounts",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "form8880",
+          "form5329"
+        ],
+        "source_module": "forms/f1040/2026/inputs/able.ts"
+      },
+      {
+        "key": "form5329",
+        "node_type": "form5329",
+        "implemented": true,
+        "targets": [
+          "schedule2",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form5329.ts"
       },
       {
         "key": "form8880",
@@ -166,7 +191,7 @@
           "agi_aggregator",
           "f1040",
           "schedule_a",
-          "schedule2",
+          "form5329",
           "form2441",
           "schedule_r",
           "form8880"
@@ -315,7 +340,8 @@
           "standard_deduction",
           "vehicle_loan_interest",
           "form2441",
-          "f1099r"
+          "f1099r",
+          "able_accounts"
         ],
         "source_module": "forms/f1040/2026/nodes/business.ts"
       },
@@ -551,7 +577,8 @@
           "f8812",
           "schedule1a",
           "f3903",
-          "f1099r"
+          "f1099r",
+          "able_accounts"
         ],
         "source_module": "forms/f1040/2026/inputs/w2.ts"
       },

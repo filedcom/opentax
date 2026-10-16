@@ -378,8 +378,8 @@ regular Git files.
   a 2026 route. The 32 nodes absent from the old review ledger are explicitly
   flagged for assignment instead of being omitted.
 - [`runtime-surface.json`](./inventories/runtime-surface.json) and
-  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 53-node 2026
-  graph, all 276 declared edges, source paths and the 19 edges to unregistered
+  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 56-node 2026
+  graph, all 294 declared edges, source paths and the 16 edges to unregistered
   targets. These counts describe registrations, not supported tax branches.
 - [`year-literals.csv`](./inventories/year-literals.csv): `2025` occurrences in
   non-test shared node modules outside configuration, including comments. These
@@ -397,6 +397,16 @@ regular Git files.
 - [`IMPLEMENTATION.md`](./readiness/IMPLEMENTATION.md): ordered code and verification plan.
 - [`SOURCES.md`](./readiness/SOURCES.md): versions, Drive package, availability limits,
   and refresh procedure.
+
+## Ordinary ABLE integration
+
+The [ABLE route](./graphs/ABLE-CURRENT.md) now connects reviewed beneficiary
+contributions and withdrawals before AGI, carries gross withdrawals into saver
+credit, and combines owner retirement/ABLE additional taxes on one Form 5329.
+Schedule 1, Schedule 2 and static draft PDFs reconcile to source calculations;
+Form 1062 retains actual additional tax. Advanced account branches, taxable ABLE
+NIIT classification above the threshold, final authorities, MeF/ATS and the public
+filing product remain required work.
 
 ## Version rule
 

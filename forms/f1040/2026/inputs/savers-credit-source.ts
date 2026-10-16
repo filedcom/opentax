@@ -1,3 +1,7 @@
+import {
+  ableSource2026Schema,
+  calculateAbleSources2026,
+} from "./able-source.ts";
 import { z } from "zod";
 import { investmentOwner2026 } from "./investment-source.ts";
 import { w2Item2026Schema } from "./w2-source.ts";
@@ -47,6 +51,7 @@ export const saversCreditSource2026Schema = investmentOwner2026.extend({
   spouse_dob: date.optional(),
   wage_sources: z.array(w2Item2026Schema).max(100),
   retirement_sources_2026: retirementSource2026Schema.optional(),
+  able_sources_2026: ableSource2026Schema.optional(),
   finalized_tax: z.object({
     line18: whole,
     schedule3_line1: whole,
@@ -65,7 +70,9 @@ export const saversCreditSource2026Schema = investmentOwner2026.extend({
       true,
     ),
     no_ira_contributions_outside_retained_annual_workpaper: z.literal(true),
-    no_able_contributions_or_current_able_distributions: z.literal(true),
+    no_able_contributions_or_current_able_distributions: z.literal(true)
+      .optional(),
+    able_inventory_reference: ref.optional(),
     no_other_plan_contributions_or_distributions: z.literal(true),
     no_returned_excess_or_prior_year_deferrals_in_current_wages: z.literal(
       true,
@@ -329,6 +336,46 @@ export function calculateSaversCredit2026(raw: SaversCreditSource2026) {
       "Saver and retirement workpapers must retain the same owners, wages and source inventory",
     );
   }
+  const ab = input.able_sources_2026;
+  if (
+    ab
+      ? (c.no_able_contributions_or_current_able_distributions !== undefined ||
+        c.able_inventory_reference !== ab.claim.record_reference ||
+        ab.filing_status !== input.filing_status ||
+        ab.taxpayer_ssn !== input.taxpayer_ssn ||
+        ab.spouse_ssn !== input.spouse_ssn ||
+        ab.taxpayer_dob !== input.taxpayer_dob ||
+        ab.spouse_dob !== input.spouse_dob ||
+        ab.claim.reviewed_on > c.reviewed_on ||
+        JSON.stringify([...ab.wage_sources].sort((a, b) =>
+            a.source_document_reference.localeCompare(
+              b.source_document_reference,
+            )
+          )) !== JSON.stringify([...wages].sort((a, b) =>
+            a.source_document_reference.localeCompare(
+              b.source_document_reference,
+            )
+          )))
+      : (c.no_able_contributions_or_current_able_distributions !== true ||
+        c.able_inventory_reference !== undefined)
+  ) {
+    throw Error(
+      "Saver ABLE review must match actual owners, wages and retained inventory, including absence",
+    );
+  }
+  const able = ab ? calculateAbleSources2026(ab) : undefined;
+  for (const account of able?.accounts ?? []) {
+    if (
+      account.source.employed_beneficiary_review &&
+      c.voluntary_employee_contributions.some((e) =>
+        e.payroll.employee_tin === account.owner_tin
+      )
+    ) {
+      throw Error(
+        "ABLE employment review conflicts with actual voluntary employee plan contributions",
+      );
+    }
+  }
   const retirement = rs ? calculateRetirementSources2026(rs) : undefined;
   const line1Sources =
     retirement?.ira_basis?.calculation.forms.flatMap((f) =>
@@ -338,6 +385,15 @@ export function calculateSaversCredit2026(raw: SaversCreditSource2026) {
         amount: v.form5498.box1_ira_contributions,
       }))
     ) ?? [];
+  for (const a of able?.accounts ?? []) {
+    for (const p of a.source.beneficiary_payments) {
+      line1Sources.push({
+        owner_tin: a.owner_tin,
+        source_document_reference: p.source_document_ref,
+        amount: p.amount,
+      });
+    }
+  }
   for (const s of line1Sources) document(s.source_document_reference);
   const inherited = new Map(
     c.current_inherited_ira_relationships.map((
@@ -385,6 +441,18 @@ export function calculateSaversCredit2026(raw: SaversCreditSource2026) {
       amount,
     };
   }) ?? [];
+  for (const a of able?.accounts ?? []) {
+    const q = a.source.current_year_distributions?.form1099qa;
+    if (q) {
+      document(q.source_document_ref);
+      distributionSources.push({
+        owner_tin: a.owner_tin,
+        source_document_reference: q.source_document_ref,
+        year: 2026,
+        amount: q.box1_gross_distribution,
+      });
+    }
+  }
   const years = new Map(c.other_year_joint_status.map((s) => [s.year, s]));
   if (
     joint
