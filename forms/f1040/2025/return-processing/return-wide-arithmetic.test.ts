@@ -6,6 +6,32 @@ import {
   assertReturnWideArithmetic,
 } from "./return-wide-arithmetic.ts";
 
+Deno.test("Form 1040 export rounds retained wage/income sources by filed line", () => {
+  const income = {
+    line1a_wages: [6000.25, 6000.24],
+    line1b_household_wages: 100.49,
+    line1h_other_earned: [0.25, 0.25],
+    line1z_total_wages: 12101,
+    line2b_taxable_interest: 0.49,
+    line3b_ordinary_dividends: 0.49,
+    line9_total_income: 12101,
+  };
+  assertReturnWideArithmetic(income);
+  for (
+    const [change, reason] of [
+      [{ line1z_total_wages: 12101.48 }, "line 1z"],
+      [{ line1z_total_wages: 12100 }, "line 1z"],
+      [{ line9_total_income: 12102 }, "line 9"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...income, ...change }),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 export replays retained wage and total-income components", () => {
   const income = {
     line1a_wages: 40_000,

@@ -111,6 +111,8 @@ export function assertReturnWideArithmetic(
 
   // A direct descriptor call may provide only a subtotal. Replay the filed
   // components when at least one component row accompanies that subtotal.
+  // Retained source rows can contain cents. Combine each line's sources before
+  // rounding that line, as the return calculator and filed fields do.
   const components = (keys: readonly string[]): number | undefined => {
     let present = false;
     let total = 0;
@@ -118,12 +120,14 @@ export function assertReturnWideArithmetic(
       const value = fields[key];
       if (value === undefined || value === null) continue;
       if (typeof value === "number" && Number.isFinite(value)) {
-        total += value;
+        total += Math.round(value);
       } else if (
         Array.isArray(value) &&
         value.every((item) => typeof item === "number" && Number.isFinite(item))
       ) {
-        total += value.reduce((sum: number, item: number) => sum + item, 0);
+        total += Math.round(
+          value.reduce((sum: number, item: number) => sum + item, 0),
+        );
       } else {
         throw new Error(`Form 1040 ${key} needs a finite amount`);
       }
