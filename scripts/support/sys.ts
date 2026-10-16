@@ -33,7 +33,7 @@ import {
   statSync as nodeStatSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { Readable, Writable } from "node:stream";
 
 type WriteOptions = {
@@ -138,8 +138,10 @@ type TempOptions = {
 };
 
 export async function makeTempDir(options?: TempOptions): Promise<string> {
+  // mkdtemp appends to its argument, so the directory needs its separator:
+  // join("/tmp", "") is "/tmp", which would create "/tmpXXXXXX" beside it.
   const made = await mkdtemp(
-    join(options?.dir ?? tmpdir(), options?.prefix ?? ""),
+    join(options?.dir ?? tmpdir(), sep) + (options?.prefix ?? ""),
   );
   if (!options?.suffix) return made;
   const { rename } = await import("node:fs/promises");

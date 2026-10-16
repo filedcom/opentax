@@ -112,7 +112,7 @@ try {
     : mode === "unit"
     ? all.filter((path) =>
       path.startsWith("core/") || path.startsWith("cli/utils/") ||
-      path === "cli/network.test.ts" ||
+      path === "cli/network.test.ts" || path.startsWith("scripts/support/") ||
       path.startsWith("scripts/testing/") ||
       path === "benchmark/harness.test.ts"
     )
