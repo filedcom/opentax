@@ -1,10 +1,10 @@
+import { hasDisqualifyingAblePlanDeferral } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts";
 import { assertAbleSelfEmploymentSources } from "./able_self_employment_sources.ts";
 import { z } from "zod";
-import { ableContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
-import { employeeContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/employee_contribution_review.ts";
+import type { ableContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
+import type { employeeContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/employee_contribution_review.ts";
 import {
   assertDistinctW2IssuedCopies,
-  Box12Code,
   w2ItemSchema,
 } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
@@ -17,16 +17,6 @@ export function assertAbleEmploymentW2Sources(
 ): void {
   if (!review.accounts.some((a) => a.employed_beneficiary_review)) return;
   assertDistinctW2IssuedCopies(copies);
-  // Section529A(b)(7): 401(a)/403(a) defined-contribution, 403(b), and 457(b).
-  // IRA-based SARSEP/SIMPLE codes F/S alone do not establish those contributions.
-  const disqualifyingCodes = new Set<Box12Code>([
-    Box12Code.D,
-    Box12Code.E,
-    Box12Code.G,
-    Box12Code.AA,
-    Box12Code.BB,
-    Box12Code.EE,
-  ]);
   for (const account of review.accounts) {
     const employment = account.employed_beneficiary_review;
     if (!employment) continue;
@@ -52,9 +42,7 @@ export function assertAbleEmploymentW2Sources(
         matches.length !== 1 || !copy || copy.box1_wages !== wage.box1_wages ||
         (copy.box11_nonqual_plans ?? 0) > 0 ||
         copy.box13_statutory_employee === true ||
-        copy.box12_entries?.some((e) =>
-          e.amount > 0 && disqualifyingCodes.has(e.code)
-        )
+        hasDisqualifyingAblePlanDeferral(copy.box12_entries ?? [])
       ) {
         throw new Error(
           "ABLE employment limit needs reconciled current-service W-2 wages without disqualifying plan contributions",

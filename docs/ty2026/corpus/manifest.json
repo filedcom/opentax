@@ -2372,6 +2372,42 @@
       "year_check": "Notice 2024-2; section F referenced by 2026 draft Form 5329 instructions",
       "retrieved_utc": "2026-10-16",
       "scope": "Terminal-illness distributions: eligible plans, physician certification content and dates, administrator receipt and return election; recontributions remain required separate work"
+    },
+    {
+      "path": "authorities/i1099qa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099qa.pdf",
+      "kind": "final-instructions",
+      "status": "downloaded",
+      "bytes": 158311,
+      "sha256": "dbc7c9f6bd86fc22f9b84043203a1b2e5895ae53adc92211218aae4fe81af6f1",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/f5498qa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f5498qa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 80624,
+      "sha256": "3a84d587ef0347a3040c8342f851ba968d0938aa1f2c8e371e790d0caacbb16a",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/f1099qa--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1099qa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 75687,
+      "sha256": "468cdb339f65afcae4423e20db35b213541a714faa202c9be51bf6f926120537",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/hhs-poverty--2025.pdf",
+      "url": "https://www.govinfo.gov/content/pkg/FR-2025-01-17/pdf/2025-01377.pdf",
+      "kind": "annual-authority",
+      "status": "downloaded",
+      "bytes": 181299,
+      "sha256": "a239506cedee787b4c164ac17fa43b2ad9a147e3c848cd935c54a692ee2cebce",
+      "reviewed_on": "2026-10-16"
     }
   ]
 }

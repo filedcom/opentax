@@ -1117,3 +1117,15 @@ identify the actual saver inventory, including reviewed zero-credit cases.
 ABLE, other IRA contribution sources, foreign adjustments, special deadlines,
 final forms and MeF/ATS remain open. This development registry is not a public
 filing product. See the [current Form 8880 contract](../../../docs/ty2026/graphs/FORM8396-8859-8880-GRAPH.md).
+
+
+## ABLE source workpaper
+
+`calculateAbleSources2026` reuses year-parameterized ABLE distribution and
+employment validation, earnings-ratio arithmetic and compensation limits from
+2025. It applies the 2026 $20,000 contribution limit, age-46 onset rule and
+preceding-year HHS amounts, with actual W-2/business source reconciliation.
+It retains beneficiary cash/gross distributions separately from taxable earnings
+and owner Form 5329 Part II amounts. This workpaper is not registered; the next
+integration must add income before AGI and combine owner additional-tax forms
+before enabling ABLE credit claims. See [ABLE source coverage and remaining work](../../../docs/ty2026/graphs/ABLE-CURRENT.md).

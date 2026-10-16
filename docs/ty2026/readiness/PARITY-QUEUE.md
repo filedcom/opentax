@@ -7,7 +7,7 @@ and [PDF bundle contract](../pdf/PDF-BUNDLE-CURRENT.md).
 
 Current inventory refresh (October 16): the loaded TY2025 product has **223 nodes,
 118 PDF descriptors and 158 MeF descriptors across 154 modules**. The connected
-TY2026 source graph has **53 nodes and 19 declared edges to unregistered targets**.
+TY2026 source graph has **54 nodes and 16 declared edges to unregistered targets**.
 Use [runtime-surface.json](../inventories/runtime-surface.json) and the
 [inventory contract](../tooling/README.md) for reproducible current counts. The
 32 nodes missing from the historical review notes are listed explicitly there.

@@ -1252,15 +1252,9 @@ forms/f1040/nodes/intermediate/forms/credits/individual/form8839/staged_sink_fin
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts,24,"tax_year: z.literal(2025),"
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts,41,"eligible_individual_in_2025_confirmed: z.literal(true),"
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts,53,"paid_on: z.string().date().refine((d) => d.startsWith(""2025-"")),"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_distribution_review.ts,20,"date.startsWith(""2025-"")"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_distribution_review.ts,85,"!(expense.paid_on.startsWith(""2025-"") || nextYear) ||"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,5,"const date2025 = z.string().date().refine((d) => d.startsWith(""2025-""));"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,104,"from: date2025,"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,105,"through: date2025,"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,128,"periods[0]?.from !== ""2025-01-01"" ||"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,129,"periods.at(-1)?.through !== ""2025-12-31"" ||"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,138,"""ABLE employment review needs a complete nonoverlapping 2025 residence calendar"","
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,174,// 2025 Form1099-QA instructions and 26 CFR1.529A-2(g)(2)(ii)(B): 2024 guidelines.
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_distribution_review.ts,108,"2025,"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,165,"2025,"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,187,// 2025 Form1099-QA instructions: preceding-year (2024) guidelines.
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,69,"(!review.current_year_source_inventory_review || year !== ""2025"")) ||"
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,70,"(year === ""2025"" && review.current_year_source_inventory_review && ("
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,100,"(year === ""2025"" && ("
