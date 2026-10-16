@@ -50,13 +50,24 @@ on this source form; whole-dollar return rounding belongs to its receiving
 income/tax owners. Output is marked draft and `filingReady: false`.
 
 The retirement bridge accepts ordinary code 1/7 pensions and no-basis IRA
-payments, including matched dated early-tax/exception reviews. It requires a
+payments, plus source-reconciled traditional/SEP/SIMPLE IRA basis and direct
+Roth conversions using the annual Form 8606 owner. It requires a
 separate Form 4852 taxability review instead of asserting an issuer's taxable
 amount. A partially taxable pension retains its supplied taxable estimate;
 unknown IRA taxability is resolved by the existing no-basis owner while the
-source form's 8b remains blank. IRA basis/conversion, HSA funding, direct
-rollovers, other distribution codes and special treatment remain explicitly
-closed until their source/payment bridges are reconciled. These are software
+source form's 8b remains blank. With an annual basis owner, codes 1/2/7/S use
+its complete current-copy and payment inventories. Each disposition matches the
+substitute's actual dates, gross amounts, federal/state/local withholding and
+plan classification before cash and conversion receipts are reconciled. The
+annual owner retains basis and contribution history; Form 5329 uses the actual
+nonconverted payments and applicable dated exceptions after basis allocation.
+A single-payment review is valid only for one actual substitute payment; a
+multi-payment ledger must match every payment reference. Unrelated corrected
+issuer copies retain the retirement owner's current-copy selection.
+
+HSA funding, plan direct rollovers, other distribution codes and special
+treatment remain explicitly closed until their source/payment bridges are
+reconciled. These are software
 coverage limits, not claims about the legal availability of Form 4852.
 
 Substitute retirement state/local withholding reaches Schedule A from its own
@@ -85,6 +96,14 @@ The affected regression suite passed 380 tests and the unit gate passed 137.
 Wage/pension return bundles and the complete wage continuation were rendered
 and visually inspected. Runtime inventory validation reports 58 nodes, 302
 declared edges and 15 edges to unfinished receivers.
+
+The IRA-basis follow-up adds ten source/graph cases and one bundle case. The
+381-test affected retirement/HSA/IRA/substitute suite and 137-test unit gate
+passed. The rendered substitute, both Form 8606 pages and Form 5329 Part I
+were visually inspected; physical cells verify $2,800 carried basis, $5,550
+ordinary taxable distributions, $9,250 taxable conversions and $555 early tax
+in the synthetic $16,000 two-payment conversion case. These are test inputs,
+not a taxpayer return or evidence of current IRS filing acceptance.
 
 ## When a substitute is appropriate
 

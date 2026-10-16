@@ -1,5 +1,9 @@
 import { hsaQualifiedFunding2026Schema } from "./hsa-qualified-funding.ts";
 import {
+  calculateForm4852Bridge2026,
+  form4852Bridge2026Schema,
+} from "./form4852-bridge.ts";
+import {
   bindIraHsaFunding2026,
   iraHsaValuation2026Schema,
   verifyIraHsaBasisPreserved2026,
@@ -40,6 +44,7 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   current_copies: z.array(retirementCopy2026Schema).max(100),
+  form4852_sources_2026: form4852Bridge2026Schema.optional(),
   claim: z.object({
     tax_year: z.literal(2026),
     record_reference: ref,
@@ -139,6 +144,35 @@ export type IraBasisSource2026 = z.input<typeof iraBasisSource2026Schema>;
 
 export function calculateIraBasis2026(raw: IraBasisSource2026) {
   const input = iraBasisSource2026Schema.parse(raw), c = input.claim;
+  const substitutes = input.form4852_sources_2026
+    ? calculateForm4852Bridge2026(input.form4852_sources_2026)
+    : undefined;
+  if (substitutes) {
+    const owners = new Set(c.owners.map((o) => o.owner_tin));
+    // Retirement validates the full correction history; basis receives current copies.
+    const retired = new Set(
+      substitutes.effective_retirement_copies.flatMap((s) =>
+        s.supersedes_document_reference ? [s.supersedes_document_reference] : []
+      ),
+    );
+    const expected = substitutes.effective_retirement_copies.filter((s) =>
+      !retired.has(s.source_document_reference) && s.box7b_ira_sep_simple &&
+      owners.has(
+        s.recipient === "spouse" ? input.spouse_ssn! : input.taxpayer_ssn,
+      )
+    );
+    if (
+      substitutes.source_input.filing_status !== input.filing_status ||
+      substitutes.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+      substitutes.source_input.spouse_ssn !== input.spouse_ssn ||
+      c.reviewed_on < substitutes.source_input.claim.reviewed_on ||
+      JSON.stringify(input.current_copies) !== JSON.stringify(expected)
+    ) {
+      throw Error(
+        "IRA basis must reconcile actual Form 4852 owners, current copies and review chronology",
+      );
+    }
+  }
   if (c.reviewed_on < "2027-01-01") {
     throw Error("IRA basis inventory needs a completed-year review");
   }
@@ -425,6 +459,9 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         funding?.transfers.filter((t) =>
           t.ira_statement_reference === s.source_document_reference
         ),
+        substitutes?.ledger.rows.find((row) =>
+          row.source.source_document_reference === s.source_document_reference
+        )?.source,
       );
       document(resolved.record_reference);
       for (const p of resolved.payments) {

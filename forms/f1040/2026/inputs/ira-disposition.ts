@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { calculateForm4852Sources2026 } from "./form4852-source.ts";
 import {
   addCalendarMonths,
   type retirementCopy2026Schema,
@@ -86,9 +87,51 @@ export function resolveIraDisposition2026(
     paid_on: string;
     amount: number;
   }[] = [],
+  substitute?: ReturnType<
+    typeof calculateForm4852Sources2026
+  >["rows"][number]["source"],
 ) {
   const c = copy;
   const ledger = disposition.kind === "ledger";
+  if (
+    substitute && (substitute.kind !== "1099r" ||
+      !substitute.amounts.is_ira || substitute.owner_tin !== owner.owner_tin ||
+      substitute.source_document_reference !== c.source_document_reference ||
+      substitute.payer_tin !== c.payer_tin ||
+      substitute.account_number !== c.account_number ||
+      substitute.distribution_sources.some((p) =>
+        p.account_type !== account.plan_type
+      ))
+  ) {
+    throw Error(
+      "IRA disposition needs its actual substitute owner, account and plan classification",
+    );
+  }
+  const estimated = substitute?.kind === "1099r" ? substitute : undefined;
+  // Form 4852 has withholding amounts/jurisdictions, but no issuer state ID or
+  // state distribution base. Reconcile the actual ledger without inventing boxes.
+  const stateWithholding = estimated
+    ? (estimated.amounts.state_name !== undefined
+      ? [{
+        state: estimated.amounts.state_name!,
+        withheld: estimated.amounts.state_tax_withheld,
+      }]
+      : [])
+    : c.state_information.map((s) => ({
+      state: s.state,
+      withheld: s.box14_state_withheld,
+    }));
+  const localWithholding = estimated
+    ? (estimated.amounts.locality_name !== undefined
+      ? [{
+        locality: estimated.amounts.locality_name!,
+        withheld: estimated.amounts.local_tax_withheld,
+      }]
+      : [])
+    : c.local_information.map((s) => ({
+      locality: s.locality,
+      withheld: s.box17_local_withheld,
+    }));
   const payments = disposition.kind === "ledger"
     ? disposition.source.payments
     : [{
@@ -97,17 +140,34 @@ export function resolveIraDisposition2026(
       gross: c.box1_gross_distribution,
       cash_paid_to_owner: disposition.source.cash_paid_to_owner,
       federal_withheld: c.box4_federal_withheld,
-      state_withholding: c.state_information.map((s) => ({
-        state: s.state,
-        withheld: s.box14_state_withheld,
-      })),
-      local_withholding: c.local_information.map((s) => ({
-        locality: s.locality,
-        withheld: s.box17_local_withheld,
-      })),
+      state_withholding: stateWithholding,
+      local_withholding: localWithholding,
       conversion: disposition.source.conversion,
       hsa_receipt_reference: undefined,
     }];
+  if (
+    estimated && (payments.length !== estimated.distribution_sources.length ||
+      payments.some((p) => {
+        const actual = ledger
+          ? estimated.distribution_sources.find((s) =>
+            s.distribution_reference === p.record_reference
+          )
+          : estimated.distribution_sources[0];
+        return !actual || p.distributed_on !== actual.paid_on ||
+          p.gross !== actual.gross_distribution ||
+          p.federal_withheld !== actual.federal_withheld ||
+          sumSourceMoney(p.state_withholding.map((s) => s.withheld)) !==
+            actual.state_tax_withheld ||
+          sumSourceMoney(p.local_withholding.map((s) => s.withheld)) !==
+            actual.local_tax_withheld ||
+          p.state_withholding.some((s) => s.state !== actual.state_name) ||
+          p.local_withholding.some((s) => s.locality !== actual.locality_name);
+      }))
+  ) {
+    throw Error(
+      "IRA basis disposition must match every dated Form 4852 payment and its federal, state and local withholding",
+    );
+  }
   if (
     ledger &&
     new Set(payments.map((p) => p.record_reference)).size !== payments.length
@@ -139,18 +199,18 @@ export function resolveIraDisposition2026(
     }
   };
   reconcileJurisdictions(
-    c.state_information.map((v) => ({
+    stateWithholding.map((v) => ({
       key: v.state,
-      amount: v.box14_state_withheld,
+      amount: v.withheld,
     })),
     payments.map((p) =>
       p.state_withholding.map((v) => ({ key: v.state, amount: v.withheld }))
     ),
   );
   reconcileJurisdictions(
-    c.local_information.map((v) => ({
+    localWithholding.map((v) => ({
       key: v.locality,
-      amount: v.box17_local_withheld,
+      amount: v.withheld,
     })),
     payments.map((p) =>
       p.local_withholding.map((v) => ({ key: v.locality, amount: v.withheld }))

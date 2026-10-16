@@ -405,6 +405,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       current_copies: current.filter((c) =>
         c.box7b_ira_sep_simple && basisOwners.has(owner(c))
       ),
+      form4852_sources_2026: input.form4852_sources_2026,
       claim: claim.ira_basis,
       wage_sources: input.wage_sources,
       business_sources_2026: input.business_sources_2026,
@@ -478,13 +479,14 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     const substitute = substituteRows.get(c.source_document_reference);
     if (substitute) {
       if (
-        r.ira_basis_owner_review_reference ||
         c.box7a_distribution_codes.length !== 1 ||
-        !["1", "7"].includes(c.box7a_distribution_codes[0]) ||
+        !(basis ? ["1", "2", "7", "S"] : ["1", "7"]).includes(
+          c.box7a_distribution_codes[0],
+        ) ||
         !r.no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified
       ) {
         throw Error(
-          "Form 4852 retirement currently supports ordinary code 1/7 pension or no-basis IRA payments; other treatment needs a reconciled substitute payment bridge",
+          "Form 4852 retirement supports ordinary pensions and reconciled IRA basis/conversion payments; other treatment needs a reconciled substitute payment bridge",
         );
       }
       if (
@@ -512,7 +514,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       }
       const payments = r.early_distribution?.payments;
       if (
-        payments &&
+        payments && !basisAmounts &&
         (payments.length !== substitute.distribution_sources.length ||
           payments.some((p) =>
             !substitute.distribution_sources.some((s) =>

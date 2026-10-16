@@ -767,14 +767,16 @@ form, required explanations and linked continuation pages, preserving unknown
 retirement taxability and the IRA/SEP/SIMPLE margin notation.
 
 Public `f4852` claims now bind to actual general identity and issued inventories.
-Effective wages and ordinary code 1/7 pensions or no-basis IRAs reach the existing
-income, payroll, early-tax and withholding owners exactly once. Replaced originals
+Effective wages, ordinary pensions and IRA distributions reach the existing
+income, payroll, early-tax and withholding owners exactly once. IRA basis and
+direct Roth conversions bind each substitute payment to the annual Form 8606
+account ledger, including actual withholding and dated nonconversion exceptions. Replaced originals
 are excluded; the retained substitute ledger is checked against executed sources.
 The return bundle prints each substitute with actual owner/address and complete
 explanations while preserving unrelated withheld 1099-R originals. State/local
 withholding comes from the substitute ledger without invented issuer state IDs.
 The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md) records
-explicitly closed basis/conversion/rollover/special retirement cases, complex
+remaining HSA funding/plan rollover/special retirement cases, complex
 corrections and remaining MeF/acceptance work. These remain development drafts.
 
 ## Investment sources and NIIT

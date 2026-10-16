@@ -94,6 +94,17 @@ requires the actual first-contribution date and completed two-year period, using
 the same calendar-anniversary helper as the retirement source adapter. Same-owner
 accounts aggregate before rounding; spouses retain independent forms and basis.
 
+Reviewed Form 4852 substitutes now participate through the same annual owner.
+The actual substitute workpaper is retained internally, with exact current-copy,
+return-owner and review-date reconciliation. Single or multiple payments match
+the substitute's dates, references and withholding before conversion receipts
+and retained cash are resolved. State/local amounts come from Form 4852 without
+inventing an issuer's state ID or distribution base. Form 5329 reviews the
+resulting nonconversion payments; it never taxes the gross conversion as cash.
+The bundle includes the substitute, owner Form 8606 and any Form 5329 without
+requiring an unavailable issuer PDF. See the [Form 4852 contract](./FORM4852-GRAPH.md)
+for the supported codes and remaining special-treatment boundaries.
+
 `traditionalIraBasisAmounts` extracts the arithmetic from the existing 2025 annual
 conversion implementation. Both years now use that helper. It starts with the
 printed three-place ratio and increases precision up to five places if necessary

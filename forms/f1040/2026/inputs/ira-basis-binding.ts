@@ -218,6 +218,7 @@ export function bindIraBasis2026(raw: IraBasisBinding2026) {
     spouse_can_be_claimed_as_dependent:
       input.spouse_can_be_claimed_as_dependent,
     current_copies: input.current_copies,
+    form4852_sources_2026: input.form4852_sources_2026,
     claim: {
       ...input.claim,
       owners: input.claim.owners.map((o) => {
