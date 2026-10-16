@@ -2,6 +2,8 @@ import {
   calculateGambling2026,
   gamblingSource2026Schema,
 } from "./gambling-source.ts";
+import { adoptionIncomeBridge2026Schema } from "./adoption-settlement.ts";
+import { adoptionSupportWages2026 } from "./adoption-support.ts";
 import { businessReturnSource2026Schema } from "./business-qbi.ts";
 import { businessChildIncome2026 } from "./business-child-income.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -26,6 +28,7 @@ export const childTaxClaim2026Schema = z.object({
     record_reference: ref,
     child_tin: tin,
     business_inventory_reference: ref.optional(),
+    adoption_inventory_reference: ref.optional(),
     parent_form8814_election_for_this_child: z.literal(false),
     all_child_income_sources_included: z.literal(true),
     no_nonw2_scholarship_or_qualified_disability_trust_income: z.literal(true),
@@ -59,8 +62,10 @@ export const childTaxInput2026Schema = childTaxClaim2026Schema.partial().extend(
   {
     gambling_sources_2026: gamblingSource2026Schema.optional(),
     business_sources_2026: businessReturnSource2026Schema.optional(),
+    adoption_income_2026: adoptionIncomeBridge2026Schema.optional(),
     child_context: z.object({
       taxpayer_ssn: tin,
+      spouse_ssn: tin.optional(),
       taxpayer_dob: z.string().date(),
       filing_status: z.nativeEnum(FilingStatus),
       taxpayer_can_be_claimed_as_dependent: z.boolean(),
@@ -158,7 +163,18 @@ export function resolveChildTax2026(
   const business = input.business_sources_2026
     ? businessChildIncome2026(input.business_sources_2026)
     : null;
-  const supportEarned = income.wages +
+  const adoption = input.adoption_income_2026
+    ? adoptionSupportWages2026(
+      input.adoption_income_2026,
+      c,
+      income.wages,
+      claim.adoption_inventory_reference,
+    )
+    : undefined;
+  if (!adoption && claim.adoption_inventory_reference) {
+    throw Error("Child-tax adoption review needs actual adoption sources");
+  }
+  const supportEarned = (adoption?.wages_for_support ?? income.wages) +
     (business?.earned_income_for_support ?? 0);
   const age = 2026 - Number(c.taxpayer_dob.slice(0, 4)) +
     (c.taxpayer_dob.endsWith("-01-01") ? 1 : 0);
@@ -239,6 +255,7 @@ export function resolveChildTax2026(
     support,
     earned_income_for_support: supportEarned,
     business_workpaper: business,
+    adoption_workpaper: adoption,
     parent_alive: parentAlive,
     gross_unearned_income: grossUnearned,
     line1_unearned_income: line1,

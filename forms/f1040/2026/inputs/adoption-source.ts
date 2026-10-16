@@ -27,6 +27,12 @@ const program = z.object({
   effective_through: date,
   written_qualified_adoption_assistance_program_verified: z.literal(true),
   not_more_than_two_percent_s_corporation_owner_verified: z.literal(true),
+  personal_services_review: z.object({
+    record_reference: ref,
+    benefits_are_reasonable_compensation_for_personal_services_verified: z
+      .literal(true),
+    not_distribution_of_earnings_or_profits_verified: z.literal(true),
+  }).strict().optional(),
 }).strict();
 const benefit = z.object({
   record_reference: ref,
@@ -202,6 +208,9 @@ export function prepareAdoptionSources2026(raw: AdoptionSource2026) {
     programs = new Map(c.programs.map((p) => [p.record_reference, p]));
   for (const p of c.programs) {
     unique(p.record_reference);
+    if (p.personal_services_review) {
+      unique(p.personal_services_review.record_reference);
+    }
     const w = wages.get(p.wage_source_reference);
     if (
       !w || !owners.has(p.owner_tin) ||

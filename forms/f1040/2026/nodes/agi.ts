@@ -712,6 +712,14 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "f8615",
       fields: {
+        ...(adoptionExclusion
+          ? {
+            adoption_income_2026: {
+              source: adoptionExclusion.source_input,
+              income: adoptionExclusion.income,
+            },
+          }
+          : {}),
         ...(business_sources_2026 ? { business_sources_2026 } : {}),
         income_context: {
           agi: earned?.auto_agi,
@@ -719,11 +727,6 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           wages: wageIncome,
           early_withdrawal_penalty: input.line18_early_withdrawal ?? 0,
           unsupported_child_income_activity: [
-            adoptionExclusion &&
-              (adoptionExclusion.source.current_code_t_benefits > 0 ||
-                adoptionExclusion.lines.line30 > 0)
-              ? 1
-              : 0,
             business ? 0 : input.line3_schedule_c,
             input.line6_schedule_f,
             input.line5_schedule_e,
@@ -740,10 +743,13 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       fields: {
         agi: earned?.auto_agi,
         earned_income_from_agi: wageIncome,
-        ...(adoptionExclusion &&
-            (adoptionExclusion.source.current_code_t_benefits > 0 ||
-              adoptionExclusion.lines.line30 > 0)
-          ? { adoption_compensation_review_required: true }
+        ...(adoptionExclusion
+          ? {
+            adoption_income_2026: {
+              source: adoptionExclusion.source_input,
+              income: adoptionExclusion.income,
+            },
+          }
           : {}),
         ...(business_sources_2026 ? { business_sources_2026 } : {}),
         unsupported_earned_income_activity: [

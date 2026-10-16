@@ -137,6 +137,7 @@ export const educationClaim2026Schema = z.object({
     review_reference: ref,
     return_filing_date: z.string().date(),
     business_inventory_reference: ref.optional(),
+    adoption_inventory_reference: ref.optional(),
     neither_filer_claimed_on_another_return: z.literal(true),
     no_foreign_or_territory_income_exclusions: z.literal(true),
     no_foreign_tax_form8978_or_prior_amt_credit: z.literal(true),

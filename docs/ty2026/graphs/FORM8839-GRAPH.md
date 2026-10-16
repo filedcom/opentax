@@ -154,10 +154,38 @@ benefits do not, following [Pub. 596](https://www.irs.gov/publications/p596).
 The ordinary no-claim care and education consumers accept signed wages. Care
 claims with unchanged reconciled wages and adult education claims proceed.
 Changed care wages still require reconciliation against the actual benefit
-workpaper; under-24 education claims and affected child-tax support cases retain
-explicit errors pending compensation treatment. In particular, the support test
-needs personal-service compensation, not an assumed taxable-wage substitute;
-see the [Form 8863 instructions](https://www.irs.gov/instructions/i8863).
+workpaper, including separate spouse and month allocations.
+
+Under-24 education and child-tax support reviews now name the actual adoption
+inventory. Both consumers replay its exclusion using the actual return owners,
+restore the signed line 1f adjustment, and add actual current benefits received
+as compensation. A program with paid benefits requires a referenced employer
+review that the benefits compensate personal services and are not a distribution
+of corporate earnings or profits. The retained workpaper traces each payment,
+program, owner and review. Payments are summed before whole-dollar rounding.
+Missing classification evidence, mismatched source inventories and unreconciled
+issued wages fail explicitly. These internal operands cannot be entered through
+the public claim schema.
+
+This applies the personal-services definition in
+[IRC 1(g)(2)](https://uscode.house.gov/us/usc/119-118/t26/s1/) and
+[911(d)(2)](https://uscode.house.gov/us/usc/119-118/t26/s911/), together with the
+[2026 draft education instructions](https://www.irs.gov/pub/irs-dft/i8863--dft.pdf)
+and [child-tax instructions](https://www.irs.gov/pub/irs-dft/i8615--dft.pdf).
+It is an application of their general compensation definition to reviewed
+employer payments, not an adoption-specific IRS worked example. The support
+calculation is taxable wages minus the signed adoption adjustment plus actual
+current compensation. Thus $10,000 wages and $4,000 excluded benefits give
+$14,000 support earnings while AGI retains $10,000 wages. A $17,670 special-needs
+exclusion with no actual payment restores $10,000 support earnings without
+inventing $17,670 compensation. Taxable pending-foreign benefits count once.
+
+This support calculation does not add excluded compensation to gross income,
+Form 8615 unearned income, the dependent standard deduction or EIC. Concurrent
+education/child-tax reviews must agree on income sources, enrollment and support.
+Draft bundles replay the same results when selecting Form 8615 and settling the
+refundable education and adoption credits. Prior foreign-benefit recovery remains
+blocked until its affected-year income binding exists.
 
 This is **development calculation intake, not public filing support**. Native
 MeF remains open. Nonspouse allocations, combined unrelated
@@ -244,3 +272,14 @@ required below.
 
 This is a research and implementation contract, not a registered TY2026
 Form 8839 filing route.
+
+The support-compensation follow-up passes 112 distinct targeted tests across
+adoption income/credits, education, child tax, business combinations and draft
+PDFs, plus the 137-test repository unit gate (3,901 modules, runtime unchanged).
+Cases include excluded and taxable payments, zero-payment special needs,
+annual rounding of fractional payments, separate-return spouse identity,
+source/owner/evidence rejection, agreed support inventories and unchanged
+unearned-income/dependent-deduction treatment. The combined draft was rendered
+and inspected; pixel checks also verify both education draft warnings across
+ordinary, LLC and extra-school pages. These checks establish this development
+increment, not complete TY2026 coverage or filing readiness.

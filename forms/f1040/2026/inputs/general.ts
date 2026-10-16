@@ -415,6 +415,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           fields: {
             child_context: {
               taxpayer_ssn: input.taxpayer_ssn,
+              spouse_ssn: input.spouse_ssn,
               taxpayer_dob: input.taxpayer_dob,
               filing_status: input.filing_status,
               taxpayer_can_be_claimed_as_dependent:

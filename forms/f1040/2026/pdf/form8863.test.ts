@@ -48,6 +48,45 @@ Deno.test("Education draft maps AOTC, LLC and extra schools once, reconciles des
         args: ["-layout", path, "-"],
       }).output();
       assertEquals(text.code, 0);
+      assertEquals(new TextDecoder().decode(text.stderr), "");
+      for (let page = 1; page <= a.formPages.length; page++) {
+        for (const x of [36, 350]) {
+          const rendered = await new Deno.Command("pdftoppm", {
+            args: [
+              "-f",
+              String(page),
+              "-l",
+              String(page),
+              "-r",
+              "72",
+              "-x",
+              String(x),
+              "-y",
+              "774",
+              "-W",
+              "100",
+              "-H",
+              "10",
+              "-gray",
+              "-singlefile",
+              path,
+            ],
+          }).output();
+          assertEquals(rendered.code, 0);
+          assertEquals(new TextDecoder().decode(rendered.stderr), "");
+          const header = "P5\n100 10\n255\n";
+          assert(
+            new TextDecoder().decode(
+              rendered.stdout.subarray(0, header.length),
+            ) === header,
+          );
+          assert(
+            rendered.stdout.subarray(header.length).filter((v) => v < 200)
+              .length > 40,
+            `Draft and incomplete footers must be visible on education page ${page} at ${x}`,
+          );
+        }
+      }
       const pages = new TextDecoder().decode(text.stdout).split("\f");
       assertStringIncludes(pages[0], "Synthetic Investor");
       assertStringIncludes(pages[1], "Synthetic University");

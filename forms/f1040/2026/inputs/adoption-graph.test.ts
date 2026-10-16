@@ -144,7 +144,7 @@ Deno.test("2026 education preserves adult adoption claims and requires under-24 
   assert(
     run(combined).diagnostics.some((d) =>
       d.message.includes(
-        "Under-24 education support needs adoption compensation",
+        "Adoption support review needs the actual adoption inventory",
       )
     ),
   );

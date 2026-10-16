@@ -2,6 +2,8 @@ import {
   childTaxInput2026Schema,
   resolveChildTax2026,
 } from "../inputs/child-tax.ts";
+import { adoptionIncomeBridge2026Schema } from "../inputs/adoption-settlement.ts";
+import { adoptionSupportWages2026 } from "../inputs/adoption-support.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
@@ -36,7 +38,7 @@ export const inputSchema = educationClaim2026Schema.partial().extend({
   }).strict(),
   agi: z.number().int(),
   earned_income_from_agi: z.number().int(),
-  adoption_compensation_review_required: z.literal(true).optional(),
+  adoption_income_2026: adoptionIncomeBridge2026Schema.optional(),
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   regular_tax: whole,
@@ -75,9 +77,25 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
   const filers = context.students.filter((p) => p.owner !== "dependent");
   const under24 = context.filing_status !== FilingStatus.MFJ &&
     context.taxpayer_dob > "2003-01-01";
-  if (under24 && input.adoption_compensation_review_required) {
+  const adoption = under24 && input.adoption_income_2026
+    ? adoptionSupportWages2026(
+      input.adoption_income_2026,
+      {
+        filing_status: context.filing_status,
+        taxpayer_ssn: filers.find((p) => p.owner === "taxpayer")?.tin ?? "",
+        spouse_ssn: filers.find((p) => p.owner === "spouse")?.tin,
+      },
+      input.earned_income_from_agi,
+      claim.adoption_inventory_reference,
+    )
+    : undefined;
+  if (
+    claim.adoption_inventory_reference &&
+    claim.adoption_inventory_reference !==
+      input.adoption_income_2026?.source.claim.record_reference
+  ) {
     throw Error(
-      "Under-24 education support needs adoption compensation reconciliation",
+      "Education adoption review needs the actual adoption inventory",
     );
   }
   let businessWorkpaper:
@@ -110,7 +128,7 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
   }
   const supportEarned = Math.max(
     0,
-    input.earned_income_from_agi +
+    (adoption?.wages_for_support ?? input.earned_income_from_agi) +
       (businessWorkpaper?.taxpayer_education_earned_income ?? 0),
   );
   if (!filers.some((p) => p.valid_ssn)) {
@@ -179,6 +197,8 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
           input.earned_income_from_agi ||
         JSON.stringify(child.source_input.business_sources_2026) !==
           JSON.stringify(input.business_sources_2026) ||
+        JSON.stringify(child.source_input.adoption_income_2026) !==
+          JSON.stringify(input.adoption_income_2026) ||
         facts.parent_alive !== review.at_least_one_parent_alive ||
         facts.support !== support ||
         JSON.stringify(
@@ -244,6 +264,7 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
     earned_income_workpaper: {
       wages: input.earned_income_from_agi,
       business: businessWorkpaper ?? null,
+      adoption: adoption ?? null,
       earned_income_for_support: under24 ? supportEarned : null,
     },
     credit_limit_worksheet,
