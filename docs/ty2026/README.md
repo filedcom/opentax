@@ -363,23 +363,30 @@ regular Git files.
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
   changes before using new values or layouts.
-- [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): each current TY2025 PDF descriptor,
-  its IRS source URL, and whether a matching TY2026 draft is in the snapshot.
-  Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
-  URLs still serve older years and are recorded as `wrong-year` in the manifest.
-- [`mef-coverage.csv`](./inventories/mef-coverage.csv): each TY2025 MeF serializer module.
-- [`mef-descriptor-coverage.csv`](./inventories/mef-descriptor-coverage.csv): all 85
-  runtime MeF descriptors in XSD emission order, including the two foreign
-  employer wage documents exported by one module.
-- [`node-coverage.csv`](./inventories/node-coverage.csv): all 191 registered TY2025 graph
-  nodes, their source modules, 2025 year mentions, tax-year dispatch, matching
-  MeF/PDF surface, available 2026 draft, and review priority. Every row remains
-  `audit-required` until its TY2026 behavior and output route are proved;
-  progress notes do not mean a node is ready for the 2026 registry.
-- [`year-literals.csv`](./inventories/year-literals.csv): all `2025` occurrences in non-test
-  calculation node source, including comments. These are review leads, not
-  proof of a bug. Regenerate the four CSVs with `python3
-  docs/ty2026/tooling/build_inventory.py` after a source or code change.
+- [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): all 118 loaded TY2025 PDF
+  descriptors, their source modules, runtime pending keys and IRS template URLs.
+  A matching draft slug in the corpus does not certify a current final template.
+- [`mef-coverage.csv`](./inventories/mef-coverage.csv): all 154 loaded TY2025 MeF
+  serializer modules, including nested modules and shared descriptor sources.
+- [`mef-descriptor-coverage.csv`](./inventories/mef-descriptor-coverage.csv): all 158
+  runtime MeF descriptors in actual registry order, with their exported symbols,
+  pending keys and source modules. This is not a TY2026 XSD conformance result.
+- [`node-coverage.csv`](./inventories/node-coverage.csv): all 223 registered TY2025
+  graph nodes, source paths, year mentions and exact pending-key matches to
+  registered PDF/MeF descriptors. Progress and priority come from the separately
+  maintained [`node-review.csv`](./inventories/node-review.csv); they never certify
+  a 2026 route. The 32 nodes absent from the old review ledger are explicitly
+  flagged for assignment instead of being omitted.
+- [`runtime-surface.json`](./inventories/runtime-surface.json) and
+  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 53-node 2026
+  graph, all 276 declared edges, source paths and the 19 edges to unregistered
+  targets. These counts describe registrations, not supported tax branches.
+- [`year-literals.csv`](./inventories/year-literals.csv): `2025` occurrences in
+  non-test shared node modules outside configuration, including comments. These
+  are review leads, not proof of a bug or an exhaustive dependency audit.
+  Regenerate these inventories with `python3 docs/ty2026/tooling/build_inventory.py`;
+  append `--check` to detect stale artifacts without writing. See the
+  [inventory contract](./tooling/README.md) for prerequisites and limitations.
 - [`FORM-DELTA.md`](./readiness/FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](./graphs/DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.

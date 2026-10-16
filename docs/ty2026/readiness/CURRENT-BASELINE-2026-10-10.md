@@ -4,6 +4,12 @@ Assessed October 10, 2026, at base commit `8f5055950`.
 Worktree: `/Users/atul/projects/opentax-ty2026`.
 Branch: `codex/ty2026-readiness`.
 
+October 16 follow-up: the inventory tooling repair requested below is complete.
+The [current inventory contract](../tooling/README.md) and
+[loaded runtime snapshot](../inventories/runtime-surface.json) supersede this
+assessment's counts and broken-tool observation. The rest of this document
+preserves the October 10 baseline.
+
 Scope: federal **tax year 2026** Form 1040 returns (normally filed in 2027),
 building on the existing OpenTax federal 1040 product. This is an implementation
 assessment, not a claim that 2026 returns can currently be calculated or filed.

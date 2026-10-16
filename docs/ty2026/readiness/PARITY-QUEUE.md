@@ -5,6 +5,15 @@ September prototype, not the current incremental source graph. Current APIs are
 `sourceRegistry2026` and `buildDraftReturnPdf2026`; see the current graph notes
 and [PDF bundle contract](../pdf/PDF-BUNDLE-CURRENT.md).
 
+Current inventory refresh (October 16): the loaded TY2025 product has **223 nodes,
+118 PDF descriptors and 158 MeF descriptors across 154 modules**. The connected
+TY2026 source graph has **53 nodes and 19 declared edges to unregistered targets**.
+Use [runtime-surface.json](../inventories/runtime-surface.json) and the
+[inventory contract](../tooling/README.md) for reproducible current counts. The
+32 nodes missing from the historical review notes are listed explicitly there.
+The older numeric counts and registry paths below remain historical planning
+context, not current evidence. All coverage rows remain audit-required.
+
 Snapshot: 2026-09-27. This is the coding order for the full TY2025 Form 1040
 product surface in TY2026. It sits beside the [detailed implementation
 plan](./IMPLEMENTATION.md), [191-node ledger](../inventories/node-coverage.csv), [56-PDF

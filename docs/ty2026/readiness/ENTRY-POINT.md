@@ -1,5 +1,11 @@
 # TY2026 Form 1040 entry point — implementation plan
 
+October 16 inventory update: use the [loaded runtime snapshot](../inventories/runtime-surface.json)
+and [inventory contract](../tooling/README.md) for current code coverage. The
+2025 product has grown to 223 nodes, 118 PDF descriptors and 158 MeF descriptors;
+32 newer nodes need review-note assignments. Older counts and the public MeF
+crosswalk below are historical and do not cover the full current product.
+
 Current AMT increment: source deduction results and reviewed Form 3921 exercise
 copies now feed the shared 2026 Form 6251 calculation, Schedule 2 and Form 1040
 line 17, with a reconciled two-page draft PDF. The
