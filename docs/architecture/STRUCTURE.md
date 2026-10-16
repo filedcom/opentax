@@ -81,6 +81,8 @@ expired entries, and on entries that no longer match anything.
 | Every node class is registered                              | `scripts/testing/structure.ts` (not-in-registry) |
 | Every registered node is a CLI input or a routing target    | `scripts/testing/structure.ts` (unreachable)     |
 | Benchmark cases are complete and expected values are finite | `benchmark/harness.ts`                           |
+| Case inputs fit the node schema the CLI applies             | `benchmark/harness.ts` (`check:cases`)           |
+| A cited source is a publication, never the engine           | `benchmark/harness.ts` (`check:cases`)           |
 | Unmapped expected lines fail instead of passing             | `benchmark/run_benchmark.ts`                     |
 | Test modules are discovered exactly, never partially        | `scripts/testing/run.ts`                         |
 

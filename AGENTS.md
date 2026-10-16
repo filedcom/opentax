@@ -6,7 +6,8 @@ as a graph of pure nodes. Two CLIs, kept apart:
 - `cli/main.ts` is the product, compiled to the `opentax` binary users run.
 - The harness is what you use while building it and is never shipped:
   `deno task check:structure` (nodes placed, registered, reachable),
-  `deno task bench` (engine output against IRS ground truth) and
+  `deno task check:cases` (benchmark cases fit their node schemas and cite a
+  publication), `deno task bench` (engine output against IRS ground truth) and
   `deno task test:unit` (module graph and typed tests).
 
 ## Before a pull request

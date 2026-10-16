@@ -19,7 +19,7 @@ function getCatalogEntry(formType: string, year: number) {
   return def;
 }
 
-function getUserInputSchema(def: FormDefinition, nodeType: string) {
+export function getUserInputSchema(def: FormDefinition, nodeType: string) {
   const entry = def.inputNodes.find((candidate) =>
     (candidate.inputKey ?? candidate.node.nodeType) === nodeType
   );
@@ -33,7 +33,10 @@ function getUserInputSchema(def: FormDefinition, nodeType: string) {
   );
 }
 
-function rejectUnknownFields(schema: z.ZodTypeAny, data: unknown): void {
+export function rejectUnknownFields(
+  schema: z.ZodTypeAny,
+  data: unknown,
+): void {
   // Input schemas may wrap their object in superRefine. Inspect the original
   // shape before Zod's default object parsing strips misspelled fields.
   const objectSchema = schema instanceof z.ZodEffects

@@ -1,5 +1,11 @@
-import { join } from "@std/path";
+import { basename, dirname, join } from "@std/path";
 import { z } from "zod";
+import { catalog } from "../catalog.ts";
+import type { FormDefinition } from "../core/types/form-definition.ts";
+import {
+  getUserInputSchema,
+  rejectUnknownFields,
+} from "../cli/commands/form.ts";
 
 export const benchmarkInputSchema = z.object({
   year: z.number().int(),
@@ -76,9 +82,131 @@ export const benchmarkReturnSchema = z.object({
   warnings: z.array(z.string()),
 });
 
+type BenchmarkInput = z.infer<typeof benchmarkInputSchema>;
+
+/** A case lives at <form>/<year>/<case>; the product it exercises is read from that path. */
+export function caseProduct(
+  directory: string,
+): { form: string; year: number } | undefined {
+  const year = basename(dirname(directory));
+  const form = basename(dirname(dirname(directory)));
+  if (!/^f\w+$/.test(form) || !/^\d{4}$/.test(year)) return undefined;
+  return { form, year: Number(year) };
+}
+
+/** Each form entry must be an input the CLI accepts, shaped as its schema says. */
+export function validateCaseInputs(
+  input: BenchmarkInput,
+  definition: FormDefinition,
+  label: string,
+): void {
+  for (const form of input.forms) {
+    let schema: z.ZodTypeAny;
+    try {
+      schema = getUserInputSchema(definition, form.node_type);
+    } catch (error) {
+      throw new Error(`${label}: ${(error as Error).message}`);
+    }
+    try {
+      rejectUnknownFields(schema, form.data);
+    } catch (error) {
+      throw new Error(
+        `${label}: ${form.node_type}: ${(error as Error).message}`,
+      );
+    }
+    const parsed = schema.safeParse(form.data);
+    if (parsed.success) continue;
+    const issues = parsed.error.issues
+      .map((issue) => `${issue.path.join(".") || "data"}: ${issue.message}`)
+      .join("; ");
+    throw new Error(`${label}: ${form.node_type}: ${issues}`);
+  }
+}
+
+// A citation that names the engine or its output is not an independent source.
+const ENGINE_SOURCE =
+  /\b(engine|output\.json|gen_correct|tax2025\.ts|reference calculator)\b/i;
+
+/** A source, when given, cites a publication; it never cites the engine. */
+export function validateCaseSource(expected: unknown, label: string): void {
+  if (!expected || typeof expected !== "object") return;
+  const sources = [
+    (expected as { source?: unknown }).source,
+    ...([] as unknown[]).concat(
+      (expected as { sources?: unknown }).sources ?? [],
+    ),
+  ].filter((source) => source !== undefined);
+  for (const source of sources) {
+    if (typeof source !== "string" || !source.trim()) {
+      throw new Error(`${label}: source must be a non-empty citation`);
+    }
+    if (ENGINE_SOURCE.test(source)) {
+      throw new Error(
+        `${label}: source cites the engine, not a publication: ${source}`,
+      );
+    }
+  }
+}
+
+function describe(error: unknown): string {
+  if (error instanceof z.ZodError) {
+    return error.issues
+      .map((issue) => `${issue.path.join(".") || "value"}: ${issue.message}`)
+      .join("; ");
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function parseFile<T>(
+  directory: string,
+  name: string,
+  schema: z.ZodType<T>,
+): Promise<{ raw: unknown; parsed: T }> {
+  const raw = JSON.parse(await Deno.readTextFile(join(directory, name)));
+  try {
+    return { raw, parsed: schema.parse(raw) };
+  } catch (error) {
+    throw new Error(`${directory}: ${name}: ${describe(error)}`);
+  }
+}
+
+/** One case: files parse, the product exists, inputs fit their schemas, the source is a publication. */
+export async function validateCase(
+  directory: string,
+  products: Readonly<Record<string, FormDefinition>>,
+): Promise<void> {
+  const { parsed: input } = await parseFile(
+    directory,
+    "input.json",
+    benchmarkInputSchema,
+  );
+  const { raw: expected } = await parseFile(
+    directory,
+    "correct.json",
+    benchmarkExpectedSchema,
+  );
+  const product = caseProduct(directory);
+  if (!product || product.year !== input.year) {
+    throw new Error(
+      `${directory}: must live at <form>/<year>/<case> with a matching year`,
+    );
+  }
+  const key = `${product.form}:${product.year}`;
+  const definition = products[key];
+  if (!definition) {
+    throw new Error(`${directory}: unsupported benchmark product ${key}`);
+  }
+  validateCaseInputs(input, definition, directory);
+  validateCaseSource(expected, directory);
+}
+
 /** Cases are leaves; an incomplete leaf must never disappear from the report. */
-export async function discoverBenchmarkCases(root: string): Promise<string[]> {
+export async function discoverBenchmarkCases(
+  root: string,
+  products: Readonly<Record<string, FormDefinition>> = catalog,
+): Promise<string[]> {
   const found: string[] = [];
+  const problems: string[] = [];
   async function visit(directory: string): Promise<void> {
     const entries = [];
     for await (const entry of Deno.readDir(directory)) entries.push(entry);
@@ -88,16 +216,12 @@ export async function discoverBenchmarkCases(root: string): Promise<string[]> {
         entry.name === "input.json" || entry.name === "correct.json"
       )
     ) {
-      const input = benchmarkInputSchema.parse(
-        JSON.parse(await Deno.readTextFile(join(directory, "input.json"))),
-      );
-      benchmarkExpectedSchema.parse(
-        JSON.parse(await Deno.readTextFile(join(directory, "correct.json"))),
-      );
-      if (input.forms.length === 0) {
-        throw new Error(`Empty benchmark: ${directory}`);
+      try {
+        await validateCase(directory, products);
+        found.push(directory);
+      } catch (error) {
+        problems.push(describe(error));
       }
-      found.push(directory);
       return;
     }
     const children = entries.filter((entry) => entry.isDirectory);
@@ -107,6 +231,13 @@ export async function discoverBenchmarkCases(root: string): Promise<string[]> {
     for (const child of children) await visit(join(directory, child.name));
   }
   await visit(root);
+  if (problems.length > 0) {
+    throw new Error(
+      `${problems.length} invalid benchmark case${
+        problems.length === 1 ? "" : "s"
+      }:\n${problems.join("\n")}`,
+    );
+  }
   if (found.length === 0) throw new Error(`No benchmark cases: ${root}`);
   return found;
 }
