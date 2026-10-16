@@ -1,3 +1,5 @@
+import { form4852_2026 } from "./inputs/form4852.ts";
+import { form4852Claim2026Schema } from "./inputs/form4852-bridge.ts";
 import { hsa_accounts_2026, hsaClaimInput2026Schema } from "./inputs/hsa.ts";
 import { able_accounts_2026, ableClaimInput2026Schema } from "./inputs/able.ts";
 import {
@@ -117,6 +119,7 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  { node: form4852_2026, isArray: false, inputSchema: form4852Claim2026Schema },
   {
     node: hsa_accounts_2026,
     isArray: false,

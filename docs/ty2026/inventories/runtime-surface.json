@@ -41,8 +41,8 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 57,
-    "declared_edges": 301,
+    "registry_nodes": 58,
+    "declared_edges": 302,
     "unregistered_target_edges": 15,
     "nodes": [
       {
@@ -50,6 +50,7 @@
         "node_type": "start",
         "implemented": true,
         "targets": [
+          "f4852",
           "hsa_accounts",
           "able_accounts",
           "form8880",
@@ -90,6 +91,13 @@
           "w2"
         ],
         "source_module": "forms/f1040/2026/source-start.ts"
+      },
+      {
+        "key": "f4852",
+        "node_type": "f4852",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/inputs/form4852.ts"
       },
       {
         "key": "hsa_accounts",

@@ -96,16 +96,31 @@ export const w2TaxSource2026Schema = z.object({
   ),
 }).strict();
 export const informationReturnTaxSource2026Schema = z.object({
-  document_type: z.enum(["1099-INT", "1099-DIV", "1099-G", "W-2G", "1099-R"]),
+  document_type: z.enum([
+    "1099-INT",
+    "1099-DIV",
+    "1099-G",
+    "W-2G",
+    "1099-R",
+    "4852-1099-R",
+  ]),
   source_document_reference: ref,
   recipient_tin: ssn,
   payer_tin: z.string().regex(/^\d{9}$/),
   account_number: ref,
   statement_identifier: ref.optional(),
   state: ref,
-  payer_state_id: ref,
+  payer_state_id: ref.optional(),
   state_withheld: money,
-}).strict();
+}).strict().superRefine((s, ctx) => {
+  if (s.document_type !== "4852-1099-R" && !s.payer_state_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["payer_state_id"],
+      message: "Issued information return needs its payer state ID",
+    });
+  }
+});
 export const expenseInput2026Schema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   taxpayer_ssn: ssn,

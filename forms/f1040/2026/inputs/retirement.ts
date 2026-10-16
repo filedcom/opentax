@@ -38,6 +38,25 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
     }
     const r = calculateRetirementSources2026({ ...input, claim: input.claim });
     const taxes = r.rows.flatMap(({ copy: c, owner_tin }) => {
+      const substitute = r.form4852?.ledger.rows.find((row) =>
+        row.source.source_document_reference === c.source_document_reference
+      )?.source;
+      if (substitute?.kind === "1099r") {
+        const a = substitute.amounts,
+          amount = sumSourceMoney([a.state_tax_withheld, a.local_tax_withheld]);
+        return amount > 0
+          ? [{
+            document_type: "4852-1099-R",
+            source_document_reference: c.source_document_reference,
+            recipient_tin: owner_tin,
+            payer_tin: c.payer_tin,
+            account_number: c.account_number,
+            statement_identifier: c.statement_identifier,
+            state: [a.state_name, a.locality_name].filter(Boolean).join("/"),
+            state_withheld: amount,
+          }]
+          : [];
+      }
       const amount = sumSourceMoney([
         ...c.state_information.map((s) => s.box14_state_withheld),
         ...c.local_information.map((s) => s.box17_local_withheld),

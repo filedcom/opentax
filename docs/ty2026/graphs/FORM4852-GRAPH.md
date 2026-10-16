@@ -15,9 +15,12 @@ one until the XSD, active rules and IRS filing guidance are checked.
 
 ## Current implementation (October 16)
 
-The internal 2026 source ledger and standalone draft component are implemented
-in `inputs/form4852-source.ts` and `pdf/form4852.ts`. They are **not yet public
-input nodes or part of the complete draft-return bundle**. The current IRS
+The 2026 source ledger, public `f4852` claim and draft-return attachment are
+implemented. `source-start.ts` binds the claim to actual general identity and
+issued W-2/1099-R inventories, then routes effective sources through the
+existing wage and retirement calculations. The retained `f4852` node holds the
+reviewed source workpaper; it makes no second income or withholding deposit.
+The current IRS
 [form page](https://www.irs.gov/forms-pubs/about-form-4852) still links the
 [September 2020 revision](https://www.irs.gov/pub/irs-pdf/f4852.pdf), checked
 October 16; the pinned digest and 34-widget inventory are unchanged.
@@ -46,23 +49,42 @@ margin notation, and removes form widgets after rendering. Exact cents remain
 on this source form; whole-dollar return rounding belongs to its receiving
 income/tax owners. Output is marked draft and `filingReady: false`.
 
-Still required: bind this ledger to actual public wage and retirement inventories,
-route the resulting sources once through AGI/payroll/withholding/retirement
-calculators, reconcile receiving lines and include substitutes in the return
-bundle instead of demanding unavailable original 1099-R PDFs. Preserve the
-retirement payment/basis/exception reviews when bridging. Unknown payer TINs,
-multiple jurisdictions, partial replacement/complex correction chains,
-post-filing amendments and unprinted special wage facts also remain open.
-The initial wage ledger requires reviewed absence of those extra facts; it
-does not infer boxes 8–14. This component is not a substitute for the selected
-MeF release's attachment rules or IRS acceptance.
+The retirement bridge accepts ordinary code 1/7 pensions and no-basis IRA
+payments, including matched dated early-tax/exception reviews. It requires a
+separate Form 4852 taxability review instead of asserting an issuer's taxable
+amount. A partially taxable pension retains its supplied taxable estimate;
+unknown IRA taxability is resolved by the existing no-basis owner while the
+source form's 8b remains blank. IRA basis/conversion, HSA funding, direct
+rollovers, other distribution codes and special treatment remain explicitly
+closed until their source/payment bridges are reconciled. These are software
+coverage limits, not claims about the legal availability of Form 4852.
 
-Verification: 83 focused tests passed across TY2025 retained Form 4852/source
-cases, the 2026 wage/retirement calculators, and the 19 new source/PDF cases.
-The 137-test unit gate and runtime inventory check passed. Wage, IRA and
-three-page explanation examples were rendered and inspected; physical PDF
-positions independently verify federal/FICA withholding, taxable income and
-IRA notation. The public-return and MeF acceptance steps below remain open.
+Substitute retirement state/local withholding reaches Schedule A from its own
+ledger without invented issuer state IDs or distribution bases. Ordinary
+information-return sources retain their existing state-ID requirement. The
+return bundle independently replays the ledger and compares the executed wage
+and retirement inventories, uses actual filer identity/address, and includes
+one Form 4852 per substitute with continuations after the official form pages.
+It exempts only the bound substitute from an issuer-PDF requirement; unrelated
+withheld 1099-R originals remain required and unchanged.
+
+Still required: broader retirement treatment, unknown payer TINs, multiple
+jurisdictions, partial replacement/complex correction chains, post-filing
+amendments, foreign return addresses and unprinted special wage facts. The
+initial wage ledger requires reviewed absence of those extra facts; it does
+not infer boxes 8–14. Public 2026 filing, the selected MeF attachment method
+and IRS acceptance remain open.
+
+Verification: the earlier source/standalone increment passed 83 focused tests
+(including retained TY2025 cases) and the 137-test unit gate. The integration
+adds 13 graph/reconciliation cases and five bundle cases covering replacement,
+mixed real/substitute employers, combined payroll limits, pensions, unknown IRA
+taxability, spouse ownership, dated early tax, stale workpapers, state withholding,
+original PDF preservation and source-form coordinates/continuation placement.
+The affected regression suite passed 380 tests and the unit gate passed 137.
+Wage/pension return bundles and the complete wage continuation were rendered
+and visually inspected. Runtime inventory validation reports 58 nodes, 302
+declared edges and 15 edges to unfinished receivers.
 
 ## When a substitute is appropriate
 
@@ -117,8 +139,8 @@ TY2025 also has a retained-form PDF descriptor and source-evidence workflow.
 The 2026 component reuses the wage projection and account-classification helpers,
 but does not register the shared legacy aggregate node. The older node's fallback
 routes and comments are not the authority for 2026 line numbers or tax treatment.
-The remaining work is the year-specific source/bundle bridge and broader
-retirement treatment, not a second aggregate deposit into Form 1040.
+The year-specific source/bundle bridge is implemented for the scope above.
+Broader retirement treatment and current filing acceptance remain.
 
 ## Build and acceptance
 

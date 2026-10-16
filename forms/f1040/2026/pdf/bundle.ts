@@ -1,3 +1,6 @@
+import { calculateForm4852Bridge2026 } from "../inputs/form4852-bridge.ts";
+import { reconcileForm4852ReturnSources2026 } from "../inputs/form4852-return.ts";
+import { buildForm4852PdfBytes2026 } from "./form4852.ts";
 import { buildForm8889PdfBytes2026 } from "./form8889.ts";
 import { calculateHsaReturnSources2026 } from "../inputs/hsa-source.ts";
 import { calculateSaversCredit2026 } from "../inputs/savers-credit-source.ts";
@@ -258,6 +261,45 @@ export async function buildDraftReturnPdf2026(
       "Draft line 1h must reconcile disability and moving source components",
     );
   }
+  const substituteWorkpaper = retained<
+    ReturnType<typeof calculateForm4852Bridge2026>
+  >("f4852");
+  const substitutes = substituteWorkpaper
+    ? reconcileForm4852ReturnSources2026(
+      substituteWorkpaper.source_input,
+      p.w2?.issued_w2_sources,
+      retirement?.source_input,
+    )
+    : undefined;
+  let substituteDraft:
+    | Awaited<ReturnType<typeof buildForm4852PdfBytes2026>>
+    | undefined;
+  if (substitutes) {
+    const address = [
+      f.address_line1,
+      f.address_line2,
+      f.address_city,
+      f.address_state,
+      f.address_zip,
+    ].filter(Boolean).join(", ");
+    if (
+      f.address_foreign_country || !f.address_line1 || !f.address_city ||
+      !f.address_state || !f.address_zip
+    ) {
+      throw Error(
+        "Form 4852 return draft needs the supported actual domestic return address",
+      );
+    }
+    const ids = new Set(
+      substitutes.ledger.rows.map((row) => row.source.owner_tin),
+    );
+    substituteDraft = await buildForm4852PdfBytes2026(
+      substitutes.ledger.source_input,
+      [taxpayer, ...(spouse ? [spouse] : [])].filter((o) =>
+        ids.has(o.ssn.replaceAll("-", ""))
+      ).map((o) => ({ ...o, ssn: o.ssn.replaceAll("-", ""), address })),
+    );
+  }
   const retirementAttachments = retirement
     ? retirementIssuedAttachments2026(retirement)
     : [];
@@ -400,6 +442,23 @@ export async function buildDraftReturnPdf2026(
         estimates?.source_input,
       ),
   );
+  if (substituteDraft) {
+    const source = await PDFDocument.load(substituteDraft.bytes);
+    for (const attachment of substituteDraft.attachments) {
+      add(`f4852:${attachment.reference}`, 1, async () => {
+        const component = await PDFDocument.create();
+        for (
+          const page of await component.copyPages(
+            source,
+            [...attachment.formPages, ...attachment.statementPages].map((p) =>
+              p - 1
+            ),
+          )
+        ) component.addPage(page);
+        return component.save({ updateFieldAppearances: false });
+      });
+    }
+  }
   if (p.schedule1?.file_schedule1) {
     add("schedule1", 2, () =>
       buildSchedule1PdfBytes2026(

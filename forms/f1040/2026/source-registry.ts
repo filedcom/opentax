@@ -1,3 +1,4 @@
+import { form4852_2026 } from "./inputs/form4852.ts";
 import { hsa_accounts_2026 } from "./inputs/hsa.ts";
 import { sourceStart2026 } from "./source-start.ts";
 import { able_accounts_2026 } from "./inputs/able.ts";
@@ -61,6 +62,7 @@ import { schedule3a } from "./nodes/schedule3a.ts";
 export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: sourceStart2026,
+  f4852: form4852_2026,
   hsa_accounts: hsa_accounts_2026,
   general: general_2026,
   able_accounts: able_accounts_2026,

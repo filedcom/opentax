@@ -1,3 +1,7 @@
+import {
+  calculateForm4852Bridge2026,
+  form4852Bridge2026Schema,
+} from "./form4852-bridge.ts";
 import { hsaQualifiedFunding2026Schema } from "./hsa-qualified-funding.ts";
 import {
   bindIraBasis2026,
@@ -156,6 +160,7 @@ const review = z.object({
     true,
   ),
   payer_determined_pension_taxability_verified: z.literal(true).optional(),
+  form4852_taxability_review_reference: ref.optional(),
   payer_code2_exception_verified: z.literal(true).optional(),
   payer_code3_disability_verified: z.literal(true).optional(),
   disability_income: disabilityIncomeReview2026Schema.optional(),
@@ -218,6 +223,7 @@ export const retirementSource2026Schema = investmentOwner2026.extend({
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   hsa_funding_sources_2026: hsaQualifiedFunding2026Schema.optional(),
+  form4852_sources_2026: form4852Bridge2026Schema.optional(),
   ...retirementClaim2026Schema.shape,
   wage_sources: z.array(w2Item2026Schema).default([]),
   business_sources_2026: businessReturnSource2026Schema.optional(),
@@ -227,6 +233,29 @@ export type RetirementCopy2026 = z.input<typeof retirementCopy2026Schema>;
 
 export function calculateRetirementSources2026(raw: RetirementSource2026) {
   const input = retirementSource2026Schema.parse(raw), claim = input.claim;
+  const substitutes = input.form4852_sources_2026
+    ? calculateForm4852Bridge2026(input.form4852_sources_2026)
+    : undefined;
+  const substituteRows = new Map(
+    substitutes?.ledger.rows.filter((r) => r.source.kind === "1099r").map(
+      (r) => [r.source.source_document_reference, r.source],
+    ) ?? [],
+  );
+  if (
+    substitutes &&
+    (substitutes.source_input.filing_status !== input.filing_status ||
+      substitutes.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+      substitutes.source_input.spouse_ssn !== input.spouse_ssn ||
+      JSON.stringify(claim.copies) !==
+        JSON.stringify(substitutes.effective_retirement_copies) ||
+      JSON.stringify(input.wage_sources) !==
+        JSON.stringify(substitutes.effective_wages) ||
+      claim.reviewed_on < substitutes.source_input.claim.reviewed_on)
+  ) {
+    throw Error(
+      "Retirement Form 4852 sources must reconcile actual owners, current copies and review chronology",
+    );
+  }
   if (
     input.taxpayer_dob > "2026-12-31" ||
     (input.spouse_dob && input.spouse_dob > "2026-12-31")
@@ -446,6 +475,63 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         "Retirement review needs a matched IRA basis owner or no-conversion declaration",
       );
     }
+    const substitute = substituteRows.get(c.source_document_reference);
+    if (substitute) {
+      if (
+        r.ira_basis_owner_review_reference ||
+        c.box7a_distribution_codes.length !== 1 ||
+        !["1", "7"].includes(c.box7a_distribution_codes[0]) ||
+        !r.no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified
+      ) {
+        throw Error(
+          "Form 4852 retirement currently supports ordinary code 1/7 pension or no-basis IRA payments; other treatment needs a reconciled substitute payment bridge",
+        );
+      }
+      if (
+        r.form4852_taxability_review_reference !==
+          c.source_document_reference ||
+        r.reviewed_on < substitutes!.source_input.claim.reviewed_on ||
+        r.payer_determined_pension_taxability_verified ||
+        substitute.kind !== "1099r"
+      ) {
+        throw Error(
+          "Substitute retirement taxability must use its reviewed Form 4852 estimate, not a payer determination",
+        );
+      }
+      const expectedType = substitute.distribution_sources[0].account_type;
+      if (
+        (expectedType === "non_ira"
+          ? !["qualified_employer_plan", "governmental_457b"].includes(
+            r.plan_type,
+          )
+          : expectedType !== r.plan_type)
+      ) {
+        throw Error(
+          "Form 4852 custodian classification disagrees with retirement treatment",
+        );
+      }
+      const payments = r.early_distribution?.payments;
+      if (
+        payments &&
+        (payments.length !== substitute.distribution_sources.length ||
+          payments.some((p) =>
+            !substitute.distribution_sources.some((s) =>
+              s.distribution_reference === p.record_reference &&
+              s.paid_on === p.payment_date &&
+              s.gross_distribution === p.gross &&
+              (p.taxable === undefined || s.taxable_amount === p.taxable)
+            )
+          ))
+      ) {
+        throw Error(
+          "Form 4852 early-tax payments must match its actual distribution ledger",
+        );
+      }
+    } else if (r.form4852_taxability_review_reference) {
+      throw Error(
+        "Retirement substitute review requires its actual Form 4852 sources",
+      );
+    }
     const codes = c.box7a_distribution_codes;
     if (
       codes.length !== 1 ||
@@ -468,6 +554,12 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     }
     const totalWithheld = sumSourceMoney([
       c.box4_federal_withheld,
+      ...(substitute?.kind === "1099r"
+        ? [
+          substitute.amounts.state_tax_withheld,
+          substitute.amounts.local_tax_withheld,
+        ]
+        : []),
       ...c.state_information.map((s) => s.box14_state_withheld),
       ...c.local_information.map((s) => s.box17_local_withheld),
     ]);
@@ -568,7 +660,10 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       taxable = c.box1_gross_distribution;
     } else {
       if (
-        !r.payer_determined_pension_taxability_verified ||
+        !(r.payer_determined_pension_taxability_verified ||
+          substituteRows.has(c.source_document_reference) &&
+            r.form4852_taxability_review_reference ===
+              c.source_document_reference) ||
         c.box2b_taxable_amount_not_determined ||
         c.box2a_taxable_amount === undefined
       ) {
@@ -1156,6 +1251,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   };
   return {
     source_input: input,
+    form4852: substitutes,
     ira_basis: iraBasis,
     early_owners: earlyOwners,
     line5_early_tax: earlyTax,
@@ -1174,6 +1270,14 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
 export function retirementIssuedAttachments2026(
   result: ReturnType<typeof calculateRetirementSources2026>,
 ) {
-  return result.rows.filter((r) => r.copy.box4_federal_withheld > 0)
+  const substituteRefs = new Set(
+    result.form4852?.substitute_retirement_copies.map((c) =>
+      c.source_document_reference
+    ) ?? [],
+  );
+  return result.rows.filter((r) =>
+    r.copy.box4_federal_withheld > 0 &&
+    !substituteRefs.has(r.copy.source_document_reference)
+  )
     .map((r) => issuedPdfAttachment2026(r.copy, "Form 1099-R"));
 }

@@ -1,6 +1,6 @@
 # TY2026 calculation graph route inventory
 
-The October 16 loaded `sourceRegistry2026` has **57 nodes and 301 unique declared
+The October 16 loaded `sourceRegistry2026` has **58 nodes and 302 unique declared
 edges**. **15 edges target unregistered nodes**, replacing the historical
 prototype's 33-edge snapshot. Generate current evidence with:
 
