@@ -48,11 +48,11 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   └── site/                      # Static site statistics
 ├── benchmark/
 │   ├── run_benchmark.ts           # Expected-output comparison against IRS ground truth
-│   ├── run_case.ts / run_all.ts   # Individual and bulk case execution
+│   ├── run_case.ts                # Run one case and print the computed return
 │   ├── check_cases.ts             # Case contract without running the engine
 │   ├── cases/baseline.json        # Known-invalid cases, with reason and expiry
 │   ├── cases/<form>/<year>/ledger.json # Every expected-value change, with its publication
-│   └── cases/<form>/<year>/<case>/ # Paired input, expected and retained output files
+│   └── cases/<form>/<year>/<case>/ # Paired input.json and correct.json
 ├── .state/                        # Existing state and retained private evidence
 └── .pdf-cache/                    # Existing downloaded form cache
 ```

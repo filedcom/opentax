@@ -62,13 +62,10 @@ itself proof that every reported discrepancy is a tax-engine arithmetic error.
 
 ```bash
 # Full benchmark
-cd benchmark && bun run_benchmark.ts
+bun run bench --form f1040 --year 2025
 
-# Single case
-bun run_case.ts cases/02-single-w2-basic/
-
-# Regenerate all output.json
-bun run_all.ts
+# One case: prints the computed return, writes nothing
+bun benchmark/run_case.ts benchmark/cases/f1040/2025/02-single-w2-basic
 
 # Validate every case's inputs and sources without running the engine
 bun run check:cases
@@ -125,5 +122,5 @@ fixtures against published TY2025 tables and worksheet arithmetic. The
 [change ledger](./reference/2025/issue77-changes.json) preserves prior values
 and calculation assumptions. A fixture's `reconciliation.source_limitations` are
 reported as errors: matching a conditional expectation is not a passing result.
-Source facts and eligibility gaps remain visible; historical `output.json` files
-were not regenerated into expected values.
+Source facts and eligibility gaps remain visible; engine output is never
+regenerated into expected values.

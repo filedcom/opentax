@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 import * as fs from "node:fs/promises";
 /**
- * Run a single benchmark case through the tax engine and save output.json.
+ * Run a single benchmark case through the tax engine and print the computed
+ * return. Nothing is written into the case directory.
  * Usage: bun benchmark/run_case.ts <case_dir>
  */
 
@@ -60,8 +61,4 @@ for (const f of caseData.forms) {
 console.log("  Computing result...");
 const result = await tax("return", "get", "--returnId", rid, "--json");
 benchmarkReturnSchema.parse(JSON.parse(result));
-const outputFile = join(caseDir, "output.json");
-await fs.writeFile(outputFile, result);
-console.log(`  Saved: ${outputFile}`);
-
-console.log(JSON.stringify(JSON.parse(result).summary, null, 2));
+console.log(result);

@@ -38,8 +38,8 @@ bun scripts/release/smoke-release-binary.ts ./opentax-linux-x64 1.2.3 [transcrip
 
 Use the actual asset path and injected version. The optional third argument
 records every call's output, masked only for return IDs, the temporary
-directory and the MeF clock, so two builds can be compared byte for byte; see
-[scripts/parity/README.md](../scripts/parity/README.md). Cross-compiled assets must be
+directory and the MeF clock, so two builds can be compared byte for byte.
+Cross-compiled assets must be
 run on the corresponding architecture. This check proves only that one simple
 source-backed return works through the packaged binary on that platform. It is
 not the full test suite, TY2025 XSD validation, PDF visual inspection, tax-rule

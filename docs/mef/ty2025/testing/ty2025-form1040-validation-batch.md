@@ -5139,7 +5139,7 @@ Integrated a31d6b09a/41ded3aae. Standard source first4/4 and initialcompat33/8 f
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025/readiness/ty2025-product-board-completed-2026-10-01.md) records **1,462 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025/readiness/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025/testing/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025/readiness/ty2025-product-board-completed-2026-10-01.md) records **1,462 completed slices** with their limits. Learnings and exact evidence are retained in the October 6 archive and [validation record](docs/mef/ty2025/testing/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 

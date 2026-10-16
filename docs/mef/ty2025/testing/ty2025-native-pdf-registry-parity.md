@@ -328,7 +328,7 @@ Currentliveimports152native/148keys and118PDF/115keys; planner369fixtures99cover
 
 ## October6 archived Form4852 and Form8621 templates
 
-The current canonical descriptors now use [IRS Form4852 September2020 archive](https://www.irs.gov/pub/irs-prior/f4852--2020.pdf) and [IRS Form8621 December2025 archive](https://www.irs.gov/pub/irs-prior/f8621--2025.pdf), including both8621continuation descriptors. Both archives were fetched andtheirbytes exactly match the previously reviewedcurrenttemplatecache. The old URLgate expected2025for4852 and rejectedbothcurrentURLs; correctedrevisionmap and archivedURLs pass118/0, affectedrealIRSfield/structural14/0. Actualretained4852/QEFfullXSD2/15pages preserve whole source/pending/PDF andXMLonlyTs/savedfinalnewline. Logs anddigestsare in [October6status](../readiness/ty2025-product-board-status-2026-10-06.md#canonical-archived48528621-revision-repair-verified). Widerfiling/authentication/IRSsupport remainsopen.
+The current canonical descriptors now use [IRS Form4852 September2020 archive](https://www.irs.gov/pub/irs-prior/f4852--2020.pdf) and [IRS Form8621 December2025 archive](https://www.irs.gov/pub/irs-prior/f8621--2025.pdf), including both8621continuation descriptors. Both archives were fetched andtheirbytes exactly match the previously reviewedcurrenttemplatecache. The old URLgate expected2025for4852 and rejectedbothcurrentURLs; correctedrevisionmap and archivedURLs pass118/0, affectedrealIRSfield/structural14/0. Actualretained4852/QEFfullXSD2/15pages preserve whole source/pending/PDF andXMLonlyTs/savedfinalnewline. Logs anddigestsare in October6status. Widerfiling/authentication/IRSsupport remainsopen.
 
 
 ## October 6 child-tax AMT inventory reconciliation
