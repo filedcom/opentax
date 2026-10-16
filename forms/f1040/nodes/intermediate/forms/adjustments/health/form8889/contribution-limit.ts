@@ -13,6 +13,8 @@ export interface HsaContributionLimitInput {
   spouse_has_separate_hsa?: boolean;
   allocated_family_limit?: number;
   archer_msa_contributions?: number;
+  /** Retain the actual monthly baseline for section 223(b)(8) testing. */
+  monthly_limit_only?: boolean;
 }
 
 export function calculateHsaContributionLimit(
@@ -30,6 +32,11 @@ export function calculateHsaContributionLimit(
   line8: number;
 } {
   const coverage = input.eligible_hdhp_coverage_by_month;
+  if (input.monthly_limit_only && input.last_month_rule_elected) {
+    throw new Error(
+      "Form 8889 monthly baseline cannot elect the last-month rule",
+    );
+  }
   if (
     coverage === undefined || input.age_55_or_older === undefined ||
     input.last_month_rule_elected === undefined
@@ -98,7 +105,9 @@ export function calculateHsaContributionLimit(
   const changedCoverage = familyMonths > 0 && selfOnlyMonths > 0;
   const decemberLimit = december === null ? 0 : monthLimit(december);
   const line3 = Math.round(
-    fullYear && changedCoverage
+    input.monthly_limit_only
+      ? worksheet
+      : fullYear && changedCoverage
       ? Math.max(worksheet, decemberLimit)
       : input.last_month_rule_elected
       ? decemberLimit

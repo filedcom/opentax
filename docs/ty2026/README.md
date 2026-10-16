@@ -417,8 +417,11 @@ coverage, individual bronze/catastrophic coverage and direct-primary-care fees.
 Notice 2026-5 is pinned. Dated funding now reconciles Form 5498-SA and actual
 W-2 code W with tax-year adjustments, and a household workpaper derives each
 spouse's deemed coverage. The current 1099-SA/5498-SA reporting instructions are
-also pinned. Graph binding, family-limit allocation, distribution/excess treatment
-and the complete Form 8889 return/output routes remain in the implementation queue.
+also pinned. An owner-limit workpaper now allocates shared family months once,
+preserves separate catch-ups, and retains monthly/last-month comparisons with
+future testing records using pinned Notice 2008-52. Graph binding, remaining
+allocation cases, distribution/excess treatment and the complete Form 8889
+return/output routes remain in the implementation queue.
 
 ## Version rule
 

@@ -2428,6 +2428,16 @@
       "sha256": "68cca68a937532ba900c4f1d091ed9ebd56317923b3b9620a04cf5287b56e215",
       "reviewed_on": "2026-10-16",
       "notes": "Continuous-use December 2026 instructions for Forms 1099-SA and 5498-SA; calendar-year and designated-year receipt reporting, rollovers, trustee transfers and mistaken repayments."
+    },
+    {
+      "path": "authorities/n-08-52.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-08-52.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 39119,
+      "sha256": "2d8f578f036c018980aeb559752274123a1b027fc13bc2bb7d5ddecad37ef8d0",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2008-52: monthly versus full-contribution HSA limits, coverage changes, testing period and spouse examples. Historical dollar amounts and distribution tax rate are not 2026 parameters."
     }
   ]
 }

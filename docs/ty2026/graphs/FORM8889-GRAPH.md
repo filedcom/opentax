@@ -122,6 +122,47 @@ eligibility supports the family rule but the spouse's deposits are not included
 as the taxpayer's contributions. This is a source bridge, not two independent
 family limits or a computed deduction.
 
+### Contribution limits and future testing records
+
+The contribution-limit workpaper now uses that evidence bridge and the shared
+2025 worksheet to produce owner limits. It distributes each shared family-month
+pool once, retains self-only and sole-eligible family capacity, and computes
+catch-up amounts for each owner separately. A one-account household cannot
+transfer the absent spouse's catch-up. Separate-return spouse account evidence
+supports allocation but does not become a filed spouse deduction.
+
+The shared helper has an explicit monthly-only mode; existing 2025 callers keep
+their previous behavior. The 2026 workpaper separately retains actual monthly
+coverage and December/full-year coverage, with agreed allocations for each.
+The monthly comparison preserves the agreed family-share proportion and assigns
+the filed-dollar rounding remainder once, preventing an alternative allocation
+from hiding an owner's testing-period exposure.
+
+[Notice 2008-52](../corpus/authorities/n-08-52.pdf) is pinned for the monthly/full
+contribution comparison and testing-period rules. Its historical dollar amounts
+and distribution-tax rate are not reused as 2026 parameters. Its full-year
+self-to-family example is covered: a full-year eligible owner can still need
+the monthly comparison when relying on the higher December limit. The workpaper
+retains the December 1, 2026–December 31, 2027 obligation with original calendars,
+allocation references and gross personal/employer funding. The stored monthly
+line is a **filed-dollar limit**, not a final recapture amount: the future Part III
+source replay must use the retained facts and its own rounding/treatment rules.
+
+Current limits require reviewed absence of Archer MSA contributions and unchanged
+marital status and use agreed whole-dollar family allocations. Exact source-cent
+allocation/remainder treatment still needs reconciliation before final filing.
+Mixed spouse last-month elections where an account owner is
+December-ineligible, paired family-to-self last-month treatment, and other
+allocation/rounding cases rejected by the shared worksheet remain open work.
+This workpaper emits no deduction, excess tax or Part III tax, and does not
+register Form 8889. Qualified funding transfers, corrected/excess distributions,
+prior-year histories and graph/output reconciliation must be completed first.
+
+Limit validation: 181 typed HSA source, worksheet, owner-return and MeF tests pass,
+including 13 new limit/allocation/testing-record cases. The unit gate passes 137
+tests with 3,800 graph modules and unchanged runtime. Generated inventories are
+current; these workpapers still do not add a Form 8889 registry node.
+
 Funding/household validation: 168 typed source, shared HSA, owner-return and MeF
 tests pass, including 18 new funding/household cases. The unit gate passes 137
 tests, resolves 3,797 modules and confirms the runtime did not change during
@@ -140,9 +181,9 @@ incorrect totals. The unit gate resolved 3,791 modules without runtime changes.
 1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual
    graph producers and extend it for employer recoveries, corrected distributions
    and special contribution deadlines. Preserve source cents through filed lines.
-2. Use the joined spouse eligibility for the family allocation, separately
-   preserve each catch-up, and retain the actual last-month election and its
-   December 2026–December 2027 testing-period obligation.
+2. Extend the owner-limit workpaper for Archer MSA sources, marriage changes,
+   mixed last-month spouse choices and the remaining allocation branches; bind
+   its retained monthly/full-year records to actual deduction/excess calculations.
 3. Reconcile dated 1099-SA receipts, qualified expenses, rollovers, excess returns
    and age/disability exceptions. Join Schedule A medical evidence to prevent a
    duplicate deduction, including the new DPC rules for reimbursed fees.
