@@ -166,7 +166,7 @@ Deno.test("2026 retirement blocks incomplete taxability and unimplemented electi
     ["earnings", (s) => {
       s.claim.copies[0].box7d_excess_contribution_earnings = 9;
     }],
-    ["source route", (s) => {
+    ["dated payment", (s) => {
       s.claim.copies[0].box7a_distribution_codes = [Code.Code1];
     }],
     ["source route", (s) => {

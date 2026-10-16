@@ -1,3 +1,4 @@
+import { buildForm5329PdfBytes2026 } from "./form5329.ts";
 import {
   calculateRetirementSources2026,
   retirementIssuedAttachments2026,
@@ -297,6 +298,11 @@ export async function buildDraftReturnPdf2026(
   }
   const s2 = p.schedule2;
   const s2line = (key: string) => amount(s2, key);
+  if (
+    s2line("line5_form5329_early_tax") !== (retirement?.line5_early_tax ?? 0)
+  ) {
+    throw new Error("Schedule 2 early tax disagrees with retirement sources");
+  }
   const parts: {
     form: string;
     officialPages?: number;
@@ -310,7 +316,7 @@ export async function buildDraftReturnPdf2026(
     hasIncompleteFooter = false,
   ) => parts.push({ form, officialPages, render, hasIncompleteFooter });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 32, 33, 43, 44, 47, 50, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 29, 32, 33, 43, 44, 47, 50, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
   add(
     "f1040",
     2,
@@ -354,6 +360,7 @@ export async function buildDraftReturnPdf2026(
           schedule3a_line4: line("schedule2_line20"),
         },
         filer,
+        { form5329_not_required: retirement?.form5329_not_required ?? false },
       ));
   }
   if (s3?.file_schedule3) {
@@ -517,6 +524,18 @@ export async function buildDraftReturnPdf2026(
         filer,
         capital.land!.source_input.finalized_loss,
       ));
+  }
+  for (const part of retirement?.early_owners ?? []) {
+    if (!part.file_form5329) continue;
+    const individual = owners[part.owner];
+    if (!individual) throw new Error("Form 5329 owner identity is missing");
+    add(`form5329:${part.owner}`, 3, () =>
+      buildForm5329PdfBytes2026(
+        retirement!.source_input,
+        part.owner,
+        s2line("line5_form5329_early_tax"),
+        individual,
+      ), true);
   }
   if (amt?.file_form6251) {
     add("form6251", 2, () =>

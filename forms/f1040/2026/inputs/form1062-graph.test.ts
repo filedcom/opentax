@@ -263,3 +263,30 @@ Deno.test("2026 absent election does not impose Form 1062 tax scope on ordinary 
     [],
   );
 });
+
+Deno.test("2026 farmland election preserves early retirement tax without deferring section 72(t)", async () => {
+  const { earlyRetirementSource2026 } = await import(
+    "./retirement-early.fixture.ts"
+  );
+  const land = landGraphFixture2026(45000, [], 40000);
+  const retirement = earlyRetirementSource2026(true);
+  retirement.claim.copies[0].recipient_tin = land.general.taxpayer_ssn;
+  const f = await form1062GraphFixture2026({
+    ...land,
+    f1099r: { claim: retirement.claim },
+  });
+  const r = await executeDraftSources2026(f.graph, f.documents);
+  assertEquals(r.diagnostics, []);
+  const work = r.pending.form1062.calculation_2026 as {
+    source_input: { schedule2: { line5_form5329_early_tax: number } };
+    lines: { line2: number; line10: number };
+    unchanged_return_facts: { other_taxes: number };
+  };
+  assertEquals(work.source_input.schedule2.line5_form5329_early_tax, 2500);
+  assertEquals([work.lines.line2, work.lines.line10], [0, 0]);
+  assertEquals(
+    r.pending.f1040.line23_other_taxes,
+    f.baseline.pending.f1040.line23_other_taxes,
+  );
+  assertEquals(work.unchanged_return_facts.other_taxes, 2500);
+});

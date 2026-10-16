@@ -33,6 +33,7 @@ const schedule2Schema = registeredSchedule2Schema.pick({
   line2_amt: true,
   line17a_household_employment_tax: true,
   line4_self_employment_tax: true,
+  line5_form5329_early_tax: true,
   line6_niit: true,
   line16a_form4137_tip_tax: true,
   line16b_form8919_wage_tax: true,
@@ -228,7 +229,8 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
     withoutIncome.line16IncomeTax,
     withoutAmt.lines.line11,
   );
-  // The registered Schedule 2 sources are AMT (26(b)(2)(A)) or taxes outside
+  // AMT (26(b)(2)(A)) and the connected section 72(t) early tax (26(b)(2)(C))
+  // are excluded from regular tax. The other connected taxes are outside
   // chapter 1 (NIIT, SE, FICA, household and section 4999); none is line 2.
   // Refundable ACTC and AOTC are treated as subpart C, and are not lines 4/12.
   const line1 = regular, line2 = 0, line3 = line1 + line2;

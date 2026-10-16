@@ -1,3 +1,4 @@
+import { earlyDistributionAdditionalTax } from "../../nodes/intermediate/forms/taxes/retirement/form5329/early-tax.ts";
 import { issuedPdfAttachment2026 } from "./issued-pdf.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -114,6 +115,20 @@ const review = z.object({
   ),
   payer_determined_pension_taxability_verified: z.literal(true).optional(),
   payer_code2_exception_verified: z.literal(true).optional(),
+  early_distribution: z.object({
+    record_reference: ref,
+    complete_payment_inventory_verified: z.literal(true),
+    no_additional_tax_exception_applies_verified: z.literal(true),
+    simple_first_contribution_date: date.optional(),
+    payments: z.array(
+      z.object({
+        record_reference: ref,
+        payment_date: date,
+        gross: money,
+        taxable: money,
+      }).strict(),
+    ).min(1).max(1000),
+  }).strict().optional(),
   death_benefit: z.object({
     decedent_tin: tin,
     death_date: date,
@@ -157,6 +172,17 @@ export const retirementSource2026Schema = investmentOwner2026.extend({
 }).strict();
 export type RetirementSource2026 = z.input<typeof retirementSource2026Schema>;
 export type RetirementCopy2026 = z.input<typeof retirementCopy2026Schema>;
+
+/** Calendar anniversaries clamp a leap/month-end day instead of rolling into another month. */
+function addCalendarMonths(value: string, months: number): string {
+  const [year, month, day] = value.split("-").map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + months, 1));
+  const last = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  target.setUTCDate(Math.min(day, last));
+  return target.toISOString().slice(0, 10);
+}
 
 export function calculateRetirementSources2026(raw: RetirementSource2026) {
   const input = retirementSource2026Schema.parse(raw), claim = input.claim;
@@ -265,6 +291,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       "Retirement current copies each need exactly one treatment review",
     );
   }
+  const paymentRecords = new Set<string>();
   const rows = current.map((c) => {
     const r = reviews.get(c.source_document_reference)!;
     if (r.reviewed_on < "2027-01-01" || r.reviewed_on > claim.reviewed_on) {
@@ -283,7 +310,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       throw new Error("Retirement plan review conflicts with issued box 7b");
     }
     const codes = c.box7a_distribution_codes;
-    if (codes.length !== 1 || !["2", "4", "7", "G"].includes(codes[0])) {
+    if (
+      codes.length !== 1 || !["1", "2", "4", "7", "G", "S"].includes(codes[0])
+    ) {
       throw new Error(
         "Retirement codes need their early-tax, Roth, QCD, corrective, or special source route",
       );
@@ -327,10 +356,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       const dob = c.recipient === "spouse"
         ? input.spouse_dob!
         : input.taxpayer_dob;
-      const age595 = new Date(`${dob}T00:00:00Z`);
-      age595.setUTCFullYear(age595.getUTCFullYear() + 59);
-      age595.setUTCMonth(age595.getUTCMonth() + 6);
-      if (age595.toISOString().slice(0, 10) > "2026-12-31") {
+      if (addCalendarMonths(dob, 59 * 12 + 6) > "2026-12-31") {
         throw new Error(
           "Normal code 7 conflicts with filer age; review the issued distribution code",
         );
@@ -412,6 +438,77 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
     }
+    const early = code === "1" || code === "S";
+    if (early !== !!r.early_distribution) {
+      throw new Error(
+        "Early distribution needs matching dated payment and exception review",
+      );
+    }
+    if (r.early_distribution) {
+      const e = r.early_distribution;
+      const dob = c.recipient === "spouse"
+        ? input.spouse_dob!
+        : input.taxpayer_dob;
+      const age595 = addCalendarMonths(dob, 59 * 12 + 6);
+      if (r.plan_type === "governmental_457b") {
+        throw new Error(
+          "Early governmental 457(b) income needs its separate rolled-in asset history",
+        );
+      }
+      if (
+        (code === "S" && r.plan_type !== "simple_ira") ||
+        (r.plan_type === "simple_ira") !== !!e.simple_first_contribution_date
+      ) {
+        throw new Error(
+          "Early SIMPLE source needs the actual first contribution date and matching plan/code",
+        );
+      }
+      if (
+        new Set(e.payments.map((p) => p.record_reference)).size !==
+          e.payments.length ||
+        sumSourceMoney(e.payments.map((p) => p.gross)) !==
+          c.box1_gross_distribution ||
+        sumSourceMoney(e.payments.map((p) => p.taxable)) !== taxable
+      ) {
+        throw new Error(
+          "Early payment records must be distinct and reconcile gross and taxable distributions",
+        );
+      }
+      for (const p of e.payments) {
+        const paymentKey = JSON.stringify([
+          id,
+          c.payer_tin,
+          c.account_number,
+          p.record_reference,
+        ]);
+        if (paymentRecords.has(paymentKey)) {
+          throw new Error(
+            "Early payment record is reused across current statements for the same owner/account",
+          );
+        }
+        paymentRecords.add(paymentKey);
+        if (
+          !p.payment_date.startsWith("2026-") || p.payment_date < dob ||
+          p.payment_date >= age595 || p.taxable > p.gross
+        ) {
+          throw new Error(
+            "Early payment date, age or taxable amount conflicts with the issued source",
+          );
+        }
+        if (
+          e.simple_first_contribution_date &&
+          (e.simple_first_contribution_date < dob ||
+            e.simple_first_contribution_date > p.payment_date ||
+            (p.payment_date <
+                addCalendarMonths(e.simple_first_contribution_date, 24)) !==
+              (code === "S"))
+        ) {
+          throw new Error(
+            "SIMPLE distribution code conflicts with its actual two-year participation period",
+          );
+        }
+      }
+    }
     const projected = sharedItem.parse({
       payer_name: c.payer_name,
       payer_ein: c.payer_tin,
@@ -432,7 +529,13 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       qcdAnnualLimit: 0,
       psoExclusionLimit: 0,
     });
-    return { copy: c, review: r, owner_tin: id, calculated };
+    return {
+      copy: c,
+      review: r,
+      owner_tin: id,
+      calculated,
+      early_tax_rate: early ? (code === "S" ? 25 : 10) : undefined,
+    };
   });
   const cents = {
     line4a_ira_gross: sumSourceMoney(
@@ -453,6 +556,55 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       ),
     ),
   };
+  const earlyRows = rows.filter((r) => r.early_tax_rate !== undefined);
+  const directEarlyTax = earlyRows.length > 0 &&
+    rows.every((r) =>
+      r.copy.box7a_distribution_codes[0] === "1" &&
+      (r.calculated.iraFields.line4b_ira_taxable ??
+          r.calculated.pensionFields.line5b_pension_taxable ?? 0) ===
+        r.copy.box1_gross_distribution
+    );
+  const earlyOwners = (["taxpayer", "spouse"] as const).flatMap((owner) => {
+    const owned = earlyRows.filter((r) => r.copy.recipient === owner);
+    if (!owned.length) return [];
+    const taxable = (r: typeof rows[number]) =>
+      r.calculated.iraFields.line4b_ira_taxable ??
+        r.calculated.pensionFields.line5b_pension_taxable ?? 0;
+    const total = sumSourceMoney(owned.map(taxable));
+    const simple = sumSourceMoney(
+      owned.filter((r) => r.early_tax_rate === 25).map(taxable),
+    );
+    // Round the combined filed base once; its SIMPLE portion gets 25%, and
+    // the remaining filed line 3 base gets 10%, so the printed tax reconciles.
+    const line1 = roundWholeDollars(total),
+      simpleBase = roundWholeDollars(simple);
+    return [{
+      owner,
+      owner_tin: owned[0].owner_tin,
+      source_document_references: owned.map((r) =>
+        r.copy.source_document_reference
+      ),
+      taxable_cents: total,
+      simple_taxable_cents: simple,
+      line1,
+      line2: 0,
+      line3: line1,
+      line4: roundWholeDollars(
+        earlyDistributionAdditionalTax(line1 - simpleBase, simpleBase),
+      ),
+      file_form5329: !directEarlyTax,
+    }];
+  });
+  const earlyTax = directEarlyTax
+    ? roundWholeDollars(
+      earlyDistributionAdditionalTax(
+        roundWholeDollars(
+          sumSourceMoney(earlyOwners.map((o) => o.taxable_cents)),
+        ),
+        0,
+      ),
+    )
+    : earlyOwners.reduce((n, o) => n + o.line4, 0);
   const pensionRollover = rows.some((r) =>
     r.review.direct_rollover !== undefined
   );
@@ -477,6 +629,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   };
   return {
     source_input: input,
+    early_owners: earlyOwners,
+    line5_early_tax: earlyTax,
+    form5329_not_required: directEarlyTax,
     rows,
     excluded_document_references: [...retired],
     cents,

@@ -1,3 +1,4 @@
+import { earlyDistributionAdditionalTax } from "./early-tax.ts";
 import {
   ableDistributionAmounts,
   ableDistributionReviewSchema,
@@ -23,10 +24,6 @@ import { TS, tsSchema } from "../../../../../types.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
-// IRC §72(t)(1) — standard early distribution additional tax rate
-const EARLY_DIST_RATE = 0.10;
-// IRC §72(t)(6) — SIMPLE IRA rate when distributed within first 2 years of participation
-const SIMPLE_IRA_EARLY_RATE = 0.25;
 // IRC §4973 — excess contribution excise tax rate (Parts III–VIII)
 const EXCESS_CONTRIB_RATE = 0.06;
 // IRC §4979 — Part II ESA/ABLE distribution penalty rate
@@ -229,9 +226,9 @@ function partI_regularTax(input: Form5329Input): number {
         "Form5329 converted Roth owner/early source differs from complete retained inventory",
       );
     }
-    return roundWholeDollars(netSubjectToTax * EARLY_DIST_RATE);
+    return roundWholeDollars(earlyDistributionAdditionalTax(netSubjectToTax, 0));
   }
-  return netSubjectToTax * EARLY_DIST_RATE;
+  return earlyDistributionAdditionalTax(netSubjectToTax, 0);
 }
 
 // Part I, Line 4 (25%): Additional tax on SIMPLE IRA early distribution
@@ -239,7 +236,7 @@ function partI_regularTax(input: Form5329Input): number {
 function partI_simpleTax(input: Form5329Input): number {
   const dist = sumAmounts(input.simple_ira_early_distribution);
   if (dist <= 0) return 0;
-  return dist * SIMPLE_IRA_EARLY_RATE;
+  return earlyDistributionAdditionalTax(0, dist);
 }
 
 // Part II, Line 8: 10% additional tax on taxable ESA/QTP/ABLE distributions

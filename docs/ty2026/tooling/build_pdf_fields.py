@@ -11,7 +11,7 @@ from pypdf import PdfReader
 ROOT = Path(__file__).resolve().parents[1]
 SLUGS = (
     "f1040", "f1040sa", "f1040s1", "f1040s2", "f1040s3a", "f1040sb", "f1040sse",
-    "f6251", "f8995", "f8995a", "f8995aa",
+    "f5329", "f6251", "f8995", "f8995a", "f8995aa",
 )
 
 

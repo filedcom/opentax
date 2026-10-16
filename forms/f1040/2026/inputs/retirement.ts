@@ -13,7 +13,7 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["agi_aggregator", "f1040", "schedule_a"];
+    return ["agi_aggregator", "f1040", "schedule_a", "schedule2"];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -65,6 +65,12 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
             line25b_withheld_1099: r.cents.line25b_withheld_1099,
           },
         },
+        ...(r.early_owners.length
+          ? [{
+            nodeType: "schedule2",
+            fields: { line5_form5329_early_tax: r.line5_early_tax },
+          }]
+          : []),
         ...(taxes.length
           ? [{
             nodeType: "schedule_a",

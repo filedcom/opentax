@@ -507,8 +507,10 @@ payer-determined qualified pensions support single codes 2, 4 and 7; code G plan
 rollovers require reconciled transfer evidence. Income and withholding reach AGI,
 Schedule A and draft Form 1040, with unchanged withheld source PDF attachments.
 See the [current 1099-R contract](../graphs/FORM1099R-GRAPH.md).
-Earlier prototype code 1 and early SIMPLE/Form 5329 descriptions do not describe
-the current registry. Those routes and Forms 8606/4972, QCDs, annuity basis and
+Early codes 1/S now require payment-date, taxable-amount and no-exception evidence.
+They use shared Part I arithmetic with the actual SIMPLE two-year period, direct
+Schedule 2 reporting where permitted, or separate taxpayer/spouse Form 5329 drafts.
+Remaining exceptions and other parts, Forms 8606/4972, QCDs, annuity basis and
 current MeF remain required parity work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond

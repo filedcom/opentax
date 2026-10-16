@@ -16,6 +16,7 @@ export const inputSchema = schedule2Input2026Schema.pick({
   line1a_excess_advance_premium: true,
   line17a_household_employment_tax: true,
   line4_self_employment_tax: true,
+  line5_form5329_early_tax: true,
   line6_niit: true,
   line16a_form4137_tip_tax: true,
   line16b_form8919_wage_tax: true,

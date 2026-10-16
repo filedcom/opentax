@@ -28,6 +28,9 @@ Supported current source treatments are:
 - Single codes 7, 2 and 4 with normal-age, known-exception or death-benefit
   evidence respectively. Owner matching includes jointly filing spouses and
   reviewed masked recipient TINs.
+- Early codes 1 and S with reconciled dated payments, no-exception review and
+  SIMPLE first-contribution evidence. Shared Part I arithmetic feeds Schedule 2
+  directly or separate owner Form 5329 drafts; see the [early-tax contract](./FORM5329-GRAPH.md).
 - Single-code G direct plan rollovers to eligible non-Roth destinations or Roth
   destinations, with transfer date, amount, destination and after-tax basis
   reconciled to gross, taxable amount and zero withholding. IRA code G and
@@ -70,9 +73,8 @@ duplicate state/local rows and withholding above gross fail before aggregation.
 
 - Form 8606 owner-wide IRA basis, Roth distributions/conversions and contribution
   records; QCD with and without Y, HSA funding and public-safety exclusions.
-- Form 5329 early distributions, exceptions, SIMPLE first-two-year rules, excess
-  contributions and RMD shortfalls. Earlier prototype notes described code 1 and
-  25% SIMPLE routes; those routes are **not registered in this current graph**.
+- Remaining Form 5329 exceptions, excess contributions, RMD shortfalls and
+  other parts. Early codes 1/S now use the reviewed Part I route above.
 - General Rule/Simplified Method annuity workpapers, disability wages, NUA,
   Form 4972 elections, disaster/repayment routes and additional code combinations.
 - Trump-account and excess-contribution earnings rules; nonqualified commercial

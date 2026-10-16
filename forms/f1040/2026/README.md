@@ -10,7 +10,10 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   the 2025 retirement amount helper. Ordinary no-basis IRAs, payer-determined
   qualified pensions, inherited distributions and direct plan rollovers reach
   AGI, withholding, state/local deductions and draft Form 1040. Withheld originals
-  remain separate verified PDF attachments. See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
+  remain separate verified PDF attachments. Early codes 1/S additionally require
+  dated payments and no-exception evidence; shared 2025 Part I tax arithmetic
+  reaches Schedule 2 and separate owner Form 5329 drafts where required.
+  See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
   for supported codes, correction checks and required basis/penalty/filing work.
 
 - `gambling` reconciles current W-2G copies and the casual winnings/loss ledger,
