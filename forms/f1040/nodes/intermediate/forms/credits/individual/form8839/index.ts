@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  adoptionAmountAfterPhaseout,
+  adoptionPhaseoutFraction,
+} from "./amounts.ts";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
@@ -116,19 +120,6 @@ export type FinalizedReturnCreditContext = z.infer<
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Phase-out fraction for both Part II credit and Part III exclusion.
-// Fraction = (MAGI - phaseOutStart) / phaseOutRange, clamped to [0, 1], rounded to 3 decimal places.
-// IRC §23(b)(2); IRC §137(b)(2)
-function phaseOutFraction(
-  magi: number,
-  phaseOutStart: number,
-  phaseOutRange: number,
-): number {
-  if (magi <= phaseOutStart) return 0;
-  const raw = (magi - phaseOutStart) / phaseOutRange;
-  return Math.round(Math.min(1, raw) * 1000) / 1000;
-}
-
 function priorFiledCredit(child: ChildItem): number {
   return (child.prior_filed_form8839?.line3 ?? 0) +
     (child.prior_filed_form8839?.line6 ?? 0);
@@ -156,15 +147,6 @@ function perChildBaseline(child: ChildItem, maxCreditPerChild: number): number {
     return remaining;
   }
   return Math.min(remaining, qualifiedUnreimbursedExpenses(child));
-}
-
-// Per-child credit after phase-out (Part II Line 11a).
-function perChildAllowed(
-  line6: number,
-  fraction: number,
-): number {
-  const line10Phaseout = Math.round(line6 * fraction * 100) / 100;
-  return Math.max(0, Math.round((line6 - line10Phaseout) * 100) / 100);
 }
 
 function finalizedMagi(context: FinalizedReturnCreditContext): number {
@@ -219,10 +201,12 @@ export function settleForm8839Credit(
   }
   const context = finalizedReturnCreditContextSchema.parse(finalizedReturn);
   const magi = finalizedMagi(context);
-  const fraction = phaseOutFraction(magi, 259_190, 40_000);
+  const fraction = adoptionPhaseoutFraction(magi, 259_190, 40_000);
   const perChild = prepared.perChild.map((base) => {
-    const line10 = Math.round(base.line6 * fraction * 100) / 100;
-    const line11a = perChildAllowed(base.line6, fraction);
+    const { reduction: line10, allowed: line11a } = adoptionAmountAfterPhaseout(
+      base.line6,
+      fraction,
+    );
     const line11b = Math.min(line11a, 5_000);
     return { ...base, line10, line11a, line11b };
   });

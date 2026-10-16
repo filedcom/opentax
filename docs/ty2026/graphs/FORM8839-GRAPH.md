@@ -38,27 +38,62 @@ their exact evidence and filing gates. Check the [Schedule 3-A
 contract](../pdf/PDF-SCHEDULE3A-MAP.md) after computing 1040 line 30; it can change
 net refundable credits without rewriting Form 8839 line 13.
 
-## Current code boundary
+## Current development workpapers (October 16)
 
-- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/index.ts)
-  contains the draft 2026 limits and a per-child credit array, plus 1040
-  line 30 and Schedule 3 line 6c outputs. It is **not registered** in the
-  2026 registry. Its child schema lacks identity, payment/finalization dates,
-  reimbursed-expense and per-child employer-benefit history. `magi` defaults
-  to zero, MFS is rejected without the exception, and the exclusion uses
-  child count instead of the printed per-child Part III ledger.
-- The calculator's Part III output is positive taxable benefits only; it
-  cannot produce the printed negative line 31 case. It takes an external
-  `income_tax_liability` as the credit-limit worksheet result rather than
-  calculating its 2026 credit-order inputs. Its outputs contain no complete
-  printable Form 8839 record, even though it tracks nonrefundable balances
-  by origin year.
-- The TY2025 [PDF descriptor](../../../forms/f1040/2025/pdf/forms/credits/individual/f8839.ts)
-  maps only three aggregate fields, and the [MeF
-  serializer](../../../forms/f1040/2025/mef/forms/credits/individual/f8839.ts) emits only the
-  corresponding XML amounts. Neither describes the 2026 per-child credit,
-  refundable split, Part III or carryforward. There is no 2026 Form 8839
-  PDF/MeF route.
+`prepareAdoptionSources2026` now reconciles the actual return owners, current
+W-2 code T inventory, employer programs, child identity/finality, dated expenses,
+reimbursements and latest filed credit/exclusion history. Domestic pre-final,
+current-final and post-final payment years remain distinct; foreign expenses
+wait for the reviewed finality year. Employer-paid and reimbursed costs cannot
+also become personal credit expenses. Current code T benefits are allocated
+exactly once across children and statements, including spouse-owned sources.
+
+State/tribal special-needs determinations, disability effective dates, separate-
+return living-apart/home-cost/residence evidence and affirmative prior-history
+reviews are separate source facts. Special-needs finalization can use the
+remaining statutory maximum without cash expenses; the separate employer
+program requirement controls the additional exclusion. More than three children
+retain individual limits and refundable caps rather than sharing one cap.
+
+The 2025 and 2026 calculations now share phaseout arithmetic. The 2025 public
+source route still requires its original 2025 evidence and late settlement;
+its limits, receipt rules and outputs are unchanged. This supersedes the historical plan's description
+of a broad flat shared calculator. Annual 2026 limits live separately in `2026-adoption.ts`.
+
+`calculateAdoptionExclusion2026` replays the source workpaper and explicit
+printed MAGI worksheet operands. It calculates Part III per child, including
+signed line 31 for special-needs benefits. The foreign prior-benefit worksheet
+retains line 9 separately and marks `requires_prior_benefit_recovery_reconciliation`
+when positive; its eventual return/affected-year treatment still needs final
+instruction review and binding before a filing route can accept that result.
+Pending foreign adoptions and ineligible separate-return claims retain their
+current taxable benefits outside the qualifying Part III rows.
+
+`settleAdoptionCredit2026` separately consumes the finalized return's actual
+AGI, foreign addbacks, tax and every prescribed priority credit, including the
+Schedule 8812 Worksheet B alternative. It calculates the 2026 refundable split,
+nonrefundable limit, oldest-origin use and five-year expiration. Prior balances
+remain nonrefundable even above the current MAGI phaseout. Receipt cents are
+summed before filed lines; the 2026 calculation rounds printed child lines to
+dollars while the shared 2025 source calculation retains its original convention.
+
+These are **internal workpapers, not a registered return route**. The exclusion
+MAGI/AGI sequence, final credit ordering, public source registration, all 2026
+PDF fields/continuations and native MeF remain to connect. Nonspouse allocations,
+combined unrelated adoption attempts, reimbursements of previously credited
+expenses, missing child identifiers, stronger foreign
+finality/history binding and the prior-benefit recovery destination remain open.
+No caller-entered MAGI or credit capacity has been added to public intake.
+
+Fresh IRS checks on October 16 found that both the published and draft
+instruction URLs still serve **2025**. The visible 2026 draft form supplies the
+annual amounts and line destinations; the 2025 instructions are explicitly a
+method comparator. The new workpapers and unchanged 2025 source/settlement
+route pass 42 typed tests covering reimbursement, timing, special needs, signed
+benefits, phaseout, multiple children, joint owners, MFS evidence and carryforward
+expiry. The repository unit gate passes 137 tests with 3,888 modules in
+preflight and unchanged runtime files. Full return/PDF/MeF validation remains
+required below.
 
 ## Build order and acceptance
 

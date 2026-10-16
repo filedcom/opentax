@@ -1168,3 +1168,15 @@ It retains beneficiary cash/gross distributions separately from taxable earnings
 and owner Form 5329 Part II amounts. This workpaper is not registered; the next
 integration must add income before AGI and combine owner additional-tax forms
 before enabling ABLE credit claims. See [ABLE source coverage and remaining work](../../../docs/ty2026/graphs/ABLE-CURRENT.md).
+
+## Adoption source and settlement workpapers
+
+`prepareAdoptionSources2026` reconciles child, payment, reimbursement, employer
+program, W-2 code T and prior-claim records before the separate exclusion and
+late credit calculations. Both years reuse the phaseout arithmetic with separate
+annual limits. Current refundable credit and prior nonrefundable carryforwards
+remain distinct; oldest balances are used first and expire after five years.
+
+These workpapers are not yet public graph inputs. AGI/exclusion ordering, final
+credit bindings, owner draft forms, foreign prior-benefit recovery and native
+filing remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).
