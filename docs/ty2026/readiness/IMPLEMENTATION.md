@@ -103,7 +103,9 @@ education-exclusion coordination and remaining filing output remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its 2026 draft and
 continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
 Part III income reconciliation and repeated asset statements. The shared
-node produces no filed form; 2026 PDF and MeF support remain open.
+node produces no filed form. The 2026 ordinary-asset valuation workpaper now
+reuses eligibility/threshold/summary checks with dated source records; Part III/IV
+return binding, special valuations, public graph intake, PDF and MeF remain open.
 The [Form 4852 contract](../graphs/FORM4852-GRAPH.md) pins its continuous-use form,
 correct line 7e/8f withholding labels and 34 PDF widgets. The shared node
 needs original/substitute deduplication, printed explanation fields and

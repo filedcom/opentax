@@ -1205,3 +1205,18 @@ only once. Carryforward-only claims attach, empty inventories do not, and curren
 taxable benefits outside Part III receive a separate income reconciliation.
 Remaining care-income cases, foreign prior-benefit recovery and native filing
 remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).
+
+### Foreign asset disclosure source valuation
+
+`inputs/foreign-assets-source.ts` prepares a Form 8938 valuation workpaper from
+reviewed filer/ownership documents, year-end FX evidence and dated portfolio
+observations. It reuses the 2025 eligibility, threshold and summary helpers with
+2026 calendar checks, derives contemporaneous peaks and year-end values, and
+keeps MFS threshold shares separate from full asset reporting values. Exact
+converted values determine thresholds before whole-dollar display rounding.
+
+This source stage is not registered in the public graph or draft bundle. Tax
+items and exception-form copies remain explicitly unbound to executed return
+lines and filing artifacts. Special trust/estate/pension valuations, remaining
+eligibility/FX branches, the PDF, MeF and ATS gates remain in the
+[Form 8938 contract](../../../docs/ty2026/graphs/FORM8938-GRAPH.md).

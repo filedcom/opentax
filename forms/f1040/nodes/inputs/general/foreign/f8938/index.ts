@@ -37,510 +37,526 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
   "Enter a valid ISO calendar date",
 );
 
-const assetSchema = z.object({
-  asset_id: z.string().min(1), // stable source-document identity
-  asset_type: z.nativeEnum(ForeignAssetType),
-  description: z.string().min(1),
-  asset_identifier: z.string().min(1), // account number or asset identifier
-  country: z.string().regex(/^[A-Z]{2}$/),
-  institution_or_issuer_name: z.string().min(1),
-  institution_or_issuer_address: foreignAddress,
-  // Form 8938 Part VI lines 35c and 36a-c, when the asset is reported there.
-  foreign_entity_type: z.enum(["partnership", "corporation", "trust", "estate"])
-    .optional(),
-  issuer_or_counterparty_role: z.enum(["issuer", "counterparty"]).optional(),
-  issuer_or_counterparty_type: z.enum([
-    "individual",
-    "partnership",
-    "corporation",
-    "trust",
-    "estate",
-  ]).optional(),
-  issuer_or_counterparty_is_us_person: z.boolean().optional(),
-  owner: z.enum([
-    "taxpayer",
-    "spouse",
-    "joint_with_spouse",
-    "joint_with_other",
-  ]),
-  spouse_is_specified_individual: z.boolean().optional(), // MFS joint-asset threshold
-  opened_or_acquired_date: date.optional(),
-  closed_or_disposed_date: date.optional(),
-  currency_code: z.string().regex(/^[A-Z]{3}$/),
-  year_end_exchange_rate_usd_per_unit: z.number().finite().positive(),
-  exchange_rate_source: z.string().min(1),
-  exchange_rate_date: date,
-  maximum_value_native: money,
-  year_end_value_native: money,
-  maximum_value_usd: money, // entire asset, including jointly owned assets
-  year_end_value_usd: money,
-  // Assets filed on these forms still count for an individual's threshold;
-  // Part IV may replace repeated Part V/VI detail only with actual filed evidence.
-  excepted_on_form: z.enum(["3520", "3520-A", "5471", "8621", "8865"])
-    .optional(),
-  filed_exception_form_reference: z.string().min(1).optional(),
-  tax_items: z.array(z.object({
-    kind: z.enum([
-      "interest",
-      "dividends",
-      "royalties",
-      "other_income",
-      "gain_loss",
-      "deduction",
-      "credit",
+/** The continuous-use source checks share one shape; only calendar boundaries vary. */
+export function createForm8938Schemas(taxYear: 2025 | 2026) {
+  const yearStart = `${taxYear}-01-01`, yearEnd = `${taxYear}-12-31`;
+  const assetSchema = z.object({
+    asset_id: z.string().min(1), // stable source-document identity
+    asset_type: z.nativeEnum(ForeignAssetType),
+    description: z.string().min(1),
+    asset_identifier: z.string().min(1), // account number or asset identifier
+    country: z.string().regex(/^[A-Z]{2}$/),
+    institution_or_issuer_name: z.string().min(1),
+    institution_or_issuer_address: foreignAddress,
+    // Form 8938 Part VI lines 35c and 36a-c, when the asset is reported there.
+    foreign_entity_type: z.enum([
+      "partnership",
+      "corporation",
+      "trust",
+      "estate",
+    ])
+      .optional(),
+    issuer_or_counterparty_role: z.enum(["issuer", "counterparty"]).optional(),
+    issuer_or_counterparty_type: z.enum([
+      "individual",
+      "partnership",
+      "corporation",
+      "trust",
+      "estate",
+    ]).optional(),
+    issuer_or_counterparty_is_us_person: z.boolean().optional(),
+    owner: z.enum([
+      "taxpayer",
+      "spouse",
+      "joint_with_spouse",
+      "joint_with_other",
     ]),
-    amount_usd: z.number().finite(),
-    filed_form_and_line: z.string().min(1),
-  })),
-}).superRefine((asset, ctx) => {
-  const partV = asset.asset_type === ForeignAssetType.DepositAccount ||
-    asset.asset_type === ForeignAssetType.CustodialAccount;
-  const entity = asset.asset_type === ForeignAssetType.ForeignStock ||
-    asset.asset_type === ForeignAssetType.ForeignEntityInterest ||
-    asset.asset_type === ForeignAssetType.ForeignTrustInterest;
-  if (!partV && entity && !asset.foreign_entity_type) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["foreign_entity_type"],
-      message: "Part VI foreign entity type is required",
-    });
-  }
-  if (
-    asset.asset_type === ForeignAssetType.ForeignStock &&
-    asset.foreign_entity_type !== "corporation"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["foreign_entity_type"],
-      message: "Foreign stock must identify a corporation",
-    });
-  }
-  if (
-    asset.asset_type === ForeignAssetType.ForeignTrustInterest &&
-    asset.foreign_entity_type !== "trust"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["foreign_entity_type"],
-      message: "Foreign trust interest must identify a trust",
-    });
-  }
-  if (
-    !partV && !entity &&
-    (!asset.issuer_or_counterparty_role || !asset.issuer_or_counterparty_type ||
-      asset.issuer_or_counterparty_is_us_person === undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["issuer_or_counterparty_role"],
-      message: "Part VI issuer or counterparty classification is required",
-    });
-  }
-  if (
-    asset.currency_code === "USD" &&
-    asset.year_end_exchange_rate_usd_per_unit !== 1
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["year_end_exchange_rate_usd_per_unit"],
-      message: "USD assets use a conversion rate of 1",
-    });
-  }
-  if (asset.exchange_rate_date !== "2025-12-31") {
-    ctx.addIssue({
-      code: "custom",
-      path: ["exchange_rate_date"],
-      message: "Form 8938 uses the last-day-of-year exchange rate",
-    });
-  }
-  for (
-    const [native, usd] of [
-      [asset.maximum_value_native, asset.maximum_value_usd],
-      [asset.year_end_value_native, asset.year_end_value_usd],
-    ]
-  ) {
+    spouse_is_specified_individual: z.boolean().optional(), // MFS joint-asset threshold
+    opened_or_acquired_date: date.optional(),
+    closed_or_disposed_date: date.optional(),
+    currency_code: z.string().regex(/^[A-Z]{3}$/),
+    year_end_exchange_rate_usd_per_unit: z.number().finite().positive(),
+    exchange_rate_source: z.string().min(1),
+    exchange_rate_date: date,
+    maximum_value_native: money,
+    year_end_value_native: money,
+    maximum_value_usd: money, // entire asset, including jointly owned assets
+    year_end_value_usd: money,
+    // Assets filed on these forms still count for an individual's threshold;
+    // Part IV may replace repeated Part V/VI detail only with actual filed evidence.
+    excepted_on_form: z.enum(["3520", "3520-A", "5471", "8621", "8865"])
+      .optional(),
+    filed_exception_form_reference: z.string().min(1).optional(),
+    tax_items: z.array(z.object({
+      kind: z.enum([
+        "interest",
+        "dividends",
+        "royalties",
+        "other_income",
+        "gain_loss",
+        "deduction",
+        "credit",
+      ]),
+      amount_usd: z.number().finite(),
+      filed_form_and_line: z.string().min(1),
+    })),
+  }).superRefine((asset, ctx) => {
+    const partV = asset.asset_type === ForeignAssetType.DepositAccount ||
+      asset.asset_type === ForeignAssetType.CustodialAccount;
+    const entity = asset.asset_type === ForeignAssetType.ForeignStock ||
+      asset.asset_type === ForeignAssetType.ForeignEntityInterest ||
+      asset.asset_type === ForeignAssetType.ForeignTrustInterest;
+    if (!partV && entity && !asset.foreign_entity_type) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["foreign_entity_type"],
+        message: "Part VI foreign entity type is required",
+      });
+    }
     if (
-      Math.abs(native * asset.year_end_exchange_rate_usd_per_unit - usd) > 1
+      asset.asset_type === ForeignAssetType.ForeignStock &&
+      asset.foreign_entity_type !== "corporation"
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["maximum_value_usd"],
-        message:
-          "USD value does not reconcile to native value at the stated year-end rate",
+        path: ["foreign_entity_type"],
+        message: "Foreign stock must identify a corporation",
       });
-      break;
     }
-  }
-  if (asset.year_end_value_usd > asset.maximum_value_usd) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["year_end_value_usd"],
-      message: "Year-end value exceeds annual maximum",
-    });
-  }
-  if (
-    asset.closed_or_disposed_date &&
-    (asset.year_end_value_native !== 0 || asset.year_end_value_usd !== 0)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["year_end_value_usd"],
-      message: "Disposed asset cannot have a year-end value",
-    });
-  }
-  if (
-    asset.opened_or_acquired_date && asset.closed_or_disposed_date &&
-    asset.opened_or_acquired_date > asset.closed_or_disposed_date
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["closed_or_disposed_date"],
-      message: "Disposition precedes acquisition",
-    });
-  }
-  if (
-    asset.opened_or_acquired_date &&
-    asset.opened_or_acquired_date > "2025-12-31"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["opened_or_acquired_date"],
-      message: "Asset was not held during TY2025",
-    });
-  }
-  if (
-    asset.closed_or_disposed_date &&
-    (asset.closed_or_disposed_date < "2025-01-01" ||
-      asset.closed_or_disposed_date > "2025-12-31")
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["closed_or_disposed_date"],
-      message: "TY2025 disposition date must occur during TY2025",
-    });
-  }
-  if (asset.excepted_on_form && !asset.filed_exception_form_reference) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["filed_exception_form_reference"],
-      message: "Part IV exception needs an actual filed-form reference",
-    });
-  }
-  if (!asset.excepted_on_form && asset.filed_exception_form_reference) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["excepted_on_form"],
-      message: "Filed-form reference requires a Part IV form",
-    });
-  }
-});
+    if (
+      asset.asset_type === ForeignAssetType.ForeignTrustInterest &&
+      asset.foreign_entity_type !== "trust"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["foreign_entity_type"],
+        message: "Foreign trust interest must identify a trust",
+      });
+    }
+    if (
+      !partV && !entity &&
+      (!asset.issuer_or_counterparty_role ||
+        !asset.issuer_or_counterparty_type ||
+        asset.issuer_or_counterparty_is_us_person === undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["issuer_or_counterparty_role"],
+        message: "Part VI issuer or counterparty classification is required",
+      });
+    }
+    if (
+      asset.currency_code === "USD" &&
+      asset.year_end_exchange_rate_usd_per_unit !== 1
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["year_end_exchange_rate_usd_per_unit"],
+        message: "USD assets use a conversion rate of 1",
+      });
+    }
+    if (asset.exchange_rate_date !== yearEnd) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["exchange_rate_date"],
+        message: "Form 8938 uses the last-day-of-year exchange rate",
+      });
+    }
+    for (
+      const [native, usd] of [
+        [asset.maximum_value_native, asset.maximum_value_usd],
+        [asset.year_end_value_native, asset.year_end_value_usd],
+      ]
+    ) {
+      if (
+        Math.abs(native * asset.year_end_exchange_rate_usd_per_unit - usd) > 1
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["maximum_value_usd"],
+          message:
+            "USD value does not reconcile to native value at the stated year-end rate",
+        });
+        break;
+      }
+    }
+    if (asset.year_end_value_usd > asset.maximum_value_usd) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["year_end_value_usd"],
+        message: "Year-end value exceeds annual maximum",
+      });
+    }
+    if (
+      asset.closed_or_disposed_date &&
+      (asset.year_end_value_native !== 0 || asset.year_end_value_usd !== 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["year_end_value_usd"],
+        message: "Disposed asset cannot have a year-end value",
+      });
+    }
+    if (
+      asset.opened_or_acquired_date && asset.closed_or_disposed_date &&
+      asset.opened_or_acquired_date > asset.closed_or_disposed_date
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["closed_or_disposed_date"],
+        message: "Disposition precedes acquisition",
+      });
+    }
+    if (
+      asset.opened_or_acquired_date &&
+      asset.opened_or_acquired_date > yearEnd
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["opened_or_acquired_date"],
+        message: `Asset was not held during TY${taxYear}`,
+      });
+    }
+    if (
+      asset.closed_or_disposed_date &&
+      (asset.closed_or_disposed_date < yearStart ||
+        asset.closed_or_disposed_date > yearEnd)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["closed_or_disposed_date"],
+        message: `TY${taxYear} disposition date must occur during TY${taxYear}`,
+      });
+    }
+    if (asset.excepted_on_form && !asset.filed_exception_form_reference) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["filed_exception_form_reference"],
+        message: "Part IV exception needs an actual filed-form reference",
+      });
+    }
+    if (!asset.excepted_on_form && asset.filed_exception_form_reference) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["excepted_on_form"],
+        message: "Filed-form reference requires a Part IV form",
+      });
+    }
+  });
 
-const usResidence = z.object({ location: z.literal("united_states") }).strict();
-const abroadResidence = z.object({
-  location: z.literal("qualifying_abroad"),
-  foreign_tax_home_country: z.string().regex(/^[A-Z]{2}$/),
-  presence_test: z.enum([
-    "bona_fide_resident_full_year",
-    "physical_presence_330_days",
-  ]),
-  qualifying_period_start: date,
-  qualifying_period_end: date,
-  full_days_abroad_in_period: z.number().int().min(0).max(366).optional(),
-}).strict();
-
-const reviewedEvidence = z.object({
-  document_reference: z.string().trim().min(1),
-  document_sha256: z.string().regex(/^[0-9a-f]{64}$/),
-  subject_ssn: z.string().regex(/^\d{9}$/),
-  reviewer_reference: z.string().trim().min(1),
-  reviewed_on: date,
-}).strict();
-
-const eligibilityEvidence = z.object({
-  legal_status: reviewedEvidence.extend({
-    evidence_kind: z.enum([
-      "us_passport",
-      "citizenship_certificate",
-      "us_birth_record",
-      "permanent_resident_card",
-      "substantial_presence_determination",
-      "section_6013_joint_election",
-    ]),
-  }).strict(),
-  return_requirement: reviewedEvidence.extend({
-    determination_basis: z.enum([
-      "gross_income_threshold_workpaper",
-      "self_employment_income_workpaper",
-      "other_statutory_filing_requirement_workpaper",
-      "no_filing_requirement_workpaper",
-    ]),
-  }).strict(),
-  us_residence: reviewedEvidence.extend({
-    evidence_kind: z.enum([
-      "government_address_record",
-      "lease_or_deed",
-      "utility_record",
-    ]),
-  }).strict().optional(),
-  foreign_tax_home: reviewedEvidence.extend({
-    evidence_kind: z.enum([
-      "employment_or_business_record",
-      "foreign_tax_residence_record",
-    ]),
-    country: z.string().regex(/^[A-Z]{2}$/),
-  }).strict().optional(),
-  foreign_presence: reviewedEvidence.extend({
-    evidence_kind: z.enum([
-      "entry_exit_records",
-      "passport_travel_records",
-      "foreign_residence_determination",
+  const usResidence = z.object({ location: z.literal("united_states") })
+    .strict();
+  const abroadResidence = z.object({
+    location: z.literal("qualifying_abroad"),
+    foreign_tax_home_country: z.string().regex(/^[A-Z]{2}$/),
+    presence_test: z.enum([
+      "bona_fide_resident_full_year",
+      "physical_presence_330_days",
     ]),
     qualifying_period_start: date,
     qualifying_period_end: date,
-  }).strict().optional(),
-}).strict();
+    full_days_abroad_in_period: z.number().int().min(0).max(366).optional(),
+  }).strict();
 
-export const inputSchema = z.object({
-  specified_individual_type: z.enum([
-    "us_citizen",
-    "resident_alien",
-    "nonresident_joint_return_election",
-  ]),
-  annual_income_tax_return_required: z.boolean(),
-  filing_status: z.enum(["single", "mfj", "mfs", "hoh", "qw"]),
-  residence: z.discriminatedUnion("location", [usResidence, abroadResidence]),
-  eligibility_evidence: eligibilityEvidence,
-  max_value_all_assets: money, // contemporaneous peak, not sum of per-asset maxima
-  year_end_value_all_assets: money,
-  assets: z.array(assetSchema).min(1),
-}).strict().superRefine((input, ctx) => {
-  const evidence = input.eligibility_evidence;
-  const statusKinds = {
-    us_citizen: ["us_passport", "citizenship_certificate", "us_birth_record"],
-    resident_alien: [
-      "permanent_resident_card",
-      "substantial_presence_determination",
-    ],
-    nonresident_joint_return_election: ["section_6013_joint_election"],
-  } as const;
-  if (
-    !(statusKinds[input.specified_individual_type] as readonly string[])
-      .includes(evidence.legal_status.evidence_kind)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["eligibility_evidence", "legal_status", "evidence_kind"],
-      message:
-        "Reviewed status evidence differs from specified-individual type",
-    });
-  }
-  if (
-    input.annual_income_tax_return_required ===
-      (evidence.return_requirement.determination_basis ===
-        "no_filing_requirement_workpaper")
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["eligibility_evidence", "return_requirement"],
-      message: "Reviewed filing requirement differs from the claimed duty",
-    });
-  }
-  const documents = [
-    evidence.legal_status,
-    evidence.return_requirement,
-    evidence.us_residence,
-    evidence.foreign_tax_home,
-    evidence.foreign_presence,
-  ].filter((document) => document !== undefined);
-  if (
-    new Set(documents.map((document) => document.document_reference)).size !==
-      documents.length ||
-    new Set(documents.map((document) => document.document_sha256)).size !==
-      documents.length ||
-    documents.some((document) =>
-      document.subject_ssn !== evidence.legal_status.subject_ssn
-    )
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["eligibility_evidence"],
-      message: "Eligibility records must be distinct and belong to one filer",
-    });
-  }
-  if (input.residence.location === "united_states") {
+  const reviewedEvidence = z.object({
+    document_reference: z.string().trim().min(1),
+    document_sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    subject_ssn: z.string().regex(/^\d{9}$/),
+    reviewer_reference: z.string().trim().min(1),
+    reviewed_on: date,
+  }).strict();
+
+  const eligibilityEvidence = z.object({
+    legal_status: reviewedEvidence.extend({
+      evidence_kind: z.enum([
+        "us_passport",
+        "citizenship_certificate",
+        "us_birth_record",
+        "permanent_resident_card",
+        "substantial_presence_determination",
+        "section_6013_joint_election",
+      ]),
+    }).strict(),
+    return_requirement: reviewedEvidence.extend({
+      determination_basis: z.enum([
+        "gross_income_threshold_workpaper",
+        "self_employment_income_workpaper",
+        "other_statutory_filing_requirement_workpaper",
+        "no_filing_requirement_workpaper",
+      ]),
+    }).strict(),
+    us_residence: reviewedEvidence.extend({
+      evidence_kind: z.enum([
+        "government_address_record",
+        "lease_or_deed",
+        "utility_record",
+      ]),
+    }).strict().optional(),
+    foreign_tax_home: reviewedEvidence.extend({
+      evidence_kind: z.enum([
+        "employment_or_business_record",
+        "foreign_tax_residence_record",
+      ]),
+      country: z.string().regex(/^[A-Z]{2}$/),
+    }).strict().optional(),
+    foreign_presence: reviewedEvidence.extend({
+      evidence_kind: z.enum([
+        "entry_exit_records",
+        "passport_travel_records",
+        "foreign_residence_determination",
+      ]),
+      qualifying_period_start: date,
+      qualifying_period_end: date,
+    }).strict().optional(),
+  }).strict();
+
+  const inputSchema = z.object({
+    specified_individual_type: z.enum([
+      "us_citizen",
+      "resident_alien",
+      "nonresident_joint_return_election",
+    ]),
+    annual_income_tax_return_required: z.boolean(),
+    filing_status: z.enum(["single", "mfj", "mfs", "hoh", "qw"]),
+    residence: z.discriminatedUnion("location", [usResidence, abroadResidence]),
+    eligibility_evidence: eligibilityEvidence,
+    max_value_all_assets: money, // contemporaneous peak, not sum of per-asset maxima
+    year_end_value_all_assets: money,
+    assets: z.array(assetSchema).min(1),
+  }).strict().superRefine((input, ctx) => {
+    const evidence = input.eligibility_evidence;
+    const statusKinds = {
+      us_citizen: ["us_passport", "citizenship_certificate", "us_birth_record"],
+      resident_alien: [
+        "permanent_resident_card",
+        "substantial_presence_determination",
+      ],
+      nonresident_joint_return_election: ["section_6013_joint_election"],
+    } as const;
     if (
-      !evidence.us_residence || evidence.foreign_tax_home ||
-      evidence.foreign_presence
+      !(statusKinds[input.specified_individual_type] as readonly string[])
+        .includes(evidence.legal_status.evidence_kind)
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["eligibility_evidence"],
-        message: "U.S. threshold needs reviewed U.S. residence evidence",
-      });
-    }
-  } else {
-    if (
-      evidence.us_residence || !evidence.foreign_tax_home ||
-      !evidence.foreign_presence ||
-      evidence.foreign_tax_home?.country !==
-        input.residence.foreign_tax_home_country ||
-      evidence.foreign_presence?.qualifying_period_start !==
-        input.residence.qualifying_period_start ||
-      evidence.foreign_presence?.qualifying_period_end !==
-        input.residence.qualifying_period_end ||
-      (input.residence.presence_test === "bona_fide_resident_full_year" &&
-        evidence.foreign_presence?.evidence_kind !==
-          "foreign_residence_determination") ||
-      (input.residence.presence_test === "physical_presence_330_days" &&
-        evidence.foreign_presence?.evidence_kind ===
-          "foreign_residence_determination")
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["eligibility_evidence"],
+        path: ["eligibility_evidence", "legal_status", "evidence_kind"],
         message:
-          "Abroad threshold needs matching tax-home and presence records",
+          "Reviewed status evidence differs from specified-individual type",
       });
     }
-  }
-  if (
-    input.specified_individual_type === "nonresident_joint_return_election" &&
-    input.filing_status !== "mfj"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["filing_status"],
-      message: "Nonresident resident-election route requires a joint return",
-    });
-  }
-  if (
-    input.residence.location === "qualifying_abroad" &&
-    input.residence.presence_test === "bona_fide_resident_full_year" &&
-    input.specified_individual_type !== "us_citizen"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["residence", "presence_test"],
-      message: "Bona fide residence abroad test requires U.S. citizenship",
-    });
-  }
-  if (
-    input.residence.location === "qualifying_abroad" &&
-    input.specified_individual_type === "nonresident_joint_return_election"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["residence"],
-      message:
-        "Abroad threshold needs separate resident status review for an elected nonresident spouse",
-    });
-  }
-  if (input.residence.location === "qualifying_abroad") {
-    const residence = input.residence;
-    if (residence.presence_test === "bona_fide_resident_full_year") {
+    if (
+      input.annual_income_tax_return_required ===
+        (evidence.return_requirement.determination_basis ===
+          "no_filing_requirement_workpaper")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eligibility_evidence", "return_requirement"],
+        message: "Reviewed filing requirement differs from the claimed duty",
+      });
+    }
+    const documents = [
+      evidence.legal_status,
+      evidence.return_requirement,
+      evidence.us_residence,
+      evidence.foreign_tax_home,
+      evidence.foreign_presence,
+    ].filter((document) => document !== undefined);
+    if (
+      new Set(documents.map((document) => document.document_reference)).size !==
+        documents.length ||
+      new Set(documents.map((document) => document.document_sha256)).size !==
+        documents.length ||
+      documents.some((document) =>
+        document.subject_ssn !== evidence.legal_status.subject_ssn
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eligibility_evidence"],
+        message: "Eligibility records must be distinct and belong to one filer",
+      });
+    }
+    if (input.residence.location === "united_states") {
       if (
-        residence.qualifying_period_start > "2025-01-01" ||
-        residence.qualifying_period_end < "2025-12-31"
+        !evidence.us_residence || evidence.foreign_tax_home ||
+        evidence.foreign_presence
       ) {
         ctx.addIssue({
           code: "custom",
-          path: ["residence"],
-          message: "Bona fide residence must include the entire TY2025 year",
+          path: ["eligibility_evidence"],
+          message: "U.S. threshold needs reviewed U.S. residence evidence",
         });
       }
     } else {
-      const [year, month, day] = residence.qualifying_period_start.split("-")
-        .map(Number);
-      const expectedEnd = new Date(
-        Date.UTC(year + 1, month - 1, day) - 86_400_000,
-      )
-        .toISOString().slice(0, 10);
       if (
-        residence.qualifying_period_end !== expectedEnd ||
-        residence.qualifying_period_end < "2025-01-01" ||
-        residence.qualifying_period_end > "2025-12-31" ||
-        (residence.full_days_abroad_in_period ?? 0) < 330
+        evidence.us_residence || !evidence.foreign_tax_home ||
+        !evidence.foreign_presence ||
+        evidence.foreign_tax_home?.country !==
+          input.residence.foreign_tax_home_country ||
+        evidence.foreign_presence?.qualifying_period_start !==
+          input.residence.qualifying_period_start ||
+        evidence.foreign_presence?.qualifying_period_end !==
+          input.residence.qualifying_period_end ||
+        (input.residence.presence_test === "bona_fide_resident_full_year" &&
+          evidence.foreign_presence?.evidence_kind !==
+            "foreign_residence_determination") ||
+        (input.residence.presence_test === "physical_presence_330_days" &&
+          evidence.foreign_presence?.evidence_kind ===
+            "foreign_residence_determination")
       ) {
         ctx.addIssue({
           code: "custom",
-          path: ["residence"],
+          path: ["eligibility_evidence"],
           message:
-            "Physical presence needs 330 full foreign days in a 12-month period ending in TY2025",
+            "Abroad threshold needs matching tax-home and presence records",
         });
       }
     }
-  }
-  const ids = new Set<string>();
-  let yearEnd = 0;
-  let upperBound = 0;
-  let lowerBound = 0;
-  for (let i = 0; i < input.assets.length; i++) {
-    const asset = input.assets[i];
-    if (ids.has(asset.asset_id)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["assets", i, "asset_id"],
-        message: "Duplicate asset source identity",
-      });
-    }
-    ids.add(asset.asset_id);
-    if (input.filing_status !== "mfj" && asset.owner === "spouse") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["assets", i, "owner"],
-        message: "Spouse-only asset is not owned by this separate filer",
-      });
-    }
     if (
-      input.filing_status !== "mfj" && input.filing_status !== "mfs" &&
-      asset.owner === "joint_with_spouse"
+      input.specified_individual_type === "nonresident_joint_return_election" &&
+      input.filing_status !== "mfj"
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["assets", i, "owner"],
-        message: "Spousal joint ownership requires married filing status",
+        path: ["filing_status"],
+        message: "Nonresident resident-election route requires a joint return",
       });
     }
     if (
-      asset.owner === "joint_with_spouse" && input.filing_status === "mfs" &&
-      asset.spouse_is_specified_individual === undefined
+      input.residence.location === "qualifying_abroad" &&
+      input.residence.presence_test === "bona_fide_resident_full_year" &&
+      input.specified_individual_type !== "us_citizen"
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["assets", i, "spouse_is_specified_individual"],
-        message: "MFS joint valuation needs spouse specified-individual status",
+        path: ["residence", "presence_test"],
+        message: "Bona fide residence abroad test requires U.S. citizenship",
       });
     }
-    const factor =
-      input.filing_status === "mfs" && asset.owner === "joint_with_spouse" &&
-        asset.spouse_is_specified_individual
-        ? 0.5
-        : 1;
-    yearEnd += asset.year_end_value_usd * factor;
-    upperBound += asset.maximum_value_usd * factor;
-    lowerBound = Math.max(lowerBound, asset.maximum_value_usd * factor);
-  }
-  if (Math.abs(yearEnd - input.year_end_value_all_assets) > 1) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["year_end_value_all_assets"],
-      message:
-        "Year-end aggregate must reconcile to ownership-adjusted asset values",
-    });
-  }
-  if (
-    input.max_value_all_assets < lowerBound - 1 ||
-    input.max_value_all_assets > upperBound + 1 ||
-    input.max_value_all_assets < input.year_end_value_all_assets - 1
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["max_value_all_assets"],
-      message:
-        "Contemporaneous peak is outside the bounds from the asset ledger",
-    });
-  }
-});
+    if (
+      input.residence.location === "qualifying_abroad" &&
+      input.specified_individual_type === "nonresident_joint_return_election"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["residence"],
+        message:
+          "Abroad threshold needs separate resident status review for an elected nonresident spouse",
+      });
+    }
+    if (input.residence.location === "qualifying_abroad") {
+      const residence = input.residence;
+      if (residence.presence_test === "bona_fide_resident_full_year") {
+        if (
+          residence.qualifying_period_start > yearStart ||
+          residence.qualifying_period_end < yearEnd
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["residence"],
+            message:
+              `Bona fide residence must include the entire TY${taxYear} year`,
+          });
+        }
+      } else {
+        const [year, month, day] = residence.qualifying_period_start.split("-")
+          .map(Number);
+        const expectedEnd = new Date(
+          Date.UTC(year + 1, month - 1, day) - 86_400_000,
+        )
+          .toISOString().slice(0, 10);
+        if (
+          residence.qualifying_period_end !== expectedEnd ||
+          residence.qualifying_period_end < yearStart ||
+          residence.qualifying_period_end > yearEnd ||
+          (residence.full_days_abroad_in_period ?? 0) < 330
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["residence"],
+            message:
+              `Physical presence needs 330 full foreign days in a 12-month period ending in TY${taxYear}`,
+          });
+        }
+      }
+    }
+    const ids = new Set<string>();
+    let yearEndUsd = 0;
+    let upperBound = 0;
+    let lowerBound = 0;
+    for (let i = 0; i < input.assets.length; i++) {
+      const asset = input.assets[i];
+      if (ids.has(asset.asset_id)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assets", i, "asset_id"],
+          message: "Duplicate asset source identity",
+        });
+      }
+      ids.add(asset.asset_id);
+      if (input.filing_status !== "mfj" && asset.owner === "spouse") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assets", i, "owner"],
+          message: "Spouse-only asset is not owned by this separate filer",
+        });
+      }
+      if (
+        input.filing_status !== "mfj" && input.filing_status !== "mfs" &&
+        asset.owner === "joint_with_spouse"
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assets", i, "owner"],
+          message: "Spousal joint ownership requires married filing status",
+        });
+      }
+      if (
+        asset.owner === "joint_with_spouse" && input.filing_status === "mfs" &&
+        asset.spouse_is_specified_individual === undefined
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assets", i, "spouse_is_specified_individual"],
+          message:
+            "MFS joint valuation needs spouse specified-individual status",
+        });
+      }
+      const factor =
+        input.filing_status === "mfs" && asset.owner === "joint_with_spouse" &&
+          asset.spouse_is_specified_individual
+          ? 0.5
+          : 1;
+      yearEndUsd += asset.year_end_value_usd * factor;
+      upperBound += asset.maximum_value_usd * factor;
+      lowerBound = Math.max(lowerBound, asset.maximum_value_usd * factor);
+    }
+    if (Math.abs(yearEndUsd - input.year_end_value_all_assets) > 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["year_end_value_all_assets"],
+        message:
+          "Year-end aggregate must reconcile to ownership-adjusted asset values",
+      });
+    }
+    if (
+      input.max_value_all_assets < lowerBound - 1 ||
+      input.max_value_all_assets > upperBound + 1 ||
+      input.max_value_all_assets < input.year_end_value_all_assets - 1
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["max_value_all_assets"],
+        message:
+          "Contemporaneous peak is outside the bounds from the asset ledger",
+      });
+    }
+  });
+
+  return { assetSchema, inputSchema };
+}
+export const { inputSchema } = createForm8938Schemas(2025);
 
 export type F8938Input = z.infer<typeof inputSchema>;
 
@@ -561,7 +577,10 @@ export interface F8938Summary {
 }
 
 /** Parts I, II and IV use Form 8938 detail/exception reporting, not threshold shares. */
-export function deriveF8938Summary(input: F8938Input): F8938Summary {
+export function deriveF8938Summary(
+  input: F8938Input,
+  taxYear?: 2025 | 2026,
+): F8938Summary {
   const summary: F8938Summary = {
     partI: {
       depositAccountCount: 0,
@@ -599,8 +618,9 @@ export function deriveF8938Summary(input: F8938Input): F8938Summary {
     } else {
       summary.partII.otherAssetCount++;
       summary.partII.otherMaximumValueUsd += asset.maximum_value_usd;
-      summary.partII.anyAssetOpenedOrClosed ||=
-        !!asset.opened_or_acquired_date ||
+      summary.partII.anyAssetOpenedOrClosed ||= (taxYear === undefined
+        ? !!asset.opened_or_acquired_date
+        : asset.opened_or_acquired_date?.startsWith(`${taxYear}-`) === true) ||
         !!asset.closed_or_disposed_date;
     }
   }

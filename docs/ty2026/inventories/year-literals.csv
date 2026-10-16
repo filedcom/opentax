@@ -673,18 +673,9 @@ forms/f1040/nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts,14,pr
 forms/f1040/nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts,23,if (!disposition.disposed_in_2025) {
 forms/f1040/nodes/inputs/general/foreign/f8938/eligibility-fixture.ts,5,"reviewer_reference: ""REVIEW-8938-2025"","
 forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,8,// the TY2025 individual-return disclosure. This node does not file the form.
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,149,"if (asset.exchange_rate_date !== ""2025-12-31"") {"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,203,"asset.opened_or_acquired_date > ""2025-12-31"""
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,208,"message: ""Asset was not held during TY2025"","
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,213,"(asset.closed_or_disposed_date < ""2025-01-01"" ||"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,214,"asset.closed_or_disposed_date > ""2025-12-31"")"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,219,"message: ""TY2025 disposition date must occur during TY2025"","
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,442,"residence.qualifying_period_start > ""2025-01-01"" ||"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,443,"residence.qualifying_period_end < ""2025-12-31"""
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,448,"message: ""Bona fide residence must include the entire TY2025 year"","
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,460,"residence.qualifying_period_end < ""2025-01-01"" ||"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,461,"residence.qualifying_period_end > ""2025-12-31"" ||"
-forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,468,"""Physical presence needs 330 full foreign days in a 12-month period ending in TY2025"","
+forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,41,export function createForm8938Schemas(taxYear: 2025 | 2026) {
+forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,559,export const { inputSchema } = createForm8938Schemas(2025);
+forms/f1040/nodes/inputs/general/foreign/f8938/index.ts,582,"taxYear?: 2025 | 2026,"
 forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts,3,"import { sha256Hex } from ""../../../../../2025/return-processing/prepared-source.ts"";"
 forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts,23,"reviewed_2025_workpaper_reference: z.string().trim().min(1),"
 forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts,32,"issuer_qof_status_for_2025_reviewed: z.literal(true),"

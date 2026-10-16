@@ -64,15 +64,13 @@ filing rules and destination.
 
 ## Current code boundary and build order
 
-The shared [`f8938` node](../../../forms/f1040/nodes/inputs/general/foreign/f8938/index.ts)
-is in the TY2025 registry but only validates a permissive object and returns
-no outputs. Every asset field, both aggregate values and filing status are
-optional; it does not calculate a threshold, build form lines, reconcile
-Part III income, derive Part IV counts or create a PDF/MeF attachment. No
-TY2025 PDF descriptor or MeF serializer exists in the current inventory.
-The comment's TY2025 threshold list also omits the tax-home/presence test
-and special joint ownership and exception rules. Retaining an input in the
-registry does not satisfy the disclosure filing requirement.
+The current shared [`f8938` node](../../../forms/f1040/nodes/inputs/general/foreign/f8938/index.ts)
+has advanced beyond this plan's September snapshot: it validates required
+individual-status, filing-duty, tax-home/presence, asset, ownership and FX facts.
+Its helpers calculate threshold decisions and Parts I/II/IV summaries. The
+node itself still returns no outputs; Part III return reconciliation and filed
+PDF/MeF attachments remain absent. Retaining an input in the registry does not
+satisfy the disclosure filing requirement.
 
 1. Build the qualified filer/valuation decision from return identity,
    residency and asset facts; validate the strict threshold OR test and
@@ -92,3 +90,60 @@ registry does not satisfy the disclosure filing requirement.
    closed accounts and last-day FX conversion, Part IV-only return, mixed
    Part IV and Part V/VI assets, multiple accounts/counterparties, no-income
    assets, duplicated income, PDF continuation and XSD/ATS validation.
+
+## Current source valuation stage (October 16)
+
+`createForm8938Schemas` now shares the existing source validation between the
+2025 and 2026 calendars. Existing 2025 consumers keep their default schema and
+summary behavior. The 2026 summary supplies its calendar explicitly so an asset
+acquired before 2026 does not become a current-year acquisition.
+
+`prepareForeignAssets2026` consumes actual filer identities, reviewed eligibility,
+asset ownership/classification documents, year-end FX evidence and dated complete
+portfolio observations. It derives asset maxima, year-end values and the
+contemporaneous portfolio peak. The source claim cannot enter those aggregate
+USD amounts. Each observation contains every asset once, including zero values
+outside its holding period. A distinct year-end observation allows a closing-day
+maximum and a zero closing balance on December 31. Referenced document copies
+must have consistent hashes; duplicate account identities are rejected.
+
+Native source cents and eight-place FX rates use integer arithmetic. Threshold
+comparisons retain sub-cent converted values and half shares before printed
+amounts are rounded. Category maxima are summed before rounding; separately
+rounded asset lines do not determine a threshold. Spouse-only and joint ownership
+are checked against the return, with separate MFS spouse-status evidence.
+The threshold and summary helpers reuse the rules in the
+[continuous-use instructions](https://www.irs.gov/instructions/i8938), which still
+serve the November 2021 revision. The current draft form remains December 2026.
+
+Reviewed Forms 5471/8621/8865 identify their exact asset sets and actual return
+owner. Repeated assets on one reviewed form copy count that form once; form types
+must match the foreign entity interest. These assets stay in threshold valuation
+but leave Parts I/II detail totals. This is a source-copy workpaper, **not proof
+that an exception form has been filed or included in the executed return**.
+
+Tax-item amounts and return-source references are retained separately. No income
+or credit is emitted and no filed location is invented. `valuation_input` is only
+the shared valuation/summary input, with empty tax items; it is not a completed
+Form 8938. `requires_tax_item_return_binding` and
+`requires_exception_filing_binding` identify remaining cross-form work, and
+`filing_ready` stays false even when neither binding is needed. This stage is not
+registered as public claim intake or attached to a draft bundle yet.
+
+The next required stage must bind Part III items to actual income/credit sources
+and computed destinations, and Part IV to actual filing artifacts, before adding
+the graph owner and PDF. Foreign trust, estate and pension interests need their
+distribution/beneficial-interest valuation workpapers; the ordinary FMV route
+rejects them. Grantor-trust exceptions, partial reporting years, possession and
+dual-resident exceptions, child interests under Form 8814, annual account-statement
+FX exceptions, and remaining source precision also remain required scope. Then
+complete the 131-widget PDF/continuations and current MeF/ATS gates above.
+
+Verification covers 16 new source cases plus eight unchanged 2025 source tests:
+threshold equality and sub-cent excess, nonconcurrent account peaks, joint/MFS
+shares, abroad presence and filing-duty evidence, excepted-form counts, acquisition
+and closure dates, incomplete/duplicate observations, document conflicts, FX
+reviews, pending tax-item binding and the separate special-valuation gate.
+The 137-test repository unit gate also passes, with 3,910 graph modules in
+preflight and unchanged runtime files. These checks verify the valuation stage,
+not the remaining return/PDF/MeF route.
