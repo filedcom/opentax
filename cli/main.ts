@@ -28,6 +28,10 @@ import {
   versionCommand,
 } from "./commands/version.ts";
 
+import { installNetworkPolicy } from "./network.ts";
+
+installNetworkPolicy();
+
 const RETURNS_DIR = "./.state/returns";
 
 async function run(fn: () => Promise<unknown>): Promise<void> {
