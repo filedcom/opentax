@@ -1261,13 +1261,13 @@ forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,129,"periods.at(-1)?.through !== ""2025-12-31"" ||"
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,138,"""ABLE employment review needs a complete nonoverlapping 2025 residence calendar"","
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts,174,// 2025 Form1099-QA instructions and 26 CFR1.529A-2(g)(2)(ii)(B): 2024 guidelines.
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,68,"(!review.current_year_source_inventory_review || year !== ""2025"")) ||"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,69,"(year === ""2025"" && review.current_year_source_inventory_review && ("
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,99,"(year === ""2025"" && ("
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,177,"joint_2025_distribution_review: z.never().optional(),"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,295,"if (year === ""2025"") continue;"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,310,"const joint = year === ""2025"" ||"
-forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,355,throw new Error(`Form 8880 ${owner} is not eligible for the 2025 credit`);
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,69,"(!review.current_year_source_inventory_review || year !== ""2025"")) ||"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,70,"(year === ""2025"" && review.current_year_source_inventory_review && ("
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,100,"(year === ""2025"" && ("
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,178,"joint_2025_distribution_review: z.never().optional(),"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,257,"if (year === ""2025"") continue;"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,272,"const joint = year === ""2025"" ||"
+forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts,317,throw new Error(`Form 8880 ${owner} is not eligible for the 2025 credit`);
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/employee_contribution_review.ts,10,"tax_year: z.literal(2025),"
 forms/f1040/nodes/intermediate/forms/credits/individual/form8880/nonjoint_distribution_review.ts,71,"(entry.received_date.startsWith(""2025-"")) !=="
 forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts,23,const vehiclePurchaseDateSchema = z.string().regex(/^2025-\d{2}-\d{2}$/)

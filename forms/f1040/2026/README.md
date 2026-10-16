@@ -1097,3 +1097,19 @@ attachment when printed dollars round to zero; empty and void-only cases do not.
 The above-400% print path remains provisional pending final 2026 instructions.
 Final instructions, public filing support and MeF are still pending; see the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
+
+
+## Saver-credit source workpaper
+
+The internal `calculateSaversCredit2026` workpaper derives Form 8880 contribution
+columns from validated W-2s, reconciled voluntary employee payments and retained
+nondeductible IRA records. It shares 2025 contribution/rate arithmetic, replays
+corrected retirement records, and applies the 2026 owner eligibility and dated
+joint-distribution rules. Its tax-capacity arguments are internal finalized line
+values; this is not public input or a new registered graph route.
+
+The next integration must connect the actual general/wage/retirement sources and
+AGI, order earlier credits before this credit, update child/energy ordering and
+Form 1062 replay, and reconcile Schedule 3, 1040 and the owner draft. ABLE, other
+IRA contribution sources, foreign adjustments, final forms and MeF/ATS remain
+open. See the [current Form 8880 contract](../../../docs/ty2026/graphs/FORM8396-8859-8880-GRAPH.md).
