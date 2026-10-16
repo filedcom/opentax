@@ -56,6 +56,34 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 
 Tax-facing boundaries use General, Income, Adjustments, Deductions, Credits, Taxes, and Payments. Business, retirement, investments, foreign and health are subgroups inside the relevant return section. Node inputs, intermediate forms/worksheets/aggregations and outputs retain their roles, with the same physical tax-section subfolders inside each role. Tests, fixtures and family research travel with their contracts. Runtime and tooling remain under separate role boundaries.
 
+## Structure contract
+
+`deno task check:structure` enforces the node layout above and fails with the
+expected path or the registration fix. Nodes are shared per form; a year owns
+only config and wiring, so a `TaxNode` must live at
+`forms/<form>/nodes/<inputs|intermediate|outputs>/[<aggregation|forms|worksheets>/]<section>/<group>/<name>/<file>.ts`.
+The year's composite input, `forms/<form>/<year>/return-processing/start.ts`, is
+wiring and stays with its year. Every node class on disk must be in a catalog
+year's registry, keyed by its node type (the executor resolves
+`registry[nodeType]`), and every registered node must be a CLI input or a
+routing target.
+
+Existing violations are listed in `scripts/testing/structure-baseline.json` with
+a reason, an expiry date and an approver; the check fails only on new ones, on
+expired entries, and on entries that no longer match anything.
+
+## Rules and what enforces them
+
+| Rule                                                        | Enforced by                                      |
+| ----------------------------------------------------------- | ------------------------------------------------ |
+| Nodes live in the canonical node tree                       | `scripts/testing/structure.ts` (placement)       |
+| Registry keys are node types                                | `scripts/testing/structure.ts` (registry-key)    |
+| Every node class is registered                              | `scripts/testing/structure.ts` (not-in-registry) |
+| Every registered node is a CLI input or a routing target    | `scripts/testing/structure.ts` (unreachable)     |
+| Benchmark cases are complete and expected values are finite | `benchmark/harness.ts`                           |
+| Unmapped expected lines fail instead of passing             | `benchmark/run_benchmark.ts`                     |
+| Test modules are discovered exactly, never partially        | `scripts/testing/run.ts`                         |
+
 ## Benchmark case formats
 
 ### input.json
