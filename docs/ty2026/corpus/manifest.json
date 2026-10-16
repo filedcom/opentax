@@ -2408,6 +2408,16 @@
       "bytes": 181299,
       "sha256": "a239506cedee787b4c164ac17fa43b2ad9a147e3c848cd935c54a692ee2cebce",
       "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/n-26-05.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-05.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 167550,
+      "sha256": "2adafd5d53b5a16efa14afa39cf09f7e9bcd235a6f26f6779945f484dee4e09c",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2026-5: 2026 bronze/catastrophic individual-market and DPC HSA eligibility; telehealth effective-date guidance."
     }
   ]
 }

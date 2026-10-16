@@ -408,6 +408,15 @@ Form 1062 retains actual additional tax. Advanced account branches, taxable ABLE
 NIIT classification above the threshold, final authorities, MeF/ATS and the public
 filing product remain required work.
 
+## HSA eligibility foundation
+
+The [HSA contract](./graphs/FORM8889-GRAPH.md) now reflects the current 2025 source
+implementation. Its monthly contribution-limit worksheet is shared with a new
+2026 eligibility workpaper, including sourced plan terms, Medicare, other
+coverage, individual bronze/catastrophic coverage and direct-primary-care fees.
+Notice 2026-5 is pinned. Funding, spouse allocation, distributions and the complete
+Form 8889 return/output routes remain in the implementation queue.
+
 ## Version rule
 
 Do not mix TY2026 sources without recording their version. On this snapshot

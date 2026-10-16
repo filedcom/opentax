@@ -453,6 +453,48 @@ Deno.test("Form 1040 export sums printed payment lines while retaining source ce
   }
 });
 
+Deno.test("Form 1040 export adds filed other-tax dollars while retaining source cents", () => {
+  const taxes = {
+    line22_tax_after_credits: 6822,
+    line23_other_taxes: 233.70,
+    line24_total_tax: 7056,
+  };
+  assertReturnWideArithmetic(taxes);
+  assertStringIncludes(
+    irs1040.build(taxes, { pending: {} }),
+    "<TotalTaxAmt>7056</TotalTaxAmt>",
+  );
+  irs1040Pdf.projectFields?.(taxes, {});
+  for (const wrong of [7055.70, 7055, 7057]) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...taxes, line24_total_tax: wrong }),
+      Error,
+      "line 24",
+    );
+  }
+  assertReturnWideArithmetic({
+    ...taxes,
+    line23_other_taxes: 233.49,
+    line24_total_tax: 7055,
+  });
+  const deferred = {
+    ...taxes,
+    form8621_1294_deferred_tax: 100,
+    form8621_1294_total_tax_before_deferral: 7056,
+    line24_total_tax: 6956,
+  };
+  assertReturnWideArithmetic(deferred);
+  assertThrows(
+    () =>
+      assertReturnWideArithmetic({
+        ...deferred,
+        form8621_1294_total_tax_before_deferral: 7055.70,
+      }),
+    Error,
+    "deferral",
+  );
+});
+
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
   const pending = {
     f1040es: {

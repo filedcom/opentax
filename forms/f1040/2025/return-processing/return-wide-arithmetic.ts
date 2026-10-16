@@ -232,13 +232,16 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 22 differs from lines 18 and 21");
   }
   const line24 = amount("line24_total_tax");
+  // The return retains Schedule 2 source cents but adds the filed line 23
+  // dollars to line 22, including when computing section 1294 deferral.
+  const line23 = Math.round(amount("line23_other_taxes") ?? 0);
   const form8621DeferredTax = amount("form8621_1294_deferred_tax") ?? 0;
   const beforeDeferral = amount("form8621_1294_total_tax_before_deferral");
   if (
     form8621DeferredTax > 0 &&
     (line22 === undefined || form8621DeferredTax > line22 ||
       beforeDeferral === undefined ||
-      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+      !matches(beforeDeferral, line22 + line23))
   ) {
     throw new Error(
       "Form 8621 section 1294 deferral differs from Form 1040 tax before deferral",
@@ -248,7 +251,7 @@ export function assertReturnWideArithmetic(
     form8621DeferredTax === 0 && beforeDeferral !== undefined &&
     (amount("form8621_1294_counterfactual_total_tax") === undefined ||
       line22 === undefined ||
-      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+      !matches(beforeDeferral, line22 + line23))
   ) {
     throw new Error(
       "Form 8621 tax before deferral needs a source-backed election",
@@ -258,7 +261,7 @@ export function assertReturnWideArithmetic(
     line24 !== undefined && line22 !== undefined &&
     !matches(
       line24,
-      line22 + (amount("line23_other_taxes") ?? 0) - form8621DeferredTax,
+      line22 + line23 - form8621DeferredTax,
     )
   ) {
     throw new Error("Form 1040 line 24 differs from lines 22 and 23");

@@ -32,34 +32,86 @@ draft coversheet). Fields `f1_3[0]`–`f1_24[0]` cover lines 2–21; `c1_1[0/1]`
 select coverage and `c1_2[0]` is the line 17a exception box. Use a separate
 copy for each spouse and verify field values and rendered appearances.
 
-## Current code boundary
+## Current code and 2026 eligibility foundation
 
-- The shared `form8889` input accepts one aggregate coverage type, a count of
-  HDHP months, one age-55 flag, own/employer contributions and gross
-  distributions. It cannot describe a month's plan/eligibility, a changing
-  coverage type, last-month-rule testing, spouse allocation, a qualified
-  funding distribution, rollovers/returned excess, separate exception
-  amounts or a prior-year excess balance. It defaults missing coverage to
-  self-only and missing months to 12, which is insufficient evidence for a
-  filed 2026 limit.
-- Its current annual limit simply prorates one coverage amount by the month
-  count and subtracts a field named `archer_msa_distributions`. The 2026
-  form's line 4 instead uses **contributions** to Archer MSAs from Form 8853
-  lines 1 and 2. The node's line 6 always copies line 5, line 7 is blank,
-  and line 11 omits qualified funding distributions. These change line 13.
-- The node sends taxable distributions to the shared `line8z_other` keys and
-  the 20% tax to `line17b_hsa_penalty`. The dedicated 2026 Schedule 1 has no
-  line 8f source key, and Schedule 2's correct fields are
-  `line13c_hsa_distribution_tax` and `line13d_hsa_eligibility_tax`. The
-  shared AGI aggregator also needs an explicit Form 8889 8f producer.
-- The node sends an estimated single excess amount to Form 5329 and uses one
-  boolean exception to suppress all 20% tax. Its self-emitted PDF fields
-  omit lines 7, 10, 14b, 17a/b and all of Part III. TY2025's PDF descriptor
-  maps only part of the old form, while its MeF serializer maps only four
-  summary values. Neither is a complete 2026 filed attachment.
-- `form8889` is in the 2025 graph/public inputs but not the 2026 registry or
-  public input surface. W-2 code W already declares an edge to it; that
-  output currently reaches an unregistered target in the 2026 graph.
+The earlier prototype description is superseded by the loaded 2025 node and its
+source/return tests. The current shared node has explicit monthly coverage,
+owner identities, spouse allocations, employer contribution-year adjustments,
+funding distributions, sourced medical/rollover/excess distributions, partial
+age/disability exceptions, prior excess and testing-period recapture. Its output
+includes owner form instances and routes HSA income to Schedule 1 line 8f.
+The current 2025 PDF/MeF descriptors map the expanded owner instances rather than
+only four summary amounts. This is reusable implementation, not 2026 authority.
+
+The contribution-limit worksheet is now extracted to a year-independent helper.
+The 2025 node passes its existing limits and preserves its established input key
+for the Archer MSA offset; the new helper calls that offset **contributions**.
+The 2026 configuration separately supplies $4,400/$8,750, $1,000 catch-up,
+$1,700/$3,400 minimum deductibles and $8,500/$17,000 out-of-pocket ceilings.
+No global 2026 filing registration was added.
+
+The internal `hsa-eligibility` workpaper derives twelve monthly owner coverage
+values from actual source records. It does not accept an eligible-month count:
+
+- Each month identifies first-day enrollment, Medicare including retroactive
+  enrollment review, other coverage including spouse/FSA/HRA/VA/IHS review, and
+  active direct-primary-care arrangements. Owner identity, birth date, dependent
+  status and a complete calendar are retained for later binding to general.
+- Ordinary health plans are checked against deductible/out-of-pocket limits,
+  embedded family deductibles and nonpermitted first-dollar benefits. The
+  telehealth exception respects its plan-year effective date.
+- Individual-market bronze/catastrophic policies use the 2026 exception. The
+  source records distinguish exchange purchase, off-exchange availability and
+  the Notice 2026-5 reasonable-belief safe harbor; employer group/SHOP plans
+  cannot use that branch.
+- Direct-primary-care contracts retain fixed periodic fees, the months in each
+  billing period, whether multiple individuals are covered, practitioner/service
+  qualifications and the sole-compensation condition. The limit is applied to
+  the aggregate annualized fee with exact rational-cent comparisons, so even a
+  one-cent annual excess cannot round down into eligibility. Contract terms,
+  rather than only services actually used, control the classification.
+- Every active plan and arrangement must occur in the relevant monthly record;
+  leaving out a disqualifying plan fails. Overlapping versions, repeated month
+  records, wrong owners, contradictory dates and invalid classifications fail.
+  A short enrollment period with no covered first day creates no eligible month.
+
+[Notice 2026-5](../corpus/authorities/n-26-05.pdf) is now pinned in the corpus with
+its hash. The downloaded July 2026 draft instructions and Rev. Proc. 2025-19
+were rechecked against their existing hashes on October 16, 2026 and match.
+The DPC eligibility exception is independent of reimbursability: employer-paid
+DPC fees cannot later be claimed as the beneficiary's medical expense.
+
+This is an **unregistered source foundation**, not a finished Form 8889 return
+route. Its monthly values feed tests of the same limit helper used by 2025.
+The eventual source producer must bind general/W-2/account facts and reconcile
+both spouses' deemed family coverage before taking any deduction. Do not use
+one owner's independently calculated limit as a married family return limit.
+The existing W-2 code W route still has an unregistered 2026 receiver.
+
+Validation for this foundation: 166 focused HSA, 2025 owner-return/MeF and
+return-arithmetic tests pass, plus 13 section 1294 export/PDF regressions and
+137 unit-gate tests. The owner-return replay exposed a pre-existing export check
+that added retained Schedule 2 cents instead of the rounded Form 1040 line 23;
+the check now agrees with the return calculation, with rejection tests for
+incorrect totals. The unit gate resolved 3,791 modules without runtime changes.
+
+## Required source integration
+
+1. Reconcile issued Form 5498-SA/account payment ledgers to personal and employer
+   contributions, including 2026-for-2025 and 2027-for-2026 employer adjustments
+   against actual W-2 code W. Preserve source cents through filed-line rounding.
+2. Join each spouse's monthly eligibility before the family allocation, separately
+   preserve each catch-up, and retain the actual last-month election and its
+   December 2026–December 2027 testing-period obligation.
+3. Reconcile dated 1099-SA receipts, qualified expenses, rollovers, excess returns
+   and age/disability exceptions. Join Schedule A medical evidence to prevent a
+   duplicate deduction, including the new DPC rules for reimbursed fees.
+4. Port prior-year excess, funding transfers and recapture using actual 2025/2026
+   years and their annual limits. The 2025 node still has explicitly dated schema
+   keys and 2024 historical constants; do not execute it as a 2026 node or relabel
+   prior-year evidence.
+5. Bind income/deduction/tax/owner Form 5329 and Form 1062 classification, then
+   complete the 2026 PDF/MeF routes and acceptance cases below.
 
 ## Build and acceptance order
 

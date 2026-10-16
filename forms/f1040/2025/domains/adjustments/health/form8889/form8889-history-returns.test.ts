@@ -58,7 +58,13 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     assertEquals(f.line15_taxable_income, e.taxable_income);
     assertEquals(f.line16_income_tax, e.regular_tax);
     assertAlmostEquals(f.line23_other_taxes!, e.additional_tax);
-    assertAlmostEquals(f.line24_total_tax!, e.total_tax);
+    assertAlmostEquals(
+      f.line16_income_tax! + f.line23_other_taxes!,
+      e.total_tax,
+    );
+    // The return's total tax now uses the filed whole-dollar amount; retain
+    // the source-cent check separately instead of expecting cents on line 24.
+    assertEquals(f.line24_total_tax, e.printed_total_tax);
     assertEquals(f.line35a_refund, e.refund);
     const filer = extractFilerIdentity(f)!;
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
