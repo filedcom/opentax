@@ -16,19 +16,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
+      - uses: oven-sh/setup-bun@v2
         with:
-          deno-version: v2.x
+          bun-version: 1.4.2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
       - name: Fetch the base branch for the oracle check
         run: git fetch --no-tags --depth=1 origin main
       - name: Nodes placed, registered and reachable
-        run: deno task check:structure
+        run: bun run check:structure
       - name: Benchmark cases fit their node schemas and cite a publication
-        run: deno task check:cases
+        run: bun run check:cases
       - name: Expected values change only with a cited ledger entry
-        run: deno task check:oracle --base origin/main
-      - name: Graph preflight and typed unit and harness verification
-        run: deno task test:unit
+        run: bun run check:oracle --base origin/main
+      - name: The binary can only reach the network through restricted fetch
+        run: bun run check:sandbox
+      - name: Graph preflight, type check and typed unit and harness verification
+        run: bun run test:unit
       - name: Preserve verification report
         if: always()
         uses: actions/upload-artifact@v4

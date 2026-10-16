@@ -28,13 +28,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          deno-version: v2.x
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
 
       - name: Update node and input counts on the site
-        run: deno run --allow-read --allow-write scripts/site/site-stats.ts
+        run: bun scripts/site/site-stats.ts
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

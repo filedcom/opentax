@@ -1,6 +1,6 @@
 /**
  * Version string. Set to "dev" in source.
- * CI replaces this value with the git tag before `deno compile`.
+ * CI replaces this value with the git tag before `bun build --compile`.
  */
 export const VERSION = "dev";
 

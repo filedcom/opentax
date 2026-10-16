@@ -19,19 +19,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
+          - target: bun-linux-x64-baseline
             os: ubuntu-latest
             asset: opentax-linux-x64
-          - target: aarch64-unknown-linux-gnu
+          - target: bun-linux-arm64
             os: ubuntu-24.04-arm
             asset: opentax-linux-arm64
-          - target: x86_64-apple-darwin
+          - target: bun-darwin-x64-baseline
             os: macos-15-intel
             asset: opentax-macos-x64
-          - target: aarch64-apple-darwin
+          - target: bun-darwin-arm64
             os: macos-15
             asset: opentax-macos-arm64
-          - target: x86_64-pc-windows-msvc
+          - target: bun-windows-x64-baseline
             os: windows-latest
             asset: opentax-windows-x64.exe
 
@@ -40,9 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: denoland/setup-deno@v2
+      - uses: oven-sh/setup-bun@v2
         with:
-          deno-version: v2.x
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
 
       - name: Set version
         shell: bash
@@ -60,16 +63,13 @@ jobs:
 
       - name: Compile
         run: >
-          deno compile
-          --allow-read --allow-write --allow-net --allow-env
-          --target ${{ matrix.target }}
-          --output ${{ matrix.asset }}
-          cli/main.ts
+          bun build cli/main.ts --compile
+          --target=${{ matrix.target }}
+          --outfile ${{ matrix.asset }}
 
       - name: Smoke compiled asset
         run: >
-          deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov
-          scripts/release/smoke-release-binary.ts
+          bun scripts/release/smoke-release-binary.ts
           ./${{ matrix.asset }} ${{ env.OPENTAX_RELEASE_VERSION }}
           smoke-${{ matrix.asset }}.json
 
