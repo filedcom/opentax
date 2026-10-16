@@ -17,7 +17,7 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 for (const c of solarBondCases) {
   test(`Form 8835 financed solar source-to-return: ${c.id}`, async () => {
     const { input, attachments, expected } = await solarBondFixture(c);
-    const { credits, produced, used, tax } = expected;
+    const { credits, used, tax } = expected;
     const execution = f1040_2025.executeReturn(input);
     assertEquals(execution.diagnostics, []);
     const filer = extractFilerIdentity(execution.pending.f1040);

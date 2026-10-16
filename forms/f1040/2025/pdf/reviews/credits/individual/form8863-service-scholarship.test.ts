@@ -12,7 +12,6 @@ import {
   filer,
   fixture,
   ssn,
-  wageReference,
 } from "./form8863-claimant-source.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { inputSchema } from "../../../../../nodes/inputs/credits/individual/f8863/index.ts";

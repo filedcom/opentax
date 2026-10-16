@@ -2,7 +2,6 @@ import {
   currentFarmRentalNet,
   type CurrentFarmRentalQbiSource,
 } from "../../income/business/f4835/qbi-source.ts";
-import type { k1PassiveIncomeSourceSchema } from "../../income/rental-passthrough/k1_passive_source.ts";
 import { z } from "zod";
 import {
   box11Line10SourceRows,

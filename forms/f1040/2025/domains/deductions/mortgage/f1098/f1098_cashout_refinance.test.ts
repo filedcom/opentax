@@ -91,7 +91,7 @@ async function source(refinanceMonth = 7) {
     0,
   );
   const qualifiedNew = newMonths.reduce(
-    (sum, row, index) =>
+    (sum, _row, index) =>
       sum + Math.min(200_000, 250_000 - 10_000 * (index + 1)),
     0,
   );

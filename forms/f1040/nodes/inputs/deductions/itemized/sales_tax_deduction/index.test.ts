@@ -8,10 +8,6 @@ function compute(input: Record<string, unknown>) {
   return sales_tax_deduction.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof sales_tax_deduction.compute>[1]);
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Validation
 // =============================================================================

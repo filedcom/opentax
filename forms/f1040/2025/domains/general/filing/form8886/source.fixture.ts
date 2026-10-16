@@ -1,4 +1,4 @@
-import { EntityType, ReportableCategory, TaxBenefit } from "./source.ts";
+import { ReportableCategory, TaxBenefit } from "./source.ts";
 export const disclosureFixture = {
   disclosure_id: "loss-disclosure-2025",
   taxpayer_ssn: "111223333",

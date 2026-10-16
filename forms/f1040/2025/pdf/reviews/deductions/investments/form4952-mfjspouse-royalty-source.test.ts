@@ -288,7 +288,7 @@ test("MFJ royalty path rejects mismatched spouse, property, interest, document a
       filer,
     },
   ];
-  for (const [index, changed] of altered.entries()) {
+  for (const changed of altered) {
     await assertRejects(
       () =>
         buildMefBundle(changed.pending as typeof pending, {

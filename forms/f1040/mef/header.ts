@@ -187,28 +187,6 @@ function buildFilerBlock(filer: FilerIdentity): string {
   return elements("Filer", children);
 }
 
-function buildSoftwareBlock(filer: FilerIdentity): string {
-  return [
-    element("SoftwareId", filer.softwareId),
-    element("SoftwareVersionNum", filer.softwareVersionNum),
-  ].filter((s) => s !== "").join("");
-}
-
-function buildOriginatorBlock(filer: FilerIdentity): string {
-  if (!filer.originator) return "";
-  const children = [
-    element("EFIN", filer.originator.efin),
-    element("OriginatorTypeCd", filer.originator.originatorType),
-    element(
-      "PractitionerPINGrp",
-      filer.originator.practitionerPIN
-        ? element("PIN", filer.originator.practitionerPIN)
-        : undefined,
-    ),
-  ];
-  return elements("OriginatorGrp", children);
-}
-
 function buildPaidPreparerBlock(filer: FilerIdentity): string {
   if (!filer.preparedBy) return "";
   if (filer.preparedBy.selfPrepared === true) {
@@ -234,27 +212,6 @@ function buildOnlineFilerBlock(filer: FilerIdentity): string {
     element("RoutingTransitNum", filer.onlineFiler.routingTransitNumber),
   ];
   return elements("OnlineFilerInformation", children);
-}
-
-function buildPINBlock(filer: FilerIdentity): string {
-  return [
-    element("PINEnteredByCd", filer.pinEnteredBy),
-    element("PrimaryPINEnteredByCd", filer.pinEnteredBy),
-    element("TaxpayerPIN", filer.signaturePin),
-    element("SpousePIN", filer.spouse?.signaturePin),
-    element("PrimaryIPPIN", filer.ipPin),
-    element("SpouseIPPIN", filer.spouse?.ipPin),
-  ].filter((s) => s !== "").join("");
-}
-
-function buildBankAccountBlock(filer: FilerIdentity): string {
-  if (!filer.bankAccount) return "";
-  const children = [
-    element("RoutingTransitNum", filer.bankAccount.routingNumber),
-    element("DepositorAccountNum", filer.bankAccount.accountNumber),
-    element("BankAccountTypeCd", filer.bankAccount.accountType),
-  ];
-  return elements("BankAccountGrp", children);
 }
 
 // ─── Main builder ─────────────────────────────────────────────────────────────

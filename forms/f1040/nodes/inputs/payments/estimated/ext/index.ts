@@ -56,11 +56,6 @@ export const inputSchema = z.object({
 
 type EXTInput = z.infer<typeof inputSchema>;
 
-// line_6_balance_due = MAX(0, line_4 - line_5) — display-only computed field
-function balanceDue(line4: number, line5: number): number {
-  return Math.max(0, line4 - line5);
-}
-
 // Route the extension payment to Schedule 3 Line 10 — this is the only tax output
 function extensionPaymentOutput(amountPaying: number): NodeOutput[] {
   if (amountPaying <= 0) return [];
@@ -80,8 +75,6 @@ class EXTNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const line4 = parsed.line_4_total_tax ?? 0;
-    const line5 = parsed.line_5_total_payments ?? 0;
     const line7 = parsed.line_7_amount_paying ?? 0;
 
     if (line7 > 0 && parsed.payment_evidence?.amount !== line7) {
@@ -94,9 +87,6 @@ class EXTNode extends TaxNode<typeof inputSchema> {
         "Extension payment evidence needs a positive line 7 amount",
       );
     }
-
-    // line_6 is computed for display purposes; not emitted as a tax output
-    const _line6 = balanceDue(line4, line5);
 
     // Only routing output: line_7 amount flows to Schedule 3 Line 10
     // when the final return is filed (line_8, line_9, and Drake flags are informational)

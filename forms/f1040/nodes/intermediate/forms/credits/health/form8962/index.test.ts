@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form8962 as form8962Mef } from "../../../../../../2025/mef/forms/credits/health/f8962/f8962.ts";
 import { form8962Pdf } from "../../../../../../2025/pdf/forms/credits/health/f8962.ts";
 import { FilingStatus } from "../../../../../types.ts";

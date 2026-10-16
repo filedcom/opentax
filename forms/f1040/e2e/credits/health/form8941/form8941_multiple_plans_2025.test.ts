@@ -516,7 +516,7 @@ test("TY2025 Form8941 multiple QHP: sourced conflicts reject public graph and ac
       ["enrolled-count-source-omission", (p) => p.f8941.employees.pop()],
       ["1040-credit", (p) => p.f1040.line20_nonrefundable_credits += 1],
     ];
-    for (const [name, mutate] of totals) {
+    for (const [, mutate] of totals) {
       const bad = structuredClone(bundle.pending);
       mutate(bad);
       assertThrows(() => buildMefXml(buildPending(bad), filer));

@@ -14,16 +14,10 @@ import { form8995a } from "../../../mef/forms/deductions/business/f8995a/f8995a.
 import { form8995aPdf } from "../../../pdf/forms/deductions/business/f8995a.ts";
 import { calculateScheduleCLossLines } from "../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { form8995 } from "../../../mef/forms/deductions/business/f8995/f8995.ts";
-import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
 import { form8995Pdf } from "../../../pdf/forms/deductions/business/f8995/f8995.ts";
 import { allocateSharedSeDeduction } from "../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
 import { scheduleSELines } from "../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../nodes/config/index.ts";
-import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
-import { FilingStatus } from "../../../../nodes/types.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-schedule-c")!;
 const wageBase = pdfReviewFixtures.find((item) =>

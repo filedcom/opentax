@@ -18,13 +18,6 @@ import {
   calculatePatronScheduleDLines,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
-import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
-const seLinesForProfit = (profit: number) =>
-  scheduleSELines(
-    { net_profit_schedule_f: profit },
-    CONFIG_BY_YEAR[2025].ssWageBase,
-  )!.line13;
 import { patronSourceAmounts } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 
 function prepared(kind: string) {

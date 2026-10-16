@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { inputSchema as reviewSchema } from "./schema.ts";
 import {
   computeGrossIncome as cGross,
   computeNetProfit as cProfit,

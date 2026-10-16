@@ -2,11 +2,6 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
-import {
-  calculateOwnerForms,
-  inputSchema as form5329InputSchema,
-} from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
-import { form5329 } from "../../../../mef/forms/taxes/retirement/f5329.ts";
 import { createHash } from "node:crypto";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";

@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, not, notLtSum, ssnNotEqual, } from "../../../../../../core/validation/mod.ts";
+import { rule, allDistinct, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, not, notLtSum, } from "../../../../../../core/validation/mod.ts";
 
 export const F5329_RULES: readonly RuleDef[] = [
   rule(

@@ -27,7 +27,6 @@ export function form8941MixedThreeInputs(
   const base: any = form8941CommonControlInputs();
   const mixed: any = form8941MixedCfInputs(agriculture);
   const oldFarm = mixed.f8941.group_members[1];
-  const oldEin = oldFarm.employment_ein;
   const newEin = "456789123";
   const shared = base.f8941.group_members[0].employees[0].employee_ssn;
   const ssns = new Map(oldFarm.employees.map((worker: any, index: number) => [

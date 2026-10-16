@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, sumOfAll, } from "../../../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, formPresent, hasNonZero, ifThen, matchesHeaderSSN, all, noValue, sumOfAll, } from "../../../../../../core/validation/mod.ts";
 
 export const SSE_RULES: readonly RuleDef[] = [
   rule(

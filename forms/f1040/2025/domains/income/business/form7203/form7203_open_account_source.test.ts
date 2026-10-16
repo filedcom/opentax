@@ -5,7 +5,6 @@ import {
   assertEquals,
   assertRejects,
   assertStringIncludes,
-  assertThrows,
 } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";

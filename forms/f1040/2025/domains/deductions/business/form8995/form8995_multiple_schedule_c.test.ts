@@ -14,9 +14,6 @@ import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { scheduleCPdf } from "../../../../pdf/forms/income/business/schedule_c.ts";
 import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f8995.ts";
-import { allocateSharedSeDeduction } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
-import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { PDFDocument } from "pdf-lib";
 import { appendQbiBusinessContinuation } from "../../../../pdf/forms/deductions/business/f8995/f8995_continuation.ts";
 

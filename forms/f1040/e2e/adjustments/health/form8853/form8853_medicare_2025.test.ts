@@ -30,7 +30,6 @@ import { form8853 as native } from "../../../../2025/mef/forms/adjustments/healt
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import {
   calculateMedicareLedger,
-  type MedicareDistributionLedger,
 } from "../../../../nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts";
 
 test("Medicare worksheet uses balance less60% deductible without reducing taxable income", () => {

@@ -8,7 +8,6 @@ import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { inputSchema as r1099Schema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
-  form4852CalculationSources,
   FormType,
   inputSchema,
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";

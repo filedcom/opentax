@@ -1,8 +1,5 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";

@@ -37,9 +37,6 @@ const OTHER_INCOME_ROUTING = [
   "excluded",
 ] as const;
 
-type RentsRouting = typeof RENTS_ROUTING[number];
-type RoyaltiesRouting = typeof ROYALTIES_ROUTING[number];
-type OtherIncomeRouting = typeof OTHER_INCOME_ROUTING[number];
 
 // ---------------------------------------------------------------------------
 // Schemas

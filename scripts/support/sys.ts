@@ -26,7 +26,12 @@ import {
   stat as nodeStat,
   writeFile,
 } from "node:fs/promises";
-import { readFileSync, type Stats } from "node:fs";
+import {
+  lstatSync as nodeLstatSync,
+  readFileSync,
+  statSync as nodeStatSync,
+  type Stats,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable, Writable } from "node:stream";
@@ -72,11 +77,13 @@ function writeFlag(options: WriteOptions | undefined): string {
   return options?.append ? "a" : "w";
 }
 
-export async function readBytes(path: string | URL): Promise<Uint8Array> {
+export async function readBytes(
+  path: string | URL,
+): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(await readFile(path));
 }
 
-export function readBytesSync(path: string | URL): Uint8Array {
+export function readBytesSync(path: string | URL): Uint8Array<ArrayBuffer> {
   return new Uint8Array(readFileSync(path));
 }
 
@@ -162,6 +169,14 @@ export async function stat(path: string | URL): Promise<FileInfo> {
 
 export async function lstat(path: string | URL): Promise<FileInfo> {
   return info(await nodeLstat(path));
+}
+
+export function statSync(path: string | URL): FileInfo {
+  return info(nodeStatSync(path));
+}
+
+export function lstatSync(path: string | URL): FileInfo {
+  return info(nodeLstatSync(path));
 }
 
 export async function* readDir(path: string | URL): AsyncIterable<DirEntry> {
@@ -295,7 +310,7 @@ export class Command {
     const web = (stream: Readable | null) => {
       streamed = true;
       return stream
-        ? Readable.toWeb(stream) as ReadableStream<Uint8Array>
+        ? Readable.toWeb(stream) as unknown as ReadableStream<Uint8Array>
         : new ReadableStream<Uint8Array>({ start: (c) => c.close() });
     };
     let stdoutWeb: ReadableStream<Uint8Array> | undefined;

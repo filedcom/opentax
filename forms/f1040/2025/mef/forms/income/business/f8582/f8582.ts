@@ -1617,7 +1617,6 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     const {
       allowed: allowedByActivity,
       suspended: suspendedByActivity,
-      overallLosses,
       specialEligibleLosses,
       specialByActivity,
       postSpecialLosses,

@@ -39,47 +39,6 @@ function origin() {
   };
 }
 
-function legacy() {
-  const {
-    noncapital_income,
-    noncapital_deductions,
-    capital_gains,
-    capital_losses,
-    prior_nol_deductions,
-  } = origin();
-  noncapital_deductions[1].amount = 6350;
-  return {
-    source_format: "reviewed_legacy_loss_year",
-    reference: "legacy-origin",
-    tax_year: 2017,
-    taxpayer_ssn: "111223333",
-    filing_status: "single",
-    inventory: {
-      noncapital_income,
-      noncapital_deductions,
-      capital_gains,
-      capital_losses,
-      prior_nol_deductions,
-    },
-    reviewed_form1040: {
-      reference: "return-2017",
-      tax_year: 2017,
-      taxpayer_ssn: "111223333",
-      filing_status: "single",
-      agi: -103000,
-      standard_or_itemized_deduction: 6350,
-      personal_exemptions: 4050,
-      reported_taxable_income: 0,
-    },
-    section199_deduction: { reference: "dpad-review", amount: 3000 },
-    limitations_review: {
-      reference: "historic-limit-review",
-      at_risk_and_passive_limits_applied: true,
-      itemized_phaseout_applied: true,
-    },
-  };
-}
-
 function review(year = 2019, origin_reference = "origin-2019") {
   return {
     reference: "farm-subset-review",

@@ -80,7 +80,7 @@ const artistCases = [
 for (const c of artistCases) {
   test(`Form 2106 artist ${c.name} reconciles owner-wide qualification and complete return`, async () => {
     const original = fixture(cases[4]);
-    const sourceJobs = c.wages.map((w, i) => {
+    const sourceJobs = c.wages.map((_w, i) => {
       const owner = c.name === "joint-two-artists" && i >= 2
         ? "spouse"
         : "taxpayer";

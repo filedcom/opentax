@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, eqField, eqStr, hasNonZero, hasValue, ifThen, isZero, not, noValue, } from "../../../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, eqField, eqStr, hasValue, ifThen, isZero, noValue, } from "../../../../../../core/validation/mod.ts";
 
 export const S8812_RULES: readonly RuleDef[] = [
   rule(

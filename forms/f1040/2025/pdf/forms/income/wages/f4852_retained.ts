@@ -8,7 +8,7 @@ import {
   FormType,
   itemSchema,
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
-import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
+import { FilingStatus } from "../../../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 
 // Taxpayer/ERO packet copy. Final rendering separately verifies the completed

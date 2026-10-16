@@ -1,7 +1,6 @@
 import { test } from "bun:test";
-import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { buildPending } from "../../../execution/pending.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
@@ -145,21 +144,6 @@ const aocStudent = {
     }],
   },
 };
-
-async function validateXsd(xml: string): Promise<void> {
-  const tmpPath = await sys.makeTempFile({ suffix: ".xml" });
-  try {
-    await fs.writeFile(tmpPath, xml);
-    const output = await new sys.Command("xmllint", {
-      args: ["--noout", "--schema", XSD_PATH, tmpPath],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(output.code, 0, new TextDecoder().decode(output.stderr));
-  } finally {
-    await sys.remove(tmpPath);
-  }
-}
 
 test.skipIf(!xsdAvailable)("XSD fixture: CTC and AOTC notice assertions cannot authorize filing", () => {
   assertThrows(

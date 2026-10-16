@@ -5,7 +5,6 @@ import {
   EntityType,
   publicSourceSchema,
   ReportableCategory,
-  TaxBenefit,
 } from "./source.ts";
 
 import { disclosureFixture as disclosure } from "./source.fixture.ts";

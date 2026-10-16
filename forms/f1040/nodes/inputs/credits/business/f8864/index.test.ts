@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";

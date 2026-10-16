@@ -14,7 +14,7 @@ import * as sys from "../support/sys.ts";
  * Usage: deno run --allow-read --allow-write scripts/maintenance/parse-rules.ts
  */
 
-import { parse } from "jsr:@std/csv@1/parse";
+import { parse } from "@std/csv";
 import { ruleCoreImportPath, ruleRelativePath } from "./rule-paths.ts";
 
 const CSV_PATH = new URL(

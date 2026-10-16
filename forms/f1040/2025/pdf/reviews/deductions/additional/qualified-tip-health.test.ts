@@ -121,7 +121,7 @@ for (const c of tipHealthCases) {
       q = p.form8995,
       filer = extractFilerIdentity(f)!;
     const e = expected[c.id],
-      [profit, half, health, tips, qbi, ded, agi, ti, tax, total] = e;
+      [profit, half, health, tips, qbi, , , ti, tax] = e;
     assertEquals([
       p.schedule1.line3_schedule_c,
       p.schedule1.line15_se_deduction,

@@ -4,11 +4,6 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8606 } from "../../../../mef/forms/income/retirement/f8606.ts";
 import { form8606Pdf } from "../../../../pdf/forms/income/retirement/f8606.ts";
 import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
-import {
-  calculateOwnerForms,
-  inputSchema as form5329InputSchema,
-} from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
-import { form5329 } from "../../../../mef/forms/taxes/retirement/f5329.ts";
 import { createHash } from "node:crypto";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";

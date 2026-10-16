@@ -98,17 +98,6 @@ function history() {
     ),
   };
 }
-function origin2024() {
-  const o = origin();
-  o.tax_year = 2024;
-  o.reference = "origin-2024";
-  o.reviewed_form1040.tax_year = 2024;
-  o.reviewed_form1040.reference = "return-2024";
-  o.reviewed_form1040.line12_standard_or_itemized_deduction = 14600;
-  o.noncapital_deductions[1].amount = 14600;
-  return o;
-}
-
 async function sha(bytes: Uint8Array) {
   return Array.from(
     new Uint8Array(

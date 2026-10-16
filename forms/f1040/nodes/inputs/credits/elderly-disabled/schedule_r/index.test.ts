@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { schedule_r } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";

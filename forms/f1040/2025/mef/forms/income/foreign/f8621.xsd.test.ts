@@ -4,7 +4,6 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createHash } from "node:crypto";
 import { buildMefXml } from "../../../builder.ts";
-import { FilingStatus } from "../../../../../nodes/types.ts";
 import {
   calculateExcessEvents,
   calculateSection1291Interest,

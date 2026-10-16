@@ -8,7 +8,6 @@ import {
   assertStringIncludes,
   assertThrows,
 } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../registry.ts";

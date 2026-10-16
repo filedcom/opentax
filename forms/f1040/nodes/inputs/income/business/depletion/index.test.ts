@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { depletion, PropertyType, DepletionMethod, DepletionPurpose } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { scheduleC } from "../schedule_c/index.ts";

@@ -1364,7 +1364,7 @@ function assertMixedScheduleCF8995(
     );
   }
   return {
-    businesses: rows.map((row, index) => ({
+    businesses: rows.map((_row, index) => ({
       businessName: names[index]!,
       tin: { kind: "ein" as const, value: eins[index]! },
       qbi: qbi[index],

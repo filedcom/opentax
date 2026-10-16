@@ -220,8 +220,9 @@ function edits(source: ts.SourceFile, needs: Needs, names: Names) {
   const unknown: string[] = [];
   const permissionVars = new Map<string, ts.VariableStatement>();
 
-  const add = (node: ts.Node, text: string) =>
+  const add = (node: ts.Node, text: string): void => {
     out.push({ start: node.getStart(), end: node.getEnd(), text });
+  };
 
   // `const p = await Deno.permissions.query({ name: "env", ... })`
   for (const statement of source.statements.length ? collectStatements(source) : []) {

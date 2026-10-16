@@ -8,10 +8,6 @@ function compute(input: Record<string, unknown>) {
   return form6198.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
 test("form6198 — nodeType is 'form6198'", () => {

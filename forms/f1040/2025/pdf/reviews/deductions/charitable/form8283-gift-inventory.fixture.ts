@@ -1,4 +1,3 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
 import { inputSchema as form8283InputSchema } from "../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../nodes/types.ts";

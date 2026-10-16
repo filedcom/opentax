@@ -62,7 +62,8 @@ export function assertCurrentPropertyQbi(
         (pal.current_loss_forms !== undefined &&
           currentPropertyPassiveAmounts(s).passiveGain < 0)
       ).map((s) => {
-        const a = currentPropertyAmounts(s);
+        // The parcel lookup still guards an incomplete property source.
+        currentPropertyAmounts(s);
         return {
           id: s.activity_id,
           net: currentPropertyPassiveAmounts(s).passiveOperating,

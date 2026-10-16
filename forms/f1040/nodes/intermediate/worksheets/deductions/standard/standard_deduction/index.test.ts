@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { inputSchema, standard_deduction } from "./index.ts";
+import { standard_deduction } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 

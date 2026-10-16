@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, allDistinct, hasValue, ifThen, any, validSSN, ssnNotEqual, eqStr, eqNum, filingStatusIs, filingStatusNot, not, } from "../../../../../../core/validation/mod.ts";
+import { rule, alwaysPass, allDistinct, hasValue, ifThen, validSSN, ssnNotEqual, } from "../../../../../../core/validation/mod.ts";
 
 export const SEIC_RULES: readonly RuleDef[] = [
   rule(

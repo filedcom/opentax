@@ -1,10 +1,9 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 test("actual ScheduleC tip deduction and personal-sale capital sources retain positive QBI zero and positive income caps", async () => {

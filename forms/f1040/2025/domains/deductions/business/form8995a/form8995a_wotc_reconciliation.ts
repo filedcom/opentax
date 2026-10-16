@@ -63,7 +63,6 @@ export function assertForm8995AWotcReturn(
       "Form 8995-A WOTC needs the matching retained parent source",
     );
   }
-  const business = source.business;
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
   const wotc = wotcInputSchema.parse(pending.f5884);
   if (sources.length === 2) {

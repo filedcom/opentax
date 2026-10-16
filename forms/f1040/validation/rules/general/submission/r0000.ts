@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, alwaysFail, hasValue, hasNonZero, noValue, validSSN, eqStr, eqField, formPresent, formAbsent, ifThen, ifThenUnless, any, all, not, gt, notGtNum, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, } from "../../../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, hasNonZero, validSSN, eqStr, eqField, formPresent, ifThen, any, all, not, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, } from "../../../../../../core/validation/mod.ts";
 
 export const R0000_RULES: readonly RuleDef[] = [
   rule(

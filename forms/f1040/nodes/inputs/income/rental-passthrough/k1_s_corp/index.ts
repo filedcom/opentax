@@ -54,7 +54,6 @@ import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   reviewedForm7203DebtEvidenceSchema,
-  sumPrincipalRepayments,
   totalCurrentDebtAdvances,
 } from "../../../../intermediate/forms/income/business/form7203/debt-note.ts";
 import { form4797 } from "../../../../intermediate/forms/income/business/form4797/index.ts";

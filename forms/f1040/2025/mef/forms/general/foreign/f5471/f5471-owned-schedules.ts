@@ -53,7 +53,7 @@ export function buildOwned5471Schedule(
   tag: OwnedScheduleTag,
   category: OwnedCategory,
 ): string {
-  const s = owned5471Category(cfc, category), { r } = s;
+  const s = owned5471Category(cfc, category);
   const head = [
     ...identity(cfc, name, tag === "IRS5471ScheduleP"),
     element("SeparateCategoryCd", category),

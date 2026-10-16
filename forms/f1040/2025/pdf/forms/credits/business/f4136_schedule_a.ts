@@ -1,6 +1,5 @@
 import { PDFDocument, type PDFPage, rgb, StandardFonts } from "pdf-lib";
 import {
-  type Form4136Input,
   inputSchema,
   rateForForm4136Claim,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
