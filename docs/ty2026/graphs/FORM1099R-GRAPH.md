@@ -29,7 +29,7 @@ Supported current source treatments are:
   evidence respectively. Owner matching includes jointly filing spouses and
   reviewed masked recipient TINs.
 - Early codes 1 and S with reconciled dated payments, no-exception or payment-bound
-  exception 01/06/10/12 review and
+  exception 01/04/06/10/12/20 review and
   SIMPLE first-contribution evidence. Shared Part I arithmetic feeds Schedule 2
   directly or separate owner Form 5329 drafts; see the [early-tax contract](./FORM5329-GRAPH.md).
 - Single-code G direct plan rollovers to eligible non-Roth destinations or Roth
@@ -96,3 +96,16 @@ and all 137 repository unit checks. Five rendered pages across ordinary-retireme
 rollover and explicitly synthetic issued-copy fixtures were visually reviewed;
 static draft fields and original attachment bytes are also checked in tests.
 These results establish development behavior, not IRS filing acceptance.
+
+### Disability routing dependency
+
+The shared `disabilityWagesF1040Fields` currently emits `line1a_wages`.
+[IRS Publication 525](https://www.irs.gov/publications/p525) and
+[Publication 575](https://www.irs.gov/publications/p575) direct taxable disability
+pensions to line 1h until minimum retirement age, then to pension lines 5a/5b
+beginning the following day. Correct the shared destination and reconcile the
+2026 earned-income consumers before enabling code 3 or pension disability
+exceptions. The current EIC source contract expressly excludes retirement
+disability wages; dependent care, child credits, dependent deductions and Schedule
+R also need their distinct income/eligibility review. These 2025 publications are
+method comparators pending final 2026 instructions.

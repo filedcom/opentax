@@ -26,6 +26,46 @@ const exceptionEvidence = { record_reference: ref, payment_reference: ref };
 const earlyException = z.discriminatedUnion("kind", [
   z.object({
     ...exceptionEvidence,
+    kind: z.literal("death_beneficiary"),
+    decedent_tin: tin,
+    beneficiary_entitlement_record_reference: ref,
+    inherited_account_not_treated_as_own_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("terminal_illness"),
+    patient_tin: tin,
+    physician_name: ref,
+    physician_contact: ref,
+    physician_qualification: z.enum(["MD", "DO"]),
+    physician_license_jurisdiction: ref,
+    physician_legally_authorized_to_practice_verified: z.literal(true),
+    physician_is_not_patient_verified: z.literal(true),
+    examination_or_evidence_review_date: date,
+    certification_signed_on: date,
+    certified_expected_death_within_months: z.number().finite().nonnegative()
+      .max(84),
+    physician_signed_narrative_and_attestation_verified: z.literal(true),
+    underlying_evidence_record_reference: ref,
+    certification_and_underlying_evidence_retained_verified: z.literal(true),
+    distribution_otherwise_permissible_verified: z.literal(true),
+    administration: z.discriminatedUnion("route", [
+      z.object({
+        route: z.literal("plan_permits"),
+        certification_furnished_to_administrator_on: date,
+        administrator_receipt_record_reference: ref,
+      }).strict(),
+      z.object({
+        route: z.literal("return_election"),
+        plan_does_not_permit_terminal_illness_distributions_verified: z.literal(
+          true,
+        ),
+        election_record_reference: ref,
+      }).strict(),
+    ]),
+  }).strict(),
+  z.object({
+    ...exceptionEvidence,
     kind: z.literal("separation_after_age55"),
     separation_date: date,
     employer_tin: tin,
@@ -333,6 +373,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     );
   }
   const paymentRecords = new Set<string>();
+  const accountDecedents = new Map<string, string>();
   const rows = current.map((c) => {
     const r = reviews.get(c.source_document_reference)!;
     if (r.reviewed_on < "2027-01-01" || r.reviewed_on > claim.reviewed_on) {
@@ -406,7 +447,10 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     if (code === "2" && !r.payer_code2_exception_verified) {
       throw new Error("Code 2 needs the payer's known-exception review");
     }
-    if ((code === "4") !== !!r.death_benefit) {
+    const deathClaims = r.early_distribution?.exception_review?.claims.filter(
+      (claim) => claim.kind === "death_beneficiary",
+    ) ?? [];
+    if ((code === "4" || deathClaims.length > 0) !== !!r.death_benefit) {
       throw new Error(
         "Death distribution needs matched decedent and inherited-basis evidence",
       );
@@ -420,6 +464,22 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         "Retirement death-benefit record conflicts with recipient or tax year",
       );
     }
+    const accountKey = JSON.stringify([id, c.payer_tin, c.account_number]);
+    const decedent = r.death_benefit
+      ? JSON.stringify([
+        r.death_benefit.decedent_tin,
+        r.death_benefit.death_date,
+      ])
+      : "own-account";
+    if (
+      accountDecedents.has(accountKey) &&
+      accountDecedents.get(accountKey) !== decedent
+    ) {
+      throw new Error(
+        "Retirement account has conflicting inherited/decedent treatment across current statements",
+      );
+    }
+    accountDecedents.set(accountKey, decedent);
     let taxable: number;
     if (ira) {
       if (
@@ -520,6 +580,13 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
           "Early exception claims must identify distinct existing payments",
         );
       }
+      // One inherited account cannot also be treated as the beneficiary's own
+      // retirement account. Reconcile all its payments to the same death review.
+      if (r.death_benefit && deathClaims.length !== e.payments.length) {
+        throw new Error(
+          "Inherited early-coded account needs death-benefit evidence for every payment",
+        );
+      }
       const dob = c.recipient === "spouse"
         ? input.spouse_dob!
         : input.taxpayer_dob;
@@ -573,7 +640,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         }
         if (
           e.simple_first_contribution_date &&
-          (e.simple_first_contribution_date < dob ||
+          ((!r.death_benefit && e.simple_first_contribution_date < dob) ||
             e.simple_first_contribution_date > p.payment_date ||
             (p.payment_date <
                 addCalendarMonths(e.simple_first_contribution_date, 24)) !==
@@ -586,6 +653,45 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         if (claim) {
           let exceptionCode: string;
           switch (claim.kind) {
+            case "death_beneficiary":
+              if (
+                !r.death_benefit ||
+                claim.decedent_tin !== r.death_benefit.decedent_tin ||
+                p.payment_date < r.death_benefit.death_date
+              ) {
+                throw new Error(
+                  "Death exception needs the matched decedent and a payment on or after death",
+                );
+              }
+              exceptionCode = "04";
+              break;
+            case "terminal_illness": {
+              const signed = claim.certification_signed_on;
+              if (
+                claim.patient_tin !== id ||
+                claim.examination_or_evidence_review_date < dob ||
+                claim.examination_or_evidence_review_date > signed ||
+                signed > p.payment_date
+              ) {
+                throw new Error(
+                  "Terminal illness needs this owner's physician certification signed on or before payment after examination or evidence review",
+                );
+              }
+              if (
+                claim.administration.route === "plan_permits" &&
+                (claim.administration
+                      .certification_furnished_to_administrator_on < signed ||
+                  claim.administration
+                      .certification_furnished_to_administrator_on >
+                    p.payment_date)
+              ) {
+                throw new Error(
+                  "Terminal illness plan receipt must follow certification and precede payment",
+                );
+              }
+              exceptionCode = "20";
+              break;
+            }
             case "separation_after_age55":
               if (
                 r.plan_type !== "qualified_employer_plan" ||

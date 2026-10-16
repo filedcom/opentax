@@ -15,7 +15,8 @@ the [ordinary retirement paths](./FORM1099R-GRAPH.md). It derives taxable income
 from a no-basis traditional/SEP/SIMPLE IRA or a payer-determined qualified pension,
 then requires a reviewed inventory of actual payment dates, gross amounts and
 taxable amounts. Payments must reconcile to the current issued statement and occur
-before age 59½ unless the reviewed payment establishes exception 12. Repeated payment references within the same owner/payer/account
+before age 59½ unless the reviewed payment establishes exception 12. Repeated
+payment references within the same owner/payer/account
 are rejected across statements as well as within one statement.
 
 The source review must provide either a no-exception declaration or a complete
@@ -33,9 +34,31 @@ entered exception amounts/codes are rejected. The supported evidence derives:
 | Exception | Required evidence and boundary |
 | --- | --- |
 | 01 | Separation date in or after the year the owner reaches 55; payment from that employer's qualified plan after separation; employer identity and plan relationship reviewed; unavailable for IRAs |
+| 04 | Matched decedent identity, death date, inherited-basis review and beneficiary entitlement; each payment must be on or after death and the account must remain inherited, including a spouse who has not treated it as their own |
 | 06 | Administrator-qualified domestic relations order effective by the payment date, matching spouse/former-spouse alternate-payee TIN and review that the entire payment was made under the order; unavailable for IRAs |
 | 10 | Dated IRS levy on the actual retirement account; the amount paid under the levy must equal that payment's gross amount; a voluntary withdrawal to pay tax does not qualify |
 | 12 | Verified birth record and actual payment date on or after the owner's 59½ birthday, including month-end anniversaries; source code remains 1/S |
+| 20 | Owner-matched physician certification signed by the payment date; reviewed physician credentials, contact, supporting narrative and attestation, examination/evidence-review date, and certified expectation of death within 84 months; eligible plan distribution and administration/election evidence |
+
+Terminal-illness evidence follows [Notice 2024-2, section F](../corpus/authorities/n-24-02.pdf)
+(SHA-256 `4f1e3dde1415ab7d2ecf404faf9750a9e0ab349be160b1cf34253d98c6d36d91`);
+the [IRS bulletin](https://www.irs.gov/irb/2024-02_IRB#NOT-2024-2) also provides the text.
+The review requires a licensed MD/DO, a certification by someone other than the
+patient, the signed narrative and supporting records, and evidence that the
+payment was otherwise permitted. For a plan offering this treatment, the
+administrator must receive the certification after signing and by payment. For a
+plan not offering it, the return election and retained certification are required.
+Neither route accepts a certificate signed after payment. Repayments remain under
+the separate required reconciliation work; this route retains the existing
+no-repayment declaration.
+
+An early-coded inherited account requires death evidence for every payment and
+cannot mix beneficiary and own-account treatment. The same decedent must match
+all claims and the inherited-basis review across every current statement for the
+same owner, payer and account. Conflicting decedent identities/death dates or a mix of own/inherited
+account reviews are rejected. SIMPLE first participation follows the
+decedent's account and can precede the beneficiary's birth. Correct code 4 stays
+on the ordinary death-income route without creating an unnecessary Form 5329.
 
 Each claim exempts the matched payment's taxable amount, not its gross amount.
 Multiple payments can make a statement partially exempt. Partial exemptions within
@@ -87,7 +110,10 @@ calculation excludes it from lines 2 and 10; see the
 The [field inventory](../inventories/pdf-fields/pdf-fields-f5329.csv) records all
 85 canonical widgets. Each attachment uses the individual owner's name and SSN,
 prints Part I lines 1, 3 and 4 plus line 2 and the derived exception code when
-claimed, and leaves unused parts blank. The draft cover is excluded; the three official pages remain in attachment
+claimed, and leaves unused parts blank. Physician certifications, medical record
+references and decedent evidence remain in the retained review, not the generated
+return or source attachments. The draft cover is excluded; the three official
+pages remain in attachment
 sequence 29, with taxpayer and spouse forms kept separate. Original source forms
 are retained unchanged where federal withholding requires an attachment.
 
@@ -100,7 +126,9 @@ footer. These files are incomplete development drafts, not filing artifacts.
 
 1. Remaining Part I exceptions and partial-payment allocations, with instruction-specific evidence and limits, including
    qualified long-term-care distributions, emergency expenses, domestic abuse,
-   medical and education expenses, death/disability and public-safety separation.
+   medical and education expenses, disability and public-safety separation.
+   Disability pensions also require minimum-retirement-age income routing and
+   earned-income consumer reconciliation; an exception alone is insufficient.
    Incorrect early coding that also conflicts with SIMPLE participation dates
    still requires source resolution; the age exception does not bypass that check.
 2. IRA basis and Roth recapture via Form 8606, indirect/partial rollovers,
@@ -123,7 +151,16 @@ the printed code and each Part I amount and require no AcroForm or annotations.
 Full 2026, shared 2025 retirement and repository unit regressions are retained
 alongside rendered whole-return and component review. IRS acceptance remains open.
 
-Current exception increment: 872 full 2026 tests, 60 focused tests (including
+Initial exception increment: 872 full 2026 tests, 60 focused tests (including
 shared 2025 Form 5329 and Form 1062 regressions), and 137 repository unit checks
 passed. Eight rendered pages across fully exempt and multiple-exception cases
 were reviewed after the standalone annotation cleanup.
+
+Life-event coverage adds death/terminal eligibility and timing, partial annual
+exemptions, ordinary code-4 comparison, inherited SIMPLE participation and
+owner-separated exceptions. PDF checks verify codes 04/20, zero tax and exclusion
+of private medical/decedent records from the return.
+
+The life-event increment passed 881 full 2026 tests, 74 focused tests and 137
+repository unit checks. Ten rendered pages were visually reviewed; regenerated
+final pages matched those reviewed images exactly, with no fields or annotations.

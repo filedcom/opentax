@@ -2361,6 +2361,17 @@
       "year_check": "2026-present",
       "retrieved_utc": "2026-10-16",
       "scope": "Estimated payment records, 2025 overpayment credits, joint-payment eligibility, dates and name-change statements; not a completed Form 2210 penalty calculation"
+    },
+    {
+      "path": "authorities/n-24-02.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-24-02.pdf",
+      "kind": "notice",
+      "status": "downloaded",
+      "bytes": 338432,
+      "sha256": "4f1e3dde1415ab7d2ecf404faf9750a9e0ab349be160b1cf34253d98c6d36d91",
+      "year_check": "Notice 2024-2; section F referenced by 2026 draft Form 5329 instructions",
+      "retrieved_utc": "2026-10-16",
+      "scope": "Terminal-illness distributions: eligible plans, physician certification content and dates, administrator receipt and return election; recontributions remain required separate work"
     }
   ]
 }

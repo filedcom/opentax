@@ -221,3 +221,36 @@ Deno.test("2026 owner draft prints multiple-exception code and taxable partial e
     assertEquals(await read(1, [505, 300, 71, 12]), "500");
   });
 });
+
+Deno.test("2026 death and terminal exceptions print owner forms and keep private medical evidence out of the return", async () => {
+  const { deathRetirementSource2026, terminalRetirementSource2026 } =
+    await import("../inputs/retirement-life-events.fixture.ts");
+  const { exceptionRetirementGraph2026 } = await import(
+    "../inputs/retirement-exceptions.fixture.ts"
+  );
+  for (
+    const [s, code] of [[deathRetirementSource2026(), "04"], [
+      terminalRetirementSource2026(true),
+      "20",
+    ]] as const
+  ) {
+    const b = await buildDraftReturnPdf2026(exceptionRetirementGraph2026(s));
+    assertEquals(b.attachments.map((a) => a.form), [
+      "f1040",
+      "form5329:taxpayer",
+    ]);
+    const page = b.attachments[1].formPages[0];
+    await inspect(b.bytes, async (read) => {
+      assertEquals(await read(page, [315, 276, 40, 12]), code);
+      assertEquals(await read(page, [505, 276, 71, 12]), "10000");
+      assertEquals(await read(page, [505, 300, 71, 12]), "0");
+      for (let p = 1; p <= 5; p++) {
+        const text = await read(p);
+        assertEquals(text.includes("Synthetic Physician"), false);
+        assertEquals(text.includes("private-supporting-records"), false);
+        assertEquals(text.includes("111223333"), false);
+      }
+    });
+    assertEquals(b.sourceAttachments, []);
+  }
+});
