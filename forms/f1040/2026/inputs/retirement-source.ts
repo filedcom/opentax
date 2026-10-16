@@ -9,6 +9,7 @@ import {
 } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
   isSourceMoney,
+  sourceCents,
   sumSourceMoney,
 } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -20,6 +21,38 @@ const money = z.number().finite().nonnegative().max(1_000_000_000).refine(
   "Retirement money needs exact cents",
 );
 const date = z.string().date();
+// Claims identify actual whole payments, never an entered exception code or tax amount.
+const exceptionEvidence = { record_reference: ref, payment_reference: ref };
+const earlyException = z.discriminatedUnion("kind", [
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("separation_after_age55"),
+    separation_date: date,
+    employer_tin: tin,
+    distribution_from_that_employers_plan_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("qdro_alternate_payee"),
+    order_date: date,
+    alternate_payee_tin: tin,
+    relationship_to_plan_participant: z.enum(["spouse", "former_spouse"]),
+    plan_administrator_qualified_order_verified: z.literal(true),
+    entire_payment_made_under_order_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("irs_levy"),
+    levy_date: date,
+    amount_paid_under_levy: money,
+    irs_levy_on_this_retirement_account_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("age59_half"),
+    actual_payment_date_and_birth_record_verified: z.literal(true),
+  }).strict(),
+]);
 const address = z.object({
   street: ref,
   suite: z.string().optional(),
@@ -118,7 +151,15 @@ const review = z.object({
   early_distribution: z.object({
     record_reference: ref,
     complete_payment_inventory_verified: z.literal(true),
-    no_additional_tax_exception_applies_verified: z.literal(true),
+    no_additional_tax_exception_applies_verified: z.literal(true).optional(),
+    exception_review: z.object({
+      record_reference: ref,
+      owner_tin: tin,
+      account_number: ref,
+      complete_exception_inventory_verified: z.literal(true),
+      no_other_payment_exception_applies_verified: z.literal(true),
+      claims: z.array(earlyException).min(1).max(1000),
+    }).strict().optional(),
     simple_first_contribution_date: date.optional(),
     payments: z.array(
       z.object({
@@ -444,8 +485,41 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         "Early distribution needs matching dated payment and exception review",
       );
     }
+    const exemptions: {
+      payment_reference: string;
+      code: string;
+      taxable: number;
+    }[] = [];
     if (r.early_distribution) {
       const e = r.early_distribution;
+      const exceptions = e.exception_review;
+      if (!!e.no_additional_tax_exception_applies_verified === !!exceptions) {
+        throw new Error(
+          "Early distribution needs exactly one complete exception review or no-exception declaration",
+        );
+      }
+      if (
+        exceptions &&
+        (exceptions.owner_tin !== id ||
+          exceptions.account_number !== c.account_number)
+      ) {
+        throw new Error(
+          "Early exception evidence must match the distribution owner and account",
+        );
+      }
+      const claims = new Map(
+        exceptions?.claims.map((claim) => [claim.payment_reference, claim]),
+      );
+      if (
+        claims.size !== (exceptions?.claims.length ?? 0) ||
+        [...claims.keys()].some((key) =>
+          !e.payments.some((p) => p.record_reference === key)
+        )
+      ) {
+        throw new Error(
+          "Early exception claims must identify distinct existing payments",
+        );
+      }
       const dob = c.recipient === "spouse"
         ? input.spouse_dob!
         : input.taxpayer_dob;
@@ -475,6 +549,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
       for (const p of e.payments) {
+        const claim = claims.get(p.record_reference);
         const paymentKey = JSON.stringify([
           id,
           c.payer_tin,
@@ -489,7 +564,8 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         paymentRecords.add(paymentKey);
         if (
           !p.payment_date.startsWith("2026-") || p.payment_date < dob ||
-          p.payment_date >= age595 || p.taxable > p.gross
+          (p.payment_date >= age595 && claim?.kind !== "age59_half") ||
+          p.taxable > p.gross
         ) {
           throw new Error(
             "Early payment date, age or taxable amount conflicts with the issued source",
@@ -506,6 +582,61 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
           throw new Error(
             "SIMPLE distribution code conflicts with its actual two-year participation period",
           );
+        }
+        if (claim) {
+          let exceptionCode: string;
+          switch (claim.kind) {
+            case "separation_after_age55":
+              if (
+                r.plan_type !== "qualified_employer_plan" ||
+                claim.separation_date.slice(0, 4) <
+                  addCalendarMonths(dob, 55 * 12).slice(0, 4) ||
+                claim.separation_date > p.payment_date
+              ) {
+                throw new Error(
+                  "Age-55 separation exception needs the separating employer's plan and qualifying separation year before payment",
+                );
+              }
+              exceptionCode = "01";
+              break;
+            case "qdro_alternate_payee":
+              if (
+                r.plan_type !== "qualified_employer_plan" ||
+                claim.alternate_payee_tin !== id ||
+                claim.order_date > p.payment_date ||
+                claim.order_date < dob
+              ) {
+                throw new Error(
+                  "QDRO exception needs an employer plan, this alternate payee and an order effective by payment",
+                );
+              }
+              exceptionCode = "06";
+              break;
+            case "irs_levy":
+              if (
+                claim.levy_date > p.payment_date || claim.levy_date < dob ||
+                claim.amount_paid_under_levy !== p.gross
+              ) {
+                throw new Error(
+                  "IRS levy exception needs a dated levy on the account covering the actual entire payment",
+                );
+              }
+              exceptionCode = "10";
+              break;
+            case "age59_half":
+              if (p.payment_date < age595) {
+                throw new Error(
+                  "Age exception needs an actual payment on or after age 59 1/2",
+                );
+              }
+              exceptionCode = "12";
+              break;
+          }
+          exemptions.push({
+            payment_reference: p.record_reference,
+            code: exceptionCode,
+            taxable: p.taxable,
+          });
         }
       }
     }
@@ -534,6 +665,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       review: r,
       owner_tin: id,
       calculated,
+      exemptions,
       early_tax_rate: early ? (code === "S" ? 25 : 10) : undefined,
     };
   });
@@ -560,6 +692,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   const directEarlyTax = earlyRows.length > 0 &&
     rows.every((r) =>
       r.copy.box7a_distribution_codes[0] === "1" &&
+      r.exemptions.length === 0 &&
       (r.calculated.iraFields.line4b_ira_taxable ??
           r.calculated.pensionFields.line5b_pension_taxable ?? 0) ===
         r.copy.box1_gross_distribution
@@ -574,10 +707,27 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     const simple = sumSourceMoney(
       owned.filter((r) => r.early_tax_rate === 25).map(taxable),
     );
-    // Round the combined filed base once; its SIMPLE portion gets 25%, and
-    // the remaining filed line 3 base gets 10%, so the printed tax reconciles.
+    const exempt = sumSourceMoney(
+      owned.flatMap((r) => r.exemptions.map((e) => e.taxable)),
+    );
+    const simpleExempt = sumSourceMoney(
+      owned.filter((r) => r.early_tax_rate === 25)
+        .flatMap((r) => r.exemptions.map((e) => e.taxable)),
+    );
+    const codes = [
+      ...new Set(owned.flatMap((r) => r.exemptions.map((e) => e.code))),
+    ];
+    // Subtract the filed whole-dollar lines. Allocate the remaining SIMPLE
+    // amount at 25%, bounded by line 3 to avoid a rounding-only negative regular base.
     const line1 = roundWholeDollars(total),
-      simpleBase = roundWholeDollars(simple);
+      line2 = roundWholeDollars(exempt),
+      line3 = line1 - line2,
+      simpleBase = Math.min(
+        line3,
+        roundWholeDollars(
+          (sourceCents(simple) - sourceCents(simpleExempt)) / 100,
+        ),
+      );
     return [{
       owner,
       owner_tin: owned[0].owner_tin,
@@ -586,11 +736,14 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       ),
       taxable_cents: total,
       simple_taxable_cents: simple,
+      exempt_taxable_cents: exempt,
+      simple_exempt_taxable_cents: simpleExempt,
+      exception_code: codes.length > 1 ? "99" : codes[0],
       line1,
-      line2: 0,
-      line3: line1,
+      line2,
+      line3,
       line4: roundWholeDollars(
-        earlyDistributionAdditionalTax(line1 - simpleBase, simpleBase),
+        earlyDistributionAdditionalTax(line3 - simpleBase, simpleBase),
       ),
       file_form5329: !directEarlyTax,
     }];

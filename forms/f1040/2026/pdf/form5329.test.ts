@@ -148,3 +148,76 @@ Deno.test("2026 joint early drafts retain separate owner identities and reconcil
     "source-derived",
   );
 });
+
+Deno.test("2026 fully exempt early distribution retains Form 5329 with printed exception and zero tax", async () => {
+  const { exceptionRetirementGraph2026 } = await import(
+    "../inputs/retirement-exceptions.fixture.ts"
+  );
+  const b = await buildDraftReturnPdf2026(exceptionRetirementGraph2026());
+  assertEquals(b.attachments.map((a) => a.form), [
+    "f1040",
+    "form5329:taxpayer",
+  ]);
+  const page = b.attachments[1].formPages[0];
+  await inspect(b.bytes, async (read) => {
+    assertEquals(await read(page, [505, 252, 71, 12]), "10000");
+    assertEquals(await read(page, [315, 276, 40, 12]), "10");
+    assertEquals(await read(page, [505, 276, 71, 12]), "10000");
+    assertEquals(await read(page, [505, 288, 71, 12]), "0");
+    assertEquals(await read(page, [505, 300, 71, 12]), "0");
+  });
+});
+Deno.test("2026 owner draft prints multiple-exception code and taxable partial exemption", async () => {
+  const { claimEarlyExceptions2026 } = await import(
+    "../inputs/retirement-exceptions.fixture.ts"
+  );
+  const s = earlyRetirementSource2026(false, 15000);
+  s.taxpayer_dob = "1967-03-01";
+  const e = s.claim.reviews[0].early_distribution!;
+  e.payments = [
+    {
+      record_reference: "levy",
+      payment_date: "2026-02-01",
+      gross: 5000,
+      taxable: 5000,
+    },
+    {
+      record_reference: "ordinary",
+      payment_date: "2026-08-01",
+      gross: 5000,
+      taxable: 5000,
+    },
+    {
+      record_reference: "older",
+      payment_date: "2026-09-01",
+      gross: 5000,
+      taxable: 5000,
+    },
+  ];
+  claimEarlyExceptions2026(s, [
+    {
+      kind: "irs_levy",
+      record_reference: "levy-order",
+      payment_reference: "levy",
+      levy_date: "2026-01-01",
+      amount_paid_under_levy: 5000,
+      irs_levy_on_this_retirement_account_verified: true,
+    },
+    {
+      kind: "age59_half",
+      record_reference: "birth-record",
+      payment_reference: "older",
+      actual_payment_date_and_birth_record_verified: true,
+    },
+  ]);
+  const bytes = await buildForm5329PdfBytes2026(s, "taxpayer", 500, {
+    name: "Sam Wheat",
+    ssn: s.taxpayer_ssn,
+  });
+  await inspect(bytes, async (read) => {
+    assertEquals(await read(1, [315, 276, 40, 12]), "99");
+    assertEquals(await read(1, [505, 276, 71, 12]), "10000");
+    assertEquals(await read(1, [505, 288, 71, 12]), "5000");
+    assertEquals(await read(1, [505, 300, 71, 12]), "500");
+  });
+});

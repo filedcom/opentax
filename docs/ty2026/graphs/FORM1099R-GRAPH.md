@@ -28,7 +28,8 @@ Supported current source treatments are:
 - Single codes 7, 2 and 4 with normal-age, known-exception or death-benefit
   evidence respectively. Owner matching includes jointly filing spouses and
   reviewed masked recipient TINs.
-- Early codes 1 and S with reconciled dated payments, no-exception review and
+- Early codes 1 and S with reconciled dated payments, no-exception or payment-bound
+  exception 01/06/10/12 review and
   SIMPLE first-contribution evidence. Shared Part I arithmetic feeds Schedule 2
   directly or separate owner Form 5329 drafts; see the [early-tax contract](./FORM5329-GRAPH.md).
 - Single-code G direct plan rollovers to eligible non-Roth destinations or Roth

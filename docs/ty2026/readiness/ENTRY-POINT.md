@@ -507,7 +507,10 @@ payer-determined qualified pensions support single codes 2, 4 and 7; code G plan
 rollovers require reconciled transfer evidence. Income and withholding reach AGI,
 Schedule A and draft Form 1040, with unchanged withheld source PDF attachments.
 See the [current 1099-R contract](../graphs/FORM1099R-GRAPH.md).
-Early codes 1/S now require payment-date, taxable-amount and no-exception evidence.
+Early codes 1/S require payment-date and taxable-amount evidence plus either a
+no-exception declaration or reviewed payment-bound exceptions 01/06/10/12.
+Exception amounts and multiple-exception code 99 are derived; fully exempt
+payments retain an owner Form 5329 even when no additional tax is due.
 They use shared Part I arithmetic with the actual SIMPLE two-year period, direct
 Schedule 2 reporting where permitted, or separate taxpayer/spouse Form 5329 drafts.
 Remaining exceptions and other parts, Forms 8606/4972, QCDs, annuity basis and

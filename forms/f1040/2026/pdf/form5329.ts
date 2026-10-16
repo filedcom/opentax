@@ -60,9 +60,13 @@ export async function buildForm5329PdfBytes2026(
   fill(1, filer.name);
   fill(2, filer.ssn);
   fill(11, part.line1);
+  if (part.exception_code) {
+    fill(12, part.exception_code);
+    fill(13, part.line2);
+  }
   fill(14, part.line3);
   fill(15, part.line4);
-  // No exception is claimed in this source route. Other parts and signature remain blank.
+  // Other parts and signature remain blank.
   form.updateFieldAppearances(font);
   form.flatten();
   const out = await PDFDocument.create();
@@ -86,6 +90,9 @@ export async function buildForm5329PdfBytes2026(
       font: footer,
       color: rgb(.4, .1, .1),
     });
+    // Drawing initializes an empty Annots array in pdf-lib; remove it after
+    // the final draw so standalone components retain the static-PDF contract.
+    page.node.delete(PDFName.of("Annots"));
   }
   out.catalog.delete(PDFName.of("AcroForm"));
   return out.save({ updateFieldAppearances: false });
