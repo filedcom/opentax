@@ -1194,8 +1194,10 @@ wages, dependent deductions and unearned income remain separate. Care now replay
 reviewed service month, including offsetting spouses and monthly deemed-income
 floors. Coordinated pre-AGI settlement now resolves changed care exclusions,
 adoption MAGI and Social Security together, retaining and printing additional
-phaseout precision when needed. Remaining whole-dollar rounding gaps and
-multi-owner child exclusions still require reconciliation. Draft bundles now attach the two-page
+phaseout precision when needed. Mixed-owner children now retain each spouse's
+wholly taxable or fully excluded ordinary benefits from actual payments.
+Remaining whole-dollar rounding gaps and partial or special-needs exclusions
+across owners still require reconciliation. Draft bundles now attach the two-page
 Form 8839 and additional copies for overflow children. Income, refundable credit,
 nonrefundable credit and final child-credit destinations are replayed before
 rendering. Previously reported children retain their prior columns; totals print

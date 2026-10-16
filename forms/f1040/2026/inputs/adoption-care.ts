@@ -5,6 +5,7 @@ import {
 } from "./adoption-settlement.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { w2Item2026Schema } from "./w2-source.ts";
+import { sumSourceMoney } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 
 /** Form 2441 uses taxable wage adjustments, separately for each return owner.
  * A special-needs exclusion can exceed payments. Never substitute the gross
@@ -51,7 +52,13 @@ export function adoptionCareIncome2026(
     const tins = new Set(
       [...programRefs].map((id) => programs.get(id)!.owner_tin),
     );
-    if (adjustment !== 0 && tins.size !== 1) {
+    // With no exclusion, actual payments identify each owner's taxable wages.
+    // Ordinary benefits excluded in full likewise have no taxable adjustment.
+    // A special-needs exclusion can exceed one owner's payments even when the
+    // joint adjustment is zero; that does not establish a per-spouse split.
+    const unambiguousSplit = line.line29 === 0 ||
+      !prepared.special_needs_program_reference && line.line29 === current;
+    if (tins.size > 1 && !unambiguousSplit) {
       throw Error(
         "Care adoption adjustment needs a reconciled per-spouse exclusion allocation for this child",
       );
@@ -64,10 +71,50 @@ export function adoptionCareIncome2026(
       : ownerTin === s.spouse_ssn
       ? "spouse"
       : undefined;
-    if (adjustment !== 0 && !owner) {
+    if (adjustment !== 0 && tins.size === 0) {
       throw Error("Care adoption adjustment has no actual return owner");
     }
-    if (owner) adjustments[owner] += adjustment;
+    const ownerAllocations = [...tins].sort().map((tin) => {
+      const owner = tin === s.taxpayer_ssn
+        ? "taxpayer" as const
+        : tin === s.spouse_ssn
+        ? "spouse" as const
+        : undefined;
+      if (!owner) {
+        throw Error("Care adoption adjustment has no actual return owner");
+      }
+      const payments = child.current_benefits.filter((b) =>
+        programs.get(b.program_reference)!.owner_tin === tin
+      );
+      const paid = sumSourceMoney(payments.map((b) => b.amount));
+      const benefits = roundWholeDollars(paid);
+      const exclusion = tins.size === 1
+        ? line.line29
+        : line.line29 === 0
+        ? 0
+        : benefits;
+      return {
+        owner_tin: tin,
+        owner,
+        payment_references: payments.map((b) => b.record_reference),
+        source_current_benefits: paid,
+        current_benefits: benefits,
+        exclusion,
+        wage_adjustment: benefits - exclusion,
+      };
+    });
+    if (
+      ownerAllocations.reduce((n, r) => n + r.current_benefits, 0) !==
+        current ||
+      ownerAllocations.reduce((n, r) => n + r.exclusion, 0) !== line.line29
+    ) {
+      throw Error(
+        "Care adoption owner totals need whole-dollar rounding reconciliation",
+      );
+    }
+    for (const allocation of ownerAllocations) {
+      adjustments[allocation.owner] += allocation.wage_adjustment;
+    }
     return {
       child_reference: child.record_reference,
       program_references: [...programRefs],
@@ -76,6 +123,7 @@ export function adoptionCareIncome2026(
       current_benefits: current,
       exclusion: line.line29,
       wage_adjustment: adjustment,
+      owner_allocations: ownerAllocations,
     };
   });
   if (

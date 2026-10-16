@@ -5,6 +5,7 @@ import { sourceRegistry2026 } from "../source-registry.ts";
 import {
   adoptionCareFixture2026,
   jointAdoptionCareFixture2026,
+  mixedOwnerAdoptionCareFixture2026,
 } from "./adoption-care.fixture.ts";
 import type { calculateCareCredit2026 } from "../nodes/f2441.ts";
 import { adoptionCareIncome2026 } from "./adoption-care.ts";
@@ -209,6 +210,135 @@ Deno.test("2026 care rejects unresolved mixed-owner child exclusions instead of 
   assert(
     run(input).diagnostics.some((d) =>
       d.message.includes("reconciled per-spouse exclusion allocation")
+    ),
+  );
+  // A joint zero does not prove that both spouses have zero adjustments when
+  // the special-needs exclusion belongs to a different employer-program owner.
+  payment.amount = 17670;
+  payment.expense_allocations[0].amount = 17670;
+  input.w2s[0].box12_entries[0].amount = 17670;
+  assert(
+    run(input).diagnostics.some((d) =>
+      d.message.includes("reconciled per-spouse exclusion allocation")
+    ),
+  );
+});
+
+Deno.test("2026 care attributes both spouses' taxable pending-foreign benefits to their actual payments", () => {
+  const input = mixedOwnerAdoptionCareFixture2026();
+  input.form8839.claim.children[0].origin = "foreign";
+  input.form8839.claim.children[0].finalization = {
+    kind: "not_final",
+    status_record_reference: "foreign-pending",
+  };
+  const before = structuredClone(input), { p, care } = complete(input);
+  assertEquals(input, before);
+  assertEquals(p.f1040.line1f_taxable_adoption_benefits, 10000);
+  assertEquals(p.f1040.line11b_agi, 80000);
+  assertEquals(care.lines!.line4, 54000);
+  assertEquals(care.lines!.line5, 26000);
+  const workpaper = care.benefit.adoption_income_workpaper!;
+  assertEquals(workpaper.adjustments, { taxpayer: 4000, spouse: 6000 });
+  assertEquals(
+    workpaper.children[0].owner_allocations.map((a) => ({
+      owner: a.owner,
+      payments: a.payment_references,
+      source: a.source_current_benefits,
+      exclusion: a.exclusion,
+      adjustment: a.wage_adjustment,
+    })).sort((a, b) => a.owner.localeCompare(b.owner)),
+    [
+      {
+        owner: "spouse",
+        payments: ["spouse-benefit-payment"],
+        source: 6000,
+        exclusion: 0,
+        adjustment: 6000,
+      },
+      {
+        owner: "taxpayer",
+        payments: ["benefit-payment"],
+        source: 4000,
+        exclusion: 0,
+        adjustment: 4000,
+      },
+    ],
+  );
+  input.w2s.reverse();
+  input.form8839.claim.programs.reverse();
+  input.form8839.claim.children[0].current_benefits.reverse();
+  assertEquals(
+    complete(input).care.benefit.adoption_income_workpaper!.adjustments,
+    workpaper.adjustments,
+  );
+});
+
+Deno.test("2026 care reconciles mixed-owner benefits when the exclusion phases out completely", () => {
+  const input = mixedOwnerAdoptionCareFixture2026();
+  input.w2s[0].box1_wages = 300000;
+  const { p, care } = complete(input);
+  assertEquals(p.f1040.line1f_taxable_adoption_benefits, 10000);
+  assertEquals(care.lines!.line4, 304000);
+  assertEquals(care.lines!.line5, 26000);
+  assertEquals(
+    care.benefit.adoption_income_workpaper!.adoption.lines.line30,
+    0,
+  );
+});
+
+Deno.test("2026 care retains each owner's fully excluded ordinary benefits but blocks partial allocations", () => {
+  const input = mixedOwnerAdoptionCareFixture2026();
+  const { p, care } = complete(input);
+  assertEquals(p.f1040.line1f_taxable_adoption_benefits, 0);
+  assertEquals(care.lines!.line4, 50000);
+  assertEquals(care.lines!.line5, 20000);
+  const allocations =
+    care.benefit.adoption_income_workpaper!.children[0].owner_allocations;
+  assertEquals(
+    allocations.find((a) => a.owner === "taxpayer")!.exclusion,
+    4000,
+  );
+  assertEquals(allocations.find((a) => a.owner === "spouse")!.exclusion, 6000);
+  input.w2s[0].box1_wages = 250000;
+  assert(
+    run(input).diagnostics.some((d) =>
+      d.message.includes("reconciled per-spouse exclusion allocation")
+    ),
+  );
+});
+
+Deno.test("2026 care sums an owner's adoption payment cents before rounding and rejects an unreconciled split", () => {
+  const input = mixedOwnerAdoptionCareFixture2026(),
+    child = input.form8839.claim.children[0];
+  child.origin = "foreign";
+  child.finalization = {
+    kind: "not_final",
+    status_record_reference: "foreign-pending",
+  };
+  child.current_benefits[0].amount = 1000.25;
+  child.current_benefits[0].expense_allocations[0].amount = 1000.25;
+  child.current_benefits.push({
+    ...structuredClone(child.current_benefits[0]),
+    record_reference: "second-primary-payment",
+  });
+  child.current_benefits[1].amount = 3000.10;
+  child.current_benefits[1].expense_allocations[0].amount = 3000.10;
+  input.w2s[0].box12_entries[0].amount = 2000.50;
+  input.w2s[1].box12_entries[0].amount = 3000.10;
+  const { p, care } = complete(input);
+  assertEquals(p.f1040.line1f_taxable_adoption_benefits, 5001);
+  assertEquals(care.benefit.adoption_income_workpaper!.adjustments, {
+    taxpayer: 2001,
+    spouse: 3000,
+  });
+  child.current_benefits[1].amount = 3000.50;
+  child.current_benefits[1].expense_allocations[0].amount = 3000.50;
+  input.w2s[1].box12_entries[0].amount = 3000.50;
+  assert(
+    run(input).diagnostics.some((d) =>
+      d.message.includes(
+        "owner totals need whole-dollar rounding reconciliation",
+      )
     ),
   );
 });

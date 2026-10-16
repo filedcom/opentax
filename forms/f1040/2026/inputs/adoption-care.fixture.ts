@@ -51,3 +51,34 @@ export function phasedAdoptionCareFixture2026(primaryWages = 250000) {
   a.form2441.claim.benefits = c.form2441.claim.benefits;
   return a;
 }
+
+export function mixedOwnerAdoptionCareFixture2026() {
+  const a = adoptionCareFixture2026(), joint = monthlyCareFixture2026();
+  const spouse = {
+    ...a.w2s[0],
+    employee_ssn: joint.general.spouse_ssn,
+    source_document_reference: "spouse-adoption-w2",
+    box1_wages: 20000,
+    box2_fed_withheld: 0,
+    box12_entries: a.w2s[0].box12_entries.map((b) => ({ ...b, amount: 6000 })),
+  };
+  const program = {
+    ...a.form8839.claim.programs[0],
+    record_reference: "spouse-adoption-program",
+    owner_tin: spouse.employee_ssn,
+    wage_source_reference: spouse.source_document_reference,
+  };
+  a.form8839.claim.programs.push(program);
+  a.form8839.claim.children[0].current_benefits.push({
+    ...a.form8839.claim.children[0].current_benefits[0],
+    record_reference: "spouse-benefit-payment",
+    program_reference: program.record_reference,
+    amount: 6000,
+    expense_allocations: [{ expense_reference: "expense-1", amount: 6000 }],
+  });
+  return {
+    ...a,
+    general: { ...joint.general, dependents: a.general.dependents },
+    w2s: [...a.w2s, spouse],
+  };
+}

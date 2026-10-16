@@ -334,9 +334,14 @@ Three through six phaseout decimal places are tried in order, as permitted by th
 2026 draft Form 8839's at-least-three-places instruction. The chosen precision is
 retained and printed; six places capture the exact ratio for whole-dollar MAGI.
 Cases still lacking a consistent whole-dollar result fail explicitly and need
-further source-cent/printed-line reconciliation. Nonzero adjustments for a child
-with several program owners also still require explicit per-spouse exclusion
-reconciliation. See the [coordinated adoption contract](FORM8839-GRAPH.md) for
+further source-cent/printed-line reconciliation. For a child with several program
+owners, wholly taxable benefits now follow the actual recipients, including
+pending foreign adoptions and fully phased-out exclusions. Fully excluded
+ordinary benefits retain each owner's payment and exclusion amounts. Source
+cents are summed per owner before rounding, and child totals must reconcile.
+Partial or special-needs exclusions across owners still require explicit
+per-spouse reconciliation, including when the joint adjustment is zero.
+See the [coordinated adoption contract](FORM8839-GRAPH.md) for
 source authority, algorithm and remaining gates.
 
 Verification for this increment covers 123 distinct typed source/PDF tests and
@@ -346,3 +351,11 @@ special-needs income, separate owners, offsetting joint adjustments, monthly
 student floors, source mismatches, and the then-required rejection of changed pre-AGI
 exclusions and unresolved mixed-owner child allocations. The combined joint draft
 was rendered and its Form 2441 owner limits were visually inspected.
+
+The subsequent mixed-owner increment passed 189 typed source/PDF tests and the
+137-test unit gate, with 3,907 graph modules and unchanged runtime files. New
+cases cover pending foreign benefits, complete and partial phaseouts, ordinary
+full exclusions, owner payment cents, source ordering and a special-needs zero
+joint adjustment that still needs allocation review. The combined draft prints
+$304,000 and $26,000 as separate care earnings, $330,000 adoption MAGI and
+$10,000 taxable adoption benefits; both forms were rendered and inspected.

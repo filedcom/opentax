@@ -166,9 +166,19 @@ Care claims naming the adoption inventory now defer their benefit calculation to
 AGI. One coordinated stage resolves actual taxable care, the adoption exclusion
 and taxable Social Security before emitting income. The final care calculation
 replays the retained source and must match the executed line 1e. It no longer
-requires the old care exclusion to remain unchanged. A child with multiple
-employer-program owners and a nonzero adjustment still requires a reconciled
-per-spouse exclusion allocation; it is never assigned a joint total by default.
+requires the old care exclusion to remain unchanged. For a child with multiple
+employer-program owners, wholly taxable payments follow their actual recipients,
+including pending foreign adoptions and a completely phased-out exclusion.
+Ordinary benefits excluded in full retain each owner's payments and exclusion.
+The workpaper traces the payment references and sums source cents before rounding
+each owner's total; those totals must reconcile the child's printed amounts.
+Partial exclusions and special-needs exclusions across owners still require a
+reconciled per-spouse allocation, even when the joint adjustment is zero. No
+proportional split or residual rounding dollar is assigned to a spouse by default.
+These cases apply the separate-owner wage definition in the
+[2026 draft care instructions](https://www.irs.gov/pub/irs-dft/i2441--dft.pdf)
+to reviewed employer payments; they do not establish an election for allocating
+an exclusion between spouses.
 
 The coordinator searches the bounded whole-dollar care-benefit amount. Increasing
 taxable care increases adoption MAGI, reduces its exclusion and increases care
