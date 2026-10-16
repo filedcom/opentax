@@ -124,7 +124,7 @@ const otherFields: readonly PdfFieldEntry[] = [
   text("otherIssuerCityCountry", `${page2}.f2_30[0]`),
 ];
 
-function putTaxRows(
+export function putTaxRows(
   target: Record<string, unknown>,
   line: 13 | 14,
   rows: readonly TaxSummaryRow[],
@@ -158,9 +158,10 @@ function addressLines(
   };
 }
 
-function detailFields(
+export function detailFields(
   account: ProjectedAsset | undefined,
   other: ProjectedAsset | undefined,
+  taxYear = 2025,
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
   if (account) {
@@ -170,7 +171,7 @@ function detailFields(
       accountCustodial:
         account.asset_type === ForeignAssetType.CustodialAccount,
       accountIdentifier: account.asset_identifier,
-      accountOpened: !!account.opened_or_acquired_date?.startsWith("2025-"),
+      accountOpened: !!account.opened_or_acquired_date?.startsWith(`${taxYear}-`),
       accountClosed: !!account.closed_or_disposed_date,
       accountJointSpouse: account.owner === "joint_with_spouse",
       accountNoTaxItem: account.tax_items.length === 0,
@@ -200,7 +201,7 @@ function detailFields(
     Object.assign(fields, {
       otherDescription: other.description,
       otherIdentifier: other.asset_identifier,
-      otherAcquired: other.opened_or_acquired_date?.startsWith("2025-")
+      otherAcquired: other.opened_or_acquired_date?.startsWith(`${taxYear}-`)
         ? other.opened_or_acquired_date
         : undefined,
       otherDisposed: other.closed_or_disposed_date,

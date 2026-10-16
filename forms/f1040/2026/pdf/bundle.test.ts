@@ -24,11 +24,11 @@ import { foreignAccountReviewFixture2026 } from "../inputs/foreign-accounts.fixt
 import { foreignBankInvestmentFixture2026 } from "../inputs/foreign-bank-interest.fixture.ts";
 import { foreignAssetReturnFixture2026 } from "../inputs/foreign-assets-return.fixture.ts";
 
-Deno.test("2026 bundle retains reconciled Form 8938 and exposes its unfinished attachment", async () => {
+Deno.test("2026 bundle attaches reconciled Form 8938 while keeping filing disabled", async () => {
   const raw = foreignAssetReturnFixture2026();
   const result = await buildDraftReturnPdf2026(raw);
-  assert(result.unfinishedReceivers.includes("f8938"));
-  assert(!result.attachments.some((a) => a.form === "f8938"));
+  assert(!result.unfinishedReceivers.includes("f8938"));
+  assert(result.attachments.some((a) => a.form === "f8938"));
   assert(result.attachments.some((a) => a.form === "schedule_b"));
   assertEquals(result.filingReady, false);
   assert(result.calculation.pending.f8938.calculation_2026);
@@ -37,6 +37,7 @@ Deno.test("2026 bundle retains reconciled Form 8938 and exposes its unfinished a
   }
   const below = await buildDraftReturnPdf2026(raw);
   assert(!below.unfinishedReceivers.includes("f8938"));
+  assert(!below.attachments.some((a) => a.form === "f8938"));
 });
 
 Deno.test("2026 foreign bank statement-only return prints reconciled interest without a synthetic 1099", async () => {

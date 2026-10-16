@@ -451,7 +451,6 @@ export function calculateForeignAssetReturn2026(
     filing_ready: false as const,
     remaining_filing_requirements: valuation.threshold.filingRequired
       ? [
-        "draft_pdf",
         "native_mef",
         "final_forms_and_instructions",
         "ats_and_public_filing",

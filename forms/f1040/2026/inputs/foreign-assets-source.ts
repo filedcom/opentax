@@ -50,6 +50,9 @@ const asset = shared.assetSchema.innerType().omit({
   excepted_on_form: true,
   filed_exception_form_reference: true,
 }).extend({
+  // Optional on the December 2026 draft; retain only a supplied identifier.
+  giin: z.string().regex(/^[A-Z0-9]{6}\.[A-Z0-9]{5}\.[A-Z0-9]{2}\.[0-9]{3}$/)
+    .optional(),
   ownership_and_classification_document: evidence,
   specified_foreign_asset_and_not_excluded_account_verified: z.literal(true),
   not_a_holding_already_represented_by_another_account_verified: z.literal(

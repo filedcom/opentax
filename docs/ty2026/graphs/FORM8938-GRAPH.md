@@ -70,8 +70,8 @@ individual-status, filing-duty, tax-home/presence, asset, ownership and FX facts
 Its helpers calculate threshold decisions and Parts I/II/IV summaries. The
 shared node itself still returns no outputs. The 2026 terminal stage below now
 reconciles supported Part III income against executed sources and completed
-Form 1040. Draft PDF/MeF attachments and the remaining tax-item and Part IV
-routes remain unfinished. Retaining an input in the registry does not satisfy
+Form 1040 and renders the supported draft PDF/continuations. Native MeF
+attachments and the remaining tax-item and Part IV routes remain unfinished. Retaining an input in the registry does not satisfy
 the disclosure filing requirement.
 
 1. Build the qualified filer/valuation decision from return identity,
@@ -131,12 +131,11 @@ or credit is emitted and no filed location is invented. `valuation_input` is onl
 the shared valuation/summary input, with empty tax items; it is not a completed
 Form 8938. `requires_tax_item_return_binding` and
 `requires_exception_filing_binding` identify remaining cross-form work, and
-`filing_ready` stays false even when neither binding is needed. This stage is not
-registered as public claim intake or attached to a draft bundle yet.
+`filing_ready` stays false even when neither binding is needed. This valuation-only stage is consumed by the public return-binding and draft
+PDF stages described below.
 
-The next required stage must bind Part III items to actual income/credit sources
-and computed destinations, and Part IV to actual filing artifacts, before adding
-the graph owner and PDF. Foreign trust, estate, pension and deferred-compensation
+The downstream stage binds supported Part III items to actual income sources
+and computed destinations; Part IV still needs actual filing artifacts. Foreign trust, estate, pension and deferred-compensation
 interests now have separate distribution/beneficial-interest workpapers, described
 below. Grantor-trust exceptions, joint beneficial interests, mixed known/unknown
 annual availability, partial reporting years, possession and
@@ -254,19 +253,50 @@ ownership cases still need their own source routes.
 No-income assets and below-threshold decisions remain distinct from missing
 source bindings. Part IV exception forms and beneficial-interest distributions
 still require actual filing identity or taxable/nontaxable treatment joins;
-those public claims fail explicitly until those routes exist. No PDF or native
-MeF is claimed by the new stage. When Form 8938 is required, the development
-bundle retains the calculation and lists `f8938` among unfinished receivers
-instead of silently treating node registration as a rendered attachment.
+those public claims fail explicitly until those routes exist. The calculation
+stage does not claim native MeF or filing readiness. The draft PDF stage below
+now renders required Form 8938 attachments in the development bundle.
 
 Validation exercises the full source graph, unchanged tax after disclosure,
 mixed domestic/foreign line totals, fractional-dollar Part III aggregation,
 joint accounts, issued copy digests, no-income assets, threshold decisions,
 complete account/exclusion coverage, source and final-line tampering, public
-computed-line rejection and explicit unfinished bundle attachment status.
+computed-line rejection and draft bundle attachment selection.
 The shared 2025 Form 8938 projection, reconciliation, PDF and MeF tests are
 included in regression coverage.
 
 Authority: [Form 8938 instructions, Part III and assets not required to be reported](https://www.irs.gov/instructions/i8938).
 These distinguish tax items and their return locations from asset values, and
 exclude qualifying U.S.-payor-maintained accounts from Form 8938 reporting.
+
+
+## Current draft PDF stage (October 16)
+
+The 2026 PDF reuses the 2025 detail projection, Part III row writer and field
+mappings, with a default-preserving year parameter and the 2026 field names.
+It replays the retained source claim against the completed return and checks
+filer identity before rendering. Reported asset values, rather than threshold
+peaks, populate the detail pages; Parts I/II use the already reconciled reported
+summaries. Part III uses bound income rounded once per category.
+
+The pinned December 2026 form supplies the two base pages. Each additional
+account or other asset receives a separate copy of page 2 with its unused part
+blank. Long text moves to a labeled, paginated supplement; the page-1 statement
+count includes every extra detail and supplement sheet. All pages retain filer
+identity and a draft footer, and the cover sheet and interactive fields are
+removed from the static review output. Optional supplied GIINs are validated
+and split across the four corresponding fields for an institution or foreign
+entity. Treasury FX sources leave the alternative-source field blank.
+
+The development bundle includes Form 8938 only when required, places the base
+pages at attachment sequence 938, and moves statements to the bundle end.
+`filingReady` remains false. Final forms/instructions, native MeF/current-schema
+validation, ATS, Part IV filing joins, remaining tax-item routes and multiple
+issuer/counterparty source records remain unfinished. The renderer supports the
+current individual full-calendar-year source contract, not every possible
+131-widget entity/fiscal-year case.
+
+Validation covers actual extracted income and asset values, supplied GIINs,
+separate continuation sheets and counts, complete long-text supplements,
+pension reporting versus threshold values, missing or mismatched sources,
+static field removal, below-threshold omission, and visually rendered pages.
