@@ -266,7 +266,8 @@ export function assertReturnWideArithmetic(
     "line25c_total",
   ] as const;
   const withholdingComponents = withholdingKeys.reduce(
-    (sum, key) => sum + (amount(key) ?? 0),
+    // Source lines retain cents; the return node sums their printed dollars.
+    (sum, key) => sum + Math.round(amount(key) ?? 0),
     0,
   );
   const line25d = amount("line25d_total_withholding");
@@ -285,7 +286,7 @@ export function assertReturnWideArithmetic(
     "line31_additional_payments",
   ] as const;
   const refundableComponents = refundableKeys.reduce(
-    (sum, key) => sum + (amount(key) ?? 0),
+    (sum, key) => sum + Math.round(amount(key) ?? 0),
     0,
   );
   const line32 = amount("line32_refundable_credits_total");
@@ -309,7 +310,7 @@ export function assertReturnWideArithmetic(
     !matches(
       line33,
       (line25d ?? withholdingComponents) +
-        (amount("line26_estimated_tax") ?? 0) +
+        Math.round(amount("line26_estimated_tax") ?? 0) +
         (line32 ?? refundableComponents),
     )
   ) {

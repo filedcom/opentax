@@ -397,6 +397,36 @@ const filed = {
   line33_total_payments: 1_890,
 };
 
+Deno.test("Form 1040 export sums printed payment lines while retaining source cents", () => {
+  const payments = {
+    line25a_w2_withheld: 1500.49,
+    line25b_withheld_1099: 200.50,
+    line25c_total: 20.50,
+    line25d_total_withholding: 1722,
+    line26_estimated_tax: 100.50,
+    line28_actc: 20.50,
+    line29_refundable_aoc: 10.49,
+    line31_additional_payments: 40.50,
+    line32_refundable_credits_total: 72,
+    line33_total_payments: 1895,
+  };
+  assertReturnWideArithmetic(payments);
+  for (
+    const [change, reason] of [
+      [{ line25d_total_withholding: 1721.49 }, "line 25d"],
+      [{ line32_refundable_credits_total: 71.49 }, "line 32"],
+      [{ line33_total_payments: 1894.50 }, "line 33"],
+      [{ line25d_total_withholding: 1723 }, "line 25d"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...payments, ...change }),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
   const pending = {
     f1040es: {
