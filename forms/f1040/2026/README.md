@@ -757,6 +757,20 @@ workpaper replays the actual beneficiary/account sources, and Form 8960 PDF
 checks Schedule 1 line 8q. See the [classification rationale and remaining
 ABLE limits](../../../docs/ty2026/graphs/FORM8960-GRAPH.md#ordinary-able-distribution-classification-october-16).
 
+## Form 4852 source estimates and standalone draft
+
+The internal `calculateForm4852Sources2026` ledger reconciles payroll and
+retirement payment records, actual owners, payer/account identity and replaced
+incorrect originals. It reuses the shared wage projection and retirement-account
+classification. `buildForm4852PdfBytes2026` prints the pinned continuous-use
+form, required explanations and linked continuation pages, preserving unknown
+retirement taxability and the IRA/SEP/SIMPLE margin notation.
+
+This component is not registered as public intake or included in the return
+bundle yet. The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md)
+records the required source bridge, receiving-line checks, substitute-versus-
+original attachment selection and remaining correction/special-source cases.
+
 ## Investment sources and NIIT
 
 The `investment_income` singleton uses existing 1099-INT, 1099-DIV and Schedule B

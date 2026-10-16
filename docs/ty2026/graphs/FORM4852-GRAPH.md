@@ -13,6 +13,57 @@ have no Form 4852 entry. That does not establish whether the selected
 release permits another documented attachment method; do not name or build
 one until the XSD, active rules and IRS filing guidance are checked.
 
+## Current implementation (October 16)
+
+The internal 2026 source ledger and standalone draft component are implemented
+in `inputs/form4852-source.ts` and `pdf/form4852.ts`. They are **not yet public
+input nodes or part of the complete draft-return bundle**. The current IRS
+[form page](https://www.irs.gov/forms-pubs/about-form-4852) still links the
+[September 2020 revision](https://www.irs.gov/pub/irs-pdf/f4852.pdf), checked
+October 16; the pinned digest and 34-widget inventory are unchanged.
+
+The ledger binds each substitute to its actual return owner, payer and account,
+dated payer attempts and IRS notification, explanations and payment records.
+It requires a pre-filing review after February. Every printed amount reconciles
+in exact cents; duplicate payment periods/references and conflicting current
+copies fail. An incorrect original must be present and match exactly one payer
+account before exclusion. Masked retirement originals resolve against actual
+return identity. Subsequent corrections and amendments still need their own
+selection/history route; the ledger does not silently discard another copy.
+
+Wage projection reuses the shared Form 4852-to-W-2 converter, then validates
+2026 source fields and the current Social Security wage cap. Retirement
+estimates retain taxable amount, tax-free recovered contributions, unknown
+amount flags, distribution codes and account classification separately. The
+shared custodian classifier and IRA/SEP/SIMPLE margin-label helper are reused.
+The estimate is never presented as an issuer's original statement. A taxable
+amount already supplied is not reduced by recovered contributions again.
+
+The draft prints one form page per substitute and complete line 9/10 narratives,
+with continuation pages when necessary. It checks the pinned field inventory,
+prints comma-separated codes and the instruction-required IRA/SEP/SIMPLE
+margin notation, and removes form widgets after rendering. Exact cents remain
+on this source form; whole-dollar return rounding belongs to its receiving
+income/tax owners. Output is marked draft and `filingReady: false`.
+
+Still required: bind this ledger to actual public wage and retirement inventories,
+route the resulting sources once through AGI/payroll/withholding/retirement
+calculators, reconcile receiving lines and include substitutes in the return
+bundle instead of demanding unavailable original 1099-R PDFs. Preserve the
+retirement payment/basis/exception reviews when bridging. Unknown payer TINs,
+multiple jurisdictions, partial replacement/complex correction chains,
+post-filing amendments and unprinted special wage facts also remain open.
+The initial wage ledger requires reviewed absence of those extra facts; it
+does not infer boxes 8–14. This component is not a substitute for the selected
+MeF release's attachment rules or IRS acceptance.
+
+Verification: 83 focused tests passed across TY2025 retained Form 4852/source
+cases, the 2026 wage/retirement calculators, and the 19 new source/PDF cases.
+The 137-test unit gate and runtime inventory check passed. Wage, IRA and
+three-page explanation examples were rendered and inspected; physical PDF
+positions independently verify federal/FICA withholding, taxable income and
+IRA notation. The public-return and MeF acceptance steps below remain open.
+
 ## When a substitute is appropriate
 
 Form 4852 substitutes for an unavailable or uncorrected W-2/W-2c or 1099-R.
@@ -35,7 +86,8 @@ The Form 4852 line labels are **not** W-2 or 1099-R box numbers:
 | Lines 9–10 | Print source of estimated amounts and chronology of attempts to obtain the missing/corrected document. These explanations are part of the filed form, not merely internal notes. |
 
 The published form has no W-2 boxes 12/13/14 or 1099-R IRA/SEP/SIMPLE
-checkbox. Obtain plan type and any TY2026 tip/overtime/SIMPLE or other
+checkbox; its instructions require the applicable IRA/SEP/SIMPLE label in the
+right margin of line 8j. Obtain plan type and any TY2026 tip/overtime/SIMPLE or other
 special treatment from separate evidence; do not infer it from a Form 4852
 amount. Any W-2 box 12 code TP/TT or 1099-R box 7 classification that cannot
 be substantiated is an intake/validation question for those owners, not a
@@ -56,23 +108,17 @@ rendered first page and their coordinates. Every field begins with
 | 1099-R lines 8f–j | `Line8Rght[0].f1_21` federal withholding, `f1_22` state withholding, `f1_23` state name, `f1_24` local withholding, `f1_25` locality name, `f1_26` employee contributions, `f1_27` distribution codes. `f1_28` is an additional fillable text widget below the printed 8j line with no visible label; inspect its behavior before binding it. |
 | Lines 9–10 | `f1_29` estimation method and `f1_30` efforts to obtain the statement. |
 
-## Current code boundary
+## Shared-code boundary
 
-The shared [`f4852` node](../../../forms/f1040/nodes/inputs/income/wages/f4852/index.ts)
-is registered for TY2025 but has no PDF descriptor or MeF serializer. It
-routes user-entered values to 1040, Form 8959, Form 5329 and Schedule 3,
-without source evidence, form printing, or replacement-of-original
-reconciliation. Its comments call federal W-2 withholding line **7b** and
-1099-R withholding line **8c**; the pinned form says **7e** and **8f**. The
-node treats a provided taxable distribution as subject to another employee
-contribution subtraction, uses a generic `is_ira` not present on the form,
-and sends aggregate Social Security withholding from two substitutes as
-`line11_excess_ss` without computing the actual excess. Its Medicare route
-needs the ordinary-versus-Additional Medicare withholding split. The
-`capital_gain` value is accepted but not routed to the proper tax worksheet.
-Review these paths against the [2026 W-2 intake](../ats/ATS-SCENARIO-02.md),
-[1099-R graph](./FORM1099R-GRAPH.md), [Form 8959](./FORM8959-GRAPH.md), and
-[credit/withholding](../pdf/PDF-SCHEDULE3-MAP.md) contracts before registration.
+The earlier September review predates the current shared native-source path.
+The shared `form4852CalculationSources` now projects reviewed substitutes into
+W-2/1099-R owners; `effectiveTaxable` retains an already-provided taxable amount.
+TY2025 also has a retained-form PDF descriptor and source-evidence workflow.
+The 2026 component reuses the wage projection and account-classification helpers,
+but does not register the shared legacy aggregate node. The older node's fallback
+routes and comments are not the authority for 2026 line numbers or tax treatment.
+The remaining work is the year-specific source/bundle bridge and broader
+retirement treatment, not a second aggregate deposit into Form 1040.
 
 ## Build and acceptance
 
