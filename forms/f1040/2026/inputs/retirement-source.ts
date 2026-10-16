@@ -270,7 +270,7 @@ export type RetirementSource2026 = z.input<typeof retirementSource2026Schema>;
 export type RetirementCopy2026 = z.input<typeof retirementCopy2026Schema>;
 
 /** Calendar anniversaries clamp a leap/month-end day instead of rolling into another month. */
-function addCalendarMonths(value: string, months: number): string {
+export function addCalendarMonths(value: string, months: number): string {
   const [year, month, day] = value.split("-").map(Number);
   const target = new Date(Date.UTC(year, month - 1 + months, 1));
   const last = new Date(

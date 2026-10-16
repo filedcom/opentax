@@ -11,9 +11,9 @@ final-version review before filing.
 
 Form 8606 is per owner: a joint return needs a separate form for each spouse
 who must file it. Inherited IRAs from different decedents can also require
-separate forms. The 2025 node currently receives one Form 1099-R item at a
-time and has one pending key, so it cannot establish a complete 2026
-owner-wide pro rata denominator. The TY2026 route must collect all relevant
+separate forms. The older generic node receives individual Form 1099-R items,
+while the current 2025 reviewed annual route reconciles complete owner account
+inventories and conversions. The TY2026 route must collect all relevant
 IRAs and distributions for one owner before calculating, and preserve the
 owner for the PDF and MeF attachment.
 
@@ -39,11 +39,11 @@ amount and its Form 5329 exception facts, not gross box 1.
 
 ## Existing-node audit and build order
 
-1. Do not register the shared 2025 `form8606` node as the TY2026 solution.
-   It has no line 4 post-year contribution field, defaults an absent year-end
-   value to zero, uses a simplified Roth distribution calculation, and emits
-   one pending form without an owner. It also lacks the current disaster and
-   repayment worksheets. Its helpers are implementation references only.
+1. Do not register the generic shared `form8606` node as the TY2026 solution.
+   Its fallback calculation defaults missing year-end values and omits current
+   source facts. Reuse the newer reviewed annual source calculations instead;
+   their 2025 schema dates and retained-document bindings must remain separate
+   from 2026. Disaster and repayment worksheets still need their own routes.
 2. Add a typed TY2026 IRA basis/contribution input per owner and aggregate
    all matching 1099-R statements before the Part I calculation. Require
    affirmative answers for outstanding rollovers, QCDs, HSA funding,
@@ -65,3 +65,71 @@ amount and its Form 5329 exception facts, not gross box 1.
 The draft instructions appear to print “April 15, 2026” in one line 4
 example about contributions made in 2027. The draft form itself specifies
 April 15, 2027; use that form date and recheck the final instructions.
+
+## Current annual traditional-IRA workpaper
+
+The internal `calculateIraBasis2026` source workpaper now implements the first
+Part I/II calculation stage. It is not registered in `sourceRegistry2026` and does
+not yet change Form 1040 or produce a 2026 filing attachment. The public 1099-R
+adapter continues to reject basis/conversion cases until the integration below
+is complete.
+
+Each owner supplies a complete traditional/SEP/SIMPLE account inventory with
+explicit December 31 statements, the latest applicable prior Form 8606 line 14
+and qualifying prior Line 15c worksheet adjustment, and a review of intervening
+basis changes. Current nondeductible contributions reconcile issued Form 5498
+box 1 to dated receipts and an all-nondeductible election. The 2026 age limit and
+the owner's evidenced eligible compensation constrain those receipts; this stage
+does not yet support spousal compensation allocation, deductible contributions or
+concurrent regular Roth contributions. Current receipts through April 15, 2027
+are retained, with post-year amounts removed from the distribution-year basis.
+
+Actual current 1099-R copies bind to distinct account dispositions. Gross amounts
+reconcile to owner cash, federal/state/local withholding and direct Roth receipts.
+Conversion receipts reconcile to destination Form 5498 box 3. A SIMPLE conversion
+requires the actual first-contribution date and completed two-year period, using
+the same calendar-anniversary helper as the retirement source adapter. Same-owner
+accounts aggregate before rounding; spouses retain independent forms and basis.
+
+`traditionalIraBasisAmounts` extracts the arithmetic from the existing 2025 annual
+conversion implementation. Both years now use that helper. It starts with the
+printed three-place ratio and increases precision up to five places if necessary
+to avoid spending more basis than exists; it never silently caps a printed
+multiplication. The 2026 workpaper exposes Part I lines, Part II lines and an
+owner-specific basis carryforward where applicable. No-activity contributions
+print only lines 1–3/14. A full conversion without Part I retains a potentially
+negative line 18 while adding no negative amount to taxable IRA income; it has no
+automatic line-14 carryforward.
+
+The form and instruction sources above were rechecked October 16, 2026. The
+annual contribution limits are independently sourced from
+[Notice 2025-67 and the IRS announcement](https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500).
+
+### Next required integration
+
+1. Bind the workpaper's current copies to the retirement adapter's resolved
+   correction inventory and compensation to executed wage/business sources.
+   The internal workpaper's completeness reviews are not substitutes for these
+   graph connections. Reconcile the IRA deduction election and any SSA interaction.
+2. Replace the public no-basis restriction for supported owners with the actual
+   annual calculation. Preserve gross and withholding once, allocate taxable
+   nonconversion amounts to payment-bound Form 5329 exceptions, and route the
+   resulting 4b/AGI and basis carryforwards through all consumers.
+3. Render separate owner forms with the pinned 2026 widgets, then add the current
+   MeF/ATS route. Finish inherited basis, Roth ordering, indirect rollovers,
+   recharacterizations, QCD/HSA, disaster/repayment and older basis-chart sources.
+
+### Validation
+
+The workpaper passed 29 typed 2026 IRA/retirement checks and the complete
+927-test TY2026 runtime suite. The 137-test repository unit gate and module-graph
+preflight passed with unchanged runtime files. Selected 2025 node, MeF and SIMPLE
+regressions passed; all ten annual traditional-IRA scenarios also completed their
+native-output and PDF assertions.
+
+Those annual scenarios exposed a pre-existing export check that summed retained
+payment cents although the return node already summed filed whole-dollar lines.
+The same failure was reproduced with the unmodified annual IRA module. The
+payment check now replays the printed withholding/refundable/estimated-payment
+operands; 17 annual-IRA and return-arithmetic tests pass, including rejection of
+incorrect subtotals. No new 2026 PDF or filing route is claimed by this increment.

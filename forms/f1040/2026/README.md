@@ -21,6 +21,11 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   same payment records; native disability filing statements remain required.
   See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
   for supported codes, correction checks and required basis/penalty/filing work.
+  An internal annual IRA-basis workpaper now reuses 2025 pro-rata arithmetic for
+  complete owner accounts, contributions and conversions. It still needs the
+  correction-inventory/compensation bindings, taxable retirement/5329 routing
+  and separate owner PDFs before the public retirement path can accept basis;
+  see the [Form 8606 contract](../../../docs/ty2026/graphs/FORM8606-GRAPH.md).
 
 - `schedule_r` selects the elderly/disability credit box from filer identities,
   birth dates, residence and medical/plan evidence. It reuses the 2025 filed-form
