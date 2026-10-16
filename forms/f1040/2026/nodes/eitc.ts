@@ -1,3 +1,7 @@
+import {
+  adoptionIncomeBridge2026Schema,
+  replayAdoptionIncome2026,
+} from "../inputs/adoption-settlement.ts";
 import { retirementCreditWages2026 } from "../inputs/retirement-earned.ts";
 import { retirementSource2026Schema } from "../inputs/retirement-source.ts";
 import { businessCreditEarnings2026 } from "../inputs/business-earned.ts";
@@ -93,7 +97,8 @@ export const inputSchema = eicClaim2026Schema.partial().extend({
   agi: z.number().finite(),
   investment_income_floor: money,
   earned_income: z.union([money, z.array(money)]).optional(),
-  wage_income_from_agi: money,
+  wage_income_from_agi: z.number().finite(),
+  adoption_income_2026: adoptionIncomeBridge2026Schema.optional(),
   unsupported_eic_activity: z.boolean(),
   capital_disposition_activity_2026: z.boolean().default(false),
   business_sources_2026: businessReturnSource2026Schema.optional(),
@@ -146,7 +151,15 @@ export function calculateEic2026(raw: EicInput2026) {
       input,
     )
     : undefined;
-  if (retirement && retirement.filed_wages > input.wage_income_from_agi) {
+  const adoption = input.adoption_income_2026
+    ? replayAdoptionIncome2026(input.adoption_income_2026, input)
+    : undefined;
+  if (
+    retirement &&
+    retirement.filed_wages >
+      input.wage_income_from_agi -
+        (adoption?.line1f_taxable_adoption_benefits ?? 0)
+  ) {
     throw new Error("EIC disability wages exceed reconciled AGI wages");
   }
   const earnedBeforeCombat = input.wage_income_from_agi +
@@ -166,6 +179,7 @@ export function calculateEic2026(raw: EicInput2026) {
     earned_income_for_eic: earnedBeforeCombat,
     business_earned_income_workpaper: business,
     retirement_earned_income_workpaper: retirement,
+    adoption_income_workpaper: adoption,
   };
   if (input.do_not_claim_eic === true) {
     return { ...base, disposition: "declined" };

@@ -70,7 +70,7 @@ export const childTaxInput2026Schema = childTaxClaim2026Schema.partial().extend(
     income_context: z.object({
       agi: z.number().int(),
       total_income: z.number().int(),
-      wages: whole,
+      wages: z.number().int(),
       early_withdrawal_penalty: whole,
       unsupported_child_income_activity: z.boolean(),
     }).strict(),

@@ -111,6 +111,11 @@ export async function buildDraftReturnPdf2026(
     throw new Error("TY2026 draft bundle needs general filer input");
   }
   const input = sourceRegistry2026.start.inputSchema.parse(raw);
+  if (input.form8839) {
+    throw Error(
+      "TY2026 adoption draft bundle needs the Form 8839 PDF and continuation reconciliation",
+    );
+  }
   const calculation = await executeDraftSources2026(input, documents);
   if (calculation.diagnostics.length) {
     throw new Error(

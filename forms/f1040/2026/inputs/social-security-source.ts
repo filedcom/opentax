@@ -67,13 +67,25 @@ export const socialSecurityClaim2026Schema = z.object({
   worksheet_scope_review: z.object({
     record_reference: reference,
     no_savings_bond_interest_exclusion: z.literal(true),
-    no_adoption_benefit_exclusion: z.literal(true),
+    no_adoption_benefit_exclusion: z.literal(true).optional(),
+    adoption_inventory_reference: reference.optional(),
     no_foreign_housing_deduction: z.literal(true),
     no_puerto_rico_or_american_samoa_excluded_income: z.literal(true),
     no_ira_contribution_requiring_coordinated_benefits_worksheet: z.literal(
       true,
     ),
-  }).strict(),
+  }).strict().superRefine((v, ctx) => {
+    if (
+      (v.no_adoption_benefit_exclusion === true) ===
+        (v.adoption_inventory_reference !== undefined)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Social Security needs either no adoption exclusion or the actual adoption inventory review",
+      });
+    }
+  }),
 }).strict();
 export const socialSecuritySource2026Schema = socialSecurityClaim2026Schema
   .extend({

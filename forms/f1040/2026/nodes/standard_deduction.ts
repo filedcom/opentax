@@ -48,7 +48,7 @@ export const inputSchema = sharedSchema.pick({
   taxpayer_dob: z.string().date().optional(),
   standard_deduction_eligible: z.boolean(),
   dependent_earned_income: money.optional(),
-  wage_income_from_agi: money.optional(),
+  wage_income_from_agi: z.number().finite().optional(),
   // Retain AGI's child-tax metadata; a 2026 Form 8615 owner must review it.
   form8615_total_income: z.number().finite().optional(),
   form8615_early_withdrawal_penalty: money.optional(),

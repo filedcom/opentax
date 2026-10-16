@@ -18,7 +18,7 @@ export const inputSchema = z.object({
   agi: z.number().int(),
   regular_tax: whole,
   schedule2_part1_tax: whole,
-  wage_income_from_agi: whole,
+  wage_income_from_agi: z.number().int(),
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),

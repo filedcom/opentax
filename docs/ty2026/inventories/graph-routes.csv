@@ -95,6 +95,7 @@ form5329,form1062,yes
 form5329,schedule2,yes
 form6251,form1062,yes
 form6251,schedule2,yes
+form8839,agi_aggregator,yes
 form8880,f8812,yes
 form8880,form1062,yes
 form8919,agi_aggregator,yes
@@ -140,6 +141,7 @@ general,form2441,yes
 general,form4137,yes
 general,form5329,yes
 general,form6251,yes
+general,form8839,yes
 general,form8880,yes
 general,form8919,yes
 general,form8959,yes
@@ -255,6 +257,7 @@ start,f8863,yes
 start,form1062,yes
 start,form2441,yes
 start,form4137,yes
+start,form8839,yes
 start,form8880,yes
 start,form8919,yes
 start,gambling,yes
@@ -285,7 +288,7 @@ w2,f3903,yes
 w2,f8812,yes
 w2,form2441,yes
 w2,form4137,yes
-w2,form8839,no
+w2,form8839,yes
 w2,form8853,no
 w2,form8880,yes
 w2,form8919,yes

@@ -1,3 +1,4 @@
+import { socialSecurityClaim2026Schema } from "../inputs/social-security-source.ts";
 import {
   adoptionSource2026Schema,
   prepareAdoptionSources2026,
@@ -120,6 +121,8 @@ export const inputSchema = sharedSchema.pick({
   line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
   social_security_lump_sum: benefitElectionBridge2026Schema.optional(),
+  social_security_scope_review_2026: socialSecurityClaim2026Schema.shape
+    .worksheet_scope_review.optional(),
 }).strict();
 
 class Agi2026Node extends TaxNode<typeof inputSchema> {
@@ -452,6 +455,20 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         },
       })
       : undefined;
+    const ssScope = input.social_security_scope_review_2026;
+    if (
+      ssScope && (
+        ssScope.adoption_inventory_reference !== undefined &&
+          ssScope.adoption_inventory_reference !==
+            adoption?.source_input.claim.record_reference ||
+        (adoptionExclusion?.lines.line30 ?? 0) > 0 &&
+          ssScope.no_adoption_benefit_exclusion === true
+      )
+    ) {
+      throw Error(
+        "Social Security adoption review must match the actual exclusion source",
+      );
+    }
     if (adoptionExclusion) {
       input.line1f_taxable_adoption_benefits =
         adoptionExclusion.line1f_taxable_adoption_benefits;
@@ -461,6 +478,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     }
     const {
       adoption_sources_2026: _adoptionSources,
+      social_security_scope_review_2026: _ssScope,
       business_sources_2026,
       business_loss_sources_2026: _lossSources,
       gambling_sources_2026,
@@ -543,6 +561,14 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
                 adoption_sources_2026: adoptionExclusion.source_input,
                 adoption_magi_additions_from_agi:
                   adoptionExclusion.income.magi_additions,
+              }
+              : {}),
+            ...(output.nodeType === "eitc" && adoptionExclusion
+              ? {
+                adoption_income_2026: {
+                  source: adoptionExclusion.source_input,
+                  income: adoptionExclusion.income,
+                },
               }
               : {}),
             ...(output.nodeType === "eitc" && retirement &&
@@ -693,6 +719,11 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           wages: wageIncome,
           early_withdrawal_penalty: input.line18_early_withdrawal ?? 0,
           unsupported_child_income_activity: [
+            adoptionExclusion &&
+              (adoptionExclusion.source.current_code_t_benefits > 0 ||
+                adoptionExclusion.lines.line30 > 0)
+              ? 1
+              : 0,
             business ? 0 : input.line3_schedule_c,
             input.line6_schedule_f,
             input.line5_schedule_e,
@@ -709,6 +740,11 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       fields: {
         agi: earned?.auto_agi,
         earned_income_from_agi: wageIncome,
+        ...(adoptionExclusion &&
+            (adoptionExclusion.source.current_code_t_benefits > 0 ||
+              adoptionExclusion.lines.line30 > 0)
+          ? { adoption_compensation_review_required: true }
+          : {}),
         ...(business_sources_2026 ? { business_sources_2026 } : {}),
         unsupported_earned_income_activity: [
           business ? 0 : input.line3_schedule_c,

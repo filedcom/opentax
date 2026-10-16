@@ -10,6 +10,7 @@ import {
 } from "../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
 import {
   type AdoptionSource2026,
+  adoptionSource2026Schema,
   prepareAdoptionSources2026,
 } from "./adoption-source.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -204,4 +205,30 @@ export function settleAdoptionCredit2026(
     },
     carryforward_allocations: allocations,
   };
+}
+
+/** Retained internal operands, emitted only by AGI after source reconciliation. */
+export const adoptionIncomeBridge2026Schema = z.object({
+  source: adoptionSource2026Schema,
+  income: adoptionExclusionIncome2026Schema,
+}).strict();
+export function replayAdoptionIncome2026(
+  raw: z.input<typeof adoptionIncomeBridge2026Schema>,
+  owners: { filing_status: string; taxpayer_ssn: string; spouse_ssn?: string },
+) {
+  const bridge = adoptionIncomeBridge2026Schema.parse(raw), s = bridge.source;
+  if (
+    s.filing_status !== owners.filing_status ||
+    s.taxpayer_ssn !== owners.taxpayer_ssn.replaceAll("-", "") ||
+    s.spouse_ssn !== owners.spouse_ssn?.replaceAll("-", "")
+  ) {
+    throw Error(
+      "Adoption income bridge must belong to the actual return owners",
+    );
+  }
+  const r = calculateAdoptionExclusion2026(s, bridge.income);
+  if (r.source.prior_foreign_benefits > 0) {
+    throw Error("Prior foreign adoption income needs recovery reconciliation");
+  }
+  return r;
 }

@@ -35,7 +35,8 @@ export const inputSchema = educationClaim2026Schema.partial().extend({
     students: z.array(person),
   }).strict(),
   agi: z.number().int(),
-  earned_income_from_agi: whole,
+  earned_income_from_agi: z.number().int(),
+  adoption_compensation_review_required: z.literal(true).optional(),
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   regular_tax: whole,
@@ -74,6 +75,11 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
   const filers = context.students.filter((p) => p.owner !== "dependent");
   const under24 = context.filing_status !== FilingStatus.MFJ &&
     context.taxpayer_dob > "2003-01-01";
+  if (under24 && input.adoption_compensation_review_required) {
+    throw Error(
+      "Under-24 education support needs adoption compensation reconciliation",
+    );
+  }
   let businessWorkpaper:
     | ReturnType<typeof businessPersonalServices2026>
     | undefined;

@@ -41,15 +41,16 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 58,
-    "declared_edges": 302,
-    "unregistered_target_edges": 15,
+    "registry_nodes": 59,
+    "declared_edges": 305,
+    "unregistered_target_edges": 14,
     "nodes": [
       {
         "key": "start",
         "node_type": "start",
         "implemented": true,
         "targets": [
+          "form8839",
           "f4852",
           "hsa_accounts",
           "able_accounts",
@@ -91,6 +92,15 @@
           "w2"
         ],
         "source_module": "forms/f1040/2026/source-start.ts"
+      },
+      {
+        "key": "form8839",
+        "node_type": "form8839",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator"
+        ],
+        "source_module": "forms/f1040/2026/inputs/adoption.ts"
       },
       {
         "key": "f4852",
@@ -149,6 +159,7 @@
           "government_payments",
           "household_employment",
           "f5695",
+          "form8839",
           "capital_gains",
           "land_dispositions",
           "extension_payments",

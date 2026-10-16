@@ -112,6 +112,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "government_payments",
       "household_employment",
       "f5695",
+      "form8839",
       "capital_gains",
       "land_dispositions",
       "extension_payments",
@@ -520,6 +521,10 @@ class General2026Node extends TaxNode<typeof inputSchema> {
             spouse_can_be_claimed_as_dependent:
               input.spouse_can_be_claimed_as_dependent,
           },
+        },
+        {
+          nodeType: "form8839",
+          fields: { ...owner, dependent_sources: input.dependents },
         },
         { nodeType: "cash_charity", fields: owner },
         { nodeType: "schedule_a", fields: owner },

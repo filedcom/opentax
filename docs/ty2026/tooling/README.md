@@ -24,8 +24,8 @@ folders. This fixes the old pre-reorganization path assumptions.
 ## Generated evidence
 
 The October 16 refresh loads 223 TY2025 nodes, 118 PDF descriptors and 158 MeF
-descriptors from 154 modules. It also loads 57 TY2026 nodes with 301 unique declared
-edges, including 15 edges to unregistered targets. Counts are recorded in
+descriptors from 154 modules. It also loads 59 TY2026 nodes with 305 unique declared
+edges, including 14 edges to unregistered targets. Counts are recorded in
 [`runtime-surface.json`](../inventories/runtime-surface.json), not hardcoded in the
 generator. Regeneration follows the checkout, including future main changes.
 

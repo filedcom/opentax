@@ -216,6 +216,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
         },
       };
     });
+    outputs.push({ nodeType: "form8839", fields: { wage_sources: input.w2s } });
     outputs.push({
       nodeType: "schedule_c",
       fields: { w2_sources_2026: input.w2s },

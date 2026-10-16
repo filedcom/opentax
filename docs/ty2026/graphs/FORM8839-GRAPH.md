@@ -135,15 +135,36 @@ does not wrongly reduce the 2026 opening balance. The corrected worksheet total
 must match the resulting 2021–2025 balances; only those balances enter 2026
 settlement. The original filed data and both allocation workpapers are retained.
 
-These remain **internal workpapers, not a registered public adoption route**.
-General and actual W-2 source routing, SSA source-review scope, the remaining
-earned-income consumers (EIC, care and education, including negative wage
-subtotals), public source registration, all 2026 PDF fields/continuations and native
-MeF remain to connect. Nonspouse allocations, combined unrelated adoption
-attempts, reimbursements of previously credited expenses, missing child
+### Development intake and remaining consumers
+
+The development registry now exposes `form8839` as a claim-only input. General
+supplies actual filer identity and dependent records; W-2 supplies issued wages
+and code T. The node reconciles the code T total and checks child identity against
+matching dependent records before emitting the retained source to AGI. Positive
+code T requires a reviewed adoption claim. An ordinary expense claim also works
+without W-2s. No caller-entered MAGI or credit capacity is accepted.
+
+Social Security review now names the actual adoption inventory when an exclusion
+applies; a contradictory no-exclusion review or a different inventory fails.
+EIC accepts signed wage subtotals and replays the adoption income operands against
+actual owners. Its disability-wage reconciliation uses wages before the adoption
+adjustment. Taxable employer adoption benefits count in EIC earnings; excluded
+benefits do not, following [Pub. 596](https://www.irs.gov/publications/p596).
+
+The ordinary no-claim care and education consumers accept signed wages. Care
+claims with unchanged reconciled wages and adult education claims proceed.
+Changed care wages still require reconciliation against the actual benefit
+workpaper; under-24 education claims and affected child-tax support cases retain
+explicit errors pending compensation treatment. In particular, the support test
+needs personal-service compensation, not an assumed taxable-wage substitute;
+see the [Form 8863 instructions](https://www.irs.gov/instructions/i8863).
+
+This is **development calculation intake, not public filing support**. Draft
+bundles reject adoption claims until all Form 8839 PDF fields and continuations
+are mapped. Native MeF remains open. Nonspouse allocations, combined unrelated
+adoption attempts, reimbursements of previously credited expenses, missing child
 identifiers, stronger foreign finality/history binding and the prior-benefit
-recovery destination remain open. No caller-entered MAGI or credit capacity
-has been added to public intake.
+recovery destination also remain open.
 
 The income sequence follows the current [Form 8839 instructions' line 25
 worksheet](https://www.irs.gov/instructions/i8839), [Pub. 915 Worksheet
@@ -154,11 +175,12 @@ rules](https://www.irs.gov/publications/p970). These publications still describe
 Fresh IRS checks on October 16 found that both the published and draft
 instruction URLs still serve **2025**. The visible 2026 draft form supplies the
 annual amounts and line destinations; the 2025 instructions are explicitly a
-method comparator. The current income/credit regression run passes 213 typed
+method comparator. The current income/credit regression run passes 281 typed
 tests, including shared 2025 child/adoption regressions, 2026 source workpapers,
-corrected carryforwards, child/energy ordering, Form 1062 replay and signed
-Form 1040 income. The repository unit gate
-passes 137 tests with 3,891 modules in preflight and unchanged runtime files.
+corrected carryforwards, child/energy ordering, Form 1062 replay, signed income,
+public claim routing and care/education reconciliation diagnostics. The repository
+unit gate passes 137 tests with 3,894 modules in preflight and unchanged runtime
+files.
 Full public return/PDF/MeF validation remains
 required below.
 
