@@ -9,13 +9,27 @@ import {
 } from "../../nodes/intermediate/forms/adjustments/health/form8889/contribution-limit.ts";
 import { hsa2026 } from "../../nodes/config/2026-hsa.ts";
 import { FilingStatus } from "../../nodes/types.ts";
+import {
+  compareHsaAmounts,
+  hsaExactAmount,
+  roundHsaAmount,
+} from "../../nodes/intermediate/forms/adjustments/health/form8889/exact-amount.ts";
 const ref = z.string().trim().min(1);
-const dollars = z.number().int().nonnegative().max(100000);
+// Bound the denominator so the reused worksheet's scaled integer sums stay
+// below Number.MAX_SAFE_INTEGER even before division by twelve.
+const share = z.object({
+  numerator: z.number().int().nonnegative().max(10_000_000),
+  denominator: z.number().int().min(1).max(10_000_000),
+}).strict().refine(
+  (s) => s.numerator <= s.denominator,
+  "HSA agreed share cannot exceed the family pool",
+);
 const allocation = z.object({
   record_reference: ref,
   agreed_by_both_spouses_verified: z.literal(true),
-  taxpayer_shared_family_limit: dollars,
-  spouse_shared_family_limit: dollars,
+  // Examples: 1/2 is equal allocation; 16/35 allocates $4,000 of $8,750.
+  // The spouse receives the exact remaining fraction, not a rounded remainder.
+  taxpayer_share: share,
 }).strict();
 export const hsaContributionLimits2026Schema = hsaContributionEvidence2026Schema
   .extend({
@@ -122,22 +136,21 @@ export function calculateHsaContributionLimits2026(
         c === C.Family && coverage[1][m] === C.Family
       ).length
       : 0;
-    const sharedLimit = Math.round(hsa2026.familyLimit * sharedMonths / 12);
-    if (sharedLimit > 0) {
-      if (
-        !split ||
-        split.taxpayer_shared_family_limit +
-              split.spouse_shared_family_limit !== sharedLimit
-      ) {
-        throw Error(
-          "HSA allocation must distribute exactly the shared family-month limit",
-        );
-      }
-    } else if (split) {
+    if (sharedMonths > 0 && !split) {
+      throw Error("HSA shared family months need the agreed allocation ratio");
+    } else if (sharedMonths === 0 && split) {
       throw Error(
         "HSA family allocation requires two account owners with shared eligible family months",
       );
     }
+    const denominator = split?.taxpayer_share.denominator ?? 1;
+    // One unit is 1/(1200 * denominator) dollars. Every monthly contribution
+    // and agreed allocation is integral in these units, so the existing
+    // worksheet's Math.round calls lose no precision.
+    const unitsPerDollar = 1200 * denominator;
+    const sharedUnits = hsa2026.familyLimit * 100 * sharedMonths * denominator;
+    const primaryUnits = hsa2026.familyLimit * 100 * sharedMonths *
+      (split?.taxpayer_share.numerator ?? 0);
     const limits = h.owners.map((o, i) => {
       if (!hasAccount[i]) return undefined;
       const soleMonths = paired
@@ -157,20 +170,25 @@ export function calculateHsaContributionLimits2026(
           ...(split
             ? {
               allocated_family_limit: i === 0
-                ? split.taxpayer_shared_family_limit
-                : split.spouse_shared_family_limit,
+                ? primaryUnits
+                : sharedUnits - primaryUnits,
             }
             : {}),
         },
-        hsa2026.selfOnlyLimit,
-        hsa2026.familyLimit,
-        hsa2026.catchupLimit,
-        split ? Math.round(hsa2026.familyLimit * soleMonths / 12) : 0,
+        hsa2026.selfOnlyLimit * unitsPerDollar,
+        hsa2026.familyLimit * unitsPerDollar,
+        hsa2026.catchupLimit * unitsPerDollar,
+        split ? hsa2026.familyLimit * 100 * soleMonths * denominator : 0,
       );
     });
     return {
       shared_family_months: sharedMonths,
-      shared_family_limit: sharedLimit,
+      shared_family_limit: hsaExactAmount(sharedUnits, unitsPerDollar),
+      total_limit: hsaExactAmount(
+        limits.reduce((sum, owner) => sum + (owner?.line8 ?? 0), 0),
+        unitsPerDollar,
+      ),
+      units_per_dollar: unitsPerDollar,
       limits,
     };
   };
@@ -179,27 +197,19 @@ export function calculateHsaContributionLimits2026(
     ? calculate(actual, review.monthly_baseline_allocation)
     : current;
   if (
-    lastMonth && paired && baseline.shared_family_limit > 0 &&
-    current.shared_family_limit === 0
+    lastMonth && paired && baseline.shared_family_limit.numerator > 0 &&
+    current.shared_family_limit.numerator === 0
   ) {
     throw Error(
       "HSA paired family-to-self last-month treatment needs a separate allocation review",
     );
   }
   if (lastMonth && review.allocation && review.monthly_baseline_allocation) {
-    // Retain the same agreed family share for the counterfactual monthly
-    // comparison. A second allocation cannot move capacity between owners to
-    // erase a later testing-period obligation. Assign rounding remainder once.
-    const primary = Math.round(
-      baseline.shared_family_limit *
-        review.allocation.taxpayer_shared_family_limit /
-        current.shared_family_limit,
-    );
+    const primary = review.allocation.taxpayer_share;
+    const monthly = review.monthly_baseline_allocation.taxpayer_share;
     if (
-      review.monthly_baseline_allocation.taxpayer_shared_family_limit !==
-        primary ||
-      review.monthly_baseline_allocation.spouse_shared_family_limit !==
-        baseline.shared_family_limit - primary
+      BigInt(primary.numerator) * BigInt(monthly.denominator) !==
+        BigInt(monthly.numerator) * BigInt(primary.denominator)
     ) {
       throw Error(
         "HSA monthly baseline must retain the agreed family allocation proportion",
@@ -207,16 +217,44 @@ export function calculateHsaContributionLimits2026(
     }
   }
   if (
-    lastMonth && current.limits.reduce((s, l) => s + (l?.line8 ?? 0), 0) <
-      baseline.limits.reduce((s, l) => s + (l?.line8 ?? 0), 0)
+    lastMonth &&
+    compareHsaAmounts(current.total_limit, baseline.total_limit) < 0
   ) {
     throw Error(
       "HSA December basis is below the monthly limit; use the monthly worksheet",
     );
   }
+  const project = (
+    l: NonNullable<typeof current.limits[number]>,
+    units: number,
+  ) => {
+    const exact = {
+      line3: hsaExactAmount(l.line3, units),
+      line5: hsaExactAmount(l.line5, units),
+      line6: hsaExactAmount(l.line6, units),
+      line7: hsaExactAmount(l.line7, units),
+      line8: hsaExactAmount(l.line8, units),
+    };
+    const line6 = roundHsaAmount(exact.line6),
+      line7 = roundHsaAmount(exact.line7);
+    return {
+      exact,
+      filed: {
+        line1: l.line1,
+        line3: roundHsaAmount(exact.line3),
+        line5: roundHsaAmount(exact.line5),
+        line6,
+        line7,
+        line8: line6 + line7,
+      },
+    };
+  };
   const owners = h.owners.flatMap((o, i) => {
-    const limits = current.limits[i], monthly = baseline.limits[i];
-    if (!limits || !monthly) return [];
+    const currentUnits = current.limits[i], baselineUnits = baseline.limits[i];
+    if (!currentUnits || !baselineUnits) return [];
+    const selected = project(currentUnits, current.units_per_dollar);
+    const prior = project(baselineUnits, baseline.units_per_dollar);
+    const limits = selected.filed, monthly = prior.filed;
     const funding = r.funding.owners.find((f) => f.owner_tin === o.owner_tin);
     return [{
       owner_tin: o.owner_tin,
@@ -225,17 +263,20 @@ export function calculateHsaContributionLimits2026(
       limit_coverage_by_month: elected[i],
       limits,
       monthly_baseline_limits: monthly,
+      exact_limits: selected.exact,
+      exact_monthly_baseline_limits: prior.exact,
       funding,
-      ...(lastMonth && limits.line8 > monthly.line8
+      ...(lastMonth &&
+          compareHsaAmounts(selected.exact.line8, prior.exact.line8) > 0
         ? {
           testing_obligation: {
             starts_on: "2026-12-01",
             ends_on: "2027-12-31",
             contribution_year: 2026,
             current_limit: limits.line8,
-            // Filed-dollar baseline only. Future recapture must replay the
-            // retained actual calendar/allocation before its own rounding.
             monthly_filed_limit: monthly.line8,
+            exact_current_limit: selected.exact.line8,
+            exact_monthly_limit: prior.exact.line8,
             eligibility_source_reference:
               o.eligibility.source_input.record_reference,
             allocation_source_reference: review.allocation?.record_reference,
@@ -253,8 +294,10 @@ export function calculateHsaContributionLimits2026(
   });
   return {
     source_input: { ...r.source_input, limit_review: review },
-    shared_family_limit: current.shared_family_limit,
-    monthly_shared_family_limit: baseline.shared_family_limit,
+    shared_family_limit: roundHsaAmount(current.shared_family_limit),
+    monthly_shared_family_limit: roundHsaAmount(baseline.shared_family_limit),
+    exact_shared_family_limit: current.shared_family_limit,
+    exact_monthly_shared_family_limit: baseline.shared_family_limit,
     owners,
   };
 }

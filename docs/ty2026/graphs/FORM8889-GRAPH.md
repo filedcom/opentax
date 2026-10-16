@@ -134,9 +134,16 @@ supports allocation but does not become a filed spouse deduction.
 The shared helper has an explicit monthly-only mode; existing 2025 callers keep
 their previous behavior. The 2026 workpaper separately retains actual monthly
 coverage and December/full-year coverage, with agreed allocations for each.
-The monthly comparison preserves the agreed family-share proportion and assigns
-the filed-dollar rounding remainder once, preventing an alternative allocation
-from hiding an owner's testing-period exposure.
+The monthly comparison preserves the agreed family-share proportion as an exact
+ratio. The shared worksheet operates in bounded integer units, retaining monthly
+fractions and each spouse's share without intermediate dollar rounding. Exact
+limits are stored as JSON-safe numerator/denominator pairs; filed lines are
+projected separately, with line 8 adding the filed lines 6 and 7. For one month
+of equally shared family coverage, each exact share is $4,375/12 and each owner
+form shows $365. Those two printed amounts do not authorize $730 of source
+contributions against the exact $4,375/6 shared pool. Equivalent allocation
+ratios are accepted, but changing proportions between current and baseline
+calculations is rejected.
 
 [Notice 2008-52](../corpus/authorities/n-08-52.pdf) is pinned for the monthly/full
 contribution comparison and testing-period rules. Its historical dollar amounts
@@ -144,19 +151,26 @@ and distribution-tax rate are not reused as 2026 parameters. Its full-year
 self-to-family example is covered: a full-year eligible owner can still need
 the monthly comparison when relying on the higher December limit. The workpaper
 retains the December 1, 2026–December 31, 2027 obligation with original calendars,
-allocation references and gross personal/employer funding. The stored monthly
-line is a **filed-dollar limit**, not a final recapture amount: the future Part III
-source replay must use the retained facts and its own rounding/treatment rules.
+allocation references and gross personal/employer funding. Exact current and
+monthly limits are retained alongside the filed-dollar projections, and even
+sub-dollar differences create a testing record. These are **limits, not final
+recapture amounts**: the future Part III source replay must reconcile actual
+funding and apply its own rounding/treatment rules.
 
 Current limits require reviewed absence of Archer MSA contributions and unchanged
-marital status and use agreed whole-dollar family allocations. Exact source-cent
-allocation/remainder treatment still needs reconciliation before final filing.
-Mixed spouse last-month elections where an account owner is
-December-ineligible, paired family-to-self last-month treatment, and other
-allocation/rounding cases rejected by the shared worksheet remain open work.
+marital status and use an agreed exact family-share ratio. Mixed spouse
+last-month elections where an account owner is December-ineligible, paired
+family-to-self last-month treatment, and coverage-choice cases rejected by the
+shared worksheet remain open work.
 This workpaper emits no deduction, excess tax or Part III tax, and does not
 register Form 8889. Qualified funding transfers, corrected/excess distributions,
 prior-year histories and graph/output reconciliation must be completed first.
+
+Exact-limit validation: 188 typed HSA source, worksheet, owner-return and MeF
+tests pass, including seven new exact-allocation cases covering all twelve month
+counts, unequal/boundary shares, mixed coverage, half-dollar ties and sub-dollar
+testing exposure. The unit gate passes 137 tests, resolves 3,802 graph modules
+and confirms unchanged runtime; formatting, lint and generated inventories pass.
 
 Limit validation: 181 typed HSA source, worksheet, owner-return and MeF tests pass,
 including 13 new limit/allocation/testing-record cases. The unit gate passes 137

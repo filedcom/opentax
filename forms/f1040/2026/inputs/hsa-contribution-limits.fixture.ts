@@ -65,8 +65,7 @@ export function hsaLimits2026(joint = false): HsaContributionLimits2026 {
           allocation: {
             record_reference: "agreed-allocation",
             agreed_by_both_spouses_verified: true,
-            taxpayer_shared_family_limit: 4375,
-            spouse_shared_family_limit: 4375,
+            taxpayer_share: { numerator: 1, denominator: 2 },
           },
         }
         : {}),

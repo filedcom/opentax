@@ -22,8 +22,8 @@ Deno.test("2026 HSA shared family limit is allocated once with independent catch
     ),
     [[8750, 4375, 1000, 5375], [8750, 4375, 1000, 5375]],
   );
-  s.limit_review.allocation!.taxpayer_shared_family_limit = 5000;
-  assertThrows(() => calculate(s), Error, "exactly the shared");
+  s.limit_review.allocation!.taxpayer_share = { numerator: 3, denominator: 2 };
+  assertThrows(() => calculate(s), Error, "cannot exceed the family pool");
 });
 Deno.test("2026 HSA spouse Medicare preserves sole family months and only the owner's eligible catch-up", () => {
   const s = hsaLimits2026(true);
@@ -33,8 +33,7 @@ Deno.test("2026 HSA spouse Medicare preserves sole family months and only the ow
     m.medicare.enrolled = true;
   }
   Object.assign(s.limit_review.allocation!, {
-    taxpayer_shared_family_limit: 2000,
-    spouse_shared_family_limit: 2375,
+    taxpayer_share: { numerator: 2000, denominator: 4375 },
   });
   const r = calculate(s);
   assertEquals(r.shared_family_limit, 4375);
@@ -60,8 +59,7 @@ Deno.test("2026 HSA mixed self and family months keep separate self-only capacit
     for (const m of owner.months.slice(0, 6)) m.plan_references = ["self-plan"];
   }
   Object.assign(s.limit_review.allocation!, {
-    taxpayer_shared_family_limit: 2000,
-    spouse_shared_family_limit: 2375,
+    taxpayer_share: { numerator: 2000, denominator: 4375 },
   });
   const r = calculate(s);
   assertEquals(r.owners.map((o) => o.limits.line3), [6575, 6575]);
@@ -105,14 +103,12 @@ Deno.test("2026 HSA paired last-month allocation preserves the actual family-sha
   s.limit_review.basis = "last_month";
   s.limit_review.last_month_testing_obligation_acknowledged = true;
   Object.assign(s.limit_review.allocation!, {
-    taxpayer_shared_family_limit: 4000,
-    spouse_shared_family_limit: 4750,
+    taxpayer_share: { numerator: 4000, denominator: 8750 },
   });
   s.limit_review.monthly_baseline_allocation = {
     ...s.limit_review.allocation!,
     record_reference: "monthly-allocation",
-    taxpayer_shared_family_limit: 2000,
-    spouse_shared_family_limit: 2375,
+    taxpayer_share: { numerator: 2000, denominator: 4375 },
   };
   const r = calculate(s);
   assertEquals(
@@ -121,8 +117,7 @@ Deno.test("2026 HSA paired last-month allocation preserves the actual family-sha
   );
   assertEquals(r.owners.every((o) => o.testing_obligation !== undefined), true);
   Object.assign(s.limit_review.monthly_baseline_allocation, {
-    taxpayer_shared_family_limit: 4000,
-    spouse_shared_family_limit: 375,
+    taxpayer_share: { numerator: 4000, denominator: 4375 },
   });
   assertThrows(() => calculate(s), Error, "allocation proportion");
 });
@@ -235,8 +230,7 @@ Deno.test("2026 HSA unchanged full-year family coverage cannot create a testing 
     undefined,
   ]);
   Object.assign(s.limit_review.monthly_baseline_allocation, {
-    taxpayer_shared_family_limit: 0,
-    spouse_shared_family_limit: 8750,
+    taxpayer_share: { numerator: 0, denominator: 8750 },
   });
   assertThrows(() => calculate(s), Error, "allocation proportion");
 });
