@@ -53,7 +53,7 @@ Deno.test("2026 foreign asset source values drive the shared threshold and summa
   });
   assertEquals(r.summary.partI.depositAccountCount, 1);
   assertEquals(r.summary.partI.depositMaximumValueUsd, 80000);
-  assertEquals(r.asset_values[0].maximum_date, "2026-06-30");
+  assertEquals(r.asset_values[0].threshold_maximum_date, "2026-06-30");
   assertEquals(r.filing_ready, false);
   assertEquals(JSON.parse(JSON.stringify(r)), r);
   assertThrows(() =>

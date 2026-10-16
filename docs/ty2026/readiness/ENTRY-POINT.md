@@ -152,8 +152,10 @@ The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its
 December 2026 disclosure draft and continuous-use instructions. The shared
 node currently files nothing. A 2026 source workpaper now reuses eligibility,
 threshold and summary checks while deriving ordinary asset values from dated
-portfolio records. Part III/IV return binding, special valuations, public graph
-intake, continuation PDF and current MeF output still must be completed.
+portfolio records, with separate trust/estate/pension/deferred-interest reporting
+and unavailable-value workpapers. Part III/IV return binding, grantor/joint-interest
+and mixed-availability cases, public graph intake, continuation PDF and current
+MeF output still must be completed.
 The [Form 4852 contract](../graphs/FORM4852-GRAPH.md) pins the
 current substitute W-2/1099-R form and maps its line 7/8 values through
 the 2026 wage, retirement, FICA and withholding owners, with printable

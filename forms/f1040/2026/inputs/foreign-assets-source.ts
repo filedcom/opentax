@@ -12,6 +12,10 @@ import {
   sourceCents,
 } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
+import {
+  foreignBeneficialInterest2026Schema,
+  prepareForeignBeneficialInterest2026,
+} from "./foreign-beneficial-interest.ts";
 
 const shared = createForm8938Schemas(2026);
 const ref = z.string().trim().min(1), date = z.string().date();
@@ -51,7 +55,11 @@ const asset = shared.assetSchema.innerType().omit({
   not_a_holding_already_represented_by_another_account_verified: z.literal(
     true,
   ),
-  valuation_method: z.literal("reviewed_fair_market_values"),
+  valuation_method: z.enum([
+    "reviewed_fair_market_values",
+    "beneficial_interest_workpaper",
+  ]),
+  beneficial_interest: foreignBeneficialInterest2026Schema.optional(),
   fx: evidence.extend({
     rate_date: z.literal("2026-12-31"),
     usd_per_currency_unit: rate,
@@ -93,7 +101,7 @@ export const foreignAssetClaim2026Schema = z.object({
       values: z.array(
         z.object({
           asset_reference: ref,
-          native_value: money,
+          native_value: money.optional(),
           source_document: evidence,
         }).strict(),
       ).min(1).max(100),
@@ -106,6 +114,7 @@ export const foreignAssetClaim2026Schema = z.object({
       tax_year: z.literal(2026),
       owner_tin: z.string().regex(/^\d{9}$/),
       timely_filed_or_included_in_current_return_reviewed: z.literal(true),
+      foreign_trust_beneficiary_part_iii_reviewed: z.literal(true).optional(),
       asset_references: z.array(ref).min(1).max(100),
     }).strict(),
   ).max(100),
@@ -193,6 +202,10 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
   };
   unique(c.record_reference);
   const fxByCurrency = new Map<string, number>();
+  const beneficialInterests = new Map<
+    string,
+    ReturnType<typeof prepareForeignBeneficialInterest2026>
+  >();
   for (const a of c.assets) {
     unique(a.asset_id);
     checkDocument(a.ownership_and_classification_document);
@@ -208,14 +221,37 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
       );
     }
     accounts.add(key);
-    if (
+    const specialValuation =
       a.asset_type === ForeignAssetType.ForeignTrustInterest ||
       a.asset_type === ForeignAssetType.ForeignPensionInterest ||
-      a.foreign_entity_type === "trust" || a.foreign_entity_type === "estate"
+      a.foreign_entity_type === "trust" || a.foreign_entity_type === "estate";
+    if (
+      specialValuation && a.valuation_method !== "beneficial_interest_workpaper"
     ) {
       throw Error(
         "Foreign trust, estate and pension interests need their separate distribution and beneficial-interest valuation workpaper",
       );
+    }
+    if (
+      (a.valuation_method === "beneficial_interest_workpaper") !==
+        !!a.beneficial_interest
+    ) {
+      throw Error(
+        "Foreign asset valuation method needs exactly its corresponding beneficial-interest workpaper",
+      );
+    }
+    if (a.beneficial_interest) {
+      const benefit = prepareForeignBeneficialInterest2026(
+        a.beneficial_interest,
+        {
+          ...a,
+          owner_tin: a.owner === "spouse" ? s.spouse_ssn ?? "" : s.taxpayer_ssn,
+        },
+        c.reviewed_on,
+      );
+      benefit.documents.forEach(checkDocument);
+      benefit.record_references.forEach(unique);
+      beneficialInterests.set(a.asset_id, benefit);
     }
     if (
       a.country === "US" ||
@@ -303,23 +339,48 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
         );
       }
       seen.add(value.asset_reference);
-      if (
-        value.native_value !== 0 &&
-        (a.opened_or_acquired_date &&
-            snapshot.valued_on < a.opened_or_acquired_date ||
-          a.closed_or_disposed_date &&
-            (snapshot.valued_on > a.closed_or_disposed_date ||
-              snapshot.observation === "year_end"))
-      ) {
+      const outsideHoldingPeriod = !!(a.opened_or_acquired_date &&
+          snapshot.valued_on < a.opened_or_acquired_date ||
+        a.closed_or_disposed_date &&
+          (snapshot.valued_on > a.closed_or_disposed_date ||
+            snapshot.observation === "year_end"));
+      const benefit = beneficialInterests.get(a.asset_id);
+      let native: number;
+      if (benefit && !benefit.threshold_fmv_known) {
+        if (value.native_value !== undefined) {
+          throw Error(
+            "Unknown foreign beneficial interests use the derived fallback, not an entered snapshot value",
+          );
+        }
+        native = outsideHoldingPeriod ? 0 : benefit.threshold_fallback_native!;
+      } else {
+        if (value.native_value === undefined) {
+          throw Error(
+            "Known foreign asset values require their actual source snapshot amount",
+          );
+        }
+        native = value.native_value;
+      }
+      if (native !== 0 && outsideHoldingPeriod) {
         throw Error(
           "Foreign asset values outside its holding period must be zero",
         );
       }
-      const units = usdUnits(value.native_value, a.fx.usd_per_currency_unit);
+      if (
+        snapshot.observation === "year_end" && benefit &&
+        benefit.source.kind !== "foreign_trust_beneficiary" &&
+        benefit.source.year_end_interest.kind === "known" &&
+        native !== benefit.source.year_end_interest.value_native
+      ) {
+        throw Error(
+          "Foreign beneficial year-end snapshot differs from its actual interest valuation document",
+        );
+      }
+      const units = usdUnits(native, a.fx.usd_per_currency_unit);
       const previous = maxima.get(a.asset_id);
       if (!previous || previous.units < units) {
         maxima.set(a.asset_id, {
-          native: value.native_value,
+          native,
           units,
           date: snapshot.valued_on,
         });
@@ -331,6 +392,10 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
       total += units * factor;
       return {
         ...value,
+        native_value: native,
+        valuation_basis: benefit && !benefit.threshold_fmv_known
+          ? "beneficial_interest_fallback" as const
+          : "source_fair_market_value" as const,
         usd_value: dollars(units),
         threshold_share: Number(factor) / 2,
       };
@@ -355,6 +420,24 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
     );
   }
   const peak = snapshots.reduce((a, b) => a.units >= b.units ? a : b);
+  const reportedUnits = new Map(c.assets.map((a) => {
+    const benefit = beneficialInterests.get(a.asset_id);
+    if (
+      benefit && !benefit.threshold_fmv_known &&
+      benefit.reported_maximum_native > 0 &&
+      maxima.get(a.asset_id)!.native === 0
+    ) {
+      throw Error(
+        "Foreign beneficial distributions need an active holding-period observation for their threshold fallback",
+      );
+    }
+    return [
+      a.asset_id,
+      benefit
+        ? usdUnits(benefit.reported_maximum_native, a.fx.usd_per_currency_unit)
+        : maxima.get(a.asset_id)!.units,
+    ];
+  }));
   const assets = c.assets.map((a) => {
     const maximum = maxima.get(a.asset_id)!,
       end = last.values.find((v) => v.asset_reference === a.asset_id)!;
@@ -367,14 +450,30 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
       );
     }
     if (
-      exception && (exception.form === "3520" || exception.form === "3520-A")
+      exception?.form === "3520-A"
     ) {
       throw Error(
-        "Foreign trust exception forms require the separate trust reporting and valuation workpaper",
+        "Foreign grantor trust exceptions require the separate ownership and paired 3520/3520-A filing workpaper",
+      );
+    }
+    if (exception?.form === "3520") {
+      const benefit = beneficialInterests.get(a.asset_id);
+      if (
+        benefit?.source.kind !== "foreign_trust_beneficiary" ||
+        !exception.foreign_trust_beneficiary_part_iii_reviewed ||
+        exception.owner_tin !== benefit.source.beneficiary_tin
+      ) {
+        throw Error(
+          "Foreign trust beneficiary exception needs the actual beneficiary's reviewed Form 3520 Part III",
+        );
+      }
+    } else if (exception?.foreign_trust_beneficiary_part_iii_reviewed) {
+      throw Error(
+        "Foreign trust Part III review belongs only to a Form 3520 exception",
       );
     }
     if (
-      exception && (
+      exception && exception.form !== "3520" && (
         ![ForeignAssetType.ForeignStock, ForeignAssetType.ForeignEntityInterest]
           .includes(a.asset_type) ||
         (exception.form === "8865"
@@ -392,6 +491,7 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
         _classification,
       not_a_holding_already_represented_by_another_account_verified: _holding,
       valuation_method: _method,
+      beneficial_interest: _beneficialInterest,
       fx,
       exception_form_reference: _exception,
       tax_items: _taxItems,
@@ -448,7 +548,7 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
         ? a.asset_type === ForeignAssetType.CustodialAccount
         : a.asset_type !== ForeignAssetType.DepositAccount &&
           a.asset_type !== ForeignAssetType.CustodialAccount)
-    ).reduce((n, a) => n + maxima.get(a.asset_id)!.units, 0n);
+    ).reduce((n, a) => n + reportedUnits.get(a.asset_id)!, 0n);
   return {
     source_input: s,
     valuation_input: input,
@@ -465,9 +565,18 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
     })),
     asset_values: c.assets.map((a) => ({
       asset_reference: a.asset_id,
-      maximum_date: maxima.get(a.asset_id)!.date,
-      maximum_reported_dollars: printedDollars(maxima.get(a.asset_id)!.units),
+      threshold_maximum_date: maxima.get(a.asset_id)!.date,
+      reported_value_date: beneficialInterests.has(a.asset_id)
+        ? "2026-12-31"
+        : maxima.get(a.asset_id)!.date,
+      maximum_reported_dollars: printedDollars(reportedUnits.get(a.asset_id)!),
+      reported_value_basis:
+        beneficialInterests.get(a.asset_id)?.reported_value_basis ??
+          "maximum_observed_fair_market_value",
     })),
+    beneficial_interest_workpapers: [...beneficialInterests.entries()].map((
+      [asset_reference, workpaper],
+    ) => ({ asset_reference, ...workpaper })),
     summary: {
       ...summary,
       partI: {
@@ -488,9 +597,11 @@ export function prepareForeignAssets2026(raw: ForeignAssetSource2026) {
         printed_amount: roundWholeDollars(item.amount_usd),
       }))
     ),
-    requires_tax_item_return_binding: c.assets.some((a) =>
-      a.tax_items.length > 0
-    ),
+    requires_tax_item_return_binding:
+      c.assets.some((a) => a.tax_items.length > 0) ||
+      [...beneficialInterests.values()].some((b) =>
+        b.distribution_rows.length > 0
+      ),
     requires_exception_filing_binding: c.exception_forms.length > 0,
     filing_ready: false as const,
   };

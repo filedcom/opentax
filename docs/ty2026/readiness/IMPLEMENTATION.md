@@ -105,7 +105,10 @@ continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
 Part III income reconciliation and repeated asset statements. The shared
 node produces no filed form. The 2026 ordinary-asset valuation workpaper now
 reuses eligibility/threshold/summary checks with dated source records; Part III/IV
-return binding, special valuations, public graph intake, PDF and MeF remain open.
+return binding, grantor/joint-interest and mixed-availability cases, public graph
+intake, PDF and MeF remain open. Separate trust/estate/pension/deferred-interest
+workpapers now distinguish reported values from threshold peaks and derive
+unavailable-value fallbacks from reviewed distributions and mandatory rights.
 The [Form 4852 contract](../graphs/FORM4852-GRAPH.md) pins its continuous-use form,
 correct line 7e/8f withholding labels and 34 PDF widgets. The shared node
 needs original/substitute deduplication, printed explanation fields and

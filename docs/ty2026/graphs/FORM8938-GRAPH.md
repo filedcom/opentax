@@ -116,9 +116,11 @@ The threshold and summary helpers reuse the rules in the
 [continuous-use instructions](https://www.irs.gov/instructions/i8938), which still
 serve the November 2021 revision. The current draft form remains December 2026.
 
-Reviewed Forms 5471/8621/8865 identify their exact asset sets and actual return
-owner. Repeated assets on one reviewed form copy count that form once; form types
-must match the foreign entity interest. These assets stay in threshold valuation
+Reviewed Forms 5471/8621/8865 and non-grantor beneficiary Forms 3520 identify
+their exact asset sets and actual return owner. Repeated assets on one reviewed
+form copy count that form once; form types must match the foreign entity interest.
+A beneficiary Form 3520 also requires review of that beneficiary's Part III.
+These assets stay in threshold valuation
 but leave Parts I/II detail totals. This is a source-copy workpaper, **not proof
 that an exception form has been filed or included in the executed return**.
 
@@ -132,9 +134,10 @@ registered as public claim intake or attached to a draft bundle yet.
 
 The next required stage must bind Part III items to actual income/credit sources
 and computed destinations, and Part IV to actual filing artifacts, before adding
-the graph owner and PDF. Foreign trust, estate and pension interests need their
-distribution/beneficial-interest valuation workpapers; the ordinary FMV route
-rejects them. Grantor-trust exceptions, partial reporting years, possession and
+the graph owner and PDF. Foreign trust, estate, pension and deferred-compensation
+interests now have separate distribution/beneficial-interest workpapers, described
+below. Grantor-trust exceptions, joint beneficial interests, mixed known/unknown
+annual availability, partial reporting years, possession and
 dual-resident exceptions, child interests under Form 8814, annual account-statement
 FX exceptions, and remaining source precision also remain required scope. Then
 complete the 131-widget PDF/continuations and current MeF/ATS gates above.
@@ -147,3 +150,56 @@ reviews, pending tax-item binding and the separate special-valuation gate.
 The 137-test repository unit gate also passes, with 3,910 graph modules in
 preflight and unchanged runtime files. These checks verify the valuation stage,
 not the remaining return/PDF/MeF route.
+
+## Beneficial-interest valuation workpapers
+
+`prepareForeignBeneficialInterest2026` now reconciles the actual individual
+beneficiary, asset classification, current-year receipts and year-end valuation
+documents before the portfolio stage. It follows
+[26 CFR 1.6038D-5(f)(2)-(3)](https://www.ecfr.gov/current/title-26/section-1.6038D-5),
+also published in the
+[IRS final regulations](https://www.irs.gov/irb/2014-53_IRB).
+
+Trust reporting combines current cash/property distributions, valued at year end,
+with the reviewed year-end section 7520 value of mandatory-distribution rights.
+The workpaper retains the governing instrument and section 7520 valuation source;
+it does not recompute a specialist actuarial appraisal. A separate affirmative
+instrument review can establish no mandatory rights. Pension, estate and deferred-
+compensation reporting uses the known year-end beneficial interest, or current
+distributions valued at year end when that interest is not reasonably accessible.
+The unavailable-value review requires neither knowledge nor reason to know from
+readily accessible information. Lack of a current withdrawal right alone is not
+used as that determination.
+
+Known FMV observations still determine threshold peaks. Unknown annual values use
+the prescribed derived fallback in active-period observations; callers must omit
+an invented snapshot balance. Rows identify their valuation basis. A terminated
+interest has zero year-end threshold value but can retain a positive annual
+distribution reporting value. Its fallback needs an active holding-period
+observation. The output separately retains `threshold_maximum_date`,
+`reported_value_date`, reporting basis and reported dollars. `valuation_input`
+remains a threshold workpaper, not a printable Part VI value source; the detailed
+reporting values and summary use the separate reported-value workpaper.
+
+Cash receipts and property appraisals retain native cents before the existing
+exact FX conversion. Recipient, currency, receipt chronology, year-end appraisal
+date, document consistency, source uniqueness and known year-end snapshot totals
+must reconcile. Known and unknown annual/year-end reviews cannot contradict each
+other. Joint interests need an ownership reconciliation beyond this individual-
+beneficiary workpaper. Grantor ownership and paired Forms 3520/3520-A remain
+separate required work; a non-grantor beneficiary's reviewed Form 3520 Part III
+copy can supply a pending exception entry but is not proof of filing.
+
+Distributions set `requires_tax_item_return_binding` even when no taxable item was
+entered. This requires later income-tax treatment review, including a supported
+nontaxable determination when applicable; valuation amounts never create income.
+An unavailable interest with no distributions and no mandatory rights retains
+zero value and remains in the asset count when another asset triggers filing.
+
+The subsequent targeted suite passes 38 tests, including 14 new beneficial-interest
+cases and all prior 2026 and 2025 valuation cases. It covers the distinct threshold
+and reporting values, known/unknown pensions/estates/deferred interests, section
+7520 source retention, zero-value interests, cents, terminations, availability and
+owner conflicts, beneficiary Form 3520, and the remaining grantor-trust gate.
+The repository unit gate passes 137 tests with 3,913 graph modules and unchanged
+runtime files. Public return binding and filed-output validation remain open.
