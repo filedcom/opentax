@@ -205,3 +205,17 @@ Static PDF checks read the Part I/II fields after flattening and reject stale
 Schedule 2 amounts; a representative combined form and Schedule 1 were rendered
 and visually inspected. Education-account distributions, advanced ABLE branches,
 remaining parts, final instructions and current MeF/ATS remain unfinished.
+
+## HSA Part VII annual source workpaper
+
+The [HSA contract](./FORM8889-GRAPH.md#annual-prior-excess-and-form-5329-part-vii)
+now joins latest filed 2025 owner history, current contribution room, ordinary
+taxable distributions and timely excess returns. It reuses shared 2025 carryover,
+deduction and six-percent arithmetic, retaining exact source fractions beside
+filed lines. Account-value caps include following-year designated contributions;
+prior filed tax must be positive to activate the carryforward. Owner totals
+identify Schedule 2 line 18, separately from the existing Part I/II line 5 route.
+
+This workpaper is not yet registered in the public owner collection or renderer.
+Coordinated HSA income/deduction, testing-period recapture, Form 1062
+classification and PDF reconciliation must precede that integration.

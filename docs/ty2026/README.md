@@ -433,9 +433,12 @@ reconciles dated medical reimbursements with Schedule A sources, and reuses
 Part II arithmetic with payment-specific age/disability exceptions. Timely
 personal/employer excess returns now bind original receipts and code-2 payments,
 retain 2027 earnings separately, and reconcile employer income with actual W-2s.
+An annual excess workpaper now replays filed 2025 owner history, absorbs prior
+excess using current room and taxable distributions, and computes Part VII tax
+with sourced year-end/following-year account-value caps and separate spouse lines.
 Basis-depleting/Roth funding, public retirement-income integration,
-remaining rollover/excess withdrawal and prior-excess settlement, graph binding
-and complete Form 8889
+remaining rollover/excess withdrawals, broader historical corrections,
+testing-period recapture, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule

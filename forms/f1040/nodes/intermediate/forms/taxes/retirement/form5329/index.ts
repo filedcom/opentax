@@ -1,3 +1,5 @@
+import { excessContributionTax as excessContribTax } from "./excess-contribution-tax.ts";
+import { hsaPriorExcess } from "../../../adjustments/health/form8889/prior-excess.ts";
 import { earlyDistributionAdditionalTax } from "./early-tax.ts";
 import {
   ableDistributionAmounts,
@@ -24,8 +26,6 @@ import { TS, tsSchema } from "../../../../../types.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
-// IRC §4973 — excess contribution excise tax rate (Parts III–VIII)
-const EXCESS_CONTRIB_RATE = 0.06;
 // IRC §4979 — Part II ESA/ABLE distribution penalty rate
 const ESA_ABLE_RATE = 0.10;
 
@@ -226,7 +226,9 @@ function partI_regularTax(input: Form5329Input): number {
         "Form5329 converted Roth owner/early source differs from complete retained inventory",
       );
     }
-    return roundWholeDollars(earlyDistributionAdditionalTax(netSubjectToTax, 0));
+    return roundWholeDollars(
+      earlyDistributionAdditionalTax(netSubjectToTax, 0),
+    );
   }
   return earlyDistributionAdditionalTax(netSubjectToTax, 0);
 }
@@ -259,18 +261,6 @@ export function partII_tax(input: Form5329Input): number {
   const exception = input.esa_able_exception ?? 0;
   const netSubjectToTax = Math.max(0, dist - exception);
   return netSubjectToTax * ESA_ABLE_RATE;
-}
-
-// 6% excise on excess account contributions: min(excess, account_value) × 6%
-// IRC §4973; Form 5329 Parts III–VIII
-function excessContribTax(excess: number, accountValue?: number): number {
-  if (excess <= 0) return 0;
-  if (accountValue === undefined) {
-    throw new Error(
-      "Form 5329 needs the December 31 account value to calculate excess-contribution tax",
-    );
-  }
-  return Math.min(excess, accountValue) * EXCESS_CONTRIB_RATE;
 }
 
 // Part III, Line 17: 6% excise on excess traditional IRA contributions
@@ -416,13 +406,14 @@ export function calculateOwnerForms(rawInput: Form5329Collection) {
     const regular = sumAmounts(ownerInput.early_distribution);
     const simple = sumAmounts(ownerInput.simple_ira_early_distribution);
     const hsa = ownerInput.hsa_part_vii;
-    const hsaLine45 = hsa
-      ? hsa.line43_unused_contribution_room + hsa.line44_taxable_distributions
-      : 0;
-    const hsaLine46 = hsa
-      ? Math.max(0, hsa.line42_prior_excess - hsaLine45)
-      : 0;
-    const hsaLine48 = hsa ? hsaLine46 + hsa.line47_current_year_excess : 0;
+    const hsaAmounts = hsa
+      ? hsaPriorExcess(
+        hsa.line42_prior_excess,
+        hsa.line43_unused_contribution_room,
+        hsa.line44_taxable_distributions,
+        hsa.line47_current_year_excess,
+      )
+      : undefined;
     return {
       ...ownerInput,
       ...(regular > 0 ? { early_distribution: regular } : {}),
@@ -442,10 +433,10 @@ export function calculateOwnerForms(rawInput: Form5329Collection) {
           print_hsa_line42: hsa.line42_prior_excess,
           print_hsa_line43: hsa.line43_unused_contribution_room,
           print_hsa_line44: hsa.line44_taxable_distributions,
-          print_hsa_line45: hsaLine45,
-          print_hsa_line46: hsaLine46,
+          print_hsa_line45: hsaAmounts!.line45,
+          print_hsa_line46: hsaAmounts!.line46,
           print_hsa_line47: hsa.line47_current_year_excess,
-          print_hsa_line48: hsaLine48,
+          print_hsa_line48: hsaAmounts!.line48,
           print_hsa_line49: partVII_tax(ownerInput),
         }
         : {}),

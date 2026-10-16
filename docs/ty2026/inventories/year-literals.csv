@@ -1098,30 +1098,30 @@ forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distri
 forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts,184,"taxYear = 2025,"
 forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts,290,"ledger.prior_year.annual_hdhp_deductible_on_2025_01_01,"
 forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/employer-postyear-evidence-schema.ts,9,"filed_2025_w2: document,"
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,56,// Distribution-only filers may have no 2025 HDHP.
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,75,// 2025 W-2 box 12 code W amount. Form 8889 line 9 may differ after the
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,79,"made_in_2025_for_2024_in_w2: z.number().nonnegative(),"
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,80,"made_in_2026_for_2025: z.number().nonnegative(),"
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,85,// withdrawal reduces the 2025 excess base but is not a 2025 distribution.
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,91,"withdrawal_tax_year: z.union([z.literal(2025), z.literal(2026)]),"
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,93,// A 2025 payment to the HSA owner reaches lines 14a/14b and must
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,107,// the 2025 HSA balance. A zero prior-year line 49 stops the carryover.
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,262,// The 2025 line 18 is recalculated from the filed 2024 contribution lines
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,428,// 2025 Part III line 18 uses the 2024 Line 3 Limitation Chart and Worksheet.
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,442,"""Form 8889 last-month rule needs twelve 2025 eligibility facts showing a testing-period failure"","
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,642,// The 2025 line 3 worksheet averages one limit for each eligible month. An
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,645,"// December-coverage amount. See 2025 Instructions for Form 8889, line 3."
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,653,// Preserve the established 2025 input key; the shared worksheet names the
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,673,"""Form 8889 employer contributions need the 2025 Employer Contribution Worksheet year facts"","
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,676,const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,680,"years?.made_in_2026_for_2025 ?? 0,"
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,762,const employerCurrentYear = employerTimely?.withdrawal_tax_year === 2025
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,769,(employerTimely?.withdrawal_tax_year === 2025
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,847,const employerCode2 = employerTimely?.withdrawal_tax_year === 2025
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,855,"""Form 8889 post-year employer excess withdrawal cannot claim a 2025 Form 1099-SA source"","
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1074,?.withdrawal_tax_year === 2025
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1170,?.withdrawal_tax_year === 2025
-forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1541,// distribution-only or Part III-only filer need not have 2025 HDHP coverage.
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,57,// Distribution-only filers may have no 2025 HDHP.
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,76,// 2025 W-2 box 12 code W amount. Form 8889 line 9 may differ after the
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,80,"made_in_2025_for_2024_in_w2: z.number().nonnegative(),"
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,81,"made_in_2026_for_2025: z.number().nonnegative(),"
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,86,// withdrawal reduces the 2025 excess base but is not a 2025 distribution.
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,92,"withdrawal_tax_year: z.union([z.literal(2025), z.literal(2026)]),"
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,94,// A 2025 payment to the HSA owner reaches lines 14a/14b and must
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,108,// the 2025 HSA balance. A zero prior-year line 49 stops the carryover.
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,263,// The 2025 line 18 is recalculated from the filed 2024 contribution lines
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,429,// 2025 Part III line 18 uses the 2024 Line 3 Limitation Chart and Worksheet.
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,443,"""Form 8889 last-month rule needs twelve 2025 eligibility facts showing a testing-period failure"","
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,643,// The 2025 line 3 worksheet averages one limit for each eligible month. An
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,646,"// December-coverage amount. See 2025 Instructions for Form 8889, line 3."
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,654,// Preserve the established 2025 input key; the shared worksheet names the
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,674,"""Form 8889 employer contributions need the 2025 Employer Contribution Worksheet year facts"","
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,677,const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,681,"years?.made_in_2026_for_2025 ?? 0,"
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,763,const employerCurrentYear = employerTimely?.withdrawal_tax_year === 2025
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,770,(employerTimely?.withdrawal_tax_year === 2025
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,848,const employerCode2 = employerTimely?.withdrawal_tax_year === 2025
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,856,"""Form 8889 post-year employer excess withdrawal cannot claim a 2025 Form 1099-SA source"","
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1075,?.withdrawal_tax_year === 2025
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1171,?.withdrawal_tax_year === 2025
+forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts,1540,// distribution-only or Part III-only filer need not have 2025 HDHP coverage.
 forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts,10,"originating_tax_year: z.literal(2025),"
 forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts,18,"tax_year: z.literal(2025),"
 forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts,50,/** Storage-ready Worksheet 9 result when all credit originates in TY2025. */
@@ -1755,7 +1755,7 @@ forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/index.ts,694,// 2
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts,110,"review.participant_death_date > ""2025-12-31"")) ||"
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts,2,* IRS 2025 i1040gi: add amounts including cents and round only the total.
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts,3,* IRS 2025 Form 4972: NUA worksheet C and line 20 use >= three decimal places.
-forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts,25,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts,27,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts,95,"// FMV of traditional IRAs on Dec 31, 2025 (caps the 6% tax base)"
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts,101,"// FMV of Roth IRAs on Dec 31, 2025 (caps the 6% tax base)"
 forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts,107,"// FMV of Coverdell ESAs on Dec 31, 2025 (caps the 6% tax base)"

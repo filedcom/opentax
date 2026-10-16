@@ -1,3 +1,4 @@
+import { hsaPriorExcess } from "./prior-excess.ts";
 import {
   hsaDistributionAdditionalTax,
   hsaTaxableDistributions,
@@ -1507,10 +1508,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     );
     const line14b = excludedDistributions(input, ctx.taxYear);
     const taxable = taxableDistributions(input, line14b.excluded);
-    const priorYearDeduction = Math.min(
-      line43,
-      Math.max(0, line42 - taxable),
-    );
+    const priorYearDeduction =
+      hsaPriorExcess(line42, line43, taxable, 0).priorYearDeduction;
     const deductible = currentDeduction + priorYearDeduction;
     const excess = excessContributions(input, currentDeduction) +
       employerExcess -

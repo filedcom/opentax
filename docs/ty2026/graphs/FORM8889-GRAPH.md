@@ -364,7 +364,8 @@ reconcile box 1 before and after HSA excess inclusion. Only that proved inclusio
 reduces the remaining employer-excess income. Returned principal, current-year
 earnings and employer excess are separate outputs, not one taxable withdrawal.
 The workpaper retains exact fractional limits and separate personal/employer
-balances; it does not yet calculate final Form 5329 tax or prior excess.
+balances; the annual workpaper below consumes them for prior excess and
+Form 5329 Part VII tax.
 
 The [2026 Form 8889 instructions](https://www.irs.gov/pub/irs-dft/i8889--dft.pdf)
 and [Form 5329 instructions](https://www.irs.gov/pub/irs-dft/i5329--dft.pdf)
@@ -384,6 +385,48 @@ owner-return and MeF checks pass, including 21 new excess-return cases. The
 unit gate passes 137 tests with 3,820 graph modules and unchanged runtime.
 Formatting, lint and inventory checks pass. The current draft Form 8889 and
 Form 5329 instructions match their pinned hashes on October 16, 2026.
+
+## Annual prior excess and Form 5329 Part VII
+
+`hsa-annual-excess.ts` replays the complete contribution, medical-distribution
+and timely-return sources before calculating each owner's Part VII. A history
+review either documents no unresolved prior excess or identifies the latest
+filed original/amended 2025 return, with no pending corrections. Filed lines
+42–49 must reconcile to each other and to distinct owner account values. The
+2026 funding ledger supplies actual 2026 receipts designated for 2025 when
+checking the prior account-value cap; the supported history route requires no
+timely returned 2025 contributions among those receipts.
+
+The [2026 Form 5329 instructions](https://www.irs.gov/pub/irs-dft/i5329--dft.pdf)
+activate line 42 only when filed 2025 line 49 is positive. Shared 2025 arithmetic
+combines unused personal contribution room and ordinary taxable distributions,
+reduces the prior balance, and adds retained current personal/employer excess.
+The corresponding prior-excess deduction increases Form 8889 line 13 once.
+Source monthly fractions remain exact alongside independently replayed filed
+lines; spouses retain separate balances, deductions and rounded taxes.
+
+The [2026 form](https://www.irs.gov/pub/irs-dft/f5329--dft.pdf) caps line 49 using
+December 31 values plus contributions made in 2027 for 2026. The workpaper
+retains each Form 5498-SA value and dated following-year receipt. Applying the
+instructions' treatment of timely returned principal as not contributed, it
+removes allocations to those following-year receipts from that addition;
+it does not subtract current-year principal or earnings from December 31 FMV.
+The unchanged shared six-percent calculation supplies filed line 49 and the
+owner totals for Schedule 2 **line 18**. Positive excess still requires Part VII
+when the value cap makes the tax zero; carryforward follows the positive filed
+tax condition rather than silently carrying every positive source balance.
+
+Annual excess validation covers 414 focused HSA/IRA/retirement and 2025
+regressions, including 13 annual cases. The rounding boundary also requires
+Part VII when returned source excess is zero but replayed filed excess is
+positive. The current Form 5329 and instruction hashes match the pinned
+authorities on October 16, 2026. The final unit gate passes 137 checks
+with 3,824 graph modules and unchanged runtime; formatting, lint and
+generated-inventory checks pass.
+
+This is an internal source workpaper. Public graph/PDF attachment binding,
+Part III testing-period recapture, broader historical corrections and the
+remaining advanced HSA routes are still required for complete return support.
 
 ## Required source integration
 
