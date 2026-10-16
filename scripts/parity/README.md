@@ -39,6 +39,14 @@ diff -r scripts/parity/golden/cases /tmp/candidate
 diff scripts/parity/golden/smoke/opentax-linux-x64.json /tmp/smoke.json
 ```
 
+The other files in `golden/smoke/` come from the dry-run release workflow (run
+38963876459, Deno 2.x, version `0.0.0-dev`), one per platform, each smoke-tested
+on its own runner; `opentax-linux-x64.ci.json` is the same platform as the local
+file. They differ from the local recording in only two known ways: CI binaries
+print `Update available: 0.0.0-dev → <latest>` on stderr (a `dev` build never
+checks), and Windows writes `\` in the one output path. Otherwise all five are
+identical, PDF bytes included.
+
 `capture.ts` uses only `node:` built-ins, so the same file runs under Deno and
 Bun. The release workflow uploads a `smoke-transcript-<asset>` artifact per
 platform; a dry run of it on the last Deno commit gives the other four
