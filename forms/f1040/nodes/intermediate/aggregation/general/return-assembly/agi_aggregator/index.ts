@@ -85,7 +85,8 @@ export const inputSchema = z.object({
   // Line 1e — Taxable dependent care benefits (Form 2441)
   line1e_taxable_dep_care: z.number().nonnegative().optional(),
   // Line 1f — Employer adoption benefits (Form 8839)
-  line1f_taxable_adoption_benefits: z.number().nonnegative().optional(),
+  // Form 8839 line 31 can be negative for a special-needs exclusion.
+  line1f_taxable_adoption_benefits: z.number().finite().optional(),
   // Line 1g — Wages from Form 8919 (uncollected SS/Medicare)
   line1g_wages_8919: z.number().nonnegative().optional(),
   // Line 2b — Taxable interest (Schedule B Part I)
@@ -672,7 +673,7 @@ export function socialSecurityWorksheetIncome(input: AgiInput) {
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
 // This is what appears on Form 1040 line 8.
-function scheduleOnePartI(input: AgiInput): number {
+export function scheduleOnePartI(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +

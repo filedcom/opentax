@@ -33,7 +33,7 @@ export const inputSchema = identityInputSchema.extend({
   line1c_unreported_tips: amount.optional(),
   line1d_medicaid_waiver: amount.optional(),
   line1e_taxable_dep_care: amount.optional(),
-  line1f_taxable_adoption_benefits: amount.optional(),
+  line1f_taxable_adoption_benefits: z.number().finite().optional(),
   line1g_wages_8919: amount.optional(),
   line1h_other_earned: accumulableSignedAmount.optional(),
   line1i_combat_pay: amount.optional(),

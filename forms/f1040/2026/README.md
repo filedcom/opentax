@@ -1177,6 +1177,9 @@ late credit calculations. Both years reuse the phaseout arithmetic with separate
 annual limits. Current refundable credit and prior nonrefundable carryforwards
 remain distinct; oldest balances are used first and expire after five years.
 
-These workpapers are not yet public graph inputs. AGI/exclusion ordering, final
-credit bindings, owner draft forms, foreign prior-benefit recovery and native
+The internal AGI adapter now derives exclusion MAGI from return income, computes
+Social Security with the exclusion addback, preserves signed line 1f and applies
+student-loan interest after exclusion. These workpapers are not yet public graph
+inputs. Public source routing, earned-income consumer reconciliation, final credit
+bindings, Form 1062 replay, draft forms, foreign prior-benefit recovery and native
 filing remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).

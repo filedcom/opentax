@@ -1,4 +1,10 @@
 import {
+  adoptionSource2026Schema,
+  prepareAdoptionSources2026,
+} from "../inputs/adoption-source.ts";
+import { calculateAdoptionExclusion2026 } from "../inputs/adoption-settlement.ts";
+import { sumSourceMoney } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+import {
   calculateHsaReturnSources2026,
   hsaReturnSource2026Schema,
 } from "../inputs/hsa-source.ts";
@@ -39,11 +45,16 @@ import {
   agi_aggregator,
   computeSsaTaxable,
   inputSchema as sharedSchema,
+  scheduleOnePartI,
   socialSecurityWorksheetIncome,
 } from "../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { agi2026 } from "../../nodes/config/2026-agi.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
+
+function sumIncome(value: number | number[] | undefined): number {
+  return Array.isArray(value) ? value.reduce((a, b) => a + b, 0) : value ?? 0;
+}
 
 /** Audited income/adjustment bridges; activity-limit routes are added with their owners. */
 export const inputSchema = sharedSchema.pick({
@@ -97,6 +108,7 @@ export const inputSchema = sharedSchema.pick({
   line23_archer_msa_deduction: true,
   line24f_501c18d: true,
 }).extend({
+  adoption_sources_2026: adoptionSource2026Schema.optional(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
   gambling_sources_2026: gamblingSource2026Schema.optional(),
@@ -259,6 +271,45 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
+    const adoption = input.adoption_sources_2026
+      ? prepareAdoptionSources2026(input.adoption_sources_2026)
+      : undefined;
+    if (adoption) {
+      if (
+        adoption.source_input.filing_status !== input.filing_status ||
+        roundWholeDollars(sumSourceMoney(adoption.source_input.wage_sources.map(
+            (w) => w.box1_wages,
+          ))) !== (input.line1a_wages ?? 0)
+      ) {
+        throw Error(
+          "Adoption income must reconcile return filing status and W-2 wages",
+        );
+      }
+      if (input.line1f_taxable_adoption_benefits !== undefined) {
+        throw Error("Adoption sources must own line 1f before AGI");
+      }
+      if (
+        adoption.children.some((child) =>
+          child.report_child && child.prior_foreign_benefits > 0
+        )
+      ) {
+        throw Error(
+          "Prior foreign adoption benefits need affected-year recovery reconciliation before AGI",
+        );
+      }
+      if (input.line6b_ss_taxable !== undefined) {
+        throw Error(
+          "Adoption sources must precede calculated Social Security benefits",
+        );
+      }
+      // Pub. 915 adds Form 8839 line 30 back to taxable wages. Computing
+      // with all current benefits first makes SSA independent of the exclusion,
+      // including a special-needs exclusion greater than cash benefits.
+      input.line1f_taxable_adoption_benefits = adoption.partIII_line23 +
+        adoption.taxable_benefits_outside_partIII;
+    } else if ((input.line1f_taxable_adoption_benefits ?? 0) !== 0) {
+      throw Error("Adoption income needs reconciled source records before AGI");
+    }
     let socialSecurityWorksheet;
     let lumpSumElection;
     if (input.social_security_lump_sum && input.line6a_ss_gross === undefined) {
@@ -291,6 +342,10 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
         line8z_taxable_grants: (input.line8z_taxable_grants ?? 0) +
           (input.line8z_family_leave ?? 0),
       });
+      if (adoption) {
+        // Worksheet 1 line 7 omits Schedule 1 line 24 adjustments.
+        income.adjustments_except_student_loan -= input.line24f_501c18d ?? 0;
+      }
       const calculated = roundWholeDollars(computeSsaTaxable(
         input.line6a_ss_gross,
         income.other_income + income.foreign_earned_income_exclusion -
@@ -363,7 +418,49 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       // SSA worksheet, so the calculation is ordered rather than iterative.
       input.line6b_ss_taxable = taxable;
     }
+    const adoptionExclusion = adoption
+      ? calculateAdoptionExclusion2026(adoption.source_input, {
+        wages_if_all_line23_benefits_excluded: [
+          input.line1a_wages,
+          input.line1b_household_wages,
+          input.line1c_unreported_tips,
+          input.line1e_taxable_dep_care,
+          input.line1g_wages_8919,
+          input.line1h_other_earned,
+          adoption.taxable_benefits_outside_partIII,
+        ].reduce<number>(
+          (sum, v) =>
+            sum + (Array.isArray(v) ? v.reduce((a, b) => a + b, 0) : v ?? 0),
+          0,
+        ),
+        taxable_interest: input.line2b_taxable_interest ?? 0,
+        ordinary_dividends: sumIncome(input.line3b_ordinary_dividends),
+        taxable_ira: input.line4b_ira_taxable ?? 0,
+        taxable_pensions: sumIncome(input.line5b_pension_taxable),
+        taxable_social_security: input.line6b_ss_taxable ?? 0,
+        capital_gain_or_loss: input.line7_capital_gain ?? 0,
+        schedule1_line10: scheduleOnePartI(input) +
+          (input.line8z_family_leave ?? 0),
+        schedule1_adjustments_excluding_student_loan_interest:
+          socialSecurityWorksheetIncome(input).adjustments_except_student_loan -
+          (input.line24f_501c18d ?? 0),
+        magi_additions: {
+          form2555_line45: input.line8d_foreign_earned_income_exclusion ?? 0,
+          form2555_line50: 0,
+          puerto_rico_excluded_income: 0,
+          form4563_line15: 0,
+        },
+      })
+      : undefined;
+    if (adoptionExclusion) {
+      input.line1f_taxable_adoption_benefits =
+        adoptionExclusion.line1f_taxable_adoption_benefits;
+      if (socialSecurityWorksheet) {
+        socialSecurityWorksheet.other_income -= adoptionExclusion.lines.line30;
+      }
+    }
     const {
+      adoption_sources_2026: _adoptionSources,
       business_sources_2026,
       business_loss_sources_2026: _lossSources,
       gambling_sources_2026,
@@ -640,11 +737,30 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           : {}),
       },
     });
+    if (adoptionExclusion) {
+      outputs.push({
+        nodeType: "agi_aggregator",
+        fields: { adoption_exclusion_2026: adoptionExclusion },
+      }, {
+        nodeType: "f1040",
+        fields: {
+          line1f_taxable_adoption_benefits:
+            adoptionExclusion.line1f_taxable_adoption_benefits,
+        },
+      });
+    }
     if (socialSecurityWorksheet) {
       outputs.push({
         nodeType: "agi_aggregator",
         fields: {
-          social_security_worksheet_2026: socialSecurityWorksheet,
+          social_security_worksheet_2026: {
+            ...socialSecurityWorksheet,
+            ...(adoptionExclusion
+              ? {
+                adoption_benefits_exclusion: adoptionExclusion.lines.line30,
+              }
+              : {}),
+          },
         },
       });
       outputs.push({

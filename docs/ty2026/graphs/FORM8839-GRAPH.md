@@ -77,22 +77,50 @@ remain nonrefundable even above the current MAGI phaseout. Receipt cents are
 summed before filed lines; the 2026 calculation rounds printed child lines to
 dollars while the shared 2025 source calculation retains its original convention.
 
-These are **internal workpapers, not a registered return route**. The exclusion
-MAGI/AGI sequence, final credit ordering, public source registration, all 2026
-PDF fields/continuations and native MeF remain to connect. Nonspouse allocations,
-combined unrelated adoption attempts, reimbursements of previously credited
-expenses, missing child identifiers, stronger foreign
-finality/history binding and the prior-benefit recovery destination remain open.
-No caller-entered MAGI or credit capacity has been added to public intake.
+The internal AGI adapter now consumes the retained adoption source ledger and
+reconciles its filing status and rounded W-2 wages to the incoming income graph.
+It derives the Part III worksheet from those income lines and Schedule 1,
+without accepting entered adoption MAGI or line 1f. Social Security is computed
+with current employer benefits before exclusion: the taxable wage adjustment
+and Pub. 915's exclusion addback cancel, including when a special-needs exclusion
+exceeds cash benefits. The chosen lump-sum election amount then enters exclusion
+MAGI. The adapter calculates the signed line 1f, student-loan interest using
+post-exclusion income, and final AGI in that order. Retained SSA workpapers show
+both the actual taxable wages and the separate adoption exclusion addback.
+
+The shared income aggregator and 2026 Form 1040 now preserve signed adoption
+income. Shared Schedule 1 arithmetic supplies the exclusion worksheet rather
+than a second list of income rules. Schedule 1 line 24 adjustments and student-
+loan interest are omitted from the adoption exclusion worksheet's prescribed
+adjustments; foreign earned income is added back. Current benefits for pending
+foreign adoptions remain taxable outside Part III. Previously taxed foreign
+benefits still require affected-year recovery reconciliation and cannot enter
+this internal income path yet.
+
+These remain **internal workpapers, not a registered public adoption route**.
+General and actual W-2 source routing, SSA source-review scope, all earned-income
+consumers (including a negative wage subtotal), final credit ordering, Form 1062
+replay, public source registration, all 2026 PDF fields/continuations and native
+MeF remain to connect. Nonspouse allocations, combined unrelated adoption
+attempts, reimbursements of previously credited expenses, missing child
+identifiers, stronger foreign finality/history binding and the prior-benefit
+recovery destination remain open. No caller-entered MAGI or credit capacity
+has been added to public intake.
+
+The income sequence follows the current [Form 8839 instructions' line 25
+worksheet](https://www.irs.gov/instructions/i8839), [Pub. 915 Worksheet
+1](https://www.irs.gov/publications/p915) and [Pub. 970 student-loan MAGI
+rules](https://www.irs.gov/publications/p970). These publications still describe
+2025 and remain method comparators pending final 2026 instructions.
 
 Fresh IRS checks on October 16 found that both the published and draft
 instruction URLs still serve **2025**. The visible 2026 draft form supplies the
 annual amounts and line destinations; the 2025 instructions are explicitly a
-method comparator. The new workpapers and unchanged 2025 source/settlement
-route pass 42 typed tests covering reimbursement, timing, special needs, signed
-benefits, phaseout, multiple children, joint owners, MFS evidence and carryforward
-expiry. The repository unit gate passes 137 tests with 3,888 modules in
-preflight and unchanged runtime files. Full return/PDF/MeF validation remains
+method comparator. The current income/source regression run passes 156 typed
+tests, including shared 2025 AGI/adoption regressions, 2026 source workpapers,
+SSA/election calculations and signed Form 1040 income. The repository unit gate
+passes 137 tests with 3,889 modules in preflight and unchanged runtime files.
+Full public return/PDF/MeF validation remains
 required below.
 
 ## Build order and acceptance

@@ -1044,9 +1044,9 @@ forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.ts,47,* Computes t
 forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.ts,11,"} from ""../../../../../2025/domains/taxes/underpayment/form2210/form2210_box_e.ts"";"
 forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.ts,41,"// Part II box E: joint filing status changed between 2024 and 2025, and"
 forms/f1040/nodes/inputs/taxes/underpayment/f2210f/index.ts,8,"} from ""../../../../../2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts"";"
-forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,585,/** Replay the TY2025 Schedule 1 line 21 result from retained AGI inputs. */
-forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,586,export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
-forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,587,"return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);"
+forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,586,/** Replay the TY2025 Schedule 1 line 21 result from retained AGI inputs. */
+forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,587,export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
+forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,588,"return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);"
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts,18,"import { ty2025IrsCountryCodeSchema } from ""../../../../../irs_country_code.ts"";"
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts,46,"irs_code: ty2025IrsCountryCodeSchema,"
 forms/f1040/nodes/intermediate/aggregation/taxes/other/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
