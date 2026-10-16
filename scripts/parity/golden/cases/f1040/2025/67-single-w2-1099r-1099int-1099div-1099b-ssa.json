@@ -1,0 +1,263 @@
+{
+  "case": "f1040/2025/67-single-w2-1099r-1099int-1099div-1099b-ssa",
+  "steps": [
+    {
+      "argv": [
+        "return",
+        "create",
+        "--year",
+        "2025",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"returnId\": \"<returnId>\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "start",
+        "{\"general\":{\"filing_status\":\"single\",\"taxpayer_first_name\":\"John\",\"taxpayer_last_name\":\"James\",\"address_city\":\"Springfield\",\"address_zip\":\"62701\",\"address_state\":\"IL\"}}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"start_01\",\n  \"nodeType\": \"start\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "w2",
+        "{\"box1_wages\":67.5,\"box2_fed_withheld\":0,\"box3_ss_wages\":67.5,\"box4_ss_withheld\":4.19,\"box5_medicare_wages\":67.5,\"box6_medicare_withheld\":0.98,\"employer_name\":\"ACME INDUSTRIES INC\",\"employer_ein\":\"11-1000001\"}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"w2_01\",\n  \"nodeType\": \"w2\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099int",
+        "{\"payer_name\":\"FIRST NATIONAL BANK\",\"box1\":1.32,\"payer_tin\":\"12-1000002\",\"source_document_reference\":\"SYNTHETIC issue77 67 interest copy 2\"}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099int_01\",\n  \"nodeType\": \"f1099int\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099div",
+        "{\"payerName\":\"LIBERTY INVESTMENTS LLC\",\"isNominee\":false,\"box11\":false,\"box1a\":782.63,\"box1b\":358.9,\"box7\":18.87,\"holdingPeriodDays\":31,\"foreign_source_dividends_usd\":423.73,\"foreign_source_qualified_dividends_usd\":0,\"foreign_tax_irs_country_code\":\"CA\",\"foreign_tax_holding_review\":{\"ex_dividend_date\":\"2025-06-15\",\"qualifying_held_days_in_31_day_window\":31,\"diminished_risk_days_excluded\":0,\"no_related_payment_obligation_confirmed\":true,\"ordinary_stock_holding_rule_confirmed\":true,\"review_reference\":\"SYNTHETIC issue77 67 holding/allocation assumption\",\"reviewed_on\":\"2026-04-01\"}}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099div_01\",\n  \"nodeType\": \"f1099div\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099b",
+        "{\"description\":\"Schwab x4464 ST Covered\",\"part\":\"A\",\"date_acquired\":\"various\",\"date_sold\":\"12/31/25\",\"proceeds\":25009.05,\"cost_basis\":25165.85,\"adjustment_amount\":0.05,\"adjustment_codes\":\"MW\"}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099b_01\",\n  \"nodeType\": \"f1099b\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099b",
+        "{\"description\":\"Schwab x4464 ST Noncovered\",\"part\":\"A\",\"date_acquired\":\"various\",\"date_sold\":\"12/31/25\",\"proceeds\":2.64,\"cost_basis\":0}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099b_02\",\n  \"nodeType\": \"f1099b\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099b",
+        "{\"description\":\"Schwab x4464 LT Covered\",\"part\":\"D\",\"date_acquired\":\"various\",\"date_sold\":\"12/31/25\",\"proceeds\":18612.61,\"cost_basis\":16743.43,\"adjustment_amount\":0.72,\"adjustment_codes\":\"MW\"}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099b_03\",\n  \"nodeType\": \"f1099b\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099r",
+        "{\"payer_name\":\"HERITAGE FINANCIAL SERVICES\",\"payer_ein\":\"12-1000002\",\"box1_gross_distribution\":124157.17,\"box2a_taxable_amount\":124157.17,\"box4_federal_withheld\":18623.58,\"box7_distribution_code\":\"7\",\"box7_ira_simple_indicator\":true}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099r_01\",\n  \"nodeType\": \"f1099r\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099r",
+        "{\"payer_name\":\"PIONEER TRUST COMPANY\",\"payer_ein\":\"13-1000003\",\"box1_gross_distribution\":70375,\"box2a_taxable_amount\":70375,\"box4_federal_withheld\":14075.04,\"box7_distribution_code\":\"7\",\"box7_ira_simple_indicator\":true}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099r_02\",\n  \"nodeType\": \"f1099r\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1099r",
+        "{\"payer_name\":\"GATEWAY SECURITIES INC\",\"payer_ein\":\"14-1000004\",\"box1_gross_distribution\":112844,\"box2a_taxable_amount\":3279,\"box4_federal_withheld\":0,\"box7_distribution_code\":\"7\"}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1099r_03\",\n  \"nodeType\": \"f1099r\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "ssa1099",
+        "{\"box3_gross_benefits\":12923.6,\"box6_federal_withheld\":0}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"ssa1099_01\",\n  \"nodeType\": \"ssa1099\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "schedule_a",
+        "{\"line_8a_mortgage_interest_1098\":21764.38,\"line_5b_real_estate_tax\":9612.39}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"schedule_a_01\",\n  \"nodeType\": \"schedule_a\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "schedule_b_part_iii",
+        "{\"foreign_accounts_question\":false,\"foreign_trust_question\":false}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"schedule_b_part_iii_01\",\n  \"nodeType\": \"schedule_b_part_iii\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "form1116_review",
+        "{\"all_foreign_sources_reviewed\":true,\"foreign_qualified_dividends\":0,\"foreign_capital_gains_or_losses_present\":false,\"source_document_references\":[\"SYNTHETIC issue77 67 ordinary Canadian dividends; all other investments US source\"],\"no_amt_liability_verified\":true}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"form1116_review_01\",\n  \"nodeType\": \"form1116_review\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "get",
+        "--returnId",
+        "<returnId>",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"returnId\": \"<returnId>\",\n  \"year\": 2025,\n  \"summary\": {\n    \"line1z_total_wages\": 68,\n    \"line9_total_income\": 211365,\n    \"line11_agi\": 211365,\n    \"line15_taxable_income\": 179989,\n    \"line24_total_tax\": 35933,\n    \"line33_total_payments\": 32699,\n    \"line37_amount_owed\": 3234\n  },\n  \"forms\": [\n    \"agi_aggregator\",\n    \"eitc\",\n    \"f1040\",\n    \"f1099b\",\n    \"f1099div\",\n    \"f1099int\",\n    \"f1099r\",\n    \"f2441\",\n    \"f8812\",\n    \"form1116_review\",\n    \"form4137\",\n    \"form461\",\n    \"form6251\",\n    \"form7206\",\n    \"form8582\",\n    \"form8880\",\n    \"form8919\",\n    \"form8949\",\n    \"form8959\",\n    \"form8960\",\n    \"form8962\",\n    \"form8978_reporting_year\",\n    \"form8995\",\n    \"form_1116\",\n    \"general\",\n    \"income_tax_calculation\",\n    \"schedule1\",\n    \"schedule1a\",\n    \"schedule2\",\n    \"schedule3\",\n    \"schedule_a\",\n    \"schedule_b\",\n    \"schedule_b_part_iii\",\n    \"schedule_d\",\n    \"schedule_j_calculation\",\n    \"schedule_se\",\n    \"ssa1099\",\n    \"standard_deduction\",\n    \"w2\"\n  ],\n  \"lines\": {\n    \"line3b_ordinary_dividends\": 782.63,\n    \"line3a_qualified_dividends\": 358.9,\n    \"line6a_ss_gross\": 12923.6,\n    \"filing_status\": \"single\",\n    \"dependent_count\": 0,\n    \"qualifying_child_tax_credit_count\": 0,\n    \"other_dependent_count\": 0,\n    \"taxpayer_first_name\": \"John\",\n    \"taxpayer_last_name\": \"James\",\n    \"address_city\": \"Springfield\",\n    \"address_state\": \"IL\",\n    \"address_zip\": \"62701\",\n    \"line4a_ira_gross\": 194532.16999999998,\n    \"line4b_ira_taxable\": 194532.16999999998,\n    \"line5a_pension_gross\": 112844,\n    \"line5b_pension_taxable\": 3279,\n    \"line25b_withheld_1099\": 32698.620000000003,\n    \"line2b_taxable_interest\": 1.32,\n    \"line25a_w2_withheld\": 0,\n    \"line1a_wages\": 67.5,\n    \"line7_capital_gain\": 1717,\n    \"line11_agi\": 211365,\n    \"line9_total_income\": 211365,\n    \"line6b_ss_taxable\": 10985,\n    \"line12e_itemized_deductions\": 31376,\n    \"line15_taxable_income\": 179989,\n    \"line16_income_tax\": 35857,\n    \"form1116_line18_worldwide_taxable_income\": 178755,\n    \"form1116_line18_preferential_adjustment\": 1234,\n    \"form1116_line20_us_tax\": 35857,\n    \"line23_other_taxes\": 95.04,\n    \"credit_limit_schedule2_line1z\": 0,\n    \"line20_nonrefundable_credits\": 19,\n    \"credit_limit_schedule3_lines\": {\n      \"line1\": 19,\n      \"line2\": 0,\n      \"line3\": 0,\n      \"line4\": 0,\n      \"line5a\": 0,\n      \"line5b\": 0,\n      \"line6aGbc\": 0,\n      \"line6bPriorMinimumTax\": 0,\n      \"line6cAdoption\": 0,\n      \"line6dElderlyDisabled\": 0,\n      \"line6fCleanVehicle\": 0,\n      \"line6gMortgage\": 0,\n      \"line6hHomebuyer\": 0,\n      \"line6iElectricVehicle\": 0,\n      \"line6jRefueling\": 0,\n      \"line6kBondCredit\": 0,\n      \"line6lForm8978\": 0,\n      \"line6mUsedCleanVehicle\": 0,\n      \"line7\": 0\n    },\n    \"line1z_total_wages\": 68,\n    \"line18_total_tax_before_credits\": 35857,\n    \"line21_credits_total\": 19,\n    \"line22_tax_after_credits\": 35838,\n    \"line24_total_tax\": 35933,\n    \"line25d_total_withholding\": 32699,\n    \"line33_total_payments\": 32699,\n    \"line10_adjustments\": 0,\n    \"line12c_deduction_total\": 31376,\n    \"line14_deductions_qbi_total\": 31376,\n    \"line32_refundable_credits_total\": 0,\n    \"line37_amount_owed\": 3234\n  },\n  \"warnings\": [],\n  \"carryforwards\": {\n    \"charitable_cash_60_2025\": 0,\n    \"charitable_noncash_50_2025\": 0,\n    \"charitable_cash_other_30_2025\": 0,\n    \"charitable_noncash_other_30_2025\": 0,\n    \"charitable_capital_gain_30_2025\": 0,\n    \"charitable_capital_gain_20_2025\": 0\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "validate",
+        "--returnId",
+        "<returnId>"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"entries\": [\n    {\n      \"ruleNumber\": \"MEF_ASSEMBLY\",\n      \"severity\": \"reject\",\n      \"category\": \"xml_error\",\n      \"message\": \"MeF export requires a real filer identity\",\n      \"formRef\": \"Return\"\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"passed\": 0,\n    \"rejected\": 1,\n    \"alerts\": 0,\n    \"skipped\": 0\n  },\n  \"canFile\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "export",
+        "--returnId",
+        "<returnId>",
+        "--type",
+        "mef"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Form 1040 export needs the identified taxpayer's SSN, first-name field, and last name\n"
+    }
+  ]
+}

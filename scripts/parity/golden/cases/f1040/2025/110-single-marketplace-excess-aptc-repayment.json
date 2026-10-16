@@ -1,0 +1,98 @@
+{
+  "case": "f1040/2025/110-single-marketplace-excess-aptc-repayment",
+  "steps": [
+    {
+      "argv": [
+        "return",
+        "create",
+        "--year",
+        "2025",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"returnId\": \"<returnId>\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "start",
+        "{\"general\":{\"filing_status\":\"single\",\"taxpayer_first_name\":\"Heather\",\"taxpayer_last_name\":\"Collins\",\"taxpayer_dob\":\"1983-06-18\",\"address_city\":\"Columbus\",\"address_state\":\"OH\",\"address_zip\":\"43201\",\"taxpayer_ssn\":\"111-22-3333\",\"taxpayer_ssn_valid_for_employment\":true,\"taxpayer_ssn_issued_before_due_date\":true,\"taxpayer_tin_issued_by_due_date\":true}}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"start_01\",\n  \"nodeType\": \"start\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "w2",
+        "{\"box1_wages\":32000,\"box2_fed_withheld\":2500,\"box3_ss_wages\":32000,\"box4_ss_withheld\":1984,\"box5_medicare_wages\":32000,\"box6_medicare_withheld\":464}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"w2_01\",\n  \"nodeType\": \"w2\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "form",
+        "add",
+        "--returnId",
+        "<returnId>",
+        "--node_type",
+        "f1095a",
+        "{\"issuer_name\":\"HealthConnect\",\"annual_premium\":5400,\"annual_slcsp\":5800,\"annual_aptc\":3600,\"monthly_premiums\":[450,450,450,450,450,450,450,450,450,450,450,450],\"monthly_slcsps\":[483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333,483.3333333333333],\"monthly_aptcs\":[300,300,300,300,300,300,300,300,300,300,300,300],\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"aptc_monthly_evidence\":[{\"month\":1,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":1,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-01-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":2,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":2,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-02-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":3,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":3,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-03-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":4,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":4,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-04-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":5,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":5,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-05-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":6,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":6,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-06-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":7,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":7,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-07-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":8,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":8,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-08-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":9,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":9,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-09-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":10,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":10,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-10-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":11,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":11,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-11-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}},{\"month\":12,\"coverage_eligibility_review\":{\"tax_year\":2025,\"policy_number\":\"SYNTHETIC-ISSUE77-110\",\"month\":12,\"review_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\",\"reviewed_on\":\"2026-04-01\",\"reviewer_name\":\"Synthetic benchmark reviewer\",\"individuals\":[{\"individual_ssn\":\"111-22-3333\",\"qhp_enrolled_for_month\":true,\"lawfully_present_for_month\":true,\"incarcerated_other_than_pending_disposition\":false,\"employer_sponsored_mec_enrolled\":false,\"employer_offer_review\":\"no_offer_available\",\"government_mec_eligibility_review\":\"not_eligible\",\"other_designated_mec_eligibility_review\":\"not_eligible\",\"eligibility_record_reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}]},\"premium_payment\":{\"amount\":150,\"paid_on\":\"2025-12-01\",\"reference\":\"SYNTHETIC benchmark/reference/2025/synthetic-marketplace/110-single-marketplace-excess-aptc-repayment.json\"}}],\"recipient_ssn\":\"111-22-3333\",\"covered_individual_ssns\":[\"111-22-3333\"]}",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"id\": \"f1095a_01\",\n  \"nodeType\": \"f1095a\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "get",
+        "--returnId",
+        "<returnId>",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"returnId\": \"<returnId>\",\n  \"year\": 2025,\n  \"summary\": {\n    \"line1z_total_wages\": 32000,\n    \"line9_total_income\": 32000,\n    \"line11_agi\": 32000,\n    \"line15_taxable_income\": 16250,\n    \"line24_total_tax\": 1715,\n    \"line33_total_payments\": 3906,\n    \"line35a_refund\": 2191\n  },\n  \"forms\": [\n    \"agi_aggregator\",\n    \"eitc\",\n    \"f1040\",\n    \"f1095a\",\n    \"f2441\",\n    \"f8812\",\n    \"form4137\",\n    \"form461\",\n    \"form6251\",\n    \"form7206\",\n    \"form8582\",\n    \"form8880\",\n    \"form8919\",\n    \"form8959\",\n    \"form8960\",\n    \"form8962\",\n    \"form8978_reporting_year\",\n    \"form8995\",\n    \"form_1116\",\n    \"general\",\n    \"income_tax_calculation\",\n    \"schedule1\",\n    \"schedule1a\",\n    \"schedule3\",\n    \"schedule_a\",\n    \"schedule_j_calculation\",\n    \"schedule_se\",\n    \"standard_deduction\",\n    \"w2\"\n  ],\n  \"lines\": {\n    \"filing_status\": \"single\",\n    \"dependent_count\": 0,\n    \"qualifying_child_tax_credit_count\": 0,\n    \"other_dependent_count\": 0,\n    \"taxpayer_first_name\": \"Heather\",\n    \"taxpayer_last_name\": \"Collins\",\n    \"taxpayer_ssn\": \"111-22-3333\",\n    \"taxpayer_ssn_valid_for_employment\": true,\n    \"taxpayer_ssn_issued_before_due_date\": true,\n    \"taxpayer_tin_issued_by_due_date\": true,\n    \"taxpayer_dob\": \"1983-06-18\",\n    \"taxpayer_age_65_or_older\": false,\n    \"address_city\": \"Columbus\",\n    \"address_state\": \"OH\",\n    \"address_zip\": \"43201\",\n    \"line25a_w2_withheld\": 2500,\n    \"line1a_wages\": 32000,\n    \"line11_agi\": 32000,\n    \"line9_total_income\": 32000,\n    \"line12a_standard_deduction\": 15750,\n    \"line15_taxable_income\": 16250,\n    \"line16_income_tax\": 1715,\n    \"line31_additional_payments\": 1406,\n    \"credit_limit_schedule3_lines\": {\n      \"line1\": 0,\n      \"line2\": 0,\n      \"line3\": 0,\n      \"line4\": 0,\n      \"line5a\": 0,\n      \"line5b\": 0,\n      \"line6aGbc\": 0,\n      \"line6bPriorMinimumTax\": 0,\n      \"line6cAdoption\": 0,\n      \"line6dElderlyDisabled\": 0,\n      \"line6fCleanVehicle\": 0,\n      \"line6gMortgage\": 0,\n      \"line6hHomebuyer\": 0,\n      \"line6iElectricVehicle\": 0,\n      \"line6jRefueling\": 0,\n      \"line6kBondCredit\": 0,\n      \"line6lForm8978\": 0,\n      \"line6mUsedCleanVehicle\": 0,\n      \"line7\": 0\n    },\n    \"line1z_total_wages\": 32000,\n    \"line18_total_tax_before_credits\": 1715,\n    \"line21_credits_total\": 0,\n    \"line22_tax_after_credits\": 1715,\n    \"line24_total_tax\": 1715,\n    \"line25d_total_withholding\": 2500,\n    \"line33_total_payments\": 3906,\n    \"line10_adjustments\": 0,\n    \"line12c_deduction_total\": 15750,\n    \"line14_deductions_qbi_total\": 15750,\n    \"line32_refundable_credits_total\": 1406,\n    \"line34_overpayment\": 2191,\n    \"line35a_refund\": 2191\n  },\n  \"warnings\": [],\n  \"carryforwards\": {\n    \"charitable_cash_60_2025\": 0,\n    \"charitable_noncash_50_2025\": 0,\n    \"charitable_cash_other_30_2025\": 0,\n    \"charitable_noncash_other_30_2025\": 0,\n    \"charitable_capital_gain_30_2025\": 0,\n    \"charitable_capital_gain_20_2025\": 0\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "validate",
+        "--returnId",
+        "<returnId>"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"entries\": [\n    {\n      \"ruleNumber\": \"MEF_ASSEMBLY\",\n      \"severity\": \"reject\",\n      \"category\": \"xml_error\",\n      \"message\": \"Form 1040 export needs the digital-assets answer in the retained general source\",\n      \"formRef\": \"Return\"\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"passed\": 0,\n    \"rejected\": 1,\n    \"alerts\": 0,\n    \"skipped\": 0\n  },\n  \"canFile\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "return",
+        "export",
+        "--returnId",
+        "<returnId>",
+        "--type",
+        "mef"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Form 1040 export needs the digital-assets answer\n"
+    }
+  ]
+}

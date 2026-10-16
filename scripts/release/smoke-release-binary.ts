@@ -10,10 +10,10 @@ import {
   PDFRawStream,
 } from "pdf-lib";
 
-const [asset, expectedVersion] = Deno.args;
-if (!asset || !expectedVersion || Deno.args.length !== 2) {
+const [asset, expectedVersion, transcriptPath] = Deno.args;
+if (!asset || !expectedVersion || Deno.args.length > 3) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/release/smoke-release-binary.ts <built-asset> <expected-version>",
+    "Usage: deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/release/smoke-release-binary.ts <built-asset> <expected-version> [transcript.json]",
   );
 }
 
@@ -22,6 +22,13 @@ const decoder = new TextDecoder();
 const workingDir = await Deno.makeTempDir({ prefix: "opentax-release-smoke-" });
 const wages = 40_000;
 const withholding = 5_000;
+// Every invocation, kept so two builds can be compared byte for byte.
+const transcript: {
+  argv: string[];
+  exit: number;
+  stdout: string;
+  stderr: string;
+}[] = [];
 
 function decodedStream(stream: PDFRawStream): string {
   return decoder.decode(decodePDFRawStream(stream).decode());
@@ -137,6 +144,12 @@ async function invoke(...args: string[]): Promise<string> {
     stdout: "piped",
     stderr: "piped",
   }).output();
+  transcript.push({
+    argv: args,
+    exit: result.code,
+    stdout: decoder.decode(result.stdout),
+    stderr: decoder.decode(result.stderr),
+  });
   const stdout = decoder.decode(result.stdout).trim();
   const stderr = decoder.decode(result.stderr).trim();
   if (!result.success) {
@@ -147,6 +160,38 @@ async function invoke(...args: string[]): Promise<string> {
     );
   }
   return stdout;
+}
+
+/**
+ * Mask what differs on every run: random return IDs, the temporary directory
+ * and the MeF clock. The timestamp is masked only in its expected shape, so a
+ * differently formatted one still shows up as a difference.
+ */
+function normalizedTranscript(pdfSha256: string): string {
+  const ids = transcript
+    .filter((call) => call.argv[0] === "return" && call.argv[1] === "create")
+    .map((call) => JSON.parse(call.stdout).returnId as string);
+  const mask = (text: string) =>
+    ids.reduce(
+      (masked, id, index) => masked.split(id).join(`<returnId-${index + 1}>`),
+      text.split(workingDir).join("<workingDir>"),
+    ).replace(
+      /<ReturnTs>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-05:00<\/ReturnTs>/g,
+      "<ReturnTs>YYYY-MM-DDThh:mm:ss-05:00</ReturnTs>",
+    );
+  return JSON.stringify(
+    {
+      calls: transcript.map((call) => ({
+        argv: call.argv.map(mask),
+        exit: call.exit,
+        stdout: mask(call.stdout),
+        stderr: mask(call.stderr),
+      })),
+      pdfSha256,
+    },
+    null,
+    2,
+  ) + "\n";
 }
 
 try {
@@ -291,6 +336,17 @@ try {
     throw new Error("Built asset PDF omitted a Form 1040 page");
   }
   assertFlattenedPdfValues(pdf);
+  if (transcriptPath) {
+    const digest = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", pdfBytes),
+    );
+    await Deno.writeTextFile(
+      transcriptPath,
+      normalizedTranscript(
+        Array.from(digest, (b) => b.toString(16).padStart(2, "0")).join(""),
+      ),
+    );
+  }
 
   console.log(
     `Release smoke passed: ${expectedVersion}, synthetic W-2, finalized MeF, ${pdf.getPageCount()} PDF pages`,

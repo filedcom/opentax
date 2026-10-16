@@ -71,6 +71,13 @@ jobs:
           deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov
           scripts/release/smoke-release-binary.ts
           ./${{ matrix.asset }} ${{ env.OPENTAX_RELEASE_VERSION }}
+          smoke-${{ matrix.asset }}.json
+
+      - name: Upload smoke transcript
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-transcript-${{ matrix.asset }}
+          path: smoke-${{ matrix.asset }}.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -86,6 +93,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: opentax-*
           merge-multiple: true
 
       - name: Verify assets and write checksums

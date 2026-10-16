@@ -1,0 +1,800 @@
+[
+  {
+    "case": "f1040/2025/01-single-w2-minimal",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "895f6f2fbe51e029cd63e1256b507ec6f4f3b6de4127028b3de6bf34316acc01"
+  },
+  {
+    "case": "f1040/2025/02-single-w2-basic",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "63d3062be4ce070909fa13d3defad6f9b4764b947bd9aa7aa4672b1275f34995"
+  },
+  {
+    "case": "f1040/2025/03-single-w2-high-income",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "d74089005540be398539945535fd9ed4d731a725ea6e8bedf5260bb92a911291"
+  },
+  {
+    "case": "f1040/2025/04-single-w2-unemployment",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "e120eb56b67f4c6e580bac947762670a663e324e6acfc51f2aa38ae81c9af324"
+  },
+  {
+    "case": "f1040/2025/05-single-w2-interest-income",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "0e106b6c1b1582e058877871a266c100cc4ad1843b370a77b41c80eaa4061cfc"
+  },
+  {
+    "case": "f1040/2025/06-single-w2-capital-gains",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "fa20b082528b599421d092b73e88a5444435581cf46c6cb5158300ae9051d76e"
+  },
+  {
+    "case": "f1040/2025/07-single-schedule-c-profit",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "d9c5a962f432565a5b3bd1d7408aa23c645b29d7902cc9bb7c0861e32edc387c"
+  },
+  {
+    "case": "f1040/2025/08-single-student-loan",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "90b33e7e2719fa482d97af7220c6d27dd71fd4742134b4f5db41c99c12da531f"
+  },
+  {
+    "case": "f1040/2025/09-single-senior-over65",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "c7cd59588d4c2c90b1fd3d38dcbdc695427d615a8d0018d0b46765f9e90a3247"
+  },
+  {
+    "case": "f1040/2025/10-single-two-w2s",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "df72b11eb97cc387838cbc87323c3bc47edbb0149610af88cb70f1cae6129956"
+  },
+  {
+    "case": "f1040/2025/100-single-w2-gambling-winnings",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "6ffb4a6a4c7c22c43e0afece31f551318f0ea328d649d019e720e9f5660ab51c"
+  },
+  {
+    "case": "f1040/2025/101-mfj-w2-itemized-mortgage-salt-charity",
+    "steps": 8,
+    "nonZero": 2,
+    "sha256": "30cea804abbcf1e377b0df5199c0e92e71824ae415b686ea87afda84d3a7c186"
+  },
+  {
+    "case": "f1040/2025/102-single-w2-residential-clean-energy-solar",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "7f775bc92db6666d394cf522a78b062bb71414f8ba8cd00055d9fa487b23da0c"
+  },
+  {
+    "case": "f1040/2025/103-mfj-w2-savers-credit-10pct",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "d8c5f53e30db03a36e13b1afb8a0653c3d34e91f3d57769385f572380d250d56"
+  },
+  {
+    "case": "f1040/2025/104-single-w2-lifetime-learning-credit",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "ea63c55352c1da8f8afd45e4cbbcf7fc5ae3cf14ccaf0bc9def5860b64738e7d"
+  },
+  {
+    "case": "f1040/2025/105-single-w2-foreign-tax-credit-de-minimis",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "fe093b6d4a66254a79c7177b7f5834842621c2908e475fce68d2c5ad433587ff"
+  },
+  {
+    "case": "f1040/2025/106-hoh-w2-child-dep-care-credit",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "a58b201c50a4a2ebce90647fb7e92001ae8f1ea2922feec16b4f0e5113267d6f"
+  },
+  {
+    "case": "f1040/2025/107-mfj-w2-energy-efficient-home-improvement",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "188ea7e062107e6b2ac42feb6059d6e7bd44d94b0aa2bb5eef733018331b21f5"
+  },
+  {
+    "case": "f1040/2025/108-single-w2-schedule-c-se-self-employed-health",
+    "steps": 8,
+    "nonZero": 2,
+    "sha256": "61c050a5f9435d0cf9feec608952aed03867d60182df305660907977ff5ea2ac"
+  },
+  {
+    "case": "f1040/2025/109-mfj-w2-ira-deduction-savers-credit",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "cdbedd8b7fff643633decd8f476960019b96b6a397d0d768789a33dc1a1bd0cf"
+  },
+  {
+    "case": "f1040/2025/11-mfj-both-w2s",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "dc817a211e312a17b6e9edae9801efe356fdf5eed97be130401d44b82ebb55f4"
+  },
+  {
+    "case": "f1040/2025/110-single-marketplace-excess-aptc-repayment",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "40ed3a50df9d550d3043c4bdfa7441e0232e9ba7515815704628dc2001dc237d"
+  },
+  {
+    "case": "f1040/2025/111-single-schedule-c-sep-ira-qbi",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "dc3d465e1a13dbf2ae75a0a87831eee2ce82d6d2ffccb1872fb68d694b94ea85"
+  },
+  {
+    "case": "f1040/2025/112-single-w2-1099r-early-ira-penalty",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "8bd8bd3e2ee123687f7b5b6c83cf55f3d7dfc2f6551c688aed02fc3879aa9474"
+  },
+  {
+    "case": "f1040/2025/113-single-1099r-rmd-ssa-senior",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "36e4730f7df96c9f5b8b2262c70ee2644112d5b13f82432b05652aa932c7d20f"
+  },
+  {
+    "case": "f1040/2025/114-single-w2-1099r-roth-conversion",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "0e11db881c582d5032b471ebc23f78a2b8f2711d962503f7ad5f4ae11f408060"
+  },
+  {
+    "case": "f1040/2025/115-single-w2-schedule-e-rental",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "fe42002f1c66764295a15b001b56a9113f929eba421d5467bf82e0fcb51f9adb"
+  },
+  {
+    "case": "f1040/2025/116-single-1099r-disability-pension",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "800839c571cdc1ce54e1375391621711a96981dd797480e6f0359afaf193230d"
+  },
+  {
+    "case": "f1040/2025/117-single-w2-1099misc-prizes",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "6de2c9e2cb04970a55101b96cdee52af2ee1c69d8c4f78b7ff504cc4e551cadb"
+  },
+  {
+    "case": "f1040/2025/118-single-w2-schedule-h-household",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "a22d8c5fa82cc7b7478ea59469251a011364bec22cdc783007f5a8907c6489dd"
+  },
+  {
+    "case": "f1040/2025/119-single-w2-nol-carryforward",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "2a03de1ba1825997139fadecdd972b36b1ef977bccd2d522b1364dea224fd871"
+  },
+  {
+    "case": "f1040/2025/12-mfj-w2-with-child",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "3d2bd4d15705b26e85a3f40d0b26636061ea1b2996919c65338f7fc1ce33b556"
+  },
+  {
+    "case": "f1040/2025/120-single-w2-alimony-received",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "161c6fc48d0f13b140dc65038768034b371693aafcb7aaa6476712bb73a63d63"
+  },
+  {
+    "case": "f1040/2025/121-mfj-w2-1099r-early-401k-penalty",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "2d6cec25a303bd18c69e45a150e652ff60ab9a75fc4741be3e2edb705b0135c0"
+  },
+  {
+    "case": "f1040/2025/122-single-1099r-w2-ssa",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "f12abd1adca3f428b4437d43b4ee7e0fe29a8604483fe763bb210202697ef335"
+  },
+  {
+    "case": "f1040/2025/123-mfj-1099r-ssa-ira-deduction",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "8df7e64eb1008ead91a472218583abe15accb3d0fd0cb44d3a018070697ba73f"
+  },
+  {
+    "case": "f1040/2025/124-mfj-1099r-rrb1099-interest",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "1d092d7d6ffa062898d7e1154379c728e234645424830e710a7d63fe09311989"
+  },
+  {
+    "case": "f1040/2025/125-mfj-w2-tax-table",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "036d1226d6732e481eb89283ccc1771a639f5c397b1e0a953a646cd7a21d3013"
+  },
+  {
+    "case": "f1040/2025/126-mfj-w2-breakeven",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "57a2a3c1e803ae680fc6616f7b24d08c28cb5d5e1d12eacad9db8f3bb5eec3e3"
+  },
+  {
+    "case": "f1040/2025/127-single-senior-1099r-ssa-age65",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "5f43a50b8c94d972f3c24986a72d90c20d0f567ef6f61a03ce4b1a792dd5a6e5"
+  },
+  {
+    "case": "f1040/2025/128-mfj-senior-both65-1099r-interest",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "987d2673d09d12fd7f78eb2f299245e8e059ee2d060be610f717b30015f2c9a6"
+  },
+  {
+    "case": "f1040/2025/129-mfj-w2-installment-sale-ltcg",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "2cc1de7cde773cfaf578f8de7cef680fa78d4f9fff15a7631f904cb481f1086d"
+  },
+  {
+    "case": "f1040/2025/13-mfj-w2-unemployment",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "a0ad2eb6cad937ef34e20e6d67f3c7c49b19e24a47093df83780508fc3a3070a"
+  },
+  {
+    "case": "f1040/2025/130-single-w2-cod-income",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "ddeeedbb64d517b43b897f328169cec4c96f2b35d3ba9929c33b99f3299e7de7"
+  },
+  {
+    "case": "f1040/2025/132-single-w2-hobby-income",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "7584e6aea669673266ae028a034922617727d9811a5c1d9d0b8acaaf0ccd11c7"
+  },
+  {
+    "case": "f1040/2025/133-hoh-w2-ctc",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "b49a467bc6615dbb8625b41cf839718a626389b6067833744e5f8ad214179f7d"
+  },
+  {
+    "case": "f1040/2025/134-mfs-w2",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "a3dd886810df1f5186cdcba13838f860e0f155ef9f2921adc7fec379d1c72709"
+  },
+  {
+    "case": "f1040/2025/14-mfj-w2-dividends",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "d07b78b6363360fe7603e8abe63b37afd2f896731c9cbcbdf7f8db52829469b6"
+  },
+  {
+    "case": "f1040/2025/15-mfj-schedule-c-qbi",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "7337fc31c1436825bae3cceb1d93d1d94992fe533047c562fb97d3e928f6cf72"
+  },
+  {
+    "case": "f1040/2025/16-mfj-retirement-ssa",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "b99b03cc86c5dde5a5a878674acb502e2a5ee9ebb0472b8cfa529d707932a863"
+  },
+  {
+    "case": "f1040/2025/17-mfj-excess-ss-tax",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "23ee31b11c71ef2fe27e202638ad223184b576301189b96ae6672ac45ea34c2e"
+  },
+  {
+    "case": "f1040/2025/18-hoh-w2-with-child",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "13dd7d05435762f77fdbd0338457fcfa2a2e15ceb3ae61fb9ff2026095bb6606"
+  },
+  {
+    "case": "f1040/2025/19-hoh-w2-eitc",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "a0e01c913278e5257204a33c0714c317add86fac7c5180c97e57b464d738fd71"
+  },
+  {
+    "case": "f1040/2025/20-hoh-dependent-care",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "aa5a1b63d92664c3abac3da1fa8e8eddd12ac48364259b7f403914faf2d167ca"
+  },
+  {
+    "case": "f1040/2025/21-single-w2-unemployment",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "acbcde2514e29fdd17166bbcbf3bec164e89e6f21854be872e7dc42be60b727a"
+  },
+  {
+    "case": "f1040/2025/22-single-w2-interest-qualified-dividends",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "2655c48ecf4e91d2e7a1baaa96a788df6e0552e894c0299f381a067125815a4c"
+  },
+  {
+    "case": "f1040/2025/23-mfj-w2-schedule-c-student-loan",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "5acd12ad0d217ca314b05675365a942546d1fe272bac0de4f33df9c3b42e256d"
+  },
+  {
+    "case": "f1040/2025/24-mfj-w2-three-children-ctc-eitc",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "e0a0f8c0d7cb7b627af630d1b80d5df30c6ddd1181cc061f99502b5c626e82a2"
+  },
+  {
+    "case": "f1040/2025/25-hoh-blind-ssa-unemployment-interest",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "8c7ffabdbb252a230162549c4ebe349939df7823d620d1afa103aa55e1f4e761"
+  },
+  {
+    "case": "f1040/2025/26-single-high-income-additional-medicare",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "92edccfbc9c3c71573f9b7137f91f2edf4083cb3aba775a6835f45cd76a160c7"
+  },
+  {
+    "case": "f1040/2025/27-single-senior-schedule-c-ssa",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "21480f3525665279f94cace35fb8de6241ff2d697961b0d2a5a5c20268fdb7a0"
+  },
+  {
+    "case": "f1040/2025/28-mfj-w2-ltcg-dividends",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "c7a150bd6a20a21778e9e4ad12d95079ac6973d529598b1f7c66de4b88b1a228"
+  },
+  {
+    "case": "f1040/2025/29-hoh-w2-three-children-eitc-actc",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "2d432b47b804dc5ac9b75a2f713ead86a860a115c77db893477906a4a9678958"
+  },
+  {
+    "case": "f1040/2025/30-mfj-senior-both-pension-ssa",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "8a874248017de8ba13da1849c781d3ac5166665fb7d78f8a4f982ff61148320c"
+  },
+  {
+    "case": "f1040/2025/31-single-w2-box12-hsa",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "9b41dd99e29eea16601afab82476781299bc5f2fb8bb380ed3751d01e0965e98"
+  },
+  {
+    "case": "f1040/2025/32-single-schedule-c-loss",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "9b6f9f9807b0224aad1eb1afe33057dbb9404f0161c1493ef03c3d85d50b36b1"
+  },
+  {
+    "case": "f1040/2025/33-single-1099nec-schedule-c",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "13194254e8586db8ca9c72c351d6dab42f8bf97a0309b0d11298de2ad1b1faff"
+  },
+  {
+    "case": "f1040/2025/34-single-1099r-retirement",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "83a7ca766adca3cfc788ca686e088b3f46d807ccc4029ccd8afbf6a3797e2c7a"
+  },
+  {
+    "case": "f1040/2025/35-single-w2-aotc",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "56c1b3218d7a06f7aacb8977614ab58dd9dd7a39f92dbc171ad3a7834ed17c58"
+  },
+  {
+    "case": "f1040/2025/36-single-w2-marketplace-1095a",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "326ddf631abb296ba1b811be6aeb624d890a8958cacc9aed757e8ffda12077f5"
+  },
+  {
+    "case": "f1040/2025/37-single-w2-educator-expense",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "60063bf06b5e1b0ec51e9383d129db8956f9fb96ff70835751798efa65394d46"
+  },
+  {
+    "case": "f1040/2025/38-single-schedule-c-estimated-tax",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "9f5489f2bee938519c926a51dda487dc037866b570628fea975af487729344c2"
+  },
+  {
+    "case": "f1040/2025/39-single-eitc-no-children",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "b6b61478f2f015309a10d070d0b3592d68ed2c554c723e997bc34e8a85bd9b4f"
+  },
+  {
+    "case": "f1040/2025/40-single-w2-box12-401k",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "30055d7b491324d6450abd4c41253e85863fd68b538dd9e6ca1b9a7aa94cc4aa"
+  },
+  {
+    "case": "f1040/2025/41-mfj-w2-educator-both",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "83f2884edd84200c1adb2474a5c04ae2babb58a746e0370dbb050ab084aa10c4"
+  },
+  {
+    "case": "f1040/2025/42-single-w2-tips",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "1b8e386522a3f5e23d67b279670c9609e6f8793761f201c8b5015d4c92f5be4b"
+  },
+  {
+    "case": "f1040/2025/43-single-multiple-1099r",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "84ee94d46289263d74f5b4cb37ccabfc866f8e7c8fbc1c2c197a01b7d333f3fd"
+  },
+  {
+    "case": "f1040/2025/44-mfj-w2-aotc",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "9890c93aaa4365bf4f0b50805e209ab7f737c1321ec364d84c19e3016596c6f8"
+  },
+  {
+    "case": "f1040/2025/45-single-w2-educator-marketplace",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "7e1dc0bf87fced0d71a194abaee7c1ce21b8db63eb85f842e54fc2a7cfc15d2d"
+  },
+  {
+    "case": "f1040/2025/46-single-schedule-c-f1040es-qbi",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "5f61fe314f35b915841f3b119aed575a4377f66c7231515c825b14a80a75f488"
+  },
+  {
+    "case": "f1040/2025/47-hoh-low-income-eitc-no-children",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "f721e1edb3095b8bbb8f0be632c7a98b05ac142dae366f3c4ab25767dd22a62d"
+  },
+  {
+    "case": "f1040/2025/48-mfj-w2-marketplace-1095a",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "deadbb3cc1edd71ce467e5dd8f678f17fbd602a32b000f42a814acf60d08f8d9"
+  },
+  {
+    "case": "f1040/2025/49-single-1099nec-w2-no-withholding",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "a9875dda69dbcd0c714b9038844cfd894c39e7c958fb62e65bbfaa1fc5ce9f83"
+  },
+  {
+    "case": "f1040/2025/50-mfj-schedule-c-estimated-tax-qbi",
+    "steps": 8,
+    "nonZero": 1,
+    "sha256": "92fa89fdcfa533efb9da45f53080119e37b4efbc0644a0856225a1d241a48ff4"
+  },
+  {
+    "case": "f1040/2025/51-single-senior-1099r-f1040es",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "0b2e73b10bd99292afbe3bc29a1a019003d16a8ff7897b258070d47ba403920a"
+  },
+  {
+    "case": "f1040/2025/52-single-w2-marketplace-ptc-no-aptc",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "0e6f28fb745ddbf4a8f25ab0d2c7782c0612eb270b6508aabb98f13aa6e076cc"
+  },
+  {
+    "case": "f1040/2025/53-single-marketplace-ptc-with-aptc-repayment",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "defccbb3184d8f8e4721a746406f9075eab9fb0abaf0970f83dcce5a165992df"
+  },
+  {
+    "case": "f1040/2025/54-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 12,
+    "nonZero": 3,
+    "sha256": "925622068360316c97c5245859c2770371ac8336d7401edf62bb1a10d233edea"
+  },
+  {
+    "case": "f1040/2025/55-mfj-1099r-1099int-1099div-1099b-ssa",
+    "steps": 20,
+    "nonZero": 1,
+    "sha256": "0da206d79902022c1ffd0e2f250d2271230027bb0c6b840ff89035265fa4e90c"
+  },
+  {
+    "case": "f1040/2025/56-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 38,
+    "nonZero": 29,
+    "sha256": "382aec5466891a541a4ba127e0a79fff8c9ca5c2da612b821a53585299dd3151"
+  },
+  {
+    "case": "f1040/2025/57-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 12,
+    "nonZero": 3,
+    "sha256": "c3945362640bec7c15e4b92fda295b35ae57228b2e81e21df06a784243babba4"
+  },
+  {
+    "case": "f1040/2025/58-single-w2-1099int-1099div-1099b",
+    "steps": 14,
+    "nonZero": 1,
+    "sha256": "d4f44170afc9f8ba6da7f6e509d30170cc783ad88162869f3d11af6e6b6360ad"
+  },
+  {
+    "case": "f1040/2025/59-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "steps": 13,
+    "nonZero": 2,
+    "sha256": "64e1626a7bb13515f66c6af27d3cea9ed1375e334b0348c6a26fc013ebb8fd50"
+  },
+  {
+    "case": "f1040/2025/60-single-1099r-1099int-1099div-1099b-ssa",
+    "steps": 13,
+    "nonZero": 1,
+    "sha256": "697a8f2f3403101f42652ad6bb8126c86ae81feff256a0c557b543053367041d"
+  },
+  {
+    "case": "f1040/2025/61-single-w2-k1-1099r-1099int-1099div",
+    "steps": 10,
+    "nonZero": 2,
+    "sha256": "c688b39c8ed0c33f25fd2b4d60a90fe34e5964aa2c83c2764401a1022301e395"
+  },
+  {
+    "case": "f1040/2025/62-single-w2-1099r-1099int",
+    "steps": 11,
+    "nonZero": 1,
+    "sha256": "0a306a21224ce457c9d7d3044a2723eece3760bcaa24bb557a74743907f4b2e8"
+  },
+  {
+    "case": "f1040/2025/63-hoh-w2",
+    "steps": 7,
+    "nonZero": 1,
+    "sha256": "d8cf0bfa8fbdc16179dbe2e22357a126dbec53c9531dec6d6299a430bb1514e7"
+  },
+  {
+    "case": "f1040/2025/64-mfj-w2-1099int",
+    "steps": 14,
+    "nonZero": 1,
+    "sha256": "5558c5072cc4122785101cc9bc8fb6b97e16a1b1540e8f7daf553979498cc34a"
+  },
+  {
+    "case": "f1040/2025/65-single-w2-k1-1099r-1099int-1099div",
+    "steps": 11,
+    "nonZero": 3,
+    "sha256": "a6adbfd882f0ace4fc746ae7347727133a001e8f13aacdfc70c10e6a7a565a8d"
+  },
+  {
+    "case": "f1040/2025/66-single-w2-k1-1099r-1099int-1099div",
+    "steps": 11,
+    "nonZero": 3,
+    "sha256": "23660818d4d57bced0fe34ccc7467e54b2162ca4b9ea54d6bcadc19585817ad8"
+  },
+  {
+    "case": "f1040/2025/67-single-w2-1099r-1099int-1099div-1099b-ssa",
+    "steps": 18,
+    "nonZero": 1,
+    "sha256": "e34455e327be0de39a282845115b09903b0d51382d9f18df968183a7383e344f"
+  },
+  {
+    "case": "f1040/2025/68-single-w2",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "06fee5e26877acdc2279057823b082eb18fd325eb03e177417ae73d317a9b589"
+  },
+  {
+    "case": "f1040/2025/69-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 13,
+    "nonZero": 4,
+    "sha256": "8911d6e6fa00856e9946635c3a0a42e238133ab6d8d26cad9d18d8533e214c15"
+  },
+  {
+    "case": "f1040/2025/70-single-w2-k1-1099r-1099int-1099div-1099b-estimated-tax",
+    "steps": 31,
+    "nonZero": 2,
+    "sha256": "36e59fced1e1434d868722f998ae4f2274c60ce31c1c8bfdf75a9f290787c263"
+  },
+  {
+    "case": "f1040/2025/71-single-1099r-1099int",
+    "steps": 9,
+    "nonZero": 1,
+    "sha256": "831bc5259bcf7a2b6fe36e3ec07f6d6f132b6f52b5725386ba01b066a333cc6c"
+  },
+  {
+    "case": "f1040/2025/72-mfj-1099r-1099int-1099div-1099b-ssa",
+    "steps": 21,
+    "nonZero": 2,
+    "sha256": "5a0aa23d7f6a19a175eadd4b62db098887e3ae067d502ad2fb545848f236e7f7"
+  },
+  {
+    "case": "f1040/2025/73-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 39,
+    "nonZero": 30,
+    "sha256": "caa5b0da32ae8c36022991ccdd018bebff9f80d5b460a8af932c44ae39e453aa"
+  },
+  {
+    "case": "f1040/2025/74-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 13,
+    "nonZero": 4,
+    "sha256": "c6259f2e6944f0140e84bacf73c7b4c0a9f34ddf02207825cace979e05e94d9e"
+  },
+  {
+    "case": "f1040/2025/75-single-w2-1099int-1099div-1099b",
+    "steps": 15,
+    "nonZero": 2,
+    "sha256": "98cb59e45b221d224c71e24a6675ff6dc203bd4772eeade0d9e213ee18253bc5"
+  },
+  {
+    "case": "f1040/2025/76-mfj-w2-1099int-1099b",
+    "steps": 12,
+    "nonZero": 1,
+    "sha256": "65a29ae88c0a3b10fa807d9768faed1ab353b105a3714a51709db064c440a923"
+  },
+  {
+    "case": "f1040/2025/77-single-1099r-1099int-1099div-1099b-ssa-estimated-tax",
+    "steps": 19,
+    "nonZero": 1,
+    "sha256": "e0916d980735a7aefd2da01076808847213e89e2d8835c630fa19a22ad15f3b6"
+  },
+  {
+    "case": "f1040/2025/78-single-w2-1099int-1099div-1099b",
+    "steps": 12,
+    "nonZero": 1,
+    "sha256": "977a6acf10e350f8c402e7968fdadb5f9f3f749550aeb83fa02d96264a9934e2"
+  },
+  {
+    "case": "f1040/2025/79-mfj-k1-1099r-1099int-ssa-estimated-tax",
+    "steps": 14,
+    "nonZero": 2,
+    "sha256": "856acffdc2e268d5e02435f4174157bae7c937ce2daaa15d42c84444afc5d6a2"
+  },
+  {
+    "case": "f1040/2025/80-single-1099r-1099int-1099div-1099b-ssa",
+    "steps": 13,
+    "nonZero": 1,
+    "sha256": "d62dd1c7219cc2d16e097bbb90f3e2e940150dd2c9997fdc289cd828b1a4dfb1"
+  },
+  {
+    "case": "f1040/2025/81-single-w2-1099int-1099div",
+    "steps": 11,
+    "nonZero": 2,
+    "sha256": "30444b773b5d249e0988680dbaa6c3c6a42112ae03b6292d6eb1a847c9dcec7d"
+  },
+  {
+    "case": "f1040/2025/82-single-w2-k1-1099r-1099int-1099div",
+    "steps": 11,
+    "nonZero": 2,
+    "sha256": "9f899bf3900f8978e621c1127669dd0a181844c75515ce0a450a3103e82b7a2b"
+  },
+  {
+    "case": "f1040/2025/83-single-w2-1099r-1099int",
+    "steps": 12,
+    "nonZero": 1,
+    "sha256": "35db005edaa0c99295624289b0570c121e48465d9347a4b4be712a8a14432508"
+  },
+  {
+    "case": "f1040/2025/84-hoh-w2",
+    "steps": 9,
+    "nonZero": 2,
+    "sha256": "9cd9410c5b6caf92363ea2de76bcc932179a8f239fa81c076a4c27d8010ae080"
+  },
+  {
+    "case": "f1040/2025/85-mfj-w2-1099int",
+    "steps": 15,
+    "nonZero": 1,
+    "sha256": "cf428aa153eac331d42034ae9b660dca8c4773ca767800e3d551dfcc0b9e832e"
+  },
+  {
+    "case": "f1040/2025/86-mfj-w2",
+    "steps": 11,
+    "nonZero": 1,
+    "sha256": "f8b562b915f90ae3f9cb82eefefec01171db87e4185fb1c8654b412d6183581e"
+  },
+  {
+    "case": "f1040/2025/87-single-w2-k1-1099r-1099int-1099div",
+    "steps": 12,
+    "nonZero": 4,
+    "sha256": "693418930892d78a873c25efbbd5767ee5c5d45009766244216bcf799aabdf74"
+  },
+  {
+    "case": "f1040/2025/88-mfj-w2-1099r-1099int-1099div-1099b-ssa",
+    "steps": 18,
+    "nonZero": 1,
+    "sha256": "352ee7735b59444e9433207e55f2a81c290d5d72b682d1ddfa640fa7e077c3ff"
+  },
+  {
+    "case": "f1040/2025/89-single-w2-k1-1099r-1099int-1099div",
+    "steps": 12,
+    "nonZero": 4,
+    "sha256": "62d0a929ca022b00aca413ee6fb873b65b88f2833af6058cea55f5865d0c6de4"
+  },
+  {
+    "case": "f1040/2025/90-mfj-w2-1099int-1099div-1099b",
+    "steps": 10,
+    "nonZero": 1,
+    "sha256": "9f4fea34d7265ee7ca61e8bec8621d94897f6755b3c2ed0160c5b9db14f0d153"
+  },
+  {
+    "case": "f1040/2025/91-single-w2-1099int-1099div-1099b-ssa",
+    "steps": 13,
+    "nonZero": 1,
+    "sha256": "e51b8866c476dda46d8f75d7aa3bb84b0d459d7e93a543c5448816e2d6d90eaf"
+  },
+  {
+    "case": "f1040/2025/92-mfj-w2-1099r-1099int-1099div-estimated-tax",
+    "steps": 12,
+    "nonZero": 1,
+    "sha256": "0fb75e9f93953202032f6b4004ec1944b64641408a07660c5c3fffb1fd6f5ee9"
+  },
+  {
+    "case": "f1040/2025/93-mfj-w2-k1",
+    "steps": 7,
+    "nonZero": 2,
+    "sha256": "a8f44ded80d9080083f5d8d60dd64dc93938661b60548b85e044610c119ecac1"
+  },
+  {
+    "case": "f1040/2025/94-single-w2-1099r-1099int-1099div-1099b",
+    "steps": 11,
+    "nonZero": 1,
+    "sha256": "2103e09e64aa18ad78e7736995f8348f7144e9c330426099d90978e030df678d"
+  },
+  {
+    "case": "f1040/2025/95-single-w2-k1-1099r-1099int-1099div-1099b",
+    "steps": 34,
+    "nonZero": 1,
+    "sha256": "ac0cd71f70edfa92a24861598ab8e6dd2ba811682c309dad4d44a6783b80744a"
+  },
+  {
+    "case": "f1040/2025/96-mfj-w2-1099int-1099div-1099b",
+    "steps": 13,
+    "nonZero": 1,
+    "sha256": "4b24d596e5b95b9e9ba6798f8e717ca30a4768ca9bdc4687c4e6932c107e685a"
+  },
+  {
+    "case": "f1040/2025/97-mfj-w2-1099int",
+    "steps": 11,
+    "nonZero": 1,
+    "sha256": "db9306f06e4e46542f374b25842b2d9a8ed5f9c9775dea9f4f9b3b3af5cb49c8"
+  },
+  {
+    "case": "f1040/2025/98-single-w2-savers-credit-50pct",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "7ad35b11c33bead69230aab6bf761c08a4705282dd0c3a8a4f337e46a2d88119"
+  },
+  {
+    "case": "f1040/2025/99-single-w2-savers-credit-20pct",
+    "steps": 6,
+    "nonZero": 1,
+    "sha256": "16856fa65c2639ffc5ebdd64218aee00847e04bdceea81a5cf4c5b4379f183ca"
+  }
+]
