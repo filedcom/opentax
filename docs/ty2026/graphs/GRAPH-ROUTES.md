@@ -1,7 +1,7 @@
 # TY2026 calculation graph route inventory
 
-The October 16 loaded `sourceRegistry2026` has **53 nodes and 276 unique declared
-edges**. **19 edges target unregistered nodes**, replacing the historical
+The October 16 loaded `sourceRegistry2026` has **54 nodes and 283 unique declared
+edges**. **16 edges target unregistered nodes**, replacing the historical
 prototype's 33-edge snapshot. Generate current evidence with:
 
 ```sh
@@ -19,10 +19,10 @@ from this checkout. See the [inventory contract](../tooling/README.md).
 
 | Producers | Targets requiring route review |
 | --- | --- |
-| AGI | `agi_final`, `form8582`, `form8880`, `form8995`, `form_1116`, `schedule_j_calculation` |
-| General identity | `form8880`, `form8995` |
+| AGI | `agi_final`, `form8582`, `form8995`, `form_1116`, `schedule_j_calculation` |
+| General identity | `form8995` |
 | Income tax | `form8978_reporting_year`, `form_1116` |
-| W-2 | `form8839`, `form8853`, `form8880`, `form8889`, `form8995`, `ira_deduction_worksheet`, `schedule_se` |
+| W-2 | `form8839`, `form8853`, `form8889`, `form8995`, `ira_deduction_worksheet`, `schedule_se` |
 | Forms 4137 and 8919 | `schedule_se` |
 
 All these target names exist in the current TY2025 registry. That does not prove

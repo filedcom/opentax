@@ -208,6 +208,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
       "f8863",
       "form1062",
       "schedule_r",
+      "form8880",
     ];
   }
   // These shared identities do not register or execute legacy calculators in 2026.
@@ -243,6 +244,7 @@ class IncomeTax2026Node extends TaxNode<typeof inputSchema> {
         { nodeType: "f1040", fields: { line16_income_tax: tax } },
         { nodeType: "f8812", fields: { auto_income_tax_liability: tax } },
         { nodeType: "f2441", fields: { regular_tax: tax } },
+        { nodeType: "form8880", fields: { regular_tax: tax } },
         { nodeType: "schedule_r", fields: { regular_tax: tax } },
         {
           nodeType: "f8863",

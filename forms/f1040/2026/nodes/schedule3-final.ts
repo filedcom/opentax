@@ -12,6 +12,7 @@ const inputSchema = schedule3Input2026Schema.pick({
   line9_premium_tax_credit: true,
   line2_childcare_credit: true,
   line3_education_credit: true,
+  line4_retirement_savings_credit: true,
   line6d_elderly_disabled_credit: true,
   line5a_residential_clean_energy: true,
   line13e_section1062_tax: true,

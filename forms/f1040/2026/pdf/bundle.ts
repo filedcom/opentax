@@ -1,3 +1,5 @@
+import { calculateSaversCredit2026 } from "../inputs/savers-credit-source.ts";
+import { buildForm8880PdfBytes2026 } from "./form8880.ts";
 import { buildForm8606PdfBytes2026 } from "./form8606.ts";
 import { buildScheduleRPdfBytes2026 } from "./schedule_r.ts";
 import { calculateScheduleR2026 } from "../inputs/schedule-r-source.ts";
@@ -302,6 +304,22 @@ export async function buildDraftReturnPdf2026(
       "Schedule R credit must reconcile ordered credit consumers and Schedule 3",
     );
   }
+  const savers = retained<ReturnType<typeof calculateSaversCredit2026>>(
+    "form8880",
+  );
+  const saverCredit = savers
+    ? calculateSaversCredit2026(savers.source_input).lines.line12
+    : 0;
+  if (
+    (s3?.input.line4_retirement_savings_credit ?? 0) !== saverCredit ||
+    (childCredit?.source_input.finalized_savers_credit ?? 0) !== saverCredit ||
+    childCredit?.source_input.savers_inventory_reference_from_source !==
+      savers?.source_input.claim.record_reference
+  ) {
+    throw Error(
+      "Saver credit must reconcile ordered credit consumers and Schedule 3",
+    );
+  }
   let electionForms:
     | Awaited<ReturnType<typeof buildForm1062Draft2026>>
     | undefined;
@@ -352,7 +370,7 @@ export async function buildDraftReturnPdf2026(
     hasIncompleteFooter = false,
   ) => parts.push({ form, officialPages, render, hasIncompleteFooter });
   // Attachment sequence numbers from the pinned 2026 forms: 01, 1A, 02, 03, 3A,
-  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 29, 32, 33, 43, 44, 47, 50, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
+  // 07, 08, 09, 12, 12A, 17, 21, 24, 27, 29, 32, 33, 43, 44, 47, 50, 54, 55, 56, 61, 64, 71, 72, 75, 106, 106A, 170. Additional statements go at the end.
   add(
     "f1040",
     2,
@@ -688,6 +706,19 @@ export async function buildDraftReturnPdf2026(
           schedule3_line6d: rCredit,
         }, filer),
     );
+  }
+  if (savers?.file_form8880) {
+    add("form8880", 1, () =>
+      buildForm8880PdfBytes2026(savers.source_input, {
+        form1040_line11a: line("line11a_agi"),
+        form1040_line18: line("line18_total_tax_before_credits"),
+        schedule3_line1: s3?.input.line1_foreign_tax_credit ?? 0,
+        schedule3_line2: s3?.input.line2_childcare_credit ?? 0,
+        schedule3_line3: s3?.input.line3_education_credit ?? 0,
+        schedule3_line4: s3?.input.line4_retirement_savings_credit ?? 0,
+        schedule3_line6d: rCredit,
+        schedule3_line6l: s3?.input.line6l_form8978_credit ?? 0,
+      }, filer));
   }
   if (land) {
     add("form8995", 1, () =>

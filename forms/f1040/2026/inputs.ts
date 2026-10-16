@@ -1,3 +1,7 @@
+import {
+  form8880_2026,
+  saversCreditClaim2026Schema,
+} from "./nodes/form8880.ts";
 import { schedule_r_2026 } from "./nodes/schedule-r.ts";
 import { scheduleRClaim2026Schema } from "./inputs/schedule-r-source.ts";
 import { retirement_2026 } from "./inputs/retirement.ts";
@@ -111,6 +115,11 @@ import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
  * identity is not repeated or trusted independently on each public input row.
  */
 export const inputNodes: readonly InputNodeEntry[] = [
+  {
+    node: form8880_2026,
+    isArray: false,
+    inputSchema: saversCreditClaim2026Schema,
+  },
   {
     node: schedule_r_2026,
     isArray: false,

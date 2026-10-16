@@ -17,6 +17,9 @@ export const energyClaim2026Schema = z.object({
     no_nonrefundable_credits_other_than_child_care_education_and_schedule_r: z
       .literal(true).optional(),
     schedule_r_inventory_reference: ref.optional(),
+    savers_inventory_reference: ref.optional(),
+    no_nonrefundable_credits_other_than_reviewed_sources: z.literal(true)
+      .optional(),
     prior_return: investmentOwner2026.extend({
       tax_year: z.literal(2025),
       return_reference: ref,
@@ -38,7 +41,21 @@ export type EnergySource2026 = z.input<typeof energySource2026Schema>;
 export function reconcileEnergySource2026(raw: EnergySource2026) {
   const source = energySource2026Schema.parse(raw);
   const c = source.claim;
-  if (c.schedule_r_inventory_reference !== undefined) {
+  if (
+    c.savers_inventory_reference !== undefined ||
+    c.no_nonrefundable_credits_other_than_reviewed_sources !== undefined
+  ) {
+    if (
+      !c.savers_inventory_reference ||
+      c.no_nonrefundable_credits_other_than_reviewed_sources !== true ||
+      c.no_nonrefundable_credits_other_than_child_dependent_care_and_education !==
+        undefined ||
+      c.no_nonrefundable_credits_other_than_child_care_education_and_schedule_r !==
+        undefined
+    ) {
+      throw Error("Energy saver credit review is incomplete or contradictory");
+    }
+  } else if (c.schedule_r_inventory_reference !== undefined) {
     if (
       c.no_nonrefundable_credits_other_than_child_care_education_and_schedule_r !==
         true ||

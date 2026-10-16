@@ -7,7 +7,7 @@ agi_aggregator,f8615,yes
 agi_aggregator,f8812,yes
 agi_aggregator,f8863,yes
 agi_aggregator,form8582,no
-agi_aggregator,form8880,no
+agi_aggregator,form8880,yes
 agi_aggregator,form8960,yes
 agi_aggregator,form8962,yes
 agi_aggregator,form8995,no
@@ -49,6 +49,7 @@ f1095a,form8962,yes
 f1099r,agi_aggregator,yes
 f1099r,f1040,yes
 f1099r,form2441,yes
+f1099r,form8880,yes
 f1099r,schedule2,yes
 f1099r,schedule_a,yes
 f1099r,schedule_r,yes
@@ -88,6 +89,8 @@ form461,schedule1,yes
 form461,standard_deduction,yes
 form6251,form1062,yes
 form6251,schedule2,yes
+form8880,f8812,yes
+form8880,form1062,yes
 form8919,agi_aggregator,yes
 form8919,eitc,yes
 form8919,f1040,yes
@@ -129,7 +132,7 @@ general,f8863,yes
 general,form2441,yes
 general,form4137,yes
 general,form6251,yes
-general,form8880,no
+general,form8880,yes
 general,form8919,yes
 general,form8959,yes
 general,form8960,yes
@@ -162,6 +165,7 @@ income_tax_calculation,f8863,yes
 income_tax_calculation,form1062,yes
 income_tax_calculation,form6251,yes
 income_tax_calculation,form8615,yes
+income_tax_calculation,form8880,yes
 income_tax_calculation,form8978_reporting_year,no
 income_tax_calculation,form_1116,no
 income_tax_calculation,schedule_r,yes
@@ -190,8 +194,10 @@ schedule2,f2441,yes
 schedule2,f8812,yes
 schedule2,f8863,yes
 schedule2,form1062,yes
+schedule2,form8880,yes
 schedule2,schedule_r,yes
 schedule3,f8812,yes
+schedule3,form8880,yes
 schedule3_final,f1040,yes
 schedule_a,form8960,yes
 schedule_a,standard_deduction,yes
@@ -232,6 +238,7 @@ start,f8863,yes
 start,form1062,yes
 start,form2441,yes
 start,form4137,yes
+start,form8880,yes
 start,form8919,yes
 start,gambling,yes
 start,general,yes
@@ -261,7 +268,7 @@ w2,form2441,yes
 w2,form4137,yes
 w2,form8839,no
 w2,form8853,no
-w2,form8880,no
+w2,form8880,yes
 w2,form8889,no
 w2,form8919,yes
 w2,form8959,yes

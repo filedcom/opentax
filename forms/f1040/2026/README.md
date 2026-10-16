@@ -1099,17 +1099,21 @@ Final instructions, public filing support and MeF are still pending; see the
 [Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
 
 
-## Saver-credit source workpaper
+## Saver-credit graph and draft
 
-The internal `calculateSaversCredit2026` workpaper derives Form 8880 contribution
-columns from validated W-2s, reconciled voluntary employee payments and retained
-nondeductible IRA records. It shares 2025 contribution/rate arithmetic, replays
-corrected retirement records, and applies the 2026 owner eligibility and dated
-joint-distribution rules. Its tax-capacity arguments are internal finalized line
-values; this is not public input or a new registered graph route.
+The registered `form8880` route derives contributions from actual W-2s,
+reconciled voluntary employee payments and retained nondeductible IRA records.
+It reuses 2025 contribution/rate arithmetic with 2026 eligibility and dated
+joint-distribution rules. Intake accepts only the reviewed claim; general,
+wage, retirement, AGI and tax nodes supply the calculation facts.
 
-The next integration must connect the actual general/wage/retirement sources and
-AGI, order earlier credits before this credit, update child/energy ordering and
-Form 1062 replay, and reconcile Schedule 3, 1040 and the owner draft. ABLE, other
-IRA contribution sources, foreign adjustments, final forms and MeF/ATS remain
-open. See the [current Form 8880 contract](../../../docs/ty2026/graphs/FORM8396-8859-8880-GRAPH.md).
+Care, Schedule R and education finalize before saver credit; child and energy
+credits then use the remaining tax. Form 1062 replays this ordering using its
+hypothetical tax while preserving actual AGI and contribution facts. Schedule 3
+line 4 and Form 1040 reconcile to the one-page draft Form 8880 attachment.
+Zero credits do not produce that attachment. Child and energy reviews must
+identify the actual saver inventory, including reviewed zero-credit cases.
+
+ABLE, other IRA contribution sources, foreign adjustments, special deadlines,
+final forms and MeF/ATS remain open. This development registry is not a public
+filing product. See the [current Form 8880 contract](../../../docs/ty2026/graphs/FORM8396-8859-8880-GRAPH.md).

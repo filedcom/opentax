@@ -20,6 +20,7 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
       "schedule2",
       "form2441",
       "schedule_r",
+      "form8880",
     ];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
@@ -57,6 +58,10 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
+        {
+          nodeType: "form8880",
+          fields: { retirement_sources_2026: r.source_input },
+        },
         {
           nodeType: "schedule_r",
           fields: { retirement_sources_2026: r.source_input },

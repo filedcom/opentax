@@ -153,7 +153,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     const outputs = common.outputs.filter((output) =>
       output.nodeType !== "schedule3" && output.nodeType !== "form8959" &&
       output.nodeType !== "schedule_a" && output.nodeType !== "schedule_c" &&
-      output.nodeType !== "schedule_se"
+      output.nodeType !== "schedule_se" && output.nodeType !== "form8880"
     ).map((output) => {
       // Form 1040 line 1i is the EIC election, not the amount printed in W-2 Q.
       if (output.nodeType === "f1040") {
@@ -376,6 +376,7 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
       },
     });
     // The source record retains TA; it is excluded from box 1, not a second wage.
+    outputs.push({ nodeType: "form8880", fields: { wage_sources: input.w2s } });
     outputs.push({ nodeType: "form2441", fields: { wage_sources: input.w2s } });
     outputs.push({ nodeType: "w2", fields: { issued_w2_sources: input.w2s } });
     return { outputs };

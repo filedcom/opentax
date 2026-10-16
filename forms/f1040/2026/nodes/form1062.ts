@@ -77,6 +77,7 @@ export class Form1062Node2026 extends TaxNode<typeof inputSchema> {
       child,
       schedule2,
       schedule_r,
+      savers,
       extension_payment_sources,
       ...return_lines
     } = input;
@@ -90,6 +91,7 @@ export class Form1062Node2026 extends TaxNode<typeof inputSchema> {
       child,
       schedule2,
       schedule_r,
+      savers,
       return_lines,
     });
     const ledger = calculateForm1062Installments2026(

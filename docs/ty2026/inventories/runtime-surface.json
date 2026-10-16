@@ -41,15 +41,16 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 53,
-    "declared_edges": 276,
-    "unregistered_target_edges": 19,
+    "registry_nodes": 54,
+    "declared_edges": 283,
+    "unregistered_target_edges": 16,
     "nodes": [
       {
         "key": "start",
         "node_type": "start",
         "implemented": true,
         "targets": [
+          "form8880",
           "schedule_r",
           "f1099r",
           "f1095a",
@@ -137,6 +138,16 @@
         "source_module": "forms/f1040/2026/inputs/general.ts"
       },
       {
+        "key": "form8880",
+        "node_type": "form8880",
+        "implemented": true,
+        "targets": [
+          "f8812",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form8880.ts"
+      },
+      {
         "key": "schedule_r",
         "node_type": "schedule_r",
         "implemented": true,
@@ -157,7 +168,8 @@
           "schedule_a",
           "schedule2",
           "form2441",
-          "schedule_r"
+          "schedule_r",
+          "form8880"
         ],
         "source_module": "forms/f1040/2026/inputs/retirement.ts"
       },
@@ -601,7 +613,8 @@
           "f2441",
           "f8863",
           "form1062",
-          "schedule_r"
+          "schedule_r",
+          "form8880"
         ],
         "source_module": "forms/f1040/2026/nodes/income-tax.ts"
       },
@@ -655,7 +668,8 @@
           "f2441",
           "f8863",
           "form1062",
-          "schedule_r"
+          "schedule_r",
+          "form8880"
         ],
         "source_module": "forms/f1040/2026/nodes/schedule2.ts"
       },
@@ -664,7 +678,8 @@
         "node_type": "schedule3",
         "implemented": true,
         "targets": [
-          "f8812"
+          "f8812",
+          "form8880"
         ],
         "source_module": "forms/f1040/2026/nodes/schedule3.ts"
       },

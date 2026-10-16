@@ -29,6 +29,7 @@ export const childCreditClaim2026Schema = z.object({
   no_nonrefundable_credits_other_than_dependent_care_and_education: z.literal(
     true,
   ).optional(),
+  savers_inventory_reference: z.string().trim().min(1).optional(),
   schedule_r_inventory_reference: z.string().trim().min(1).optional(),
   no_nonrefundable_credits_other_than_reviewed_sources: z.literal(
     true,
@@ -54,6 +55,8 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   // Older wage emitters also deposit these facts; the worksheet uses the
   // normalized 1040 wage lines instead, including tips and Form 8919 wages.
   finalized_eic: amount.optional(),
+  finalized_savers_credit: amount.default(0),
+  savers_inventory_reference_from_source: z.string().trim().min(1).optional(),
   finalized_schedule_r_credit: amount.default(0),
   schedule_r_inventory_reference_from_source: z.string().trim().min(1)
     .optional(),
@@ -95,7 +98,8 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   const others = input.auto_other_dependents;
   const energySource = input.energy_sources_2026;
   const tax = input.auto_income_tax_liability + input.schedule2_part1_tax;
-  const earlierCredits = input.finalized_schedule_r_credit +
+  const earlierCredits = input.finalized_savers_credit +
+    input.finalized_schedule_r_credit +
     input.finalized_dependent_care_credit +
     input.finalized_education_credit;
   if (
@@ -118,6 +122,17 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   ) {
     throw Error("Energy credit must include the actual Schedule R inventory");
   }
+  if (
+    energySource &&
+    (energySource.claim.savers_inventory_reference !== undefined ||
+      input.savers_inventory_reference_from_source !== undefined ||
+      input.finalized_savers_credit > 0) &&
+    (!energySource.claim.savers_inventory_reference ||
+      energySource.claim.savers_inventory_reference !==
+        input.savers_inventory_reference_from_source)
+  ) {
+    throw Error("Energy credit must include the actual saver credit inventory");
+  }
   if (children + others === 0) {
     return {
       source_input: input,
@@ -134,9 +149,27 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       key,
     ) => [key, input[key as keyof typeof input]]),
   ));
-  const scheduleRReviewed =
-    review.schedule_r_inventory_reference !== undefined ||
-    review.no_nonrefundable_credits_other_than_reviewed_sources !== undefined;
+  const scheduleRReviewed = review.schedule_r_inventory_reference !== undefined;
+  const saversReviewed = review.savers_inventory_reference !== undefined;
+  if (
+    saversReviewed ||
+    input.savers_inventory_reference_from_source !== undefined ||
+    input.finalized_savers_credit > 0
+  ) {
+    if (
+      !review.savers_inventory_reference ||
+      review.savers_inventory_reference !==
+        input.savers_inventory_reference_from_source ||
+      review
+          .no_nonrefundable_credits_other_than_dependent_care_and_education !==
+        undefined ||
+      review.no_nonrefundable_credits_other_than_reviewed_sources !== true
+    ) {
+      throw Error(
+        "Child credit needs the actual saver credit inventory and an updated other-credit review",
+      );
+    }
+  }
   if (scheduleRReviewed || input.finalized_schedule_r_credit > 0) {
     if (
       !review.schedule_r_inventory_reference ||
@@ -165,7 +198,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       );
     }
   } else if (
-    (!scheduleRReviewed &&
+    (!scheduleRReviewed && !saversReviewed &&
       review
           .no_nonrefundable_credits_other_than_dependent_care_and_education !==
         true) || review.energy_inventory_reference !== undefined
@@ -320,7 +353,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       schedule3_line1: 0,
       schedule3_line2: input.finalized_dependent_care_credit,
       schedule3_line3: input.finalized_education_credit,
-      schedule3_line4: 0,
+      schedule3_line4: input.finalized_savers_credit,
       schedule3_line5b: 0,
       schedule3_line6d: input.finalized_schedule_r_credit,
       schedule3_line6f: 0,
@@ -416,6 +449,7 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
             line19_child_tax_credit: calculation.lines?.line14 ?? 0,
             line28_actc: calculation.lines?.line27 ?? 0,
             line20_nonrefundable_credits:
+              calculation.source_input.finalized_savers_credit +
               calculation.source_input.finalized_schedule_r_credit +
               (calculation.source_input.finalized_dependent_care_credit ?? 0) +
               (calculation.source_input.finalized_education_credit ?? 0) +
@@ -426,6 +460,8 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
         {
           nodeType: "schedule3_final",
           fields: {
+            line4_retirement_savings_credit:
+              calculation.source_input.finalized_savers_credit,
             line6d_elderly_disabled_credit:
               calculation.source_input.finalized_schedule_r_credit,
             line2_childcare_credit:

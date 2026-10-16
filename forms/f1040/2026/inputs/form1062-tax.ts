@@ -1,4 +1,8 @@
 import {
+  calculateSaversCredit2026,
+  saversCreditSource2026Schema,
+} from "./savers-credit-source.ts";
+import {
   calculateScheduleR2026,
   scheduleRSource2026Schema,
 } from "./schedule-r-source.ts";
@@ -55,6 +59,7 @@ export const form1062TaxSource2026Schema = z.object({
   education: educationSchema,
   child: childSchema,
   schedule_r: scheduleRSource2026Schema.optional(),
+  savers: saversCreditSource2026Schema.optional(),
   schedule2: schedule2Schema,
   return_lines: z.object({
     line11b_agi: z.number().int(),
@@ -70,6 +75,8 @@ export const form1062TaxSource2026Schema = z.object({
   review: z.object({
     record_reference: z.string().trim().min(1),
     no_other_regular_tax_additions_or_tax_methods: z.literal(true),
+    savers_inventory_reference: z.string().trim().min(1).optional(),
+    no_credits_other_than_reviewed_sources: z.literal(true).optional(),
     no_credits_other_than_care_education_child_and_energy: z.literal(true)
       .optional(),
     no_credits_other_than_care_education_child_energy_and_schedule_r: z.literal(
@@ -106,21 +113,37 @@ function replayCredits(
     finalized_dependent_care_credit: care.lines?.line11 ?? 0,
     finalized_schedule_r_credit: scheduleRCredit,
   });
+  const savers = input.savers
+    ? calculateSaversCredit2026({
+      ...input.savers,
+      finalized_tax: {
+        line18: regular + amt,
+        schedule3_line1: 0,
+        schedule3_line6l: 0,
+        schedule3_line2: care.lines?.line11 ?? 0,
+        schedule3_line3: education.lines?.line19 ?? 0,
+        schedule3_line6d: scheduleRCredit,
+      },
+    })
+    : undefined;
   const child = calculateChildCredit2026({
     ...input.child,
+    finalized_savers_credit: savers?.lines.line12 ?? 0,
     auto_income_tax_liability: regular,
     schedule2_part1_tax: amt,
     finalized_dependent_care_credit: care.lines?.line11 ?? 0,
     finalized_schedule_r_credit: scheduleRCredit,
     finalized_education_credit: education.lines?.line19 ?? 0,
   });
-  const personal = scheduleRCredit + (care.lines?.line11 ?? 0) +
+  const personal = (savers?.lines.line12 ?? 0) + scheduleRCredit +
+    (care.lines?.line11 ?? 0) +
     (education.lines?.line19 ?? 0) +
     (child.energy_credit?.lines.line3 ?? 0);
   const other = child.lines?.line14 ?? 0;
   return {
     care,
     scheduleR,
+    savers,
     education,
     child,
     personal,
@@ -131,7 +154,24 @@ function replayCredits(
 
 export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
   const input = form1062TaxSource2026Schema.parse(raw);
-  if (input.schedule_r?.claim) {
+  if (
+    input.savers || input.review.savers_inventory_reference ||
+    input.review.no_credits_other_than_reviewed_sources
+  ) {
+    if (
+      !input.savers ||
+      input.review.savers_inventory_reference !==
+        input.savers.claim.record_reference ||
+      input.review.no_credits_other_than_reviewed_sources !== true ||
+      input.review.no_credits_other_than_care_education_child_and_energy !==
+        undefined ||
+      input.review
+          .no_credits_other_than_care_education_child_energy_and_schedule_r !==
+        undefined
+    ) {
+      throw Error("Form 1062 needs its reviewed saver credit inventory");
+    }
+  } else if (input.schedule_r?.claim) {
     if (
       input.review
           .no_credits_other_than_care_education_child_energy_and_schedule_r !==
@@ -265,8 +305,46 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
       "Form 1062 Schedule R must match actual return owners, AGI and tax",
     );
   }
+  if (
+    input.savers && (input.savers.filing_status !== owner.filing_status ||
+      input.savers.taxpayer_ssn !== owner.taxpayer_ssn ||
+      input.savers.spouse_ssn !== owner.spouse_ssn ||
+      input.savers.taxpayer_dob !== input.care.benefit_source.taxpayer_dob ||
+      input.savers.spouse_dob !== input.care.benefit_source.spouse_dob ||
+      input.savers.agi !== ret.line11b_agi ||
+      input.savers.finalized_tax.line18 !== regular + additional)
+  ) {
+    throw Error(
+      "Form 1062 saver credit must match actual return owners, AGI and tax",
+    );
+  }
+  if (input.savers) {
+    const orderedWages = (wages: typeof input.savers.wage_sources) =>
+      [...wages].sort((a, b) =>
+        a.source_document_reference.localeCompare(b.source_document_reference)
+      );
+    if (
+      JSON.stringify(orderedWages(input.savers.wage_sources)) !==
+        JSON.stringify(orderedWages(input.care.benefit_source.wage_sources))
+    ) {
+      throw Error("Form 1062 saver credit needs the actual wage inventory");
+    }
+  }
   const actualCredits = replayCredits(input, regular, additional);
   if (
+    input.child.finalized_savers_credit !==
+      (actualCredits.savers?.lines.line12 ?? 0) ||
+    input.child.savers_inventory_reference_from_source !==
+      input.savers?.claim.record_reference ||
+    (input.savers &&
+      (input.savers.finalized_tax.schedule3_line1 !== 0 ||
+        input.savers.finalized_tax.schedule3_line6l !== 0 ||
+        input.savers.finalized_tax.schedule3_line2 !==
+          (actualCredits.care.lines?.line11 ?? 0) ||
+        input.savers.finalized_tax.schedule3_line3 !==
+          (actualCredits.education.lines?.line19 ?? 0) ||
+        input.savers.finalized_tax.schedule3_line6d !==
+          (actualCredits.scheduleR?.lines?.line22 ?? 0))) ||
     (input.schedule_r &&
       input.schedule_r.finalized_dependent_care_credit !==
         (actualCredits.care.lines?.line11 ?? 0)) ||

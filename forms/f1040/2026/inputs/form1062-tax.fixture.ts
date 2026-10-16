@@ -30,6 +30,7 @@ export function form1062TaxFixture2026(
     care: source("f2441"),
     education: source("f8863"),
     child: source("f8812"),
+    ...(graph.form8880 ? { savers: source("form8880") } : {}),
     ...(graph.schedule_r ? { schedule_r: source("schedule_r") } : {}),
     schedule2: pick(p.schedule2, Object.keys(schedule2Schema.shape)),
     return_lines: pick(
@@ -39,7 +40,14 @@ export function form1062TaxFixture2026(
     review: {
       record_reference: "synthetic-form1062-tax-scope",
       no_other_regular_tax_additions_or_tax_methods: true,
-      ...(graph.schedule_r
+      ...(graph.form8880
+        ? {
+          no_credits_other_than_reviewed_sources: true,
+          savers_inventory_reference:
+            (graph.form8880 as { claim: { record_reference: string } }).claim
+              .record_reference,
+        }
+        : graph.schedule_r
         ? {
           no_credits_other_than_care_education_child_energy_and_schedule_r:
             true,

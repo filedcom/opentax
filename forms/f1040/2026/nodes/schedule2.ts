@@ -35,6 +35,7 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
       "f8863",
       "form1062",
       "schedule_r",
+      "form8880",
     ];
   }
   readonly outputNodes = new OutputNodes([f1040_2026_node, f8812]);
@@ -46,6 +47,10 @@ class Schedule2Node2026 extends TaxNode<typeof inputSchema> {
     const lines = calculateSchedule2_2026(input);
     return {
       outputs: [
+        {
+          nodeType: "form8880",
+          fields: { schedule2_part1_tax: lines.line3_part1_tax },
+        },
         {
           nodeType: "schedule_r",
           fields: { schedule2_part1_tax: lines.line3_part1_tax },

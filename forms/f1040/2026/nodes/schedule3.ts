@@ -20,6 +20,9 @@ class Schedule3Node2026 extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule3";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f8812_2026]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "form8880"];
+  }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Schedule 3 needs f1040:2026 context");
@@ -33,6 +36,17 @@ class Schedule3Node2026 extends TaxNode<typeof inputSchema> {
         {
           nodeType: "schedule3",
           fields: { pre_credit_calculation_2026: calculation },
+        },
+        {
+          nodeType: "form8880",
+          fields: {
+            finalized_schedule_r_credit:
+              calculation.input.line6d_elderly_disabled_credit ?? 0,
+            finalized_education_credit:
+              calculation.input.line3_education_credit ?? 0,
+            finalized_dependent_care_credit:
+              calculation.input.line2_childcare_credit ?? 0,
+          },
         },
         {
           nodeType: "f8812",
