@@ -29,7 +29,7 @@ import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8
 import { form4952 } from "../../../../intermediate/forms/deductions/investments/form4952/index.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { CONFIG_BY_YEAR, type F1040Config } from "../../../../config/index.ts";
 
 const nomineeDistributionSchema = z.object({
   box1a: z.number().nonnegative(),
@@ -422,6 +422,19 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, input: DIVInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, input, cfg);
+  }
+
+  computeWithConfig(
+    _ctx: NodeContext,
+    input: DIVInput,
+    cfg: Pick<
+      F1040Config,
+      | "scheduleBDividendThreshold"
+      | "sec199aSingleThreshold"
+      | "sec199aMfjThreshold"
+    >,
+  ): NodeResult {
     const parsed = inputSchema.parse(input);
     assertDistinct1099DIVCopies(parsed.f1099divs);
     const { taxableIncome, filingStatus } = parsed;

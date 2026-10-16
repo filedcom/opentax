@@ -6,6 +6,32 @@ import {
   assertReturnWideArithmetic,
 } from "./return-wide-arithmetic.ts";
 
+Deno.test("Form 1040 export rounds retained wage/income sources by filed line", () => {
+  const income = {
+    line1a_wages: [6000.25, 6000.24],
+    line1b_household_wages: 100.49,
+    line1h_other_earned: [0.25, 0.25],
+    line1z_total_wages: 12101,
+    line2b_taxable_interest: 0.49,
+    line3b_ordinary_dividends: 0.49,
+    line9_total_income: 12101,
+  };
+  assertReturnWideArithmetic(income);
+  for (
+    const [change, reason] of [
+      [{ line1z_total_wages: 12101.48 }, "line 1z"],
+      [{ line1z_total_wages: 12100 }, "line 1z"],
+      [{ line9_total_income: 12102 }, "line 9"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...income, ...change }),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 export replays retained wage and total-income components", () => {
   const income = {
     line1a_wages: 40_000,
@@ -396,6 +422,78 @@ const filed = {
   line32_refundable_credits_total: 70,
   line33_total_payments: 1_890,
 };
+
+Deno.test("Form 1040 export sums printed payment lines while retaining source cents", () => {
+  const payments = {
+    line25a_w2_withheld: 1500.49,
+    line25b_withheld_1099: 200.50,
+    line25c_total: 20.50,
+    line25d_total_withholding: 1722,
+    line26_estimated_tax: 100.50,
+    line28_actc: 20.50,
+    line29_refundable_aoc: 10.49,
+    line31_additional_payments: 40.50,
+    line32_refundable_credits_total: 72,
+    line33_total_payments: 1895,
+  };
+  assertReturnWideArithmetic(payments);
+  for (
+    const [change, reason] of [
+      [{ line25d_total_withholding: 1721.49 }, "line 25d"],
+      [{ line32_refundable_credits_total: 71.49 }, "line 32"],
+      [{ line33_total_payments: 1894.50 }, "line 33"],
+      [{ line25d_total_withholding: 1723 }, "line 25d"],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...payments, ...change }),
+      Error,
+      reason,
+    );
+  }
+});
+
+Deno.test("Form 1040 export adds filed other-tax dollars while retaining source cents", () => {
+  const taxes = {
+    line22_tax_after_credits: 6822,
+    line23_other_taxes: 233.70,
+    line24_total_tax: 7056,
+  };
+  assertReturnWideArithmetic(taxes);
+  assertStringIncludes(
+    irs1040.build(taxes, { pending: {} }),
+    "<TotalTaxAmt>7056</TotalTaxAmt>",
+  );
+  irs1040Pdf.projectFields?.(taxes, {});
+  for (const wrong of [7055.70, 7055, 7057]) {
+    assertThrows(
+      () => assertReturnWideArithmetic({ ...taxes, line24_total_tax: wrong }),
+      Error,
+      "line 24",
+    );
+  }
+  assertReturnWideArithmetic({
+    ...taxes,
+    line23_other_taxes: 233.49,
+    line24_total_tax: 7055,
+  });
+  const deferred = {
+    ...taxes,
+    form8621_1294_deferred_tax: 100,
+    form8621_1294_total_tax_before_deferral: 7056,
+    line24_total_tax: 6956,
+  };
+  assertReturnWideArithmetic(deferred);
+  assertThrows(
+    () =>
+      assertReturnWideArithmetic({
+        ...deferred,
+        form8621_1294_total_tax_before_deferral: 7055.70,
+      }),
+    Error,
+    "deferral",
+  );
+});
 
 Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => {
   const pending = {

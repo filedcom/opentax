@@ -2,9 +2,15 @@
 
 Source: pinned [2026 draft Form 1116](../corpus/draft/f1116.pdf), SHA-256
 `9899d7fbd5401ca26d5677cbc87e221c983c86f8f43130347e8f2329cc6c9779`.
-The [2025 Form 1116 instructions](../corpus/authorities/i1116--2025.pdf)
-are a **prior-year comparator**: the expected 2026 draft instruction URL still
-serves 2025. The [December 2022 Schedule B](../corpus/authorities/f1116sb--2022.pdf)
+The [2026 draft instructions](../corpus/draft/i1116.pdf), dated September 28,
+2026, were verified October 16 and pinned at SHA-256
+`7581530b8d131747ebf8a04913d794e51780173263167711fc0a15891e9f9e99`.
+The [2025 instructions](../corpus/authorities/i1116--2025.pdf) remain a prior-year
+comparator. The draft adds section 904(b)(6) inventory-income sourcing and
+requires the Schedule A overall reduction to be reflected in apportioned
+itemized deductions. PTEP group codes distinguish pre-/post-June 29, 2025
+section 951A earnings. Final instructions still require reconciliation.
+The [December 2022 Schedule B](../corpus/authorities/f1116sb--2022.pdf)
 and [instructions](../corpus/authorities/i1116sb--2022.pdf) cover foreign tax
 carryovers. The [December 2025 Schedule C](../corpus/authorities/f1116sc--2025.pdf)
 and [instructions](../corpus/authorities/i1116sc--2025.pdf) cover foreign tax
@@ -16,7 +22,7 @@ before filing.
 
 | Form area | Required source and calculation | Downstream or attachment |
 | --- | --- | --- |
-| Direct Schedule 3 election | Qualified payee statements such as 1099-INT/1099-DIV or K-1/K-3 may permit a small passive-credit election without Form 1116. The **2025** instruction comparator specifies all-passive statement income and $300/$600 tax limits; verify those conditions in 2026 instructions before using them. | If eligible and elected, send the source-backed foreign tax directly to Schedule 3 line 1, without a Form 1116 attachment or a carryover into/out of that elected year. Otherwise complete Form 1116. |
+| Direct Schedule 3 election | Qualified payee statements such as 1099-INT/1099-DIV or K-1/K-3 may permit a small passive-credit election without Form 1116. The September 28 **2026 draft** retains the all-passive qualified-statement conditions and $300/$600 tax limits; the source ledger alone does not establish election eligibility. | If eligible and elected, send the source-backed foreign tax directly to Schedule 3 line 1, without a Form 1116 attachment or a carryover into/out of that elected year. Otherwise complete Form 1116. |
 | Header, category and Part I | Keep one Form 1116 per separate category: §951A, branch, passive, general, §901(j), treaty re-sourcing, and lump-sum distributions. Preserve country/territory, gross foreign income, currency/source method, directly related expenses, apportioned deductions and losses. Use Schedule A/standard deduction and Form 2555 exclusion data once, by category. | Line 7 foreign taxable income feeds Part III line 15. Attach direct-expense and other required statements, including one per relevant country/category rather than a single aggregate tax number. |
 | Part II | For each country record paid or accrued method/date, tax withheld by dividend/rent/interest/PTEP source, other tax, foreign-currency amount and U.S.-dollar conversion. The 2026 printed form has separate PTEP distribution/group columns. | Lines A–C total to line 8/Part III line 9. Multiple countries or tax character cannot be collapsed into one unspecified row. |
 | Part III lines 10–17 | Add eligible carryover/carryback by category; reconcile Schedule B line 3 column (xiv), reductions, high-tax kickout and foreign-source adjustments. §951A has no line 10 carryover. | Line 14 available foreign tax and line 17 net foreign taxable income. Generate/consume/expire carryovers in the category ledger. |
@@ -40,12 +46,13 @@ copies, country rows and statements, and visually inspect a filled bundle.
   `f1099int`, `agi_aggregator` and `income_tax_calculation` declare edges to
   it. Other 2025 sources including 1099-DIV, foreign-earned income and K-1
   also point there and need source-specific TY2026 audits.
-- Shared `form_1116/index.ts` groups six categories and simplifies the
-  allowed credit to tax paid versus a foreign-taxable-income fraction. It
-  lacks the printed lump-sum category, country-level Part II, Schedule B/C
-  ledger, line 12/13 reductions, line 16 adjustments and all special
-  preferential-rate rules. It defaults missing U.S. tax or taxable income
-  to **zero**; that must not be treated as a completed filed computation.
+- The current shared `form_1116/index.ts` is substantially beyond the September
+  snapshot: it validates source tax items, allocates deductions, reconciles
+  selected carryover/current-excess cases and emits Schedule B workpapers.
+  Missing regular-tax operands now fail. It also contains 2025-specific dates,
+  preferential rates, country validation and carryover vintages, so do not call
+  the entire node with 2026 context. Its reusable category/tax-kind definitions
+  are used by the new source ledger below.
 - `income_tax_calculation` currently sends `taxable_income` and `tax` to
   Form 1116. The 2026 line 18/20 formulas above require different inputs,
   including Schedule 1-A line 43 and Schedule 2 line 1z. Feed these from the
@@ -54,19 +61,17 @@ copies, country rows and statements, and visually inspect a filled bundle.
   The 2026 Schedule 3 node has line 1, but no registered producer or tested
   AMT foreign-tax-credit handoff yet. Keep direct-election credit and filed
   Form 1116 credit mutually exclusive for the same source tax.
-- The TY2025 PDF descriptor fills only **four numeric fields and six category
-  checks**, with comments calling its field locations approximate. It does
-  not represent a complete two-page Form 1116. The TY2025 MeF serializer
-  rejects unsupported categories and has a direct-expense statement, but
-  current TY2026 element names, category rules, document order and
-  Schedule B/C attachment support remain unverified.
+- TY2025 now has source-specific PDF/MeF projections for interest, dividends,
+  multiple countries, wages, carryovers and redetermination statements. Audit
+  their source contracts and annual assumptions before adapting them. Current
+  TY2026 elements, document order, special-category and Schedule B/C rules still
+  need the current authorized schema package and acceptance evidence.
 
 ## Implementation and acceptance order
 
 1. Audit each foreign income/tax producer and source statement. Choose
    credit versus deduction and, if credit, direct Schedule 3 election versus
-   filed Form 1116 from documented facts. Confirm 2026 election thresholds
-   and qualified statements when the instructions appear.
+   filed Form 1116 from documented facts. Use the pinned 2026 draft election conditions and reconcile final instructions.
 2. Create category/country/owner and origin-year ledger records. Build the
    full Part I/II and Schedule B/C paths before claiming carryovers or
    redeterminations. The preparer must see diagnostics for missing paid/
@@ -87,3 +92,44 @@ copies, country rows and statements, and visually inspect a filled bundle.
    redetermination. Run TY2025 regressions on existing foreign-credit
    fixtures and retain explicit unsupported-case diagnostics until the
    whole filed path is present.
+
+
+## Current foreign-tax source ledger (October 16)
+
+`prepareForeignTaxSources2026` retains actual paid-method tax receipts and
+issued 1099-INT/1099-DIV copies. It reuses the existing category/tax-kind enums,
+2026 issued-copy schemas and reconciliation, actual return-owner checks, and
+integer currency conversion used for foreign bank interest. Issued tax boxes
+are preserved in the original source; their income-only validation projection
+removes the tax box so the existing income validation can run independently.
+Every issued-tax allocation references its actual income copy.
+
+Each payment retains its taxpayer, country, taxing authority, transaction,
+liability, original currency, payment date, evidence digest, conversion rate
+and explanation. Complete reviewed allocations reconcile in source currency
+before translation. Translated cents are allocated by largest remainder with
+stable source-order ties; reduced and remaining portions conserve the original
+payment. Duplicate payments/copies, stale or mismatched dates, source-precision
+loss, wrong owners, incoherent allocations and conflicting document hashes fail.
+Joint returns can retain both owners; MFS does not import spouse tax.
+
+The workpaper preserves all seven category identities and country-level rows.
+Issued passive 1099 taxes use the special USD presentation with no fabricated
+foreign-currency amount or payment date. Actual payments use payment-date FX.
+PTEP rows require a current group code. Reviewed pre-Part-II reductions and
+line 12 reductions remain separate; all original amounts and reduction evidence
+are retained. Credit-with-form, direct-election and deduction choices remain
+explicit, but no credit or deduction is emitted at this stage.
+
+This is not public intake, a completed Form 1116, or proof of creditability.
+Required next stages bind income and reduction workpapers to actual return
+sources, establish election eligibility, apportion deductions, derive the 2026
+limitation operands and preferential adjustments, and reconcile carryover and
+AMT credit ordering. Accrued-method conversions/elections, refund and contested
+redeterminations, released section 909 taxes, QBU rules, PDF/MeF and ATS remain
+unfinished. A positive tax source cannot bypass the public investment gates.
+
+Validation includes multiple countries and categories, issued-copy identity,
+PTEP codes/reductions, fractional-cent conservation, original-currency totals,
+owner attribution, exact payment-date FX, duplicate coverage and evidence
+integrity. The loaded 2026 registry remains unchanged until consumers exist.

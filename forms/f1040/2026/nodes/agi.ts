@@ -1,0 +1,905 @@
+import { socialSecurityClaim2026Schema } from "../inputs/social-security-source.ts";
+import { inputSchema as careSourceSchema } from "../inputs/dependent-care.ts";
+import { settleAdoptionCare2026 } from "../inputs/adoption-care-settlement.ts";
+import {
+  adoptionSource2026Schema,
+  prepareAdoptionSources2026,
+} from "../inputs/adoption-source.ts";
+import { calculateAdoptionExclusion2026 } from "../inputs/adoption-settlement.ts";
+import { sumSourceMoney } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+import {
+  calculateHsaReturnSources2026,
+  hsaReturnSource2026Schema,
+} from "../inputs/hsa-source.ts";
+import {
+  ableSource2026Schema,
+  calculateAbleSources2026,
+} from "../inputs/able-source.ts";
+import {
+  calculateMovingSources2026,
+  movingSource2026Schema,
+} from "../inputs/moving-source.ts";
+import {
+  calculateRetirementSources2026,
+  retirementSource2026Schema,
+} from "../inputs/retirement-source.ts";
+import {
+  calculateGambling2026,
+  gamblingSource2026Schema,
+} from "../inputs/gambling-source.ts";
+import {
+  businessLossSource2026Schema,
+  calculateBusinessLoss2026,
+} from "../inputs/business-loss-source.ts";
+import { businessSources2026Schema } from "../inputs/business-source.ts";
+import {
+  calculateGovernmentPayments2026,
+  governmentSource2026Schema,
+} from "../inputs/government-source.ts";
+import {
+  businessReturnSource2026Schema,
+  resolveBusinessQbi2026,
+} from "../inputs/business-qbi.ts";
+import { benefitElectionBridge2026Schema } from "../inputs/social-security-election.ts";
+import { z } from "zod";
+import type { NodeContext } from "../../../../core/types/node-context.ts";
+import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
+import {
+  agi_aggregator,
+  computeSsaTaxable,
+  inputSchema as sharedSchema,
+  scheduleOnePartI,
+  socialSecurityWorksheetIncome,
+} from "../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { agi2026 } from "../../nodes/config/2026-agi.ts";
+import { FilingStatus } from "../../nodes/types.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
+
+function sumIncome(value: number | number[] | undefined): number {
+  return Array.isArray(value) ? value.reduce((a, b) => a + b, 0) : value ?? 0;
+}
+
+/** Audited income/adjustment bridges; activity-limit routes are added with their owners. */
+export const inputSchema = sharedSchema.pick({
+  line1a_wages: true,
+  line1b_household_wages: true,
+  line1h_other_earned: true,
+  line1c_unreported_tips: true,
+  line1e_taxable_dep_care: true,
+  line1f_taxable_adoption_benefits: true,
+  line1g_wages_8919: true,
+  line2b_taxable_interest: true,
+  line3b_ordinary_dividends: true,
+  line4b_ira_taxable: true,
+  line5b_pension_taxable: true,
+  line6a_ss_gross: true,
+  line6b_ss_taxable: true,
+  tax_exempt_interest: true,
+  mfs_lived_with_spouse: true,
+  line7_capital_gain: true,
+  line7a_cap_gain_distrib: true,
+  line1_state_refund: true,
+  line2a_alimony_received: true,
+  line3_schedule_c: true,
+  line4_other_gains: true,
+  line5_schedule_e: true,
+  line6_schedule_f: true,
+  line7_unemployment: true,
+  line8a_nol_deduction: true,
+  line8b_gambling_winnings: true,
+  line8p_excess_business_loss: true,
+  line8q_able_taxable_earnings: true,
+  line8f_hsa_income: true,
+  line8z_hsa_excess_earnings: true,
+  line8z_hsa_excess_employer: true,
+  line8c_cod_income: true,
+  line8d_foreign_earned_income_exclusion: true,
+  line8e_archer_msa_dist: true,
+  line8i_prizes_awards: true,
+  line8z_rtaa: true,
+  line8z_taxable_grants: true,
+  line11_educator_expenses: true,
+  line12_business_expenses: true,
+  line13_hsa_deduction: true,
+  line14_moving_expenses: true,
+  line15_se_deduction: true,
+  line16_sep_simple: true,
+  line17_se_health_insurance: true,
+  line18_early_withdrawal: true,
+  line20_ira_deduction: true,
+  line21_student_loan_interest: true,
+  line23_archer_msa_deduction: true,
+  line24f_501c18d: true,
+}).extend({
+  care_sources_2026: careSourceSchema.optional(),
+  adoption_sources_2026: adoptionSource2026Schema.optional(),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
+  business_loss_sources_2026: businessLossSource2026Schema.optional(),
+  gambling_sources_2026: gamblingSource2026Schema.optional(),
+  retirement_sources_2026: retirementSource2026Schema.optional(),
+  able_sources_2026: ableSource2026Schema.optional(),
+  hsa_sources_2026: hsaReturnSource2026Schema.optional(),
+  moving_sources_2026: movingSource2026Schema.optional(),
+  government_sources_2026: governmentSource2026Schema.optional(),
+  line8z_family_leave: z.number().finite().nonnegative().optional(),
+  filing_status: z.nativeEnum(FilingStatus),
+  social_security_lump_sum: benefitElectionBridge2026Schema.optional(),
+  social_security_scope_review_2026: socialSecurityClaim2026Schema.shape
+    .worksheet_scope_review.optional(),
+}).strict();
+
+class Agi2026Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "agi_aggregator";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = agi_aggregator.outputNodes;
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "f8863", "f8615", "schedule_r"];
+  }
+
+  compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
+    const { care_sources_2026: care, ...raw } = inputSchema.parse(rawInput);
+    if (!care) return this.computeIncome(ctx, raw);
+    if (
+      !raw.adoption_sources_2026 || raw.line1e_taxable_dep_care !== undefined
+    ) {
+      throw Error(
+        "Coordinated care must own line 1e and use actual adoption sources",
+      );
+    }
+    const settled = settleAdoptionCare2026(care, (taxableCare, places) => {
+      const result = this.computeIncome(ctx, {
+        ...raw,
+        line1e_taxable_dep_care: taxableCare,
+      }, places);
+      const adoption = result.outputs?.find((o) =>
+        o.nodeType === "agi_aggregator" && o.fields.adoption_exclusion_2026
+      )?.fields.adoption_exclusion_2026 as
+        | ReturnType<typeof calculateAdoptionExclusion2026>
+        | undefined;
+      if (!adoption) {
+        throw Error(
+          "Coordinated care needs executed adoption exclusion income",
+        );
+      }
+      return { result, adoption };
+    });
+    return {
+      ...settled.result,
+      finalizations: [
+        ...(settled.result.finalizations ?? []),
+        { nodeType: "form2441", fields: { calculation_2026: settled.benefit } },
+      ],
+      outputs: [
+        ...(settled.result.outputs ?? []),
+        {
+          nodeType: "f1040",
+          fields: { line1e_taxable_dep_care: settled.benefit.lines!.line26 },
+        },
+        {
+          nodeType: "f2441",
+          fields: { benefit_source: settled.benefit.source_input },
+        },
+        {
+          nodeType: "agi_aggregator",
+          fields: {
+            care_adoption_settlement_2026: {
+              benefit: settled.benefit,
+              attempts: settled.attempts,
+            },
+          },
+        },
+      ],
+    };
+  }
+  private computeIncome(
+    ctx: NodeContext,
+    rawInput: z.input<typeof inputSchema>,
+    adoptionPhaseoutPlaces = 3,
+  ): NodeResult {
+    if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
+      throw new Error("2026 AGI needs f1040:2026 context");
+    }
+    const parsed = inputSchema.parse(rawInput);
+    // Repeated sources for one printed line are added before rounding; signed
+    // halves use the same helper as the 2026 finalizer.
+    const normalized = Object.fromEntries(
+      Object.entries(parsed).map(([key, value]) => {
+        if (typeof value === "number" || Array.isArray(value)) {
+          const values = Array.isArray(value) ? value : [value];
+          if (values.some((amount) => !Number.isFinite(amount))) {
+            throw new Error("AGI amounts must be finite");
+          }
+          const amount = roundWholeDollars(
+            values.reduce((sum, part) => sum + part, 0),
+          );
+          if (!Number.isSafeInteger(amount)) {
+            throw new Error("AGI amount exceeds whole-dollar range");
+          }
+          return [key, amount];
+        }
+        return [key, value];
+      }),
+    );
+    // These two sources share one printed capital-gain line.
+    if (
+      parsed.line7_capital_gain !== undefined ||
+      parsed.line7a_cap_gain_distrib !== undefined
+    ) {
+      normalized.line7_capital_gain = roundWholeDollars(
+        (parsed.line7_capital_gain ?? 0) +
+          (parsed.line7a_cap_gain_distrib ?? 0),
+      );
+      normalized.line7a_cap_gain_distrib = undefined;
+    }
+    const input = inputSchema.parse(normalized);
+    const hsa = input.hsa_sources_2026
+      ? calculateHsaReturnSources2026(input.hsa_sources_2026)
+      : undefined;
+    if (
+      (hsa?.schedule1_line8f ?? 0) !== (input.line8f_hsa_income ?? 0) ||
+      (hsa?.schedule1_line13 ?? 0) !== (input.line13_hsa_deduction ?? 0) ||
+      (hsa?.schedule1_line8z_earnings ?? 0) !==
+        (input.line8z_hsa_excess_earnings ?? 0) ||
+      (hsa?.schedule1_line8z_employer ?? 0) !==
+        (input.line8z_hsa_excess_employer ?? 0) ||
+      hsa && hsa.source_input.filing_status !== input.filing_status
+    ) {
+      throw Error(
+        "AGI HSA income and deduction need reconciled return sources",
+      );
+    }
+    const able = input.able_sources_2026
+      ? calculateAbleSources2026(input.able_sources_2026)
+      : undefined;
+    if (
+      (able?.taxable_earnings ?? 0) !==
+        (input.line8q_able_taxable_earnings ?? 0) ||
+      able && able.source_input.filing_status !== input.filing_status
+    ) throw Error("AGI ABLE earnings must reconcile retained source records");
+    const retirement = input.retirement_sources_2026
+      ? calculateRetirementSources2026(input.retirement_sources_2026)
+      : undefined;
+    if (
+      retirement &&
+      (retirement.source_input.filing_status !== input.filing_status ||
+        retirement.lines.line4b_ira_taxable !==
+          (input.line4b_ira_taxable ?? 0) ||
+        retirement.lines.line5b_pension_taxable !==
+          (input.line5b_pension_taxable ?? 0))
+    ) {
+      throw new Error(
+        "AGI retirement income must reconcile retained distribution sources",
+      );
+    }
+
+    const moving = input.moving_sources_2026
+      ? calculateMovingSources2026(input.moving_sources_2026)
+      : undefined;
+    if (
+      moving && retirement &&
+      (moving.source_input.taxpayer_ssn.replaceAll("-", "") !==
+          retirement.source_input.taxpayer_ssn ||
+        (input.filing_status === FilingStatus.MFJ &&
+          moving.source_input.spouse_ssn?.replaceAll("-", "") !==
+            retirement.source_input.spouse_ssn))
+    ) {
+      throw new Error(
+        "AGI moving and retirement sources must belong to the same return owners",
+      );
+    }
+    if (
+      (moving && moving.source_input.filing_status !== input.filing_status) ||
+      ((moving || retirement) &&
+        (input.line1h_other_earned ?? 0) !== roundWholeDollars(
+            (retirement?.cents.line1h_disability_wages ?? 0) +
+              (moving?.f1040Line1h ?? 0),
+          ))
+    ) {
+      throw new Error(
+        "AGI line 1h must reconcile disability and moving source components",
+      );
+    }
+
+    if ((input.line21_student_loan_interest ?? 0) > 2_500) {
+      throw new Error(
+        "Student-loan input must be the eligible amount capped at $2,500",
+      );
+    }
+    const loss = input.business_loss_sources_2026
+      ? calculateBusinessLoss2026(input.business_loss_sources_2026)
+      : undefined;
+    if (input.line8p_excess_business_loss !== undefined && !loss) {
+      throw new Error(
+        "AGI business-loss adjustment needs its retained source workpaper",
+      );
+    }
+    if (loss) {
+      const b = input.business_sources_2026;
+      const core = b
+        ? (() => {
+          const { qbi_review: _q, loss_limit_review: _l, ...rest } = b;
+          return businessSources2026Schema.parse(rest);
+        })()
+        : undefined;
+      if (
+        loss.source_input.filing_status !== input.filing_status ||
+        JSON.stringify(core) !==
+          JSON.stringify(loss.source_input.business_sources) ||
+        loss.lines.line2 !== (input.line3_schedule_c ?? 0) ||
+        loss.lines.line3 !== (input.line7_capital_gain ?? 0) ||
+        loss.lines.line4 !== (input.line4_other_gains ?? 0) ||
+        -loss.lines.line8 !== (input.line15_se_deduction ?? 0) ||
+        loss.schedule1_line8p !== (input.line8p_excess_business_loss ?? 0)
+      ) {
+        throw new Error(
+          "AGI loss workpaper disagrees with retained sources and receiving lines",
+        );
+      }
+    }
+    const adoption = input.adoption_sources_2026
+      ? prepareAdoptionSources2026(input.adoption_sources_2026)
+      : undefined;
+    if (adoption) {
+      if (
+        adoption.source_input.filing_status !== input.filing_status ||
+        roundWholeDollars(sumSourceMoney(adoption.source_input.wage_sources.map(
+            (w) => w.box1_wages,
+          ))) !== (input.line1a_wages ?? 0)
+      ) {
+        throw Error(
+          "Adoption income must reconcile return filing status and W-2 wages",
+        );
+      }
+      if (input.line1f_taxable_adoption_benefits !== undefined) {
+        throw Error("Adoption sources must own line 1f before AGI");
+      }
+      if (
+        adoption.children.some((child) =>
+          child.report_child && child.prior_foreign_benefits > 0
+        )
+      ) {
+        throw Error(
+          "Prior foreign adoption benefits need affected-year recovery reconciliation before AGI",
+        );
+      }
+      if (input.line6b_ss_taxable !== undefined) {
+        throw Error(
+          "Adoption sources must precede calculated Social Security benefits",
+        );
+      }
+      // Pub. 915 adds Form 8839 line 30 back to taxable wages. Computing
+      // with all current benefits first makes SSA independent of the exclusion,
+      // including a special-needs exclusion greater than cash benefits.
+      input.line1f_taxable_adoption_benefits = adoption.partIII_line23 +
+        adoption.taxable_benefits_outside_partIII;
+    } else if ((input.line1f_taxable_adoption_benefits ?? 0) !== 0) {
+      throw Error("Adoption income needs reconciled source records before AGI");
+    }
+    let socialSecurityWorksheet;
+    let lumpSumElection;
+    if (input.social_security_lump_sum && input.line6a_ss_gross === undefined) {
+      throw new Error("Lump-sum comparison needs current net benefits");
+    }
+    if (input.line6a_ss_gross !== undefined) {
+      if (input.line6a_ss_gross < 0) {
+        throw new Error(
+          "Negative net benefits need repayment deduction or credit review",
+        );
+      }
+      if (
+        input.filing_status === FilingStatus.MFS &&
+        input.mfs_lived_with_spouse === undefined
+      ) {
+        throw new Error(
+          "MFS Social Security needs the full-year spouse residence answer",
+        );
+      }
+      if (
+        (input.line20_ira_deduction ?? 0) > 0 &&
+        input.line6b_ss_taxable === undefined
+      ) {
+        throw new Error(
+          "IRA deduction with Social Security needs coordinated Pub. 590-A worksheets",
+        );
+      }
+      const income = socialSecurityWorksheetIncome({
+        ...input,
+        line8z_taxable_grants: (input.line8z_taxable_grants ?? 0) +
+          (input.line8z_family_leave ?? 0),
+      });
+      if (adoption) {
+        // Worksheet 1 line 7 omits Schedule 1 line 24 adjustments.
+        income.adjustments_except_student_loan -= input.line24f_501c18d ?? 0;
+      }
+      const calculated = roundWholeDollars(computeSsaTaxable(
+        input.line6a_ss_gross,
+        income.other_income + income.foreign_earned_income_exclusion -
+          income.adjustments_except_student_loan,
+        input.tax_exempt_interest ?? 0,
+        input.filing_status === FilingStatus.MFJ,
+        input.filing_status === FilingStatus.MFS &&
+          input.mfs_lived_with_spouse === true,
+      ));
+      const election = input.social_security_lump_sum;
+      if (election) {
+        if (
+          input.line6b_ss_taxable !== undefined ||
+          roundWholeDollars(election.net_benefits_before_rounding) !==
+            input.line6a_ss_gross
+        ) {
+          throw new Error(
+            "Lump-sum worksheet must own taxable benefits and reconcile to current source benefits",
+          );
+        }
+        const currentBenefits = Math.max(
+          0,
+          roundWholeDollars(
+            (Math.round(election.net_benefits_before_rounding * 100) -
+              Math.round(election.lump_sum_payments * 100)) / 100,
+          ),
+        );
+        const currentTaxable = roundWholeDollars(computeSsaTaxable(
+          currentBenefits,
+          income.other_income + income.foreign_earned_income_exclusion -
+            income.adjustments_except_student_loan,
+          input.tax_exempt_interest ?? 0,
+          input.filing_status === FilingStatus.MFJ,
+          input.filing_status === FilingStatus.MFS &&
+            input.mfs_lived_with_spouse === true,
+        ));
+        const alternative = election.additional_taxable_benefits === undefined
+          ? undefined
+          : currentTaxable + election.additional_taxable_benefits;
+        const elected = election.method === "use_if_lower" &&
+          alternative !== undefined && alternative < calculated;
+        lumpSumElection = {
+          ...election,
+          current_year_benefits_excluding_lump_sums: currentBenefits,
+          current_year_taxable_benefits: currentTaxable,
+          ordinary_taxable_benefits: calculated,
+          election_taxable_benefits: alternative,
+          elected,
+          taxable_benefits: elected ? alternative! : calculated,
+        };
+      }
+      // Coordinated IRA may later supply an internal final amount. Public
+      // sources cannot assert current taxable benefits or override an election.
+      const taxable = lumpSumElection?.taxable_benefits ??
+        input.line6b_ss_taxable ?? calculated;
+      if (
+        taxable < 0 || taxable > roundWholeDollars(.85 * input.line6a_ss_gross)
+      ) {
+        throw new Error("Taxable Social Security exceeds the benefit limit");
+      }
+      socialSecurityWorksheet = {
+        net_benefits: input.line6a_ss_gross,
+        ...income,
+        tax_exempt_interest: input.tax_exempt_interest ?? 0,
+        ordinary_taxable_benefits: calculated,
+        taxable_benefits: taxable,
+        ...(lumpSumElection ? { lump_sum_election: lumpSumElection } : {}),
+      };
+      // Resolve SSA before the shared SLI phaseout. SLI does not reduce the
+      // SSA worksheet, so the calculation is ordered rather than iterative.
+      input.line6b_ss_taxable = taxable;
+    }
+    const adoptionExclusion = adoption
+      ? calculateAdoptionExclusion2026(adoption.source_input, {
+        ...(adoptionPhaseoutPlaces > 3
+          ? { phaseout_decimal_places: adoptionPhaseoutPlaces }
+          : {}),
+        wages_if_all_line23_benefits_excluded: [
+          input.line1a_wages,
+          input.line1b_household_wages,
+          input.line1c_unreported_tips,
+          input.line1e_taxable_dep_care,
+          input.line1g_wages_8919,
+          input.line1h_other_earned,
+          adoption.taxable_benefits_outside_partIII,
+        ].reduce<number>(
+          (sum, v) =>
+            sum + (Array.isArray(v) ? v.reduce((a, b) => a + b, 0) : v ?? 0),
+          0,
+        ),
+        taxable_interest: input.line2b_taxable_interest ?? 0,
+        ordinary_dividends: sumIncome(input.line3b_ordinary_dividends),
+        taxable_ira: input.line4b_ira_taxable ?? 0,
+        taxable_pensions: sumIncome(input.line5b_pension_taxable),
+        taxable_social_security: input.line6b_ss_taxable ?? 0,
+        capital_gain_or_loss: input.line7_capital_gain ?? 0,
+        schedule1_line10: scheduleOnePartI(input) +
+          (input.line8z_family_leave ?? 0),
+        schedule1_adjustments_excluding_student_loan_interest:
+          socialSecurityWorksheetIncome(input).adjustments_except_student_loan -
+          (input.line24f_501c18d ?? 0),
+        magi_additions: {
+          form2555_line45: input.line8d_foreign_earned_income_exclusion ?? 0,
+          form2555_line50: 0,
+          puerto_rico_excluded_income: 0,
+          form4563_line15: 0,
+        },
+      })
+      : undefined;
+    const ssScope = input.social_security_scope_review_2026;
+    if (
+      ssScope && (
+        ssScope.adoption_inventory_reference !== undefined &&
+          ssScope.adoption_inventory_reference !==
+            adoption?.source_input.claim.record_reference ||
+        (adoptionExclusion?.lines.line30 ?? 0) > 0 &&
+          ssScope.no_adoption_benefit_exclusion === true
+      )
+    ) {
+      throw Error(
+        "Social Security adoption review must match the actual exclusion source",
+      );
+    }
+    if (adoptionExclusion) {
+      input.line1f_taxable_adoption_benefits =
+        adoptionExclusion.line1f_taxable_adoption_benefits;
+      if (socialSecurityWorksheet) {
+        socialSecurityWorksheet.other_income -= adoptionExclusion.lines.line30;
+      }
+    }
+    const {
+      care_sources_2026: _careSources,
+      adoption_sources_2026: _adoptionSources,
+      social_security_scope_review_2026: _ssScope,
+      business_sources_2026,
+      business_loss_sources_2026: _lossSources,
+      gambling_sources_2026,
+      retirement_sources_2026: _retirementSources,
+      able_sources_2026: _ableSources,
+      hsa_sources_2026: _hsaSources,
+      moving_sources_2026: _movingSources,
+      government_sources_2026,
+      line8z_family_leave,
+      ...sharedInput
+    } = input;
+    const gambling = gambling_sources_2026
+      ? calculateGambling2026(gambling_sources_2026)
+      : undefined;
+    if (
+      gambling &&
+        (gambling.source_input.filing_status !== input.filing_status ||
+          gambling.schedule1_line8b !==
+            (input.line8b_gambling_winnings ?? 0)) ||
+      !gambling && (input.line8b_gambling_winnings ?? 0) !== 0
+    ) throw new Error("AGI gambling income needs reconciled source records");
+    const government = government_sources_2026
+      ? calculateGovernmentPayments2026(government_sources_2026)
+      : undefined;
+    if (
+      government &&
+      (government.source_input.filing_status !== input.filing_status ||
+        government.lines.state_refund !== (input.line1_state_refund ?? 0) ||
+        government.lines.unemployment !== (input.line7_unemployment ?? 0) ||
+        government.lines.rtaa !== (input.line8z_rtaa ?? 0) ||
+        government.lines.grants !== (input.line8z_taxable_grants ?? 0) ||
+        government.lines.family_leave !== (line8z_family_leave ?? 0))
+    ) {
+      throw new Error(
+        "Government income must reconcile actual sources before AGI",
+      );
+    }
+    sharedInput.line8z_taxable_grants =
+      (sharedInput.line8z_taxable_grants ?? 0) + (line8z_family_leave ?? 0);
+    const business = business_sources_2026
+      ? resolveBusinessQbi2026(business_sources_2026).business
+      : undefined;
+    if (
+      business &&
+      (business.source_input.filing_status !== input.filing_status ||
+        business.schedule1_line3 !== (input.line3_schedule_c ?? 0) ||
+        business.schedule1_line15 !== (input.line15_se_deduction ?? 0))
+    ) {
+      throw new Error(
+        "AGI business amounts disagree with retained business sources",
+      );
+    }
+    const result = agi_aggregator.computeWithConfig(ctx, sharedInput, agi2026);
+    let additionalIncome = 0;
+    let adjustments = 0;
+    let studentLoan = 0;
+    const wageIncome = [
+      input.line1a_wages,
+      input.line1b_household_wages,
+      input.line1c_unreported_tips,
+      input.line1e_taxable_dep_care,
+      input.line1f_taxable_adoption_benefits,
+      input.line1g_wages_8919,
+      input.line1h_other_earned,
+    ].reduce<number>(
+      (sum, value) =>
+        sum +
+        (Array.isArray(value) ? value.reduce((a, b) => a + b, 0) : value ?? 0),
+      0,
+    );
+    const outputs = result.outputs.map((output) => {
+      if (output.nodeType === "f8812" || output.nodeType === "eitc") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            wage_income_from_agi: wageIncome,
+            ...(output.nodeType === "f8812" && adoptionExclusion
+              ? {
+                adoption_sources_2026: adoptionExclusion.source_input,
+                adoption_magi_additions_from_agi:
+                  adoptionExclusion.income.magi_additions,
+              }
+              : {}),
+            ...(output.nodeType === "eitc" && adoptionExclusion
+              ? {
+                adoption_income_2026: {
+                  source: adoptionExclusion.source_input,
+                  income: adoptionExclusion.income,
+                },
+              }
+              : {}),
+            ...(output.nodeType === "eitc" && retirement &&
+                retirement.cents.line1h_disability_wages > 0
+              ? { retirement_sources_2026: retirement.source_input }
+              : {}),
+            ...(business_sources_2026 ? { business_sources_2026 } : {}),
+            [
+              output.nodeType === "eitc"
+                ? "unsupported_eic_activity"
+                : "unsupported_earned_income_activity"
+            ]: [
+              business ? 0 : input.line3_schedule_c,
+              input.line6_schedule_f,
+              ...(output.nodeType === "eitc"
+                ? [
+                  input.line5_schedule_e,
+                  input.line4_other_gains,
+                  retirement ? 0 : input.line4b_ira_taxable,
+                  retirement ? 0 : input.line5b_pension_taxable,
+                ]
+                : []),
+              business ? 0 : input.line15_se_deduction,
+              input.line8d_foreign_earned_income_exclusion,
+            ].some((v) => (v ?? 0) !== 0),
+          },
+        };
+      }
+      if (output.nodeType === "f1040") {
+        const { line11_agi: _legacy, ...fields } = output.fields;
+        if (Object.hasOwn(fields, "line9_total_income")) {
+          additionalIncome = Number(fields.line8_additional_income ?? 0);
+          adjustments = Number(fields.line10_adjustments ?? 0);
+        }
+        return { nodeType: "f1040", fields };
+      }
+      if (
+        output.nodeType === "schedule1a" || output.nodeType === "schedule_a"
+      ) {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            form2555_line45_from_agi:
+              input.line8d_foreign_earned_income_exclusion ?? 0,
+            ...(output.nodeType === "schedule_a"
+              ? {
+                educator_adjustment_from_agi: input.line11_educator_expenses ??
+                  0,
+              }
+              : {}),
+          },
+        };
+      }
+      if (output.nodeType === "form8960") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            foreign_earned_income_exclusion_from_agi:
+              input.line8d_foreign_earned_income_exclusion ?? 0,
+            ...(able ? { able_sources_2026: able.source_input } : {}),
+            ...(hsa ? { hsa_sources_2026: hsa.source_input } : {}),
+            hsa_deduction_from_agi: input.line13_hsa_deduction ?? 0,
+            hsa_taxable_income_from_agi: (input.line8f_hsa_income ?? 0) +
+              (input.line8z_hsa_excess_earnings ?? 0) +
+              (input.line8z_hsa_excess_employer ?? 0),
+            able_taxable_earnings_from_agi:
+              input.line8q_able_taxable_earnings ?? 0,
+            other_niit_income_pending: [
+              retirement ? 0 : input.line4b_ira_taxable,
+              retirement ? 0 : input.line5b_pension_taxable,
+              business ? 0 : input.line3_schedule_c,
+              loss?.capital.land ? 0 : input.line4_other_gains,
+              input.line5_schedule_e,
+              input.line6_schedule_f,
+              input.line8a_nol_deduction,
+              (input.line1_state_refund ?? 0) -
+              (government?.lines.state_refund ?? 0),
+            ].some((v) => (v ?? 0) !== 0),
+            early_withdrawal_penalty_from_agi: input.line18_early_withdrawal ??
+              0,
+            taxable_interest_from_agi: input.line2b_taxable_interest ?? 0,
+            ordinary_dividends_from_agi: input.line3b_ordinary_dividends ?? 0,
+            capital_gain_from_agi: input.line7_capital_gain ?? 0,
+            ordinary_disposition_gain_from_agi: input.line4_other_gains ?? 0,
+          },
+        };
+      }
+      if (output.nodeType === "standard_deduction") {
+        return {
+          ...output,
+          fields: {
+            ...output.fields,
+            // The dependent worksheet uses Schedule C net, including statutory
+            // expenses, less deductible half-SE tax. It is not EIC gross income.
+            wage_income_from_agi: wageIncome,
+            ...([
+                business ? 0 : input.line3_schedule_c,
+                input.line6_schedule_f,
+                business ? 0 : input.line15_se_deduction,
+                input.line8d_foreign_earned_income_exclusion,
+              ].some((v) => (v ?? 0) !== 0)
+              ? {}
+              : {
+                dependent_earned_income: Math.max(
+                  0,
+                  wageIncome + (business?.schedule1_line3 ?? 0) -
+                    (business?.schedule1_line15 ?? 0),
+                ),
+              }),
+            qbi_activity_pending: [
+              business ? 0 : input.line3_schedule_c,
+              input.line5_schedule_e,
+              input.line6_schedule_f,
+            ].some((amount) => amount !== undefined && amount !== 0),
+          },
+        };
+      }
+      if (output.nodeType === "schedule1") {
+        studentLoan = Number(output.fields.line21_student_loan_interest ?? 0);
+        return {
+          nodeType: "schedule1",
+          fields: { line21_student_loan_interest_from_agi: studentLoan },
+        };
+      }
+      return output;
+    });
+    outputs.push({
+      nodeType: "schedule_r",
+      fields: {
+        agi: outputs.find((o) => o.nodeType === "f8812")?.fields.auto_agi,
+        gross_ssa: input.line6a_ss_gross ?? 0,
+        taxable_ssa: input.line6b_ss_taxable ?? 0,
+      },
+    });
+    const earned = outputs.find((o) => o.nodeType === "f8812")?.fields;
+    const returnIncome = outputs.find((o) =>
+      o.nodeType === "f1040" && o.fields.line9_total_income !== undefined
+    )?.fields;
+    outputs.push({
+      nodeType: "f8615",
+      fields: {
+        ...(adoptionExclusion
+          ? {
+            adoption_income_2026: {
+              source: adoptionExclusion.source_input,
+              income: adoptionExclusion.income,
+            },
+          }
+          : {}),
+        ...(business_sources_2026 ? { business_sources_2026 } : {}),
+        income_context: {
+          agi: earned?.auto_agi,
+          total_income: returnIncome?.line9_total_income ?? 0,
+          wages: wageIncome,
+          early_withdrawal_penalty: input.line18_early_withdrawal ?? 0,
+          unsupported_child_income_activity: [
+            business ? 0 : input.line3_schedule_c,
+            input.line6_schedule_f,
+            input.line5_schedule_e,
+            input.line8a_nol_deduction,
+            input.line8p_excess_business_loss,
+            input.line8d_foreign_earned_income_exclusion,
+            business ? 0 : input.line15_se_deduction,
+          ].some((v) => (v ?? 0) !== 0),
+        },
+      },
+    });
+    outputs.push({
+      nodeType: "f8863",
+      fields: {
+        agi: earned?.auto_agi,
+        earned_income_from_agi: wageIncome,
+        ...(adoptionExclusion
+          ? {
+            adoption_income_2026: {
+              source: adoptionExclusion.source_input,
+              income: adoptionExclusion.income,
+            },
+          }
+          : {}),
+        ...(business_sources_2026 ? { business_sources_2026 } : {}),
+        unsupported_earned_income_activity: [
+          business ? 0 : input.line3_schedule_c,
+          input.line6_schedule_f,
+          business ? 0 : input.line15_se_deduction,
+          input.line8d_foreign_earned_income_exclusion,
+        ].some((v) => (v ?? 0) !== 0),
+      },
+    });
+    outputs.push({
+      nodeType: "f2441",
+      fields: {
+        taxable_care_benefits_from_agi: input.line1e_taxable_dep_care ?? 0,
+        ...(adoptionExclusion
+          ? {
+            adoption_income_2026: {
+              source: adoptionExclusion.source_input,
+              income: adoptionExclusion.income,
+            },
+          }
+          : {}),
+        wage_income_from_agi: earned?.wage_income_from_agi ?? 0,
+        ...(retirement && retirement.cents.line1h_disability_wages > 0
+          ? { retirement_sources_2026: retirement.source_input }
+          : {}),
+        ...(business_sources_2026 ? { business_sources_2026 } : {}),
+        unsupported_earned_income_activity: [
+          business ? 0 : input.line3_schedule_c,
+          input.line6_schedule_f,
+          business ? 0 : input.line15_se_deduction,
+          input.line8d_foreign_earned_income_exclusion,
+        ].some((v) => (v ?? 0) !== 0),
+      },
+    });
+    outputs.push({
+      nodeType: "schedule1",
+      fields: {
+        agi_schedule1_line10: additionalIncome,
+        agi_schedule1_line26: adjustments,
+        ...(studentLoan === 0
+          ? { line21_student_loan_interest_from_agi: 0 }
+          : {}),
+      },
+    });
+    if (adoptionExclusion) {
+      outputs.push({
+        nodeType: "agi_aggregator",
+        fields: { adoption_exclusion_2026: adoptionExclusion },
+      }, {
+        nodeType: "f1040",
+        fields: {
+          line1f_taxable_adoption_benefits:
+            adoptionExclusion.line1f_taxable_adoption_benefits,
+        },
+      });
+    }
+    if (socialSecurityWorksheet) {
+      outputs.push({
+        nodeType: "agi_aggregator",
+        fields: {
+          social_security_worksheet_2026: {
+            ...socialSecurityWorksheet,
+            ...(adoptionExclusion
+              ? {
+                adoption_benefits_exclusion: adoptionExclusion.lines.line30,
+              }
+              : {}),
+          },
+        },
+      });
+      outputs.push({
+        nodeType: "f1040",
+        fields: {
+          // The shared aggregator suppresses zero amounts; 1040 line 6b needs 0.
+          ...(input.line6b_ss_taxable === 0 ? { line6b_ss_taxable: 0 } : {}),
+          line6c_lump_sum_election: lumpSumElection?.elected ?? false,
+          line6d_mfs_lived_apart: input.filing_status === FilingStatus.MFS &&
+            input.mfs_lived_with_spouse === false,
+        },
+      });
+    }
+    return { outputs };
+  }
+}
+
+export const agi_2026 = new Agi2026Node();

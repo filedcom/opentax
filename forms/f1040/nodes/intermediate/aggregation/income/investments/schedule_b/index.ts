@@ -84,12 +84,23 @@ export const inputSchema = z.object({
   form8814_foreign_trust: z.boolean().optional(),
 });
 
+// Paper disclosure uses country names, without asserting a tax-year MeF code list.
+// The native entry point continues to require the pinned 2025 IRS country codes.
+export const paperInputSchema = inputSchema.extend({
+  foreign_countries: z.array(
+    foreignCountrySchema.omit({ irs_code: true }).strict(),
+  )
+    .max(25).optional(),
+});
 type ScheduleBInput = z.infer<typeof inputSchema>;
+type ScheduleBCalculationInput = Omit<ScheduleBInput, "foreign_countries"> & {
+  foreign_countries?: { name: string; irs_code?: string }[];
+};
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Part I — Line 2: sum all per-payer taxable interest amounts
-export function totalTaxableInterest(input: ScheduleBInput): number {
+export function totalTaxableInterest(input: ScheduleBCalculationInput): number {
   return normalizeArray(input.taxable_interest_net)
     .reduce((sum, n) => sum + n, 0) +
     normalizeArray(input.interest_detail).reduce(
@@ -99,14 +110,14 @@ export function totalTaxableInterest(input: ScheduleBInput): number {
 }
 
 // Part I — Line 4: total interest minus EE/I bond exclusion (clamped to >= 0)
-export function line4TaxableInterest(input: ScheduleBInput): number {
+export function line4TaxableInterest(input: ScheduleBCalculationInput): number {
   const line2 = totalTaxableInterest(input);
   const exclusion = input.ee_bond_exclusion ?? 0;
   return Math.max(0, line2 - exclusion);
 }
 
 // Part II — Line 6: sum all per-payer ordinary dividend amounts
-function line6OrdinaryDividends(input: ScheduleBInput): number {
+function line6OrdinaryDividends(input: ScheduleBCalculationInput): number {
   return normalizeArray(input.ordinaryDividends)
     .reduce((sum, n) => sum + n, 0) +
     normalizeArray(input.dividend_detail).reduce(
@@ -125,8 +136,14 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form8960]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleBInput): NodeResult {
-    const input = inputSchema.parse(rawInput);
+    return this.calculate(inputSchema.parse(rawInput));
+  }
 
+  computeForPaper(rawInput: z.input<typeof paperInputSchema>): NodeResult {
+    return this.calculate(paperInputSchema.parse(rawInput));
+  }
+
+  private calculate(input: ScheduleBCalculationInput): NodeResult {
     const line2 = totalTaxableInterest(input);
     if ((input.ee_bond_exclusion ?? 0) > line2) {
       throw new Error("Schedule B savings bond exclusion exceeds interest");
@@ -363,9 +380,13 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
         printFields.form8814_foreign_account = true;
       }
       if (input.foreign_countries?.length) {
-        printFields.foreign_country_codes = input.foreign_countries.map((
-          entry,
-        ) => entry.irs_code);
+        if (
+          input.foreign_countries.every((entry) => entry.irs_code !== undefined)
+        ) {
+          printFields.foreign_country_codes = input.foreign_countries.map((
+            entry,
+          ) => entry.irs_code);
+        }
         printFields.foreign_country_names = input.foreign_countries.map((
           entry,
         ) => entry.name);

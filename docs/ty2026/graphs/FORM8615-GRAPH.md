@@ -7,6 +7,14 @@ and [2026 draft instructions](../corpus/draft/i8615.pdf), SHA-256
 They are research sources until final release. Reconcile final 1040, Schedule D,
 Schedule J, Form 2555, Form 8814 and current MeF rules before filing.
 
+Current implementation (October 15): the reviewed `f8615` source route now
+connects wage/investment/business child eligibility, parent selection, sibling worksheets,
+shared annual tax, credit/AMT handoffs and a reconciled draft attachment. See
+[FORM8615-CURRENT.md](FORM8615-CURRENT.md) for the exact source contract and tests.
+The blanket under-24 guard remains when a qualifying review is absent. Remaining
+income sources, advanced family worksheets, filing cases and filing registration still
+need completion; the full contract below remains the target.
+
 ## Return ownership and source facts
 
 Form 8615 attaches to the **child's** Form 1040 or 1040-NR. The 2026
@@ -53,24 +61,17 @@ post that child's elected income or Form 8814 tax to the child return.
 
 ## Current code boundary
 
-- The shared `f8615` input asks for `eligibility_confirmed` and parent/child
-  aggregate figures. It does not derive eligibility, parent selection or
-  line 1 from source facts. `income_tax_calculation` optionally checks an
-  independently supplied unearned-income total, but the source itself can
-  be entered without that cross-check.
-- `calculateForm8615` covers ordinary-rate lines 1–18 and other-child
-  allocation. It hardcodes the 2026-compatible $2,700/$1,350 amounts, uses
-  bracket tax rather than the applicable Tax Table, and throws for parent
-  qualified-dividend, Schedule D, Schedule J and Form 2555 paths and for
-  child preferential/foreign-income paths. The high-value tax worksheet
-  graph therefore remains incomplete.
-- The TY2025 PDF descriptor maps numeric fields and parent filing status,
-  but it omits the printed worksheet checkboxes on lines 9/10/15/17. The
-  [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f8615.csv) has **32 terminal widgets**,
-  all in the field tree: 23 text and nine buttons. The TY2025 MeF serializer
-  has numeric lines and parent fields, but no proven current 2026 XSD/rules.
-  Neither the calculator nor form/PDF/MeF serializers are registered in the
-  TY2026 product.
+The shared `calculateForm8615` uses annual Tax Table, Tax Computation and
+qualified-dividend/capital-gain rates for lines 9, 15 and 17. Its three Line 5
+allocation worksheets, sibling ratio, tax floor and stop records are reused.
+The 2026 source claim derives eligibility and line 1 rather than exposing the
+legacy `eligibility_confirmed` aggregate input.
+
+The 2026 PDF maps all **32 terminal widgets** (23 text and nine buttons),
+including worksheet checkboxes absent from the older descriptor. It attaches
+only the official form page at sequence 33, including required stop forms.
+Family Schedule D special-rate, Schedule J and Form 2555 worksheets, full source
+parity, final PDF review and current MeF/ATS acceptance remain unfinished.
 
 ## Build order and acceptance
 

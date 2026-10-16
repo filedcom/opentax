@@ -1,0 +1,86 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,"Page 1. Name of individual subject to additional tax. If married filing jointly, see instructions. ",2,36 684 474.45 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,475.95 684 576 698.001,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"Fill in Your Address Only if You Are Filing This Form by Itself and Not With Your Tax Return. Home address (number and street), or P.O. box if mail is not delivered to your home. ",2,145 659.999 416.85 674,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,Apt. no. ,2,418.35 659.999 474.45 674,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"If this is an amended return, check here. ",2,565 663 573 671,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"City, town, or post office. If you have a foreign address, also complete spaces below.",2,145 635.998 416.85 649.999,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,State. ,2,418.35 635.998 510.45 649.999,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,Z I P code. ,2,511.95 635.998 576 649.999,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,Foreign country name. ,2,145 612 308.85 626.001,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,Foreign province/state/county. ,2,310.35 612 474.45 626.001,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,Foreign postal code. ,2,475.95 612 576 626.001,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,"Part I. Additional Tax on Early Distributions. Complete this part if you took a taxable distribution (other than a qualified disaster recovery distribution) before you reached age 59½ from a qualified retirement plan (including an I R A and Trump account (after the growth period of the Trump account)) or modified endowment contract (unless you are reporting this tax directly on Schedule 2 (Form 1040)—see above). You may also have to complete this part to indicate that you qualify for an exception to the additional tax on early distributions or for certain Roth I R A distributions. See instructions. 1. Early distribuctions includible in income (see instructions). For Roth I R A distributions, see instructions.",2,504.75 528.001 576 540,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,2. Enter the appropriate exception number from the instructions: ,2,316.8 504 352.8 515.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,2. Early distributions included on line 1 that are not subject to the additional tax (see instructions). ,2,504.75 504 576 515.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,3. Amount subject to additional tax. Subtract line 2 from line 1. ,2,504.75 492.001 576 504,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"4. Additional tax. Enter 10% (0.10) of line 3. Include this amount on Schedule 2 (Form 1040), line 5. Caution: If any part of the amount on line 3 was a distribution from a S I M P L E I R A, you may have to include 25% of that amount on line 4 instead of 10%. See instructions.",2,504.75 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"Part I I. Additional Tax on Certain Distributions From Education Accounts and A B L E Accounts. Complete this part if you included an amount in income, on Schedule 1 (Form 1040), line 8z, from a Coverdell education savings account (E S A) or a qualified tuition program (Q T P), or on Schedule 1 (Form 1040), line 8q, from an A B L E account. 5. Distributions included in income from a Coverdell E S A, a Q T P, or an A B L E account. ",2,504.75 408.002 576 420.001,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,6. Distributions included on line 5 that are not subject to the additional tax (see instructions). ,2,504.75 396 576 407.999,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,7. Amount subject to additional tax. Subtract line 6 from line 5. ,2,504.75 384.001 576 396,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"8. Additional tax. Enter 10% (0.10) of line 7. Include this amount on Schedule 2 (Form 1040), line 5. ",2,504.75 372.002 576 384.001,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"Part I I I. Additional Tax on Excess Contributions to Traditional I R A s. Complete this part if you contributed more to your traditional I R A s (which include your traditional S E P I R A s and traditional S I M P L E I R A s) for 2026 than is allowable or you had an amount on line 17 of your 2025 Form 5329. Do not complete this part for a Trump account if the account beneficiary under age 18 at the end of 2026 (see Part X). 9. Enter your excess contributions from line 16 of your 2025 Form 5329. See instructions. If zero, go to line 15. ",2,504.75 312.001 576 324,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"10. If your traditional I R A contributions for 2026 are less than your maximum allowable contribution, see instructions. Otherwise, enter 0.  ",2,411.15 288 481.65 299.999,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,11. 2026 traditional I R A distributions included in income (see instructions). ,2,411.15 276.001 481.65 288,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,12. 2026 distributions of prior year excess contributions to traditional I R A s (see instructions). ,2,411.15 252 481.65 263.999,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,"13. Add lines 10, 11, and 12. ",2,504.75 240.001 576 252,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"14. Prior year excess contributions. Subtract line 13 from line 9. If zero or less, enter 0. ",2,504.75 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,15. Excess contributions for 2026 (see instructions). ,2,504.75 216 576 227.999,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,16. Total excess contributions. Add lines 14 and 15. ,2,504.75 204.001 576 216,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"17. Additional tax. Enter 6% (0.06) of the smaller of line 16 or the value of your traditional I R A s on December 31, 2026 (including 2026 contributions made in 2027). Include this amount on Schedule 2 (Form 1040), line 18.  ",2,504.75 180 576 191.999,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"Part I V. Additional Tax on Excess Contributions to Roth I R A s. Complete this part if you contributed more to your Roth I R A s (which include your Roth S E P I R A s and Roth S I M P L E I R A s) for 2026 than is allowable or you had an amount on line 25 of your 2025 Form 5329. 18. Enter your excess contributions from line 24 of your 2025 Form 5329. See instructions. If zero, go to line 23.",2,504.75 132.001 576 144,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,"19. If your Roth I R A contributions for 2026 are less than your maximum allowable contribution, see instructions. Otherwise, enter 0. ",2,411.15 108 481.65 119.999,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,20. 2026 distributions from your Roth I R A s (see instructions). ,2,411.15 96.001 481.65 108,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,21. Add lines 19 and 20. ,2,504.75 84.002 576 96.001,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,"22. Prior year excess contributions. Subtract line 21 from line 18. If zero or less, enter 0. ",2,504.75 72 576 83.999,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,23. Excess contributions for 2026 (see instructions). ,2,504.75 60.001 576 72,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,24. Total excess contributions. Add lines 22 and 23. ,2,504.75 48.002 576 60.001,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,"25. Additional tax. Enter 6% (0.06) of the smaller of line 24 or the value of your Roth I R A s on December 31, 2026 (including 2026 contributions made in 2027). Include this amount on Schedule 2 (Form 1040), line 18.",2,504.75 24.001 576 36,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,"Page 2. Part V. Additional Tax on Excess Contributions to Coverdell E S A s. Complete this part if the contributions to your Coverdell E S A s for 2026 were more than is allowable or you had an amount on line 33 of your 2025 Form 5329. 26. Enter the excess contributions from line 32 of your 2025 Form 5329. See instructions. If zero, go to line 31.",3,504.75 708.001 576 720,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,"27. If the contributions to your Coverdell E S A s for 2026 were less than the maximum allowable contribution, see instructions. Otherwise, enter 0. ",3,411.15 684 481.65 695.999,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,28. 2026 distributions from your Coverdell E S A s (see instructions). ,3,411.15 672.001 481.65 684,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,29. Add lines 27 and 28. ,3,504.75 660.002 576 672.001,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,"30. Prior year excess contributions. Subtract line 29 from line 26. If zero or less, enter 0.",3,504.75 648 576 659.999,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,31. Excess contributions for 2026 (see instructions). ,3,504.75 636.001 576 648,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,32. Total excess contributions. Add lines 30 and 31. ,3,504.75 624.002 576 636.001,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,"33. Additional tax. Enter 6% (0.06) of the smaller of line 32 or the value of your Coverdell E S A s on December 31, 2026 (including 2026 contributions made in 2027). Include this amount on Schedule 2 (Form 1040), line 18.",3,504.75 600.001 576 612,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,"Part V I. Additional Tax on Excess Contributions to Archer M S A s. Complete this part if you or your employer contributed more to your Archer M S A s for 2026 than is allowable or you had an amount on line 41 of your 2025 Form 5329. 34. Enter the excess contributions from line 40 of your 2025 Form 5329. See instructions. If zero, go to line 39.",3,504.75 564.001 576 576,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,"35. If the contributions to your Archer M S A s for 2026 are less than the maximum allowable contribution, see instructions. Otherwise, enter 0. ",3,411.15 540 481.65 551.999,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,"36. 2026 distributions from your Archer M S A s from Form 8853, line 8. ",3,411.15 528.001 481.65 540,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,37. Add lines 35 and 36. ,3,504.75 516.002 576 528.001,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,"38. Prior year excess contributions. Subtract line 37 from line 34. If zero or less, enter 0. ",3,504.75 504 576 515.999,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,39. Excess contributions for 2026 (see instructions). ,3,504.75 492.001 576 504,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,40. Total excess contributions. Add lines 38 and 39. ,3,504.75 480.002 576 492.001,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,"41. Additional tax. Enter 6% (0.06) of the smaller of line 40 or the value of your Archer M S A s on December 31, 2026 (including 2026 contributions made in 2027). Include this amount on Schedule 2 (Form 1040), line 18.",3,504.75 444.002 576 456.001,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,"Part V I I. Additional Tax on Excess Contributions to Health Savings Accounts (H S A s). Complete this part if you, someone on your behalf, or your employer contributed more to your H S A s for 2026 than is allowable or you had an amount on line 49 of your 2025 Form 5329. 42. Enter the excess contributions from line 48 of your 2025 Form 5329. If zero, go to line 47.",3,504.75 396 576 407.999,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"43. If the contributions to your H S A s for 2026 are less than the maximum allowable contribution, see instructions. Otherwise, enter 0. ",3,411.15 372.002 481.65 384.001,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,"44. 2026 distributions from your H S A s from Form 8889, line 16. ",3,411.15 360 481.65 371.999,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,45. Add lines 43 and 44. ,3,504.75 348.001 576 360,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,"46. Prior year excess contributions. Subtract line 45 from line 42. If zero or less, enter 0. ",3,504.75 336.002 576 348.001,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,47. Excess contributions for 2026 (see instructions). ,3,504.75 324 576 335.999,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,48. Total excess contributions. Add lines 46 and 47. ,3,504.75 312.001 576 324,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,"49. Additional tax. Enter 6% (0.06) of the smaller of line 48 or the value of your H S A s on December 31, 2026 (including 2026 contributions made in 2027). Include this amount on Schedule 2 (Form 1040), line 18.",3,504.75 288 576 299.999,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,Part V I I I. Additional Tax on Excess Contributions to an A B L E Account. Complete this part if contributions to your A B L E account for 2026 were more than is allowable. 50. Excess contributions for 2026 (see instructions). ,3,504.75 252 576 263.999,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,"51. Additional tax. Enter 6% (0.06) of the smaller of line 50 or the value of your A B L E account on December 31, 2026. Include this amount on Schedule 2 (Form 1040), line 18.",3,504.75 228.002 576 240.001,yes
+topmostSubform[0].Page3[0].f3_1[0],/Tx,Page 3. Part I X. Additional Tax on Excess Accumulation in Qualified Retirement Plans (Including I R A s). Complete this part if you did not receive the minimum required distribution from your qualified retirement plan. 52a. Minimum required distribution for 2026 from all qualified plans for which you received a distribution of the full amount of the excess accumulation during the correction window. ,4,504.75 696.002 576 708.001,yes
+topmostSubform[0].Page3[0].f3_2[0],/Tx,52b. Minimum required distribution for 2026 from all other plans. ,4,504.75 684 576 695.999,yes
+topmostSubform[0].Page3[0].f3_3[0],/Tx,53a. Amount distributed to you during 2026 from all qualified plans for which you received a distribution of the full amount of the excess accumulation during the correction window. ,4,504.75 660.002 576 672.001,yes
+topmostSubform[0].Page3[0].f3_4[0],/Tx,53b. Amount distributed to you during 2026 from all other plans. ,4,504.75 648 576 659.999,yes
+topmostSubform[0].Page3[0].f3_5[0],/Tx,"54a. Subtract line 53a from line 52a and multiply the result by 10% (0.10). If zero or less, enter 0. ",4,504.75 636.001 576 648,yes
+topmostSubform[0].Page3[0].f3_6[0],/Tx,"54b. Subtract line 53b from line 52b and multiply the result by 25% (0.25). If zero or less, enter 0. ",4,504.75 624.002 576 636.001,yes
+topmostSubform[0].Page3[0].f3_7[0],/Tx,"55. Add lines 54a and 54b. Include the total on Schedule 2 (Form 1040), line 18, or Form 1041, Schedule G, line 8. ",4,504.75 600.001 576 612,yes
+topmostSubform[0].Page3[0].f3_8[0],/Tx,"Part X. Additional Tax on Excess Contributions to Trump Accounts During the Growth Period. Complete this part if the account beneficiary has not attained age 18 by the end of 2026 and aggregate contributions to the Trump account for 2026, other than exempt contributions, were more than $5,000. 56. Enter your total excess contributions for 2025. Caution: For 2026, this amount is zero because there were no Trump accounts in 2025. See instructions.",4,504.75 540 576 551.999,yes
+topmostSubform[0].Page3[0].f3_9[0],/Tx,57. Excess contributions made during 2026 (see instructions).,4,504.75 528.001 576 540,yes
+topmostSubform[0].Page3[0].f3_10[0],/Tx,58. Add lines 56 and 57.,4,504.75 516.002 576 528.001,yes
+topmostSubform[0].Page3[0].f3_11[0],/Tx,59. Distributions of excess contributions (not including earnings) under 530A(d)(5) (see instructions).,4,504.75 504 576 515.999,yes
+topmostSubform[0].Page3[0].f3_12[0],/Tx,"60. Total excess contributions for 2026.  Subtract line 59 from 58. If zero or less, enter 0.",4,504.75 492.001 576 504,yes
+topmostSubform[0].Page3[0].f3_13[0],/Tx,"61. Additional tax. Enter 6% (0.06) of line 60. Include this amount on Schedule 2 (Form 1040), line 18.",4,504.75 480.002 576 492.001,yes
+topmostSubform[0].Page3[0].f3_14[0],/Tx,"Part X I. Additional Tax on Income Attributable to Excess Contributions Distributed From Trump Accounts. Complete this part if there were earnings attributable to the excess contributions distributed from your Trump account. 62. Enter the earnings attributable to the excess contributions distributed from Form 1099-R, box 7d. ",4,504.75 444.002 576 456.001,yes
+topmostSubform[0].Page3[0].f3_15[0],/Tx,"63. Additional tax. Enter 100% of line 62.  Include this amount on Schedule 2 (Form 1040), line 5. ",4,504.75 432 576 443.999,yes
+topmostSubform[0].Page3[0].f3_16[0],/Tx,Paid Preparer Use Only. Print/Type preparer's name. ,4,87.4 360 236.85 374.001,yes
+topmostSubform[0].Page3[0].c3_1[0],/Btn,Check if self-employed. ,4,481.2 372.501 489.2 380.501,yes
+topmostSubform[0].Page3[0].f3_17[0],/Tx,P T I N. ,4,504 360 576 374.001,yes
+topmostSubform[0].Page3[0].f3_18[0],/Tx,Firm’s name. ,4,134.008 348.001 431.25 360,yes
+topmostSubform[0].Page3[0].f3_19[0],/Tx,Firm's E I N. ,4,475.2 348.001 576 360,yes
+topmostSubform[0].Page3[0].f3_20[0],/Tx,Firm’s address. ,4,144 336.002 431.25 348.001,yes
+topmostSubform[0].Page3[0].f3_21[0],/Tx,Phone no. ,4,475.2 336.002 576 348.001,yes

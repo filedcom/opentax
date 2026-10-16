@@ -175,3 +175,56 @@ export function computeCredit(input: ScheduleRInput): number {
 
   return Math.round(amount * 0.15);
 }
+
+export type ScheduleRBox = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+/** Statutory amounts and printed line arithmetic shared by the annual adapters.
+ * Eligibility, source ownership and MFS residence must be resolved by the caller.
+ */
+export function calculateScheduleRAmounts(input: {
+  box: ScheduleRBox;
+  disability_income: number;
+  nontaxable_ssa: number;
+  nontaxable_other: number;
+  agi: number;
+  tax_before_credits: number;
+  prior_credits: number;
+}) {
+  const b = input.box;
+  const line10 = [3, 5, 6].includes(b)
+    ? 7500
+    : [8, 9].includes(b)
+    ? 3750
+    : 5000;
+  const line11 = [2, 4, 5, 6, 9].includes(b)
+    ? input.disability_income + (b === 6 ? 5000 : 0)
+    : 0;
+  const line12 = [2, 4, 5, 6, 9].includes(b)
+    ? Math.min(line10, line11)
+    : line10;
+  const line13a = input.nontaxable_ssa, line13b = input.nontaxable_other;
+  const line13c = line13a + line13b, line14 = input.agi;
+  const line15 = [1, 2].includes(b) ? 7500 : [8, 9].includes(b) ? 5000 : 10000;
+  const line16 = Math.max(0, line14 - line15), line17 = Math.round(line16 / 2);
+  const line18 = line13c + line17, line19 = Math.max(0, line12 - line18);
+  const line20 = Math.round(line19 * .15);
+  const line21 = Math.max(0, input.tax_before_credits - input.prior_credits);
+  const line22 = Math.min(line20, line21);
+  return {
+    line10,
+    line11,
+    line12,
+    line13a,
+    line13b,
+    line13c,
+    line14,
+    line15,
+    line16,
+    line17,
+    line18,
+    line19,
+    line20,
+    line21,
+    line22,
+  };
+}

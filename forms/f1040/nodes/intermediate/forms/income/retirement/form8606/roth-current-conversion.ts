@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { traditionalIraBasisAmounts } from "./traditional-amounts.ts";
 import {
   rothConversionYearSchema,
   rothSourceMoney,
@@ -580,20 +581,19 @@ export function reviewedCurrentRothConversion(
       "Current conversion requires positive actual source amounts",
     );
   }
-  const combined = yearEnd + gross + withdrawals;
-  let ratio = 0, nontaxable = 0, nontaxableWithdrawal = 0;
-  for (let decimals = 3; decimals <= 5; decimals++) {
-    const scale = 10 ** decimals;
-    ratio = Math.min(1, Math.round(currentBasis / combined * scale) / scale);
-    nontaxable = roundWholeDollars(gross * ratio);
-    nontaxableWithdrawal = roundWholeDollars(withdrawals * ratio);
-    if (nontaxable + nontaxableWithdrawal <= currentBasis) break;
-  }
-  if (nontaxable + nontaxableWithdrawal > currentBasis) {
-    throw new Error(
-      "Annual Form8606 filed multiplication exceeds basis at native five-decimal precision; source basis cannot be capped",
-    );
-  }
+  const {
+    combined,
+    ratio,
+    nontaxableConversion: nontaxable,
+    nontaxableDistribution: nontaxableWithdrawal,
+  } = traditionalIraBasisAmounts({
+    contribution,
+    priorBasis: basis,
+    postYearContribution: postYear,
+    yearEndValue: yearEnd,
+    distributions: withdrawals,
+    conversions: gross,
+  });
   const hasPartI = !!activity || withdrawals > 0 || basis > 0 && rawYearEnd > 0;
   const filedLine17 = hasPartI ? nontaxable : basis;
   const filedLine18 = gross - filedLine17,

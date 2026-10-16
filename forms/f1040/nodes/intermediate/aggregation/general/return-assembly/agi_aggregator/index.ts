@@ -35,6 +35,14 @@ import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-pass
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
 
+export type AgiConfig = Pick<
+  import("../../../../../config/index.ts").F1040Config,
+  | "sliPhaseOutStartMfj"
+  | "sliPhaseOutEndMfj"
+  | "sliPhaseOutStartSingle"
+  | "sliPhaseOutEndSingle"
+>;
+
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
@@ -77,7 +85,8 @@ export const inputSchema = z.object({
   // Line 1e — Taxable dependent care benefits (Form 2441)
   line1e_taxable_dep_care: z.number().nonnegative().optional(),
   // Line 1f — Employer adoption benefits (Form 8839)
-  line1f_taxable_adoption_benefits: z.number().nonnegative().optional(),
+  // Form 8839 line 31 can be negative for a special-needs exclusion.
+  line1f_taxable_adoption_benefits: z.number().finite().optional(),
   // Line 1g — Wages from Form 8919 (uncollected SS/Medicare)
   line1g_wages_8919: z.number().nonnegative().optional(),
   // Line 2b — Taxable interest (Schedule B Part I)
@@ -116,6 +125,7 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Internal sourced NOL projection; public carry intake remains guarded.
   line8a_nol_deduction: z.number().int().nonnegative().optional(),
+  line8p_excess_business_loss: z.number().int().nonnegative().optional(),
   // Line 1 — State and local income tax refunds (Form 1099-G)
   line1_state_refund: z.number().optional(),
   // Line 3 — Net profit or (loss) from business (Schedule C)
@@ -334,13 +344,24 @@ const SSA_UPPER_THRESHOLD_MFJ = 44_000;
 const SSA_BASE_THRESHOLD_OTHER = 25_000;
 const SSA_UPPER_THRESHOLD_OTHER = 34_000;
 
-function computeSsaTaxable(
+export function computeSsaTaxable(
   ssaGross: number,
   otherIncome: number,
   taxExemptInterest: number,
   isMfj: boolean,
+  mfsLivedWithSpouse = false,
 ): number {
   if (ssaGross <= 0) return 0;
+  if (mfsLivedWithSpouse) {
+    // Pub. 915 Worksheet 1, lines 8, 17–19: both base amounts are zero.
+    return Math.min(
+      0.85 * ssaGross,
+      0.85 * Math.max(
+        0,
+        otherIncome + taxExemptInterest + 0.5 * ssaGross,
+      ),
+    );
+  }
 
   const baseThreshold = isMfj
     ? SSA_BASE_THRESHOLD_MFJ
@@ -377,6 +398,7 @@ function computeSsaTaxable(
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
+    (input.line8p_excess_business_loss ?? 0) +
     Math.round(sumField(input.line1a_wages)) +
     Math.round(sumField(input.line1b_household_wages)) +
     Math.round(sumField(input.line1h_other_earned)) +
@@ -451,7 +473,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
 // "Other income" for provisional income = AGI from non-SSA sources (after exclusions/deductions).
 function resolveSsaTaxable(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
   const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
@@ -491,7 +513,7 @@ function resolveSsaTaxable(
 // Fields can be negative (e.g., capital loss, schedule C net loss).
 function grossIncome(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   const ssaTaxable = resolveSsaTaxable(input, cfg);
   return (
@@ -533,7 +555,7 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 // Phase-out: single/HOH/QSS $85k–$100k; MFJ $170k–$200k; MFS not eligible.
 function computeAdjustedSli(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   const raw = input.line21_student_loan_interest ?? 0;
   if (raw <= 0) return 0;
@@ -570,7 +592,7 @@ export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
 // IRC §62 allows these before arriving at AGI.
 function aboveLineDeductions(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input, cfg);
 }
@@ -638,11 +660,23 @@ function nonSsaIncome(input: AgiInput): number {
   return nonSsaIncomeBeforePal(input) - remainingAllowedPassiveLoss(input);
 }
 
+/** Shared income classification for Pub. 915 Worksheet 1. Callers supply
+ * separately reviewed exclusions not represented by the income graph. SLI is
+ * deliberately excluded from worksheet line 7 (IRC 86(b)(2)). */
+export function socialSecurityWorksheetIncome(input: AgiInput) {
+  return {
+    other_income: nonSsaIncome(input) - exclusions(input),
+    foreign_earned_income_exclusion: exclusions(input),
+    adjustments_except_student_loan: aboveLineDeductionsExceptSli(input),
+  };
+}
+
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
 // This is what appears on Form 1040 line 8.
-function scheduleOnePartI(input: AgiInput): number {
+export function scheduleOnePartI(input: AgiInput): number {
   return (
     -(input.line8a_nol_deduction ?? 0) +
+    (input.line8p_excess_business_loss ?? 0) +
     (input.line1_state_refund ?? 0) +
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
@@ -700,7 +734,7 @@ function scheduleOnePartI(input: AgiInput): number {
 // AGI can be negative in large NOL scenarios (IRC §172); do not floor at 0.
 function computeAgi(
   input: AgiInput,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: AgiConfig,
 ): number {
   return grossIncome(input, cfg) - exclusions(input) -
     aboveLineDeductions(input, cfg);
@@ -735,6 +769,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, rawInput, cfg);
+  }
+
+  /** Reuse aggregation with only its reviewed annual student-loan thresholds. */
+  computeWithConfig(
+    _ctx: NodeContext,
+    rawInput: AgiInput,
+    cfg: AgiConfig,
+  ): NodeResult {
     // Reject the obsolete input before Zod silently strips unknown keys.
     // Form 2555 line 50 requires a separately supported Schedule 1 line 24j source.
     if (

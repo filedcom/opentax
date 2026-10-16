@@ -19,22 +19,43 @@ with `build_pdf_fields.py`. Recheck this map against the final 2026 form.
 | Part III, 7b countries | `foreign_countries` | `f1_65[0]`, `f1_66[0]` |
 | Part III, 8 foreign trust | `foreign_trust` yes/no | `c1_3[0]`/`[1]` |
 
-The 2026 Schedule B node emits all interest and dividend rows, filed totals,
-Part III answers, and `file_schedule_b`. Its interest rows show each payer's
-gross amount followed by separately labeled negative adjustments. The
-dedicated PDF filler verifies the source hash and row arithmetic, fills the
-printed page, then appends continuation pages after the 14 interest or 15
-dividend slots. Each continuation page carries the filer's name and SSN,
-the additional payer/adjustment rows, and the filed line total. It also
-appends seller-financed buyer SSN/address details and additional countries
-when needed. The sample with gross and nominee rows and the sample with a
-fifteenth payer and seller-financed details passed text extraction and visual
-inspection. Recheck the field map and placement against the final 2026 PDF.
+## Current implementation
 
-The 2026 draft instructions require Part III answers when taxable interest or
-ordinary dividends exceed $1,500, or when a foreign account/trust trigger
-applies. The calculation node and PDF builder check the answer combinations.
-`pdf/core.ts` appends Schedule B to the 1040 bundle and reconciles its lines
-4 and 6 with 1040 lines 2b and 3b. The bundle rejects a missing Schedule B
-when either main-form amount exceeds $1,500. Other attachment triggers still
-depend on Schedule B being passed from a fully registered product graph.
+`forms/f1040/2026/pdf/schedule_b.ts` recomputes the retained investment claim
+through the shared INT/DIV/Schedule B calculators, checks payer/adjustment
+arithmetic in cents and reconciles lines 4 and 6 to Form 1040 lines 2b and 3b.
+It rejects an unneeded attachment or mismatched filer. This is a component
+builder; complete return attachment selection remains unfinished.
+
+The builder verifies the pinned source and all 72 canonical fields/widgets,
+fills the printed page, removes the cover, flattens appearances and removes
+annotations/AcroForm. Every output page retains a draft warning. The source
+contract currently permits only false foreign-account/trust answers; those No
+boxes are marked, while the conditional FBAR question and countries stay blank.
+Positive foreign disclosures require their own validated reporting path.
+
+Interest payers print gross amounts, followed by a subtotal and separately
+labeled negative adjustments. Below-threshold dividends remain visible when
+interest independently requires Schedule B, without a second income handoff.
+Payer/adjustment rows retain cents; return totals round only after summation.
+If rows exceed 14 interest or 15 dividend slots, the last slot points to a
+complete statement. Those statements repeat all rows, paginate at 30 rows,
+identify their row range and carry filer identity and the whole-dollar total.
+Seller-financed personal-residence interest prints first; separate buyer-detail
+pages preserve name, SSN, address and exact interest, seven buyers per page.
+
+[2026 draft instructions](https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf),
+rechecked October 15, 2026, require labeled adjustments and filer-identified
+statements with totals on Schedule B. OID, savings-bond exclusions, nominee
+dividends and foreign-account/trust reporting are not enabled by this component.
+Recheck the map and behavior against final 2026 forms/instructions before release.
+
+## Verification
+
+Four focused tests cover source arithmetic, multi-page payer/adjustment and buyer
+printing, a below-threshold adjustment trigger, destination/filer disagreement,
+unneeded attachments and static output. The complete current-2026 plus shared
+INT/DIV/Schedule B regression run passed 480 tests. A six-page synthetic QA PDF
+was rendered with Poppler and visually inspected, including two interest
+statement pages, a dividend statement, buyer details and a single-page adjusted
+return. No payer or adjustment was lost, and output has no widgets/AcroForm.

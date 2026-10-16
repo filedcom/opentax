@@ -3,6 +3,30 @@ import { appendInput } from "../store/store.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import { formAddCommand } from "./form.ts";
 
+Deno.test("return creation rejects unsupported products before writing metadata", async () => {
+  const baseDir = await Deno.makeTempDir();
+  try {
+    for (
+      const args of [
+        { year: 2026 },
+        { year: 2024 },
+        { year: 2025, formType: "f1120" },
+      ]
+    ) {
+      await assertRejects(
+        () => createReturnCommand({ ...args, baseDir }),
+        Error,
+        `Unsupported form: ${args.formType ?? "f1040"}:${args.year}`,
+      );
+    }
+    const entries = [];
+    for await (const entry of Deno.readDir(baseDir)) entries.push(entry.name);
+    assertEquals(entries, []);
+  } finally {
+    await Deno.remove(baseDir, { recursive: true });
+  }
+});
+
 Deno.test("createReturnCommand creates return.json with meta and inputs", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -201,10 +225,8 @@ Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async ()
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
 
     assertEquals(result.forms.includes("form8995a"), true);
-    assertEquals(
-      Math.round(result.summary.line15_taxable_income * 100) / 100,
-      206_926.37,
-    );
+    // The filed Form 1040 line is whole dollars (main's rounding correction).
+    assertEquals(result.summary.line15_taxable_income, 206_926);
     assertEquals(
       Math.round(result.summary.line24_total_tax * 100) / 100,
       44_854,

@@ -26,15 +26,21 @@ Section A, then implement Section B with a dated credit-reduction table. Until S
 2026 rates are verified, an eligible Section B return must receive an explicit
 diagnostic.
 
-Current slice: `nodes/schedule_h.ts` accepts entered, already-qualified Part I
-wage amounts and explicit filing/FUTA answers. It computes Part I and Section A,
-emits Schedule 2 line 17a, and rejects Section B with a named diagnostic.
-`pdf/schedule_h.ts` fills both printed pages of the pinned draft and reconciles
-the calculated tax to Schedule 2. The ATS line 9 No page and a Section A page
-were rendered and visually checked. Employee payroll records, relationship
-exclusions, the Social Security wage-base calculation, and quarter-level FUTA
-evidence are still needed to derive the form entries from source facts. XML
-attachment and active MeF rules also remain open.
+## Current implementation boundary
+
+The rebuilt branch now registers `household_employment`, deriving employee-level
+FICA wages, both years' FUTA quarters, withholding and Section A state facts.
+The shared Part I/Section A arithmetic feeds Schedule 2 line 17a and a reconciled
+two-page draft Schedule H. See [SCHEDULEH-CURRENT.md](SCHEDULEH-CURRENT.md) for
+source evidence, verified cases and remaining family/state/payroll limits.
+This supersedes the earlier prototype's entered-amount contract.
+
+The pinned instructions still show placeholder CA/VI credit-reduction rates.
+Section B, remaining complex payroll paths, final forms, current MeF and ATS
+acceptance remain open. Scenario 1's missing worker/quarter facts are a real
+fixture gap: $4,100 of ordinary FUTA-eligible wages cannot leave every quarter
+below $1,000. A FICA-taxable/FUTA-excluded employee can reconcile those answers,
+but the packet does not identify one.
 
 ## Completion checks
 

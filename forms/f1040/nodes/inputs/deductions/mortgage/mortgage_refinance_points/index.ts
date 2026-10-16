@@ -1,3 +1,4 @@
+import { ratableMortgagePoints } from "../f1098/amounts.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
@@ -391,13 +392,10 @@ function deductiblePoints(item: Item, ratio = 1): number {
       (item.improvement.amount_used_to_substantially_improve_main_home /
         item.refinanced_principal)
     : 0;
-  const beforeTable1 =
-    improvementPoints +
-      (interestPoints - improvementPoints) *
-        item.monthly_payment_records.length / item.loan_term_months;
-  // Pub. 936's Table 1 ratio applies to the current-year ratable amount.
-  // Keep its fractional dollars until the final Schedule A amount is rounded.
-  return Math.round(beforeTable1 * ratio);
+  return ratableMortgagePoints(
+    interestPoints, improvementPoints,
+    item.monthly_payment_records.length, item.loan_term_months, ratio,
+  );
 }
 
 export function refinancePointsDeduction(source: unknown): number {

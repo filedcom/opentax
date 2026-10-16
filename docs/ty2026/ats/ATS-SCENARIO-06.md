@@ -14,7 +14,7 @@ output** separately. Empty calculated fields are unknown, not printed zeros.
 | 1 | Jeremy Davidson, SSN 400-00-1059, born January 20, 2008, U.S. citizen, may be claimed on his parents' federal return; partner in a gambling trade/business. Cover lists Form 1040, W-2, W-2G, Schedule 1, and Schedule E. | Preserve dependent and citizenship source answers. A business description is not a Schedule K-1, an SE earnings figure, or QBI evidence. |
 | 2–3 | Single, Wyoming address, no dependents, digital-assets **No**; Form 1040 line 12a dependent box checked. The citizenship/work-authorization boxes are not visibly answered, despite the cover's citizenship statement. Money lines are blank. | Require a reconciled citizenship answer before e-filing. Calculate income, deduction, tax, payments, and refund from source facts; do not turn blanks into zero. |
 | 4 | W-2 from Nona's Italian Kitchen, EIN 00-0000012: box 1 wages $2,300, box 2 federal withholding $985, box 4 Social Security tax $143, box 6 Medicare tax $33; box 12 code **TT $200**; box 14b tipped occupation code **102**. Boxes 3 and 5 are blank. | Wages → 1040 line 1a; withholding → line 25a. TT → 2026 Schedule 1-A overtime calculation if eligibility is satisfied, and then 1040 line 13a. Occupation code is not tip income: there is no box 12 TP or other tip amount. Do not reconstruct blank W-2 boxes 3/5 from FICA withholding. |
-| 5 | W-2G from Lucky Bear Casino, TIN 00-0000013: box 1 winnings $2,200, box 2 date won February 15, box 3 Slot Machines, box 4 withholding **$0**, box 5 transaction 8888888, winner SSN 400-00-1059. Box 7 has no amount. | 2026 Schedule 1 **line 8b Gambling** $2,200. Box 7, when present, is *additional winnings from identical wagers*, not noncash winnings; add it once to reportable winnings. Box 4 → 1040 line 25b, with the printed zero preserved as source evidence. Personal W-2G winnings remain separate from the partnership Schedule E activity. |
+| 5 | W-2G from Lucky Bear Casino, TIN 00-0000013: box 1 winnings $2,200, box 2 date won February 15, box 3 Slot Machines, box 4 withholding **$0**, box 5 transaction 8888888, winner SSN 400-00-1059. Box 7 has no amount. | 2026 Schedule 1 **line 8b Gambling** $2,200. Box 7, when present, is *additional winnings from identical wagers*, not noncash winnings; reconcile it once with box 1 and the winnings ledger. Box 4 → 1040 line 25c, with the printed zero preserved as source evidence. Personal W-2G winnings remain separate from the partnership Schedule E activity. |
 | 6–7 | Schedule 1 monetary lines are unfilled. | Line 5 from Schedule E $1,200; line 8b from W-2G $2,200; line 9 $2,200; line 10 $3,400 → 1040 line 8. Do not put gambling on line 8z. |
 | 8 | Schedule E Part I property rows unfilled. | No rental/royalty activity may be invented. |
 | 9 | Schedule E line 26 is printed **$0**; line 27 **No** checked. Part II row A: Davidson and Davidson, EIN 00-0000022, partnership type P; column (i) nonpassive allowed loss $1,000 and column (k) nonpassive income $2,200. Rows' (e)/(f) boxes are unchecked. | Preserve separate row columns and the printed Part I zero. Derive line 30 nonpassive income $2,200, line 31 allowed nonpassive loss ($1,000), and line 32 net $1,200. Do not net the two source columns before loss limitation and K-1 reconciliation. The packet includes no K-1, outside-basis, at-risk, or loss-carryforward evidence. |
@@ -40,18 +40,14 @@ from the cover's attachment list.
 
 ## Current graph and source-contract gaps
 
-- The shared [W-2G node](../../../forms/f1040/nodes/inputs/income/gambling/w2g/index.ts)
-  labels box 2 as wager type, box 3 as identical winnings, and box 7 as
-  noncash winnings. The January 2026 W-2G labels these **date won**, **type of
-  wager**, and **winnings from identical wagers**. Its box 1 plus box 7 sum is
-  plausible, but the input contract, validation, and provenance are wrong.
-  It emits gambling to shared Schedule 1 line 8z and is not registered in the
-  2026 graph. Create a dedicated 2026 W-2G record and emit to 2026 Schedule 1
-  line 8b; reconcile Form 1040 line 25b without double counting.
-- The [2026 Schedule 1 sink](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/nodes/schedule1.ts)
-  lacks `line8b_gambling`. Add it to its schema and line 9 sum, with distinct
-  PDF and MeF field mapping. The sink explicitly rejects the stale
-  `line8b_savings_bond_exclusion` key; do not reuse that key for gambling.
+- The [current casual gambling route](../graphs/GAMBLING-CURRENT.md) now
+  reuses the corrected 2025 W-2G schema and copy checks, reconciles box 7
+  against the winnings ledger and routes income to Schedule 1 line 8b.
+  Withholding belongs on Form 1040 line 25c, correcting this plan's old 25b
+  reference. The PDF prints line 8b and preserves required issued copies.
+  The dedicated Schedule 1 sink still rejects the legacy savings-bond key.
+  These tests do not implement the packet's partnership activity or prove ATS
+  acceptance; that remains a separate Schedule E source dependency.
 - The shared [partnership K-1 node](../../../forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/index.ts)
   routes amounts directly to Schedule 1. It neither fills Schedule E Part II
   nor proves allowed losses. Build a per-activity K-1/limitation result feeding

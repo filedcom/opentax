@@ -1,5 +1,25 @@
 # TY2026 Form 1040 entry point — implementation plan
 
+October 16 inventory update: use the [loaded runtime snapshot](../inventories/runtime-surface.json)
+and [inventory contract](../tooling/README.md) for current code coverage. The
+2025 product has grown to 223 nodes, 118 PDF descriptors and 158 MeF descriptors;
+32 newer nodes need review-note assignments. Older counts and the public MeF
+crosswalk below are historical and do not cover the full current product.
+
+Current AMT increment: source deduction results and reviewed Form 3921 exercise
+copies now feed the shared 2026 Form 6251 calculation, Schedule 2 and Form 1040
+line 17, with a reconciled two-page draft PDF. The
+[bounded AMT contract](../graphs/FORM6251-CURRENT.md) lists the still-rejected
+adjustments, foreign/credit branches and remaining filing work.
+
+Current-main update (October 15): the connected 2026 source tests now calculate
+ordinary income tax and refunds rather than injecting line 16. The pinned draft
+Publication 1040 provides all 8,248 Tax Table cells and the Tax Computation
+Worksheet. Preferential/special-rate/foreign helpers reuse 2025 arithmetic with
+2026 configuration; their complete source routes and specialist elections are
+still pending. See [current scope](../../../forms/f1040/2026/README.md#income-tax-worksheets)
+before treating historical prototype notes below as current implementation.
+
 Status: research snapshot, 2026-09-27, from code commit `b7c07b61`.
 The 2026 code snapshot had a calculation registry for a verified subset;
 `f1040_2026` was not registered in `catalog.ts` yet. This plan belongs with
@@ -85,10 +105,11 @@ The [Form 965-A contract](../graphs/FORM965A-GRAPH.md) preserves
 the outstanding liability and actual payment history and routes the
 reporting-year amount to Schedule 2 line 12. The current draft's line 15
 addition omits line 12, so the final total requires IRS resolution.
-The [Schedule R contract](../graphs/SCHEDULER-GRAPH.md) maps
+The [Schedule R contract](../graphs/SCHEDULER-GRAPH.md) implements
 the nine age/disability filing choices, the printed credit-limit worksheet,
-both PDF pages and Schedule 3 line 6d. The shared node's QSS and mixed-age
-joint-return arithmetic does not match the 2026 form.
+both draft PDF pages and Schedule 3 line 6d using shared 2025 filed-form
+arithmetic. Reviewed 2026 sources reconcile eligibility and ordered credits;
+W-2 disability, special eligibility and current MeF remain open.
 The [Schedule J contract](../graphs/SCHEDULEJ-GRAPH.md) maps the
 2026 farming/fishing election through three base-year returns and rate
 worksheets into Form 1040 line 16. The shared node instead accepts the
@@ -119,10 +140,22 @@ The [Form 3903 and educator contract](../graphs/FORM3903-EDUCATOR-GRAPH.md)
 pins 2026 moving instructions and maps the intelligence-community expansion,
 per-move Form 3903, Schedule 1/1040 reimbursement routes and educator
 Schedule A line 17k after the capped Schedule 1 deduction.
+The educator source now implements the $350 cap and enacted early-childhood
+eligibility, separates Schedule 1 from the broader itemized categories and
+reconciles receipt allocations through AGI and deduction choice. Annual
+education-exclusion coordination, printing and MeF remain open. Moving sources
+now calculate military/intelligence/special-family moves with dated mileage,
+per-move reimbursements, W-2 reconciliation and foreign storage-only routing;
+reviewed Form 3903 draft pages check the receiving totals. Other cross-year
+claims, 2555 allocation, Schedule 1 printing and current MeF remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its
 December 2026 disclosure draft and continuous-use instructions. The shared
-node currently files nothing; threshold, asset detail, Part III income,
-continuation PDF and current MeF output must be built.
+node currently files nothing. A 2026 source workpaper now reuses eligibility,
+threshold and summary checks while deriving ordinary asset values from dated
+portfolio records, with separate trust/estate/pension/deferred-interest reporting
+and unavailable-value workpapers. Part III/IV return binding, grantor/joint-interest
+and mixed-availability cases, public graph intake, continuation PDF and current
+MeF output still must be completed.
 The [Form 4852 contract](../graphs/FORM4852-GRAPH.md) pins the
 current substitute W-2/1099-R form and maps its line 7/8 values through
 the 2026 wage, retirement, FICA and withholding owners, with printable
@@ -478,29 +511,28 @@ box 10 withholding. Net benefits reach Form 1040 line 6a, the AGI taxability
 worksheet computes line 6b, and the PDF prints both. Negative aggregate net
 benefits require a repayment-deduction route before filing; see the
 [SSA benefits contract](../graphs/SSA-BENEFITS-GRAPH.md).
-Final 2026 Form 1099-R and instructions are pinned. A dedicated `f1099r`
-input uses boxes 7a–7d and 8a/8b and routes normal, fully taxable IRA and
-pension distributions to AGI and the printed 1040. Other codes and special
-accounts fail explicitly until their linked forms are built. Code 1 can
-route the full 10% early-distribution tax to Schedule 2 line 5 when the
-taxpayer supplies the full-tax and SIMPLE-period facts; see the
-[1099-R contract](../graphs/FORM1099R-GRAPH.md). Form 1040 line
-25b sums withholding from multiple 1099 sources in the active graph.
-Single-code G pension-plan direct rollovers now retain separate gross and
-taxable totals, reach AGI and Form 1040 lines 5a/5b, and mark draft line
-5c(1) in the PDF. IRA and other rollover variants remain in the 1099-R
-contract.
-Normal code 7 pensions with a payer-determined taxable box 2a below the
-gross box 1 now use the same separate totals without the rollover box.
-The [Form 8606 contract](../graphs/FORM8606-GRAPH.md) uses the
-newly pinned 2026 instructions to specify the owner-wide IRA basis inputs,
-calculation order, PDF, and MeF work that remains before IRA basis or Roth
-conversion cases can enter this registry.
-An early SIMPLE IRA distribution in its first two years uses a dedicated
-Form 5329 Part I node at 25%, with its three printed draft pages attached
-to the return PDF. The [Form 5329 contract](../graphs/FORM5329-GRAPH.md)
-records the implemented branch and the remaining parts, spouse handling,
-and MeF work.
+Final 2026 Form 1099-R and instructions are pinned. The current `f1099r`
+source validates actual 2026 boxes, current/corrected copies and recipient/treatment
+reviews before calling the shared 2025 amount helper. Ordinary no-basis IRAs and
+payer-determined qualified pensions support single codes 2, 3, 4 and 7; code G plan
+rollovers require reconciled transfer evidence. Income and withholding reach AGI,
+Schedule A and draft Form 1040, with unchanged withheld source PDF attachments.
+See the [current 1099-R contract](../graphs/FORM1099R-GRAPH.md).
+Early codes 1/S require payment-date and taxable-amount evidence plus either a
+no-exception declaration or reviewed payment-bound exceptions 01/03/04/06/10/12/20.
+Exception amounts and multiple-exception code 99 are derived; fully exempt
+payments retain an owner Form 5329 even when no additional tax is due.
+They use shared Part I arithmetic with the actual SIMPLE two-year period, direct
+Schedule 2 reporting where permitted, or separate taxpayer/spouse Form 5329 drafts.
+Ordinary code-3 withdrawals and medical-proof exception 03 are connected.
+Disability pension payments are split by the plan minimum-retirement-age date.
+Wages combine with moving income on line 1h and reach EIC, child credits, annual/monthly
+care and dependent/education income calculations through reviewed source bridges.
+Schedule R now reuses shared line arithmetic with sourced medical/mandatory-age
+evidence, SSA reconciliation, ordered credit limits and two static draft pages.
+W-2 disability and special Schedule R eligibility, native disability statements,
+remaining exceptions and other parts, Forms
+8606/4972, QCDs, annuity basis and current MeF remain required parity work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
 AMT interest, plain box 2a capital gain distributions, and NIIT income. Its

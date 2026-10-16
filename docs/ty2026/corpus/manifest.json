@@ -2298,6 +2298,177 @@
       "bytes": 205786,
       "sha256": "15977bb641b55d9ca8acb81b1da10e04371f10acf15ec9fb09bce829bd1a5c77",
       "retrieved_utc": "2026-09-27T17:04:40.997867+00:00"
+    },
+    {
+      "path": "authorities/pl119-111--2026.pdf",
+      "url": "https://www.govinfo.gov/content/pkg/PLAW-119publ111/pdf/PLAW-119publ111.pdf",
+      "kind": "enacted-law",
+      "status": "downloaded",
+      "bytes": 278902,
+      "sha256": "49ac8c667cd9e443eb2fd64f7655c42fc68e7ad0c594cb5e233a520539abe4cc",
+      "retrieved_utc": "2026-10-15T11:28:39.050882+00:00",
+      "year_check": "2026-present",
+      "scope": "Division B, section 1, page 25: early-childhood educator eligibility applies from tax year 2026"
+    },
+    {
+      "path": "draft/p1040.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/p1040--dft.pdf",
+      "kind": "draft-publication",
+      "status": "downloaded",
+      "bytes": 2705378,
+      "sha256": "407bc35ab09aaf034689341d7469b9b082cd2ceaa652e38ca5874c1dd1c3f12e",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-15",
+      "scope": "Aug 28 draft; Tax Table printed pages 2-13 and Tax Computation Worksheet pages 14-15; EIC table printed pages 16-27 extracted to 1405 bands/11240 cells with eight terminal footnotes and annual arithmetic cross-checks"
+    },
+    {
+      "path": "draft/f4797-2026-10-01.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f4797--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 243263,
+      "sha256": "66e57b82213189baa8564ed9cb83e75d6f556edb0bd051df458879280bc1fec9",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-15",
+      "note": "October 1 creation date; later draft preserved separately from September research snapshot. Schedule A destination on line 20a is now 17d."
+    },
+    {
+      "path": "draft/i461-2026-09-28.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i461--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 234106,
+      "sha256": "e3ba90d00f657eed6b83a4555fc5acffb823401a4a6ddda29160fc33a8376399",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-15T20:16:08.546018+00:00"
+    },
+    {
+      "path": "continuous/f1062sa.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1062sa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 88431,
+      "sha256": "dc50ba9b52db27a01492962b7349b71070812956c56feff376928dcd17a4953d",
+      "year_check": "December 2025 continuous-use revision; checked for 2026 on 2026-10-15"
+    },
+    {
+      "path": "authorities/f1040es--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1040es.pdf",
+      "kind": "final-form-instructions",
+      "status": "downloaded",
+      "bytes": 331490,
+      "sha256": "396ffad25baa737b33a67d27624f7444be3ac4e7245d287aebe5f89864f90b54",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-10-16",
+      "scope": "Estimated payment records, 2025 overpayment credits, joint-payment eligibility, dates and name-change statements; not a completed Form 2210 penalty calculation"
+    },
+    {
+      "path": "authorities/n-24-02.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-24-02.pdf",
+      "kind": "notice",
+      "status": "downloaded",
+      "bytes": 338432,
+      "sha256": "4f1e3dde1415ab7d2ecf404faf9750a9e0ab349be160b1cf34253d98c6d36d91",
+      "year_check": "Notice 2024-2; section F referenced by 2026 draft Form 5329 instructions",
+      "retrieved_utc": "2026-10-16",
+      "scope": "Terminal-illness distributions: eligible plans, physician certification content and dates, administrator receipt and return election; recontributions remain required separate work"
+    },
+    {
+      "path": "authorities/i1099qa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099qa.pdf",
+      "kind": "final-instructions",
+      "status": "downloaded",
+      "bytes": 158311,
+      "sha256": "dbc7c9f6bd86fc22f9b84043203a1b2e5895ae53adc92211218aae4fe81af6f1",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/f5498qa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f5498qa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 80624,
+      "sha256": "3a84d587ef0347a3040c8342f851ba968d0938aa1f2c8e371e790d0caacbb16a",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/f1099qa--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1099qa.pdf",
+      "kind": "continuous-use-form",
+      "status": "downloaded",
+      "bytes": 75687,
+      "sha256": "468cdb339f65afcae4423e20db35b213541a714faa202c9be51bf6f926120537",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/hhs-poverty--2025.pdf",
+      "url": "https://www.govinfo.gov/content/pkg/FR-2025-01-17/pdf/2025-01377.pdf",
+      "kind": "annual-authority",
+      "status": "downloaded",
+      "bytes": 181299,
+      "sha256": "a239506cedee787b4c164ac17fa43b2ad9a147e3c848cd935c54a692ee2cebce",
+      "reviewed_on": "2026-10-16"
+    },
+    {
+      "path": "authorities/n-26-05.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-05.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 167550,
+      "sha256": "2adafd5d53b5a16efa14afa39cf09f7e9bcd235a6f26f6779945f484dee4e09c",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2026-5: 2026 bronze/catastrophic individual-market and DPC HSA eligibility; telehealth effective-date guidance."
+    },
+    {
+      "path": "authorities/i1099sa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099sa.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 157004,
+      "sha256": "68cca68a937532ba900c4f1d091ed9ebd56317923b3b9620a04cf5287b56e215",
+      "reviewed_on": "2026-10-16",
+      "notes": "Continuous-use December 2026 instructions for Forms 1099-SA and 5498-SA; calendar-year and designated-year receipt reporting, rollovers, trustee transfers and mistaken repayments."
+    },
+    {
+      "path": "authorities/n-08-52.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-08-52.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 39119,
+      "sha256": "2d8f578f036c018980aeb559752274123a1b027fc13bc2bb7d5ddecad37ef8d0",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2008-52: monthly versus full-contribution HSA limits, coverage changes, testing period and spouse examples. Historical dollar amounts and distribution tax rate are not 2026 parameters."
+    },
+    {
+      "path": "authorities/n-08-51.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-08-51.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 38322,
+      "sha256": "e0559785860e0dccaeb50b62ea82ca97fa27cce0710342bff4d38dd7f09e1e10",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2008-51: qualified IRA-to-HSA funding distributions, lifetime and coverage-change limits, direct transfers, non-ongoing SEP/SIMPLE accounts and separate testing periods. Historical contribution limits and HSA distribution tax rates are not 2026 parameters."
+    },
+    {
+      "path": "authorities/i8889--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8889--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 216817,
+      "sha256": "da6f2f588b06f3f44cc7177883ce6496dc1bb247d84bc068a79277822410cb0f",
+      "reviewed_on": "2026-10-16",
+      "notes": "Filed 2025 HSA history for 2026 testing-period recapture: 2025 contribution and HDHP limits, spouse allocation and Part I lines. This is historical authority, not 2026 annual parameters."
+    },
+    {
+      "path": "draft/i1116.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1116--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 554717,
+      "sha256": "7581530b8d131747ebf8a04913d794e51780173263167711fc0a15891e9f9e99",
+      "year_check": "2026-present",
+      "verified_on": "2026-10-16",
+      "revision": "2026 draft dated September 28, 2026"
     }
   ]
 }

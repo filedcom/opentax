@@ -1,0 +1,1227 @@
+# TY2026 calculation and return-assembly foundation
+
+This directory starts the 2026 implementation on current main. It is not the
+historical prototype restored wholesale, and it is not registered as a filing
+product. The ongoing branch is `codex/ty2026-readiness`.
+
+## Implemented
+
+- `f1099r` reconciles issued 2026 statements and treatment reviews before reusing
+  the 2025 retirement amount helper. Ordinary no-basis IRAs, payer-determined
+  qualified pensions, inherited distributions and direct plan rollovers reach
+  AGI, withholding, state/local deductions and draft Form 1040. Withheld originals
+  remain separate verified PDF attachments. Early codes 1/S additionally require
+  dated payments and no-exception or payment-bound 01/03/04/06/10/12/20 evidence; shared
+  2025 Part I tax arithmetic
+  reaches Schedule 2 and separate owner Form 5329 drafts where required.
+  Dated employer disability payments split between wages and pensions. The wage
+  component combines with moving income on line 1h, reaches earned-income credits
+  and dependent/education calculations, and supplies owner/month-specific care
+  income without creating payroll taxes. Reviewed Schedule R now consumes the
+  same payment records; native disability filing statements remain required.
+  See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
+  for supported codes, correction checks and required basis/penalty/filing work.
+  Annual traditional/SEP/SIMPLE IRA basis now binds resolved current copies and
+  executed wage/business compensation. Contributions, distributions and direct
+  Roth conversions produce taxable IRA income, 2027 basis carryforward and
+  basis-adjusted early tax. Separate two-page owner Form 8606 drafts reconcile
+  to Form 1040. Multi-date IRA payment ledgers reconcile each cash, withholding
+  and conversion amount to the current copy and bind age/SIMPLE exceptions to
+  actual payment dates. See the [Form 8606 contract](../../../docs/ty2026/graphs/FORM8606-GRAPH.md)
+  for remaining Roth, inherited, deduction, special-source and native filing work.
+
+- `schedule_r` selects the elderly/disability credit box from filer identities,
+  birth dates, residence and medical/plan evidence. It reuses the 2025 filed-form
+  arithmetic for lines 10–22, reconciles SSA and other nontaxable benefits, and
+  applies the employer's mandatory retirement date separately from the minimum
+  retirement age used for wage reporting. Care precedes Schedule R; education,
+  child and energy credits follow it, including Form 1062 credit replay. Two
+  static draft pages reconcile to Schedule 3 line 6d and Form 1040. W-2 disability
+  ledgers, special eligibility cases and native MeF remain open; see the
+  [Schedule R contract](../../../docs/ty2026/graphs/SCHEDULER-GRAPH.md).
+
+- `gambling` reconciles current W-2G copies and the casual winnings/loss ledger,
+  reusing 2025 copy checks and sums. Schedule 1 line 8b, withholding line 25c,
+  the 90% loss limit, deduction choice, child tax and draft pages are connected.
+  Withheld copies remain original PDF attachments; see
+  [current gambling scope](../../../docs/ty2026/graphs/GAMBLING-CURRENT.md).
+
+- `estimated_payments` reuses 2025 payment reconciliation for posted 2026
+  receipts, signed joint allocations and reconciled posted 2025 credits.
+  Line 26 flows through settlement and refund allocation; draft PDFs replay
+  retained sources and print former-spouse and MFS identity fields correctly.
+  See [current estimated payments](../../../docs/ty2026/graphs/ESTIMATED-PAYMENTS-CURRENT.md).
+
+- `refund_allocation` runs after settlement and reuses the 2025 account/refund
+  reconciliation for one to three reviewed deposit accounts. Fixed amounts or
+  one remainder resolve against line 35a after any 2027 estimated-tax election.
+  The draft packet prints single-account details on Form 1040, or the split
+  indicator and Form 8888; general bank fields require a matching reviewed claim.
+  See [current refund allocation](../../../docs/ty2026/graphs/REFUND-CURRENT.md).
+
+- The `schedule_c` source claim reuses shared Schedule C/SE/8995 arithmetic and
+  connects reviewed service businesses, statutory W-2s and vehicle records to
+  income, owner SE tax, Additional Medicare, QBI and draft attachments. It includes
+  the 2026 active-business minimum and separate prior QBI losses. Advanced QBI,
+  broader source/loss coverage and complete child-tax calculations remain unfinished.
+  EIC and ACTC now replay supported business sources, including statutory gross
+  wages, losses, SE deductions and the three-child payroll method.
+  See the [current business scope](../../../docs/ty2026/graphs/BUSINESS-CURRENT.md).
+  Dependent care replays these sources by spouse, including losses and statutory
+  gross earnings, with reconciled monthly records for student/disability cases.
+  Education support uses reviewed personal-service earnings and the material-capital
+  limit; dependent deductions use Schedule C net less the actual SE deduction.
+  [Business education and child-tax screening](../../../docs/ty2026/graphs/EDUCATION-CURRENT.md#business-earnings-and-dependent-deductions)
+  retain separate rules for these consumers.
+
+- `capital_gains` reuses shared Schedule D netting and Form 8949 rounding for
+  reviewed 1099-B, 1099-DA and unreported ordinary investment sales. All twelve
+  reporting categories, basis/expense/wash-sale adjustments and prior losses
+  reach AGI, preferential tax, AMT, NIIT and draft Schedule D/Form 8949.
+  `capital_loss_carryover` derives the 2027 workpaper after final deductions.
+  See the [current capital scope](../../../docs/ty2026/graphs/CAPITAL-CURRENT.md).
+
+- `f8863` reuses shared AOTC, phaseout and credit-limit formulas with 2026
+  student/payment sources and SSN eligibility. Tuition, refunds, aid and other
+  benefits reconcile before AOTC/LLC reach Schedule 3 and Form 1040. Draft Form
+  8863 supports multiple students and school continuations. See the
+  [current education scope](../../../docs/ty2026/graphs/EDUCATION-CURRENT.md).
+
+- `form2441` reuses shared benefit arithmetic before AGI; `f2441` applies the
+  2026 rate after AGI and tax. Reviewed ordinary W-2/child-care expenses feed
+  Schedule 3 and reduce Schedule 8812's tax capacity, with a reconciled draft
+  Form 2441 and provider/child continuations. Monthly student/disability income
+  and independent care combat elections reconcile to issued W-2 records.
+  Prior-return care receipts use the shared 2025 rate, feed line 9b and produce
+  a Worksheet A statement, including returns with no current care expenses.
+  Reviewed qualifying-person records now support incapacity, ordinary custodial
+  care and birth/death residence, with dated expenses and independent 1040
+  dependency treatment. Claimable filers' deductions use actual wage income;
+  potential Form 8615 returns require the reviewed child-tax source route.
+  MFS home reviews derive current-credit eligibility, while separate spouse W-2
+  records constrain benefits without adding spouse income to this return.
+  Eligible prior-year credits remain available to ordinary MFS. Reviewed special
+  providers, employer-furnished care, due-diligence statements and no-provider
+  taxable benefits now reach draft forms using the shared arithmetic. See
+  [current care scope and remaining gates](../../../docs/ty2026/graphs/FORM2441-CURRENT.md).
+
+- `ssa1099` reconciles current SSA/RRB copies, ownership, signed repayments and
+  form-specific withholding. The 2026 AGI wrapper reuses shared income and
+  benefit logic, resolves taxable benefits before student-loan MAGI, and handles
+  MFS residence. Draft Form 1040 prints zero line 6b and the lived-apart checkbox.
+  See [SSA-BENEFITS-GRAPH.md](../../../docs/ty2026/graphs/SSA-BENEFITS-GRAPH.md)
+  for remaining repayment, IRA and filing gates. The
+  [lump-sum election](../../../docs/ty2026/graphs/SSA-LUMP-SUM-CURRENT.md) retains
+  prior-return facts, compares both methods, feeds the selected amount through
+  AGI, and prints line 6c without appending private worksheets.
+
+- `student_loan_interest` reconciles 1098-E copies and loan payment records,
+  including old-loan fees, capitalized interest, funding exclusions, corrections
+  and borrower eligibility. It reuses the shared cap and AGI phaseout, with 2026
+  amounts, then reaches Schedule 1 and the draft bundle. See the
+  [current source contract](../../../docs/ty2026/graphs/STUDENT-LOANS-CURRENT.md)
+  for remaining foreign sources, special SSA worksheets and filing gates.
+
+- `buildDraftReturnPdf2026` in `pdf/bundle.ts` runs the current strict source
+  graph and assembles reconciled draft components in attachment order, followed
+  by continuation statements. It returns page manifests and unfinished receiver
+  names with `filingReady: false`; every page identifies the incomplete
+  implementation. See the [current bundle contract](../../../docs/ty2026/pdf/PDF-BUNDLE-CURRENT.md).
+
+- The existing 2025 standard-deduction node and the 2026 wage baseline call the
+  same `standardDeductionAmount` implementation. Year-specific amounts are
+  supplied explicitly, including dependent minimum/earned-income additions.
+- The 2025 and 2026 Tax Table, ordinary-rate and preferential worksheets share
+  the same calculations with explicit year-specific configurations. The existing
+  2025 entry points retain their behavior.
+- `f8615` derives wage/investment/business child eligibility, selects a linked parent
+  return and reconciles sibling worksheets before using the shared annual tax
+  calculator. The tax reaches Form 1040, AMT and credit limits, with a reconciled
+  draft Form 8615 including stop forms and worksheet checkboxes. Remaining income sources,
+  advanced family worksheets and remaining filing cases still need completion;
+  see the [current child-tax scope](../../../docs/ty2026/graphs/FORM8615-CURRENT.md).
+- `nodes/config/2026-income.ts` contains the audited subset of 2026 constants
+  from [Rev. Proc. 2025-32 §§4.01, 4.14](https://www.irs.gov/irb/2025-45_IRB),
+  checked October 15, 2026. It does not fill missing constants with 2025 values
+  or enable unaudited nodes through a complete `F1040Config` registration.
+- `calculateWageBaseline2026` sums classified taxable wages, applies the base
+  standard deduction and calculates an ordinary-tax preview from the draft
+  Tax Table or Tax Computation Worksheet. It
+  rejects unrecognized input fields and reports `canFile: false`.
+- The CLI rejects unsupported return products before creating metadata files.
+- `assembleReturn2026` runs the shared input router and executor with a bounded
+  Form 1040/Schedule 3-A registry. It consumes finalized upstream amounts; it is
+  an internal assembly API, not a public facts/source-document API.
+- The 2026 finalizer assembles income, deductions, credits, withholding, refund
+  allocation and balance due. It maps nonitemizer charity to 12f, Schedule 1-A
+  to 13a, QBI to 13b, Form 1062 to 24b, and the Schedule 3-A reduction to 32b.
+  Individual printed operands use the existing signed whole-dollar helper.
+- Schedule 3-A implements the zero-benefit stop and line 7/8 answer branches;
+  its Schedule 2 line 20 exclusion cannot exceed Form 1040 line 23. Header work
+  authorization is kept separate from the schedule's eligibility answer.
+- Separate Schedule 1 and Schedule 2 output calculations reject stale line
+  mappings. Schedule 1 requires agreement with finalized AGI totals. Positive
+  Schedule 2 section 965 installments remain held because the pinned draft's
+  line 12/15 instructions conflict. The Schedule 2 graph sink currently accepts
+  reviewed W-2 payroll/golden-parachute, Form 4137, Form 8919, Form 8959 and Form 6251 sources.
+- Fourteen local rules reconcile income, tax, deductions, payments, refund and
+  required attachments. They are arithmetic checks, not IRS MeF acceptance.
+- Draft Form 1040 and Schedule 3-A PDF components use pinned IRS hashes and the
+  shared 2025 template cache. Form 1040 supports four dependent columns plus a
+  continuation. Draft markings remain visible. The loader accepts checked-out
+  LFS bytes or downloads exactly the reviewed bytes into the ignored cache;
+  changed sources fail verification.
+
+Example, from the repository root:
+
+```sh
+deno eval 'import { calculateWageBaseline2026 } from "./forms/f1040/2026/wage-baseline.ts"; console.log(calculateWageBaseline2026({filing_status:"single", wages:[150000]}));'
+```
+
+This produces a $16,100 base deduction, $133,900 taxable-income baseline and
+$24,734 ordinary rate-schedule tax before credits and other taxes. It does not
+calculate total tax, a refund or an amount due. In particular, the preview
+assumes base-standard-deduction eligibility and excludes age/blind additions,
+dependent eligibility, itemization, Schedule 1-A and charitable deductions,
+credits, other income/taxes, and withholding. Below $100,000 it now uses the
+checked draft 2026 Tax Table; final IRS revisions remain a filing gate.
+
+## Income-tax worksheets
+
+The 2026 `income_tax_calculation` node receives resolved taxable income and
+signed AMT inputs from deduction resolution. It derives Form 1040 line 16 and
+forwards tax/preference facts to the AMT, child-credit, foreign-tax-credit and
+Form 8978 owners. The bounded AMT route below now consumes its handoff; the other
+destinations still need their 2026 calculators.
+
+The [August 28 draft Publication 1040](../../../docs/ty2026/corpus/draft/p1040.pdf)
+is pinned at SHA-256
+`407bc35ab09aaf034689341d7469b9b082cd2ceaa652e38ca5874c1dd1c3f12e`.
+Its 2,062 Tax Table rows were independently extracted into
+`docs/ty2026/evidence/tax-table-2026.csv`, retaining PDF page provenance.
+Tests compare all 8,248 printed tax cells at both interval endpoints, plus QSS
+against the joint column, and each Tax Computation Worksheet bracket boundary.
+The reproducible extractor reads the pinned PDF; it does not compute tax.
+
+Qualified-dividend/0%/15%/20%, Schedule D special-rate/election, and foreign
+exclusion stacking calculations now accept explicit 2026 annual configuration.
+The shared helpers still default to 2025 for existing callers. Annual thresholds
+come from Rev. Proc. 2025-32 §§4.01/4.03; the 2026 Form 1116 draft corroborates
+Schedule D's status-specific 24% ceiling, including the distinct HOH amount.
+The 2026 Form 1040/Schedule D instruction URLs still serve 2025 worksheets;
+final 2026 worksheet-layout review remains required.
+
+The graph scenarios derive tax/refunds for wages, tips/overtime, vehicle interest,
+mortgages, educators and moving expenses. Connected investment and child-tax
+sources use preferential calculations; foreign calculations remain internal
+building blocks until their 2026 source owners are connected. Schedule J,
+parent elections, lump-sum distribution tax and PFIC/reporting-year tax
+adjustments are rejected until their calculation order is implemented.
+Form 8615 now uses the reviewed wage/investment/business child-tax route described above.
+The shared special-rate foreign worksheet still rejects capital-gain-excess
+refigures. No asserted tax amount is exposed by the public source catalog.
+
+The child-tax business workpaper links the actual Schedule C inventory and keeps
+gross support earnings, line-1 service net, loss add-backs and capital-service
+compensation separate from the education and dependent-deduction calculations.
+Business gross income and the actual SE requirement also establish filing evidence.
+Three business PDF cases reconcile Schedule C, SE, QBI and Form 8615 through
+regular tax; source tests cover support boundaries and mismatched inventories.
+
+## AMT and ISO exercise sources
+
+The 2026 Form 6251 node now follows deduction and income-tax calculation, sends
+line 11 to Schedule 2 line 2, and reaches Form 1040 line 17 through Schedule 2.
+Schedule 2's filing decision covers both its income-tax and other-tax sections.
+All seventeen source-graph cases run the AMT calculation; the ISO case derives
+$16,830 of AMT from issued-copy exercise facts, with no asserted tax input.
+
+The 2025 and 2026 nodes call the same exemption, ordinary AMT and Part III
+arithmetic. Explicit 2026 policy supplies exemptions, phaseout starts/rates,
+MFS addition and tax brackets. The 2025 wrappers retain their original defaults.
+For current source and legal details, see the [AMT contract](../../../docs/ty2026/graphs/FORM6251-CURRENT.md).
+The connected graph supports standard/itemized tax addback, the separately
+resolved senior addback, and unrestricted ISO exercises retained through year
+end. Domestic qualified-dividend, net-capital-gain and 1250/28% calculations
+are internal building blocks until their source owners are connected.
+
+The public Form 3921 adapter reuses the existing lot calculation with an explicit
+exercise year. It validates return ownership, unique issued-copy references,
+grant/exercise dates, unrestricted rights, no option cost, no exercise-year
+sale, and a year-end brokerage review covering every copy. It sums lot cents
+before rounding line 2i and retains regular/AMT basis for later dispositions.
+The fixture is synthetic; a real completed-year claim needs its own records.
+
+The draft Form 6251 PDF recalculates the source result and checks Form 1040
+income, deductions and regular tax, Schedule A taxes, Schedule 1-A senior
+amount and Schedule 2 AMT. It fills the canonical fields, removes the cover and
+widgets, preserves draft markings and prints both pages. The PDF tests cover
+ordinary/preferential cases, senior/itemized reconciliation and mismatches;
+both preferential-case pages were rendered and visually reviewed.
+
+This is still a bounded calculation and draft component. Refund/NOL/PAB and
+business adjustments, AMT dispositions and carryovers, foreign exclusions/FTC,
+Form 4952 elections, Schedule J and credit-driven filing triggers are rejected
+until their source owners and refigures are connected. Final 2026 instructions,
+complete attachment selection, MeF and filing registration remain unfinished.
+
+## W-2 and AGI source integration
+
+The 2026 W-2 adapter calls the existing W-2 routing implementation with a narrow
+2026 configuration. The shared 2025 entry point still selects its own original
+configuration. The 2026 adapter requires issued-copy references and employer and
+employee identities, checks return ownership, and preserves the complete source
+record. `inputs.ts` contains its repeated `w2s` input entry and the singleton
+2026 general source node, which supplies the return identity before W-2 runs.
+
+- The 2026 schema supports box 14a/14b and new box 12 TP, TT and TA values.
+  Tip/overtime source amounts are retained for 2026 Schedule 1-A; neither is
+  added to box 1 again. Multiple occupation codes, including `000`, remain
+  explicit. The 2025 transitional employer-statement fields are rejected.
+- Ordinary wages, withholding, statutory-employee business sources, Medicare,
+  dependent-care, HSA/MSA, retirement and state/local-tax handoffs reuse the
+  existing source routing. W-2 uncollected FICA and golden-parachute tax use the
+  revised Schedule 2 destinations. These emitted handoffs still need their
+  complete 2026 receiving calculations and attachments.
+- Excess Social Security withholding uses the $184,500 wage base and $11,439 cap
+  separately for each owner, includes Social Security tips, and rejects
+  employer-level overwithholding before computing a multi-employer credit.
+- A narrow AGI configuration supplies the 2026 student-loan phaseout. The shared
+  AGI algorithm runs through a strict 2026 adapter, which remaps the Schedule 1
+  reconciliation fields and removes the old Form 1040 AGI key. Upstream activity
+  limits and source eligibility remain each source calculator's responsibility.
+- Positive Medicaid-waiver code II, section 409A code Z, and deferrals exceeding
+  the owner's base limit currently require further 2026 review. Catch-up/Roth,
+  enhanced SIMPLE limits, corrections/substitute W-2s and community-property
+  allocation are unfinished; no 2025 evidence is silently accepted for them.
+
+The internal graph test covers general identity and cash-gift records → issued
+W-2 → AGI → deduction resolution → income-tax calculation → Form 1040
+settlement. Line 16 is calculated rather than supplied by the fixture. It exposes the
+remaining credit/form pending records. It is not a complete public return graph.
+The `w2_2026_sources` handoff now feeds the employee/senior Schedule 1-A
+calculator described below; its other source branches remain unfinished.
+
+The 224-test combined 2026/W-2/AGI run passed; 21 focused tests passed after the
+final shared-line rounding and input-catalog changes. The existing 2025 W-2,
+community-property and AGI suites are included in the combined run.
+
+## Filer and dependent sources
+
+The 2026 general node reuses the existing dependency classification, credit-SSN
+checks and age-65 helper. An explicit year policy supplies the 2026 age cutoff,
+$5,300 qualifying-relative gross-income limit, younger-than-filer test and
+reviewed residence behavior; existing 2025 callers retain their original policy.
+Counts and credit categories are derived from source rows rather than accepted
+as asserted totals.
+
+- Identity is checked across taxpayer, spouse, dependents and W-2 owners. Joint
+  returns require spouse facts; HOH/QSS need qualifying-person and home-cost
+  reviews, including the applicable spouse-death year for QSS.
+- `claim_as_dependent: false` retains an EIC source child without adding a
+  dependent row or child/dependent credit count. EIC does not use the child's
+  self-support test. Student status needs at least five full-time months.
+- Dated residence checks inclusive days, lifetime boundaries, overlapping
+  periods and actual calendar months. Birth/death exceptions require their
+  source records; Schedule EIC printed months remain separate from actual
+  months. The Form 1040 rows and continuation use the reviewed residence result.
+- The node routes identity and eligibility facts to pending deduction and
+  credit owners, but those 2026 calculators are still unfinished. It does not
+  establish a final EIC or child-credit amount.
+- Custody releases, PTC households, competing-claim/tiebreaker evidence,
+  adoption/placement exceptions, multiple-support agreements, nonclaimed
+  HOH/QSS exceptions, deceased filers and born-and-died children without a TIN
+  still need dedicated 2026 handling. The old 2025 review objects are rejected.
+
+Sources checked October 15: [IRS qualifying-child rules](https://www.irs.gov/credits-deductions/individuals/earned-income-tax-credit/qualifying-child-rules),
+[Rev. Proc. 2025-32 §4.23](https://www.irs.gov/irb/2025-45_IRB), and
+[draft 2026 Schedule EIC](https://www.irs.gov/pub/irs-dft/f1040sei--dft.pdf).
+
+## Joint deduction resolution and cash-gift sources
+
+`deduction-resolution.ts` owns the standard/itemized comparison. It reuses the
+same standard-amount and election helpers as 2025, adds the nonitemizer cash
+candidate, applies the 2026 overall itemized limit, and retains both candidates
+and the selection reason. The selected values drive Form 1040 and the draft
+Form 6251 line 1b/2a handoff. Negative AMT bases remain signed.
+
+The QBI interface evaluates each candidate's income before QBI **and section
+68**, using unreduced Schedule A for itemizers. It then applies the overall
+itemized limit using that QBI result. The earlier finite fixed-point search was
+removed because the 2026 statutory definition excludes section 68 from QBI's
+income base. Each candidate retains its complete form result.
+
+The graph supports reviewed service-business simplified Form 8995, including the
+active-business minimum, prior losses and actual capital-gain/qualified-dividend
+limits. It rejects caller-calculated `qbi_deduction` and unsupported QBI activity.
+Form 8995-A/cooperatives, remaining source categories, dependent earned-income
+classification and foreign-tax allocation still need their 2026 owners. The
+existing finalization API continues to accept upstream finalized amounts only.
+
+`cash_gifts` is a repeated source entry with donor/donee identity, current-year
+payment and classification records, benefits received, QCD status and
+contemporaneous acknowledgment facts. It excludes QCDs, donor-advised funds,
+supporting organizations and other ineligible recipients from the nonitemizer
+amount. Credits/reimbursements await a separate reduction review. The same
+identified gift records feed the Schedule A category/floor calculator below;
+they are not asserted as a net itemized deduction.
+
+The resolver applies the retained 60% contribution-base ceiling before the
+$1,000/$2,000 cap. Section 170(p) excludes carryforwards and the itemizer floor;
+it does not exclude section 170(b)(1)(G)(i). The contribution base may be supplied
+separately from AGI when an NOL carryback changes it. General supplies separate
+tax-residency and accounting-period answers for standard-deduction eligibility;
+work authorization alone is insufficient. Residency elections/treaty exceptions
+and disaster additions remain to implement.
+
+Sources checked October 15: [26 USC §170(b)(1)(G), (H), (p)](https://uscode.house.gov/us/usc/119-118/t26/s170/),
+[Publication 505 (2026), Worksheet 2-6](https://www.irs.gov/publications/p505),
+[standard-deduction eligibility](https://www.irs.gov/taxtopics/tc551), and
+[draft Form 6251 lines 1a–2a](https://www.irs.gov/pub/irs-dft/f6251--dft.pdf).
+
+## Schedule 1-A calculation and draft attachment
+
+The 2026 Schedule 1-A adapter reuses the existing stepped-phaseout and senior
+arithmetic. The 2025 node calls those same extracted helpers without changing
+its source contract or form lines. Current 2026 TP/TT sources, filer eligibility
+and AGI now feed deduction selection: line 44 becomes Form 1040 line 13a, while
+line 43 remains separate for the Form 6251 basis adjustment.
+
+Public `schedule1a` input contains source-inventory and qualification evidence,
+not calculated amounts. Each TP review reconciles qualified occupation amounts
+plus excluded tips to the issued W-2, retains its records, and checks the
+current occupation list. TP alone does not establish qualified tips. The source
+owner and employer must match, duplicate sources/reviews are rejected, and
+missing SSN review facts cannot silently become a zero deduction. Issued TT
+supplies qualified overtime; return-level caps, completed-$1,000 phaseout steps
+and the per-person senior reduction follow the 2026 draft. Printed source rows
+round before their line totals are added. Ineligible and fully phased-out
+outcomes remain inspectable.
+
+Part I requires either the existing sourced zero-exclusions review or all four
+upstream exclusion amounts with references. Positive addbacks are internal
+calculator inputs, not public source fields. The Form 2555 line 45 addback must
+agree with the exclusion used by AGI. The foreign/territorial source calculators
+and their complete 2026 attachment routes are not yet implemented.
+
+This adapter currently covers ordinary employee W-2 tips/overtime, Form 4137
+tips, seniors and reviewed vehicle-loan interest. Form 4137 and W-2 TP are
+compared separately for each owner/employer using the larger qualified amount.
+The source-inventory review must agree with the Form 4137 handoff. Business tips,
+non-W-2 overtime and statutory-employee sources still need their business/net
+profit and QBI coordination. Schedule 1-A MeF remains to build.
+
+The draft PDF recalculates its internal source inputs and checks line 44 against
+Form 1040 line 13a. It prints all three form pages, plus separate continuations
+for more than five tip employers, five overtime employers or two VINs. Sources
+and zero-result lines remain visible after phaseout. The template is pinned at
+SHA-256 `e22aec7feb2f5b734e16ee74d70acfdfdc0d66a5292f69cf0ced3b87543d95ac`;
+output is static with draft markings. This is a component for the future complete
+return bundle, not a claim that all required attachments are implemented.
+
+Sources checked October 15:
+[2026 Schedule 1-A draft](https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf),
+[2026 W-2 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf),
+[current tipped occupations](https://www.irs.gov/TippedOccupations), and
+[TD 10044 and the retained SSTB transition relief](https://www.irs.gov/irb/2026-18_IRB).
+
+## Form 4137 source and payroll integration
+
+The 2026 adapter reuses the existing employer matching, allocated-tip diary,
+below-$20-month and payroll-tax calculation. A year policy supplies the record
+window and January reporting deadlines; 2025 retains its original defaults.
+2026 calculations round printed row operands and use the $184,500 Social Security
+wage base separately for each spouse. All W-2 payroll amounts must be known when
+Form 4137 is filed; missing boxes are not silently assumed to be zero.
+
+Public intake supplies annual tip records, employer identities and qualification
+allocations, with source references. The qualifications must reconcile to **all**
+line 1(c) tips. Neither an asserted qualified total nor the unreported difference
+replaces those records. The adapter checks owner/employer/W-2 identity and rejects
+duplicate employers or issued copies. Below-allocation income requires reconciled
+daily records, including the December/January reporting boundaries.
+
+The unreported difference enters Form 1040 line 1c and AGI once. It also contributes
+to the pending earned-income credit calculations. Payroll tax goes to Schedule 2
+line 16a and its line 20/21 totals, then to Form 1040 settlement. Form 8959 receives
+Medicare tips; Form 8919 and Schedule SE retain separate owner payroll handoffs.
+The 2026 Form 8919 and Form 8959 receivers are implemented below; Schedule SE
+and credit calculators remain unfinished. MFS still
+owes payroll tax while receiving no tips deduction. Government-employee Social
+Security exclusions need a coverage record; Medicare tips remain taxable.
+
+The [March 2026 Form 4137 draft](https://www.irs.gov/pub/irs-dft/f4137--dft.pdf)
+still refers to the old Schedule 2 line 5. Routing follows the actual reviewed
+[2026 Schedule 2](https://www.irs.gov/pub/irs-dft/f1040s2--dft.pdf), line 16a.
+The internal integration fixture proves $2,000 of additional income, $153 of
+payroll tax and a $19,800 tips deduction after comparing $18,000 of qualified TP
+with $20,000 of qualified Form 4137 tips at $152,001 AGI.
+
+The issued W-2 source is still required. Applied-for EINs, substitute/corrected
+W-2s, railroad tips, statutory-employee coordination and noncash-tip income need
+separate source handling. Form 4137 MeF, complete PDF bundle selection and full
+payroll/credit integration remain release gates; the existing Schedule 1-A component already
+has the Form 4137 comparison column.
+
+The Form 4137 PDF component now uses the pinned 34-field draft, recalculates
+sources and checks Form 1040 line 1c, Schedule 2 line 16a and recipient identity.
+It prints a separate form per spouse and additional first-page rows beyond five
+employers, with all totals on the first copy only. Printed row rounding follows
+the calculator. The line 10 government-employee annotation retains the Medicare
+amount excluded only from Social Security. Draft markings and the source's old
+Schedule 2 reference remain visible; the destination check uses the reviewed
+2026 line 16a. No editable widgets remain.
+
+## Form 8919 employee wage sources and draft attachment
+
+The 2026 adapter reuses the existing per-firm A/C/G/H evidence validation and
+payroll calculator with the $184,500 wage base. Employer wages are derived from
+identified 2026 NEC box 1a, MISC box 3 or direct payment records. Each information
+return reconciles to underlying wage-payment IDs; repeated documents or payments
+fail. Same-firm cash payments omitted from information returns can supplement
+those sources before rounding. A positive source amount may round to zero on
+its printed row; the 2025 positive-input schema remains unchanged.
+
+The adapter checks recipient/firm identity, SS-8 and IRS correspondence dates,
+actual W-2 payroll boxes, reason H's same-firm W-2, and the review that payments
+are employee wages omitted from W-2/other income with no FICA withheld. Form 4137
+line 10 consumes the same owner's wage base first. The resulting Form 8919 wages
+reach Form 1040 line 1g and AGI once, tax reaches Schedule 2 line 16b, source
+withholding reaches Form 1040 line 25b and Medicare wages reach Form 8959 line 3.
+Earned-income and Schedule SE receivers remain pending.
+
+This is focused employee-compensation intake. Corrected NEC/MISC copies,
+positive tip/overtime detail, NEC golden parachutes and other reportable boxes
+remain held for their respective source owners. It does not replace the full
+business/property source nodes or enable the public filing registry.
+
+The pinned Form 8919 PDF component checks source calculations, destination
+amounts and recipient identity. Each spouse receives a separate form, with
+additional first-page copies beyond five firms and totals on only the first
+copy. All 40 template fields are inventoried; line 7's tiny dummy widget stays
+empty because the wage base is preprinted. The static output retains draft
+markings. Current MeF serialization and full return attachment assembly remain
+release gates. Sources checked October 15:
+[2026 Form 8919 draft and instructions](https://www.irs.gov/pub/irs-dft/f8919--dft.pdf),
+[2026 Form 1099-NEC](https://www.irs.gov/pub/irs-pdf/f1099nec.pdf) and
+[2026 Form 1099-MISC](https://www.irs.gov/pub/irs-pdf/f1099msc.pdf).
+
+## Additional Medicare Tax and CT-2
+
+The 2026 Form 8959 node implements the revised 24 lines, using the shared exact
+0.9% tax helper and a whole-dollar 1.45% withholding calculation. Wage and RRTA
+taxes go to Schedule 2 line 17b; SE tax goes separately to line 11. The resulting
+Schedule 2 line 20 employment-tax amount remains separate for Schedule 3-A.
+Form 8959 withholding adds to Form 1040 line 25c even when liability is zero.
+
+W-2 records retain owner/employer/source identity and actual Medicare box 5/6
+values. Missing amounts fail validation, including below-threshold returns;
+explicit source zeros are accepted. Code B/N uncollected FICA is included for
+withholding reconciliation, but uncollected RRTA is excluded. Mixed B/N amounts
+require allocation evidence. Each owner/employer must have one reconciled copy.
+
+Forms 4137 and 8919 send identified per-owner line 6 results. The strict internal
+interface receives finalized per-owner Schedule SE line 6 from the supported
+business source graph; broader SE methods remain unfinished. SE losses cannot offset a spouse's
+positive income. RRTA uses its own threshold and never reduces the SE threshold.
+The source-level filing test remains true when a tax amount rounds to zero.
+
+The repeated `ct2s` source reuses existing annual/quarterly validation with 2026
+records and filer identity. All four quarterly records are reconciled before
+compensation and paid Additional Medicare Tax reach Form 8959. Payment references
+are required; partial payments, corrections and incomplete quarters remain held.
+
+A static one-page Form 8959 PDF component uses the pinned 2026 template and its
+revised line map, preserving draft markings and blank inapplicable parts. It
+checks the two Schedule 2 destinations and the Form 8959 share of line 25c;
+other withholding sources must remain separate at assembly. The whole return
+bundle and current-version MeF serialization remain pending. The source contract
+and remaining acceptance work are in
+[FORM8959-GRAPH.md](../../../docs/ty2026/graphs/FORM8959-GRAPH.md).
+
+## Schedule 2 draft attachment
+
+The two-page Schedule 2 component maps all 68 fields in the pinned draft and
+recalculates its subtotals from finalized source-owner amounts. It checks Part I
+against Form 1040 line 17, the total against line 23, and employment/other tax
+against the amount used by Schedule 3-A. The PDF API covers the printed contract;
+its presence does not enable the remaining source calculators in the graph.
+
+Form 4255 selections, SE exemptions and the Form 5329 exception checkbox remain
+explicit print details. Other-tax/credit-recapture disclosures must reconcile
+itemized descriptions and amounts to their line. Long disclosures produce
+identified, paginated statements with a final total. Static output preserves
+draft markings, removes widgets and retains both printed pages. Positive
+section 965 installments remain held for the existing line 12/15 source conflict.
+
+The combined payroll PDF test uses $184,000 of W-2 Social Security wages:
+Form 4137 consumes the remaining $500 before Form 8919 runs. The resulting
+$60/$145 payroll taxes, $558 Additional Medicare Tax and $30 uncollected W-2 FICA
+produce $793 of Schedule 2 line 20 employment tax. A separate $100 additional
+income tax produces $893 on line 21. This is a source/component reconciliation
+case; it does not establish complete public return, bundle or MeF support.
+The [Schedule 2/6251 PDF plan](../../../docs/ty2026/pdf/PDF-SCHEDULE2-6251-MAP.md)
+records current component scope and remaining AMT/bundle work.
+
+## Vehicle-loan source integration
+
+The repeated `vehicle_loans` entry records purchase/debt evidence, borrower and
+lender identities, loan accounts, vehicle qualifications, interest payments,
+statements and refinancing history. General supplies return ownership. The
+source node reconciles qualifying debt and the actual interest paid by each
+borrower before sending per-loan amounts to Schedule 1-A. The schedule groups
+loans by VIN, rounds printed rows, applies the shared upward-step phaseout and
+routes line 36 through line 44 to deduction selection.
+
+- Purchase financing is itemized. Down payments first reduce excluded negative
+  equity/unrelated costs; interest on mixed debt is allocated proportionally.
+  Refinancing retains only the outstanding qualified balance, and later lender
+  acquisition is not treated as new borrower debt.
+- A Form 1098-VLI box 1 already excludes nonqualifying debt interest. Gross
+  payment records independently reproduce that allocation; the box is not
+  multiplied by the ratio again. Lender payment records support amounts below
+  the form's reporting threshold.
+- Corrections retain their predecessors but replace only matching source
+  periods. Duplicate loans, co-borrower copies, overlapping servicing periods,
+  conflicting lender transfers and correction cycles are rejected. Payment
+  ownership and supported third-party gifts control the return's share.
+- Internal business-owner results must identify the loan, borrower and activity
+  and reflect actual deductions after limitations. Only that amount is removed
+  from Schedule 1-A; the public source cannot assert a final business deduction.
+  The full business activity owners and choice between independent deductions
+  remain to be integrated.
+- Prior-year box 5 refunds require the unfinished tax-benefit recovery owner and
+  are not subtracted from current box 1. Inherited debt, partial refinancing of
+  mixed debt with a paydown, special collateral replacements/lien exceptions,
+  and prepaid/accrual adjustments also remain unfinished. Current sources use
+  cash accounting with an explicit timing review.
+
+The plan's broader acceptance requirements are retained in
+[FORM1098VLI-GRAPH.md](../../../docs/ty2026/graphs/FORM1098VLI-GRAPH.md).
+Sources checked October 15: [TD 10054, §§1.163-16 and 1.6050AA-1](https://www.irs.gov/irb/2026-39_irb)
+and [Form 1098-VLI instructions](https://www.irs.gov/pub/irs-pdf/i1098vli.pdf).
+
+## Schedule A expense sources and deduction selection
+
+The incremental `schedule_a` input accepts dated medical and tax payment records,
+an income-versus-actual-sales-tax election, charity classifications and a source
+inventory review. Filer identity, AGI, W-2 withholding and cash gifts come from
+upstream owners. The receiver calculates a candidate before the overall limit;
+the joint resolver decides itemizing versus standard plus nonitemizer charity,
+applies the overall limit, and sends the selected amounts to Form 1040 and the
+Form 6251 handoff. No duplicate charity or W-2 tax total is accepted publicly.
+
+Ordinary medical payments exclude reimbursements, tax-free funding and nonmedical
+charges before the shared 7.5% AGI floor. Tax records distinguish income payments,
+value-based personal-property taxes, domestic real-estate taxes and actual sales
+receipts. They exclude assessments, service charges and current-payment refunds.
+Vehicle sales tax is capped at the general rate before subtracting a refund of
+its deductible general-tax portion. Sales-tax tables, mixed business/property
+allocations, ownership changes and special medical limits remain outside this
+source contract. W-2 sources retain document, employee and employer identity;
+repeated employer records require reconciliation before itemizing.
+
+The 2026 policy supplies the $40,400 SALT cap and $505,000/$252,500 thresholds.
+SALT MAGI requires either an explicit exclusion review or internally sourced
+Puerto Rico, Form 2555 lines 45 and 50, and Form 4563 amounts. The Form 2555
+exclusion must agree with AGI. Printed worksheet inputs and reduction are rounded
+before the final MFS division. Under [IRC §164(b)(6)–(7)](https://uscode.house.gov/us/usc/119-118/t26/s164/),
+the full limit is reduced before halving for MFS: MAGI of $262,500 produces an
+$18,700 cap. The legacy 2025 node currently halves first; this branch preserves
+that behavior during extraction, so its MFS regression is not evidence of the
+correct 2026 policy. Correcting that legacy ordering remains separate work.
+
+Current cash gifts reuse the shared percentage-limit calculator with the amended
+2026 cash-only coordination rule in [IRC §170(b)(1)(B)](https://uscode.house.gov/us/usc/119-118/t26/s170/).
+The 0.5% floor reduces the other-30 category before cash-60. Nonpublic-recipient
+classification and DAF exclusive-control acknowledgment require source records.
+Percentage excess and eligible floor carryover are retained as **candidates**;
+no carryforward is persisted before deduction selection and the remaining
+carryover/NOL rules. The cash-only policy rejects noncash gifts rather than
+applying the old mixed-property ordering.
+
+This is a bounded source implementation: the inventory review must establish no
+other deductible taxes, investment interest, noncash gifts or prior
+charitable carryovers, casualty/other deductions, or NOL carryback. Mortgage interest requires the separate source inventory described below. Those
+remaining owners, Schedule A PDF/MeF and final instructions still need implementation. The internal
+graph fixture derives a $53,250 itemized candidate from receipts and W-2 sources
+at $150,001 AGI, selects it, removes the nonitemizer deduction and retains $38,750
+of taxes for the AMT handoff. Its graph fixture now calculates line 16 from the
+resolved taxable income.
+
+## Mortgage sources, points and insurance
+
+The `mortgage_interest` source entry now supplies Schedule A lines 8a–8d from
+one inventory of loans and qualified homes. It reuses the Table 1 loan-limit and
+ratable-points arithmetic with 2025 while retaining separate evidence schemas.
+The inventory joins borrower/property identity, payment records, lender
+statements, twelve monthly balances, debt dates and acquisition use. One loan
+limit covers all included homes; the same source cannot be entered twice.
+
+Reported and unreported interest/points remain separate through their printed
+lines. Current purchase points can be immediate or ratable, with limits for
+customary charges and funds supplied at closing. Prior points require a retained
+allocation ledger. Mortgage-insurance sources reconcile to box 5, apply current
+or prepaid allocation, and then the restored 2026 income phaseout. The Schedule A
+receiver verifies owners and its inventory review before deduction selection.
+
+The source model covers wholly acquisition-use personal mortgages, documented
+payoffs and one in-year refinance of a prior-year loan without cash out or term
+extension. Property qualification dates determine the monthly-balance divisor;
+old and replacement balances share one debt cap. Payoff statements must reconcile
+loan links, dates, principal, borrowers and property. Remaining points are
+deducted on repayment or a different-lender refinance; a same-lender refinance
+transfers the remainder to the replacement term after the old loan's regular
+allocation. New points remain separate, and prepaid MIP stops at payoff without
+an accelerated deduction. Returned remainders belong to the replacement loan.
+
+Repeated in-year refinancing, refinancing a binding-contract-exception loan,
+property qualification ending during the year, mixed-use proceeds, lender transfers,
+shared nonfiler expenses, credit-certificate reductions, prior-interest recoveries,
+prior-year prepaid interest and the 2022–2025 prepaid-insurance transition still
+need their source owners. PDF/MeF and persisted points remainders are also pending.
+See the [mortgage source graph](../../../docs/ty2026/graphs/FORM1098-1098E-GRAPH.md)
+for current authorities and boundaries. A passing mortgage calculation does not
+establish complete 2026 Schedule A or filing support.
+
+## Educator expenses
+
+The `educator_expenses` source routes a receipt-based deduction to Schedule 1
+line 11 and AGI, with the remaining eligible expenses on Schedule A line 17k.
+It applies the 2026 $350 per-educator cap, explicit school-year hours and the
+September 2026 early-childhood eligibility expansion. Coaches, nonathletic
+health/PE supplies and instructional use outside the classroom use the broader
+itemized rules. It reuses the 2025 cap arithmetic with separate source rules.
+Refunds, personal use and disclosed reimbursement/credit/deduction allocations
+are removed before either deduction. Schedule A verifies identity, inventory
+and the adjustment supplied by AGI before deduction selection. The
+[educator source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
+records the authorities and unfinished annual-exclusion, cross-form education
+benefit, depreciation and filing-output routes.
+
+## Moving expenses
+
+The `f3903` singleton accepts a complete move/expense/reimbursement ledger;
+identity and issued W-2 records arrive from general and W-2. It reuses the 2025
+net-balance arithmetic while separately validating 2026 military, intelligence
+and special spouse/dependent eligibility. The source derives each move's lines,
+including the June/July mileage change, storage periods, excluded government
+services and allowance allocations. Code P must reconcile across all moves;
+box 1 reimbursements remain wages. Deductions and taxable excess are routed
+separately to Schedule 1/AGI and 1040/AGI, so different moves cannot cancel them.
+
+Prior-year foreign storage with reimbursements in wages sets Schedule 1's
+storage checkbox without creating Form 3903. The PDF component recomputes the
+ledger and validates receiving totals before rendering one static draft page
+per other move. The [source contract](../../../docs/ty2026/graphs/FORM3903-EDUCATOR-GRAPH.md)
+records the reviewed instructions and boundaries. Other cross-year claims,
+Form 2555 coordination, community-property allocations, remaining Schedule 1 sources,
+complete-bundle assembly and current-MeF/ATS acceptance remain unfinished.
+
+## Schedule A draft attachment
+
+The Schedule A PDF component recomputes reviewed expenses and the same deduction
+selection used by the graph. The deduction node retains `calculation_input_2026`
+for this replay. Source totals, AGI, filing status, contribution facts and Form
+1040 lines 11b/12e/12f/13a/13b must agree, and itemization must be selected.
+
+The two printed pages include medical/SALT limits, mortgage interest and
+insurance, cash-gift limits/floor, educator remainder, the overall deduction
+limit and itemization election. Seller-financed mortgage details get complete,
+paginated statements. The pinned 47-field inventory is verified before printing;
+the cover is removed and output is static and marked as a draft. See the
+[Schedule A map](../../../docs/ty2026/pdf/PDF-SCHEDULEA-MAP.md) for the screening
+checkbox distinction, supported source scope and six focused tests. All 294
+current-2026 tests passed and eleven synthetic QA pages were visually inspected.
+Complete source coverage, bundle assembly, QBI and filing acceptance remain open.
+
+## Schedule 1 draft attachment
+
+The Schedule 1 sink retains `calculation_input_2026`. Its new static draft PDF
+recomputes that input and checks lines 10/26 against Form 1040 lines 8/10. It
+prints the connected educator, moving/storage and investment-penalty amounts,
+signed income, adjusted student-loan interest, checkbox/date facts and line 8z
+statements with readable pagination. The 73-field source inventory is checked
+before filling, the cover is removed and all output remains marked as a draft.
+
+The [current Schedule 1 contract](../../../docs/ty2026/graphs/SCHEDULE1-GRAPH.md)
+distinguishes mapped internal print fields from registered public sources.
+Adding alimony/gain/IRA print facts does not enable those source calculations.
+The component's five focused tests include a connected educator/investment
+return; seven rendered synthetic QA pages were visually inspected. Complete
+source ownership, bundle selection, current MeF and ATS remain release gates.
+
+Ordinary ABLE distributions now retain source earnings in NIIT MAGI without an
+investment-income addition, including above the filing-status threshold. The
+workpaper replays the actual beneficiary/account sources, and Form 8960 PDF
+checks Schedule 1 line 8q. See the [classification rationale and remaining
+ABLE limits](../../../docs/ty2026/graphs/FORM8960-GRAPH.md#ordinary-able-distribution-classification-october-16).
+
+## Form 4852 source estimates and return draft
+
+The internal `calculateForm4852Sources2026` ledger reconciles payroll and
+retirement payment records, actual owners, payer/account identity and replaced
+incorrect originals. It reuses the shared wage projection and retirement-account
+classification. `buildForm4852PdfBytes2026` prints the pinned continuous-use
+form, required explanations and linked continuation pages, preserving unknown
+retirement taxability and the IRA/SEP/SIMPLE margin notation.
+
+Public `f4852` claims now bind to actual general identity and issued inventories.
+Effective wages, ordinary pensions and IRA distributions reach the existing
+income, payroll, early-tax and withholding owners exactly once. IRA basis and
+direct Roth conversions bind each substitute payment to the annual Form 8606
+account ledger, including actual withholding and dated nonconversion exceptions. Replaced originals
+are excluded; the retained substitute ledger is checked against executed sources.
+The return bundle prints each substitute with actual owner/address and complete
+explanations while preserving unrelated withheld 1099-R originals. Plan direct
+rollovers now reconcile multiple payments and destination receipts, including
+mixed pretax non-Roth and Roth transfers, before the shared code G projection.
+After-tax IRA receipts bind to the annual receiving account inventory and Form
+8606 line 2 before same-year allocations. Non-Roth plan receipts retain separate
+basis-transfer events; next-year receipts do not enter current-year IRA basis.
+State/local
+withholding comes from the substitute ledger without invented issuer state IDs.
+The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md) records
+remaining special retirement cases, complex
+corrections and remaining MeF/acceptance work. These remain development drafts.
+
+Qualified HSA funding now accepts `substitute_ira_accounts` that reference the
+actual Form 4852 source and reconcile every dated IRA payment. Existing HSA
+qualification, annual IRA basis, early tax and testing-period calculations are
+reused; the draft bundle reconciles HFD income with Forms 8889, 8606 and 5329.
+
+## Investment sources and NIIT
+
+The `investment_income` singleton uses existing 1099-INT, 1099-DIV and Schedule B
+calculators with strict 2026 source reconciliation. It validates ownership,
+issuer copies, gross/net premium treatment and qualified-dividend holding
+periods, then routes income, withholding, penalties and reviewed direct gain
+distributions. State withholding reaches Schedule A as identified 1099 sources.
+Form 6251 recomputes PAB preferences from retained copies and reconciles them to
+regular preference income. Returns without wages need no synthetic W-2.
+
+`sourceRegistry2026` is the common incremental source graph. Form 8960 waits for
+AGI and the selected deduction, reconciles its income and penalty, applies the
+reviewed state-income-tax allocation and routes whole-dollar NIIT to Schedule 2
+line 6. Its new one-page static draft PDF checks all receiving amounts. Form
+6251's PDF includes the PAB preference. Schedule B's static draft component
+recomputes the connected workpaper, checks return totals and prints complete
+payer/adjustment statements and seller-financed buyer details. Broader investment
+branches and complete attachment selection remain pending.
+
+The [current investment contract](../../../docs/ty2026/graphs/INVESTMENTS-CURRENT.md)
+records the source scope, authorities, interpretation of the 2026 overall
+itemized limit and remaining work. This registry does not enable a complete
+public filing product, unfinished credits/activities, MeF or ATS acceptance.
+
+## Reuse and folder rules for subsequent work
+
+Keep shared algorithms in the existing `nodes` domain folders and preserve
+year-specific configuration and output assembly. Extract only the code needed by
+both years; avoid wholesale domain moves while 2025 work continues. A shared
+algorithm does not by itself verify a node's input rules or downstream routes.
+
+For each next node, separately prove:
+
+1. Source schema and eligibility for the selected year, including dates and
+   taxpayer/spouse ownership.
+2. All constants and rule branches, with no fallback to another year's config.
+3. Input and output destinations in that year's registry; changed printed lines
+   require explicit mappings even when the underlying amount is unchanged.
+4. Regression behavior for the existing 2025 product and source-derived 2026
+   boundary cases.
+
+Next work is the remaining Schedule A, Schedule 1-A and QBI calculators
+feeding deduction resolution, followed by income tax and credit calculations,
+alongside the remaining general/dependent exception routes. Extend the strict
+AGI bridge alongside its activity owners. Current
+general and W-2 nodes contain year-specific evidence schemas and cross-form
+routes, and the full income-tax node still invokes 2025 preferential-income/Tax
+Table helpers. Do not register those entire nodes for 2026 just because their
+arithmetic helpers are shared. Port individual differences from `b7c07b616` only
+after reconciling current paths and the latest 2025 source-validation changes.
+
+Complete PDF attachment coverage, current-version MeF schemas/rules, submission
+archives and ATS acceptance remain separate release gates. No complete public
+2026 product, MeF serializer or filing catalog entry is enabled. Missing tax
+calculations must not be supplied as zeros to make a public return pass. See the
+[current assessment](../../../docs/ty2026/readiness/CURRENT-BASELINE-2026-10-10.md)
+and [product assembly plan](../../../docs/ty2026/readiness/PRODUCT-ASSEMBLY.md).
+
+## Verification on October 15
+
+- 98 typed tests passed across the 2026 baseline/configuration, existing 2025
+  standard deduction, ordinary/preferential tax, Tax Table and CLI return
+  suites.
+- `deno task test:unit` passed: 137 tests in 14 selected modules, with a
+  complete module-graph preflight. This is the repository's PR gate, not the
+  full private PDF/schema/ATS evidence suite.
+- The CLI's old $206,926.37 QBI taxable-income expectation also failed on
+  untouched `origin/main` at `9a17a7282`; it now expects the filed whole-dollar
+  $206,926. No QBI calculation was changed.
+
+- A further 56 typed tests passed for the 2026 calculation/assembly/PDF modules
+  and the existing 2025 input-router and template-cache suites.
+- The repository unit/preflight gate passed again after the shared extractions.
+- Rendered and visually inspected a synthetic three-page Form 1040/Schedule 3-A
+  fixture. All pages retain draft markings, amounts reconcile across forms, and
+  no editable widgets remain. This exercises rendering and assembly; its
+  supplied credit amounts do not establish taxpayer eligibility.
+
+- General/dependent work passed 138 tests in the combined 2026 and existing
+  general/source regression run. Eight additional native XML tests initially
+  lacked execution permission and local schema fixtures; after copying those
+  fixtures into this worktree, all ten dated/death-residence tests passed.
+- The final focused source suite passed 12 tests, including the added lifetime
+  boundary case and the general-to-W-2-to-AGI integration.
+- The 137-test unit gate and complete module-graph preflight passed again.
+- Visually inspected synthetic newborn rows, the dependent continuation and the
+  spouse-dependent checkbox in a five-page PDF QA fixture; it has no widgets or
+  AcroForm tree. This checks source projection and rendering, not a filed return.
+
+- Deduction/source work passed 127 typed tests across all current 2026 modules,
+  the existing 2025 standard-deduction node and shared start-router regression.
+  Those historical QBI cycle examples are superseded by pre-section-68 tests;
+  coverage also includes all filing-status
+  overall-limit thresholds, source ownership/receipt checks, and the cash-gift
+  → deduction → settlement graph. The 137-test unit/preflight gate also passed.
+
+- Schedule 1-A integration passed 194 typed tests across all current 2026
+  modules and the existing 2025 Schedule 1-A and AGI suites. Graph fixtures
+  cover wages alone, W-2 overtime, and combined tips/overtime/senior deductions,
+  including the distinct senior adjustment to the Form 6251 basis.
+- The 137-test repository unit/preflight gate passed again.
+
+- Vehicle-source and Schedule 1-A PDF work passed 139 typed tests across all
+  current 2026 modules and the existing 2025 Schedule 1-A suite. They cover
+  corrections, lender transfers, mixed debt/refinancing, co-borrowers, business
+  coordination, exclusions, phaseout boundaries and source-to-return routing.
+- The 137-test unit/preflight gate passed. A six-page synthetic Schedule 1-A
+  fixture was rendered and visually inspected, including all three continuation
+  types; output has zero widgets and no AcroForm tree.
+
+- Form 4137 integration passed 175 typed tests across all 2026 modules and the
+  shared 2025 Form 4137/Schedule 1-A suites. Cases cover spouse ownership,
+  annual reporting deadlines, allocated-tip records, below-$20 months,
+  Social Security wage-base exhaustion, qualification and deduction overlap.
+- The 137-test unit/preflight gate passed. Thirteen additional 2025 replay/end-to-end
+  checks passed, including native XML/XSD and Schedule 2 PDF export. One legacy
+  income-export test could not finish because `pdftotext` is not installed;
+  its XML/XSD and PDF-generation steps completed before that dependency failure.
+
+- Form 8959/CT-2 integration passed 186 typed tests across all 2026 modules and
+  the existing 2025 Form 8959/CT-2 suites. They cover the separated tax pools,
+  status thresholds, source rounding, spouse SE losses, zero-tax withholding,
+  W-2/RRTA distinctions, quarterly payment evidence and seven source graph cases.
+- The 137-test unit/preflight gate passed. The new pinned one-page Form 8959 PDF
+  was rendered and visually inspected with all parts populated; it has no widgets
+  or AcroForm tree and retains visible draft markings.
+
+- Form 8919 work passed 164 typed tests across all 2026 modules and the shared
+  2025 Form 8919 suite. Cases cover classification evidence, payment-ledger
+  reconciliation, joint ownership, missing payroll boxes, withheld tax and the
+  combined Form 4137/8919 source graph. The 137-test unit/preflight gate passed.
+- Rendered and visually inspected the three-page Form 8919 fixture: six primary
+  firms plus a spouse, all A/C/G/H reason codes, IRS dates, unknown TIN, checkboxes
+  and separate totals. Continuation totals are blank, draft markings remain,
+  and all pages have no widgets or AcroForm tree.
+
+- Form 4137/Schedule 2 PDF work passed 192 typed tests across all 2026 modules
+  and the shared 2025 Forms 4137/8919 suites. The 137-test unit/preflight gate
+  passed. The six focused component tests cover all Schedule 2 numeric fields
+  and checkboxes, missing disclosures, destination mismatches, pagination and
+  the combined payroll calculation above.
+- Rendered and visually inspected all eight pages of two synthetic QA files:
+  three Form 4137 pages (six employers plus spouse) and five Schedule 2 pages
+  (two form pages plus 35 disclosure items across three statements). Text
+  extraction confirmed every statement item appears once, the statement total
+  is retained, continuation totals stay blank and the government-tip note prints.
+  Both PDFs retain draft markings and have no editable widgets.
+
+## Source recheck
+
+The IRS drafts below were checked on October 15, 2026. The two rendered PDF
+components matched the hashes already recorded in the research corpus.
+
+- [Form 1040](https://www.irs.gov/pub/irs-dft/f1040--dft.pdf)
+- [Schedule 1](https://www.irs.gov/pub/irs-dft/f1040s1--dft.pdf)
+- [Schedule 2](https://www.irs.gov/pub/irs-dft/f1040s2--dft.pdf)
+- [Schedule 3-A](https://www.irs.gov/pub/irs-dft/f1040s3a--dft.pdf)
+
+- [2026 W-2/W-3 instructions](https://www.irs.gov/pub/irs-pdf/iw2w3.pdf)
+- [Notice 2025-67 retirement limits](https://www.irs.gov/pub/irs-drop/n-25-67.pdf)
+- [2026 student-loan phaseouts, Rev. Proc. 2025-32 §4.29](https://www.irs.gov/irb/2025-45_IRB)
+
+- Schedule A source integration passed 267 typed tests across all 2026 modules
+  and the shared 2025 Schedule A/standard-deduction suites. Coverage includes
+  medical reimbursements, payment ownership and duplicate checks, actual-sales
+  elections, SALT phase-down/rounding and MFS ordering, sourced exclusion addbacks,
+  cash-category coordination, floor attribution and the itemized graph handoff.
+  The unit and preflight gates passed; this does not establish complete Schedule A
+  categories, income-tax calculation or filing readiness.
+
+- Mortgage integration passed 252 typed tests across all 2026 modules and the
+  shared 2025 Form 1098/refinance-points suites. A final 23-test mortgage and
+  return-assembly run also passed after tightening year, identity and payment
+  evidence. The 137-test unit gate and preflight passed. Cases cover whole-return
+  debt limits, old/new debt, MFS, purchase and ratable points, prepaid insurance,
+  phaseout rounding, source mismatches and the selected Schedule A deduction.
+
+- Payoff/refinance integration passed 261 typed tests across all 2026 modules
+  and the shared 2025 Form 1098/refinance-points suites, including 31 focused
+  mortgage/return-assembly cases. Coverage adds replacement-debt averaging,
+  unchanged acquisition caps, retained points on same/different-lender refinance,
+  new points alongside carried points, order independence, broken source links,
+  and insurance stopping at payoff. Unit and preflight gates also passed.
+
+- Educator integration passed 231 typed tests across all 2026 modules and the
+  existing 2025 educator suite. The receipt-to-return fixtures verify both
+  standard and itemized choices, the adjustment's effect on AGI, and the
+  separate itemized remainder. Eligibility cases include early-childhood
+  facilities, coach roles, school-year hours, spouses, refunds and other-benefit
+  allocations. Unit and preflight gates passed. Schedule 1/A PDF/MeF and
+  annual education-exclusion coordination remain unfinished.
+
+- Moving-expense verification: the full 2026 component suite plus the unchanged
+  2025 Form 3903 suite passed 250 tests before the additional leap-day boundary
+  check. Source-to-return cases cover deduction, taxable excess and foreign
+  storage-only routing. Draft PDF review covers separate deduction/excess
+  pages, certification/line-5 choices and removal of interactive fields.
+
+- Income-tax verification: 346 combined 2026/shared-2025 tests passed, including
+  income tax, Tax Table, Form 8615, Form 2555 and Schedule J. The complete draft
+  table comparison covers 8,248 published cells at both endpoints plus QSS.
+  All 16 source-to-return scenarios now derive line 16 and their refunds;
+  the source catalog also rejects direct tax/worksheet injection. The ordinary
+  rate calculation agreed with independent integer-cent bracket arithmetic for
+  every whole-dollar income from $100,000 through $1 million in all five statuses.
+
+- Investment workpaper verification: 490 combined 2026/shared source tests
+  passed, followed by all 16 focused tests after the fractional-dollar PAB
+  allocation case. The repository unit gate and its module-graph preflight
+  passed. This covers source reconciliation and shared calculator reuse, not
+  a registered investment return or new Schedule B/Form 8960 PDF components.
+
+- Connected investment verification: 604 combined 2026/shared investment/W-2
+  tests passed. The eight graph cases include investment-only and joint
+  returns, penalties, PAB AMT, selected state-tax deductions and NIIT. Direct
+  whole-dollar NIIT avoids a cents-to-dollars rounding error. A three-page
+  Form 6251/8960 QA fixture was rendered and visually inspected; it retains
+  draft labels and has no widgets or AcroForm tree.
+
+## Source-backed child credits (October 15, 2026)
+
+The `f8812` singleton claim now connects reviewed source facts to the shared
+child-credit calculator with explicit 2026 configuration. General derives credit
+counts; AGI supplies earned wage lines; W-2 supplies combat pay; income tax and
+Schedule 2 supply the tax limit including AMT. CTC/ODC and the supported ACTC
+method finalize Form 1040 lines 19/28 and select draft Schedule 8812 in the bundle.
+Caller credit totals are rejected. Review fields establish the absence of other
+credits and unsupported income sources. Ordinary W-2 Part II-B now consumes
+finalized EIC, Schedule 3 excess Social Security and actual payroll withholding.
+Supported business sources now supply credit earned income, half-SE tax and half
+of Additional Medicare tax on SE. RRTA, advanced business sources, other-credit
+ordering, Form 8862 and foreign cases still need their owners. See
+[the current contract](../../../docs/ty2026/graphs/CHILD-CREDIT-CURRENT.md).
+
+
+## Source-backed EIC (October 15, 2026)
+
+The `eitc` claim now uses shared eligibility/worksheet logic with the published
+2026 table and annual thresholds. General and AGI supply source-derived children,
+filer eligibility, earned wages and investment income. W-2 supplies separate
+spouse combat-pay elections; only elected pay reaches Form 1040 line 1i. The credit
+flows to Form 1040 line 27a, ACTC Part II-B and Schedule 3-A. The draft bundle adds
+Schedule EIC for child-based claims. [Current scope, evidence and remaining work](../../../docs/ty2026/graphs/EIC-CURRENT.md)
+include explicit gates for unsupported sources and recertification.
+
+
+## Schedule 3 and excess withholding (October 15, 2026)
+
+The source graph now finalizes ordinary W-2 excess Social Security withholding
+through Schedule 3, Form 1040 line 31 and ACTC Part II-B. The annual Schedule 3
+finalizer reuses 2025 totals and handles the revised 2026 line contract; the draft
+bundle replays original W-2 sources, omits the cover, and places Schedule 3 before
+Schedule 3-A. [Current contract and PDF map](../../../docs/ty2026/pdf/PDF-SCHEDULE3-MAP.md)
+distinguish the registered W-2 source from the broader internal line/PDF mapping.
+
+
+### Reviewed business-loss returns
+
+The Schedule C source route now requires `loss_limit_review` whenever Form 461
+must be filed, including the individual-line filing trigger with no addback.
+One return-wide owner replays business and capital sources, posts Schedule 1
+line 8p through AGI once, and supplies the retained workpaper to QBI. Qualified
+461-origin losses are kept separately from Form 8995 losses already allowed in
+2026. Statutory employees remain distinct in the two calculations. The draft
+bundle includes Form 461 at sequence 64 and prints allowed QBI amounts.
+
+See [the loss contract](../../../docs/ty2026/graphs/FORM461-GRAPH.md) and
+[the executable source fixture](inputs/business-loss-graph.fixture.ts). This
+route does not enable land, farm, Schedule E/K-1, mixed qualified-loss allocation,
+negative-AGI NOL computations or child-tax claims with an excess-loss addback.
+Those owners and current MeF acceptance remain part of the full 2026 work.
+
+### Internal land loss and QBI workpapers
+
+The land limitation owner now runs preliminary Schedule D/4797 sources through
+Form 461, applies its reviewed source-bucket allocation, finalizes section 1231
+history and replays the final tax destinations. Callers provide source records
+and reviews rather than a deductible-loss override. Positive EBL with farming
+loss still requires the separate Form 172 allocation route.
+
+The land QBI component keeps ordinary/capital character, allowed/suspended loss
+and qualified/foreign-business treatment by owner and activity. It supplies the
+land contribution. A combined C/land owner now applies one prior-loss record,
+reconciles qualified and nonqualified suspended origins, and evaluates the
+existing deduction candidates with their actual capital-gain limit. The shared
+Form 8995 renderer serves both the C-only and combined source paths, including
+continuations. Reviewed direct land sales now enter the source graph and draft
+bundle with matching capital, C and loss records; one combined QBI calculation
+supplies the selected deduction. Form 4797 attaches before Form 6251. The existing
+C-only route retains its reviewed allocation method; both routes reuse the same
+integer allocation helper. The [current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md)
+records these conventions, graph/PDF evidence and remaining advanced cases.
+Advanced Form 1062 cases, full parity, public filing and current IRS acceptance
+remain open.
+
+
+Form 1062 now has an internal direct-sale qualification and Schedule A component.
+It reuses land basis/closing records, retains ten-year farming and covenant
+reviews, and verifies the exact covenant PDF bytes with the shared document
+verifier. Generated Schedule A pages are static drafts; original covenant copies
+remain byte-identical separate attachments. An internal Form 1062 tax component
+now replays shared land/capital netting, regular tax, AMT credit limits and ordered
+care/education/child/energy credits from retained sources. It derives the draft
+form's tax difference and first installment without changing actual return
+credits, deductions or carryforwards. The main-form draft renderer verifies its
+receiving amounts and includes matching Schedule A components with original
+covenants. An internal installment workpaper now derives four equal amounts in
+cents, reconciles evidenced payment allocations and distinguishes the election
+filing deadline from ordinary payment dates. It flags late records and printed
+whole-dollar rounding differences for review. `executeDraftSources2026` now
+binds exact covenant PDF copies to each internal source execution. The new
+`form1062.claim` source carries election, tax-scope review and installment
+records; tax and credit amounts come from preceding graph nodes. Qualified
+ordinary cases with timely records and no rounding difference post to Schedule 3
+and Form 1040 after credit resolution. The draft bundle includes main/Schedule A
+pages and returns required original covenants in `sourceAttachments`; callers
+must preserve those separate attachments with the generated PDF. Special
+deadlines, acceleration, fractional-installment settlement, public filing and
+MeF remain open; see the
+[current land contract](../../../docs/ty2026/graphs/FARMLAND-CURRENT.md).
+
+Reviewed ordinary extension receipts now use `extension_payments.claim` and the
+shared year-parameterized payment calculation, retaining the 2025 defaults.
+Matching receipts feed Schedule 3 line 10 once; recorded first-installment
+payments must reconcile to those receipts before an extended election settles.
+Other payment categories and later-installment settlement remain unconnected.
+
+The 2026 Marketplace source and Form 8962 adapters now reuse the 2025
+monthly/annual arithmetic with separate annual rules. Issued/corrected/void
+copies, payment and coverage evidence, validated general family identities,
+sourced dependent income and filer residence histories determine the input.
+A complete filer income review binds primary/joint MAGI to the executed AGI
+workpaper. The credit and full excess-APTC repayment reach Schedule 3,
+Schedule 2, AMT, nonrefundable-credit limits and final 1040 settlement.
+
+Schedule A replays those same sources and adds eligible ordinary premiums
+net of the allowed PTC once, with payment timing, filer ownership and duplicate
+receipt checks. Unrelated medical expenses remain usable. QSEHRA, self-employed
+health, advanced eligibility and allocation cases, nonordinary medical timing,
+and Form 1062 hypothetical-income replay remain open. Marketplace draft bundles
+now attach reconciled annual/monthly Form 8962 pages, including full repayment
+on line 27 and blank reserved lines 28/29. Positive advances still trigger an
+attachment when printed dollars round to zero; empty and void-only cases do not.
+The above-400% print path remains provisional pending final 2026 instructions.
+Final instructions, public filing support and MeF are still pending; see the
+[Form 8962 contract](../../../docs/ty2026/graphs/FORM8962-GRAPH.md).
+
+
+## Saver-credit graph and draft
+
+The registered `form8880` route derives contributions from actual W-2s,
+reconciled voluntary employee payments and retained nondeductible IRA records.
+It reuses 2025 contribution/rate arithmetic with 2026 eligibility and dated
+joint-distribution rules. Intake accepts only the reviewed claim; general,
+wage, retirement, AGI and tax nodes supply the calculation facts.
+
+Care, Schedule R and education finalize before saver credit; child and energy
+credits then use the remaining tax. Form 1062 replays this ordering using its
+hypothetical tax while preserving actual AGI and contribution facts. Schedule 3
+line 4 and Form 1040 reconcile to the one-page draft Form 8880 attachment.
+Zero credits do not produce that attachment. Child and energy reviews must
+identify the actual saver inventory, including reviewed zero-credit cases.
+
+ABLE, other IRA contribution sources, foreign adjustments, special deadlines,
+final forms and MeF/ATS remain open. This development registry is not a public
+filing product. See the [current Form 8880 contract](../../../docs/ty2026/graphs/FORM8396-8859-8880-GRAPH.md).
+
+
+## ABLE source workpaper
+
+`calculateAbleSources2026` reuses year-parameterized ABLE distribution and
+employment validation, earnings-ratio arithmetic and compensation limits from
+2025. It applies the 2026 $20,000 contribution limit, age-46 onset rule and
+preceding-year HHS amounts, with actual W-2/business source reconciliation.
+It retains beneficiary cash/gross distributions separately from taxable earnings
+and owner Form 5329 Part II amounts. This workpaper is not registered; the next
+integration must add income before AGI and combine owner additional-tax forms
+before enabling ABLE credit claims. See [ABLE source coverage and remaining work](../../../docs/ty2026/graphs/ABLE-CURRENT.md).
+
+## Adoption source and settlement workpapers
+
+`prepareAdoptionSources2026` reconciles child, payment, reimbursement, employer
+program, W-2 code T and prior-claim records before the separate exclusion and
+late credit calculations. Both years reuse the phaseout arithmetic with separate
+annual limits. Current refundable credit and prior nonrefundable carryforwards
+remain distinct; oldest balances are used first and expire after five years.
+
+The internal AGI adapter now derives exclusion MAGI from return income, computes
+Social Security with the exclusion addback, preserves signed line 1f and applies
+student-loan interest after exclusion. The development intake now accepts the
+reviewed claim and binds actual filer, dependent and W-2 records inside the graph;
+callers cannot supply adoption MAGI or return totals. The child-credit stage
+coordinates adoption and energy through
+Worksheet B, emits Schedule 3 line 6c and Form 1040 line 30, and replays credits
+for Form 1062. Carryforwards reconcile any IRS 2025 systemic adjustment using
+its credit increase and corrected origin-year worksheet. Social Security review
+identifies the actual adoption inventory. EIC accepts signed wages and retains
+replayed adoption income. Under-24 education and child-tax support now replay the
+actual adoption inventory and employer personal-services review, using current
+payments without treating the special-needs exclusion as compensation. Taxable
+wages, dependent deductions and unearned income remain separate. Care now replays signed adoption adjustments by employer-program owner and
+reviewed service month, including offsetting spouses and monthly deemed-income
+floors. Coordinated pre-AGI settlement now resolves changed care exclusions,
+adoption MAGI and Social Security together, retaining and printing additional
+phaseout precision when needed. Mixed-owner children now retain each spouse's
+wholly taxable or fully excluded ordinary benefits from actual payments.
+Remaining whole-dollar rounding gaps and partial or special-needs exclusions
+across owners still require reconciliation. Draft bundles now attach the two-page
+Form 8839 and additional copies for overflow children. Income, refundable credit,
+nonrefundable credit and final child-credit destinations are replayed before
+rendering. Previously reported children retain their prior columns; totals print
+only once. Carryforward-only claims attach, empty inventories do not, and current
+taxable benefits outside Part III receive a separate income reconciliation.
+Remaining care-income cases, foreign prior-benefit recovery and native filing
+remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).
+
+### Foreign asset disclosure source valuation
+
+`inputs/foreign-assets-source.ts` prepares a Form 8938 valuation workpaper from
+reviewed filer/ownership documents, year-end FX evidence and dated portfolio
+observations. It reuses the 2025 eligibility, threshold and summary helpers with
+2026 calendar checks, derives contemporaneous peaks and year-end values, and
+keeps MFS threshold shares separate from full asset reporting values. Exact
+converted values determine thresholds before whole-dollar display rounding.
+Trust, estate, pension and deferred-compensation interests now use separate
+reviewed distribution and beneficial-interest workpapers. Their reported values
+stay distinct from known threshold peaks; unavailable-value fallbacks are derived
+without an entered balance. Mandatory trust rights retain section 7520 valuation
+evidence, and distributions still require income-tax treatment binding.
+
+This source stage is not registered in the public graph or draft bundle. Tax
+items and exception-form copies remain explicitly unbound to executed return
+lines and filing artifacts. Grantor-trust and joint-interest reconciliation,
+mixed valuation availability, remaining eligibility/FX branches, the PDF, MeF and ATS gates remain in the
+[Form 8938 contract](../../../docs/ty2026/graphs/FORM8938-GRAPH.md).

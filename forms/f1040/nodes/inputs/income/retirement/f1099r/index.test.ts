@@ -721,17 +721,27 @@ Deno.test("f1099r.compute: rollover_code C routes to form8606 with taxable amoun
   assertEquals(f8606Fields.roth_conversion, 10000);
 });
 
-Deno.test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line1a with exact amount", () => {
+Deno.test("f1099r.compute: disability_flag + disability_as_wages routes taxable income to line1h and AGI", () => {
   const result = compute([minimalPensionItem({
-    box1_gross_distribution: 10000,
+    box1_gross_distribution: 12000,
+    box2a_taxable_amount: 10000,
+    box4_federal_withheld: 1200,
     box7_distribution_code: DistributionCode.Code3,
     disability_flag: true,
     disability_as_wages: true,
   })]);
   const input = f1040Input(result);
-  assertEquals(input.line1a_wages, 10000);
-  // Disability-as-wages items must NOT appear on pension lines
+  assertEquals(input.line1h_other_earned, 10000);
+  assertEquals(input.line1a_wages, undefined);
   assertEquals(input.line5a_pension_gross, undefined);
+  assertEquals(input.line5b_pension_taxable, undefined);
+  assertEquals(input.line25b_withheld_1099, 1200);
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "agi_aggregator")?.fields,
+    {
+      line1h_other_earned: 10000,
+    },
+  );
 });
 
 Deno.test("f1099r.compute: no_distribution_received suppresses all income outputs", () => {
@@ -1198,6 +1208,7 @@ Deno.test("f1099r.compute: disability_flag alone routes to pension lines (not wa
   const input = f1040Input(result);
   assertEquals(input.line5a_pension_gross, 10000);
   assertEquals(input.line1a_wages, undefined);
+  assertEquals(input.line1h_other_earned, undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -2607,4 +2618,49 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
   const f5329Fields =
     (form5329!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 15000);
+});
+
+Deno.test("f1099r.compute: disability and corrective distributions accumulate on line1h without replacing pension income", () => {
+  const disability = minimalPensionItem({
+    source_document_reference: "disability-issued-copy",
+    box1_gross_distribution: 12000,
+    box2a_taxable_amount: 10000,
+    box4_federal_withheld: 1200,
+    box7_distribution_code: DistributionCode.Code3,
+    disability_flag: true,
+    disability_as_wages: true,
+  });
+  const correction = minimalPensionItem({
+    source_document_reference: "corrective-issued-copy",
+    recipient_ssn: "111223333",
+    box1_gross_distribution: 1500,
+    box2a_taxable_amount: 1000,
+    box4_federal_withheld: 150,
+    box7_distribution_code: DistributionCode.Code8,
+  });
+  const pension = minimalPensionItem({
+    box1_gross_distribution: 5000,
+    box2a_taxable_amount: 4000,
+  });
+  for (
+    const items of [
+      [disability, correction, pension],
+      [pension, correction, disability],
+    ]
+  ) {
+    const result = compute(items);
+    assertEquals(f1040Input(result), {
+      line1h_other_earned: 11000,
+      line5a_pension_gross: 5000,
+      line5b_pension_taxable: 4000,
+      line25b_withheld_1099: 1350,
+    });
+    assertEquals(
+      result.outputs.find((o) => o.nodeType === "agi_aggregator")?.fields,
+      {
+        line1h_other_earned: 11000,
+        line5b_pension_taxable: 4000,
+      },
+    );
+  }
 });

@@ -1,5 +1,9 @@
 # TY2026 capital-gain path and Schedule D work order
 
+Current implementation: [CAPITAL-CURRENT.md](CAPITAL-CURRENT.md).
+Implementation-status paragraphs below describe the earlier prototype; retain
+the source and field inventory, but use the current contract for supported routes.
+
 Source baseline: the pinned [2026 draft Schedule D](../corpus/draft/f1040sd.pdf)
 (SHA-256 `0df9af0711964b3198ea04bb0037b29d6afa85578a671553daed46251630b5f1`),
 the pinned [2026 draft Form 1040](../corpus/draft/f1040.pdf), and the

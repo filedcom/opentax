@@ -111,6 +111,8 @@ export function assertReturnWideArithmetic(
 
   // A direct descriptor call may provide only a subtotal. Replay the filed
   // components when at least one component row accompanies that subtotal.
+  // Retained source rows can contain cents. Combine each line's sources before
+  // rounding that line, as the return calculator and filed fields do.
   const components = (keys: readonly string[]): number | undefined => {
     let present = false;
     let total = 0;
@@ -118,12 +120,14 @@ export function assertReturnWideArithmetic(
       const value = fields[key];
       if (value === undefined || value === null) continue;
       if (typeof value === "number" && Number.isFinite(value)) {
-        total += value;
+        total += Math.round(value);
       } else if (
         Array.isArray(value) &&
         value.every((item) => typeof item === "number" && Number.isFinite(item))
       ) {
-        total += value.reduce((sum: number, item: number) => sum + item, 0);
+        total += Math.round(
+          value.reduce((sum: number, item: number) => sum + item, 0),
+        );
       } else {
         throw new Error(`Form 1040 ${key} needs a finite amount`);
       }
@@ -228,13 +232,16 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 22 differs from lines 18 and 21");
   }
   const line24 = amount("line24_total_tax");
+  // The return retains Schedule 2 source cents but adds the filed line 23
+  // dollars to line 22, including when computing section 1294 deferral.
+  const line23 = Math.round(amount("line23_other_taxes") ?? 0);
   const form8621DeferredTax = amount("form8621_1294_deferred_tax") ?? 0;
   const beforeDeferral = amount("form8621_1294_total_tax_before_deferral");
   if (
     form8621DeferredTax > 0 &&
     (line22 === undefined || form8621DeferredTax > line22 ||
       beforeDeferral === undefined ||
-      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+      !matches(beforeDeferral, line22 + line23))
   ) {
     throw new Error(
       "Form 8621 section 1294 deferral differs from Form 1040 tax before deferral",
@@ -244,7 +251,7 @@ export function assertReturnWideArithmetic(
     form8621DeferredTax === 0 && beforeDeferral !== undefined &&
     (amount("form8621_1294_counterfactual_total_tax") === undefined ||
       line22 === undefined ||
-      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+      !matches(beforeDeferral, line22 + line23))
   ) {
     throw new Error(
       "Form 8621 tax before deferral needs a source-backed election",
@@ -254,7 +261,7 @@ export function assertReturnWideArithmetic(
     line24 !== undefined && line22 !== undefined &&
     !matches(
       line24,
-      line22 + (amount("line23_other_taxes") ?? 0) - form8621DeferredTax,
+      line22 + line23 - form8621DeferredTax,
     )
   ) {
     throw new Error("Form 1040 line 24 differs from lines 22 and 23");
@@ -266,7 +273,8 @@ export function assertReturnWideArithmetic(
     "line25c_total",
   ] as const;
   const withholdingComponents = withholdingKeys.reduce(
-    (sum, key) => sum + (amount(key) ?? 0),
+    // Source lines retain cents; the return node sums their printed dollars.
+    (sum, key) => sum + Math.round(amount(key) ?? 0),
     0,
   );
   const line25d = amount("line25d_total_withholding");
@@ -285,7 +293,7 @@ export function assertReturnWideArithmetic(
     "line31_additional_payments",
   ] as const;
   const refundableComponents = refundableKeys.reduce(
-    (sum, key) => sum + (amount(key) ?? 0),
+    (sum, key) => sum + Math.round(amount(key) ?? 0),
     0,
   );
   const line32 = amount("line32_refundable_credits_total");
@@ -309,7 +317,7 @@ export function assertReturnWideArithmetic(
     !matches(
       line33,
       (line25d ?? withholdingComponents) +
-        (amount("line26_estimated_tax") ?? 0) +
+        Math.round(amount("line26_estimated_tax") ?? 0) +
         (line32 ?? refundableComponents),
     )
   ) {

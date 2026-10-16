@@ -1,3 +1,4 @@
+import { movingExpenseBalance } from "./amounts.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -47,7 +48,7 @@ function netDeduction(item: F3903Item): number {
     (item.transportation_storage ?? 0) + (item.travel_expenses ?? 0)
   );
   const reimbursed = item.employer_reimbursements ?? 0;
-  return Math.max(0, total - reimbursed);
+  return movingExpenseBalance(total, reimbursed).deduction;
 }
 
 function totalMilitaryDeduction(items: F3903Items): number {

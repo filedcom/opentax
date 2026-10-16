@@ -7,6 +7,34 @@ import {
   ptcSpouseIncomeReviewSchema,
 } from "./form8962-family-eligibility.ts";
 
+Deno.test("2025 family payment proof uses exact cents and rejects malformed or short payments", () => {
+  const { no_aptc_monthly_evidence, ...copy } =
+    reviewedJointContract().f1095a.f1095as[0];
+  const policy = {
+    ...copy,
+    monthly_premiums: [0.8, ...Array(11).fill(0)],
+    monthly_aptcs: [0.7, ...Array(11).fill(0)],
+    aptc_monthly_evidence: [{
+      ...no_aptc_monthly_evidence[0],
+      premium_payment: {
+        amount: 0.1,
+        paid_on: "2025-01-01",
+        reference: "actual-cent-payment",
+      },
+    }],
+  };
+  assertForm8962PolicyEligibility(policy, undefined, true);
+  for (const amount of [0.09, 0.104, Infinity]) {
+    const changed = structuredClone(policy);
+    changed.aptc_monthly_evidence[0].premium_payment.amount = amount;
+    assertThrows(
+      () => assertForm8962PolicyEligibility(changed, undefined, true),
+      Error,
+      "full premium payment",
+    );
+  }
+});
+
 // Contract unit controls only; these facts do not establish an issued packet.
 function reviewedJointContract() {
   const general = {

@@ -1,7 +1,53 @@
 # TY2026 deduction graph: Schedule A, Schedule 1-A, and QBI
 
+Current implementation: [business/SE/simplified QBI](BUSINESS-CURRENT.md).
+The 2026 resolver uses pre-section-68 QBI income; earlier cycle-solving plans
+are superseded. Advanced 8995-A/cooperative work below remains a plan.
+
+Current source update (October 15): AGI supplies actual taxable wage income to
+the dependent standard-deduction calculation, including taxable care benefits and
+excluding care deemed income or combat-pay elections. Replayed business sources
+now add Schedule C net and subtract the actual deductible half of SE tax; statutory
+expenses remain deductible in this worksheet. Potential under-24, nonjoint returns
+use a separate business income-character review for the Form 8615 screen, restoring
+losses and retaining capital-produced income. Amounts over $2,700 stop for the
+unfinished child-tax owner. See the [business earnings contract](EDUCATION-CURRENT.md#business-earnings-and-dependent-deductions).
+Scholarship sources and full child-tax eligibility/calculation remain unfinished.
+See [current care source integration](FORM2441-CURRENT.md) and
+[the complete child-tax contract](FORM8615-GRAPH.md).
+
+
+Current print increment: the two-page Schedule A draft now recomputes source
+expenses and the retained deduction-selection input, verifies Form 1040 totals,
+and prints seller statements, educator remainder and the final overall limit.
+The [Schedule A component map](../pdf/PDF-SCHEDULEA-MAP.md) records its reviewed
+47-field source, supported branches and remaining bundle/QBI/MeF gates.
+
 Status: source and dependency design, 2026-09-27. This is an implementation
 contract for the TY2026 `f1040` entry point, not a registered calculation path.
+
+## Current implementation boundary — October 15, 2026
+
+The older progress claims below describe a historical prototype. The active
+`forms/f1040/2026` path now has source-backed W-2 TP/TT, Form 4137, senior and
+vehicle-interest calculations, the joint deduction resolver and a pinned draft
+Schedule 1-A PDF component. It is not registered as a complete filing product.
+Form 4137 reuses 2025 payroll/diary algorithms under an explicit year policy,
+routes its income to AGI/1040 and tax to 2026 Schedule 2 line 16a, and supplies
+qualified line 1(c) tips for the per-owner/employer larger-of comparison. Its
+qualification records cover total tips, not just the unreported remainder.
+
+The active graph has no complete foreign/territorial exclusion source owners,
+business-tip/non-W-2 overtime path or 8995/8995-A implementation. Forms 4137,
+8919 and 8959 now have source calculations and pinned draft PDF components;
+SE/credit receivers and MeF remain pending. Schedule A now calculates ordinary
+medical expenses, sourced income/actual-sales/property taxes and current cash
+charity with explicit absence reviews for unsupported categories. Its candidate
+feeds the deduction resolver and Form 6251 tax handoff. Mortgage sources now add continuing acquisition-loan interest, points and
+insurance to lines 8a–8d. Mortgage exceptions/investment interest, noncash/prior gifts, special medical/property allocations, other deductions,
+carryforward persistence and Schedule A PDF/MeF remain unfinished. See the
+[active source contract](../../../forms/f1040/2026/README.md#schedule-a-expense-sources-and-deduction-selection).
+These components do not establish a complete filing product.
 
 ## Sources and line contract
 
@@ -52,23 +98,21 @@ flowchart LR
   D --> G[Form 6251 and income tax]
 ```
 
-Build **one TY2026 deduction-resolution stage** that owns deduction choice,
-Schedule A's overall limit, and the QBI income limit. It must evaluate the
-standard and itemized paths using their actual taxable-income bases. Where
-Schedule A and QBI constrain each other, solve their shared result explicitly
-with dollar rounding and a tested convergence/uniqueness rule; do not insert
-a graph cycle or use the TY2025 standard-deduction estimate. The resolver
-should publish the two candidate outcomes and the reason for the chosen one
-for review, then emit a single finalized set of form lines.
+The implemented TY2026 deduction-resolution stage owns both candidates and
+selection. Under P.L. 119-21 section 70111(b), QBI taxable income excludes the
+section 68 reduction. Thus the itemized path evaluates QBI using Schedule A
+before its overall limit, then applies that limit using the resulting QBI.
+There is no fixed-point search or uniqueness test. The selected form results and
+reason are retained before final Form 1040 amounts are emitted.
 
 ## Inputs that must be supplied or computed upstream
 
 | Area | Required detail | Current status |
 | --- | --- | --- |
-| Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI graph exists; SALT MAGI source path pending. |
+| Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI and strict SALT addback/zero-review contract exist; full foreign source owners pending. |
 | Home-office SALT split | [Form 8829](./FORM8829-GRAPH.md) line 11 worksheet divides business and personal property tax; limited cases iterate through Schedule C, SE, AGI and Schedule A until MAGI stabilizes. | Shared home-office node omits this loop; keep both allocations from one property-tax source. |
-| Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | `schedule-a.ts` assembles lines from already allowed values. Input nodes and each separate eligibility limit pending. |
-| Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Pure 0.5% floor exists; category-limit and carryforward accounting pending. Do not treat raw 11/12/14 amounts as all deductible. |
+| Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | Medical, income/actual-sales/property-tax and mortgage sources feed shared limits and deduction resolution; remaining categories require absence reviews. |
+| Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Current cash categories and ordered floor exist with 2026 cash coordination; noncash, prior gifts and persisted carryforward accounting remain pending. |
 | Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks, W-2 TP/TT, and employer-level Form 4137 reconciliation exist. Puerto Rico/Form 4563 addbacks remain. |
 | QBI | All Form 8995/8995-A business, wage, UBIA, loss, gain, and carryforward facts | Existing shared nodes need a 2026 output contract and pre-QBI income from the joint resolver. |
 
@@ -80,9 +124,9 @@ resolver until that source shape is corrected and reconciled.
 
 ## Implementation order and gates
 
-1. Build TY2026 Schedule A input and form-line node from the pure calculator.
-   Wire upstream allowed amounts without guessing percentage limits,
-   mortgage-insurance eligibility, Form 4952, or contribution carryovers.
+1. Extend the TY2026 Schedule A source node beyond ordinary medical, taxes,
+   continuing acquisition mortgages and current cash gifts. Add mortgage
+   exceptions, Form 4952, noncash categories and contribution carryovers.
 2. Finish Schedule 1-A's 2026 source inputs: Puerto Rico/Form 4563 MAGI
    addbacks. W-2 TP and Form 4137 line 1(c) now reconcile by filer and
    employer using the draft's larger-of rule. Mixed or unverified occupations

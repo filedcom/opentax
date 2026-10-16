@@ -14,23 +14,59 @@ added to Form 1040 line 20. Schedule 3 line 13e is new: the total section
 13a–13z on line 14, then joins lines 9–12 on line 15. Part I line 8 reaches
 Form 1040 line 20; Part II line 15 reaches Form 1040 line 31.
 
-The current active source is excess Social Security withholding from multiple
-W-2s. In a two-employer example, 2026 W-2 box 4 total $18,600 less the
-$11,439 annual cap yields Schedule 3 line 11 and line 15 of $7,161. The
-registered graph puts that amount on Form 1040 line 31, and the three-page
-PDF bundle was rendered and visually checked.
+## Current graph (October 15, 2026)
 
-The 2026 node also sends actual Schedule 3 credit-line amounts to Schedule
-8812. Its Credit Limit Worksheet A/B answers must match those amounts.
-Future Form 1116, 2441, 8863, 3800, 8839, 8936, and other credit source
-routes can join this node after their TY2026 tax-limit rules and attachments
-are reviewed. The four source-credit-pending signals currently fail instead
-of printing unfinalized gross credits.
+The source graph registers `schedule3_2026` for preliminary credit sources and
+`schedule3_final_2026` after the energy/child-credit resolution. W-2s finalize
+excess Social Security withholding, including an explicit zero when absent.
+Schedule 3 line 11 flows through line 15 to Form 1040 line 31, Schedule 3-A's
+other-payment subtraction, and Schedule 8812 Part II-B line 24. The ACTC node
+waits for Schedule 3 and reconciles the credit against W-2 before subtracting it
+along with EIC; it no longer rejects positive ordinary excess-withholding credit.
+
+Each spouse has a separate Social Security ceiling; employer/employee groups
+combine box 3 wages and box 7 tips. Same-employer excess requires correction,
+not a return credit. If multiple employers' wages exceed the annual base, actual
+box 4 amounts are required for every employer rather than interpreting a missing
+amount as zero. In the synthetic two-employer case, $18,600 withheld less the
+$11,439 annual cap yields $7,161 on Schedule 3 lines 11/15 and Form 1040 line 31.
+This follows [IRS Topic 608](https://www.irs.gov/taxtopics/tc608) and the pinned
+2026 W-2 wage base; tier 1 RRTA reconciliation still needs a separate source route.
+
+The annual finalizer reuses shared 2025 Schedule 3 totals, preserving the 2025
+node's existing behavior. The 2026 internal contract covers all nonreserved form
+lines, adds 6z detail and 13b–13e/13z, and rounds combined source amounts on each
+printed line before totaling. Unsupported pending-credit signals and reserved
+2025 line 5b are rejected. It is not a public input accepting caller credit totals.
+Only reviewed registered producers can feed the active node: W-2 excess
+withholding, finalized Form 2441 care and Form 8863 education credits, and the
+resolved Form 5695 carryforward credit. Care credit reaches
+1040 line 20 and reduces Schedule 8812 Worksheet A's tax capacity. See
+[the current care route](../graphs/FORM2441-CURRENT.md). Other source-credit and
+payment calculations remain pending.
+
+The draft builder recomputes all subtotals, checks Form 1040 lines 20/31, and
+replays the original identified W-2 records before printing line 11. Schedule 3
+uses attachment sequence 03, before Schedule 3-A. It omits the IRS cover, leaves
+reserved fields blank and adds complete paginated 6z/13z continuation statements
+when descriptions exceed the form. The bundle puts statements after all forms.
+
+## Verification
+
+The combined 2026/shared Schedule 3/child-credit regression run passed 509 tests.
+The repository unit command, targeted type checks and changed-file lint passed.
+Cases cover per-spouse ceilings, reported tips, absent withholding, same-employer
+errors, settlement, EIC/ACTC/Schedule 3-A coordination, source replay mismatches,
+reserved fields, line 13e, whole-dollar rounding and multipage statements. Nine
+synthetic QA pages were rendered and inspected. Reopened output has no fields
+or page annotations. Internal all-line/PDF fixtures establish line mapping,
+not source eligibility for unregistered credit forms.
 
 ## AcroForm fields
 
 The draft has a cover page followed by one filed page (`pageIndices: [1]`).
-`f1_01` and `f1_02` are name and SSN. `f1_03`–`f1_25` cover Part I; `f1_08`
+`f1_01` and `f1_02` are name and SSN. All 38 fields and their rectangles are
+in [the inventory](../inventories/pdf-fields/pdf-fields-f1040s3.csv). `f1_03`–`f1_25` cover Part I; `f1_08`
 and `f1_13` are reserved lines 5b and 6e. The line 6a field lives under
 `Line6a_ReadOrder`, and the line 6z description uses the nested `f2_22`
 field despite being on `Page1`. `f1_26`–`f1_38` cover Part II; `f1_34` is

@@ -2486,6 +2486,40 @@ export function computeScheduleHAmounts(
       );
     }
   }
+  const {
+    socialSecurityTax,
+    medicareTax,
+    additionalMedicareTax,
+    ficaAndWithholding,
+  } = computeHouseholdPartI(input);
+  const sectionB = unemployment && "state_rows" in unemployment
+    ? computeSectionB(unemployment)
+    : undefined;
+  const futaTax = sectionB?.futaTax ??
+    (unemployment && "taxable_wages" in unemployment
+      ? computeHouseholdSectionA(unemployment.taxable_wages)
+      : 0);
+  return {
+    socialSecurityTax,
+    medicareTax,
+    additionalMedicareTax,
+    ficaAndWithholding,
+    futaTax,
+    sectionB,
+    totalTax: ficaAndWithholding + futaTax,
+  };
+}
+
+/** Year-independent arithmetic after source owners establish taxable wage bases. */
+export function computeHouseholdPartI(
+  input: Pick<
+    ScheduleHInput,
+    | "ss_wages"
+    | "medicare_wages"
+    | "additional_medicare_wages"
+    | "federal_income_tax_withheld"
+  >,
+) {
   const socialSecurityTax = Math.round(
     Math.round(input.ss_wages ?? 0) * (SS_RATE_EMPLOYER + SS_RATE_EMPLOYEE),
   );
@@ -2499,22 +2533,16 @@ export function computeScheduleHAmounts(
   const ficaAndWithholding = socialSecurityTax + medicareTax +
     additionalMedicareTax +
     Math.round(input.federal_income_tax_withheld ?? 0);
-  const sectionB = unemployment && "state_rows" in unemployment
-    ? computeSectionB(unemployment)
-    : undefined;
-  const futaTax = sectionB?.futaTax ??
-    (unemployment && "taxable_wages" in unemployment
-      ? Math.round(Math.round(unemployment.taxable_wages) * 0.006)
-      : 0);
   return {
     socialSecurityTax,
     medicareTax,
     additionalMedicareTax,
     ficaAndWithholding,
-    futaTax,
-    sectionB,
-    totalTax: ficaAndWithholding + futaTax,
   };
+}
+
+export function computeHouseholdSectionA(taxableWages: number) {
+  return Math.round(Math.round(taxableWages) * 0.006);
 }
 
 function computeSectionB(

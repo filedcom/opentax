@@ -25,7 +25,7 @@ export interface TaxSummaryRow {
   scheduleLocations: readonly string[];
 }
 
-export function isPartVAccount(asset: Asset): boolean {
+export function isPartVAccount(asset: Pick<Asset, "asset_type">): boolean {
   return asset.asset_type === ForeignAssetType.DepositAccount ||
     asset.asset_type === ForeignAssetType.CustodialAccount;
 }
@@ -58,7 +58,7 @@ export function projectForm8938(raw: unknown): {
   };
 }
 
-function aggregateTaxItems(assets: readonly Asset[]): TaxSummaryRow[] {
+export function aggregateTaxItems(assets: readonly Asset[]): TaxSummaryRow[] {
   return taxKinds.flatMap((kind) => {
     const matches = assets.flatMap((asset) =>
       asset.tax_items.filter((item) => item.kind === kind)

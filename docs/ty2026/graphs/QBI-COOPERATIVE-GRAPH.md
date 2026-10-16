@@ -1,5 +1,9 @@
 # TY2026 QBI and cooperative filing contract
 
+The [current business graph](BUSINESS-CURRENT.md) now implements simplified
+8995, its active minimum, prior losses and draft attachment for reviewed service
+businesses. This broader cooperative/8995-A contract remains unfinished.
+
 The 2026 [Form 8995](../corpus/draft/f8995.pdf), [Form 8995-A](../corpus/draft/f8995a.pdf),
 [Form 8995-A Schedule A](../corpus/draft/f8995aa.pdf), and [Form 8995
 instructions](../corpus/draft/i8995.pdf) are pinned in the manifest. The

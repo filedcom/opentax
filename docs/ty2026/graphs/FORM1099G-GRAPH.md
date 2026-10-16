@@ -25,23 +25,17 @@ is source evidence, not automatically a Form 1040 attachment.
 
 ## Current implementation boundary
 
-The shared [`f1099g` node](../../../forms/f1040/nodes/inputs/income/other/f1099g/index.ts)
-is registered in the TY2026 graph for unemployment, a supplied
-tax-benefit-adjusted refund, RTAA, taxable grants and box 4 withholding.
-The [Schedule 1 plan](./SCHEDULE1-GRAPH.md) records its successful focused
-calculation/PDF tests. It correctly refuses to route several incomplete
-2026 branches: box 8 business refund, box 7 agricultural payment, box 9
-CCC market gain and new box 10 family leave. This is an explicit filing
-gap, not a reason to drop those 1099-G sources.
+The current source registry uses `government_payments`, which reuses the shared
+`f1099g` calculation after validating actual 2026 copies and deriving the taxable
+refund from prior-return facts. Unemployment and same-year repayments, bounded
+2025 refund recoveries, RTAA, taxable nonbusiness grants, box 10 family leave,
+federal withholding and state withholding are connected to the draft return.
+See [FORM1099G-CURRENT.md](FORM1099G-CURRENT.md) for the implemented contract,
+verification and remaining boundaries. This supersedes the earlier prototype
+that accepted a caller-supplied taxable refund and omitted family leave.
 
-The node aggregates box 1 across forms and rejects TY2026 repayments
-greater than current receipts. Preserve each benefit year and repayment
-date to distinguish same-year netting from a prior-year tax recomputation.
-Its box 2 `box_2_taxable_amount` is caller supplied and bounded by the
-refund, but the prior-year tax-benefit worksheet is not calculated. Box 6
-currently assumes Schedule 1 other income for every grant. The node's
-declared Schedule F target is absent from the focused 2026 registry, so a
-farm source needs its complete graph, PDF and MeF route before activation.
+Business/farm/CCC sources, prior-year repayments and special recovery cases
+remain in the full target below. This is not a complete 1099-G filing surface.
 
 ## Build and acceptance
 

@@ -1,3 +1,4 @@
+import { mortgageDebtLimit } from "./amounts.ts";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 
@@ -1202,17 +1203,13 @@ export function cashoutRefinanceRatio(review: Review): number | undefined {
     priorAverage += averages.pre2017;
     postAverage += averages.post2017;
   }
-  // Table 1 lines 6, 9, 10 and 11. A pre-2017 mortgage can preserve a
-  // larger qualified limit without reclassifying the later mixed refinance.
-  const line6 = Math.min(
-    Math.max(grandfatheredAverage, separate ? 500_000 : 1_000_000),
-    grandfatheredAverage + priorAverage,
-  );
-  const line9 = Math.max(line6, separate ? 375_000 : 750_000);
-  const line11 = Math.min(line9, line6 + postAverage);
-  const ratio = Math.round(
-    line11 / (oldAverage + newAverage + secondYearAverage +
-      additionalTotalAverage) * 1000,
-  ) / 1000;
-  return ratio;
+  return mortgageDebtLimit({
+    grandfathered: grandfatheredAverage,
+    pre2017: priorAverage,
+    post2017: postAverage,
+    total: oldAverage + newAverage + secondYearAverage + additionalTotalAverage,
+  }, {
+    pre2017: separate ? 500_000 : 1_000_000,
+    post2017: separate ? 375_000 : 750_000,
+  }).ratio;
 }

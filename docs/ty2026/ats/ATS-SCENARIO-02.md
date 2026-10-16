@@ -54,6 +54,13 @@ derived expectations, and application output distinct.
 
 ## Current graph and build order
 
+The [estimated-payment source route](../graphs/ESTIMATED-PAYMENTS-CURRENT.md)
+now supports the $300 prior-year-credit category through line 26 and the draft
+PDF. A production claim requires reconciled accepted 2025 return and posted IRS
+credit observations; the ATS cover alone does not establish these records.
+The synthetic payment tests are not a completed scenario 2 fixture or IRS ATS
+acceptance result.
+
 1. Extend the W-2/2026 source route to honor box 13 statutory-employee status:
    attach the W-2 to the correct Schedule C activity, direct box 1 there once,
    preserve box 2 withholding, and exclude that activity's net from Schedule

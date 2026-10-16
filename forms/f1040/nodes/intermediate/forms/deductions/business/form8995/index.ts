@@ -1,3 +1,4 @@
+import { simplifiedQbiLines } from "./calculation.ts";
 import { assertSstbServiceClassification } from "../../../../../inputs/income/business/schedule_c/sstb-classification.ts";
 import { passiveSCorpLossBundleSchema } from "../../../../../inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts";
 import { passiveSCorpLossQbiLines } from "./passive-s-corp-loss.ts";
@@ -1187,12 +1188,15 @@ function oneScheduleCLines(
         (input.additional_deductions ?? 0),
     ),
   );
-  const line5 = Math.round(qbi * QBI_RATE);
-  const reit = sumField(input.line6_sec199a_dividends);
-  const line9 = Math.round(reit * QBI_RATE);
-  const line12 = qbiCapitalTotal(input, true);
-  const line13 = Math.max(0, line11 - line12);
-  const line14 = Math.round(line13 * QBI_RATE);
+  const { businessLossCarryforward, reitLossCarryforward, ...lines } =
+    simplifiedQbiLines({
+      businessIncome: qbi,
+      businessLossCarryforward: 0,
+      reitAndPtpIncome: sumField(input.line6_sec199a_dividends),
+      reitLossCarryforward: 0,
+      taxableIncomeBeforeQbi: line11,
+      netCapitalGainAndQualifiedDividends: qbiCapitalTotal(input, true),
+    });
   return {
     line1_business_reference: business.business_reference,
     line1_business_name: business.business_name,
@@ -1200,22 +1204,9 @@ function oneScheduleCLines(
       ? { line1_ein: business.ein }
       : { line1_ssn: ownerSsn!.replace(/\D/g, "") }),
     line1_qbi: qbi,
-    line2: qbi,
-    line3: 0,
-    line4: qbi,
-    line5,
-    line6: reit,
-    line7: 0,
-    line8: reit,
-    line9,
-    line10: line5 + line9,
-    line11,
-    line12,
-    line13,
-    line14,
-    line15: Math.min(line5 + line9, line14),
-    line16: 0,
-    line17: 0,
+    ...lines,
+    line16: businessLossCarryforward,
+    line17: reitLossCarryforward,
   };
 }
 
@@ -1772,14 +1763,18 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           .filter((v) => v !== undefined).map((v) => v!.replace(/\D/g, ""));
         const sources = input.owned_s_corp_loss_sources ??
           [input.owned_s_corp_loss_source];
-        const sourceOwners = sources.map((s: any) =>
-          s.recipient_tin?.replace(/\D/g, "")
-        );
+        const sourceOwners = sources.map((s) => {
+          if (
+            !s || typeof s !== "object" || !("recipient_tin" in s) ||
+            typeof s.recipient_tin !== "string"
+          ) return undefined;
+          return s.recipient_tin.replace(/\D/g, "");
+        });
         if (
           !input.taxpayer_ssn ||
-          sourceOwners.some((v) => !actualOwners.includes(v)) ||
+          sourceOwners.some((v) => !v || !actualOwners.includes(v)) ||
           (input.owned_s_corp_loss_sources &&
-            sourceOwners.some((v) => !actualOwners.includes(v)))
+            sourceOwners.some((v) => !v || !actualOwners.includes(v)))
         ) {
           throw Error(
             "Owned S corporation loss must belong to the actual finalized return claimant(s)",

@@ -1,0 +1,831 @@
+{
+  "scope": "Loaded registrations and declared edges only; not branch parity or filing acceptance.",
+  "ty2025": {
+    "registry_nodes": 223,
+    "pdf_descriptors": 118,
+    "mef_modules": 154,
+    "mef_descriptors": 158,
+    "nodes_without_review_notes": [
+      "agi_final",
+      "amendment_request",
+      "benefit_1042s",
+      "ct2",
+      "disabled_access_limit",
+      "education_income",
+      "f2210f",
+      "f3921",
+      "f453a_interest",
+      "f4547",
+      "f8854Annual",
+      "f8858",
+      "f8874_recapture",
+      "f8886",
+      "f9000",
+      "form1116_carryover_review",
+      "form1116_prior_carryover",
+      "form1116_review",
+      "form3800_current_orphan_allocation",
+      "form3800_current_production_allocation",
+      "form8582_prior_year_record",
+      "form8995aScheduleA",
+      "form8995aScheduleC",
+      "form8995aScheduleD",
+      "mortgage_refinance_points",
+      "payment_request",
+      "personal_property_rental",
+      "qbi_patron",
+      "schedule_b_part_iii",
+      "schedule_d_final",
+      "schedule_j_calculation",
+      "schedule_lep"
+    ]
+  },
+  "ty2026": {
+    "registry_nodes": 60,
+    "declared_edges": 308,
+    "unregistered_target_edges": 14,
+    "nodes": [
+      {
+        "key": "start",
+        "node_type": "start",
+        "implemented": true,
+        "targets": [
+          "form8839",
+          "f4852",
+          "hsa_accounts",
+          "able_accounts",
+          "form8880",
+          "schedule_r",
+          "f1099r",
+          "f1095a",
+          "gambling",
+          "estimated_payments",
+          "refund_allocation",
+          "f8938",
+          "extension_payments",
+          "form1062",
+          "land_dispositions",
+          "f5695",
+          "household_employment",
+          "government_payments",
+          "f8615",
+          "schedule_c",
+          "capital_gains",
+          "f8863",
+          "form2441",
+          "eitc",
+          "f8812",
+          "ssa1099",
+          "student_loan_interest",
+          "investment_income",
+          "f3921",
+          "f3903",
+          "educator_expenses",
+          "mortgage_interest",
+          "schedule_a",
+          "form8919",
+          "ct2",
+          "form4137",
+          "vehicle_loan_interest",
+          "schedule1a",
+          "general",
+          "cash_charity",
+          "w2"
+        ],
+        "source_module": "forms/f1040/2026/source-start.ts"
+      },
+      {
+        "key": "form8839",
+        "node_type": "form8839",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator"
+        ],
+        "source_module": "forms/f1040/2026/inputs/adoption.ts"
+      },
+      {
+        "key": "f8938",
+        "node_type": "f8938",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/nodes/form8938.ts"
+      },
+      {
+        "key": "f4852",
+        "node_type": "f4852",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/inputs/form4852.ts"
+      },
+      {
+        "key": "hsa_accounts",
+        "node_type": "hsa_accounts",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "schedule2",
+          "form5329",
+          "f1099r"
+        ],
+        "source_module": "forms/f1040/2026/inputs/hsa.ts"
+      },
+      {
+        "key": "general",
+        "node_type": "general",
+        "implemented": true,
+        "targets": [
+          "w2",
+          "cash_charity",
+          "schedule_a",
+          "mortgage_interest",
+          "educator_expenses",
+          "f3903",
+          "f3921",
+          "investment_income",
+          "student_loan_interest",
+          "ssa1099",
+          "form6251",
+          "vehicle_loan_interest",
+          "form4137",
+          "form8919",
+          "agi_aggregator",
+          "f1040",
+          "standard_deduction",
+          "eitc",
+          "f8812",
+          "schedule1a",
+          "form8959",
+          "ct2",
+          "form8880",
+          "form8960",
+          "form8995",
+          "form2441",
+          "schedule_r",
+          "f8863",
+          "f8615",
+          "government_payments",
+          "household_employment",
+          "f5695",
+          "form8839",
+          "capital_gains",
+          "land_dispositions",
+          "extension_payments",
+          "estimated_payments",
+          "gambling",
+          "schedule_c",
+          "f1095a",
+          "f1099r",
+          "able_accounts",
+          "hsa_accounts",
+          "form5329"
+        ],
+        "source_module": "forms/f1040/2026/inputs/general.ts"
+      },
+      {
+        "key": "able_accounts",
+        "node_type": "able_accounts",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "form8880",
+          "form5329"
+        ],
+        "source_module": "forms/f1040/2026/inputs/able.ts"
+      },
+      {
+        "key": "form5329",
+        "node_type": "form5329",
+        "implemented": true,
+        "targets": [
+          "schedule2",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form5329.ts"
+      },
+      {
+        "key": "form8880",
+        "node_type": "form8880",
+        "implemented": true,
+        "targets": [
+          "f8812",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form8880.ts"
+      },
+      {
+        "key": "schedule_r",
+        "node_type": "schedule_r",
+        "implemented": true,
+        "targets": [
+          "f8863",
+          "schedule3",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule-r.ts"
+      },
+      {
+        "key": "f1099r",
+        "node_type": "f1099r",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "f1040",
+          "schedule_a",
+          "form5329",
+          "form2441",
+          "schedule_r",
+          "form8880"
+        ],
+        "source_module": "forms/f1040/2026/inputs/retirement.ts"
+      },
+      {
+        "key": "f1095a",
+        "node_type": "f1095a",
+        "implemented": true,
+        "targets": [
+          "form8962",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/inputs/marketplace.ts"
+      },
+      {
+        "key": "form8962",
+        "node_type": "form8962",
+        "implemented": true,
+        "targets": [
+          "schedule3_final",
+          "schedule2",
+          "form6251",
+          "schedule_a"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form8962.ts"
+      },
+      {
+        "key": "gambling",
+        "node_type": "gambling",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "schedule_a",
+          "f1040",
+          "f8615"
+        ],
+        "source_module": "forms/f1040/2026/inputs/gambling.ts"
+      },
+      {
+        "key": "estimated_payments",
+        "node_type": "estimated_payments",
+        "implemented": true,
+        "targets": [
+          "f1040"
+        ],
+        "source_module": "forms/f1040/2026/inputs/estimated-payments.ts"
+      },
+      {
+        "key": "refund_allocation",
+        "node_type": "refund_allocation",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/inputs/refund-allocation.ts"
+      },
+      {
+        "key": "form1062",
+        "node_type": "form1062",
+        "implemented": true,
+        "targets": [
+          "schedule3_final",
+          "f1040"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form1062.ts"
+      },
+      {
+        "key": "extension_payments",
+        "node_type": "extension_payments",
+        "implemented": true,
+        "targets": [
+          "schedule3_final",
+          "form1062",
+          "estimated_payments"
+        ],
+        "source_module": "forms/f1040/2026/inputs/extension-payments.ts"
+      },
+      {
+        "key": "f5695",
+        "node_type": "f5695",
+        "implemented": true,
+        "targets": [
+          "f8812"
+        ],
+        "source_module": "forms/f1040/2026/inputs/energy.ts"
+      },
+      {
+        "key": "schedule3_final",
+        "node_type": "schedule3_final",
+        "implemented": true,
+        "targets": [
+          "f1040"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule3-final.ts"
+      },
+      {
+        "key": "household_employment",
+        "node_type": "household_employment",
+        "implemented": true,
+        "targets": [
+          "schedule2"
+        ],
+        "source_module": "forms/f1040/2026/inputs/household-employment.ts"
+      },
+      {
+        "key": "government_payments",
+        "node_type": "government_payments",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "f1040",
+          "form6251",
+          "schedule_a"
+        ],
+        "source_module": "forms/f1040/2026/inputs/government-payments.ts"
+      },
+      {
+        "key": "f8615",
+        "node_type": "f8615",
+        "implemented": true,
+        "targets": [
+          "standard_deduction"
+        ],
+        "source_module": "forms/f1040/2026/inputs/child-tax.ts"
+      },
+      {
+        "key": "form8615",
+        "node_type": "form8615",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/nodes/intermediate/forms/taxes/investments/form8615/index.ts"
+      },
+      {
+        "key": "schedule_c",
+        "node_type": "schedule_c",
+        "implemented": true,
+        "targets": [
+          "form461",
+          "land_dispositions",
+          "agi_aggregator",
+          "schedule1",
+          "schedule2",
+          "form8959",
+          "standard_deduction",
+          "vehicle_loan_interest",
+          "form2441",
+          "f1099r",
+          "able_accounts"
+        ],
+        "source_module": "forms/f1040/2026/nodes/business.ts"
+      },
+      {
+        "key": "form461",
+        "node_type": "form461",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "standard_deduction"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form461.ts"
+      },
+      {
+        "key": "capital_gains",
+        "node_type": "capital_gains",
+        "implemented": true,
+        "targets": [
+          "land_dispositions",
+          "form461",
+          "f1040",
+          "agi_aggregator",
+          "income_tax_calculation",
+          "form6251",
+          "form8960",
+          "capital_loss_carryover",
+          "standard_deduction",
+          "eitc"
+        ],
+        "source_module": "forms/f1040/2026/nodes/capital-gains.ts"
+      },
+      {
+        "key": "land_dispositions",
+        "node_type": "land_dispositions",
+        "implemented": true,
+        "targets": [
+          "form461",
+          "f1040",
+          "agi_aggregator",
+          "schedule1",
+          "income_tax_calculation",
+          "form6251",
+          "form8960",
+          "capital_loss_carryover",
+          "standard_deduction",
+          "eitc"
+        ],
+        "source_module": "forms/f1040/2026/nodes/land-dispositions.ts"
+      },
+      {
+        "key": "capital_loss_carryover",
+        "node_type": "capital_loss_carryover",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/nodes/capital-carryover.ts"
+      },
+      {
+        "key": "form2441",
+        "node_type": "form2441",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "agi_aggregator",
+          "f2441"
+        ],
+        "source_module": "forms/f1040/2026/inputs/dependent-care.ts"
+      },
+      {
+        "key": "f2441",
+        "node_type": "f2441",
+        "implemented": true,
+        "targets": [
+          "schedule3",
+          "f8863",
+          "form1062",
+          "schedule_r"
+        ],
+        "source_module": "forms/f1040/2026/nodes/f2441.ts"
+      },
+      {
+        "key": "f8863",
+        "node_type": "f8863",
+        "implemented": true,
+        "targets": [
+          "schedule3",
+          "f1040",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/f8863.ts"
+      },
+      {
+        "key": "f8812",
+        "node_type": "f8812",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "schedule3_final",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/f8812.ts"
+      },
+      {
+        "key": "eitc",
+        "node_type": "eitc",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "f8812"
+        ],
+        "source_module": "forms/f1040/2026/nodes/eitc.ts"
+      },
+      {
+        "key": "ssa1099",
+        "node_type": "ssa1099",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "f1040",
+          "schedule_r"
+        ],
+        "source_module": "forms/f1040/2026/inputs/social-security.ts"
+      },
+      {
+        "key": "student_loan_interest",
+        "node_type": "student_loan_interest",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator"
+        ],
+        "source_module": "forms/f1040/2026/inputs/student-loan-interest.ts"
+      },
+      {
+        "key": "investment_income",
+        "node_type": "investment_income",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "agi_aggregator",
+          "schedule1",
+          "schedule_a",
+          "income_tax_calculation",
+          "form6251",
+          "form8960",
+          "capital_gains",
+          "f8938"
+        ],
+        "source_module": "forms/f1040/2026/inputs/investments.ts"
+      },
+      {
+        "key": "f3921",
+        "node_type": "f3921",
+        "implemented": true,
+        "targets": [
+          "form6251"
+        ],
+        "source_module": "forms/f1040/2026/inputs/f3921.ts"
+      },
+      {
+        "key": "cash_charity",
+        "node_type": "cash_charity",
+        "implemented": true,
+        "targets": [
+          "standard_deduction",
+          "schedule_a"
+        ],
+        "source_module": "forms/f1040/2026/inputs/cash-charity.ts"
+      },
+      {
+        "key": "mortgage_interest",
+        "node_type": "mortgage_interest",
+        "implemented": true,
+        "targets": [
+          "schedule_a"
+        ],
+        "source_module": "forms/f1040/2026/inputs/mortgage-interest.ts"
+      },
+      {
+        "key": "educator_expenses",
+        "node_type": "educator_expenses",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "schedule_a"
+        ],
+        "source_module": "forms/f1040/2026/inputs/educator-expenses.ts"
+      },
+      {
+        "key": "f3903",
+        "node_type": "f3903",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "f1040"
+        ],
+        "source_module": "forms/f1040/2026/inputs/moving-expenses.ts"
+      },
+      {
+        "key": "vehicle_loan_interest",
+        "node_type": "vehicle_loan_interest",
+        "implemented": true,
+        "targets": [
+          "schedule1a"
+        ],
+        "source_module": "forms/f1040/2026/inputs/vehicle-loan-interest.ts"
+      },
+      {
+        "key": "w2",
+        "node_type": "w2",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "agi_aggregator",
+          "eitc",
+          "schedule1",
+          "schedule2",
+          "schedule3",
+          "schedule_a",
+          "schedule_c",
+          "schedule_se",
+          "form8995",
+          "form4137",
+          "form8919",
+          "form2441",
+          "form8959",
+          "form8853",
+          "form8839",
+          "form8880",
+          "form8962",
+          "ira_deduction_worksheet",
+          "f8812",
+          "schedule1a",
+          "f3903",
+          "f1099r",
+          "able_accounts",
+          "hsa_accounts"
+        ],
+        "source_module": "forms/f1040/2026/inputs/w2.ts"
+      },
+      {
+        "key": "form4137",
+        "node_type": "form4137",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "agi_aggregator",
+          "schedule2",
+          "schedule1a",
+          "form8959",
+          "form8919",
+          "eitc",
+          "f8812",
+          "schedule_se",
+          "schedule_c"
+        ],
+        "source_module": "forms/f1040/2026/inputs/form4137.ts"
+      },
+      {
+        "key": "form8919",
+        "node_type": "form8919",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "agi_aggregator",
+          "schedule2",
+          "form8959",
+          "schedule_se",
+          "eitc",
+          "f8812",
+          "schedule_c"
+        ],
+        "source_module": "forms/f1040/2026/inputs/form8919.ts"
+      },
+      {
+        "key": "ct2",
+        "node_type": "ct2",
+        "implemented": true,
+        "targets": [
+          "form8959",
+          "schedule_c"
+        ],
+        "source_module": "forms/f1040/2026/inputs/ct2.ts"
+      },
+      {
+        "key": "income_tax_calculation",
+        "node_type": "income_tax_calculation",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "form8615",
+          "form6251",
+          "f8812",
+          "form_1116",
+          "form8978_reporting_year",
+          "f2441",
+          "f8863",
+          "form1062",
+          "schedule_r",
+          "form8880"
+        ],
+        "source_module": "forms/f1040/2026/nodes/income-tax.ts"
+      },
+      {
+        "key": "form6251",
+        "node_type": "form6251",
+        "implemented": true,
+        "targets": [
+          "schedule2",
+          "form1062"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form6251.ts"
+      },
+      {
+        "key": "form8960",
+        "node_type": "form8960",
+        "implemented": true,
+        "targets": [
+          "schedule2"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form8960.ts"
+      },
+      {
+        "key": "form8959",
+        "node_type": "form8959",
+        "implemented": true,
+        "targets": [
+          "schedule2",
+          "f1040",
+          "f8812"
+        ],
+        "source_module": "forms/f1040/2026/nodes/form8959.ts"
+      },
+      {
+        "key": "schedule_a",
+        "node_type": "schedule_a",
+        "implemented": true,
+        "targets": [
+          "standard_deduction",
+          "form8960"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule-a.ts"
+      },
+      {
+        "key": "schedule2",
+        "node_type": "schedule2",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "f8812",
+          "f2441",
+          "f8863",
+          "form1062",
+          "schedule_r",
+          "form8880"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule2.ts"
+      },
+      {
+        "key": "schedule3",
+        "node_type": "schedule3",
+        "implemented": true,
+        "targets": [
+          "f8812",
+          "form8880"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule3.ts"
+      },
+      {
+        "key": "agi_aggregator",
+        "node_type": "agi_aggregator",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "schedule1",
+          "standard_deduction",
+          "schedule_a",
+          "eitc",
+          "f8812",
+          "f2441",
+          "form8995",
+          "form8960",
+          "form8962",
+          "form8880",
+          "form8582",
+          "form_1116",
+          "schedule1a",
+          "agi_final",
+          "schedule_j_calculation",
+          "f8863",
+          "f8615",
+          "schedule_r"
+        ],
+        "source_module": "forms/f1040/2026/nodes/agi.ts"
+      },
+      {
+        "key": "standard_deduction",
+        "node_type": "standard_deduction",
+        "implemented": true,
+        "targets": [
+          "f1040",
+          "income_tax_calculation",
+          "form8960"
+        ],
+        "source_module": "forms/f1040/2026/nodes/standard_deduction.ts"
+      },
+      {
+        "key": "schedule1",
+        "node_type": "schedule1",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/nodes/schedule1.ts"
+      },
+      {
+        "key": "schedule1a",
+        "node_type": "schedule1a",
+        "implemented": true,
+        "targets": [
+          "standard_deduction"
+        ],
+        "source_module": "forms/f1040/2026/nodes/schedule1a.ts"
+      },
+      {
+        "key": "f1040",
+        "node_type": "f1040",
+        "implemented": true,
+        "targets": [
+          "schedule3a",
+          "capital_loss_carryover",
+          "refund_allocation",
+          "f8938"
+        ],
+        "source_module": "forms/f1040/2026/nodes/f1040.ts"
+      },
+      {
+        "key": "schedule3a",
+        "node_type": "schedule3a",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/nodes/schedule3a.ts"
+      }
+    ]
+  }
+}

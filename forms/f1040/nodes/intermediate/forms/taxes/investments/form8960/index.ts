@@ -3,12 +3,18 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
+import {
+  CONFIG_BY_YEAR,
+  type F1040Config,
+} from "../../../../../config/index.ts";
 import { normalizeArray } from "../../../../../utils.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
@@ -82,7 +88,7 @@ export const inputSchema = z.object({
   line10_additional_modifications: z.number().nonnegative().optional(),
 });
 
-const printFieldsSchema = z.object({
+export const printFieldsSchema = z.object({
   line1_taxable_interest: z.number(),
   line2_ordinary_dividends: z.number(),
   line3_annuities: z.number(),
@@ -110,11 +116,16 @@ const printFieldsSchema = z.object({
 type Form8960Input = z.infer<typeof inputSchema>;
 type Form8960PrintFields = z.infer<typeof printFieldsSchema>;
 
+export type NiitConfig = Pick<
+  F1040Config,
+  "niitThresholdMfj" | "niitThresholdMfs" | "niitThresholdOther"
+>;
+
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
 // MAGI threshold by filing status
 // Form 8960 line 14; not indexed for inflation (TY2025)
-function threshold(status: FilingStatus, cfg: F1040Config): number {
+function threshold(status: FilingStatus, cfg: NiitConfig): number {
   if (status === FilingStatus.MFJ) return cfg.niitThresholdMfj;
   if (status === FilingStatus.QSS) return cfg.niitThresholdMfj;
   if (status === FilingStatus.MFS) return cfg.niitThresholdMfs;
@@ -181,8 +192,8 @@ function toCents(n: number): number {
 
 // Part III, Line 17: Net Investment Income Tax = line16 × 3.8%
 // Form 8960 line 17 → Schedule 2 line 12
-function niitTax(base: number): number {
-  return toCents(base * NIIT_RATE);
+function niitTax(base: number, roundTax: (amount: number) => number): number {
+  return roundTax(base * NIIT_RATE);
 }
 
 // Route NIIT to schedule2 line 12 when > 0
@@ -205,6 +216,15 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8960Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    return this.computeWithConfig(ctx, rawInput, cfg);
+  }
+
+  computeWithConfig(
+    _ctx: NodeContext,
+    rawInput: Form8960Input,
+    cfg: NiitConfig,
+    roundTax: (amount: number) => number = toCents,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const limit = threshold(input.filing_status, cfg);
@@ -223,7 +243,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     const nii = netInvestmentIncome(gross, deductions);
 
     const base = taxableBase(nii, excess);
-    const niit = niitTax(base);
+    const niit = niitTax(base, roundTax);
 
     const line4a = input.line4a_passive_income ?? 0;
     const line4b = input.line4b_rental_net ?? 0;

@@ -10,7 +10,7 @@ export enum AccountType {
   Savings = "savings",
 }
 
-const accountSchema = z.object({
+export const accountSchema = z.object({
   routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/),
   account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/),
   account_type: z.nativeEnum(AccountType),

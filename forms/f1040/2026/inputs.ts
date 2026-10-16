@@ -1,0 +1,274 @@
+import { adoption_2026, adoptionClaim2026Schema } from "./inputs/adoption.ts";
+import { form8938_2026 } from "./nodes/form8938.ts";
+import { foreignAssetReturnClaim2026Schema } from "./inputs/foreign-assets-return.ts";
+import { form4852_2026 } from "./inputs/form4852.ts";
+import { form4852Claim2026Schema } from "./inputs/form4852-bridge.ts";
+import { hsa_accounts_2026, hsaClaimInput2026Schema } from "./inputs/hsa.ts";
+import { able_accounts_2026, ableClaimInput2026Schema } from "./inputs/able.ts";
+import {
+  form8880_2026,
+  saversCreditClaim2026Schema,
+} from "./nodes/form8880.ts";
+import { schedule_r_2026 } from "./nodes/schedule-r.ts";
+import { scheduleRClaim2026Schema } from "./inputs/schedule-r-source.ts";
+import { retirement_2026 } from "./inputs/retirement.ts";
+import { retirementClaim2026Schema } from "./inputs/retirement-source.ts";
+import { f1095a_2026 } from "./inputs/marketplace.ts";
+import { marketplaceReturnClaim2026Schema } from "./inputs/marketplace-return.ts";
+import { gambling_2026 } from "./inputs/gambling.ts";
+import { gamblingClaim2026Schema } from "./inputs/gambling-source.ts";
+import {
+  estimated_payments_2026,
+  estimatedPaymentClaim2026Schema,
+} from "./inputs/estimated-payments.ts";
+import {
+  refund_allocation_2026,
+  refundAllocationClaim2026Schema,
+} from "./inputs/refund-allocation.ts";
+import { form1062_2026, form1062Claim2026Schema } from "./nodes/form1062.ts";
+import {
+  extension_payments_2026,
+  extensionPaymentClaim2026Schema,
+} from "./inputs/extension-payments.ts";
+import { f5695_2026 } from "./inputs/energy.ts";
+import {
+  land_dispositions_2026,
+  landDispositionClaimInput2026Schema,
+} from "./nodes/land-dispositions.ts";
+import { energyClaim2026Schema } from "./inputs/energy-source.ts";
+import { household_employment_2026 } from "./inputs/household-employment.ts";
+import { householdClaim2026Schema } from "./inputs/household-source.ts";
+import {
+  government_payments_2026,
+  governmentClaim2026Schema,
+} from "./inputs/government-payments.ts";
+import { childTaxClaim2026Schema, f8615_2026 } from "./inputs/child-tax.ts";
+import {
+  business_2026,
+  businessClaimInput2026Schema,
+} from "./nodes/business.ts";
+import {
+  capital_gains_2026,
+  capitalGainClaimInput2026Schema,
+} from "./nodes/capital-gains.ts";
+import { f8863_2026 } from "./nodes/f8863.ts";
+import { educationClaim2026Schema } from "./inputs/education-source.ts";
+import {
+  dependentCareClaim2026Schema,
+  form2441_2026,
+} from "./inputs/dependent-care.ts";
+import { eicClaim2026Schema, eitc_2026 } from "./nodes/eitc.ts";
+import { childCreditClaim2026Schema, f8812_2026 } from "./nodes/f8812.ts";
+import {
+  social_security_2026,
+  socialSecurityClaim2026Schema,
+} from "./inputs/social-security.ts";
+import {
+  student_loan_interest_2026,
+  studentLoanClaim2026Schema,
+} from "./inputs/student-loan-interest.ts";
+import {
+  investmentClaim2026Schema,
+  investments_2026,
+} from "./inputs/investments.ts";
+import { f3921_2026, isoClaim2026Schema } from "./inputs/f3921.ts";
+import {
+  moving_expenses_2026,
+  movingClaim2026Schema,
+} from "./inputs/moving-expenses.ts";
+import {
+  mortgage_interest_2026,
+  mortgageClaim2026Schema,
+} from "./inputs/mortgage-interest.ts";
+import {
+  educator_expenses_2026,
+  educatorClaim2026Schema,
+} from "./inputs/educator-expenses.ts";
+import {
+  claimInputSchema as scheduleASchema,
+  schedule_a_2026,
+} from "./nodes/schedule-a.ts";
+import {
+  claimInputSchema as form8919Schema,
+  form8919_2026,
+} from "./inputs/form8919.ts";
+import { ct2_2026, ct2Item2026Schema } from "./inputs/ct2.ts";
+import {
+  claimInputSchema as form4137Schema,
+  form4137_2026,
+} from "./inputs/form4137.ts";
+import {
+  vehicle_loan_interest_2026,
+  vehicleLoan2026Schema,
+} from "./inputs/vehicle-loan-interest.ts";
+import {
+  claimInputSchema as schedule1aSchema,
+  schedule1a_2026,
+} from "./nodes/schedule1a.ts";
+import {
+  cash_charity_2026,
+  cashGift2026Schema,
+} from "./inputs/cash-charity.ts";
+import {
+  general_2026,
+  inputSchema as generalSchema,
+} from "./inputs/general.ts";
+import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
+import { w2_2026, w2Item2026Schema } from "./inputs/w2.ts";
+
+/**
+ * Incremental 2026 source catalog, not yet registered as a filing product.
+ * The general node supplies filing_status/taxpayer_ssn/spouse_ssn to W-2;
+ * identity is not repeated or trusted independently on each public input row.
+ */
+export const inputNodes: readonly InputNodeEntry[] = [
+  { node: adoption_2026, isArray: false, inputSchema: adoptionClaim2026Schema },
+  { node: form4852_2026, isArray: false, inputSchema: form4852Claim2026Schema },
+  {
+    node: hsa_accounts_2026,
+    isArray: false,
+    inputSchema: hsaClaimInput2026Schema,
+  },
+  {
+    node: able_accounts_2026,
+    isArray: false,
+    inputSchema: ableClaimInput2026Schema,
+  },
+  {
+    node: form8880_2026,
+    isArray: false,
+    inputSchema: saversCreditClaim2026Schema,
+  },
+  {
+    node: schedule_r_2026,
+    isArray: false,
+    inputSchema: scheduleRClaim2026Schema,
+  },
+  {
+    node: retirement_2026,
+    isArray: false,
+    inputSchema: retirementClaim2026Schema,
+  },
+  {
+    node: f1095a_2026,
+    isArray: false,
+    inputSchema: marketplaceReturnClaim2026Schema,
+  },
+  { node: gambling_2026, isArray: false, inputSchema: gamblingClaim2026Schema },
+  {
+    node: estimated_payments_2026,
+    isArray: false,
+    inputSchema: estimatedPaymentClaim2026Schema,
+  },
+  {
+    node: refund_allocation_2026,
+    isArray: false,
+    inputSchema: refundAllocationClaim2026Schema,
+  },
+  {
+    node: form8938_2026,
+    isArray: false,
+    inputSchema: foreignAssetReturnClaim2026Schema,
+  },
+  {
+    node: extension_payments_2026,
+    isArray: false,
+    inputSchema: extensionPaymentClaim2026Schema,
+  },
+  { node: form1062_2026, isArray: false, inputSchema: form1062Claim2026Schema },
+  {
+    node: land_dispositions_2026,
+    isArray: false,
+    inputSchema: landDispositionClaimInput2026Schema,
+  },
+  { node: f5695_2026, isArray: false, inputSchema: energyClaim2026Schema },
+  {
+    node: household_employment_2026,
+    isArray: false,
+    inputSchema: householdClaim2026Schema,
+  },
+  {
+    node: government_payments_2026,
+    isArray: false,
+    inputSchema: governmentClaim2026Schema,
+  },
+  { node: f8615_2026, isArray: false, inputSchema: childTaxClaim2026Schema },
+  {
+    node: business_2026,
+    isArray: false,
+    inputSchema: businessClaimInput2026Schema,
+  },
+  {
+    node: capital_gains_2026,
+    isArray: false,
+    inputSchema: capitalGainClaimInput2026Schema,
+  },
+  { node: f8863_2026, isArray: false, inputSchema: educationClaim2026Schema },
+  {
+    node: form2441_2026,
+    isArray: false,
+    inputSchema: dependentCareClaim2026Schema,
+  },
+  { node: eitc_2026, isArray: false, inputSchema: eicClaim2026Schema },
+  { node: f8812_2026, isArray: false, inputSchema: childCreditClaim2026Schema },
+  {
+    node: social_security_2026,
+    isArray: false,
+    inputSchema: socialSecurityClaim2026Schema,
+  },
+  {
+    node: student_loan_interest_2026,
+    isArray: false,
+    inputSchema: studentLoanClaim2026Schema,
+  },
+  {
+    node: investments_2026,
+    isArray: false,
+    inputSchema: investmentClaim2026Schema,
+  },
+  { node: f3921_2026, isArray: false, inputSchema: isoClaim2026Schema },
+  {
+    node: moving_expenses_2026,
+    isArray: false,
+    inputSchema: movingClaim2026Schema,
+  },
+  {
+    node: educator_expenses_2026,
+    isArray: false,
+    inputSchema: educatorClaim2026Schema,
+  },
+  {
+    node: mortgage_interest_2026,
+    isArray: false,
+    inputSchema: mortgageClaim2026Schema,
+  },
+  { node: schedule_a_2026, isArray: false, inputSchema: scheduleASchema },
+  { node: form8919_2026, isArray: false, inputSchema: form8919Schema },
+  {
+    node: ct2_2026,
+    isArray: true,
+    inputKey: "ct2s",
+    itemSchema: ct2Item2026Schema,
+  },
+  { node: form4137_2026, isArray: false, inputSchema: form4137Schema },
+  {
+    node: vehicle_loan_interest_2026,
+    isArray: true,
+    inputKey: "vehicle_loans",
+    itemSchema: vehicleLoan2026Schema,
+  },
+  { node: schedule1a_2026, isArray: false, inputSchema: schedule1aSchema },
+  { node: general_2026, isArray: false, inputSchema: generalSchema },
+  {
+    node: cash_charity_2026,
+    isArray: true,
+    inputKey: "cash_gifts",
+    itemSchema: cashGift2026Schema,
+  },
+  {
+    node: w2_2026,
+    isArray: true,
+    inputKey: "w2s",
+    itemSchema: w2Item2026Schema,
+  },
+];

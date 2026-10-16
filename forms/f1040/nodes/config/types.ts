@@ -1,6 +1,38 @@
 // forms/f1040/nodes/config/types.ts
 import type { FilingStatus } from "../types.ts";
-import type { Bracket } from "./2025.ts";
+
+/** A rate-schedule row, shared across tax years. */
+export type Bracket = {
+  over: number;
+  upTo: number;
+  rate: number;
+  base: number;
+};
+
+export type IncomeTaxConfig = Pick<
+  F1040Config,
+  "bracketsMfj" | "bracketsSingle" | "bracketsHoh" | "bracketsMfs"
+>;
+
+export type StandardDeductionConfig =
+  & Pick<
+    F1040Config,
+    "standardDeductionBase" | "standardDeductionAdditional"
+  >
+  & {
+    readonly dependentMinimum: number;
+    readonly dependentEarnedIncomeAddition: number;
+  };
+
+export type ChildCreditConfig = Pick<
+  F1040Config,
+  | "ctcPerChild"
+  | "odcPerDependent"
+  | "actcMaxPerChild"
+  | "ctcPhaseOutThresholdMfj"
+  | "ctcPhaseOutThresholdOther"
+  | "actcEarnedIncomeFloor"
+>;
 
 export interface F1040Config {
   // ── Tax brackets ──────────────────────────────────────────────────────────

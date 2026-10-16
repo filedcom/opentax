@@ -9,10 +9,12 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { filingStatusSchema } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import type { ChildCreditConfig } from "../../../../config/types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 
 export const earnedIncomeWorksheetSchema = z.object({
-  form1040_line1z_wages: z.number().nonnegative(),
+  // A special-needs adoption exclusion can make printed wages negative.
+  form1040_line1z_wages: z.number().finite(),
   nontaxable_combat_pay: z.number().nonnegative(),
   schedule_c_statutory_employee_income: z.number().nonnegative(),
   nonfarm_schedule_c_and_k1_net: z.number(),
@@ -232,12 +234,14 @@ export function calculateCreditLimitWorksheetBLines(
   earnedIncomeWorksheet: EarnedIncomeWorksheet,
   bonaFidePrResident: boolean,
   payrollAndCredits?: PartIIBDetails,
+  roundEarnedIncome = false,
 ) {
   const line1 = line12;
   const line2 = qualifyingChildren * 1_700;
   const line3 = calculateEarnedIncomeWorksheet(earnedIncomeWorksheet).line7;
   const line4 = Math.max(0, line3 - 2_500);
-  const line5 = line4 * ACTC_EARNED_INCOME_RATE;
+  const rawLine5 = line4 * ACTC_EARNED_INCOME_RATE;
+  const line5 = roundEarnedIncome ? Math.round(rawLine5) : rawLine5;
   const usesPayrollBranch = line2 < 5_100
     ? bonaFidePrResident && line5 < line1
     : line5 < line1;
@@ -374,6 +378,18 @@ export function calculateSchedule8812Lines(
 ) {
   const cfg = CONFIG_BY_YEAR[taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  return calculateSchedule8812LinesWithConfig(cfg, rawInput);
+}
+
+/** Shared arithmetic; callers own year-specific source and worksheet routing. */
+export function calculateSchedule8812LinesWithConfig(
+  cfg: ChildCreditConfig,
+  rawInput: F8812Input,
+  options: {
+    roundActcEarnedIncome?: boolean;
+    resolvePartIIB?: () => PartIIBDetails;
+  } = {},
+) {
   const input = inputSchema.parse(rawInput);
   const explicitItems = input.f8812s ?? [];
   if (explicitItems.length > 0) {
@@ -527,6 +543,7 @@ export function calculateSchedule8812Lines(
       worksheetInput!,
       isPrResident,
       input.part_iib,
+      options.roundActcEarnedIncome,
     )
     : null;
   const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
@@ -571,20 +588,26 @@ export function calculateSchedule8812Lines(
     );
   }
   const line19 = Math.max(0, (line18a ?? 0) - cfg.actcEarnedIncomeFloor);
-  const line20 = computeActcEarnedIncomeBased(
+  const earnedMethodAmount = computeActcEarnedIncomeBased(
     line18a ?? 0,
     cfg.actcEarnedIncomeFloor,
   );
+  // Whole-dollar returns compare the printed line 20 with line 17 before
+  // deciding whether Part II-B is required. Preserve the legacy default.
+  const line20 = options.roundActcEarnedIncome
+    ? Math.round(earnedMethodAmount)
+    : earnedMethodAmount;
   const needsPartIIB = line17 > 0 &&
     (isPrResident || (line4 >= 3 && line20 < line17));
   let partIIBLines = null;
   if (needsPartIIB) {
-    if (!input.part_iib) {
+    const partIIB = input.part_iib ?? options.resolvePartIIB?.();
+    if (!partIIB) {
       throw new Error(
         "Schedule 8812 Part II-B needs its W-2, Schedule 1, Schedule 2, EIC, and adoption-credit line sources",
       );
     }
-    partIIBLines = calculatePartIIBLines(input.part_iib, line20);
+    partIIBLines = calculatePartIIBLines(partIIB, line20);
   }
   const line27 = Math.min(
     line17,

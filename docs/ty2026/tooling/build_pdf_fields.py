@@ -1,15 +1,17 @@
 """Record fields and widgets in pinned TY2026 draft PDFs."""
 
+import argparse
 import csv
+import sys
 from pathlib import Path
 
 from pypdf import PdfReader
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 SLUGS = (
-    "f1040", "f1040s1", "f1040s2", "f1040s3a", "f1040sb", "f1040sse",
-    "f6251", "f8995", "f8995a", "f8995aa",
+    "f1040", "f1040sa", "f1040s1", "f1040s2", "f1040s3a", "f1040sb", "f1040sse",
+    "f5329", "f6251", "f8995", "f8995a", "f8995aa",
 )
 
 
@@ -26,7 +28,7 @@ def full_name(annotation):
 
 def inventory(slug, source=None):
     source = source or ROOT / f"corpus/draft/{slug}.pdf"
-    target = ROOT / f"pdf-fields-{slug}.csv"
+    target = ROOT / "inventories/pdf-fields" / f"pdf-fields-{slug}.csv"
     reader = PdfReader(source)
     fields = reader.get_fields() or {}
     widgets = {}
@@ -66,6 +68,17 @@ def inventory(slug, source=None):
 
     attached = sum(row["in_field_tree"] == "yes" for row in rows)
     print(f"{slug}: {len(rows)} widgets/fields, {attached} in field tree: {target}")
+
+
+if len(sys.argv) > 1:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--slug", required=True)
+    parser.add_argument("--source", type=Path)
+    args = parser.parse_args()
+    if not args.slug.isalnum():
+        parser.error("slug must contain only letters and digits")
+    inventory(args.slug, args.source)
+    sys.exit(0)
 
 
 for slug in SLUGS:

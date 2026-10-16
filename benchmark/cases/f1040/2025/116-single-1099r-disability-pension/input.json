@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Single filer age 42 with disability pension (1099-R code 3) — below minimum retirement age, treated as wages on line 1a",
+  "scenario": "Single filer age 42 with disability pension (1099-R code 3) — below minimum retirement age, treated as wages on line 1h",
   "forms": [
     {
       "node_type": "start",

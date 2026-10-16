@@ -51,40 +51,63 @@ a difference between the two calculations.
    multi-type 8z scenarios through calculation, PDF, XML, and TY2025
    regression gates.
 
-Current slice: `nodes/schedule1.ts` accepts established unambiguous source
-keys, maps raw student-loan interest to AGI's adjusted 2026 line 21, and
-rejects the identified legacy misroutes. The AGI node supplies finalized
-line 10/26 totals; the Schedule 1 node and PDF filler each reconcile them.
-The draft PDF filler covers the mapped fields and removes the cover. A
-1099-INT box 2 focused graph produces a five-page 1040/Schedule 1/Schedule B
-PDF that passed text extraction and visual inspection. Form 1098-E is now a
-registered TY2026 input: a $2,500 source amount at $90,000 MAGI produces a
-$1,667 line 21 deduction, the same 1040 line 10 amount, and a four-page
-1040/Schedule 1 PDF. The other rows above remain implementation work; this
-is not yet a public 1099-INT input path.
+## Current implementation on the rebuilt branch
 
-1099-G source audit: the payer's Form 1099-G reporting minimums are
-not income exclusions. The shared source now routes every positive taxable
-amount, including amounts below those payer minimums. For TY2026, a state
-refund input requires `box_2_taxable_amount`, bounded by box 2; prior-year
-itemization alone does not determine how much tax benefit was received. The
-TY2025 `box_2_prior_year_itemized` behavior remains for existing callers,
-but should be replaced with an explicit tax-benefit calculation there too.
-Form 1099-G is now a registered TY2026 input for unemployment, including a
-same-year repayment and the draft Schedule 1 repayment checkbox/amount;
-tax-benefit-adjusted state refunds; federal withholding; RTAA payments; and
-taxable grants. The latter two sources are typed Schedule 1 line 8z entries.
-One type prints directly; multiple types print a reconciled total and a
-continuation statement. Agricultural payments, CCC market gain, box 8
-business refunds, and the new 2026 box 10 family-leave benefits raise a
-TY2026 diagnostic before routing any amount. The TY2026 input schema accepts
-renumbered state boxes 11a/11b/12 and rejects the older 10a/10b/11 names.
-Those unsupported branches still need complete graph and print routes.
-Registered integration tests reconcile Schedule 1 line 10 to Form 1040 line 8,
-check withholding on line 25b, and build the 1040/Schedule 1 PDF, including
-the five-page version with a line 8z statement. The statement page was also
-checked by PDF text extraction and rendering.
-IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
-[Publication 525](https://www.irs.gov/publications/p525).
-The [1099-G source contract](./FORM1099G-GRAPH.md) pins the final 2026 form,
-instructions and family-leave ruling and defines the unsupported branches.
+Checked October 15, 2026. This replaces the old prototype registration claims.
+`nodes/schedule1.ts` accepts established source keys, uses AGI's adjusted
+student-loan amount for line 21, rejects the listed legacy misroutes and checks
+its line 10/26 totals against finalized AGI. Its output now retains the parsed,
+rounded calculation input as `calculation_input_2026`, so the PDF builder can
+recompute the same sink rather than trusting edited print totals.
+
+`pdf/schedule1.ts` verifies the pinned three-page source and all 73 canonical
+fields/widgets, fills the two printed pages and removes the cover. It checks
+line 10 against Form 1040 line 8 and line 26 against Form 1040 line 10, rejects
+an unneeded attachment, and validates filer name/SSN syntax. Identity matching
+to the complete return belongs to the still-pending bundle assembler.
+
+The existing educator, moving/storage and investment-penalty routes now have
+printable Schedule 1 destinations. Negative income retains its sign; NOL and
+FEIE amounts use the parentheses already printed on the IRS form. Repayment
+and storage-only facts mark their corresponding checkboxes. The storage-only
+flag retains an attachment even when the amount rounds to zero. Raw student-loan
+interest never substitutes for the AGI-adjusted line 21 deduction.
+
+The sink also retains original alimony-agreement date, both Form 4797/4684
+source answers and the IRA MFS-lived-apart answer. The PDF refuses nonzero
+alimony, other gains or IRA deductions when those print facts are missing.
+These are internal print contracts; adding metadata does not establish the
+source's eligibility or enable its public input route. The original agreement
+date and future source-form/IRA facts must come from their validated owners.
+
+Multiple line 8z income types print on a reconciled statement. A single type
+that cannot fit legibly also gets a statement. Descriptions wrap and paginate
+without losing text, and each statement page carries filer identity and the
+line total. All output pages are static, retain draft warnings and have no
+widgets or AcroForm tree. Unsupported 1099-K header, alimony-paid, housing,
+and other line sources remain blank and are not enabled by this work.
+The [current gambling route](./GAMBLING-CURRENT.md) now supplies and prints
+line 8b using reconciled W-2G and annual ledger records.
+
+## Verification and remaining gates
+
+Five focused tests cover signed income, original dates, statements, adjusted
+student-loan placement, storage-only attachment, missing facts, stale AGI/main-
+form totals, long-description pagination and connected source calculation.
+The connected test derives $350 of educator expenses plus a rounded $101
+investment penalty, retains the sink input and prints the $451 Form 1040
+adjustment. Component fixtures exercise other mapped fields without claiming
+that their public source routes are registered.
+
+Seven synthetic QA pages were rendered with Poppler and visually inspected,
+including checked gain/repayment/storage/IRA fields, signed NOL/FEIE, the two
+printed pages, a multi-type statement and a two-page long-description statement.
+All 288 current-2026 tests passed, as did the repository unit/preflight gate.
+Complete remaining source ownership, 1099-G public inputs, Form 2555 coordination,
+complete attachment selection, current MeF and ATS acceptance remain unfinished.
+
+
+The [student-loan source route](./STUDENT-LOANS-CURRENT.md) now supplies reviewed
+1098-E/payment records through the shared cap and 2026 AGI phaseout to line 21.
+The draft bundle prints that finalized amount and omits a Schedule 1 whose only
+potential deduction is completely phased out.

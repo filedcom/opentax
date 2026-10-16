@@ -1,3 +1,4 @@
+import { saverContributionColumn, saverCreditRate } from "./amounts.ts";
 import {
   ableContributionReviewSchema,
   ownedAbleContributions,
@@ -195,45 +196,6 @@ export const inputSchema = z.object({
 export type Form8880Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// Returns the credit rate (as a decimal) based on AGI and filing status.
-// Returns 0 if AGI exceeds the upper limit for the filing status.
-function creditRate(
-  agi: number,
-  status: FilingStatus,
-  agiSingle: { rate50: number; rate20: number; rate10: number },
-  agiHoh: { rate50: number; rate20: number; rate10: number },
-  agiMfj: { rate50: number; rate20: number; rate10: number },
-): number {
-  if (status === FilingStatus.MFJ) {
-    if (agi <= agiMfj.rate50) return 0.50;
-    if (agi <= agiMfj.rate20) return 0.20;
-    if (agi <= agiMfj.rate10) return 0.10;
-    return 0;
-  }
-  if (status === FilingStatus.HOH) {
-    if (agi <= agiHoh.rate50) return 0.50;
-    if (agi <= agiHoh.rate20) return 0.20;
-    if (agi <= agiHoh.rate10) return 0.10;
-    return 0;
-  }
-  // Single, MFS
-  if (agi <= agiSingle.rate50) return 0.50;
-  if (agi <= agiSingle.rate20) return 0.20;
-  if (agi <= agiSingle.rate10) return 0.10;
-  return 0;
-}
-
-// Returns eligible contribution for one person after distributions and cap.
-// Line 3 = max(Line 1 - Line 2, 0); Line 4 = min(Line 3, contributionCap).
-function eligibleContribution(
-  contributions: number,
-  distributions: number,
-  contributionCap: number,
-): number {
-  const line3 = Math.max(0, contributions - distributions);
-  return Math.min(line3, contributionCap);
-}
 
 function distributionColumns(input: Form8880Input): {
   taxpayer: number;
@@ -513,18 +475,20 @@ export function calculateForm8880(
 
   // Part I — per-person eligible contributions
   const tContributions = line1.taxpayer + deferrals.taxpayer;
-  const tEligible = eligibleContribution(
-    tContributions,
+  const tEligible = saverContributionColumn(
+    line1.taxpayer,
+    deferrals.taxpayer,
     distributions.taxpayer,
     cfg.saversCreditContributionCap,
-  );
+  ).line6;
 
   const sContributions = line1.spouse + deferrals.spouse;
-  const sEligible = eligibleContribution(
-    sContributions,
+  const sEligible = saverContributionColumn(
+    line1.spouse,
+    deferrals.spouse,
     distributions.spouse,
     cfg.saversCreditContributionCap,
-  );
+  ).line6;
 
   // Part II — credit computation
   const totalEligible = tEligible + sEligible; // Line 7
@@ -543,7 +507,7 @@ export function calculateForm8880(
   // Pub. 590-A refigures Form 8880 line 8 by adding back foreign exclusions.
   const agi = parsed.agi + (parsed.foreign_agi_addback ?? 0);
   const status = parsed.filing_status;
-  const rate = creditRate(
+  const rate = saverCreditRate(
     agi,
     status,
     cfg.saversCreditAgiSingle,

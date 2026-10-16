@@ -1,6 +1,12 @@
 # TY2026 Form 1040 product assembly handoff
 
-Snapshot: 2026-09-27. The specialist plans specify calculations and filed
+Current checkout update (October 15, 2026): the
+[development bundle](../pdf/PDF-BUNDLE-CURRENT.md) now assembles the implemented
+source graph with reconciled components and statement ordering. It explicitly
+reports incomplete receivers and cannot produce a filing-ready return. The
+prototype builder named in the historical table below is not the current API.
+
+Historical snapshot: 2026-09-27. The specialist plans specify calculations and filed
 forms. This plan names the repository seams that turn those pieces into one
 `f1040:2026` product. Follow it after the [parity queue](./PARITY-QUEUE.md)
 routes are implemented; catalog registration by itself does not make a

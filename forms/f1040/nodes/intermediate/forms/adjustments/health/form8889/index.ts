@@ -1,3 +1,17 @@
+import { hsaRolloverElapsedDays } from "./rollover-timing.ts";
+import { hsaTestingPeriodIncome } from "./testing-income.ts";
+import { hsaPriorExcess } from "./prior-excess.ts";
+import {
+  hsaDistributionAdditionalTax,
+  hsaTaxableDistributions,
+} from "./distribution-amounts.ts";
+import {
+  calculateHsaContributionLimit,
+  CoverageType,
+} from "./contribution-limit.ts";
+import { verifyHsaFundingTransfers } from "./qualified-funding.ts";
+import { hsaCurrentContributions } from "./current-contributions.ts";
+import { hsaEmployerContributionsForYear } from "./employer-contributions.ts";
 import { z } from "zod";
 import { employerCode2RetainedSourceSchema } from "./employer-code2-evidence-schema.ts";
 import { employerReturnEvidenceSchema } from "./employer-return-evidence-schema.ts";
@@ -27,10 +41,7 @@ const NON_QUALIFIED_PENALTY_RATE = 0.20;
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export enum CoverageType {
-  SelfOnly = "self_only",
-  Family = "family",
-}
+export { CoverageType } from "./contribution-limit.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -641,126 +652,19 @@ function contributionLimitLines(
   familyLimit: number,
   catchupLimit: number,
   soleFamilyLimit = 0,
-): {
-  line1?: CoverageType;
-  line3: number;
-  line5: number;
-  line6: number;
-  line7: number;
-  line8: number;
-} {
-  const coverage = input.eligible_hdhp_coverage_by_month;
-  if (
-    coverage === undefined || input.age_55_or_older === undefined ||
-    input.last_month_rule_elected === undefined
-  ) {
-    throw new Error(
-      "Form 8889 contributions need twelve monthly HDHP eligibility/coverage facts, age, and a last-month-rule answer",
-    );
-  }
-  const eligible = coverage.filter((month) => month !== null);
-  const december = coverage[11];
-  if (eligible.length === 0) {
-    if (input.last_month_rule_elected) {
-      throw new Error(
-        "Form 8889 last-month rule requires December 1 HDHP eligibility",
-      );
-    }
-    return { line3: 0, line5: 0, line6: 0, line7: 0, line8: 0 };
-  }
-  if (input.last_month_rule_elected && december === null) {
-    throw new Error(
-      "Form 8889 last-month rule requires December 1 HDHP eligibility",
-    );
-  }
-  const familyMonths =
-    coverage.filter((month) => month === CoverageType.Family).length;
-  const selfOnlyMonths = eligible.length - familyMonths;
-  // The form's line 1 is the longer-duration coverage unless December is
-  // family. The instructions do not resolve a non-December tie, so stop.
-  if (
-    !input.last_month_rule_elected &&
-    december !== CoverageType.Family && familyMonths === selfOnlyMonths
-  ) {
-    throw new Error(
-      "Form 8889 line 1 needs a source-backed coverage choice when durations tie",
-    );
-  }
-  const line1 = input.last_month_rule_elected
-    ? december!
-    : december === CoverageType.Family || familyMonths > selfOnlyMonths
-    ? CoverageType.Family
-    : CoverageType.SelfOnly;
-  const marriedFamily = familyMonths > 0 && input.married_at_year_end === true;
-  if (
-    familyMonths > 0 && input.married_at_year_end === undefined
-  ) {
-    throw new Error(
-      "Form 8889 family contribution limit needs an explicit marriage answer",
-    );
-  }
-  if (marriedFamily && input.spouse_has_separate_hsa === undefined) {
-    throw new Error(
-      "Form 8889 married family coverage needs a separate-spouse-HSA answer",
-    );
-  }
-  const catchupOnLine7 = input.age_55_or_older === true && marriedFamily;
-  const monthLimit = (month: CoverageType | null): number => {
-    if (month === null) return 0;
-    const base = month === CoverageType.Family ? familyLimit : selfOnlyLimit;
-    return base +
-      (input.age_55_or_older === true && !catchupOnLine7 ? catchupLimit : 0);
-  };
-  const worksheet =
-    coverage.reduce((sum, month) => sum + monthLimit(month), 0) /
-    12;
-  const fullYear = eligible.length === 12;
-  const changedCoverage = familyMonths > 0 && selfOnlyMonths > 0;
-  const decemberLimit = december === null ? 0 : monthLimit(december);
-  const line3 = Math.round(
-    fullYear && changedCoverage
-      ? Math.max(worksheet, decemberLimit)
-      : input.last_month_rule_elected
-      ? decemberLimit
-      : worksheet,
+) {
+  // Preserve the established 2025 input key; the shared worksheet names the
+  // statutory Archer MSA contribution offset correctly for new year adapters.
+  return calculateHsaContributionLimit(
+    {
+      ...input,
+      archer_msa_contributions: input.archer_msa_distributions,
+    },
+    selfOnlyLimit,
+    familyLimit,
+    catchupLimit,
+    soleFamilyLimit,
   );
-  const line5 = Math.max(0, line3 - (input.archer_msa_distributions ?? 0));
-  // For spouses with separate HSAs and mixed family/self-only months, line 6
-  // first takes the agreed family-month share, then adds this owner's own
-  // self-only-month limit. The latter is not shared with the spouse.
-  const ownSelfOnlyLimit = marriedFamily &&
-      input.spouse_has_separate_hsa === true &&
-      input.allocated_family_limit !== undefined && selfOnlyMonths > 0
-    ? Math.round(selfOnlyLimit * selfOnlyMonths / 12)
-    : 0;
-  const line6 = input.allocated_family_limit === undefined
-    ? line5
-    : input.allocated_family_limit + ownSelfOnlyLimit + soleFamilyLimit;
-  if (line6 > line5) {
-    throw new Error("Form 8889 allocated family limit cannot exceed line 5");
-  }
-  const catchupMonths = input.last_month_rule_elected ? 12 : eligible.length;
-  const line7 = catchupOnLine7
-    ? Math.round(catchupLimit * catchupMonths / 12)
-    : 0;
-  return { line1, line3, line5, line6, line7, line8: line6 + line7 };
-}
-
-// Part I, Line 13: Deductible HSA contributions for AGI purposes.
-// Only the taxpayer's own contributions (not through payroll) are deductible.
-// Employer contributions (Box 12 Code W, §106(d)) are already excluded from
-// W-2 Box 1 wages by standard payroll — they are NOT an above-the-line
-// deduction. They appear on Form 8889 for informational and excess-contribution
-// purposes only. The deductible amount is capped by line 12, after employer
-// and qualified IRA-to-HSA funding transfers consume their part of the limit.
-// IRC §223(a), §223(b)(4)
-function deductibleContributions(
-  input: Form8889Input,
-  remainingLimit: number,
-): number {
-  const taxpayer = input.taxpayer_hsa_contributions ?? 0;
-  if (taxpayer <= 0) return 0;
-  return Math.min(taxpayer, remainingLimit);
 }
 
 // Part I: Detect whether regular personal or employer contributions exist.
@@ -773,12 +677,11 @@ function employerContributionsForTaxYear(input: Form8889Input): number {
     );
   }
   const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
-  if (priorYear > codeW) {
-    throw new Error(
-      "Form 8889 prior-year employer contributions exceed W-2 box 12 code W",
-    );
-  }
-  return codeW - priorYear + (years?.made_in_2026_for_2025 ?? 0);
+  return hsaEmployerContributionsForYear(
+    codeW,
+    priorYear,
+    years?.made_in_2026_for_2025 ?? 0,
+  );
 }
 
 function totalContributions(
@@ -821,23 +724,11 @@ function excludedDistributions(input: Form8889Input, taxYear: number): {
   const sources = input.hsa_excluded_distributions;
   const rollover = sources?.rollover;
   if (rollover) {
-    const parseDate = (value: string): number => {
-      const timestamp = Date.parse(`${value}T00:00:00.000Z`);
-      if (
-        !Number.isFinite(timestamp) ||
-        new Date(timestamp).toISOString().slice(0, 10) !== value
-      ) {
-        throw new Error("Form 8889 HSA rollover needs valid calendar dates");
-      }
-      return timestamp;
-    };
-    const distributionDate = parseDate(rollover.distribution_date);
-    const contributionDate = parseDate(rollover.contribution_date);
-    const elapsedDays = (contributionDate - distributionDate) / 86_400_000;
-    if (
-      rollover.distribution_date.slice(0, 4) !== String(taxYear) ||
-      elapsedDays < 0 || elapsedDays > 60
-    ) {
+    hsaRolloverElapsedDays(
+      rollover.distribution_date,
+      rollover.contribution_date,
+    );
+    if (rollover.distribution_date.slice(0, 4) !== String(taxYear)) {
       throw new Error(
         "Form 8889 HSA rollover must redeposit a tax-year distribution within 60 days",
       );
@@ -875,19 +766,11 @@ function excludedDistributions(input: Form8889Input, taxYear: number): {
 // Part II: Taxable (non-qualified) distributions after line 14b exclusions.
 // IRC §223(f)(2)
 function taxableDistributions(input: Form8889Input, excluded: number): number {
-  const total = input.hsa_distributions ?? 0;
-  if (excluded > total) {
-    throw new Error("Form 8889 line 14b cannot exceed HSA distributions");
-  }
-  const net = total - excluded;
-  const qualified = input.qualified_medical_expenses ?? 0;
-  if (qualified > net) {
-    throw new Error(
-      "Form 8889 line 15 qualified expenses cannot exceed net HSA distributions",
-    );
-  }
-  if (total <= 0) return 0;
-  return net - qualified;
+  return hsaTaxableDistributions(
+    input.hsa_distributions ?? 0,
+    excluded,
+    input.qualified_medical_expenses ?? 0,
+  );
 }
 
 function verifyDistributionSources(
@@ -1154,7 +1037,11 @@ function nonQualifiedPenalty(
         "Form 8889 combined age-65 and disability evidence does not reconcile to dated Form 1099-SA sources",
       );
     }
-    return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
+    return hsaDistributionAdditionalTax(
+      taxable,
+      excepted ?? 0,
+      NON_QUALIFIED_PENALTY_RATE,
+    );
   }
   if (taxable <= 0 && !disability) return 0;
   if (taxable > 0 && excepted === undefined) {
@@ -1353,7 +1240,11 @@ function nonQualifiedPenalty(
       );
     }
   }
-  return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
+  return hsaDistributionAdditionalTax(
+    taxable,
+    excepted ?? 0,
+    NON_QUALIFIED_PENALTY_RATE,
+  );
 }
 
 // Merged Schedule 1 output avoids duplicate nodeType entries when deduction,
@@ -1526,55 +1417,32 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       )
       : undefined;
     if (funding && limitLines) {
-      const transferCoverage = funding.transfers.map((transfer) => {
-        const coverage = input.eligible_hdhp_coverage_by_month![
-          transfer.transfer_month - 1
-        ];
-        if (coverage === null) {
-          throw new Error(
-            "Form 8889 qualified HSA funding transfer needs HDHP eligibility in its transfer month",
-          );
-        }
-        const limit = (coverage === CoverageType.Family
-          ? cfg.hsaFamilyLimit
-          : cfg.hsaSelfOnlyLimit) +
-          (input.age_55_or_older ? cfg.hsaCatchup : 0);
-        if (transfer.amount > limit) {
-          throw new Error(
-            "Form 8889 qualified HSA funding transfer exceeds its coverage limit",
-          );
-        }
-        return coverage;
-      });
-      if (funding.transfers.length === 2) {
-        const first = funding.transfers[0]!;
-        const second = funding.transfers[1]!;
-        if (
-          transferCoverage[0] !== CoverageType.SelfOnly ||
-          transferCoverage[1] !== CoverageType.Family ||
-          first.transfer_month >= second.transfer_month ||
-          first.source_reference === second.source_reference
-        ) {
-          throw new Error(
-            "Form 8889 second HSA funding transfer needs a later family-coverage month and distinct trustee source",
-          );
-        }
-      }
-      const lifetimeLimit = (funding.transfers.length === 2
-        ? cfg.hsaFamilyLimit
-        : transferCoverage[0] === CoverageType.Family
-        ? cfg.hsaFamilyLimit
-        : cfg.hsaSelfOnlyLimit) +
-        (input.age_55_or_older ? cfg.hsaCatchup : 0);
-      if (fundingAmount > lifetimeLimit || fundingAmount > limitLines.line8) {
+      verifyHsaFundingTransfers(
+        funding.transfers.map((transfer) => ({
+          amount: transfer.amount,
+          month: transfer.transfer_month,
+          coverage:
+            input.eligible_hdhp_coverage_by_month![transfer.transfer_month - 1],
+          source_reference: transfer.source_reference,
+        })),
+        input.age_55_or_older ?? false,
+        cfg.hsaSelfOnlyLimit,
+        cfg.hsaFamilyLimit,
+        cfg.hsaCatchup,
+      );
+      if (fundingAmount > limitLines.line8) {
         throw new Error(
           "Form 8889 qualified HSA funding transfer exceeds its eligible contribution limit",
         );
       }
     }
-    const employerExcess = limitLines
-      ? Math.max(0, employer - Math.max(0, limitLines.line8 - fundingAmount))
-      : 0;
+    const currentContributions = hsaCurrentContributions(
+      limitLines?.line8 ?? 0,
+      input.taxpayer_hsa_contributions ?? 0,
+      employer,
+      fundingAmount,
+    );
+    const employerExcess = limitLines ? currentContributions.employerExcess : 0;
     const employerTreatment = input.employer_excess_treatment;
     if (employerExcess > 0 && !employerTreatment) {
       throw new Error(
@@ -1600,11 +1468,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         "Form 8889 timely employer withdrawal exceeds excess employer contributions",
       );
     }
-    const line12 = Math.max(
-      0,
-      (limitLines?.line8 ?? 0) - employer - fundingAmount,
-    );
-    const currentDeduction = deductibleContributions(input, line12);
+    const line12 = currentContributions.remainingPersonalLimit;
+    const currentDeduction = currentContributions.currentPersonalDeduction;
     const returnedPersonal = input.hsa_excluded_distributions
       ?.timely_excess_withdrawal;
     if (
@@ -1633,10 +1498,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     );
     const line14b = excludedDistributions(input, ctx.taxYear);
     const taxable = taxableDistributions(input, line14b.excluded);
-    const priorYearDeduction = Math.min(
-      line43,
-      Math.max(0, line42 - taxable),
-    );
+    const priorYearDeduction =
+      hsaPriorExcess(line42, line43, taxable, 0).priorYearDeduction;
     const deductible = currentDeduction + priorYearDeduction;
     const excess = excessContributions(input, currentDeduction) +
       employerExcess -
@@ -1646,11 +1509,12 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const penalty = nonQualifiedPenalty(input, taxable, ctx.taxYear);
     const failure = input.testing_period_failure;
     const lastMonthIncome = lastMonthRuleIncome(input, pairedPriorYear);
-    const partIIIIncome = failure
-      ? lastMonthIncome +
-        failure.qualified_funding_distribution_amount
-      : 0;
-    const eligibilityTax = partIIIIncome * 0.1;
+    const testingIncome = hsaTestingPeriodIncome(
+      failure ? lastMonthIncome : 0,
+      failure?.qualified_funding_distribution_amount ?? 0,
+    );
+    const partIIIIncome = testingIncome.income;
+    const eligibilityTax = testingIncome.additionalTax;
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(

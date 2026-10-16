@@ -10,30 +10,64 @@ pages 2 and 3. `pdf-fields-f1040s2.csv` inventories 68 widgets and
 Regenerate both inventories with `build_pdf_fields.py` and recheck against
 the final 2026 forms.
 
-## Schedule 2
+## Schedule 2 (current October 15 component)
 
-The dedicated descriptor maps each calculated numeric line to the draft
-field. The changed 2026 routes include AMT on line 2, NIIT on line 6,
-Form 4137 on line 16a, W-2 uncollected FICA on line 17c, and the new Part II
-totals. The filler recalculates lines 1z, 3, 14, 15, 16c, 17d, 19c, 20,
-and 21 before rendering. It rejects positive lines 1e/1f when their election
-boxes are missing, and lines 1y/13a/13z when their required description is
-missing. These facts need to be added to the calculation record and PDF
-descriptor before those branches can file.
+The [2026 Schedule 2 builder](../../../forms/f1040/2026/pdf/schedule2.ts)
+recalculates lines 1z, 3, 14, 15, 16c, 17d, 19c, 20 and 21 from finalized
+source-owner amounts. It verifies line 3 against Form 1040 line 17, line 21
+against Form 1040 line 23, and line 20 against the employment/other-tax amount
+used by Schedule 3-A. Its typed map covers every numeric input and total; the
+pinned template has 68 fields across the two printed pages.
 
-## Form 6251
+Changed destinations include Form 4137 on 16a, Form 8919 on 16b, Form 8959
+SE tax on 11 and wage/RRTA tax on 17b, plus W-2 uncollected FICA on 17c.
+The source graph accepts reviewed payroll/golden-parachute routes and the
+bounded Form 6251 AMT route. The PDF's broader finalized-amount interface does not implement missing
+source calculators or establish taxpayer eligibility.
 
-The descriptor maps the calculation node's line 1b, modeled adjustments,
-Part I/II totals, and optional Part III worksheet lines. Line 1a is derived
-from Form 1040 line 11b minus Form 6251 line 1b. The filler verifies the
-AMTI, exemption/tax arithmetic, and Form 1040 line 16 versus Form 6251
-line 10. The current calculation node groups several less common adjustments
-into line 3 and has not modeled every separate printed line 2b–2t. Source
-routes and print detail for those lines remain to implement.
+Separate print details retain Form 4255 line selections for 1e/1f, SE exemption
+checkboxes and text, and the Form 5329 attachment-exception checkbox. Positive
+1e/1f require matching selections. Itemized descriptions and amounts for
+1y/13a/13z must reproduce their printed total; credit recaptures also retain
+form numbers. Descriptions that do not fit inline generate statements with
+filer identity, calendar year, item amounts, pagination and a reconciled total.
+Amounts and labels are not silently clipped to fit.
 
-The core PDF builder appends Schedule 2 when Form 1040 line 17 or 23 reports
-tax. It requires Form 6251 whenever Schedule 2 line 2 reports AMT, and
-reconciles those amounts before merging. A six-page sample (1040, Schedule 2,
-Form 6251) passed text extraction and visual inspection. These are draft
-renderers; the remaining supported TY2025 attachments, current MeF output,
-and final-form verification remain open.
+Output is static, includes both printed pages and any generated statements,
+removes cover/widgets and preserves draft markings. Positive section 965
+installments remain held because line 15's printed addition excludes line 12.
+Final instructions must resolve that conflict before enabling the branch.
+
+The focused integration case links Forms 4137, 8919 and 8959 with Schedule 2:
+$184,000 of W-2 Social Security wages leave $500 for Form 4137 and none for
+Form 8919. Their taxes are $60 and $145. Additional Medicare Tax is $558;
+$30 of W-2 uncollected FICA makes line 20 $793. A separate $100 golden-parachute
+tax makes line 21 $893. This verifies component reconciliation, not complete
+return eligibility, all attachments or IRS acceptance.
+
+## Form 6251 (current October 15 component)
+
+The [current calculator contract](../graphs/FORM6251-CURRENT.md) now connects
+source deduction resolution and Form 3921 exercises to Schedule 2 line 2.
+The [2026 PDF component](../../../forms/f1040/2026/pdf/form6251.ts) uses the
+pinned 62-field inventory: identity, line 1a/1b/2a, supported ISO line 2i,
+Part I/II totals and applicable Part III lines. Unsupported adjustment fields
+stay blank because their sources are rejected by the calculator.
+
+Before rendering, the component recomputes the source result and reconciles
+Form 1040 lines 11b, 12e, 14–16, Schedule 1-A line 43, itemized taxes when
+applicable, and Schedule 2 line 2. It requires matching filer identity and the
+calculated attachment trigger. The ordinary and preferential branches produce
+two static printed pages, remove the cover/widgets and preserve draft markings.
+Both pages of the preferential synthetic case were visually checked; $100,000
+of ISO spread and $20,000 of qualified dividends give $39,374 tentative minimum
+tax, $22,934 regular tax and $16,440 AMT in that component case.
+
+This does not implement the remaining Form 6251 sources or the historical
+prototype's complete bundle. Foreign tax, investment-interest elections,
+credit-driven attachment triggers and AMT disposition refigures remain held.
+
+The future complete PDF bundle must select and reconcile Schedule 2 when Form
+1040 line 17/23 requires it, require Form 6251 for AMT, and include all other
+source-triggered forms and statements. Current component tests and rendered QA
+do not establish that bundle, final-form approval or current-version MeF parity.

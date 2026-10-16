@@ -4,45 +4,222 @@ Sources: pinned [2026 draft Form 5329](../corpus/draft/f5329.pdf)
 (SHA-256 `f8822ccc8d14eca9424255d3b9606a8c210143ad8a317018f50222d03740edbe`)
 and [draft instructions](../corpus/draft/i5329.pdf)
 (SHA-256 `55f531aad380ec1ac63cc697e0f5d0cd603c503e18cebd9fb04b0bd46633aa35`).
-The form is still a draft, so its fields and instructions must be checked
-against the final version before filing.
+The final [2026 Form 1099-R instructions](../corpus/authorities/i1099r--2026.pdf)
+define the payment codes and SIMPLE participation period. Final forms/instructions
+and current IRS acceptance remain filing gates.
 
-## Implemented Part I branch
+## Connected Part I sources
 
-The registered TY2026 `f1099r` source accepts a single-code 1 distribution
-whose box 2a equals box 1 and whose source facts affirm that the full amount
-is subject to additional tax. It also requires a fact identifying whether a
-SIMPLE IRA distribution occurs within its first two years. That fact must
-agree with the 7b IRA/SEP/SIMPLE checkbox when true. If no statement has the
-early SIMPLE fact, the complete 10% tax goes directly to Schedule 2 line 5,
-as the instructions permit for an all-code-1 set of statements. If an early
-SIMPLE statement is present, the Form 5329 Part I node calculates:
+The registered `f1099r` source supports single-code 1 and S distributions alongside
+the [ordinary retirement paths](./FORM1099R-GRAPH.md). It derives taxable income
+from a no-basis traditional/SEP/SIMPLE IRA or a payer-determined qualified pension,
+then requires a reviewed inventory of actual payment dates, gross amounts and
+taxable amounts. Payments must reconcile to the current issued statement and occur
+before age 59½ unless the reviewed payment establishes exception 12. Repeated
+payment references within the same owner/payer/account
+are rejected across statements as well as within one statement.
 
-| Form 5329 line | Current calculation |
+The source review must provide either a no-exception declaration or a complete
+exception review, never both. Code 1 alone is not evidence for either conclusion.
+SIMPLE distributions additionally need
+the first actual contribution date: code S is valid only within two years of that
+date, and a code 1 SIMPLE payment must be on or after the second anniversary.
+Governmental 457(b) early payments require separate rolled-in asset history and
+remain blocked rather than being assigned the ordinary plan tax.
+
+The exception review identifies the owner and account and links each claim to one
+actual payment. Duplicate/orphan payment claims, contradictory declarations and
+entered exception amounts/codes are rejected. The supported evidence derives:
+
+| Exception | Required evidence and boundary |
 | --- | --- |
-| 1 | Sum of eligible regular early and early SIMPLE taxable distributions |
-| 2 | Zero; exception claims are not yet accepted |
-| 3 | Line 1 less line 2 |
-| 4 | 10% of the regular portion plus 25% of the early SIMPLE portion, rounded to whole dollars |
+| 01 | Separation date in or after the year the owner reaches 55; payment from that employer's qualified plan after separation; employer identity and plan relationship reviewed; unavailable for IRAs |
+| 03 | Patient-matched medical determination and retained physician record, disability onset by payment, inability to perform any substantial gainful activity, expected death or long/continued/indefinite duration, and evidence covering the payment date; income classification remains separate |
+| 04 | Matched decedent identity, death date, inherited-basis review and beneficiary entitlement; each payment must be on or after death and the account must remain inherited, including a spouse who has not treated it as their own |
+| 06 | Administrator-qualified domestic relations order effective by the payment date, matching spouse/former-spouse alternate-payee TIN and review that the entire payment was made under the order; unavailable for IRAs |
+| 10 | Dated IRS levy on the actual retirement account; the amount paid under the levy must equal that payment's gross amount; a voluntary withdrawal to pay tax does not qualify |
+| 12 | Verified birth record and actual payment date on or after the owner's 59½ birthday, including month-end anniversaries; source code remains 1/S |
+| 20 | Owner-matched physician certification signed by the payment date; reviewed physician credentials, contact, supporting narrative and attestation, examination/evidence-review date, and certified expectation of death within 84 months; eligible plan distribution and administration/election evidence |
 
-Line 4 feeds 2026 Schedule 2 line 5, its Part II tax total feeds Form 1040
-line 23, and the PDF builder reconciles all three values. The pinned draft
-has a cover sheet and three printed pages; the output copies only those
-three printed pages after filling recipient name, SSN, and lines 1, 3, and
-4. Line 2 stays blank because no exception is claimed. A rendered sample was
-visually checked. An ordinary code 7 statement may coexist with this branch.
+Disability evidence derives exception 03 from the pinned 2026 draft instructions.
+The medical determination must exist by the treatment review and establish
+disability at payment; unlike terminal illness, it need not have been signed
+before payment. No diagnosis or private physician record is printed on the draft.
+The exception applies to the reviewed payment's taxable amount for ordinary
+qualified-plan and traditional/SEP/SIMPLE IRA withdrawals. A disabled taxpayer's
+withdrawal is not automatically an employer disability pension; that classification
+has its own [income contract](./FORM1099R-GRAPH.md#disability-payment-source-contract).
 
-## Required expansion
+Terminal-illness evidence follows [Notice 2024-2, section F](../corpus/authorities/n-24-02.pdf)
+(SHA-256 `4f1e3dde1415ab7d2ecf404faf9750a9e0ab349be160b1cf34253d98c6d36d91`);
+the [IRS bulletin](https://www.irs.gov/irb/2024-02_IRB#NOT-2024-2) also provides the text.
+The review requires a licensed MD/DO, a certification by someone other than the
+patient, the signed narrative and supporting records, and evidence that the
+payment was otherwise permitted. For a plan offering this treatment, the
+administrator must receive the certification after signing and by payment. For a
+plan not offering it, the return election and retained certification are required.
+Neither route accepts a certificate signed after payment. Repayments remain under
+the separate required reconciliation work; this route retains the existing
+no-repayment declaration.
 
-1. Add each Part I exception code and amount with its instruction-specific
-   evidence and validation; then support partial distributions, rollovers,
-   and statements whose box 2a is not the taxable base. Do not infer the
-   25% SIMPLE rate from 7b alone, which also marks other IRA and SEP sources.
-2. Split taxpayer and spouse into separate Form 5329 nodes and PDFs when
-   both have early distributions. The current combined branch rejects that
-   case when a Form 5329 is required.
-3. Map Parts II–X, including excess contributions and RMD shortfalls, from
-   their source forms and carryovers. The current node does not emit them.
-4. Compare the final TY2026 form and instructions, then build the current
-   MeF elements, attachment, validation rules, and ATS cases. The May v1
-   MeF package is research only; this path has no current TY2026 MeF output.
+An early-coded inherited account requires death evidence for every payment and
+cannot mix beneficiary and own-account treatment. The same decedent must match
+all claims and the inherited-basis review across every current statement for the
+same owner, payer and account. Conflicting decedent identities/death dates or a mix of own/inherited
+account reviews are rejected. SIMPLE first participation follows the
+decedent's account and can precede the beneficiary's birth. Correct code 4 stays
+on the ordinary death-income route without creating an unnecessary Form 5329.
+
+Each claim exempts the matched payment's taxable amount, not its gross amount.
+Multiple payments can make a statement partially exempt. Partial exemptions within
+one payment need a separate allocation contract and are not accepted here.
+Different exception kinds across an owner's payments derive code 99. No entered
+exception code or exempt-dollar override is accepted. Public-safety separation
+variants, QDRO payments to children/dependents and the other exception families
+remain required work. QDRO child/dependent payments are taxable to the plan
+participant, so they cannot use this alternate-payee income contract; see
+[IRS Publication 504](https://www.irs.gov/publications/p504).
+
+The 2025 Form 5329 node and 2026 source share `earlyDistributionAdditionalTax`.
+Existing 2025 exception validation, Roth review and rounding behavior remain in
+the 2025 owner node. The 2026 path derives its own validated regular/SIMPLE bases.
+No legacy 2025 source schema or precomputed penalty is exposed as a 2026 input.
+
+## Owner calculation and return routing
+
+| Value | Current calculation |
+| --- | --- |
+| Line 1 | Each owner's combined early taxable distributions, summed in cents and rounded once for the filed line |
+| Line 2 | Sum of the taxable portions of the owner's exempt payments, rounded once |
+| Line 3 | Line 1 less line 2 |
+| Line 4 | 25% of the remaining SIMPLE two-year portion plus 10% of the remaining regular portion, rounded once |
+| Schedule 2 line 5 | Sum of the separately rounded owner Form 5329 taxes when forms are required |
+
+The unexempt SIMPLE amount is summed in cents and rounded, then bounded by filed
+line 3 so independently rounded lines 1/2 cannot create a negative regular base.
+The residual filed line 3 amount receives the 10% rate.
+
+If every current 1099-R on the return has code 1 and its full gross amount is
+subject to the 10% tax, the direct Schedule 2 route rounds the combined taxable
+base once, computes the tax and marks the form-not-required checkbox. Otherwise
+each affected owner gets a separate Form 5329, including mixed ordinary/early
+statements, partial-taxable pensions, and combined regular/SIMPLE distributions.
+A claimed exception always requires an owner form, including a fully exempt
+distribution with zero tax; a zero-tax Schedule 2 is omitted when otherwise unused.
+The owners' income still aggregates on Form 1040; their additional tax is kept
+separate through Schedule 2 line 5, its totals, Form 1040 line 23 and settlement.
+
+Form 1062 accepts the connected section 72(t) tax as an explicit exclusion from
+regular tax under [26 USC 26(b)(2)(C)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapA-partIV-subpartA-sec26.htm).
+Its actual-return reconciliation retains that payable tax while the farmland
+calculation excludes it from lines 2 and 10; see the
+[Form 1062 instructions](https://www.irs.gov/instructions/i1062).
+
+## Draft PDF
+
+The [field inventory](../inventories/pdf-fields/pdf-fields-f5329.csv) records all
+85 canonical widgets. Each attachment uses the individual owner's name and SSN,
+prints Part I lines 1, 3 and 4 plus line 2 and the derived exception code when
+claimed, and leaves unused parts blank. Physician certifications, medical record
+references and decedent evidence remain in the retained review, not the generated
+return or source attachments. The draft cover is excluded; the three official
+pages remain in attachment
+sequence 29, with taxpayer and spouse forms kept separate. Original source forms
+are retained unchanged where federal withholding requires an attachment.
+
+The renderer replays the source calculation and requires an exact match to the
+combined Schedule 2 destination and owner identity. Generated pages are static,
+without AcroForm fields or annotations, and carry development labels below the IRS
+footer. These files are incomplete development drafts, not filing artifacts.
+
+## Required remaining work
+
+1. Remaining Part I exceptions and partial-payment allocations, with instruction-specific evidence and limits, including
+   qualified long-term-care distributions, emergency expenses, domestic abuse,
+   medical and education expenses, disability and public-safety separation.
+   Disability pensions also require minimum-retirement-age income routing and
+   earned-income consumer reconciliation; an exception alone is insufficient.
+   Incorrect early coding that also conflicts with SIMPLE participation dates
+   still requires source resolution; the age exception does not bypass that check.
+2. IRA basis and Roth recapture via Form 8606, indirect/partial rollovers,
+   disaster distributions and repayments, and governmental 457(b) rolled-in assets.
+3. Remaining Parts II–XI: education and advanced ABLE distributions, excess contributions, RMD shortfalls,
+   Trump-account contributions and excess-contribution earnings, each with the
+   applicable source forms, owner separation and prior-year carryovers.
+4. Final TY2026 form/instruction comparison, current MeF mapping/rules and ATS
+   acceptance. The older May v1 MeF package remains research material.
+
+These remain required parity work. The connected Part I routes do not establish
+complete Form 5329 or retirement filing support.
+
+## Validation evidence
+
+Focused tests cover payment eligibility, contradictory/missing evidence, distinct
+spouses, mixed regular/SIMPLE bases, partial annual exemptions, multiple-exception
+code 99, month-end age boundaries and zero-tax owner attachments. PDF checks read
+the printed code and each Part I amount and require no AcroForm or annotations.
+Full 2026, shared 2025 retirement and repository unit regressions are retained
+alongside rendered whole-return and component review. IRS acceptance remains open.
+
+Initial exception increment: 872 full 2026 tests, 60 focused tests (including
+shared 2025 Form 5329 and Form 1062 regressions), and 137 repository unit checks
+passed. Eight rendered pages across fully exempt and multiple-exception cases
+were reviewed after the standalone annotation cleanup.
+
+Life-event coverage adds death/terminal eligibility and timing, partial annual
+exemptions, ordinary code-4 comparison, inherited SIMPLE participation and
+owner-separated exceptions. PDF checks verify codes 04/20, zero tax and exclusion
+of private medical/decedent records from the return.
+
+The life-event increment passed 881 full 2026 tests, 74 focused tests and 137
+repository unit checks. Ten rendered pages were visually reviewed; regenerated
+final pages matched those reviewed images exactly, with no fields or annotations.
+
+Disability coverage adds code-03 ordinary IRA/plan income, total and partial
+annual exemptions, SIMPLE distributions, medical-proof dates and the independent
+pension/wage source split. The draft test verifies leading-zero exception 03,
+zero Part I tax and exclusion of retained medical evidence. The five-page
+synthetic SIMPLE return was rendered and visually reviewed, with no AcroForm or
+annotations. Employer disability-wage return assembly now connects to AGI and
+earned-income consumers as documented in the [1099-R contract](./FORM1099R-GRAPH.md);
+this income classification remains independent of Part I exception eligibility.
+
+The disability source increment passed 165 typed source/shared-node/PDF/Form 1062
+checks and 137 repository unit/harness checks. Regenerated final draft pages
+matched the visually reviewed five-page bundle exactly.
+
+
+## Ordinary ABLE Part II integration
+
+The [ABLE source contract](./ABLE-CURRENT.md) now provides owner Part II lines
+5–8. A dedicated collection combines those amounts with retirement Part I on one
+form per owner and supplies the single Schedule 2 line 5 amount. When Part II
+requires a form, early-distribution owners also use printed Part I forms rather
+than the combined direct-report shortcut, so joint whole-dollar rounding agrees
+with the filed owner lines. The retirement-only shortcut is preserved.
+
+The collection replays both source inventories and checks return owners, DOBs,
+wages and business facts. Form 1062 separately reconciles the collection and
+excludes section 529A additional tax from its regular-tax deferral comparison.
+Static PDF checks read the Part I/II fields after flattening and reject stale
+Schedule 2 amounts; a representative combined form and Schedule 1 were rendered
+and visually inspected. Education-account distributions, advanced ABLE branches,
+remaining parts, final instructions and current MeF/ATS remain unfinished.
+
+## HSA Part VII annual source workpaper
+
+The [HSA contract](./FORM8889-GRAPH.md#annual-prior-excess-and-form-5329-part-vii)
+now joins latest filed 2025 owner history, current contribution room, ordinary
+taxable distributions and timely excess returns. It reuses shared 2025 carryover,
+deduction and six-percent arithmetic, retaining exact source fractions beside
+filed lines. Account-value caps include following-year designated contributions;
+prior filed tax must be positive to activate the carryforward. Owner totals
+identify Schedule 2 line 18, separately from the existing Part I/II line 5 route.
+
+The registered development owner collection now replays the HSA sources alongside
+retirement and ABLE, checking identity, birth dates and the actual wage inventory.
+It combines applicable Parts I, II and VII on one owner draft, with Part VII
+printed on page 2 and reconciled to Schedule 2 line 18. HSA distribution/testing
+taxes remain separate on lines 13c/13d and are excluded from Form 1062 deferred
+regular tax. Advanced HSA sources, other Form 5329 parts and native TY2026 MeF
+remain incomplete.

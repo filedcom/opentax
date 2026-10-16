@@ -33,6 +33,20 @@ form alone does not establish eligibility.
 
 ## Current implementation boundary
 
+The October 15 [2026 employee-payment intake](../../../forms/f1040/2026/inputs/employee-payments.ts)
+provides a focused NEC box 1a/MISC box 3 route for reviewed Form 8919 wages.
+Issued document IDs, recipient/payer identity and underlying wage-payment IDs
+must reconcile; overlapping payments cannot be counted twice. Box 4 withholding
+reaches Form 1040 line 25b once. A same-firm payment without an information return
+can supplement the issued amount with independent receipt evidence. Corrected
+copies, positive tip/overtime detail, NEC golden parachutes and other reportable
+boxes remain held for their source owners. This does not implement the full
+business/farm/property intake below. The [8919 contract](./FORM4137-8919-GRAPH.md)
+records its current calculator, graph and draft PDF scope.
+
+The following shared-node observations are the historical September snapshot;
+re-audit current 2025 code before expanding either 2026 source adapter.
+
 The shared [`f1099nec` node](../../../forms/f1040/nodes/inputs/income/business/f1099nec/index.ts)
 uses an old `box1_nec` field, has no 1b/1c/1d inputs, and creates a new
 Schedule C business for each form using payer name, code `999999`, cash

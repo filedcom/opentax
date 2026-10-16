@@ -22,27 +22,32 @@ issuance threshold is not a recipient deduction floor.
 | Boxes 6/7 original use and final U.S. assembly | Validate these flags using vehicle purchase documentation/VIN/manufacturer evidence. The form's boxes are source facts; an unchecked or missing box is not a license to assume eligibility. Also check permitted vehicle type, public-road use, at least two wheels and gross vehicle weight rating under 14,000 pounds. |
 | Return worksheet | Send qualified per-loan interest less amounts actually deducted on business schedules to Schedule 1-A line 28 column (iii), sum line 29, cap at **$10,000** on line 30, then reduce by **$200 for each $1,000 or fraction** of MAGI above $100,000 ($200,000 MFJ) on lines 31–36. Reconcile line 36 to Schedule 1-A line 44, 1040 line 13a, taxable income, printed PDF, and current MeF. Keep the taxpayer's MAGI and any Form 2555/territory addbacks as a year-specific calculation, not a user-supplied final answer. |
 
-## Current implementation boundary
+## Current implementation boundary (October 15)
 
-The shared [`schedule1a` node](../../../forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/index.ts)
-and dedicated [2026 PDF](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/schedule1a.ts) already
-calculate the $10,000 cap, $200 phaseout and per-VIN form rows, including a
-continuation page test. The input only carries VIN, a caller-supplied
-`qualified_interest_paid`, an optional business deduction and optional
-original-use/assembly flags. The node rejects explicit `false` flags but
-accepts absent flags. It has no lender/form source, origination/first-lien,
-vehicle category/weight, purchase financing, refinancing, payer, refund,
-payment date or third-party evidence. The PDF prints derived rows from
-these sparse facts; it cannot prove box 1 reconciliation or eligibility.
+The current branch implements the repeated vehicle-loan source in
+[`vehicle-loan-source.ts`](../../../forms/f1040/2026/inputs/vehicle-loan-source.ts)
+and its [graph node](../../../forms/f1040/2026/inputs/vehicle-loan-interest.ts).
+It reconciles purchase financing, down-payment allocation, pro-rata mixed debt,
+ordinary refinancing, lender transfers, correction chains, payer allocations
+and internal post-limitation business deductions. Form 1098-VLI box 1 is
+reconciled against gross interest because the lender already excludes the
+non-SPVL portion. Loan identity remains distinct from VIN; the Schedule 1-A
+owner groups verified loan amounts into per-VIN printed rows.
 
-The [Schedule E](./SCHEDULEE-GRAPH.md), [Schedule F](./SCHEDULEF-GRAPH.md)
-and [Form 4835](./FORM4835-GRAPH.md) plans identify their **new, distinct**
-2026 vehicle-interest lines. Schedule C also needs a business-interest
-route. Feed one allocation record to those activity owners and Schedule
-1-A, and account for any Form 8990 business-interest limit before treating
-a business amount as actually deducted. Do not infer a Schedule 1-A amount
-from a business vehicle-expense total. The current focused registry/PDF
-slice is a tested calculator, not an intake for the final 1098-VLI source.
+The [2026 Schedule 1-A node](../../../forms/f1040/2026/nodes/schedule1a.ts)
+feeds line 36 through line 44 to deduction selection and Form 1040 line 13a.
+The [draft PDF](../../../forms/f1040/2026/pdf/schedule1a.ts) prints Part IV and
+continuations with reconciled totals. It is an internal attachment component,
+not a complete public filing product.
+
+Remaining acceptance work includes prior-year refund tax-benefit recovery,
+prepaid/accrual adjustments, inherited obligors, special replacement/lien
+exceptions, mixed-debt refinancing with a paydown, and actual integration of
+Schedule C/E/F/4835 and Form 8990 activity owners. The current public source
+rejects these unfinished paths rather than assigning a final deduction.
+The internal business allocation interface alone does not prove the activities'
+deductions. The complete PDF bundle and current-version MeF mapping/validation
+also remain open. The full acceptance list below remains the required scope.
 
 ## Build and acceptance
 

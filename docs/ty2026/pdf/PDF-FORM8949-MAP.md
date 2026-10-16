@@ -1,5 +1,9 @@
 # TY2026 Form 8949 PDF map
 
+Current implementation: [CAPITAL-CURRENT.md](../graphs/CAPITAL-CURRENT.md).
+Implementation-status paragraphs below describe the earlier prototype; retain
+the source and field inventory, but use the current contract for supported routes.
+
 Source: hash-pinned [2026 draft Form 8949](../corpus/draft/f8949.pdf), SHA-256
 `891d869c87ffe9c6d7f79079d19ebf4ac0afa7257f6374cd95936e44a7079ffe`.
 Physical page 1 is the IRS draft cover. Physical pages 2 and 3 are printed

@@ -1,5 +1,9 @@
 # TY2026 capital transaction graph contract
 
+Current implementation: [CAPITAL-CURRENT.md](CAPITAL-CURRENT.md).
+Implementation-status paragraphs below describe the earlier prototype; retain
+the source and field inventory, but use the current contract for supported routes.
+
 Source snapshot: the pinned [2026 draft Form 8949](../corpus/draft/f8949.pdf)
 (SHA-256 `891d869c87ffe9c6d7f79079d19ebf4ac0afa7257f6374cd95936e44a7079ffe`),
 final [2026 Form 1099-B](../corpus/authorities/f1099b--2026.pdf) and

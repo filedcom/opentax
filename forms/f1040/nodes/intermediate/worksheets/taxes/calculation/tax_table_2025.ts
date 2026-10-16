@@ -1,6 +1,5 @@
 import { FilingStatus } from "../../../../types.ts";
 import {
-  type Bracket,
   BRACKETS_HOH_2025,
   BRACKETS_MFJ_2025,
   BRACKETS_MFS_2025,
@@ -8,7 +7,28 @@ import {
   QDCGT_TWENTY_FLOOR_2025,
   QDCGT_ZERO_CEILING_2025,
 } from "../../../../config/2025.ts";
-import { taxFromBrackets } from "./tax_brackets.ts";
+import {
+  type IncomeWorksheetConfig,
+  ordinaryTaxWithConfig,
+  qualifiedDividendTaxWithConfig,
+  taxTableWithConfig,
+} from "./tax_worksheets.ts";
+
+export const incomeWorksheet2025: IncomeWorksheetConfig = {
+  bracketsMfj: BRACKETS_MFJ_2025,
+  bracketsSingle: BRACKETS_SINGLE_2025,
+  bracketsHoh: BRACKETS_HOH_2025,
+  bracketsMfs: BRACKETS_MFS_2025,
+  qdcgtZeroCeiling: QDCGT_ZERO_CEILING_2025,
+  qdcgtTwentyFloor: QDCGT_TWENTY_FLOOR_2025,
+  scheduleDLine19Limit: {
+    [FilingStatus.Single]: 197300,
+    [FilingStatus.MFJ]: 394600,
+    [FilingStatus.MFS]: 197300,
+    [FilingStatus.HOH]: 197300,
+    [FilingStatus.QSS]: 394600,
+  },
+};
 
 /**
  * TY2025 Form 1040 Tax Table, for taxable income below $100,000.
@@ -31,35 +51,7 @@ export function taxTable2025(income: number, status: FilingStatus): number {
   if (wholeDollarIncome >= 100_000) {
     throw new Error("The 2025 Tax Table stops below $100,000");
   }
-  const midpoint = wholeDollarIncome < 5
-    ? 2.5
-    : wholeDollarIncome < 15
-    ? 10
-    : wholeDollarIncome < 25
-    ? 20
-    : wholeDollarIncome < 3_000
-    ? Math.floor(wholeDollarIncome / 25) * 25 + 12.5
-    : Math.floor(wholeDollarIncome / 50) * 50 + 25;
-  const bracket = [...bracketsForTableStatus(status)].reverse().find((entry) =>
-    midpoint > entry.over
-  );
-  if (!bracket) return 0;
-  // Midpoints are exact half-dollars. Compute in integer cents so a value
-  // ending in exactly 50 cents rounds up consistently with the printed table.
-  const ratePercent = Math.round(bracket.rate * 100);
-  const taxCents = Math.round(bracket.base * 100) +
-    (midpoint * 2 - bracket.over * 2) * ratePercent / 2;
-  return Math.floor((taxCents + 50) / 100);
-}
-
-function bracketsForTableStatus(status: FilingStatus): ReadonlyArray<Bracket> {
-  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
-    return BRACKETS_MFJ_2025;
-  }
-  if (status === FilingStatus.MFS) return BRACKETS_MFS_2025;
-  if (status === FilingStatus.HOH) return BRACKETS_HOH_2025;
-  if (status === FilingStatus.Single) return BRACKETS_SINGLE_2025;
-  throw new Error("Unsupported filing status for the 2025 Tax Table");
+  return taxTableWithConfig(wholeDollarIncome, status, incomeWorksheet2025);
 }
 
 /** Tax Table below $100,000; Tax Computation Worksheet rates at or above. */
@@ -67,13 +59,7 @@ export function ordinaryTax2025(income: number, status: FilingStatus): number {
   if (!Number.isFinite(income) || income < 0) {
     throw new Error("The 2025 ordinary tax amount must be nonnegative");
   }
-  const wholeDollarIncome = Math.round(income);
-  return wholeDollarIncome < 100_000
-    ? taxTable2025(wholeDollarIncome, status)
-    : Math.round(taxFromBrackets(
-      wholeDollarIncome,
-      bracketsForTableStatus(status),
-    ));
+  return ordinaryTaxWithConfig(income, status, incomeWorksheet2025);
 }
 
 /**
@@ -99,22 +85,11 @@ export function qualifiedDividendTax2025(
       "The 2025 qualified-dividend worksheet needs nonnegative amounts",
     );
   }
-  const line1 = Math.round(taxableIncome);
-  const line4 = Math.round(qualifiedDividends) + Math.round(netCapitalGain);
-  const line5 = Math.max(0, line1 - line4);
-  const line7 = Math.min(line1, QDCGT_ZERO_CEILING_2025[status]);
-  const line8 = Math.min(line5, line7);
-  const line9 = line7 - line8;
-  const line10 = Math.min(line1, line4);
-  const line12 = Math.max(0, line10 - line9);
-  const line14 = Math.min(line1, QDCGT_TWENTY_FLOOR_2025[status]);
-  const line16 = Math.max(0, line14 - (line5 + line9));
-  const line17 = Math.min(line12, line16);
-  const line18 = line17 * 0.15;
-  const line20 = Math.max(0, line10 - (line9 + line17));
-  const line21 = line20 * 0.20;
-  const line22 = ordinaryTax2025(line5, status);
-  const line23 = line18 + line21 + line22;
-  const line24 = ordinaryTax2025(line1, status);
-  return Math.round(Math.min(line23, line24));
+  return qualifiedDividendTaxWithConfig(
+    taxableIncome,
+    qualifiedDividends,
+    netCapitalGain,
+    status,
+    incomeWorksheet2025,
+  );
 }

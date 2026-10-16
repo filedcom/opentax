@@ -1,3 +1,8 @@
+import {
+  calculateDependentPtcMagi,
+  dependentPtcReturnSchemaForYear,
+  dependentPtcRules2025,
+} from "./dependent-ptc-income.ts";
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { form5329 } from "../../../../intermediate/forms/taxes/retirement/form5329/index.ts";
 import {
@@ -147,16 +152,6 @@ export enum DependentCreditCategory {
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
-const ptcDividendSourceSchema = z.object({
-  source_document_id: z.string().min(1),
-  payer_ein: z.string().regex(/^\d{9}$/),
-  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  box1a_ordinary_dividends: z.number().positive(),
-  box1b_qualified_dividends: z.literal(0),
-  box2a_capital_gain_distributions: z.literal(0),
-  box12_exempt_interest_dividends: z.literal(0),
-}).strict();
-
 export const dependentSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
@@ -187,96 +182,8 @@ export const dependentSchema = z.object({
   gross_income: z.number().nonnegative().optional(), // For qualifying relative test
   // Form 8962 Worksheet 1-2. A dependent's MAGI counts only when a return is
   // required because income meets the filing threshold, not for refund-only returns.
-  ptc_tax_return: z.union([
-    z.object({
-      filing: z.literal("not_required"),
-      // Bounded wage-only Table 2 determination. The reviewed inventory also
-      // rules out the separate Pub. 501 Table 3 filing triggers.
-      wage_form_w2: z.object({
-        source_document_id: z.string().min(1),
-        employer_name: z.string().trim().min(1),
-        employer_ein: z.string().regex(/^\d{9}$/),
-        employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        box1_wages: z.number().positive(),
-      }).strict(),
-      filing_requirement_review: z.object({
-        source_document_id: z.string().min(1),
-        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        tax_year: z.literal(2025),
-        filing_status: z.literal("single"),
-        blind: z.literal(false),
-        wage_source_document_id: z.string().min(1),
-        other_income_reviewed_absent: z.literal(true),
-        other_filing_triggers_reviewed_absent: z.literal(true),
-        return_filed: z.literal(false),
-        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        reviewer_name: z.string().trim().min(1),
-      }).strict(),
-    }).strict(),
-    z.object({
-      filing: z.literal("not_required"),
-      interest_form1099: z.object({
-        source_document_id: z.string().min(1),
-        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        box1_taxable_interest: z.number().positive().max(1_350),
-        box8_tax_exempt_interest: z.number().nonnegative(),
-      }).strict(),
-      filing_requirement_review: z.object({
-        source_document_id: z.string().min(1),
-        dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        tax_year: z.literal(2025),
-        filing_status: z.literal("single"),
-        blind: z.literal(false),
-        interest_source_document_id: z.string().min(1),
-        other_income_reviewed_absent: z.literal(true),
-        other_filing_triggers_reviewed_absent: z.literal(true),
-        return_filed: z.literal(false),
-        reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        reviewer_name: z.string().trim().min(1),
-      }).strict(),
-    }).strict(),
-    z.object({ filing: z.literal("form8814") }),
-    z.object({
-      filing: z.literal("required"),
-      filed_form1040: z.object({
-        source_document_id: z.string().min(1),
-        taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
-        tax_year: z.literal(2025),
-        filing_status: z.literal("single"),
-        blind: z.boolean(),
-        line1z_wages: z.number().nonnegative(),
-        line2a_tax_exempt_interest: z.number().nonnegative(),
-        line2b_taxable_interest: z.number().nonnegative(),
-        line3b_dividends: z.number().nonnegative(),
-        line4b_ira: z.literal(0),
-        line5b_pensions: z.literal(0),
-        line6b_social_security: z.literal(0),
-        line7a_capital_gain: z.literal(0),
-        line8_additional_income: z.literal(0),
-        line10_adjustments: z.literal(0),
-        line11b_agi: z.number().positive(),
-      }).strict(),
-      interest_forms1099: z.array(
-        z.object({
-          source_document_id: z.string().min(1),
-          recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
-          box1_taxable_interest: z.number().nonnegative(),
-          box8_tax_exempt_interest: z.number().nonnegative(),
-        }).strict(),
-      ),
-      dividend_form1099: ptcDividendSourceSchema.optional(),
-      dividend_forms1099: z.array(ptcDividendSourceSchema).min(1).optional(),
-      wage_forms_w2: z.array(
-        z.object({
-          source_document_id: z.string().min(1),
-          employer_name: z.string().trim().min(1),
-          employer_ein: z.string().regex(/^\d{9}$/),
-          employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-          box1_wages: z.number().positive(),
-        }).strict(),
-      ).min(1).optional(),
-    }).strict(),
-  ]).optional(),
+  ptc_tax_return: dependentPtcReturnSchemaForYear(dependentPtcRules2025)
+    .optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
   dependent_on_another_return: z.boolean().optional(), // Excludes the Form 1040 dependent row and CTC/ODC
   custodial_eitc_release_review: z.object({
@@ -567,179 +474,51 @@ export function hohQualifyingChildFromGeneral(
 }
 type DependentItem = z.infer<typeof dependentSchema>;
 
-type RequiredDependentReturn = Extract<
-  NonNullable<DependentItem["ptc_tax_return"]>,
-  { filing: "required" }
->;
+export { ptcDependentDividendSources } from "./dependent-ptc-income.ts";
 
-export function ptcDependentDividendSources(source: RequiredDependentReturn) {
-  if (
-    source.dividend_form1099 !== undefined &&
-    source.dividend_forms1099 !== undefined
-  ) {
-    throw new Error(
-      "Form 8962 dependent dividend sources must use one collection",
-    );
-  }
-  return source.dividend_forms1099 ??
-    (source.dividend_form1099 ? [source.dividend_form1099] : []);
-}
-
+/** Existing 2025 entrypoint; other years supply an explicit annual policy. */
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
-  const claimedSsns = dependents.map((dependent) =>
-    dependent.ssn?.replaceAll("-", "")
-  ).filter((ssn): ssn is string => ssn !== undefined);
-  if (new Set(claimedSsns).size !== claimedSsns.length) {
-    throw new Error("Form 8962 claimed dependents need distinct SSNs");
-  }
-  return dependents.reduce((total, dep) => {
-    const taxReturn = dep.ptc_tax_return;
-    if (taxReturn?.filing === "not_required") {
-      const review = taxReturn.filing_requirement_review;
-      const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
-        ? new Date(`${dep.dob}T00:00:00Z`)
-        : new Date(Number.NaN);
-      const reviewed = new Date(`${review.reviewed_on}T00:00:00Z`);
-      if (
-        Number.isNaN(birth.getTime()) ||
-        birth.toISOString().slice(0, 10) !== dep.dob
-      ) {
-        throw new Error("Form 8962 dependent needs a valid birth date");
-      }
-      if (
-        birth.getTime() < Date.UTC(1961, 0, 2) ||
-        Number.isNaN(reviewed.getTime()) ||
-        reviewed.toISOString().slice(0, 10) !== review.reviewed_on ||
-        reviewed.getTime() < Date.UTC(2026, 0, 1) ||
-        review.dependent_ssn.replaceAll("-", "") !==
-          dep.ssn?.replaceAll("-", "") ||
-        !dep.ssn
-      ) {
-        throw new Error(
-          "Form 8962 dependent not-required review must match the under-65 dependent and 2025 filing threshold",
-        );
-      }
-      if ("wage_form_w2" in taxReturn) {
-        const wage = taxReturn.wage_form_w2;
-        if (
-          wage.box1_wages > 15_750 ||
-          !("wage_source_document_id" in review) ||
-          review.wage_source_document_id !== wage.source_document_id ||
-          review.source_document_id === wage.source_document_id ||
-          wage.employee_ssn.replaceAll("-", "") !== dep.ssn.replaceAll("-", "")
-        ) {
-          throw new Error(
-            "Form 8962 dependent wage-only not-required review must match the W-2 and filing threshold",
-          );
-        }
-      } else {
-        const interest = taxReturn.interest_form1099;
-        if (
-          !("interest_source_document_id" in review) ||
-          review.interest_source_document_id !== interest.source_document_id ||
-          review.source_document_id === interest.source_document_id ||
-          interest.recipient_ssn.replaceAll("-", "") !==
-            dep.ssn.replaceAll("-", "")
-        ) {
-          throw new Error(
-            "Form 8962 dependent interest-only not-required review must match the Form 1099-INT",
-          );
-        }
-      }
-      return total;
-    }
-    if (!taxReturn || taxReturn.filing !== "required") return total;
-    const filed = taxReturn.filed_form1040;
-    const taxableInterest = taxReturn.interest_forms1099.reduce(
-      (sum, source) => sum + source.box1_taxable_interest,
-      0,
-    );
-    const exemptInterest = taxReturn.interest_forms1099.reduce(
-      (sum, source) => sum + source.box8_tax_exempt_interest,
-      0,
-    );
-    const wages = taxReturn.wage_forms_w2?.reduce(
-      (sum, source) => sum + source.box1_wages,
-      0,
-    ) ?? 0;
-    const dividendSources = ptcDependentDividendSources(taxReturn);
-    const dividends = dividendSources.reduce(
-      (sum, source) => sum + source.box1a_ordinary_dividends,
-      0,
-    );
-    const documents = [
-      filed.source_document_id,
-      ...taxReturn.interest_forms1099.map((source) =>
-        source.source_document_id
-      ),
-      ...(taxReturn.wage_forms_w2 ?? []).map((source) =>
-        source.source_document_id
-      ),
-      ...dividendSources.map((source) => source.source_document_id),
-    ];
-    if (new Set(documents).size !== documents.length) {
-      throw new Error(
-        "Form 8962 dependent needs distinct filed-return and income source documents",
-      );
-    }
-    if (
-      taxReturn.wage_forms_w2 &&
-      new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein)).size !==
-        taxReturn.wage_forms_w2.length
-    ) {
-      throw new Error(
-        "Form 8962 dependent W-2 wage sources need distinct documents and employers",
-      );
-    }
-    if (wages + taxableInterest + dividends <= 0) {
-      throw new Error(
-        "Form 8962 dependent needs positive sourced earned or unearned income",
-      );
-    }
-    if (
-      filed.line1z_wages !== wages ||
-      filed.line2a_tax_exempt_interest !== exemptInterest ||
-      filed.line2b_taxable_interest !== taxableInterest ||
-      filed.line3b_dividends !== dividends ||
-      filed.line11b_agi !== wages + taxableInterest + dividends
-    ) {
-      throw new Error(
-        "Form 8962 dependent filed Form 1040 wages, interest, dividends, and AGI must reconcile to W-2 or Forms 1099",
-      );
-    }
-    const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
-      ? new Date(`${dep.dob}T00:00:00Z`)
-      : new Date(Number.NaN);
-    if (
-      Number.isNaN(birth.getTime()) ||
-      birth.toISOString().slice(0, 10) !== dep.dob
-    ) {
-      throw new Error("Form 8962 dependent needs a valid birth date");
-    }
-    const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
-    // Pub.501 Table2 single dependents: each age/blind condition adds $2,000.
-    const increase = (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-    const unearned = taxableInterest + dividends;
-    const gross = wages + unearned;
-    const combinedThreshold = Math.max(
-      1_350 + increase,
-      Math.min(wages, 15_300) + 450 + increase,
-    );
-    if (
-      unearned <= 1_350 + increase && wages <= 15_750 + increase &&
-      gross <= combinedThreshold
-    ) {
-      throw new Error(
-        "Form 8962 dependent sourced income does not establish the 2025 single-dependent filing requirement",
-      );
-    }
-    return total + filed.line11b_agi + exemptInterest;
-  }, 0);
+  return calculateDependentPtcMagi(dependents, dependentPtcRules2025);
 }
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Tax year-end reference date for age calculations
-const TAX_YEAR_END = new Date("2025-12-31");
+/** Annual facts and reviewed residency behavior for shared dependency tests. */
+export interface DependentYearRules {
+  readonly taxYear: number;
+  readonly qualifyingRelativeGrossIncomeLimit: number;
+  readonly livedWithFilerOverHalfYear: (dep: DependentItem) => boolean;
+  readonly qualifyingChildAgeAllowed: (dep: DependentItem) => boolean;
+  readonly assertEicResidence: (
+    dep: DependentItem,
+    qualifyingIdentity: boolean,
+    otherwiseQualified: boolean,
+  ) => void;
+}
+
+const dependentRules2025: DependentYearRules = {
+  taxYear: 2025,
+  qualifyingRelativeGrossIncomeLimit: 5_200,
+  livedWithFilerOverHalfYear: dependentLivedWithFilerOverHalfYear,
+  qualifyingChildAgeAllowed: () => true,
+  assertEicResidence(dep, qualifyingIdentity, otherwiseQualified) {
+    if (
+      qualifyingIdentity && dep.dob.startsWith("2025-") &&
+      dep.months_in_home <= 6 &&
+      dep.eic_birth_residency_review === undefined &&
+      dep.eic_death_residency_review === undefined
+    ) {
+      throw new Error(
+        "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
+      );
+    }
+    if (otherwiseQualified && dep.months_lived_with_you_in_us === undefined) {
+      throw new Error(
+        "EIC qualifying child needs exact U.S. months no greater than home months",
+      );
+    }
+    if (otherwiseQualified) scheduleEicLine6Months(dep);
+  },
+};
 
 // Relationships that qualify for the qualifying-child test (CTC relationship test)
 // IRS Pub 501: child, stepchild, foster child, sibling (or step/half), grandchild,
@@ -758,9 +537,10 @@ const CTC_QUALIFYING_RELATIONSHIPS = new Set<DependentRelationship>([
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Age at December 31, 2025 (tax year end).
+// Age at December 31 of the selected tax year.
 // Returns integer age in completed years.
-function ageAtYearEnd(dob: string): number {
+function ageAtYearEnd(dob: string, taxYear: number): number {
+  const TAX_YEAR_END = new Date(`${taxYear}-12-31`);
   const birth = new Date(dob);
   const yearDiff = TAX_YEAR_END.getFullYear() - birth.getFullYear();
   const birthdayThisYear = new Date(
@@ -786,13 +566,20 @@ function passesSSNTest(dep: DependentItem): boolean {
 
 // IRS CTC age test: under 17 at end of tax year. Disability can extend
 // qualifying-child status for ODC, but not the CTC age limit.
-function passesAgeTest(dep: DependentItem): boolean {
-  return ageAtYearEnd(dep.dob) < 17;
+function passesAgeTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return rules.qualifyingChildAgeAllowed(dep) &&
+    ageAtYearEnd(dep.dob, rules.taxYear) < 17;
 }
 
 // IRS CTC residency test: lived with taxpayer MORE than 6 months.
-function passesResidencyTest(dep: DependentItem): boolean {
-  return dependentLivedWithFilerOverHalfYear(dep);
+function passesResidencyTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return rules.livedWithFilerOverHalfYear(dep);
 }
 
 export function dependentLivedWithFilerOverHalfYear(
@@ -814,22 +601,25 @@ function passesQualifyingChildSupportTest(dep: DependentItem): boolean {
 }
 
 // IRS CTC relationship test: qualifying child relationship only.
-function passesRelationshipTest(dep: DependentItem): boolean {
+export function passesRelationshipTest(dep: DependentItem): boolean {
   return CTC_QUALIFYING_RELATIONSHIPS.has(dep.relationship);
 }
 
 // Determine whether a dependent qualifies for the Child Tax Credit.
 // A true override can account for a special residency exception; it cannot
 // waive the SSN, age, or relationship requirements.
-function isQualifyingChildForCTC(dep: DependentItem): boolean {
+function isQualifyingChildForCTC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
   if (dep.qualifying_child_for_ctc === false) return false;
   return (
     passesSSNTest(dep) &&
-    passesAgeTest(dep) &&
+    passesAgeTest(dep, rules) &&
     passesRelationshipTest(dep) &&
     passesJointReturnTest(dep) &&
     passesQualifyingChildSupportTest(dep) &&
-    (passesResidencyTest(dep) || dep.qualifying_child_for_ctc === true)
+    (passesResidencyTest(dep, rules) || dep.qualifying_child_for_ctc === true)
   );
 }
 
@@ -844,12 +634,16 @@ function hasTin(dep: DependentItem): boolean {
 // This matches the EITC age test — broader than CTC (< 17) but narrower than hasTin alone.
 // IRC §152(c): a qualifying child who is too old for CTC but under 19 (or student < 24)
 // still qualifies as a "qualifying child" and therefore qualifies for ODC.
-function isQualifyingChildForODC(dep: DependentItem): boolean {
+function isQualifyingChildForODC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+  disregardJointReturn = false,
+): boolean {
   return (
-    passesResidencyTest(dep) &&
+    passesResidencyTest(dep, rules) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep) &&
-    passesJointReturnTest(dep) &&
+    passesEitcAgeTest(dep, rules) &&
+    (disregardJointReturn || passesJointReturnTest(dep)) &&
     passesQualifyingChildSupportTest(dep)
   );
 }
@@ -857,9 +651,18 @@ function isQualifyingChildForODC(dep: DependentItem): boolean {
 // The ordinary qualifying-relative path requires confirmed support and gross
 // income facts. Exceptional cases such as multiple-support agreements need
 // separate facts and cannot be inferred from an unanswered question.
-function isQualifyingRelativeForODC(dep: DependentItem): boolean {
-  if (!hasTin(dep)) return false;
-  if (!passesJointReturnTest(dep)) return false;
+function isQualifyingRelativeForODC(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+  careExceptions?: {
+    disregardJointReturn: boolean;
+    disregardGrossIncome: boolean;
+  },
+): boolean {
+  if (!careExceptions && !hasTin(dep)) return false;
+  if (!careExceptions?.disregardJointReturn && !passesJointReturnTest(dep)) {
+    return false;
+  }
   // Family relationships listed in Pub. 501 do not require co-residency.
   // "Other" represents an unrelated household member. Family relationships
   // such as grandparents and in-laws have their own input values.
@@ -870,21 +673,43 @@ function isQualifyingRelativeForODC(dep: DependentItem): boolean {
     return false;
   }
   if (dep.taxpayer_provided_over_half_support !== true) return false;
-  // The 2025 gross-income limit is $5,200. Zero is a valid explicit answer.
-  return dep.gross_income !== undefined && dep.gross_income < 5200;
+  return dep.gross_income !== undefined &&
+    (careExceptions?.disregardGrossIncome === true ||
+      dep.gross_income < rules.qualifyingRelativeGrossIncomeLimit);
 }
 
-/** Ordinary dependency facts reused by education ownership reconciliation. */
-export function educationDependentSourceEligible(dep: DependentItem): boolean {
+/** Section 21 qualifying-person dependency tests. Care does not require a
+ * credit-valid TIN by the CTC/ODC deadline, and permits two statutory exceptions.
+ * Filer-dependent restrictions and custody exceptions are handled by the caller.
+ * Default CTC/ODC/education paths above retain their original requirements. */
+export function careDependentSourceEligible(
+  dep: DependentItem,
+  rules: DependentYearRules,
+  exceptions = { disregardJointReturn: false, disregardGrossIncome: false },
+): boolean {
   return dep.us_citizen_national_or_resident === true &&
     dep.provided_over_half_own_support !== true &&
     dep.dependent_on_another_return !== true &&
-    (isQualifyingChildForODC(dep) || isQualifyingRelativeForODC(dep));
+    (isQualifyingChildForODC(dep, rules, exceptions.disregardJointReturn) ||
+      isQualifyingRelativeForODC(dep, rules, exceptions));
+}
+
+/** Ordinary dependency facts reused by education ownership reconciliation. */
+export function educationDependentSourceEligible(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return dep.us_citizen_national_or_resident === true &&
+    dep.provided_over_half_own_support !== true &&
+    dep.dependent_on_another_return !== true &&
+    (isQualifyingChildForODC(dep, rules) ||
+      isQualifyingRelativeForODC(dep, rules));
 }
 
 export function dependentCreditCategory(
   dep: DependentItem,
   filer: FilerCreditEligibility,
+  rules: DependentYearRules = dependentRules2025,
 ): DependentCreditCategory {
   if (
     dep.us_citizen_national_or_resident !== true ||
@@ -892,13 +717,13 @@ export function dependentCreditCategory(
   ) {
     return DependentCreditCategory.None;
   }
-  if (filer.ctc && isQualifyingChildForCTC(dep)) {
+  if (filer.ctc && isQualifyingChildForCTC(dep, rules)) {
     return DependentCreditCategory.ChildTaxCredit;
   }
   if (
     filer.odc && (
-      (isQualifyingChildForODC(dep) && hasTin(dep)) ||
-      isQualifyingRelativeForODC(dep)
+      (isQualifyingChildForODC(dep, rules) && hasTin(dep)) ||
+      isQualifyingRelativeForODC(dep, rules)
     )
   ) {
     return DependentCreditCategory.OtherDependentCredit;
@@ -907,9 +732,10 @@ export function dependentCreditCategory(
 }
 
 // Count dependents in each category, excluding those claimed on another return.
-function dependentCounts(
+export function dependentCounts(
   deps: DependentItem[],
   filer: FilerCreditEligibility,
+  rules: DependentYearRules = dependentRules2025,
 ): {
   qualifying_child_tax_credit_count: number;
   other_dependent_count: number;
@@ -919,7 +745,7 @@ function dependentCounts(
   let ctcCount = 0;
   let odcCount = 0;
   for (const dep of claimable) {
-    const category = dependentCreditCategory(dep, filer);
+    const category = dependentCreditCategory(dep, filer, rules);
     if (category === DependentCreditCategory.ChildTaxCredit) {
       ctcCount += 1;
     } else if (category === DependentCreditCategory.OtherDependentCredit) {
@@ -936,24 +762,42 @@ function dependentCounts(
 /** Claimable dependent rows exactly as the general node sends to Form 1040. */
 export function filedDependentsFromGeneral(
   input: GeneralInput,
+  rules: DependentYearRules = dependentRules2025,
 ): DependentFiling[] {
   const filer = filerCreditEligibility(input);
   return (input.dependents ?? [])
     .filter((dep) => dep.dependent_on_another_return !== true)
     .map((dep) => ({
       ...dep,
-      credit_category: dependentCreditCategory(dep, filer),
+      credit_category: dependentCreditCategory(dep, filer, rules),
     }));
 }
 
 // EITC age test: under 19 at year-end, OR full-time student under 24, OR permanently disabled.
 // IRC §32(c)(3)(A); broader than CTC age test (< 17).
-function passesEitcAgeTest(dep: DependentItem): boolean {
+function passesEitcAgeTest(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  if (!rules.qualifyingChildAgeAllowed(dep)) return false;
   if (dep.disabled === true) return true;
-  const age = ageAtYearEnd(dep.dob);
+  const age = ageAtYearEnd(dep.dob, rules.taxYear);
   if (age < 19) return true;
   if (dep.full_time_student === true && age < 24) return true;
   return false;
+}
+
+/** Child relationship, age, joint-return and residence tests before the TIN test.
+ * The 2026 self-only EIC attachment route must distinguish these children from
+ * a return that has no qualifying child at all.
+ */
+export function eicChildMeetsNonTinTests(
+  dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
+): boolean {
+  return dep.lived_in_us_over_half_year === true &&
+    passesJointReturnTest(dep) && passesRelationshipTest(dep) &&
+    passesEitcAgeTest(dep, rules) && passesResidencyTest(dep, rules);
 }
 
 // EITC uses its own child test: qualifying age and relationship, U.S. residency,
@@ -961,6 +805,7 @@ function passesEitcAgeTest(dep: DependentItem): boolean {
 // test, and a noncustodial parent's CTC release does not confer EITC eligibility.
 function isEitcQualifyingChild(
   dep: DependentItem,
+  rules: DependentYearRules = dependentRules2025,
 ): dep is DependentItem & {
   ssn: string;
   months_lived_with_you_in_us: number;
@@ -971,33 +816,17 @@ function isEitcQualifyingChild(
     dep.tin_issued_by_due_date === true &&
     passesJointReturnTest(dep) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep);
-  if (
-    qualifyingIdentity && dep.dob.startsWith("2025-") &&
-    dep.months_in_home <= 6 &&
-    dep.eic_birth_residency_review === undefined &&
-    dep.eic_death_residency_review === undefined
-  ) {
-    throw new Error(
-      "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
-    );
-  }
-  const otherwiseQualified = passesResidencyTest(dep) && qualifyingIdentity;
-  if (
-    otherwiseQualified &&
-    dep.months_lived_with_you_in_us === undefined
-  ) {
-    throw new Error(
-      "EIC qualifying child needs exact U.S. months no greater than home months",
-    );
-  }
-  if (otherwiseQualified) scheduleEicLine6Months(dep);
+    passesEitcAgeTest(dep, rules);
+  const otherwiseQualified = passesResidencyTest(dep, rules) &&
+    qualifyingIdentity;
+  rules.assertEicResidence(dep, qualifyingIdentity, otherwiseQualified);
   return otherwiseQualified;
 }
 
 function eitcQualifyingChildren(
   deps: DependentItem[],
   ownerSsns: ReadonlySet<string>,
+  rules: DependentYearRules = dependentRules2025,
 ): Array<
   DependentItem & {
     ssn: string;
@@ -1008,7 +837,7 @@ function eitcQualifyingChildren(
     dep.dependent_on_another_return !== true ||
     dep.custodial_eitc_release_review !== undefined
   )
-    .filter(isEitcQualifyingChild);
+    .filter((dep) => isEitcQualifyingChild(dep, rules));
   const seenSsns = new Set<string>();
   for (const child of children) {
     const ssn = child.ssn.replaceAll("-", "");
@@ -1026,13 +855,20 @@ function eitcQualifyingChildren(
 }
 
 /** The exact child rows projected by the general source into Schedule EIC. */
-export function eicChildSourceProjection(parsed: GeneralInput) {
+export function eicChildSourceProjection(
+  parsed: GeneralInput,
+  rules: DependentYearRules = dependentRules2025,
+) {
   const ownerSsns = new Set(
     [parsed.taxpayer_ssn, parsed.spouse_ssn]
       .filter((ssn): ssn is string => ssn !== undefined)
       .map((ssn) => ssn.replaceAll("-", "")),
   );
-  const children = eitcQualifyingChildren(parsed.dependents ?? [], ownerSsns);
+  const children = eitcQualifyingChildren(
+    parsed.dependents ?? [],
+    ownerSsns,
+    rules,
+  );
   return {
     children,
     count: Math.min(children.length, 3),

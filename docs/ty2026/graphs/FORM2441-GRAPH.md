@@ -1,5 +1,20 @@
 # TY2026 Form 2441 graph contract
 
+**Historical acceptance contract:** implementation claims below describe an older
+prototype and are not current completion evidence. The rebuilt source graph now
+connects the bounded ordinary-W-2/child-care route, shared annual arithmetic,
+Schedule 3/8812 ordering and draft PDF. See [current implementation and explicit
+remaining gates](FORM2441-CURRENT.md), which supersedes the implementation-status
+claims below. Monthly deemed income and independent care combat elections are
+now connected, along with reviewed 2025-return expenses paid in 2026 and the
+required Worksheet A statement. Reviewed incapacity, ordinary custodial-care
+exceptions and birth/death residence now feed that source route; changed joint
+units, special custody/status cases and other filing work remain. Reviewed MFS
+home facts and separate spouse W-2 income now support ordinary benefit-only and
+considered-unmarried returns, including the prior-only line 9b exception. Special
+provider identities, employer-furnished care, due-diligence statements and
+no-provider taxable benefits now feed the same shared arithmetic and draft.
+
 Sources: pinned [2026 draft Form 2441](../corpus/draft/f2441.pdf)
 (SHA-256 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`)
 and [draft instructions](../corpus/draft/i2441.pdf)

@@ -1,3 +1,14 @@
+import {
+  computeAmt,
+  computeExemption,
+  computeForeignEarnedIncomeTax,
+  computeMfsAddition,
+  computeNetTmt,
+  computePartThree,
+  computeTaxableExcess,
+  computeTentativeMinimumTax,
+  partThreeWorksheetInputs,
+} from "./calculation.ts";
 import { z } from "zod";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
@@ -17,7 +28,6 @@ import {
 } from "../../../../../../2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
-const PHASE_OUT_RATE = 0.25;
 // 2025 Form 6251 line 4, married filing separately addition.
 const MFS_LINE4_ADDITION_START = 900_350;
 const MFS_LINE4_ADDITION_CAP = 68_500;
@@ -332,249 +342,13 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
 function computeAmti(input: Form6251Input): number {
   const base = computeAmtiBeforeMfsAddition(input);
   if (input.filing_status !== FilingStatus.MFS) return base;
-  const addition = Math.min(
+  const addition = computeMfsAddition(
+    base,
+    MFS_LINE4_ADDITION_START,
     MFS_LINE4_ADDITION_CAP,
-    Math.max(0, Math.round((base - MFS_LINE4_ADDITION_START) * 0.25)),
+    0.25,
   );
   return base + addition;
-}
-
-// Form 6251 Line 5 Worksheet: compute the exemption amount with phase-out
-// Full exemption phases out at 25¢ per dollar of AMTI above the threshold.
-// Exemption = max(0, full_exemption − 25% × max(0, AMTI − phase_out_start))
-// IRC §55(d); Form 6251 Instructions page 9
-function computeExemption(
-  amti: number,
-  status: FilingStatus,
-  exemption: Record<FilingStatus, number>,
-  phaseOutStart: Record<FilingStatus, number>,
-): number {
-  const fullExemption = exemption[status];
-  const start = phaseOutStart[status];
-  const excess = Math.max(0, amti - start);
-  // Retain the unpublished worksheet multiplication through subtraction;
-  // settle only the resulting exemption entered on filed line5.
-  const reduction = excess * PHASE_OUT_RATE;
-  return Math.round(Math.max(0, fullExemption - reduction));
-}
-
-// Form 6251 Line 6: Taxable excess (AMTI minus exemption)
-// Line 6 = max(0, Line 4 − Line 5)
-function computeTaxableExcess(amti: number, exemption: number): number {
-  return Math.max(0, amti - exemption);
-}
-
-// Form 6251 Line 7: Tentative Minimum Tax using 26%/28% rate structure
-// MFS filers use a halved bracket threshold ($119,550 vs $239,100).
-// For line6 ≤ threshold:   TMT = line6 × 26%
-// For line6 > threshold:   TMT = line6 × 28% − adjustment
-// Source: IRS Instructions for Form 6251 (2025), "Line 7" / "What's New"
-function computeTentativeMinimumTax(
-  taxableExcess: number,
-  status: FilingStatus,
-  thresholdStandard: number,
-  thresholdMfs: number,
-  adjustmentStandard: number,
-  adjustmentMfs: number,
-): number {
-  if (taxableExcess === 0) return 0;
-  const threshold = status === FilingStatus.MFS
-    ? thresholdMfs
-    : thresholdStandard;
-  const adjustment = status === FilingStatus.MFS
-    ? adjustmentMfs
-    : adjustmentStandard;
-  if (taxableExcess <= threshold) {
-    return Math.round(Math.round(taxableExcess) * 0.26);
-  }
-  return Math.round(Math.round(taxableExcess) * 0.28 - adjustment);
-}
-
-// 2025 Form 6251 Foreign Earned Income Tax Worksheet, ordinary-income branch.
-function computeForeignEarnedIncomeTax(
-  taxableExcess: number,
-  excludedIncome: number,
-  disallowedDeductions: number,
-  status: FilingStatus,
-  thresholdStandard: number,
-  thresholdMfs: number,
-  adjustmentStandard: number,
-  adjustmentMfs: number,
-): number {
-  if (taxableExcess === 0) return 0;
-  const line2c = Math.max(0, excludedIncome - disallowedDeductions);
-  const line3 = taxableExcess + line2c;
-  return computeTentativeMinimumTax(
-    line3,
-    status,
-    thresholdStandard,
-    thresholdMfs,
-    adjustmentStandard,
-    adjustmentMfs,
-  ) - computeTentativeMinimumTax(
-    line2c,
-    status,
-    thresholdStandard,
-    thresholdMfs,
-    adjustmentStandard,
-    adjustmentMfs,
-  );
-}
-
-// Form 6251 Line 9: TMT net of AMTFTC. Cannot be negative.
-// Line 9 = max(0, Line 7 − Line 8)
-function computeNetTmt(tmt: number, amtftc: number): number {
-  return Math.max(0, tmt - amtftc);
-}
-
-// Form 6251 Line 11: AMT liability = max(0, net TMT − regular tax)
-// Only positive when tentative minimum tax exceeds regular income tax.
-// IRC §55(a); Form 6251 Line 11 → 2025 Schedule 2 Line 2
-function computeAmt(netTmt: number, regularTax: number): number {
-  return Math.max(0, netTmt - regularTax);
-}
-
-// Form 6251 Part III lines 13–15, 20, and 27 draw from either the QDCGT
-// Worksheet or the Schedule D Tax Worksheet used for regular tax.
-function partThreeWorksheetInputs(
-  regularTaxableIncome: number,
-  qualDividends: number,
-  netCapGain: number,
-  unrecaptured1250: number,
-  rate28Gain: number,
-  status: FilingStatus,
-  form4952Election: number,
-  electedCapitalGain: number,
-): {
-  line13: number;
-  line14: number;
-  line15: number;
-  line20: number;
-  line27: number;
-} {
-  const worksheetLine6 = Math.max(
-    0,
-    qualDividends - Math.max(0, form4952Election - electedCapitalGain),
-  );
-  const worksheetLine9 = Math.max(0, netCapGain - electedCapitalGain);
-  const worksheetLine10 = worksheetLine6 + worksheetLine9;
-  const useScheduleD = form4952Election > 0 ||
-    (netCapGain > 0 && (unrecaptured1250 > 0 || rate28Gain > 0));
-  if (!useScheduleD) {
-    const regularWorksheetLine5 = Math.max(
-      0,
-      regularTaxableIncome - worksheetLine10,
-    );
-    return {
-      line13: worksheetLine10,
-      line14: 0,
-      line15: worksheetLine10,
-      line20: regularWorksheetLine5,
-      line27: regularWorksheetLine5,
-    };
-  }
-
-  // Schedule D Tax Worksheet lines 10–14 and 18–21, including Form 4952
-  // line 4g amounts removed from preferential-rate income.
-  const scheduleDLine9 = worksheetLine9;
-  const scheduleDLine11 = rate28Gain + unrecaptured1250;
-  const scheduleDLine12 = Math.min(scheduleDLine9, scheduleDLine11);
-  const scheduleDLine13 = worksheetLine10 - scheduleDLine12;
-  const scheduleDLine14 = Math.max(0, regularTaxableIncome - scheduleDLine13);
-  const scheduleDLine18 = Math.max(0, regularTaxableIncome - worksheetLine10);
-  const limit = status === FilingStatus.MFJ || status === FilingStatus.QSS
-    ? 394_600
-    : 197_300;
-  const scheduleDLine19 = Math.min(regularTaxableIncome, limit);
-  const scheduleDLine20 = Math.min(scheduleDLine14, scheduleDLine19);
-  const scheduleDLine21 = Math.max(scheduleDLine18, scheduleDLine20);
-  return {
-    line13: scheduleDLine13,
-    line14: unrecaptured1250,
-    line15: Math.min(scheduleDLine13 + unrecaptured1250, worksheetLine10),
-    line20: regularTaxableIncome > 0 ? scheduleDLine14 : 0,
-    line27: regularTaxableIncome > 0 ? scheduleDLine21 : 0,
-  };
-}
-
-// 2025 Form 6251 Part III, using the worksheet amounts above for both the
-// regular QDCGT and Schedule D Tax Worksheet branches.
-function computePartThree(
-  taxableExcess: number,
-  worksheet: ReturnType<typeof partThreeWorksheetInputs>,
-  status: FilingStatus,
-  zeroCeilingMap: Record<FilingStatus, number>,
-  twentyFloorMap: Record<FilingStatus, number>,
-  thresholdStandard: number,
-  thresholdMfs: number,
-  adjustmentStandard: number,
-  adjustmentMfs: number,
-): Record<string, number> {
-  const line12 = taxableExcess;
-  const { line13, line14, line15, line20, line27 } = worksheet;
-  const line16 = Math.min(line12, line15);
-  const line17 = line12 - line16;
-  const amtOrdinaryTax = (income: number) =>
-    computeTentativeMinimumTax(
-      income,
-      status,
-      thresholdStandard,
-      thresholdMfs,
-      adjustmentStandard,
-      adjustmentMfs,
-    );
-  const line18 = amtOrdinaryTax(line17);
-  const line19 = zeroCeilingMap[status];
-  const line21 = Math.max(0, line19 - line20);
-  const line22 = Math.min(line12, line13);
-  const line23 = Math.min(line21, line22);
-  const line24 = line22 - line23;
-  const line25 = twentyFloorMap[status];
-  const line26 = line21;
-  const line28 = line26 + line27;
-  const line29 = Math.max(0, line25 - line28);
-  const line30 = Math.min(line24, line29);
-  const line31 = Math.round(line30 * 0.15);
-  const line32 = line23 + line30;
-  const line33 = line22 - line32;
-  const line34 = Math.round(line33 * 0.20);
-  const line35 = line17 + line32 + line33;
-  const line36 = line12 - line35;
-  const line37 = Math.round(line36 * 0.25);
-  const line38 = line18 + line31 + line34 + (line14 > 0 ? line37 : 0);
-  const line39 = amtOrdinaryTax(line12);
-  const line40 = Math.min(line38, line39);
-  const additionalRateLinesApply = line32 !== line12;
-  return {
-    line12,
-    line13,
-    ...(line14 > 0 ? { line14 } : {}),
-    line15,
-    line16,
-    line17,
-    line18,
-    line19,
-    line20,
-    line21,
-    line22,
-    line23,
-    line24,
-    line25,
-    line26,
-    line27,
-    line28,
-    line29,
-    line30,
-    line31,
-    line32,
-    ...(additionalRateLinesApply ? { line33, line34 } : {}),
-    ...(additionalRateLinesApply && line14 > 0
-      ? { line35, line36, line37 }
-      : {}),
-    line38,
-    line39,
-    line40,
-  };
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

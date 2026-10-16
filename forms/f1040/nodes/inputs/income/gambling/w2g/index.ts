@@ -11,7 +11,7 @@ import { agi_aggregator } from "../../../../intermediate/aggregation/general/ret
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 // Per-entry schema — one W-2G from one payer
-export const itemSchema = z.object({
+export const w2gFieldsSchema = z.object({
   calendar_year: z.literal(2025).optional(),
   box1_winnings: z.number().nonnegative().optional(),
   box2_date_won: z.string().optional(),
@@ -56,7 +56,12 @@ export const itemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional(),
   issued_copy_attachment_file_name: z.string().trim().min(1).optional(),
   issued_copy_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
-}).strict().superRefine((item, ctx) => {
+}).strict();
+
+export function validateW2GCopy(
+  item: Omit<z.infer<typeof w2gFieldsSchema>, "calendar_year">,
+  ctx: z.RefinementCtx,
+): void {
   if (
     item.standard_or_nonstandard_code === "N" &&
     (!item.nonstandard_document_review ||
@@ -95,11 +100,16 @@ export const itemSchema = z.object({
         "Positive W-2G winnings or withholding need an issued-copy reference and identified payer name and EIN",
     });
   }
-});
+}
 
-export const inputSchema = z.object({
-  w2gs: z.array(itemSchema).min(1),
-}).superRefine(({ w2gs }, ctx) => {
+export const itemSchema = w2gFieldsSchema.superRefine(validateW2GCopy);
+
+export function validateDistinctW2GCopies(
+  { w2gs }: {
+    w2gs: readonly Omit<z.infer<typeof w2gFieldsSchema>, "calendar_year">[];
+  },
+  ctx: z.RefinementCtx,
+): void {
   const references = new Set<string>();
   const copyFiles = new Set<string>();
   const copyHashes = new Set<string>();
@@ -154,19 +164,26 @@ export const inputSchema = z.object({
       }
     }
   });
-});
+}
+
+export const inputSchema = z.object({
+  w2gs: z.array(itemSchema).min(1),
+}).superRefine(validateDistinctW2GCopies);
 
 export type W2GItem = z.infer<typeof itemSchema>;
-type W2GItems = W2GItem[];
+type W2GItems = readonly {
+  box1_winnings?: number;
+  box4_federal_withheld?: number;
+}[];
 
-function totalWinnings(items: W2GItems): number {
+export function totalWinnings(items: W2GItems): number {
   return items.reduce(
     (sum, item) => sum + (item.box1_winnings ?? 0),
     0,
   );
 }
 
-function totalFederalWithheld(items: W2GItems): number {
+export function totalFederalWithheld(items: W2GItems): number {
   return items.reduce(
     (sum, item) => sum + (item.box4_federal_withheld ?? 0),
     0,

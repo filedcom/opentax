@@ -13,6 +13,159 @@ have no Form 4852 entry. That does not establish whether the selected
 release permits another documented attachment method; do not name or build
 one until the XSD, active rules and IRS filing guidance are checked.
 
+## Current implementation (October 16)
+
+The 2026 source ledger, public `f4852` claim and draft-return attachment are
+implemented. `source-start.ts` binds the claim to actual general identity and
+issued W-2/1099-R inventories, then routes effective sources through the
+existing wage and retirement calculations. The retained `f4852` node holds the
+reviewed source workpaper; it makes no second income or withholding deposit.
+The current IRS
+[form page](https://www.irs.gov/forms-pubs/about-form-4852) still links the
+[September 2020 revision](https://www.irs.gov/pub/irs-pdf/f4852.pdf), checked
+October 16; the pinned digest and 34-widget inventory are unchanged.
+
+The ledger binds each substitute to its actual return owner, payer and account,
+dated payer attempts and IRS notification, explanations and payment records.
+It requires a pre-filing review after February. Every printed amount reconciles
+in exact cents; duplicate payment periods/references and conflicting current
+copies fail. An incorrect original must be present and match exactly one payer
+account before exclusion. Masked retirement originals resolve against actual
+return identity. Subsequent corrections and amendments still need their own
+selection/history route; the ledger does not silently discard another copy.
+
+Wage projection reuses the shared Form 4852-to-W-2 converter, then validates
+2026 source fields and the current Social Security wage cap. Retirement
+estimates retain taxable amount, tax-free recovered contributions, unknown
+amount flags, distribution codes and account classification separately. The
+shared custodian classifier and IRA/SEP/SIMPLE margin-label helper are reused.
+The estimate is never presented as an issuer's original statement. A taxable
+amount already supplied is not reduced by recovered contributions again.
+
+The draft prints one form page per substitute and complete line 9/10 narratives,
+with continuation pages when necessary. It checks the pinned field inventory,
+prints comma-separated codes and the instruction-required IRA/SEP/SIMPLE
+margin notation, and removes form widgets after rendering. Exact cents remain
+on this source form; whole-dollar return rounding belongs to its receiving
+income/tax owners. Output is marked draft and `filingReady: false`.
+
+The retirement bridge accepts ordinary code 1/7 pensions and no-basis IRA
+payments, plus source-reconciled traditional/SEP/SIMPLE IRA basis and direct
+Roth conversions using the annual Form 8606 owner. It requires a
+separate Form 4852 taxability review instead of asserting an issuer's taxable
+amount. A partially taxable pension retains its supplied taxable estimate;
+unknown IRA taxability is resolved by the existing no-basis owner while the
+source form's 8b remains blank. With an annual basis owner, codes 1/2/7/S use
+its complete current-copy and payment inventories. Each disposition matches the
+substitute's actual dates, gross amounts, federal/state/local withholding and
+plan classification before cash and conversion receipts are reconciled. The
+annual owner retains basis and contribution history; Form 5329 uses the actual
+nonconverted payments and applicable dated exceptions after basis allocation.
+A single-payment review is valid only for one actual substitute payment; a
+multi-payment ledger must match every payment reference. Unrelated corrected
+issuer copies retain the retirement owner's current-copy selection.
+
+Code G plan direct rollovers now use `direct_rollover_payments`: a complete
+ledger of dated plan payments, reviewed basis allocations and destination
+receipts. One payment may have several eligible Roth/non-Roth destinations.
+Each amount and receipt belongs to the actual owner, and every payment must
+match the substitute's gross, taxable amount, basis and zero withholding.
+Receipts cannot be reused across current retirement statements. The existing
+shared retirement calculation supplies line 5a/5b and the rollover checkbox;
+code G does not become an ordinary early-withdrawal tax merely because the
+owner is under 59½. Bank receipt evidence can be dated after year end but must
+exist by the completed treatment review.
+
+This allocation follows the [IRS after-tax rollover guidance](https://www.irs.gov/retirement-plans/rollovers-of-after-tax-contributions-in-retirement-plans)
+and [2026 Form 1099-R code G/basis reporting](https://www.irs.gov/instructions/i1099r),
+rechecked October 16. Plan records must establish the distribution's
+proportionate basis and the simultaneous-destination allocation; the software
+does not infer those facts from an account balance. After-tax amounts entering
+an IRA now require its annual owner/account inventory and exact current-year
+receipt references. The receiving basis enters Form 8606 line 2 once, before
+same-year withdrawal/conversion allocation; it is not a regular contribution.
+SIMPLE receiving accounts must have completed their two-year period. Employer
+plan destinations retain separate basis-transfer events with actual owner,
+custodian, account, payment and receipt evidence. These events are not annual
+remaining-basis balances. Next-year receipts are retained with their effective
+year and do not increase 2026 IRA basis. Never add a current-year event again to
+the calculated 2027 IRA carryforward. Aggregate issued-statement rollover reviews
+cannot carry after-tax non-Roth basis without the dated receipt ledger.
+
+Qualified IRA-to-HSA funding now binds through the existing HSA qualification
+and annual IRA basis calculations. Public `substitute_ira_accounts` identify
+the actual Form 4852 source rather than assert an issued copy. The internal
+bridge replays the substitute and compares every dated payment, gross amount,
+withholding, owner and account classification before the existing direct-transfer,
+lifetime, coverage and testing-period checks. Funding payments cannot include
+federal, state or local withholding. Ordinary payments on the same substitute
+remain in the IRA basis and early-tax ledgers. The return retains the HFD
+designation and separate Form 8889 line 10, annual Form 8606 basis allocation,
+testing obligations and Form 5329 amounts. A funding-only IRA source preserves
+basis without forcing Form 8606 solely for the transfer.
+
+The [2026 1099-R instructions](https://www.irs.gov/instructions/i1099r) state
+there is no special issuer reporting for qualified HSA funding; qualification
+comes from separate transfer evidence. The
+[Form 8889 instructions](https://www.irs.gov/instructions/i8889) and
+[Notice 2008-51](https://www.irs.gov/irb/2008-25_IRB) supply the direct-transfer
+and taxable-first method. Published instructions remain the 2025 method comparator;
+the pinned 2026 draft and final-authority reconciliation gate still apply.
+Sources checked October 16.
+
+The increment passes 418 affected retirement/IRA/HSA/substitute checks, including
+the corrected domestic-address PDF fixture rerun, plus 137 repository unit tests.
+The source and new test modules pass type checking; preflight includes 3,882
+modules with unchanged runtime files. Rendered Form 1040 and Form 8889 pages
+were visually inspected after the printed-value checks.
+
+Other distribution codes and special treatment remain explicitly
+closed until their source/payment bridges are reconciled. These are software
+coverage limits, not claims about the legal availability of Form 4852.
+
+Substitute retirement state/local withholding reaches Schedule A from its own
+ledger without invented issuer state IDs or distribution bases. Ordinary
+information-return sources retain their existing state-ID requirement. The
+return bundle independently replays the ledger and compares the executed wage
+and retirement inventories, uses actual filer identity/address, and includes
+one Form 4852 per substitute with continuations after the official form pages.
+It exempts only the bound substitute from an issuer-PDF requirement; unrelated
+withheld 1099-R originals remain required and unchanged.
+
+Still required: broader retirement treatment, unknown payer TINs, multiple
+jurisdictions, partial replacement/complex correction chains, post-filing
+amendments, foreign return addresses and unprinted special wage facts. The
+initial wage ledger requires reviewed absence of those extra facts; it does
+not infer boxes 8–14. Public 2026 filing, the selected MeF attachment method
+and IRS acceptance remain open.
+
+Verification: the earlier source/standalone increment passed 83 focused tests
+(including retained TY2025 cases) and the 137-test unit gate. The integration
+adds 13 graph/reconciliation cases and five bundle cases covering replacement,
+mixed real/substitute employers, combined payroll limits, pensions, unknown IRA
+taxability, spouse ownership, dated early tax, stale workpapers, state withholding,
+original PDF preservation and source-form coordinates/continuation placement.
+The affected regression suite passed 380 tests and the unit gate passed 137.
+Wage/pension return bundles and the complete wage continuation were rendered
+and visually inspected. Runtime inventory validation reports 58 nodes, 302
+declared edges and 15 edges to unfinished receivers.
+
+The IRA-basis follow-up adds ten source/graph cases and one bundle case. The
+381-test affected retirement/HSA/IRA/substitute suite and 137-test unit gate
+passed. The rendered substitute, both Form 8606 pages and Form 5329 Part I
+were visually inspected; physical cells verify $2,800 carried basis, $5,550
+ordinary taxable distributions, $9,250 taxable conversions and $555 early tax
+in the synthetic $16,000 two-payment conversion case. These are test inputs,
+not a taxpayer return or evidence of current IRS filing acceptance.
+
+The direct-transfer follow-up adds eleven source/graph cases and one bundle
+case. The affected 392-test suite passed; after adding birth-date reconciliation,
+the 16-test transfer/retirement-source selection and 137-test unit gate passed.
+Form 1040's rollover checkbox, gross and taxable amounts and Form 4852's
+separate taxable/recovered-basis amounts were rendered and visually inspected.
+The synthetic two-payment/three-destination example reports $16,000 rounded
+gross, $4,000 taxable, $2,000 recovered basis and no early-distribution tax.
+
 ## When a substitute is appropriate
 
 Form 4852 substitutes for an unavailable or uncorrected W-2/W-2c or 1099-R.
@@ -35,7 +188,8 @@ The Form 4852 line labels are **not** W-2 or 1099-R box numbers:
 | Lines 9–10 | Print source of estimated amounts and chronology of attempts to obtain the missing/corrected document. These explanations are part of the filed form, not merely internal notes. |
 
 The published form has no W-2 boxes 12/13/14 or 1099-R IRA/SEP/SIMPLE
-checkbox. Obtain plan type and any TY2026 tip/overtime/SIMPLE or other
+checkbox; its instructions require the applicable IRA/SEP/SIMPLE label in the
+right margin of line 8j. Obtain plan type and any TY2026 tip/overtime/SIMPLE or other
 special treatment from separate evidence; do not infer it from a Form 4852
 amount. Any W-2 box 12 code TP/TT or 1099-R box 7 classification that cannot
 be substantiated is an intake/validation question for those owners, not a
@@ -56,23 +210,17 @@ rendered first page and their coordinates. Every field begins with
 | 1099-R lines 8f–j | `Line8Rght[0].f1_21` federal withholding, `f1_22` state withholding, `f1_23` state name, `f1_24` local withholding, `f1_25` locality name, `f1_26` employee contributions, `f1_27` distribution codes. `f1_28` is an additional fillable text widget below the printed 8j line with no visible label; inspect its behavior before binding it. |
 | Lines 9–10 | `f1_29` estimation method and `f1_30` efforts to obtain the statement. |
 
-## Current code boundary
+## Shared-code boundary
 
-The shared [`f4852` node](../../../forms/f1040/nodes/inputs/income/wages/f4852/index.ts)
-is registered for TY2025 but has no PDF descriptor or MeF serializer. It
-routes user-entered values to 1040, Form 8959, Form 5329 and Schedule 3,
-without source evidence, form printing, or replacement-of-original
-reconciliation. Its comments call federal W-2 withholding line **7b** and
-1099-R withholding line **8c**; the pinned form says **7e** and **8f**. The
-node treats a provided taxable distribution as subject to another employee
-contribution subtraction, uses a generic `is_ira` not present on the form,
-and sends aggregate Social Security withholding from two substitutes as
-`line11_excess_ss` without computing the actual excess. Its Medicare route
-needs the ordinary-versus-Additional Medicare withholding split. The
-`capital_gain` value is accepted but not routed to the proper tax worksheet.
-Review these paths against the [2026 W-2 intake](../ats/ATS-SCENARIO-02.md),
-[1099-R graph](./FORM1099R-GRAPH.md), [Form 8959](./FORM8959-GRAPH.md), and
-[credit/withholding](../pdf/PDF-SCHEDULE3-MAP.md) contracts before registration.
+The earlier September review predates the current shared native-source path.
+The shared `form4852CalculationSources` now projects reviewed substitutes into
+W-2/1099-R owners; `effectiveTaxable` retains an already-provided taxable amount.
+TY2025 also has a retained-form PDF descriptor and source-evidence workflow.
+The 2026 component reuses the wage projection and account-classification helpers,
+but does not register the shared legacy aggregate node. The older node's fallback
+routes and comments are not the authority for 2026 line numbers or tax treatment.
+The year-specific source/bundle bridge is implemented for the scope above.
+Broader retirement treatment and current filing acceptance remain.
 
 ## Build and acceptance
 

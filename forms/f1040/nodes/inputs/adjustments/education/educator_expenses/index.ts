@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { educatorExpenseDeduction } from "./amounts.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -67,14 +68,14 @@ function educator2Eligible(input: EducatorExpensesInput): boolean {
 function educator1Deduction(input: EducatorExpensesInput): number {
   if (!educator1Eligible(input)) return 0;
   const total = input.educator1_expenses + (input.educator1_professional_development ?? 0);
-  return Math.min(total, PER_EDUCATOR_CAP);
+  return educatorExpenseDeduction(total, true, PER_EDUCATOR_CAP);
 }
 
 function educator2Deduction(input: EducatorExpensesInput): number {
   if (input.filing_status !== FilingStatus.MFJ) return 0;
   if (!educator2Eligible(input)) return 0;
   const total = (input.educator2_expenses ?? 0) + (input.educator2_professional_development ?? 0);
-  return Math.min(total, PER_EDUCATOR_CAP);
+  return educatorExpenseDeduction(total, true, PER_EDUCATOR_CAP);
 }
 
 function totalDeduction(input: EducatorExpensesInput): number {

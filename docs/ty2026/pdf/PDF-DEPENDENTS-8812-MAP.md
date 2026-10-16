@@ -44,6 +44,11 @@ without attaching an empty Schedule 8812. One-child CTC and ACTC examples
 were rendered and inspected; the flattened four-page CTC sample reopened with
 zero form fields and zero page annotations.
 
+The current source-backed route and its narrower supported scope are documented
+in [CHILD-CREDIT-CURRENT.md](../graphs/CHILD-CREDIT-CURRENT.md). Part II-B is
+gated when needed; the public API does not accept caller-computed payroll or
+credit-limit totals. Form 1040 has no ACTC opt-out checkbox in this pinned draft.
+
 ## Remaining filing work
 
 - Reconcile the public Credit Limit Worksheets A/B and Part II-B source facts

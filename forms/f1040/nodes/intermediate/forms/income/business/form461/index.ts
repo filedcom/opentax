@@ -1,3 +1,4 @@
+import { businessLossLimitLines } from "./calculation.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
@@ -102,10 +103,18 @@ class Form461Node extends TaxNode<typeof inputSchema> {
     const threshold = input.filing_status === FilingStatus.MFJ
       ? cfg.eblThresholdMfj
       : cfg.eblThresholdSingle;
-    const line16 = line9 + threshold;
-    // The IRS's per-line filing trigger is $156,500 for every filing status.
-    const mustFile = line9 < -threshold || line2 < -156_500 ||
-      line6 < -156_500;
+    const computed = businessLossLimitLines({
+      line2,
+      line3: 0,
+      line4: 0,
+      line5: 0,
+      line6,
+      line8: 0,
+      line10: 0,
+      line11: 0,
+    }, { threshold, individualLineFilingTrigger: 156500 });
+    const line16 = computed.line16;
+    const mustFile = computed.must_file;
     if (!mustFile) return { outputs: [] };
 
     const fields = filedForm461Schema.parse({

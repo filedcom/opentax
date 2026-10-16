@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cappedStudentLoanInterest } from "./amounts.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -13,10 +14,6 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 // IRC §221: student loan interest deduction, capped at $2,500.
 // The AGI aggregator applies the MAGI phaseout and sends the final amount to
 // Schedule 1 and Form 1040.
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const STUDENT_LOAN_INTEREST_CAP = 2_500; // IRC §221(b)(1)
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -259,20 +256,15 @@ function totalInterest(items: F1098EItems): number {
   return items.reduce((sum, item) => sum + item.box1_student_loan_interest, 0);
 }
 
-function allowedDeduction(items: F1098EItems): number {
-  return Math.min(totalInterest(items), STUDENT_LOAN_INTEREST_CAP);
-}
-
 function agiOutput(
   items: F1098EItems,
   records: z.infer<typeof unreportedInterestRecordSchema>[],
 ): NodeOutput[] {
-  const deduction = Math.min(
-    allowedDeduction(items) + records.reduce(
+  const deduction = cappedStudentLoanInterest(
+    totalInterest(items) + records.reduce(
       (sum, record) => sum + record.interest_paid,
       0,
     ),
-    STUDENT_LOAN_INTEREST_CAP,
   );
   if (deduction === 0) return [];
   return [output(agi_aggregator, { line21_student_loan_interest: deduction })];

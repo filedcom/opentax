@@ -1,5 +1,15 @@
 # TY2026 Form 1040 research corpus
 
+For the initial main-based assessment, read the
+[October 10 baseline assessment](./readiness/CURRENT-BASELINE-2026-10-10.md).
+The [October 15 calculation and assembly foundation](../../forms/f1040/2026/README.md)
+now reuses the 2025 deduction/rate algorithms, input routing and PDF cache.
+It adds internal 2026 return assembly, local reconciliation and a
+[source-driven development PDF bundle](./pdf/PDF-BUNDLE-CURRENT.md) for the
+currently implemented sources. Full source parity and filing remain unfinished.
+The historical prototype described below is recoverable at `b7c07b616`; its
+full registry and filing outputs have not been ported to this checkout.
+
 Snapshot date: 2026-09-27. This is the source map for full TY2026 1040 end-to-end
 work. Start at the [implementation entry point](./readiness/ENTRY-POINT.md).
 The code observations were captured from research commit `b7c07b61` while
@@ -10,7 +20,7 @@ remaining IRS publication, MeF and ATS gates.
 
 ## Working with the pinned PDFs
 
-All 248 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
+All 254 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
 the repository's `.gitattributes`. Install Git LFS before working with this
 corpus. After cloning or switching to a checkout that already has pointer
 files, fetch the PDF content with:
@@ -30,6 +40,13 @@ PDF from Git history. The MeF inventory spreadsheets and text ledgers remain
 regular Git files.
 
 ## What is in this snapshot
+
+- [`GAMBLING-CURRENT.md`](./graphs/GAMBLING-CURRENT.md): W-2G and casual
+  winnings/loss records through income, deductions, child tax and draft output.
+
+- [`ESTIMATED-PAYMENTS-CURRENT.md`](./graphs/ESTIMATED-PAYMENTS-CURRENT.md):
+  shared payment reconciliation, posted 2025 credits, signed joint allocations
+  and draft Form 1040 line 26, with the final 2026 Form 1040-ES source.
 
 - [`PDF-F1040-MAP.md`](./pdf/PDF-F1040-MAP.md) and `pdf-fields-f1040.csv`: the
   draft 2026 Form 1040 AcroForm inventory and changed-line mapping for the
@@ -103,8 +120,9 @@ regular Git files.
   continuing section 965 liability/payment ledger, 2026 Schedule 2 line
   12/15 draft conflict and 413 current form widgets.
 - [`SCHEDULER-GRAPH.md`](./graphs/SCHEDULER-GRAPH.md) and
-  `pdf-fields-f1040sr.csv`: 2026 elderly/disabled eligibility, box-specific
-  amount and tax-limit worksheet, Schedule 3 line 6d and 27 PDF widgets.
+  `pdf-fields-f1040sr.csv`: reviewed 2026 elderly/disability sources reuse shared
+  box-specific arithmetic, ordered credit limits and two static draft pages;
+  W-2 disability, special eligibility and current MeF remain open.
 - [`SCHEDULEJ-GRAPH.md`](./graphs/SCHEDULEJ-GRAPH.md) and
   `pdf-fields-f1040sj.csv`: elected farm/fishing income across the
   2023–2025 base years, prior Schedule J state, 1040 line 16 and 27 widgets.
@@ -114,6 +132,10 @@ regular Git files.
 - [`FORM1099MISC-NEC-GRAPH.md`](./graphs/FORM1099MISC-NEC-GRAPH.md): final 2026
   forms and combined instructions, included cash-tip/overtime boxes,
   activity reconciliation and Schedule 1-A/2 destinations.
+- [`SCHEDULEH-CURRENT.md`](./graphs/SCHEDULEH-CURRENT.md): employee payroll,
+  family/minor exclusions, FUTA quarters and reconciled draft Schedule H.
+- [`FORM1099G-CURRENT.md`](./graphs/FORM1099G-CURRENT.md): reviewed unemployment,
+  repayments, derived state-refund recovery, family leave, withholding and draft PDFs.
 - [`FORM1099G-GRAPH.md`](./graphs/FORM1099G-GRAPH.md): final 2026 government-payment
   form and instructions, family-leave authority, refund tax-benefit and
   farm/CCC route.
@@ -145,14 +167,24 @@ regular Git files.
 - [`DIVIDEND-GRAPH.md`](./graphs/DIVIDEND-GRAPH.md): continuous-use 1099-DIV source,
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`SSA-BENEFITS-GRAPH.md`](./graphs/SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
-  distinctions, taxable-benefit route, and remaining repayment/election work.
+  distinctions, signed benefits, MFS residence, student-loan MAGI, draft PDF,
+  and remaining repayment/IRA work.
+- [`CHILD-CREDIT-CURRENT.md`](./graphs/CHILD-CREDIT-CURRENT.md): shared child-credit
+  arithmetic, 2026 source reviews, AMT tax limit, draft Schedule 8812 and remaining
+  payroll/other-credit dependencies.
+- [`EIC-CURRENT.md`](./graphs/EIC-CURRENT.md): published 2026 EIC table, shared
+  eligibility/worksheet reuse, combat elections, Schedule EIC and ACTC payroll routing.
+- [`SSA-LUMP-SUM-CURRENT.md`](./graphs/SSA-LUMP-SUM-CURRENT.md): historical return
+  records, election comparison, AGI/MAGI destinations and draft line 6c.
 - [`RRB-1099-GRAPH.md`](./graphs/RRB-1099-GRAPH.md): pinned RRB issuer explanations
   and IRS pension/benefit publications, separate SSEB and pension statements,
   signed repayments, corrected sources and their 1040/MeF handoffs.
 - [`FORM1099R-GRAPH.md`](./graphs/FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
-  IRA/pension downstream routes, and filing gates.
-- [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): early SIMPLE IRA Part I tax and
-  attachment route, with the remaining additional-tax work.
+  reviewed IRA/pension sources, shared 2025 amounts, disability wage/credit bridges,
+  draft attachments and filing gates.
+- [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): reviewed early-distribution tax, separate
+  owner Part I drafts, payment-bound exceptions 01/03/04/06/10/12/20 and required remaining
+  exceptions/parts.
 - [`FORM8606-GRAPH.md`](./graphs/FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.
 - [`FORM8889-GRAPH.md`](./graphs/FORM8889-GRAPH.md) and `pdf-fields-f8889.csv`:
@@ -241,7 +273,8 @@ regular Git files.
   2026 Schedule 3 line 6i, and all 11 current PDF widgets.
 - [`FORM8962-GRAPH.md`](./graphs/FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
-  143 PDF widgets, and MeF/graph acceptance order.
+  143 PDF widgets, ordinary annual/monthly draft attachments, and remaining
+  advanced-source/MeF acceptance order.
 - [`FORM1116-GRAPH.md`](./graphs/FORM1116-GRAPH.md), `pdf-fields-f1116.csv`,
   `pdf-fields-f1116sb.csv`, and `pdf-fields-f1116sc.csv`: category credit,
   2026 line 18/20 tax bases, carryovers and redeterminations, full PDF
@@ -330,23 +363,30 @@ regular Git files.
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
   changes before using new values or layouts.
-- [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): each current TY2025 PDF descriptor,
-  its IRS source URL, and whether a matching TY2026 draft is in the snapshot.
-  Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
-  URLs still serve older years and are recorded as `wrong-year` in the manifest.
-- [`mef-coverage.csv`](./inventories/mef-coverage.csv): each TY2025 MeF serializer module.
-- [`mef-descriptor-coverage.csv`](./inventories/mef-descriptor-coverage.csv): all 85
-  runtime MeF descriptors in XSD emission order, including the two foreign
-  employer wage documents exported by one module.
-- [`node-coverage.csv`](./inventories/node-coverage.csv): all 191 registered TY2025 graph
-  nodes, their source modules, 2025 year mentions, tax-year dispatch, matching
-  MeF/PDF surface, available 2026 draft, and review priority. Every row remains
-  `audit-required` until its TY2026 behavior and output route are proved;
-  progress notes do not mean a node is ready for the 2026 registry.
-- [`year-literals.csv`](./inventories/year-literals.csv): all `2025` occurrences in non-test
-  calculation node source, including comments. These are review leads, not
-  proof of a bug. Regenerate the four CSVs with `python3
-  docs/ty2026/tooling/build_inventory.py` after a source or code change.
+- [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): all 118 loaded TY2025 PDF
+  descriptors, their source modules, runtime pending keys and IRS template URLs.
+  A matching draft slug in the corpus does not certify a current final template.
+- [`mef-coverage.csv`](./inventories/mef-coverage.csv): all 154 loaded TY2025 MeF
+  serializer modules, including nested modules and shared descriptor sources.
+- [`mef-descriptor-coverage.csv`](./inventories/mef-descriptor-coverage.csv): all 158
+  runtime MeF descriptors in actual registry order, with their exported symbols,
+  pending keys and source modules. This is not a TY2026 XSD conformance result.
+- [`node-coverage.csv`](./inventories/node-coverage.csv): all 223 registered TY2025
+  graph nodes, source paths, year mentions and exact pending-key matches to
+  registered PDF/MeF descriptors. Progress and priority come from the separately
+  maintained [`node-review.csv`](./inventories/node-review.csv); they never certify
+  a 2026 route. The 32 nodes absent from the old review ledger are explicitly
+  flagged for assignment instead of being omitted.
+- [`runtime-surface.json`](./inventories/runtime-surface.json) and
+  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 57-node 2026
+  graph, all 301 declared edges, source paths and the 15 edges to unregistered
+  targets. These counts describe registrations, not supported tax branches.
+- [`year-literals.csv`](./inventories/year-literals.csv): `2025` occurrences in
+  non-test shared node modules outside configuration, including comments. These
+  are review leads, not proof of a bug or an exhaustive dependency audit.
+  Regenerate these inventories with `python3 docs/ty2026/tooling/build_inventory.py`;
+  append `--check` to detect stale artifacts without writing. See the
+  [inventory contract](./tooling/README.md) for prerequisites and limitations.
 - [`FORM-DELTA.md`](./readiness/FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](./graphs/DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.
@@ -357,6 +397,75 @@ regular Git files.
 - [`IMPLEMENTATION.md`](./readiness/IMPLEMENTATION.md): ordered code and verification plan.
 - [`SOURCES.md`](./readiness/SOURCES.md): versions, Drive package, availability limits,
   and refresh procedure.
+
+## Ordinary ABLE integration
+
+The [ABLE route](./graphs/ABLE-CURRENT.md) now connects reviewed beneficiary
+contributions and withdrawals before AGI, carries gross withdrawals into saver
+credit, and combines owner retirement/ABLE additional taxes on one Form 5329.
+Schedule 1, Schedule 2 and static draft PDFs reconcile to source calculations;
+Form 1062 retains actual additional tax. Advanced account branches, taxable ABLE
+NIIT classification above the threshold, final authorities, MeF/ATS and the public
+filing product remain required work.
+
+## HSA eligibility foundation
+
+The [HSA contract](./graphs/FORM8889-GRAPH.md) now reflects the current 2025 source
+implementation. Its monthly contribution-limit worksheet is shared with a new
+2026 eligibility workpaper, including sourced plan terms, Medicare, other
+coverage, individual bronze/catastrophic coverage and direct-primary-care fees.
+Notice 2026-5 is pinned. Dated funding now reconciles Form 5498-SA and actual
+W-2 code W with tax-year adjustments, and a household workpaper derives each
+spouse's deemed coverage. The current 1099-SA/5498-SA reporting instructions are
+also pinned. An owner-limit workpaper now allocates shared family months once,
+preserves separate catch-ups, and retains exact monthly/last-month limits and
+spouse-share ratios alongside separately rounded form lines. Future testing
+records retain sub-dollar exposure using pinned Notice 2008-52. Shared Part I
+arithmetic now derives current deduction capacity and separate personal/employer
+excess from cash funding, retaining source fractions beside replayed form lines.
+Qualified IRA funding now joins actual IRA statements/payments to HSA receipts,
+checks lifetime and transfer-month rules, and reaches line 10 with separate
+funding/testing records using pinned Notice 2008-51. The internal annual IRA
+workpaper now reconciles the same actual sources, removes verified funding from
+the ordinary basis pool and preserves basis with dated valuation evidence.
+An ordinary distribution workpaper now resolves corrected 1099-SA copies,
+reconciles dated medical reimbursements with Schedule A sources, and reuses
+Part II arithmetic with payment-specific age/disability exceptions. Timely
+personal/employer excess returns now bind original receipts and code-2 payments,
+retain 2027 earnings separately, and reconcile employer income with actual W-2s.
+An annual excess workpaper now replays filed 2025 owner history, absorbs prior
+excess using current room and taxable distributions, and computes Part VII tax
+with sourced year-end/following-year account-value caps and separate spouse lines.
+Current-origin testing now reconciles dated coverage with monthly eligibility,
+tracks separate last-month and qualified-funding windows, checks disability
+causation, and retains
+pending 2027 obligations using shared Part III arithmetic. Ordinary 2025
+last-month histories now replay historical eligibility, receipts, owner forms
+and spouse allocation, reconcile 2026 payments for 2025, and derive current
+recapture or completed testing periods. Dated 2025 IRA funding now reuses the
+current transfer reconciler, replays filed Part I/III and preserves each transfer
+window, including failures already taxed in 2025.
+The registered development graph now binds these workpapers to actual identity,
+W-2s, Schedule A medical payments and annual IRA evidence. Deduction and income
+reach AGI/Schedule 1; Schedule 2 and Form 1062 reconcile distribution, testing and
+excess tax. Qualified IRA funding reaches the actual IRA exclusion and HFD
+notation. Owner Forms 8889 and combined Forms 5329 now appear in the draft bundle,
+including separate spouse pages and no attachment for inactive accounts.
+Current HSA cash rollovers now reconcile actual payouts, redeposits and
+beneficiary-wide annual history before line 14b, including January redeposits and
+separate prior-excess carryforward effects. The 60-day validator is shared with
+2025 and owner draft forms reconcile the resulting income and tax.
+Direct cash transfers and accepted mistaken-distribution repayments now join
+actual debits to receipts and reconcile any corrected 1099-SA gross before
+annual settlement. They stay out of contribution totals and Form 8889 gross
+or rollover exclusions, without creating a new owner tax-form requirement.
+Basis-depleting/Roth funding, remaining rollover/excess withdrawals, broader
+historical corrections, advanced testing histories, native MeF and complete filing support
+remain in the implementation queue.
+Form 8960 now replays actual HSA sources: taxable distributions, returned excess
+earnings, employer excess and testing recapture remain in MAGI without becoming
+investment income. The HSA deduction is not deducted again from investment income;
+draft output checks the related Schedule 1 amounts and Schedule 2 tax.
 
 ## Version rule
 

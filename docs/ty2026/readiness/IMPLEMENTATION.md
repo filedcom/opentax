@@ -1,5 +1,11 @@
 # TY2026 Form 1040 end-to-end implementation plan
 
+Current AMT increment: source deduction results and reviewed Form 3921 exercise
+copies now feed the shared 2026 Form 6251 calculation, Schedule 2 and Form 1040
+line 17, with a reconciled two-page draft PDF. The
+[bounded AMT contract](../graphs/FORM6251-CURRENT.md) lists the still-rejected
+adjustments, foreign/credit branches and remaining filing work.
+
 Target: a `f1040:2026` return can be created, populated, calculated, validated,
 exported to MeF XML and IRS PDF, and checked against TY2026 ATS scenarios for
 the complete Form 1040 family supported by the TY2025 implementation. This
@@ -20,6 +26,13 @@ an authorized e-Services/SOR mailbox. Use the current
 [`GRAPH-ROUTES.md`](../graphs/GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
+On the current-main rebuild, the source graph now derives line 16 from resolved
+taxable income using the checked 2026 draft Tax Table/Tax Computation Worksheet.
+The shared preferential and foreign-stacking helpers accept 2026 configuration,
+but their source owners and specialist tax elections remain incomplete. See the
+[current code scope](../../../forms/f1040/2026/README.md#income-tax-worksheets);
+historical progress notes below are not proof that those routes are registered
+on this branch.
 The [parity queue](./PARITY-QUEUE.md) groups retained TY2025 PDF/MeF surfaces
 and TY2026-only attachments into coding waves, with the cross-form evidence
 required to close each route.
@@ -80,12 +93,22 @@ to Schedule 1-A Part IV or business-interest schedules.
 The [Form 3903/educator contract](../graphs/FORM3903-EDUCATOR-GRAPH.md) pins the 2026
 moving form and instructions, all ten PDF widgets, per-move deduction or
 taxable reimbursement routes, and educator Schedule A line 17k after the
-Schedule 1 limit. Both shared input nodes need 2026 source facts before
-registration.
+Schedule 1 limit. The educator source now applies the $350 annual cap,
+September 2026 early-childhood expansion and the broader itemized role/use
+rules, with receipts reconciled through AGI and deduction selection. The moving
+source now validates per-move expenses/eligibility, reconciles issued W-2 code P
+and box 1 reimbursements, routes deduction/taxable excess and storage-only claims,
+and renders reviewed draft Form 3903 pages. Cross-year moving/2555 allocation,
+education-exclusion coordination and remaining filing output remain open.
 The [Form 8938 contract](../graphs/FORM8938-GRAPH.md) pins its 2026 draft and
 continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
 Part III income reconciliation and repeated asset statements. The shared
-node produces no filed form; 2026 PDF and MeF support remain open.
+node produces no filed form. The 2026 ordinary-asset valuation workpaper now
+reuses eligibility/threshold/summary checks with dated source records; Part III/IV
+return binding, grantor/joint-interest and mixed-availability cases, public graph
+intake, PDF and MeF remain open. Separate trust/estate/pension/deferred-interest
+workpapers now distinguish reported values from threshold peaks and derive
+unavailable-value fallbacks from reviewed distributions and mandatory rights.
 The [Form 4852 contract](../graphs/FORM4852-GRAPH.md) pins its continuous-use form,
 correct line 7e/8f withholding labels and 34 PDF widgets. The shared node
 needs original/substitute deduplication, printed explanation fields and

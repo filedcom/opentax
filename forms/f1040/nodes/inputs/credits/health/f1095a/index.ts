@@ -283,6 +283,16 @@ type F1095AItem = z.infer<typeof itemSchema>;
 type F1095AItems = F1095AItem[];
 
 export function current1095AStatements(items: F1095AItems): F1095AItems {
+  return selectCurrent1095AStatements(items);
+}
+
+/** Preserve annual source metadata while applying the shared correction rules. */
+export function selectCurrent1095AStatements<
+  T extends Pick<
+    F1095AItem,
+    "issuer_name" | "policy_number" | "corrected_box_checked"
+  >,
+>(items: T[]): T[] {
   for (const corrected of items.filter((item) => item.corrected_box_checked)) {
     if (!corrected.policy_number) {
       throw new Error(
@@ -381,8 +391,11 @@ function mergeMonthlyArrays(
   return merged;
 }
 
-function mergeMonthlySlcsps(
-  items: F1095AItems,
+export function mergeMonthlySlcsps(
+  items: Pick<
+    F1095AItem,
+    "monthly_slcsps" | "coverage_state" | "alternative_marriage_owner"
+  >[],
   marriageMonth?: number,
 ): number[] | null {
   if (items.length === 1) return items[0].monthly_slcsps ?? null;
