@@ -124,3 +124,46 @@ Deno.test("code-8 correction cannot mask a second line 1h wage source", () => {
     "line 1h needs exactly one supported retained source",
   );
 });
+
+Deno.test("disability wages reach line 1h without becoming a corrective distribution statement", () => {
+  const disability = {
+    ...corrective,
+    source_document_reference: "2025 disability Form 1099-R",
+    box1_gross_distribution: 12_000,
+    box2a_taxable_amount: 10_000,
+    box4_federal_withheld: 1_200,
+    box7_distribution_code: "3",
+    disability_flag: true,
+    disability_as_wages: true,
+  };
+  const baseline = buildPending(
+    execute(
+      buildExecutionPlan(registry),
+      registry,
+      base.inputs,
+      { taxYear: 2025, formType: "f1040" },
+    ).pending,
+  );
+  for (const items of [[disability], [disability, corrective]]) {
+    const result = filing(items);
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    const otherWages = items.length === 1 ? 10_000 : 11_000;
+    assertEquals(pending.f1040?.line1a_wages, baseline.f1040?.line1a_wages);
+    assertEquals(pending.f1040?.line1h_other_earned, otherWages);
+    assertEquals(pending.f1040?.line5a_pension_gross, undefined);
+    assertEquals(pending.f1040?.line5b_pension_taxable, undefined);
+    assertEquals(pending.f1040?.line25b_withheld_1099, 1_200);
+    assertEquals(
+      pending.f1040?.line11_agi,
+      Number(baseline.f1040?.line11_agi) + otherWages,
+    );
+    // The source-backed native disability statement is still required work.
+    // Corrective support must not disguise these wages as a code-8 statement.
+    assertThrows(
+      () => buildMefXml(pending, base.filer),
+      Error,
+      "line 1h needs exactly one supported retained source",
+    );
+  }
+});

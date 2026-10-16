@@ -1292,7 +1292,7 @@ export function correctivePlanItems(items: R1099Items): R1099Items {
   );
 }
 
-// Disability-as-wages items: disability routing to line1a
+// Disability-as-wages items: disability routing to line1h
 function disabilityWagesItems(items: R1099Items): R1099Items {
   return items.filter(
     (item) =>
@@ -1454,7 +1454,7 @@ function pensionF1040Fields(
   qcdAnnualLimit: number,
   psoExclusionLimit: number,
 ): Record<string, number> {
-  // Exclude disability-as-wages items from pension lines (they go to line1a)
+  // Exclude disability-as-wages items from pension lines (they go to line1h)
   const disWagesSet = new Set(disabilityWagesItems(activeItems(items)));
   const active = pensionItems(activeItems(items)).filter((item) =>
     !disWagesSet.has(item)
@@ -1474,7 +1474,7 @@ function pensionF1040Fields(
   return fields;
 }
 
-// Build f1040 line1a output for disability-as-wages items
+// Build f1040 line1h output for disability-as-wages items
 function disabilityWagesF1040Fields(
   items: R1099Items,
   qcdAnnualLimit: number,
@@ -1488,7 +1488,7 @@ function disabilityWagesF1040Fields(
     0,
   );
   if (total <= 0) return {};
-  return { line1a_wages: total };
+  return { line1h_other_earned: total };
 }
 
 function correctivePlanF1040Fields(items: R1099Items): Record<string, number> {
@@ -2146,12 +2146,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       withholdingFields,
     } = calculateReportedRetirementIncome(r1099s, cfg);
 
+    // Both disability wages and corrective distributions belong on line 1h.
+    // Add them before merging so one source cannot overwrite the other.
+    const otherEarned = (disWagesFields.line1h_other_earned ?? 0) +
+      (correctiveFields.line1h_other_earned ?? 0);
     // Merge all f1040 fields into one output
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
       ...iraFields,
       ...pensionFields,
-      ...disWagesFields,
-      ...correctiveFields,
+      ...(otherEarned > 0 ? { line1h_other_earned: otherEarned } : {}),
       ...withholdingFields,
     };
     if (r1099s.some(isPensionDirectRollover)) {
@@ -2172,7 +2175,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     // Route IRA/pension taxable amounts to AGI aggregator.
     // Only emit line4b_ira_taxable when > 0 to avoid accumulation conflicts with form8606,
     // which emits its own line4b_ira_taxable to agi_aggregator for items with prior_ira_basis.
-    // Also route disability-as-wages (line1a_wages) so AGI is computed correctly.
+    // Also route disability and corrective distributions together on line 1h.
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
       {};
     if ((iraFields.line4b_ira_taxable ?? 0) > 0) {
@@ -2181,11 +2184,8 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     if (pensionFields.line5b_pension_taxable !== undefined) {
       agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
     }
-    if ((disWagesFields.line1a_wages ?? 0) > 0) {
-      agiFields.line1a_wages = disWagesFields.line1a_wages;
-    }
-    if ((correctiveFields.line1h_other_earned ?? 0) > 0) {
-      agiFields.line1h_other_earned = correctiveFields.line1h_other_earned;
+    if (otherEarned > 0) {
+      agiFields.line1h_other_earned = otherEarned;
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(

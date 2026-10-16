@@ -99,13 +99,23 @@ These results establish development behavior, not IRS filing acceptance.
 
 ### Disability routing dependency
 
-The shared `disabilityWagesF1040Fields` currently emits `line1a_wages`.
+The shared `disabilityWagesF1040Fields` now emits `line1h_other_earned`.
+The shared node adds disability and corrective distribution amounts before
+writing Form 1040 and AGI, preserving withholding and keeping disability wages
+off pension lines. Regression coverage checks the mixed-source case and the
+2025 export guard: disability wages cannot be mislabeled as a corrective
+distribution statement.
 [IRS Publication 525](https://www.irs.gov/publications/p525) and
 [Publication 575](https://www.irs.gov/publications/p575) direct taxable disability
 pensions to line 1h until minimum retirement age, then to pension lines 5a/5b
-beginning the following day. Correct the shared destination and reconcile the
-2026 earned-income consumers before enabling code 3 or pension disability
-exceptions. The current EIC source contract expressly excludes retirement
-disability wages; dependent care, child credits, dependent deductions and Schedule
+beginning the following day. The 2026 payment-date and plan-evidenced minimum
+retirement-age split, source-bound earned-income reconciliation and native
+disability statement remain required before enabling code 3 or pension
+disability exceptions. The current EIC source contract expressly excludes
+retirement disability wages; dependent care, child credits, dependent deductions and Schedule
 R also need their distinct income/eligibility review. These 2025 publications are
 method comparators pending final 2026 instructions.
+
+The routing correction passed 143 typed retirement and export regressions and
+137 repository unit/harness checks. These checks do not establish 2026 disability
+eligibility or filing acceptance.
