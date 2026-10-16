@@ -16,7 +16,6 @@ export const patronStatusCases = (["hoh", "qss", "mfs"] as const).flatMap((
 );
 
 export function patronStatusFixture(c: typeof patronStatusCases[number]) {
-  // deno-lint-ignore no-explicit-any
   const input: Record<string, any> = structuredClone(
     pdfReviewFixtures.find((f) => f.id === `single-form8995a-patron-${c.kind}`)!
       .inputs,
@@ -45,7 +44,6 @@ export function patronStatusFixture(c: typeof patronStatusCases[number]) {
   if (c.status === "mfs") {
     // The existing domicile review establishes separate property independently
     // of mailing address; bind its earnings reference to these patron records.
-    // deno-lint-ignore no-explicit-any
     const business = (household.schedule_c as any[])[0];
     input.qbi_patron.mfs_filing_review = structuredClone(
       business.qbi_sstb_filing_review.mfs_filing_review,

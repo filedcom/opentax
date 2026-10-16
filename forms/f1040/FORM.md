@@ -35,7 +35,7 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
 ## Benchmark
 
 Cases: `benchmark/cases/f1040/{year}/`
-Runner: `deno task bench --form f1040 --year {year}`
+Runner: `bun run bench --form f1040 --year {year}`
 Pass threshold: 95% (≥ 93 of 97 for the current case set)
 
 ## Known Failure Modes (TY2025)
@@ -49,7 +49,7 @@ Pass threshold: 95% (≥ 93 of 97 for the current case set)
 1. Copy `forms/f1040/2025/` → `forms/f1040/{year}/`
 2. Update `{year}/config.ts` with new IRS Rev. Proc. constants
 3. Add `{year}` entry to `nodes/config/index.ts`: `import { config{year} } from "../../{year}/config.ts"`
-4. Run `deno task bench --form f1040 --year {year}` — most nodes pass unchanged
+4. Run `bun run bench --form f1040 --year {year}` — most nodes pass unchanged
 5. Any failure → that node has structural changes → create override at `{year}/nodes/{path}/index.ts`
 6. Update `{year}/registry.ts` to import override instead of shared node
 7. Update this FORM.md: bump "Known Failure Modes" section

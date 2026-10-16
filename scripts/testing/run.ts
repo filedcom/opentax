@@ -28,7 +28,11 @@ async function retain(stream: ReadableStream<Uint8Array>, path: string) {
   const file = await fs.open(path, "wx", 0o600);
   try {
     const reader = stream.getReader();
-    for (let read = await reader.read(); !read.done; read = await reader.read()) {
+    for (
+      let read = await reader.read();
+      !read.done;
+      read = await reader.read()
+    ) {
       await file.write(read.value);
     }
   } finally {
@@ -92,7 +96,11 @@ try {
     { createNew: true, mode: 0o600 },
   );
   if (mode === "full") {
-    await acquireFullRunLock(lockPath, { pid: process.pid, evidence, startedAt });
+    await acquireFullRunLock(lockPath, {
+      pid: process.pid,
+      evidence,
+      startedAt,
+    });
     lockOwned = true;
   }
   const all = await testInventory(root);
@@ -219,7 +227,10 @@ try {
     }
     const skipPolicy = skipPolicySchema.parse(
       JSON.parse(
-        await fs.readFile(new URL("./skip-policy.json", import.meta.url), "utf8"),
+        await fs.readFile(
+          new URL("./skip-policy.json", import.meta.url),
+          "utf8",
+        ),
       ),
     );
     const ignoredRequirements = classifiedIgnoredTests(

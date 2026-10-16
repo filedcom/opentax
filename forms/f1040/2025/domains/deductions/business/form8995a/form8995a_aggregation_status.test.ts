@@ -13,7 +13,6 @@ import {
   aggregationStatusCases,
   aggregationStatusFixture,
 } from "./form8995a_aggregation_status_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 const expected: Record<string, number[]> = {
   "hoh-direct-3": [9568, 41245, 1926, 43171, 16829],

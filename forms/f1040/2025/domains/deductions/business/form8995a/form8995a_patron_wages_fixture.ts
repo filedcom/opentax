@@ -17,7 +17,6 @@ export function patronWageFixture(c: typeof patronWageCases[number]) {
   const fixture = (id: string) =>
     structuredClone(pdfReviewFixtures.find((f) => f.id === id)!);
   // Synthetic issued copies are deliberately retained at the public boundary.
-  // deno-lint-ignore no-explicit-any
   let input: Record<string, any>;
   if (c.status === "joint" || c.status === "spouse") {
     const base = fixture(`joint-form8995a-patron-${c.kind}`);
@@ -33,7 +32,6 @@ export function patronWageFixture(c: typeof patronWageCases[number]) {
     });}
   const joint = c.status === "joint" || c.status === "spouse";
   const base = fixture("joint-form8995a-patron-farm").inputs;
-  // deno-lint-ignore no-explicit-any
   const wage = structuredClone((base.w2 as any[])[0]);
   const salary = c.kind === "farm" ? 60000 : 176101;
   const owner = input.qbi_patron.source_1099patr.recipient_tin;

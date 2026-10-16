@@ -1,6 +1,5 @@
 import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-aggregation-election.fixture.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 export const jointAggregationCases = [
   {

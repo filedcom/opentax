@@ -28,7 +28,6 @@ import {
 
 import { FilingStatus } from "../types.ts";
 // Deliberately altered untrusted persisted values exercise the preparation boundary.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 const encoder = new TextEncoder(), decoder = new TextDecoder();

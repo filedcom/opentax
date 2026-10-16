@@ -3,12 +3,12 @@
  * migration can prove it changed nothing: capture once on the old runtime,
  * once on the new, and `diff -r` the two directories.
  *
- * Only `node:` built-ins are used so this file runs unchanged under Deno and Bun.
+ * Only `node:` built-ins are used, so the same file recorded the golden set
+ * under Deno and replays it under Bun.
  *
- * Usage: <runtime> scripts/parity/capture.ts <out-dir> -- <cli command...>
- *   deno run -A scripts/parity/capture.ts scripts/parity/golden/cases -- \
- *     deno run --allow-read --allow-write cli/main.ts
- *   deno run -A scripts/parity/capture.ts out/ -- ./opentax
+ * Usage: bun scripts/parity/capture.ts <out-dir> -- <cli command...>
+ *   bun scripts/parity/capture.ts /tmp/candidate -- bun cli/main.ts
+ *   bun scripts/parity/capture.ts /tmp/candidate -- ./opentax
  */
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";

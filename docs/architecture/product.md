@@ -1,7 +1,7 @@
 # Tax Engine — Research & Architecture Plan
 
 > Last updated: 2026-03-26 (architecture revised: unified TaxNode + activation
-> model) Team: Atul + Claude Stack: Deno + TypeScript + Vibes SDK
+> model) Team: Atul + Claude Stack: Bun + TypeScript + Vibes SDK
 
 ---
 
@@ -353,14 +353,14 @@ then apply. Two nodes in sequence.
 
 ## 4. Filesystem Structure
 
-Two separate Deno workspace packages — same repo, separate CLIs.
+Two separate workspace packages — same repo, separate CLIs.
 
 ```
 /tax/
-  deno.json                  ← workspace root: { "workspace": ["engine", "agent"] }
+  package.json               ← workspace root: { "workspaces": ["engine", "agent"] }
 
   engine/                    ← @filed/tax-engine — the tax computation engine
-    deno.json                ← { "name": "@filed/tax-engine", "exports": "./mod.ts" }
+    package.json             ← { "name": "@filed/tax-engine", "module": "./mod.ts" }
     cli.ts                   ← CLI entry: `tax` command
     mod.ts                   ← public API for programmatic use
     core/
@@ -416,7 +416,7 @@ Two separate Deno workspace packages — same repo, separate CLIs.
         inputs.json          ← only persisted state — full recompute by replaying this
 
   agent/                     ← @filed/tax-agent — AI ingestion agent
-    deno.json                ← { "name": "@filed/tax-agent" }
+    package.json             ← { "name": "@filed/tax-agent" }
     cli.ts                   ← CLI entry: `tax-agent` command
     agents/
       document-parser.ts     ← Vibes agent: PDF/URL → structured changes
@@ -732,10 +732,10 @@ URL/path, and run ID.
 |                | Engine                           | Agent              |
 | -------------- | -------------------------------- | ------------------ |
 | CLI command    | `tax`                            | `tax-agent`        |
-| Deno package   | `@filed/tax-engine`              | `@filed/tax-agent` |
+| Package        | `@filed/tax-engine`              | `@filed/tax-agent` |
 | Package path   | `engine/`                        | `agent/`           |
 | Repo           | `/Users/atul/Projects/filed/tax` | same repo          |
-| Workspace root | `deno.json`                      | —                  |
+| Workspace root | `package.json`                   | —                  |
 | Research doc   | `research.md` (this file)        | —                  |
 
 ---
@@ -744,14 +744,14 @@ URL/path, and run ID.
 
 | Layer            | Technology                                                |
 | ---------------- | --------------------------------------------------------- |
-| Runtime          | Deno                                                      |
+| Runtime          | Bun                                                       |
 | Language         | TypeScript (strict)                                       |
 | Agent framework  | Vibes SDK (vibes-sdk.a7ul.com)                            |
 | LLM              | Claude (default, swappable via Vibes)                     |
 | Validation       | Zod                                                       |
 | PDF manipulation | pdf-lib (AcroForm filling) + custom watermark layer       |
 | MeF XML          | Native DOM/XML builder, validated against IRS XSD schemas |
-| Testing          | Deno test + Vibes TestModel for agent unit tests          |
+| Testing          | bun test + Vibes TestModel for agent unit tests           |
 | Observability    | OpenTelemetry (via Vibes SDK)                             |
 | Storage          | File-based (JSON files per return)                        |
 
@@ -944,7 +944,7 @@ calls. CI enforces `setAllowModelRequests(false)`.
 - [ ] Core 1040 lines (1040 main form, Schedule 1/2/3)
 - [ ] Constants: 2025 tax brackets, standard deductions
 - [ ] Basic two-tier validator
-- [ ] Deno test suite with IRS examples
+- [ ] bun test suite with IRS examples
 
 ### Phase 2 — Input Forms + Schedules (Weeks 7-14)
 
@@ -1196,7 +1196,7 @@ Every node gets this exact template on creation:
 
 ## 17. Open Questions
 
-- [ ] Which PDF library handles IRS AcroForm field filling best in Deno?
+- [ ] Which PDF library handles IRS AcroForm field filling best under Bun?
       (pdf-lib is Node-first, needs evaluation)
 - [ ] IRS MeF schema download location for TY2025 — confirm URL pattern
 - [ ] Clearinghouse partner for MeF XML submission (Thomson Reuters, Drake, or

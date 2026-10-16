@@ -40,10 +40,10 @@ Bug fixers change engine code only. They never edit anything under `benchmark/ca
 
 Run, in this order, and stop at the first failure (it is the round's result):
 
-1. `deno task check:structure`
-2. `deno task check:cases`
-3. `deno task check:oracle` — expected values unchanged unless `ledger.json` cites a publication
-4. `deno task test:unit`
+1. `bun run check:structure`
+2. `bun run check:cases`
+3. `bun run check:oracle` — expected values unchanged unless `ledger.json` cites a publication
+4. `bun run test:unit`
 
 Then spawn the validator agent (`.claude/skills/tax-fix/agents/validator.md`) with form, year and the cases dir, and parse `VALIDATOR_RESULT: { total, pass, fail, failing }`.
 

@@ -13,7 +13,6 @@ import {
   jointAggregationCases,
   jointAggregationFixture,
 } from "./form8995a_joint_aggregation_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 for (const c of jointAggregationCases) {

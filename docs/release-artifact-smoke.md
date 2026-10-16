@@ -13,7 +13,7 @@ publishes it beside them. Reviewers can compare each downloaded file with its
 recorded digest; the manifest alone does not establish a signature or publisher
 identity.
 
-`scripts/release/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
+`scripts/release/smoke-release-binary.ts` invokes the **compiled asset**, not the
 source CLI, from a temporary working directory. It checks the injected
 version, creates a synthetic TY2025 Single return, adds full filer and W-2
 source facts, checks computed wages and withholding, requires CLI validation to
@@ -33,10 +33,13 @@ also read or write its update-check cache in the runner's home directory at
 For a manually built native asset on a matching machine, run:
 
 ```sh
-deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/release/smoke-release-binary.ts ./opentax-linux-x64 1.2.3
+bun scripts/release/smoke-release-binary.ts ./opentax-linux-x64 1.2.3 [transcript.json]
 ```
 
-Use the actual asset path and injected version. Cross-compiled assets must be
+Use the actual asset path and injected version. The optional third argument
+records every call's output, masked only for return IDs, the temporary
+directory and the MeF clock, so two builds can be compared byte for byte; see
+[scripts/parity/README.md](../scripts/parity/README.md). Cross-compiled assets must be
 run on the corresponding architecture. This check proves only that one simple
 source-backed return works through the packaged binary on that platform. It is
 not the full test suite, TY2025 XSD validation, PDF visual inspection, tax-rule

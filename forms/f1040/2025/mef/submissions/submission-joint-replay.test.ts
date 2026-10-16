@@ -40,7 +40,6 @@ test("joint source replay preserves owner copies and inline statements in a mixe
     )!,
   );
   // Four distinct door QMIDs trigger the existing generated statement path.
-  // deno-lint-ignore no-explicit-any
   const doorInput = doors.inputs as Record<string, any>;
   doorInput.f5695.part_ii_section_a.exterior_doors = Array.from(
     { length: 4 },

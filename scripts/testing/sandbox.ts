@@ -1,7 +1,6 @@
 /**
- * The binary's sandbox, as a check. Deno compiled the binary without
- * subprocess or FFI permission; Bun has no permission model, so this walks
- * every module `cli/main.ts` can load, dependencies included, and fails on
+ * The binary's sandbox, as a check. The runtime has no permission model, so
+ * this walks every module `cli/main.ts` can load, dependencies included, and fails on
  * anything that could run a process, load native code, open a socket or
  * load code it cannot see. With fetch the only network path left,
  * `cli/network.ts` decides which hosts the binary reaches.
@@ -46,7 +45,10 @@ export const FORBIDDEN_CALLS: readonly RegExp[] = [
   /\beval\s*\(/,
 ];
 
-export type SandboxProblem = { readonly module: string; readonly problem: string };
+export type SandboxProblem = {
+  readonly module: string;
+  readonly problem: string;
+};
 
 /** The built-in a specifier names (`node:fs/promises` → `fs`), if any. */
 function builtin(specifier: string): string | undefined {
@@ -58,7 +60,9 @@ function builtin(specifier: string): string | undefined {
 }
 
 function scanner(path: string): Bun.Transpiler {
-  const loader = path.endsWith(".ts") ? "ts" : path.endsWith(".tsx")
+  const loader = path.endsWith(".ts")
+    ? "ts"
+    : path.endsWith(".tsx")
     ? "tsx"
     : "js";
   return new Bun.Transpiler({ loader });
@@ -108,7 +112,10 @@ export function inspectSandbox(root = ROOT, entry = ENTRY) {
       }
     }
   }
-  return { modules: [...seen].map((file) => relative(root, file)).sort(), problems };
+  return {
+    modules: [...seen].map((file) => relative(root, file)).sort(),
+    problems,
+  };
 }
 
 if (import.meta.main) {
@@ -123,7 +130,9 @@ if (import.meta.main) {
           `which cli/network.ts restricts.`,
       );
     }
-    console.log(`${modules.length} shipped modules, ${problems.length} problems`);
+    console.log(
+      `${modules.length} shipped modules, ${problems.length} problems`,
+    );
   }
   process.exit(problems.length === 0 ? 0 : 1);
 }

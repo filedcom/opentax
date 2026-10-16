@@ -35,7 +35,7 @@ import { assertReviewScope } from "./ty2025-pdf-review-scope.ts";
 const [directoryArg, xsdArg] = process.argv.slice(2);
 if (!directoryArg || !xsdArg || process.argv.slice(2).length !== 2) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-run=xmllint scripts/research/check-ty2025-pdf-review.ts /review-directory /absolute/path/Return1040.xsd",
+    "Usage: bun scripts/research/check-ty2025-pdf-review.ts /review-directory /absolute/path/Return1040.xsd",
   );
 }
 const directory = resolve(directoryArg);

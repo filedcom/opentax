@@ -9,7 +9,6 @@ import {
   aggregationInvestmentCases,
   aggregationInvestmentFixture,
 } from "./form8995a_aggregation_investments_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 // Independently checked decimal source ledger; QSS stays below the NIIT threshold.
 const expected: Record<string, number[]> = {

@@ -98,13 +98,17 @@ function testCall(call: ts.CallExpression, names: Names): string | undefined {
       name = property.initializer.getText();
     } else if (ts.isPropertyAssignment(property) && key === "fn") {
       fn = property.initializer.getText();
-    } else if (ts.isMethodDeclaration(property) && key === "fn" && property.body) {
+    } else if (
+      ts.isMethodDeclaration(property) && key === "fn" && property.body
+    ) {
       if (property.body.getText().includes("this")) return undefined;
       const isAsync = property.modifiers?.some((m) =>
         m.kind === ts.SyntaxKind.AsyncKeyword
       );
       const params = property.parameters.map((p) => p.getText()).join(", ");
-      fn = `${isAsync ? "async " : ""}(${params}) => ${property.body.getText()}`;
+      fn = `${
+        isAsync ? "async " : ""
+      }(${params}) => ${property.body.getText()}`;
     } else if (ts.isPropertyAssignment(property) && key === "ignore") {
       ignore = property.initializer.getText();
     } else if (key === "sanitizeOps" || key === "sanitizeResources") {
@@ -154,7 +158,9 @@ function callEdit(
     }
     needs.sys = true;
     return {
-      callee: `${names.sys}.${api === "writeTextFile" ? "writeText" : "writeBytes"}`,
+      callee: `${names.sys}.${
+        api === "writeTextFile" ? "writeText" : "writeBytes"
+      }`,
     };
   }
   if ((api === "writeTextFileSync" || api === "writeFileSync") && n === 2) {
@@ -180,9 +186,10 @@ function callEdit(
   if (api === "env.get" && n === 1) {
     const literal = call.arguments[0];
     return {
-      whole: ts.isStringLiteral(literal) && /^[A-Za-z_$][\w$]*$/.test(literal.text)
-        ? `process.env.${literal.text}`
-        : `process.env[${literal.getText()}]`,
+      whole:
+        ts.isStringLiteral(literal) && /^[A-Za-z_$][\w$]*$/.test(literal.text)
+          ? `process.env.${literal.text}`
+          : `process.env[${literal.getText()}]`,
     };
   }
   if (api === "exit") return { callee: "process.exit" };
@@ -196,10 +203,14 @@ function callEdit(
 function notCapableTry(statement: ts.TryStatement): string | undefined {
   const clause = statement.catchClause;
   if (!clause || statement.finallyBlock) return undefined;
-  if (!clause.block.getText().includes("Deno.errors.NotCapable")) return undefined;
+  if (!clause.block.getText().includes("Deno.errors.NotCapable")) {
+    return undefined;
+  }
   const variable = clause.variableDeclaration?.name.getText();
   for (const inner of clause.block.statements) {
-    if (ts.isThrowStatement(inner) && inner.expression?.getText() === variable) {
+    if (
+      ts.isThrowStatement(inner) && inner.expression?.getText() === variable
+    ) {
       continue;
     }
     if (
@@ -226,7 +237,9 @@ function edits(source: ts.SourceFile, needs: Needs, names: Names) {
   };
 
   // `const p = await Deno.permissions.query({ name: "env", ... })`
-  for (const statement of source.statements.length ? collectStatements(source) : []) {
+  for (
+    const statement of source.statements.length ? collectStatements(source) : []
+  ) {
     const declaration = statement.declarationList.declarations[0];
     const init = declaration?.initializer;
     if (
@@ -289,7 +302,11 @@ function edits(source: ts.SourceFile, needs: Needs, names: Names) {
         add(node.expression, rewrite.callee);
         if (rewrite.append) {
           const last = node.arguments.at(-1)!;
-          out.push({ start: last.getEnd(), end: last.getEnd(), text: `, ${rewrite.append}` });
+          out.push({
+            start: last.getEnd(),
+            end: last.getEnd(),
+            text: `, ${rewrite.append}`,
+          });
         }
         node.arguments.forEach(visit);
         return;
@@ -307,7 +324,9 @@ function edits(source: ts.SourceFile, needs: Needs, names: Names) {
     }
     if (ts.isIdentifier(node) && node.text === "Deno") {
       const { line } = source.getLineAndCharacterOfPosition(node.getStart());
-      unknown.push(`${source.fileName}:${line + 1}: ${node.parent.getText().slice(0, 80)}`);
+      unknown.push(
+        `${source.fileName}:${line + 1}: ${node.parent.getText().slice(0, 80)}`,
+      );
       return;
     }
     ts.forEachChild(node, visit);
@@ -476,7 +495,9 @@ if (import.meta.main) {
       if (!check) writeFileSync(file, after.text);
     }
   }
-  console.log(`${changed} of ${files.length} files ${check ? "would change" : "changed"}`);
+  console.log(
+    `${changed} of ${files.length} files ${check ? "would change" : "changed"}`,
+  );
   if (unknown.length > 0) {
     console.error(`${unknown.length} Deno uses left for hand migration:`);
     for (const line of unknown) console.error(`  ${line}`);

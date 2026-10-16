@@ -13,7 +13,6 @@ import {
   sstbZeroExpected as expected,
   sstbZeroExpectedNiit as expectedNiit,
 } from "./form8995a_sstb_zero_expected.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 for (const c of sstbZeroCases) {
   const name = c.name;

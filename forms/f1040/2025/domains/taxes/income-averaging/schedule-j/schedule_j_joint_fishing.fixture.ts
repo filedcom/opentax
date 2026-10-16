@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { createHash } from "node:crypto";
 import { scheduleJFishingInputs } from "./schedule_j_fishing_source.fixture.ts";
 

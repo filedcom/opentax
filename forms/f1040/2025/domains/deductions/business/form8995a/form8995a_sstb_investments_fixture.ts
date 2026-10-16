@@ -24,7 +24,6 @@ export const sstbInvestmentCases = [
 export function sstbInvestmentFixture(
   name: typeof sstbInvestmentCases[number],
 ) {
-  // deno-lint-ignore no-explicit-any
   let input: Record<string, any>;
   const joint = sstbJointOwnerCases.find((c) => c.name === name);
   const household = sstbStatusCases.find((c) => c.name === name);

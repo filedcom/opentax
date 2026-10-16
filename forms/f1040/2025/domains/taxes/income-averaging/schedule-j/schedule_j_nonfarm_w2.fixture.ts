@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { createHash } from "node:crypto";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import {

@@ -56,7 +56,6 @@ export async function aggregationStatusFixture(
   }
   if (c.status === "mfs") {
     // The existing reviewed separate-property contract applies to the whole group.
-    // deno-lint-ignore no-explicit-any
     const review = (status.inputs.schedule_c as Record<string, any>[])[0]
       .qbi_sstb_filing_review.mfs_filing_review;
     input.qbi_aggregation.aggregation_mfs_review = {

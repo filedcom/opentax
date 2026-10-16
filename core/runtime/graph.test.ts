@@ -35,9 +35,7 @@ class MockParentNode extends TaxNode<typeof noOpSchema> {
 
 // Cyclic A → B → A: use getters so each side can reference the other's instance lazily
 // (class fields would need the other instance to already exist at construction time)
-// deno-lint-ignore prefer-const
 let mockANode: MockANode;
-// deno-lint-ignore prefer-const
 let mockBNode: MockBNode;
 
 class MockANode extends TaxNode<typeof noOpSchema> {

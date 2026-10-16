@@ -15,7 +15,7 @@ import {
 const [asset, expectedVersion, transcriptPath] = process.argv.slice(2);
 if (!asset || !expectedVersion || process.argv.slice(2).length > 3) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/release/smoke-release-binary.ts <built-asset> <expected-version> [transcript.json]",
+    "Usage: bun scripts/release/smoke-release-binary.ts <built-asset> <expected-version> [transcript.json]",
   );
 }
 

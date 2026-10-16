@@ -25,7 +25,9 @@ export async function releaseFullRunLock(
   path: string,
   owner: Owner,
 ): Promise<void> {
-  const recorded = ownerSchema.parse(JSON.parse(await fs.readFile(path, "utf8")));
+  const recorded = ownerSchema.parse(
+    JSON.parse(await fs.readFile(path, "utf8")),
+  );
   if (
     recorded.pid !== owner.pid || recorded.evidence !== owner.evidence ||
     recorded.startedAt !== owner.startedAt

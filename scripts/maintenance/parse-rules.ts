@@ -11,7 +11,7 @@ import * as sys from "../support/sys.ts";
  * For recognizable patterns (~60% of rules), auto-generates the
  * predicate DSL check function. Complex rules get check: null (stub).
  *
- * Usage: deno run --allow-read --allow-write scripts/maintenance/parse-rules.ts
+ * Usage: bun scripts/maintenance/parse-rules.ts
  */
 
 import { parse } from "@std/csv";

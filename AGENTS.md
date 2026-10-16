@@ -5,18 +5,20 @@ as a graph of pure nodes. Two CLIs, kept apart:
 
 - `cli/main.ts` is the product, compiled to the `opentax` binary users run.
 - The harness is what you use while building it and is never shipped:
-  `deno task check:structure` (nodes placed, registered, reachable),
-  `deno task check:cases` (benchmark cases fit their node schemas and cite a
-  publication), `deno task bench` (engine output against IRS ground truth) and
-  `deno task test:unit` (module graph and typed tests).
+  `bun run check:structure` (nodes placed, registered, reachable),
+  `bun run check:cases` (benchmark cases fit their node schemas and cite a
+  publication), `bun run check:sandbox` (the binary reaches the network only
+  through restricted fetch), `bun run bench` (engine output against IRS ground
+  truth) and `bun run test:unit` (module graph, type check and typed tests).
 
 ## Before a pull request
 
 A change ships with proof, not a description of it:
 
-- `deno task check:structure` and `deno task test:unit` pass.
-- `deno task bench --form <form> --year <year>` passes for every form:year the
-  change touches, and `deno task check:oracle` passes: an expected value changes
+- `bun run check:structure`, `bun run check:sandbox` and `bun run test:unit`
+  pass.
+- `bun run bench --form <form> --year <year>` passes for every form:year the
+  change touches, and `bun run check:oracle` passes: an expected value changes
   only with a publication cited in that product's `ledger.json`.
 - The pull request says what was not verified and why.
 

@@ -9,7 +9,6 @@ import {
   groupLossCases,
   groupLossFixture,
 } from "./form8995a_group_loss_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 for (const c of groupLossCases) {
   test(`Capital distributions with QBI loss employer groups ${c.name}`, async () => {

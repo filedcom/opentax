@@ -1,6 +1,5 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
-// deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   passiveRentalCases,

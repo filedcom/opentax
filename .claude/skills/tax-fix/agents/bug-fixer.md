@@ -14,11 +14,11 @@ Pick 1–2 representative cases (directory names start with the case number, e.g
 
 ## Step 2 — Reproduce
 
-Run `deno task check:cases` first. If it reports your case, its inputs no longer fit the node schema: stop and report `case input drift: <message>`. Do not patch the engine around it.
+Run `bun run check:cases` first. If it reports your case, its inputs no longer fit the node schema: stop and report `case input drift: <message>`. Do not patch the engine around it.
 
 Otherwise run the engine on the case:
 ```bash
-deno run --allow-read --allow-write --allow-run benchmark/run_case.ts {cases_dir}/{case}
+bun benchmark/run_case.ts {cases_dir}/{case}
 ```
 Compare the printed summary with `correct.json`. Name the field and the delta.
 
@@ -35,8 +35,8 @@ Read the node at `root_cause.node_path` and the nodes it routes to (`outputNodes
 
 Make a minimal, targeted change following `AGENTS.md`: Zod schemas, pure functions, no mutation, early returns, no `as any`. Then:
 ```bash
-deno test {node_directory}/ --allow-read
-deno task check:structure
+bun test ./{node_directory}/
+bun run check:structure
 ```
 Re-run the representative cases; expected values must match within $5.
 

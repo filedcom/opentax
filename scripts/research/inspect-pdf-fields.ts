@@ -6,7 +6,7 @@ import * as sys from "../support/sys.ts";
  * Audit real IRS AcroForm fields against every registered PDF descriptor.
  *
  * Usage:
- *   deno run --allow-net=www.irs.gov --allow-read --allow-write scripts/research/inspect-pdf-fields.ts
+ *   bun scripts/research/inspect-pdf-fields.ts
  *
  * Output:
  *   .state/research/ty2025-pdf-field-audit/<pendingKey>-<index>.json

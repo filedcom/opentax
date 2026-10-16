@@ -1,6 +1,5 @@
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 // Synthetic source references do not authenticate issued payroll or ownership.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 export const groupLossCases = [
   {

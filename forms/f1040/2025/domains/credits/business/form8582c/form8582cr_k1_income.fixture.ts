@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { passiveInventoryFixture } from "./form8582cr_overflow.fixture.ts";
 import { passiveK1Item } from "../../earned-income/earned-income/eic_passive_k1.fixture.ts";
 

@@ -9,7 +9,6 @@ import {
   sstbInvestmentCases,
   sstbInvestmentFixture,
 } from "./form8995a_sstb_investments_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 // Independent decimal source ledger, including a binding investment-income cap.
 const expected: Record<string, number[]> = {

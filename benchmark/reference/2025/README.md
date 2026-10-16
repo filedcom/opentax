@@ -103,7 +103,7 @@ removing a limitation or treating the complete return as an authoritative oracle
 Run the focused checks with:
 
 ```sh
-deno test --allow-read --allow-write --allow-run \
+bun test ./--allow-run \
   benchmark/issue77_reference.test.ts benchmark/fixture_contract.test.ts \
   benchmark/harness.test.ts benchmark/run_benchmark.test.ts \
   benchmark/run_benchmark.integration.test.ts

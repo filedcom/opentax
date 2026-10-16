@@ -11,7 +11,6 @@ import {
 } from "./form8995a_patron_status_fixture.ts";
 import { patronStatusExpected } from "./form8995a_patron_status_expected.ts";
 // Mutations intentionally cross the untrusted persisted-data boundary.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 function mirrorSources(p: Row) {

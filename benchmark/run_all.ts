@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../scripts/support/sys.ts";
 /**
  * Run all benchmark cases and generate output.json for each.
- * Run: deno run --allow-read --allow-write --allow-run benchmark/run_all.ts
+ * Run: bun benchmark/run_all.ts
  */
 
 import { dirname, join } from "node:path";

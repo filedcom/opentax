@@ -6,7 +6,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 /
 ├── AGENTS.md                      # Agent instructions; CLAUDE.md includes it
 ├── mod.ts / catalog.ts            # Public API and supported form catalog
-├── deno.json / deno.lock           # Typed tasks and locked dependencies
+├── package.json / bun.lock         # Scripts and locked dependencies
 ├── cli/
 │   ├── commands/                  # Return, form, node and export operations
 │   ├── store/                     # Return persistence and guarded carry archives
@@ -61,7 +61,7 @@ Tax-facing boundaries use General, Income, Adjustments, Deductions, Credits, Tax
 
 ## Structure contract
 
-`deno task check:structure` enforces the node layout above and fails with the
+`bun run check:structure` enforces the node layout above and fails with the
 expected path or the registration fix. Nodes are shared per form; a year owns
 only config and wiring, so a `TaxNode` must live at
 `forms/<form>/nodes/<inputs|intermediate|outputs>/[<aggregation|forms|worksheets>/]<section>/<group>/<name>/<file>.ts`.
@@ -89,6 +89,9 @@ expired entries, and on entries that no longer match anything.
 | Expected values change only with a cited ledger entry       | `scripts/testing/oracle.ts` (`check:oracle`)     |
 | Unmapped expected lines fail instead of passing             | `benchmark/run_benchmark.ts`                     |
 | Test modules are discovered exactly, never partially        | `scripts/testing/run.ts`                         |
+| Every module resolves and type-checks strictly              | `scripts/testing/repository.ts` (`tsc`)          |
+| The binary cannot spawn, load native code or open sockets   | `scripts/testing/sandbox.ts` (`check:sandbox`)   |
+| The binary reaches only the IRS and GitHub over HTTPS       | `cli/network.ts`                                 |
 | The checks above run on every pull request                  | `.github/workflows/test.yml`                     |
 
 ## Benchmark case formats

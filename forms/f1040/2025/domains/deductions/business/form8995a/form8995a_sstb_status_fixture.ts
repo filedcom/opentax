@@ -19,7 +19,6 @@ export function sstbStatusFixture(c: typeof sstbStatusCases[number]) {
         ? "hoh-w2-nonclaimed-custodial-release-child"
         : "qss-w2-nonclaimed-joint-return-child")
   )!;
-  // deno-lint-ignore no-explicit-any
   const input: Record<string, any> = structuredClone(business.inputs);
   input.general = {
     ...structuredClone(household.inputs.general as Record<string, unknown>),

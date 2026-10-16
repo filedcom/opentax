@@ -13,7 +13,6 @@ import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
 } from "./form8995a_aggregation_phasein_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 for (const c of aggregationPhaseInCases) {

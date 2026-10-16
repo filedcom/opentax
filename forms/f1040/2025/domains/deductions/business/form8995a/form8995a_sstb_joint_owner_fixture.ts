@@ -35,7 +35,6 @@ export function sstbJointOwnerFixture(c: typeof sstbJointOwnerCases[number]) {
         ? "single-form8995a-accounting-sstb-phasein"
         : "single-form8995a-accounting-sstb-no-payroll")
   )!;
-  // deno-lint-ignore no-explicit-any
   const input: Record<string, any> = structuredClone(joint.inputs);
   input.schedule_c = structuredClone(business.inputs.schedule_c);
   const ownerSsn =

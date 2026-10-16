@@ -39,6 +39,7 @@ Write `index.test.ts` before `index.ts`. Tests must fail initially.
 
 Test structure:
 ```typescript
+import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { nodeInstance, inputSchema } from "./index.ts";
 
@@ -46,12 +47,12 @@ function compute(input: Record<string, unknown>) {
   return nodeInstance.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
-Deno.test("{node_id} — zero input returns no outputs", () => {
+test("{node_id} — zero input returns no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("{node_id} — basic {section} calculation", () => {
+test("{node_id} — basic {section} calculation", () => {
   const result = compute({ /* minimal valid input */ });
   // assert specific output fields and values from IRS example
 });
@@ -116,7 +117,7 @@ For 1120: the main constant is `CORPORATE_TAX_RATE = 0.21` (IRC §11(b)).
 ### Step 5 — Run Tests
 
 ```bash
-deno test forms/f{FORM}/{YEAR}/nodes/{section}/{node_id}/ --allow-read 2>&1 | tail -10
+bun test ./forms/f{FORM}/{YEAR}/nodes/{section}/{node_id}/ 2>&1 | tail -10
 ```
 
 Fix until all tests pass green.
@@ -135,7 +136,7 @@ const registry = {
 
 Run type check:
 ```bash
-deno check forms/f{FORM}/{YEAR}/registry.ts 2>&1 | tail -5
+bun run typecheck 2>&1 | tail -5
 ```
 
 ### Step 7 — Report

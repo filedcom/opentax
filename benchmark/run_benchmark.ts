@@ -4,7 +4,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../scripts/support/sys.ts";
 /**
  * run_benchmark.ts — Run all cases through the tax engine and compare to correct values.
- * Run: deno run --allow-read --allow-write --allow-run benchmark/run_benchmark.ts
+ * Run: bun benchmark/run_benchmark.ts
  */
 
 import { dirname, join } from "node:path";
@@ -50,7 +50,7 @@ export function taxCommandOutputOrThrow(
 ): string {
   if (code !== 0) {
     throw new Error(
-      `opentax command failed (${code}): deno run cli/main.ts ${
+      `opentax command failed (${code}): bun cli/main.ts ${
         args.join(" ")
       }\n${stderrText}${stdoutText}`,
     );

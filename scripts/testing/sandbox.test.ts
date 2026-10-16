@@ -25,7 +25,7 @@ test("sandbox check follows imports and rejects every escape from fetch", async 
       'import { spawn } from "node:child_process";',
       'import "node:net";',
       'import ffi from "bun:ffi";',
-      "export const helper = (f: unknown) => [f, spawn, ffi, Bun.spawn, eval(\"1\")];",
+      'export const helper = (f: unknown) => [f, spawn, ffi, Bun.spawn, eval("1")];',
       "const name = 'x'; export const lazy = () => import(name);",
     ].join("\n"),
   });

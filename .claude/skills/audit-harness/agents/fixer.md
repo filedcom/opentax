@@ -44,7 +44,7 @@ After applying all fixes for a file, look for adjacent test files:
 
 If test files exist, run them:
 ```bash
-deno test {test_file} --allow-read 2>&1 | tail -20
+bun test ./{test_file} 2>&1 | tail -20
 ```
 
 (Adjust the test command based on what test runner the project uses.)

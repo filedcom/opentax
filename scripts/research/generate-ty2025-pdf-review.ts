@@ -35,7 +35,7 @@ import { reviewScope } from "./ty2025-pdf-review-scope.ts";
 const [outputDir, xsdArg, selectionFile] = process.argv.slice(2);
 if (!outputDir || !xsdArg || process.argv.slice(2).length < 2 || process.argv.slice(2).length > 3) {
   throw new Error(
-    "Usage: deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/research/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd [/absolute/path/selection.json]",
+    "Usage: bun scripts/research/generate-ty2025-pdf-review.ts /new/output-directory /absolute/path/Return1040.xsd [/absolute/path/selection.json]",
   );
 }
 let selectedIds: string[] | undefined;

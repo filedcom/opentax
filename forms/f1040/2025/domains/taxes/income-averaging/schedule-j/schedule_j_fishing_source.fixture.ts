@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { createHash } from "node:crypto";
 import { scheduleJNonfarmW2Inputs } from "./schedule_j_nonfarm_w2.fixture.ts";
 import { allocateSharedSeDeduction } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";

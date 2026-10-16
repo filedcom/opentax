@@ -256,7 +256,7 @@ All traced back to the authoritative IRS source.
 
 ## Development
 
-Requires [Deno](https://deno.land).
+Requires [Bun](https://bun.sh) 1.4. Run `bun install` once after cloning.
 
 Two CLIs, kept apart: `cli/main.ts` is the product, and the harness is what you
 use while building it. The harness is dev-only and documented in
@@ -265,17 +265,19 @@ in [AGENTS.md](AGENTS.md).
 
 ```bash
 # Prove a change before a pull request (what CI runs)
-deno task check:structure   # nodes placed, registered, reachable
-deno task check:cases       # benchmark cases fit their node schemas and cite a source
-deno task check:oracle      # expected values changed only with a cited ledger entry
-deno task test:unit         # module graph and typed tests
+bun run check:structure   # nodes placed, registered, reachable
+bun run check:cases       # benchmark cases fit their node schemas and cite a source
+bun run check:oracle      # expected values changed only with a cited ledger entry
+bun run check:sandbox     # the binary reaches the network only through restricted fetch
+bun run test:unit         # module graph, type check and typed tests
 
 # Run the full test suite and the accuracy benchmark
-deno task test
-deno task bench
+bun run test
+bun run bench
 
-# Run the CLI in dev mode
-deno task tax return create --year 2025
+# Run the CLI in dev mode, or build the single-file binary
+bun run tax return create --year 2025
+bun run compile
 ```
 
 ### TY2026 research sources
@@ -316,7 +318,7 @@ Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root
 
 #### `/tax-cases [source]`
 
-Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages) and validates what it writes with `deno task check:cases`. Run `/tax-fix` after to see how the engine performs on the new cases.
+Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages) and validates what it writes with `bun run check:cases`. Run `/tax-fix` after to see how the engine performs on the new cases.
 
 ```
 /tax-cases vita                            # VITA Pub 4491 training exercises

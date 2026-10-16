@@ -30,7 +30,9 @@ export async function repositoryFiles(root: string): Promise<string[]> {
 export function verificationInputPaths(paths: string[]): string[] {
   return paths.filter((path) =>
     path.endsWith(".ts") ||
-    ["package.json", "bun.lock", "bunfig.toml", "tsconfig.json"].includes(path) ||
+    ["package.json", "bun.lock", "bunfig.toml", "tsconfig.json"].includes(
+      path,
+    ) ||
     (path.endsWith(".json") &&
       [
         "forms/",

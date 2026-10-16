@@ -25,7 +25,6 @@ const patronInvestmentExpected: Record<string, number[]> = {
   "spouse-c-health": [23579, 612971, 153139, 164091, 111820],
 };
 // Mutations intentionally cross the untrusted persisted-data boundary.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 for (const c of patronInvestmentCases) {

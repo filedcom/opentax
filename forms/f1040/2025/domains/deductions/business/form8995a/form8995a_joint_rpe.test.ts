@@ -13,7 +13,6 @@ import {
   jointRpeCases,
   jointRpeFixture,
 } from "./form8995a_joint_rpe_fixture.ts";
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 for (const c of jointRpeCases) {
   test(`issued RPE ${c.name}: actual owner, phased limit, intact copies and final tax`, async () => {

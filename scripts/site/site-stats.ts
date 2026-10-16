@@ -6,7 +6,7 @@ import * as fs from "node:fs/promises";
  * rewrites every "<n> registered nodes" and "<n> input types" on the site.
  * The Pages workflow runs this before each deploy. It can also be run locally:
  *
- *   deno run --allow-read --allow-write scripts/site/site-stats.ts
+ *   bun scripts/site/site-stats.ts
  */
 import { registry } from "../../forms/f1040/2025/registry.ts";
 import { inputNodes } from "../../forms/f1040/2025/inputs.ts";

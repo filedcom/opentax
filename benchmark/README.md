@@ -62,16 +62,16 @@ itself proof that every reported discrepancy is a tax-engine arithmetic error.
 
 ```bash
 # Full benchmark
-cd benchmark && deno run --allow-read --allow-write --allow-run run_benchmark.ts
+cd benchmark && bun run_benchmark.ts
 
 # Single case
-deno run --allow-read --allow-write --allow-run run_case.ts cases/02-single-w2-basic/
+bun run_case.ts cases/02-single-w2-basic/
 
 # Regenerate all output.json
-deno run --allow-read --allow-write --allow-run run_all.ts
+bun run_all.ts
 
 # Validate every case's inputs and sources without running the engine
-deno task check:cases
+bun run check:cases
 ```
 
 ## Adding a new case
@@ -83,7 +83,7 @@ automatically, or create `cases/{form}/{year}/NN-description/input.json` and
 
 ## Changing expected values
 
-`deno task check:oracle` compares every `correct.json` with `origin/main`
+`bun run check:oracle` compares every `correct.json` with `origin/main`
 (`--base <ref>` to choose another). Each changed scored value needs an entry in
 `benchmark/cases/<form>/<year>/ledger.json` stating `case`, `line`, `before`,
 `after`, a `source` that cites a publication, `approvedBy` and `on`; a removed
@@ -108,7 +108,7 @@ input and expected-value schemas, the product read from `<form>/<year>/<case>`,
 each form entry against the node schema `form add` applies (unknown fields
 rejected, required fields named), and any `source`, which must cite a
 publication and never the engine. Every invalid case is reported in one error;
-`deno task check:cases` runs only this step, without the engine, allowing the
+`bun run check:cases` runs only this step, without the engine, allowing the
 known-invalid cases listed in `benchmark/cases/baseline.json` (with a reason,
 an expiry and an approver) until their entry expires. Empty or
 incomplete directories and malformed fixtures terminate with an error; no

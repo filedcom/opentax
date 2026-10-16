@@ -1,5 +1,4 @@
 import { test } from "bun:test";
-// deno-lint-ignore-file no-explicit-any
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   disabledAccessInventoryCases,

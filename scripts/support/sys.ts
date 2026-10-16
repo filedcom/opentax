@@ -1,6 +1,6 @@
 /**
- * The few file and process operations whose Deno semantics have no 1:1 `node:`
- * call, implemented on `node:` built-ins for tests, fixtures and scripts.
+ * The few file and process operations that have no 1:1 `node:` call,
+ * implemented on `node:` built-ins for tests, fixtures and scripts.
  * Product code under `cli/`, `core/` and `forms/` uses `node:` directly.
  *
  * Each function keeps the behaviour the callers were written against:
@@ -29,8 +29,8 @@ import {
 import {
   lstatSync as nodeLstatSync,
   readFileSync,
-  statSync as nodeStatSync,
   type Stats,
+  statSync as nodeStatSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -95,7 +95,10 @@ export async function writeText(
   if (options?.append && !options.createNew && options.mode === undefined) {
     return await appendFile(path, text);
   }
-  await writeFile(path, text, { flag: writeFlag(options), mode: options?.mode });
+  await writeFile(path, text, {
+    flag: writeFlag(options),
+    mode: options?.mode,
+  });
 }
 
 export async function writeBytes(
@@ -106,10 +109,13 @@ export async function writeBytes(
   const bytes = data instanceof Uint8Array
     ? data
     : new Uint8Array(await new Response(data).arrayBuffer());
-  await writeFile(path, bytes, { flag: writeFlag(options), mode: options?.mode });
+  await writeFile(path, bytes, {
+    flag: writeFlag(options),
+    mode: options?.mode,
+  });
 }
 
-/** Removes a file, or a directory: recursively only when asked, like Deno.remove. */
+/** Removes a file, or a directory: an empty one plainly, a full one only when recursive. */
 export async function remove(
   path: string | URL,
   options?: { readonly recursive?: boolean },
@@ -223,7 +229,10 @@ export type ChildHandle = {
   kill(signal?: NodeJS.Signals): void;
 };
 
-function stdio(value: Stdio | undefined, fallback: Stdio): "pipe" | "inherit" | "ignore" {
+function stdio(
+  value: Stdio | undefined,
+  fallback: Stdio,
+): "pipe" | "inherit" | "ignore" {
   const chosen = value ?? fallback;
   return chosen === "piped" ? "pipe" : chosen === "null" ? "ignore" : "inherit";
 }
@@ -235,7 +244,7 @@ function status(code: number | null, signal: string | null): CommandStatus {
 
 const EMPTY = new Uint8Array();
 
-/** A subprocess with Deno.Command's defaults: output() pipes, spawn() inherits. */
+/** A subprocess: output() pipes stdout and stderr, spawn() inherits them. */
 export class Command {
   readonly #command: string;
   readonly #options: CommandOptions;

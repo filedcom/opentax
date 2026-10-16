@@ -14,7 +14,6 @@ import {
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 // Synthetic reviewed payroll; neither source references nor these tests authenticate issuer records.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 for (const c of groupLossCases) {
   test(`Joint common-control employers with QBI losses ${c.name}`, async () => {

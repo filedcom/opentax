@@ -73,10 +73,14 @@ test("runner retains terminal failure when a tracked runtime file is missing bef
     code: z.literal(1),
     mode: z.literal("preflight"),
     error: z.string(),
-  }).parse(JSON.parse(await fs.readFile(join(evidence, "failure.json"), "utf8")));
+  }).parse(
+    JSON.parse(await fs.readFile(join(evidence, "failure.json"), "utf8")),
+  );
   const final = z.object({ code: z.literal(1), endedAt: z.string().min(1) })
     .parse(
-      JSON.parse(await fs.readFile(join(evidence, "final-status.json"), "utf8")),
+      JSON.parse(
+        await fs.readFile(join(evidence, "final-status.json"), "utf8"),
+      ),
     );
   assertStringIncludes(failure.error, "missing.ts");
   assertEquals(final.code, 1);

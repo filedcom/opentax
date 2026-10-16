@@ -25,7 +25,6 @@ const patronWageExpected: Record<string, number[]> = {
   "spouse-c-health": [23579, 606471, 151359, 162064, 109793],
 };
 // Mutations intentionally cross the untrusted persisted-data boundary.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 function mirrorSources(p: Row) {

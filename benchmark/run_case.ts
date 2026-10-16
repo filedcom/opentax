@@ -2,7 +2,7 @@
 import * as fs from "node:fs/promises";
 /**
  * Run a single benchmark case through the tax engine and save output.json.
- * Usage: deno run --allow-read --allow-write --allow-run benchmark/run_case.ts <case_dir>
+ * Usage: bun benchmark/run_case.ts <case_dir>
  */
 
 import { basename, dirname, join } from "node:path";
@@ -21,7 +21,7 @@ const TAX_DIR = join(SCRIPT_DIR, "..");
 const caseDir = process.argv.slice(2)[0];
 if (!caseDir) {
   console.error(
-    "Usage: deno run --allow-read --allow-write --allow-run run_case.ts <case_dir>",
+    "Usage: bun benchmark/run_case.ts <case_dir>",
   );
   process.exit(1);
 }

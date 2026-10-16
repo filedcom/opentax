@@ -17,7 +17,6 @@ import {
 
 // Persisted pending data are an untrusted boundary, so mutations deliberately
 // bypass input types and change every retained copy of the source together.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 for (const endpoint of sstbZeroCases) {

@@ -7,7 +7,6 @@ import { patronWageFixture } from "./form8995a_patron_wages_fixture.ts";
 import { independentPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-independent-patron.fixture.ts";
 
 // Untrusted persisted values are deliberately altered to exercise export guards.
-// deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
 for (const [offset, expected] of [[-1, 931], [0, 932], [1, 932]]) {

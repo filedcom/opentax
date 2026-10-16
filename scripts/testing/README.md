@@ -6,18 +6,19 @@ pull request carries evidence instead of a description. The finish condition is
 in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 [STRUCTURE.md](../../docs/architecture/STRUCTURE.md).
 
-| Command                                       | Proves                                                   | Fails when                                                                                                                                                                                                                  |
-| --------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `deno task check:structure`                   | nodes are placed, registered and reachable               | a `TaxNode` outside `forms/<form>/nodes/<role>/[<kind>/]<section>/<group>/<name>/`; a registry key that is not the node type; a node class in no registry; a registered node that nothing routes to and the CLI cannot take |
-| `deno task check:cases`                       | benchmark cases fit their node schemas and cite a source | an input `form add` would reject, with the field named; a `source` that cites the engine                                                                                                                                    |
-| `deno task check:oracle [--base origin/main]` | expected values changed only with a citation             | a changed scored value, a removed case, or a new case without a source, that has no matching entry in `benchmark/cases/<form>/<year>/ledger.json`                                                                           |
-| `deno task bench --form f1040 --year 2025`    | the engine matches IRS ground truth                      | a supported line outside the $5 legacy tolerance, an unmapped oracle, a diagnostic, a skipped case                                                                                                                          |
-| `deno task test:unit`                         | the module graph resolves and the typed tests pass       | a graph error, a missing or duplicate test module, a failing test, a runtime change during the run                                                                                                                          |
+| Command                                     | Proves                                                           | Fails when                                                                                                                                                                                                                  |
+| ------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run check:structure`                   | nodes are placed, registered and reachable                       | a `TaxNode` outside `forms/<form>/nodes/<role>/[<kind>/]<section>/<group>/<name>/`; a registry key that is not the node type; a node class in no registry; a registered node that nothing routes to and the CLI cannot take |
+| `bun run check:cases`                       | benchmark cases fit their node schemas and cite a source         | an input `form add` would reject, with the field named; a `source` that cites the engine                                                                                                                                    |
+| `bun run check:oracle [--base origin/main]` | expected values changed only with a citation                     | a changed scored value, a removed case, or a new case without a source, that has no matching entry in `benchmark/cases/<form>/<year>/ledger.json`                                                                           |
+| `bun run bench --form f1040 --year 2025`    | the engine matches IRS ground truth                              | a supported line outside the $5 legacy tolerance, an unmapped oracle, a diagnostic, a skipped case                                                                                                                          |
+| `bun run check:sandbox`                     | the binary can reach the network only through restricted fetch   | a module `cli/main.ts` loads, dependencies included, that imports `child_process`, `net`, `http`, `worker_threads`, `vm`, `bun:ffi` or similar, or calls `Bun.spawn`, `eval` or a non-literal `import()`                    |
+| `bun run test:unit`                         | the module graph resolves, type-checks, and the typed tests pass | an unresolved import, a `tsc` error (strict, no unused locals or parameters), a missing or duplicate test module, a failing test, a runtime change during the run                                                           |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
-problem. `.github/workflows/test.yml` runs the first three and `test:unit` on
-every pull request. `bench` runs locally until the baselined cases below are
-fixed, then joins them.
+problem. `.github/workflows/test.yml` runs the first three, `check:sandbox` and
+`test:unit` on every pull request. `bench` runs locally until the baselined
+cases below are fixed, then joins them.
 
 ## Ratchets
 
@@ -46,21 +47,24 @@ rule and its enforcer in the STRUCTURE.md table.
 
 ## Test runner
 
-`deno task test:unit` runs the exact core, CLI utility and harness modules after
-checking the graph of every TypeScript module. `test:harness` selects the
-verification contracts and benchmark harness. `test:preflight` checks discovery
-and graph resolution without executing tests. Reports explicitly list excluded
-modules; a selected run does not prove complete filing coverage.
+`bun run test:unit` runs the exact core, CLI utility, network policy and harness
+modules after resolving every runtime import of every TypeScript module and
+type-checking the tree with `tsc`. Tests run under `bun test --isolate`, a fresh
+global and module registry per file, with a 30-minute per-test limit.
+`test:harness` selects the verification contracts and benchmark harness.
+`test:preflight` checks discovery and graph resolution without executing tests.
+Reports explicitly list excluded modules; a selected run does not prove complete
+filing coverage.
 
-`deno task test` runs the complete discovered suite serially, requires xmllint,
-Poppler and the retained TY2025 Return1040 schema, and rejects unavailable
-ignored requirements. Exact module/test exclusions in `skip-policy.json` require
-a documented reason; excluded tests remain unverified, and the report never
-calls a run with exclusions complete coverage. Private reviewed evidence must be
-supplied through the existing named environment inputs for the relevant optional
-filing gates. Missing inputs and ignored cases remain visible in the
-requirements and JUnit reports. A full suite is not IRS acceptance or
-independent tax ground truth.
+`bun run test` runs the complete discovered suite in isolated parallel workers,
+requires xmllint, Poppler and the retained TY2025 Return1040 schema, and rejects
+unavailable ignored requirements. Exact module/test exclusions in
+`skip-policy.json` require a documented reason; excluded tests remain
+unverified, and the report never calls a run with exclusions complete coverage.
+Private reviewed evidence must be supplied through the existing named
+environment inputs for the relevant optional filing gates. Missing inputs and
+ignored cases remain visible in the requirements and JUnit reports. A full suite
+is not IRS acceptance or independent tax ground truth.
 
 Every invocation retains a unique private directory under
 `.state/research/testing/`, including exact selected/excluded modules, module
