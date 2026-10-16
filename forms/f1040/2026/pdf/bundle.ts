@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../whole-dollars.ts";
 import { buildForm5329PdfBytes2026 } from "./form5329.ts";
 import {
   calculateRetirementSources2026,
@@ -50,7 +51,7 @@ import { PDFDocument, PDFName, rgb, StandardFonts } from "pdf-lib";
 import { FilingStatus } from "../../nodes/types.ts";
 import { sourceRegistry2026 } from "../source-registry.ts";
 import type { calculateInvestmentClaim2026 } from "../inputs/investment-claim.ts";
-import type { calculateMovingSources2026 } from "../inputs/moving-source.ts";
+import { calculateMovingSources2026 } from "../inputs/moving-source.ts";
 import type { calculateForm4137_2026 } from "../inputs/form4137.ts";
 import type { calculateForm8919_2026 } from "../inputs/form8919.ts";
 import type { calculateScheduleA2026 } from "../schedule-a.ts";
@@ -185,9 +186,14 @@ export async function buildDraftReturnPdf2026(
     "form8959",
   );
   const niit = retained<ReturnType<typeof calculateForm8960_2026>>("form8960");
-  const moving = retained<ReturnType<typeof calculateMovingSources2026>>(
+  const movingWorkpaper = retained<
+    ReturnType<typeof calculateMovingSources2026>
+  >(
     "f3903",
   );
+  const moving = movingWorkpaper
+    ? calculateMovingSources2026(movingWorkpaper.source_input)
+    : undefined;
   const business = retained<ReturnType<typeof calculateBusiness2026>>(
     "schedule_c",
   );
@@ -197,11 +203,13 @@ export async function buildDraftReturnPdf2026(
   const capital = retained<ReturnType<typeof calculateCapitalGains2026>>(
     "capital_gains",
   ) ?? land?.land.loss.calculation.capital;
-  const retirement = retained<
+  const retirementWorkpaper = retained<
     ReturnType<typeof calculateRetirementSources2026>
   >("f1099r");
+  const retirement = retirementWorkpaper
+    ? calculateRetirementSources2026(retirementWorkpaper.source_input)
+    : undefined;
   if (retirement) {
-    const replay = calculateRetirementSources2026(retirement.source_input);
     for (
       const key of [
         "line4a_ira_gross",
@@ -211,12 +219,22 @@ export async function buildDraftReturnPdf2026(
         "line5c_rollover",
       ] as const
     ) {
-      if (f[key] !== (replay.filed_lines as Record<string, unknown>)[key]) {
+      if (f[key] !== (retirement.filed_lines as Record<string, unknown>)[key]) {
         throw new Error(
           "Retirement draft lines disagree with reviewed sources",
         );
       }
     }
+  }
+  if (
+    (moving || retirement) && line("line1h_other_earned") !== roundWholeDollars(
+        (retirement?.cents.line1h_disability_wages ?? 0) +
+          (moving?.f1040Line1h ?? 0),
+      )
+  ) {
+    throw new Error(
+      "Draft line 1h must reconcile disability and moving source components",
+    );
   }
   const retirementAttachments = retirement
     ? retirementIssuedAttachments2026(retirement)
@@ -768,7 +786,7 @@ export async function buildDraftReturnPdf2026(
         {
           schedule1_line14: amount(p.schedule1, "line14_moving_expenses"),
           schedule1_storage_fees: moving.schedule1StorageFees,
-          f1040_line1h_moving_component: line("line1h_other_earned"),
+          f1040_line1h_moving_component: moving.f1040Line1h,
         },
         filer,
       ));

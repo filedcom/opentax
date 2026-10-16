@@ -47,6 +47,7 @@ class MovingExpenses2026Node extends TaxNode<typeof inputSchema> {
         {
           nodeType: "agi_aggregator",
           fields: {
+            moving_sources_2026: result.source_input,
             line14_moving_expenses: result.schedule1Line14,
             line1h_other_earned: result.f1040Line1h,
           },

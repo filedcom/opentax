@@ -1,3 +1,5 @@
+import { retirementCreditWages2026 } from "../inputs/retirement-earned.ts";
+import { retirementSource2026Schema } from "../inputs/retirement-source.ts";
 import { businessCreditEarnings2026 } from "../inputs/business-earned.ts";
 import { businessReturnSource2026Schema } from "../inputs/business-qbi.ts";
 import { z } from "zod";
@@ -44,7 +46,9 @@ export const eicClaim2026Schema = z.object({
   business_inventory_reference: reference.optional(),
   no_other_farm_rental_passive_or_capital_disposition_sources: z.literal(true)
     .optional(),
-  no_retirement_disability_inmate_or_workfare_wages: z.literal(true),
+  no_retirement_disability_inmate_or_workfare_wages: z.literal(true).optional(),
+  retirement_inventory_reference: reference.optional(),
+  no_inmate_or_workfare_wages: z.literal(true).optional(),
   no_medicaid_waiver_payments: z.literal(true),
   no_community_property_allocation: z.literal(true),
   // These source cases need their own eligibility/attachment routes; a child
@@ -93,6 +97,7 @@ export const inputSchema = eicClaim2026Schema.partial().extend({
   unsupported_eic_activity: z.boolean(),
   capital_disposition_activity_2026: z.boolean().default(false),
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  retirement_sources_2026: retirementSource2026Schema.optional(),
   w2_eic_sources_2026: z.array(
     z.object({
       recipient: z.enum(["taxpayer", "spouse"]),
@@ -134,6 +139,16 @@ export function calculateEic2026(raw: EicInput2026) {
       input,
     )
     : undefined;
+  const retirement = input.retirement_sources_2026
+    ? retirementCreditWages2026(
+      input.retirement_sources_2026,
+      input.filing_status,
+      input,
+    )
+    : undefined;
+  if (retirement && retirement.filed_wages > input.wage_income_from_agi) {
+    throw new Error("EIC disability wages exceed reconciled AGI wages");
+  }
   const earnedBeforeCombat = input.wage_income_from_agi +
     (business?.business_earned_income ?? 0);
   const base = {
@@ -150,6 +165,7 @@ export function calculateEic2026(raw: EicInput2026) {
     elected_combat_pay: 0,
     earned_income_for_eic: earnedBeforeCombat,
     business_earned_income_workpaper: business,
+    retirement_earned_income_workpaper: retirement,
   };
   if (input.do_not_claim_eic === true) {
     return { ...base, disposition: "declined" };
@@ -212,6 +228,26 @@ export function calculateEic2026(raw: EicInput2026) {
       ) => [key, input[key as keyof typeof input]]),
     ),
   );
+  if (retirement && retirement.wages > 0) {
+    if (
+      review.retirement_inventory_reference !==
+        retirement.source_input.claim.record_reference ||
+      review.no_inmate_or_workfare_wages !== true ||
+      review.no_retirement_disability_inmate_or_workfare_wages !== undefined
+    ) {
+      throw new Error(
+        "EIC disability wages need the matching retirement inventory and no contradictory no-disability answer",
+      );
+    }
+  } else if (
+    review.no_retirement_disability_inmate_or_workfare_wages !== true ||
+    review.retirement_inventory_reference !== undefined ||
+    review.no_inmate_or_workfare_wages !== undefined
+  ) {
+    throw new Error(
+      "EIC retirement review needs actual retained disability wage sources",
+    );
+  }
   if (business) {
     if (
       review.business_inventory_reference !==

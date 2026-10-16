@@ -253,6 +253,7 @@ Deno.test("2026 moving node routes AGI, Schedule 1, wages and source provenance"
   const raw = syntheticMoving2026();
   const out = moving_expenses_2026.compute(ctx, raw).outputs;
   assertEquals(out.find((r) => r.nodeType === "agi_aggregator")!.fields, {
+    moving_sources_2026: calculateMovingSources2026(raw).source_input,
     line14_moving_expenses: 1044,
     line1h_other_earned: 0,
   });

@@ -1,4 +1,8 @@
 import {
+  calculateMovingSources2026,
+  movingSource2026Schema,
+} from "../inputs/moving-source.ts";
+import {
   calculateRetirementSources2026,
   retirementSource2026Schema,
 } from "../inputs/retirement-source.ts";
@@ -85,6 +89,7 @@ export const inputSchema = sharedSchema.pick({
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
   gambling_sources_2026: gamblingSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
+  moving_sources_2026: movingSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus),
@@ -149,6 +154,34 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     ) {
       throw new Error(
         "AGI retirement income must reconcile retained distribution sources",
+      );
+    }
+
+    const moving = input.moving_sources_2026
+      ? calculateMovingSources2026(input.moving_sources_2026)
+      : undefined;
+    if (
+      moving && retirement &&
+      (moving.source_input.taxpayer_ssn.replaceAll("-", "") !==
+          retirement.source_input.taxpayer_ssn ||
+        (input.filing_status === FilingStatus.MFJ &&
+          moving.source_input.spouse_ssn?.replaceAll("-", "") !==
+            retirement.source_input.spouse_ssn))
+    ) {
+      throw new Error(
+        "AGI moving and retirement sources must belong to the same return owners",
+      );
+    }
+    if (
+      (moving && moving.source_input.filing_status !== input.filing_status) ||
+      ((moving || retirement) &&
+        (input.line1h_other_earned ?? 0) !== roundWholeDollars(
+            (retirement?.cents.line1h_disability_wages ?? 0) +
+              (moving?.f1040Line1h ?? 0),
+          ))
+    ) {
+      throw new Error(
+        "AGI line 1h must reconcile disability and moving source components",
       );
     }
 
@@ -297,6 +330,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       business_loss_sources_2026: _lossSources,
       gambling_sources_2026,
       retirement_sources_2026: _retirementSources,
+      moving_sources_2026: _movingSources,
       government_sources_2026,
       line8z_family_leave,
       ...sharedInput
@@ -367,6 +401,10 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
           fields: {
             ...output.fields,
             wage_income_from_agi: wageIncome,
+            ...(output.nodeType === "eitc" && retirement &&
+                retirement.cents.line1h_disability_wages > 0
+              ? { retirement_sources_2026: retirement.source_input }
+              : {}),
             ...(business_sources_2026 ? { business_sources_2026 } : {}),
             [
               output.nodeType === "eitc"
@@ -524,6 +562,9 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       nodeType: "f2441",
       fields: {
         wage_income_from_agi: earned?.wage_income_from_agi ?? 0,
+        ...(retirement && retirement.cents.line1h_disability_wages > 0
+          ? { retirement_sources_2026: retirement.source_input }
+          : {}),
         ...(business_sources_2026 ? { business_sources_2026 } : {}),
         unsupported_earned_income_activity: [
           business ? 0 : input.line3_schedule_c,

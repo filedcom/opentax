@@ -1,3 +1,5 @@
+import { retirementCreditWages2026 } from "./retirement-earned.ts";
+import { retirementSource2026Schema } from "./retirement-source.ts";
 import {
   careProvider2026Schema,
   resolveCareProviders2026,
@@ -49,6 +51,7 @@ export const dependentCareClaim2026Schema = z.object({
     review_reference: reference,
     ordinary_w2_earnings_only: z.literal(true).optional(),
     business_inventory_reference: reference.optional(),
+    retirement_inventory_reference: reference.optional(),
     earned_income: careEarnedIncomeReview2026Schema,
     combat_pay_elections: careCombatElections2026Schema,
     prior_year_expenses: priorCarePayments2026Schema,
@@ -104,6 +107,7 @@ export const inputSchema = dependentCareClaim2026Schema.partial().extend({
   dependents: z.array(dependent2026Schema).default([]),
   wage_sources: z.array(w2Item2026Schema).default([]),
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  retirement_sources_2026: retirementSource2026Schema.optional(),
   dep_care_benefits: money.optional(),
 }).strict();
 export type DependentCareInput2026 = z.input<typeof inputSchema>;
@@ -139,6 +143,31 @@ export function calculateDependentCareBenefits2026(
       "Form 2441 household employees need Schedule H reconciliation",
     );
   }
+  const retirement = input.retirement_sources_2026
+    ? retirementCreditWages2026(
+      input.retirement_sources_2026,
+      input.filing_status,
+      input,
+    )
+    : undefined;
+  const disability = retirement && retirement.wages > 0
+    ? retirement
+    : undefined;
+  if (disability) {
+    if (
+      claim.ordinary_w2_earnings_only ||
+      claim.retirement_inventory_reference !==
+        disability.source_input.claim.record_reference
+    ) {
+      throw new Error(
+        "Care disability wages need the actual retirement inventory and no W-2-only declaration",
+      );
+    }
+  } else if (claim.retirement_inventory_reference !== undefined) {
+    throw new Error(
+      "Care retirement review needs actual disability wage sources",
+    );
+  }
   const business = input.business_sources_2026
     ? businessCreditEarnings2026(
       input.business_sources_2026,
@@ -165,7 +194,8 @@ export function calculateDependentCareBenefits2026(
       );
     }
   } else if (
-    !claim.ordinary_w2_earnings_only || claim.business_inventory_reference
+    (!disability && !claim.ordinary_w2_earnings_only) ||
+    claim.business_inventory_reference
   ) {
     throw new Error(
       "Care business review needs an actual business source inventory",
@@ -191,6 +221,11 @@ export function calculateDependentCareBenefits2026(
     taxpayer: { wages: 0, combat: 0, taxable_care: 0 },
     spouse: { wages: 0, combat: 0, taxable_care: 0 },
   };
+  for (const row of disability?.owners ?? []) {
+    if (row.wages > 0) {
+      annual[row.owner].disability_wages_by_month = row.wages_by_month;
+    }
+  }
   for (const row of business?.owners ?? []) {
     if (
       !business!.source_input.businesses.some((b) =>
@@ -443,7 +478,9 @@ export function calculateDependentCareBenefits2026(
     details,
     benefits,
     lines,
-    expected_wage_income: totalWages + lines.line26,
+    expected_wage_income: totalWages + lines.line26 +
+      (disability?.filed_wages ?? 0),
+    retirement_earned_income_workpaper: disability ?? null,
     prior_year_worksheet: priorWorksheet,
     qualifying_person_workpaper: qualification,
     providers,

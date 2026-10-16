@@ -13,7 +13,7 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["agi_aggregator", "f1040", "schedule_a", "schedule2"];
+    return ["agi_aggregator", "f1040", "schedule_a", "schedule2", "form2441"];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -22,11 +22,6 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(raw);
     if (!input.claim) return { outputs: [] };
     const r = calculateRetirementSources2026({ ...input, claim: input.claim });
-    if (r.cents.line1h_disability_wages > 0) {
-      throw new Error(
-        "2026 disability pension wages need the earned-income credit and dependent-income source bridges before return assembly",
-      );
-    }
     const taxes = r.rows.flatMap(({ copy: c, owner_tin }) => {
       const amount = sumSourceMoney([
         ...c.state_information.map((s) => s.box14_state_withheld),
@@ -59,6 +54,7 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
           nodeType: "agi_aggregator",
           fields: {
             retirement_sources_2026: r.source_input,
+            line1h_other_earned: r.cents.line1h_disability_wages,
             line4b_ira_taxable: r.cents.line4b_ira_taxable,
             line5b_pension_taxable: r.cents.line5b_pension_taxable,
           },
@@ -67,9 +63,18 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
           nodeType: "f1040",
           fields: {
             ...r.filed_lines,
+            ...(r.cents.line1h_disability_wages > 0
+              ? { line1h_other_earned: r.cents.line1h_disability_wages }
+              : {}),
             line25b_withheld_1099: r.cents.line25b_withheld_1099,
           },
         },
+        ...(r.cents.line1h_disability_wages > 0
+          ? [{
+            nodeType: "form2441",
+            fields: { retirement_sources_2026: r.source_input },
+          }]
+          : []),
         ...(r.early_owners.length
           ? [{
             nodeType: "schedule2",

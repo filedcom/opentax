@@ -113,11 +113,9 @@ pensions to line 1h until minimum retirement age, then to pension lines 5a/5b
 beginning the following day. The 2026 source calculation now implements this
 payment-date split and reuses the shared helper for both categories. Ordinary
 code-3 withdrawals and exception-03 withdrawals are connected to return assembly.
-Employer disability wages still require the earned-income bridges and native
-disability statement described below. The current EIC source contract expressly excludes
-retirement disability wages; dependent care, child credits, dependent deductions and Schedule
-R also need their distinct income/eligibility review. These 2025 publications are
-method comparators pending final 2026 instructions.
+Employer disability wages now reach the earned-income consumers described below.
+Schedule R eligibility and native disability filing statements remain required.
+These 2025 publications are method comparators pending final 2026 instructions.
 
 The routing correction passed 143 typed retirement and export regressions and
 137 repository unit/harness checks. These checks do not establish 2026 disability
@@ -147,11 +145,58 @@ references or disagree on plan dates. Different owners remain separate. The
 source result retains exact-cent `line1h_disability_wages` and owner-linked dated
 `disability_wage_payments` for the downstream consumers.
 
-**Remaining connection:** `retirement_2026` currently rejects positive disability
-wages before return assembly; it does not drop the wage amount or emit an
-incorrect partial return. The next implementation must combine disability and
-moving amounts on line 1h, replay that composition in AGI/PDF output, replace the
-EIC no-disability declaration with retained-source review, connect annual/monthly
-dependent-care income, and reconcile the distinct child-credit, dependent
-standard-deduction, child-tax and education definitions. Schedule R and current
-native disability filing support also remain required parity work.
+### Disability wages in return calculations
+
+The retirement node emits exact-cent disability wages alongside pension/IRA
+amounts. Form 1040 accepts multiple line-1h components, adds them and rounds the
+printed line once. AGI independently replays the retirement and moving inventories,
+checks their owners, and reconciles the combined line. The draft bundle replays both
+sources; Form 3903 receives only its own moving component, not the combined 1040 line.
+
+EIC already receives these wages through AGI and must not add them again. A claim
+with disability wages replaces the old no-disability declaration with the actual
+`retirement_inventory_reference` and `no_inmate_or_workfare_wages`; contradictory,
+missing or wrong-owner evidence fails. Shared child-credit arithmetic uses the
+same finalized wage line. The three-child ACTC payroll alternative continues to
+use actual W-2/SE payroll sources, never payroll tax inferred from disability wages.
+
+Dependent-care benefits and credits replay the same retirement inventory, including
+filer identities and birth dates. Annual `annual_retirement` earnings add disability
+wages to the receiving owner's W-2 wages; `annual_business` also includes the
+owner's business earnings and applicable SE deduction. Monthly care derives disability
+wages from payment dates before applying student/incapacity floors. No second
+entered disability total or monthly ledger is accepted. The final care credit
+reconciles the benefit calculation's retirement source against AGI's source.
+Taxable care benefits and post-minimum-retirement pension amounts remain distinct.
+
+The dependent standard deduction, child-tax screening/support and education
+support calculations consume the classified wage component through AGI. Pension
+payments after the minimum-retirement date remain unearned income. Regression
+cases cover a dependent deduction, child-tax unearned income, the under-24 AOTC
+support boundary, annual/monthly care, separate spouses, business earnings and
+combined moving income. This uses the Pub. 575 wage classification with each
+consumer's existing income definition; it does not equate disability pensions
+with qualified-disability-trust distributions.
+
+Source basis: [Pub. 575](https://www.irs.gov/publications/p575),
+[disability and EIC](https://www.irs.gov/credits-deductions/individuals/earned-income-tax-credit/disability-and-the-earned-income-tax-credit-eitc),
+[Pub. 503 earned income](https://www.irs.gov/publications/p503),
+[Pub. 501 dependent deduction](https://www.irs.gov/publications/p501),
+[Form 8615 instructions](https://www.irs.gov/instructions/i8615) and
+[Form 8863 instructions](https://www.irs.gov/instructions/i8863).
+The current publications/instructions remain comparators where final TY2026 text
+is not published; the wage classification applied to the latter three consumers
+is the implementation's interpretation of these sources.
+
+**Required remaining work:** Schedule R, native disability filing statements,
+current MeF/ATS acceptance, other retirement basis/rollover/exception branches and
+final 2026 instruction reconciliation. Moving-income-plus-care combinations still
+need the separate moving earned-income bridge. These draft calculations do not
+establish complete disability or retirement filing support.
+
+The disability earned-income increment passed 903 full TY2026 runtime tests,
+200 typed retirement/care/moving/credit/PDF/Form 1062 checks and all 137 repository
+unit checks. Eleven pages across combined moving/disability and monthly-care
+returns were rendered and visually reviewed; PDF checks require no AcroForm or
+annotations and keep plan/payment evidence out of the draft. These checks validate
+development behavior, not IRS filing acceptance.

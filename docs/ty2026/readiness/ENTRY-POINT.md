@@ -514,9 +514,10 @@ payments retain an owner Form 5329 even when no additional tax is due.
 They use shared Part I arithmetic with the actual SIMPLE two-year period, direct
 Schedule 2 reporting where permitted, or separate taxpayer/spouse Form 5329 drafts.
 Ordinary code-3 withdrawals and medical-proof exception 03 are connected.
-Disability pension payments are split by the plan minimum-retirement-age date in
-the source calculator, but positive disability wages still require the earned-income
-bridges before return assembly. Remaining exceptions and other parts, Forms
+Disability pension payments are split by the plan minimum-retirement-age date.
+Wages combine with moving income on line 1h and reach EIC, child credits, annual/monthly
+care and dependent/education income calculations through reviewed source bridges.
+Schedule R and native disability statements remain required. Remaining exceptions and other parts, Forms
 8606/4972, QCDs, annuity basis and current MeF remain required parity work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond

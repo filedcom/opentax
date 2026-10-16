@@ -179,7 +179,8 @@ regular Git files.
   and IRS pension/benefit publications, separate SSEB and pension statements,
   signed repayments, corrected sources and their 1040/MeF handoffs.
 - [`FORM1099R-GRAPH.md`](./graphs/FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
-  reviewed IRA/pension sources, shared 2025 amounts, draft attachments and filing gates.
+  reviewed IRA/pension sources, shared 2025 amounts, disability wage/credit bridges,
+  draft attachments and filing gates.
 - [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): reviewed early-distribution tax, separate
   owner Part I drafts, payment-bound exceptions 01/03/04/06/10/12/20 and required remaining
   exceptions/parts.

@@ -38,6 +38,10 @@ export const careEarnedIncomeReview2026Schema = z.discriminatedUnion("method", [
     no_student_or_disability_deemed_income: z.literal(true),
   }).strict(),
   z.object({
+    method: z.literal("annual_retirement"),
+    no_student_or_disability_deemed_income: z.literal(true),
+  }).strict(),
+  z.object({
     method: z.literal("annual_business"),
     no_student_or_disability_deemed_income: z.literal(true),
   }).strict(),
@@ -67,6 +71,7 @@ export type CareAnnualEarnings2026 = Record<CareOwner2026, {
   wages: number;
   combat: number;
   taxable_care: number;
+  disability_wages_by_month?: number[];
   business?: {
     regular_net_profit: number;
     statutory_gross_income: number;
@@ -105,12 +110,28 @@ export function calculateCareEarnedIncome2026(
   const hasBusiness = owners.some((owner) =>
     annual[owner].business !== undefined
   );
+  const hasDisability = owners.some((owner) =>
+    annual[owner].disability_wages_by_month !== undefined
+  );
+  for (const owner of owners) {
+    const months = annual[owner].disability_wages_by_month;
+    if (
+      months &&
+      (months.length !== 12 || months.some((n) => !Number.isFinite(n) || n < 0))
+    ) {
+      throw new Error(
+        "Care disability income needs twelve source-derived monthly amounts",
+      );
+    }
+  }
   if (
-    (review.method === "annual_w2" && hasBusiness) ||
+    (review.method === "annual_retirement" &&
+      (!hasDisability || hasBusiness)) ||
+    (review.method === "annual_w2" && (hasBusiness || hasDisability)) ||
     (review.method === "annual_business" && !hasBusiness)
   ) {
     throw new Error(
-      "Care annual income method must match the business sources",
+      "Care annual income method must match the business sources and disability wage sources",
     );
   }
   if (review.method !== "monthly") {
@@ -120,6 +141,10 @@ export function calculateCareEarnedIncome2026(
         0,
         roundWholeDollars(
           annual[owner].wages + combat[owner] +
+            (annual[owner].disability_wages_by_month?.reduce(
+              (a, b) => a + b,
+              0,
+            ) ?? 0) +
             (business
               ? business.regular_net_profit + business.statutory_gross_income -
                 business.se_deduction
@@ -218,6 +243,7 @@ export function calculateCareEarnedIncome2026(
       months.map((m) => ({
         month: m.month,
         actual: m.w2_wages + (elected[owner] ? m.nontaxable_combat_pay : 0) +
+          (annual[owner].disability_wages_by_month?.[m.month - 1] ?? 0) +
           (m.business
             ? m.business.regular_net_profit +
               m.business.statutory_gross_income - m.business.se_deduction

@@ -180,8 +180,9 @@ annual exemptions, SIMPLE distributions, medical-proof dates and the independent
 pension/wage source split. The draft test verifies leading-zero exception 03,
 zero Part I tax and exclusion of retained medical evidence. The five-page
 synthetic SIMPLE return was rendered and visually reviewed, with no AcroForm or
-annotations. Employer disability-wage return assembly remains explicitly pending
-its earned-income consumer connections.
+annotations. Employer disability-wage return assembly now connects to AGI and
+earned-income consumers as documented in the [1099-R contract](./FORM1099R-GRAPH.md);
+this income classification remains independent of Part I exception eligibility.
 
 The disability source increment passed 165 typed source/shared-node/PDF/Form 1062
 checks and 137 repository unit/harness checks. Regenerated final draft pages

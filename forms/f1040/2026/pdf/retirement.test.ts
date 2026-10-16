@@ -8,6 +8,40 @@ import {
 import { DistributionCode as Code } from "../../nodes/inputs/income/retirement/f1099r/distribution-code.ts";
 import { buildDraftReturnPdf2026 } from "./bundle.ts";
 import type { RetirementCopy2026 } from "../inputs/retirement-source.ts";
+import {
+  disabilityMovingGraph2026,
+  monthlyDisabilityCareGraph2026,
+} from "../inputs/retirement-earned.fixture.ts";
+
+Deno.test("2026 retirement draft prints combined line 1h while Form 3903 retains only the moving component", async () => {
+  const r = await buildDraftReturnPdf2026(disabilityMovingGraph2026());
+  const moving = r.attachments.find((a) => a.form === "form3903")!;
+  assertEquals(moving.formPages.length, 1);
+  await inspect(r.bytes, async (read) => {
+    assertEquals(await read(1, [505, 246, 71, 12]), "7957");
+    assertEquals(await read(1, [505, 150, 71, 12]), "3000");
+    const text = await read(moving.formPages[0]);
+    assertStringIncludes(text, "3000");
+    assertEquals(text.includes("7001"), false);
+    assertEquals(text.includes("7957"), false);
+  });
+});
+Deno.test("2026 retirement draft prints monthly care income and leaves source payment evidence private", async () => {
+  const r = await buildDraftReturnPdf2026(monthlyDisabilityCareGraph2026());
+  assertEquals(r.attachments.some((a) => a.form === "form2441"), true);
+  await inspect(r.bytes, async (read) => {
+    assertEquals(await read(1, [505, 246, 71, 12]), "300");
+    for (
+      let page = 1;
+      page <= (await PDFDocument.load(r.bytes)).getPageCount();
+      page++
+    ) {
+      const text = await read(page);
+      assertEquals(text.includes("plan-minimum-retirement-age-record"), false);
+      assertEquals(text.includes("june-wages"), false);
+    }
+  });
+});
 
 export async function addRetirementIssuedPdf2026(c: RetirementCopy2026) {
   const doc = await PDFDocument.create();

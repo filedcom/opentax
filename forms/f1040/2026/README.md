@@ -14,6 +14,11 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   dated payments and no-exception or payment-bound 01/03/04/06/10/12/20 evidence; shared
   2025 Part I tax arithmetic
   reaches Schedule 2 and separate owner Form 5329 drafts where required.
+  Dated employer disability payments split between wages and pensions. The wage
+  component combines with moving income on line 1h, reaches earned-income credits
+  and dependent/education calculations, and supplies owner/month-specific care
+  income without creating payroll taxes. Schedule R and native disability filing
+  statements remain required.
   See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
   for supported codes, correction checks and required basis/penalty/filing work.
 

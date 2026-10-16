@@ -1,3 +1,4 @@
+import { retirementSource2026Schema } from "../inputs/retirement-source.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -20,6 +21,7 @@ export const inputSchema = z.object({
   wage_income_from_agi: whole,
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
+  retirement_sources_2026: retirementSource2026Schema.optional(),
 }).strict();
 export type CareCreditInput2026 = z.input<typeof inputSchema>;
 export function calculateCareCredit2026(raw: CareCreditInput2026) {
@@ -40,6 +42,14 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
   ) {
     throw new Error(
       "Care benefits and final AGI must use the same business sources",
+    );
+  }
+  if (
+    JSON.stringify(input.retirement_sources_2026) !==
+      JSON.stringify(benefit.source_input.retirement_sources_2026)
+  ) {
+    throw new Error(
+      "Care benefits and final AGI must use the same retirement sources",
     );
   }
   if (

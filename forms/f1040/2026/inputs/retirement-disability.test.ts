@@ -243,15 +243,13 @@ Deno.test("2026 ordinary plan disability exception preserves pension income and 
   assertEquals(g.pending.schedule2.line5_form5329_early_tax, 300);
 });
 
-Deno.test("2026 disability pension assembly reports the unfinished earned-income bridge instead of dropping wages", async () => {
-  const { retirement_2026 } = await import("./retirement.ts");
-  assertThrows(
-    () =>
-      retirement_2026.compute(
-        { taxYear: 2026, formType: "f1040" },
-        disabilityPension2026(),
-      ),
-    Error,
-    "earned-income credit and dependent-income source bridges",
+Deno.test("2026 disability pension assembly routes wages and pensions once through AGI", async () => {
+  const g = await executeDraftSources2026(
+    exceptionRetirementGraph2026(disabilityPension2026()),
   );
+  assertEquals(g.diagnostics, []);
+  assertEquals(g.pending.f1040.line1h_other_earned, 7001);
+  assertEquals(g.pending.f1040.line1a_wages, 30000);
+  assertEquals(g.pending.f1040.line5b_pension_taxable, 3000);
+  assertEquals(g.pending.f1040.line11b_agi, 40001);
 });
