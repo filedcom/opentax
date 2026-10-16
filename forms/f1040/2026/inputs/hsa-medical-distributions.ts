@@ -1,3 +1,7 @@
+import {
+  hsaExcessReturns2026Schema,
+  reconcileHsaExcessReturns2026,
+} from "./hsa-excess-returns.ts";
 import { z } from "zod";
 import {
   hsaDistributionSources2026Schema,
@@ -45,6 +49,7 @@ const disability = z.discriminatedUnion("kind", [
 ]);
 export const hsaMedicalDistributions2026Schema =
   hsaDistributionSources2026Schema.extend({
+    excess_returns: hsaExcessReturns2026Schema.optional(),
     treatment_review: z.object({
       record_reference: ref,
       current_schedule_a_medical_inventory_complete_verified: z.literal(true),
@@ -53,7 +58,10 @@ export const hsaMedicalDistributions2026Schema =
           owner_tin: tin,
           review_reference: ref,
           no_rollover_excess_return_or_mistaken_distribution_in_payments_verified:
-            z.literal(true),
+            z.literal(true).optional(),
+          no_rollover_or_mistaken_distribution_in_payments_verified: z.literal(
+            true,
+          ).optional(),
           disability,
         }).strict(),
       ).min(1).max(2),
@@ -121,9 +129,29 @@ export function calculateHsaMedicalDistributions2026(
     treatment_review: review,
     medical_expenses: expenses,
     schedule_a_medical_sources: scheduleA,
+    excess_returns: excessReview,
     ...source
   } = input;
-  const r = reconcileHsaDistributions2026(source);
+  const excess = excessReview
+    ? reconcileHsaExcessReturns2026(excessReview, source)
+    : undefined;
+  const r = excess?.distribution_sources ??
+    reconcileHsaDistributions2026(source);
+  for (const o of review.owners) {
+    if (
+      excess
+        ? o
+          .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
+          !o.no_rollover_or_mistaken_distribution_in_payments_verified
+        : !o
+          .no_rollover_excess_return_or_mistaken_distribution_in_payments_verified ||
+          o.no_rollover_or_mistaken_distribution_in_payments_verified
+    ) {
+      throw Error(
+        "HSA distribution absence declarations must match the actual excess-return source route",
+      );
+    }
+  }
   calculateItemizedExpenseSources2026({
     filing_status: input.filing_status,
     taxpayer_ssn: input.taxpayer_ssn,
@@ -146,7 +174,9 @@ export function calculateHsaMedicalDistributions2026(
   if (
     r.current_copies.some((f) =>
       f.box5_account_type !== "hsa" ||
-      !["1", "3"].includes(f.box3_distribution_code) ||
+      !(excess ? ["1", "2", "3"] : ["1", "3"]).includes(
+        f.box3_distribution_code,
+      ) ||
       f.box4_fmv_on_death !== 0
     )
   ) {
@@ -302,9 +332,13 @@ export function calculateHsaMedicalDistributions2026(
           "HSA disability-coded payment must follow the sourced disability onset",
         );
       }
+      const returned = excess?.withdrawals.find((w) =>
+        w.income_tax_year === 2026 && w.payment_reference === p.record_reference
+      );
+      const excluded = returned ? sourceCents(returned.gross_amount) : 0;
       const taxable = hsaTaxableDistributions(
         sourceCents(p.gross_amount),
-        0,
+        excluded,
         p.medical_cents,
       );
       const exception = p.distributed_on >= age65
@@ -317,6 +351,7 @@ export function calculateHsaMedicalDistributions2026(
         form1099sa_source_reference: p.form1099sa_source_reference,
         distributed_on: p.distributed_on,
         gross_amount: p.gross_amount,
+        excluded_excess_return: excluded / 100,
         qualified_medical_amount: p.medical_cents / 100,
         taxable_amount: taxable / 100,
         exception,
@@ -327,9 +362,13 @@ export function calculateHsaMedicalDistributions2026(
       (n, p) => n + sourceCents(p.qualified_medical_amount),
       0,
     );
+    const excluded = rows.reduce(
+      (n, p) => n + sourceCents(p.excluded_excess_return),
+      0,
+    );
     const taxable = hsaTaxableDistributions(
       o.gross_distribution_cents,
-      0,
+      excluded,
       qualified,
     );
     const excepted = rows.reduce(
@@ -339,11 +378,18 @@ export function calculateHsaMedicalDistributions2026(
     const tax = hsaDistributionAdditionalTax(taxable, excepted, .20) / 100;
     const line14a = roundWholeDollars(o.gross_distributions),
       line15 = roundWholeDollars(qualified / 100);
-    const line16 = hsaTaxableDistributions(line14a, 0, line15);
+    const line14b = roundWholeDollars(excluded / 100);
+    // Source amounts have already been reconciled above. Independent filed
+    // line rounding can make line 15 exceed 14c by a dollar; the printed form
+    // explicitly floors line 16 at zero in that case.
+    const line16 = Math.max(0, line14a - line14b - line15);
     const filedExcepted = Math.min(line16, roundWholeDollars(excepted / 100));
     return {
       ...o,
       payments: rows,
+      excess_return_settlement: excess?.owners.find((v) =>
+        v.owner_tin === o.owner_tin
+      ),
       qualified_medical_amount: qualified / 100,
       taxable_distributions: taxable / 100,
       excepted_taxable_distributions: excepted / 100,
@@ -351,8 +397,8 @@ export function calculateHsaMedicalDistributions2026(
       filed_excepted_taxable_amount: filedExcepted,
       filed_part_ii: {
         line14a,
-        line14b: 0,
-        line14c: line14a,
+        line14b,
+        line14c: line14a - line14b,
         line15,
         line16,
         line17a: excepted > 0,
@@ -365,6 +411,7 @@ export function calculateHsaMedicalDistributions2026(
   return {
     source_input: input,
     distribution_sources: r,
+    excess_return_sources: excess,
     medical_expenses: medical,
     owners,
   };

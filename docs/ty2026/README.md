@@ -430,9 +430,12 @@ workpaper now reconciles the same actual sources, removes verified funding from
 the ordinary basis pool and preserves basis with dated valuation evidence.
 An ordinary distribution workpaper now resolves corrected 1099-SA copies,
 reconciles dated medical reimbursements with Schedule A sources, and reuses
-Part II arithmetic with payment-specific age/disability exceptions.
+Part II arithmetic with payment-specific age/disability exceptions. Timely
+personal/employer excess returns now bind original receipts and code-2 payments,
+retain 2027 earnings separately, and reconcile employer income with actual W-2s.
 Basis-depleting/Roth funding, public retirement-income integration,
-rollover/excess withdrawal and prior-excess settlement, graph binding and complete Form 8889
+remaining rollover/excess withdrawal and prior-excess settlement, graph binding
+and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule

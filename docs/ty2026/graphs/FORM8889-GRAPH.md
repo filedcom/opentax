@@ -320,11 +320,9 @@ additional tax uses the filed taxable amount after its bounded exception
 allocation. Both source and filed results are retained; rounded gross amounts do
 not replace payment evidence.
 
-This ordinary route does not yet settle rollovers, mistaken repayments or timely
-excess returns. Code-2 gross/earnings records are reconciled by the inventory but
-stop before the ordinary tax calculation pending contribution-year, deadline,
-principal and earnings settlement. Death/prohibited-transaction/MSA records also
-need their separate routes. Insurance, DPC, long-term-care, capital and travel
+This route does not yet settle rollovers or mistaken repayments. Code-2
+records require the excess-return reconciliation below before exclusion.
+Death/prohibited-transaction/MSA records need their separate routes. Insurance, DPC, long-term-care, capital and travel
 medical expenses require their own qualification rules; they are not accepted as
 ordinary medical receipts. Full graph, Schedule 1/2, owner PDF/MeF and Part III
 integration remain required work.
@@ -336,6 +334,57 @@ The current 2026 draft instructions were downloaded and match the pinned hash
 on October 16, 2026. Formatting, lint and generated-inventory checks pass.
 The unit gate passes 137 tests with 3,817 graph modules and unchanged runtime.
 
+### Timely personal and employer excess returns
+
+The distribution workpaper now optionally binds the current-contribution
+workpaper before excluding code-2 payments. Actual return identities, birth
+facts and every account must match. Returned principal identifies original
+same-owner, same-kind 2026 receipts paid before withdrawal; a different owned
+HSA may make the payment. Principal cannot be spent twice or exceed the exact
+personal/employer excess derived from the shared contribution arithmetic.
+Qualified IRA funding reduces contribution capacity before this comparison.
+
+Current payments must match the resolved 1099-SA code-2 ledger, with returned
+principal plus all trustee-reported attributable earnings equal to gross.
+Every current code-2 payment needs settlement. A returned excess payment cannot
+also reimburse medical expenses. Partial personal and employer returns may
+coexist with ordinary payments, and unreturned excess remains explicit.
+
+Following-year payments instead require the actual 2027 trustee transaction and
+matching owner receipt. They reduce the 2026 excess but enter neither 2026 gross
+distributions nor 2026 earnings income. Retained 2027 records identify principal,
+excludable gross and earnings to report in that year; they are not a generated
+2027 return. The ordinary April 15, 2027 deadline applies unless the same return
+has a timely filed, accepted Form 4868 supporting October 15, 2027. Reviews must
+cover the complete deadline and all source reviews.
+
+Employer excess remains income even when timely returned to its owner.
+Sourced payroll reconciliations must identify actual owner/employer W-2s and
+reconcile box 1 before and after HSA excess inclusion. Only that proved inclusion
+reduces the remaining employer-excess income. Returned principal, current-year
+earnings and employer excess are separate outputs, not one taxable withdrawal.
+The workpaper retains exact fractional limits and separate personal/employer
+balances; it does not yet calculate final Form 5329 tax or prior excess.
+
+The [2026 Form 8889 instructions](https://www.irs.gov/pub/irs-dft/i8889--dft.pdf)
+and [Form 5329 instructions](https://www.irs.gov/pub/irs-dft/i5329--dft.pdf)
+provide the deadline and receipt-year treatment. The
+[2026 form](https://www.irs.gov/pub/irs-dft/f8889--dft.pdf) explicitly floors line 16
+at zero: independent rounding of verified medical and returned-excess amounts
+can put their filed total a dollar above filed gross, without invalidating the
+source reconciliation.
+
+Loss-adjusted returns, employer recoveries, prior contribution years, special
+postponements and section 301.9100-2 amended-return relief still need their own
+source routes. This remains internal workpaper integration; public graph binding,
+final Schedule 1/2/Form 5329 settlement, Part III and PDF/MeF outputs remain open.
+
+Excess-return validation: 366 typed HSA, IRA/retirement, shared HSA, 2025
+owner-return and MeF checks pass, including 21 new excess-return cases. The
+unit gate passes 137 tests with 3,820 graph modules and unchanged runtime.
+Formatting, lint and inventory checks pass. The current draft Form 8889 and
+Form 5329 instructions match their pinned hashes on October 16, 2026.
+
 ## Required source integration
 
 1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual
@@ -344,9 +393,9 @@ The unit gate passes 137 tests with 3,817 graph modules and unchanged runtime.
 2. Extend the owner-limit workpaper for Archer MSA sources, marriage changes,
    mixed last-month spouse choices and the remaining allocation branches; bind
    its retained monthly/full-year records to actual deduction/excess calculations.
-3. Reconcile dated 1099-SA receipts, qualified expenses, rollovers, excess returns
-   and age/disability exceptions. Join Schedule A medical evidence to prevent a
-   duplicate deduction, including the new DPC rules for reimbursed fees.
+3. Extend the reconciled 1099-SA/medical/excess-return workpapers for rollovers,
+   mistaken repayments and remaining excess/medical branches. Bind the actual
+   Schedule A inventory, including new DPC rules for reimbursed fees.
 4. Port prior-year excess, funding transfers and recapture using actual 2025/2026
    years and their annual limits. The 2025 node still has explicitly dated schema
    keys and 2024 historical constants; do not execute it as a 2026 node or relabel
