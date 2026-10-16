@@ -4,7 +4,9 @@ Checked October 15, 2026, on `codex/ty2026-readiness`. This supersedes the
 executable-state claims in the historical interest and dividend graph notes.
 
 `calculateInvestmentIncome2026` reconciles issued 1099-INT and 1099-DIV copies
-through the existing interest, dividend and Schedule B calculators. The new
+through the existing interest, dividend and Schedule B calculators. Foreign
+bank deposit interest from actual statements feeds the same Schedule B route,
+without manufacturing a 1099 or payer TIN. The new
 source validation lives under `forms/f1040/2026/inputs`; shared algorithms stay
 in their current domain folders. Dividend and NIIT calculations now also accept
 explicit configurations, while their 2025 entry points still select 2025 config.
@@ -44,7 +46,7 @@ FormDefinition, supported filing catalog entry, or claim of IRS acceptance.
   recomputes their combined preference from retained copies.
 - Unsupported foreign-tax, QBI, special-rate gains, nondividend/liquidation and
   dividend-nominee branches fail strict source parsing. Foreign-trust reporting,
-  foreign statement income without issued 1099 copies, and OID remain pending.
+  foreign dividend statements, positive foreign withholding, and OID remain pending.
   Source review does not establish every
   required attachment or tax treatment for an entire brokerage account.
 
@@ -172,11 +174,11 @@ proof that an FBAR was filed. An account relationship must overlap 2026; a
 signature-only relationship can trigger Schedule B even without taxable income.
 
 An account's income must either be reviewed as not reportable by that subject
-or bind to the actual owner's issued 1099 source copies and account number.
-Bindings add no amounts: the shared INT/DIV arithmetic remains the sole income
-route, and duplicate/missing/wrong-owner source references fail. Standalone
-foreign bank statements still need a native source contract; no fake 1099 is
-created for an account-only disclosure.
+or bind to the actual owner's issued 1099 source copies or reviewed bank
+interest ledgers and account number. Disclosure bindings add no amounts:
+the income source calculation remains the sole income route, and duplicate,
+missing or wrong-owner source references fail. Bank statements use the native
+source contract below; no fake 1099 is created for account reporting.
 
 The shared Schedule B calculator now has a paper entry point that accepts names
 without implying validation against the 2025 native MeF country codes. Its
@@ -197,3 +199,53 @@ Validation covers source/owner/date/hash rejection, no-income and issued-copy
 bindings, joint/MFS reviews, preservation of the 2025 country-code contract,
 unchanged 1040/AGI/NIIT/tax, draft-bundle selection, rendered checkbox interiors,
 country overflow, and static PDF structure.
+
+## Foreign deposit interest from bank statements
+
+`foreign_bank_interest` retains each account/currency annual ledger and its
+actual interest receipts: named recipient, institution, account identifier,
+country, availability date, bank transaction reference, original currency
+amount, statement evidence and receipt-date exchange-rate evidence. It accepts
+cash-method ordinary taxable deposit interest with USD functional currency.
+The original-currency receipt total must reconcile exactly to the bank's
+retained annual interest summary before any FX conversion. The full statement
+inventory must be reviewed; non-spouse/nominee allocation,
+OID or other adjustments, pending section 988 gains, and positive foreign
+withholding currently fail rather than disappearing from income or credits.
+A deposit claim does not assert direct foreign corporation/trust ownership.
+
+Original amounts are decimal strings with up to six places; USD-per-unit
+rates have up to eight places. Exact integer multiplication translates each
+receipt to USD cents with deterministic half-cent rounding. USD-denominated
+foreign deposits require a no-conversion rate of one. Receipt-date rates must
+match when income was received or became available, separately from Form
+8938's year-end asset valuation rate. Payer rows retain cents, and shared
+Schedule B combines domestic and foreign interest before whole-dollar return
+rounding. The resulting amount reaches AGI and NIIT through the existing
+receivers exactly once.
+
+Each ledger must bind to its disclosed account's actual recipient, institution,
+number, country, relationship dates and financial interest. Disclosure review
+cannot predate the income reconciliation. Duplicate bank transactions, annual
+account/currency ledgers, record references, conflicting document hashes and
+concurrent issued-copy coverage of the same owner/account are rejected. The
+current bounded route requires duplicate coverage to be resolved to one source;
+it does not automatically merge a 1099 with partially overlapping statements.
+
+The statement-only route needs neither a W-2 nor a 1099. It selects Schedule B
+and prints the institution, translated payer total, reconciled whole-dollar
+interest and reviewed country/FBAR answers. Receipt-level source references and
+USD amounts are retained for Form 8938's subsequent Part III return binding;
+that binding, foreign dividends, foreign-tax deductions/credits and native
+MeF support remain open.
+
+Authorities: [IRS Topic 403](https://www.irs.gov/taxtopics/tc403) requires
+reporting taxable interest even without an issued information return and
+addresses income available for withdrawal; [IRS currency guidance](https://www.irs.gov/individuals/international-taxpayers/foreign-currency-and-currency-exchange-rates)
+requires USD translation at the prevailing receipt/payment/accrual rate for a
+USD functional currency.
+
+Validation includes changing receipt-date rates, exact decimal ties, USD
+accounts, source/owner/date/hash/duplicate rejection, joint versus separate
+filers, mixed domestic/foreign income, a statement-only full return, NIIT
+reconciliation, and selected draft PDF amounts and identity.

@@ -21,6 +21,29 @@ import {
 } from "../nodes/schedule1a.fixture.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { foreignAccountReviewFixture2026 } from "../inputs/foreign-accounts.fixture.ts";
+import { foreignBankInvestmentFixture2026 } from "../inputs/foreign-bank-interest.fixture.ts";
+
+Deno.test("2026 foreign bank statement-only return prints reconciled interest without a synthetic 1099", async () => {
+  const base = investmentGraphInput2026(0);
+  const { filing_status: _status, taxpayer_ssn: _tin, ...claim } =
+    foreignBankInvestmentFixture2026();
+  claim.f1099ints = [];
+  claim.f1099divs = [];
+  const result = await buildDraftReturnPdf2026({
+    ...base,
+    investment_income: claim,
+  });
+  assertEquals(result.attachments.map((a) => a.form), ["f1040", "schedule_b"]);
+  assertEquals(result.calculation.pending.f1040.line2b_taxable_interest, 1551);
+  assertEquals(result.calculation.pending.f1040.line11b_agi, 1551);
+  assertEquals(result.filingReady, false);
+  const texts = await extract(result.bytes);
+  const b = result.attachments.find((a) => a.form === "schedule_b")!;
+  const text = texts[b.formPages[0] - 1];
+  for (
+    const value of ["SYNTHETIC SWISS BANK", "1550.51", "1551", "Switzerland"]
+  ) assertStringIncludes(text, value);
+});
 
 Deno.test("2026 draft bundle includes a foreign-account-only Schedule B", async () => {
   const base = investmentGraphInput2026(100000);

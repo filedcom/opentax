@@ -13,6 +13,7 @@ export const investmentClaim2026Schema = investmentIncome2026Schema.omit({
   source_scope_review: z.object({
     record_reference: ref,
     all_interest_and_dividend_copies_included: z.literal(true),
+    all_foreign_bank_interest_statements_included: z.literal(true).optional(),
     property_held_for_investment_not_a_trade_or_business: z.literal(true),
     no_other_niit_income_expenses_or_carryovers: z.literal(true),
     no_foreign_entities_or_niit_magi_adjustments: z.literal(true),
@@ -48,6 +49,14 @@ export function calculateInvestmentClaim2026(raw: InvestmentSource2026) {
     ...facts
   } = input;
   const result = calculateInvestmentIncome2026(facts);
+  if (
+    result.foreign_bank_interest &&
+    !_scope.all_foreign_bank_interest_statements_included
+  ) {
+    throw new Error(
+      "Foreign bank interest needs a complete statement inventory review",
+    );
+  }
   if (result.cents.capital_gain_distributions > 0 && !capital) {
     throw new Error(
       "Capital-gain distributions need the complete Schedule D inventory review",

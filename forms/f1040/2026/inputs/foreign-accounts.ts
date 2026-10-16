@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
+import type { calculateForeignBankInterest2026 } from "./foreign-bank-interest.ts";
 
 const ref = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{9}$/);
@@ -30,6 +31,12 @@ const account = z.object({
       kind: z.literal("issued_1099_copies"),
       source_references: z.array(ref).min(1),
       all_reportable_income_in_these_copies_verified: z.literal(true),
+      source_document: evidence,
+    }).strict(),
+    z.object({
+      kind: z.literal("foreign_bank_interest_statements"),
+      source_references: z.array(ref).min(1),
+      all_reportable_income_in_these_statements_verified: z.literal(true),
       source_document: evidence,
     }).strict(),
   ]),
@@ -70,6 +77,7 @@ export function prepareForeignAccounts2026(
     recipient_tin: string;
     account_number: string;
   }[],
+  bankInterest?: ReturnType<typeof calculateForeignBankInterest2026>,
 ) {
   const input = foreignAccountReview2026Schema.parse(raw);
   if (input.reviewed_on < "2026-12-31") {
@@ -97,6 +105,7 @@ export function prepareForeignAccounts2026(
   const records = new Set([input.record_reference]),
     accounts = new Set<string>();
   const documents = new Map<string, string>(), boundCopies = new Set<string>();
+  const boundLedgers = new Set<string>();
   const checkDocument = (document: z.infer<typeof evidence>) => {
     const previous = documents.get(document.document_reference);
     if (previous && previous !== document.document_sha256) {
@@ -107,6 +116,7 @@ export function prepareForeignAccounts2026(
     documents.set(document.document_reference, document.document_sha256);
   };
   for (const review of input.fbar_reviews) checkDocument(review);
+  for (const document of bankInterest?.documents ?? []) checkDocument(document);
   for (const row of input.accounts) {
     if (!subjects.includes(row.subject_tin)) {
       throw new Error("Foreign account subject must be an actual return filer");
@@ -145,6 +155,58 @@ export function prepareForeignAccounts2026(
         }
         boundCopies.add(reference);
       }
+    } else if (row.income_review.kind === "foreign_bank_interest_statements") {
+      if (row.relationship === "signature_authority") {
+        throw new Error(
+          "Reportable bank interest needs the recipient's financial interest in the account",
+        );
+      }
+      for (const reference of row.income_review.source_references) {
+        const matches = bankInterest?.ledgers.filter((l) =>
+          l.source_input.record_reference === reference
+        ) ?? [];
+        const ledger = matches[0]?.source_input;
+        if (
+          matches.length !== 1 || !ledger || boundLedgers.has(reference) ||
+          ledger.foreign_account_reference !== row.record_reference ||
+          ledger.recipient_tin !== row.subject_tin ||
+          ledger.account_number !== row.account_number ||
+          ledger.institution_name.toLowerCase() !==
+            row.institution_name.toLowerCase() ||
+          ledger.country_name.toLowerCase() !== row.country_name.toLowerCase()
+        ) {
+          throw new Error(
+            "Foreign bank interest must bind once to its actual account, institution and owner",
+          );
+        }
+        if (
+          ledger.receipts.some((r) =>
+            r.received_or_available_on < row.relationship_started_on ||
+            (row.relationship_ended_on &&
+              r.received_or_available_on > row.relationship_ended_on)
+          )
+        ) {
+          throw new Error(
+            "Foreign interest receipt falls outside the recipient's account relationship",
+          );
+        }
+        if (ledger.reviewed_on > input.reviewed_on) {
+          throw new Error(
+            "Account review cannot predate its bank interest reconciliation",
+          );
+        }
+        if (
+          copies.some((copy) =>
+            copy.recipient_tin === row.subject_tin &&
+            copy.account_number === row.account_number
+          )
+        ) {
+          throw new Error(
+            "Foreign bank account also has an issued income copy; reconcile duplicate source coverage first",
+          );
+        }
+        boundLedgers.add(reference);
+      }
     } else if (
       copies.some((copy) =>
         copy.recipient_tin === row.subject_tin &&
@@ -155,6 +217,15 @@ export function prepareForeignAccounts2026(
         "No-reportable-income review conflicts with an issued account copy",
       );
     }
+  }
+  if (
+    (bankInterest?.ledgers ?? []).some((l) =>
+      !boundLedgers.has(l.source_input.record_reference)
+    )
+  ) {
+    throw new Error(
+      "Every foreign bank interest ledger needs its matching account income review",
+    );
   }
   for (const review of input.fbar_reviews) {
     if (

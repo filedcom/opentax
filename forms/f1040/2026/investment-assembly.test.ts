@@ -7,10 +7,37 @@ import { syntheticPabReview2026 } from "./inputs/investment.fixture.ts";
 import { syntheticMedical2026 } from "./schedule-a.fixture.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { foreignAccountReviewFixture2026 } from "./inputs/foreign-accounts.fixture.ts";
+import { foreignBankInvestmentFixture2026 } from "./inputs/foreign-bank-interest.fixture.ts";
 import type { calculateForm8960_2026 } from "./nodes/form8960.ts";
 import type { calculateForm6251_2026 } from "./nodes/form6251.ts";
 import type { calculateInvestmentClaim2026 } from "./inputs/investment-claim.ts";
 const plan = buildExecutionPlan(sourceRegistry2026);
+
+Deno.test("2026 foreign bank receipts reach AGI and NIIT once alongside domestic interest", () => {
+  const base = investmentGraphInput2026(250000);
+  const { filing_status: _status, taxpayer_ssn: _tin, ...claim } =
+    foreignBankInvestmentFixture2026();
+  const result = run({ ...base, investment_income: claim });
+  assertEquals(result.return.line2b_taxable_interest, 2751);
+  assertEquals(result.return.line3b_ordinary_dividends, 800);
+  assertEquals(result.return.line11b_agi, 253551);
+  assertEquals(result.niit.lines?.line1_taxable_interest, 2751);
+  assertEquals(result.niit.lines?.line12_net_investment_income, 3551);
+  assertEquals(result.niit.tax, 135);
+  assertEquals(result.result.pending.schedule2.line6_niit, 135);
+  assertEquals(
+    result.investment.foreign_bank_interest?.taxable_interest_usd,
+    1550.51,
+  );
+  const only = investmentGraphInput2026(0);
+  claim.f1099ints = [];
+  claim.f1099divs = [];
+  const foreignOnly = run({ ...only, investment_income: claim });
+  assertEquals(foreignOnly.return.line11b_agi, 1551);
+  assertEquals(foreignOnly.return.line1a_wages, undefined);
+  assertEquals(foreignOnly.return.line16_income_tax, 0);
+  assertEquals(foreignOnly.investment.source_input.f1099ints, []);
+});
 
 Deno.test("2026 foreign account disclosure changes no income, AGI, NIIT or final tax", () => {
   const base = investmentGraphInput2026(180000);

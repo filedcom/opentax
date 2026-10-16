@@ -19,6 +19,10 @@ import {
   foreignAccountReview2026Schema,
   prepareForeignAccounts2026,
 } from "./foreign-accounts.ts";
+import {
+  calculateForeignBankInterest2026,
+  foreignBankInterest2026Schema,
+} from "./foreign-bank-interest.ts";
 
 const ctx = { taxYear: 2026, formType: "f1040" };
 // Schedule B's $1,500 threshold is unchanged in the 2026 draft instructions.
@@ -34,6 +38,7 @@ const dividendConfig = {
 export const investmentIncome2026Schema = investmentOwner2026.extend({
   f1099ints: z.array(intItem2026Schema).default([]),
   f1099divs: z.array(divItem2026Schema).default([]),
+  foreign_bank_interest: z.array(foreignBankInterest2026Schema).default([]),
   foreign_accounts_question: z.boolean(),
   foreign_account_review: foreignAccountReview2026Schema.optional(),
   // Trust income, grantor ownership and Forms 3520/3520-A need separate routes.
@@ -62,6 +67,28 @@ export function calculateInvestmentIncome2026(
     taxpayer_ssn: input.taxpayer_ssn,
     ...(input.spouse_ssn ? { spouse_ssn: input.spouse_ssn } : {}),
   };
+  const foreignBankInterest = input.foreign_bank_interest.length
+    ? calculateForeignBankInterest2026(input.foreign_bank_interest, owner)
+    : undefined;
+  if (foreignBankInterest && !input.foreign_account_review) {
+    throw new Error(
+      "Foreign bank interest needs the complete foreign account review",
+    );
+  }
+  const issuedReferences = new Set([
+    ...input.f1099ints.map((i) => i.source_document_reference),
+    ...input.f1099divs.map((i) => i.source_document_reference),
+  ]);
+  if (
+    foreignBankInterest?.ledgers.some((l) =>
+      issuedReferences.has(l.source_input.record_reference) ||
+      l.receipts.some((r) => issuedReferences.has(r.record_reference))
+    )
+  ) {
+    throw new Error(
+      "Foreign bank and issued income sources must have distinct references",
+    );
+  }
   const foreignAccounts = input.foreign_account_review
     ? prepareForeignAccounts2026(input.foreign_account_review, owner, [
       ...input.f1099ints.map((i) => ({
@@ -74,7 +101,7 @@ export function calculateInvestmentIncome2026(
         recipient_tin: i.recipient_tin,
         account_number: i.account_number,
       })),
-    ])
+    ], foreignBankInterest)
     : undefined;
   if (input.foreign_accounts_question !== Boolean(foreignAccounts)) {
     throw new Error(
@@ -121,6 +148,12 @@ export function calculateInvestmentIncome2026(
       const previous = bInputs[key];
       bInputs[key] = previous === undefined ? value : [previous, value].flat();
     }
+  }
+  if (foreignBankInterest) {
+    bInputs.interest_detail = [
+      ...[bInputs.interest_detail ?? []].flat(),
+      ...foreignBankInterest.schedule_b_rows,
+    ];
   }
   const scheduleBInput = scheduleBSchema.parse(bInputs);
   const bOutputs = schedule_b.computeForPaper(scheduleBInput).outputs;
@@ -169,6 +202,7 @@ export function calculateInvestmentIncome2026(
   return {
     source_input: input,
     foreign_accounts: foreignAccounts,
+    foreign_bank_interest: foreignBankInterest,
     interest,
     dividends,
     cents,
