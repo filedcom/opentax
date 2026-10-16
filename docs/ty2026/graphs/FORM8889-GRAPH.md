@@ -190,6 +190,40 @@ that added retained Schedule 2 cents instead of the rounded Form 1040 line 23;
 the check now agrees with the return calculation, with rejection tests for
 incorrect totals. The unit gate resolved 3,791 modules without runtime changes.
 
+### Current contribution arithmetic
+
+The current-contribution workpaper now feeds reconciled personal cash and the
+employer year-adjustment worksheet into shared Part I arithmetic. The 2025 node
+uses the same extracted calculation, preserving its existing numeric behavior;
+2026 supplies exact rational operations. Source cents and monthly family-share
+fractions remain intact when determining current personal deduction capacity,
+personal excess, employer excess and unused capacity. Employer contributions
+are never deducted as personal contributions.
+
+A separate whole-dollar projection replays lines 2, 8–12 and the current-year
+portion of line 13 from rounded form inputs. An exact one-cent excess can remain
+even when those printed lines agree; the source calculation is retained for
+subsequent excess treatment. Supporting MFS spouse accounts do not produce
+return contribution calculations. Last-month records now include exposure based
+on actual gross contributions, capped by the current limit and compared with
+the actual monthly baseline; an unused December limit alone does not create a
+gross contribution exposure amount.
+
+These are explicitly **before-withdrawal and before-prior-excess** calculations.
+They do not establish the final deduction, W-2 excess income, Form 5329 tax or
+Part III recapture. Current-year noncash receipts stop this calculation until
+qualified funding, rollover, trustee-transfer or repayment treatment has been
+reconciled; their deposit labels cannot establish tax-free treatment. No Form
+8889 registry node or filing output is added by this workpaper. The next source
+settlement must reconcile timely returns/earnings, employer inclusions and prior
+excess against these retained exact amounts, then bind the final return outputs.
+
+Current-contribution validation: 200 typed source, shared HSA, 2025 owner-return
+and MeF tests pass, including 12 current-contribution tests for payroll ordering,
+source cents, exact monthly fractions, actual funding exposure and owner scope.
+Formatting and lint pass. The unit gate passes 137 tests with 3,805 graph modules
+and unchanged runtime; generated inventories are current.
+
 ## Required source integration
 
 1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual

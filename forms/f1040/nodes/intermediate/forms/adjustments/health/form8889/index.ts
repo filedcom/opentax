@@ -2,6 +2,7 @@ import {
   calculateHsaContributionLimit,
   CoverageType,
 } from "./contribution-limit.ts";
+import { hsaCurrentContributions } from "./current-contributions.ts";
 import { hsaEmployerContributionsForYear } from "./employer-contributions.ts";
 import { z } from "zod";
 import { employerCode2RetainedSourceSchema } from "./employer-code2-evidence-schema.ts";
@@ -656,23 +657,6 @@ function contributionLimitLines(
     catchupLimit,
     soleFamilyLimit,
   );
-}
-
-// Part I, Line 13: Deductible HSA contributions for AGI purposes.
-// Only the taxpayer's own contributions (not through payroll) are deductible.
-// Employer contributions (Box 12 Code W, §106(d)) are already excluded from
-// W-2 Box 1 wages by standard payroll — they are NOT an above-the-line
-// deduction. They appear on Form 8889 for informational and excess-contribution
-// purposes only. The deductible amount is capped by line 12, after employer
-// and qualified IRA-to-HSA funding transfers consume their part of the limit.
-// IRC §223(a), §223(b)(4)
-function deductibleContributions(
-  input: Form8889Input,
-  remainingLimit: number,
-): number {
-  const taxpayer = input.taxpayer_hsa_contributions ?? 0;
-  if (taxpayer <= 0) return 0;
-  return Math.min(taxpayer, remainingLimit);
 }
 
 // Part I: Detect whether regular personal or employer contributions exist.
@@ -1483,9 +1467,13 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
-    const employerExcess = limitLines
-      ? Math.max(0, employer - Math.max(0, limitLines.line8 - fundingAmount))
-      : 0;
+    const currentContributions = hsaCurrentContributions(
+      limitLines?.line8 ?? 0,
+      input.taxpayer_hsa_contributions ?? 0,
+      employer,
+      fundingAmount,
+    );
+    const employerExcess = limitLines ? currentContributions.employerExcess : 0;
     const employerTreatment = input.employer_excess_treatment;
     if (employerExcess > 0 && !employerTreatment) {
       throw new Error(
@@ -1511,11 +1499,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         "Form 8889 timely employer withdrawal exceeds excess employer contributions",
       );
     }
-    const line12 = Math.max(
-      0,
-      (limitLines?.line8 ?? 0) - employer - fundingAmount,
-    );
-    const currentDeduction = deductibleContributions(input, line12);
+    const line12 = currentContributions.remainingPersonalLimit;
+    const currentDeduction = currentContributions.currentPersonalDeduction;
     const returnedPersonal = input.hsa_excluded_distributions
       ?.timely_excess_withdrawal;
     if (

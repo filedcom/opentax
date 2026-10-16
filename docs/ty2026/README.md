@@ -420,9 +420,11 @@ spouse's deemed coverage. The current 1099-SA/5498-SA reporting instructions are
 also pinned. An owner-limit workpaper now allocates shared family months once,
 preserves separate catch-ups, and retains exact monthly/last-month limits and
 spouse-share ratios alongside separately rounded form lines. Future testing
-records retain sub-dollar exposure using pinned Notice 2008-52. Graph binding, remaining
-allocation cases, distribution/excess treatment and the complete Form 8889
-return/output routes remain in the implementation queue.
+records retain sub-dollar exposure using pinned Notice 2008-52. Shared Part I
+arithmetic now derives current deduction capacity and separate personal/employer
+excess from cash funding, retaining source fractions beside replayed form lines.
+Qualified transfers, withdrawal/prior-excess settlement, graph binding and the
+complete Form 8889 return/output routes remain in the implementation queue.
 
 ## Version rule
 
