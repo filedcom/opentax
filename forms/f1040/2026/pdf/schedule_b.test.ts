@@ -15,9 +15,108 @@ import {
   scheduleBPrintData2026,
 } from "./schedule_b.ts";
 import { scheduleBFixture2026 } from "./schedule_b.fixture.ts";
+import { foreignAccountReviewFixture2026 } from "../inputs/foreign-accounts.fixture.ts";
 
 const filer = { name: "Synthetic Investor", ssn: "123456789" };
 const destinations = { form1040_line2b: 3149, form1040_line3b: 1605 };
+
+Deno.test("2026 Schedule B paints the reviewed foreign-account and independent FBAR answers", async () => {
+  for (const required of [true, false]) {
+    const raw = {
+      ...investmentOwner,
+      ...syntheticInvestmentClaim2026(),
+      f1099ints: [],
+      f1099divs: [],
+      foreign_accounts_question: true,
+      foreign_account_review: foreignAccountReviewFixture2026(required),
+    };
+    const bytes = await buildScheduleBPdfBytes2026(raw, {
+      form1040_line2b: 0,
+      form1040_line3b: 0,
+    }, filer);
+    const text = await extract(bytes);
+    assertEquals(text.includes("Switzerland"), required);
+    const dir = await Deno.makeTempDir();
+    try {
+      await Deno.writeFile(`${dir}/review.pdf`, bytes);
+      for (
+        const [y, selectedYes] of [[133, true], [97, required], [
+          37,
+          false,
+        ]] as const
+      ) {
+        for (const [x, yes] of [[539.4, true], [561, false]] as const) {
+          // Crop the interior only, excluding the printed checkbox border.
+          const rendered = await new Deno.Command("pdftoppm", {
+            args: [
+              "-f",
+              "1",
+              "-singlefile",
+              "-r",
+              "144",
+              "-gray",
+              "-x",
+              String(Math.round((x + 3) * 2)),
+              "-y",
+              String((792 - y - 7) * 2),
+              "-W",
+              "8",
+              "-H",
+              "8",
+              `${dir}/review.pdf`,
+            ],
+          }).output();
+          assertEquals(rendered.code, 0);
+          const pixels = rendered.stdout.subarray("P5\n8 8\n255\n".length);
+          assertEquals(
+            pixels.filter((p) => p < 128).length > 5,
+            yes === selectedYes,
+          );
+        }
+      }
+    } finally {
+      await Deno.remove(dir, { recursive: true });
+    }
+  }
+});
+
+Deno.test("2026 Schedule B country overflow preserves every reviewed country in a complete statement", async () => {
+  const review = foreignAccountReviewFixture2026();
+  const countries = [
+    "Antigua and Barbuda",
+    "Bosnia and Herzegovina",
+    "Central African Republic",
+    "Dominican Republic",
+    "Equatorial Guinea",
+    "United Arab Emirates",
+    "United Kingdom",
+    "Switzerland",
+  ];
+  review.accounts = countries.map((country_name, i) => ({
+    ...review.accounts[0],
+    record_reference: `account-${i}`,
+    account_number: `account-${i}`,
+    country_name,
+  }));
+  const bytes = await buildScheduleBPdfBytes2026(
+    {
+      ...investmentOwner,
+      ...syntheticInvestmentClaim2026(),
+      foreign_accounts_question: true,
+      foreign_account_review: review,
+    },
+    { form1040_line2b: 1200, form1040_line3b: 800 },
+    filer,
+  );
+  const doc = await PDFDocument.load(bytes);
+  assertEquals(doc.getPageCount(), 2);
+  assertEquals(doc.catalog.get(PDFName.of("AcroForm")), undefined);
+  assert(doc.getPages().every((p) => !p.node.has(PDFName.of("Annots"))));
+  const text = await extract(bytes);
+  assertStringIncludes(text, "See attached complete country statement");
+  assertStringIncludes(text, "Line 7b Foreign Countries");
+  for (const country of countries) assertStringIncludes(text, country);
+});
 
 async function extract(bytes: Uint8Array) {
   const dir = await Deno.makeTempDir();

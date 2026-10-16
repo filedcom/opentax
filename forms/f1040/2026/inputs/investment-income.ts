@@ -3,7 +3,7 @@ import type { NodeOutput } from "../../../../core/types/tax-node.ts";
 import { f1099int } from "../../nodes/inputs/income/investments/f1099int/index.ts";
 import { f1099div } from "../../nodes/inputs/income/investments/f1099div/index.ts";
 import {
-  inputSchema as scheduleBSchema,
+  paperInputSchema as scheduleBSchema,
   schedule_b,
 } from "../../nodes/intermediate/aggregation/income/investments/schedule_b/index.ts";
 import {
@@ -14,6 +14,11 @@ import {
   reconcileDividends2026,
   reconcileInterest2026,
 } from "./investment-source.ts";
+
+import {
+  foreignAccountReview2026Schema,
+  prepareForeignAccounts2026,
+} from "./foreign-accounts.ts";
 
 const ctx = { taxYear: 2026, formType: "f1040" };
 // Schedule B's $1,500 threshold is unchanged in the 2026 draft instructions.
@@ -29,9 +34,9 @@ const dividendConfig = {
 export const investmentIncome2026Schema = investmentOwner2026.extend({
   f1099ints: z.array(intItem2026Schema).default([]),
   f1099divs: z.array(divItem2026Schema).default([]),
-  // Foreign accounts/trusts need their reporting owners and current country
-  // schema. Do not silently reuse the 2025 MeF country-code validation here.
-  foreign_accounts_question: z.literal(false),
+  foreign_accounts_question: z.boolean(),
+  foreign_account_review: foreignAccountReview2026Schema.optional(),
+  // Trust income, grantor ownership and Forms 3520/3520-A need separate routes.
   foreign_trust_question: z.literal(false),
 }).strict();
 
@@ -52,14 +57,35 @@ export function calculateInvestmentIncome2026(
   raw: z.input<typeof investmentIncome2026Schema>,
 ) {
   const input = investmentIncome2026Schema.parse(raw);
-  if (!input.f1099ints.length && !input.f1099divs.length) {
-    throw new Error("Investment workpaper needs at least one issued copy");
-  }
   const owner = {
     filing_status: input.filing_status,
     taxpayer_ssn: input.taxpayer_ssn,
     ...(input.spouse_ssn ? { spouse_ssn: input.spouse_ssn } : {}),
   };
+  const foreignAccounts = input.foreign_account_review
+    ? prepareForeignAccounts2026(input.foreign_account_review, owner, [
+      ...input.f1099ints.map((i) => ({
+        reference: i.source_document_reference,
+        recipient_tin: i.recipient_tin,
+        account_number: i.account_number,
+      })),
+      ...input.f1099divs.map((i) => ({
+        reference: i.source_document_reference,
+        recipient_tin: i.recipient_tin,
+        account_number: i.account_number,
+      })),
+    ])
+    : undefined;
+  if (input.foreign_accounts_question !== Boolean(foreignAccounts)) {
+    throw new Error(
+      "Foreign account answer must match the reviewed account inventory",
+    );
+  }
+  if (!input.f1099ints.length && !input.f1099divs.length && !foreignAccounts) {
+    throw new Error(
+      "Investment workpaper needs an issued copy or a foreign account disclosure",
+    );
+  }
   const interest = input.f1099ints.length
     ? reconcileInterest2026(input.f1099ints, owner)
     : undefined;
@@ -79,6 +105,12 @@ export function calculateInvestmentIncome2026(
   const bInputs: Record<string, unknown> = {
     foreign_accounts_question: input.foreign_accounts_question,
     foreign_trust_question: input.foreign_trust_question,
+    ...(foreignAccounts
+      ? {
+        fincen_form114_required: foreignAccounts.fincen_form114_required,
+        foreign_countries: foreignAccounts.foreign_countries,
+      }
+      : {}),
   };
   // Match executor accumulation, including dividend_info arrays. This keeps
   // below-threshold dividends informational on Schedule B, never routed twice.
@@ -91,7 +123,7 @@ export function calculateInvestmentIncome2026(
     }
   }
   const scheduleBInput = scheduleBSchema.parse(bInputs);
-  const bOutputs = schedule_b.compute(ctx, scheduleBInput).outputs;
+  const bOutputs = schedule_b.computeForPaper(scheduleBInput).outputs;
   const all = [...sourceOutputs, ...bOutputs];
   const cents = {
     taxable_interest: amount(all, "f1040", "line2b_taxable_interest"),
@@ -136,6 +168,7 @@ export function calculateInvestmentIncome2026(
   }
   return {
     source_input: input,
+    foreign_accounts: foreignAccounts,
     interest,
     dividends,
     cents,

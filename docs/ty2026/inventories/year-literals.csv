@@ -1040,6 +1040,7 @@ forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregato
 forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts,588,"return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);"
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts,18,"import { ty2025IrsCountryCodeSchema } from ""../../../../../irs_country_code.ts"";"
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts,46,"irs_code: ty2025IrsCountryCodeSchema,"
+forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts,88,// The native entry point continues to require the pinned 2025 IRS country codes.
 forms/f1040/nodes/intermediate/aggregation/taxes/other/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
 forms/f1040/nodes/intermediate/aggregation/taxes/other/schedule2/index.ts,33,// Pre-2025 Form 5405 repayment posted to Schedule 2 line 10; 2025 reserves it.
 forms/f1040/nodes/intermediate/aggregation/taxes/other/schedule2/index.ts,84,// IRC §36B(f); 2025 Schedule 2 line 1a.

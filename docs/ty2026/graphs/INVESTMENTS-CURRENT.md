@@ -43,8 +43,9 @@ FormDefinition, supported filing catalog entry, or claim of IRS acceptance.
   W-2 sources. PAB sources require eligibility and expense evidence; Form 6251
   recomputes their combined preference from retained copies.
 - Unsupported foreign-tax, QBI, special-rate gains, nondividend/liquidation and
-  dividend-nominee branches fail strict source parsing. Foreign account/trust
-  reporting and OID are not enabled. Source review does not establish every
+  dividend-nominee branches fail strict source parsing. Foreign-trust reporting,
+  foreign statement income without issued 1099 copies, and OID remain pending.
+  Source review does not establish every
   required attachment or tax treatment for an entire brokerage account.
 
 Schedule B keeps below-threshold dividend rows informational when already
@@ -158,3 +159,41 @@ Schedule B printing subsequently passed four focused tests and a 480-test
 current-2026/shared-investment regression run. Six synthetic QA pages were
 rendered and visually inspected for payer completeness, adjustments, buyer
 details, cents-to-whole-dollar totals and static draft output.
+
+## Reviewed foreign accounts and Schedule B Part III
+
+The October 16 increment accepts a complete 2026 foreign account/signature
+inventory with actual filer TINs, relationship dates, institution/account identity,
+country names, source document references and SHA-256 evidence. Each joint filer
+needs a separate reviewed FBAR determination, including the spouse without any
+accounts. These are retained specialist determinations with explanations and
+reviewed values/exceptions, not an implemented FBAR threshold calculator or
+proof that an FBAR was filed. An account relationship must overlap 2026; a
+signature-only relationship can trigger Schedule B even without taxable income.
+
+An account's income must either be reviewed as not reportable by that subject
+or bind to the actual owner's issued 1099 source copies and account number.
+Bindings add no amounts: the shared INT/DIV arithmetic remains the sole income
+route, and duplicate/missing/wrong-owner source references fail. Standalone
+foreign bank statements still need a native source contract; no fake 1099 is
+created for an account-only disclosure.
+
+The shared Schedule B calculator now has a paper entry point that accepts names
+without implying validation against the 2025 native MeF country codes. Its
+existing native entry point still requires those codes. A reviewed foreign
+account triggers attachment below the income thresholds, including zero-income
+accounts. The 2026 draft PDF fills line 7a's two independent answers, leaves
+line 7b blank when FBAR is not required, and prints all countries in the two
+available lines or a complete continuation statement. Bundle selection includes
+this account-only attachment. Line 8 remains explicitly No; foreign trusts and
+Form 8938 return binding remain separate unfinished work.
+
+Authority: [2026 draft Schedule B instructions, August 10, Part III](https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf).
+The instructions distinguish line 7a's account question from the FBAR filing
+question and permit a line 7b country continuation. FBAR is filed separately;
+this increment neither files it nor establishes compliance with Form 8938.
+
+Validation covers source/owner/date/hash rejection, no-income and issued-copy
+bindings, joint/MFS reviews, preservation of the 2025 country-code contract,
+unchanged 1040/AGI/NIIT/tax, draft-bundle selection, rendered checkbox interiors,
+country overflow, and static PDF structure.

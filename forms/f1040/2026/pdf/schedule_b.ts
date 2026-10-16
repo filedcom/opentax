@@ -83,7 +83,16 @@ export function scheduleBPrintData2026(
       }, ...deductions]
       : []),
   ];
-  return { result, interestRows, dividendRows: dividends as Row[], sellers };
+  const countries = z.array(z.string()).parse(
+    fields.foreign_country_names ?? [],
+  );
+  return {
+    result,
+    interestRows,
+    dividendRows: dividends as Row[],
+    sellers,
+    countries,
+  };
 }
 
 function fit(font: PDFFont, text: string, width: number, maximum = 9) {
@@ -98,7 +107,7 @@ function money(amount: number) {
   return amount < 0 ? `(${(-amount).toFixed(2)})` : amount.toFixed(2);
 }
 
-/** Static draft attachment; unsupported foreign reporting remains rejected by the source schema. */
+/** Static draft attachment; country names do not assert native MeF country-code support. */
 export async function buildScheduleBPdfBytes2026(
   raw: InvestmentSource2026,
   destinations: { form1040_line2b: number; form1040_line3b: number },
@@ -172,9 +181,39 @@ export async function buildScheduleBPdfBytes2026(
   fill(31, String(data.result.lines.line2b), true);
   fill(33, String(data.result.lines.line2b), true);
   fill(64, String(data.result.lines.line3b), true);
-  // No foreign account: leave the conditional FBAR follow-up and countries blank.
-  form.getCheckBox(check(1, false)).check();
+  const accounts = data.result.foreign_accounts;
+  form.getCheckBox(check(1, Boolean(accounts))).check();
+  if (accounts) {
+    form.getCheckBox(check(2, accounts.fincen_form114_required)).check();
+  }
   form.getCheckBox(check(3, false)).check();
+  // Fit whole country names on the two available lines; preserve every name
+  // in a separate statement if the list would need tiny type or truncation.
+  const countryLines = ["", ""];
+  let countryLine = 0, countryOverflow = false;
+  for (const country of data.countries) {
+    let joined = countryLines[countryLine]
+      ? `${countryLines[countryLine]}, ${country}`
+      : country;
+    const width = (line: number) =>
+      form.getTextField(key(65 + line))
+        .acroField.getWidgets()[0].getRectangle().width - 4;
+    if (font.widthOfTextAtSize(joined, 9) > width(countryLine)) {
+      if (countryLine === 1) {
+        countryOverflow = true;
+        break;
+      }
+      countryLine = 1;
+      joined = country;
+      if (font.widthOfTextAtSize(joined, 9) > width(countryLine)) {
+        countryOverflow = true;
+        break;
+      }
+    }
+    countryLines[countryLine] = joined;
+  }
+  if (countryOverflow) fill(65, "See attached complete country statement");
+  else countryLines.forEach((line, i) => fill(65 + i, line));
   form.updateFieldAppearances(font);
   form.flatten();
   const doc = await PDFDocument.create();
@@ -259,6 +298,12 @@ export async function buildScheduleBPdfBytes2026(
     "Line 5 Ordinary Dividends",
     data.result.lines.line3b,
   );
+  if (countryOverflow) {
+    const page = statement("Line 7b Foreign Countries");
+    data.countries.forEach((country, i) =>
+      text(page, country, 36, 674 - i * 20, 540)
+    );
+  }
   for (let start = 0; start < data.sellers.length; start += 7) {
     const page = statement("Line 1 Buyer Details");
     data.sellers.slice(start, start + 7).forEach(({ buyer, amount }, i) => {

@@ -20,6 +20,28 @@ import {
   zeroExclusions2026,
 } from "../nodes/schedule1a.fixture.ts";
 import { FilingStatus } from "../../nodes/types.ts";
+import { foreignAccountReviewFixture2026 } from "../inputs/foreign-accounts.fixture.ts";
+
+Deno.test("2026 draft bundle includes a foreign-account-only Schedule B", async () => {
+  const base = investmentGraphInput2026(100000);
+  const result = await buildDraftReturnPdf2026({
+    ...base,
+    investment_income: {
+      ...base.investment_income,
+      f1099ints: [],
+      f1099divs: [],
+      foreign_accounts_question: true,
+      foreign_account_review: foreignAccountReviewFixture2026(),
+    },
+  });
+  assertEquals(
+    result.attachments.filter((a) => a.form === "schedule_b").length,
+    1,
+  );
+  assertEquals(result.calculation.pending.f1040.line11b_agi, 100000);
+  assertEquals(result.filingReady, false);
+  assertStringIncludes((await extract(result.bytes)).join("\n"), "Switzerland");
+});
 
 async function extract(bytes: Uint8Array) {
   const dir = await Deno.makeTempDir();

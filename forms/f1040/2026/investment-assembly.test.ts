@@ -6,10 +6,33 @@ import { sourceRegistry2026 } from "./source-registry.ts";
 import { syntheticPabReview2026 } from "./inputs/investment.fixture.ts";
 import { syntheticMedical2026 } from "./schedule-a.fixture.ts";
 import { FilingStatus } from "../nodes/types.ts";
+import { foreignAccountReviewFixture2026 } from "./inputs/foreign-accounts.fixture.ts";
 import type { calculateForm8960_2026 } from "./nodes/form8960.ts";
 import type { calculateForm6251_2026 } from "./nodes/form6251.ts";
 import type { calculateInvestmentClaim2026 } from "./inputs/investment-claim.ts";
 const plan = buildExecutionPlan(sourceRegistry2026);
+
+Deno.test("2026 foreign account disclosure changes no income, AGI, NIIT or final tax", () => {
+  const base = investmentGraphInput2026(180000);
+  const before = run(base);
+  const raw = {
+    ...base,
+    investment_income: {
+      ...base.investment_income,
+      foreign_accounts_question: true,
+      foreign_account_review: foreignAccountReviewFixture2026(),
+    },
+  };
+  const after = run(raw);
+  assertEquals(after.return, before.return);
+  assertEquals(after.niit.tax, before.niit.tax);
+  assertEquals(after.investment.schedule_b.required, true);
+  raw.investment_income.f1099ints = [];
+  raw.investment_income.f1099divs = [];
+  const disclosureOnly = run(raw);
+  assertEquals(disclosureOnly.return.line11b_agi, 180000);
+  assertEquals(disclosureOnly.investment.schedule_b.required, true);
+});
 
 function run(input: Record<string, unknown>) {
   const result = execute(plan, sourceRegistry2026, input, {
