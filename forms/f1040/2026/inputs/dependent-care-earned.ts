@@ -96,6 +96,7 @@ export function calculateCareEarnedIncome2026(
   qualifyingPeople: number,
   joint: boolean,
   stage: "benefits" | "credit",
+  verifyAdoptionAllocation = true,
 ) {
   const review = careEarnedIncomeReview2026Schema.parse(raw);
   const elected = careCombatElections2026Schema.parse(elections)[stage];
@@ -204,7 +205,7 @@ export function calculateCareEarnedIncome2026(
     const taxable = months.reduce((n, m) => n + m.taxable_care_benefits, 0);
     const adoption = annual[owner].adoption_wage_adjustment;
     if (
-      adoption !== undefined && (
+      verifyAdoptionAllocation && adoption !== undefined && (
         months.reduce((n, m) => n + (m.adoption_wage_adjustment ?? 0), 0) !==
           adoption ||
         months.some((m) => (m.adoption_wage_adjustment ?? 0) !== 0) &&

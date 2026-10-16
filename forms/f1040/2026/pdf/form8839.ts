@@ -153,8 +153,14 @@ export async function buildForm8839PdfBytes2026(
     function check(page: number, index: number, occurrence = 0) {
       form.getCheckBox(fieldName(`c${page}_${index}[${occurrence}]`)).check();
     }
-    function ratio(page: number, index: number, value: number) {
-      const [whole, fraction] = value.toFixed(3).split(".");
+    function ratio(page: number, index: number, value: number, places = 3) {
+      const [whole, fraction] = value.toFixed(places).split(".");
+      // The printed instruction permits at least three places; the widget's
+      // digit limit must not discard a reconciled higher-precision fraction.
+      if (places > 3) {
+        form.getTextField(fieldName(`f${page}_${index + 1}[0]`))
+          .removeMaxLength();
+      }
       fill(page, index, whole);
       fill(page, index + 1, fraction);
     }
@@ -228,7 +234,7 @@ export async function buildForm8839PdfBytes2026(
         check(2, 2, e.lines.line26 > 0 ? 1 : 0);
         if (e.lines.line26 > 0) {
           fill(2, 18, e.lines.line26);
-          ratio(2, 19, e.lines.line27);
+          ratio(2, 19, e.lines.line27, e.income.phaseout_decimal_places ?? 3);
         }
         fill(2, 27, e.lines.line30);
         fill(2, 28, e.lines.line31);

@@ -118,6 +118,7 @@ export type DependentCareInput2026 = z.input<typeof inputSchema>;
 
 export function calculateDependentCareBenefits2026(
   raw: DependentCareInput2026,
+  stage: "complete" | "benefits_probe" = "complete",
 ) {
   const input = inputSchema.parse(raw);
   const claim = input.claim;
@@ -406,6 +407,7 @@ export function calculateDependentCareBenefits2026(
     people.length,
     includeSpouseIncome,
     "benefits",
+    stage === "complete",
   );
   const details: Form2441CalculationDetails = {
     filing_status: input.filing_status,
@@ -472,14 +474,16 @@ export function calculateDependentCareBenefits2026(
     }
     annual[[...benefitOwners][0]].taxable_care = lines.line26;
   }
-  const creditIncome = calculateCareEarnedIncome2026(
-    claim.earned_income,
-    claim.combat_pay_elections,
-    annual,
-    people.length,
-    includeSpouseIncome,
-    "credit",
-  );
+  const creditIncome = stage === "benefits_probe"
+    ? benefitIncome
+    : calculateCareEarnedIncome2026(
+      claim.earned_income,
+      claim.combat_pay_elections,
+      annual,
+      people.length,
+      includeSpouseIncome,
+      "credit",
+    );
   const part3 = box10 > 0 || (details.benefits_carryover_used ?? 0) > 0 ||
     (details.benefits_forfeited_or_carried_forward ?? 0) > 0;
   details.student_or_disabled_deemed_income_used =
@@ -526,7 +530,24 @@ class DependentCareBenefitsNode2026 extends TaxNode<typeof inputSchema> {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Care benefits need f1040:2026 context");
     }
-    const result = calculateDependentCareBenefits2026(raw);
+    const input = inputSchema.parse(raw);
+    if (input.claim?.adoption_inventory_reference) {
+      if (input.adoption_income_2026) {
+        throw Error(
+          "Pre-AGI care sources cannot supply a calculated adoption bridge",
+        );
+      }
+      return {
+        outputs: [
+          {
+            nodeType: "form2441",
+            fields: { deferred_benefit_source_2026: input },
+          },
+          { nodeType: "agi_aggregator", fields: { care_sources_2026: input } },
+        ],
+      };
+    }
+    const result = calculateDependentCareBenefits2026(input);
     return {
       outputs: [
         { nodeType: "form2441", fields: { calculation_2026: result } },

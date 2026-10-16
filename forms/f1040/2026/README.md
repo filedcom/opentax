@@ -1192,8 +1192,10 @@ actual adoption inventory and employer personal-services review, using current
 payments without treating the special-needs exclusion as compensation. Taxable
 wages, dependent deductions and unearned income remain separate. Care now replays signed adoption adjustments by employer-program owner and
 reviewed service month, including offsetting spouses and monthly deemed-income
-floors. Cases changing the pre-AGI care exclusion still require coordinated
-settlement; multi-owner child exclusions also remain to be reconciled. Draft bundles now attach the two-page
+floors. Coordinated pre-AGI settlement now resolves changed care exclusions,
+adoption MAGI and Social Security together, retaining and printing additional
+phaseout precision when needed. Remaining whole-dollar rounding gaps and
+multi-owner child exclusions still require reconciliation. Draft bundles now attach the two-page
 Form 8839 and additional copies for overflow children. Income, refundable credit,
 nonrefundable credit and final child-credit destinations are replayed before
 rendering. Previously reported children retain their prior columns; totals print

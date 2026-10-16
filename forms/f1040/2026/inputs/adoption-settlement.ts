@@ -19,6 +19,7 @@ const signed = z.number().int().min(-1e9).max(1e9),
 /** Internal printed MAGI worksheet operands, to be bound by the pre-credit
  * return stage. These are deliberately absent from the public source claim. */
 export const adoptionExclusionIncome2026Schema = z.object({
+  phaseout_decimal_places: z.number().int().min(3).max(6).optional(),
   wages_if_all_line23_benefits_excluded: signed,
   taxable_interest: signed,
   ordinary_dividends: signed,
@@ -56,6 +57,7 @@ export function calculateAdoptionExclusion2026(
       line25,
       rules.phaseoutStart,
       rules.phaseoutRange,
+      income.phaseout_decimal_places ?? 3,
     );
   const children = source.children.map((r) => {
     const { reduction: line28, allowed: line29 } = adoptionAmountAfterPhaseout(

@@ -51,11 +51,9 @@ Deno.test("2026 negative adoption income limits care credit and retains unchange
   assertEquals(care.lines!.line25, 1000);
   assertEquals(care.lines!.line4, 2330);
   assertEquals(care.lines!.line6, 2000);
-  assert(
-    run(adoptionCareFixture2026(20000, 0, true, 5000)).diagnostics.some((d) =>
-      d.message.includes("coordinated pre-AGI")
-    ),
-  );
+  const changed = complete(adoptionCareFixture2026(20000, 0, true, 5000));
+  assertEquals(changed.p.f1040.line1e_taxable_dep_care, 2670);
+  assertEquals(changed.p.f1040.line11b_agi, 5000);
 });
 Deno.test("2026 joint care assigns special-needs exclusion to the actual employer-program owner", () => {
   const { p, care } = complete(jointAdoptionCareFixture2026());

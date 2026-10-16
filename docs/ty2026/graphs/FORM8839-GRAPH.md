@@ -162,13 +162,38 @@ allocate the actual owner adjustment across all twelve months, require a cited
 service-month review, and apply the student/disability floor after each month's
 signed adjustment. Gross support compensation is not substituted for care wages.
 
-The final care calculation and draft now accept those changes when the pre-AGI
-care-benefit exclusion remains correct. If replay changes Form 2441 line 26, it
-stops explicitly: the next required step is coordinated pre-AGI care/adoption
-settlement, including Social Security/MAGI dependencies. A child with multiple
+Care claims naming the adoption inventory now defer their benefit calculation to
+AGI. One coordinated stage resolves actual taxable care, the adoption exclusion
+and taxable Social Security before emitting income. The final care calculation
+replays the retained source and must match the executed line 1e. It no longer
+requires the old care exclusion to remain unchanged. A child with multiple
 employer-program owners and a nonzero adjustment still requires a reconciled
-per-spouse exclusion allocation. Neither case is silently assigned a joint total
-or accepted using the old care exclusion.
+per-spouse exclusion allocation; it is never assigned a joint total by default.
+
+The coordinator searches the bounded whole-dollar care-benefit amount. Increasing
+taxable care increases adoption MAGI, reduces its exclusion and increases care
+earnings, so the computed taxable-care amount cannot increase. Monthly service
+allocations remain reviewed source facts and must match the final derived owner
+adjustment; no trial values enter the executed graph. Each attempt retains its
+care amount, derived care amount, adoption exclusion, taxable Social Security and
+phaseout precision. Final replay also verifies monthly taxable-care allocations.
+
+The [2026 draft Form 8839](https://www.irs.gov/pub/irs-dft/f8839--dft.pdf) permits
+at least three decimal places on line 27. The stage tries three through six places,
+retaining the first consistent result. Six places represent the exact ratio of
+whole-dollar excess MAGI to $40,000. The retained precision is replayed by every
+income consumer and printed on Form 8839, with the widget's three-digit limit
+removed only when needed. Default/shared 2025 calculations still use three places.
+A remaining whole-dollar gap fails explicitly instead of emitting inconsistent
+Form 2441/8839/1040 amounts; resolving those source-cent/printed-line cases remains
+required work.
+
+This coordination follows the printed Form 8839 line-25 worksheet and
+[IRC 137(b)(3)](https://uscode.house.gov/us/usc/119-118/t26/s137/), the care
+instructions' taxable-wage definition, and Pub. 915's adoption addback. The
+published adoption instructions and Pub. 915 still describe 2025 and are method
+comparators. It is a simultaneous application of their worksheet relationships,
+not an IRS worked example of the combined case.
 
 Under-24 education and child-tax support reviews now name the actual adoption
 inventory. Both consumers replay its exclusion using the actual return owners,
@@ -297,3 +322,14 @@ unearned-income/dependent-deduction treatment. The combined draft was rendered
 and inspected; pixel checks also verify both education draft warnings across
 ordinary, LLC and extra-school pages. These checks establish this development
 increment, not complete TY2026 coverage or filing readiness.
+
+The coordinated-income follow-up passes 184 typed source/PDF tests, including
+shared 2025 adoption regressions, plus the 137-test unit gate (3,907 modules,
+runtime unchanged). A $20,000 wage/$17,670 exclusion example now derives $2,670
+taxable care and $5,000 AGI; adding the reviewed $10,000 net Social Security
+source yields $1,335 taxable Social Security and $6,335 AGI. The joint phaseout
+case with $270,030 wages settles at $2,069 taxable care, $14,569 adoption exclusion
+and $257,530 AGI using four decimal places. Both forms' final pages were rendered
+and inspected. The $270,039 companion case still has a whole-dollar gap at all
+permitted retained precisions and explicitly fails rather than filing inconsistent
+lines. These are synthetic regression fixtures, not taxpayer returns.

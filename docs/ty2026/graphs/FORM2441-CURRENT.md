@@ -321,17 +321,28 @@ The review cannot change wages, line 1f, or calculated income by entering an
 unreconciled monthly total. Source-only claims cannot supply an internal adoption
 income bridge. Missing inventories and mismatched wage/owner records fail.
 
-The final care/PDF route replays both stages and checks that its revised exclusion
-still equals the amount already used before AGI. It currently rejects changes to
-line 26; coordinated pre-AGI settlement of care, adoption and Social Security is
-required next. Nonzero adjustments for a child with several program owners still
-require explicit per-spouse exclusion reconciliation. These are outstanding
-implementation requirements, not completed filing support.
+Care claims identifying adoption sources now defer Part III to the coordinated
+AGI stage. It derives the adoption exclusion and Social Security at each candidate
+care-income amount, finds a consistent whole-dollar result, and replays the
+complete source with monthly allocation checks before emitting income. The
+executor finalizes the earlier care node's retained calculation. The late credit
+and PDF stage must match that executed line 1e and the same adoption bridge;
+changed care exclusions are supported. Retirement/business sources and original
+W-2s retain their existing reconciliation requirements.
+
+Three through six phaseout decimal places are tried in order, as permitted by the
+2026 draft Form 8839's at-least-three-places instruction. The chosen precision is
+retained and printed; six places capture the exact ratio for whole-dollar MAGI.
+Cases still lacking a consistent whole-dollar result fail explicitly and need
+further source-cent/printed-line reconciliation. Nonzero adjustments for a child
+with several program owners also still require explicit per-spouse exclusion
+reconciliation. See the [coordinated adoption contract](FORM8839-GRAPH.md) for
+source authority, algorithm and remaining gates.
 
 Verification for this increment covers 123 distinct typed source/PDF tests and
 the 137-test repository unit gate, with 3,905 modules in preflight and unchanged
 runtime files. Cases exercise fully excluded, taxable pending-foreign and signed
 special-needs income, separate owners, offsetting joint adjustments, monthly
-student floors, source mismatches, and explicit rejection of changed pre-AGI
-exclusions or unresolved mixed-owner child allocations. The combined joint draft
+student floors, source mismatches, and the then-required rejection of changed pre-AGI
+exclusions and unresolved mixed-owner child allocations. The combined joint draft
 was rendered and its Form 2441 owner limits were visually inspected.

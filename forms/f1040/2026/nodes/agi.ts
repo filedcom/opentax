@@ -1,4 +1,6 @@
 import { socialSecurityClaim2026Schema } from "../inputs/social-security-source.ts";
+import { inputSchema as careSourceSchema } from "../inputs/dependent-care.ts";
+import { settleAdoptionCare2026 } from "../inputs/adoption-care-settlement.ts";
 import {
   adoptionSource2026Schema,
   prepareAdoptionSources2026,
@@ -109,6 +111,7 @@ export const inputSchema = sharedSchema.pick({
   line23_archer_msa_deduction: true,
   line24f_501c18d: true,
 }).extend({
+  care_sources_2026: careSourceSchema.optional(),
   adoption_sources_2026: adoptionSource2026Schema.optional(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   business_loss_sources_2026: businessLossSource2026Schema.optional(),
@@ -134,6 +137,65 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
   }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
+    const { care_sources_2026: care, ...raw } = inputSchema.parse(rawInput);
+    if (!care) return this.computeIncome(ctx, raw);
+    if (
+      !raw.adoption_sources_2026 || raw.line1e_taxable_dep_care !== undefined
+    ) {
+      throw Error(
+        "Coordinated care must own line 1e and use actual adoption sources",
+      );
+    }
+    const settled = settleAdoptionCare2026(care, (taxableCare, places) => {
+      const result = this.computeIncome(ctx, {
+        ...raw,
+        line1e_taxable_dep_care: taxableCare,
+      }, places);
+      const adoption = result.outputs?.find((o) =>
+        o.nodeType === "agi_aggregator" && o.fields.adoption_exclusion_2026
+      )?.fields.adoption_exclusion_2026 as
+        | ReturnType<typeof calculateAdoptionExclusion2026>
+        | undefined;
+      if (!adoption) {
+        throw Error(
+          "Coordinated care needs executed adoption exclusion income",
+        );
+      }
+      return { result, adoption };
+    });
+    return {
+      ...settled.result,
+      finalizations: [
+        ...(settled.result.finalizations ?? []),
+        { nodeType: "form2441", fields: { calculation_2026: settled.benefit } },
+      ],
+      outputs: [
+        ...(settled.result.outputs ?? []),
+        {
+          nodeType: "f1040",
+          fields: { line1e_taxable_dep_care: settled.benefit.lines!.line26 },
+        },
+        {
+          nodeType: "f2441",
+          fields: { benefit_source: settled.benefit.source_input },
+        },
+        {
+          nodeType: "agi_aggregator",
+          fields: {
+            care_adoption_settlement_2026: {
+              benefit: settled.benefit,
+              attempts: settled.attempts,
+            },
+          },
+        },
+      ],
+    };
+  }
+  private computeIncome(
+    ctx: NodeContext,
+    rawInput: z.input<typeof inputSchema>,
+    adoptionPhaseoutPlaces = 3,
+  ): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("2026 AGI needs f1040:2026 context");
     }
@@ -423,6 +485,9 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     }
     const adoptionExclusion = adoption
       ? calculateAdoptionExclusion2026(adoption.source_input, {
+        ...(adoptionPhaseoutPlaces > 3
+          ? { phaseout_decimal_places: adoptionPhaseoutPlaces }
+          : {}),
         wages_if_all_line23_benefits_excluded: [
           input.line1a_wages,
           input.line1b_household_wages,
@@ -477,6 +542,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       }
     }
     const {
+      care_sources_2026: _careSources,
       adoption_sources_2026: _adoptionSources,
       social_security_scope_review_2026: _ssScope,
       business_sources_2026,
@@ -763,6 +829,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "f2441",
       fields: {
+        taxable_care_benefits_from_agi: input.line1e_taxable_dep_care ?? 0,
         ...(adoptionExclusion
           ? {
             adoption_income_2026: {

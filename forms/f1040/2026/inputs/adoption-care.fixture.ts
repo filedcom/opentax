@@ -42,3 +42,12 @@ export function jointAdoptionCareFixture2026() {
     w2s: [...a.w2s, spouse],
   };
 }
+
+export function phasedAdoptionCareFixture2026(primaryWages = 250000) {
+  const a = jointAdoptionCareFixture2026(),
+    c = adoptionCareFixture2026(primaryWages, 0, true, 7500);
+  a.w2s[0].box1_wages = primaryWages;
+  a.w2s[0].box10_dep_care = 7500;
+  a.form2441.claim.benefits = c.form2441.claim.benefits;
+  return a;
+}

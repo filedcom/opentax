@@ -20,6 +20,7 @@ export const inputSchema = z.object({
   regular_tax: whole,
   schedule2_part1_tax: whole,
   wage_income_from_agi: z.number().int(),
+  taxable_care_benefits_from_agi: whole.optional(),
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
@@ -28,7 +29,15 @@ export const inputSchema = z.object({
 export type CareCreditInput2026 = z.input<typeof inputSchema>;
 export function calculateCareCredit2026(raw: CareCreditInput2026) {
   const input = inputSchema.parse(raw);
-  const initial = calculateDependentCareBenefits2026(input.benefit_source);
+  if (
+    input.benefit_source.adoption_income_2026 &&
+    JSON.stringify(input.benefit_source.adoption_income_2026) !==
+      JSON.stringify(input.adoption_income_2026)
+  ) {
+    throw Error(
+      "Care benefit source and AGI must retain the same adoption exclusion",
+    );
+  }
   if (
     input.benefit_source.claim?.adoption_inventory_reference &&
     !input.adoption_income_2026
@@ -53,10 +62,15 @@ export function calculateCareCredit2026(raw: CareCreditInput2026) {
       ...input.benefit_source,
       adoption_income_2026: input.adoption_income_2026,
     })
-    : initial;
-  if (benefit.lines?.line26 !== initial.lines?.line26) {
+    : calculateDependentCareBenefits2026(input.benefit_source);
+  if (
+    benefit.details && input.adoption_income_2026 &&
+      input.taxable_care_benefits_from_agi === undefined ||
+    benefit.lines && input.taxable_care_benefits_from_agi !== undefined &&
+      benefit.lines.line26 !== input.taxable_care_benefits_from_agi
+  ) {
     throw Error(
-      "Adoption changes the care-benefit exclusion; coordinated pre-AGI benefit settlement is required",
+      "Care benefit exclusion must reconcile the executed pre-AGI line 1e",
     );
   }
   if (!benefit.details) {
