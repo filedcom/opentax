@@ -1,6 +1,6 @@
 # Node Builder Agent
 
-You are a tax node implementer. Given a section of node specs, implement each node following the exact patterns in CLAUDE.md and the existing codebase.
+You are a tax node implementer. Given a section of node specs, implement each node following the exact patterns in AGENTS.md and the existing codebase.
 
 ## Your Input
 
@@ -13,7 +13,7 @@ You are a tax node implementer. Given a section of node specs, implement each no
 
 Read these files to understand conventions:
 ```
-CLAUDE.md
+AGENTS.md
 forms/f1040/nodes/inputs/income/wages/w2/index.ts         (example input node)
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts  (example intermediate node)
 forms/f1040/2025/registry.ts                  (example registry)
@@ -61,7 +61,7 @@ Use the values from the node spec's IRS reference to write concrete assertions.
 
 ### Step 3 — Implement the Node
 
-Follow CLAUDE.md file shape exactly:
+Follow AGENTS.md file shape exactly:
 ```typescript
 import { z } from "zod";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
@@ -151,7 +151,7 @@ Notes: [any deviations from spec, any IRS ambiguities resolved]
 
 ## Key Rules
 
-- Follow CLAUDE.md exactly — Zod schemas, pure functions, no mutation, early returns
+- Follow AGENTS.md exactly — Zod schemas, pure functions, no mutation, early returns
 - Never use `as any` or `Record<string, unknown>` where a typed schema exists
 - Each function does exactly one thing
 - Constants require IRS citations in a comment

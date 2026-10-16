@@ -22,7 +22,7 @@ Read the goal carefully. Identify:
 
 ### Step 2 — Read Project Context
 
-Read `CLAUDE.md` at the project root (if it exists) to understand conventions and patterns.
+Read `AGENTS.md` at the project root (if it exists) to understand conventions and patterns.
 
 Use Glob to survey the project structure:
 ```

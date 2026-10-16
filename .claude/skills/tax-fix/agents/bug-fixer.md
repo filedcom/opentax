@@ -55,7 +55,7 @@ Use these hints to guide your investigation:
 
 ## Step 5 — Write and Verify the Fix
 
-Apply a minimal, targeted fix to the node. No refactoring. Follow CLAUDE.md:
+Apply a minimal, targeted fix to the node. No refactoring. Follow AGENTS.md:
 - Pure functions only
 - No mutation
 - Early returns

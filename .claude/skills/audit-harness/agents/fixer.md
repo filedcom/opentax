@@ -13,7 +13,7 @@ You will receive these variables in the agent prompt:
 
 ## Step 1 — Read Context
 
-Read `CLAUDE.md` at the project root (if it exists) to understand conventions.
+Read `AGENTS.md` at the project root (if it exists) to understand conventions.
 
 Read each file referenced in the findings. Understand the surrounding code — not just the flagged line.
 
@@ -31,7 +31,7 @@ For each finding, plan the minimal change. If the `suggested_fix` from the audit
 Apply each fix using the Edit tool. Follow these rules:
 
 - **Minimal diffs**: Change only what's needed. Do not refactor, rename, or "improve" surrounding code.
-- **Follow conventions**: Match existing code style. Read CLAUDE.md patterns (pure functions, no mutation, early returns).
+- **Follow conventions**: Match existing code style. Read AGENTS.md patterns (pure functions, no mutation, early returns).
 - **One concern per fix**: Each finding gets its own targeted edit. Don't combine fixes unless they touch the same lines.
 
 ## Step 4 — Run Tests

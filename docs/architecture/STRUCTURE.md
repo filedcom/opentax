@@ -4,7 +4,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 
 ```text
 /
-├── CLAUDE.md                      # Coding conventions
+├── AGENTS.md                      # Agent instructions; CLAUDE.md includes it
 ├── mod.ts / catalog.ts            # Public API and supported form catalog
 ├── deno.json / deno.lock           # Typed tasks and locked dependencies
 ├── cli/

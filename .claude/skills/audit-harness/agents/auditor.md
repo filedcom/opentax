@@ -63,7 +63,7 @@ From `fixes_applied`, identify which files were modified (where `applied === tru
 For each fix in `fixes_applied` where `applied === true`:
 1. Does the fix address the original finding? (Compare to the finding's description)
 2. Does the fix introduce any **new** issues relevant to the goal?
-3. Does the fix follow project conventions? (Check CLAUDE.md if uncertain)
+3. Does the fix follow project conventions? (Check AGENTS.md if uncertain)
 
 ### Step 3 — Report Only Problems
 

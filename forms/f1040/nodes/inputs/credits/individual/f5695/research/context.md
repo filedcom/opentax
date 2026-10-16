@@ -64,7 +64,7 @@ Parse and validate all fields using Zod schema. All fields are optional and nonn
 ### Step 2 — Forward to form5695
 Build a fields object from defined input fields and emit a single output to `form5695`.
 
-Source: CLAUDE.md — input nodes forward to intermediate nodes; intermediate nodes own calculation logic.
+Source: AGENTS.md — input nodes forward to intermediate nodes; intermediate nodes own calculation logic.
 
 ---
 

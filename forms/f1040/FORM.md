@@ -21,7 +21,7 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
   `nodes/config/index.ts`. Adding a new year = add entry to that barrel + a new `config.ts`.
 - **Year-specific structural overrides** (rare, ~2–5 per year) live in `{year}/nodes/`.
   A year's `registry.ts` imports the override instead of the shared node.
-- All nodes follow the file shape in `CLAUDE.md`: imports → enums → schemas → helpers → class → singleton.
+- All nodes follow the file shape in `AGENTS.md`: imports → enums → schemas → helpers → class → singleton.
 - Node discovery: `glob forms/f1040/nodes/**/ ` — no master list needed.
 
 ## IRS Specs

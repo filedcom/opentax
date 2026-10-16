@@ -25,7 +25,7 @@ Derive all paths from convention:
 - Node specs:   `.state/bench/node-specs/{ARGUMENTS}-2025-nodes.json`
 - Progress log: `.state/bench/progress.md`
 
-Read `CLAUDE.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
+Read `AGENTS.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
 Pass both as context to all spawned agents throughout this skill.
 
 Read `.state/bench/state.json`. Navigate to `forms.f{ARGUMENTS}:2025.build`:
@@ -119,6 +119,6 @@ Spawn all failing-case fix agents in parallel. Wait. Then go back to 4a.
 ## Key Constraints
 
 - Always check the existing `forms/f1040/` structure before building anything in `forms/f$ARGUMENTS/` — follow the exact same patterns
-- Read `CLAUDE.md` before spawning node-builder agents — pass its contents as context
+- Read `AGENTS.md` before spawning node-builder agents — pass its contents as context
 - Never skip the research phase — node specs are the contract everything else depends on
 - Only commit after a net-positive validation round
