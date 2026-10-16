@@ -5,6 +5,43 @@
 > implemented. See [the current investment contract](INVESTMENTS-CURRENT.md)
 > for the exact scope; the broader paths below remain the completion plan.
 
+## Ordinary ABLE distribution classification (October 16)
+
+The registered source route now retains each beneficiary, account, issued
+1099-QA reference and taxable earnings in the NIIT workpaper. It replays the
+actual ABLE inputs and reconciles owners and Schedule 1 line 8q both below and
+above the filing-status threshold. Taxable earnings remain in AGI/MAGI, with
+zero addition to NII. Shared TY2025 Form 8960 arithmetic remains unchanged.
+The PDF independently checks the actual Schedule 1 destination, including zero.
+
+This treatment is an inference from the current general rules, not an explicit
+ABLE example in the NIIT regulations. [26 CFR 1.529A-3(a)](https://www.ecfr.gov/current/title-26/section-1.529A-3)
+treats the distributed earnings according to the disability-expense allocation.
+[26 CFR 1.1411-1(d)(1), (3) and (6)](https://www.ecfr.gov/current/title-26/section-1.1411-1)
+defines annuities, dividends and interest: applying section 72 to account basis
+and earnings does not itself create an annuity contract or turn the payout into
+interest or dividends. [26 CFR 1.1411-4(a) and (e)](https://www.ecfr.gov/current/title-26/section-1.1411-4)
+does not provide an ordinary ABLE-account investment-income pass-through under
+sections 652/662. The exempt-account rule in
+[26 CFR 1.1411-3(b)(1)(iv)](https://www.ecfr.gov/current/title-26/section-1.1411-3)
+is consistent with that reading; the program's exemption alone is not the basis
+for deciding a beneficiary's tax. ABLE is not a qualified retirement plan under
+section 1411(c)(5), and the historical 2012 preamble predates ABLE legislation.
+
+This bounded route requires a living beneficiary, current corrected statements,
+ordinary withdrawals and reviewed qualified disability expenses. It still
+rejects excess returns, rollovers/transfers, closed accounts and beneficiary
+changes. Those source categories need separate review before expansion.
+Actual interest still enters NII; ABLE additional tax remains on Form 5329
+Part II and Schedule 2 line 5, separate from NIIT on Schedule 2 line 6.
+
+Verification: 573 focused checks passed, including five new ABLE NIIT
+source/return cases and two PDF cases; the 137-test unit gate and runtime
+inventory check also passed. The rendered threshold and full-investment
+examples show 38 and 760 of NIIT, with 200 of ABLE income retained in MAGI.
+The new tests also cover zero taxable distributions, both joint owners,
+missing/stale source earnings and the state-tax allocation denominator.
+
 ## HSA source classification (October 16)
 
 The registered Form 8960 path now replays the complete executed HSA source

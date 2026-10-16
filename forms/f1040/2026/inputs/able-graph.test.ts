@@ -117,11 +117,13 @@ Deno.test("2026 ABLE income changes Social Security and Marketplace MAGI before 
   });
   assertEquals(r.form8962.taxpayer_modified_agi, 62600);
 });
-Deno.test("2026 ABLE taxable NIIT boundary requires classification only above the filing-status threshold", async () => {
+Deno.test("2026 ordinary ABLE taxable earnings cross the NIIT threshold without investment income", async () => {
   const at = ableGraph2026(true, 199800);
   assertEquals((await run(at)).f1040.line11b_agi, 200000);
-  const over = await executeDraftSources2026(ableGraph2026(true, 199801));
-  assert(over.diagnostics.some((d) => d.message.includes("section 1411")));
+  const over = await run(ableGraph2026(true, 199801));
+  assertEquals(over.f1040.line11b_agi, 200001);
+  assertEquals(over.form8960.file_form8960, true);
+  assertEquals(over.schedule2.line6_niit, 0);
 });
 Deno.test("2026 owner Form 5329 merges retirement Part I and ABLE Part II and rejects stale sources", async () => {
   const g = ableGraph2026(true), rs = earlyRetirementSource2026(false, 1000);

@@ -18,6 +18,7 @@ export interface Form8960Destinations2026 {
   form1040_line12e: number;
   schedule1_line18: number;
   schedule1_line4?: number;
+  schedule1_able_line8q?: number;
   schedule1_hsa_line8f?: number;
   schedule1_hsa_excess_earnings?: number;
   schedule1_hsa_excess_employer?: number;
@@ -51,6 +52,9 @@ export async function buildForm8960PdfBytes2026(
     (input.capital_sources_2026?.land_sources_2026 !== undefined &&
       d.schedule1_line4 !== input.ordinary_disposition_gain_from_agi) ||
     d.schedule2_line6 !== result.tax ||
+    (result.able_noninvestment_income_workpaper &&
+      d.schedule1_able_line8q !==
+        result.able_noninvestment_income_workpaper.income_already_in_magi) ||
     (h && (
       d.schedule1_hsa_line8f !==
         h.owners.reduce(

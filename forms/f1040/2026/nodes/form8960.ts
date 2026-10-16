@@ -138,11 +138,24 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
       "NIIT ABLE sources must reconcile actual owners and AGI earnings",
     );
   }
-  if (able && able.taxable_earnings > 0 && input.magi > limit) {
-    throw Error(
-      "Taxable ABLE earnings above the NIIT threshold need a reviewed section 1411 classification",
-    );
-  }
+  // Ordinary qualified-ABLE-program distributions are not interest/dividend
+  // pass-throughs under 1.1411-4(e). Applying section 72 to the earnings/basis
+  // split does not make the account an annuity contract under 1.1411-1(d)(1).
+  // Taxable earnings stay in MAGI. Excess returns, transfers, deceased owners
+  // and beneficiary changes remain outside the source contract.
+  const ableWorkpaper = able
+    ? {
+      owners: able.accounts.map((a) => ({
+        owner_tin: a.owner_tin,
+        account_number: a.source.form5498qa.account_number,
+        distribution_reference: a.source.current_year_distributions
+          ?.form1099qa.source_document_ref,
+        taxable_earnings: a.distribution?.taxableWholeDollars ?? 0,
+      })),
+      income_already_in_magi: able.taxable_earnings,
+      net_investment_income: 0,
+    }
+    : undefined;
   const hsa = input.hsa_sources_2026
     ? calculateHsaReturnSources2026(input.hsa_sources_2026)
     : undefined;
@@ -247,6 +260,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
   return {
     source_input: input,
     investment,
+    able_noninvestment_income_workpaper: ableWorkpaper,
     hsa_noninvestment_income_workpaper: hsaWorkpaper,
     land_exclusion_workpaper: landExclusion,
     shared_input: sharedInput,

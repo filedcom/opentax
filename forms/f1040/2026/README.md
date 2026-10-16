@@ -751,6 +751,12 @@ The component's five focused tests include a connected educator/investment
 return; seven rendered synthetic QA pages were visually inspected. Complete
 source ownership, bundle selection, current MeF and ATS remain release gates.
 
+Ordinary ABLE distributions now retain source earnings in NIIT MAGI without an
+investment-income addition, including above the filing-status threshold. The
+workpaper replays the actual beneficiary/account sources, and Form 8960 PDF
+checks Schedule 1 line 8q. See the [classification rationale and remaining
+ABLE limits](../../../docs/ty2026/graphs/FORM8960-GRAPH.md#ordinary-able-distribution-classification-october-16).
+
 ## Investment sources and NIIT
 
 The `investment_income` singleton uses existing 1099-INT, 1099-DIV and Schedule B
