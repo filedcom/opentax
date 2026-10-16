@@ -20,6 +20,7 @@ export async function buildForm8863PdfBytes2026(
     form1040_line29: number;
     schedule3_line2: number;
     schedule3_line3: number;
+    schedule3_line6d?: number;
   },
   filer: { name: string; ssn: string },
 ): Promise<Uint8Array> {
@@ -35,6 +36,8 @@ export async function buildForm8863PdfBytes2026(
     raw.regular_tax + raw.schedule2_part1_tax !==
       destinations.form1040_line18 ||
     raw.finalized_dependent_care_credit !== destinations.schedule3_line2 ||
+    (raw.finalized_schedule_r_credit ?? 0) !==
+      (destinations.schedule3_line6d ?? 0) ||
     lines.line8 !== destinations.form1040_line29 ||
     lines.line19 !== destinations.schedule3_line3
   ) {

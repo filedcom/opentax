@@ -42,6 +42,7 @@ export const inputSchema = educationClaim2026Schema.partial().extend({
   child_tax_source_2026: childTaxInput2026Schema.optional(),
   schedule2_part1_tax: whole,
   finalized_dependent_care_credit: whole,
+  finalized_schedule_r_credit: whole.default(0),
 }).strict();
 export type EducationInput2026 = z.input<typeof inputSchema>;
 export function calculateEducationCredit2026(raw: EducationInput2026) {
@@ -222,7 +223,7 @@ export function calculateEducationCredit2026(raw: EducationInput2026) {
     schedule3_line1_foreign_tax_credit: 0,
     schedule3_line2_dependent_care_credit:
       input.finalized_dependent_care_credit,
-    schedule3_line6d: 0,
+    schedule3_line6d: input.finalized_schedule_r_credit,
     schedule3_line6l: 0,
   };
   const line19 = calculateForm8863Line19(

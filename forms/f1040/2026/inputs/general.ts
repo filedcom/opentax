@@ -106,6 +106,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
     return [
       ...this.outputNodes.nodeTypes,
       "form2441",
+      "schedule_r",
       "f8863",
       "f8615",
       "government_payments",
@@ -472,6 +473,23 @@ class General2026Node extends TaxNode<typeof inputSchema> {
                 })),
               ],
             },
+          },
+        },
+        {
+          nodeType: "schedule_r",
+          fields: {
+            ...owner,
+            taxpayer_dob: input.taxpayer_dob,
+            taxpayer_first_name: input.taxpayer_first_name,
+            ...(joint
+              ? {
+                spouse_dob: input.spouse_dob,
+                spouse_first_name: input.spouse_first_name,
+              }
+              : {}),
+            tax_residency: input.tax_residency,
+            mfs_spouse_lived_with_taxpayer:
+              input.mfs_spouse_lived_with_taxpayer,
           },
         },
         { nodeType: "w2", fields: owner },

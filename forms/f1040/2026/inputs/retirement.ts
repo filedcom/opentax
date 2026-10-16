@@ -13,7 +13,14 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
   override get outputNodeTypes() {
-    return ["agi_aggregator", "f1040", "schedule_a", "schedule2", "form2441"];
+    return [
+      "agi_aggregator",
+      "f1040",
+      "schedule_a",
+      "schedule2",
+      "form2441",
+      "schedule_r",
+    ];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -50,6 +57,10 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
+        {
+          nodeType: "schedule_r",
+          fields: { retirement_sources_2026: r.source_input },
+        },
         {
           nodeType: "agi_aggregator",
           fields: {

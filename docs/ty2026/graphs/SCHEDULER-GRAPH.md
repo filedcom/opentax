@@ -1,6 +1,6 @@
 # TY2026 Schedule R elderly/disabled credit graph
 
-Snapshot: September 27, 2026. The pinned IRS [2026 Schedule R draft](../corpus/draft/f1040sr.pdf),
+Implementation snapshot: October 16, 2026. The pinned IRS [2026 Schedule R draft](../corpus/draft/f1040sr.pdf),
 SHA-256 `0fcbd9fe296b470b2a0ceadc497380159f7d872f7aa11d86ae856bbd2234f5b6`,
 and [2026 instructions](../corpus/draft/i1040sr.pdf) define this route. The
 [PDF inventory](../inventories/pdf-fields/pdf-fields-f1040sr.csv) has 27 AcroForm widgets, including
@@ -23,32 +23,87 @@ facts, `CFE` next to Schedule 3 line 6d, and the attached Schedule R. If
 the product supports this choice, treat it as a distinct filing path; do not
 invent a numeric credit on the return.
 
-## Current implementation boundary
+## Current implementation and shared reuse
 
-The shared [`schedule_r` node](../../../forms/f1040/nodes/inputs/credits/elderly-disabled/schedule_r/index.ts)
-accepts manual AGI and benefit totals, computes 15% and sends only a number to
-the TY2025 Schedule 3 line 6d key. It has no Part I box selection, MFS
-lived-apart proof, disability certification, line-by-line result, liability
-worksheet, CFE choice, PDF or MeF serializer. In particular, it treats QSS
-like MFJ ($7,500/$10,000), caps **box 6** by disability income alone instead
-of $5,000 plus that income, and omits the line 21 limit. The 2026 Schedule 3
-node accepts a line 6d amount, but it does not produce or validate the source
-Schedule R attachment. Do not register the shared shortcut for TY2026.
+The public `schedule_r.claim` inventory is registered in the 2026 source graph.
+It supplies external medical, employer-plan and benefit evidence; return owners,
+birth dates, finalized AGI, Social Security and tax amounts come from preceding
+nodes. The 2026 adapter and the existing 2025 filed-form adapter both call
+`calculateScheduleRAmounts` in the shared calculation module. Existing 2025
+source checks and filing behavior remain in their adapter. No folder reorganization
+or wholesale copy of the 2025 node is needed.
 
-## Build and acceptance
+The reviewed route requires full-year citizen/resident treatment, a completed-year
+inventory, and no foreign-tax or Form 8978 credit. Joint returns require distinct
+owners and birth dates. MFS requires both the general lived-apart answer and its
+full-year evidence reference. The January 1 birthday convention derives the
+age-65 branch from birth dates. The general source still excludes deceased filers.
 
-1. Derive age/status, disability income, benefits and AGI from their existing
-   owner records; require only genuinely external disability and lived-apart
-   evidence. Select exactly one box and compute lines 10–22 in printed order.
-2. Add the line 21 dependency after 1040 line 18 and Schedule 3 lines 1/2/6l,
-   avoiding a credit-limit cycle. Carry the resulting line 22 to Schedule 3
-   line 6d and reconcile the 1040 nonrefundable-credit total.
-3. Render both Schedule R pages with correct PDF button export values and
-   amount widgets, and add the current MeF document/answer route after the
-   active 2026 XSD and rules are available. Include the CFE path only with
-   its full required filing expression.
-4. Test QSS age 65+, MFS not living apart, MFJ box 6 with a small disability
-   income, both-under-65 box 5, nontaxable SSA reduction, zero/limited tax,
-   prior physician certification and new statement retained for records.
-   Compare all printed lines, Schedule 3/1040 amounts and XML, and retain
-   the TY2025 calculation regression.
+For each under-65 claimant, medical evidence establishes permanent and total
+disability at retirement, onset and statement dates, duration and inability to
+perform substantial gainful activity. The statement can be current, qualifying
+prior-year evidence with continued disability, or authorized VA Form 21-0172.
+Each employer disability pension must match an actual reviewed 1099-R copy and
+its dated taxable payments. Same-account statements need consistent mandatory
+retirement evidence. The minimum retirement age controls wage/pension reporting;
+the employer's mandatory retirement date separately controls Schedule R income.
+Payments before the mandatory date remain eligible even when already reported
+as pension income. An employer plan with no mandatory retirement age has an
+explicit evidence branch.
+
+Social Security/RRB inventories reconcile to finalized gross and taxable benefits;
+workers' compensation offsets already included in those source boxes are not
+added again. Other benefits have owner, statement and statutory-treatment records.
+VA pensions and qualifying exclusions outside the Internal Revenue Code count;
+military disability, Foreign Service section 808, return of cost and exclusions
+under the Code do not. Duplicate benefit/source references are rejected.
+
+The graph resolves credits in this order:
+
+```text
+regular tax + Schedule 2 Part I
+  -> dependent care
+  -> Schedule R -> Schedule 3 line 6d
+  -> education
+  -> child / energy credit limits
+  -> Form 1040 and Form 1062 replay
+```
+
+Child and energy reviews bind the actual Schedule R inventory. Form 1062 replays
+these same sources and credit ordering for actual and hypothetical tax, while
+preserving its existing AGI convention. Its scope review must explicitly include
+Schedule R when supplied.
+
+The PDF builder replays the claim and reconciles AGI, pre-credit tax, prior care
+credit and the Schedule 3 destination. It fills exactly one box, the applicable
+prior-statement checkbox and all required Part III amounts. Mixed joint returns
+print the qualifying prior-statement first name above the checkbox. The two form
+pages, without the IRS draft cover, join the return in attachment order. They are
+static development drafts with no AcroForm or annotation dictionaries; medical
+and plan record references are not printed. An exhausted credit has no attachment.
+
+## Required remaining work
+
+- Add dated employer disability payments reported on W-2, including separate
+  treatment of accrued leave; the current claim explicitly requires all disability
+  payments to be in the reviewed retirement inventory.
+- Add the pre-1977 disability exception, deceased-filer age treatment and foreign
+  residence/election branches with their source evidence.
+- If offered, implement the separate IRS-figures-credit choice with its required
+  partial Schedule R and Schedule 3 `CFE` expression.
+- Reconcile final 2026 instructions and add the current MeF document, medical
+  answer expressions and ATS acceptance. Existing 2025 filing serializers are
+  regression comparators, not 2026 filing authorization.
+
+The source cases cover all nine boxes, QSS, mixed-age joint returns, dated minimum
+versus mandatory retirement, SSA reduction, MFS residence, medical evidence,
+benefit exclusions, dependent-care ordering, education/child/energy limits and
+Form 1062 replay. These checks establish development behavior, not complete
+Schedule R parity or IRS filing acceptance.
+
+Validation for this increment: 917 full TY2026 runtime tests, 102 typed focused
+tests (including existing 2025 Schedule R node, PDF and MeF regressions), and
+137 repository unit checks passed. The unit module-graph preflight found no
+runtime changes during execution. Eight full-return pages and two standalone
+mixed-age pages were rendered and visually reviewed; regenerated output matches
+all ten reviewed pages and contains no AcroForm or annotation dictionaries.

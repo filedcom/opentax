@@ -17,10 +17,20 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   Dated employer disability payments split between wages and pensions. The wage
   component combines with moving income on line 1h, reaches earned-income credits
   and dependent/education calculations, and supplies owner/month-specific care
-  income without creating payroll taxes. Schedule R and native disability filing
-  statements remain required.
+  income without creating payroll taxes. Reviewed Schedule R now consumes the
+  same payment records; native disability filing statements remain required.
   See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)
   for supported codes, correction checks and required basis/penalty/filing work.
+
+- `schedule_r` selects the elderly/disability credit box from filer identities,
+  birth dates, residence and medical/plan evidence. It reuses the 2025 filed-form
+  arithmetic for lines 10–22, reconciles SSA and other nontaxable benefits, and
+  applies the employer's mandatory retirement date separately from the minimum
+  retirement age used for wage reporting. Care precedes Schedule R; education,
+  child and energy credits follow it, including Form 1062 credit replay. Two
+  static draft pages reconcile to Schedule 3 line 6d and Form 1040. W-2 disability
+  ledgers, special eligibility cases and native MeF remain open; see the
+  [Schedule R contract](../../../docs/ty2026/graphs/SCHEDULER-GRAPH.md).
 
 - `gambling` reconciles current W-2G copies and the casual winnings/loss ledger,
   reusing 2025 copy checks and sums. Schedule 1 line 8b, withholding line 25c,

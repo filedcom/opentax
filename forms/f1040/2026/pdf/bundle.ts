@@ -1,3 +1,5 @@
+import { buildScheduleRPdfBytes2026 } from "./schedule_r.ts";
+import { calculateScheduleR2026 } from "../inputs/schedule-r-source.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { buildForm5329PdfBytes2026 } from "./form5329.ts";
 import {
@@ -284,6 +286,21 @@ export async function buildDraftReturnPdf2026(
   const election = retained<ReturnType<typeof calculateForm1062Tax2026>>(
     "form1062",
   );
+  const scheduleR = retained<ReturnType<typeof calculateScheduleR2026>>(
+    "schedule_r",
+  );
+  const rCredit = scheduleR
+    ? calculateScheduleR2026(scheduleR.source_input).lines?.line22 ?? 0
+    : 0;
+  if (
+    (s3?.input.line6d_elderly_disabled_credit ?? 0) !== rCredit ||
+    (education?.source_input.finalized_schedule_r_credit ?? 0) !== rCredit ||
+    (childCredit?.source_input.finalized_schedule_r_credit ?? 0) !== rCredit
+  ) {
+    throw Error(
+      "Schedule R credit must reconcile ordered credit consumers and Schedule 3",
+    );
+  }
   let electionForms:
     | Awaited<ReturnType<typeof buildForm1062Draft2026>>
     | undefined;
@@ -517,6 +534,19 @@ export async function buildDraftReturnPdf2026(
         filer,
       ));
   }
+  if (scheduleR?.file_schedule_r) {
+    add(
+      "schedule_r",
+      2,
+      () =>
+        buildScheduleRPdfBytes2026(scheduleR.source_input, {
+          form1040_line11b: line("line11b_agi"),
+          form1040_line18: line("line18_total_tax_before_credits"),
+          schedule3_line2: s3?.input.line2_childcare_credit ?? 0,
+          schedule3_line6d: rCredit,
+        }, filer),
+    );
+  }
   // Employer overflow uses repeated official form pages, not statement pages.
   if (tips?.forms.length) {
     add("form4137", undefined, () =>
@@ -639,6 +669,7 @@ export async function buildDraftReturnPdf2026(
           form1040_line29: line("line29_refundable_aotc"),
           schedule3_line2: amount(p.schedule3, "line2_childcare_credit"),
           schedule3_line3: amount(p.schedule3, "line3_education_credit"),
+          schedule3_line6d: rCredit,
         }, filer),
     );
   }

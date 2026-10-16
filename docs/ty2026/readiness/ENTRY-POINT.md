@@ -99,10 +99,11 @@ The [Form 965-A contract](../graphs/FORM965A-GRAPH.md) preserves
 the outstanding liability and actual payment history and routes the
 reporting-year amount to Schedule 2 line 12. The current draft's line 15
 addition omits line 12, so the final total requires IRS resolution.
-The [Schedule R contract](../graphs/SCHEDULER-GRAPH.md) maps
+The [Schedule R contract](../graphs/SCHEDULER-GRAPH.md) implements
 the nine age/disability filing choices, the printed credit-limit worksheet,
-both PDF pages and Schedule 3 line 6d. The shared node's QSS and mixed-age
-joint-return arithmetic does not match the 2026 form.
+both draft PDF pages and Schedule 3 line 6d using shared 2025 filed-form
+arithmetic. Reviewed 2026 sources reconcile eligibility and ordered credits;
+W-2 disability, special eligibility and current MeF remain open.
 The [Schedule J contract](../graphs/SCHEDULEJ-GRAPH.md) maps the
 2026 farming/fishing election through three base-year returns and rate
 worksheets into Form 1040 line 16. The shared node instead accepts the
@@ -517,7 +518,10 @@ Ordinary code-3 withdrawals and medical-proof exception 03 are connected.
 Disability pension payments are split by the plan minimum-retirement-age date.
 Wages combine with moving income on line 1h and reach EIC, child credits, annual/monthly
 care and dependent/education income calculations through reviewed source bridges.
-Schedule R and native disability statements remain required. Remaining exceptions and other parts, Forms
+Schedule R now reuses shared line arithmetic with sourced medical/mandatory-age
+evidence, SSA reconciliation, ordered credit limits and two static draft pages.
+W-2 disability and special Schedule R eligibility, native disability statements,
+remaining exceptions and other parts, Forms
 8606/4972, QCDs, annuity basis and current MeF remain required parity work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond

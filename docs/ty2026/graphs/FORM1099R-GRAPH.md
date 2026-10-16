@@ -114,7 +114,9 @@ beginning the following day. The 2026 source calculation now implements this
 payment-date split and reuses the shared helper for both categories. Ordinary
 code-3 withdrawals and exception-03 withdrawals are connected to return assembly.
 Employer disability wages now reach the earned-income consumers described below.
-Schedule R eligibility and native disability filing statements remain required.
+Reviewed Schedule R eligibility, ordered credits and draft pages now consume
+the same retirement payment inventory; see the [Schedule R contract](SCHEDULER-GRAPH.md).
+Native disability filing statements remain required.
 These 2025 publications are method comparators pending final 2026 instructions.
 
 The routing correction passed 143 typed retirement and export regressions and
@@ -188,7 +190,8 @@ The current publications/instructions remain comparators where final TY2026 text
 is not published; the wage classification applied to the latter three consumers
 is the implementation's interpretation of these sources.
 
-**Required remaining work:** Schedule R, native disability filing statements,
+**Required remaining work:** broader Schedule R eligibility and W-2 disability
+sources, native disability filing statements,
 current MeF/ATS acceptance, other retirement basis/rollover/exception branches and
 final 2026 instruction reconciliation. Moving-income-plus-care combinations still
 need the separate moving earned-income bridge. These draft calculations do not

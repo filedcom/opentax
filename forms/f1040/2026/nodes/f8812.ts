@@ -29,6 +29,10 @@ export const childCreditClaim2026Schema = z.object({
   no_nonrefundable_credits_other_than_dependent_care_and_education: z.literal(
     true,
   ).optional(),
+  schedule_r_inventory_reference: z.string().trim().min(1).optional(),
+  no_nonrefundable_credits_other_than_reviewed_sources: z.literal(
+    true,
+  ).optional(),
   energy_inventory_reference: z.string().trim().min(1).optional(),
   no_foreign_or_territory_exclusions: z.literal(true),
   not_bona_fide_puerto_rico_resident: z.literal(true),
@@ -50,6 +54,9 @@ export const inputSchema = childCreditClaim2026Schema.partial().extend({
   // Older wage emitters also deposit these facts; the worksheet uses the
   // normalized 1040 wage lines instead, including tips and Form 8919 wages.
   finalized_eic: amount.optional(),
+  finalized_schedule_r_credit: amount.default(0),
+  schedule_r_inventory_reference_from_source: z.string().trim().min(1)
+    .optional(),
   finalized_dependent_care_credit: amount.default(0),
   finalized_education_credit: amount.default(0),
   finalized_excess_social_security: amount.optional(),
@@ -88,7 +95,8 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
   const others = input.auto_other_dependents;
   const energySource = input.energy_sources_2026;
   const tax = input.auto_income_tax_liability + input.schedule2_part1_tax;
-  const earlierCredits = input.finalized_dependent_care_credit +
+  const earlierCredits = input.finalized_schedule_r_credit +
+    input.finalized_dependent_care_credit +
     input.finalized_education_credit;
   if (
     energySource &&
@@ -99,6 +107,16 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
     throw new Error(
       "Energy carryforward differs from the current return owner",
     );
+  }
+  if (
+    energySource &&
+    (energySource.claim.schedule_r_inventory_reference !== undefined ||
+      input.finalized_schedule_r_credit > 0) &&
+    (!energySource.claim.schedule_r_inventory_reference ||
+      energySource.claim.schedule_r_inventory_reference !==
+        input.schedule_r_inventory_reference_from_source)
+  ) {
+    throw Error("Energy credit must include the actual Schedule R inventory");
   }
   if (children + others === 0) {
     return {
@@ -116,6 +134,24 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       key,
     ) => [key, input[key as keyof typeof input]]),
   ));
+  const scheduleRReviewed =
+    review.schedule_r_inventory_reference !== undefined ||
+    review.no_nonrefundable_credits_other_than_reviewed_sources !== undefined;
+  if (scheduleRReviewed || input.finalized_schedule_r_credit > 0) {
+    if (
+      !review.schedule_r_inventory_reference ||
+      review.schedule_r_inventory_reference !==
+        input.schedule_r_inventory_reference_from_source ||
+      review
+          .no_nonrefundable_credits_other_than_dependent_care_and_education !==
+        undefined ||
+      review.no_nonrefundable_credits_other_than_reviewed_sources !== true
+    ) {
+      throw new Error(
+        "Child credit needs the actual Schedule R inventory and an updated other-credit review",
+      );
+    }
+  }
   if (energySource) {
     if (
       review.energy_inventory_reference !==
@@ -129,8 +165,10 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       );
     }
   } else if (
-    review.no_nonrefundable_credits_other_than_dependent_care_and_education !==
-      true || review.energy_inventory_reference !== undefined
+    (!scheduleRReviewed &&
+      review
+          .no_nonrefundable_credits_other_than_dependent_care_and_education !==
+        true) || review.energy_inventory_reference !== undefined
   ) {
     throw new Error(
       "Child credit needs its complete nonrefundable-credit inventory",
@@ -284,7 +322,7 @@ export function calculateChildCredit2026(raw: ChildCreditInput2026) {
       schedule3_line3: input.finalized_education_credit,
       schedule3_line4: 0,
       schedule3_line5b: 0,
-      schedule3_line6d: 0,
+      schedule3_line6d: input.finalized_schedule_r_credit,
       schedule3_line6f: 0,
       schedule3_line6l: 0,
       schedule3_line6m: 0,
@@ -378,6 +416,7 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
             line19_child_tax_credit: calculation.lines?.line14 ?? 0,
             line28_actc: calculation.lines?.line27 ?? 0,
             line20_nonrefundable_credits:
+              calculation.source_input.finalized_schedule_r_credit +
               (calculation.source_input.finalized_dependent_care_credit ?? 0) +
               (calculation.source_input.finalized_education_credit ?? 0) +
               (calculation.energy_credit?.lines.line3 ?? 0),
@@ -387,6 +426,8 @@ class ChildCreditNode2026 extends TaxNode<typeof inputSchema> {
         {
           nodeType: "schedule3_final",
           fields: {
+            line6d_elderly_disabled_credit:
+              calculation.source_input.finalized_schedule_r_credit,
             line2_childcare_credit:
               calculation.source_input.finalized_dependent_care_credit,
             line3_education_credit:

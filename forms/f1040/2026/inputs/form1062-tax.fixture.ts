@@ -30,6 +30,7 @@ export function form1062TaxFixture2026(
     care: source("f2441"),
     education: source("f8863"),
     child: source("f8812"),
+    ...(graph.schedule_r ? { schedule_r: source("schedule_r") } : {}),
     schedule2: pick(p.schedule2, Object.keys(schedule2Schema.shape)),
     return_lines: pick(
       p.f1040,
@@ -38,7 +39,12 @@ export function form1062TaxFixture2026(
     review: {
       record_reference: "synthetic-form1062-tax-scope",
       no_other_regular_tax_additions_or_tax_methods: true,
-      no_credits_other_than_care_education_child_and_energy: true,
+      ...(graph.schedule_r
+        ? {
+          no_credits_other_than_care_education_child_energy_and_schedule_r:
+            true,
+        }
+        : { no_credits_other_than_care_education_child_and_energy: true }),
     },
   });
   return { input, execution, graph };

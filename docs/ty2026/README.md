@@ -120,8 +120,9 @@ regular Git files.
   continuing section 965 liability/payment ledger, 2026 Schedule 2 line
   12/15 draft conflict and 413 current form widgets.
 - [`SCHEDULER-GRAPH.md`](./graphs/SCHEDULER-GRAPH.md) and
-  `pdf-fields-f1040sr.csv`: 2026 elderly/disabled eligibility, box-specific
-  amount and tax-limit worksheet, Schedule 3 line 6d and 27 PDF widgets.
+  `pdf-fields-f1040sr.csv`: reviewed 2026 elderly/disability sources reuse shared
+  box-specific arithmetic, ordered credit limits and two static draft pages;
+  W-2 disability, special eligibility and current MeF remain open.
 - [`SCHEDULEJ-GRAPH.md`](./graphs/SCHEDULEJ-GRAPH.md) and
   `pdf-fields-f1040sj.csv`: elected farm/fishing income across the
   2023–2025 base years, prior Schedule J state, 1040 line 16 and 27 widgets.

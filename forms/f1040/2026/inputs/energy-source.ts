@@ -13,7 +13,10 @@ export const energyClaim2026Schema = z.object({
     record_reference: ref,
     review_reference: ref,
     no_nonrefundable_credits_other_than_child_dependent_care_and_education: z
-      .literal(true),
+      .literal(true).optional(),
+    no_nonrefundable_credits_other_than_child_care_education_and_schedule_r: z
+      .literal(true).optional(),
+    schedule_r_inventory_reference: ref.optional(),
     prior_return: investmentOwner2026.extend({
       tax_year: z.literal(2025),
       return_reference: ref,
@@ -34,6 +37,24 @@ export type EnergySource2026 = z.input<typeof energySource2026Schema>;
 
 export function reconcileEnergySource2026(raw: EnergySource2026) {
   const source = energySource2026Schema.parse(raw);
+  const c = source.claim;
+  if (c.schedule_r_inventory_reference !== undefined) {
+    if (
+      c.no_nonrefundable_credits_other_than_child_care_education_and_schedule_r !==
+        true ||
+      c.no_nonrefundable_credits_other_than_child_dependent_care_and_education !==
+        undefined
+    ) throw Error("Energy Schedule R review is incomplete or contradictory");
+  } else if (
+    c.no_nonrefundable_credits_other_than_child_dependent_care_and_education !==
+      true ||
+    c.no_nonrefundable_credits_other_than_child_care_education_and_schedule_r !==
+      undefined
+  ) {
+    throw Error(
+      "Energy credit needs its complete nonrefundable-credit inventory",
+    );
+  }
   const prior = source.claim.prior_return;
   function owners(owner: z.infer<typeof investmentOwner2026>) {
     if (owner.filing_status === FilingStatus.MFJ) {

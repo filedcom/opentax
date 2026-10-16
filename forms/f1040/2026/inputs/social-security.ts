@@ -21,6 +21,9 @@ class SocialSecurity2026Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ssa1099";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([agi_2026, f1040_2026_node]);
+  override get outputNodeTypes() {
+    return [...this.outputNodes.nodeTypes, "schedule_r"];
+  }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
       throw new Error("Social Security sources need f1040:2026 context");
@@ -35,6 +38,10 @@ class SocialSecurity2026Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         { nodeType: this.nodeType, fields: { calculation_2026: calculation } },
+        {
+          nodeType: "schedule_r",
+          fields: { social_security_sources_2026: calculation.source_input },
+        },
         {
           nodeType: "agi_aggregator",
           fields: {

@@ -1,3 +1,4 @@
+import { calculateScheduleRAmounts } from "../../../../../nodes/inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import {
@@ -5,7 +6,10 @@ import {
   schedule_r,
   validDisabilityEvidence,
 } from "../../../../../nodes/inputs/credits/elderly-disabled/schedule_r/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 function number(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];
@@ -135,7 +139,6 @@ export function calculateScheduleR(
   }
   let box: ScheduleRBox | 0;
   let base: number;
-  let threshold: number;
   if (
     source.filing_status === FilingStatus.Single ||
     source.filing_status === FilingStatus.HOH ||
@@ -150,7 +153,6 @@ export function calculateScheduleR(
       ? 2
       : 0;
     base = 5_000;
-    threshold = 7_500;
   } else if (source.filing_status === FilingStatus.MFS) {
     if (
       source.spouse_age_65_or_older === true ||
@@ -167,7 +169,6 @@ export function calculateScheduleR(
       ? 9
       : 0;
     base = 3_750;
-    threshold = 5_000;
   } else {
     if (
       source.filing_status !== FilingStatus.MFJ ||
@@ -185,7 +186,6 @@ export function calculateScheduleR(
     else if (taxpayerDisabled || spouseDisabled) box = 4;
     else box = 0;
     base = [3, 5, 6].includes(box) ? 7_500 : 5_000;
-    threshold = 10_000;
   }
   if (box === 0) {
     throw new Error("Schedule R needs a qualifying age or disability route");
@@ -207,17 +207,22 @@ export function calculateScheduleR(
       "Schedule R nontaxable Social Security must match finalized Form 1040 lines 6a and 6b",
     );
   }
-  const excessAgi = Math.max(0, source.agi - threshold);
-  const halfExcessAgi = Math.round(excessAgi / 2);
-  const totalReduction = benefits + otherBenefits + halfExcessAgi;
-  const net = Math.max(0, line12 - totalReduction);
-  const tentative = Math.round(net * 0.15);
   const taxBeforeCredits = number(f1040, "line18_total_tax_before_credits");
   const priorCredits = number(schedule3, "line1_total") +
     number(schedule3, "line2_childcare_credit") +
     number(schedule3, "line6l_form8978_credit");
-  const limit = Math.max(0, taxBeforeCredits - priorCredits);
-  const credit = Math.min(tentative, limit);
+  const lines = calculateScheduleRAmounts({
+    box,
+    disability_income: disabilityIncome,
+    nontaxable_ssa: benefits,
+    nontaxable_other: otherBenefits,
+    agi: source.agi,
+    tax_before_credits: taxBeforeCredits,
+    prior_credits: priorCredits,
+  });
+  const halfExcessAgi = lines.line17,
+    tentative = lines.line20,
+    credit = lines.line22;
   if (
     !Number.isSafeInteger(base) || !Number.isSafeInteger(benefits) ||
     !Number.isSafeInteger(line11) || !Number.isSafeInteger(line12) ||
@@ -243,23 +248,7 @@ export function calculateScheduleR(
   return {
     box,
     priorYearStatement,
-    lines: {
-      line10: base,
-      line11,
-      line12,
-      line13a: benefits,
-      line13b: otherBenefits,
-      line13c: benefits + otherBenefits,
-      line14: source.agi,
-      line15: threshold,
-      line16: excessAgi,
-      line17: halfExcessAgi,
-      line18: totalReduction,
-      line19: net,
-      line20: tentative,
-      line21: limit,
-      line22: credit,
-    },
+    lines,
   };
 }
 

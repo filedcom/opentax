@@ -1,3 +1,7 @@
+import {
+  calculateScheduleR2026,
+  scheduleRSource2026Schema,
+} from "./schedule-r-source.ts";
 import { z } from "zod";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { form1062Election2026Schema } from "./form1062-source.ts";
@@ -50,6 +54,7 @@ export const form1062TaxSource2026Schema = z.object({
   care: careSchema,
   education: educationSchema,
   child: childSchema,
+  schedule_r: scheduleRSource2026Schema.optional(),
   schedule2: schedule2Schema,
   return_lines: z.object({
     line11b_agi: z.number().int(),
@@ -65,7 +70,11 @@ export const form1062TaxSource2026Schema = z.object({
   review: z.object({
     record_reference: z.string().trim().min(1),
     no_other_regular_tax_additions_or_tax_methods: z.literal(true),
-    no_credits_other_than_care_education_child_and_energy: z.literal(true),
+    no_credits_other_than_care_education_child_and_energy: z.literal(true)
+      .optional(),
+    no_credits_other_than_care_education_child_energy_and_schedule_r: z.literal(
+      true,
+    ).optional(),
   }).strict(),
 }).strict();
 export type Form1062TaxSource2026 = z.input<typeof form1062TaxSource2026Schema>;
@@ -81,27 +90,68 @@ function replayCredits(
     regular_tax: regular,
     schedule2_part1_tax: amt,
   });
+  const scheduleR = input.schedule_r
+    ? calculateScheduleR2026({
+      ...input.schedule_r,
+      regular_tax: regular,
+      schedule2_part1_tax: amt,
+      finalized_dependent_care_credit: care.lines?.line11 ?? 0,
+    })
+    : undefined;
+  const scheduleRCredit = scheduleR?.lines?.line22 ?? 0;
   const education = calculateEducationCredit2026({
     ...input.education,
     regular_tax: regular,
     schedule2_part1_tax: amt,
     finalized_dependent_care_credit: care.lines?.line11 ?? 0,
+    finalized_schedule_r_credit: scheduleRCredit,
   });
   const child = calculateChildCredit2026({
     ...input.child,
     auto_income_tax_liability: regular,
     schedule2_part1_tax: amt,
     finalized_dependent_care_credit: care.lines?.line11 ?? 0,
+    finalized_schedule_r_credit: scheduleRCredit,
     finalized_education_credit: education.lines?.line19 ?? 0,
   });
-  const personal = (care.lines?.line11 ?? 0) + (education.lines?.line19 ?? 0) +
+  const personal = scheduleRCredit + (care.lines?.line11 ?? 0) +
+    (education.lines?.line19 ?? 0) +
     (child.energy_credit?.lines.line3 ?? 0);
   const other = child.lines?.line14 ?? 0;
-  return { care, education, child, personal, other, total: personal + other };
+  return {
+    care,
+    scheduleR,
+    education,
+    child,
+    personal,
+    other,
+    total: personal + other,
+  };
 }
 
 export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
   const input = form1062TaxSource2026Schema.parse(raw);
+  if (input.schedule_r?.claim) {
+    if (
+      input.review
+          .no_credits_other_than_care_education_child_energy_and_schedule_r !==
+        true ||
+      input.review.no_credits_other_than_care_education_child_and_energy !==
+        undefined
+    ) {
+      throw new Error(
+        "Form 1062 needs its reviewed Schedule R credit inventory",
+      );
+    }
+  } else if (
+    input.review.no_credits_other_than_care_education_child_and_energy !==
+      true ||
+    input.review
+        .no_credits_other_than_care_education_child_energy_and_schedule_r !==
+      undefined
+  ) {
+    throw new Error("Form 1062 credit review needs actual Schedule R sources");
+  }
   const income = calculateIncomeTax2026(input.income_tax);
   const amt = calculateForm6251_2026(input.amt);
   const schedule2 = calculateSchedule2_2026(input.schedule2);
@@ -199,8 +249,33 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
       "Form 1062 credit replay needs consistent earned-income and filer sources",
     );
   }
+  if (
+    input.schedule_r &&
+    (input.schedule_r.filing_status !== owner.filing_status ||
+      ssn(input.schedule_r.taxpayer_ssn) !== owner.taxpayer_ssn ||
+      ssn(input.schedule_r.spouse_ssn) !== owner.spouse_ssn ||
+      input.schedule_r.taxpayer_dob !==
+        input.care.benefit_source.taxpayer_dob ||
+      input.schedule_r.spouse_dob !== input.care.benefit_source.spouse_dob ||
+      input.schedule_r.agi !== ret.line11b_agi ||
+      input.schedule_r.regular_tax !== regular ||
+      input.schedule_r.schedule2_part1_tax !== additional)
+  ) {
+    throw Error(
+      "Form 1062 Schedule R must match actual return owners, AGI and tax",
+    );
+  }
   const actualCredits = replayCredits(input, regular, additional);
   if (
+    (input.schedule_r &&
+      input.schedule_r.finalized_dependent_care_credit !==
+        (actualCredits.care.lines?.line11 ?? 0)) ||
+    input.education.finalized_schedule_r_credit !==
+      (actualCredits.scheduleR?.lines?.line22 ?? 0) ||
+    input.child.finalized_schedule_r_credit !==
+      (actualCredits.scheduleR?.lines?.line22 ?? 0) ||
+    input.child.schedule_r_inventory_reference_from_source !==
+      input.schedule_r?.claim?.record_reference ||
     input.education.finalized_dependent_care_credit !==
       (actualCredits.care.lines?.line11 ?? 0) ||
     input.child.finalized_dependent_care_credit !==

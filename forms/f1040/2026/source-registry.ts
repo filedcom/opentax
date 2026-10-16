@@ -1,3 +1,4 @@
+import { schedule_r_2026 } from "./nodes/schedule-r.ts";
 import { retirement_2026 } from "./inputs/retirement.ts";
 import { f1095a_2026 } from "./inputs/marketplace.ts";
 import { form8962_2026 } from "./nodes/form8962.ts";
@@ -58,6 +59,7 @@ export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
   start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
   general: general_2026,
+  schedule_r: schedule_r_2026,
   f1099r: retirement_2026,
   f1095a: f1095a_2026,
   form8962: form8962_2026,
