@@ -80,6 +80,14 @@ class SourceStart2026 extends TaxNode<typeof base.inputSchema> {
               form4852_sources_2026: substitute.source_input,
             },
           }
+          : substitute && o.nodeType === "hsa_accounts"
+          ? {
+            ...o,
+            fields: {
+              ...o.fields,
+              form4852_sources_2026: substitute.source_input,
+            },
+          }
           : o
       ),
     };

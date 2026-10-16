@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { retirementCopy2026Schema } from "./retirement-statement.ts";
+import type { calculateForm4852Bridge2026 } from "./form4852-bridge.ts";
 import type {
   hsaEligibility2025HistorySchema,
   hsaEligibility2026Schema,
@@ -46,7 +47,9 @@ export const hsaFundingReview2026Schema = z.object({
       ira_type: z.enum(["traditional", "roth", "sep", "simple"]),
       account_agreement_reference: ref,
       owned_or_maintained_for_identified_beneficiary_verified: z.literal(true),
-      current_issued_copy_after_corrections_verified: z.literal(true),
+      current_issued_copy_after_corrections_verified: z.literal(true)
+        .optional(),
+      form4852_source_reference: ref.optional(),
       form1099r: retirementCopy2026Schema,
       // A SEP/SIMPLE plan is ongoing if employer contributions were made for
       // the plan year ending within 2026, even when the cash arrived later.
@@ -101,7 +104,10 @@ export const hsaFundingReview2025Schema = hsaFundingReview2026Schema.extend({
     ).max(100),
   })).min(1).max(2),
   ira_accounts: z.array(
-    hsaFundingReview2026Schema.shape.ira_accounts.element.extend({
+    hsaFundingReview2026Schema.shape.ira_accounts.element.omit({
+      form4852_source_reference: true,
+    }).extend({
+      current_issued_copy_after_corrections_verified: z.literal(true),
       form1099r: historicalCopy,
     }),
   ).min(1).max(100),
@@ -138,6 +144,7 @@ export function reconcileHsaFundingSources<Year extends 2025 | 2026>(
     actual_eligible_hdhp_coverage_by_month: (CoverageType | null)[];
   }[],
   rules: { selfOnlyLimit: number; familyLimit: number; catchupLimit: number },
+  substitutes?: ReturnType<typeof calculateForm4852Bridge2026>,
 ) {
   if (
     reviewed.ira_accounts.some((a) => a.form1099r.tax_year !== year) ||
@@ -178,6 +185,51 @@ export function reconcileHsaFundingSources<Year extends 2025 | 2026>(
   for (const owner of reviewed.owners) unique(owner.lifetime_history_reference);
   const transfers = reviewed.ira_accounts.flatMap((a) => {
     const f = a.form1099r;
+    const substituteRef = "form4852_source_reference" in a
+      ? a.form4852_source_reference
+      : undefined;
+    const substitute = substitutes?.ledger.rows.find((r) =>
+      r.source.source_document_reference === f.source_document_reference
+    )?.source;
+    if (substituteRef || substitute) {
+      const current = substitutes?.substitute_retirement_copies.find((c) =>
+        c.source_document_reference === substituteRef
+      );
+      const plan = {
+        traditional: "traditional_ira",
+        sep: "sep_ira",
+        simple: "simple_ira",
+        roth: "roth_ira",
+      }[a.ira_type];
+      if (
+        year !== 2026 || !substituteRef || !current ||
+        !substitute || substitute.kind !== "1099r" ||
+        a.current_issued_copy_after_corrections_verified ||
+        JSON.stringify(f) !== JSON.stringify(current) ||
+        reviewed.reviewed_on < substitutes!.source_input.claim.reviewed_on ||
+        substitute.owner_tin !== a.owner_tin ||
+        substitute.distribution_sources.length !== a.payments.length ||
+        a.payments.some((p) =>
+          !substitute.distribution_sources.some((d) =>
+            d.distribution_reference === p.record_reference &&
+            d.paid_on === p.paid_on &&
+            d.gross_distribution === p.gross_amount &&
+            d.federal_withheld === p.federal_withheld &&
+            d.account_type === plan &&
+            (!p.hsa_receipt_reference ||
+              d.state_tax_withheld === 0 && d.local_tax_withheld === 0)
+          )
+        )
+      ) {
+        throw Error(
+          "HSA funding must reconcile the actual Form 4852 copy and every dated IRA payment",
+        );
+      }
+    } else if (!a.current_issued_copy_after_corrections_verified) {
+      throw Error(
+        "HSA funding requires a reviewed issued copy or its actual Form 4852 substitute",
+      );
+    }
     unique(a.record_reference);
     unique(f.source_document_reference);
     const accountKey = `${a.owner_tin}/${a.trustee_tin}/${a.account_number}`;

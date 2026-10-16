@@ -521,10 +521,13 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         !(basis ? ["1", "2", "7", "S"] : ["1", "7", "G"]).includes(
           c.box7a_distribution_codes[0],
         ) ||
-        !r.no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified
+        !(basisAmounts?.qualified_hsa_funding
+          ? r.no_qcd_pso_exclusion_disaster_or_corrective_treatment_verified
+          : r
+            .no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified)
       ) {
         throw Error(
-          "Form 4852 retirement supports ordinary pensions and reconciled IRA basis/conversion payments; other treatment needs a reconciled substitute payment bridge",
+          "Form 4852 retirement supports ordinary pensions and reconciled IRA basis/conversion/HSA payments; other treatment needs a reconciled substitute payment bridge",
         );
       }
       if (

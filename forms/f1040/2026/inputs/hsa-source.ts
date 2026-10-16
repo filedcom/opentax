@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+  calculateForm4852Bridge2026,
+  form4852Bridge2026Schema,
+} from "./form4852-bridge.ts";
+import { hsaFundingReview2026Schema } from "./hsa-funding-evidence.ts";
+import {
   calculateHsaTestingPeriod2026,
   hsaTestingPeriod2026Schema,
 } from "./hsa-testing-period.ts";
@@ -21,6 +26,23 @@ const contributionClaim = hsaQualifiedFunding2026Schema.omit({
   wage_sources: true,
   rollover_distribution_sources: true,
   nonreportable_distribution_sources: true,
+  form4852_sources_2026: true,
+}).extend({
+  qualified_funding_review: hsaFundingReview2026Schema.extend({
+    ira_accounts: z.array(
+      hsaFundingReview2026Schema.shape.ira_accounts.element.omit({
+        form4852_source_reference: true,
+      }).extend({
+        current_issued_copy_after_corrections_verified: z.literal(true),
+      }),
+    ).max(100).default([]),
+    substitute_ira_accounts: z.array(
+      hsaFundingReview2026Schema.shape.ira_accounts.element.omit({
+        form1099r: true,
+        current_issued_copy_after_corrections_verified: true,
+      }).extend({ form4852_source_reference: z.string().trim().min(1) }),
+    ).min(1).max(100).optional(),
+  }).optional(),
 });
 export const hsaReturnClaim2026Schema = hsaTestingPeriod2026Schema.omit({
   ...ownerKeys,
@@ -37,6 +59,7 @@ export const hsaReturnSource2026Schema = investmentOwner2026.extend({
   spouse_dob: z.string().date().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
+  form4852_sources_2026: form4852Bridge2026Schema.optional(),
   wage_sources: z.array(w2Item2026Schema).default([]),
   schedule_a_medical_sources: hsaTestingPeriod2026Schema.shape
     .schedule_a_medical_sources.default([]),
@@ -48,6 +71,33 @@ export type HsaReturnSource2026 = z.input<typeof hsaReturnSource2026Schema>;
 export function calculateHsaReturnSources2026(raw: HsaReturnSource2026) {
   const input = hsaReturnSource2026Schema.parse(raw),
     { claim, wage_sources } = input;
+  const review =
+    claim.excess_returns.contribution_sources.qualified_funding_review;
+  const substitutes = input.form4852_sources_2026
+    ? calculateForm4852Bridge2026(input.form4852_sources_2026)
+    : undefined;
+  const qualifiedReview = review
+    ? (() => {
+      const { substitute_ira_accounts, ...issued } = review;
+      return {
+        ...issued,
+        ira_accounts: [
+          ...issued.ira_accounts,
+          ...(substitute_ira_accounts ?? []).map((a) => {
+            const copy = substitutes?.substitute_retirement_copies.find((c) =>
+              c.source_document_reference === a.form4852_source_reference
+            );
+            if (!copy) {
+              throw Error(
+                "HSA substitute account needs its actual Form 4852 retirement source",
+              );
+            }
+            return { ...a, form1099r: copy };
+          }),
+        ],
+      };
+    })()
+    : undefined;
   const owner = {
     filing_status: input.filing_status,
     taxpayer_ssn: input.taxpayer_ssn,
@@ -83,6 +133,8 @@ export function calculateHsaReturnSources2026(raw: HsaReturnSource2026) {
       ...claim.excess_returns,
       contribution_sources: {
         ...claim.excess_returns.contribution_sources,
+        qualified_funding_review: qualifiedReview,
+        form4852_sources_2026: input.form4852_sources_2026,
         ...owner,
         wage_sources,
         ...(claim.excess_returns.contribution_sources.nonreportable_review ||

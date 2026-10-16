@@ -782,8 +782,13 @@ basis-transfer events; next-year receipts do not enter current-year IRA basis.
 State/local
 withholding comes from the substitute ledger without invented issuer state IDs.
 The [Form 4852 contract](../../../docs/ty2026/graphs/FORM4852-GRAPH.md) records
-remaining HSA funding/special retirement cases, complex
+remaining special retirement cases, complex
 corrections and remaining MeF/acceptance work. These remain development drafts.
+
+Qualified HSA funding now accepts `substitute_ira_accounts` that reference the
+actual Form 4852 source and reconcile every dated IRA payment. Existing HSA
+qualification, annual IRA basis, early tax and testing-period calculations are
+reused; the draft bundle reconciles HFD income with Forms 8889, 8606 and 5329.
 
 ## Investment sources and NIIT
 

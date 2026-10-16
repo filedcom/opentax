@@ -1,4 +1,8 @@
 import { hsaRolloverReview2026Schema } from "./hsa-rollover-source.ts";
+import {
+  calculateForm4852Bridge2026,
+  form4852Bridge2026Schema,
+} from "./form4852-bridge.ts";
 import { hsaDistributionSources2026Schema } from "./hsa-distribution-source.ts";
 import { hsaNonreportableReview2026Schema } from "./hsa-nonreportable-schema.ts";
 import type { z } from "zod";
@@ -21,6 +25,7 @@ import {
 export const hsaQualifiedFunding2026Schema = hsaContributionLimits2026Schema
   .extend({
     qualified_funding_review: review.optional(),
+    form4852_sources_2026: form4852Bridge2026Schema.optional(),
     rollover_review: hsaRolloverReview2026Schema.optional(),
     rollover_distribution_sources: hsaDistributionSources2026Schema.optional(),
     nonreportable_review: hsaNonreportableReview2026Schema.optional(),
@@ -37,12 +42,28 @@ export type HsaQualifiedFunding2026 = z.input<
 export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
   const {
     qualified_funding_review: reviewed,
+    form4852_sources_2026,
     rollover_review,
     rollover_distribution_sources,
     nonreportable_review,
     nonreportable_distribution_sources,
     ...source
   } = hsaQualifiedFunding2026Schema.parse(raw);
+  const substitutes = form4852_sources_2026
+    ? calculateForm4852Bridge2026(form4852_sources_2026)
+    : undefined;
+  if (
+    substitutes &&
+    (substitutes.source_input.filing_status !== source.filing_status ||
+      substitutes.source_input.taxpayer_ssn !== source.taxpayer_ssn ||
+      substitutes.source_input.spouse_ssn !== source.spouse_ssn ||
+      JSON.stringify(substitutes.effective_wages) !==
+        JSON.stringify(source.wage_sources))
+  ) {
+    throw Error(
+      "HSA substitute binding must use the same actual return owners and wages",
+    );
+  }
   const limits = calculateHsaContributionLimits2026(source);
   const receipts = source.claim.accounts.flatMap((a) =>
     a.receipts.flatMap((r) =>
@@ -81,6 +102,7 @@ export function reconcileHsaQualifiedFunding2026(raw: HsaQualifiedFunding2026) {
     source,
     limits.owners,
     hsa2026,
+    substitutes,
   ).map((q) => {
     const { owner_tin, amount, transfers: held } = q;
     const owner = limits.owners.find((o) => o.owner_tin === owner_tin)!;

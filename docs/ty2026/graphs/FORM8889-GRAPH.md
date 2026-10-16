@@ -21,6 +21,23 @@ gaps are resolved by the [return integration](#return-graph-and-draft-pdf-integr
 section. Native TY2026 MeF, public filing registration, final authorities and
 advanced source branches remain incomplete.
 
+Qualified funding can now use the actual [Form 4852 retirement substitute](./FORM4852-GRAPH.md)
+through `qualified_funding_review.substitute_ira_accounts`. These records contain
+the account and dated payment evidence plus `form4852_source_reference`; they
+do not contain an invented issued 1099-R. The internal source bridge supplies
+the reconciled calculation copy and rejects conflicting issued-copy assertions,
+stale reviews, or payment/date/account differences. Existing issued accounts
+retain their required current-copy review. Historical 2025 inventories retain
+their issued-copy schema and are not widened by this current-year route.
+
+The actual substitute and funding ledger are replayed by both HSA and IRA basis
+owners before the transfer leaves taxable IRA income. Ordinary withdrawals on
+the same source, basis preservation, one-time election limits, current-year
+coverage failures and future testing obligations retain their existing treatment.
+The draft bundle includes the real Form 4852 alongside owner Forms 8889, 8606
+when required and the combined Form 5329; it does not demand an issuer PDF for
+the substituted statement.
+
 ## Per-beneficiary source and filed routes
 
 An HSA belongs to its beneficiary. For a joint return with both spouses'

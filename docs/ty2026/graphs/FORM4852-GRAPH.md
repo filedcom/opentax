@@ -92,7 +92,34 @@ year and do not increase 2026 IRA basis. Never add a current-year event again to
 the calculated 2027 IRA carryforward. Aggregate issued-statement rollover reviews
 cannot carry after-tax non-Roth basis without the dated receipt ledger.
 
-HSA funding, other distribution codes and special treatment remain explicitly
+Qualified IRA-to-HSA funding now binds through the existing HSA qualification
+and annual IRA basis calculations. Public `substitute_ira_accounts` identify
+the actual Form 4852 source rather than assert an issued copy. The internal
+bridge replays the substitute and compares every dated payment, gross amount,
+withholding, owner and account classification before the existing direct-transfer,
+lifetime, coverage and testing-period checks. Funding payments cannot include
+federal, state or local withholding. Ordinary payments on the same substitute
+remain in the IRA basis and early-tax ledgers. The return retains the HFD
+designation and separate Form 8889 line 10, annual Form 8606 basis allocation,
+testing obligations and Form 5329 amounts. A funding-only IRA source preserves
+basis without forcing Form 8606 solely for the transfer.
+
+The [2026 1099-R instructions](https://www.irs.gov/instructions/i1099r) state
+there is no special issuer reporting for qualified HSA funding; qualification
+comes from separate transfer evidence. The
+[Form 8889 instructions](https://www.irs.gov/instructions/i8889) and
+[Notice 2008-51](https://www.irs.gov/irb/2008-25_IRB) supply the direct-transfer
+and taxable-first method. Published instructions remain the 2025 method comparator;
+the pinned 2026 draft and final-authority reconciliation gate still apply.
+Sources checked October 16.
+
+The increment passes 418 affected retirement/IRA/HSA/substitute checks, including
+the corrected domestic-address PDF fixture rerun, plus 137 repository unit tests.
+The source and new test modules pass type checking; preflight includes 3,882
+modules with unchanged runtime files. Rendered Form 1040 and Form 8889 pages
+were visually inspected after the printed-value checks.
+
+Other distribution codes and special treatment remain explicitly
 closed until their source/payment bridges are reconciled. These are software
 coverage limits, not claims about the legal availability of Form 4852.
 
