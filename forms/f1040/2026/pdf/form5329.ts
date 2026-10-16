@@ -38,12 +38,16 @@ export async function buildCombinedForm5329PdfBytes2026(
   owner: "taxpayer" | "spouse",
   schedule2Line5: number,
   filer: { name: string; ssn: string },
+  schedule2Line18 = 0,
 ): Promise<Uint8Array> {
   const r = calculateForm5329Sources2026(raw);
   const part = r.owners.find((o) => o.owner === owner);
-  if (!part?.file_form5329 || schedule2Line5 !== r.schedule2_line5) {
+  if (
+    !part?.file_form5329 || schedule2Line5 !== r.schedule2_line5 ||
+    schedule2Line18 !== r.schedule2_line18
+  ) {
     throw new Error(
-      "Form 5329 draft needs source-derived owner tax and matching Schedule 2 line 5",
+      "Form 5329 draft needs source-derived owner tax and matching Schedule 2 lines 5 and 18",
     );
   }
   if (!filer.name.trim() || filer.ssn.replaceAll("-", "") !== part.owner_tin) {
@@ -59,12 +63,13 @@ export async function buildCombinedForm5329PdfBytes2026(
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const form = doc.getForm(),
     font = await doc.embedFont(StandardFonts.Helvetica);
-  const key = (n: number) => `topmostSubform[0].Page1[0].f1_${n}[0]`;
+  const key = (n: number, page: number) =>
+    `topmostSubform[0].Page${page}[0].f${page}_${n}[0]`;
   if (doc.getPageCount() !== 4 || form.getFields().length !== 85) {
     throw new Error("Form 5329 draft field/page contract changed");
   }
-  const fill = (n: number, value: string | number) => {
-    const field = form.getTextField(key(n));
+  const fill = (n: number, value: string | number, page = 1) => {
+    const field = form.getTextField(key(n, page));
     const width = field.acroField.getWidgets()[0].getRectangle().width - 4;
     const text = String(value),
       size = Math.min(
@@ -94,6 +99,11 @@ export async function buildCombinedForm5329PdfBytes2026(
     fill(17, part.part2.line6);
     fill(18, part.part2.line7);
     fill(19, part.part2.line8);
+  }
+  if (part.part7) {
+    for (const [i, value] of Object.entries(part.part7)) {
+      fill(Number(i.slice(4)) - 25, value, 2);
+    }
   }
   // Other parts and signature remain blank.
   form.updateFieldAppearances(font);

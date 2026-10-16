@@ -28,7 +28,14 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
       throw new Error("Retirement sources need f1040:2026 context");
     }
     const input = inputSchema.parse(raw);
-    if (!input.claim) return { outputs: [] };
+    if (!input.claim) {
+      if (input.hsa_funding_sources_2026) {
+        throw Error(
+          "Qualified HSA funding requires the actual retirement statement and basis claim",
+        );
+      }
+      return { outputs: [] };
+    }
     const r = calculateRetirementSources2026({ ...input, claim: input.claim });
     const taxes = r.rows.flatMap(({ copy: c, owner_tin }) => {
       const amount = sumSourceMoney([

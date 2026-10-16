@@ -176,7 +176,11 @@ Deno.test("2026 W-2 preserves benefit and statutory-employee source routing", ()
       o.nodeType === "w2"
     )!.fields.issued_w2_sources,
   });
-  assertEquals(fields(outputs, "form8889").length, 1);
+  assertEquals(fields(outputs, "form8889").length, 0);
+  assertEquals(
+    fields(outputs, "hsa_accounts")[0].wage_sources,
+    outputs.find((o) => o.nodeType === "w2")!.fields.issued_w2_sources,
+  );
   assertEquals(fields(outputs, "form8853").length, 1);
   assertEquals(fields(outputs, "schedule_a"), [{
     w2_tax_sources: [{

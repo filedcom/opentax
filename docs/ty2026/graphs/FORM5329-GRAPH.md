@@ -216,6 +216,10 @@ filed lines. Account-value caps include following-year designated contributions;
 prior filed tax must be positive to activate the carryforward. Owner totals
 identify Schedule 2 line 18, separately from the existing Part I/II line 5 route.
 
-This workpaper is not yet registered in the public owner collection or renderer.
-Coordinated HSA income/deduction, testing-period recapture, Form 1062
-classification and PDF reconciliation must precede that integration.
+The registered development owner collection now replays the HSA sources alongside
+retirement and ABLE, checking identity, birth dates and the actual wage inventory.
+It combines applicable Parts I, II and VII on one owner draft, with Part VII
+printed on page 2 and reconciled to Schedule 2 line 18. HSA distribution/testing
+taxes remain separate on lines 13c/13d and are excluded from Form 1062 deferred
+regular tax. Advanced HSA sources, other Form 5329 parts and native TY2026 MeF
+remain incomplete.

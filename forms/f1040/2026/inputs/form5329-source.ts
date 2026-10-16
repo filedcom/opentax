@@ -1,3 +1,7 @@
+import {
+  calculateHsaReturnSources2026,
+  hsaReturnSource2026Schema,
+} from "./hsa-source.ts";
 import { z } from "zod";
 import { investmentOwner2026 } from "./investment-source.ts";
 import {
@@ -14,6 +18,7 @@ export const form5329Source2026Schema = investmentOwner2026.extend({
   spouse_dob: z.string().date().optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
   able_sources_2026: ableSource2026Schema.optional(),
+  hsa_sources_2026: hsaReturnSource2026Schema.optional(),
 }).strict();
 export type Form5329Source2026 = z.input<typeof form5329Source2026Schema>;
 export function calculateForm5329Sources2026(raw: Form5329Source2026) {
@@ -24,9 +29,14 @@ export function calculateForm5329Sources2026(raw: Form5329Source2026) {
   const able = input.able_sources_2026
     ? calculateAbleSources2026(input.able_sources_2026)
     : undefined;
-  const sources = [retirement?.source_input, able?.source_input].filter((s) =>
-    s !== undefined
-  );
+  const hsa = input.hsa_sources_2026
+    ? calculateHsaReturnSources2026(input.hsa_sources_2026)
+    : undefined;
+  const sources = [
+    retirement?.source_input,
+    able?.source_input,
+    hsa?.source_input,
+  ].filter((s) => s !== undefined);
   for (const s of sources) {
     if (
       s.filing_status !== input.filing_status ||
@@ -55,11 +65,36 @@ export function calculateForm5329Sources2026(raw: Form5329Source2026) {
       );
     }
   }
-  // When Part II needs a form, print each early-distribution owner's Part I too.
+  for (const source of [retirement?.source_input, able?.source_input]) {
+    if (
+      source && hsa &&
+      JSON.stringify(
+          [...source.wage_sources].sort((a, b) =>
+            a.source_document_reference.localeCompare(
+              b.source_document_reference,
+            )
+          ),
+        ) !==
+        JSON.stringify(
+          [...hsa.source_input.wage_sources].sort((a, b) =>
+            a.source_document_reference.localeCompare(
+              b.source_document_reference,
+            )
+          ),
+        )
+    ) {
+      throw Error(
+        "Form 5329 HSA and retirement/ABLE workpapers need the same wage inventory",
+      );
+    }
+  }
+  // When Part II or VII needs a form, print each early-distribution owner's Part I too.
   // This replaces the return-level code-1 shortcut with the sum of owner forms,
   // preserving the whole-dollar lines actually printed on those forms.
   const part2Required =
     able?.owners.some((o) => o.form5329_part2 !== undefined) ?? false;
+  const additionalFormRequired = part2Required ||
+    !!hsa?.owners.some((o) => o.form5329_part_vii_required);
   const owners = ([
     "taxpayer",
     ...(input.filing_status === FilingStatus.MFJ ? ["spouse"] : []),
@@ -70,17 +105,20 @@ export function calculateForm5329Sources2026(raw: Form5329Source2026) {
     const part1 = retirement?.early_owners.find((o) => o.owner === owner);
     const part2 = able?.owners.find((o) => o.owner_tin === owner_tin)
       ?.form5329_part2;
-    if (!part1 && !part2) return [];
+    const h = hsa?.owners.find((o) => o.owner_tin === owner_tin);
+    const part7 = h?.form5329_part_vii_required ? h.filed_part_vii : undefined;
+    if (!part1 && !part2 && !part7) return [];
     return [{
       owner,
       owner_tin: owner_tin!,
       part1,
       part2,
-      file_form5329: !!part2 ||
-        !!part1 && (part1.file_form5329 || part2Required),
+      part7,
+      file_form5329: !!part2 || !!part7 ||
+        !!part1 && (part1.file_form5329 || additionalFormRequired),
     }];
   });
-  const early_tax = part2Required
+  const early_tax = additionalFormRequired
     ? owners.reduce((n, o) => n + (o.part1?.line4 ?? 0), 0)
     : retirement?.line5_early_tax ?? 0;
   const able_tax = able?.additional_tax ?? 0;
@@ -88,9 +126,11 @@ export function calculateForm5329Sources2026(raw: Form5329Source2026) {
     source_input: input,
     owners,
     early_tax,
+    hsa,
+    schedule2_line18: hsa?.schedule2_line18 ?? 0,
     able_tax,
     schedule2_line5: early_tax + able_tax,
     form5329_not_required: !!retirement?.form5329_not_required &&
-      !part2Required,
+      !additionalFormRequired,
   };
 }

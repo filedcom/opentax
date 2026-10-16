@@ -55,9 +55,19 @@ export const registry = {
     def test_changed_start_factory_requires_review(self):
         with self.assertRaisesRegex(ValueError, 'start factory'):
             self.parse('''import { source } from "./node.ts";
+const unknownStart = source;
 export const registry = {
-  start: source,
+  start: unknownStart,
 };''')
+
+
+    def test_imported_start_is_resolved_for_runtime_identity_check(self):
+        rows = self.parse('''import { source as sourceStart2026 } from "./node.ts";
+export const registry = {
+  start: sourceStart2026,
+};''')
+        self.assertEqual(rows[0]['exported'], 'source')
+        self.assertEqual(rows[0]['key'], 'start')
 
     def test_descriptor_spread_fails(self):
         path = self.source('''import { source } from "./node.ts";

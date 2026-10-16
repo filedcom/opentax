@@ -41,15 +41,16 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 56,
-    "declared_edges": 294,
-    "unregistered_target_edges": 16,
+    "registry_nodes": 57,
+    "declared_edges": 301,
+    "unregistered_target_edges": 15,
     "nodes": [
       {
         "key": "start",
         "node_type": "start",
         "implemented": true,
         "targets": [
+          "hsa_accounts",
           "able_accounts",
           "form8880",
           "schedule_r",
@@ -88,7 +89,20 @@
           "cash_charity",
           "w2"
         ],
-        "source_module": "forms/f1040/start.ts"
+        "source_module": "forms/f1040/2026/source-start.ts"
+      },
+      {
+        "key": "hsa_accounts",
+        "node_type": "hsa_accounts",
+        "implemented": true,
+        "targets": [
+          "agi_aggregator",
+          "schedule1",
+          "schedule2",
+          "form5329",
+          "f1099r"
+        ],
+        "source_module": "forms/f1040/2026/inputs/hsa.ts"
       },
       {
         "key": "general",
@@ -136,6 +150,7 @@
           "f1095a",
           "f1099r",
           "able_accounts",
+          "hsa_accounts",
           "form5329"
         ],
         "source_module": "forms/f1040/2026/inputs/general.ts"
@@ -568,7 +583,6 @@
           "form8919",
           "form2441",
           "form8959",
-          "form8889",
           "form8853",
           "form8839",
           "form8880",
@@ -578,7 +592,8 @@
           "schedule1a",
           "f3903",
           "f1099r",
-          "able_accounts"
+          "able_accounts",
+          "hsa_accounts"
         ],
         "source_module": "forms/f1040/2026/inputs/w2.ts"
       },

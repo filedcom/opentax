@@ -26,6 +26,9 @@ export const inputSchema = z.object({
   line8c_cod_income: signed.optional(),
   line8d_foreign_earned_income_exclusion: nonnegative.optional(),
   line8e_archer_msa_dist: nonnegative.optional(),
+  line8f_hsa_income: nonnegative.int().optional(),
+  line8z_hsa_excess_earnings: nonnegative.int().optional(),
+  line8z_hsa_excess_employer: nonnegative.int().optional(),
   line8i_prizes_awards: signed.optional(),
   line8p_excess_business_loss: nonnegative.optional(),
   line8q_able_taxable_earnings: nonnegative.int().optional(),
@@ -105,6 +108,14 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
     }
     const line8zRows = [
       {
+        description: "HSA excess contribution earnings",
+        amount: input.line8z_hsa_excess_earnings ?? 0,
+      },
+      {
+        description: "HSA excess employer contributions",
+        amount: input.line8z_hsa_excess_employer ?? 0,
+      },
+      {
         description: "State paid family leave",
         amount: input.line8z_family_leave ?? 0,
       },
@@ -141,6 +152,7 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
       (input.line8c_cod_income ?? 0) -
       (input.line8d_foreign_earned_income_exclusion ?? 0) +
       (input.line8e_archer_msa_dist ?? 0) +
+      (input.line8f_hsa_income ?? 0) +
       (input.line8i_prizes_awards ?? 0) +
       (input.line8p_excess_business_loss ?? 0) +
       (input.line8q_able_taxable_earnings ?? 0) +

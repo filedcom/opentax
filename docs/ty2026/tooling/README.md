@@ -24,15 +24,14 @@ folders. This fixes the old pre-reorganization path assumptions.
 ## Generated evidence
 
 The October 16 refresh loads 223 TY2025 nodes, 118 PDF descriptors and 158 MeF
-descriptors from 154 modules. It also loads 56 TY2026 nodes with 294 unique declared
-edges, including 16 edges to unregistered targets. Counts are recorded in
+descriptors from 154 modules. It also loads 57 TY2026 nodes with 301 unique declared
+edges, including 15 edges to unregistered targets. Counts are recorded in
 [`runtime-surface.json`](../inventories/runtime-surface.json), not hardcoded in the
 generator. Regeneration follows the checkout, including future main changes.
 
 - Node sources come from imported registry bindings; every imported node is
-  compared by object identity with the loaded registry. The two explicit start
-  factory declarations are supported separately and point to their imported
-  factory modules (which may re-export the shared implementation).
+  compared by object identity with the loaded registry. Explicit start factories are supported separately; the imported 2026 start
+  adapter now receives the same runtime object-identity check as other nodes.
 - PDF and MeF coverage comes from the actual descriptor arrays, including nested
   modules, descriptors outside the `forms` directories, and multiple descriptors
   exported by one module. Runtime object identity and array order are checked.

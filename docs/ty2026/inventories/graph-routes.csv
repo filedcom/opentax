@@ -148,6 +148,7 @@ general,form8995,no
 general,gambling,yes
 general,government_payments,yes
 general,household_employment,yes
+general,hsa_accounts,yes
 general,investment_income,yes
 general,land_dispositions,yes
 general,mortgage_interest,yes
@@ -166,6 +167,11 @@ government_payments,form6251,yes
 government_payments,schedule1,yes
 government_payments,schedule_a,yes
 household_employment,schedule2,yes
+hsa_accounts,agi_aggregator,yes
+hsa_accounts,f1099r,yes
+hsa_accounts,form5329,yes
+hsa_accounts,schedule1,yes
+hsa_accounts,schedule2,yes
 income_tax_calculation,f1040,yes
 income_tax_calculation,f2441,yes
 income_tax_calculation,f8812,yes
@@ -254,6 +260,7 @@ start,gambling,yes
 start,general,yes
 start,government_payments,yes
 start,household_employment,yes
+start,hsa_accounts,yes
 start,investment_income,yes
 start,land_dispositions,yes
 start,mortgage_interest,yes
@@ -280,11 +287,11 @@ w2,form4137,yes
 w2,form8839,no
 w2,form8853,no
 w2,form8880,yes
-w2,form8889,no
 w2,form8919,yes
 w2,form8959,yes
 w2,form8962,yes
 w2,form8995,no
+w2,hsa_accounts,yes
 w2,ira_deduction_worksheet,no
 w2,schedule1,yes
 w2,schedule1a,yes

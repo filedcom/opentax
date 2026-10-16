@@ -74,7 +74,7 @@ def registry_bindings(path, name):
             if not match:
                 raise ValueError(f'Unrecognized registry entry: {code}')
             key, binding = match.group(1), match.group(2) or match.group(1)
-            if key == 'start':
+            if key == 'start' and binding not in bindings:
                 raise ValueError('Unrecognized start factory; review inventory mapping')
         if binding not in bindings:
             raise ValueError(f'Unresolved node: {key}: {binding}')

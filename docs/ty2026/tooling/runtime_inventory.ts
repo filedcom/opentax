@@ -27,7 +27,10 @@ async function verifyBindings(
     throw new Error("Parsed inventory does not match runtime keys/order");
   }
   for (const binding of bindings) {
-    if (skipStart && binding.key === "start") continue;
+    if (
+      skipStart && binding.key === "start" &&
+      binding.exported === "buildStartNode"
+    ) continue;
     const exports = await import(binding.module);
     if (exports[binding.exported] !== actual[binding.key]) {
       throw new Error(`Runtime binding mismatch: ${binding.key}`);

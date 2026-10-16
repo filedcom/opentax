@@ -35,6 +35,7 @@ const textFields: readonly (readonly [string, string])[] = [
   ["line3b_ordinary_dividends", `${p1}f1_61[0]`],
   ["line4a_ira_gross", `${p1}f1_62[0]`],
   ["line4b_ira_taxable", `${p1}f1_63[0]`],
+  ["line4c_other_text", `${p1}f1_64[0]`],
   ["line5a_pension_gross", `${p1}f1_65[0]`],
   ["line5b_pension_taxable", `${p1}f1_66[0]`],
   ["line6a_ss_gross", `${p1}f1_68[0]`],
@@ -185,6 +186,11 @@ const fields: readonly PdfFieldEntry[] = [
     kind: "checkbox",
     domainKey: "spouse_blind",
     pdfField: `${p2}c2_8[0]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line4c_other",
+    pdfField: `${p1}c1_39[0]`,
   },
   {
     kind: "checkbox",

@@ -10,6 +10,17 @@ filing. The form's **visible** line 3 says $4,400 self-only and $8,750 family;
 its `f1_4[0]` AcroForm tooltip incorrectly says 2025/$4,300/$8,550. Use
 printed text and instructions as the calculation authority.
 
+## Current integration status
+
+The registered development source graph now accepts `hsa_accounts` and binds it
+to actual return identity/dependency, W-2s, Schedule A medical payments and the
+annual IRA inventory. It emits owner Forms 8889, combined owner Forms 5329 and
+reconciled Schedule 1/2/1040 draft pages. Earlier foundation and validation
+sections below describe the incremental workpapers; their former public-binding
+gaps are resolved by the [return integration](#return-graph-and-draft-pdf-integration)
+section. Native TY2026 MeF, public filing registration, final authorities and
+advanced source branches remain incomplete.
+
 ## Per-beneficiary source and filed routes
 
 An HSA belongs to its beneficiary. For a joint return with both spouses'
@@ -555,23 +566,68 @@ passes 137 checks, resolves 3,836 graph modules and confirms unchanged runtime.
 Formatting, lint and generated inventory checks pass. Public HSA graph/PDF/MeF
 integration remains outside these internal workpaper checks.
 
+## Return graph and draft PDF integration
+
+The `hsa_accounts` source input accepts annual evidence rather than asserted tax
+lines. General identity supplies actual dates of birth and dependency answers;
+W-2 supplies complete issued wage records. The year-specific start adapter routes
+the original Schedule A medical-payment inventory before AGI, avoiding a cycle
+through the later itemized deduction. A positive W-2 code W without an HSA annual
+inventory now fails explicitly, and the old unregistered W-2 Form 8889 deposit
+is removed.
+
+The owner calculation joins contribution capacity, ordinary/timely-return
+payments, prior excess and current/historical testing workpapers. Schedule 1
+receives deduction on line 13, distributions/testing income on 8f, and separately
+identified excess earnings/employer income on 8z. These amounts enter AGI before
+Social Security and Marketplace calculations. Taxable HSA income above the NIIT
+threshold still requires a section 1411 classification review; this increment
+does not silently assume it is excluded from net investment income.
+
+Qualified IRA funding is supplied to the actual retirement producer. Its complete
+statement, dated-payment and annual-basis inventories must reconcile with the HSA
+transfer evidence. The same transfer is excluded once from ordinary IRA income;
+Form 1040 prints the line 4c Other checkbox and HFD notation, following the
+[existing Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+and the matching 2026 draft boxes; final 2026 instructions still require reconciliation. A missing retirement
+claim or a second, inconsistent HSA exclusion is rejected. Future testing periods
+remain pending through their actual 2027 endpoints.
+
+Owner Form 5329 now combines applicable Parts I, II and VII. Schedule 2 separately
+receives the HSA distribution tax on 13c, testing tax on 13d and excess-contribution
+tax on 18. Form 1062 replays these sources and preserves those nondeferrable taxes
+outside its regular-income-tax comparison. Joint returns aggregate the printed
+owner tax lines, including rounding, instead of reusing a combined shortcut.
+
+The pinned Form 8889 template supplies one static development page per reportable
+beneficiary, with correct owner identity, coverage/exception boxes and Parts I–III.
+The combined Form 5329 renderer fills Part VII on its second printed page. Each
+renderer replays source evidence and rejects mismatched destination amounts.
+Inactive accounts produce no attachment; spouses get distinct owner forms. Draft
+and incomplete-implementation markings remain visible. Independent PDF text
+checks, static-document checks and rendered inspection cover the new output.
+
+Validation for this integration: 1,380 distinct tax/source/PDF regressions pass
+across all TY2026 tests and the selected TY2025 HSA/Form 5329 regressions. The
+unit gate passes 137 checks, resolves 3,843 graph modules and confirms unchanged
+runtime. Nine inventory-contract checks pass. New cases cover joint and separate
+filers, inactive and employer-only accounts, actual IRA funding, independently
+failed current/prior testing periods, medical double-use rejection, Social
+Security/Marketplace MAGI, NIIT review, Form 1062 tax classification and static
+owner PDF pages. This is development validation, not IRS acceptance.
+
 ## Required source integration
 
-1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual
-   graph producers and extend it for employer recoveries, corrected distributions
-   and special contribution deadlines. Preserve source cents through filed lines.
-2. Extend the owner-limit workpaper for Archer MSA sources, marriage changes,
-   mixed last-month spouse choices and the remaining allocation branches; bind
-   its retained monthly/full-year records to actual deduction/excess calculations.
-3. Extend the reconciled 1099-SA/medical/excess-return workpapers for rollovers,
-   mistaken repayments and remaining excess/medical branches. Bind the actual
-   Schedule A inventory, including new DPC rules for reimbursed fees.
-4. Extend prior-year excess, funding transfers and recapture for remaining
-   corrections and exceptions using actual 2025/2026 years and annual limits. The 2025 node still has explicitly dated schema
-   keys and 2024 historical constants; do not execute it as a 2026 node or relabel
-   prior-year evidence.
-5. Bind income/deduction/tax/owner Form 5329 and Form 1062 classification, then
-   complete the 2026 PDF/MeF routes and acceptance cases below.
+1. Extend the reconciled account/W-2 bridge for employer recoveries, corrected
+   distributions and special contribution deadlines; preserve source cents.
+2. Extend owner limits for Archer MSA sources, marriage changes, mixed last-month
+   spouse choices and remaining allocation branches.
+3. Extend distribution/medical workpapers for rollovers, mistaken repayments and
+   remaining excess/medical branches, including reimbursed DPC fees.
+4. Extend prior-year excess, funding and recapture for remaining corrections and
+   exceptions using actual contribution years; never relabel historical evidence.
+5. Resolve taxable HSA NIIT classification above the threshold, complete native
+   TY2026 MeF, reconcile current authorities and finish the full acceptance matrix.
 
 ## Build and acceptance order
 

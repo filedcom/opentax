@@ -1,3 +1,5 @@
+import { buildForm8889PdfBytes2026 } from "./form8889.ts";
+import { calculateHsaReturnSources2026 } from "../inputs/hsa-source.ts";
 import { calculateSaversCredit2026 } from "../inputs/savers-credit-source.ts";
 import { buildForm8880PdfBytes2026 } from "./form8880.ts";
 import { buildForm8606PdfBytes2026 } from "./form8606.ts";
@@ -215,6 +217,12 @@ export async function buildDraftReturnPdf2026(
   const form5329 = form5329Workpaper
     ? calculateForm5329Sources2026(form5329Workpaper.source_input)
     : undefined;
+  const hsaWorkpaper = retained<
+    ReturnType<typeof calculateHsaReturnSources2026>
+  >("hsa_accounts");
+  const hsa = hsaWorkpaper
+    ? calculateHsaReturnSources2026(hsaWorkpaper.source_input)
+    : undefined;
   const retirementWorkpaper = retained<
     ReturnType<typeof calculateRetirementSources2026>
   >("f1099r");
@@ -229,6 +237,8 @@ export async function buildDraftReturnPdf2026(
         "line5a_pension_gross",
         "line5b_pension_taxable",
         "line5c_rollover",
+        "line4c_other",
+        "line4c_other_text",
       ] as const
     ) {
       if (f[key] !== (retirement.filed_lines as Record<string, unknown>)[key]) {
@@ -616,6 +626,32 @@ export async function buildDraftReturnPdf2026(
         individual,
       ), true);
   }
+  for (const part of hsa?.owners ?? []) {
+    if (!part.file_form8889) continue;
+    const individual = owners[part.owner];
+    if (!individual) throw Error("Form 8889 owner identity is missing");
+    add(`form8889:${part.owner}`, 1, () =>
+      buildForm8889PdfBytes2026(
+        hsa!.source_input,
+        part.owner,
+        {
+          schedule1_line8f: amount(p.schedule1, "line8f_hsa_income"),
+          schedule1_line13: amount(p.schedule1, "line13_hsa_deduction"),
+          schedule1_line8z_earnings: amount(
+            p.schedule1,
+            "line8z_hsa_excess_earnings",
+          ),
+          schedule1_line8z_employer: amount(
+            p.schedule1,
+            "line8z_hsa_excess_employer",
+          ),
+          schedule2_line13c: s2line("line13c_hsa_distribution_tax"),
+          schedule2_line13d: s2line("line13d_hsa_eligibility_tax"),
+          schedule2_line18: s2line("line18_form5329_excess_tax"),
+        },
+        individual,
+      ), true);
+  }
   for (const part of form5329?.owners ?? []) {
     if (!part.file_form5329) continue;
     const individual = owners[part.owner];
@@ -626,6 +662,7 @@ export async function buildDraftReturnPdf2026(
         part.owner,
         s2line("line5_form5329_early_tax"),
         individual,
+        s2line("line18_form5329_excess_tax"),
       ), true);
   }
   if (amt?.file_form6251) {

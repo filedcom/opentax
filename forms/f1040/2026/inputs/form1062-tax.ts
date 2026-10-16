@@ -46,6 +46,9 @@ const schedule2Schema = registeredSchedule2Schema.pick({
   line17a_household_employment_tax: true,
   line4_self_employment_tax: true,
   line5_form5329_early_tax: true,
+  line13c_hsa_distribution_tax: true,
+  line13d_hsa_eligibility_tax: true,
+  line18_form5329_excess_tax: true,
   line6_niit: true,
   line16a_form4137_tip_tax: true,
   line16b_form8919_wage_tax: true,
@@ -212,6 +215,12 @@ export function calculateForm1062Tax2026(raw: Form1062TaxSource2026) {
     ? calculateForm5329Sources2026(input.form5329)
     : undefined;
   if (
+    (additional5329?.schedule2_line18 ?? 0) !==
+      (input.schedule2.line18_form5329_excess_tax ?? 0) ||
+    (additional5329?.hsa?.schedule2_line13c ?? 0) !==
+      (input.schedule2.line13c_hsa_distribution_tax ?? 0) ||
+    (additional5329?.hsa?.schedule2_line13d ?? 0) !==
+      (input.schedule2.line13d_hsa_eligibility_tax ?? 0) ||
     (additional5329?.schedule2_line5 ?? 0) !==
       (input.schedule2.line5_form5329_early_tax ?? 0) ||
     input.form5329 &&

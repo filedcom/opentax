@@ -32,7 +32,7 @@ export function form1062TaxFixture2026(
     child: source("f8812"),
     ...(graph.form8880 ? { savers: source("form8880") } : {}),
     ...(graph.schedule_r ? { schedule_r: source("schedule_r") } : {}),
-    ...(graph.f1099r || graph.able_accounts
+    ...(graph.f1099r || graph.able_accounts || graph.hsa_accounts
       ? { form5329: source("form5329") }
       : {}),
     schedule2: pick(p.schedule2, Object.keys(schedule2Schema.shape)),

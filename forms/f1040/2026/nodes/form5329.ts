@@ -26,10 +26,13 @@ class Form5329Node2026 extends TaxNode<typeof form5329Source2026Schema> {
         { nodeType: this.nodeType, fields: { calculation_2026: r } },
         {
           nodeType: "schedule2",
-          fields: { line5_form5329_early_tax: r.schedule2_line5 },
+          fields: {
+            line5_form5329_early_tax: r.schedule2_line5,
+            line18_form5329_excess_tax: r.schedule2_line18,
+          },
         },
         ...(r.source_input.retirement_sources_2026 ||
-            r.source_input.able_sources_2026
+            r.source_input.able_sources_2026 || r.source_input.hsa_sources_2026
           ? [{ nodeType: "form1062", fields: { form5329: r.source_input } }]
           : []),
       ],

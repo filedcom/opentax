@@ -1,3 +1,4 @@
+import { hsaQualifiedFunding2026Schema } from "./hsa-qualified-funding.ts";
 import {
   bindIraBasis2026,
   iraBasisClaim2026Schema,
@@ -140,7 +141,10 @@ const review = z.object({
   ]),
   // Includes QCDs with no optional Y code and HSA funding without a special code.
   no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified: z
-    .literal(true),
+    .literal(true).optional(),
+  no_qcd_pso_exclusion_disaster_or_corrective_treatment_verified: z.literal(
+    true,
+  ).optional(),
   no_roth_ira_or_designated_roth_distribution_or_ira_conversion_verified: z
     .literal(true).optional(),
   ira_basis_owner_review_reference: ref.optional(),
@@ -211,6 +215,9 @@ export const retirementClaim2026Schema = z.object({
 export const retirementSource2026Schema = investmentOwner2026.extend({
   taxpayer_dob: date,
   spouse_dob: date.optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
+  hsa_funding_sources_2026: hsaQualifiedFunding2026Schema.optional(),
   ...retirementClaim2026Schema.shape,
   wage_sources: z.array(w2Item2026Schema).default([]),
   business_sources_2026: businessReturnSource2026Schema.optional(),
@@ -335,6 +342,25 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       "IRA basis review must precede the complete retirement inventory",
     );
   }
+  if (input.hsa_funding_sources_2026) {
+    if (!claim.ira_basis) {
+      throw Error(
+        "Qualified HSA funding needs the actual annual IRA basis inventory",
+      );
+    }
+    if (
+      claim.ira_basis.hsa_funding_sources &&
+      JSON.stringify(claim.ira_basis.hsa_funding_sources) !==
+        JSON.stringify(input.hsa_funding_sources_2026)
+    ) {
+      throw Error("Retirement and HSA funding sources disagree");
+    }
+    claim.ira_basis.hsa_funding_sources = input.hsa_funding_sources_2026;
+  } else if (claim.ira_basis?.hsa_funding_sources) {
+    throw Error(
+      "Retirement HSA funding needs the executed HSA return inventory",
+    );
+  }
   const basisOwners = new Set(claim.ira_basis?.owners.map((o) => o.owner_tin));
   const iraBasis = claim.ira_basis
     ? bindIraBasis2026({
@@ -343,6 +369,10 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       spouse_ssn: input.spouse_ssn,
       taxpayer_dob: input.taxpayer_dob,
       spouse_dob: input.spouse_dob,
+      taxpayer_can_be_claimed_as_dependent:
+        input.taxpayer_can_be_claimed_as_dependent,
+      spouse_can_be_claimed_as_dependent:
+        input.spouse_can_be_claimed_as_dependent,
       current_copies: current.filter((c) =>
         c.box7b_ira_sep_simple && basisOwners.has(owner(c))
       ),
@@ -377,6 +407,19 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     const basisAmounts = basis?.distributions.find((d) =>
       d.source_document_reference === c.source_document_reference
     );
+    if (
+      basisAmounts?.qualified_hsa_funding
+        ? r
+          .no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified ||
+          !r.no_qcd_pso_exclusion_disaster_or_corrective_treatment_verified
+        : !r
+          .no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified ||
+          r.no_qcd_pso_exclusion_disaster_or_corrective_treatment_verified
+    ) {
+      throw Error(
+        "Retirement exclusion declarations must match the actual qualified HSA funding payments",
+      );
+    }
     if (basis) {
       const account = basis.source.accounts.find((a) =>
         a.custodian_tin === c.payer_tin && a.account_number === c.account_number
@@ -1090,6 +1133,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     ) => [key, roundWholeDollars(value)]),
   ) as typeof cents;
   const filed_lines = {
+    ...(iraBasis?.calculation.forms.some((o) => o.raw_qualified_hsa_funding > 0)
+      ? { line4c_other: true, line4c_other_text: "HFD" as const }
+      : {}),
     ...(hasIra ? { line4b_ira_taxable: lines.line4b_ira_taxable } : {}),
     ...(hasIra && (cents.line4a_ira_gross !== cents.line4b_ira_taxable ||
         rows.filter((r) => r.copy.box7b_ira_sep_simple).length > 1 ||

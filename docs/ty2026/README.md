@@ -378,8 +378,8 @@ regular Git files.
   a 2026 route. The 32 nodes absent from the old review ledger are explicitly
   flagged for assignment instead of being omitted.
 - [`runtime-surface.json`](./inventories/runtime-surface.json) and
-  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 56-node 2026
-  graph, all 294 declared edges, source paths and the 16 edges to unregistered
+  [`graph-routes.csv`](./inventories/graph-routes.csv): the loaded 57-node 2026
+  graph, all 301 declared edges, source paths and the 15 edges to unregistered
   targets. These counts describe registrations, not supported tax branches.
 - [`year-literals.csv`](./inventories/year-literals.csv): `2025` occurrences in
   non-test shared node modules outside configuration, including comments. These
@@ -445,10 +445,16 @@ and spouse allocation, reconcile 2026 payments for 2025, and derive current
 recapture or completed testing periods. Dated 2025 IRA funding now reuses the
 current transfer reconciler, replays filed Part I/III and preserves each transfer
 window, including failures already taxed in 2025.
-Basis-depleting/Roth funding, public retirement-income integration,
-remaining rollover/excess withdrawals, broader historical corrections,
-advanced testing histories, graph binding and complete Form 8889
-return/output routes remain in the implementation queue.
+The registered development graph now binds these workpapers to actual identity,
+W-2s, Schedule A medical payments and annual IRA evidence. Deduction and income
+reach AGI/Schedule 1; Schedule 2 and Form 1062 reconcile distribution, testing and
+excess tax. Qualified IRA funding reaches the actual IRA exclusion and HFD
+notation. Owner Forms 8889 and combined Forms 5329 now appear in the draft bundle,
+including separate spouse pages and no attachment for inactive accounts.
+Basis-depleting/Roth funding, remaining rollover/excess withdrawals, broader
+historical corrections, advanced testing histories, taxable HSA NIIT
+classification above the threshold, native MeF and complete filing support
+remain in the implementation queue.
 
 ## Version rule
 

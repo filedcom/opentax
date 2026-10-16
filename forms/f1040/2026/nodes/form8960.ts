@@ -36,6 +36,7 @@ export const inputSchema = investmentOwner2026.extend({
   magi: z.number().finite().int().safe(),
   able_sources_2026: ableSource2026Schema.optional(),
   able_taxable_earnings_from_agi: money.default(0),
+  hsa_income_for_niit_review_from_agi: money.default(0),
   foreign_earned_income_exclusion_from_agi: z.literal(0),
   other_niit_income_pending: z.literal(false),
   early_withdrawal_penalty_from_agi: money,
@@ -134,6 +135,11 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
   if (able && able.taxable_earnings > 0 && input.magi > limit) {
     throw Error(
       "Taxable ABLE earnings above the NIIT threshold need a reviewed section 1411 classification",
+    );
+  }
+  if (input.hsa_income_for_niit_review_from_agi > 0 && input.magi > limit) {
+    throw Error(
+      "Taxable HSA income above the NIIT threshold needs a reviewed section 1411 classification",
     );
   }
   const gross = line1 + line2 + line5 + line5b;

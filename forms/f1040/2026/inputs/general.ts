@@ -121,6 +121,7 @@ class General2026Node extends TaxNode<typeof inputSchema> {
       "f1095a",
       "f1099r",
       "able_accounts",
+      "hsa_accounts",
       "form5329",
     ];
   }
@@ -544,6 +545,18 @@ class General2026Node extends TaxNode<typeof inputSchema> {
           fields: { ...owner, digital_assets_answer: input.digital_assets },
         },
         { nodeType: "ssa1099", fields: owner },
+        {
+          nodeType: "hsa_accounts",
+          fields: {
+            ...owner,
+            taxpayer_dob: input.taxpayer_dob,
+            ...(joint ? { spouse_dob: input.spouse_dob } : {}),
+            taxpayer_can_be_claimed_as_dependent:
+              input.taxpayer_can_be_claimed_as_dependent,
+            spouse_can_be_claimed_as_dependent:
+              input.spouse_can_be_claimed_as_dependent,
+          },
+        },
         ...["able_accounts", "form5329"].map((nodeType) => ({
           nodeType,
           fields: {
@@ -555,6 +568,10 @@ class General2026Node extends TaxNode<typeof inputSchema> {
         {
           nodeType: "f1099r",
           fields: {
+            taxpayer_can_be_claimed_as_dependent:
+              input.taxpayer_can_be_claimed_as_dependent,
+            spouse_can_be_claimed_as_dependent:
+              input.spouse_can_be_claimed_as_dependent,
             ...owner,
             taxpayer_dob: input.taxpayer_dob,
             ...(joint ? { spouse_dob: input.spouse_dob } : {}),

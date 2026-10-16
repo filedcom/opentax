@@ -1,3 +1,5 @@
+import { hsa_accounts_2026 } from "./inputs/hsa.ts";
+import { sourceStart2026 } from "./source-start.ts";
 import { able_accounts_2026 } from "./inputs/able.ts";
 import { form5329_2026 } from "./nodes/form5329.ts";
 import { form8880_2026 } from "./nodes/form8880.ts";
@@ -29,8 +31,6 @@ import { eitc_2026 } from "./nodes/eitc.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
 import { social_security_2026 } from "./inputs/social-security.ts";
 import { student_loan_interest_2026 } from "./inputs/student-loan-interest.ts";
-import { buildStartNode } from "../start.ts";
-import { inputNodes } from "./inputs.ts";
 import { general_2026 } from "./inputs/general.ts";
 import { investments_2026 } from "./inputs/investments.ts";
 import { f3921_2026 } from "./inputs/f3921.ts";
@@ -60,7 +60,8 @@ import { schedule3a } from "./nodes/schedule3a.ts";
  * pending. This is not a FormDefinition or a supported filing catalog entry. */
 export const sourceRegistry2026 = {
   // This year joins issued wages and owner identities inside its business node.
-  start: buildStartNode(inputNodes, { routeLegacyJointSeOwners: false }),
+  start: sourceStart2026,
+  hsa_accounts: hsa_accounts_2026,
   general: general_2026,
   able_accounts: able_accounts_2026,
   form5329: form5329_2026,

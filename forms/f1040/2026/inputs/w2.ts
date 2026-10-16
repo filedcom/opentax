@@ -28,11 +28,12 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
   readonly outputNodes = w2.outputNodes;
   override get outputNodeTypes(): readonly string[] {
     return [
-      ...this.outputNodes.nodeTypes,
+      ...this.outputNodes.nodeTypes.filter((node) => node !== "form8889"),
       // Resolve by registry key: source replays must not import downstream AGI.
       "f3903",
       "f1099r",
       "able_accounts",
+      "hsa_accounts",
     ];
   }
 
@@ -154,7 +155,8 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     const outputs = common.outputs.filter((output) =>
       output.nodeType !== "schedule3" && output.nodeType !== "form8959" &&
       output.nodeType !== "schedule_a" && output.nodeType !== "schedule_c" &&
-      output.nodeType !== "schedule_se" && output.nodeType !== "form8880"
+      output.nodeType !== "schedule_se" && output.nodeType !== "form8880" &&
+      output.nodeType !== "form8889"
     ).map((output) => {
       // Form 1040 line 1i is the EIC election, not the amount printed in W-2 Q.
       if (output.nodeType === "f1040") {
@@ -217,6 +219,10 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "schedule_c",
       fields: { w2_sources_2026: input.w2s },
+    });
+    outputs.push({
+      nodeType: "hsa_accounts",
+      fields: { wage_sources: input.w2s },
     });
     outputs.push({
       nodeType: "able_accounts",

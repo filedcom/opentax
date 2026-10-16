@@ -1,4 +1,8 @@
 import {
+  calculateHsaReturnSources2026,
+  hsaReturnSource2026Schema,
+} from "../inputs/hsa-source.ts";
+import {
   ableSource2026Schema,
   calculateAbleSources2026,
 } from "../inputs/able-source.ts";
@@ -71,6 +75,9 @@ export const inputSchema = sharedSchema.pick({
   line8b_gambling_winnings: true,
   line8p_excess_business_loss: true,
   line8q_able_taxable_earnings: true,
+  line8f_hsa_income: true,
+  line8z_hsa_excess_earnings: true,
+  line8z_hsa_excess_employer: true,
   line8c_cod_income: true,
   line8d_foreign_earned_income_exclusion: true,
   line8e_archer_msa_dist: true,
@@ -95,6 +102,7 @@ export const inputSchema = sharedSchema.pick({
   gambling_sources_2026: gamblingSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
   able_sources_2026: ableSource2026Schema.optional(),
+  hsa_sources_2026: hsaReturnSource2026Schema.optional(),
   moving_sources_2026: movingSource2026Schema.optional(),
   government_sources_2026: governmentSource2026Schema.optional(),
   line8z_family_leave: z.number().finite().nonnegative().optional(),
@@ -147,6 +155,22 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       normalized.line7a_cap_gain_distrib = undefined;
     }
     const input = inputSchema.parse(normalized);
+    const hsa = input.hsa_sources_2026
+      ? calculateHsaReturnSources2026(input.hsa_sources_2026)
+      : undefined;
+    if (
+      (hsa?.schedule1_line8f ?? 0) !== (input.line8f_hsa_income ?? 0) ||
+      (hsa?.schedule1_line13 ?? 0) !== (input.line13_hsa_deduction ?? 0) ||
+      (hsa?.schedule1_line8z_earnings ?? 0) !==
+        (input.line8z_hsa_excess_earnings ?? 0) ||
+      (hsa?.schedule1_line8z_employer ?? 0) !==
+        (input.line8z_hsa_excess_employer ?? 0) ||
+      hsa && hsa.source_input.filing_status !== input.filing_status
+    ) {
+      throw Error(
+        "AGI HSA income and deduction need reconciled return sources",
+      );
+    }
     const able = input.able_sources_2026
       ? calculateAbleSources2026(input.able_sources_2026)
       : undefined;
@@ -345,6 +369,7 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
       gambling_sources_2026,
       retirement_sources_2026: _retirementSources,
       able_sources_2026: _ableSources,
+      hsa_sources_2026: _hsaSources,
       moving_sources_2026: _movingSources,
       government_sources_2026,
       line8z_family_leave,
@@ -476,6 +501,10 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             foreign_earned_income_exclusion_from_agi:
               input.line8d_foreign_earned_income_exclusion ?? 0,
             ...(able ? { able_sources_2026: able.source_input } : {}),
+            hsa_income_for_niit_review_from_agi:
+              (input.line8f_hsa_income ?? 0) +
+              (input.line8z_hsa_excess_earnings ?? 0) +
+              (input.line8z_hsa_excess_employer ?? 0),
             able_taxable_earnings_from_agi:
               input.line8q_able_taxable_earnings ?? 0,
             other_niit_income_pending: [
