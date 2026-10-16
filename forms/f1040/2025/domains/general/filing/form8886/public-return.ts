@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
@@ -5,6 +6,8 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
 import { publicSourceSchema } from "./source.ts";
 import { prepareForm8886ReturnPackets } from "./return-packets.ts";
+// A file import, so the compiled binary embeds the blank form.
+import f8886Template from "./fixtures/f8886-2019.pdf" with { type: "file" };
 
 /** Replay retained public inputs rather than manufacture a successful executor
  * result from pending values. Inputs and the full result must agree before any
@@ -55,9 +58,7 @@ export async function preparePublicForm8886Return(
       "Form 8886 pending return differs from its public input replay",
     );
   }
-  const template = await Deno.readFile(
-    new URL("./fixtures/f8886-2019.pdf", import.meta.url),
-  );
+  const template = new Uint8Array(await readFile(f8886Template));
   const prepared = await prepareForm8886ReturnPackets(
     source,
     result,

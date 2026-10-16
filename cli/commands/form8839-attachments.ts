@@ -1,3 +1,4 @@
+import { lstat, readFile } from "node:fs/promises";
 import { join } from "@std/path";
 import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 import { parsePublicForm8839Source } from "../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
@@ -13,8 +14,8 @@ export async function loadForm8839Attachments(
   if (!route) return [];
   const { publicSource } = parsePublicForm8839Source(route.public_source);
   const directory = join(returnPath, "attachments");
-  const directoryStat = await Deno.lstat(directory);
-  if (!directoryStat.isDirectory || directoryStat.isSymlink) {
+  const directoryStat = await lstat(directory);
+  if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
     throw new Error(
       "Form 8839 attachments path must be a return-owned directory",
     );
@@ -26,14 +27,17 @@ export async function loadForm8839Attachments(
       throw new Error(`Form 8839 attachment filename is unsafe: ${name}`);
     }
     const path = join(directory, name);
-    const fileStat = await Deno.lstat(path);
-    if (!fileStat.isFile || fileStat.isSymlink || fileStat.size > 60_000_000) {
+    const fileStat = await lstat(path);
+    if (
+      !fileStat.isFile() || fileStat.isSymbolicLink() ||
+      fileStat.size > 60_000_000
+    ) {
       throw new Error(`Form 8839 attachment must be a regular PDF: ${name}`);
     }
     attachments.push({
       fileName: name,
       description: document.description,
-      bytes: await Deno.readFile(path),
+      bytes: new Uint8Array(await readFile(path)),
     });
   }
   return attachments;

@@ -1,3 +1,4 @@
+import process from "node:process";
 import {
   exportForm8886OtsaCommand,
   recordForm8886OtsaDeliveryCommand,
@@ -37,7 +38,7 @@ async function run(fn: () => Promise<unknown>): Promise<void> {
     }
   } catch (err: unknown) {
     console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
-    Deno.exit(1);
+    process.exit(1);
   }
 }
 
@@ -47,7 +48,7 @@ function requireArg(
 ): string {
   if (!value) {
     console.error(`Error: --${name} is required`);
-    Deno.exit(1);
+    process.exit(1);
   }
   return value;
 }
@@ -97,7 +98,7 @@ const COMMANDS: readonly CommandDef[] = [
       const year = Number(args.year);
       if (!args.year || isNaN(year)) {
         console.error("Error: --year is required and must be a number");
-        Deno.exit(1);
+        process.exit(1);
       }
       const formType = args.form ?? "f1040";
       await run(() =>
@@ -256,7 +257,7 @@ const COMMANDS: readonly CommandDef[] = [
         console.error(
           "Error: --type must be 'mef', 'pdf', or 'form4972-paper'",
         );
-        Deno.exit(1);
+        process.exit(1);
       }
     },
   },
@@ -279,7 +280,7 @@ const COMMANDS: readonly CommandDef[] = [
       const dataJson = args._[2] as string | undefined;
       if (!dataJson) {
         console.error("Error: JSON data argument is required");
-        Deno.exit(1);
+        process.exit(1);
       }
       await run(() =>
         formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR })
@@ -343,7 +344,7 @@ const COMMANDS: readonly CommandDef[] = [
       const dataJson = args._[2] as string | undefined;
       if (!dataJson) {
         console.error("Error: JSON data argument is required");
-        Deno.exit(1);
+        process.exit(1);
       }
       await run(() =>
         formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR })
@@ -420,7 +421,7 @@ const COMMANDS: readonly CommandDef[] = [
       const depth = args.depth !== undefined ? Number(args.depth) : Infinity;
       if (isNaN(depth) || depth < 0) {
         console.error("Error: --depth must be a non-negative number");
-        Deno.exit(1);
+        process.exit(1);
       }
       await run(() =>
         Promise.resolve(
@@ -446,7 +447,7 @@ const TOP_LEVEL_DEFS: readonly TopLevelDef[] = [
 ];
 
 async function main(): Promise<void> {
-  const args = parseArgs(Deno.args, {
+  const args = parseArgs(process.argv.slice(2), {
     string: [
       "year",
       "returnId",
@@ -477,21 +478,21 @@ async function main(): Promise<void> {
 
   if (!cmd || args.help) {
     printHelp(COMMANDS, cmd, TOP_LEVEL_DEFS);
-    Deno.exit(args.help ? 0 : 1);
+    process.exit(args.help ? 0 : 1);
   }
 
   await checkForUpdate();
 
   if (!sub) {
     printHelp(COMMANDS, cmd);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   const def = COMMANDS.find((c) => c.cmd === cmd && c.sub === sub);
   if (!def) {
     console.error(`Unknown command: opentax ${cmd} ${sub}\n`);
     printHelp(COMMANDS);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   await def.handler(args);

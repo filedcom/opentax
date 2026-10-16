@@ -1,3 +1,7 @@
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import process from "node:process";
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { VERSION, GITHUB_REPO } from "../version.ts";
 
 const RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -32,7 +36,7 @@ async function fetchLatestRelease(): Promise<GithubRelease | null> {
 }
 
 function cacheDir(): string {
-  const home = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE") ?? ".";
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? ".";
   return `${home}/.opentax`;
 }
 
@@ -47,7 +51,7 @@ interface UpdateCache {
 
 async function readCache(): Promise<UpdateCache | null> {
   try {
-    const text = await Deno.readTextFile(cachePath());
+    const text = await readFile(cachePath(), "utf8");
     return JSON.parse(text) as UpdateCache;
   } catch {
     return null;
@@ -56,8 +60,8 @@ async function readCache(): Promise<UpdateCache | null> {
 
 async function writeCache(cache: UpdateCache): Promise<void> {
   try {
-    await Deno.mkdir(cacheDir(), { recursive: true });
-    await Deno.writeTextFile(cachePath(), JSON.stringify(cache));
+    await mkdir(cacheDir(), { recursive: true });
+    await writeFile(cachePath(), JSON.stringify(cache));
   } catch {
     // Non-critical -- skip silently
   }
@@ -100,14 +104,14 @@ export function versionCommand(): void {
 
 /** Detect the asset name for the current platform */
 function assetName(): string {
-  const os = Deno.build.os;
-  const arch = Deno.build.arch;
+  const os = process.platform;
+  const arch = process.arch;
 
-  if (os === "darwin" && arch === "aarch64") return "opentax-macos-arm64";
-  if (os === "darwin" && arch === "x86_64") return "opentax-macos-x64";
-  if (os === "linux" && arch === "x86_64") return "opentax-linux-x64";
-  if (os === "linux" && arch === "aarch64") return "opentax-linux-arm64";
-  if (os === "windows" && arch === "x86_64") return "opentax-windows-x64.exe";
+  if (os === "darwin" && arch === "arm64") return "opentax-macos-arm64";
+  if (os === "darwin" && arch === "x64") return "opentax-macos-x64";
+  if (os === "linux" && arch === "x64") return "opentax-linux-x64";
+  if (os === "linux" && arch === "arm64") return "opentax-linux-arm64";
+  if (os === "win32" && arch === "x64") return "opentax-windows-x64.exe";
 
   throw new Error(`Unsupported platform: ${os}/${arch}`);
 }
@@ -120,7 +124,7 @@ export async function updateCommand(): Promise<void> {
   const release = await fetchLatestRelease();
   if (!release) {
     console.error("Could not reach GitHub. Check your internet connection.");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   const latest = release.tag_name.replace(/^v/, "");
@@ -140,28 +144,25 @@ export async function updateCommand(): Promise<void> {
   const resp = await fetch(downloadUrl);
   if (!resp.ok || !resp.body) {
     console.error(`Download failed: ${resp.status} ${resp.statusText}`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   // Write to a temp file next to the current binary, then swap
-  const currentBinary = Deno.execPath();
+  const currentBinary = process.execPath;
   const tmpPath = `${currentBinary}.update`;
 
-  const file = await Deno.open(tmpPath, {
-    write: true,
-    create: true,
-    truncate: true,
-    mode: 0o755,
-  });
-
   try {
-    await resp.body.pipeTo(file.writable);
+    await writeFile(
+      tmpPath,
+      Readable.fromWeb(resp.body as NodeReadableStream<Uint8Array>),
+      { mode: 0o755 },
+    );
   } catch (err) {
-    await Deno.remove(tmpPath).catch(() => {});
+    await rm(tmpPath, { force: true });
     throw err;
   }
 
-  await Deno.rename(tmpPath, currentBinary);
+  await rename(tmpPath, currentBinary);
   await writeCache({ checkedAt: Date.now(), latestVersion: latest });
 
   console.log(`Updated to ${latest}. Restart to use the new version.`);

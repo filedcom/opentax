@@ -1,3 +1,4 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 import { dirname, join } from "@std/path";
@@ -26,7 +27,7 @@ async function prepareExport(
     throw new Error("OTSA exact-copy export does not accept draft output");
   }
   const request = otsaExportRequestSchema.parse(
-    JSON.parse(await Deno.readTextFile(args.requestsPath)),
+    JSON.parse(await readFile(args.requestsPath, "utf8")),
   );
   const pipeline = await runReturnPipeline(args);
   const { pending, def } = pipeline;
@@ -62,18 +63,18 @@ export async function exportForm8886OtsaCommand(
   const exported = await prepareExport(args);
   const outputDir = args.outputDir ??
     join(args.baseDir, args.returnId, "otsa-export");
-  await Deno.mkdir(dirname(outputDir), { recursive: true });
+  await mkdir(dirname(outputDir), { recursive: true });
   // Exclusive directory creation preserves prior exports and their delivery bindings.
-  await Deno.mkdir(outputDir, { mode: 0o700 });
+  await mkdir(outputDir, { mode: 0o700 });
   for (const file of exported.files) {
-    await Deno.writeFile(join(outputDir, file.name), file.bytes, {
-      createNew: true,
+    await writeFile(join(outputDir, file.name), file.bytes, {
+      flag: "wx",
       mode: 0o600,
     });
   }
   const manifestPath = join(outputDir, "manifest.json");
   // This completion marker is written only after every referenced artifact.
-  await Deno.writeTextFile(
+  await writeFile(
     manifestPath,
     JSON.stringify(
       {
@@ -83,7 +84,7 @@ export async function exportForm8886OtsaCommand(
       null,
       2,
     ) + "\n",
-    { createNew: true, mode: 0o600 },
+    { flag: "wx", mode: 0o600 },
   );
   return {
     outputDir,
@@ -105,11 +106,11 @@ export async function recordForm8886OtsaDeliveryCommand(
   },
 ) {
   const request = otsaDeliveryRequestSchema.parse(
-    JSON.parse(await Deno.readTextFile(args.recordPath)),
+    JSON.parse(await readFile(args.recordPath, "utf8")),
   );
-  const evidence = new Uint8Array(await Deno.readFile(args.evidencePath));
+  const evidence = new Uint8Array(await readFile(args.evidencePath));
   const manifestBytes = new Uint8Array(
-    await Deno.readFile(join(args.exportDir, "manifest.json")),
+    await readFile(join(args.exportDir, "manifest.json")),
   );
   // Retain the exact original preparation instant, including source-bound milliseconds.
   // All other manifest fields and every retained file are compared with the regenerated export below.
@@ -132,7 +133,9 @@ export async function recordForm8886OtsaDeliveryCommand(
     );
   }
   for (const file of exported.files) {
-    const retained = await Deno.readFile(join(args.exportDir, file.name));
+    const retained = new Uint8Array(
+      await readFile(join(args.exportDir, file.name)),
+    );
     if (
       await sha256Hex(retained) !== exported.manifest.file_sha256[file.name]
     ) {
@@ -146,19 +149,19 @@ export async function recordForm8886OtsaDeliveryCommand(
     request,
     evidence,
   );
-  await Deno.mkdir(dirname(args.outputDir), { recursive: true });
-  await Deno.mkdir(args.outputDir, { mode: 0o700 });
-  await Deno.writeFile(join(args.outputDir, "evidence.bin"), evidence, {
-    createNew: true,
+  await mkdir(dirname(args.outputDir), { recursive: true });
+  await mkdir(args.outputDir, { mode: 0o700 });
+  await writeFile(join(args.outputDir, "evidence.bin"), evidence, {
+    flag: "wx",
     mode: 0o600,
   });
-  await Deno.writeFile(
+  await writeFile(
     join(args.outputDir, "export-manifest.json"),
     manifestBytes,
-    { createNew: true, mode: 0o600 },
+    { flag: "wx", mode: 0o600 },
   );
   const receiptPath = join(args.outputDir, "delivery.json");
-  await Deno.writeTextFile(
+  await writeFile(
     receiptPath,
     JSON.stringify(
       {
@@ -170,7 +173,7 @@ export async function recordForm8886OtsaDeliveryCommand(
       null,
       2,
     ) + "\n",
-    { createNew: true, mode: 0o600 },
+    { flag: "wx", mode: 0o600 },
   );
   return { receiptPath, status: receipt.status, irs_acceptance: false };
 }

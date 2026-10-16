@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { join } from "@std/path";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { catalog } from "../../catalog.ts";
@@ -320,7 +321,7 @@ export async function exportPdfCommand(
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");
-  await Deno.writeFile(outPath, outputBytes);
+  await writeFile(outPath, outputBytes);
   return outPath;
 }
 
@@ -351,8 +352,8 @@ export async function exportForm4972PaperCommand(
   );
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "paper-only-form4972.pdf");
-  await Deno.writeFile(outPath, bytes);
-  await Deno.writeTextFile(
+  await writeFile(outPath, bytes);
+  await writeFile(
     `${outPath}.source-manifest.json`,
     JSON.stringify(
       {

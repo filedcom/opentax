@@ -1,3 +1,4 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "@std/path";
 
 async function assertTemplateDigest(
@@ -33,7 +34,7 @@ export async function loadPdfTemplate(
   const cachePath = join(cacheDir, `${slug}.pdf`);
   let cached: Uint8Array | undefined;
   try {
-    cached = await Deno.readFile(cachePath);
+    cached = new Uint8Array(await readFile(cachePath));
   } catch {
     // Preserve the existing cache-miss behavior; digest failures never refetch.
   }
@@ -47,7 +48,7 @@ export async function loadPdfTemplate(
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
   await assertTemplateDigest(bytes, url, expectedSha256);
-  await Deno.mkdir(cacheDir, { recursive: true });
-  await Deno.writeFile(cachePath, bytes);
+  await mkdir(cacheDir, { recursive: true });
+  await writeFile(cachePath, bytes);
   return bytes;
 }

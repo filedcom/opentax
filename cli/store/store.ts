@@ -1,4 +1,4 @@
-import { ensureDir } from "@std/fs";
+import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
 import { join } from "@std/path";
 import type {
   Form8990CalculatedWorkpaperRecord,
@@ -69,7 +69,7 @@ const RETURN_JSON = "return.json";
 async function readReturnJson(returnPath: string): Promise<ReturnJson> {
   const filePath = join(returnPath, RETURN_JSON);
   try {
-    const raw = JSON.parse(await Deno.readTextFile(filePath)) as ReturnJson;
+    const raw = JSON.parse(await readFile(filePath, "utf8")) as ReturnJson;
     return {
       ...raw,
       meta: {
@@ -78,7 +78,7 @@ async function readReturnJson(returnPath: string): Promise<ReturnJson> {
       },
     };
   } catch (err) {
-    if (err instanceof Deno.errors.NotFound) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
       throw new Error(`File not found: ${filePath}`);
     }
     throw err;
@@ -90,28 +90,20 @@ async function writeReturnJson(
   data: ReturnJson,
 ): Promise<void> {
   const stagedPath = join(returnPath, `.return-${crypto.randomUUID()}.json`);
-  const file = await Deno.open(stagedPath, {
-    write: true,
-    createNew: true,
-    mode: 0o600,
-  });
+  const file = await open(stagedPath, "wx", 0o600);
   try {
-    const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2));
-    let offset = 0;
-    while (offset < bytes.length) {
-      offset += await file.write(bytes.subarray(offset));
-    }
+    await file.writeFile(JSON.stringify(data, null, 2));
     await file.sync();
   } catch (error) {
-    file.close();
-    await Deno.remove(stagedPath).catch(() => {});
+    await file.close();
+    await rm(stagedPath, { force: true });
     throw error;
   }
-  file.close();
+  await file.close();
   try {
-    await Deno.rename(stagedPath, join(returnPath, RETURN_JSON));
+    await rename(stagedPath, join(returnPath, RETURN_JSON));
   } catch (error) {
-    await Deno.remove(stagedPath).catch(() => {});
+    await rm(stagedPath, { force: true });
     throw error;
   }
 }
@@ -140,7 +132,7 @@ export async function createReturn(
   const returnId = crypto.randomUUID();
   const returnPath = join(baseDir, returnId);
 
-  await ensureDir(returnPath);
+  await mkdir(returnPath, { recursive: true });
 
   const meta: MetaJson = {
     returnId,
