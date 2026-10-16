@@ -1190,8 +1190,10 @@ identifies the actual adoption inventory. EIC accepts signed wages and retains
 replayed adoption income. Under-24 education and child-tax support now replay the
 actual adoption inventory and employer personal-services review, using current
 payments without treating the special-needs exclusion as compensation. Taxable
-wages, dependent deductions and unearned income remain separate. Care with changed
-wages still requires owner/month compensation reconciliation. Draft bundles now attach the two-page
+wages, dependent deductions and unearned income remain separate. Care now replays signed adoption adjustments by employer-program owner and
+reviewed service month, including offsetting spouses and monthly deemed-income
+floors. Cases changing the pre-AGI care exclusion still require coordinated
+settlement; multi-owner child exclusions also remain to be reconciled. Draft bundles now attach the two-page
 Form 8839 and additional copies for overflow children. Income, refundable credit,
 nonrefundable credit and final child-credit destinations are replayed before
 rendering. Previously reported children retain their prior columns; totals print

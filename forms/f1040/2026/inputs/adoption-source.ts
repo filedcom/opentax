@@ -538,6 +538,7 @@ export function prepareAdoptionSources2026(raw: AdoptionSource2026) {
       eligible_current_claim: eligibleCurrent,
       report_child: reportChild,
       current_benefits: currentBenefits,
+      special_needs_program_reference: specialProgram?.record_reference,
       prior_foreign_benefits: priorBenefits,
       partII: {
         line2,

@@ -300,3 +300,38 @@ expenses, changed filing-unit or corrected/unfiled prior-return care allocations
 proprietor/partner benefits, Schedule H, multi-W-2 employer-furnished aggregation,
 FTC/Form 8978 ordering, final forms, current MeF, product registration and ATS.
 The [full acceptance contract](FORM2441-GRAPH.md) remains broader than this slice.
+
+## Adoption wages and owner/month reconciliation
+
+The October 16 follow-up binds the final care calculation to the actual adoption
+inventory, issued W-2s and employer-program owners. It derives each child's
+current taxable benefit or signed special-needs adjustment from the replayed
+Form 8839 exclusion, then requires owner amounts to reconcile Form 1040 line 1f.
+The special-needs program is retained even when current payments are zero.
+One spouse's negative adjustment cannot reduce the other spouse's care earnings;
+offsetting owner adjustments remain separate even if joint line 1f is zero.
+This follows taxable line 1z and the separate-owner rules in the pinned draft
+instructions, not the gross-compensation definition used for under-24 support.
+
+Annual methods include the signed adjustment before their zero floor. Monthly
+reviews allocate the computed owner adjustment to twelve months and cite the
+service-month evidence. The allocation must match the derived owner amount;
+student/disability deemed-income floors apply to each month's resulting income.
+The review cannot change wages, line 1f, or calculated income by entering an
+unreconciled monthly total. Source-only claims cannot supply an internal adoption
+income bridge. Missing inventories and mismatched wage/owner records fail.
+
+The final care/PDF route replays both stages and checks that its revised exclusion
+still equals the amount already used before AGI. It currently rejects changes to
+line 26; coordinated pre-AGI settlement of care, adoption and Social Security is
+required next. Nonzero adjustments for a child with several program owners still
+require explicit per-spouse exclusion reconciliation. These are outstanding
+implementation requirements, not completed filing support.
+
+Verification for this increment covers 123 distinct typed source/PDF tests and
+the 137-test repository unit gate, with 3,905 modules in preflight and unchanged
+runtime files. Cases exercise fully excluded, taxable pending-foreign and signed
+special-needs income, separate owners, offsetting joint adjustments, monthly
+student floors, source mismatches, and explicit rejection of changed pre-AGI
+exclusions or unresolved mixed-owner child allocations. The combined joint draft
+was rendered and its Form 2441 owner limits were visually inspected.

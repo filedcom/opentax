@@ -153,8 +153,22 @@ benefits do not, following [Pub. 596](https://www.irs.gov/publications/p596).
 
 The ordinary no-claim care and education consumers accept signed wages. Care
 claims with unchanged reconciled wages and adult education claims proceed.
-Changed care wages still require reconciliation against the actual benefit
-workpaper, including separate spouse and month allocations.
+Care now replays actual adoption sources and matches the issued W-2 inventory.
+Each child's signed adjustment follows its employer-program owner, and all owner
+adjustments must sum to Form 1040 line 1f. Special-needs cases retain the actual
+qualifying program even when no benefit was paid. The workpaper keeps separate
+spouses' adjustments even when their return total is zero. Monthly care reviews
+allocate the actual owner adjustment across all twelve months, require a cited
+service-month review, and apply the student/disability floor after each month's
+signed adjustment. Gross support compensation is not substituted for care wages.
+
+The final care calculation and draft now accept those changes when the pre-AGI
+care-benefit exclusion remains correct. If replay changes Form 2441 line 26, it
+stops explicitly: the next required step is coordinated pre-AGI care/adoption
+settlement, including Social Security/MAGI dependencies. A child with multiple
+employer-program owners and a nonzero adjustment still requires a reconciled
+per-spouse exclusion allocation. Neither case is silently assigned a joint total
+or accepted using the old care exclusion.
 
 Under-24 education and child-tax support reviews now name the actual adoption
 inventory. Both consumers replay its exclusion using the actual return owners,

@@ -1,4 +1,6 @@
 import { retirementCreditWages2026 } from "./retirement-earned.ts";
+import { adoptionIncomeBridge2026Schema } from "./adoption-settlement.ts";
+import { adoptionCareIncome2026 } from "./adoption-care.ts";
 import { retirementSource2026Schema } from "./retirement-source.ts";
 import {
   careProvider2026Schema,
@@ -52,6 +54,7 @@ export const dependentCareClaim2026Schema = z.object({
     ordinary_w2_earnings_only: z.literal(true).optional(),
     business_inventory_reference: reference.optional(),
     retirement_inventory_reference: reference.optional(),
+    adoption_inventory_reference: reference.optional(),
     earned_income: careEarnedIncomeReview2026Schema,
     combat_pay_elections: careCombatElections2026Schema,
     prior_year_expenses: priorCarePayments2026Schema,
@@ -108,6 +111,7 @@ export const inputSchema = dependentCareClaim2026Schema.partial().extend({
   wage_sources: z.array(w2Item2026Schema).default([]),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
+  adoption_income_2026: adoptionIncomeBridge2026Schema.optional(),
   dep_care_benefits: money.optional(),
 }).strict();
 export type DependentCareInput2026 = z.input<typeof inputSchema>;
@@ -221,6 +225,18 @@ export function calculateDependentCareBenefits2026(
     taxpayer: { wages: 0, combat: 0, taxable_care: 0 },
     spouse: { wages: 0, combat: 0, taxable_care: 0 },
   };
+  const adoption = input.adoption_income_2026
+    ? adoptionCareIncome2026(
+      input.adoption_income_2026,
+      input,
+      input.wage_sources,
+      claim.adoption_inventory_reference,
+    )
+    : undefined;
+  if (adoption) {
+    annual.taxpayer.adoption_wage_adjustment = adoption.adjustments.taxpayer;
+    annual.spouse.adoption_wage_adjustment = adoption.adjustments.spouse;
+  }
   for (const row of disability?.owners ?? []) {
     if (row.wages > 0) {
       annual[row.owner].disability_wages_by_month = row.wages_by_month;
@@ -304,6 +320,9 @@ export function calculateDependentCareBenefits2026(
     );
   }
   if (mfs.spouse_earnings) annual.spouse = mfs.spouse_earnings;
+  if (adoption) {
+    annual.spouse.adoption_wage_adjustment = adoption.adjustments.spouse;
+  }
   const includeSpouseIncome = joint || mfs.spouse_earnings !== null;
   for (const person of people) {
     if (!person.spouse_incapacity_months) continue;
@@ -479,7 +498,9 @@ export function calculateDependentCareBenefits2026(
     benefits,
     lines,
     expected_wage_income: totalWages + lines.line26 +
-      (disability?.filed_wages ?? 0),
+      (disability?.filed_wages ?? 0) +
+      (adoption?.adoption.line1f_taxable_adoption_benefits ?? 0),
+    adoption_income_workpaper: adoption ?? null,
     retirement_earned_income_workpaper: disability ?? null,
     prior_year_worksheet: priorWorksheet,
     qualifying_person_workpaper: qualification,

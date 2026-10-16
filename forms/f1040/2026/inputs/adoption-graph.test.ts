@@ -118,11 +118,13 @@ Deno.test("2026 adoption without employer benefits works without wage sources", 
   assertEquals(p.f1040.line30_refundable_adoption, 5120);
   assertEquals(p.f1040.line20_nonrefundable_credits, 0);
 });
-Deno.test("2026 care accepts reconciled excluded benefits and rejects unresolved adoption wage adjustments", () => {
+Deno.test("2026 care reconciles excluded and taxable adoption benefits", () => {
   const input = adoptionGraphFixture2026(), care = dependentCareFixture2026();
   input.general.dependents[0].dob = care.general.dependents[0].dob;
   input.form8839.claim.children[0].date_of_birth =
     care.general.dependents[0].dob;
+  care.form2441.claim.adoption_inventory_reference =
+    input.form8839.claim.record_reference;
   const combined = { ...input, form2441: care.form2441 };
   complete(combined);
   input.form8839.claim.children[0].origin = "foreign";
@@ -130,11 +132,7 @@ Deno.test("2026 care accepts reconciled excluded benefits and rejects unresolved
     kind: "not_final",
     status_record_reference: "pending-foreign-adoption",
   };
-  assert(
-    run(combined).diagnostics.some((d) =>
-      d.message.includes("Form 2441 needs reconciliation")
-    ),
-  );
+  assertEquals(complete(combined).f1040.line1f_taxable_adoption_benefits, 4000);
 });
 Deno.test("2026 education preserves adult adoption claims and requires under-24 compensation reconciliation", () => {
   const input = adoptionGraphFixture2026(), education = educationFixture2026();

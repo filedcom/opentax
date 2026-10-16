@@ -1,4 +1,5 @@
 import { retirementSource2026Schema } from "../inputs/retirement-source.ts";
+import { adoptionIncomeBridge2026Schema } from "../inputs/adoption-settlement.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "../../../../core/types/tax-node.ts";
@@ -22,11 +23,42 @@ export const inputSchema = z.object({
   unsupported_earned_income_activity: z.boolean(),
   business_sources_2026: businessReturnSource2026Schema.optional(),
   retirement_sources_2026: retirementSource2026Schema.optional(),
+  adoption_income_2026: adoptionIncomeBridge2026Schema.optional(),
 }).strict();
 export type CareCreditInput2026 = z.input<typeof inputSchema>;
 export function calculateCareCredit2026(raw: CareCreditInput2026) {
   const input = inputSchema.parse(raw);
-  const benefit = calculateDependentCareBenefits2026(input.benefit_source);
+  const initial = calculateDependentCareBenefits2026(input.benefit_source);
+  if (
+    input.benefit_source.claim?.adoption_inventory_reference &&
+    !input.adoption_income_2026
+  ) {
+    throw Error("Care adoption review needs actual adoption income sources");
+  }
+  const monthly = input.benefit_source.claim?.earned_income;
+  if (
+    !input.adoption_income_2026 && monthly?.method === "monthly" &&
+    [monthly.taxpayer, monthly.spouse].some((o) =>
+      o &&
+      (o.adoption_allocation_review ||
+        o.months.some((m) => m.adoption_wage_adjustment !== undefined))
+    )
+  ) {
+    throw Error(
+      "Monthly care adoption allocation needs actual adoption income sources",
+    );
+  }
+  const benefit = input.adoption_income_2026 && input.benefit_source.claim
+    ? calculateDependentCareBenefits2026({
+      ...input.benefit_source,
+      adoption_income_2026: input.adoption_income_2026,
+    })
+    : initial;
+  if (benefit.lines?.line26 !== initial.lines?.line26) {
+    throw Error(
+      "Adoption changes the care-benefit exclusion; coordinated pre-AGI benefit settlement is required",
+    );
+  }
   if (!benefit.details) {
     return {
       source_input: input,

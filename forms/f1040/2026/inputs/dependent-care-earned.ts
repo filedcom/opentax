@@ -7,6 +7,10 @@ const ownerSchema = z.enum(["taxpayer", "spouse"]);
 export type CareOwner2026 = z.infer<typeof ownerSchema>;
 const monthlyOwnerSchema = z.object({
   record_reference: reference,
+  adoption_allocation_review: z.object({
+    record_reference: reference,
+    actual_months_of_adoption_wage_adjustment_reviewed: z.literal(true),
+  }).strict().optional(),
   business_allocation_review: z.object({
     record_reference: reference,
     actual_months_earned_and_se_deduction_allocation_reviewed: z.literal(true),
@@ -18,6 +22,7 @@ const monthlyOwnerSchema = z.object({
     z.object({
       month: z.number().int().min(1).max(12),
       w2_wages: money,
+      adoption_wage_adjustment: z.number().int().optional(),
       business: z.object({
         regular_net_profit: z.number().finite(),
         statutory_gross_income: money,
@@ -71,6 +76,7 @@ export type CareAnnualEarnings2026 = Record<CareOwner2026, {
   wages: number;
   combat: number;
   taxable_care: number;
+  adoption_wage_adjustment?: number;
   disability_wages_by_month?: number[];
   business?: {
     regular_net_profit: number;
@@ -141,6 +147,7 @@ export function calculateCareEarnedIncome2026(
         0,
         roundWholeDollars(
           annual[owner].wages + combat[owner] +
+            (annual[owner].adoption_wage_adjustment ?? 0) +
             (annual[owner].disability_wages_by_month?.reduce(
               (a, b) => a + b,
               0,
@@ -195,6 +202,19 @@ export function calculateCareEarnedIncome2026(
     const wages = months.reduce((n, m) => n + m.w2_wages, 0);
     const pay = months.reduce((n, m) => n + m.nontaxable_combat_pay, 0);
     const taxable = months.reduce((n, m) => n + m.taxable_care_benefits, 0);
+    const adoption = annual[owner].adoption_wage_adjustment;
+    if (
+      adoption !== undefined && (
+        months.reduce((n, m) => n + (m.adoption_wage_adjustment ?? 0), 0) !==
+          adoption ||
+        months.some((m) => (m.adoption_wage_adjustment ?? 0) !== 0) &&
+          !source.adoption_allocation_review
+      )
+    ) {
+      throw Error(
+        "Monthly care adoption wages need reviewed months matching the actual owner adjustment",
+      );
+    }
     const business = annual[owner].business;
     if (business) {
       if (
@@ -242,7 +262,9 @@ export function calculateCareEarnedIncome2026(
       owner,
       months.map((m) => ({
         month: m.month,
-        actual: m.w2_wages + (elected[owner] ? m.nontaxable_combat_pay : 0) +
+        actual: m.w2_wages +
+          (adoption !== undefined ? m.adoption_wage_adjustment ?? 0 : 0) +
+          (elected[owner] ? m.nontaxable_combat_pay : 0) +
           (annual[owner].disability_wages_by_month?.[m.month - 1] ?? 0) +
           (m.business
             ? m.business.regular_net_profit +
