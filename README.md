@@ -248,6 +248,7 @@ AI agents maintain the codebase:
 - Write node implementations
 - Generate test cases from official IRS exercises
 - Fix regressions
+- Prove each change with the harness before it ships
 
 All traced back to the authoritative IRS source.
 
@@ -257,11 +258,20 @@ All traced back to the authoritative IRS source.
 
 Requires [Deno](https://deno.land).
 
-```bash
-# Run tests
-deno task test
+Two CLIs, kept apart: `cli/main.ts` is the product, and the harness is what you
+use while building it. The harness is dev-only and documented in
+[scripts/testing/README.md](scripts/testing/README.md); agent instructions live
+in [AGENTS.md](AGENTS.md).
 
-# Run accuracy benchmark
+```bash
+# Prove a change before a pull request (what CI runs)
+deno task check:structure   # nodes placed, registered, reachable
+deno task check:cases       # benchmark cases fit their node schemas and cite a source
+deno task check:oracle      # expected values changed only with a cited ledger entry
+deno task test:unit         # module graph and typed tests
+
+# Run the full test suite and the accuracy benchmark
+deno task test
 deno task bench
 
 # Run the CLI in dev mode
@@ -298,7 +308,7 @@ Run this first. Shows pass/fail counts, pending root causes, and build phase for
 
 #### `/tax-fix [form:year]`
 
-Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates, and commits any net-positive improvements. Loops until all cases pass or progress stalls.
+Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates with the harness, and commits net-positive engine fixes only; benchmark cases are never edited to pass. Loops until all cases pass or progress stalls.
 
 ```
 /tax-fix f1040:2025
@@ -306,7 +316,7 @@ Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root
 
 #### `/tax-cases [source]`
 
-Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages). Run `/tax-fix` after to see how the engine performs on the new cases.
+Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages) and validates what it writes with `deno task check:cases`. Run `/tax-fix` after to see how the engine performs on the new cases.
 
 ```
 /tax-cases vita                            # VITA Pub 4491 training exercises

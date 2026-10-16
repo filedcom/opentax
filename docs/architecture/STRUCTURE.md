@@ -40,15 +40,18 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   ├── ats/ / releases/           # ATS correspondence drafts and release documents
 │   └── index.html / build/        # Existing static documentation site
 ├── scripts/
-│   ├── testing/                   # Typed validation harness and negative contracts
+│   ├── testing/                   # Harness: structure and oracle checks, test runner (see its README)
 │   ├── research/                  # PDF review generation and source checks
 │   ├── verification/              # Inventory verification
 │   ├── maintenance/               # Rule generation and independent source oracles
 │   ├── release/                   # Compiled binary checks
 │   └── site/                      # Static site statistics
 ├── benchmark/
-│   ├── run_benchmark.ts           # Archived expected-output comparison
+│   ├── run_benchmark.ts           # Expected-output comparison against IRS ground truth
 │   ├── run_case.ts / run_all.ts   # Individual and bulk case execution
+│   ├── check_cases.ts             # Case contract without running the engine
+│   ├── cases/baseline.json        # Known-invalid cases, with reason and expiry
+│   ├── cases/<form>/<year>/ledger.json # Every expected-value change, with its publication
 │   └── cases/<form>/<year>/<case>/ # Paired input, expected and retained output files
 ├── .state/                        # Existing state and retained private evidence
 └── .pdf-cache/                    # Existing downloaded form cache
