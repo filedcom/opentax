@@ -580,9 +580,9 @@ The owner calculation joins contribution capacity, ordinary/timely-return
 payments, prior excess and current/historical testing workpapers. Schedule 1
 receives deduction on line 13, distributions/testing income on 8f, and separately
 identified excess earnings/employer income on 8z. These amounts enter AGI before
-Social Security and Marketplace calculations. Taxable HSA income above the NIIT
-threshold still requires a section 1411 classification review; this increment
-does not silently assume it is excluded from net investment income.
+Social Security and Marketplace calculations. Form 8960 now replays the HSA
+source workpaper and reconciles its income and deduction with AGI using the
+classification described below.
 
 Qualified IRA funding is supplied to the actual retirement producer. Its complete
 statement, dated-payment and annual-basis inventories must reconcile with the HSA
@@ -705,6 +705,16 @@ repayments, postponed deadlines, and corrections involving additional changes
 remain source gaps. Unresolved classifications cannot be silently omitted from
 the return or treated as qualified medical reimbursements.
 
+## HSA income and NIIT
+
+The [Form 8960 source classification](FORM8960-GRAPH.md#hsa-source-classification-october-16)
+now replaces the above-threshold HSA guard. Actual HSA income remains in MAGI,
+with distribution, testing, employer and excess-earnings categories retained.
+The investment numerator and allocable expenses exclude these HSA amounts; the
+personal HSA deduction is not taken a second time. Single and joint returns,
+threshold crossings, payroll inclusions and the state-tax allocation are covered
+by source/return tests; draft Form 8960 checks the related Schedule 1 destinations.
+
 ## Required source integration
 
 1. Extend the reconciled account/W-2 bridge for employer recoveries, corrected
@@ -716,8 +726,8 @@ the return or treated as qualified medical reimbursements.
    remaining excess/medical branches, including reimbursed DPC fees.
 4. Extend prior-year excess, funding and recapture for remaining corrections and
    exceptions using actual contribution years; never relabel historical evidence.
-5. Resolve taxable HSA NIIT classification above the threshold, complete native
-   TY2026 MeF, reconcile current authorities and finish the full acceptance matrix.
+5. Complete native TY2026 MeF, reconcile current authorities and finish the full
+   acceptance matrix, including remaining HSA source branches.
 
 ## Build and acceptance order
 

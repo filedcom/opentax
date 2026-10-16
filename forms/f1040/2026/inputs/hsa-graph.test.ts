@@ -210,17 +210,16 @@ Deno.test("2026 HSA deduction and income feed Social Security and Marketplace MA
   });
   assertEquals(p.form8962.taxpayer_modified_agi, 60530);
 });
-Deno.test("2026 HSA NIIT classification is required only when taxable HSA income crosses the threshold", async () => {
+Deno.test("2026 HSA taxable income stays in MAGI above the NIIT threshold without becoming investment income", async () => {
   const g = hsaGraph2026();
   g.w2s[0].box1_wages = g.w2s[0].box5_medicare_wages = 201870;
   g.w2s[0].box6_medicare_withheld = 2927.12;
   assertEquals((await run(g)).f1040.line11b_agi, 200000);
   g.w2s[0].box1_wages++;
-  assert(
-    (await executeDraftSources2026(g)).diagnostics.some((d) =>
-      d.message.includes("section 1411")
-    ),
-  );
+  const p = await run(g);
+  assertEquals(p.f1040.line11b_agi, 200001);
+  assertEquals(p.form8960.file_form8960, true);
+  assertEquals(p.schedule2.line6_niit, 0);
 });
 Deno.test("2026 Form 1062 keeps HSA distribution, testing and excess tax outside deferred regular tax", () => {
   const h = hsaGraph2026(true);

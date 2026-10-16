@@ -5,6 +5,50 @@
 > implemented. See [the current investment contract](INVESTMENTS-CURRENT.md)
 > for the exact scope; the broader paths below remain the completion plan.
 
+## HSA source classification (October 16)
+
+The registered Form 8960 path now replays the complete executed HSA source
+workpaper. It requires the same return owners and exact agreement with the HSA
+income and deduction already included in AGI, including when MAGI is below the
+NIIT threshold. This replaces the former above-threshold HSA guard.
+
+Authority: [26 CFR 1.1411-3(b)(1)(iv)](https://www.ecfr.gov/current/title-26/section-1.1411-3)
+identifies exempt accounts, including section 223 HSAs;
+[26 CFR 1.1411-4(a), (e) and (f)](https://www.ecfr.gov/current/title-26/section-1.1411-4)
+defines investment income, trust pass-throughs and allocable deductions. The
+[2012 proposed-rule preamble, part 5.F, printed pages 72622–72623](https://www.govinfo.gov/content/pkg/FR-2012-12-05/pdf/2012-29238.pdf)
+explicitly explains the HSA distribution treatment. That preamble is historical
+explanatory material, not a final regulation. The implementation applies the
+current income definition to the source categories below; it does not rely on
+the HSA being one of the qualified retirement plans listed in section 1411(c)(5).
+
+| Reconciled source category | Retained NIIT treatment |
+| --- | --- |
+| Form 8889 line 16, ordinary taxable account distributions | Remains in MAGI; no look-through to investment income earned inside the exempt account. |
+| Earnings distributed with timely excess returns, Schedule 1 line 8z | Retained as account-distribution income in MAGI, outside the investment numerator. |
+| Employer excess not already included in W-2 wages, Schedule 1 line 8z | Compensation inclusion in MAGI, reconciled against actual payroll inclusions. |
+| Form 8889 line 20, contribution/qualified-funding testing recapture | Restores contribution or IRA-funding income in MAGI; it is not a new investment return. |
+| HSA deduction, Schedule 1 line 13 | Already reduces AGI/MAGI; no additional investment-expense deduction. |
+
+The workpaper retains the owner distribution/testing breakdown and separate
+earnings, employer income and deduction amounts. Actual bank interest and other
+investment sources still enter NII normally. The existing reasonable state-tax
+allocation uses the complete MAGI denominator and unchanged investment-income
+numerator. Shared 2025 NIIT arithmetic calculates the tax; the 2026 PDF replays
+sources and checks all four related Schedule 1 amounts plus Schedule 2 line 6.
+
+Validation: 554 distinct focused tax/source/PDF checks pass across the main run
+and corrected test rerun, including six new HSA NIIT source/return cases and two
+PDF cases. Single and joint owners, threshold crossings, testing recapture,
+employer wage inclusions, state-tax allocation and missing/stale sources are
+covered. Rendered threshold-limited and investment-limited drafts were inspected;
+their printed tax is $38 and $760 respectively, reconciled to Schedule 2.
+
+This route covers the currently supported ordinary owned HSA sources. Inherited
+accounts, prohibited transactions and other unsupported source categories remain
+rejected by their HSA workpapers. ABLE's separate classification guard, other
+investment routes, native MeF and final-source acceptance remain open.
+
 
 The pinned [2026 draft Form 8960](../corpus/draft/f8960.pdf), SHA-256
 `2306f4f334a8b3b1ed73fd5045dec86eed194902923462bf485431c756f66982`,

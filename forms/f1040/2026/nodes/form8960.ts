@@ -2,6 +2,10 @@ import {
   ableSource2026Schema,
   calculateAbleSources2026,
 } from "../inputs/able-source.ts";
+import {
+  calculateHsaReturnSources2026,
+  hsaReturnSource2026Schema,
+} from "../inputs/hsa-source.ts";
 import { landNiitExclusion2026 } from "../inputs/land-disposition-bridge.ts";
 import {
   calculateCapitalGains2026,
@@ -36,7 +40,9 @@ export const inputSchema = investmentOwner2026.extend({
   magi: z.number().finite().int().safe(),
   able_sources_2026: ableSource2026Schema.optional(),
   able_taxable_earnings_from_agi: money.default(0),
-  hsa_income_for_niit_review_from_agi: money.default(0),
+  hsa_sources_2026: hsaReturnSource2026Schema.optional(),
+  hsa_taxable_income_from_agi: money.default(0),
+  hsa_deduction_from_agi: money.default(0),
   foreign_earned_income_exclusion_from_agi: z.literal(0),
   other_niit_income_pending: z.literal(false),
   early_withdrawal_penalty_from_agi: money,
@@ -137,11 +143,45 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
       "Taxable ABLE earnings above the NIIT threshold need a reviewed section 1411 classification",
     );
   }
-  if (input.hsa_income_for_niit_review_from_agi > 0 && input.magi > limit) {
+  const hsa = input.hsa_sources_2026
+    ? calculateHsaReturnSources2026(input.hsa_sources_2026)
+    : undefined;
+  const hsaIncome = hsa
+    ? hsa.schedule1_line8f + hsa.schedule1_line8z_earnings +
+      hsa.schedule1_line8z_employer
+    : 0;
+  if (
+    hsaIncome !== input.hsa_taxable_income_from_agi ||
+    (hsa?.schedule1_line13 ?? 0) !== input.hsa_deduction_from_agi ||
+    hsa && (hsa.source_input.filing_status !== input.filing_status ||
+        hsa.source_input.taxpayer_ssn !== input.taxpayer_ssn ||
+        hsa.source_input.spouse_ssn !== input.spouse_ssn)
+  ) {
     throw Error(
-      "Taxable HSA income above the NIIT threshold needs a reviewed section 1411 classification",
+      "NIIT HSA sources must reconcile actual owners and AGI income and deduction",
     );
   }
+  // Sections 223(e)(1), 1.1411-3(b)(1)(iv) and 1.1411-4(a),(e): HSA
+  // account distributions are not investment-income pass-throughs. Returned
+  // excess earnings remain account distributions; testing-period inclusions
+  // restore contribution/IRA-funding income, and employer excess is compensation.
+  // These amounts affect MAGI, but do not enter the NII numerator. The personal
+  // HSA deduction is already in AGI and is not a second section 1411 deduction.
+  const hsaWorkpaper = hsa
+    ? {
+      owners: hsa.owners.map((o) => ({
+        owner_tin: o.owner_tin,
+        taxable_distributions: o.form8889.line16,
+        testing_period_income: o.form8889.line20,
+      })),
+      returned_excess_earnings: hsa.schedule1_line8z_earnings,
+      employer_excess_compensation: hsa.schedule1_line8z_employer,
+      income_already_in_magi: hsaIncome,
+      deduction_already_in_magi: hsa.schedule1_line13,
+      net_investment_income: 0,
+      additional_niit_deduction: 0,
+    }
+    : undefined;
   const gross = line1 + line2 + line5 + line5b;
   let line9b = 0;
   const taxes = input.schedule_a_tax_facts;
@@ -207,6 +247,7 @@ export function calculateForm8960_2026(raw: Form8960Input2026) {
   return {
     source_input: input,
     investment,
+    hsa_noninvestment_income_workpaper: hsaWorkpaper,
     land_exclusion_workpaper: landExclusion,
     shared_input: sharedInput,
     file_form8960: input.magi > limit,

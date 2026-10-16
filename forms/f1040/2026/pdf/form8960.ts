@@ -18,6 +18,10 @@ export interface Form8960Destinations2026 {
   form1040_line12e: number;
   schedule1_line18: number;
   schedule1_line4?: number;
+  schedule1_hsa_line8f?: number;
+  schedule1_hsa_excess_earnings?: number;
+  schedule1_hsa_excess_employer?: number;
+  schedule1_hsa_line13?: number;
   schedule_a_line5d?: number;
   schedule_a_line7?: number;
   schedule2_line6: number;
@@ -34,6 +38,7 @@ export async function buildForm8960PdfBytes2026(
     !filer.name.trim() || filer.ssn.replaceAll("-", "") !== input.taxpayer_ssn
   ) throw new Error("Form 8960 PDF needs matching filer identity");
   const d = destinations;
+  const h = result.hsa_noninvestment_income_workpaper;
   if (
     Object.values(d).some((n) => !Number.isSafeInteger(n)) ||
     d.form1040_line2b !== input.taxable_interest_from_agi ||
@@ -46,6 +51,16 @@ export async function buildForm8960PdfBytes2026(
     (input.capital_sources_2026?.land_sources_2026 !== undefined &&
       d.schedule1_line4 !== input.ordinary_disposition_gain_from_agi) ||
     d.schedule2_line6 !== result.tax ||
+    (h && (
+      d.schedule1_hsa_line8f !==
+        h.owners.reduce(
+          (n, o) => n + o.taxable_distributions + o.testing_period_income,
+          0,
+        ) ||
+      d.schedule1_hsa_excess_earnings !== h.returned_excess_earnings ||
+      d.schedule1_hsa_excess_employer !== h.employer_excess_compensation ||
+      d.schedule1_hsa_line13 !== h.deduction_already_in_magi
+    )) ||
     (input.schedule_a_tax_facts &&
       (d.schedule_a_line5d !==
           input.schedule_a_tax_facts.total_taxes_before_limit ||

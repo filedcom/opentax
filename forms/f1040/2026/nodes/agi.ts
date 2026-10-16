@@ -501,8 +501,9 @@ class Agi2026Node extends TaxNode<typeof inputSchema> {
             foreign_earned_income_exclusion_from_agi:
               input.line8d_foreign_earned_income_exclusion ?? 0,
             ...(able ? { able_sources_2026: able.source_input } : {}),
-            hsa_income_for_niit_review_from_agi:
-              (input.line8f_hsa_income ?? 0) +
+            ...(hsa ? { hsa_sources_2026: hsa.source_input } : {}),
+            hsa_deduction_from_agi: input.line13_hsa_deduction ?? 0,
+            hsa_taxable_income_from_agi: (input.line8f_hsa_income ?? 0) +
               (input.line8z_hsa_excess_earnings ?? 0) +
               (input.line8z_hsa_excess_employer ?? 0),
             able_taxable_earnings_from_agi:

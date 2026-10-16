@@ -837,6 +837,20 @@ export async function buildDraftReturnPdf2026(
           form1040_line11b: line("line11b_agi"),
           form1040_line12e: line("line12e_standard_or_itemized"),
           schedule1_line18: amount(p.schedule1, "line18_early_withdrawal"),
+          ...(niit.hsa_noninvestment_income_workpaper
+            ? {
+              schedule1_hsa_line8f: amount(p.schedule1, "line8f_hsa_income"),
+              schedule1_hsa_excess_earnings: amount(
+                p.schedule1,
+                "line8z_hsa_excess_earnings",
+              ),
+              schedule1_hsa_excess_employer: amount(
+                p.schedule1,
+                "line8z_hsa_excess_employer",
+              ),
+              schedule1_hsa_line13: amount(p.schedule1, "line13_hsa_deduction"),
+            }
+            : {}),
           ...(capital?.land
             ? { schedule1_line4: amount(p.schedule1, "line4_other_gains") }
             : {}),

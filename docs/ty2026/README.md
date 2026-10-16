@@ -460,9 +460,12 @@ actual debits to receipts and reconcile any corrected 1099-SA gross before
 annual settlement. They stay out of contribution totals and Form 8889 gross
 or rollover exclusions, without creating a new owner tax-form requirement.
 Basis-depleting/Roth funding, remaining rollover/excess withdrawals, broader
-historical corrections, advanced testing histories, taxable HSA NIIT
-classification above the threshold, native MeF and complete filing support
+historical corrections, advanced testing histories, native MeF and complete filing support
 remain in the implementation queue.
+Form 8960 now replays actual HSA sources: taxable distributions, returned excess
+earnings, employer excess and testing recapture remain in MAGI without becoming
+investment income. The HSA deduction is not deducted again from investment income;
+draft output checks the related Schedule 1 amounts and Schedule 2 tax.
 
 ## Version rule
 
