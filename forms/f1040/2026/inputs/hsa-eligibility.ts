@@ -1,4 +1,7 @@
-import { classifyHsaCoverage2026 } from "./hsa-plan-eligibility.ts";
+import {
+  classifyHsaCoverage2025History,
+  classifyHsaCoverage2026,
+} from "./hsa-plan-eligibility.ts";
 import { z } from "zod";
 import { CoverageType } from "../../nodes/intermediate/forms/adjustments/health/form8889/contribution-limit.ts";
 import {
@@ -100,9 +103,31 @@ export const hsaEligibility2026Schema = z.object({
 }).strict();
 export type HsaEligibility2026 = z.input<typeof hsaEligibility2026Schema>;
 
+/** Dated prior-year evidence only; never reinterpret a 2026 plan as 2025. */
+export const hsaEligibility2025HistorySchema = hsaEligibility2026Schema.extend({
+  tax_year: z.literal(2025),
+  reviewed_on: date.refine((d) => d >= "2026-01-01"),
+  plans: z.array(hsaHealthPlan2026Schema.options[0]).max(24),
+  direct_primary_care_arrangements: z.array(z.never()).max(0),
+}).strict();
+export function calculateHsaEligibility2025History(
+  raw: z.input<typeof hsaEligibility2025HistorySchema>,
+) {
+  return calculateEligibility(hsaEligibility2025HistorySchema.parse(raw));
+}
 export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
-  const input = hsaEligibility2026Schema.parse(raw);
-  if (input.owner_dob > "2026-12-31") {
+  return calculateEligibility(hsaEligibility2026Schema.parse(raw));
+}
+function calculateEligibility<
+  T extends
+    | HsaEligibility2026
+    | z.infer<typeof hsaEligibility2025HistorySchema>,
+>(input: T) {
+  const year = input.tax_year;
+  const classify = year === 2025
+    ? classifyHsaCoverage2025History
+    : classifyHsaCoverage2026;
+  if (input.owner_dob > `${year}-12-31`) {
     throw Error("HSA owner must be born by the tax year");
   }
   const planMap = new Map(
@@ -150,8 +175,9 @@ export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
     if (
       p.covered_owner_tin !== input.owner_tin ||
       p.effective_from > p.effective_through ||
-      p.effective_from > input.reviewed_on || p.effective_from > "2026-12-31" ||
-      p.effective_through < "2026-01-01"
+      p.effective_from > input.reviewed_on ||
+      p.effective_from > `${year}-12-31` ||
+      p.effective_through < `${year}-01-01`
     ) {
       throw Error(
         "HSA plan evidence needs the actual owner and an ordered coverage period",
@@ -160,7 +186,7 @@ export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
   }
   const months = [...input.months].sort((a, b) => a.month - b.month).map(
     (m) => {
-      const first = `2026-${String(m.month).padStart(2, "0")}-01`;
+      const first = `${year}-${String(m.month).padStart(2, "0")}-01`;
       if (
         new Set(m.plan_references).size !== m.plan_references.length ||
         new Set(m.direct_primary_care_references).size !==
@@ -233,7 +259,7 @@ export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
       return {
         month: m.month,
         first_day: first,
-        ...classifyHsaCoverage2026(
+        ...classify(
           plans,
           dpcs,
           input.can_be_claimed_as_dependent,
@@ -248,6 +274,6 @@ export function calculateHsaEligibility2026(raw: HsaEligibility2026) {
     source_input: input,
     months,
     eligible_hdhp_coverage_by_month: months.map((m) => m.eligible_coverage),
-    age_55_or_older: input.owner_dob <= "1972-01-01",
+    age_55_or_older: input.owner_dob <= `${year - 54}-01-01`,
   };
 }

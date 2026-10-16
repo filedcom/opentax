@@ -460,16 +460,57 @@ loss. Dated coverage and statutory monthly eligibility remain separate outputs. 
 remain pending through their actual 2027 end dates, not marked complete from a
 2026 review.
 
-This increment handles obligations originating in 2026 for living owners. It
-requires explicit reviewed absence of earlier testing obligations and rejects
-contradictory 2025 funding history. Actual 2025 contribution/election and testing
-records, death/inherited-account routes, public graph/PDF binding and MeF remain
-unfinished. The annual workpaper is still internal, not a public HSA input.
+Current-origin obligations cover living owners. The historical route below now
+adds ordinary 2025 last-month cash contributions; other earlier obligations still
+need their own source routes. Death/inherited-account routes, public graph/PDF
+binding and MeF remain unfinished. The annual workpaper is still internal, not
+a public HSA input.
 
 Validation: 426 focused HSA/IRA/retirement and 2025 source/MeF regressions pass,
 including 12 testing-period cases. The repository unit gate passes 137 checks
 with 3,828 graph modules and unchanged runtime. Formatting, lint and generated
 inventory checks pass. No public graph or PDF route is claimed by these checks.
+
+## Filed 2025 last-month histories
+
+`hsa-testing-history.ts` retains actual 2025 contracts, monthly enrollment,
+Medicare/other coverage, contribution receipts, election and filed owner forms.
+The pinned [2025 instructions](https://www.irs.gov/pub/irs-prior/i8889--2025.pdf)
+supply the historical HDHP parameters. The existing 2025 contribution constants
+and shared household-limit worksheet redetermine each owner's monthly capacity;
+2026 limits and the new bronze/DPC rules never relabel the earlier evidence.
+Earlier telehealth safe-harbor plan years remain recognized.
+
+Historical spouse eligibility determines deemed family coverage before allocation.
+Both account holders' filed forms and the agreed ratio reconcile to one family
+pool; separate filed-return references are retained when spouses filed separately.
+Catch-up age is evaluated in 2025, and source fractions remain exact until filed
+2026 recapture lines. Ordinary personal/employer cash receipts replay filed Part I
+lines 2–13. Duplicate transactions, missing owners, late or wrong-year receipts,
+stale filed records and incompatible limits stop the history calculation.
+
+The annual bridge requires either reviewed absence or a named history for each
+current owner. TIN/DOB and any retained prior Form 5329 filing reference must
+agree. Every 2026 payment designated for 2025 must match the current funding
+ledger's actual account, transaction, date, amount and contribution kind. An
+unreferenced or duplicate history cannot contribute income.
+
+A first ineligible month in 2026 activates the prior last-month exposure on line
+18. An uninterrupted period through December 2026 is marked completed, with no
+recapture or future obligation. Current IRA funding remains separately on line
+19; shared Part III arithmetic combines the filed lines once. Disability causation
+continues to use the current sourced physician/coverage review.
+
+This history route currently supports ordinary cash contributions with no Archer
+MSA or qualified IRA funding, excess-return/recovery or prior-excess deduction
+adjustments. Prior qualified-funding transfers, advanced historical corrections,
+legacy death/disability transitions and other unsupported coverage branches still
+need source integration. Public HSA return/PDF binding remains unfinished.
+
+Historical last-month validation: 436 focused HSA/IRA/retirement and 2025
+source/MeF tests pass, including 10 new prior-year history cases. The repository
+unit gate passes 137 checks, resolves 3,833 graph modules and confirms unchanged
+runtime. Formatting, lint and the generated inventory check pass.
 
 ## Required source integration
 

@@ -2448,6 +2448,16 @@
       "sha256": "e0559785860e0dccaeb50b62ea82ca97fa27cce0710342bff4d38dd7f09e1e10",
       "reviewed_on": "2026-10-16",
       "notes": "Notice 2008-51: qualified IRA-to-HSA funding distributions, lifetime and coverage-change limits, direct transfers, non-ongoing SEP/SIMPLE accounts and separate testing periods. Historical contribution limits and HSA distribution tax rates are not 2026 parameters."
+    },
+    {
+      "path": "authorities/i8889--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8889--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 216817,
+      "sha256": "da6f2f588b06f3f44cc7177883ce6496dc1bb247d84bc068a79277822410cb0f",
+      "reviewed_on": "2026-10-16",
+      "notes": "Filed 2025 HSA history for 2026 testing-period recapture: 2025 contribution and HDHP limits, spouse allocation and Part I lines. This is historical authority, not 2026 annual parameters."
     }
   ]
 }

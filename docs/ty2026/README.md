@@ -439,10 +439,13 @@ with sourced year-end/following-year account-value caps and separate spouse line
 Current-origin testing now reconciles dated coverage with monthly eligibility,
 tracks separate last-month and qualified-funding windows, checks disability
 causation, and retains
-pending 2027 obligations using shared Part III arithmetic.
+pending 2027 obligations using shared Part III arithmetic. Ordinary 2025
+last-month histories now replay historical eligibility, receipts, owner forms
+and spouse allocation, reconcile 2026 payments for 2025, and derive current
+recapture or completed testing periods.
 Basis-depleting/Roth funding, public retirement-income integration,
 remaining rollover/excess withdrawals, broader historical corrections,
-prior-origin testing histories, graph binding and complete Form 8889
+prior qualified-funding and advanced testing histories, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule

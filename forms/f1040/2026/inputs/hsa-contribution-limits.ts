@@ -1,10 +1,10 @@
+import { hsaHouseholdLimitAmounts } from "../../nodes/intermediate/forms/adjustments/health/form8889/household-limits.ts";
 import { z } from "zod";
 import {
   hsaContributionEvidence2026Schema,
   reconcileHsaContributionEvidence2026,
 } from "./hsa-household-eligibility.ts";
-import {
-  calculateHsaContributionLimit,
+import type {
   CoverageType as C,
 } from "../../nodes/intermediate/forms/adjustments/health/form8889/contribution-limit.ts";
 import { hsa2026 } from "../../nodes/config/2026-hsa.ts";
@@ -130,68 +130,17 @@ export function calculateHsaContributionLimits2026(
   const calculate = (
     coverage: (C | null)[][],
     split: z.input<typeof allocation> | undefined,
-  ) => {
-    const sharedMonths = paired
-      ? coverage[0].filter((c, m) =>
-        c === C.Family && coverage[1][m] === C.Family
-      ).length
-      : 0;
-    if (sharedMonths > 0 && !split) {
-      throw Error("HSA shared family months need the agreed allocation ratio");
-    } else if (sharedMonths === 0 && split) {
-      throw Error(
-        "HSA family allocation requires two account owners with shared eligible family months",
-      );
-    }
-    const denominator = split?.taxpayer_share.denominator ?? 1;
-    // One unit is 1/(1200 * denominator) dollars. Every monthly contribution
-    // and agreed allocation is integral in these units, so the existing
-    // worksheet's Math.round calls lose no precision.
-    const unitsPerDollar = 1200 * denominator;
-    const sharedUnits = hsa2026.familyLimit * 100 * sharedMonths * denominator;
-    const primaryUnits = hsa2026.familyLimit * 100 * sharedMonths *
-      (split?.taxpayer_share.numerator ?? 0);
-    const limits = h.owners.map((o, i) => {
-      if (!hasAccount[i]) return undefined;
-      const soleMonths = paired
-        ? coverage[i].filter((c, m) =>
-          c === C.Family && coverage[1 - i][m] !== C.Family
-        ).length
-        : 0;
-      return calculateHsaContributionLimit(
-        {
-          eligible_hdhp_coverage_by_month: coverage[i],
-          age_55_or_older: o.eligibility.age_55_or_older,
-          married_at_year_end: married,
-          spouse_has_separate_hsa: paired,
-          last_month_rule_elected: false,
-          monthly_limit_only: true,
-          archer_msa_contributions: 0,
-          ...(split
-            ? {
-              allocated_family_limit: i === 0
-                ? primaryUnits
-                : sharedUnits - primaryUnits,
-            }
-            : {}),
-        },
-        hsa2026.selfOnlyLimit * unitsPerDollar,
-        hsa2026.familyLimit * unitsPerDollar,
-        hsa2026.catchupLimit * unitsPerDollar,
-        split ? hsa2026.familyLimit * 100 * soleMonths * denominator : 0,
-      );
-    });
-    return {
-      shared_family_months: sharedMonths,
-      shared_family_limit: hsaExactAmount(sharedUnits, unitsPerDollar),
-      total_limit: hsaExactAmount(
-        limits.reduce((sum, owner) => sum + (owner?.line8 ?? 0), 0),
-        unitsPerDollar,
-      ),
-      units_per_dollar: unitsPerDollar,
-      limits,
-    };
-  };
+  ) =>
+    hsaHouseholdLimitAmounts(
+      coverage,
+      h.owners.map((o, i) => ({
+        hasAccount: hasAccount[i],
+        age55: o.eligibility.age_55_or_older,
+      })),
+      married,
+      split,
+      hsa2026,
+    );
   const current = calculate(elected, review.allocation);
   const baseline = lastMonth
     ? calculate(actual, review.monthly_baseline_allocation)

@@ -14,6 +14,58 @@ export function classifyHsaCoverage2026(
     HsaEligibility2026["months"][number]["other_coverage"]["disposition"],
   first: string,
 ) {
+  return classifyHsaCoverage(
+    plans,
+    dpcs,
+    canBeClaimedAsDependent,
+    medicareEnrolled,
+    otherCoverage,
+    first,
+    hsa2026,
+  );
+}
+export function classifyHsaCoverage2025History(
+  plans: HsaEligibility2026["plans"],
+  dpcs: HsaEligibility2026["direct_primary_care_arrangements"],
+  canBeClaimedAsDependent: boolean,
+  medicareEnrolled: boolean,
+  otherCoverage:
+    HsaEligibility2026["months"][number]["other_coverage"]["disposition"],
+  first: string,
+) {
+  if (plans.some((p) => p.kind !== "ordinary_health_plan") || dpcs.length) {
+    throw Error(
+      "2025 historical eligibility requires actual ordinary-plan terms, without 2026 bronze or direct-care relief",
+    );
+  }
+  return classifyHsaCoverage(
+    plans,
+    dpcs,
+    canBeClaimedAsDependent,
+    medicareEnrolled,
+    otherCoverage,
+    first,
+    {
+      minimumDeductible: { self_only: 1650, family: 3300 },
+      maximumOutOfPocket: { self_only: 8300, family: 16600 },
+      telehealthSafeHarborFrom: "2023-01-01",
+    },
+  );
+}
+function classifyHsaCoverage(
+  plans: HsaEligibility2026["plans"],
+  dpcs: HsaEligibility2026["direct_primary_care_arrangements"],
+  canBeClaimedAsDependent: boolean,
+  medicareEnrolled: boolean,
+  otherCoverage:
+    HsaEligibility2026["months"][number]["other_coverage"]["disposition"],
+  first: string,
+  rules: {
+    minimumDeductible: Record<CoverageType, number>;
+    maximumOutOfPocket: Record<CoverageType, number>;
+    telehealthSafeHarborFrom?: string;
+  },
+) {
   const planEligibility = plans.map((p) => {
     if (p.kind !== "ordinary_health_plan") {
       return {
@@ -36,15 +88,15 @@ export function classifyHsaCoverage2026(
         "HSA ordinary plan year or embedded deductible contradicts coverage",
       );
     }
-    const minimum = hsa2026.minimumDeductible[p.coverage];
+    const minimum = rules.minimumDeductible[p.coverage];
     const qualified = p.annual_deductible >= minimum &&
       p.annual_out_of_pocket_maximum <=
-        hsa2026.maximumOutOfPocket[p.coverage] &&
+        rules.maximumOutOfPocket[p.coverage] &&
       (p.embedded_individual_deductible === null ||
         p.embedded_individual_deductible >= minimum) &&
       !p.nonpermitted_benefits_before_minimum_deductible &&
       (!p.telehealth_or_remote_care_before_deductible ||
-        p.plan_year_begins >= "2025-01-01");
+        p.plan_year_begins >= (rules.telehealthSafeHarborFrom ?? "2025-01-01"));
     return {
       source_reference: p.source_document_reference,
       coverage: p.coverage,
