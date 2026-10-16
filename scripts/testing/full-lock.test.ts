@@ -10,7 +10,8 @@ test("full regression lock refuses a concurrent owner and foreign release", asyn
   await acquireFullRunLock(path, owner);
   await assertRejects(
     () => acquireFullRunLock(path, { ...owner, evidence: "second" }),
-    Deno.errors.AlreadyExists,
+    Error,
+      "EEXIST",
   );
   await assertRejects(
     () => releaseFullRunLock(path, { ...owner, evidence: "second" }),

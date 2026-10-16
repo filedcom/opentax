@@ -139,7 +139,7 @@ test("durable Form 8582 candidates preserve original characters and private sour
           "<TotalLossesAllowedAmt>",
         ),
       );
-      if (Deno.build.os !== "windows") {
+      if (process.platform !== "win32") {
         for (const directory of [root, path]) {
           assertEquals((await sys.stat(directory)).mode! & 0o777, 0o700);
         }

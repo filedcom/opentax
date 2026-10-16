@@ -1413,17 +1413,14 @@ test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remain
       const documents = [];
       for (const [index, document] of actualRecords.entries()) {
         const filename = `document-${index}.bin`;
-        const file = await Deno.open(`${directory}/${filename}`, {
-          write: true,
-          createNew: true,
-        });
+        const file = await fs.open(`${directory}/${filename}`, "wx");
         try {
           let offset = 0;
           while (offset < document.bytes.length) {
-            offset += await file.write(document.bytes.subarray(offset));
+            offset += (await file.write(document.bytes.subarray(offset))).bytesWritten;
           }
         } finally {
-          file.close();
+          await file.close();
         }
         documents.push({
           reference: document.reference,
@@ -1433,10 +1430,7 @@ test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remain
           )!.sha256,
         });
       }
-      const file = await Deno.open(`${directory}/source.json`, {
-        write: true,
-        createNew: true,
-      });
+      const file = await fs.open(`${directory}/source.json`, "wx");
       try {
         const bytes = new TextEncoder().encode(
           JSON.stringify(
@@ -1458,10 +1452,10 @@ test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but remain
         );
         let offset = 0;
         while (offset < bytes.length) {
-          offset += await file.write(bytes.subarray(offset));
+          offset += (await file.write(bytes.subarray(offset))).bytesWritten;
         }
       } finally {
-        file.close();
+        await file.close();
       }
     }
   }

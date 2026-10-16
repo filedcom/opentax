@@ -71,12 +71,8 @@ for (
       if (scenario === "missing-case") {
         await fs.mkdir(join(caseRoot, "2025", "incomplete"));
       }
-      const { code, stdout, stderr } = await new sys.Command("deno", {
+      const { code, stdout, stderr } = await new sys.Command(process.execPath, {
         args: [
-          "run",
-          "--allow-read",
-          "--allow-write",
-          "--allow-run=deno",
           join(root, "run_benchmark.ts"),
           "--form",
           form,

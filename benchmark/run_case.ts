@@ -8,13 +8,10 @@ import * as fs from "node:fs/promises";
 import { basename, dirname, fromFileUrl, join } from "@std/path";
 
 import {
-  benchmarkExitCode,
-  benchmarkExpectedSchema,
   benchmarkInputSchema,
   benchmarkReturnSchema,
   benchmarkTax,
   createdReturnSchema,
-  discoverBenchmarkCases,
 } from "./harness.ts";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));

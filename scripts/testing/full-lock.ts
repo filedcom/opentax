@@ -13,17 +13,11 @@ export async function acquireFullRunLock(
   path: string,
   owner: Owner,
 ): Promise<void> {
-  const file = await Deno.open(path, {
-    write: true,
-    createNew: true,
-    mode: 0o600,
-  });
+  const file = await fs.open(path, "wx", 0o600);
   try {
-    await file.write(
-      new TextEncoder().encode(JSON.stringify(ownerSchema.parse(owner))),
-    );
+    await file.writeFile(JSON.stringify(ownerSchema.parse(owner)));
   } finally {
-    file.close();
+    await file.close();
   }
 }
 

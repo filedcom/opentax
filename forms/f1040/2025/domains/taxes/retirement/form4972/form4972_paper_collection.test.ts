@@ -141,11 +141,8 @@ test("CLI paper export emits no XML and ordinary MeF still rejects the same stor
     );
     const main = fromFileUrl(new URL("../../../../../../../cli/main.ts", import.meta.url));
     const command = (type: string) =>
-      new sys.Command("deno", {
+      new sys.Command(process.execPath, {
         args: [
-          "run",
-          "-A",
-          "--no-check",
           main,
           "return",
           "export",

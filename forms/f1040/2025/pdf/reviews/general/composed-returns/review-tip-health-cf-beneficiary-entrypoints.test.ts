@@ -25,7 +25,7 @@ for (
       }
       console.log('eighteen retained packets ready');`;
     const result = await new sys.Command(process.execPath, {
-      args: ["eval", code],
+      args: ["--eval", code],
       stdout: "piped",
       stderr: "piped",
     }).output();

@@ -154,7 +154,7 @@ export async function updateCommand(): Promise<void> {
   try {
     await writeFile(
       tmpPath,
-      Readable.fromWeb(resp.body as NodeReadableStream<Uint8Array>),
+      Readable.fromWeb(resp.body as unknown as NodeReadableStream<Uint8Array>),
       { mode: 0o755 },
     );
   } catch (err) {

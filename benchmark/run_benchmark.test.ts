@@ -120,12 +120,8 @@ test("run_benchmark exits nonzero for an empty runnable case set", async () => {
   const casesDir = join("benchmark", "cases", form, "2025");
   await fs.mkdir(casesDir, { recursive: true });
   try {
-    const command = new sys.Command("deno", {
+    const command = new sys.Command(process.execPath, {
       args: [
-        "run",
-        "--allow-read=benchmark",
-        "--allow-write=benchmark",
-        "--allow-run=deno",
         "benchmark/run_benchmark.ts",
         "--form",
         form,

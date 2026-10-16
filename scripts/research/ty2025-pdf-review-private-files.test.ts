@@ -26,7 +26,7 @@ test("PDF review artifacts use private permissions and refuse overwrite", async 
     const templatePath = join(cacheDirectory, "irs.pdf");
     await sys.writeText(templatePath, "%PDF-test", { mode: 0o644 });
     await makeReviewCacheFilesPrivate(cacheDirectory);
-    if (Deno.build.os !== "windows") {
+    if (process.platform !== "win32") {
       assertEquals((await sys.stat(directory)).mode! & 0o777, 0o700);
       assertEquals(
         (await sys.stat(join(directory, "filled.pdf"))).mode! & 0o777,

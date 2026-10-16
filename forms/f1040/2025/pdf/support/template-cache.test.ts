@@ -43,7 +43,8 @@ test("pinned template rejects changed download without caching it", async () => 
     );
     await assertRejects(
       () => sys.stat(`${cache}/${fileName}`),
-      Deno.errors.NotFound,
+      Error,
+      "ENOENT",
     );
     await assertRejects(
       () => loadPdfTemplate(url, cache, "bad"),

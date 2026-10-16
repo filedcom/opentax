@@ -139,7 +139,8 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
       () => exportForm8886OtsaCommand({ ...args, force: false }),
       ExportRejectedError,
     );
-    await assertRejects(() => sys.stat(args.outputDir), Deno.errors.NotFound);
+    await assertRejects(() => sys.stat(args.outputDir), Error,
+      "ENOENT");
     const result = await exportForm8886OtsaCommand(args);
     assertEquals(result.delivered, false);
     const manifestText = await fs.readFile(result.manifestPath, "utf8");
@@ -184,7 +185,8 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
     );
     await assertRejects(
       () => exportForm8886OtsaCommand(args),
-      Deno.errors.AlreadyExists,
+      Error,
+      "EEXIST",
     );
     assertEquals(await fs.readFile(result.manifestPath, "utf8"), manifestText);
     await assertRejects(
@@ -241,7 +243,8 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
     assertEquals(await fs.readFile(result.manifestPath, "utf8"), manifestText);
     await assertRejects(
       () => recordForm8886OtsaDeliveryCommand(deliveryArgs),
-      Deno.errors.AlreadyExists,
+      Error,
+      "EEXIST",
     );
     assertEquals(
       await fs.readFile(receiptResult.receiptPath, "utf8"),
@@ -280,7 +283,8 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
       );
       await assertRejects(
         () => sys.stat(rejectedArgs.outputDir),
-        Deno.errors.NotFound,
+        Error,
+      "ENOENT",
       );
     }
     await fs.writeFile(recordPath, JSON.stringify(deliveryRequest));
@@ -314,11 +318,13 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
     await fs.writeFile(requestsPath, JSON.stringify(requests));
     await assertRejects(
       () => sys.stat(rejectedArgs.outputDir),
-      Deno.errors.NotFound,
+      Error,
+      "ENOENT",
     );
     await assertRejects(
       () => sys.stat(rejectedArgs.outputDir),
-      Deno.errors.NotFound,
+      Error,
+      "ENOENT",
     );
     await fs.writeFile(
       requestsPath,
@@ -335,7 +341,8 @@ test("OTSA command writes separate owned copies with matching hashes and preserv
     );
     await assertRejects(
       () => sys.stat(join(dir, "incomplete")),
-      Deno.errors.NotFound,
+      Error,
+      "ENOENT",
     );
   } finally {
     await sys.remove(dir, { recursive: true });

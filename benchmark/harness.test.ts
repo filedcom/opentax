@@ -71,10 +71,10 @@ test("benchmark rejects missing expected results, nonfinite ground truth and zer
 });
 
 test("benchmark refuses valid-looking stdout from failed child process", async () => {
-  const result = await new sys.Command("deno", {
+  const result = await new sys.Command(process.execPath, {
     args: [
-      "eval",
-      'console.log("{\\"returnId\\":\\"pretend\\"}"); Deno.exit(7);',
+      "--eval",
+      'console.log("{\\"returnId\\":\\"pretend\\"}"); process.exit(7);',
     ],
     stdout: "piped",
     stderr: "piped",

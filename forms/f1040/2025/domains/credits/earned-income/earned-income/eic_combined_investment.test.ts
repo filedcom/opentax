@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { combinedInvestmentInputs } from "./eic_combined_investment.fixture.ts";
@@ -49,11 +50,7 @@ test("combined investment categories calculate the EIC boundary but keep the unr
     );
     if (artifactRoot) {
       const path = `${artifactRoot}/combined-${above ? 11951 : 11950}.json`;
-      const handle = await Deno.open(path, {
-        write: true,
-        createNew: true,
-        mode: 0o600,
-      });
+      const handle = await fs.open(path, "wx", 0o600);
       try {
         await handle.write(new TextEncoder().encode(JSON.stringify(
           {
@@ -76,7 +73,7 @@ test("combined investment categories calculate the EIC boundary but keep the unr
           2,
         )));
       } finally {
-        handle.close();
+        await handle.close();
       }
     }
   }

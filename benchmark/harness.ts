@@ -335,11 +335,8 @@ export async function benchmarkTax(
   taxDirectory: string,
   args: string[],
 ): Promise<string> {
-  const result = await new sys.Command("deno", {
+  const result = await new sys.Command(process.execPath, {
     args: [
-      "run",
-      "--allow-read",
-      "--allow-write",
       join(taxDirectory, "cli/main.ts"),
       ...args,
     ],

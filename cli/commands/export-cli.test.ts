@@ -8,14 +8,8 @@ test("CLI force and draft cannot export an empty return with invented identity",
   const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
-    new sys.Command("deno", {
+    new sys.Command(process.execPath, {
       args: [
-        "run",
-        "--frozen",
-        "--cached-only",
-        "--allow-read",
-        "--allow-write",
-        "--allow-net=www.irs.gov",
         main,
         ...args,
       ],
@@ -67,14 +61,8 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
   const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
-    new sys.Command("deno", {
+    new sys.Command(process.execPath, {
       args: [
-        "run",
-        "--frozen",
-        "--cached-only",
-        "--allow-read",
-        "--allow-write",
-        "--allow-net=www.irs.gov",
         main,
         ...args,
       ],

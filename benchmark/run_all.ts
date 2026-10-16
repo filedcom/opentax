@@ -6,11 +6,10 @@ import * as sys from "../scripts/support/sys.ts";
  * Run: deno run --allow-read --allow-write --allow-run benchmark/run_all.ts
  */
 
-import { basename, dirname, fromFileUrl, join } from "@std/path";
+import { dirname, fromFileUrl, join } from "@std/path";
 
 import {
   benchmarkExitCode,
-  benchmarkExpectedSchema,
   benchmarkInputSchema,
   benchmarkReturnSchema,
   benchmarkTax,

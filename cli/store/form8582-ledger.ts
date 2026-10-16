@@ -1,5 +1,4 @@
 import * as fs from "node:fs/promises";
-import * as sys from "../../scripts/support/sys.ts";
 import { join } from "@std/path";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
@@ -11,6 +10,10 @@ import {
 } from "../../forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts";
 import { singletonPublicInputKeys } from "./public-input-keys.ts";
 import { buildEngineInputs, loadReturn } from "./store.ts";
+
+async function readBytes(path: string): Promise<Uint8Array> {
+  return new Uint8Array(await fs.readFile(path));
+}
 
 const candidateSchema = z.object({
   recordVersion: z.literal(1),
@@ -76,15 +79,11 @@ async function calculateCandidate(
 }
 
 async function writeSynced(path: string, bytes: Uint8Array) {
-  const file = await Deno.open(path, {
-    createNew: true,
-    write: true,
-    mode: 0o600,
-  });
+  const file = await fs.open(path, "wx", 0o600);
   try {
     let offset = 0;
     while (offset < bytes.length) {
-      const count = await file.write(bytes.subarray(offset));
+      const count = (await file.write(bytes.subarray(offset))).bytesWritten;
       if (count === 0) {
         throw new Error("Form 8582 snapshot write made no progress");
       }
@@ -92,7 +91,7 @@ async function writeSynced(path: string, bytes: Uint8Array) {
     }
     await file.sync();
   } finally {
-    file.close();
+    await file.close();
   }
 }
 
@@ -126,7 +125,7 @@ export async function archiveForm8582LedgerCandidate(
     );
     await fs.rename(staging, join(root, data.record.recordId));
   } catch (error) {
-    await sys.remove(staging, { recursive: true }).catch(() => {});
+    await fs.rm(staging, { recursive: true }).catch(() => {});
     throw error;
   }
   return data.record;
@@ -147,8 +146,8 @@ export async function readForm8582LedgerCandidate(
   const stored = candidateSchema.parse(
     JSON.parse(await fs.readFile(join(path, "record.json"), "utf8")),
   );
-  const sourceBytes = await sys.readBytes(join(path, "source.json"));
-  const xmlBytes = await sys.readBytes(join(path, "form8582.xml"));
+  const sourceBytes = await readBytes(join(path, "source.json"));
+  const xmlBytes = await readBytes(join(path, "form8582.xml"));
   const expected = await calculateCandidate(
     returnPath,
     recordId,

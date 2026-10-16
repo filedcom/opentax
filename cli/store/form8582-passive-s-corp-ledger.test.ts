@@ -130,7 +130,7 @@ for (
       before,
     );
     for (const file of ["source.json", "form8582.xml", "record.json"]) {
-      if (Deno.build.os !== "windows") {
+      if (process.platform !== "win32") {
         assertEquals((await sys.stat(join(path, file))).mode! & 0o777, 0o600);
       }
     }
