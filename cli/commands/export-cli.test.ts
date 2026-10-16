@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { fromFileUrl } from "@std/path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 test("CLI force and draft cannot export an empty return with invented identity", async () => {
   const cwd = await sys.makeTempDir();

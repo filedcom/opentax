@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Generate only synthetic filled PDFs for the held, single full validation batch. */
-import { join, resolve } from "@std/path";
+import { join, resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import {

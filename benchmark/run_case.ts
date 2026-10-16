@@ -5,7 +5,8 @@ import * as fs from "node:fs/promises";
  * Usage: deno run --allow-read --allow-write --allow-run benchmark/run_case.ts <case_dir>
  */
 
-import { basename, dirname, fromFileUrl, join } from "@std/path";
+import { basename, dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 import {
   benchmarkInputSchema,

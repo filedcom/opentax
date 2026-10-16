@@ -2,7 +2,8 @@ import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Exact-discovery verification; full runs require exclusive ownership and no skips. */
 import { availableParallelism } from "node:os";
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 import {
   assertRuntimeUnchanged,
   assertTestInventory,

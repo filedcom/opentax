@@ -6,7 +6,7 @@ import {
   assertNotEquals,
   assertStringIncludes,
 } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";

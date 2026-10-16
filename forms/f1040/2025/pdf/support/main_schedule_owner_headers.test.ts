@@ -7,7 +7,7 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { fillFormPdf } from "../builder.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { returnHeaderNameLine1 } from "../../../mef/header.ts";

@@ -1,5 +1,5 @@
 import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
-import { join } from "@std/path";
+import { join } from "node:path";
 import type {
   Form8990CalculatedWorkpaperRecord,
   InputsJson,

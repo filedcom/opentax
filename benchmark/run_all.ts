@@ -6,7 +6,8 @@ import * as sys from "../scripts/support/sys.ts";
  * Run: deno run --allow-read --allow-write --allow-run benchmark/run_all.ts
  */
 
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 import {
   benchmarkExitCode,

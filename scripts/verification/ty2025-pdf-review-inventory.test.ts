@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 import { assertRejects } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { assertReviewArtifactInventory } from "./ty2025-pdf-review-inventory.ts";
 
 test("review packet inventory rejects unlisted and missing artifacts", async () => {

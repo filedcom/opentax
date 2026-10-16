@@ -1,5 +1,5 @@
 import * as sys from "../support/sys.ts";
-import { join } from "@std/path";
+import { join } from "node:path";
 
 /** Require the generated review packet to contain exactly its declared artifacts. */
 export async function assertReviewArtifactInventory(

@@ -5,7 +5,8 @@
  * publication. Known-invalid cases listed in benchmark/cases/baseline.json are
  * allowed until their entry expires; every other problem fails.
  */
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 import {
   applyCaseBaseline,
   inspectBenchmarkCases,

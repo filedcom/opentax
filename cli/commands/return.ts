@@ -1,4 +1,4 @@
-import { join } from "@std/path";
+import { join } from "node:path";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 import { singletonPublicInputKeys } from "../store/public-input-keys.ts";

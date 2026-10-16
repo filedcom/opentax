@@ -7,7 +7,7 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
 import { appendSchedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";

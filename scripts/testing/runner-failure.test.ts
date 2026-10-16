@@ -3,7 +3,8 @@ import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 import { z } from "zod";
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 test("runner retains terminal failure when a tracked runtime file is missing before discovery", async () => {
   const root = await sys.makeTempDir();

@@ -1,5 +1,5 @@
 import { lstat, readFile } from "node:fs/promises";
-import { join } from "@std/path";
+import { join } from "node:path";
 import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 import { parsePublicForm8839Source } from "../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 

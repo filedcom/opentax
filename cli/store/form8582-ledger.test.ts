@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../scripts/support/sys.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { passivePropertyInputs } from "../../forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
 import { reconcileForm8582NextYearOpening } from "../../forms/f1040/nodes/intermediate/forms/income/business/form8582/next_year_import.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";

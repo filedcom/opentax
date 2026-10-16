@@ -1,4 +1,4 @@
-import { join } from "@std/path";
+import { join } from "node:path";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import {

@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import {
   applyCaseBaseline,
   benchmarkExitCode,

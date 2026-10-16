@@ -7,7 +7,7 @@ import {
   assertRejects,
   assertThrows,
 } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { buildPdfBytes, fillFormPdf } from "../../../builder.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";

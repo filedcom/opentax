@@ -2,7 +2,8 @@
  * One-shot codemod for the Deno-to-Bun migration. Rewrites every `Deno.*`
  * use in the given TypeScript files into `bun:test`, `node:` built-ins, the
  * global `process`, or `scripts/support/sys.ts` (for the few calls whose Deno
- * semantics have no 1:1 `node:` form). Anything it does not recognise is
+ * semantics have no 1:1 `node:` form), and `@std/path` imports into
+ * `node:path` and `node:url`. Anything it does not recognise is
  * reported and left untouched, so the run fails loudly instead of guessing.
  *
  * Usage: bun scripts/maintenance/deno-to-bun-codemod.ts [--check] <file.ts...>
@@ -368,6 +369,50 @@ function importLines(file: string, needs: Needs, names: Names): string {
   return lines.join("\n");
 }
 
+/**
+ * `@std/path` resolves relative paths with `Deno.cwd()`, so its imports move
+ * to `node:path` and `node:url` under the same local names; call sites stay.
+ */
+const NODE_URL_NAMES: Record<string, string> = {
+  fromFileUrl: "fileURLToPath",
+  toFileUrl: "pathToFileURL",
+};
+
+function stdPathImports(source: ts.SourceFile): Edit[] {
+  const out: Edit[] = [];
+  for (const statement of source.statements) {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      (statement.moduleSpecifier as ts.StringLiteral).text !== "@std/path"
+    ) continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (!bindings || !ts.isNamedImports(bindings)) continue;
+    const typeOnly = statement.importClause!.isTypeOnly ? "type " : "";
+    const path: string[] = [];
+    const url: string[] = [];
+    for (const element of bindings.elements) {
+      const imported = (element.propertyName ?? element.name).text;
+      const local = element.name.text;
+      const node = NODE_URL_NAMES[imported];
+      if (node) url.push(node === local ? node : `${node} as ${local}`);
+      else path.push(imported === local ? local : `${imported} as ${local}`);
+    }
+    const lines = [];
+    if (path.length) {
+      lines.push(`import ${typeOnly}{ ${path.join(", ")} } from "node:path";`);
+    }
+    if (url.length) {
+      lines.push(`import ${typeOnly}{ ${url.join(", ")} } from "node:url";`);
+    }
+    out.push({
+      start: statement.getStart(),
+      end: statement.getEnd(),
+      text: lines.join("\n"),
+    });
+  }
+  return out;
+}
+
 /** One pass: outermost Deno uses only; nested ones are rewritten next pass. */
 function pass(file: string, text: string) {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
@@ -381,6 +426,7 @@ function pass(file: string, text: string) {
   };
   const needs: Needs = { fs: false, fsSync: false, sys: false, test: false };
   const found = edits(source, needs, names);
+  found.edits.push(...stdPathImports(source));
   // Imports added by an earlier pass are reused, not added twice.
   for (const key of Object.keys(needs) as (keyof Needs)[]) {
     if (existing[key]) needs[key] = false;

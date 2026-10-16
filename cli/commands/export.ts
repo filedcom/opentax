@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";

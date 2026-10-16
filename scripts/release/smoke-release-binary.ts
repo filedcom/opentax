@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Exercise a compiled release asset with a synthetic TY2025 W-2 return. */
 import { smokeCompletedIssue77, smokeIssue77 } from "./smoke-issue77.ts";
-import { join, resolve } from "@std/path";
+import { join, resolve } from "node:path";
 import {
   decodePDFRawStream,
   PDFArray,

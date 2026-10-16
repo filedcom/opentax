@@ -1,5 +1,5 @@
 import * as fs from "node:fs/promises";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { unzipSync } from "fflate";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { z } from "zod";

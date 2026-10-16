@@ -1,4 +1,4 @@
-import { join } from "@std/path";
+import { join } from "node:path";
 import { z } from "zod";
 import { catalog } from "../../catalog.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";

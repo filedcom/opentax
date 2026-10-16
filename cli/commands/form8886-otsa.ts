@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
-import { dirname, join } from "@std/path";
+import { dirname, join } from "node:path";
 import {
   emittedValidationScope,
   type ExportReturnArgs,

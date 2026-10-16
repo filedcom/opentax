@@ -2,7 +2,8 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 const root = dirname(fromFileUrl(import.meta.url));
 const validForms = [

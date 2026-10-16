@@ -1,7 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Structure contract: where tax nodes live, and that every node is registered and reachable. */
-import { dirname, fromFileUrl, join, toFileUrl } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl, pathToFileURL as toFileUrl } from "node:url";
 import { z } from "zod";
 import { TaxNode } from "../../core/types/tax-node.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";

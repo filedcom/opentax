@@ -1,5 +1,5 @@
 import * as sys from "../support/sys.ts";
-import { basename, dirname, join } from "@std/path";
+import { basename, dirname, join } from "node:path";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 /** Reviewed local TY2025 v5.4 bytes; these are not IRS-issued digests. */

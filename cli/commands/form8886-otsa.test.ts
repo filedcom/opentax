@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../scripts/support/sys.ts";
 import { ExportRejectedError } from "./export.ts";
 import { assertEquals, assertRejects } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import {
   exportForm8886OtsaCommand,

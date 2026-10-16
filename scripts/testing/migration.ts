@@ -8,7 +8,8 @@ import {
   assertPrerequisiteGuardPatch,
   prerequisiteGuardSchema,
 } from "./migration-guards.ts";
-import { dirname, fromFileUrl, join, normalize, toFileUrl } from "@std/path";
+import { dirname, join, normalize } from "node:path";
+import { fileURLToPath as fromFileUrl, pathToFileURL as toFileUrl } from "node:url";
 import {
   assertHealthyModuleGraph,
   assertTestInventory,

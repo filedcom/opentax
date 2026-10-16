@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand } from "./return.ts";
 import { validateReturnCommand } from "./validate.ts";

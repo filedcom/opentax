@@ -1,6 +1,7 @@
 import * as sys from "../support/sys.ts";
 import { readFileSync } from "node:fs";
-import { dirname, join, toFileUrl } from "@std/path";
+import { dirname, join } from "node:path";
+import { pathToFileURL as toFileUrl } from "node:url";
 import {
   assertGraphCoverage,
   assertHealthyModuleGraph,

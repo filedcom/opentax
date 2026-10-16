@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../scripts/support/sys.ts";
-import { basename, dirname, join, relative } from "@std/path";
+import { basename, dirname, join, relative } from "node:path";
 import { z } from "zod";
 import { catalog } from "../catalog.ts";
 import type { FormDefinition } from "../core/types/form-definition.ts";

@@ -1,6 +1,7 @@
 import { test } from "bun:test";
 import { assert, assertEquals } from "@std/assert";
-import { dirname, fromFileUrl } from "@std/path";
+import { dirname } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 import { z } from "zod";
 import { TaxNode } from "../../core/types/tax-node.ts";
 import { OutputNodes } from "../../core/types/output-nodes.ts";

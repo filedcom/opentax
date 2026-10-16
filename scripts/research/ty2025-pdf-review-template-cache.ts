@@ -1,5 +1,5 @@
 import * as sys from "../support/sys.ts";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 export interface ReviewTemplateCacheEntry {

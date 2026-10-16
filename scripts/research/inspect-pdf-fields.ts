@@ -14,8 +14,7 @@ import * as sys from "../support/sys.ts";
  */
 
 import { PDFDocument } from "pdf-lib";
-import { ensureDir } from "@std/fs";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { ALL_PDF_FORMS } from "../../forms/f1040/2025/pdf/forms/index.ts";
 import type { PdfFormDescriptor } from "../../forms/f1040/2025/pdf/review-support/form-descriptor.ts";
 
@@ -191,8 +190,8 @@ async function inspectForm(
 }
 
 async function main() {
-  await ensureDir(CACHE_DIR);
-  await ensureDir(DUMP_DIR);
+  await fs.mkdir(CACHE_DIR, { recursive: true });
+  await fs.mkdir(DUMP_DIR, { recursive: true });
 
   const results: Array<FormDump & { error?: string }> = [];
   let formsWithMissing = 0;

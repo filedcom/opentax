@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import {
   assertReviewTemplateCacheEvidence,
   reviewTemplateCacheEvidence,

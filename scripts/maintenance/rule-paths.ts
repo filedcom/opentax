@@ -1,4 +1,4 @@
-import { dirname, relative } from "@std/path";
+import { dirname, relative } from "node:path";
 
 /** Stable source rule IDs mapped to their semantic storage folders. */
 const paths = new Map<string, string>([

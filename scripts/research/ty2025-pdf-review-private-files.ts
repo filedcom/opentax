@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
-import { join } from "@std/path";
+import { join } from "node:path";
 
 /** Keep full return sources and filled PDFs private to the local reviewer. */
 export async function createPrivateReviewDirectory(

@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as sys from "../support/sys.ts";
 import { assertRejects } from "@std/assert";
-import { join } from "@std/path";
+import { join } from "node:path";
 import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
 
 test("full regression lock refuses a concurrent owner and foreign release", async () => {

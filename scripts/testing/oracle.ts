@@ -1,7 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Oracle contract: expected benchmark values change only with a cited publication. */
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname, join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 import { z } from "zod";
 import {
   benchmarkExpectedSchema,

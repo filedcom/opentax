@@ -17,7 +17,8 @@ import expected from "./form4972_participant_collection.expected.json" with {
 };
 import { appendInput, createReturn } from "../../../../../../../cli/store/store.ts";
 import { exportForm4972PaperCommand } from "../../../../../../../cli/commands/export.ts";
-import { fromFileUrl, join } from "@std/path";
+import { join } from "node:path";
+import { fileURLToPath as fromFileUrl } from "node:url";
 
 test("three and five sourced Form 4972 participants print as paper packets only", async () => {
   const evidenceDir = process.argv.slice(2)[0];

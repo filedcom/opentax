@@ -7,7 +7,6 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { exists } from "@std/fs";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand } from "./return.ts";
 import {
@@ -263,7 +262,10 @@ test("exportPdfCommand blocks executor diagnostics before writing or overwriting
         }),
       ExportExecutionError,
     );
-    assertEquals(await exists(unwrittenPath), false);
+    assertEquals(
+      await fs.access(unwrittenPath).then(() => true, () => false),
+      false,
+    );
   } finally {
     await sys.remove(tmpDir, { recursive: true });
   }

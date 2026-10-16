@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "@std/path";
+import { join } from "node:path";
 
 async function assertTemplateDigest(
   bytes: Uint8Array,

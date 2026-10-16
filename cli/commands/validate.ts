@@ -5,7 +5,7 @@
  * return and produces a diagnostics report.
  */
 
-import { join } from "@std/path";
+import { join } from "node:path";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";

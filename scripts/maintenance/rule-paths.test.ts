@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
-import { basename } from "@std/path";
+import { basename } from "node:path";
 import { ruleCoreImportPath, ruleRelativePath } from "./rule-paths.ts";
 
 const ruleRegistry = new URL(
