@@ -181,6 +181,43 @@ standalone-return address/signature fields remain blank. Negative Part II line 1
 is printed without becoming negative taxable income. Generated pages remain
 development drafts, not filing products.
 
+### Qualified HSA funding in the internal annual workpaper
+
+The annual source/binding workpaper now accepts qualified traditional/SEP/SIMPLE
+IRA funding reconciled by the HSA source adapter. Actual return identities,
+birth dates, dependency facts, current resolved 1099-R copies and executed W-2s
+must match across both inventories. Complete dated ledgers must agree on ordinary
+payments as well as the funding payment. No entered exclusion amount is accepted.
+
+Following [Notice 2008-51](../corpus/authorities/n-08-51.pdf), funding uses taxable
+IRA dollars first. When basis exists, every owned traditional/SEP/SIMPLE account
+needs a value immediately before the transfer. Prior basis plus nondeductible
+receipts already paid provides a conservative upper bound on remaining basis.
+Only transfers covered entirely by the available taxable value proceed; even a
+one-cent shortfall stops for a separate basis-depletion settlement. An annual
+December 31 value cannot substitute for the dated valuation.
+
+Verified funding remains in gross distributions but leaves both the ordinary
+withdrawal and conversion pools before the shared annual basis calculation.
+The [2026 draft Form 8606 instructions](https://www.irs.gov/pub/irs-dft/i8606--dft.pdf)
+exclude qualified HSA funding from line 7. Funding alone does not require Form
+8606, and unused basis is retained in the owner carryforward. The pinned draft
+instruction download was hash-verified on October 16, 2026.
+
+This increment is internal source reconciliation. The public retirement adapter
+still lacks the dependency/source binding and coordinated HSA return outputs;
+it cannot accept this route as a complete return. Form 1040 HFD labeling,
+retirement/AGI and owner additional-tax integration, PDF reconciliation and
+Form 8889 distribution/excess/Part III settlement remain pending. Roth funding,
+basis-depleting transfers and inherited accounts remain outside this branch.
+
+Validation: 324 typed HSA, IRA/retirement, shared HSA, 2025 owner-return and MeF
+tests pass, including 13 new annual IRA/HSA cases. These cover mixed statements,
+HSA-only basis carryforwards, current contributions, Roth conversions, source
+cents, actual inventory binding and the one-cent valuation boundary. Formatting,
+lint and inventory checks pass. The unit gate passes 137 tests with a
+3,812-module preflight and unchanged runtime.
+
 ### Remaining parity work
 
 1. Add statutory-employee expense reconciliation and other compensation sources,
@@ -188,7 +225,8 @@ development drafts, not filing products.
    allocation and concurrent regular Roth contributions.
 2. Add remaining Form 5329 exceptions and modified-payment-series recapture; finish
    inherited basis, Roth ordering, indirect rollovers, recharacterizations,
-   QCD/HSA, disaster/repayment and older basis-chart sources.
+   QCD, remaining HSA branches/public integration, disaster/repayment and older
+   basis-chart sources.
 3. Add current MeF/ATS outputs and review final 2026 forms/instructions before
    registering a public filing product. These remain required scope.
 

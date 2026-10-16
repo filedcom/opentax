@@ -1,3 +1,9 @@
+import { hsaQualifiedFunding2026Schema } from "./hsa-qualified-funding.ts";
+import {
+  bindIraHsaFunding2026,
+  iraHsaValuation2026Schema,
+  verifyIraHsaBasisPreserved2026,
+} from "./hsa-ira-basis.ts";
 import {
   type IraDisposition2026,
   iraSingleDisposition2026Schema,
@@ -31,12 +37,15 @@ const owned = { owner_tin: tin, source_document_reference: ref };
 export const iraBasisSource2026Schema = investmentOwner2026.extend({
   taxpayer_dob: date,
   spouse_dob: date.optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   current_copies: z.array(retirementCopy2026Schema).max(100),
   claim: z.object({
     tax_year: z.literal(2026),
     record_reference: ref,
     reviewed_on: date,
     complete_current_copy_inventory_verified: z.literal(true),
+    hsa_funding_sources: hsaQualifiedFunding2026Schema.optional(),
     owners: z.array(
       z.object({
         owner_tin: tin,
@@ -44,7 +53,11 @@ export const iraBasisSource2026Schema = investmentOwner2026.extend({
         all_owned_traditional_sep_simple_accounts_included: z.literal(true),
         no_inherited_ira_or_divorce_transfer: z.literal(true),
         no_qcd_hsa_disaster_repayment_recharacterization_or_returned_contribution:
-          z.literal(true),
+          z.literal(true).optional(),
+        no_qcd_disaster_repayment_recharacterization_or_returned_contribution: z
+          .literal(true).optional(),
+        hsa_funding_valuations: z.array(iraHsaValuation2026Schema).max(2)
+          .optional(),
         no_outstanding_or_indirect_rollover: z.literal(true),
         no_roth_distributions_or_current_regular_roth_contributions: z.literal(
           true,
@@ -144,6 +157,23 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
   if (copies.size !== input.current_copies.length) {
     throw Error("IRA basis current copies must be unique");
   }
+  const hsa = c.hsa_funding_sources
+    ? bindIraHsaFunding2026(c.hsa_funding_sources, input)
+    : undefined;
+  if (hsa && hsa.qualified_funding_review!.reviewed_on > c.reviewed_on) {
+    throw Error(
+      "IRA annual review cannot predate the completed HSA funding review",
+    );
+  }
+  if (
+    hsa?.qualified_funding.some((o) =>
+      !c.owners.some((v) => v.owner_tin === o.owner_tin)
+    )
+  ) {
+    throw Error(
+      "Every HSA funding owner needs an annual IRA account inventory",
+    );
+  }
   const seenOwners = new Set<string>(),
     usedCopies = new Set<string>(),
     documents = new Set<string>();
@@ -165,6 +195,23 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       );
     }
     seenOwners.add(o.owner_tin);
+    const funding = hsa?.qualified_funding.find((v) =>
+      v.owner_tin === o.owner_tin
+    );
+    if (
+      funding
+        ? (o
+          .no_qcd_hsa_disaster_repayment_recharacterization_or_returned_contribution ||
+          !o.no_qcd_disaster_repayment_recharacterization_or_returned_contribution)
+        : (!o
+          .no_qcd_hsa_disaster_repayment_recharacterization_or_returned_contribution ||
+          o.no_qcd_disaster_repayment_recharacterization_or_returned_contribution ||
+          o.hsa_funding_valuations)
+    ) {
+      throw Error(
+        "Annual IRA exclusions must match the actual HSA funding source route",
+      );
+    }
     const dob = spouse ? input.spouse_dob! : input.taxpayer_dob;
     if (dob > "2026-12-31") {
       throw Error("IRA owner birth must precede year end");
@@ -263,6 +310,15 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         );
       }
     }
+    const hsaBasis = funding
+      ? verifyIraHsaBasisPreserved2026({
+        prior_basis: prior,
+        contributions: receipts,
+        accounts: o.accounts,
+        transfers: funding.transfers,
+        valuations: o.hsa_funding_valuations ?? [],
+      })
+      : undefined;
     const transfers = new Map<string, number[]>(),
       statementKeys = new Set<string>();
     const dispositions: IraDisposition2026[] = [
@@ -327,10 +383,49 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
           "IRA basis workpaper requires ordinary owned traditional distributions or conversions",
         );
       }
-      const resolved = resolveIraDisposition2026(disposition, s, {
-        owner_tin: o.owner_tin,
-        dob,
-      }, a);
+      const fundingAccount = hsa?.qualified_funding_review?.ira_accounts.find((
+        v,
+      ) =>
+        v.form1099r.source_document_reference === s.source_document_reference
+      );
+      if (fundingAccount) {
+        const plan = {
+          traditional: "traditional_ira",
+          sep: "sep_ira",
+          simple: "simple_ira",
+          roth: "roth_ira",
+        }[fundingAccount.ira_type];
+        if (
+          plan !== a.plan_type || disposition.kind !== "ledger" ||
+          disposition.source.payments.length !==
+            fundingAccount.payments.length ||
+          disposition.source.payments.some((p) => {
+            const actual = fundingAccount.payments.find((v) =>
+              v.record_reference === p.record_reference
+            );
+            return !actual || actual.paid_on !== p.distributed_on ||
+              actual.gross_amount !== p.gross ||
+              actual.federal_withheld !== p.federal_withheld ||
+              actual.hsa_receipt_reference !== p.hsa_receipt_reference;
+          })
+        ) {
+          throw Error(
+            "Annual IRA and HSA inventories must reconcile the same account and every dated payment",
+          );
+        }
+      }
+      const resolved = resolveIraDisposition2026(
+        disposition,
+        s,
+        {
+          owner_tin: o.owner_tin,
+          dob,
+        },
+        a,
+        funding?.transfers.filter((t) =>
+          t.ira_statement_reference === s.source_document_reference
+        ),
+      );
       document(resolved.record_reference);
       for (const p of resolved.payments) {
         if (p.record_reference) document(p.record_reference);
@@ -351,6 +446,7 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
         gross: s.box1_gross_distribution,
         converted: resolved.converted,
         nonconversion: resolved.nonconversion,
+        qualified_hsa_funding: resolved.qualified_hsa_funding,
         payments: resolved.payments,
       };
     });
@@ -396,7 +492,7 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
     });
     const hasPartI = contribution > 0 || withdrawn > 0 && prior > 0 ||
       converted > 0 && prior > 0 && yearEnd > 0;
-    const hasActivity = gross > 0;
+    const hasActivity = withdrawn > 0 || converted > 0;
     const line17 = hasPartI ? amounts.nontaxableConversion : prior;
     const line18 = roundWholeDollars(converted) - line17;
     const partI = hasPartI
@@ -430,6 +526,10 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       source: o,
       distributions,
       raw_gross: gross,
+      raw_qualified_hsa_funding: sumSourceMoney(
+        distributions.map((d) => d.qualified_hsa_funding),
+      ),
+      hsa_basis_preservation: hsaBasis,
       raw_converted: converted,
       raw_withdrawn: withdrawn,
       amounts,
@@ -456,5 +556,5 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       "IRA basis workpaper must reconcile every supplied current copy",
     );
   }
-  return { source_input: input, forms };
+  return { source_input: input, forms, hsa_funding: hsa };
 }

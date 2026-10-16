@@ -253,8 +253,11 @@ last day of its receipt month in 2027. Last-month exposure accounts for funding'
 use of contribution capacity but is capped at non-funding contributions; it does
 not include the funding transfer again under the last-month testing rule.
 
-These source records do not yet adjust annual IRA basis, retirement income,
-Form 5329 or Part III. Prior lifetime elections, over-limit transfers and other
+The [internal annual IRA workpaper](FORM8606-GRAPH.md#qualified-hsa-funding-in-the-internal-annual-workpaper)
+now binds these records to actual return identities, current IRA copies and W-2s.
+Verified payments leave the ordinary pro-rata pool while retaining basis, with
+immediately-before-transfer valuations required when basis exists. This does
+not yet connect public retirement income, Form 5329 or Part III. Prior lifetime elections, over-limit transfers and other
 nonqualified amounts need their ordinary IRA/HSA tax treatment, rather than an
 assumed exclusion. Cross-month settlement, changed eligibility between the
 first day and transfer, multiple issued copies for one IRA account, and funding
@@ -262,7 +265,10 @@ above an owner's current annual allocation stop for further reconciliation.
 The transfer-month maximum can differ from the ordinary monthly limit (including
 Notice 2008-51's family-to-self example); that branch remains explicit pending
 work rather than being classified as automatically taxable. Future integration
-must bind retained IRA payments to the annual IRA basis and retirement adapters.
+must connect the internal annual IRA binding to the public retirement adapter
+and coordinated HSA outputs; basis-depleting and Roth funding need their own
+settlement. The internal bridge passes 324 focused HSA/IRA/retirement and prior
+year regression tests, including 13 new annual binding cases.
 
 Qualified-funding validation: 220 typed HSA/source, 2025 owner-return and MeF
 tests pass, including 20 new transfer-source cases. These cover statement/receipt

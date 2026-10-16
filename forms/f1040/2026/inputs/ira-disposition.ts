@@ -58,6 +58,7 @@ export const iraStatementPaymentLedger2026Schema = z.object({
         z.object({ locality: ref, withheld: money }).strict(),
       ).max(2).default([]),
       conversion: iraConversion2026Schema.optional(),
+      hsa_receipt_reference: ref.optional(),
     }).strict(),
   ).min(1).max(1000),
 }).strict();
@@ -79,6 +80,12 @@ export function resolveIraDisposition2026(
     plan_type: "traditional_ira" | "sep_ira" | "simple_ira";
     simple_first_contribution_date?: string;
   },
+  qualifiedFunding: readonly {
+    source_reference: string;
+    receipt_reference: string;
+    paid_on: string;
+    amount: number;
+  }[] = [],
 ) {
   const c = copy;
   const ledger = disposition.kind === "ledger";
@@ -99,6 +106,7 @@ export function resolveIraDisposition2026(
         withheld: s.box17_local_withheld,
       })),
       conversion: disposition.source.conversion,
+      hsa_receipt_reference: undefined,
     }];
   if (
     ledger &&
@@ -159,6 +167,7 @@ export function resolveIraDisposition2026(
     );
   }
   const code = c.box7a_distribution_codes[0];
+  const usedFunding = new Set<string>();
   const resolved = payments.map((p) => {
     if (
       !p.distributed_on.startsWith("2026-") || p.distributed_on < owner.dob ||
@@ -189,6 +198,22 @@ export function resolveIraDisposition2026(
         );
       }
     }
+    const funding = qualifiedFunding.find((t) =>
+      t.receipt_reference === p.hsa_receipt_reference
+    );
+    if (
+      p.hsa_receipt_reference &&
+      (!ledger || !funding || usedFunding.has(funding.receipt_reference) ||
+        p.record_reference !== funding.source_reference ||
+        p.distributed_on !== funding.paid_on || p.gross !== funding.amount ||
+        p.conversion || p.cash_paid_to_owner !== 0)
+    ) {
+      throw Error(
+        "IRA payment HSA treatment must match an actual qualified funding transfer exactly once",
+      );
+    }
+    if (funding) usedFunding.add(funding.receipt_reference);
+    const hsaFunding = funding?.amount ?? 0;
     const converted = p.conversion?.receipt.amount ?? 0;
     const withheld = sumSourceMoney([
       p.federal_withheld,
@@ -196,10 +221,15 @@ export function resolveIraDisposition2026(
       ...p.local_withholding.map((v) => v.withheld),
     ]);
     if (
-      sumSourceMoney([converted, p.cash_paid_to_owner, withheld]) !== p.gross
+      sumSourceMoney([
+        converted,
+        hsaFunding,
+        p.cash_paid_to_owner,
+        withheld,
+      ]) !== p.gross
     ) {
       throw Error(
-        "IRA gross distribution must reconcile conversion, cash and withholding for each actual payment",
+        "IRA gross distribution must reconcile conversion, HSA funding, cash and withholding for each actual payment",
       );
     }
     const receipt = p.conversion?.receipt;
@@ -232,16 +262,24 @@ export function resolveIraDisposition2026(
       payment_date: p.distributed_on,
       gross: p.gross,
       converted,
-      nonconversion: (sourceCents(p.gross) - sourceCents(converted)) / 100,
+      nonconversion: (sourceCents(p.gross) - sourceCents(converted) -
+        sourceCents(hsaFunding)) / 100,
+      qualified_hsa_funding: hsaFunding,
       conversion: p.conversion,
     };
   });
+  if (usedFunding.size !== qualifiedFunding.length) {
+    throw Error("IRA payment ledger omits a qualified HSA funding transfer");
+  }
   return {
     record_reference: disposition.kind === "ledger"
       ? disposition.source.record_reference
       : disposition.source.disposition_record_reference,
     payments: resolved,
     converted: sumSourceMoney(resolved.map((p) => p.converted)),
+    qualified_hsa_funding: sumSourceMoney(
+      resolved.map((p) => p.qualified_hsa_funding),
+    ),
     nonconversion: sumSourceMoney(resolved.map((p) => p.nonconversion)),
   };
 }

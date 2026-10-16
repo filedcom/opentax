@@ -77,6 +77,18 @@ export function bindIraBasis2026(raw: IraBasisBinding2026) {
       "IRA compensation needs unique wage sources for actual return owners",
     );
   }
+  const hsaWages = input.claim.hsa_funding_sources?.wage_sources;
+  if (
+    hsaWages && (!sameReferences(
+      wages.map((w) => w.source_document_reference),
+      hsaWages.map((w) => w.source_document_reference),
+    ) || wages.some((w) =>
+      JSON.stringify(w2Item2026Schema.parse(w)) !==
+        JSON.stringify(w2Item2026Schema.parse(hsaWages.find((v) =>
+          v.source_document_reference === w.source_document_reference
+        )))
+    ))
+  ) throw Error("IRA and HSA funding need the same actual wage inventory");
   const business = input.business_sources_2026;
   if (business) {
     if (
@@ -201,6 +213,10 @@ export function bindIraBasis2026(raw: IraBasisBinding2026) {
     spouse_ssn: input.spouse_ssn,
     taxpayer_dob: input.taxpayer_dob,
     spouse_dob: input.spouse_dob,
+    taxpayer_can_be_claimed_as_dependent:
+      input.taxpayer_can_be_claimed_as_dependent,
+    spouse_can_be_claimed_as_dependent:
+      input.spouse_can_be_claimed_as_dependent,
     current_copies: input.current_copies,
     claim: {
       ...input.claim,

@@ -425,7 +425,10 @@ arithmetic now derives current deduction capacity and separate personal/employer
 excess from cash funding, retaining source fractions beside replayed form lines.
 Qualified IRA funding now joins actual IRA statements/payments to HSA receipts,
 checks lifetime and transfer-month rules, and reaches line 10 with separate
-funding/testing records using pinned Notice 2008-51. Annual IRA basis/income,
+funding/testing records using pinned Notice 2008-51. The internal annual IRA
+workpaper now reconciles the same actual sources, removes verified funding from
+the ordinary basis pool and preserves basis with dated valuation evidence.
+Basis-depleting/Roth funding, public retirement-income integration,
 withdrawal/prior-excess settlement, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
