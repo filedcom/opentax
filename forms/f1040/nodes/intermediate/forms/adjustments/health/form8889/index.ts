@@ -1,4 +1,8 @@
 import {
+  hsaDistributionAdditionalTax,
+  hsaTaxableDistributions,
+} from "./distribution-amounts.ts";
+import {
   calculateHsaContributionLimit,
   CoverageType,
 } from "./contribution-limit.ts";
@@ -771,19 +775,11 @@ function excludedDistributions(input: Form8889Input, taxYear: number): {
 // Part II: Taxable (non-qualified) distributions after line 14b exclusions.
 // IRC §223(f)(2)
 function taxableDistributions(input: Form8889Input, excluded: number): number {
-  const total = input.hsa_distributions ?? 0;
-  if (excluded > total) {
-    throw new Error("Form 8889 line 14b cannot exceed HSA distributions");
-  }
-  const net = total - excluded;
-  const qualified = input.qualified_medical_expenses ?? 0;
-  if (qualified > net) {
-    throw new Error(
-      "Form 8889 line 15 qualified expenses cannot exceed net HSA distributions",
-    );
-  }
-  if (total <= 0) return 0;
-  return net - qualified;
+  return hsaTaxableDistributions(
+    input.hsa_distributions ?? 0,
+    excluded,
+    input.qualified_medical_expenses ?? 0,
+  );
 }
 
 function verifyDistributionSources(
@@ -1050,7 +1046,11 @@ function nonQualifiedPenalty(
         "Form 8889 combined age-65 and disability evidence does not reconcile to dated Form 1099-SA sources",
       );
     }
-    return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
+    return hsaDistributionAdditionalTax(
+      taxable,
+      excepted ?? 0,
+      NON_QUALIFIED_PENALTY_RATE,
+    );
   }
   if (taxable <= 0 && !disability) return 0;
   if (taxable > 0 && excepted === undefined) {
@@ -1249,7 +1249,11 @@ function nonQualifiedPenalty(
       );
     }
   }
-  return (taxable - (excepted ?? 0)) * NON_QUALIFIED_PENALTY_RATE;
+  return hsaDistributionAdditionalTax(
+    taxable,
+    excepted ?? 0,
+    NON_QUALIFIED_PENALTY_RATE,
+  );
 }
 
 // Merged Schedule 1 output avoids duplicate nodeType entries when deduction,

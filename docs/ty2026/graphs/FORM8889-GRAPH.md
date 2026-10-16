@@ -278,6 +278,64 @@ independent testing exposure. Formatting, lint and inventory checks pass. The
 unit gate passes 137 tests, resolves 3,809 graph modules and confirms unchanged
 runtime.
 
+### Current distribution and medical-expense workpaper
+
+The 2026 distribution source now resolves 1099-SA correction chains before
+reconciling complete dated trustee payment ledgers. Current statements bind to
+actual owner identities (including reviewed masked TINs), account numbers and
+statement identifiers. Every current gross/earnings box must equal the ledger's
+source-cent totals. Replaced copies remain evidence without contributing income
+again. Orphaned or branching corrections, cycles, duplicate current copies,
+renamed custodian transactions and payments assigned to retired copies fail.
+Multiple current distribution-code statements can belong to the same account.
+
+The ordinary owned-HSA workpaper reuses the taxable-distribution and additional-tax
+arithmetic extracted from the 2025 node. It retains each actual payment's date and
+medical allocation. Age 65 derives from the actual birth date; a disability
+exception requires an owner-specific physician determination and onset date.
+Code 3 alone cannot create an exception, and age/disability does not exempt
+unrelated earlier payments. Contribution eligibility is independent of this
+calculation: an owner can receive qualified medical reimbursements while no
+longer eligible to contribute.
+
+Medical receipts identify the beneficiary, payer, patient, provider invoice,
+service/payment dates, qualification review and traceable payment allocations.
+Own, spouse and section 223 medical-dependent patients are distinguished.
+Earlier-year expenses can be reimbursed when actual HSA establishment precedes
+the service; a new trustee account can retain the earlier establishment date with
+continuity evidence. Prior deductions, other coverage, other account reimbursements
+and nonmedical costs reduce the available expense before allocation. Each bill
+and actual distribution can be spent only once across the supplied inventory.
+
+The supplied current Schedule A medical inventory is replayed through its source
+calculator. Matching bills must retain the same facts and exclude both current
+and other tax-free reimbursements; changing a reference cannot conceal a duplicate
+bill. This remains an internal bridge: the eventual public producer must supply
+the actual executed medical inventory and return identity, rather than accept a
+second independently entered inventory.
+
+Source cents remain alongside separately replayed Form 8889 lines 14a–17b.
+Filed line 16 subtracts filed medical expenses from filed distributions, and the
+additional tax uses the filed taxable amount after its bounded exception
+allocation. Both source and filed results are retained; rounded gross amounts do
+not replace payment evidence.
+
+This ordinary route does not yet settle rollovers, mistaken repayments or timely
+excess returns. Code-2 gross/earnings records are reconciled by the inventory but
+stop before the ordinary tax calculation pending contribution-year, deadline,
+principal and earnings settlement. Death/prohibited-transaction/MSA records also
+need their separate routes. Insurance, DPC, long-term-care, capital and travel
+medical expenses require their own qualification rules; they are not accepted as
+ordinary medical receipts. Full graph, Schedule 1/2, owner PDF/MeF and Part III
+integration remain required work.
+
+Distribution validation: 345 typed HSA, IRA/retirement, shared HSA, 2025
+owner-return and MeF checks pass, including 21 new distribution cases. The
+Schedule A duplicate-bill checks also pass after tightening reference matching.
+The current 2026 draft instructions were downloaded and match the pinned hash
+on October 16, 2026. Formatting, lint and generated-inventory checks pass.
+The unit gate passes 137 tests with 3,817 graph modules and unchanged runtime.
+
 ## Required source integration
 
 1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual

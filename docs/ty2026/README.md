@@ -428,8 +428,11 @@ checks lifetime and transfer-month rules, and reaches line 10 with separate
 funding/testing records using pinned Notice 2008-51. The internal annual IRA
 workpaper now reconciles the same actual sources, removes verified funding from
 the ordinary basis pool and preserves basis with dated valuation evidence.
+An ordinary distribution workpaper now resolves corrected 1099-SA copies,
+reconciles dated medical reimbursements with Schedule A sources, and reuses
+Part II arithmetic with payment-specific age/disability exceptions.
 Basis-depleting/Roth funding, public retirement-income integration,
-withdrawal/prior-excess settlement, graph binding and complete Form 8889
+rollover/excess withdrawal and prior-excess settlement, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule
