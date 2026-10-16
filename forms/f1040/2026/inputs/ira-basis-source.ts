@@ -4,7 +4,7 @@ import { investmentOwner2026 } from "./investment-source.ts";
 import {
   addCalendarMonths,
   retirementCopy2026Schema,
-} from "./retirement-source.ts";
+} from "./retirement-statement.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import {
   isSourceMoney,
@@ -330,7 +330,7 @@ export function calculateIraBasis2026(raw: IraBasisSource2026) {
       }
       if (
         s.box7a_distribution_codes.length !== 1 ||
-        !["1", "2", "7", "S"].includes(s.box7a_distribution_codes[0]) ||
+        !["1", "2", "3", "7", "S"].includes(s.box7a_distribution_codes[0]) ||
         !s.box7b_ira_sep_simple ||
         s.box7c_trump_account || s.box7d_excess_contribution_earnings > 0 ||
         s.box3_capital_gain > 0 || s.box5_employee_contributions > 0 ||

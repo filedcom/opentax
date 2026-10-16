@@ -68,11 +68,13 @@ April 15, 2027; use that form date and recheck the final instructions.
 
 ## Current annual traditional-IRA workpaper
 
-The internal `calculateIraBasis2026` source workpaper now implements the first
-Part I/II calculation stage. It is not registered in `sourceRegistry2026` and does
-not yet change Form 1040 or produce a 2026 filing attachment. The public 1099-R
-adapter continues to reject basis/conversion cases until the integration below
-is complete.
+`calculateIraBasis2026` implements annual Part I/II arithmetic through the
+registered 2026 `f1099r` source. The retirement adapter resolves original and
+corrected statements first, then passes every current owned IRA copy for each
+covered owner to `bindIraBasis2026`. Public claims contain evidence references,
+not current-copy overrides or entered compensation totals. General return
+identity, executed W-2s and executed Schedule C inventories supply those facts.
+The old generic shared `form8606` node remains unregistered for 2026.
 
 Each owner supplies a complete traditional/SEP/SIMPLE account inventory with
 explicit December 31 statements, the latest applicable prior Form 8606 line 14
@@ -105,21 +107,75 @@ The form and instruction sources above were rechecked October 16, 2026. The
 annual contribution limits are independently sourced from
 [Notice 2025-67 and the IRS announcement](https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500).
 
-### Next required integration
+### Return and payment integration
 
-1. Bind the workpaper's current copies to the retirement adapter's resolved
-   correction inventory and compensation to executed wage/business sources.
-   The internal workpaper's completeness reviews are not substitutes for these
-   graph connections. Reconcile the IRA deduction election and any SSA interaction.
-2. Replace the public no-basis restriction for supported owners with the actual
-   annual calculation. Preserve gross and withholding once, allocate taxable
-   nonconversion amounts to payment-bound Form 5329 exceptions, and route the
-   resulting 4b/AGI and basis carryforwards through all consumers.
-3. Render separate owner forms with the pinned 2026 widgets, then add the current
-   MeF/ATS route. Finish inherited basis, Roth ordering, indirect rollovers,
-   recharacterizations, QCD/HSA, disaster/repayment and older basis-chart sources.
+A public nondeductible election identifies all of that owner's actual W-2s and
+service businesses. The bridge replays Schedule C and the owner's SE deduction,
+verifies the same W-2 inventory on both paths, and calculates W-2 box 1 less
+box 11 plus code Q combat pay. It floors aggregate net business income less
+deductible SE tax at zero separately from wages. A business loss therefore does
+not reduce wage compensation. Reviews exclude other compensation, exclusions
+and self-employed retirement deductions. This method follows
+[Publication 590-A's compensation rules](https://www.irs.gov/publications/p590a);
+its 2025 annual contribution limits are not reused.
+
+Treatment reviews must identify the same annual owner and plan type, and cannot
+simultaneously assert no basis or no conversion. Every current IRA copy for a
+covered owner must have a disposition in the complete account inventory;
+retired corrections cannot contribute income or withholding. Contribution-only
+inventories need no invented 1099-R. Ordinary owned code 3 distributions retain
+the payer disability exception; inherited accounts remain outside this basis
+route.
+
+Annual taxable distributions plus nonnegative taxable conversions feed 4b and
+AGI once. Gross income remains on 4a for Form 8606 distributions and multiple IRA
+copies, including fully taxable conversions. Withholding remains the unchanged
+current-copy amount. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+are the display-method comparator; the served draft instructions still describe
+2025 and need final 2026 review.
+
+Early IRA basis payments supply the actual nonconverted amount and date, without
+an entered taxable amount. The current disposition contract describes one dated
+payment per issued copy; multi-date basis statements need a broader source ledger.
+Cash and withholding left outside a direct conversion remain nonconversion
+income. Code 2 partial conversions before age 59 1/2 therefore need a payment
+review; full conversions need no early ledger. Exceptions remain tied to actual
+payments. The annual ratio adjusts early, exempt and first-two-year SIMPLE groups,
+bounded by filed annual taxable withdrawals. Owner Form 5329 combines those
+amounts with ordinary early pensions; spouse amounts never cross. Conversion
+income stays outside the penalty base, consistent with the
+[2026 Form 5329 draft instructions](https://www.irs.gov/pub/irs-dft/i5329--dft.pdf).
+
+The pinned 2026 PDF has 47 widgets across two form pages plus its draft cover.
+The renderer removes the cover and produces separate static owner attachments,
+replaying sources and reconciling combined 4b before filling lines 1-18. Split
+line 10 widgets preserve at least three decimal places and any additional
+precision used by the arithmetic. No-activity rows, unused Part III and
+standalone-return address/signature fields remain blank. Negative Part II line 18
+is printed without becoming negative taxable income. Generated pages remain
+development drafts, not filing products.
+
+### Remaining parity work
+
+1. Add statutory-employee expense reconciliation and other compensation sources,
+   deductible IRA contribution/SSA worksheet coordination, spousal compensation
+   allocation and concurrent regular Roth contributions.
+2. Expand dated payment ledgers and remaining Form 5329 exceptions; finish
+   inherited basis, Roth ordering, indirect rollovers, recharacterizations,
+   QCD/HSA, disaster/repayment and older basis-chart sources.
+3. Add current MeF/ATS outputs and review final 2026 forms/instructions before
+   registering a public filing product. These remain required scope.
 
 ### Validation
+
+The integrated route passes 31 typed compensation, retirement, graph, exception
+and PDF checks, the complete 952-test TY2026 runtime suite, and the 137-test unit
+gate with a 3,763-module preflight and unchanged runtime snapshot. Printed-field
+checks cover every Part I/II line, contribution-only blanks, negative line 18 and
+joint owner attachments. Both rendered form pages were visually inspected;
+flattened outputs contain neither widgets nor a residual AcroForm tree.
+
+Earlier workpaper-only validation:
 
 The workpaper passed 29 typed 2026 IRA/retirement checks and the complete
 927-test TY2026 runtime suite. The 137-test repository unit gate and module-graph

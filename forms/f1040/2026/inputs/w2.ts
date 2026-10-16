@@ -28,7 +28,11 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
   // Shared destination identities; the 2026 registry must supply its own nodes.
   readonly outputNodes = w2.outputNodes;
   override get outputNodeTypes(): readonly string[] {
-    return [...this.outputNodes.nodeTypes, moving_expenses_2026.nodeType];
+    return [
+      ...this.outputNodes.nodeTypes,
+      moving_expenses_2026.nodeType,
+      "f1099r",
+    ];
   }
 
   compute(ctx: NodeContext, rawInput: z.input<typeof inputSchema>): NodeResult {
@@ -212,6 +216,10 @@ export class W2Node2026 extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "schedule_c",
       fields: { w2_sources_2026: input.w2s },
+    });
+    outputs.push({
+      nodeType: "f1099r",
+      fields: { wage_sources: input.w2s },
     });
     outputs.push({
       nodeType: "eitc",

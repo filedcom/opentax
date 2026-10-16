@@ -23,6 +23,10 @@ Supported current source treatments are:
 
 - Traditional, SEP and SIMPLE IRA distributions with no basis, current
   nondeductible contribution, rollover, conversion or special exclusion.
+- Annual owned traditional/SEP/SIMPLE basis, all-nondeductible contributions and
+  direct Roth conversions with resolved-copy and executed compensation bindings;
+  owner Form 8606, basis carryforward and basis-adjusted Form 5329 are connected.
+  See the [annual basis contract](./FORM8606-GRAPH.md) for precise source limits.
 - Qualified employer-plan and governmental 457(b) distributions with
   payer-determined taxability, including a taxable amount below gross.
 - Single codes 7, 2, 3 and 4 with normal-age, known-exception, disability or
@@ -45,7 +49,8 @@ The source replay reconciles income in AGI and the draft bundle, including Socia
 Security taxability, Marketplace MAGI, EIC/ACTC and NIIT: qualified retirement
 income increases AGI/MAGI without becoming wages or net investment income.
 
-Fully taxable ordinary distributions print only the taxable line. Partial pensions
+A single fully taxable ordinary IRA distribution prints only the taxable line;
+multiple IRA statements and Form 8606 cases also retain gross on line 4a. Partial pensions
 and direct plan rollovers retain gross on line 5a; zero-taxable rollovers print zero
 on 5b and check 5c(1). Box 4 joins other information-return withholding on 25b.
 Withheld current 1099-Rs require their unchanged original PDF, verified by hash and
@@ -74,8 +79,8 @@ duplicate state/local rows and withholding above gross fail before aggregation.
 
 ## Required remaining work
 
-- Form 8606 owner-wide IRA basis, Roth distributions/conversions and contribution
-  records; QCD with and without Y, HSA funding and public-safety exclusions.
+- Remaining Form 8606 inherited/Roth/disaster and deduction/compensation routes;
+  QCD with and without Y, HSA funding and public-safety exclusions.
 - Remaining Form 5329 exceptions, excess contributions, RMD shortfalls and
   other parts. Early codes 1/S now use the reviewed Part I route above.
 - General Rule/Simplified Method annuity workpapers, disability wages, NUA,

@@ -1,4 +1,18 @@
 import {
+  bindIraBasis2026,
+  iraBasisClaim2026Schema,
+} from "./ira-basis-binding.ts";
+import { businessReturnSource2026Schema } from "./business-qbi.ts";
+import { w2Item2026Schema } from "./w2-source.ts";
+import {
+  addCalendarMonths,
+  retirementCopy2026Schema,
+} from "./retirement-statement.ts";
+export {
+  addCalendarMonths,
+  retirementCopy2026Schema,
+} from "./retirement-statement.ts";
+import {
   disabilityIncomeReview2026Schema,
   retirementPayment2026Schema,
   splitDisabilityIncome2026,
@@ -9,7 +23,6 @@ import { z } from "zod";
 import { FilingStatus } from "../../nodes/types.ts";
 import {
   calculateReportedRetirementIncome,
-  DistributionCode,
   itemSchema as sharedItem,
 } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
@@ -113,75 +126,6 @@ const earlyException = z.discriminatedUnion("kind", [
     actual_payment_date_and_birth_record_verified: z.literal(true),
   }).strict(),
 ]);
-const address = z.object({
-  street: ref,
-  suite: z.string().optional(),
-  city: ref,
-  state_or_province: z.string(),
-  country: ref,
-  postal_code: ref,
-}).strict();
-
-/** Issued 2026 box facts. Advanced codes/boxes remain visible for explicit diagnostics. */
-export const retirementCopy2026Schema = z.object({
-  tax_year: z.literal(2026),
-  source_document_reference: ref,
-  issued_copy_pdf_base64: ref.optional(),
-  issued_copy_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
-  issued_copy_attachment_file_name: z.string().regex(
-    /^[A-Za-z0-9][A-Za-z0-9_.-]*\.pdf$/,
-  ).optional(),
-  statement_identifier: ref,
-  current_copy_review_reference: ref,
-  corrected: z.boolean(),
-  supersedes_document_reference: ref.optional(),
-  payer_name: ref,
-  payer_tin: tin,
-  payer_address: address.optional(),
-  recipient: z.enum(["taxpayer", "spouse"]),
-  recipient_name: ref,
-  recipient_tin: z.string().regex(/^(\d{9}|\d{3}-\d{2}-\d{4}|XXX-XX-\d{4})$/),
-  recipient_identity_review_reference: ref,
-  recipient_address: address.optional(),
-  account_number: ref,
-  box1_gross_distribution: money,
-  box2a_taxable_amount: money.optional(),
-  box2b_taxable_amount_not_determined: z.boolean(),
-  box2b_total_distribution: z.boolean(),
-  box3_capital_gain: money.default(0),
-  box4_federal_withheld: money.default(0),
-  box5_employee_contributions: money.default(0),
-  box6_nua: money.default(0),
-  box7a_distribution_codes: z.array(z.nativeEnum(DistributionCode)).min(1).max(
-    2,
-  ),
-  box7b_ira_sep_simple: z.boolean(),
-  box7c_trump_account: z.boolean(),
-  box7d_excess_contribution_earnings: money.default(0),
-  box8a_other_amount: money.default(0),
-  box8b_annuity_percentage: z.number().min(0).max(100).optional(),
-  box9a_percentage_of_total: z.number().min(0).max(100).optional(),
-  box9b_employee_contributions: money.default(0),
-  box10_irr_within_five_years: money.default(0),
-  box11_first_roth_year: z.number().int().min(1998).max(2026).optional(),
-  box12_fatca: z.boolean().default(false),
-  box13_payment_date: date.optional(),
-  state_information: z.array(
-    z.object({
-      state: ref,
-      payer_state_id: ref,
-      box14_state_withheld: money,
-      box16_state_distribution: money,
-    }).strict(),
-  ).max(2).default([]),
-  local_information: z.array(
-    z.object({
-      locality: ref,
-      box17_local_withheld: money,
-      box19_local_distribution: money,
-    }).strict(),
-  ).max(2).default([]),
-}).strict();
 const review = z.object({
   source_document_reference: ref,
   record_reference: ref,
@@ -198,7 +142,8 @@ const review = z.object({
   no_qcd_hsa_funding_pso_exclusion_disaster_or_corrective_treatment_verified: z
     .literal(true),
   no_roth_ira_or_designated_roth_distribution_or_ira_conversion_verified: z
-    .literal(true),
+    .literal(true).optional(),
+  ira_basis_owner_review_reference: ref.optional(),
   no_form4972_nua_election_or_other_tax_method_verified: z.literal(true),
   no_unreported_excess_contributions_or_rmd_shortfall_verified: z.literal(true),
   no_ira_basis_or_current_nondeductible_contributions_verified: z.literal(true)
@@ -223,7 +168,8 @@ const review = z.object({
       claims: z.array(earlyException).min(1).max(1000),
     }).strict().optional(),
     simple_first_contribution_date: date.optional(),
-    payments: z.array(retirementPayment2026Schema).min(1).max(1000),
+    payments: z.array(retirementPayment2026Schema.partial({ taxable: true }))
+      .min(1).max(1000),
   }).strict().optional(),
   death_benefit: z.object({
     decedent_tin: tin,
@@ -257,28 +203,20 @@ export const retirementClaim2026Schema = z.object({
     complete_retirement_statement_and_correction_inventory_verified: z.literal(
       true,
     ),
-    copies: z.array(retirementCopy2026Schema).min(1).max(100),
-    reviews: z.array(review).min(1).max(100),
+    copies: z.array(retirementCopy2026Schema).max(100),
+    reviews: z.array(review).max(100),
+    ira_basis: iraBasisClaim2026Schema.optional(),
   }).strict(),
 }).strict();
 export const retirementSource2026Schema = investmentOwner2026.extend({
   taxpayer_dob: date,
   spouse_dob: date.optional(),
   ...retirementClaim2026Schema.shape,
+  wage_sources: z.array(w2Item2026Schema).default([]),
+  business_sources_2026: businessReturnSource2026Schema.optional(),
 }).strict();
 export type RetirementSource2026 = z.input<typeof retirementSource2026Schema>;
 export type RetirementCopy2026 = z.input<typeof retirementCopy2026Schema>;
-
-/** Calendar anniversaries clamp a leap/month-end day instead of rolling into another month. */
-export function addCalendarMonths(value: string, months: number): string {
-  const [year, month, day] = value.split("-").map(Number);
-  const target = new Date(Date.UTC(year, month - 1 + months, 1));
-  const last = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-  target.setUTCDate(Math.min(day, last));
-  return target.toISOString().slice(0, 10);
-}
 
 export function calculateRetirementSources2026(raw: RetirementSource2026) {
   const input = retirementSource2026Schema.parse(raw), claim = input.claim;
@@ -387,6 +325,32 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       "Retirement current copies each need exactly one treatment review",
     );
   }
+  if (!current.length && !claim.ira_basis) {
+    throw Error(
+      "Retirement inventory needs current copies or an annual IRA workpaper",
+    );
+  }
+  if (claim.ira_basis && claim.ira_basis.reviewed_on > claim.reviewed_on) {
+    throw Error(
+      "IRA basis review must precede the complete retirement inventory",
+    );
+  }
+  const basisOwners = new Set(claim.ira_basis?.owners.map((o) => o.owner_tin));
+  const iraBasis = claim.ira_basis
+    ? bindIraBasis2026({
+      filing_status: input.filing_status,
+      taxpayer_ssn: input.taxpayer_ssn,
+      spouse_ssn: input.spouse_ssn,
+      taxpayer_dob: input.taxpayer_dob,
+      spouse_dob: input.spouse_dob,
+      current_copies: current.filter((c) =>
+        c.box7b_ira_sep_simple && basisOwners.has(owner(c))
+      ),
+      claim: claim.ira_basis,
+      wage_sources: input.wage_sources,
+      business_sources_2026: input.business_sources_2026,
+    })
+    : undefined;
   const paymentRecords = new Set<string>();
   const accountDecedents = new Map<string, string>();
   const disabilityPlanDates = new Map<string, string>();
@@ -406,6 +370,41 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     }
     if (c.box7b_ira_sep_simple !== ira) {
       throw new Error("Retirement plan review conflicts with issued box 7b");
+    }
+    const basis = ira
+      ? iraBasis?.calculation.forms.find((o) => o.owner_tin === id)
+      : undefined;
+    const disposition = basis?.source.distributions.find((d) =>
+      d.source_document_reference === c.source_document_reference
+    );
+    const basisAmounts = basis?.distributions.find((d) =>
+      d.source_document_reference === c.source_document_reference
+    );
+    if (basis) {
+      const account = basis.source.accounts.find((a) =>
+        a.custodian_tin === c.payer_tin && a.account_number === c.account_number
+      )!;
+      if (
+        r.ira_basis_owner_review_reference !== basis.source.record_reference ||
+        r.death_benefit !== undefined ||
+        r.no_ira_basis_or_current_nondeductible_contributions_verified ||
+        account.plan_type !== r.plan_type ||
+        (r.early_distribution && account.simple_first_contribution_date !==
+            r.early_distribution.simple_first_contribution_date) ||
+        (basisAmounts!.converted > 0 &&
+          r.no_roth_ira_or_designated_roth_distribution_or_ira_conversion_verified)
+      ) {
+        throw Error(
+          "IRA treatment review must match annual basis owner, account and conversion evidence",
+        );
+      }
+    } else if (
+      r.ira_basis_owner_review_reference ||
+      !r.no_roth_ira_or_designated_roth_distribution_or_ira_conversion_verified
+    ) {
+      throw Error(
+        "Retirement review needs a matched IRA basis owner or no-conversion declaration",
+      );
     }
     const codes = c.box7a_distribution_codes;
     if (
@@ -461,7 +460,10 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
     }
-    if (code === "2" && !r.payer_code2_exception_verified) {
+    if (
+      code === "2" && !disposition?.conversion &&
+      !r.payer_code2_exception_verified
+    ) {
       throw new Error("Code 2 needs the payer's known-exception review");
     }
     if ((code === "3") !== !!r.payer_code3_disability_verified) {
@@ -506,7 +508,8 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     if (ira) {
       if (
         code === "G" ||
-        !r.no_ira_basis_or_current_nondeductible_contributions_verified ||
+        (!basis &&
+          !r.no_ira_basis_or_current_nondeductible_contributions_verified) ||
         c.box5_employee_contributions > 0 || c.box9b_employee_contributions > 0
       ) {
         throw new Error(
@@ -514,7 +517,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
       if (
-        (!c.box2b_taxable_amount_not_determined ||
+        !basis && (!c.box2b_taxable_amount_not_determined ||
           c.box2a_taxable_amount !== undefined) &&
         c.box2a_taxable_amount !== c.box1_gross_distribution
       ) {
@@ -561,7 +564,33 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         );
       }
     }
-    const early = code === "1" || code === "S";
+    const ownerDob = c.recipient === "spouse"
+      ? input.spouse_dob!
+      : input.taxpayer_dob;
+    const early = basisAmounts
+      ? basisAmounts.nonconversion > 0 && (code === "1" || code === "S" ||
+        code === "2" && !!disposition?.conversion &&
+          disposition.distributed_on < addCalendarMonths(ownerDob, 59 * 12 + 6))
+      : code === "1" || code === "S";
+    const earlyPayments = r.early_distribution?.payments.map((p) => {
+      if (basisAmounts) {
+        if (
+          p.taxable !== undefined ||
+          p.payment_date !== disposition!.distributed_on ||
+          r.early_distribution!.payments.length !== 1 ||
+          p.gross !== basisAmounts.nonconversion
+        ) {
+          throw Error(
+            "IRA basis early review needs the actual dated nonconversion payment without entered taxable income",
+          );
+        }
+        return { ...p, taxable: p.gross };
+      }
+      if (p.taxable === undefined) {
+        throw Error("Ordinary early payment needs its source taxable amount");
+      }
+      return { ...p, taxable: p.taxable };
+    });
     if (early !== !!r.early_distribution) {
       throw new Error(
         "Early distribution needs matching dated payment and exception review",
@@ -573,7 +602,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       taxable: number;
     }[] = [];
     if (r.early_distribution) {
-      const e = r.early_distribution;
+      const e = { ...r.early_distribution, payments: earlyPayments! };
       const exceptions = e.exception_review;
       if (!!e.no_additional_tax_exception_applies_verified === !!exceptions) {
         throw new Error(
@@ -630,8 +659,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         new Set(e.payments.map((p) => p.record_reference)).size !==
           e.payments.length ||
         sumSourceMoney(e.payments.map((p) => p.gross)) !==
-          c.box1_gross_distribution ||
-        sumSourceMoney(e.payments.map((p) => p.taxable)) !== taxable
+          (basisAmounts?.nonconversion ?? c.box1_gross_distribution) ||
+        sumSourceMoney(e.payments.map((p) => p.taxable)) !==
+          (basisAmounts?.nonconversion ?? taxable)
       ) {
         throw new Error(
           "Early payment records must be distinct and reconcile gross and taxable distributions",
@@ -800,7 +830,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       has_disability_exception: exemptions.some((e) => e.code === "03"),
       gross: c.box1_gross_distribution,
       taxable,
-      early_payments: r.early_distribution?.payments,
+      early_payments: earlyPayments,
     });
     if (r.disability_income?.kind === "employer_disability_pension") {
       const d = r.disability_income;
@@ -868,6 +898,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       qcdAnnualLimit: 0,
       psoExclusionLimit: 0,
     });
+    // Annual Form 8606 owns taxable IRA income. Do not retain a per-copy
+    // gross-as-taxable projection that a later consumer could mistake for it.
+    if (basis) delete calculated.iraFields.line4b_ira_taxable;
     // Withholding belongs to the issued copy, not each income-classification part.
     calculated.withholdingFields = c.box4_federal_withheld > 0
       ? { line25b_withheld_1099: c.box4_federal_withheld }
@@ -876,10 +909,16 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       copy: c,
       review: r,
       owner_tin: id,
-      taxable,
+      taxable: basis ? undefined : taxable,
+      ira_basis_owner_tin: basis?.owner_tin,
+      ira_nonconversion_before_basis: basisAmounts?.nonconversion,
       disability_wage_payments: disability.wage_payments,
       calculated,
-      exemptions,
+      exemptions: exemptions.map((e) => ({
+        ...e,
+        taxable: basis ? undefined : e.taxable,
+        ira_amount_before_basis: basis ? e.taxable : undefined,
+      })),
       early_tax_rate: early ? (code === "S" ? 25 : 10) : undefined,
     };
   });
@@ -891,7 +930,12 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
       rows.map((r) => r.calculated.iraFields.line4a_ira_gross ?? 0),
     ),
     line4b_ira_taxable: sumSourceMoney(
-      rows.map((r) => r.calculated.iraFields.line4b_ira_taxable ?? 0),
+      [
+        ...rows.filter((r) => !r.ira_basis_owner_tin).map((r) =>
+          r.calculated.iraFields.line4b_ira_taxable ?? 0
+        ),
+        ...(iraBasis?.calculation.forms.map((o) => o.taxable_ira_income) ?? []),
+      ],
     ),
     line5a_pension_gross: sumSourceMoney(
       rows.map((r) => r.calculated.pensionFields.line5a_pension_gross ?? 0),
@@ -915,17 +959,72 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   const earlyOwners = (["taxpayer", "spouse"] as const).flatMap((owner) => {
     const owned = earlyRows.filter((r) => r.copy.recipient === owner);
     if (!owned.length) return [];
-    const taxable = (r: typeof rows[number]) => r.taxable;
-    const total = sumSourceMoney(owned.map(taxable));
+    const taxable = (r: typeof rows[number]) => r.taxable ?? 0;
+    const basis = iraBasis?.calculation.forms.find((f) =>
+      f.owner_tin === owned[0].owner_tin
+    );
+    const basisRows = owned.filter((r) => r.ira_basis_owner_tin);
+    const regularRows = owned.filter((r) => !r.ira_basis_owner_tin);
+    const basisTaxable = (
+      amount: number,
+      cap = basis?.amounts.taxableDistribution ?? 0,
+    ) =>
+      Math.min(
+        cap,
+        Math.max(
+          0,
+          roundWholeDollars(amount) -
+            roundWholeDollars(
+              roundWholeDollars(amount) * (basis?.amounts.ratio ?? 0),
+            ),
+        ),
+      );
+    const basisEarly = basisTaxable(
+      sumSourceMoney(basisRows.map((r) => r.ira_nonconversion_before_basis!)),
+    );
+    const basisExempt = basisTaxable(
+      sumSourceMoney(
+        basisRows.flatMap((r) =>
+          r.exemptions.map((e) => e.ira_amount_before_basis!)
+        ),
+      ),
+      basisEarly,
+    );
+    const basisSimple = basisTaxable(
+      sumSourceMoney(
+        basisRows.filter((r) => r.early_tax_rate === 25).map((r) =>
+          r.ira_nonconversion_before_basis!
+        ),
+      ),
+      basisEarly,
+    );
+    const basisSimpleExempt = basisTaxable(
+      sumSourceMoney(
+        basisRows.filter((r) => r.early_tax_rate === 25).flatMap((r) =>
+          r.exemptions.map((e) => e.ira_amount_before_basis!)
+        ),
+      ),
+      Math.min(basisSimple, basisExempt),
+    );
+    const total = sumSourceMoney([...regularRows.map(taxable), basisEarly]);
     const simple = sumSourceMoney(
-      owned.filter((r) => r.early_tax_rate === 25).map(taxable),
+      [
+        ...regularRows.filter((r) => r.early_tax_rate === 25).map(taxable),
+        basisSimple,
+      ],
     );
     const exempt = sumSourceMoney(
-      owned.flatMap((r) => r.exemptions.map((e) => e.taxable)),
+      [
+        ...regularRows.flatMap((r) => r.exemptions.map((e) => e.taxable!)),
+        basisExempt,
+      ],
     );
     const simpleExempt = sumSourceMoney(
-      owned.filter((r) => r.early_tax_rate === 25)
-        .flatMap((r) => r.exemptions.map((e) => e.taxable)),
+      [
+        ...regularRows.filter((r) => r.early_tax_rate === 25)
+          .flatMap((r) => r.exemptions.map((e) => e.taxable!)),
+        basisSimpleExempt,
+      ],
     );
     const codes = [
       ...new Set(owned.flatMap((r) => r.exemptions.map((e) => e.code))),
@@ -985,6 +1084,13 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   ) as typeof cents;
   const filed_lines = {
     ...(hasIra ? { line4b_ira_taxable: lines.line4b_ira_taxable } : {}),
+    ...(hasIra && (cents.line4a_ira_gross !== cents.line4b_ira_taxable ||
+        rows.filter((r) => r.copy.box7b_ira_sep_simple).length > 1 ||
+        iraBasis?.calculation.forms.some((o) =>
+          o.requires_form8606 && o.raw_gross > 0
+        ))
+      ? { line4a_ira_gross: lines.line4a_ira_gross }
+      : {}),
     ...(hasPension
       ? { line5b_pension_taxable: lines.line5b_pension_taxable }
       : {}),
@@ -997,6 +1103,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   };
   return {
     source_input: input,
+    ira_basis: iraBasis,
     early_owners: earlyOwners,
     line5_early_tax: earlyTax,
     form5329_not_required: directEarlyTax,

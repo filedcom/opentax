@@ -1,3 +1,4 @@
+import { buildForm8606PdfBytes2026 } from "./form8606.ts";
 import { buildScheduleRPdfBytes2026 } from "./schedule_r.ts";
 import { calculateScheduleR2026 } from "../inputs/schedule-r-source.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -572,6 +573,21 @@ export async function buildDraftReturnPdf2026(
         filer,
         capital.land!.source_input.finalized_loss,
       ));
+  }
+  for (const part of retirement?.ira_basis?.calculation.forms ?? []) {
+    if (!part.requires_form8606) continue;
+    const owner = part.owner_tin === retirement!.source_input.taxpayer_ssn
+      ? "taxpayer"
+      : "spouse";
+    const individual = owners[owner];
+    if (!individual) throw Error("Form 8606 owner identity is missing");
+    add(`form8606:${owner}`, 2, () =>
+      buildForm8606PdfBytes2026(
+        retirement!.source_input,
+        owner,
+        line("line4b_ira_taxable"),
+        individual,
+      ), true);
   }
   for (const part of retirement?.early_owners ?? []) {
     if (!part.file_form5329) continue;

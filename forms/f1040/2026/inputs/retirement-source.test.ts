@@ -23,6 +23,7 @@ Deno.test("2026 retirement uses shared gross/taxable calculation, adds cents onc
   assertEquals(r.cents.line25b_withheld_1099, 3000.75);
   assertEquals(r.filed_lines, {
     line4b_ira_taxable: 24001,
+    line4a_ira_gross: 24001,
     line5b_pension_taxable: 10000,
     line5a_pension_gross: 12000,
   });
