@@ -503,18 +503,21 @@ benefits require a repayment-deduction route before filing; see the
 Final 2026 Form 1099-R and instructions are pinned. The current `f1099r`
 source validates actual 2026 boxes, current/corrected copies and recipient/treatment
 reviews before calling the shared 2025 amount helper. Ordinary no-basis IRAs and
-payer-determined qualified pensions support single codes 2, 4 and 7; code G plan
+payer-determined qualified pensions support single codes 2, 3, 4 and 7; code G plan
 rollovers require reconciled transfer evidence. Income and withholding reach AGI,
 Schedule A and draft Form 1040, with unchanged withheld source PDF attachments.
 See the [current 1099-R contract](../graphs/FORM1099R-GRAPH.md).
 Early codes 1/S require payment-date and taxable-amount evidence plus either a
-no-exception declaration or reviewed payment-bound exceptions 01/04/06/10/12/20.
+no-exception declaration or reviewed payment-bound exceptions 01/03/04/06/10/12/20.
 Exception amounts and multiple-exception code 99 are derived; fully exempt
 payments retain an owner Form 5329 even when no additional tax is due.
 They use shared Part I arithmetic with the actual SIMPLE two-year period, direct
 Schedule 2 reporting where permitted, or separate taxpayer/spouse Form 5329 drafts.
-Remaining exceptions and other parts, Forms 8606/4972, QCDs, annuity basis and
-current MeF remain required parity work.
+Ordinary code-3 withdrawals and medical-proof exception 03 are connected.
+Disability pension payments are split by the plan minimum-retirement-age date in
+the source calculator, but positive disability wages still require the earned-income
+bridges before return assembly. Remaining exceptions and other parts, Forms
+8606/4972, QCDs, annuity basis and current MeF remain required parity work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
 AMT interest, plain box 2a capital gain distributions, and NIIT income. Its

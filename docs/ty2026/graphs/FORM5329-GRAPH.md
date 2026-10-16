@@ -34,11 +34,21 @@ entered exception amounts/codes are rejected. The supported evidence derives:
 | Exception | Required evidence and boundary |
 | --- | --- |
 | 01 | Separation date in or after the year the owner reaches 55; payment from that employer's qualified plan after separation; employer identity and plan relationship reviewed; unavailable for IRAs |
+| 03 | Patient-matched medical determination and retained physician record, disability onset by payment, inability to perform any substantial gainful activity, expected death or long/continued/indefinite duration, and evidence covering the payment date; income classification remains separate |
 | 04 | Matched decedent identity, death date, inherited-basis review and beneficiary entitlement; each payment must be on or after death and the account must remain inherited, including a spouse who has not treated it as their own |
 | 06 | Administrator-qualified domestic relations order effective by the payment date, matching spouse/former-spouse alternate-payee TIN and review that the entire payment was made under the order; unavailable for IRAs |
 | 10 | Dated IRS levy on the actual retirement account; the amount paid under the levy must equal that payment's gross amount; a voluntary withdrawal to pay tax does not qualify |
 | 12 | Verified birth record and actual payment date on or after the owner's 59½ birthday, including month-end anniversaries; source code remains 1/S |
 | 20 | Owner-matched physician certification signed by the payment date; reviewed physician credentials, contact, supporting narrative and attestation, examination/evidence-review date, and certified expectation of death within 84 months; eligible plan distribution and administration/election evidence |
+
+Disability evidence derives exception 03 from the pinned 2026 draft instructions.
+The medical determination must exist by the treatment review and establish
+disability at payment; unlike terminal illness, it need not have been signed
+before payment. No diagnosis or private physician record is printed on the draft.
+The exception applies to the reviewed payment's taxable amount for ordinary
+qualified-plan and traditional/SEP/SIMPLE IRA withdrawals. A disabled taxpayer's
+withdrawal is not automatically an employer disability pension; that classification
+has its own [income contract](./FORM1099R-GRAPH.md#disability-payment-source-contract).
 
 Terminal-illness evidence follows [Notice 2024-2, section F](../corpus/authorities/n-24-02.pdf)
 (SHA-256 `4f1e3dde1415ab7d2ecf404faf9750a9e0ab349be160b1cf34253d98c6d36d91`);
@@ -164,3 +174,15 @@ of private medical/decedent records from the return.
 The life-event increment passed 881 full 2026 tests, 74 focused tests and 137
 repository unit checks. Ten rendered pages were visually reviewed; regenerated
 final pages matched those reviewed images exactly, with no fields or annotations.
+
+Disability coverage adds code-03 ordinary IRA/plan income, total and partial
+annual exemptions, SIMPLE distributions, medical-proof dates and the independent
+pension/wage source split. The draft test verifies leading-zero exception 03,
+zero Part I tax and exclusion of retained medical evidence. The five-page
+synthetic SIMPLE return was rendered and visually reviewed, with no AcroForm or
+annotations. Employer disability-wage return assembly remains explicitly pending
+its earned-income consumer connections.
+
+The disability source increment passed 165 typed source/shared-node/PDF/Form 1062
+checks and 137 repository unit/harness checks. Regenerated final draft pages
+matched the visually reviewed five-page bundle exactly.

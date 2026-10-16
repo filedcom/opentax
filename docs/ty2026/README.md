@@ -181,7 +181,7 @@ regular Git files.
 - [`FORM1099R-GRAPH.md`](./graphs/FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
   reviewed IRA/pension sources, shared 2025 amounts, draft attachments and filing gates.
 - [`FORM5329-GRAPH.md`](./graphs/FORM5329-GRAPH.md): reviewed early-distribution tax, separate
-  owner Part I drafts, payment-bound exceptions 01/04/06/10/12/20 and required remaining
+  owner Part I drafts, payment-bound exceptions 01/03/04/06/10/12/20 and required remaining
   exceptions/parts.
 - [`FORM8606-GRAPH.md`](./graphs/FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.

@@ -11,7 +11,7 @@ product. The ongoing branch is `codex/ty2026-readiness`.
   qualified pensions, inherited distributions and direct plan rollovers reach
   AGI, withholding, state/local deductions and draft Form 1040. Withheld originals
   remain separate verified PDF attachments. Early codes 1/S additionally require
-  dated payments and no-exception or payment-bound 01/04/06/10/12/20 evidence; shared
+  dated payments and no-exception or payment-bound 01/03/04/06/10/12/20 evidence; shared
   2025 Part I tax arithmetic
   reaches Schedule 2 and separate owner Form 5329 drafts where required.
   See the [retirement contract](../../../docs/ty2026/graphs/FORM1099R-GRAPH.md)

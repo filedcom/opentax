@@ -25,11 +25,13 @@ Supported current source treatments are:
   nondeductible contribution, rollover, conversion or special exclusion.
 - Qualified employer-plan and governmental 457(b) distributions with
   payer-determined taxability, including a taxable amount below gross.
-- Single codes 7, 2 and 4 with normal-age, known-exception or death-benefit
-  evidence respectively. Owner matching includes jointly filing spouses and
+- Single codes 7, 2, 3 and 4 with normal-age, known-exception, disability or
+  death-benefit evidence respectively. Code 3 needs a payer-exception review;
+  a non-IRA copy also needs a separate ordinary-withdrawal or disability-pension
+  classification. Owner matching includes jointly filing spouses and
   reviewed masked recipient TINs.
 - Early codes 1 and S with reconciled dated payments, no-exception or payment-bound
-  exception 01/04/06/10/12/20 review and
+  exception 01/03/04/06/10/12/20 review and
   SIMPLE first-contribution evidence. Shared Part I arithmetic feeds Schedule 2
   directly or separate owner Form 5329 drafts; see the [early-tax contract](./FORM5329-GRAPH.md).
 - Single-code G direct plan rollovers to eligible non-Roth destinations or Roth
@@ -108,10 +110,11 @@ distribution statement.
 [IRS Publication 525](https://www.irs.gov/publications/p525) and
 [Publication 575](https://www.irs.gov/publications/p575) direct taxable disability
 pensions to line 1h until minimum retirement age, then to pension lines 5a/5b
-beginning the following day. The 2026 payment-date and plan-evidenced minimum
-retirement-age split, source-bound earned-income reconciliation and native
-disability statement remain required before enabling code 3 or pension
-disability exceptions. The current EIC source contract expressly excludes
+beginning the following day. The 2026 source calculation now implements this
+payment-date split and reuses the shared helper for both categories. Ordinary
+code-3 withdrawals and exception-03 withdrawals are connected to return assembly.
+Employer disability wages still require the earned-income bridges and native
+disability statement described below. The current EIC source contract expressly excludes
 retirement disability wages; dependent care, child credits, dependent deductions and Schedule
 R also need their distinct income/eligibility review. These 2025 publications are
 method comparators pending final 2026 instructions.
@@ -119,3 +122,36 @@ method comparators pending final 2026 instructions.
 The routing correction passed 143 typed retirement and export regressions and
 137 repository unit/harness checks. These checks do not establish 2026 disability
 eligibility or filing acceptance.
+
+### Disability payment source contract
+
+Income classification is separate from the additional-tax exception. Non-IRA
+code 3 and exception 03 require a reviewed distinction between an ordinary plan
+withdrawal and an employer disability pension. IRA distributions cannot become
+employer disability wages. Correct code 3 needs the payer's disability-exception
+review and does not create an unnecessary Part I form.
+
+Employer pensions require an owner/account match, the plan record establishing
+the first non-disability pension eligibility date, disability retirement date,
+complete dated gross/taxable payment records and review of special military,
+service and terrorism exclusions. Every payment must occur in 2026 after
+retirement; gross and taxable sums must reconcile to the current issued copy.
+Payments on the minimum-retirement-age date remain wages; later payments become
+pension income. Withholding is counted once from the issued copy, and pure-wage
+copies do not emit pension lines. The complete taxable distribution remains the
+Part I base regardless of its wage/pension split.
+
+Early-tax and disability ledgers must describe the same payments, dates and
+amounts. Current statements for one owner/payer/account cannot reuse payment
+references or disagree on plan dates. Different owners remain separate. The
+source result retains exact-cent `line1h_disability_wages` and owner-linked dated
+`disability_wage_payments` for the downstream consumers.
+
+**Remaining connection:** `retirement_2026` currently rejects positive disability
+wages before return assembly; it does not drop the wage amount or emit an
+incorrect partial return. The next implementation must combine disability and
+moving amounts on line 1h, replay that composition in AGI/PDF output, replace the
+EIC no-disability declaration with retained-source review, connect annual/monthly
+dependent-care income, and reconcile the distinct child-credit, dependent
+standard-deduction, child-tax and education definitions. Schedule R and current
+native disability filing support also remain required parity work.

@@ -254,3 +254,33 @@ Deno.test("2026 death and terminal exceptions print owner forms and keep private
     assertEquals(b.sourceAttachments, []);
   }
 });
+
+Deno.test("2026 disability exception prints code 03 for a SIMPLE distribution without medical evidence in the draft", async () => {
+  const { disabilityWithdrawal2026 } = await import(
+    "../inputs/retirement-disability.fixture.ts"
+  );
+  const { exceptionRetirementGraph2026 } = await import(
+    "../inputs/retirement-exceptions.fixture.ts"
+  );
+  const b = await buildDraftReturnPdf2026(
+    exceptionRetirementGraph2026(disabilityWithdrawal2026(true)),
+  );
+  assertEquals(b.attachments.map((a) => a.form), [
+    "f1040",
+    "form5329:taxpayer",
+  ]);
+  const page = b.attachments[1].formPages[0];
+  await inspect(b.bytes, async (read) => {
+    assertEquals(await read(page, [315, 276, 40, 12]), "03");
+    assertEquals(await read(page, [505, 252, 71, 12]), "10000");
+    assertEquals(await read(page, [505, 276, 71, 12]), "10000");
+    assertEquals(await read(page, [505, 288, 71, 12]), "0");
+    assertEquals(await read(page, [505, 300, 71, 12]), "0");
+    for (let p = 1; p <= 5; p++) {
+      const text = await read(p);
+      assertEquals(text.includes("private-disability"), false);
+      assertEquals(text.includes("2027-01-15"), false);
+    }
+  });
+  assertEquals(b.sourceAttachments, []);
+});

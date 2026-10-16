@@ -1,3 +1,8 @@
+import {
+  disabilityIncomeReview2026Schema,
+  retirementPayment2026Schema,
+  splitDisabilityIncome2026,
+} from "./retirement-disability.ts";
 import { earlyDistributionAdditionalTax } from "../../nodes/intermediate/forms/taxes/retirement/form5329/early-tax.ts";
 import { issuedPdfAttachment2026 } from "./issued-pdf.ts";
 import { z } from "zod";
@@ -24,6 +29,21 @@ const date = z.string().date();
 // Claims identify actual whole payments, never an entered exception code or tax amount.
 const exceptionEvidence = { record_reference: ref, payment_reference: ref };
 const earlyException = z.discriminatedUnion("kind", [
+  z.object({
+    ...exceptionEvidence,
+    kind: z.literal("total_permanent_disability"),
+    patient_tin: tin,
+    physician_record_reference: ref,
+    physician_determination_signed_on: date,
+    disability_onset_date: date,
+    unable_to_perform_any_substantial_gainful_activity_verified: z.literal(
+      true,
+    ),
+    disability_caused_by_physical_or_mental_condition_verified: z.literal(true),
+    physician_expected_duration: z.enum(["death", "long_continued_indefinite"]),
+    medical_evidence_covers_payment_date_verified: z.literal(true),
+    distribution_due_to_disability_verified: z.literal(true),
+  }).strict(),
   z.object({
     ...exceptionEvidence,
     kind: z.literal("death_beneficiary"),
@@ -188,6 +208,8 @@ const review = z.object({
   ),
   payer_determined_pension_taxability_verified: z.literal(true).optional(),
   payer_code2_exception_verified: z.literal(true).optional(),
+  payer_code3_disability_verified: z.literal(true).optional(),
+  disability_income: disabilityIncomeReview2026Schema.optional(),
   early_distribution: z.object({
     record_reference: ref,
     complete_payment_inventory_verified: z.literal(true),
@@ -201,14 +223,7 @@ const review = z.object({
       claims: z.array(earlyException).min(1).max(1000),
     }).strict().optional(),
     simple_first_contribution_date: date.optional(),
-    payments: z.array(
-      z.object({
-        record_reference: ref,
-        payment_date: date,
-        gross: money,
-        taxable: money,
-      }).strict(),
-    ).min(1).max(1000),
+    payments: z.array(retirementPayment2026Schema).min(1).max(1000),
   }).strict().optional(),
   death_benefit: z.object({
     decedent_tin: tin,
@@ -374,6 +389,7 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
   }
   const paymentRecords = new Set<string>();
   const accountDecedents = new Map<string, string>();
+  const disabilityPlanDates = new Map<string, string>();
   const rows = current.map((c) => {
     const r = reviews.get(c.source_document_reference)!;
     if (r.reviewed_on < "2027-01-01" || r.reviewed_on > claim.reviewed_on) {
@@ -393,7 +409,8 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     }
     const codes = c.box7a_distribution_codes;
     if (
-      codes.length !== 1 || !["1", "2", "4", "7", "G", "S"].includes(codes[0])
+      codes.length !== 1 ||
+      !["1", "2", "3", "4", "7", "G", "S"].includes(codes[0])
     ) {
       throw new Error(
         "Retirement codes need their early-tax, Roth, QCD, corrective, or special source route",
@@ -446,6 +463,11 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     }
     if (code === "2" && !r.payer_code2_exception_verified) {
       throw new Error("Code 2 needs the payer's known-exception review");
+    }
+    if ((code === "3") !== !!r.payer_code3_disability_verified) {
+      throw new Error(
+        "Code 3 needs a matching payer disability-exception review",
+      );
     }
     const deathClaims = r.early_distribution?.exception_review?.claims.filter(
       (claim) => claim.kind === "death_beneficiary",
@@ -653,6 +675,21 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         if (claim) {
           let exceptionCode: string;
           switch (claim.kind) {
+            case "total_permanent_disability":
+              if (
+                claim.patient_tin !== id ||
+                claim.disability_onset_date < dob ||
+                claim.disability_onset_date > p.payment_date ||
+                claim.physician_determination_signed_on < dob ||
+                claim.physician_determination_signed_on > r.reviewed_on
+              ) {
+                throw new Error(
+                  "Disability exception needs this owner's medical determination covering disability at payment by the treatment review date",
+                );
+              }
+              // Exception 03 does not impose exception 20's pre-payment certification rule.
+              exceptionCode = "03";
+              break;
             case "death_beneficiary":
               if (
                 !r.death_benefit ||
@@ -746,6 +783,58 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
         }
       }
     }
+    if (r.death_benefit && r.disability_income) {
+      throw new Error(
+        "Inherited death-benefit income cannot be classified as the beneficiary's disability pension",
+      );
+    }
+    const disability = splitDisabilityIncome2026({
+      review: r.disability_income,
+      owner_tin: id,
+      account_number: c.account_number,
+      owner_dob: c.recipient === "spouse"
+        ? input.spouse_dob!
+        : input.taxpayer_dob,
+      ira,
+      code,
+      has_disability_exception: exemptions.some((e) => e.code === "03"),
+      gross: c.box1_gross_distribution,
+      taxable,
+      early_payments: r.early_distribution?.payments,
+    });
+    if (r.disability_income?.kind === "employer_disability_pension") {
+      const d = r.disability_income;
+      const planDates = JSON.stringify([
+        d.disability_retirement_date,
+        d.minimum_retirement_age_date,
+      ]);
+      if (
+        disabilityPlanDates.has(accountKey) &&
+        disabilityPlanDates.get(accountKey) !== planDates
+      ) {
+        throw new Error(
+          "Disability pension plan dates disagree across current statements for one owner/account",
+        );
+      }
+      disabilityPlanDates.set(accountKey, planDates);
+      // Early payment ledgers have already registered these same reconciled records.
+      if (!r.early_distribution) {
+        for (const p of d.payments) {
+          const key = JSON.stringify([
+            id,
+            c.payer_tin,
+            c.account_number,
+            p.record_reference,
+          ]);
+          if (paymentRecords.has(key)) {
+            throw new Error(
+              "Disability payment record is reused across current statements for the same owner/account",
+            );
+          }
+          paymentRecords.add(key);
+        }
+      }
+    }
     const projected = sharedItem.parse({
       payer_name: c.payer_name,
       payer_ein: c.payer_tin,
@@ -762,20 +851,42 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     });
     // No QCD or PSO exclusions can enter this projection. Their source routes
     // will supply annual policy when implemented, rather than borrowing 2025 limits.
-    const calculated = calculateReportedRetirementIncome([projected], {
+    const parts = disability.pension_payments === undefined ? [projected] : [
+      { payments: disability.wage_payments, wages: true },
+      { payments: disability.pension_payments, wages: false },
+    ].filter((part) => part.payments.length > 0).map((part) => ({
+      ...projected,
+      box1_gross_distribution: sumSourceMoney(
+        part.payments.map((p) => p.gross),
+      ),
+      box2a_taxable_amount: sumSourceMoney(part.payments.map((p) => p.taxable)),
+      box4_federal_withheld: 0,
+      disability_flag: part.wages,
+      disability_as_wages: part.wages,
+    }));
+    const calculated = calculateReportedRetirementIncome(parts, {
       qcdAnnualLimit: 0,
       psoExclusionLimit: 0,
     });
+    // Withholding belongs to the issued copy, not each income-classification part.
+    calculated.withholdingFields = c.box4_federal_withheld > 0
+      ? { line25b_withheld_1099: c.box4_federal_withheld }
+      : {};
     return {
       copy: c,
       review: r,
       owner_tin: id,
+      taxable,
+      disability_wage_payments: disability.wage_payments,
       calculated,
       exemptions,
       early_tax_rate: early ? (code === "S" ? 25 : 10) : undefined,
     };
   });
   const cents = {
+    line1h_disability_wages: sumSourceMoney(
+      rows.map((r) => r.calculated.disWagesFields.line1h_other_earned ?? 0),
+    ),
     line4a_ira_gross: sumSourceMoney(
       rows.map((r) => r.calculated.iraFields.line4a_ira_gross ?? 0),
     ),
@@ -799,16 +910,12 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     rows.every((r) =>
       r.copy.box7a_distribution_codes[0] === "1" &&
       r.exemptions.length === 0 &&
-      (r.calculated.iraFields.line4b_ira_taxable ??
-          r.calculated.pensionFields.line5b_pension_taxable ?? 0) ===
-        r.copy.box1_gross_distribution
+      r.taxable === r.copy.box1_gross_distribution
     );
   const earlyOwners = (["taxpayer", "spouse"] as const).flatMap((owner) => {
     const owned = earlyRows.filter((r) => r.copy.recipient === owner);
     if (!owned.length) return [];
-    const taxable = (r: typeof rows[number]) =>
-      r.calculated.iraFields.line4b_ira_taxable ??
-        r.calculated.pensionFields.line5b_pension_taxable ?? 0;
+    const taxable = (r: typeof rows[number]) => r.taxable;
     const total = sumSourceMoney(owned.map(taxable));
     const simple = sumSourceMoney(
       owned.filter((r) => r.early_tax_rate === 25).map(taxable),
@@ -868,7 +975,9 @@ export function calculateRetirementSources2026(raw: RetirementSource2026) {
     r.review.direct_rollover !== undefined
   );
   const hasIra = rows.some((r) => r.copy.box7b_ira_sep_simple);
-  const hasPension = rows.some((r) => !r.copy.box7b_ira_sep_simple);
+  const hasPension = rows.some((r) =>
+    r.calculated.pensionFields.line5b_pension_taxable !== undefined
+  );
   const lines = Object.fromEntries(
     Object.entries(cents).map((
       [key, value],

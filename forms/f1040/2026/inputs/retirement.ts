@@ -22,6 +22,11 @@ class Retirement2026 extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(raw);
     if (!input.claim) return { outputs: [] };
     const r = calculateRetirementSources2026({ ...input, claim: input.claim });
+    if (r.cents.line1h_disability_wages > 0) {
+      throw new Error(
+        "2026 disability pension wages need the earned-income credit and dependent-income source bridges before return assembly",
+      );
+    }
     const taxes = r.rows.flatMap(({ copy: c, owner_tin }) => {
       const amount = sumSourceMoney([
         ...c.state_information.map((s) => s.box14_state_withheld),
