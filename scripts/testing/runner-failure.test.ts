@@ -15,16 +15,28 @@ test("runner retains terminal failure when a tracked runtime file is missing bef
       "./run.ts",
       "./contracts.ts",
       "./repository.ts",
-      "./permissions.ts",
       "./full-lock.ts",
       "./skip-policy.json",
     ]
   ) {
     await fs.copyFile(join(source, name), join(tooling, name));
   }
-  await fs.copyFile(join(source, "../../deno.json"), join(root, "deno.json"));
-  await fs.copyFile(join(source, "../../deno.lock"), join(root, "deno.lock"));
-  await fs.writeFile(join(root, ".gitignore"), ".state/research/\n");
+  await fs.mkdir(join(root, "scripts/support"), { recursive: true });
+  await fs.copyFile(
+    join(source, "../support/sys.ts"),
+    join(root, "scripts/support/sys.ts"),
+  );
+  for (const name of ["package.json", "bun.lock", "tsconfig.json"]) {
+    await fs.copyFile(join(source, "../..", name), join(root, name));
+  }
+  await fs.symlink(
+    join(source, "../../node_modules"),
+    join(root, "node_modules"),
+  );
+  await fs.writeFile(
+    join(root, ".gitignore"),
+    ".state/research/\nnode_modules\n",
+  );
   await fs.writeFile(
     join(root, "missing.ts"),
     "export const original = true;\n",
@@ -40,12 +52,8 @@ test("runner retains terminal failure when a tracked runtime file is missing bef
   }).output();
   assertEquals(staged.code, 0);
   await sys.remove(join(root, "missing.ts"));
-  const result = await new sys.Command("deno", {
+  const result = await new sys.Command(process.execPath, {
     args: [
-      "run",
-      "--allow-read",
-      "--allow-write",
-      "--allow-run=git,deno",
       join(tooling, "./run.ts"),
       "preflight",
     ],

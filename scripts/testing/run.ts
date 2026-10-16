@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Exact-discovery verification; full runs require exclusive ownership and no skips. */
+import { availableParallelism } from "node:os";
 import { dirname, fromFileUrl, join } from "@std/path";
 import {
   assertRuntimeUnchanged,
@@ -16,9 +17,38 @@ import {
   testInventory,
 } from "./repository.ts";
 import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
-import { TEST_PERMISSIONS } from "./permissions.ts";
 
 const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
+// PDF and XSD round trips can take minutes; a test is only stopped when hung.
+const TEST_TIMEOUT_MS = 30 * 60 * 1000;
+
+/** Streams a child's output into a new private evidence file. */
+async function retain(stream: ReadableStream<Uint8Array>, path: string) {
+  const file = await fs.open(path, "wx", 0o600);
+  try {
+    const reader = stream.getReader();
+    for (let read = await reader.read(); !read.done; read = await reader.read()) {
+      await file.write(read.value);
+    }
+  } finally {
+    await file.close();
+  }
+}
+
+/** Optional environment inputs the tests read, for the requirements report. */
+async function testEnvironmentInputs(
+  root: string,
+  tests: string[],
+): Promise<string[]> {
+  const names = new Set<string>();
+  for (const path of tests) {
+    const source = await fs.readFile(join(root, path), "utf8");
+    for (const match of source.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) {
+      names.add(match[1]);
+    }
+  }
+  return [...names].sort();
+}
 const mode = process.argv.slice(2)[0] ?? "full";
 if (!["full", "unit", "harness", "preflight"].includes(mode)) {
   throw new Error(`Unknown test mode: ${mode}`);
@@ -97,14 +127,9 @@ try {
     const source = await fs.readFile(join(root, path), "utf8");
     if (/\bignore\s*:/.test(source)) conditionalModules.push(path);
   }
-  const envFlag = TEST_PERMISSIONS.find((flag) =>
-    flag.startsWith("--allow-env=")
-  );
-  const externalInputs =
-    (envFlag?.slice("--allow-env=".length).split(",") ?? []).map((name) => ({
-      name,
-      provided: Boolean(process.env[name]),
-    }));
+  const externalInputs = (await testEnvironmentInputs(root, all)).map((
+    name,
+  ) => ({ name, provided: Boolean(process.env[name]) }));
   const requiredXsd = mode === "full" ? await requiredTools() : null;
   await sys.writeText(
     join(evidence, "requirements.json"),
@@ -144,31 +169,24 @@ try {
     code = 0;
   } else {
     const junitPath = join(evidence, "junit.xml");
-    const child = new sys.Command("deno", {
+    const child = new sys.Command(process.execPath, {
       args: [
         "test",
-        ...TEST_PERMISSIONS,
+        // Each file gets a fresh global and module registry.
+        mode === "full" ? `--parallel=${availableParallelism()}` : "--isolate",
+        `--timeout=${TEST_TIMEOUT_MS}`,
         "--reporter=junit",
-        `--junit-path=${junitPath}`,
-        ...selected,
+        `--reporter-outfile=${junitPath}`,
+        // A bare argument is a name filter to bun test; ./ makes it a path.
+        ...selected.map((path) => `./${path}`),
       ],
       cwd: root,
       stdout: "piped",
       stderr: "piped",
     }).spawn();
-    const stdout = await Deno.open(join(evidence, "stdout.log"), {
-      write: true,
-      createNew: true,
-      mode: 0o600,
-    });
-    const stderr = await Deno.open(join(evidence, "stderr.log"), {
-      write: true,
-      createNew: true,
-      mode: 0o600,
-    });
     const outputs = Promise.all([
-      child.stdout.pipeTo(stdout.writable),
-      child.stderr.pipeTo(stderr.writable),
+      retain(child.stdout, join(evidence, "stdout.log")),
+      retain(child.stderr, join(evidence, "stderr.log")),
     ]);
     const status = await child.status;
     await outputs;

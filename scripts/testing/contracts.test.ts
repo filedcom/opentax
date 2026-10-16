@@ -73,10 +73,10 @@ test("run result requires terminal success executed tests and unchanged runtime"
 
 test("JUnit reporting preserves ignored and failed requirements separately", () => {
   const report = junitSummary(
-    '<testsuites tests="3" failures="1" errors="0"><testsuite name="./a.test.ts" tests="3" disabled="1" errors="0" failures="1"><testcase name="positive"/><testcase name="ignored"><skipped/></testcase><testcase name="failed"><failure/></testcase></testsuite></testsuites>',
+    '<testsuites tests="4" failures="1" skipped="1"><testsuite name="a.test.ts" tests="4" skipped="1" failures="1"><testcase name="positive"/><testcase name="ignored"><skipped/></testcase><testcase name="failed"><failure/></testcase><testsuite name="group" tests="1" skipped="0" failures="0"><testcase name="nested"/></testsuite></testsuite></testsuites>',
   );
   assertEquals(report.modules, ["a.test.ts"]);
-  assertEquals(report.executed, 2);
+  assertEquals(report.executed, 3);
   assertEquals(report.ignored, 1);
   assertEquals(report.failures, 1);
   assertThrows(() => junitSummary("<testsuites/>"));
@@ -106,10 +106,12 @@ test("ignored policy requires exact module and test identities, reason, and neve
 test("JUnit rejects truncated XML missing cases and false failure attributes", () => {
   for (
     const xml of [
-      '<testsuites tests="3" failures="0" errors="0"><testsuite name="a" tests="3" failures="0" errors="0"/></testsuites>',
-      '<testsuites tests="1" failures="0" errors="0"><testsuite name="a" tests="1" failures="0" errors="0"><testcase name="failed"><failure/></testcase></testsuite></testsuites>',
-      '<testsuites tests="3" failures="0" errors="0"><testsuite name="a" tests="3" failures="0" errors="0">',
-      '<testsuites tests="9" failures="0" errors="0"><testsuite name="a" tests="1" failures="0" errors="0"><testcase name="one"/></testsuite></testsuites>',
+      '<testsuites tests="3" failures="0" skipped="0"><testsuite name="a" tests="3" failures="0" skipped="0"/></testsuites>',
+      '<testsuites tests="1" failures="0" skipped="0"><testsuite name="a" tests="1" failures="0" skipped="0"><testcase name="failed"><failure/></testcase></testsuite></testsuites>',
+      '<testsuites tests="1" failures="0" skipped="0"><testsuite name="a" tests="1" failures="0" skipped="0"><testcase name="ignored"><skipped/></testcase></testsuite></testsuites>',
+      '<testsuites tests="3" failures="0" skipped="0"><testsuite name="a" tests="3" failures="0" skipped="0">',
+      '<testsuites tests="9" failures="0" skipped="0"><testsuite name="a" tests="1" failures="0" skipped="0"><testcase name="one"/></testsuite></testsuites>',
+      '<testsuites tests="2" failures="0" skipped="0"><testsuite name="a" tests="2" failures="0" skipped="0"><testcase name="one"/><testsuite name="g" tests="2" failures="0" skipped="0"><testcase name="two"/></testsuite></testsuite></testsuites>',
     ]
   ) assertThrows(() => junitSummary(xml));
   assertGraphCoverage(["file:///one.ts"], {

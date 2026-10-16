@@ -84,23 +84,49 @@ export function testRunExitCode(
 }
 
 const testcaseSchema = z.object({ "@_name": z.string() }).passthrough();
-const suiteSchema = z.object({
-  "@_name": z.string(),
+type Testcase = z.infer<typeof testcaseSchema>;
+const counts = {
   "@_tests": z.coerce.number().int().nonnegative(),
-  "@_disabled": z.coerce.number().int().nonnegative().default(0),
   "@_failures": z.coerce.number().int().nonnegative(),
-  "@_errors": z.coerce.number().int().nonnegative(),
-  testcase: z.union([testcaseSchema, z.array(testcaseSchema)]).optional(),
-}).passthrough();
+  "@_skipped": z.coerce.number().int().nonnegative(),
+};
+type Suite = {
+  "@_name": string;
+  "@_tests": number;
+  "@_failures": number;
+  "@_skipped": number;
+  testcase?: Testcase | Testcase[];
+  testsuite?: Suite | Suite[];
+};
+// Bun nests a testsuite per describe() block inside each file's testsuite.
+const suiteSchema: z.ZodType<Suite, z.ZodTypeDef, unknown> = z.lazy(() =>
+  z.object({
+    "@_name": z.string(),
+    ...counts,
+    testcase: z.union([testcaseSchema, z.array(testcaseSchema)]).optional(),
+    testsuite: z.union([suiteSchema, z.array(suiteSchema)]).optional(),
+  }).passthrough()
+);
 const junitSchema = z.object({
   testsuites: z.object({
-    "@_tests": z.coerce.number().int().nonnegative(),
-    "@_failures": z.coerce.number().int().nonnegative(),
-    "@_errors": z.coerce.number().int().nonnegative(),
+    ...counts,
     testsuite: z.union([suiteSchema, z.array(suiteSchema)]),
   }),
 });
 
+function list<T>(value: T | T[] | undefined): T[] {
+  return Array.isArray(value) ? value : value === undefined ? [] : [value];
+}
+
+/** Every testcase of a file, including those inside describe() blocks. */
+function suiteCases(suite: Suite): Testcase[] {
+  return [
+    ...list(suite.testcase),
+    ...list(suite.testsuite).flatMap(suiteCases),
+  ];
+}
+
+/** Bun's JUnit report, with every count checked against the cases it lists. */
 export function junitSummary(xml: string) {
   const validation = XMLValidator.validate(xml);
   if (validation !== true) {
@@ -109,51 +135,39 @@ export function junitSummary(xml: string) {
   const parsed = junitSchema.parse(
     new XMLParser({ ignoreAttributes: false }).parse(xml),
   );
-  const suites = Array.isArray(parsed.testsuites.testsuite)
-    ? parsed.testsuites.testsuite
-    : [parsed.testsuites.testsuite];
-  for (const suite of suites) {
-    const cases = Array.isArray(suite.testcase)
-      ? suite.testcase
-      : suite.testcase
-      ? [suite.testcase]
-      : [];
-    const disabled = cases.filter((test) => "skipped" in test).length;
-    const failures = cases.filter((test) => "failure" in test).length;
-    const errors = cases.filter((test) => "error" in test).length;
+  const suites = list(parsed.testsuites.testsuite);
+  const check = (suite: Suite): void => {
+    const cases = suiteCases(suite);
     if (
-      suite["@_tests"] !== cases.length || suite["@_disabled"] !== disabled ||
-      suite["@_failures"] !== failures || suite["@_errors"] !== errors
+      suite["@_tests"] !== cases.length ||
+      suite["@_skipped"] !== cases.filter((test) => "skipped" in test).length ||
+      suite["@_failures"] !==
+        cases.filter((test) => "failure" in test || "error" in test).length
     ) throw new Error(`JUnit testcase counts disagree for ${suite["@_name"]}`);
-  }
-  for (const field of ["@_tests", "@_failures", "@_errors"] as const) {
+    list(suite.testsuite).forEach(check);
+  };
+  suites.forEach(check);
+  for (const field of ["@_tests", "@_failures", "@_skipped"] as const) {
     if (
       parsed.testsuites[field] !==
         suites.reduce((sum, suite) => sum + suite[field], 0)
     ) throw new Error(`JUnit aggregate ${field} disagrees`);
   }
-  const ignoredTests = suites.flatMap((suite) => {
-    const cases = Array.isArray(suite.testcase)
-      ? suite.testcase
-      : suite.testcase
-      ? [suite.testcase]
-      : [];
-    return cases.filter((test) => "skipped" in test).map((test) => ({
-      module: suite["@_name"].replace(/^\.\//, ""),
+  const module = (suite: Suite) => suite["@_name"].replace(/^\.\//, "");
+  const ignoredTests = suites.flatMap((suite) =>
+    suiteCases(suite).filter((test) => "skipped" in test).map((test) => ({
+      module: module(suite),
       name: test["@_name"],
-    }));
-  });
+    }))
+  );
   return {
-    modules: suites.map((suite) => suite["@_name"].replace(/^\.\//, "")),
+    modules: suites.map(module),
     executed: suites.reduce(
-      (sum, suite) => sum + suite["@_tests"] - suite["@_disabled"],
+      (sum, suite) => sum + suite["@_tests"] - suite["@_skipped"],
       0,
     ),
-    ignored: suites.reduce((sum, suite) => sum + suite["@_disabled"], 0),
-    failures: suites.reduce(
-      (sum, suite) => sum + suite["@_failures"] + suite["@_errors"],
-      0,
-    ),
+    ignored: suites.reduce((sum, suite) => sum + suite["@_skipped"], 0),
+    failures: suites.reduce((sum, suite) => sum + suite["@_failures"], 0),
     suites,
     ignoredTests,
   };

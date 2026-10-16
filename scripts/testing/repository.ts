@@ -1,5 +1,6 @@
 import * as sys from "../support/sys.ts";
-import { join, toFileUrl } from "@std/path";
+import { readFileSync } from "node:fs";
+import { dirname, join, toFileUrl } from "@std/path";
 import {
   assertGraphCoverage,
   assertHealthyModuleGraph,
@@ -27,7 +28,8 @@ export async function repositoryFiles(root: string): Promise<string[]> {
 
 export function verificationInputPaths(paths: string[]): string[] {
   return paths.filter((path) =>
-    path.endsWith(".ts") || path === "deno.json" || path === "deno.lock" ||
+    path.endsWith(".ts") ||
+    ["package.json", "bun.lock", "bunfig.toml", "tsconfig.json"].includes(path) ||
     (path.endsWith(".json") &&
       [
         "forms/",
@@ -62,6 +64,49 @@ export async function runtimeSnapshot(
   return Object.fromEntries(entries);
 }
 
+type GraphModule = {
+  readonly specifier: string;
+  readonly error?: string;
+  readonly dependencies: { specifier: string; code: { error?: string } }[];
+};
+
+/** Every runtime import of every module, resolved the way Bun will load it. */
+export function moduleGraph(root: string, paths: string[]): GraphModule[] {
+  const transpiler = new Bun.Transpiler({ loader: "ts" });
+  return paths.map((path) => {
+    const file = join(root, path);
+    const specifier = toFileUrl(file).href;
+    let imports: { path: string }[];
+    try {
+      // The transpiler API rejects a leading #! line that `bun` itself skips.
+      imports = transpiler.scanImports(
+        readFileSync(file, "utf8").replace(/^#!.*/, ""),
+      );
+    } catch (error) {
+      return {
+        specifier,
+        error: `${path}: ${(error as Error).message}`,
+        dependencies: [],
+      };
+    }
+    const dependencies = imports
+      .filter((entry) => !/^(node|bun):/.test(entry.path))
+      .map((entry) => {
+        try {
+          Bun.resolveSync(entry.path, dirname(file));
+          return { specifier: entry.path, code: {} };
+        } catch (error) {
+          return {
+            specifier: entry.path,
+            code: { error: `${path}: ${(error as Error).message}` },
+          };
+        }
+      });
+    return { specifier, dependencies };
+  });
+}
+
+/** Resolves every runtime import and type-checks every module with tsconfig.json. */
 export async function graphPreflight(
   root: string,
   evidenceDirectory: string,
@@ -69,46 +114,43 @@ export async function graphPreflight(
   const paths = (await repositoryFiles(root)).filter((path) =>
     path.endsWith(".ts")
   );
-  const entry = join(evidenceDirectory, "all-modules.ts");
+  const graph = { modules: moduleGraph(root, paths) };
   await sys.writeText(
-    entry,
-    paths.map((path) =>
-      `import ${JSON.stringify(toFileUrl(join(root, path)).href)};`
-    ).join("\n"),
+    join(evidenceDirectory, "module-graph.json"),
+    JSON.stringify(graph, null, 2),
     { createNew: true, mode: 0o600 },
   );
-  const result = await new sys.Command("deno", {
+  const count = assertHealthyModuleGraph(graph);
+  assertGraphCoverage(
+    paths.map((path) => toFileUrl(join(root, path)).href),
+    graph,
+  );
+  const typecheck = await new sys.Command(process.execPath, {
     args: [
-      "info",
-      "--frozen",
-      "--json",
-      "--config",
-      join(root, "deno.json"),
-      entry,
+      join(root, "node_modules/typescript/bin/tsc"),
+      "--project",
+      join(root, "tsconfig.json"),
+      "--pretty",
+      "false",
     ],
     cwd: root,
     stdout: "piped",
     stderr: "piped",
   }).output();
   await sys.writeBytes(
-    join(evidenceDirectory, "module-graph.json"),
-    result.stdout,
+    join(evidenceDirectory, "typecheck.log"),
+    new Uint8Array([...typecheck.stdout, ...typecheck.stderr]),
     { createNew: true, mode: 0o600 },
   );
-  await sys.writeBytes(
-    join(evidenceDirectory, "module-graph.stderr.log"),
-    result.stderr,
-    { createNew: true, mode: 0o600 },
-  );
-  if (!result.success) {
-    throw new Error(`Module graph command exited ${result.code}`);
+  if (!typecheck.success) {
+    const errors = new TextDecoder().decode(typecheck.stdout)
+      .split("\n").filter((line) => line.includes("error TS"));
+    throw new Error(
+      `Type check failed with ${errors.length} error(s): ${
+        errors.slice(0, 20).join("; ")
+      }`,
+    );
   }
-  const graph: unknown = JSON.parse(new TextDecoder().decode(result.stdout));
-  const count = assertHealthyModuleGraph(graph);
-  assertGraphCoverage(
-    paths.map((path) => toFileUrl(join(root, path)).href),
-    graph,
-  );
   return count;
 }
 
