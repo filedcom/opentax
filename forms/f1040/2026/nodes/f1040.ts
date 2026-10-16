@@ -101,6 +101,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       ...this.outputNodes.nodeTypes,
       "capital_loss_carryover",
       "refund_allocation",
+      "f8938",
     ];
   }
 
@@ -303,6 +304,10 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     outputs.push({
       nodeType: "refund_allocation",
       fields: { settled_return: { ...outputs[0].fields } },
+    });
+    outputs.push({
+      nodeType: "f8938",
+      fields: { settled_return: { ...outputs[0].fields, tax_year: ctx.taxYear } },
     });
     outputs.push({
       nodeType: "capital_loss_carryover",

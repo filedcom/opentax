@@ -46,6 +46,7 @@ extension_payments,estimated_payments,yes
 extension_payments,form1062,yes
 extension_payments,schedule3_final,yes
 f1040,capital_loss_carryover,yes
+f1040,f8938,yes
 f1040,refund_allocation,yes
 f1040,schedule3a,yes
 f1095a,form1062,yes
@@ -188,6 +189,7 @@ income_tax_calculation,schedule_r,yes
 investment_income,agi_aggregator,yes
 investment_income,capital_gains,yes
 investment_income,f1040,yes
+investment_income,f8938,yes
 investment_income,form6251,yes
 investment_income,form8960,yes
 investment_income,income_tax_calculation,yes
@@ -254,6 +256,7 @@ start,f5695,yes
 start,f8615,yes
 start,f8812,yes
 start,f8863,yes
+start,f8938,yes
 start,form1062,yes
 start,form2441,yes
 start,form4137,yes

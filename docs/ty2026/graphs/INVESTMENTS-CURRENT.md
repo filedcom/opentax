@@ -236,8 +236,9 @@ The statement-only route needs neither a W-2 nor a 1099. It selects Schedule B
 and prints the institution, translated payer total, reconciled whole-dollar
 interest and reviewed country/FBAR answers. Receipt-level source references and
 USD amounts are retained for Form 8938's subsequent Part III return binding;
-that binding, foreign dividends, foreign-tax deductions/credits and native
-MeF support remain open.
+the terminal Form 8938 stage now binds supported receipt/issued-copy items to
+completed income. Broader foreign dividends, foreign-tax deductions/credits
+and native MeF support remain open; see FORM8938-GRAPH.md.
 
 Authorities: [IRS Topic 403](https://www.irs.gov/taxtopics/tc403) requires
 reporting taxable interest even without an issued information return and

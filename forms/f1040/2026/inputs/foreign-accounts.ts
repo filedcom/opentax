@@ -13,6 +13,8 @@ const account = z.object({
   institution_name: ref,
   account_number: ref,
   country_name: z.string().trim().min(1).max(90).regex(/^[\x20-\x7e]+$/),
+  // Source country identity for cross-form joins, distinct from IRS MeF codes.
+  iso_country_code: z.string().regex(/^[A-Z]{2}$/).optional(),
   subject_tin: tin,
   relationship: z.enum(["financial_interest", "signature_authority", "both"]),
   relationship_started_on: z.string().date(),

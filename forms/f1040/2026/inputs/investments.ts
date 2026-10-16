@@ -32,7 +32,7 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
     form8960_2026,
   ]);
   override get outputNodeTypes() {
-    return [...this.outputNodes.nodeTypes, "capital_gains"];
+    return [...this.outputNodes.nodeTypes, "capital_gains", "f8938"];
   }
   compute(ctx: NodeContext, raw: z.input<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -113,6 +113,10 @@ class InvestmentsNode2026 extends TaxNode<typeof inputSchema> {
         },
         { nodeType: "form6251", fields: { investment_sources_2026: claim } },
         { nodeType: "form8960", fields: { investment_sources_2026: claim } },
+        {
+          nodeType: "f8938",
+          fields: { investment_sources_2026: result.source_input },
+        },
         ...(stateTaxes.length
           ? [{
             nodeType: "schedule_a",

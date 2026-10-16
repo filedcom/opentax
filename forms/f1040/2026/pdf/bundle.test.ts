@@ -22,6 +22,22 @@ import {
 import { FilingStatus } from "../../nodes/types.ts";
 import { foreignAccountReviewFixture2026 } from "../inputs/foreign-accounts.fixture.ts";
 import { foreignBankInvestmentFixture2026 } from "../inputs/foreign-bank-interest.fixture.ts";
+import { foreignAssetReturnFixture2026 } from "../inputs/foreign-assets-return.fixture.ts";
+
+Deno.test("2026 bundle retains reconciled Form 8938 and exposes its unfinished attachment", async () => {
+  const raw = foreignAssetReturnFixture2026();
+  const result = await buildDraftReturnPdf2026(raw);
+  assert(result.unfinishedReceivers.includes("f8938"));
+  assert(!result.attachments.some((a) => a.form === "f8938"));
+  assert(result.attachments.some((a) => a.form === "schedule_b"));
+  assertEquals(result.filingReady, false);
+  assert(result.calculation.pending.f8938.calculation_2026);
+  for (const snapshot of raw.f8938.claim.valuation_snapshots) {
+    snapshot.values[0].native_value = 1000;
+  }
+  const below = await buildDraftReturnPdf2026(raw);
+  assert(!below.unfinishedReceivers.includes("f8938"));
+});
 
 Deno.test("2026 foreign bank statement-only return prints reconciled interest without a synthetic 1099", async () => {
   const base = investmentGraphInput2026(0);

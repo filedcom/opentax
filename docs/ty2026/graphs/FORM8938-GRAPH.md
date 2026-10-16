@@ -68,9 +68,11 @@ The current shared [`f8938` node](../../../forms/f1040/nodes/inputs/general/fore
 has advanced beyond this plan's September snapshot: it validates required
 individual-status, filing-duty, tax-home/presence, asset, ownership and FX facts.
 Its helpers calculate threshold decisions and Parts I/II/IV summaries. The
-node itself still returns no outputs; Part III return reconciliation and filed
-PDF/MeF attachments remain absent. Retaining an input in the registry does not
-satisfy the disclosure filing requirement.
+shared node itself still returns no outputs. The 2026 terminal stage below now
+reconciles supported Part III income against executed sources and completed
+Form 1040. Draft PDF/MeF attachments and the remaining tax-item and Part IV
+routes remain unfinished. Retaining an input in the registry does not satisfy
+the disclosure filing requirement.
 
 1. Build the qualified filer/valuation decision from return identity,
    residency and asset facts; validate the strict threshold OR test and
@@ -203,3 +205,68 @@ and reporting values, known/unknown pensions/estates/deferred interests, section
 owner conflicts, beneficiary Form 3520, and the remaining grantor-trust gate.
 The repository unit gate passes 137 tests with 3,913 graph modules and unchanged
 runtime files. Public return binding and filed-output validation remain open.
+
+## October 16: terminal return binding and public source intake
+
+`f8938` is now a source claim in the incremental 2026 input catalog and a
+terminal node in `sourceRegistry2026`. It receives the actual retained
+investment sources and the completed Form 1040 identity and income, with tax
+year supplied by the executing 1040 context. Public intake accepts valuation
+records and account links, not completed return lines or caller-written filed
+locations. The node emits only its retained disclosure calculation; there is
+no edge back to income, deductions, credits or tax.
+
+Each Part V asset binds to the actual Schedule B account inventory by account
+reference, institution, account number, ISO country identity and filer TIN.
+Joint accounts appear once in the asset summary and bind both joint filers'
+account relationships; signature authority alone cannot establish ownership of
+a reported asset. The optional ISO country identity on Schedule B sources is
+separate from the unchanged 2025 native MeF country-code list.
+
+Part III currently binds ordinary foreign deposit receipts and ordinary issued
+1099 interest/dividend copies. Bank receipt references, original document
+digests, currency and availability/holding dates must agree. Issued copies
+need their original document digest and matching institution; adjusted/exempt
+interest, gain distributions and exempt dividends need additional tax-item
+routes and fail explicitly. Qualified dividends remain part of ordinary
+dividends, not an additional disclosure amount. The declared items must cover
+the complete linked account income inventory exactly once. Missing items,
+reused references, altered amounts or digests and stale completed-line totals
+fail. Document reference/hash consistency is also checked across the source,
+valuation and exclusion records.
+
+The stage reuses the shared 2025 account classification and tax-item grouping
+helpers. It derives the Schedule B line 1/5 and Form 1040 line 2b/3b locations,
+adds original cents within each Part III category and rounds only the printed
+category total. It reconciles the complete investment totals to Form 1040;
+foreign asset income can be a subset of a line that also contains domestic
+income. Receipt-date income exchange rates remain independent of year-end
+asset valuation exchange rates and beneficial-interest reporting values.
+
+Every reviewed foreign account must appear in the asset inventory or carry an
+owner-specific evidenced exclusion. The bounded exclusion routes are an
+account maintained by a U.S. payor under regulation 1.6049-5(c)(5), or signature
+authority without a section 6038D interest or reportable income. Exclusions do
+not remove income from the return or remove Schedule B/FBAR answers. Duplicate,
+unknown, stale or contradictory exclusion reviews fail. Other exclusion and
+ownership cases still need their own source routes.
+
+No-income assets and below-threshold decisions remain distinct from missing
+source bindings. Part IV exception forms and beneficial-interest distributions
+still require actual filing identity or taxable/nontaxable treatment joins;
+those public claims fail explicitly until those routes exist. No PDF or native
+MeF is claimed by the new stage. When Form 8938 is required, the development
+bundle retains the calculation and lists `f8938` among unfinished receivers
+instead of silently treating node registration as a rendered attachment.
+
+Validation exercises the full source graph, unchanged tax after disclosure,
+mixed domestic/foreign line totals, fractional-dollar Part III aggregation,
+joint accounts, issued copy digests, no-income assets, threshold decisions,
+complete account/exclusion coverage, source and final-line tampering, public
+computed-line rejection and explicit unfinished bundle attachment status.
+The shared 2025 Form 8938 projection, reconciliation, PDF and MeF tests are
+included in regression coverage.
+
+Authority: [Form 8938 instructions, Part III and assets not required to be reported](https://www.irs.gov/instructions/i8938).
+These distinguish tax items and their return locations from asset values, and
+exclude qualifying U.S.-payor-maintained accounts from Form 8938 reporting.

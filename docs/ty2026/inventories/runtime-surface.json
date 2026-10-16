@@ -41,8 +41,8 @@
     ]
   },
   "ty2026": {
-    "registry_nodes": 59,
-    "declared_edges": 305,
+    "registry_nodes": 60,
+    "declared_edges": 308,
     "unregistered_target_edges": 14,
     "nodes": [
       {
@@ -61,6 +61,7 @@
           "gambling",
           "estimated_payments",
           "refund_allocation",
+          "f8938",
           "extension_payments",
           "form1062",
           "land_dispositions",
@@ -101,6 +102,13 @@
           "agi_aggregator"
         ],
         "source_module": "forms/f1040/2026/inputs/adoption.ts"
+      },
+      {
+        "key": "f8938",
+        "node_type": "f8938",
+        "implemented": true,
+        "targets": [],
+        "source_module": "forms/f1040/2026/nodes/form8938.ts"
       },
       {
         "key": "f4852",
@@ -520,7 +528,8 @@
           "income_tax_calculation",
           "form6251",
           "form8960",
-          "capital_gains"
+          "capital_gains",
+          "f8938"
         ],
         "source_module": "forms/f1040/2026/inputs/investments.ts"
       },
@@ -805,7 +814,8 @@
         "targets": [
           "schedule3a",
           "capital_loss_carryover",
-          "refund_allocation"
+          "refund_allocation",
+          "f8938"
         ],
         "source_module": "forms/f1040/2026/nodes/f1040.ts"
       },

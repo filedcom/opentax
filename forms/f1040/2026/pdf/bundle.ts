@@ -1,4 +1,5 @@
 import { calculateForm4852Bridge2026 } from "../inputs/form4852-bridge.ts";
+import type { calculateForeignAssetReturn2026 } from "../inputs/foreign-assets-return.ts";
 import { reconcileForm4852ReturnSources2026 } from "../inputs/form4852-return.ts";
 import { buildForm4852PdfBytes2026 } from "./form4852.ts";
 import {
@@ -192,6 +193,9 @@ export async function buildDraftReturnPdf2026(
   const b = retained<ReturnType<typeof calculateInvestmentClaim2026>>(
     "investment_income",
   );
+  const foreignAssets = retained<
+    ReturnType<typeof calculateForeignAssetReturn2026>
+  >("f8938");
   const s1a = retained<ReturnType<typeof calculateSchedule1A2026>>(
     "schedule1a",
   );
@@ -1121,8 +1125,13 @@ export async function buildDraftReturnPdf2026(
     calculation,
     filingReady: false as const,
     // Pending deposits are not evidence that a credit/activity was finalized.
-    unfinishedReceivers: Object.keys(p).filter((k) =>
-      !(k in sourceRegistry2026)
-    ).sort(),
+    unfinishedReceivers: [
+      ...new Set([
+        ...Object.keys(p).filter((k) => !(k in sourceRegistry2026)),
+        // Source reconciliation is complete, but this required attachment still
+        // has no 2026 PDF builder; do not hide it merely because its node exists.
+        ...(foreignAssets?.filing_required ? ["f8938"] : []),
+      ]),
+    ].sort(),
   };
 }

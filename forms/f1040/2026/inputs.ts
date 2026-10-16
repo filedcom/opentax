@@ -1,4 +1,6 @@
 import { adoption_2026, adoptionClaim2026Schema } from "./inputs/adoption.ts";
+import { form8938_2026 } from "./nodes/form8938.ts";
+import { foreignAssetReturnClaim2026Schema } from "./inputs/foreign-assets-return.ts";
 import { form4852_2026 } from "./inputs/form4852.ts";
 import { form4852Claim2026Schema } from "./inputs/form4852-bridge.ts";
 import { hsa_accounts_2026, hsaClaimInput2026Schema } from "./inputs/hsa.ts";
@@ -162,6 +164,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
     node: refund_allocation_2026,
     isArray: false,
     inputSchema: refundAllocationClaim2026Schema,
+  },
+  {
+    node: form8938_2026,
+    isArray: false,
+    inputSchema: foreignAssetReturnClaim2026Schema,
   },
   {
     node: extension_payments_2026,
