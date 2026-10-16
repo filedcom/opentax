@@ -1,7 +1,7 @@
 import {
-  calculateHsaContributionLimits2026,
-  type HsaContributionLimits2026,
-} from "./hsa-contribution-limits.ts";
+  type HsaQualifiedFunding2026,
+  reconcileHsaQualifiedFunding2026,
+} from "./hsa-qualified-funding.ts";
 import {
   hsaCurrentContributions,
   hsaCurrentContributionsWith,
@@ -18,13 +18,14 @@ import { sourceCents } from "../../nodes/intermediate/forms/taxes/retirement/for
  * prior excess and employer W-2 inclusions require separate source settlement.
  * Never assume an IRA transfer/rollover/repayment qualifies from its label. */
 export function calculateHsaCurrentContributions2026(
-  raw: HsaContributionLimits2026,
+  raw: HsaQualifiedFunding2026,
 ) {
-  const limits = calculateHsaContributionLimits2026(raw);
+  const limits = reconcileHsaQualifiedFunding2026(raw);
   const pending = limits.source_input.claim.accounts.flatMap((a) =>
     a.receipts.filter((r) =>
       r.received_on.startsWith("2026-") &&
-      r.kind !== "personal_cash" && r.kind !== "employer_cash"
+      r.kind !== "personal_cash" && r.kind !== "employer_cash" &&
+      r.kind !== "ira_funding_transfer"
     ).map((r) => r.record_reference)
   );
   if (pending.length) {
@@ -46,33 +47,50 @@ export function calculateHsaCurrentContributions2026(
       sourceCents(f.employer_contributions_for_2026),
       100,
     );
+    const qualified = limits.qualified_funding.find((q) =>
+      q.owner_tin === owner.owner_tin
+    );
+    const qualifiedAmount = qualified?.amount ?? zero;
     const exact = hsaCurrentContributionsWith(
       owner.exact_limits.line8,
       personal,
       employer,
-      zero,
+      qualifiedAmount,
       math,
     );
     const monthly = hsaCurrentContributionsWith(
       owner.exact_monthly_baseline_limits.line8,
       personal,
       employer,
-      zero,
+      qualifiedAmount,
       math,
     );
     const line2 = roundHsaAmount(personal), line9 = roundHsaAmount(employer);
-    const filed = hsaCurrentContributions(owner.limits.line8, line2, line9, 0);
+    const line10 = roundHsaAmount(qualifiedAmount);
+    const filed = hsaCurrentContributions(
+      owner.limits.line8,
+      line2,
+      line9,
+      line10,
+    );
     const gross = math.add(personal, employer);
-    const currentExposure = math.subtractFloorZero(
-      math.min(gross, owner.exact_limits.line8),
-      math.min(gross, owner.exact_monthly_baseline_limits.line8),
+    // Notice 2008-51: the funding transfer has its own testing period.
+    // Last-month exposure includes its use of monthly capacity but cannot
+    // exceed the non-funding contributions subject to that separate rule.
+    const currentExposure = math.min(
+      gross,
+      math.subtractFloorZero(
+        math.min(math.add(gross, qualifiedAmount), owner.exact_limits.line8),
+        owner.exact_monthly_baseline_limits.line8,
+      ),
     );
     return [{
       ...owner,
       current_contributions: {
         exact_personal: personal,
         exact_employer: employer,
-        exact_qualified_funding: zero,
+        exact_qualified_funding: qualifiedAmount,
+        qualified_funding_transfers: qualified?.transfers ?? [],
         before_withdrawals_and_prior_excess: exact,
         monthly_baseline_before_withdrawals_and_prior_excess: monthly,
         // Replayed printed arithmetic can differ from rounding an exact
@@ -81,7 +99,7 @@ export function calculateHsaCurrentContributions2026(
           line2,
           line8: owner.limits.line8,
           line9,
-          line10: 0,
+          line10,
           line11: filed.employerAndFunding,
           line12: filed.remainingPersonalLimit,
           line13_before_prior_excess: filed.currentPersonalDeduction,

@@ -2,6 +2,7 @@ import {
   calculateHsaContributionLimit,
   CoverageType,
 } from "./contribution-limit.ts";
+import { verifyHsaFundingTransfers } from "./qualified-funding.ts";
 import { hsaCurrentContributions } from "./current-contributions.ts";
 import { hsaEmployerContributionsForYear } from "./employer-contributions.ts";
 import { z } from "zod";
@@ -1421,47 +1422,20 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       )
       : undefined;
     if (funding && limitLines) {
-      const transferCoverage = funding.transfers.map((transfer) => {
-        const coverage = input.eligible_hdhp_coverage_by_month![
-          transfer.transfer_month - 1
-        ];
-        if (coverage === null) {
-          throw new Error(
-            "Form 8889 qualified HSA funding transfer needs HDHP eligibility in its transfer month",
-          );
-        }
-        const limit = (coverage === CoverageType.Family
-          ? cfg.hsaFamilyLimit
-          : cfg.hsaSelfOnlyLimit) +
-          (input.age_55_or_older ? cfg.hsaCatchup : 0);
-        if (transfer.amount > limit) {
-          throw new Error(
-            "Form 8889 qualified HSA funding transfer exceeds its coverage limit",
-          );
-        }
-        return coverage;
-      });
-      if (funding.transfers.length === 2) {
-        const first = funding.transfers[0]!;
-        const second = funding.transfers[1]!;
-        if (
-          transferCoverage[0] !== CoverageType.SelfOnly ||
-          transferCoverage[1] !== CoverageType.Family ||
-          first.transfer_month >= second.transfer_month ||
-          first.source_reference === second.source_reference
-        ) {
-          throw new Error(
-            "Form 8889 second HSA funding transfer needs a later family-coverage month and distinct trustee source",
-          );
-        }
-      }
-      const lifetimeLimit = (funding.transfers.length === 2
-        ? cfg.hsaFamilyLimit
-        : transferCoverage[0] === CoverageType.Family
-        ? cfg.hsaFamilyLimit
-        : cfg.hsaSelfOnlyLimit) +
-        (input.age_55_or_older ? cfg.hsaCatchup : 0);
-      if (fundingAmount > lifetimeLimit || fundingAmount > limitLines.line8) {
+      verifyHsaFundingTransfers(
+        funding.transfers.map((transfer) => ({
+          amount: transfer.amount,
+          month: transfer.transfer_month,
+          coverage:
+            input.eligible_hdhp_coverage_by_month![transfer.transfer_month - 1],
+          source_reference: transfer.source_reference,
+        })),
+        input.age_55_or_older ?? false,
+        cfg.hsaSelfOnlyLimit,
+        cfg.hsaFamilyLimit,
+        cfg.hsaCatchup,
+      );
+      if (fundingAmount > limitLines.line8) {
         throw new Error(
           "Form 8889 qualified HSA funding transfer exceeds its eligible contribution limit",
         );

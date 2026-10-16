@@ -211,9 +211,9 @@ gross contribution exposure amount.
 
 These are explicitly **before-withdrawal and before-prior-excess** calculations.
 They do not establish the final deduction, W-2 excess income, Form 5329 tax or
-Part III recapture. Current-year noncash receipts stop this calculation until
-qualified funding, rollover, trustee-transfer or repayment treatment has been
-reconciled; their deposit labels cannot establish tax-free treatment. No Form
+Part III recapture. Current-year noncash receipts need separate tax-treatment
+reconciliation; a sourced qualified-funding route is now available below.
+Rollover, trustee-transfer and repayment labels still do not establish treatment. No Form
 8889 registry node or filing output is added by this workpaper. The next source
 settlement must reconcile timely returns/earnings, employer inclusions and prior
 excess against these retained exact amounts, then bind the final return outputs.
@@ -223,6 +223,54 @@ and MeF tests pass, including 12 current-contribution tests for payroll ordering
 source cents, exact monthly fractions, actual funding exposure and owner scope.
 Formatting and lint pass. The unit gate passes 137 tests with 3,805 graph modules
 and unchanged runtime; generated inventories are current.
+
+### Qualified IRA funding source reconciliation
+
+[Notice 2008-51](../corpus/authorities/n-08-51.pdf) is pinned for the qualified
+funding rules, alongside the 2026 Form 8889 and 1099-R instructions. Historical
+limits and distribution-tax rates in the notice are not 2026 parameters.
+
+The source workpaper joins each current IRA funding receipt to an actual dated
+IRA payment, issued 1099-R, account agreement, direct-transfer instruction and
+lifetime-history review. Complete IRA ledgers must reconcile gross distributions
+and withholding, including separately retained ordinary payments. Funding
+payments must match one same-owner HSA receipt without withholding. Renaming a
+payment does not permit duplicate custodian transaction IDs. Each spouse keeps
+separate source records, lifetime elections and annual allocation capacity.
+
+Transfer-month eligibility and the one-transfer/self-to-family exception reuse
+the extracted 2025 helper with explicit 2026 limits. The source adapter checks
+actual coverage rather than December-elected coverage; dated plan transitions
+cannot be overridden by a continuity assertion. SEP/SIMPLE accounts require a
+review of employer contributions for the plan year ending in 2026. A positive
+amount makes the account ongoing. Roth and non-ongoing SEP/SIMPLE funding records
+remain distinguishable from traditional IRA records.
+
+Qualified amounts now reach the exact current contribution calculation and
+projected Form 8889 line 10, reducing employer and personal capacity without a
+personal deduction. Each transfer retains its own testing period through the
+last day of its receipt month in 2027. Last-month exposure accounts for funding's
+use of contribution capacity but is capped at non-funding contributions; it does
+not include the funding transfer again under the last-month testing rule.
+
+These source records do not yet adjust annual IRA basis, retirement income,
+Form 5329 or Part III. Prior lifetime elections, over-limit transfers and other
+nonqualified amounts need their ordinary IRA/HSA tax treatment, rather than an
+assumed exclusion. Cross-month settlement, changed eligibility between the
+first day and transfer, multiple issued copies for one IRA account, and funding
+above an owner's current annual allocation stop for further reconciliation.
+The transfer-month maximum can differ from the ordinary monthly limit (including
+Notice 2008-51's family-to-self example); that branch remains explicit pending
+work rather than being classified as automatically taxable. Future integration
+must bind retained IRA payments to the annual IRA basis and retirement adapters.
+
+Qualified-funding validation: 220 typed HSA/source, 2025 owner-return and MeF
+tests pass, including 20 new transfer-source cases. These cover statement/receipt
+matching, duplicate custodian payments, separate spouses, lifetime and second
+transfer limits, employer plan-year status, Roth sources, source cents and
+independent testing exposure. Formatting, lint and inventory checks pass. The
+unit gate passes 137 tests, resolves 3,809 graph modules and confirms unchanged
+runtime.
 
 ## Required source integration
 

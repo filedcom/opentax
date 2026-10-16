@@ -423,8 +423,11 @@ spouse-share ratios alongside separately rounded form lines. Future testing
 records retain sub-dollar exposure using pinned Notice 2008-52. Shared Part I
 arithmetic now derives current deduction capacity and separate personal/employer
 excess from cash funding, retaining source fractions beside replayed form lines.
-Qualified transfers, withdrawal/prior-excess settlement, graph binding and the
-complete Form 8889 return/output routes remain in the implementation queue.
+Qualified IRA funding now joins actual IRA statements/payments to HSA receipts,
+checks lifetime and transfer-month rules, and reaches line 10 with separate
+funding/testing records using pinned Notice 2008-51. Annual IRA basis/income,
+withdrawal/prior-excess settlement, graph binding and complete Form 8889
+return/output routes remain in the implementation queue.
 
 ## Version rule
 

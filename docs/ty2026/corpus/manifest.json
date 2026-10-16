@@ -2438,6 +2438,16 @@
       "sha256": "2d8f578f036c018980aeb559752274123a1b027fc13bc2bb7d5ddecad37ef8d0",
       "reviewed_on": "2026-10-16",
       "notes": "Notice 2008-52: monthly versus full-contribution HSA limits, coverage changes, testing period and spouse examples. Historical dollar amounts and distribution tax rate are not 2026 parameters."
+    },
+    {
+      "path": "authorities/n-08-51.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-08-51.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 38322,
+      "sha256": "e0559785860e0dccaeb50b62ea82ca97fa27cce0710342bff4d38dd7f09e1e10",
+      "reviewed_on": "2026-10-16",
+      "notes": "Notice 2008-51: qualified IRA-to-HSA funding distributions, lifetime and coverage-change limits, direct transfers, non-ongoing SEP/SIMPLE accounts and separate testing periods. Historical contribution limits and HSA distribution tax rates are not 2026 parameters."
     }
   ]
 }
