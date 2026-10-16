@@ -1,3 +1,9 @@
+import {
+  hsaFundingReview2025Schema,
+  reconcileHsaFundingSources,
+} from "./hsa-funding-evidence.ts";
+import { hsaTestingPeriodIncome } from "../../nodes/intermediate/forms/adjustments/health/form8889/testing-income.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
 import { z } from "zod";
 import {
   calculateHsaEligibility2025History,
@@ -38,9 +44,8 @@ const allocation = z.object({
     .refine((s) => s.numerator <= s.denominator),
 }).strict();
 
-/** Prior-year source records stay dated 2025. This ordinary cash history route
- * excludes qualified funding, Archer MSA offsets and contribution corrections. */
-export const hsaLastMonth2025HistorySchema = z.object({
+/** Filed contribution-year sources, retaining separate cash and IRA testing windows. */
+export const hsaContribution2025HistorySchema = z.object({
   tax_year: z.literal(2025),
   record_reference: ref,
   reviewed_on: date,
@@ -53,12 +58,16 @@ export const hsaLastMonth2025HistorySchema = z.object({
   ),
   complete_prior_household_hsa_accounts_and_contribution_inventory_verified: z
     .literal(true),
-  last_month_rule_elected: z.literal(true),
-  election_reference: ref,
+  last_month_rule_elected: z.boolean(),
+  election_reference: ref.optional(),
   allocation: allocation.optional(),
-  no_archer_msa_or_qualified_ira_funding_contributions_verified: z.literal(
-    true,
-  ),
+  no_archer_msa_or_qualified_ira_funding_contributions_verified: z.literal(true)
+    .optional(),
+  no_archer_msa_contributions_verified: z.literal(true).optional(),
+  qualified_funding_review: hsaFundingReview2025Schema.optional(),
+  no_death_or_disability_testing_exception_in_2025_verified: z.literal(true)
+    .optional(),
+  no_other_2025_testing_income_verified: z.literal(true).optional(),
   no_contribution_returns_recoveries_or_prior_excess_deduction_adjustments_verified:
     z.literal(true),
   latest_original_or_amended_return_verified: z.literal(true),
@@ -84,11 +93,41 @@ export const hsaLastMonth2025HistorySchema = z.object({
         line7: line,
         line8: line,
         line9: line,
-        line10: z.literal(0),
+        line10: line,
         line11: line,
         line12: line,
         line13: line,
       }).strict(),
+      filed_part_iii: z.object({
+        line18: z.literal(0),
+        line19: line,
+        line20: line,
+        line21: line,
+        ira_exclusion_workpaper_reference: ref,
+        excluded_qualified_funding_amount: money,
+        latest_filed_ira_exclusion_and_basis_reviewed: z.literal(true),
+      }).strict().optional(),
+      funding_receipts: z.array(
+        z.object({
+          record_reference: ref,
+          owner_tin: tin,
+          trustee_tin: tin,
+          account_number: ref,
+          custodian_transaction_identifier: ref,
+          custodian_statement_reference: ref,
+          received_on: date,
+          amount: money,
+          originating_ira_type: z.enum([
+            "traditional",
+            "roth",
+            "sep",
+            "simple",
+          ]),
+          ira_distribution_source_reference: ref,
+          source_account_or_payment_reference: ref,
+          direct_trustee_transfer_verified: z.literal(true),
+        }).strict(),
+      ).max(2).default([]),
       contributions: z.array(
         z.object({
           record_reference: ref,
@@ -109,12 +148,44 @@ export const hsaLastMonth2025HistorySchema = z.object({
     }).strict(),
   ).min(1).max(2),
 }).strict();
+export const hsaLastMonth2025HistorySchema = hsaContribution2025HistorySchema
+  .extend({
+    last_month_rule_elected: z.literal(true),
+    election_reference: ref,
+  });
+export type HsaContribution2025History = z.input<
+  typeof hsaContribution2025HistorySchema
+>;
 export type HsaLastMonth2025History = z.input<
   typeof hsaLastMonth2025HistorySchema
 >;
 
 export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
-  const s = hsaLastMonth2025HistorySchema.parse(raw);
+  return reconcileHsaContribution2025History(
+    hsaLastMonth2025HistorySchema.parse(raw),
+  );
+}
+export function reconcileHsaContribution2025History(
+  raw: HsaContribution2025History,
+) {
+  const s = hsaContribution2025HistorySchema.parse(raw);
+  if (
+    s.last_month_rule_elected !== !!s.election_reference ||
+    (s.qualified_funding_review
+      ? s.no_archer_msa_or_qualified_ira_funding_contributions_verified ||
+        !s.no_archer_msa_contributions_verified ||
+        !s.no_death_or_disability_testing_exception_in_2025_verified ||
+        !s.no_other_2025_testing_income_verified ||
+        s.qualified_funding_review.reviewed_on > s.reviewed_on
+      : !s.no_archer_msa_or_qualified_ira_funding_contributions_verified ||
+        s.no_archer_msa_contributions_verified ||
+        s.no_death_or_disability_testing_exception_in_2025_verified ||
+        s.no_other_2025_testing_income_verified)
+  ) {
+    throw Error(
+      "2025 HSA history requires consistent election, funding and completed prior testing reviews",
+    );
+  }
   const ids = [s.taxpayer_tin, ...(s.spouse_tin ? [s.spouse_tin] : [])];
   if (
     s.filed_forms.some((f) =>
@@ -164,7 +235,10 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
         : c
     )
   );
-  if (owners.some((o, i) => o.has_hsa && coverage[i][11] === null)) {
+  if (
+    s.last_month_rule_elected &&
+    owners.some((o, i) => o.has_hsa && coverage[i][11] === null)
+  ) {
     throw Error(
       "2025 HSA last-month history needs actual December eligibility for each account holder",
     );
@@ -179,9 +253,11 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
     catchupLimit: HSA_CATCHUP_2025,
   };
   const selected = hsaHouseholdLimitAmounts(
-    coverage.map((c, i) =>
-      owners[i].has_hsa ? Array<C | null>(12).fill(c[11]) : c
-    ),
+    s.last_month_rule_elected
+      ? coverage.map((c, i) =>
+        owners[i].has_hsa ? Array<C | null>(12).fill(c[11]) : c
+      )
+      : coverage,
     limitsOwners,
     s.married_at_year_end,
     s.allocation,
@@ -205,6 +281,46 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
       "2025 HSA last-month election cannot reduce the monthly household limit",
     );
   }
+  const fundingReceipts = forms.flatMap((f) =>
+    f.funding_receipts.map((r) => ({
+      ...r,
+      hsa_account_reference: `${r.trustee_tin}/${r.account_number}`,
+    }))
+  );
+  if (
+    fundingReceipts.some((r) => !r.received_on.startsWith("2025-")) ||
+    forms.some((f) =>
+      f.funding_receipts.some((r) => r.owner_tin !== f.owner_tin)
+    ) ||
+    (!!s.qualified_funding_review !== (fundingReceipts.length > 0))
+  ) {
+    throw Error(
+      "2025 HSA funding history needs actual contribution-year receipts for each filed owner",
+    );
+  }
+  const funding = s.qualified_funding_review
+    ? reconcileHsaFundingSources(
+      2025,
+      s.qualified_funding_review,
+      fundingReceipts,
+      {
+        taxpayer_ssn: s.taxpayer_tin,
+        claim: {
+          reviewed_on: s.owners.reduce(
+            (d, o) =>
+              d > o.eligibility.reviewed_on ? d : o.eligibility.reviewed_on,
+            "2026-01-01",
+          ),
+        },
+        household_eligibility: { owners: s.owners.map((o) => o.eligibility) },
+      },
+      owners.map((o, i) => ({
+        owner_tin: o.eligibility.owner_tin,
+        actual_eligible_hdhp_coverage_by_month: coverage[i],
+      })),
+      rules,
+    )
+    : [];
   const records = new Set<string>(),
     transactions = new Set<string>(),
     accountOwners = new Map<string, string>();
@@ -212,7 +328,8 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
     if (!o.has_hsa) return [];
     const f = forms.find((f) => f.owner_tin === o.eligibility.owner_tin)!;
     let personal = 0, employer = 0;
-    for (const r of f.contributions) {
+    const fundingOwner = funding.find((q) => q.owner_tin === f.owner_tin);
+    for (const r of [...f.contributions, ...f.funding_receipts]) {
       const account = `${r.trustee_tin}/${r.account_number}`;
       const txn = `${account}/${r.custodian_transaction_identifier}`;
       if (
@@ -221,7 +338,8 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
         (accountOwners.has(account) &&
           accountOwners.get(account) !== f.owner_tin) ||
         r.received_on < "2025-01-01" || r.received_on > "2026-04-15" ||
-        (r.kind === "employer_cash") !== !!r.employer_payroll_reference
+        ("kind" in r &&
+          (r.kind === "employer_cash") !== !!r.employer_payroll_reference)
       ) {
         throw Error(
           "2025 HSA contributions require distinct owned trustee payments, designations and employer payroll sources",
@@ -230,8 +348,10 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
       records.add(r.record_reference);
       transactions.add(txn);
       accountOwners.set(account, f.owner_tin);
-      if (r.kind === "personal_cash") personal += sourceCents(r.amount);
-      else employer += sourceCents(r.amount);
+      if ("kind" in r) {
+        if (r.kind === "personal_cash") personal += sourceCents(r.amount);
+        else employer += sourceCents(r.amount);
+      }
     }
     const l = selected.limits[i]!,
       b = baseline.limits[i]!,
@@ -240,7 +360,8 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
     const exactLimit = hsaExactAmount(l.line8, u),
       exactMonthly = hsaExactAmount(b.line8, bu);
     const cash = hsaExactAmount(personal + employer, 100);
-    if (compareHsaAmounts(cash, exactLimit) > 0) {
+    const qualifiedAmount = fundingOwner?.amount ?? hsaExactAmount(0, 1);
+    if (compareHsaAmounts(math.add(cash, qualifiedAmount), exactLimit) > 0) {
       throw Error(
         "2025 testing history with excess contributions needs a settled correction source route",
       );
@@ -249,7 +370,9 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
       filed7 = roundHsaAmount(hsaExactAmount(l.line7, u));
     const filed2 = roundHsaAmount(hsaExactAmount(personal, 100)),
       filed9 = roundHsaAmount(hsaExactAmount(employer, 100));
-    const filed8 = filed6 + filed7, filed12 = Math.max(0, filed8 - filed9);
+    const filed10 = roundHsaAmount(qualifiedAmount);
+    const filed8 = filed6 + filed7,
+      filed12 = Math.max(0, filed8 - filed9 - filed10);
     const expected = {
       line2: filed2,
       line3: roundHsaAmount(hsaExactAmount(l.line3, u)),
@@ -259,8 +382,8 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
       line7: filed7,
       line8: filed8,
       line9: filed9,
-      line10: 0,
-      line11: filed9,
+      line10: filed10,
+      line11: filed9 + filed10,
       line12: filed12,
       line13: Math.min(filed2, filed12),
     };
@@ -273,6 +396,41 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
         "2025 HSA filed Part I must reconcile its actual receipts, annual limits and spouse allocation",
       );
     }
+    const transfers = (fundingOwner?.transfers ?? []).map((t) => {
+      const first = eligibility[i].eligible_hdhp_coverage_by_month.findIndex((
+        c,
+        m,
+      ) => m + 1 >= t.month && c === null);
+      return {
+        ...t,
+        first_ineligible_in_2025: first < 0
+          ? undefined
+          : `2025-${String(first + 1).padStart(2, "0")}-01`,
+      };
+    });
+    const failed2025 = transfers.filter((t) => t.first_ineligible_in_2025)
+      .reduce((n, t) => n + sourceCents(t.amount), 0);
+    const prior19 = roundHsaAmount(hsaExactAmount(failed2025, 100));
+    const priorTax = hsaTestingPeriodIncome(0, prior19);
+    const filedIII = f.filed_part_iii;
+    if (
+      fundingOwner
+        ? !filedIII ||
+          compareHsaAmounts(
+              hsaExactAmount(
+                sourceCents(filedIII.excluded_qualified_funding_amount),
+                100,
+              ),
+              qualifiedAmount,
+            ) !== 0 ||
+          filedIII.line19 !== prior19 || filedIII.line20 !== priorTax.income ||
+          filedIII.line21 !== roundWholeDollars(priorTax.additionalTax)
+        : !!filedIII
+    ) {
+      throw Error(
+        "2025 HSA funding must reconcile filed IRA exclusion and prior testing income without duplicate recapture",
+      );
+    }
     return [{
       owner_tin: f.owner_tin,
       owner_dob: o.eligibility.owner_dob,
@@ -282,7 +440,15 @@ export function reconcileHsaLastMonth2025History(raw: HsaLastMonth2025History) {
       exact_allowed_cash: cash,
       exact_elected_limit: exactLimit,
       exact_monthly_limit: exactMonthly,
-      exact_last_month_exposure: math.subtractFloorZero(cash, exactMonthly),
+      qualified_funding_transfers: transfers,
+      exact_qualified_funding: qualifiedAmount,
+      last_month_rule_elected: s.last_month_rule_elected,
+      exact_last_month_exposure: s.last_month_rule_elected
+        ? math.min(
+          cash,
+          math.subtractFloorZero(math.add(cash, qualifiedAmount), exactMonthly),
+        )
+        : hsaExactAmount(0, 1),
       testing_period: { starts_on: "2025-12-01", ends_on: "2026-12-31" },
     }];
   });

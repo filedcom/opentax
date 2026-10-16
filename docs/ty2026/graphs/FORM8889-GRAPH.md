@@ -461,8 +461,8 @@ remain pending through their actual 2027 end dates, not marked complete from a
 2026 review.
 
 Current-origin obligations cover living owners. The historical route below now
-adds ordinary 2025 last-month cash contributions; other earlier obligations still
-need their own source routes. Death/inherited-account routes, public graph/PDF
+adds ordinary 2025 last-month cash contributions and dated qualified-funding
+transfers; advanced historical corrections still need their own source routes. Death/inherited-account routes, public graph/PDF
 binding and MeF remain unfinished. The annual workpaper is still internal, not
 a public HSA input.
 
@@ -501,16 +501,59 @@ recapture or future obligation. Current IRA funding remains separately on line
 19; shared Part III arithmetic combines the filed lines once. Disability causation
 continues to use the current sourced physician/coverage review.
 
-This history route currently supports ordinary cash contributions with no Archer
-MSA or qualified IRA funding, excess-return/recovery or prior-excess deduction
-adjustments. Prior qualified-funding transfers, advanced historical corrections,
-legacy death/disability transitions and other unsupported coverage branches still
-need source integration. Public HSA return/PDF binding remains unfinished.
+The cash history route excludes Archer MSA offsets, excess-return/recovery and
+prior-excess deduction adjustments. The contribution history extension below
+adds qualified IRA funding while preserving separate transfer testing windows.
+Advanced historical corrections, legacy death/disability transitions and other
+unsupported coverage branches still need source integration. Public HSA
+return/PDF binding remains unfinished.
 
 Historical last-month validation: 436 focused HSA/IRA/retirement and 2025
 source/MeF tests pass, including 10 new prior-year history cases. The repository
 unit gate passes 137 checks, resolves 3,833 graph modules and confirms unchanged
 runtime. Formatting, lint and the generated inventory check pass.
+
+## Filed 2025 qualified-funding histories
+
+The contribution history workpaper now accepts actual 2025 IRA statements,
+trustee payments and HSA receipts alongside the filed owner Form 8889. The
+2025 statement schema retains its own tax year and excludes the 2026-only
+Trump-account/excess-earnings boxes. The same source reconciler now serves
+current and historical transfers: it matches owner/account identity, complete
+IRA gross distributions and withholding, correction metadata, direct-payment
+elections and destination receipts. Transfer-month eligibility, contribution-year
+age, annual limits and the same-year self-only-to-family exception reuse the
+existing calculation helper. SEP/SIMPLE employer contributions are checked for
+the actual contribution year's plan year.
+
+Monthly or last-month historical limits replay filed Part I with funding on
+line 10. Cash exposure is capped at nonfunding cash after accounting for the
+funding amount's use of capacity, following Notice 2008-51. A filed IRA exclusion
+workpaper must account for that funding amount; this historical reconciliation
+does not produce a new IRA exclusion or recalculate all prior-year IRA basis.
+
+Each transfer's period begins in its 2025 transfer month and ends in that month
+of 2026. A 2026 eligibility failure includes only the transfers whose periods
+are still open on Form 8889 line 19. A later lapse cannot reopen a completed
+period. The existing sourced disability-causation review applies independently
+to each period. Historical monthly eligibility also identifies ordinary failures
+in 2025 and checks the filed Part III income and additional tax; those transfers
+remain marked failed in 2025 and are never recaptured again in 2026. The source
+route requires no other 2025 testing income or historical disability exception,
+so those combinations still need additional source settlement.
+
+Current owners must reference one consistent filed household history for their
+cash and funding obligations, or explicitly review their absence. Supplied
+history cannot be silently omitted, duplicate an owner or contradict the actual
+owner's DOB, filed excess history or cross-year cash receipts. A filed 2025
+funding election also prevents a contradictory 2026 lifetime election. The
+contribution-year sources are never relabeled as current-year records.
+
+Qualified-funding history validation: 450 focused HSA/IRA/retirement and 2025
+source/MeF tests pass, including 14 new historical funding cases. The unit gate
+passes 137 checks, resolves 3,836 graph modules and confirms unchanged runtime.
+Formatting, lint and generated inventory checks pass. Public HSA graph/PDF/MeF
+integration remains outside these internal workpaper checks.
 
 ## Required source integration
 
@@ -523,8 +566,8 @@ runtime. Formatting, lint and the generated inventory check pass.
 3. Extend the reconciled 1099-SA/medical/excess-return workpapers for rollovers,
    mistaken repayments and remaining excess/medical branches. Bind the actual
    Schedule A inventory, including new DPC rules for reimbursed fees.
-4. Port prior-year excess, funding transfers and recapture using actual 2025/2026
-   years and their annual limits. The 2025 node still has explicitly dated schema
+4. Extend prior-year excess, funding transfers and recapture for remaining
+   corrections and exceptions using actual 2025/2026 years and annual limits. The 2025 node still has explicitly dated schema
    keys and 2024 historical constants; do not execute it as a 2026 node or relabel
    prior-year evidence.
 5. Bind income/deduction/tax/owner Form 5329 and Form 1062 classification, then

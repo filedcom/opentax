@@ -1,6 +1,7 @@
 import {
+  hsaContribution2025HistorySchema,
   hsaLastMonth2025HistorySchema,
-  reconcileHsaLastMonth2025History,
+  reconcileHsaContribution2025History,
 } from "./hsa-testing-history.ts";
 import { sourceCents } from "../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { hsaTestingPeriodIncome } from "../../nodes/intermediate/forms/adjustments/health/form8889/testing-income.ts";
@@ -34,12 +35,14 @@ const cause = z.discriminatedUnion("kind", [
     disability_caused_loss_of_eligibility_verified: z.literal(true),
   }).strict(),
 ]);
-/** Annual testing workpaper with dated current-origin and prior last-month
- * sources. Prior qualified funding still requires a separate historical route. */
+/** Annual testing workpaper with dated current and prior contribution-year sources. */
 export const hsaTestingPeriod2026Schema = hsaAnnualExcess2026Schema.extend({
   testing_review: z.object({
     record_reference: ref,
     reviewed_on: date,
+    prior_contribution_histories: z.array(hsaContribution2025HistorySchema).max(
+      2,
+    ).default([]),
     prior_last_month_histories: z.array(hsaLastMonth2025HistorySchema).max(2)
       .default([]),
     owners: z.array(
@@ -49,6 +52,9 @@ export const hsaTestingPeriod2026Schema = hsaAnnualExcess2026Schema.extend({
         no_2025_or_earlier_last_month_or_qualified_funding_testing_obligations_verified:
           z.literal(true).optional(),
         last_month_2025_history_reference: ref.optional(),
+        funding_2025_history_reference: ref.optional(),
+        no_prior_last_month_testing_obligations_verified: z.literal(true)
+          .optional(),
         no_prior_qualified_funding_testing_obligations_verified: z.literal(true)
           .optional(),
         complete_dated_coverage_changes_including_midmonth_and_retroactive_changes_verified:
@@ -94,17 +100,23 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
       "HSA testing review must follow annual settlement and identify every actual return owner once",
     );
   }
+  const historySources = [
+    ...review.prior_last_month_histories,
+    ...review.prior_contribution_histories,
+  ];
   const histories = new Map(
-    review.prior_last_month_histories.map((
+    historySources.map((
       h,
-    ) => [h.record_reference, reconcileHsaLastMonth2025History(h)]),
+    ) => [h.record_reference, reconcileHsaContribution2025History(h)]),
   );
   if (
-    histories.size !== review.prior_last_month_histories.length ||
+    histories.size !== historySources.length ||
     [...histories.values()].some((h) =>
       h.source_input.reviewed_on > review.reviewed_on ||
       !review.owners.some((o) =>
-        o.last_month_2025_history_reference === h.source_input.record_reference
+        o.last_month_2025_history_reference ===
+          h.source_input.record_reference ||
+        o.funding_2025_history_reference === h.source_input.record_reference
       )
     )
   ) {
@@ -125,21 +137,57 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
     const eligibility = funding.source_input.household_eligibility.owners.find((
       o,
     ) => o.owner_tin === a.owner_tin)!;
-    const historical = owner.last_month_2025_history_reference
+    const lastHistory = owner.last_month_2025_history_reference
       ? histories.get(owner.last_month_2025_history_reference)
       : undefined;
+    const fundingHistory = owner.funding_2025_history_reference
+      ? histories.get(owner.funding_2025_history_reference)
+      : undefined;
+    const historical = lastHistory ?? fundingHistory;
     const prior = historical?.owners.find((o) => o.owner_tin === a.owner_tin);
+    const allAbsent = owner
+      .no_2025_or_earlier_last_month_or_qualified_funding_testing_obligations_verified;
     if (
-      owner
-          .no_2025_or_earlier_last_month_or_qualified_funding_testing_obligations_verified
+      allAbsent
         ? owner.last_month_2025_history_reference !== undefined ||
+          owner.funding_2025_history_reference !== undefined ||
+          owner.no_prior_last_month_testing_obligations_verified !==
+            undefined ||
           owner.no_prior_qualified_funding_testing_obligations_verified !==
             undefined
         : !prior ||
-          !owner.no_prior_qualified_funding_testing_obligations_verified
+          (!!owner.last_month_2025_history_reference ===
+            !!owner.no_prior_last_month_testing_obligations_verified) ||
+          (!!owner.funding_2025_history_reference ===
+            !!owner.no_prior_qualified_funding_testing_obligations_verified) ||
+          (!!owner.last_month_2025_history_reference !==
+            prior.last_month_rule_elected) ||
+          (!!owner.funding_2025_history_reference !==
+            (prior.qualified_funding_transfers.length > 0)) ||
+          (owner.last_month_2025_history_reference !== undefined &&
+            !lastHistory) ||
+          (owner.funding_2025_history_reference !== undefined &&
+            !fundingHistory) ||
+          (lastHistory && fundingHistory && lastHistory !== fundingHistory)
     ) {
       throw Error(
-        "HSA testing needs either reviewed absence or the actual owner's dated prior last-month history",
+        "HSA testing needs reviewed absence or one actual filed history for each owner's last-month and funding obligations",
+      );
+    }
+    // A current owner present in a supplied household history cannot disclaim
+    // the obligations recorded by that history.
+    if (
+      allAbsent &&
+      [...histories.values()].some((h) =>
+        h.owners.some((o) =>
+          o.owner_tin === a.owner_tin &&
+          (o.last_month_rule_elected ||
+            o.qualified_funding_transfers.length > 0)
+        )
+      )
+    ) {
+      throw Error(
+        "HSA testing absence contradicts supplied historical owner evidence",
       );
     }
     if (prior) {
@@ -197,12 +245,11 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
       o.owner_tin === a.owner_tin
     )!;
     if (
-      funding.qualified_funding_review?.owners.find((o) =>
-        o.owner_tin === a.owner_tin
-      )?.prior_qualified_transfers.some((t) => t.tax_year === 2025)
+      prior?.qualified_funding_transfers.length &&
+      contributions.current_contributions.qualified_funding_transfers.length
     ) {
       throw Error(
-        "HSA 2025 funding history needs its contribution-year testing source route",
+        "HSA qualified funding election was already used in the filed prior year",
       );
     }
     const periods = [...owner.periods].sort((a, b) =>
@@ -363,7 +410,7 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
       ...t,
       testing: evaluate(t.testing_period.starts_on, t.testing_period.ends_on),
     }));
-    const previousLastMonth = prior
+    const previousLastMonth = prior?.last_month_rule_elected
       ? {
         ...evaluate(
           prior.testing_period.starts_on,
@@ -375,13 +422,31 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
         filed_form8889_source_reference: prior.form8889_source_reference,
       }
       : undefined;
+    const priorTransfers = (prior?.qualified_funding_transfers ?? []).map((
+      t,
+    ) => ({
+      ...t,
+      history_source_reference: historical!.source_input.record_reference,
+      filed_form8889_source_reference: prior!.form8889_source_reference,
+      testing: t.first_ineligible_in_2025
+        ? {
+          starts_on: t.testing_period.starts_on,
+          ends_on: t.testing_period.ends_on,
+          reviewed_through: "2026-12-31" as const,
+          status: "failed_2025" as const,
+          first_ineligible_on: t.first_ineligible_in_2025,
+        }
+        : evaluate(t.testing_period.starts_on, t.testing_period.ends_on),
+    }));
     const exact18 = math.add(
       lastMonth?.status === "failed" ? lastMonthExposure : zero,
       previousLastMonth?.status === "failed"
         ? prior!.exact_last_month_exposure
         : zero,
     );
-    const exact19 = transfers.filter((t) => t.testing.status === "failed")
+    const exact19 = [...transfers, ...priorTransfers].filter((t) =>
+      t.testing.status === "failed"
+    )
       .reduce(
         (n, t) => math.add(n, hsaExactAmount(sourceCents(t.amount), 100)),
         zero,
@@ -396,6 +461,7 @@ export function calculateHsaTestingPeriod2026(raw: HsaTestingPeriod2026) {
       last_month_testing: lastMonth,
       prior_last_month_testing: previousLastMonth,
       qualified_funding_testing: transfers,
+      prior_qualified_funding_testing: priorTransfers,
       exact_part_iii_income: math.add(exact18, exact19),
       filed_part_iii: {
         line18,

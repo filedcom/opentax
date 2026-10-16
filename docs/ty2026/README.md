@@ -442,10 +442,12 @@ causation, and retains
 pending 2027 obligations using shared Part III arithmetic. Ordinary 2025
 last-month histories now replay historical eligibility, receipts, owner forms
 and spouse allocation, reconcile 2026 payments for 2025, and derive current
-recapture or completed testing periods.
+recapture or completed testing periods. Dated 2025 IRA funding now reuses the
+current transfer reconciler, replays filed Part I/III and preserves each transfer
+window, including failures already taxed in 2025.
 Basis-depleting/Roth funding, public retirement-income integration,
 remaining rollover/excess withdrawals, broader historical corrections,
-prior qualified-funding and advanced testing histories, graph binding and complete Form 8889
+advanced testing histories, graph binding and complete Form 8889
 return/output routes remain in the implementation queue.
 
 ## Version rule
