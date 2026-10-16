@@ -110,6 +110,8 @@ export const adoptionSource2026Schema = investmentOwner2026.extend({
         }).strict().optional(),
         prior_form8839: z.object({
           source_document_reference: ref,
+          form_copy_number: z.number().int().min(1).max(100),
+          child_column: z.number().int().min(1).max(3),
           tax_year: z.number().int().min(1997).max(2025),
           parent_tin: tin,
           child_tin: tin,
@@ -232,6 +234,10 @@ export function prepareAdoptionSources2026(raw: AdoptionSource2026) {
     }
   }
   const ids = new Set<string>();
+  const priorDocuments = new Map<
+    string,
+    { tax_year: number; parent_tin: string; slots: Set<string> }
+  >();
   const children = c.children.map((ch) => {
     unique(ch.record_reference);
     unique(ch.identity_document_reference);
@@ -299,7 +305,26 @@ export function prepareAdoptionSources2026(raw: AdoptionSource2026) {
       );
     }
     if (prior) {
-      unique(prior.source_document_reference);
+      let document = priorDocuments.get(prior.source_document_reference);
+      if (!document) {
+        unique(prior.source_document_reference);
+        document = {
+          tax_year: prior.tax_year,
+          parent_tin: prior.parent_tin,
+          slots: new Set(),
+        };
+        priorDocuments.set(prior.source_document_reference, document);
+      }
+      const slot = `${prior.form_copy_number}:${prior.child_column}`;
+      if (
+        document.tax_year !== prior.tax_year ||
+        document.parent_tin !== prior.parent_tin || document.slots.has(slot)
+      ) {
+        throw Error(
+          "Prior adoption document must have consistent ownership and distinct child positions",
+        );
+      }
+      document.slots.add(slot);
       if (
         !owners.has(prior.parent_tin) ||
         prior.child_tin !== ch.identifying_number ||

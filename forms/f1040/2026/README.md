@@ -1188,7 +1188,11 @@ for Form 1062. Carryforwards reconcile any IRS 2025 systemic adjustment using
 its credit increase and corrected origin-year worksheet. Social Security review
 identifies the actual adoption inventory. EIC accepts signed wages and retains
 replayed adoption income; care with changed wages and under-24 education support
-require further compensation reconciliation. Draft bundles reject adoption
-claims until Form 8839 and its continuations are mapped. Remaining support-income
-cases, draft forms, foreign prior-benefit recovery and native filing remain
-required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).
+require further compensation reconciliation. Draft bundles now attach the two-page
+Form 8839 and additional copies for overflow children. Income, refundable credit,
+nonrefundable credit and final child-credit destinations are replayed before
+rendering. Previously reported children retain their prior columns; totals print
+only once. Carryforward-only claims attach, empty inventories do not, and current
+taxable benefits outside Part III receive a separate income reconciliation.
+Remaining support-income cases, foreign prior-benefit recovery and native filing
+remain required in the [Form 8839 contract](../../../docs/ty2026/graphs/FORM8839-GRAPH.md).

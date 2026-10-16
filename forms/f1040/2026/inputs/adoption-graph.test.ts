@@ -1,11 +1,10 @@
-import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { sourceRegistry2026 } from "../source-registry.ts";
 import { adoptionGraphFixture2026 } from "./adoption-graph.fixture.ts";
 import { socialSecurityGraphFixture2026 } from "./social-security.fixture.ts";
 import { eicGraphFixture2026 } from "../nodes/eitc.fixture.ts";
-import { buildDraftReturnPdf2026 } from "../pdf/bundle.ts";
 import { dependentCareFixture2026 } from "./dependent-care.fixture.ts";
 import { educationFixture2026 } from "./education.fixture.ts";
 const ctx = { taxYear: 2026, formType: "f1040" };
@@ -109,13 +108,6 @@ Deno.test("2026 Social Security adoption review identifies the actual exclusion 
     run({ ...input, ssa1099: claim }).diagnostics.some((d) =>
       d.message.includes("actual exclusion source")
     ),
-  );
-});
-Deno.test("2026 adoption PDF bundle cannot silently omit the still-unmapped Form 8839", async () => {
-  await assertRejects(
-    () => buildDraftReturnPdf2026(adoptionGraphFixture2026()),
-    Error,
-    "Form 8839 PDF",
   );
 });
 Deno.test("2026 adoption without employer benefits works without wage sources", () => {

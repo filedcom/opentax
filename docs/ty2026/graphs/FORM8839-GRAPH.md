@@ -159,12 +159,46 @@ explicit errors pending compensation treatment. In particular, the support test
 needs personal-service compensation, not an assumed taxable-wage substitute;
 see the [Form 8863 instructions](https://www.irs.gov/instructions/i8863).
 
-This is **development calculation intake, not public filing support**. Draft
-bundles reject adoption claims until all Form 8839 PDF fields and continuations
-are mapped. Native MeF remains open. Nonspouse allocations, combined unrelated
+This is **development calculation intake, not public filing support**. Native
+MeF remains open. Nonspouse allocations, combined unrelated
 adoption attempts, reimbursements of previously credited expenses, missing child
 identifiers, stronger foreign finality/history binding and the prior-benefit
 recovery destination also remain open.
+
+### Draft attachment and continuation mapping
+
+The static development bundle now includes Form 8839, sequence 38, using the
+pinned two tax pages after removing the IRS cover. It replays the atomic
+child/adoption/energy credit calculation and the retained exclusion source,
+requires identical source inventories, and reconciles Form 1040 lines 1f, 11b,
+18, 19, 28 and 30 plus Schedule 3 line 6c before rendering. Signed line 31 and
+2027 carryforward print in their own fields. All 101 template fields must retain
+the reviewed inventory and one widget each; output contains no widgets or
+AcroForm tree.
+
+Part I prints identity, birth year, disability, special needs, foreign status
+and finalization. Prior records now retain the filed form copy and child column;
+multiple children may cite one document only with consistent ownership/year and
+distinct positions. Placement preserves each prior column and fills unused
+columns with new children. When needed, additional two-page Forms 8839 carry
+per-child rows while aggregate Parts II/III amounts appear only on the main copy.
+The “See Attached” notation sits beside the Part I caution. This follows the
+[2025 instructions' continuation and prior-column rules](https://www.irs.gov/instructions/i8839),
+which remain a method comparator until final 2026 instructions are available.
+
+Carryforward-only claims select an attachment; empty/inactive inventories do
+not. Part III stays blank when no qualifying benefit claim exists. Current
+benefits outside Part III remain taxable on line 1f and receive a separate income
+reconciliation after the official forms, without changing printed line 31.
+The retained calculations continue to hold carryforward origin/expiry details;
+no private supporting decree or wage statement is fabricated as an attachment.
+
+PDF tests inspect values at their printed coordinates, reject each mismatched
+return destination and owner, and cover negative special-needs income, five
+children, partial phaseout, prior-column placement, shared prior documents,
+carryforward-only claims, inactive claims and pending foreign benefits. A
+synthetic five-child bundle with mixed ordinary/special-needs benefits is rendered
+for visual inspection. This does not establish native MeF or filing readiness.
 
 The income sequence follows the current [Form 8839 instructions' line 25
 worksheet](https://www.irs.gov/instructions/i8839), [Pub. 915 Worksheet
@@ -175,12 +209,15 @@ rules](https://www.irs.gov/publications/p970). These publications still describe
 Fresh IRS checks on October 16 found that both the published and draft
 instruction URLs still serve **2025**. The visible 2026 draft form supplies the
 annual amounts and line destinations; the 2025 instructions are explicitly a
-method comparator. The current income/credit regression run passes 281 typed
+method comparator. The preceding income/credit regression run passed 281 typed
 tests, including shared 2025 child/adoption regressions, 2026 source workpapers,
 corrected carryforwards, child/energy ordering, Form 1062 replay, signed income,
 public claim routing and care/education reconciliation diagnostics. The repository
-unit gate passes 137 tests with 3,894 modules in preflight and unchanged runtime
-files.
+unit gate passes 137 tests with 3,897 modules in preflight and unchanged runtime
+files. The current PDF/source regression passes 52 tests, including six adoption
+PDF cases and the existing energy/saver attachment checks. Footer pixel checks
+confirm visible draft text outside the template clipping state; appearance fonts
+are materialized before isolated page embedding.
 Full public return/PDF/MeF validation remains
 required below.
 

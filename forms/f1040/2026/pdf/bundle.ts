@@ -1,6 +1,11 @@
 import { calculateForm4852Bridge2026 } from "../inputs/form4852-bridge.ts";
 import { reconcileForm4852ReturnSources2026 } from "../inputs/form4852-return.ts";
 import { buildForm4852PdfBytes2026 } from "./form4852.ts";
+import {
+  adoptionPrintPlan2026,
+  buildForm8839PdfBytes2026,
+} from "./form8839.ts";
+import type { calculateAdoptionExclusion2026 } from "../inputs/adoption-settlement.ts";
 import { buildForm8889PdfBytes2026 } from "./form8889.ts";
 import { calculateHsaReturnSources2026 } from "../inputs/hsa-source.ts";
 import { calculateSaversCredit2026 } from "../inputs/savers-credit-source.ts";
@@ -111,11 +116,6 @@ export async function buildDraftReturnPdf2026(
     throw new Error("TY2026 draft bundle needs general filer input");
   }
   const input = sourceRegistry2026.start.inputSchema.parse(raw);
-  if (input.form8839) {
-    throw Error(
-      "TY2026 adoption draft bundle needs the Form 8839 PDF and continuation reconciliation",
-    );
-  }
   const calculation = await executeDraftSources2026(input, documents);
   if (calculation.diagnostics.length) {
     throw new Error(
@@ -344,6 +344,20 @@ export async function buildDraftReturnPdf2026(
   const childCredit = retained<ReturnType<typeof calculateChildCredit2026>>(
     "f8812",
   );
+  const adoptionIncome = p.agi_aggregator?.adoption_exclusion_2026 as
+    | ReturnType<typeof calculateAdoptionExclusion2026>
+    | undefined;
+  if (input.form8839 && (!adoptionIncome || !childCredit?.adoption_credit)) {
+    throw Error(
+      "Adoption draft requires completed income and credit workpapers",
+    );
+  }
+  const adoptionBridge = adoptionIncome
+    ? { source: adoptionIncome.source_input, income: adoptionIncome.income }
+    : undefined;
+  const adoption = adoptionBridge && childCredit
+    ? adoptionPrintPlan2026(childCredit.source_input, adoptionBridge)
+    : undefined;
   const education = retained<ReturnType<typeof calculateEducationCredit2026>>(
     "f8863",
   );
@@ -758,6 +772,22 @@ export async function buildDraftReturnPdf2026(
         form1040_line15: line("line15_taxable_income"),
         form1040_line16: line("line16_income_tax"),
       }, filer));
+  }
+  if (adoption?.file_form8839) {
+    add(
+      "form8839",
+      adoption.official_pages,
+      () =>
+        buildForm8839PdfBytes2026(childCredit!.source_input, adoptionBridge!, {
+          form1040_line1f: line("line1f_taxable_adoption_benefits"),
+          form1040_line11b: line("line11b_agi"),
+          form1040_line18: line("line18_total_tax_before_credits"),
+          form1040_line19: line("line19_child_tax_credit"),
+          form1040_line28: line("line28_actc"),
+          form1040_line30: line("line30_refundable_adoption"),
+          schedule3_line6c: s3?.input.line6c_adoption_credit ?? 0,
+        }, filer),
+    );
   }
   if (eic?.file_schedule_eic) {
     add(

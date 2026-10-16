@@ -42,6 +42,7 @@ full source parity. Every PDF page states `INCOMPLETE 2026 IMPLEMENTATION`.
 | Form 4137 (24) | Calculated owner forms | All owner/employer continuation copies |
 | Form 6251 (32) | Retained filing condition | 2 |
 | Form 8615 (33) | Reviewed child-tax eligibility, including line 3/5 stops | 1 |
+| Form 8839 (38) | Current adoption credit/benefit claim or prior carryforward | Two pages per three-child copy; shared totals only on the main copy |
 | Schedule EIC (43) | Positive supported child-based EIC | 1 |
 | Schedule 8812 (47) | Positive source-derived CTC/ODC or ACTC | 2 |
 | Form 8863 (50) | Positive supported AOTC or LLC | Totals plus student/school pages |
@@ -202,3 +203,12 @@ copies require their retained, digest-verified original PDFs; assembly parses
 them and returns unchanged bytes and page counts in `sourceAttachments`. They
 are not flattened into generated return pages. See
 [current gambling coverage](../graphs/GAMBLING-CURRENT.md).
+
+## Adoption attachment
+
+The [Form 8839 route](../graphs/FORM8839-GRAPH.md) replays the retained exclusion
+and atomic child/adoption/energy settlement before printing. Repeated official
+copies preserve prior child columns and carry only their individual amounts;
+aggregate credit and benefit totals occur once. Inactive inventories produce no
+attachment, while carryforward-only claims do. Taxable current benefits outside
+Part III have a separate reconciliation statement after all official forms.

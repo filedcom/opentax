@@ -200,6 +200,8 @@ Deno.test("2026 adoption prior filed history reduces credit and exclusion maximu
   delete ch.no_prior_form8839_claim_verified;
   ch.prior_form8839 = {
     source_document_reference: "prior-8839",
+    form_copy_number: 1,
+    child_column: 1,
     tax_year: 2025,
     parent_tin: s.taxpayer_ssn,
     child_tin: ch.identifying_number,
