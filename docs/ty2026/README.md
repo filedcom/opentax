@@ -414,8 +414,11 @@ The [HSA contract](./graphs/FORM8889-GRAPH.md) now reflects the current 2025 sou
 implementation. Its monthly contribution-limit worksheet is shared with a new
 2026 eligibility workpaper, including sourced plan terms, Medicare, other
 coverage, individual bronze/catastrophic coverage and direct-primary-care fees.
-Notice 2026-5 is pinned. Funding, spouse allocation, distributions and the complete
-Form 8889 return/output routes remain in the implementation queue.
+Notice 2026-5 is pinned. Dated funding now reconciles Form 5498-SA and actual
+W-2 code W with tax-year adjustments, and a household workpaper derives each
+spouse's deemed coverage. The current 1099-SA/5498-SA reporting instructions are
+also pinned. Graph binding, family-limit allocation, distribution/excess treatment
+and the complete Form 8889 return/output routes remain in the implementation queue.
 
 ## Version rule
 

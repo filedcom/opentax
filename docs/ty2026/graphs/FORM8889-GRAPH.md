@@ -83,10 +83,50 @@ DPC fees cannot later be claimed as the beneficiary's medical expense.
 
 This is an **unregistered source foundation**, not a finished Form 8889 return
 route. Its monthly values feed tests of the same limit helper used by 2025.
-The eventual source producer must bind general/W-2/account facts and reconcile
-both spouses' deemed family coverage before taking any deduction. Do not use
+The eventual graph producer must bind general identity/dependency facts and
+resolve the family allocation before taking any deduction. Do not use
 one owner's independently calculated limit as a married family return limit.
 The existing W-2 code W route still has an unregistered 2026 receiver.
+
+### Funding and household evidence
+
+The internal funding workpaper now reconciles each trustee account's dated
+receipts against the actual 2026 Form 5498-SA (or current custodian substitute)
+and each issued W-2. The current
+[1099-SA/5498-SA instructions](../corpus/authorities/i1099sa--2026.pdf), revision
+December 2026, are pinned with their hash and explicitly apply to 2026 data:
+
+- Box 2 includes calendar-2026 personal/employer deposits for **both** 2025 and
+  2026, plus reported IRA-to-HSA funding transfers; box 3 includes 2027 deposits
+  designated for 2026. Deposit dates and ordinary deadlines are checked.
+- Box 4 reconciles reported rollovers separately. Direct HSA/Archer trustee
+  transfers and accepted mistaken-distribution repayments stay outside new
+  contributions. These classifications retain references for later tax-treatment
+  review; they do not establish qualified rollover/funding/repayment treatment.
+- Each employer receipt identifies its owner, employer, payroll evidence and
+  actual current W-2 when paid in 2026. The reused employer worksheet subtracts
+  2026-for-2025 deposits and adds 2027-for-2026 deposits. It runs in source cents
+  before conversion to annual amounts; cafeteria contributions are never counted
+  again as personal contributions.
+- Distinct account and transaction identities, corrected-copy review, complete
+  receipt ledgers through April 15, 2027, and statement totals prevent omitted,
+  duplicate, stale-year or owner-swapped receipt records. Employer error recoveries
+  and special postponed/combat-zone contribution deadlines still need extensions.
+
+The household workpaper joins the two actual eligibility calendars with sourced
+first-day marriage facts. When both spouses are eligible and either has family
+coverage, it derives family coverage for both; it never revives a Medicare or
+otherwise disqualified month. The contribution-evidence bridge matches these
+owners to the reconciled funding owners. On a separate return, the spouse's
+eligibility supports the family rule but the spouse's deposits are not included
+as the taxpayer's contributions. This is a source bridge, not two independent
+family limits or a computed deduction.
+
+Funding/household validation: 168 typed source, shared HSA, owner-return and MeF
+tests pass, including 18 new funding/household cases. The unit gate passes 137
+tests, resolves 3,797 modules and confirms the runtime did not change during
+verification. The generated inventories remain current; Form 8889 is still an
+unregistered 2026 target rather than a completed filing path.
 
 Validation for this foundation: 166 focused HSA, 2025 owner-return/MeF and
 return-arithmetic tests pass, plus 13 section 1294 export/PDF regressions and
@@ -97,10 +137,10 @@ incorrect totals. The unit gate resolved 3,791 modules without runtime changes.
 
 ## Required source integration
 
-1. Reconcile issued Form 5498-SA/account payment ledgers to personal and employer
-   contributions, including 2026-for-2025 and 2027-for-2026 employer adjustments
-   against actual W-2 code W. Preserve source cents through filed-line rounding.
-2. Join each spouse's monthly eligibility before the family allocation, separately
+1. Connect the reconciled Form 5498-SA/payment/W-2 source bridge to the actual
+   graph producers and extend it for employer recoveries, corrected distributions
+   and special contribution deadlines. Preserve source cents through filed lines.
+2. Use the joined spouse eligibility for the family allocation, separately
    preserve each catch-up, and retain the actual last-month election and its
    December 2026–December 2027 testing-period obligation.
 3. Reconcile dated 1099-SA receipts, qualified expenses, rollovers, excess returns

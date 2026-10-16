@@ -2418,6 +2418,16 @@
       "sha256": "2adafd5d53b5a16efa14afa39cf09f7e9bcd235a6f26f6779945f484dee4e09c",
       "reviewed_on": "2026-10-16",
       "notes": "Notice 2026-5: 2026 bronze/catastrophic individual-market and DPC HSA eligibility; telehealth effective-date guidance."
+    },
+    {
+      "path": "authorities/i1099sa--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099sa.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 157004,
+      "sha256": "68cca68a937532ba900c4f1d091ed9ebd56317923b3b9620a04cf5287b56e215",
+      "reviewed_on": "2026-10-16",
+      "notes": "Continuous-use December 2026 instructions for Forms 1099-SA and 5498-SA; calendar-year and designated-year receipt reporting, rollovers, trustee transfers and mistaken repayments."
     }
   ]
 }

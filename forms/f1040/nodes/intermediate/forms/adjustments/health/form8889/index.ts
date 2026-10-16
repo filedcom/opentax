@@ -2,6 +2,7 @@ import {
   calculateHsaContributionLimit,
   CoverageType,
 } from "./contribution-limit.ts";
+import { hsaEmployerContributionsForYear } from "./employer-contributions.ts";
 import { z } from "zod";
 import { employerCode2RetainedSourceSchema } from "./employer-code2-evidence-schema.ts";
 import { employerReturnEvidenceSchema } from "./employer-return-evidence-schema.ts";
@@ -684,12 +685,11 @@ function employerContributionsForTaxYear(input: Form8889Input): number {
     );
   }
   const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
-  if (priorYear > codeW) {
-    throw new Error(
-      "Form 8889 prior-year employer contributions exceed W-2 box 12 code W",
-    );
-  }
-  return codeW - priorYear + (years?.made_in_2026_for_2025 ?? 0);
+  return hsaEmployerContributionsForYear(
+    codeW,
+    priorYear,
+    years?.made_in_2026_for_2025 ?? 0,
+  );
 }
 
 function totalContributions(
