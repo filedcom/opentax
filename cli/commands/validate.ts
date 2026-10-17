@@ -64,9 +64,12 @@ export async function validateReturnCommand(
   const f1040 = pending["f1040"] ?? {};
   const filerIdentity = extractFilerIdentity(f1040);
   let scope: ReturnType<typeof emittedValidationScope> | undefined;
+  let ownReport: DiagnosticsReport | undefined;
   let assemblyError: DiagnosticEntry | undefined;
   try {
-    scope = emittedValidationScope(def.buildMefXml(pending, filerIdentity));
+    const xml = def.buildMefXml(pending, filerIdentity);
+    if (def.mefRuleReport) ownReport = def.mefRuleReport(pending, xml);
+    else scope = emittedValidationScope(xml);
   } catch (error) {
     assemblyError = {
       ruleNumber: "MEF_ASSEMBLY",
@@ -107,7 +110,7 @@ export async function validateReturnCommand(
       summary: { total: 0, passed: 0, rejected: 0, alerts: 0, skipped: 0 },
       canFile: false,
     }
-    : evaluateRules(
+    : ownReport ?? evaluateRules(
       rulesForReturnVersion(scope?.returnVersion).filter((rule) =>
         !isTransmissionOnlyRule(rule.ruleNumber)
       ),

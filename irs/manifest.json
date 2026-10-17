@@ -39,6 +39,28 @@
       "files": {
         "1040_Business_Rules_2026v1.0.csv": "ec54240b1800073b25e59ef725772ff761e12a569abcde700822d126edc39433"
       }
+    },
+    {
+      "id": "mef-4868-2026v1.0",
+      "use": "TY2026 Form 4868 extension MeF schemas (Return4868); no TY2025 4868 schema is in the 2025v5.4 package",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v1.0.zip > 4868_2026v1.0.zip > 4868_Schema_2026v1.0.zip > 2026v1.0/",
+      "path": "4868/2026v1.0",
+      "files": {
+        "Extensions/4868/Return4868.xsd": "2bd6273f48d9c97fcc29f9465148f94ce5f9109949073961b73e1a2754c32b19",
+        "Extensions/4868/ReturnHeader4868.xsd": "73deaae4531d3900da945b5a0386786bf086f1e02846e35fac21c3f7eeaa5d46",
+        "Extensions/4868/ReturnData4868.xsd": "18629916358fa320cb6d84c5690fc53e98db427dfcb0fdbe1fe2b29099f80944",
+        "Extensions/4868/IRS4868/IRS4868.xsd": "73c124f90cf889f5a77f78fe0c24fb72e2989d90bb6a6c4db34b3ff83ae52bab",
+        "Common/efileTypes.xsd": "49c572779264a6ff15cd43f0ceccf73f8f0be6eaf7da83cb590c533061a74941"
+      }
+    },
+    {
+      "id": "rules-4868-2026v1.0",
+      "use": "TY2026 Form 4868 business rules that forms/f4868/validation/rules implements",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v1.0.zip > 4868_2026v1.0.zip > 4868_Business_Rules_2026v1.0.zip",
+      "path": "4868/rules",
+      "files": {
+        "4868_Business_Rules_2026v1.0.pdf": "9cf94127d91771adf594340d21d432ffa8aacde0e06dfd365c5f5e8c6ef82b05"
+      }
     }
   ]
 }
