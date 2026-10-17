@@ -959,3 +959,70 @@ export const dateNotAfterReceipt = (xml: string): RuleCheck =>
   (ctx) =>
     !ctx.hasValue(xml) ||
     dateOf(xml)(ctx) <= dateOf("ReturnHeader/ReturnTs")(ctx);
+
+// ─── Submission Envelope (submission and transmission rules) ───
+
+/**
+ * Lower-case engine facts a transmission-time context carries beside the
+ * return. A return-only context has none of them, so envelope rules then
+ * check only what the return itself controls.
+ */
+export enum EnvelopeFact {
+  /** The submission ZIP: manifest/manifest.xml, xml/submission.xml, attachment/*. */
+  SubmissionZip = "submission_zip",
+  /** The SendSubmissions attachment ZIP: one <SubmissionId>.zip per submission. */
+  TransmissionZip = "transmission_zip",
+  /** The Submission IDs listed in the SendSubmissions request. */
+  TransmissionSubmissionIds = "transmission_submission_ids",
+  /** UTC date (YYYY-MM-DD) the submission is transmitted: the earliest MeF can receive it. */
+  ProcessingDate = "processing_date",
+  MessageId = "message_id",
+  TransmitterEtin = "transmitter_etin",
+  /** StateSubmissionManifest XML of each state submission sent with this return. */
+  StateManifests = "state_submission_manifests",
+}
+
+/** A byte-valued envelope fact, or undefined in a return-only context. */
+export const factBytes = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): Uint8Array | undefined => {
+  const v = ctx.field(fact);
+  return v instanceof Uint8Array ? v : undefined;
+};
+
+/** A text-valued envelope fact, or undefined when absent or empty. */
+export const factText = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): string | undefined => {
+  const v = ctx.field(fact);
+  return typeof v === "string" && v !== "" ? v : undefined;
+};
+
+/** Every text value of a list-valued envelope fact. */
+export const factTexts = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): readonly string[] =>
+  ctx.fieldArray(fact).filter((v): v is string => typeof v === "string");
+
+/** Text of every `<tag>` element in an XML string, in document order. */
+export const xmlTexts = (xml: string, tag: string): readonly string[] =>
+  [...xml.matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]*)</${tag}>`, "g"))]
+    .map((m) => m[1].trim());
+
+/** Days since 1970-01-01 of a YYYY-MM-DD date, or undefined. */
+export const isoDay = (v: unknown): number | undefined => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v ?? ""));
+  return m
+    ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86_400_000
+    : undefined;
+};
+
+/** efileTypes PersonNameControlType: a letter, then up to three letters, hyphens or spaces. */
+export const isPersonNameControl = (v: unknown): boolean =>
+  /^[A-Z][A-Z\- ]{0,3}$/.test(String(v ?? ""));
+
+/** A five-digit Electronic Transmitter Identification Number. */
+export const isEtin = (v: unknown): boolean => /^\d{5}$/.test(String(v ?? ""));
