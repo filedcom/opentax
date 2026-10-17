@@ -240,20 +240,6 @@
     "approvedBy": "pending-review"
   },
   {
-    "module": "forms/f1040/2025/mef/submissions/submission-patron-replay.test.ts",
-    "name": "Patron saved returns preserve all 58 source packets in mixed submission archives",
-    "reason": "Replayed Patron saved returns fail return-wide arithmetic: Form 1040 line 1z differs from lines 1a through 1h. Fails on main before PR #86.",
-    "expires": "2027-01-31",
-    "approvedBy": "pending-review"
-  },
-  {
-    "module": "forms/f1040/2025/mef/submissions/submission-sstb-replay.test.ts",
-    "name": "SSTB saved returns preserve all 68 source packets in mixed submission archives",
-    "reason": "Replayed SSTB saved returns fail return-wide arithmetic: Form 1040 line 24 differs from lines 22 and 23 (and line 1z). Fails on main before PR #86.",
-    "expires": "2027-01-31",
-    "approvedBy": "pending-review"
-  },
-  {
     "module": "forms/f1040/2025/mef/support/current-loss-original-form-review.test.ts",
     "name": "current loss original-form native reviews reconcile original deductions and validate three reporting schemas",
     "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
@@ -272,7 +258,7 @@
   {
     "module": "forms/f1040/2025/return-processing/calculated_return_replay.test.ts",
     "name": "calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay",
-    "reason": "owned-two-farm-wotc-below unexpectedly cannot export XML. Fails on main before PR #86.",
+    "reason": "38 pdf review fixtures still fail export on source-reconciliation guards (independent health deductions 20, joint WOTC W-2 owners 12, tip-health Schedule 1-A source 5, multiple Schedule C SE allocation 1). Same set before PR #86.",
     "expires": "2027-01-31",
     "approvedBy": "pending-review"
   },

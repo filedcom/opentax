@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
 import { inputSchema as w2SourceSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { assertQualifiedTipQbiSource } from "../../../../../domains/deductions/business/form8995/form8995_qualified_tip_source.ts";
 import { assertIndependentOwnerHealth } from "../../../../../domains/adjustments/health/form7206/form7206_independent_owner_source.ts";
@@ -127,8 +128,11 @@ export function assertJointOwner8995(
     g.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     g.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     g.filing_status !== "mfj" || fields.filing_status !== "mfj" ||
-    Math.abs(f.line11_agi - (wages + profit - owned.deduction - health)) >=
-      .000001 ||
+    // AGI adds the whole-dollar line 1z, not the source wage cents.
+    Math.abs(
+        f.line11_agi -
+          (roundWholeDollars(wages) + profit - owned.deduction - health),
+      ) >= .000001 ||
     Number(f.line10_adjustments ?? 0) !== owned.deduction + health ||
     Number(f.line1a_wages ?? 0) !== wages ||
     Number(f.line13_qbi_deduction ?? 0) !== expected.line15 ||

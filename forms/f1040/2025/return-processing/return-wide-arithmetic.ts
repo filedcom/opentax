@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../whole-dollars.ts";
 import { schedule2Part1Total } from "../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
 import { schedule1ActivityNotForProfitTotal } from "../mef/forms/general/return-assembly/schedule1/schedule1_nonbusiness_sources.ts";
 import { schedule1OtherIncomeTotal } from "../mef/forms/general/return-assembly/schedule1/schedule1_other_income_rows.ts";
@@ -60,13 +61,16 @@ export function assertFinalBalanceProjection(
 }
 
 /** Replay final Form 1040 tax and payment subtotals before native/PDF export. */
+/** Checks the return as filed: every line is a whole-dollar amount. */
 export function assertReturnWideArithmetic(
   fields: Record<string, unknown>,
 ): void {
   const amount = (key: string): number | undefined => {
     const value = fields[key];
     if (value === undefined || value === null) return undefined;
-    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return roundWholeDollars(value);
+    }
     throw new Error(`Form 1040 ${key} needs a finite amount`);
   };
   for (
@@ -118,12 +122,15 @@ export function assertReturnWideArithmetic(
       const value = fields[key];
       if (value === undefined || value === null) continue;
       if (typeof value === "number" && Number.isFinite(value)) {
-        total += value;
+        total += roundWholeDollars(value);
       } else if (
         Array.isArray(value) &&
         value.every((item) => typeof item === "number" && Number.isFinite(item))
       ) {
-        total += value.reduce((sum: number, item: number) => sum + item, 0);
+        total += value.reduce(
+          (sum: number, item: number) => sum + roundWholeDollars(item),
+          0,
+        );
       } else {
         throw new Error(`Form 1040 ${key} needs a finite amount`);
       }

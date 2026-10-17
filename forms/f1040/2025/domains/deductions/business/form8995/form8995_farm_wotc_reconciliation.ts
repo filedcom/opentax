@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import {
   inputSchema as tipInputSchema,
   qualifiedBusinessTipQbiSource,
@@ -581,9 +582,11 @@ export function assertFarmWotcReturn(
     (Number(pending.schedule1?.line3_schedule_c ?? 0) !== cTotal) ||
     pending.schedule1?.line15_se_deduction !== half ||
     pending.schedule2?.line4_se_tax !== tax ||
+    // AGI adds the whole-dollar line 1z, not the source wage cents.
     Math.abs(
         Number(final.line11_agi) -
-          (wageTotal + profit - half - (health?.deduction ?? 0)),
+          (roundWholeDollars(wageTotal) + profit - half -
+            (health?.deduction ?? 0)),
       ) > 1e-6 ||
     Number(final.line1a_wages ?? 0) !== wageTotal ||
     general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
@@ -644,7 +647,9 @@ export function assertFarmWotcReturn(
       ) ||
       (calculated.source.se_health_insurance_deduction ?? 0) !==
         (health?.deduction ?? 0) ||
-      Math.abs(calculated.source.joint_wages_total - wageTotal) > 1e-6 ||
+      Math.abs(
+          calculated.source.joint_wages_total - roundWholeDollars(wageTotal),
+        ) > 1e-6 ||
       calculated.source.businesses.length !== businessRefs.length ||
       calculated.source.businesses.some((r) =>
         r.kind === "schedule_f"
