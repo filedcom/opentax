@@ -1,5 +1,6 @@
 import { test } from "bun:test";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath as fromFileUrl } from "node:url";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import * as sys from "../../../../scripts/support/sys.ts";
@@ -19,11 +20,12 @@ import {
 import {
   SCENARIO_1040_05_TY2026_FACTS,
   TY2026_ATS_CASES,
+  TY2026_SCHEMA_GAPS,
 } from "./ty2026_cases.ts";
 
 const SCHEMA = fromFileUrl(
   new URL(
-    "../../../../.state/research/docs/IMF_Series_2026v1.0/1040x_2026v1.0/2026v1.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../irs/mef/2026v1.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ),
 );
@@ -157,3 +159,19 @@ test("TY2026 ATS 1040 Scenario 5 inventory and assumptions stay explicit", () =>
     ],
   );
 });
+
+test.skipIf(!existsSync(SCHEMA))(
+  "TY2026 stylesheet elements recorded as schema gaps are absent from 2026v1.0",
+  () => {
+    const root = join(dirname(SCHEMA), "../..");
+    const xsd = readdirSync(root, { recursive: true, encoding: "utf8" })
+      .filter((path) => path.endsWith(".xsd"))
+      .map((path) => readFileSync(join(root, path), "utf8"))
+      .join("\n");
+    for (const gap of TY2026_SCHEMA_GAPS) {
+      for (const element of gap.elements) {
+        assertEquals(xsd.includes(`name="${element}"`), false, element);
+      }
+    }
+  },
+);

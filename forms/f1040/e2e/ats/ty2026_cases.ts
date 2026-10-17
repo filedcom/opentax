@@ -322,3 +322,64 @@ export const SCENARIO_1040_05_TY2026_FACTS = {
     thirdAccountBlank: true,
   },
 } as const;
+
+/**
+ * Elements the IRS public TY2026 stylesheets (2026-07-29) render that the
+ * 2026v1.0 schema lacks. The export stays valid against 2026v1.0 and emits
+ * none of them; each is an assumption until a later 2026 schema is held.
+ */
+export const TY2026_SCHEMA_GAPS: readonly {
+  readonly stylesheet: string;
+  readonly elements: readonly string[];
+  readonly assumption: string;
+}[] = [
+  {
+    stylesheet: "IRS1040Schedule1A.xsl",
+    elements: [
+      "QualifiedTipsEmployeeGrp",
+      "QualifiedTipsTradeOrBusGrp",
+      "QualifiedOvertimeWagesGrp",
+      "QualifiedOvertimeForm1099Grp",
+      "NoTaxCarLoanInterestGrp",
+      "OriginalUseStartedWithFilerInd",
+      "VehicleFinalAssemblyInUSInd",
+    ],
+    assumption:
+      "Schedule 1-A tips, overtime and car-loan interest are regrouped; TY2026 refuses those inputs until the schema is held.",
+  },
+  {
+    stylesheet: "IRS1040.xsl",
+    elements: [
+      "FiledPursuantToSect30191002Cd",
+      "FirstInstallmentSect1062TaxAmt",
+      "TotalTaxAfter1062TaxAmt",
+    ],
+    assumption:
+      "Form 1062 farmland installment lines (1040 line 24b) are not emitted; no supported TY2026 input produces them.",
+  },
+  {
+    stylesheet: "IRS1040Schedule3.xsl",
+    elements: ["TotalLiabilitySect1062TaxAmt"],
+    assumption: "Schedule 3 Form 1062 liability is not emitted.",
+  },
+  {
+    stylesheet: "IRS1040ScheduleA.xsl",
+    elements: ["ItemizedDeductionsLimitedInd"],
+    assumption:
+      "Schedule A is not available for TY2026, so the itemized-deduction limitation indicator is never needed.",
+  },
+  {
+    stylesheet: "IRS1040Schedule3A.xsl",
+    elements: [
+      "FederalPublicBenefitInd",
+      "FederalPublicBenefitAmt",
+      "FederalPublicBenefitLimitAmt",
+      "ReceiveFederalPublicBenefitInd",
+      "RfdblCrSubjToPRWORAAmt",
+      "USCtznUSNatlQlfyAlienInd",
+      "USCtznUSNatlQlfyAlienAmt",
+    ],
+    assumption:
+      "Schedule 3-A (refundable credits subject to PRWORA) is not emitted; TY2026 refuses the EIC and child-credit inputs that require it.",
+  },
+];
