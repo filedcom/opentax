@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { buildReturnHeader, FilingStatus } from "./header.ts";
+import { buildReturnHeader, FilingStatus, irsNameLine1 } from "./header.ts";
 import type { FilerIdentity } from "./header.ts";
 
 function sampleFiler(): FilerIdentity {
@@ -360,4 +360,36 @@ test("files the paid preparer as PaidPreparerInformationGrp in XSD order", () =>
 test("a self-prepared return files no preparer group", () => {
   const header = buildReturnHeader({ ...sampleFiler(), preparedBy: { selfPrepared: true } });
   assertEquals(header.includes("Preparer"), false);
+});
+
+test("DECD follows Pub 4164 section 12.5 for every deceased-taxpayer layout", () => {
+  const john = { first: "JOHN", middle: "A", last: "DOE" };
+  const jane = { first: "JANE", middle: "B", last: "DOE" };
+  const smith = { first: "JANE", middle: "B", last: "SMITH" };
+  const cases: Array<[string, string]> = [
+    [irsNameLine1({ ...john, deceased: true }), "JOHN A<DOE<DECD"],
+    [irsNameLine1({ ...john, suffix: "JR", deceased: true }), "JOHN A<DOE<JR DECD"],
+    [irsNameLine1({ ...john, deceased: true }, jane), "JOHN A DECD & JANE B<DOE"],
+    [irsNameLine1({ ...john, suffix: "JR", deceased: true }, jane), "JOHN A DECD & JANE B<DOE<JR"],
+    [irsNameLine1(john, { ...jane, deceased: true }), "JOHN A & JANE B DECD<DOE"],
+    [irsNameLine1({ ...john, suffix: "SR" }, { ...jane, deceased: true }), "JOHN A & JANE B DECD<DOE<SR"],
+    [irsNameLine1({ ...john, deceased: true }, smith), "JOHN A<DOE<DECD & JANE B SMITH"],
+    [irsNameLine1({ ...john, suffix: "III", deceased: true }, smith), "JOHN A<DOE<III DECD & JANE B SMITH"],
+    [irsNameLine1(john, { ...smith, deceased: true }), "JOHN A<DOE<& JANE B SMITH DECD"],
+    [irsNameLine1({ ...john, suffix: "JR" }, { ...smith, deceased: true }), "JOHN A<DOE<JR & JANE B SMITH DECD"],
+    [irsNameLine1({ ...john, deceased: true }, { ...jane, deceased: true }), "JOHN A DECD & JANE B DECD<DOE"],
+    [irsNameLine1({ ...john, deceased: true }, { ...smith, deceased: true }), "JOHN A<DOE<DECD & JANE B SMITH DECD"],
+  ];
+  for (const [actual, expected] of cases) assertEquals(actual, expected);
+});
+
+test("a joint return with a deceased spouse files DECD in the header name line", () => {
+  const header = buildReturnHeader({
+    ...sampleFiler(),
+    firstName: "JOHN",
+    lastName: "JONES",
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: { ssn: "987654321", firstName: "JUDY", lastName: "JONES", nameControl: "JONE", deathDate: "2025-09-11" },
+  });
+  assertStringIncludes(header, "<NameLine1Txt>JOHN &amp; JUDY DECD&lt;JONES</NameLine1Txt>");
 });

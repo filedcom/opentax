@@ -138,6 +138,7 @@ interface NameParts {
   readonly middle?: string;
   readonly last: string;
   readonly suffix?: string;
+  readonly deceased?: boolean;
 }
 
 const MAX_NAME_LINE = 35;
@@ -155,21 +156,28 @@ function given(person: NameParts): string {
 
 /**
  * Pub 4164 §12.5 Table 12-1: "JOHN A<SMITH<III", joint "JOHN A & JANE B<SMITH",
- * and a spouse with another last name "CARL A<JONES<& ANGIE MYER".
+ * and a spouse with another last name "CARL A<JONES<& ANGIE MYER". A deceased
+ * taxpayer's DECD follows the first name on a same-surname joint line
+ * ("JOHN A & JANE B DECD<DOE") and the surname otherwise ("JOHN A<DOE<DECD").
  */
 export function irsNameLine1(
   primary: NameParts,
   spouse?: NameParts,
 ): string {
+  const decd = (x: NameParts) => x.deceased ? " DECD" : "";
+  // The surname's tail: "<JR", "<JR DECD" or "<DECD".
+  const tail = (x: NameParts) =>
+    x.suffix ? `<${x.suffix}${decd(x)}` : x.deceased ? "<DECD" : "";
   const build = (p: NameParts, s: NameParts | undefined): string => {
-    const suffix = p.suffix ? `<${p.suffix}` : "";
-    if (!s) return `${given(p)}<${p.last}${suffix}`;
+    if (!s) return `${given(p)}<${p.last}${tail(p)}`;
     if (s.last === p.last) {
-      return `${given(p)} & ${given(s)}<${p.last}${suffix}`;
+      const suffix = p.suffix ? `<${p.suffix}` : "";
+      return `${given(p)}${decd(p)} & ${given(s)}${decd(s)}<${p.last}${suffix}`;
     }
-    const spouseName = `& ${given(s)} ${s.last}`;
-    return suffix
-      ? `${given(p)}<${p.last}${suffix} ${spouseName}`
+    const spouseName = `& ${given(s)} ${s.last}${decd(s)}`;
+    const primaryTail = tail(p);
+    return primaryTail
+      ? `${given(p)}<${p.last}${primaryTail} ${spouseName}`
       : `${given(p)}<${p.last}<${spouseName}`;
   };
   // Shorten in the Pub 4164 order until the line fits in 35 characters.
@@ -208,10 +216,17 @@ function nameParts(
   middle: string | undefined,
   last: string | undefined,
   suffix?: string,
+  deceased?: boolean,
 ): NameParts | undefined {
   const f = nameToken(first), l = nameToken(last);
   return f && l
-    ? { first: f, middle: nameToken(middle), last: l, suffix: nameToken(suffix) }
+    ? {
+      first: f,
+      middle: nameToken(middle),
+      last: l,
+      suffix: nameToken(suffix),
+      deceased,
+    }
     : undefined;
 }
 
@@ -222,6 +237,7 @@ export function returnHeaderNameLine1(filer: FilerIdentity): string {
     filer.middleInitial,
     filer.lastName,
     filer.suffix,
+    filer.deceased === true || Boolean(filer.deathDate),
   );
   if (primary) {
     const spouse = filer.filingStatus === FilingStatus.MarriedFilingJointly &&
@@ -230,6 +246,8 @@ export function returnHeaderNameLine1(filer: FilerIdentity): string {
         filer.spouse.firstName,
         filer.spouse.middleInitial,
         filer.spouse.lastName,
+        undefined,
+        filer.spouse.deceased === true || Boolean(filer.spouse.deathDate),
       )
       : undefined;
     return irsNameLine1(primary, spouse);
