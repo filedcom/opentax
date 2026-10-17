@@ -134,7 +134,13 @@ export async function changedFiles(
     await git(root, "diff", "--name-only", "-z", mergeBase),
     await git(root, "ls-files", "--others", "--exclude-standard", "-z"),
   ].join("\0");
-  return [...new Set(lines.split("\0").filter(Boolean))].sort();
+  // A node_modules symlink in a worktree escapes the `node_modules/` ignore pattern.
+  return [
+    ...new Set(
+      lines.split("\0").filter((path) => path && path !== "node_modules"),
+    ),
+  ]
+    .sort();
 }
 
 /** Tests a change can affect, from the given candidates. */
