@@ -155,7 +155,10 @@ try {
       }`,
     );
   }
-  assertTestInventory(selected, selected);
+  // An empty changed-only selection is reported, never run as a passing test run.
+  if (selected.length > 0 || gate === null) {
+    assertTestInventory(selected, selected);
+  }
   await sys.writeText(
     join(evidence, "discovery.json"),
     JSON.stringify(
